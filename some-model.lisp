@@ -73,7 +73,8 @@
                               (nthcdr (+ n s-offset) s))
                       size
                       min
-                      max)))
+                      max))
+  :hints (("Goal" :in-theory (enable bounded-int-listp)) ))
 
 (verify-guards block-memset
   :guard-debug t
