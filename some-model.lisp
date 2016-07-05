@@ -4,7 +4,7 @@
   (declare (xargs :guard (integer-listp (list min max))))
   (if (atom units)
       (not units)
-    (and (integerp (car units)) (< min (car units)) (< (car units) max)
+    (and (integerp (car units)) (<= min (car units)) (<= (car units) max)
          (bounded-int-listp (cdr units) min max))))
 
 (defthm bounded-int-listp-implies-integer-listp
@@ -46,6 +46,11 @@
      (cdr (hons-get :min s-mb))
      (cdr (hons-get :max s-mb)))))
 
+(defthm block-memset-guard-lemma-2
+  (implies (and (bounded-int-listp u1 min max) (bounded-int-listp u2 min max))
+           (bounded-int-listp (append u1 u2) min max))
+  :hints (("Goal" :in-theory (enable bounded-int-listp))))
+
 (defthm block-memset-guard-lemma-1
   (implies
    (and (integerp min)
@@ -65,7 +70,7 @@
                               (nthcdr (+ n s-offset) units))
                       min
                       max))
-  :hints (("Goal" :in-theory (enable bounded-int-listp))
+  :hints (("Goal" :in-theory (enable bounded-int-listp repeat))
           ("Subgoal 8'" :use ((:instance bounded-int-listp-implies-integer-listp
                                          (units (cdr (hons-assoc-equal :units s-mb)))
                                          (min (cdr (hons-assoc-equal :min s-mb)))
