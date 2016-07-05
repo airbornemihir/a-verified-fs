@@ -46,10 +46,60 @@
      (cdr (hons-get :min s-mb))
      (cdr (hons-get :max s-mb)))))
 
+(in-theory (enable bounded-int-listp valid-block-p))
+
 (defthm block-memset-guard-lemma-2
   (implies (and (bounded-int-listp u1 min max) (bounded-int-listp u2 min max))
            (bounded-int-listp (append u1 u2) min max))
   :hints (("Goal" :in-theory (enable bounded-int-listp))))
+
+(defthm block-memset-guard-lemma-3
+  (implies (and (integerp min)
+                (integerp max)
+                (<= min max)
+                (bounded-int-listp units min max)
+                (integerp m)
+                (integerp c)
+                (<= 0 m)
+                (<= m (len units))
+                (<= min c)
+                (<= c max))
+           (bounded-int-listp (nthcdr m units)
+                              min max)))
+
+(defthm block-memset-guard-lemma-5
+  (implies (and (integerp min)
+                (integerp max)
+                (<= min max)
+                (bounded-int-listp u1 min max)
+                (bounded-int-listp u2 min max))
+           (bounded-int-listp (revappend u1 u2)
+                              min max)))
+
+(defthm block-memset-guard-lemma-4
+  (implies (and (integerp min)
+                (integerp max)
+                (<= min max)
+                (bounded-int-listp u1 min max)
+                (bounded-int-listp u2 min max)
+                (integerp m)
+                (<= 0 m)
+                (<= m (len u1)))
+           (bounded-int-listp (first-n-ac m u1 u2)
+                              min max)))
+
+(defthm block-memset-guard-lemma-6
+  (implies
+   (and (integerp min)
+        (integerp max)
+        (<= min max)
+        (integerp c)
+        (integerp n)
+        (<= 0 n)
+        (<= min c)
+        (<= c max))
+   (bounded-int-listp (repeat n c) min max))
+  :hints (("Goal" :in-theory (enable bounded-int-listp repeat))))
 
 (defthm block-memset-guard-lemma-1
   (implies
@@ -71,23 +121,21 @@
                       min
                       max))
   :hints (("Goal" :in-theory (enable bounded-int-listp repeat))
-          ("Subgoal 8'" :use ((:instance bounded-int-listp-implies-integer-listp
-                                         (units (cdr (hons-assoc-equal :units s-mb)))
-                                         (min (cdr (hons-assoc-equal :min s-mb)))
-                                         (max (cdr (hons-assoc-equal :max
-                                                                     s-mb))))))
-          ("Subgoal *1/1.2'" :expand ((repeat 0 c) ))))
+          ("Subgoal *1/1'''" :in-theory (disable block-memset-guard-lemma-2)
+           :use ((:instance block-memset-guard-lemma-2
+                            (u1 (repeat n c))
+                            (u2 (nthcdr n units)))) )))
 
 (verify-guards block-memset
   :guard-debug t
-  :hints (("goal" :in-theory (enable valid-block-p))
+  :hints (("goal")
           ))
 
-(let ((s-mb (build-block (repeat 20 7) 20 0 20)))
-  (let ((s (hons-get :s s-mb))
-      (size (hons-get :size s-mb))
-      (min (hons-get :min s-mb))
-      (max (hons-get :max s-mb)))
-  (and (integer-listp (list size min max))
-       (<= min max)
-       (bounded-int-listp s size min max))))
+(in-theory (disable bounded-int-listp valid-block-p))
+
+#||
+example
+(let ((s-mb (build-block (repeat 20 7) 0 20)))
+  (block-memset s-mb 7 5 5))
+||#
+
