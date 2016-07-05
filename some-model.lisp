@@ -1,39 +1,33 @@
 (include-book "std/lists/update-nth" :dir :system)
 
-(defund bounded-int-listp (s size min max)
-  (declare (xargs :guard (integer-listp (list size min max))))
-  (if (atom s)
-      (and (not s) (equal size 0))
-    (and (integerp (car s)) (< min (car s)) (< (car s) max)
-         (bounded-int-listp (cdr s) (- size 1) min max))))
+(defund bounded-int-listp (units min max)
+  (declare (xargs :guard (integer-listp (list min max))))
+  (if (atom units)
+      (not units)
+    (and (integerp (car units)) (< min (car units)) (< (car units) max)
+         (bounded-int-listp (cdr units) min max))))
 
 (defthm bounded-int-listp-implies-integer-listp
-  (implies (bounded-int-listp s size min max) (integer-listp s))
-  :hints (("Goal" :in-theory (enable bounded-int-listp))))
-
-(defthm len-if-bounded-int-listp
-  (implies (bounded-int-listp s size min max) (equal (len s) size))
+  (implies (bounded-int-listp units min max) (integer-listp units))
   :hints (("Goal" :in-theory (enable bounded-int-listp))))
 
 (defnd valid-block-p (mb)
-  (let ((s (cdr (hons-get :s mb)))
-        (size (cdr (hons-get :size mb)))
+  (let ((units (cdr (hons-get :units mb)))
         (min (cdr (hons-get :min mb)))
         (max (cdr (hons-get :max mb))))
-    (and (integer-listp (list size min max))
+    (and (integer-listp (list min max))
          (<= min max)
-         (bounded-int-listp s size min max))))
+         (bounded-int-listp units min max))))
 
-(defund build-block (s size min max)
+(defund build-block (units min max)
   (declare (xargs :guard
-                  (and (integer-listp (list size min max))
+                  (and (integer-listp (list min max))
                        (<= min max)
-                       (bounded-int-listp s size min max))))
-  (hons-acons :s s
-              (hons-acons :size size
-                          (hons-acons :min min
-                                      (hons-acons :max max
-                                                  nil)))))
+                       (bounded-int-listp units min max))))
+  (hons-acons :units units
+              (hons-acons :min min
+                          (hons-acons :max max
+                                      nil))))
 
 (defund block-memset (s-mb s-offset c n)
   (declare (xargs :guard (and (integer-listp (list s-offset c n))
@@ -41,51 +35,47 @@
                   :verify-guards nil))
   (if (or (< s-offset 0)
           (< n 0)
-          (> (+ s-offset n) (cdr (hons-get :size s-mb)))
+          (> (+ s-offset n) (len (cdr (hons-get :units s-mb))))
           (< c (cdr (hons-get :min s-mb)))
           (> c (cdr (hons-get :max s-mb))))
       s-mb
     (build-block
-     (append (take s-offset (cdr (hons-get :s s-mb)))
+     (append (take s-offset (cdr (hons-get :units s-mb)))
              (repeat n c)
-             (nthcdr (+ s-offset n) (cdr (hons-get :s s-mb))))
-     (cdr (hons-get :size s-mb))
+             (nthcdr (+ s-offset n) (cdr (hons-get :units s-mb))))
      (cdr (hons-get :min s-mb))
      (cdr (hons-get :max s-mb)))))
 
 (defthm block-memset-guard-lemma-1
   (implies
-   (and (integerp size)
-        (integerp min)
+   (and (integerp min)
         (integerp max)
         (<= min max)
-        (bounded-int-listp s size min max)
+        (bounded-int-listp units min max)
         (integerp s-offset)
         (integerp c)
         (integerp n)
         (<= 0 s-offset)
         (<= 0 n)
-        (<= (+ n s-offset) size)
+        (<= (+ n s-offset) (len units))
         (<= min c)
         (<= c max))
-   (bounded-int-listp (append (take s-offset s)
+   (bounded-int-listp (append (take s-offset units)
                               (repeat n c)
-                              (nthcdr (+ n s-offset) s))
-                      size
+                              (nthcdr (+ n s-offset) units))
                       min
                       max))
-  :hints (("Goal" :in-theory (enable bounded-int-listp)) ))
+  :hints (("Goal" :in-theory (enable bounded-int-listp))
+          ("Subgoal 8'" :use ((:instance bounded-int-listp-implies-integer-listp
+                                         (units (cdr (hons-assoc-equal :units s-mb)))
+                                         (min (cdr (hons-assoc-equal :min s-mb)))
+                                         (max (cdr (hons-assoc-equal :max
+                                                                     s-mb))))))
+          ("Subgoal *1/1.2'" :expand ((repeat 0 c) ))))
 
 (verify-guards block-memset
   :guard-debug t
   :hints (("goal" :in-theory (enable valid-block-p))
-          ("Subgoal 9'" :use ((:instance bounded-int-listp-implies-integer-listp
-                                         (s (cdr (hons-assoc-equal :s s-mb)))
-                                         (size (cdr (hons-assoc-equal :size s-mb)))
-                                         (min (cdr (hons-assoc-equal :min s-mb)))
-                                         (max (cdr (hons-assoc-equal :max s-mb)))
-                                         ))
-           :in-theory (disable bounded-int-listp-implies-integer-listp))
           ))
 
 (let ((s-mb (build-block (repeat 20 7) 20 0 20)))
