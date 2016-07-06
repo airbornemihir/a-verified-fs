@@ -155,6 +155,11 @@ example
      (cdr (hons-get :min dst-mb))
      (cdr (hons-get :max dst-mb)))))
 
+#||
+example
+(block-memcpy (build-block (repeat 20 7) 0 20) 5 (build-block (repeat 20 5) 0 20) 10 3)
+||#
+
 (in-theory (enable bounded-int-listp valid-block-p))
 
 (defthm block-memcpy-guard-lemma-2
@@ -206,3 +211,37 @@ example
 (verify-guards block-memcpy :guard-debug t)
 
 (in-theory (disable bounded-int-listp valid-block-p))
+
+;; ok, it's time to talk
+;; there's no sense trying to model blocks of the disk as, you know, numbers
+;; ranging from 0 to 4194303 for instance (for blocks of size 512 kilobytes.)
+;; the logical thing is to make the read and write operations like memcpy, and
+;; enforce the block nature by making sure the size and offset of the byte is
+;; compatible with the disk (that is, reads and writes should begin and end on
+;; a block boundary)
+
+(defund block-write (src-mb src-offset dst-mb dst-offset n blocksize)
+  (declare (xargs :guard (and (integer-listp (list src-offset dst-offset n blocksize))
+                              (>= blocksize 1)
+                              (valid-block-p src-mb)
+                              (valid-block-p dst-mb)
+                              (equal (rem dst-offset blocksize) 0)
+                              (equal (rem n blocksize) 0))
+                  :verify-guards nil)
+           (ignore blocksize))
+  (block-memcpy src-mb src-offset dst-mb dst-offset n))
+
+(verify-guards block-write :guard-debug t)
+
+(defund block-read (src-mb src-offset dst-mb dst-offset n blocksize)
+  (declare (xargs :guard (and (integer-listp (list src-offset dst-offset n blocksize))
+                              (>= blocksize 1)
+                              (valid-block-p src-mb)
+                              (valid-block-p dst-mb)
+                              (equal (rem src-offset blocksize) 0)
+                              (equal (rem n blocksize) 0))
+                  :verify-guards nil)
+           (ignore blocksize))
+  (block-memcpy src-mb src-offset dst-mb dst-offset n))
+
+(verify-guards block-read :guard-debug t)
