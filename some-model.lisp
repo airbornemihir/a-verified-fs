@@ -59,11 +59,8 @@
                 (<= min max)
                 (bounded-int-listp units min max)
                 (integerp m)
-                (integerp c)
                 (<= 0 m)
-                (<= m (len units))
-                (<= min c)
-                (<= c max))
+                (<= m (len units)))
            (bounded-int-listp (nthcdr m units)
                               min max)))
 
@@ -127,7 +124,6 @@
                             (u2 (nthcdr n units)))) )))
 
 (verify-guards block-memset
-  :guard-debug t
   :hints (("goal")
           ))
 
@@ -139,3 +135,74 @@ example
   (block-memset s-mb 7 5 5))
 ||#
 
+(defund block-memcpy (src-mb src-offset dst-mb dst-offset n)
+  (declare (xargs :guard (and (integer-listp (list src-offset dst-offset n))
+                              (valid-block-p src-mb)
+                              (valid-block-p dst-mb))
+                  :verify-guards nil))
+  (if (or (< src-offset 0)
+          (< dst-offset 0)
+          (< n 0)
+          (> (+ src-offset n) (len (cdr (hons-get :units src-mb))))
+          (> (+ dst-offset n) (len (cdr (hons-get :units dst-mb))))
+          (< (cdr (hons-get :min src-mb)) (cdr (hons-get :min dst-mb)))
+          (> (cdr (hons-get :max src-mb)) (cdr (hons-get :max dst-mb))))
+      dst-mb
+    (build-block
+     (append (take dst-offset (cdr (hons-get :units dst-mb)))
+             (nthcdr src-offset (take (+ src-offset n) (cdr (hons-get :units src-mb))))
+             (nthcdr (+ dst-offset n) (cdr (hons-get :units dst-mb))))
+     (cdr (hons-get :min dst-mb))
+     (cdr (hons-get :max dst-mb)))))
+
+(in-theory (enable bounded-int-listp valid-block-p))
+
+(defthm block-memcpy-guard-lemma-2
+  (implies (and (<= dst-min src-min)
+                (<= src-max dst-max)
+                (integerp dst-min)
+                (integerp dst-max)
+                (<= dst-min dst-max)
+                (integerp src-min)
+                (integerp src-max)
+                (<= src-min src-max)
+                (bounded-int-listp src-units src-min src-max))
+           (bounded-int-listp src-units dst-min dst-max)))
+
+(defthm block-memcpy-guard-lemma-4
+  (equal (len (revappend l2 l1))
+         (+ (len l1) (len l2))))
+
+(defthm block-memcpy-guard-lemma-3
+  (implies (and  (integerp m) (>= m 0))
+           (equal (len (first-n-ac m l1 l2))
+                  (+ (len l2) m)))
+  :hints (("Goal" :induct (first-n-ac m l1 l2)) ))
+
+(defthm block-memcpy-guard-lemma-1
+  (implies (and (integer-listp (list src-offset dst-offset n))
+                (<= 0 src-offset)
+                (<= 0 dst-offset)
+                (<= 0 n)
+                (<= (+ n src-offset) (len src-units))
+                (<= (+ dst-offset n) (len dst-units))
+                (<= dst-min src-min)
+                (<= src-max dst-max)
+                (integerp dst-min)
+                (integerp dst-max)
+                (<= dst-min dst-max)
+                (bounded-int-listp dst-units dst-min dst-max)
+                (integerp src-min)
+                (integerp src-max)
+                (<= src-min src-max)
+                (bounded-int-listp src-units src-min src-max))
+           (bounded-int-listp (append (first-n-ac dst-offset dst-units nil)
+                                      (nthcdr src-offset
+                                              (first-n-ac (+ n src-offset)
+                                                          src-units nil))
+                                      (nthcdr (+ dst-offset n) dst-units))
+                              dst-min dst-max)))
+
+(verify-guards block-memcpy :guard-debug t)
+
+(in-theory (disable bounded-int-listp valid-block-p))
