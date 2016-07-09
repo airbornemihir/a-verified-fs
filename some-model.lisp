@@ -29,22 +29,27 @@
                           (hons-acons :max max
                                       nil))))
 
+;; we're going to be making some changes here
+;; this doesn't have an error code as its return value, so we won't attempt to
+;; establish one - but we will move some implicit assumptions into the guards
+;; because it's crappy to silently fail when we can't memset
 (defund block-memset (s-mb s-offset c n)
   (declare (xargs :guard (and (integer-listp (list s-offset c n))
-                              (valid-block-p s-mb))
+                              (valid-block-p s-mb)
+                              (>= s-offset 0)
+                              (>= n 0)
+                              (<= (+ s-offset n)
+                                  (len (cdr (hons-get :units s-mb))))
+                              (< c (cdr (hons-get :min s-mb)))
+                              (> c (cdr (hons-get :max s-mb))))
                   :verify-guards nil))
-  (if (or (< s-offset 0)
-          (< n 0)
-          (> (+ s-offset n) (len (cdr (hons-get :units s-mb))))
-          (< c (cdr (hons-get :min s-mb)))
-          (> c (cdr (hons-get :max s-mb))))
-      s-mb
-    (build-block
-     (append (take s-offset (cdr (hons-get :units s-mb)))
-             (repeat n c)
-             (nthcdr (+ s-offset n) (cdr (hons-get :units s-mb))))
-     (cdr (hons-get :min s-mb))
-     (cdr (hons-get :max s-mb)))))
+  
+  (build-block
+   (append (take s-offset (cdr (hons-get :units s-mb)))
+           (repeat n c)
+           (nthcdr (+ s-offset n) (cdr (hons-get :units s-mb))))
+   (cdr (hons-get :min s-mb))
+   (cdr (hons-get :max s-mb))))
 
 (in-theory (enable bounded-int-listp valid-block-p))
 
