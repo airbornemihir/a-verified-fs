@@ -29,22 +29,27 @@
                           (hons-acons :max max
                                       nil))))
 
+;; we're going to be making some changes here
+;; this doesn't have an error code as its return value, so we won't attempt to
+;; establish one - but we will move some implicit assumptions into the guards
+;; because it's crappy to silently fail when we can't memset
 (defund block-memset (s-mb s-offset c n)
   (declare (xargs :guard (and (integer-listp (list s-offset c n))
-                              (valid-block-p s-mb))
+                              (valid-block-p s-mb)
+                              (>= s-offset 0)
+                              (>= n 0)
+                              (<= (+ s-offset n)
+                                  (len (cdr (hons-get :units s-mb))))
+                              (< c (cdr (hons-get :min s-mb)))
+                              (> c (cdr (hons-get :max s-mb))))
                   :verify-guards nil))
-  (if (or (< s-offset 0)
-          (< n 0)
-          (> (+ s-offset n) (len (cdr (hons-get :units s-mb))))
-          (< c (cdr (hons-get :min s-mb)))
-          (> c (cdr (hons-get :max s-mb))))
-      s-mb
-    (build-block
-     (append (take s-offset (cdr (hons-get :units s-mb)))
-             (repeat n c)
-             (nthcdr (+ s-offset n) (cdr (hons-get :units s-mb))))
-     (cdr (hons-get :min s-mb))
-     (cdr (hons-get :max s-mb)))))
+  
+  (build-block
+   (append (take s-offset (cdr (hons-get :units s-mb)))
+           (repeat n c)
+           (nthcdr (+ s-offset n) (cdr (hons-get :units s-mb))))
+   (cdr (hons-get :min s-mb))
+   (cdr (hons-get :max s-mb))))
 
 (in-theory (enable bounded-int-listp valid-block-p))
 
@@ -138,22 +143,21 @@ example
 (defund block-memcpy (src-mb src-offset dst-mb dst-offset n)
   (declare (xargs :guard (and (integer-listp (list src-offset dst-offset n))
                               (valid-block-p src-mb)
-                              (valid-block-p dst-mb))
+                              (valid-block-p dst-mb)
+                              (>= src-offset 0)
+                              (>= dst-offset 0)
+                              (>= n 0)
+                              (<= (+ src-offset n) (len (cdr (hons-get :units src-mb))))
+                              (<= (+ dst-offset n) (len (cdr (hons-get :units dst-mb))))
+                              (>= (cdr (hons-get :min src-mb)) (cdr (hons-get :min dst-mb)))
+                              (<= (cdr (hons-get :max src-mb)) (cdr (hons-get :max dst-mb))))
                   :verify-guards nil))
-  (if (or (< src-offset 0)
-          (< dst-offset 0)
-          (< n 0)
-          (> (+ src-offset n) (len (cdr (hons-get :units src-mb))))
-          (> (+ dst-offset n) (len (cdr (hons-get :units dst-mb))))
-          (< (cdr (hons-get :min src-mb)) (cdr (hons-get :min dst-mb)))
-          (> (cdr (hons-get :max src-mb)) (cdr (hons-get :max dst-mb))))
-      dst-mb
-    (build-block
-     (append (take dst-offset (cdr (hons-get :units dst-mb)))
-             (nthcdr src-offset (take (+ src-offset n) (cdr (hons-get :units src-mb))))
-             (nthcdr (+ dst-offset n) (cdr (hons-get :units dst-mb))))
-     (cdr (hons-get :min dst-mb))
-     (cdr (hons-get :max dst-mb)))))
+  (build-block
+   (append (take dst-offset (cdr (hons-get :units dst-mb)))
+           (nthcdr src-offset (take (+ src-offset n) (cdr (hons-get :units src-mb))))
+           (nthcdr (+ dst-offset n) (cdr (hons-get :units dst-mb))))
+   (cdr (hons-get :min dst-mb))
+   (cdr (hons-get :max dst-mb))))
 
 #||
 example
@@ -222,26 +226,52 @@ example
 
 (defund block-write (src-mb src-offset dst-mb dst-offset n blocksize)
   (declare (xargs :guard (and (integer-listp (list src-offset dst-offset n blocksize))
-                              (>= blocksize 1)
                               (valid-block-p src-mb)
                               (valid-block-p dst-mb)
+                              (>= src-offset 0)
+                              (>= dst-offset 0)
+                              (>= n 0)
+                              (<= (+ src-offset n) (len (cdr (hons-get :units src-mb))))
+                              (<= (+ dst-offset n) (len (cdr (hons-get :units dst-mb))))
+                              (>= (cdr (hons-get :min src-mb)) (cdr (hons-get :min dst-mb)))
+                              (<= (cdr (hons-get :max src-mb)) (cdr (hons-get
+                                                                     :max dst-mb)))
+                              (>= blocksize 1)
                               (equal (rem dst-offset blocksize) 0)
                               (equal (rem n blocksize) 0))
                   :verify-guards nil)
            (ignore blocksize))
   (block-memcpy src-mb src-offset dst-mb dst-offset n))
 
-(verify-guards block-write :guard-debug t)
+(verify-guards block-write :guard-debug t
+  :hints (("Subgoal 6'" :expand ((VALID-BLOCK-P DST-MB)))
+          ("Subgoal 5'" :expand ((VALID-BLOCK-P SRC-MB)))
+          ("Subgoal 4'" :expand ((VALID-BLOCK-P SRC-MB)))
+          ("Subgoal 3'" :expand ((VALID-BLOCK-P DST-MB)))))
 
 (defund block-read (src-mb src-offset dst-mb dst-offset n blocksize)
   (declare (xargs :guard (and (integer-listp (list src-offset dst-offset n blocksize))
-                              (>= blocksize 1)
                               (valid-block-p src-mb)
                               (valid-block-p dst-mb)
+                              (>= src-offset 0)
+                              (>= dst-offset 0)
+                              (>= n 0)
+                              (<= (+ src-offset n) (len (cdr (hons-get :units src-mb))))
+                              (<= (+ dst-offset n) (len (cdr (hons-get :units dst-mb))))
+                              (>= (cdr (hons-get :min src-mb)) (cdr (hons-get :min dst-mb)))
+                              (<= (cdr (hons-get :max src-mb)) (cdr (hons-get :max dst-mb)))
+                              (>= blocksize 1)
                               (equal (rem src-offset blocksize) 0)
                               (equal (rem n blocksize) 0))
                   :verify-guards nil)
            (ignore blocksize))
   (block-memcpy src-mb src-offset dst-mb dst-offset n))
 
-(verify-guards block-read :guard-debug t)
+(verify-guards block-read :guard-debug t
+  :hints (("Subgoal 5'" :expand (valid-block-p dst-mb))
+          ("Subgoal 4'" :expand (valid-block-p src-mb))
+          ("Subgoal 3'" :expand (valid-block-p src-mb))
+          ("Subgoal 2'" :expand (valid-block-p dst-mb))
+          ("Subgoal 6'" :expand (valid-block-p dst-mb))
+          ("Subgoal 5''" :expand (valid-block-p src-mb))
+          ("Subgoal 3''" :expand (valid-block-p dst-mb))))
