@@ -1,6 +1,6 @@
 (include-book "std/lists/update-nth" :dir :system)
 
-(defund bounded-int-listp (units min max)
+(defun bounded-int-listp (units min max)
   (declare (xargs :guard (integer-listp (list min max))))
   (if (atom units)
       (not units)
@@ -8,10 +8,9 @@
          (bounded-int-listp (cdr units) min max))))
 
 (defthm bounded-int-listp-implies-integer-listp
-  (implies (bounded-int-listp units min max) (integer-listp units))
-  :hints (("Goal" :in-theory (enable bounded-int-listp))))
+  (implies (bounded-int-listp units min max) (integer-listp units)))
 
-(defnd valid-block-p (mb)
+(defn valid-block-p (mb)
   (let ((units (cdr (hons-get :units mb)))
         (min (cdr (hons-get :min mb)))
         (max (cdr (hons-get :max mb))))
@@ -51,12 +50,9 @@
    (cdr (hons-get :min s-mb))
    (cdr (hons-get :max s-mb))))
 
-(in-theory (enable bounded-int-listp valid-block-p))
-
 (defthm block-memset-guard-lemma-2
   (implies (and (bounded-int-listp u1 min max) (bounded-int-listp u2 min max))
-           (bounded-int-listp (append u1 u2) min max))
-  :hints (("Goal" :in-theory (enable bounded-int-listp))))
+           (bounded-int-listp (append u1 u2) min max)))
 
 (defthm block-memset-guard-lemma-3
   (implies (and (integerp min)
@@ -101,7 +97,7 @@
         (<= min c)
         (<= c max))
    (bounded-int-listp (repeat n c) min max))
-  :hints (("Goal" :in-theory (enable bounded-int-listp repeat))))
+  :hints (("Goal" :in-theory (enable repeat))))
 
 (defthm block-memset-guard-lemma-1
   (implies
@@ -122,17 +118,12 @@
                               (nthcdr (+ n s-offset) units))
                       min
                       max))
-  :hints (("Goal" :in-theory (enable bounded-int-listp repeat))
-          ("Subgoal *1/1'''" :in-theory (disable block-memset-guard-lemma-2)
+  :hints (("Subgoal *1/1'''" :in-theory (disable block-memset-guard-lemma-2)
            :use ((:instance block-memset-guard-lemma-2
                             (u1 (repeat n c))
                             (u2 (nthcdr n units)))) )))
 
-(verify-guards block-memset
-  :hints (("goal")
-          ))
-
-(in-theory (disable bounded-int-listp valid-block-p))
+(verify-guards block-memset)
 
 #||
 example
@@ -163,8 +154,6 @@ example
 example
 (block-memcpy (build-block (repeat 20 7) 0 20) 5 (build-block (repeat 20 5) 0 20) 10 3)
 ||#
-
-(in-theory (enable bounded-int-listp valid-block-p))
 
 (defthm block-memcpy-guard-lemma-2
   (implies (and (<= dst-min src-min)
@@ -214,8 +203,6 @@ example
 
 (verify-guards block-memcpy :guard-debug t)
 
-(in-theory (disable bounded-int-listp valid-block-p))
-
 ;; ok, it's time to talk
 ;; there's no sense trying to model blocks of the disk as, you know, numbers
 ;; ranging from 0 to 4194303 for instance (for blocks of size 512 kilobytes.)
@@ -243,11 +230,7 @@ example
            (ignore blocksize))
   (block-memcpy src-mb src-offset dst-mb dst-offset n))
 
-(verify-guards block-write :guard-debug t
-  :hints (("Subgoal 6'" :expand ((VALID-BLOCK-P DST-MB)))
-          ("Subgoal 5'" :expand ((VALID-BLOCK-P SRC-MB)))
-          ("Subgoal 4'" :expand ((VALID-BLOCK-P SRC-MB)))
-          ("Subgoal 3'" :expand ((VALID-BLOCK-P DST-MB)))))
+(verify-guards block-write :guard-debug t)
 
 (defund block-read (src-mb src-offset dst-mb dst-offset n blocksize)
   (declare (xargs :guard (and (integer-listp (list src-offset dst-offset n blocksize))
@@ -267,11 +250,4 @@ example
            (ignore blocksize))
   (block-memcpy src-mb src-offset dst-mb dst-offset n))
 
-(verify-guards block-read :guard-debug t
-  :hints (("Subgoal 5'" :expand (valid-block-p dst-mb))
-          ("Subgoal 4'" :expand (valid-block-p src-mb))
-          ("Subgoal 3'" :expand (valid-block-p src-mb))
-          ("Subgoal 2'" :expand (valid-block-p dst-mb))
-          ("Subgoal 6'" :expand (valid-block-p dst-mb))
-          ("Subgoal 5''" :expand (valid-block-p src-mb))
-          ("Subgoal 3''" :expand (valid-block-p dst-mb))))
+(verify-guards block-read :guard-debug t)
