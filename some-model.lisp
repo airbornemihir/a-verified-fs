@@ -201,7 +201,12 @@ example
                                       (nthcdr (+ dst-offset n) dst-units))
                               dst-min dst-max)))
 
-(verify-guards block-memcpy :guard-debug t)
+(verify-guards block-memcpy :guard-debug t
+  :hints (("Goal"
+           :in-theory
+           (disable (:rewrite bounded-int-listp-implies-integer-listp)
+                    (:definition hons-assoc-equal)
+                    (:definition hons-equal))) ))
 
 ;; ok, it's time to talk
 ;; there's no sense trying to model blocks of the disk as, you know, numbers
