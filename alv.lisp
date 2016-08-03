@@ -54,20 +54,20 @@
          ;;  *d->alv=(1<<((d->maxdir*32+d->blksiz-1)/d->blksiz))-1;
          (d-alv
           (update-alv-bytesi 0
-                             (- (expt 2
-                                      (truncate (+ (* *d-maxdir* 32) *d-blksiz* -1)
-                                                *d-blksiz*)) 1)
+                             (- (ash 1
+                                     (truncate (+ (* *d-maxdir* 32) *d-blksiz* -1)
+                                               *d-blksiz*)) 1)
                              d-alv)))
     d-alv))
 
 (thm (implies (and (integerp a) (integerp i) (<= 0 i) (< i a))
-              (not (equal 0 (logand (expt 2 i) (1- (expt 2 a)))))))
+              (not (equal 0 (logand (ash 1 i) (1- (ash 1 a)))))))
 
 (thm
  (implies (and (integerp i) (<= 0 i)
                (< i (truncate (+ (* *d-maxdir* 32) *d-blksiz* -1)
                               *d-blksiz*)))
-          (not (equal 0 (logand (expt 2 i)
+          (not (equal 0 (logand (ash 1 i)
                                 (let* ((d-alv (alv-alvInit d-alv)))
                                   (alv-bytesi 0 d-alv)))))))
 
