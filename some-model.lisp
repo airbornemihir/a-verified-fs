@@ -256,3 +256,7 @@ example
   (block-memcpy src-mb src-offset dst-mb dst-offset n))
 
 (verify-guards block-read :guard-debug t)
+
+;; let's skip the cpm3 thing with the timestamps. it's an interesting problem
+;; but for later
+
