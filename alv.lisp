@@ -93,134 +93,76 @@
      PhysDirectoryEntry
      (alv-block-allocation-loop i1 (+ j1 1) d-alv))))
 
-(defun alv-allocBlock-loop (d-alv block)
+(defun bitmap-block-used-p (d-alv block)
   (declare (xargs :stobjs (d-alv)
-                  :measure (if (and (integerp block) (<= block (* *INTBITS* *d-alvsize*)))
-                               (- (* *INTBITS* *d-alvsize*) block)
+                  :verify-guards nil))
+  (let* ((i1 (ash block -5))
+         (j1 (part-select block :high 4 :low 0))
+         (thisbit (part-select (alv-bytesi i1 d-alv) :low j1 :high j1)))
+    (not (equal thisbit 0))))
+
+(defun bitmap-set-block-used (d-alv block)
+  (declare (xargs :stobjs (d-alv)
+                  :verify-guards nil))
+  (let* ((i1 (ash block -5))
+         (j1 (part-select block :high 4 :low 0)))
+    (let
+        ((d-alv (update-alv-bytesi i1 (part-install 1 (alv-bytesi i1 d-alv)
+                                                    :low j1 :high j1) d-alv)))
+      d-alv)))
+
+(defun alv-allocBlock-loop (d-alv startblock)
+  (declare (xargs :stobjs (d-alv)
+                  :measure (if (and (integerp startblock) (<= startblock (* *INTBITS* *d-alvsize*)))
+                               (- (* *INTBITS* *d-alvsize*) startblock)
                              0)
                   :verify-guards nil))
-  (if (or (not (natp block)) (>= block (* *INTBITS* *d-alvsize*)))
+  (if (or (not (natp startblock)) (>= startblock (* *INTBITS* *d-alvsize*)))
       (mv d-alv -1)
-    (let* ((i (ash block -5))
-           (j (part-select block :high 4 :low 0))
-           (thisbit (part-select (alv-bytesi i d-alv) :low j :high j)))
+    (let* ((i1 (ash startblock -5))
+           (j1 (part-select startblock :high 4 :low 0))
+           (thisbit (part-select (alv-bytesi i1 d-alv) :low j1 :high j1)))
       (if (equal thisbit 0)
           (let
-              ((d-alv (update-alv-bytesi i (part-install 1 (alv-bytesi i d-alv)
-                                                         :low j :high j) d-alv)))
+              ((d-alv (update-alv-bytesi i1 (part-install 1 (alv-bytesi i1 d-alv)
+                                                          :low j1 :high j1) d-alv)))
             (mv
              d-alv
-             block))
-          
-        (alv-allocBlock-loop d-alv (+ block 1))))
+             startblock))
+        (alv-allocBlock-loop d-alv (+ startblock 1))))
     ))
 
 (defun alv-allocBlock (d-alv)
   (declare (xargs :stobjs (d-alv)
                   :verify-guards nil))
-  (alv-allocBlock-loop d-alv 0))
+  (let ((startblock 0)) (alv-allocBlock-loop d-alv startblock)))
 
-(defun is-full-p-loop (d-alv i)
-  (declare (xargs :stobjs (d-alv)
-                  :measure (if (and (integerp i) (<= i *d-alvsize*))
-                               (- *d-alvsize* i)
-                             0)
-                  ))
-  (and (natp i)
-       (or (>= i *d-alvsize*)
-           (and (equal (alv-bytesi i d-alv) (- (ash 1 *INTBITS*) 1))
-                (is-full-p-loop d-alv (+ i 1))))))
-
-(defun is-full-p (d-alv)
-  (declare (xargs :stobjs (d-alv)))
-  (is-full-p-loop d-alv 0))
-
-(defthm allocBlock-succeeds-only-after-full-blocks-lemma-1
-  (implies (and (integerp block) (d-alvp d-alv))
-           (integerp (mv-nth 1 (alv-allocblock-loop d-alv block)))))
-
-(defthm allocBlock-succeeds-only-after-full-blocks-lemma-2
-  (implies (and (integerp x) (<= 32 x))
-              (<= 1 (floor x 32))))
-
-(defthm allocblock-succeeds-only-after-full-blocks-lemma-5
-  (implies (and (natp i1) (< i1 (len alv-bytes)) (alv-bytesp alv-bytes))
-           (integerp (nth i1 alv-bytes))))
-
-(defthm allocblock-succeeds-only-after-full-blocks-lemma-6
-  (implies (and (integerp block) (d-alvp d-alv))
-           (< (mv-nth 1 (alv-allocblock-loop d-alv block)) (* *INTBITS* *d-alvsize*))))
-
-(defthm allocblock-succeeds-only-after-full-blocks-lemma-7
- (implies (and (natp x) (integerp y) (> y 0))
-          (natp (floor x y))))
-
-(proof-by-arith
- (defthm allocblock-succeeds-only-after-full-blocks-lemma-8
-   (implies (and (natp x) (integerp y) (> y 0) (integerp z) (> z 0) (< x (* y z)))
-            (< (floor x y) z))))
-
-(defthm allocblock-succeeds-only-after-full-blocks-lemma-9
- (implies (and (d-alvp d-alv)
-               (not (integerp (* 1/2 (ifix (car (car d-alv))))))
-               (<= 0
-                   (mv-nth 1 (alv-allocblock-loop d-alv 1)))
-               (integerp j2)
-               (<= 0 j2)
-               (consp (car d-alv))
-               (< j2
-                  (mod (mv-nth 1 (alv-allocblock-loop d-alv 1))
-                       32))
-               (consp d-alv))
-          (integerp (nth (floor (mv-nth 1 (alv-allocblock-loop d-alv 1))
-                                32)
-                         (car d-alv)))))
-
-(defthm allocBlock-succeeds-only-after-full-blocks-lemma-4
- (mv-let
-   (new-d-alv block) (alv-allocBlock d-alv) (declare (ignore new-d-alv))
-   (implies (and (d-alvp d-alv) (>= block 0) (natp j2) (< j2 (part-select block :high 4 :low 0)))
-            (not (equal 0 (logand (alv-bytesi (ash block -5) d-alv) (ash 1 j2))))))
- :hints (("Goal" :in-theory (disable d-alvp))
-         ("Subgoal 4.4''"
-          :in-theory (disable
-                      allocblock-succeeds-only-after-full-blocks-lemma-9)
-          :use allocblock-succeeds-only-after-full-blocks-lemma-9)))
-
-(defthm allocBlock-succeeds-only-after-full-blocks-lemma-3
+(defthm allocBlock-return-value-upper-bound
   (mv-let
-    (new-d-alv block) (alv-allocblock-loop d-alv startblock) (declare (ignore new-d-alv))
-    (implies (and (not (equal 0
-                              (part-select (car (car d-alv)) :low 0 :high 0)))
-                  (integerp block)
-                  (integerp startblock)
-                  (>= startblock *INTBITS*)
-                  (< startblock (* *INTBITS* *d-alvsize*))
-                  (consp d-alv)
-                  (consp (car d-alv))
-                  (<= 32
-                      block)
-                  (d-alvp d-alv)
-                  (< (floor block
-                            32)
-                     13))
-             (is-full-p-loop d-alv
-                             (floor block
-                                    *INTBITS*)))))
+    (new-d-alv block) (alv-allocBlock-loop d-alv startblock) (declare (ignore new-d-alv))
+    (and (integerp block) (< block (* *INTBITS* *d-alvsize*)))))
+
+(defthm allocBlock-return-value-lower-bound
+  (mv-let
+    (new-d-alv block) (alv-allocBlock-loop d-alv startblock) (declare (ignore new-d-alv))
+    (implies (>= block 0) (>= block startblock))))
+
+(defun alv-full-p-loop (d-alv endblock)
+  (declare (xargs :stobjs (d-alv)
+                  :verify-guards nil))
+  (if (or (not (integerp endblock)) (<= endblock 0) (> endblock (* *INTBITS* *d-alvsize*)))
+      t
+    (let* ((i1 (ash (- endblock 1) -5))
+           (j1 (part-select (- endblock 1) :high 4 :low 0))
+           (thisbit (part-select (alv-bytesi i1 d-alv) :low j1 :high j1)))
+      (if (equal thisbit 0)
+          nil
+        (alv-full-p-loop d-alv (- endblock 1))))))
 
 (defthm allocBlock-succeeds-only-after-full-blocks
   (mv-let
-    (new-d-alv block) (alv-allocBlock d-alv) (declare (ignore new-d-alv))
-    (implies (and (>= block *INTBITS*) (d-alvp d-alv))
-             (is-full-p-loop d-alv (- (ash block -5) 1))))
+    (new-d-alv block) (alv-allocBlock-loop d-alv startblock) (declare (ignore new-d-alv))
+    (implies (and (natp startblock) (>= block startblock) (d-alvp d-alv)
+                  (alv-full-p-loop d-alv startblock))
+             (alv-full-p-loop d-alv block)))
   :hints (("Goal" :in-theory (disable d-alvp)) ))
-
-(defthm allocBlock-fails-only-when-blocks-full
-  (implies (and
-            (d-alvp d-alv)
-            (mv-let
-              (d-alv ret) (alv-allocBlock d-alv)
-              (declare (ignore d-alv)) (< ret 0)))
-           (is-full-p d-alv))
-  :otf-flg t)
-
