@@ -159,6 +159,11 @@
           nil
         (alv-full-p-loop d-alv (- endblock 1))))))
 
+(defun alv-full-p (d-alv)
+  (declare (xargs :stobjs (d-alv)
+                  :verify-guards nil))
+  (let ((endblock (* *INTBITS* *d-alvsize*))) (alv-full-p-loop d-alv endblock)))
+
 (defthm allocBlock-succeeds-only-after-full-blocks
   (mv-let
     (new-d-alv block) (alv-allocBlock-loop d-alv startblock) (declare (ignore new-d-alv))
@@ -166,3 +171,21 @@
                   (alv-full-p-loop d-alv startblock))
              (alv-full-p-loop d-alv block)))
   :hints (("Goal" :in-theory (disable d-alvp)) ))
+
+(defthm allocBlock-fails-only-when-all-blocks-full-lemma-1
+  (mv-let
+    (new-d-alv block) (alv-allocBlock-loop d-alv startblock) (declare (ignore new-d-alv))
+    (implies (and (natp startblock) (<= startblock (* *INTBITS* *d-alvsize*))
+                  (< block 0) (d-alvp d-alv)
+                  (alv-full-p-loop d-alv startblock))
+             (alv-full-p d-alv)))
+  :hints (("Goal" :in-theory (disable d-alvp)) ))
+
+(defthm allocBlock-fails-only-when-all-blocks-full
+  (mv-let
+    (new-d-alv block) (alv-allocBlock d-alv) (declare (ignore new-d-alv))
+    (implies (and (< block 0) (d-alvp d-alv))
+             (alv-full-p d-alv)))
+  :hints (("Goal" :in-theory (disable d-alvp allocblock-fails-only-when-all-blocks-full-lemma-1)
+           :use
+           (:instance allocblock-fails-only-when-all-blocks-full-lemma-1 (startblock 0))) ))
