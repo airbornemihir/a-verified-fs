@@ -1,8 +1,11 @@
 (include-book "centaur/bitops/part-install" :dir :system)
 (include-book "arithmetic-5/top" :dir :system)
-(include-book "make-event/proof-by-arith" :dir :system)
+(include-book "std/util/defaggregate" :dir :system)
 
 ;; these are the values after a call to diskdefReadSuper
+;; more info below:
+;; (gdb) p drive
+;; $1 = {dev = {opened = 0, secLength = 512, tracks = 160, sectrk = 18, offset = 0, fd = 0}, secLength = 512, tracks = 160, sectrk = 18, blksiz = 4096, maxdir = 256, skew = 1, boottrk = 2, offset = 0, type = 7, size = 355, extents = 2, dir = 0x60d0a0, alvSize = 12, alv = 0x60d060, skewtab = 0x60d010, cnotatime = 1, label = 0x0, labelLength = 0, passwd = 0x0, passwdLength = 0, root = 0x7fffffffdfd0, dirtyDirectory = 0, ds = 0x0, dirtyDs = 0}
 (defconst *d-secLength* 512)
 (defconst *d-sectrk* 18)
 (defconst *d-tracks* 160)
@@ -11,6 +14,7 @@
 (defconst *d-blksiz* 4096)
 (defconst *d-maxdir* 256)
 (defconst *d-size* 355)
+(defconst *d-extents* 2)
 ;; from #define INTBITS ((int)(sizeof(int)*8))
 (defconst *INTBITS* 32)
 ;; d->alvSize=((d->secLength*d->sectrk*(d->tracks-d->boottrk))/d->blksiz+INTBITS-1)/INTBITS;
@@ -23,7 +27,7 @@
 ;; struct PhysDirectoryEntry
 ;; {
 ;;   char status;
-;;   char name[8];
+;;   char name[8];b
 ;;   char ext[3];
 ;;   char extnol;
 ;;   char lrc;
@@ -33,20 +37,25 @@
 ;; };
 (defconst *pde-pointercnt* 16)
 
-(defstobj PhysDirectoryEntry
-  (pde-status :type (signed-byte 8) :initially 0)
-  (pde-name :type (array character (8)) :initially #\X)
-  (pde-ext :type (array character (3)) :initially #\X)
-  (pde-extnol :type character :initially #\X)
-  (pde-lrc :type character :initially #\X)
-  (pde-extnoh :type character :initially #\X)
-  (pde-blkcnt :type character :initially #\X)
-  (pde-pointers :type (array character (*pde-pointercnt*)) :initially #\X))
+(std::defaggregate
+ cpmdir-PhysDirectoryEntry
+ (status
+  name
+  ext
+  extnol
+  lrc
+  extnoh
+  blkcnt
+  pointers)
+ :tag :cpmdir-PhysDirectoryEntry)
+
+(defconst *pde-default* (make-cpmdir-PhysDirectoryEntry))
 
 ;; (d->alv=malloc(d->alvSize*sizeof(int)))
 (defstobj d-alv
   (alv-bytes :type (array (unsigned-byte 32) (*d-alvSize*)) :initially 0)
-  (alv-dir :type (array PhysDirectoryEntry (*d-maxdir*))))
+  (alv-dir :type (array (satisfies cpmdir-PhysDirectoryEntry-p) (*d-maxdir*))
+           :initially #.*pde-default*))
 
 (defun alv-alvInit (d-alv)
   (declare (xargs :stobjs (d-alv)))
@@ -74,24 +83,24 @@
 
 ;; given that this doesn't come up in the running example of a 1.44 MB floppy,
 ;; i feel OK leaving it alone for now. we'll return later.
-(defun alv-block-allocation-loop (i1 j1 d-alv)
-  (declare (xargs :stobjs (d-alv)
-                  :guard (and (integerp i1)
-                              (integerp j1)
-                              (<= j1 *pde-pointercnt*)
-                              (>= i1 0) (< i1 *d-maxdir*))
-                  :verify-guards nil
-                  :measure (if (and (integerp j1) (<= j1 *pde-pointercnt*))
-                               (- *pde-pointercnt* j1)
-                             0)
-                  :measure-debug t))
-  (if (or (not (integerp j1)) (>= j1 *pde-pointercnt*))
-      d-alv
-    (stobj-let
-     ((PhysDirectoryEntry (alv-diri i1 d-alv)))
-     (PhysDirectoryEntry)
-     PhysDirectoryEntry
-     (alv-block-allocation-loop i1 (+ j1 1) d-alv))))
+;; (defun alv-block-allocation-loop (i1 j1 d-alv)
+;;   (declare (xargs :stobjs (d-alv)
+;;                   :guard (and (integerp i1)
+;;                               (integerp j1)
+;;                               (<= j1 *pde-pointercnt*)
+;;                               (>= i1 0) (< i1 *d-maxdir*))
+;;                   :verify-guards nil
+;;                   :measure (if (and (integerp j1) (<= j1 *pde-pointercnt*))
+;;                                (- *pde-pointercnt* j1)
+;;                              0)
+;;                   :measure-debug t))
+;;   (if (or (not (integerp j1)) (>= j1 *pde-pointercnt*))
+;;       d-alv
+;;     (stobj-let
+;;      ((PhysDirectoryEntry (alv-diri i1 d-alv)))
+;;      (PhysDirectoryEntry)
+;;      PhysDirectoryEntry
+;;      (alv-block-allocation-loop i1 (+ j1 1) d-alv))))
 
 (defun bitmap-block-used-p (d-alv block)
   (declare (xargs :stobjs (d-alv)
@@ -189,3 +198,60 @@
   :hints (("Goal" :in-theory (disable d-alvp allocblock-fails-only-when-all-blocks-full-lemma-1)
            :use
            (:instance allocblock-fails-only-when-all-blocks-full-lemma-1 (startblock 0))) ))
+
+;; struct cpmInode
+;; {
+;;   ino_t ino;
+;;   mode_t mode;
+;;   off_t size;
+;;   cpm_attr_t attr;
+;;   time_t atime;
+;;   time_t mtime;
+;;   time_t ctime;
+;;   struct cpmSuperBlock *sb;
+;; };
+(std::defaggregate struct-cpmInode
+                   (ino mode size)
+                   :tag :struct-cpmInode)
+
+;; #define EXTENT(low,high) (((low)&0x1f)|(((high)&0x3f)<<5))
+(defun cpmdir_EXTENT (low high)
+  (logior (logand low  (- (ash 1 5) 1))
+          (logand high (- (ash 1 6) 1))))
+
+(defun cpmfs_findFileExtent (user name ext start extno d-alv)
+  (declare (xargs :stobjs (d-alv)
+                  :verify-guards nil
+                  :measure
+                  (if (or (not (natp start)) (>= start *d-maxdir*))
+                      0
+                    (- *d-maxdir* start))))
+  (if (or (not (natp start)) (>= start *d-maxdir*))
+      -1
+    (if (let* ((dir-start (alv-diri start d-alv)) )
+          (and (< (cpmdir-PhysDirectoryEntry->status dir-start) (ash 1 5))
+               (or (< extno 0)
+                   (equal (cpmdir_EXTENT
+                           (cpmdir-PhysDirectoryEntry->extnol dir-start)
+                           (cpmdir-PhysDirectoryEntry->extnoh dir-start))
+                          (truncate extno *d-extents*)))
+               ;; and inside an and to keep things clear
+               (and
+                (equal user (cpmdir-PhysDirectoryEntry->status dir-start))
+                (equal name (cpmdir-PhysDirectoryEntry->name dir-start))
+                (equal ext (cpmdir-PhysDirectoryEntry->ext dir-start)))))
+        start
+      (cpmfs_findFileExtent user name ext (+ start 1) extno d-alv))))
+
+(defun cpmfs-cpmCreat (dir fname mode)
+  (if (and nil (struct-cpmInode->mode dir)) ;; to be replaced by (!S_ISDIR(dir->mode))
+      -1
+    (if nil ;; to be replaced by (splitFilename(fname,dir->sb->type,name,extension,&user)==-1)
+        -1
+      (if nil ;; to be replaced by (findFileExtent(dir->sb,user,name,extension,0,-1)!=-1)
+          -1
+        (let* ((extent nil) ) ;; to be replaced by findFreeExtent(dir->sb)
+          (if nil ;; to be replaced by (extent==-1)
+              -1
+            (let* ((ent nil) ) ;; to be replaced by dir->sb->dir+extent
+              0)))))))
