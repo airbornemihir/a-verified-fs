@@ -23,3 +23,11 @@ mkfs.cpm is fairly simple
   previously...
 
 Let's start by modelling the skew table and the allocation vector map.
+
+OK, allocation vector map done. I'm not sure we'll need the skew
+table. Let's head for replicating:
+-cpmCreat
+-cpmOpen
+-cpmWrite
+-cpmClose
+All these are taken from cpmcp - the part where we write from Unix to CP/M.
