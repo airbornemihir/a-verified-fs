@@ -1,6 +1,7 @@
 (include-book "centaur/bitops/part-install" :dir :system)
 (include-book "arithmetic-5/top" :dir :system)
 (include-book "std/util/defaggregate" :dir :system)
+(include-book "std/strings/hex" :dir :system)
 
 ;; these are the values after a call to diskdefReadSuper
 ;; more info below:
@@ -36,6 +37,7 @@
 ;;   char pointers[16];
 ;; };
 (defconst *pde-pointercnt* 16)
+(defconst *pde-free-extent-magic* (str::strval16 "e5"))
 
 (std::defaggregate
  cpmdir-PhysDirectoryEntry
@@ -49,7 +51,8 @@
   pointers)
  :tag :cpmdir-PhysDirectoryEntry)
 
-(defconst *pde-default* (make-cpmdir-PhysDirectoryEntry))
+(defconst *pde-default*
+  (make-cpmdir-PhysDirectoryEntry :status *pde-free-extent-magic*))
 
 ;; (d->alv=malloc(d->alvSize*sizeof(int)))
 (defstobj d-alv
@@ -210,16 +213,16 @@
 ;;   time_t ctime;
 ;;   struct cpmSuperBlock *sb;
 ;; };
-(std::defaggregate struct-cpmInode
+(std::defaggregate cpmfs-cpmInode
                    (ino mode size)
-                   :tag :struct-cpmInode)
+                   :tag :cpmfs-cpmInode)
 
 ;; #define EXTENT(low,high) (((low)&0x1f)|(((high)&0x3f)<<5))
-(defun cpmdir_EXTENT (low high)
+(defun cpmdir-EXTENT (low high)
   (logior (logand low  (- (ash 1 5) 1))
           (logand high (- (ash 1 6) 1))))
 
-(defun cpmfs_findFileExtent (user name ext start extno d-alv)
+(defun cpmfs-findFileExtent (user name ext start extno d-alv)
   (declare (xargs :stobjs (d-alv)
                   :verify-guards nil
                   :measure
@@ -231,7 +234,7 @@
     (if (let* ((dir-start (alv-diri start d-alv)) )
           (and (< (cpmdir-PhysDirectoryEntry->status dir-start) (ash 1 5))
                (or (< extno 0)
-                   (equal (cpmdir_EXTENT
+                   (equal (cpmdir-EXTENT
                            (cpmdir-PhysDirectoryEntry->extnol dir-start)
                            (cpmdir-PhysDirectoryEntry->extnoh dir-start))
                           (truncate extno *d-extents*)))
@@ -241,17 +244,70 @@
                 (equal name (cpmdir-PhysDirectoryEntry->name dir-start))
                 (equal ext (cpmdir-PhysDirectoryEntry->ext dir-start)))))
         start
-      (cpmfs_findFileExtent user name ext (+ start 1) extno d-alv))))
+      (cpmfs-findFileExtent user name ext (+ start 1) extno d-alv))))
 
-(defun cpmfs-cpmCreat (dir fname mode)
-  (if (and nil (struct-cpmInode->mode dir)) ;; to be replaced by (!S_ISDIR(dir->mode))
+(defun cpmfs-splitFilename(fullname)
+  ;; char name[2+8+1+3+1]; /* 00foobarxy.zzy\0 */
+  (if (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1)))
+      (mv
+       0 ;; return value
+       (+ (* 10 (- (char-code (nth 0 fullname)) (char-code #\0)))
+          (- (char-code (nth 1 fullname)) (char-code #\0))) ;; user
+       (take 8 (nthcdr 2 fullname)) ;; name
+       (take 3 (nthcdr (+ 2 8 1) fullname))) ;; ext
+    (mv -1 nil nil nil)))
+
+(defun cpmfs-findFreeExtent-loop (i1 d-alv)
+  (declare (xargs :stobjs (d-alv)
+                  :measure (if (or (not (natp i1)) (>= i1 *d-maxdir*))
+                               0
+                             (- *d-maxdir* i1))
+                  :verify-guards nil))
+  (if (or (not (natp i1)) (>= i1 *d-maxdir*))
       -1
-    (if nil ;; to be replaced by (splitFilename(fname,dir->sb->type,name,extension,&user)==-1)
-        -1
-      (if nil ;; to be replaced by (findFileExtent(dir->sb,user,name,extension,0,-1)!=-1)
-          -1
-        (let* ((extent nil) ) ;; to be replaced by findFreeExtent(dir->sb)
-          (if nil ;; to be replaced by (extent==-1)
-              -1
-            (let* ((ent nil) ) ;; to be replaced by dir->sb->dir+extent
-              0)))))))
+    (if (equal (cpmdir-PhysDirectoryEntry->status (alv-diri i1 d-alv))
+               *pde-free-extent-magic*)
+        i1
+      (cpmfs-findFreeExtent-loop (+ i1 1) d-alv))))
+
+(defun cpmfs-findFreeExtent (d-alv)
+  (declare (xargs :stobjs d-alv
+                  :verify-guards nil))
+  (cpmfs-findFreeExtent-loop 0 d-alv))
+
+;; this isn't exactly in compliance with the C code - that remains to be
+;; checked
+(defconst *cpmfs-cpmCreat-default-ino* (make-cpmfs-cpmInode))
+
+(defun cpmfs-cpmCreat (dir fname mode d-alv)
+  (declare (xargs :stobjs d-alv
+                  :verify-guards nil))
+  (if (and nil (cpmfs-cpmInode->mode dir)) ;; to be replaced by (!S_ISDIR(dir->mode))
+      (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
+    (mv-let (retval user name ext)
+      (cpmfs-splitFilename fname)
+      (if (< retval 0)
+        (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
+      (if (< (cpmfs-findFileExtent user name ext 0 -1 d-alv) 0)
+          (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
+        (let* ((extent (cpmfs-findFreeExtent d-alv)) )
+          (if (< extent 0)
+              (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
+            (let* ((ent (alv-diri extent d-alv))
+                   (d-alv (update-alv-diri extent
+                                           (change-cpmdir-PhysDirectoryEntry ent
+                                                                             :status user
+                                                                             :name name
+                                                                             :ext ext)
+                                           d-alv))
+                   (ino (change-cpmfs-cpmInode
+                         *cpmfs-cpmCreat-default-ino*
+                         ;; to be replaced by ino->mode=s_ifreg|mode;
+                         :ino extent :mode mode :size 0)))
+              (mv 0 ino d-alv)))))))
+    ))
+
+;; leaving out ino for now, because pointers are a mess
+(std::defaggregate cpmfs-cpmFile
+                   (mode pos))
+
