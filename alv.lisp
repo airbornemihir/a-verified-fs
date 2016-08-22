@@ -2,6 +2,7 @@
 (include-book "arithmetic-5/top" :dir :system)
 (include-book "std/util/defaggregate" :dir :system)
 (include-book "std/strings/hex" :dir :system)
+(include-book "std/strings/octal" :dir :system)
 
 ;; these are the values after a call to diskdefReadSuper
 ;; more info below:
@@ -54,11 +55,14 @@
 (defconst *pde-default*
   (make-cpmdir-PhysDirectoryEntry :status *pde-free-extent-magic*))
 
+(defconst *floppy-byte-count* 1474560)
+
 ;; (d->alv=malloc(d->alvSize*sizeof(int)))
 (defstobj d-alv
   (alv-bytes :type (array (unsigned-byte 32) (*d-alvSize*)) :initially 0)
   (alv-dir :type (array (satisfies cpmdir-PhysDirectoryEntry-p) (*d-maxdir*))
-           :initially #.*pde-default*))
+           :initially #.*pde-default*)
+  (disk-bytes :type (array (unsigned-byte 8) (*floppy-byte-count*)) :initially 0))
 
 (defun alv-alvInit (d-alv)
   (declare (xargs :stobjs (d-alv)))
@@ -279,6 +283,15 @@
 ;; checked
 (defconst *cpmfs-cpmCreat-default-ino* (make-cpmfs-cpmInode))
 
+(defconst *s_ifdir* (ash 1 14))
+(defconst *s_ifreg* (ash 1 15))
+
+(defun cpmfs-S_ISDIR (mode)
+  (not (equal (logand mode *s_ifdir*) 0)))
+
+(defun cpmfs-S_ISREG (mode)
+  (not (equal (logand mode *s_ifreg*) 0)))
+
 (defun cpmfs-cpmCreat (dir fname mode d-alv)
   (declare (xargs :stobjs d-alv
                   :verify-guards nil))
@@ -303,11 +316,34 @@
                    (ino (change-cpmfs-cpmInode
                          *cpmfs-cpmCreat-default-ino*
                          ;; to be replaced by ino->mode=s_ifreg|mode;
-                         :ino extent :mode mode :size 0)))
+                         :ino extent
+                         :mode (logior *s_ifreg* mode)
+                         :size 0)))
               (mv 0 ino d-alv)))))))
     ))
+
+;; (defthm cpmfs-cpmCreat-well-formed-output
+;;   (mv-let (retval ino d-alv)
+;;     (cpmfs-cpmCreat dir fname mode d-alv)
+;;     (if ()
+;;         ()
+;;       ())))
 
 ;; leaving out ino for now, because pointers are a mess
 (std::defaggregate cpmfs-cpmFile
                    (mode pos))
 
+(defconst *O_WRONLY* (ash 1 0))
+
+(defun cpmfs-cpmOpen (ino file mode)
+  (if (or (not (cpmfs-cpmInode-p ino))
+          (not (cpmfs-S_ISREG (cpmfs-cpmInode->mode ino))))
+      (mv -1 file)
+    (if (and (not (equal (logand mode *O_WRONLY*) 0))
+             (equal (logand (cpmfs-cpmInode->mode ino) (str::strval8 "222")) 0))
+        (mv -1 file)
+      (let* ((file (change-cpmfs-cpmFile file
+                    :pos 0
+                    :mode mode))
+             )
+        (mv 0 file)))))
