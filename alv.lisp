@@ -3,6 +3,7 @@
 (include-book "std/util/defaggregate" :dir :system)
 (include-book "std/strings/hex" :dir :system)
 (include-book "std/strings/octal" :dir :system)
+(include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
 
 ;; these are the values after a call to diskdefReadSuper
 ;; more info below:
@@ -250,7 +251,9 @@
         start
       (cpmfs-findFileExtent user name ext (+ start 1) extno d-alv))))
 
-(defun cpmfs-splitFilename(fullname)
+()
+
+(defun cpmfs-splitFilename (fullname)
   ;; char name[2+8+1+3+1]; /* 00foobarxy.zzy\0 */
   (if (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1)))
       (mv
@@ -274,6 +277,12 @@
         i1
       (cpmfs-findFreeExtent-loop (+ i1 1) d-alv))))
 
+(defthm cpmfs-findFreeExtent-loop-correctness-1
+  (implies (and (d-alvp d-alv)
+                (equal extent (cpmfs-findFreeExtent-loop i1 d-alv)))
+           (and (integerp extent)
+                (< extent *d-maxdir*))))
+
 (defun cpmfs-findFreeExtent (d-alv)
   (declare (xargs :stobjs d-alv
                   :verify-guards nil))
@@ -295,32 +304,101 @@
 (defun cpmfs-cpmCreat (dir fname mode d-alv)
   (declare (xargs :stobjs d-alv
                   :verify-guards nil))
-  (if (and nil (cpmfs-cpmInode->mode dir)) ;; to be replaced by (!S_ISDIR(dir->mode))
+  (if (not (cpmfs-S_ISDIR (cpmfs-cpmInode->mode dir)))
       (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
     (mv-let (retval user name ext)
       (cpmfs-splitFilename fname)
       (if (< retval 0)
-        (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
-      (if (< (cpmfs-findFileExtent user name ext 0 -1 d-alv) 0)
           (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
-        (let* ((extent (cpmfs-findFreeExtent d-alv)) )
-          (if (< extent 0)
-              (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
-            (let* ((ent (alv-diri extent d-alv))
-                   (d-alv (update-alv-diri extent
-                                           (change-cpmdir-PhysDirectoryEntry ent
-                                                                             :status user
-                                                                             :name name
-                                                                             :ext ext)
-                                           d-alv))
-                   (ino (change-cpmfs-cpmInode
-                         *cpmfs-cpmCreat-default-ino*
-                         ;; to be replaced by ino->mode=s_ifreg|mode;
-                         :ino extent
-                         :mode (logior *s_ifreg* mode)
-                         :size 0)))
-              (mv 0 ino d-alv)))))))
-    ))
+        (if (>= (cpmfs-findFileExtent user name ext 0 -1 d-alv) 0)
+            (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
+          (let* ((extent (cpmfs-findFreeExtent d-alv)) )
+            (if (< extent 0)
+                (mv -1 *cpmfs-cpmCreat-default-ino* d-alv)
+              (let* ((ent (alv-diri extent d-alv))
+                     (d-alv (update-alv-diri extent
+                                             (change-cpmdir-PhysDirectoryEntry ent
+                                                                               :status user
+                                                                               :name name
+                                                                               :ext ext)
+                                             d-alv))
+                     (ino (change-cpmfs-cpmInode
+                           *cpmfs-cpmCreat-default-ino*
+                           ;; to be replaced by ino->mode=s_ifreg|mode;
+                           :ino extent
+                           :mode (logior *s_ifreg* mode)
+                           :size 0)))
+                (mv 0 ino d-alv)))))))))
+
+(defthm cpmfs-cpmCreat-correctness-1-lemma-1
+  (mv-let (retval ino new-d-alv)
+    (cpmfs-cpmCreat dir fname mode d-alv)
+    (declare (ignore new-d-alv))
+    (implies
+     (>= retval 0)
+     (and (cpmfs-cpmInode-p ino)
+          (natp (cpmfs-cpmInode->ino ino)))))
+  :hints (("Goal" :in-theory (disable (:rewrite take-of-too-many)
+                                      (:definition take-redefinition)
+                                      (:rewrite take-of-len-free)
+                                      (:definition len)))
+          ))
+
+(defthm cpmfs-cpmCreat-correctness-1-lemma-3
+ (implies (cpmfs-S_ISDIR ino)
+          (equal (cpmfs-S_ISDIR ino) t)))
+
+(in-theory (disable CPMFS-S_ISDIR))
+
+(defthm cpmfs-cpmCreat-correctness-1-lemma-2
+  (implies
+   (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1))
+        (d-alvp d-alv)
+        (cpmfs-cpmInode-p dir) (cpmfs-S_ISDIR (cpmfs-cpmInode->mode dir)))
+   (mv-let (retval user name ext)
+     (cpmfs-splitFilename fullname)
+     (implies (>= retval 0)
+              (mv-let (retval ino new-d-alv)
+                (cpmfs-cpmCreat dir fullname mode d-alv)
+                (implies
+                 (>= retval 0)
+                 (= (cpmfs-findFileExtent user name ext
+                                          (cpmfs-cpmInode->ino ino) -1
+                                          new-d-alv)
+                    (cpmfs-cpmInode->ino ino))))))))
+
+(defthm cpmfs-cpmCreat-correctness-1
+  (implies
+   (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1)))
+   (mv-let (retval user name ext)
+     (cpmfs-splitFilename fullname)
+     (implies (>= retval 0)
+              (mv-let (retval ino new-d-alv)
+                (cpmfs-cpmCreat dir fname mode d-alv)
+                (declare (ignore ino))
+                (implies
+                 (>= retval 0)
+                 (>= (cpmfs-findFileExtent user name ext 0 -1 new-d-alv) 0)))))))
+
+(thm
+ (implies
+  (and (character-listp fullname)
+       (equal (len fullname) (+ 2 8 1 3 1))
+       (<= 0
+           (mv-nth 0 (cpmfs-splitfilename fullname)))
+       (<= 0
+           (mv-nth 0
+                   (cpmfs-cpmcreat dir fname mode d-alv))))
+  (<=
+   0
+   (cpmfs-findfileextent (mv-nth 1 (cpmfs-splitfilename fullname))
+                         (mv-nth 2 (cpmfs-splitfilename fullname))
+                         (mv-nth 3 (cpmfs-splitfilename fullname))
+                         0 -1
+                         (mv-nth 2
+                                 (cpmfs-cpmcreat dir fname mode d-alv))))))
+
+(in-theory (enable CPMFS-S_ISDIR))
 
 ;; (defthm cpmfs-cpmCreat-well-formed-output
 ;;   (mv-let (retval ino d-alv)
@@ -337,6 +415,7 @@
 
 (defun cpmfs-cpmOpen (ino file mode)
   (if (or (not (cpmfs-cpmInode-p ino))
+          (not (cpmfs-cpmFile-p file))
           (not (cpmfs-S_ISREG (cpmfs-cpmInode->mode ino))))
       (mv -1 file)
     (if (and (not (equal (logand mode *O_WRONLY*) 0))
@@ -347,3 +426,11 @@
                     :mode mode))
              )
         (mv 0 file)))))
+
+(defun cpmfs-cpmWrite (file ino buf count)
+  (if (or (not (cpmfs-cpmInode-p ino))
+          (not (cpmfs-cpmFile-p file))
+          (not (unsigned-byte-listp 8 buf))
+          (not (natp count)))
+      -1
+    ()))
