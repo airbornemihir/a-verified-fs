@@ -236,22 +236,48 @@
                     (- *d-maxdir* start))))
   (if (or (not (natp start)) (>= start *d-maxdir*))
       -1
-    (if (let* ((dir-start (alv-diri start d-alv)) )
-          (and (< (cpmdir-PhysDirectoryEntry->status dir-start) (ash 1 5))
+    (if (let* ((pde-start (alv-diri start d-alv)) )
+          (and (< (cpmdir-PhysDirectoryEntry->status pde-start) (ash 1 5))
                (or (< extno 0)
                    (equal (cpmdir-EXTENT
-                           (cpmdir-PhysDirectoryEntry->extnol dir-start)
-                           (cpmdir-PhysDirectoryEntry->extnoh dir-start))
+                           (cpmdir-PhysDirectoryEntry->extnol pde-start)
+                           (cpmdir-PhysDirectoryEntry->extnoh pde-start))
                           (truncate extno *d-extents*)))
                ;; and inside an and to keep things clear
                (and
-                (equal user (cpmdir-PhysDirectoryEntry->status dir-start))
-                (equal name (cpmdir-PhysDirectoryEntry->name dir-start))
-                (equal ext (cpmdir-PhysDirectoryEntry->ext dir-start)))))
+                (equal user (cpmdir-PhysDirectoryEntry->status pde-start))
+                (equal name (cpmdir-PhysDirectoryEntry->name pde-start))
+                (equal ext (cpmdir-PhysDirectoryEntry->ext pde-start)))))
         start
       (cpmfs-findFileExtent user name ext (+ start 1) extno d-alv))))
 
-()
+(defun no-matching-fileExtent-loop (user name ext end extno d-alv)
+  (declare (xargs :stobjs (d-alv)
+                  :verify-guards nil))
+  (or (not (integerp end))
+      (<= end 0)
+      (> end *d-maxdir*)
+      (if (let* ((pde-end (alv-diri (- end 1) d-alv)) )
+            (and (< (cpmdir-PhysDirectoryEntry->status pde-end) (ash 1 5))
+                 (or (< extno 0)
+                     (equal (cpmdir-EXTENT
+                             (cpmdir-PhysDirectoryEntry->extnol pde-end)
+                             (cpmdir-PhysDirectoryEntry->extnoh pde-end))
+                            (truncate extno *d-extents*)))
+                 ;; and inside an and to keep things clear
+                 (and
+                  (equal user (cpmdir-PhysDirectoryEntry->status pde-end))
+                  (equal name (cpmdir-PhysDirectoryEntry->name pde-end))
+                  (equal ext (cpmdir-PhysDirectoryEntry->ext pde-end)))))
+          nil
+        (no-matching-fileExtent-loop user name ext (- end 1) extno d-alv))))
+
+(defthm cpmfs-findFileExtent-correctness-1
+ (let ((extent (cpmfs-findFileExtent user name ext start extno d-alv))
+       )
+   (implies (and (d-alvp d-alv) (natp extent)
+                 (no-matching-fileExtent-loop user name ext start extno d-alv))
+            (no-matching-fileExtent-loop user name ext extent extno d-alv))))
 
 (defun cpmfs-splitFilename (fullname)
   ;; char name[2+8+1+3+1]; /* 00foobarxy.zzy\0 */
@@ -350,7 +376,27 @@
 
 (in-theory (disable CPMFS-S_ISDIR))
 
-(defthm cpmfs-cpmCreat-correctness-1-lemma-2
+(defthm cpmfs-cpmCreat-correctness-1-lemma-4
+  (implies
+   (and (d-alvp d-alv)
+        (natp extent)
+        (< extent 256)
+        (natp start)
+        (<= start extent)
+        (natp user)
+        (< user (ash 1 5))
+        (no-matching-fileextent-loop user name ext extent -1 d-alv))
+   (let*
+       ((ent (alv-diri extent d-alv))
+        (new-d-alv (update-alv-diri extent (change-cpmdir-physdirectoryentry ent
+                                                                             :status user
+                                                                             :name name
+                                                                             :ext ext)
+                                    d-alv)))
+     (equal (cpmfs-findfileextent user name ext start -1 new-d-alv)
+            extent))))
+
+(defthm cpmfs-cpmCreat-correctness-1
   (implies
    (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1))
         (d-alvp d-alv)
@@ -367,36 +413,29 @@
                                           new-d-alv)
                     (cpmfs-cpmInode->ino ino))))))))
 
-(defthm cpmfs-cpmCreat-correctness-1
-  (implies
-   (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1)))
-   (mv-let (retval user name ext)
-     (cpmfs-splitFilename fullname)
-     (implies (>= retval 0)
-              (mv-let (retval ino new-d-alv)
-                (cpmfs-cpmCreat dir fname mode d-alv)
-                (declare (ignore ino))
-                (implies
-                 (>= retval 0)
-                 (>= (cpmfs-findFileExtent user name ext 0 -1 new-d-alv) 0)))))))
-
-(thm
- (implies
-  (and (character-listp fullname)
-       (equal (len fullname) (+ 2 8 1 3 1))
-       (<= 0
-           (mv-nth 0 (cpmfs-splitfilename fullname)))
-       (<= 0
-           (mv-nth 0
-                   (cpmfs-cpmcreat dir fname mode d-alv))))
-  (<=
-   0
-   (cpmfs-findfileextent (mv-nth 1 (cpmfs-splitfilename fullname))
-                         (mv-nth 2 (cpmfs-splitfilename fullname))
-                         (mv-nth 3 (cpmfs-splitfilename fullname))
-                         0 -1
-                         (mv-nth 2
-                                 (cpmfs-cpmcreat dir fname mode d-alv))))))
+(thm (IMPLIES
+ (AND (CHARACTER-LISTP FULLNAME)
+      (EQUAL (LEN FULLNAME) (+ 2 8 1 3 1))
+      (D-ALVP D-ALV)
+      (CPMFS-CPMINODE-P DIR)
+      (CPMFS-S_ISDIR (CPMFS-CPMINODE->MODE DIR))
+      (<= 0
+          (MV-NTH 0 (CPMFS-SPLITFILENAME FULLNAME)))
+      (<= 0
+          (MV-NTH 0
+                  (CPMFS-CPMCREAT DIR FULLNAME MODE D-ALV))))
+ (=
+  (CPMFS-FINDFILEEXTENT
+      (MV-NTH 1 (CPMFS-SPLITFILENAME FULLNAME))
+      (MV-NTH 2 (CPMFS-SPLITFILENAME FULLNAME))
+      (MV-NTH 3 (CPMFS-SPLITFILENAME FULLNAME))
+      (CPMFS-CPMINODE->INO (MV-NTH 1
+                                   (CPMFS-CPMCREAT DIR FULLNAME MODE D-ALV)))
+      -1
+      (MV-NTH 2
+              (CPMFS-CPMCREAT DIR FULLNAME MODE D-ALV)))
+  (CPMFS-CPMINODE->INO (MV-NTH 1
+                               (CPMFS-CPMCREAT DIR FULLNAME MODE D-ALV))))))
 
 (in-theory (enable CPMFS-S_ISDIR))
 
