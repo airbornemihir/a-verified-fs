@@ -227,6 +227,22 @@
   (logior (logand low  (- (ash 1 5) 1))
           (logand high (- (ash 1 6) 1))))
 
+(defun matchFileExtent (user name ext extent extno d-alv)
+  (declare (xargs :stobjs (d-alv)
+                  :verify-guards nil))
+  (let* ((pde-extent (alv-diri extent d-alv)) )
+    (and (< (cpmdir-PhysDirectoryEntry->status pde-extent) (ash 1 5))
+         (or (< extno 0)
+             (equal (cpmdir-EXTENT
+                     (cpmdir-PhysDirectoryEntry->extnol pde-extent)
+                     (cpmdir-PhysDirectoryEntry->extnoh pde-extent))
+                    (truncate extno *d-extents*)))
+         ;; and inside an and to keep things clear
+         (and
+          (equal user (cpmdir-PhysDirectoryEntry->status pde-extent))
+          (equal name (cpmdir-PhysDirectoryEntry->name pde-extent))
+          (equal ext (cpmdir-PhysDirectoryEntry->ext pde-extent))))))
+
 (defun cpmfs-findFileExtent (user name ext start extno d-alv)
   (declare (xargs :stobjs (d-alv)
                   :verify-guards nil
@@ -236,18 +252,7 @@
                     (- *d-maxdir* start))))
   (if (or (not (natp start)) (>= start *d-maxdir*))
       -1
-    (if (let* ((pde-start (alv-diri start d-alv)) )
-          (and (< (cpmdir-PhysDirectoryEntry->status pde-start) (ash 1 5))
-               (or (< extno 0)
-                   (equal (cpmdir-EXTENT
-                           (cpmdir-PhysDirectoryEntry->extnol pde-start)
-                           (cpmdir-PhysDirectoryEntry->extnoh pde-start))
-                          (truncate extno *d-extents*)))
-               ;; and inside an and to keep things clear
-               (and
-                (equal user (cpmdir-PhysDirectoryEntry->status pde-start))
-                (equal name (cpmdir-PhysDirectoryEntry->name pde-start))
-                (equal ext (cpmdir-PhysDirectoryEntry->ext pde-start)))))
+    (if (matchFileExtent user name ext start extno d-alv)
         start
       (cpmfs-findFileExtent user name ext (+ start 1) extno d-alv))))
 
@@ -257,18 +262,7 @@
   (or (not (integerp end))
       (<= end 0)
       (> end *d-maxdir*)
-      (if (let* ((pde-end (alv-diri (- end 1) d-alv)) )
-            (and (< (cpmdir-PhysDirectoryEntry->status pde-end) (ash 1 5))
-                 (or (< extno 0)
-                     (equal (cpmdir-EXTENT
-                             (cpmdir-PhysDirectoryEntry->extnol pde-end)
-                             (cpmdir-PhysDirectoryEntry->extnoh pde-end))
-                            (truncate extno *d-extents*)))
-                 ;; and inside an and to keep things clear
-                 (and
-                  (equal user (cpmdir-PhysDirectoryEntry->status pde-end))
-                  (equal name (cpmdir-PhysDirectoryEntry->name pde-end))
-                  (equal ext (cpmdir-PhysDirectoryEntry->ext pde-end)))))
+      (if (matchFileExtent user name ext (- end 1) extno d-alv)
           nil
         (no-matching-fileExtent-loop user name ext (- end 1) extno d-alv))))
 
@@ -376,30 +370,117 @@
 
 (in-theory (disable CPMFS-S_ISDIR))
 
-(defthm cpmfs-cpmCreat-correctness-1-lemma-4
+(defthmd cpmfs-cpmCreat-correctness-1-lemma-6
   (implies
-   (and (d-alvp d-alv)
-        (natp extent)
-        (< extent 256)
-        (natp start)
-        (<= start extent)
-        (natp user)
-        (< user (ash 1 5))
-        (no-matching-fileextent-loop user name ext extent -1 d-alv))
-   (let*
-       ((ent (alv-diri extent d-alv))
-        (new-d-alv (update-alv-diri extent (change-cpmdir-physdirectoryentry ent
-                                                                             :status user
-                                                                             :name name
-                                                                             :ext ext)
-                                    d-alv)))
-     (equal (cpmfs-findfileextent user name ext start -1 new-d-alv)
-            extent))))
+   (and
+    (matchfileextent
+     user name ext extent -1
+     (update-alv-diri
+      extent
+      (let
+       ((change-cpmdir-physdirectoryentry (alv-diri extent d-alv))
+        (cpmdir-physdirectoryentry->status user)
+        (cpmdir-physdirectoryentry->name name)
+        (cpmdir-physdirectoryentry->ext ext))
+       (cpmdir-physdirectoryentry
+        cpmdir-physdirectoryentry->status
+        cpmdir-physdirectoryentry->name
+        cpmdir-physdirectoryentry->ext
+        (cpmdir-physdirectoryentry->extnol change-cpmdir-physdirectoryentry)
+        (cpmdir-physdirectoryentry->lrc change-cpmdir-physdirectoryentry)
+        (cpmdir-physdirectoryentry->extnoh change-cpmdir-physdirectoryentry)
+        (cpmdir-physdirectoryentry->blkcnt change-cpmdir-physdirectoryentry)
+        (cpmdir-physdirectoryentry->pointers
+         change-cpmdir-physdirectoryentry)))
+      d-alv))
+    (d-alvp d-alv)
+    (natp extent)
+    (< extent 256)
+    (natp user)
+    (< user (ash 1 5))
+    (no-matching-fileextent-loop user name ext extent -1 d-alv))
+   (equal
+    (cpmfs-findfileextent
+     user name ext extent -1
+     (update-alv-diri
+      extent
+      (let
+       ((change-cpmdir-physdirectoryentry (alv-diri extent d-alv))
+        (cpmdir-physdirectoryentry->status user)
+        (cpmdir-physdirectoryentry->name name)
+        (cpmdir-physdirectoryentry->ext ext))
+       (cpmdir-physdirectoryentry
+        cpmdir-physdirectoryentry->status
+        cpmdir-physdirectoryentry->name
+        cpmdir-physdirectoryentry->ext
+        (cpmdir-physdirectoryentry->extnol change-cpmdir-physdirectoryentry)
+        (cpmdir-physdirectoryentry->lrc change-cpmdir-physdirectoryentry)
+        (cpmdir-physdirectoryentry->extnoh change-cpmdir-physdirectoryentry)
+        (cpmdir-physdirectoryentry->blkcnt change-cpmdir-physdirectoryentry)
+        (cpmdir-physdirectoryentry->pointers
+         change-cpmdir-physdirectoryentry)))
+      d-alv))
+    extent)))
+
+(verify (implies
+         (and (d-alvp d-alv)
+              (natp extent)
+              (< extent 256)
+              (natp start)
+              (<= start extent)
+              (natp user)
+              (< user (ash 1 5))
+              (no-matching-fileextent-loop user name ext extent -1 d-alv))
+         (equal
+          (cpmfs-findfileextent
+           user name ext start -1
+           (update-nth
+            *alv-diri*
+            (update-nth
+             extent
+             (cpmdir-physdirectoryentry
+              user name ext
+              (cpmdir-physdirectoryentry->extnol (nth extent (nth *alv-diri* d-alv)))
+              (cpmdir-physdirectoryentry->lrc (nth extent (nth *alv-diri* d-alv)))
+              (cpmdir-physdirectoryentry->extnoh (nth extent (nth *alv-diri* d-alv)))
+              (cpmdir-physdirectoryentry->blkcnt (nth extent (nth *alv-diri* d-alv)))
+              (cpmdir-physdirectoryentry->pointers
+               (nth extent (nth *alv-diri* d-alv))))
+             (nth *alv-diri* d-alv))
+            d-alv))
+          extent))
+        :instructions (promote induct bash promote
+                               (claim (equal start extent))
+                               bash bash
+                               (exit cpmfs-cpmcreat-correctness-1-lemma-5 (:rewrite) t))
+        :rule-classes (:rewrite))
+
+;; (defthm cpmfs-cpmCreat-correctness-1-lemma-4
+;;   (implies
+;;    (and (d-alvp d-alv)
+;;         (natp extent)
+;;         (< extent 256)
+;;         (natp start)
+;;         (<= start extent)
+;;         (natp user)
+;;         (< user (ash 1 5))
+;;         (no-matching-fileextent-loop user name ext extent -1 d-alv))
+;;    (let*
+;;        ((ent (alv-diri extent d-alv))
+;;         (new-d-alv (update-alv-diri extent
+;;                                     (change-cpmdir-physdirectoryentry ent
+;;                                                                       :status user
+;;                                                                       :name name
+;;                                                                       :ext ext)
+;;                                     d-alv)))
+;;      (equal (cpmfs-findfileextent user name ext start -1 new-d-alv)
+;;             extent))))
 
 (defthm cpmfs-cpmCreat-correctness-1
   (implies
    (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1))
         (d-alvp d-alv)
+        (integerp mode)
         (cpmfs-cpmInode-p dir) (cpmfs-S_ISDIR (cpmfs-cpmInode->mode dir)))
    (mv-let (retval user name ext)
      (cpmfs-splitFilename fullname)
@@ -408,10 +489,10 @@
                 (cpmfs-cpmCreat dir fullname mode d-alv)
                 (implies
                  (>= retval 0)
-                 (= (cpmfs-findFileExtent user name ext
-                                          (cpmfs-cpmInode->ino ino) -1
-                                          new-d-alv)
-                    (cpmfs-cpmInode->ino ino))))))))
+                 (equal (cpmfs-findFileExtent user name ext
+                                              (cpmfs-cpmInode->ino ino) -1
+                                              new-d-alv)
+                        (cpmfs-cpmInode->ino ino))))))))
 
 (thm (IMPLIES
  (AND (CHARACTER-LISTP FULLNAME)
