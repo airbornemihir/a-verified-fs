@@ -284,6 +284,13 @@
        (take 3 (nthcdr (+ 2 8 1) fullname))) ;; ext
     (mv -1 nil nil nil)))
 
+(defthm cpmfs-splitFilename-correctness-1
+  (mv-let (retval user name ext)
+    (cpmfs-splitFilename fullname)
+    (declare (ignore retval name ext))
+    (implies (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1)))
+             (integerp user))))
+
 (defun cpmfs-findFreeExtent-loop (i1 d-alv)
   (declare (xargs :stobjs (d-alv)
                   :measure (if (or (not (natp i1)) (>= i1 *d-maxdir*))
@@ -350,131 +357,85 @@
                            :size 0)))
                 (mv 0 ino d-alv)))))))))
 
+(in-theory (disable cpmfs-splitfilename
+                    cpmfs-s_isdir
+                    (:rewrite |(< (if a b c) x)|)
+                    (:rewrite |(equal (if a b c) x)|)
+                    (:rewrite default-less-than-1)))
+
 (defthm cpmfs-cpmCreat-correctness-1-lemma-1
-  (mv-let (retval ino new-d-alv)
-    (cpmfs-cpmCreat dir fname mode d-alv)
-    (declare (ignore new-d-alv))
-    (implies
-     (>= retval 0)
-     (and (cpmfs-cpmInode-p ino)
-          (natp (cpmfs-cpmInode->ino ino)))))
-  :hints (("Goal" :in-theory (disable (:rewrite take-of-too-many)
-                                      (:definition take-redefinition)
-                                      (:rewrite take-of-len-free)
-                                      (:definition len)))
-          ))
+  (implies
+   (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1))
+        (d-alvp d-alv)
+        (integerp mode)
+        (cpmfs-cpmInode-p dir) (cpmfs-S_ISDIR (cpmfs-cpmInode->mode dir))
+        (natp i1) (< i1 256))
+   (mv-let (retval user name ext)
+     (cpmfs-splitFilename fullname)
+     (implies (and (>= retval 0) (< user 32))
+              (implies (< (cpmfs-findFileExtent user name ext i1 -1 d-alv) 0)
+                       (let* ((i2 (cpmfs-findFreeExtent-loop i1 d-alv)) )
+                         (implies (>= i2 i1)
+                                  (let* ((ent (alv-diri i2 d-alv))
+                                         (new-d-alv
+                                          (update-alv-diri
+                                           i2
+                                           (change-cpmdir-PhysDirectoryEntry ent
+                                                                             :status user
+                                                                             :name name
+                                                                             :ext ext)
+                                           d-alv)))
+                                    (equal (cpmfs-findFileExtent user name ext
+                                                                 i1 -1
+                                                                 new-d-alv)
+                                           i2))))))))
+  :hints (("Goal" :induct (cpmfs-findfileextent (mv-nth 1 (cpmfs-splitfilename fullname))
+                                                (mv-nth 2 (cpmfs-splitfilename fullname))
+                                                (mv-nth 3 (cpmfs-splitfilename fullname))
+                                                i1 -1 d-alv)) ))
+
+(defthm cpmfs-cpmCreat-correctness-1-lemma-2
+  (implies
+   (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1))
+        (d-alvp d-alv)
+        (integerp mode)
+        (cpmfs-cpmInode-p dir) (cpmfs-S_ISDIR (cpmfs-cpmInode->mode dir)))
+   (mv-let (retval user name ext)
+     (cpmfs-splitFilename fullname)
+     (implies (and (>= retval 0) (< user 32))
+              (mv-let (retval ino new-d-alv)
+                (cpmfs-cpmCreat dir fullname mode d-alv)
+                (declare (ignore new-d-alv ino))
+                (implies
+                 (>= retval 0)
+                 (< (cpmfs-findFileExtent user name ext
+                                          0 -1
+                                          d-alv)
+                    0))))))
+  :hints (("Goal"
+           :expand ((cpmfs-cpmcreat dir fullname mode d-alv) )
+           :do-not-induct t) ))
 
 (defthm cpmfs-cpmCreat-correctness-1-lemma-3
- (implies (cpmfs-S_ISDIR ino)
-          (equal (cpmfs-S_ISDIR ino) t)))
-
-(in-theory (disable CPMFS-S_ISDIR))
-
-(defthmd cpmfs-cpmCreat-correctness-1-lemma-6
   (implies
-   (and
-    (matchfileextent
-     user name ext extent -1
-     (update-alv-diri
-      extent
-      (let
-       ((change-cpmdir-physdirectoryentry (alv-diri extent d-alv))
-        (cpmdir-physdirectoryentry->status user)
-        (cpmdir-physdirectoryentry->name name)
-        (cpmdir-physdirectoryentry->ext ext))
-       (cpmdir-physdirectoryentry
-        cpmdir-physdirectoryentry->status
-        cpmdir-physdirectoryentry->name
-        cpmdir-physdirectoryentry->ext
-        (cpmdir-physdirectoryentry->extnol change-cpmdir-physdirectoryentry)
-        (cpmdir-physdirectoryentry->lrc change-cpmdir-physdirectoryentry)
-        (cpmdir-physdirectoryentry->extnoh change-cpmdir-physdirectoryentry)
-        (cpmdir-physdirectoryentry->blkcnt change-cpmdir-physdirectoryentry)
-        (cpmdir-physdirectoryentry->pointers
-         change-cpmdir-physdirectoryentry)))
-      d-alv))
-    (d-alvp d-alv)
-    (natp extent)
-    (< extent 256)
-    (natp user)
-    (< user (ash 1 5))
-    (no-matching-fileextent-loop user name ext extent -1 d-alv))
-   (equal
-    (cpmfs-findfileextent
-     user name ext extent -1
-     (update-alv-diri
-      extent
-      (let
-       ((change-cpmdir-physdirectoryentry (alv-diri extent d-alv))
-        (cpmdir-physdirectoryentry->status user)
-        (cpmdir-physdirectoryentry->name name)
-        (cpmdir-physdirectoryentry->ext ext))
-       (cpmdir-physdirectoryentry
-        cpmdir-physdirectoryentry->status
-        cpmdir-physdirectoryentry->name
-        cpmdir-physdirectoryentry->ext
-        (cpmdir-physdirectoryentry->extnol change-cpmdir-physdirectoryentry)
-        (cpmdir-physdirectoryentry->lrc change-cpmdir-physdirectoryentry)
-        (cpmdir-physdirectoryentry->extnoh change-cpmdir-physdirectoryentry)
-        (cpmdir-physdirectoryentry->blkcnt change-cpmdir-physdirectoryentry)
-        (cpmdir-physdirectoryentry->pointers
-         change-cpmdir-physdirectoryentry)))
-      d-alv))
-    extent)))
-
-(verify (implies
-         (and (d-alvp d-alv)
-              (natp extent)
-              (< extent 256)
-              (natp start)
-              (<= start extent)
-              (natp user)
-              (< user (ash 1 5))
-              (no-matching-fileextent-loop user name ext extent -1 d-alv))
-         (equal
-          (cpmfs-findfileextent
-           user name ext start -1
-           (update-nth
-            *alv-diri*
-            (update-nth
-             extent
-             (cpmdir-physdirectoryentry
-              user name ext
-              (cpmdir-physdirectoryentry->extnol (nth extent (nth *alv-diri* d-alv)))
-              (cpmdir-physdirectoryentry->lrc (nth extent (nth *alv-diri* d-alv)))
-              (cpmdir-physdirectoryentry->extnoh (nth extent (nth *alv-diri* d-alv)))
-              (cpmdir-physdirectoryentry->blkcnt (nth extent (nth *alv-diri* d-alv)))
-              (cpmdir-physdirectoryentry->pointers
-               (nth extent (nth *alv-diri* d-alv))))
-             (nth *alv-diri* d-alv))
-            d-alv))
-          extent))
-        :instructions (promote induct bash promote
-                               (claim (equal start extent))
-                               bash bash
-                               (exit cpmfs-cpmcreat-correctness-1-lemma-5 (:rewrite) t))
-        :rule-classes (:rewrite))
-
-;; (defthm cpmfs-cpmCreat-correctness-1-lemma-4
-;;   (implies
-;;    (and (d-alvp d-alv)
-;;         (natp extent)
-;;         (< extent 256)
-;;         (natp start)
-;;         (<= start extent)
-;;         (natp user)
-;;         (< user (ash 1 5))
-;;         (no-matching-fileextent-loop user name ext extent -1 d-alv))
-;;    (let*
-;;        ((ent (alv-diri extent d-alv))
-;;         (new-d-alv (update-alv-diri extent
-;;                                     (change-cpmdir-physdirectoryentry ent
-;;                                                                       :status user
-;;                                                                       :name name
-;;                                                                       :ext ext)
-;;                                     d-alv)))
-;;      (equal (cpmfs-findfileextent user name ext start -1 new-d-alv)
-;;             extent))))
+   (and (character-listp fullname) (equal (len fullname) (+ 2 8 1 3 1))
+        (d-alvp d-alv)
+        (integerp mode)
+        (cpmfs-cpmInode-p dir) (cpmfs-S_ISDIR (cpmfs-cpmInode->mode dir)))
+   (mv-let (retval user name ext)
+     (cpmfs-splitFilename fullname)
+     (declare (ignore name ext))
+     (implies (and (>= retval 0) (< user 32))
+              (mv-let (retval ino new-d-alv)
+                (cpmfs-cpmCreat dir fullname mode d-alv)
+                (declare (ignore new-d-alv ino))
+                (implies
+                 (>= retval 0)
+                 (>= (cpmfs-findfreeextent-loop 0 d-alv)
+                    0))))))
+  :hints (("Goal"
+           :expand ((cpmfs-cpmcreat dir fullname mode d-alv) )
+           :do-not-induct t) ))
 
 (defthm cpmfs-cpmCreat-correctness-1
   (implies
@@ -484,39 +445,24 @@
         (cpmfs-cpmInode-p dir) (cpmfs-S_ISDIR (cpmfs-cpmInode->mode dir)))
    (mv-let (retval user name ext)
      (cpmfs-splitFilename fullname)
-     (implies (>= retval 0)
+     (implies (and (>= retval 0) (< user 32))
               (mv-let (retval ino new-d-alv)
                 (cpmfs-cpmCreat dir fullname mode d-alv)
                 (implies
                  (>= retval 0)
                  (equal (cpmfs-findFileExtent user name ext
-                                              (cpmfs-cpmInode->ino ino) -1
+                                              0 -1
                                               new-d-alv)
-                        (cpmfs-cpmInode->ino ino))))))))
-
-(thm (IMPLIES
- (AND (CHARACTER-LISTP FULLNAME)
-      (EQUAL (LEN FULLNAME) (+ 2 8 1 3 1))
-      (D-ALVP D-ALV)
-      (CPMFS-CPMINODE-P DIR)
-      (CPMFS-S_ISDIR (CPMFS-CPMINODE->MODE DIR))
-      (<= 0
-          (MV-NTH 0 (CPMFS-SPLITFILENAME FULLNAME)))
-      (<= 0
-          (MV-NTH 0
-                  (CPMFS-CPMCREAT DIR FULLNAME MODE D-ALV))))
- (=
-  (CPMFS-FINDFILEEXTENT
-      (MV-NTH 1 (CPMFS-SPLITFILENAME FULLNAME))
-      (MV-NTH 2 (CPMFS-SPLITFILENAME FULLNAME))
-      (MV-NTH 3 (CPMFS-SPLITFILENAME FULLNAME))
-      (CPMFS-CPMINODE->INO (MV-NTH 1
-                                   (CPMFS-CPMCREAT DIR FULLNAME MODE D-ALV)))
-      -1
-      (MV-NTH 2
-              (CPMFS-CPMCREAT DIR FULLNAME MODE D-ALV)))
-  (CPMFS-CPMINODE->INO (MV-NTH 1
-                               (CPMFS-CPMCREAT DIR FULLNAME MODE D-ALV))))))
+                        (cpmfs-cpmInode->ino ino)))))))
+  :hints (("Goal" :use ((:instance cpmfs-cpmCreat-correctness-1-lemma-1
+                                   (i1 0)))
+           :expand ((cpmfs-cpmcreat dir fullname mode d-alv) )
+           :do-not-induct t
+           :in-theory (disable cpmfs-splitfilename
+                              cpmfs-s_isdir
+                              (:rewrite |(< (if a b c) x)|)
+                              (:rewrite |(equal (if a b c) x)|)
+                              (:rewrite default-less-than-1))) ))
 
 (in-theory (enable CPMFS-S_ISDIR))
 
