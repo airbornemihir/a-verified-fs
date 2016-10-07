@@ -1,5 +1,5 @@
 (include-book "centaur/bitops/part-install" :dir :system)
-(include-book "arithmetic-5/top" :dir :system)
+;; (include-book "arithmetic-5/top" :dir :system)
 (include-book "std/util/defaggregate" :dir :system)
 (include-book "std/strings/hex" :dir :system)
 (include-book "std/strings/octal" :dir :system)
@@ -78,16 +78,16 @@
                              d-alv)))
     d-alv))
 
-(thm (implies (and (integerp a) (integerp i) (<= 0 i) (< i a))
-              (not (equal 0 (logand (ash 1 i) (1- (ash 1 a)))))))
+;; (thm (implies (and (integerp a) (integerp i) (<= 0 i) (< i a))
+;;               (not (equal 0 (logand (ash 1 i) (1- (ash 1 a)))))))
 
-(thm
- (implies (and (integerp i) (<= 0 i)
-               (< i (truncate (+ (* *d-maxdir* 32) *d-blksiz* -1)
-                              *d-blksiz*)))
-          (not (equal 0 (logand (ash 1 i)
-                                (let* ((d-alv (alv-alvInit d-alv)))
-                                  (alv-bytesi 0 d-alv)))))))
+;; (thm
+;;  (implies (and (integerp i) (<= 0 i)
+;;                (< i (truncate (+ (* *d-maxdir* 32) *d-blksiz* -1)
+;;                               *d-blksiz*)))
+;;           (not (equal 0 (logand (ash 1 i)
+;;                                 (let* ((d-alv (alv-alvInit d-alv)))
+;;                                   (alv-bytesi 0 d-alv)))))))
 
 ;; given that this doesn't come up in the running example of a 1.44 MB floppy,
 ;; i feel OK leaving it alone for now. we'll return later.
@@ -359,9 +359,10 @@
 
 (in-theory (disable cpmfs-splitfilename
                     cpmfs-s_isdir
-                    (:rewrite |(< (if a b c) x)|)
-                    (:rewrite |(equal (if a b c) x)|)
-                    (:rewrite default-less-than-1)))
+                    ;; (:rewrite |(< (if a b c) x)|)
+                    ;; (:rewrite |(equal (if a b c) x)|)
+                    ;; (:rewrite default-less-than-1)
+                    ))
 
 (defthm cpmfs-cpmCreat-correctness-1-lemma-1
   (implies
@@ -460,9 +461,10 @@
            :do-not-induct t
            :in-theory (disable cpmfs-splitfilename
                               cpmfs-s_isdir
-                              (:rewrite |(< (if a b c) x)|)
-                              (:rewrite |(equal (if a b c) x)|)
-                              (:rewrite default-less-than-1))) ))
+                              ;; (:rewrite |(< (if a b c) x)|)
+                              ;; (:rewrite |(equal (if a b c) x)|)
+                              ;; (:rewrite default-less-than-1)
+                              )) ))
 
 (in-theory (enable CPMFS-S_ISDIR))
 
