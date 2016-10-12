@@ -1,3 +1,14 @@
+#||
+
+This file contains an initial attempt at modelling the syscalls in
+cpmfs. We begin with defining the allocation vector as an array of unsigned
+32-bit integers in a stobj named d-alv, and prove a couple of theorems about
+it. Slowly, we expand to using the allocation vectors to actually allocate
+blocks for files and directories, proving theorems as we go. The end goal is
+to have a verified set of syscalls that is sufficient to make a copy of the
+program cpmcp provided with cpmtools (which is our basis for development).
+||#
+
 (include-book "centaur/bitops/part-install" :dir :system)
 (include-book "std/util/defaggregate" :dir :system)
 (include-book "std/strings/hex" :dir :system)
@@ -470,10 +481,19 @@
              )
         (mv 0 file)))))
 
-(defun cpmfs-cpmWrite (file ino buf count)
+(defun cpmfs-cpmWrite-helper-1 ())
+
+(defun cpmfs-cpmWrite-loop (file ino buf count d-alv findext findblock)
   (if (or (not (cpmfs-cpmInode-p ino))
           (not (cpmfs-cpmFile-p file))
           (not (unsigned-byte-listp 8 buf))
-          (not (natp count)))
-      -1
-    ()))
+          (not (natp count))
+          (not (booleanp findext))
+          (not (booleanp findblock))
+          (not (d-alvp d-alv)))
+      (mv -1 d-alv)
+    (if (<= count 0)
+        (mv 0 d-alv)
+      (if findext
+          ()
+        ()))))
