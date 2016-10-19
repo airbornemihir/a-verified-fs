@@ -14,6 +14,7 @@ program cpmcp provided with cpmtools (which is our basis for development).
 (include-book "std/strings/hex" :dir :system)
 (include-book "std/strings/octal" :dir :system)
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
+(include-book "std/util/bstar" :dir :system)
 
 ;; these are the values after a call to diskdefReadSuper
 ;; more info below:
@@ -222,9 +223,15 @@ program cpmcp provided with cpmtools (which is our basis for development).
                    :tag :cpmfs-cpmInode)
 
 ;; #define EXTENT(low,high) (((low)&0x1f)|(((high)&0x3f)<<5))
+;; #define EXTENTL(extent) ((extent)&0x1f)
+;; #define EXTENTH(extent) (((extent>>5))&0x3f)
 (defun cpmdir-EXTENT (low high)
   (logior (logand low  (- (ash 1 5) 1))
           (logand high (- (ash 1 6) 1))))
+(defun cpmdir-EXTENTL (extent)
+  (logand extent (- (ash 1 5) 1)))
+(defun cpmdir-EXTENTH (extent)
+  (logand (ash extent -5) (- (ash 1 6) 1)))
 
 (defun matchFileExtent (user name ext extent extno d-alv)
   (declare (xargs :stobjs (d-alv)
@@ -481,8 +488,6 @@ program cpmcp provided with cpmtools (which is our basis for development).
              )
         (mv 0 file)))))
 
-(defun cpmfs-cpmWrite-helper-1 ())
-
 (defun cpmfs-cpmWrite-loop (file ino buf count d-alv findext findblock)
   (if (or (not (cpmfs-cpmInode-p ino))
           (not (cpmfs-cpmFile-p file))
@@ -493,7 +498,41 @@ program cpmcp provided with cpmtools (which is our basis for development).
           (not (d-alvp d-alv)))
       (mv -1 d-alv)
     (if (<= count 0)
-        (mv 0 d-alv)
-      (if findext
-          ()
-        ()))))
+        (mv got d-alv)
+      (mv-let
+        (d-alv extentno extent nextextpos)
+        (if (not (findext))
+            (mv got d-alv extentno extent nextextpos findext findblock)
+          (let*
+              ((extentno (/ (cpmfs-cpmFile->pos file) 16384))
+               (pde-extent (alv-diri (cpmfs-cpmInode->ino ino) d-alv))
+               (nextextpos (+ (* ((cpmfs-cpmFile->pos file) / extcap) extcap) extcap))
+               (extent (cpmfs-findFileExtent (cpmdir-PhysDirectoryEntry->status
+                                              pde-extent)
+                                             (cpmdir-PhysDirectoryEntry->name
+                                              pde-extent)
+                                             (cpmdir-PhysDirectoryEntry->ext
+                                              pde-extent)
+                                             0
+                                             extentno
+                                             d-alv))
+               (findext nil)
+               (findblock t))
+            (if (>= extent 0)
+                (let* ((extent (cpmfs-findFreeExtent d-alv)) )
+                  (if ((< extent 0))
+                      (mv (if (= got 0) -1 got) d-alv extentno extent nextextpos findext findblock)
+                    (let ((d-alv (update-alv-diri
+                                  extent
+                                  (change-cpmdir-PhysDirectoryEntry
+                                   (alv-diri (cpmfs-cpmInode->ino ino) d-alv)
+                                   :extnol (cpmdir-EXTENTL extentno)
+                                   :extnoh (cpmdir-EXTENTH extentno)
+                                   :blkcnt 0
+                                   :lrc 0
+                                   )
+                                  d-alv)) )
+                      (mv got d-alv extentno extent nextextpos findext findblock))))
+              (mv got d-alv extentno extent nextextpos findext findblock))))
+        ())))
+  )
