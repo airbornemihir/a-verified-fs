@@ -89,9 +89,13 @@
                 (mv -1 cwd)
               (mv 0 (cons (car cwd)
                           (cons indexdir (append (take index (cdr cwd))
-                                           (Nthcdr (+ 1 index) (cdr cwd)))))))
+                                                 (Nthcdr (+ 1 index) (cdr cwd)))))))
             )))
       )))
+
+(defthm am-cpmCreat-correctness-1
+  (mv-let (fd cwd) (am-cpmCreat dir fname ino mode cwd0)
+    (implies (< fd 0) (equal cwd cwd0))))
 
 (defthm am-cpmcreat-preserves-am-dir-treep
   (implies (and (am-dir-filep cwd)
@@ -102,18 +106,150 @@
   :hints (("goal" :induct (am-cpmcreat dir fname ino mode
                                        cwd)) ))
 
-(skip-proofs
- (defthm am-cpmCreat-fails-second-time
-   (implies (and (am-dir-filep cwd)
-                 (character-listp fname))
-            (mv-let (fd cwd)
-              (am-cpmCreat dir fname ino mode cwd)
-              (implies (>= fd 0)
-                       (mv-let (fd cwd)
-                         (am-cpmCreat dir fname ino mode cwd)
-                         (declare (ignore cwd))
-                         (< fd 0)))))
-   :hints (("Goal" :in-theory (disable character-listp)) )))
+(defun am-file-foundp (dir fname cwd)
+  (and (am-dir-filep cwd)
+       (if (atom dir)
+           ;; file in the current directory
+           (>= (am-find-local-file-by-name (cdr cwd) fname 0) 0)
+         ;; file in a subdirectory 1 or more levels down
+         (let* ((index (am-find-local-file-by-name (cdr cwd) (car dir) 0))
+                (indexdir (nth index (cdr cwd))))
+           (and (>= index 0)
+                (am-dir-filep indexdir)
+                (am-file-foundp (cdr dir) fname indexdir)))
+         )))
+
+(defthm am-cpmCreat-correctness-2
+  (implies
+   (character-listp fname)
+   (mv-let (fd cwd) (am-cpmCreat dir fname ino mode cwd0)
+     (implies (>= fd 0)
+              (am-file-foundp dir fname cwd))))
+  :instructions (
+                 :split
+                 (:induct (am-cpmcreat dir fname ino mode cwd0))
+                 (:change-goal nil t)
+                 :bash
+                 :bash
+                 :bash
+                 :bash
+                 :bash
+                 :promote
+                 (:demote 3 5)
+                 (:dive 1)
+                 :s
+                 :top
+                 :promote
+                 (:claim
+                  (equal (< (car (am-cpmcreat (cdr dir)
+                                              fname ino mode
+                                              (nth (am-find-local-file-by-name (cdr cwd0)
+                                                                               (car dir)
+                                                                               0)
+                                                   (cdr cwd0))))
+                            0)
+                         nil))
+                 (:dive 3 2)
+                 :x
+                 :up
+                 :s
+                 :up
+                 :x
+                 :split
+                 :bash
+                 :bash
+                 :bash
+                 :bash
+                 (:change-goal nil t)
+                 (:dive 3 2)
+                 :s
+                 :up
+                 :top
+                 (:demote 10)
+                 :promote
+                 (:use (:instance am-find-local-file-by-name-correctness-1
+                                  (index0 0)
+                                  (dir-tree (cdr cwd0))
+                                  (fname (car dir))))
+                 :promote
+                 (:demote 1)
+                 (:dive 1)
+                 :expand
+                 :s
+                 :top
+                 :promote
+                 (:demote 10)
+                 (:dive 1)
+                 :s
+                 (:dive 1)
+                 (:dive 2 1 2)
+                 :x
+                 :up
+                 :up
+                 :up
+                 :s
+                 :up
+                 :s
+                 (:use (:instance am-find-local-file-by-name-correctness-1
+                                  (index0 0)
+                                  (dir-tree (cdr cwd0))
+                                  (fname (car dir))))
+                 :promote
+                 (:demote 1)
+                 (:dive 1)
+                 :expand
+                 :s
+                 :top
+                 :promote
+                 (:demote 10)
+                 (:dive 1)
+                 (:dive 1 2 1 2)
+                 :x
+                 :up
+                 :up
+                 :up
+                 :up
+                 :s
+                 :up
+                 :s
+                 (:use (:instance am-find-local-file-by-name-correctness-1
+                                  (index0 0)
+                                  (dir-tree (cdr cwd0))
+                                  (fname (car dir))))
+                 :promote
+                 (:demote 1)
+                 (:dive 1)
+                 :expand
+                 s
+                 top
+                 promote
+                 (:demote 10)
+                 (:dive 1)
+                 (:dive 1 2 1 2)
+                 x
+                 top
+                 bash))
+
+(defthm am-cpmCreat-correctness-3
+  (implies (and (character-listp fname) (am-file-foundp dir fname cwd0))
+           (mv-let (fd cwd) (am-cpmCreat dir fname ino mode cwd0)
+             (and (< fd 0) (equal cwd cwd0)))))
+
+(defthm am-cpmCreat-fails-second-time
+  (implies
+   (and (am-dir-filep cwd)
+        (character-listp fname))
+   (let ((mv (am-cpmcreat dir fname ino mode cwd)))
+     (let ((fd (mv-nth 0 mv)) (cwd (mv-nth 1 mv)))
+       (implies (<= 0 fd)
+                (let ((mv (am-cpmcreat dir fname ino mode cwd)))
+                  (let ((fd (mv-nth 0 mv))
+                        (cwd (hide (mv-nth 1 mv))))
+                    (< fd 0)))))))
+  :instructions (split
+                 (:rewrite am-cpmcreat-correctness-3)
+                 (:use (:instance am-cpmcreat-correctness-2 (cwd0 cwd)))
+                 bash))
 
 ;; int cpmWrite(struct cpmFile *file, const char *buf, int count)
 (defun am-cpmWrite (dir fname contents position cwd)
