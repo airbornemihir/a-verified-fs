@@ -1,4 +1,5 @@
 (include-book "std/util/defconsts" :dir :system)
+(include-book "std/util/bstar" :dir :system)
 
 ;; lemma for later theorems
 (defthm len-of-revappend
@@ -84,11 +85,94 @@
   (implies (natp index)
            (not (< (+ index (len dir-tree)) (am-find-local-file-by-name dir-tree fname index)))))
 
-(defthm am-find-local-file-by-name-correctness-
+(defthm am-find-local-file-by-name-correctness-4
   (implies (and (<= 0 index)
                 (<= 0 (am-find-local-file-by-name dir-tree fname index))
                 (am-dir-treep dir-tree))
            (character-listp fname)))
+
+(defthm am-find-local-file-by-name-correctness-5
+  (let ((file-index (am-find-local-file-by-name dir-tree fname index)) )
+    (implies (<= 0 file-index)
+           (<= index file-index))))
+
+(defthm am-find-local-file-by-name-correctness-6
+  (let ((file-index (am-find-local-file-by-name dir-tree1 fname index)) )
+    (implies
+     (and (<= 0 index)
+          (<= index file-index))
+     (equal (am-find-local-file-by-name (binary-append dir-tree1 dir-tree2)
+                                        fname index)
+            file-index)))
+  :instructions ((:induct (am-find-local-file-by-name dir-tree1 fname index))
+                 (:use (:instance am-find-local-file-by-name-correctness-5
+                                  (dir-tree (cdr dir-tree1))
+                                  (index (+ 1 index))))
+                 :split :bash :bash :bash
+                 (:bash ("goal" :expand (append dir-tree1 dir-tree2)))
+                 :bash))
+
+(defthmd am-find-local-file-by-name-correctness-7
+  (let ((file-index1 (am-find-local-file-by-name dir-tree fname index1))
+        (file-index2 (am-find-local-file-by-name dir-tree fname index2)))
+    (implies
+     (and (natp index1) (natp index2)
+          (<= 0 file-index1))
+     (equal (- file-index2 index2)
+            (- file-index1 index1))))
+  :rule-classes
+  ((:rewrite :corollary
+              (let ((file-index1 (am-find-local-file-by-name dir-tree fname index1))
+                    (file-index2 (am-find-local-file-by-name dir-tree fname index2)))
+                (implies
+                 (and (natp index1) (natp index2)
+                      (<= 0 file-index1))
+                 (equal file-index2
+                        (+ file-index1 index2 (- index1))))))))
+
+(defun induction-scheme (dir-tree1 dir-tree2 fname index1 index2)
+  (if (atom dir-tree1)
+      (mv dir-tree1 dir-tree2 fname index1 index2)
+    (induction-scheme (cdr dir-tree1)
+                      dir-tree2 fname (+ 1 index1)
+                      (+ 1 index2))))
+
+(defthm
+  am-find-local-file-by-name-correctness-8
+  (let
+   ((file-index1 (am-find-local-file-by-name dir-tree1 fname index1))
+    (file-index2 (am-find-local-file-by-name dir-tree2 fname index2)))
+   (implies
+    (and (am-dir-treep dir-tree1)
+         (am-dir-treep dir-tree2)
+         (natp index1)
+         (natp index2)
+         (< file-index1 0)
+         (<= 0 file-index2))
+    (equal (am-find-local-file-by-name (binary-append dir-tree1 dir-tree2)
+                                       fname index2)
+           (+ (len dir-tree1) file-index2))))
+  :instructions
+  (:split
+   (:induct (and (append dir-tree1 dir-tree2)
+                 (am-find-local-file-by-name dir-tree1 fname index1)
+                 (am-find-local-file-by-name dir-tree2 fname index2)))
+   :split
+   :bash :bash :bash (:change-goal nil t)
+   :split :bash :bash
+   (:claim
+    (equal (am-find-local-file-by-name (append (cdr dir-tree1) dir-tree2)
+                                       fname (+ 1 index2))
+           (+ 1
+              (am-find-local-file-by-name (append (cdr dir-tree1) dir-tree2)
+                                          fname index2)))
+    :hints :none)
+   (:change-goal nil t)
+   (:dive 1)
+   (:rewrite am-find-local-file-by-name-correctness-7
+             ((index1 index2)))
+   :top
+   :bash :bash))
 
 ;; int cpmCreat(struct cpmInode *dir, const char *fname, struct cpmInode *ino, mode_t mode)
 (defun am-cpmCreat (dir fname ino mode cwd)
@@ -296,6 +380,10 @@
                   (+ i (len ac))))
 )
 
+(defthm first-n-characters-ac-character-listp
+  (implies (and (character-listp l) (character-listp ac))
+           (character-listp (first-n-characters-ac i l ac))))
+
 (defun take-characters (n l)
   (declare (xargs :guard (and (integerp n)
                               (not (< n 0))
@@ -355,36 +443,73 @@
                                                  nil) nil)) nil))
                ))
 
+(defthm am-cpmWrite-returns-file-lemma-1
+  (implies (character-listp l)
+           (character-listp (nthcdr n l))))
+
 (defthm am-cpmWrite-returns-file
   (mv-let (fd cwd) (am-cpmWrite dir fname contents position cwd0)
-    (declare (ignore fd))
-    (implies (am-dir-filep cwd0)
+    (implies (and (<= 0 fd) (am-dir-filep cwd0))
              (am-dir-filep cwd)))
   :instructions
-  (:split (:induct (am-cpmwrite dir fname contents position cwd0))
-          (:change-goal nil t)
-          :bash :bash (:change-goal nil t)
-          :bash :bash (:change-goal nil t)
-          :split (:demote 6)
-          (:dive 1)
-          :x :top :promote (:dive 1 2)
-          :x :top (:demote 1)
-          (:dive 1)
-          :x :top :promote :x :bash
-          (:rewrite am-find-local-file-by-name-correctness-4
-                    ((dir-tree (cdr cwd0)) (index 0)))
-          (:rewrite am-dir-treep-correctness-1)
-          (:rewrite am-dir-treep-correctness-3)
-          :bash (:use (:instance am-find-local-file-by-name-correctness-2
-                                 (dir-tree (cdr cwd0))
-                                 (index 0)))
-          :bash (:rewrite am-dir-treep-correctness-4)
-          :bash :bash))
+  (:split
+   (:induct (am-cpmwrite dir fname contents position cwd0))
+   (:change-goal nil t)
+   :bash :bash (:change-goal nil t)
+   :bash :bash :split (:demote 6)
+   (:dive 1)
+   :x :top :promote (:dive 1 2)
+   :x :top (:demote 1)
+   (:dive 1)
+   :x :top
+   :promote :x :bash :split (:demote 6)
+   (:dive 1)
+   :x :top :promote (:dive 1 2)
+   :x :top (:dive 1)
+   :x :top
+   (:claim (character-listp fname)
+           :hints :none)
+   (:change-goal nil t)
+   (:rewrite am-find-local-file-by-name-correctness-4
+             ((dir-tree (cdr cwd0)) (index 0)))
+   :bash
+   (:claim
+    (character-listp
+     (first-n-characters-ac position
+                            (cdr (nth (am-find-local-file-by-name (cdr cwd0)
+                                                                  fname 0)
+                                      (cdr cwd0)))
+                            nil))
+    :hints :none)
+   (:change-goal nil t)
+   (:rewrite first-n-characters-ac-character-listp)
+   :bash
+   (:claim
+    (character-listp (nthcdr (+ position (len contents))
+                             (cdr (nth (am-find-local-file-by-name (cdr cwd0)
+                                                                   fname 0)
+                                       (cdr cwd0))))))
+   :bash
+   (:rewrite am-dir-treep-correctness-1)
+   (:rewrite am-dir-treep-correctness-3)
+   :bash
+   (:use (:instance am-find-local-file-by-name-correctness-2
+                    (index 0)
+                    (dir-tree (cdr cwd0))))
+   :bash
+   (:rewrite am-dir-treep-correctness-4)
+   :bash))
 
 (defthm am-cpmWrite-preserves-names
   (mv-let (fd cwd) (am-cpmWrite dir fname contents position cwd0)
     (declare (ignore fd))
     (equal (car cwd) (car cwd0))))
+
+;; (defthm am-cpmWrite-preserves-files
+;;   (mv-let (fd cwd) (am-cpmWrite dir1 fname1 contents position cwd0)
+;;     (declare (ignore fd))
+;;     (implies (am-file-foundp dir2 fname2 cwd0)
+;;              (am-file-foundp dir2 fname2 cwd))))
 
 ;; int cpmRead(struct cpmFile *file, char *buf, int count)
 (defun am-cpmRead (dir fname length position cwd)
@@ -416,6 +541,13 @@
 
 (defconsts (& *am-cpmRead-example-1*)
   (am-cpmRead (cons (coerce "tmp" 'list) nil) (coerce "complaint" 'list) 7 0 *am-cpmWrite-example-1*))
+
+(defthm am-cpmRead-correctness-1
+  (implies
+   (mv-let (fd contents) (am-cpmRead dir fname length position cwd)
+     (declare (ignore contents))
+     (>= fd 0))
+   (am-file-foundp dir fname cwd)))
 
 (defthm am-read-what-was-written-lemma-1
   (implies (and (character-listp l) (character-listp ac))
@@ -500,3 +632,19 @@
                     (fname (car dir))
                     (index0 0)))
    :bash))
+
+(defthm am-read-what-was-read
+  (implies (and (character-listp fname)
+                (not (and (equal dir1 dir2)
+                          (equal fname1 fname2))))
+           (b* (((mv & cwd1) (am-cpmWrite dir1 fname1 contents0 position1 cwd0))
+                ((mv fd2 contents2) (am-cpmRead dir2 fname2 len2 position2 cwd1))
+                ((mv fd3 contents3) (am-cpmRead dir2 fname2 len2 position2 cwd0)))
+             (and (equal (>= fd2 0) (>= fd3 0))
+                  (equal contents2 contents3))))
+  :instructions
+  ((:induct (am-cpmwrite dir1 fname1 contents0 position1 cwd0))
+   (:change-goal nil t)
+   :bash
+   :bash (:change-goal nil t)
+   :bash :bash))
