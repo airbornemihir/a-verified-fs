@@ -1,3 +1,19 @@
+#||
+This is a simple model of a unix-style filesystem, represented as a tree. A
+file is constrained to be either a regular file (a character list with a
+name, defined by the predicate am-reg-filep) or a directory file (a list of
+files with a name, defined by the predicate am-dir-filep). This tree
+representation is the model for implementations of the familiar unix FS
+operations of creating, reading and writing files; however directory
+creation and deletion of directories are left alone for now. With these, we
+prove the two read-over-write properties, named am-read-what-was-written and
+am-read-what-was-read here.
+
+We plan to use these as the basis for more realistic models, starting by
+relaxing the assumption that the contents of a file remain in one place, in
+order to allow lengthy files to be split across blocks.
+||#
+
 (include-book "std/util/defconsts" :dir :system)
 (include-book "std/util/bstar" :dir :system)
 
@@ -16,15 +32,16 @@
   (equal (revappend x y)
          (append (reverse x) y)))
 
+;; lemma for later theorems
 (defthm revappend-twice-reduces
   (equal (revappend (revappend x y) z)
          (revappend y (append x z))))
 
+;; predicates defining two types of files
 (defun am-reg-filep (x)
   (and (consp x)
        (character-listp (car x))
        (character-listp (cdr x))))
-
 (mutual-recursion
  (defun am-dir-treep (x)
    (if (atom x)
@@ -37,6 +54,7 @@
         (am-dir-treep (cdr x))))
  )
 
+;; predicate defining a file from either of the two types
 (defun am-filep (x)
   (or (am-reg-filep x) (am-dir-filep x)))
 
@@ -55,8 +73,9 @@
 (defthm am-dir-treep-correctness-4
   (implies (am-dir-treep l)
            (am-dir-treep (nthcdr n l))))
-;; to implement - cpmcreat cpmopen cpmread cpmwrite cpmclose
 
+;; utility function for finding a file with the name fname in the directory
+;; tree dirtree
 (defun am-find-local-file-by-name (dir-tree fname index)
   (if (or
        ;; no more files to see
@@ -80,7 +99,8 @@
            (< (am-find-local-file-by-name dir-tree fname index) (+ (len
                                                                     dir-tree) index))))
 
-;; stupid theorem! weaker version of the above. a disaster!
+;; weaker version of the above theorem - unsuccessfully trying to make certain
+;; arithmetic properties automatically provable
 (defthm am-find-local-file-by-name-correctness-3
   (implies (natp index)
            (not (< (+ index (len dir-tree)) (am-find-local-file-by-name dir-tree fname index)))))
@@ -130,13 +150,6 @@
                  (equal file-index2
                         (+ file-index1 index2 (- index1))))))))
 
-(defun induction-scheme (dir-tree1 dir-tree2 fname index1 index2)
-  (if (atom dir-tree1)
-      (mv dir-tree1 dir-tree2 fname index1 index2)
-    (induction-scheme (cdr dir-tree1)
-                      dir-tree2 fname (+ 1 index1)
-                      (+ 1 index2))))
-
 (defthm
   am-find-local-file-by-name-correctness-8
   (let
@@ -174,6 +187,8 @@
    :top
    :bash :bash))
 
+;; this is a recursive function for creating a file fname in the subdirectory dir
+;; starting from directory cwd. the C prototype follows.
 ;; int cpmCreat(struct cpmInode *dir, const char *fname, struct cpmInode *ino, mode_t mode)
 (defun am-cpmCreat (dir fname ino mode cwd)
   (declare (irrelevant ino mode))
@@ -217,6 +232,7 @@
   :hints (("goal" :induct (am-cpmcreat dir fname ino mode
                                        cwd)) ))
 
+;; this predicate is used in theorem am-cpmCreat-correctness-2
 (defun am-file-foundp (dir fname cwd)
   (and (am-dir-filep cwd)
        (if (atom dir)
@@ -362,6 +378,10 @@
                  (:use (:instance am-cpmcreat-correctness-2 (cwd0 cwd)))
                  bash))
 
+;; this function was created as an alternative to first-n-ac to preserve the
+;; character-listp nature of the list, instead of inserting nil elements into
+;; the list as first-n-ac is wont to do. it may be advantageous later to
+;; re-write this function in the style of first-n
 (defun
     first-n-characters-ac (i l ac)
   (declare (type (integer 0 *) i)
@@ -384,12 +404,16 @@
   (implies (and (character-listp l) (character-listp ac))
            (character-listp (first-n-characters-ac i l ac))))
 
+;; replacement of take that instead uses first-n-characters-ac
 (defun take-characters (n l)
   (declare (xargs :guard (and (integerp n)
                               (not (< n 0))
                               (character-listp l))))
   (first-n-characters-ac n l nil))
 
+;; this recursive function writes the character list contents into the file
+;; fname in subdirectory dir starting from directory cwd, using the given
+;; position as a starting point. the C prototype follows.
 ;; int cpmWrite(struct cpmFile *file, const char *buf, int count)
 (defun am-cpmWrite (dir fname contents position cwd)
   (if (not (and (am-dir-filep cwd)
@@ -511,6 +535,9 @@
 ;;     (implies (am-file-foundp dir2 fname2 cwd0)
 ;;              (am-file-foundp dir2 fname2 cwd))))
 
+;; this recursive funcion reads the specified number of characters from the
+;; specified position in the file fname in the subdirectory dir, starting from
+;; directory cwd. the C prototype follows.
 ;; int cpmRead(struct cpmFile *file, char *buf, int count)
 (defun am-cpmRead (dir fname length position cwd)
   (if (not (and (am-dir-filep cwd)
@@ -583,6 +610,8 @@
                            (equal (nthcdr len3 (binary-append l1 l2))
                                   (nthcdr len2 l2))))))
 
+;; first read-on-write theorem - a read following a write at the same place
+;; should return what was written.
 (defthm am-read-what-was-written
   (implies (character-listp fname)
            (mv-let (fd1 cwd1) (am-cpmWrite dir fname contents0 position cwd0)
@@ -633,6 +662,8 @@
                     (index0 0)))
    :bash))
 
+;; second read-on-write theorem - a read following a write at a different place
+;; should return what was present previously.
 (defthm am-read-what-was-read
   (implies (and (character-listp fname)
                 (not (and (equal dir1 dir2)
@@ -645,6 +676,46 @@
   :instructions
   ((:induct (am-cpmwrite dir1 fname1 contents0 position1 cwd0))
    (:change-goal nil t)
-   :bash
-   :bash (:change-goal nil t)
-   :bash :bash))
+   :bash :bash (:change-goal nil t)
+   :bash :bash (:change-goal (main . 4) t)
+   (:demote 1 3)
+   (:dive 1)
+   :s-prop :top :pro
+   (:claim
+    (equal
+     (am-cpmwrite dir1 fname1 contents0 position1 cwd0)
+     (list
+      0
+      (list*
+       (car cwd0)
+       (cons
+        fname1
+        (append (first-n-characters-ac
+                 position1
+                 (cdr (nth (am-find-local-file-by-name (cdr cwd0)
+                                                       fname1 0)
+                           (cdr cwd0)))
+                 nil)
+                contents0
+                (nthcdr (+ position1 (len contents0))
+                        (cdr (nth (am-find-local-file-by-name (cdr cwd0)
+                                                              fname1 0)
+                                  (cdr cwd0))))))
+       (append (first-n-ac (am-find-local-file-by-name (cdr cwd0)
+                                                       fname1 0)
+                           (cdr cwd0)
+                           nil)
+               (nthcdr (am-find-local-file-by-name (cdr cwd0)
+                                                   fname1 0)
+                       (cddr cwd0)))))))
+   :expand :expand :expand
+   :expand :expand :expand (:dive 1 1)
+   :s (:dive 1 1 1 5)
+   :x :top (:dive 1 2)
+   :s :top (:dive 1 1 1 1 1 5 1 1 1)
+   := :top (:dive 1 1 1 1 1 5 2 1)
+   (:dive 1)
+   := :top (:dive 2 1 2 5 2)
+   := :up :s :top (:drop 9)
+   (:dive 1 1 1 1 1 5)
+   :s :top))
