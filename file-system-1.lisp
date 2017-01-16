@@ -22,7 +22,7 @@
                       (fs-p entry))))))
          (fs-p (cdr fs)))))
 
-(defthm alistp-fp-p
+(defthm alistp-fs-p
   (implies (fs-p fs)
            (alistp fs)))
 
@@ -87,7 +87,21 @@
 ; Prove (list-of-chars-to-string (string-to-chars str))
 ;       (string-to-chars (list-of-chars-to-string char-list))
 ; and then, you will be positioned to use either form.
+#||From :doc STR::STD/STRINGS/COERCE
+  Theorem: <coerce-inverse-1-better>
 
+    (defthm coerce-inverse-1-better
+            (equal (coerce (coerce x 'string) 'list)
+                   (if (stringp x)
+                       nil (make-character-list x))))
+
+  Theorem: <coerce-inverse-2-better>
+
+    (defthm coerce-inverse-2-better
+            (equal (coerce (coerce x 'list) 'string)
+                   (if (stringp x) x "")))
+That takes care of that
+||#
 ; Correspond (or not) with Linux system calls -- the low-level stuff...
 
 ; Add file -- or, if you will, create a file with some initial contents
