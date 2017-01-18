@@ -102,7 +102,32 @@
                 (cons (cons (car sd) (unlink (cdr hns) contents)) (delete-assoc (car hns) fs))))))))
     ))
 
+(defthm wrchs-guard-lemma-1
+  (implies (and (character-listp l) (character-listp acc) (<= n (len l)))
+           (character-listp (first-n-ac n l acc))))
+
+(defthm wrchs-guard-lemma-2
+  (implies (and (character-listp l))
+           (character-listp (nthcdr n l))))
+
 ; Add wrchs...
+(defun wrchs (hns fs start text)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (fs-p fs)
+                              (natp start)
+                              (stringp text))))
+  (let ((file (stat hns fs)))
+    (if (not (stringp file))
+        nil
+      (let ((file-length (length file))
+            (end (+ start (length text))))
+        (if (< file-length end)
+            nil
+          (coerce
+           (append (take start (coerce file 'list))
+                   (coerce text 'list)
+                   (nthcdr end (coerce file 'list)))
+           'string))))))
 
 ; Find length of file
 
