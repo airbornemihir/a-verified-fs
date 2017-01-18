@@ -21,6 +21,10 @@
                         (stringp entry)
                       (fs-p entry))))))
          (fs-p (cdr fs)))))
+;; this definition includes a stipulation that empty directories don't
+;; exist. this is a possible definition of directories, but not a very good
+;; one. see the example below - it will be nil.
+(defconst *test01* (fs-p '((a . "Mihir") (b . "Warren") (c))))
 
 (defthm alistp-fs-p
   (implies (fs-p fs)
@@ -79,6 +83,24 @@
 ; More for Mihir to do...
 
 ; Delete file
+(defun unlink (hns fs)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (fs-p fs))))
+  (if (atom hns)
+      fs ;;error case, basically
+    (if (atom (cdr hns))
+        (delete-assoc (car hns) fs)
+      (if (atom fs)
+          nil
+        (let ((sd (assoc (car hns) fs)))
+          (if (atom sd)
+              fs
+            (let ((contents (cdr sd)))
+              (if (atom contents)
+                  (and (null (cdr hns))
+                       contents)
+                (cons (cons (car sd) (unlink (cdr hns) contents)) (delete-assoc (car hns) fs))))))))
+    ))
 
 ; Add wrchs...
 
@@ -119,3 +141,8 @@ That takes care of that
 (stat (@ h2) (@ fs))
 (stat (@ h3) (@ fs))
 (stat (@ h4) (@ fs))
+
+(unlink (@ h1) (@ fs))
+(unlink (@ h2) (@ fs))
+(unlink (@ h3) (@ fs))
+(unlink (@ h4) (@ fs))
