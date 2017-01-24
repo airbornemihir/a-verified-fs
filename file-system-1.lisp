@@ -108,6 +108,7 @@
            (character-listp (nthcdr n l))))
 
 ; Add wrchs...
+; note: this definition doesn't allow writing past the end of the file.
 (defun wrchs (hns fs start text)
   (declare (xargs :guard (and (symbol-listp hns)
                               (fs-p fs)
@@ -127,6 +128,13 @@
            'string))))))
 
 ; Find length of file
+(defun wc-len (hns fs)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (fs-p fs))))
+  (let ((file (stat hns fs)))
+    (if (not (stringp file))
+        nil
+      (length file))))
 
 ; Prove (list-of-chars-to-string (string-to-chars str))
 ;       (string-to-chars (list-of-chars-to-string char-list))
