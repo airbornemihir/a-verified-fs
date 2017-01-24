@@ -17,13 +17,10 @@
              (let ((name (car directory-or-file-entry))
                    (entry (cdr directory-or-file-entry)))
                (and (symbolp name)
-                    (if (atom entry)
-                        (stringp entry)
-                      (fs-p entry))))))
+                    (or (stringp entry) (fs-p entry))))))
          (fs-p (cdr fs)))))
-;; this definition includes a stipulation that empty directories don't
-;; exist. this is a possible definition of directories, but not a very good
-;; one. see the example below - it will be nil.
+;; this example - which evaluates to t - remains as a counterexample to an
+;; erstwhile bug.
 (defconst *test01* (fs-p '((a . "Mihir") (b . "Warren") (c))))
 
 (defthm alistp-fs-p
