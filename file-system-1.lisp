@@ -108,24 +108,35 @@
            (character-listp (nthcdr n l))))
 
 ; Add wrchs...
-; note: this definition doesn't allow writing past the end of the file.
+; The problem with this definition of wrchs is that it deletes a directory if
+; it's found where a text file is expected
 (defun wrchs (hns fs start text)
   (declare (xargs :guard (and (symbol-listp hns)
-                              (fs-p fs)
+                              (or (stringp fs) (fs-p fs))
                               (natp start)
                               (stringp text))))
-  (let ((file (stat hns fs)))
-    (if (not (stringp file))
-        nil
-      (let ((file-length (length file))
-            (end (+ start (length text))))
-        (if (< file-length end)
+  (if (atom hns)
+      (let ((file fs))
+        (if (not (stringp file))
             nil
-          (coerce
-           (append (take start (coerce file 'list))
-                   (coerce text 'list)
-                   (nthcdr end (coerce file 'list)))
-           'string))))))
+          (let ((file-length (length file))
+                (end (+ start (length text))))
+            (if (< file-length start)
+                nil
+              (coerce
+               (append (take start (coerce file 'list))
+                       (coerce text 'list)
+                       (nthcdr end (coerce file 'list)))
+               'string)))))
+    (if (atom fs)
+        nil
+      (let ((sd (assoc (car hns) fs)))
+        (if (atom sd)
+            nil
+          (let ((contents (cdr sd)))
+            (cons (cons (car sd) (wrchs (cdr hns) contents start text))
+                  (delete-assoc (car hns) fs))
+            ))))))
 
 ; Find length of file
 (defun wc-len (hns fs)
@@ -171,6 +182,14 @@ That takes care of that
 (stat (@ h2) (@ fs))
 (stat (@ h3) (@ fs))
 (stat (@ h4) (@ fs))
+
+(wc-len (@ h1) (@ fs))
+(wc-len (@ h2) (@ fs))
+(wc-len (@ h3) (@ fs))
+(wc-len (@ h4) (@ fs))
+
+(wrchs (@ h1) (@ fs) 1 "athur")
+(wrchs (@ h3) (@ fs) 1 "offman")
 
 (unlink (@ h1) (@ fs))
 (unlink (@ h2) (@ fs))
