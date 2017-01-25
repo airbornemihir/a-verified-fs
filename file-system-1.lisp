@@ -7,6 +7,9 @@
 
 (include-book "misc/assert" :dir :system)
 
+(defthm make-character-list-makes-character-list
+  (character-listp (make-character-list x)))
+
 (defun fs-p (fs)
   (declare (xargs :guard t))
   (if (atom fs)
@@ -119,15 +122,13 @@
       (let ((file fs))
         (if (not (stringp file))
             file ;; error, so leave fs unchanged 
-          (let ((file-length (length file))
+          (let (
                 (end (+ start (length text))))
-            (if (< file-length start)
-                nil
-              (coerce
-               (append (take start (coerce file 'list))
-                       (coerce text 'list)
-                       (nthcdr end (coerce file 'list)))
-               'string)))))
+            (coerce
+             (append (make-character-list (take start (coerce file 'list)))
+                     (coerce text 'list)
+                     (nthcdr end (coerce file 'list)))
+             'string))))
     (if (atom fs)
         nil
       (let ((sd (assoc (car hns) fs)))
@@ -156,7 +157,7 @@
 (defthm wrchs-returns-fs
   (implies (and (symbol-listp hns) (fs-p fs))
            (fs-p (wrchs hns fs start text)))
-  :hints (("Subgoal *1/7''" :use (:instance wrchs-returns-fs-lemma-3 (s (car hns)))) ))
+  :hints (("Subgoal *1/6''" :use (:instance wrchs-returns-fs-lemma-3 (s (car hns)))) ))
 
 ; Find length of file
 (defun wc-len (hns fs)
@@ -209,7 +210,8 @@ That takes care of that
 (wc-len (@ h4) (@ fs))
 
 (wrchs (@ h1) (@ fs) 1 "athur")
-(wrchs (@ h3) (@ fs) 1 "offman")
+(wrchs (@ h3) (@ fs) 1 "inojosa")
+(wrchs (@ h3) (@ fs) 5 "Alvarez")
 
 (unlink (@ h1) (@ fs))
 (unlink (@ h2) (@ fs))
