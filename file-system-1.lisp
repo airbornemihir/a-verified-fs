@@ -118,7 +118,7 @@
   (if (atom hns)
       (let ((file fs))
         (if (not (stringp file))
-            nil
+            file ;; error, so leave fs unchanged 
           (let ((file-length (length file))
                 (end (+ start (length text))))
             (if (< file-length start)
@@ -132,11 +132,31 @@
         nil
       (let ((sd (assoc (car hns) fs)))
         (if (atom sd)
-            nil
+            fs ;; error, so leave fs unchanged 
           (let ((contents (cdr sd)))
             (cons (cons (car sd) (wrchs (cdr hns) contents start text))
                   (delete-assoc (car hns) fs))
             ))))))
+
+(defthm wrchs-returns-fs-lemma-1
+  (implies (and (consp (assoc-equal s fs))
+                (fs-p fs))
+           (symbolp (car (assoc-equal s fs)))))
+
+(defthm wrchs-returns-fs-lemma-2
+  (implies (fs-p fs)
+           (fs-p (delete-assoc-equal s fs))))
+
+(defthm wrchs-returns-fs-lemma-3
+  (implies (and (consp fs) (fs-p fs)
+                (consp (assoc-equal s fs))
+                (not (stringp (cdr (assoc-equal s fs)))))
+           (fs-p (cdr (assoc-equal s fs)))))
+
+(defthm wrchs-returns-fs
+  (implies (and (symbol-listp hns) (fs-p fs))
+           (fs-p (wrchs hns fs start text)))
+  :hints (("Subgoal *1/7''" :use (:instance wrchs-returns-fs-lemma-3 (s (car hns)))) ))
 
 ; Find length of file
 (defun wc-len (hns fs)
