@@ -111,12 +111,17 @@
             (let ((contents (cdr sd)))
               (if (stringp (car contents))
                   (and (null (cdr hns))
-                       contents)
-                (cons (cons (car sd) (unlink (cdr hns) contents)) (delete-assoc (car hns) fs))))))))
+                       contents)  ;; We still need to remove the pair (delete-assoc (car hns) fs)
+                ;; Mihir:  Consider this...
+                (cons (cons (car sd)
+                            (unlink (cdr hns) contents))
+                      (delete-assoc (car hns) fs))))))))
     ))
 
 (defthm wrchs-guard-lemma-1
-  (implies (and (character-listp l) (character-listp acc) (<= n (len l)))
+  (implies (and (character-listp l)
+                (character-listp acc)
+                (<= n (len l)))
            (character-listp (first-n-ac n l acc))))
 
 (defthm wrchs-guard-lemma-2
@@ -147,7 +152,7 @@
 ;;   (if (atom hns)
 ;;       (let ((file fs))
 ;;         (if (not (and (consp file) (stringp (car file))))
-;;             file ;; error, so leave fs unchanged 
+;;             file ;; error, so leave fs unchanged
 ;;           (let* (
 ;;                  (end (+ start (length text)))
 ;;                  (oldtext (coerce (car file) 'list))
@@ -162,7 +167,7 @@
 ;;         nil
 ;;       (let ((sd (assoc (car hns) fs)))
 ;;         (if (or (atom sd) (and (consp (cdr sd)) (stringp (cadr sd))) )
-;;             fs ;; error, so leave fs unchanged 
+;;             fs ;; error, so leave fs unchanged
 ;;           (let ((contents (cdr sd)))
 ;;             (cons (cons (car sd) (wrchs (cdr hns) contents start text))
 ;;                   (delete-assoc (car hns) fs))
@@ -181,13 +186,13 @@
         nil ;; error, so leave fs unchanged
       (let ((sd (assoc (car hns) fs)))
         (if (atom sd)
-            fs ;; file-not-found error, so leave fs unchanged 
+            fs ;; file-not-found error, so leave fs unchanged
           (let ((contents (cdr sd)))
             (cons (cons (car sd)
                         (if (and (consp (cdr sd)) (stringp (cadr sd)))
                             (let ((file (cdr sd)))
                               (if (not (and (consp file) (stringp (car file))))
-                                  file ;; error, so leave fs unchanged 
+                                  file ;; error, so leave fs unchanged
                                 (let* (
                                        (end (+ start (length text)))
                                        (oldtext (coerce (car file) 'list))
@@ -201,6 +206,9 @@
                           (wrchs (cdr hns) contents start text)))
                   (delete-assoc (car hns) fs))
             ))))))
+
+; Mihir, run some example and provide some ASSERT$ events.
+
 
 (defthm wrchs-returns-fs-lemma-1
   (implies (and (consp (assoc-equal s fs))
