@@ -109,14 +109,18 @@
           (if (atom sd)
               fs
             (let ((contents (cdr sd)))
-              (if (stringp (car contents))
-                  (and (null (cdr hns))
-                       contents)  ;; We still need to remove the pair (delete-assoc (car hns) fs)
-                ;; Mihir:  Consider this...
+              (if (stringp (car contents)) 
+                  fs ;; we still have names but we're at a regular file - error
                 (cons (cons (car sd)
                             (unlink (cdr hns) contents))
                       (delete-assoc (car hns) fs))))))))
     ))
+
+;; putting these lemmas on the back burner because we would need to add uniquep
+;; to our fs-p definition to make this work
+;; (defthm unlink-works-lemma-1 (not (assoc-equal key (delete-assoc-equal key alist))))
+
+;; (defthm unlink-works (implies (fs-p fs) (not (stat hns (unlink hns fs)))))
 
 (defthm wrchs-guard-lemma-1
   (implies (and (character-listp l)
@@ -139,42 +143,6 @@
            (character-listp (nthcdr n (coerce str 'list)))))
 
 ; Add wrchs...
-<<<<<<< d06bad337ac6d10dbca02b470164d9587665bfa2
-; The problem with this definition of wrchs is that it deletes a directory if
-; it's found where a text file is expected
-;; (defun wrchs (hns fs start text)
-;;   (declare (xargs :guard-debug t
-;;                   :guard (and (symbol-listp hns)
-;;                               (or (stringp fs) (fs-p fs))
-;;                               (natp start)
-;;                               (stringp text))
-;;                   :guard-hints
-;;                   (("Subgoal 1.4" :use (:instance wrchs-returns-fs-lemma-3 (s (car hns)))) )))
-;;   (if (atom hns)
-;;       (let ((file fs))
-;;         (if (not (and (consp file) (stringp (car file))))
-;;             file ;; error, so leave fs unchanged
-;;           (let* (
-;;                  (end (+ start (length text)))
-;;                  (oldtext (coerce (car file) 'list))
-;;                  (newtext (append (make-character-list (take start oldtext))
-;;                                   (coerce text 'list)
-;;                                   (nthcdr end oldtext)))
-;;                  (newlength (len newtext)))
-;;             (cons
-;;              (coerce newtext 'string)
-;;              newlength))))
-;;     (if (atom fs)
-;;         nil
-;;       (let ((sd (assoc (car hns) fs)))
-;;         (if (or (atom sd) (and (consp (cdr sd)) (stringp (cadr sd))) )
-;;             fs ;; error, so leave fs unchanged
-;;           (let ((contents (cdr sd)))
-;;             (cons (cons (car sd) (wrchs (cdr hns) contents start text))
-;;                   (delete-assoc (car hns) fs))
-;;             ))))))
-=======
->>>>>>> Add definition of fsck
 (defun wrchs (hns fs start text)
   (declare (xargs :guard-debug t
                   :guard (and (symbol-listp hns)
@@ -226,6 +194,10 @@
   (implies (and (fs-p fs))
            (fs-p (wrchs hns fs start text))))
 
+(defthm unlink-returns-fs
+  (implies (and (fs-p fs))
+           (fs-p (unlink hns fs))))
+
 (defun fsck (fs)
   (declare (xargs :guard (fs-p fs)))
   (or (atom fs)
@@ -250,6 +222,10 @@
 (defthm fsck-after-wrchs
   (implies (and (fs-p fs) (stringp text) (fsck fs))
            (fsck (wrchs hns fs start text))))
+
+(defthm fsck-after-unlink
+  (implies (and (fs-p fs) (fsck fs))
+           (fsck (unlink hns fs))))
 
 ; Find length of file
 (defun wc-len (hns fs)
