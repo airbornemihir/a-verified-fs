@@ -139,6 +139,7 @@
            (character-listp (nthcdr n (coerce str 'list)))))
 
 ; Add wrchs...
+<<<<<<< d06bad337ac6d10dbca02b470164d9587665bfa2
 ; The problem with this definition of wrchs is that it deletes a directory if
 ; it's found where a text file is expected
 ;; (defun wrchs (hns fs start text)
@@ -172,6 +173,8 @@
 ;;             (cons (cons (car sd) (wrchs (cdr hns) contents start text))
 ;;                   (delete-assoc (car hns) fs))
 ;;             ))))))
+=======
+>>>>>>> Add definition of fsck
 (defun wrchs (hns fs start text)
   (declare (xargs :guard-debug t
                   :guard (and (symbol-listp hns)
@@ -223,6 +226,15 @@
   (implies (and (symbol-listp hns) (fs-p fs))
            (fs-p (wrchs hns fs start text)))
   )
+
+(defun fsck (fs)
+  (declare (xargs :guard (fs-p fs)))
+  (or (atom fs)
+    (and (let ((directory-or-file-entry (car fs)))
+           (let ((entry (cdr directory-or-file-entry)))
+             (if (and (consp entry) (stringp (car entry)))
+                 (equal (len (car entry)) (cdr entry))
+               (fs-p (cdr fs))))))))
 
 ; Find length of file
 (defun wc-len (hns fs)
