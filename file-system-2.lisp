@@ -223,9 +223,8 @@
            (fs-p (delete-assoc-equal s fs))))
 
 (defthm wrchs-returns-fs
-  (implies (and (symbol-listp hns) (fs-p fs))
-           (fs-p (wrchs hns fs start text)))
-  )
+  (implies (and (fs-p fs))
+           (fs-p (wrchs hns fs start text))))
 
 (defun fsck (fs)
   (declare (xargs :guard (fs-p fs)))
@@ -233,8 +232,24 @@
     (and (let ((directory-or-file-entry (car fs)))
            (let ((entry (cdr directory-or-file-entry)))
              (if (and (consp entry) (stringp (car entry)))
-                 (equal (len (car entry)) (cdr entry))
-               (fs-p (cdr fs))))))))
+                 (equal (length (car entry)) (cdr entry))
+               (fsck entry))))
+         (fsck (cdr fs)))))
+
+(defthm fsck-after-wrchs-lemma-1
+  (implies (and (fs-p fs) (fsck fs))
+           (fsck (delete-assoc-equal name fs))))
+
+(defthm fsck-after-wrchs-lemma-2
+  (implies (and (fs-p fs) (fsck fs))
+           (fsck (cdr (assoc-equal (car hns) fs)))))
+
+(defthm fsck-after-wrchs-lemma-3
+  (implies (and (fs-p fs) (consp fs)) (not (stringp (car fs)))))
+
+(defthm fsck-after-wrchs
+  (implies (and (fs-p fs) (stringp text) (fsck fs))
+           (fsck (wrchs hns fs start text))))
 
 ; Find length of file
 (defun wc-len (hns fs)
