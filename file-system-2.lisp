@@ -194,7 +194,7 @@
             (cons (cons (car sd)
                         (if (and (consp (cdr sd)) (stringp (cadr sd)))
                             (let ((file (cdr sd)))
-                              (if (not (and (consp file) (stringp (car file))))
+                              (if (cdr hns)
                                   file ;; error, so leave fs unchanged
                                 (let* (
                                        (end (+ start (length text)))
@@ -221,6 +221,15 @@
 (defthm wrchs-returns-fs-lemma-2
   (implies (fs-p fs)
            (fs-p (delete-assoc-equal s fs))))
+
+(defthm wrchs-returns-fs-lemma-4
+  (implies (and (consp fs)
+                (consp (assoc-equal name fs))
+                (fs-p fs)
+                (consp (cdr (assoc-equal name fs)))
+                (stringp (cadr (assoc-equal name fs)))
+                )
+           (natp (cddr (assoc-equal name fs)))))
 
 (defthm wrchs-returns-fs
   (implies (and (fs-p fs))
@@ -272,42 +281,7 @@
                 (stringp (stat hns1 fs)))
            (stringp (stat hns1 (wrchs hns2 fs start2 text2)))))
 
-(defun wrchs (hns fs start text)
-  (declare (xargs :guard-debug t
-                  :guard (and (symbol-listp hns)
-                              (fs-p fs)
-                              (natp start)
-                              (stringp text))
-                  :guard-hints
-                  (("Subgoal 1.4" :use (:instance character-listp-coerce (str ()))) )))
-  (if (atom hns)
-      fs ;; error - showed up at fs with no name  - so leave fs unchanged
-    (if (atom fs)
-        nil ;; error, so leave fs unchanged
-      (let ((sd (assoc (car hns) fs)))
-        (if (atom sd)
-            fs ;; file-not-found error, so leave fs unchanged
-          (let ((contents (cdr sd)))
-            (cons (cons (car sd)
-                        (if (and (consp (cdr sd)) (stringp (cadr sd)))
-                            (let ((file (cdr sd)))
-                              (if (not (and (consp file) (stringp (car file))))
-                                  file ;; error, so leave fs unchanged
-                                (let* (
-                                       (end (+ start (length text)))
-                                       (oldtext (coerce (car file) 'list))
-                                       (newtext (append (make-character-list (take start oldtext))
-                                                        (coerce text 'list)
-                                                        (nthcdr end oldtext)))
-                                       (newlength (len newtext)))
-                                  (cons
-                                   (coerce newtext 'string)
-                                   newlength))))
-                          (wrchs (cdr hns) contents start text)))
-                  (delete-assoc (car hns) fs))
-            ))))))
-
-(defthm read-after-write-2-lemma-1
+(defthm read-after-write-2-lemma-2
   (implies (not (equal name1 name2))
            (equal (assoc-equal name1 (delete-assoc name2 alist))
                   (assoc-equal name1 alist))))
@@ -328,7 +302,7 @@
                 (cons (cons (car sd)
                             (if (and (consp (cdr sd)) (stringp (cadr sd)))
                                 (let ((file (cdr sd)))
-                                  (if (not (and (consp file) (stringp (car file))))
+                                  (if (cdr hns2)
                                       file ;; error, so leave fs unchanged
                                     (cons (car file) (cdr file))))
                               (induction-scheme (cdr hns1) (cdr hns2) contents)))
