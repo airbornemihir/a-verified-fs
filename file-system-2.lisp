@@ -271,21 +271,6 @@
                 (stringp (stat hns fs)))
            (equal (rdchs hns (wrchs hns fs start text) start n) text)))
 
-(defthm read-after-write-2-lemma-1
-  (implies (and (fs-p fs)
-                (stringp text2)
-                (symbol-listp hns1)
-                (symbol-listp hns2)
-                (not (equal hns1 hns2))
-                (natp start2)
-                (stringp (stat hns1 fs)))
-           (stringp (stat hns1 (wrchs hns2 fs start2 text2)))))
-
-(defthm read-after-write-2-lemma-2
-  (implies (not (equal name1 name2))
-           (equal (assoc-equal name1 (delete-assoc name2 alist))
-                  (assoc-equal name1 alist))))
-
 (defun induction-scheme (hns1 hns2 fs)
   (if (atom hns2)
       fs
@@ -308,6 +293,37 @@
                               (induction-scheme (cdr hns1) (cdr hns2) contents)))
                       (delete-assoc (car hns2) fs))
                 ))))))))
+
+(defthm read-after-write-2-lemma-1
+  (implies (fs-p fs)
+           (or (stringp (stat hns fs)) (fs-p (stat hns fs)))))
+
+(defthm read-after-write-2-lemma-2
+ (IMPLIES (AND (CONSP HNS2)
+               (CONSP FS)
+               (CONSP HNS1)
+               (NOT (EQUAL (CAR HNS1) (CAR HNS2)))
+               (FS-P FS)
+               (SYMBOL-LISTP HNS1)
+               (SYMBOL-LISTP HNS2)
+               (assoc-equal (car hns1) fs))
+          (assoc-equal (car hns1) (WRCHS HNS2 FS START2 TEXT2))))
+
+(defthm read-after-write-2-lemma-3
+  (implies (and (fs-p fs)
+                (stringp text2)
+                (symbol-listp hns1)
+                (symbol-listp hns2)
+                (not (equal hns1 hns2))
+                (natp start2)
+                (stringp (stat hns1 fs)))
+           (stringp (stat hns1 (wrchs hns2 fs start2 text2))))
+  :instructions ((induct (induction-scheme hns1 hns2 fs)) ))
+
+(defthm read-after-write-2-lemma-4
+  (implies (not (equal name1 name2))
+           (equal (assoc-equal name1 (delete-assoc name2 alist))
+                  (assoc-equal name1 alist))))
 
 (defthm read-after-write-2
   (implies (and (fs-p fs)
