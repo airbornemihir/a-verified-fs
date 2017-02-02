@@ -262,6 +262,100 @@
                 (stringp (stat hns fs)))
            (equal (rdchs hns (wrchs hns fs start text) start n) text)))
 
+(defthm read-after-write-2-lemma-1
+  (implies (and (fs-p fs)
+                (stringp text2)
+                (symbol-listp hns1)
+                (symbol-listp hns2)
+                (not (equal hns1 hns2))
+                (natp start2)
+                (stringp (stat hns1 fs)))
+           (stringp (stat hns1 (wrchs hns2 fs start2 text2)))))
+
+(defun wrchs (hns fs start text)
+  (declare (xargs :guard-debug t
+                  :guard (and (symbol-listp hns)
+                              (fs-p fs)
+                              (natp start)
+                              (stringp text))
+                  :guard-hints
+                  (("Subgoal 1.4" :use (:instance character-listp-coerce (str ()))) )))
+  (if (atom hns)
+      fs ;; error - showed up at fs with no name  - so leave fs unchanged
+    (if (atom fs)
+        nil ;; error, so leave fs unchanged
+      (let ((sd (assoc (car hns) fs)))
+        (if (atom sd)
+            fs ;; file-not-found error, so leave fs unchanged
+          (let ((contents (cdr sd)))
+            (cons (cons (car sd)
+                        (if (and (consp (cdr sd)) (stringp (cadr sd)))
+                            (let ((file (cdr sd)))
+                              (if (not (and (consp file) (stringp (car file))))
+                                  file ;; error, so leave fs unchanged
+                                (let* (
+                                       (end (+ start (length text)))
+                                       (oldtext (coerce (car file) 'list))
+                                       (newtext (append (make-character-list (take start oldtext))
+                                                        (coerce text 'list)
+                                                        (nthcdr end oldtext)))
+                                       (newlength (len newtext)))
+                                  (cons
+                                   (coerce newtext 'string)
+                                   newlength))))
+                          (wrchs (cdr hns) contents start text)))
+                  (delete-assoc (car hns) fs))
+            ))))))
+
+(defthm read-after-write-2-lemma-1
+  (implies (not (equal name1 name2))
+           (equal (assoc-equal name1 (delete-assoc name2 alist))
+                  (assoc-equal name1 alist))))
+
+(defun induction-scheme (hns1 hns2 fs)
+  (if (atom hns2)
+      fs
+    (if (atom fs)
+        nil
+      (if (atom hns1)
+          fs
+        (if (not (equal (car hns1) (car hns2)))
+            fs
+          (let ((sd (assoc (car hns2) fs)))
+            (if (atom sd)
+                fs ;; file-not-found error, so leave fs unchanged
+              (let ((contents (cdr sd)))
+                (cons (cons (car sd)
+                            (if (and (consp (cdr sd)) (stringp (cadr sd)))
+                                (let ((file (cdr sd)))
+                                  (if (not (and (consp file) (stringp (car file))))
+                                      file ;; error, so leave fs unchanged
+                                    (cons (car file) (cdr file))))
+                              (induction-scheme (cdr hns1) (cdr hns2) contents)))
+                      (delete-assoc (car hns2) fs))
+                ))))))))
+
+(defthm read-after-write-2
+  (implies (and (fs-p fs)
+                (stringp text2)
+                (symbol-listp hns1)
+                (symbol-listp hns2)
+                (not (equal hns1 hns2))
+                (natp start1)
+                (natp start2)
+                (natp n1)
+                (stringp (stat hns1 fs)))
+           (equal (rdchs hns1 (wrchs hns2 fs start2 text2) start1 n1)
+                  (rdchs hns1 fs start1 n1)))
+  :instructions ((:induct (induction-scheme hns1 hns2 fs))
+                 (:change-goal nil t)
+                 :bash (:change-goal nil t)
+                 :bash
+                 :bash :bash :split (:change-goal nil t)
+                 :bash (:change-goal nil t)
+                 (:change-goal nil t)
+                 :bash (:change-goal nil t)))
+
 (defun fsck (fs)
   (declare (xargs :guard (fs-p fs)))
   (or (atom fs)
@@ -344,6 +438,7 @@ That takes care of that
 (wrchs (@ h1) (@ fs) 1 "athur")
 (wrchs (@ h3) (@ fs) 1 "inojosa")
 (wrchs (@ h3) (@ fs) 5 "Alvarez")
+(wrchs (@ h2) (@ fs) 1 "athur") ;; buggy example
 
 (unlink (@ h1) (@ fs))
 (unlink (@ h2) (@ fs))
