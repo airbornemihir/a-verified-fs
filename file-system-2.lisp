@@ -315,30 +315,11 @@
 ;; (stat (cdr hns1) (cdr (assoc (car hns1) fs))) = (induction hypothesis)
 ;; (stat hns1 fs)
 
-(defun induction-scheme (hns1 hns2 fs)
-  (if (atom hns1)
-      fs
-    (if (atom fs)
-        nil
-      (let ((sd (assoc (car hns2) fs)))
-        (if (atom sd)
-            fs
-          (if (atom hns2)
-              fs
-            (if (not (equal (car hns1) (car hns2)))
-                fs
-              (let ((contents (cdr sd)))
-                (if (atom (cdr hns1))
-                    (cons (cons (car sd)
-                                contents)
-                          (delete-assoc (car hns2) fs))
-                  (cons (cons (car sd)
-                              (induction-scheme (cdr hns1) (cdr hns2) contents))
-                        (delete-assoc (car hns2) fs)))
-                ))))
-        ))))
-
 (defthm read-after-write-2-lemma-1
+  (implies (fs-p fs)
+           (not (stringp (cdr (assoc-equal name fs))))))
+
+(defthm read-after-write-2-lemma-2
         (implies (and (consp hns1)
                       (consp fs)
                       (consp (assoc-equal (car hns1) fs))
@@ -355,32 +336,49 @@
                       (stringp (stat hns1 fs)))
                  (equal (stat hns1 (wrchs hns2 fs start2 text2))
                         (stat hns1 fs)))
-        :instructions
-        (:promote (:claim (consp (cdr hns2)))
-                  (:demote 14)
-                  (:dive 1 1)
-                  :x :top :promote
-                  (:claim (and (consp (cdr (assoc-equal (car hns1) fs)))
-                               (stringp (cadr (assoc-equal (car hns1) fs)))))
-                  (:dive 1 2)
-                  :x
-                  :up :x
-                  :up :bash))
+        :hints (("Goal" :expand (stat hns1 fs)) ))
 
-(defthm read-after-write-2-lemma-2
-  (implies (and (fs-p fs)
-                (stringp text2)
-                (symbol-listp hns1)
-                (symbol-listp hns2)
-                (not (equal hns1 hns2))
-                (natp start2)
-                (stringp (stat hns1 fs)))
-           (equal (stat hns1 (wrchs hns2 fs start2 text2)) (stat hns1 fs)))
-  :hints (("Goal"  :induct (induction-scheme hns1 hns2 fs))
-          ("Subgoal *1/7.1''" :in-theory (disable alistp-fs-p)
-           :use (:instance alistp-fs-p (fs (wrchs (cdr hns2)
-                                                  (cdr (assoc-equal (car hns1) fs))
-                                                  start2 text2))))))
+(encapsulate
+  ()
+  (local (defun induction-scheme (hns1 hns2 fs)
+           (if (atom hns1)
+               fs
+             (if (atom fs)
+                 nil
+               (let ((sd (assoc (car hns2) fs)))
+                 (if (atom sd)
+                     fs
+                   (if (atom hns2)
+                       fs
+                     (if (not (equal (car hns1) (car hns2)))
+                         fs
+                       (let ((contents (cdr sd)))
+                         (if (atom (cdr hns1))
+                             (cons (cons (car sd)
+                                         contents)
+                                   (delete-assoc (car hns2) fs))
+                           (cons (cons (car sd)
+                                       (induction-scheme (cdr hns1) (cdr hns2) contents))
+                                 (delete-assoc (car hns2) fs)))
+                         ))))
+                 )))))
+
+  (defthm read-after-write-2-lemma-3
+    (implies (and (fs-p fs)
+                  (stringp text2)
+                  (symbol-listp hns1)
+                  (symbol-listp hns2)
+                  (not (equal hns1 hns2))
+                  (natp start2)
+                  (stringp (stat hns1 fs)))
+             (equal (stat hns1 (wrchs hns2 fs start2 text2)) (stat hns1 fs)))
+    :hints (("Goal"  :induct (induction-scheme hns1 hns2 fs))
+            ("Subgoal *1/7.1''" :in-theory (disable alistp-fs-p)
+             :use (:instance alistp-fs-p (fs (wrchs (cdr hns2)
+                                                    (cdr (assoc-equal (car hns1) fs))
+                                                    start2 text2))))))
+
+  )
 
 (defthm read-after-write-2
   (implies (and (fs-p fs)
