@@ -315,27 +315,6 @@
 ;; (stat (cdr hns1) (cdr (assoc (car hns1) fs))) = (induction hypothesis)
 ;; (stat hns1 fs)
 
-;; (defun induction-scheme (hns1 hns2 fs)
-;;   (if (atom hns1)
-;;       fs
-;;     (if (atom fs)
-;;         nil
-;;       (let ((sd (assoc (car hns2) fs)))
-;;         (if (atom sd)
-;;             fs
-;;           (if (atom hns2)
-;;               fs
-;;             (if (not (equal (car hns1) (car hns2)))
-;;                 fs
-;;               (let ((contents (cdr sd)))
-;;                 (cons (cons (car sd)
-;;                             (if (atom (cdr hns1))
-;;                                 contents
-;;                               (induction-scheme (cdr hns1) (cdr hns2) contents)))
-;;                       (delete-assoc (car hns2) fs))
-;;                 ))))
-;;         ))))
-
 (defun induction-scheme (hns1 hns2 fs)
   (if (atom hns1)
       fs
