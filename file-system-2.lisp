@@ -416,6 +416,19 @@
 (defthm fsck-after-wrchs-lemma-3
   (implies (and (fs-p fs) (consp fs)) (not (stringp (car fs)))))
 
+(defthm fsck-after-wrchs-lemma-4
+  (implies (and (consp fs)
+                (consp (assoc-equal name fs))
+                (fs-p fs)
+                (stringp text)
+                (fsck fs)
+                (consp (cdr (assoc-equal name fs)))
+                (stringp (cadr (assoc-equal name fs))))
+           (equal (len (coerce (cadr (assoc-equal name fs))
+                               'list))
+                  (cddr (assoc-equal name fs))))
+)
+
 (defthm fsck-after-wrchs
   (implies (and (fs-p fs) (stringp text) (fsck fs))
            (fsck (wrchs hns fs start text))))
