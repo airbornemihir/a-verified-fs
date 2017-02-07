@@ -134,14 +134,16 @@
       (binary-append (car blocks)
                      (unmake-blocks (cdr blocks) (- n *blocksize*))))))
 
+(defthm unmake-blocks-correctness-1
+  (implies (and (block-listp blocks) (natp n)
+                (<= n (* (len blocks) *blocksize*))
+                (< (- (* (len blocks) *blocksize*) n) *blocksize*))
+           (character-listp (unmake-blocks blocks n))))
+
 (defthm unmake-make-blocks-lemma-1
         (implies (natp n)
                  (iff (consp (nthcdr n l)) (> (len l) n)))
         :hints (("Goal" :induct (nthcdr n l))))
-;; (defthm unmake-make-blocks-lemma-1
-;;         (implies (and (consp (nthcdr n l)) (natp n))
-;;                  (> (len l) n))
-;;         :hints (("Goal" :induct (nthcdr n l))))
 
 (defthm unmake-make-blocks-lemma-2
   (implies (and (natp n) (>= (len l) n))
@@ -162,12 +164,16 @@
              :use ((:instance take-of-too-many (x text) (n *blocksize*))
                    (:instance unmake-make-blocks-lemma-1 (n *blocksize*) (l
                                                                           text))))))
+
   )
 
 (defun bounded-nat-listp (l b)
   (if (atom b)
       (eq l nil)
     (and (natp (car l)) (< (car l) b) (bounded-nat-listp (cdr l) b))))
+
+;; gonna start returning this when a block is not found
+(defconst *nullblock* (make-character-list (take *blocksize* nil)))
 
 ;; i could have made bounded-nat-listp a guard for this function. i chose not
 ;; to, because guard-checking later on would require me to look at the length
@@ -180,27 +186,21 @@
                               (nat-listp index-list))))
   (if (atom index-list)
       nil
-    (if (>= (car index-list) (len block-list))
-        (fetch-blocks-by-indices block-list (cdr index-list))
-      (cons (nth (car index-list) block-list)
-            (fetch-blocks-by-indices block-list (cdr index-list)))
-      )))
+    (let ((tail (fetch-blocks-by-indices block-list (cdr index-list))) )
+      (if (>= (car index-list) (len block-list))
+          (cons *nullblock* tail)
+        (cons (nth (car index-list) block-list)
+              tail)
+        ))))
 
 (defthm fetch-blocks-by-indices-correctness-1
   (implies (and (block-listp block-list) (nat-listp index-list))
            (block-listp (fetch-blocks-by-indices block-list index-list))))
 
 (defthm fetch-blocks-by-indices-correctness-2
-  (implies (and (block-listp block-list)
-                (bounded-nat-listp index-list (len block-list)))
+  (implies (and (block-listp block-list) (nat-listp index-list))
            (equal (len (fetch-blocks-by-indices block-list index-list))
                   (len index-list))))
-
-(defthm fetch-blocks-by-indices-correctness-3
-  (implies (and (block-listp block-list) (nat-listp index-list))
-           (<= (len (fetch-blocks-by-indices block-list index-list))
-               (len index-list)))
-  :rule-classes :linear)
 
 (defun fs-p (fs)
   (declare (xargs :guard t))
@@ -216,7 +216,9 @@
                              (nat-listp (car entry))
                              (natp (cdr entry))
                              (> (cdr entry)
-                                (* *blocksize* (- (len (car entry)) 1))))
+                                (* *blocksize* (- (len (car entry)) 1)))
+                             (<= (cdr entry)
+                                 (* *blocksize* (len (car entry)))))
                         (fs-p entry))))))
          (fs-p (cdr fs)))))
 ;; this example - which evaluates to t - remains as a counterexample to an
@@ -244,8 +246,13 @@
                 (nat-listp (cadr (assoc-equal name fs)))
                 )
            (and (natp (cddr (assoc-equal name fs)))
-                (> (cdr (cdr (assoc-equal name fs)))
-                   (* *blocksize* (- (len (car (cdr (assoc-equal name fs)))) 1))))))
+                (< (+ (- (cddr (assoc-equal name fs)))
+                      (* *blocksize*
+                         (len (cadr (assoc-equal name fs)))))
+                   *blocksize*)
+                (>= (* *blocksize*
+                       (len (cadr (assoc-equal name fs))))
+                    (cddr (assoc-equal name fs))))))
 
 (defthm stat-guard-lemma-2
   (implies (and (consp fs) (fs-p fs)
@@ -273,8 +280,10 @@
           (let ((contents (cdr sd)))
             (if (and (consp contents) (nat-listp (car contents)))
                 (and (null (cdr hns))
-                     (unmake-blocks (fetch-blocks-by-indices disk (car contents))
-                                    (cdr contents)))
+                     (coerce
+                      (unmake-blocks (fetch-blocks-by-indices disk (car contents))
+                                     (cdr contents))
+                      'string))
               (stat (cdr hns) contents disk))))))))
 
 ;; (defthm stat-of-stat-lemma-1
