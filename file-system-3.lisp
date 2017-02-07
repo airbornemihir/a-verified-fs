@@ -164,6 +164,44 @@
                                                                           text))))))
   )
 
+(defun bounded-nat-listp (l b)
+  (if (atom b)
+      (eq l nil)
+    (and (natp (car l)) (< (car l) b) (bounded-nat-listp (cdr l) b))))
+
+;; i could have made bounded-nat-listp a guard for this function. i chose not
+;; to, because guard-checking later on would require me to look at the length
+;; of the disk while deciding fs-p for an fs, which strikes me as a bit too
+;; much for this model. as a consequence, i'm not going to heedlessly use nth -
+;; instead, i'm going to leave out blocks that don't actually exist. thus,
+;; we'll have only blocks and no nils.
+(defun fetch-blocks-by-indices (block-list index-list)
+  (declare (xargs :guard (and (block-listp block-list)
+                              (nat-listp index-list))))
+  (if (atom index-list)
+      nil
+    (if (>= (car index-list) (len block-list))
+        (fetch-blocks-by-indices block-list (cdr index-list))
+      (cons (nth (car index-list) block-list)
+            (fetch-blocks-by-indices block-list (cdr index-list)))
+      )))
+
+(defthm fetch-blocks-by-indices-correctness-1
+  (implies (and (block-listp block-list) (nat-listp index-list))
+           (block-listp (fetch-blocks-by-indices block-list index-list))))
+
+(defthm fetch-blocks-by-indices-correctness-2
+  (implies (and (block-listp block-list)
+                (bounded-nat-listp index-list (len block-list)))
+           (equal (len (fetch-blocks-by-indices block-list index-list))
+                  (len index-list))))
+
+(defthm fetch-blocks-by-indices-correctness-3
+  (implies (and (block-listp block-list) (nat-listp index-list))
+           (<= (len (fetch-blocks-by-indices block-list index-list))
+               (len index-list)))
+  :rule-classes :linear)
+
 (defun fs-p (fs)
   (declare (xargs :guard t))
   (if (atom fs)
@@ -174,7 +212,11 @@
              (let ((name (car directory-or-file-entry))
                    (entry (cdr directory-or-file-entry)))
                (and (symbolp name)
-                    (or (and (consp entry) (stringp (car entry)) (natp (cdr entry)))
+                    (or (and (consp entry)
+                             (nat-listp (car entry))
+                             (natp (cdr entry))
+                             (> (cdr entry)
+                                (* *blocksize* (- (len (car entry)) 1))))
                         (fs-p entry))))))
          (fs-p (cdr fs)))))
 ;; this example - which evaluates to t - remains as a counterexample to an
@@ -185,12 +227,6 @@
   (implies (fs-p fs)
            (alistp fs)))
 
-;; (defthm fs-p-assoc
-;;   (implies (and (fs-p fs)
-;;                 (consp (assoc-equal name fs))
-;;                 (consp (cdr (assoc-equal name fs))))
-;;            (fs-p (cdr (assoc-equal name fs)))))
-
 (defthm fs-p-assoc
   (implies (and (fs-p fs)
                 (consp (assoc-equal name fs))
@@ -198,11 +234,35 @@
            (fs-p (cdr (assoc-equal name fs)))))
 
 (assert!
- (fs-p '((a "Mihir" . 5) (b "Warren" . 6) (c (a "Mehta" . 5) (b "Hunt" . 4)))))
+ (fs-p '((a (1 2) . 10) (b (3 4) . 11) (c (a (5 6) . 12) (b (7 8) . 13)))))
 
-(defun stat (hns fs)
-  (declare (xargs :guard (and (symbol-listp hns)
-                              (fs-p fs))))
+(defthm stat-guard-lemma-1
+  (implies (and (consp fs)
+                (consp (assoc-equal name fs))
+                (fs-p fs)
+                (consp (cdr (assoc-equal name fs)))
+                (nat-listp (cadr (assoc-equal name fs)))
+                )
+           (and (natp (cddr (assoc-equal name fs)))
+                (> (cdr (cdr (assoc-equal name fs)))
+                   (* *blocksize* (- (len (car (cdr (assoc-equal name fs)))) 1))))))
+
+(defthm stat-guard-lemma-2
+  (implies (and (consp fs) (fs-p fs)
+                (consp (assoc-equal s fs))
+                (not (and (consp (cdr (assoc-equal s fs)))
+                          (nat-listp (cadr (assoc-equal s fs))))))
+           (fs-p (cdr (assoc-equal s fs)))))
+
+(defun stat (hns fs disk)
+  (declare (xargs :guard-debug t
+                  :guard (and (symbol-listp hns)
+                              (fs-p fs)
+                              (block-listp disk))
+                  :guard-hints (("Subgoal 2.2'"
+                                 :in-theory (disable stat-guard-lemma-1)
+                                 :use (:instance stat-guard-lemma-1
+                                                 (name (car hns)))))))
   (if (atom hns)
       fs
     (if (atom fs)
@@ -211,16 +271,17 @@
         (if (atom sd)
             nil
           (let ((contents (cdr sd)))
-            (if (stringp (car contents))
+            (if (and (consp contents) (nat-listp (car contents)))
                 (and (null (cdr hns))
-                     (car contents))
-              (stat (cdr hns) contents))))))))
+                     (unmake-blocks (fetch-blocks-by-indices disk (car contents))
+                                    (cdr contents)))
+              (stat (cdr hns) contents disk))))))))
 
-(defthm stat-of-stat-lemma-1
-  (implies (and (consp (assoc-equal (car outside) fs))
-                (not (stringp (cadr (assoc-equal (car outside) fs))))
-                (fs-p fs))
-           (fs-p (cdr (assoc-equal (car outside) fs)))))
+;; (defthm stat-of-stat-lemma-1
+;;   (implies (and (consp (assoc-equal (car outside) fs))
+;;                 (not (nat-listp (cadr (assoc-equal (car outside) fs))))
+;;                 (fs-p fs))
+;;            (fs-p (cdr (assoc-equal (car outside) fs)))))
 
 (defthm stat-of-stat
   (implies (and (symbol-listp inside)
@@ -276,12 +337,6 @@
 
 ;; (defthm unlink-works (implies (fs-p fs) (not (stat hns (unlink hns fs)))))
 
-(defthm wrchs-returns-fs-lemma-3
-  (implies (and (consp fs) (fs-p fs)
-                (consp (assoc-equal s fs))
-                (not (stringp (cadr (assoc-equal s fs)))))
-           (fs-p (cdr (assoc-equal s fs)))))
-
 (defthm wrchs-guard-lemma-1
   (implies (and (stringp str))
            (character-listp (nthcdr n (coerce str 'list)))))
@@ -333,15 +388,6 @@
 (defthm wrchs-returns-fs-lemma-2
   (implies (fs-p fs)
            (fs-p (delete-assoc-equal s fs))))
-
-(defthm wrchs-returns-fs-lemma-4
-  (implies (and (consp fs)
-                (consp (assoc-equal name fs))
-                (fs-p fs)
-                (consp (cdr (assoc-equal name fs)))
-                (stringp (cadr (assoc-equal name fs)))
-                )
-           (natp (cddr (assoc-equal name fs)))))
 
 (defthm wrchs-returns-fs
   (implies (and (fs-p fs))
