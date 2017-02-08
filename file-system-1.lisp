@@ -10,6 +10,41 @@
 (defthm make-character-list-makes-character-list
   (character-listp (make-character-list x)))
 
+(defthm make-character-list-makes-character-list
+  (character-listp (make-character-list x)))
+
+(defthm len-of-binary-append
+  (equal (len (binary-append x y)) (+ (len x) (len y))))
+
+(defthm len-of-make-character-list
+  (equal (len (make-character-list x)) (len x)))
+
+(defthm len-of-revappend
+  (equal (len (revappend x y)) (+ (len x) (len y))))
+
+(defthm len-of-first-n-ac
+  (implies (natp i) (equal (len (first-n-ac i l ac)) (+ i (len ac)))))
+
+(defthm nthcdr-of-binary-append-1
+  (implies (and (integerp n) (>= n (len x)))
+           (equal (nthcdr n (binary-append x y))
+                  (nthcdr (- n (len x)) y)))
+  :hints (("Goal" :induct (nthcdr n x)) ))
+
+(defthm first-n-ac-of-binary-append-1
+  (implies (and (natp i) (<= i (len x)))
+           (equal (first-n-ac i (binary-append x y) ac)
+                  (first-n-ac i x ac))))
+
+(defthm by-slice-you-mean-the-whole-cake
+  (implies (true-listp l)
+           (equal (first-n-ac (len l) l ac)
+                  (revappend ac l)))
+  :hints (("Goal" :induct (revappend l ac)) )
+  :rule-classes ((:rewrite :corollary
+                           (implies (and (true-listp l) (equal i (len l)))
+                                    (equal (first-n-ac i l ac) (revappend ac l)))) ))
+
 (defun fs-p (fs)
   (declare (xargs :guard t))
   (if (atom fs)
@@ -158,6 +193,31 @@
   (implies (and (symbol-listp hns) (fs-p fs))
            (fs-p (wrchs hns fs start text)))
   :hints (("Subgoal *1/6''" :use (:instance wrchs-returns-fs-lemma-3 (s (car hns)))) ))
+
+(defthm unlink-returns-fs
+  (implies (and (fs-p fs))
+           (fs-p (unlink hns fs))))
+
+(defthm read-after-write-1-lemma-1
+  (implies (consp (assoc-equal name alist))
+           (equal (car (assoc-equal name alist)) name)))
+
+(defthm read-after-write-1-lemma-2
+  (implies (and (fs-p fs) (stringp text) (stringp (stat hns fs)))
+           (stringp (stat hns (wrchs hns fs start text)))))
+
+(defthm read-after-write-1-lemma-3
+  (implies (rdchs hns fs start n)
+           (stringp (stat hns fs))))
+
+(defthm read-after-write-1
+  (implies (and (fs-p fs)
+                (stringp text)
+                (symbol-listp hns)
+                (natp start)
+                (equal n (length text))
+                (stringp (stat hns fs)))
+           (equal (rdchs hns (wrchs hns fs start text) start n) text)))
 
 ; Find length of file
 (defun wc-len (hns fs)
