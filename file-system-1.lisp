@@ -45,6 +45,11 @@
                            (implies (and (true-listp l) (equal i (len l)))
                                     (equal (first-n-ac i l ac) (revappend ac l)))) ))
 
+(defthm assoc-after-delete-assoc
+  (implies (not (equal name1 name2))
+           (equal (assoc-equal name1 (delete-assoc name2 alist))
+                  (assoc-equal name1 alist))))
+
 (defun fs-p (fs)
   (declare (xargs :guard t))
   (if (atom fs)
@@ -156,7 +161,7 @@
   (if (atom hns)
       (let ((file fs))
         (if (not (stringp file))
-            file ;; error, so leave fs unchanged 
+            file ;; error, so leave fs unchanged
           (let (
                 (end (+ start (length text))))
             (coerce
@@ -165,10 +170,10 @@
                      (nthcdr end (coerce file 'list)))
              'string))))
     (if (atom fs)
-        nil
+        fs ;; error, so leave fs unchanged
       (let ((sd (assoc (car hns) fs)))
         (if (atom sd)
-            fs ;; error, so leave fs unchanged 
+            fs ;; error, so leave fs unchanged
           (let ((contents (cdr sd)))
             (cons (cons (car sd) (wrchs (cdr hns) contents start text))
                   (delete-assoc (car hns) fs))
@@ -218,6 +223,62 @@
                 (equal n (length text))
                 (stringp (stat hns fs)))
            (equal (rdchs hns (wrchs hns fs start text) start n) text)))
+
+(defthm read-after-write-2-lemma-1
+  (implies (fs-p fs)
+           (not (stringp (assoc-equal name fs)))))
+
+(defthm read-after-write-2-lemma-2
+  (implies (and (consp hns1)
+                (consp fs)
+                (consp (assoc-equal (car hns1) fs))
+                (fs-p fs)
+                (symbolp (car hns1))
+                (not (cdr hns1))
+                (stringp (stat hns1 fs)))
+           (equal (stat hns1 fs) (cdr (assoc (car hns1) fs)))))
+
+(encapsulate
+  ()
+  (local (defun induction-scheme (hns1 hns2 fs)
+           (if (atom hns1)
+               fs
+             (if (atom fs)
+                 nil
+               (let ((sd (assoc (car hns2) fs)))
+                 (if (atom sd)
+                     fs
+                   (if (atom hns2)
+                       fs
+                     (if (not (equal (car hns1) (car hns2)))
+                         fs
+                       (let ((contents (cdr sd)))
+                         (if (atom (cdr hns1))
+                             (cons (cons (car sd)
+                                         contents)
+                                   (delete-assoc (car hns2) fs))
+                           (cons (cons (car sd)
+                                       (induction-scheme (cdr hns1) (cdr hns2) contents))
+                                 (delete-assoc (car hns2) fs)))
+                         ))))
+                 )))))
+
+  (defthm read-after-write-2-lemma-3
+    (implies (and (fs-p fs)
+                  (stringp text2)
+                  (symbol-listp hns1)
+                  (symbol-listp hns2)
+                  (not (equal hns1 hns2))
+                  (natp start2)
+                  (stringp (stat hns1 fs)))
+             (equal (stat hns1 (wrchs hns2 fs start2 text2)) (stat hns1 fs)))
+    :hints (("Goal"  :induct (induction-scheme hns1 hns2 fs))
+            ("Subgoal *1/7.1''" :in-theory (disable alistp-fs-p)
+             :use (:instance alistp-fs-p (fs (wrchs (cdr hns2)
+                                                    (cdr (assoc-equal (car hns1) fs))
+                                                    start2 text2))))))
+
+  )
 
 ; Find length of file
 (defun wc-len (hns fs)
