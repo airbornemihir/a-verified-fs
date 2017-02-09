@@ -3,9 +3,6 @@
 (defthm make-character-list-makes-character-list
   (character-listp (make-character-list x)))
 
-(defthm make-character-list-makes-character-list
-  (character-listp (make-character-list x)))
-
 (defthm len-of-binary-append
   (equal (len (binary-append x y)) (+ (len x) (len y))))
 
@@ -47,6 +44,6 @@
   (implies (and (character-listp l) (character-listp acc) (<= n (len l)))
            (character-listp (first-n-ac n l acc))))
 
-(defthm wrchs-guard-lemma-2
+(defthm character-listp-of-nthcdr
   (implies (and (character-listp l))
            (character-listp (nthcdr n l))))
