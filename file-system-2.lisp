@@ -26,6 +26,23 @@
 ;; erstwhile bug.
 (defconst *test01* (l2-fs-p '((a  "Mihir" . 5) (b "Warren" . 6) (c))))
 
+(defun l2-to-l1-fs (fs)
+  (declare (xargs :guard (l2-fs-p fs)))
+  (if (atom fs)
+      fs
+    (cons (let* ((directory-or-file-entry (car fs))
+                 (name (car directory-or-file-entry))
+                 (entry (cdr directory-or-file-entry)))
+            (cons name
+                (if (and (consp entry) (stringp (car entry)))
+                    (car entry)
+                  (l2-to-l1-fs entry))))
+          (l2-to-l1-fs (cdr fs)))))
+
+(defthm l2-to-l1-fs-correctness-1
+  (implies (l2-fs-p fs)
+           (l1-fs-p (l2-to-l1-fs fs))))
+
 (defthm alistp-l2-fs-p
   (implies (l2-fs-p fs)
            (alistp fs)))
