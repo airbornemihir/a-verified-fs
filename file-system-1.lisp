@@ -48,10 +48,16 @@
         (if (atom sd)
             nil
           (let ((contents (cdr sd)))
-            (if (atom contents)
+            (if (stringp contents)
                 (and (null (cdr hns))
                      contents)
               (l1-stat (cdr hns) contents))))))))
+
+(defthm l1-stat-of-l1-stat-lemma-1
+  (implies (and (L1-FS-P FS)
+                (CONSP (ASSOC-EQUAL name FS))
+                (NOT (STRINGP (CDR (ASSOC-EQUAL name FS)))))
+           (L1-FS-P (CDR (ASSOC-EQUAL name FS)))))
 
 (defthm l1-stat-of-l1-stat
   (implies (and (symbol-listp inside)
