@@ -72,11 +72,45 @@
                      (car contents))
               (l2-stat (cdr hns) contents))))))))
 
-(defthm l2-stat-of-l2-stat-lemma-1
-  (implies (and (consp (assoc-equal (car outside) fs))
-                (not (stringp (cadr (assoc-equal (car outside) fs))))
+(defthm l2-stat-correctness-1-lemma-1
+  (implies (and (l2-fs-p fs))
+           (iff (consp (assoc-equal name (l2-to-l1-fs fs)))
+                (consp (assoc-equal name fs)))))
+
+(defthm l2-stat-correctness-1-lemma-2
+  (implies (and (l2-fs-p fs)
+                (consp (assoc-equal name fs))
+                (consp (cdr (assoc-equal name fs)))
+                (stringp (car (cdr (assoc-equal name fs)))))
+           (equal (cdr (assoc-equal name (l2-to-l1-fs fs)))
+                  (car (cdr (assoc-equal name fs))))))
+
+(defthm l2-stat-correctness-1-lemma-3
+  (implies (and (l2-fs-p fs)
+                (consp (assoc-equal name fs))
+                (not (and (consp (cdr (assoc-equal name fs)))
+                          (stringp (car (cdr (assoc-equal name fs)))))))
+           (equal (cdr (assoc-equal name (l2-to-l1-fs fs)))
+                  (l2-to-l1-fs (cdr (assoc-equal name fs))))))
+
+(defthm l2-stat-correctness-1-lemma-4
+  (implies (and (l2-fs-p fs) (stringp (cadr (assoc-equal name fs))))
+           (equal (cdr (assoc-equal name (l2-to-l1-fs fs)))
+                  (cadr (assoc-equal name fs))
+                  )))
+
+(defthm l2-stat-correctness-1-lemma-5
+  (implies (and (consp (assoc-equal name fs))
+                (not (stringp (cadr (assoc-equal name fs))))
                 (l2-fs-p fs))
-           (l2-fs-p (cdr (assoc-equal (car outside) fs)))))
+           (l2-fs-p (cdr (assoc-equal name fs)))))
+
+(defthm l2-stat-correctness-1
+  (implies (and (symbol-listp hns)
+                (l2-fs-p fs)
+                (stringp (l2-stat hns fs)))
+           (equal (l1-stat hns (l2-to-l1-fs fs))
+                  (l2-stat hns fs))))
 
 (defthm l2-stat-of-l2-stat
   (implies (and (symbol-listp inside)
