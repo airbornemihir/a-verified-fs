@@ -112,6 +112,23 @@
            (equal (l1-stat hns (l2-to-l1-fs fs))
                   (l2-stat hns fs))))
 
+(defthm l2-stat-correctness-2-lemma-1
+  (implies (and (l2-fs-p fs) (consp (assoc-equal name fs)))
+           (implies (not (stringp (cadr (assoc-equal name fs))))
+                    (not (stringp (cdr (assoc-equal name (l2-to-l1-fs fs))))))))
+
+(defthm l2-stat-correctness-2-lemma-2
+  (implies (not (stringp fs))
+           (not (stringp (l2-to-l1-fs fs)))))
+
+(defthm l2-stat-correctness-2
+  (implies (and (symbol-listp hns)
+                (l2-fs-p fs)
+                (l2-fs-p (l2-stat hns fs)))
+           (equal (l1-stat hns (l2-to-l1-fs fs))
+                  (l2-to-l1-fs (l2-stat hns fs))))
+  )
+
 (defthm l2-stat-of-l2-stat
   (implies (and (symbol-listp inside)
                 (symbol-listp outside)
@@ -136,6 +153,14 @@
         (if (< file-length end)
             nil
           (subseq file start (+ start n)))))))
+
+(defthm l2-rdchs-correctness-1
+  (implies (and (symbol-listp hns)
+                (l1-fs-p fs)
+                (natp start)
+                (natp n))
+           (equal (l2-rdchs hns fs start n)
+                  (l1-rdchs hns (l2-to-l1-fs fs) start n))))
 
 ; More for Mihir to do...
 
