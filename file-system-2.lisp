@@ -129,7 +129,7 @@
                   (l2-to-l1-fs (l2-stat hns fs))))
   )
 
-(defthm l2-stat-of-l2-stat
+(defthm l2-stat-of-stat
   (implies (and (symbol-listp inside)
                 (symbol-listp outside)
                 (l2-stat outside fs)
@@ -154,9 +154,19 @@
             nil
           (subseq file start (+ start n)))))))
 
+(defthm l2-rdchs-correctness-1-lemma-1
+  (implies (and (l2-fs-p fs)
+                (symbol-listp hns)
+                (not (stringp (l2-stat hns fs))))
+           (not (stringp (l1-stat hns (l2-to-l1-fs fs))))))
+
+(defthm l2-rdchs-correctness-1-lemma-2
+  (implies (l2-fs-p fs)
+           (not (stringp (l2-to-l1-fs fs)))))
+
 (defthm l2-rdchs-correctness-1
   (implies (and (symbol-listp hns)
-                (l1-fs-p fs)
+                (l2-fs-p fs)
                 (natp start)
                 (natp n))
            (equal (l2-rdchs hns fs start n)
