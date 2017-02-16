@@ -29,22 +29,6 @@
 
 (defconst *blocksize* 8)
 
-(defthm len-of-nthcdr-1 (<= (len (nthcdr n l)) (len l)))
-
-(defthm len-of-nthcdr-2 (implies (atom l) (atom (nthcdr n l))))
-
-(defthm len-of-nthcdr-3
-  (implies (and (consp l) (integerp n) (> n 0))
-           (< (len (nthcdr n l)) (len l)))
-  :instructions (:induct (:use (:instance len-of-nthcdr-2 (n (+ -1 n))
-                                          (l (cdr l))))
-                         :split (:dive 1 1)
-                         :x :top (:dive 2)
-                         :x
-                         :top :bash
-                         :bash :bash
-                         :bash :bash))
-
 (defun make-blocks (text)
   (declare (xargs :guard (character-listp text)
                   :measure (len text)))

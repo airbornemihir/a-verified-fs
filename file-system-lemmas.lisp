@@ -54,3 +54,11 @@
 (defthm make-character-list-of-binary-append
   (equal (make-character-list (binary-append x y))
          (binary-append (make-character-list x) (make-character-list y))))
+
+(defthm len-of-nthcdr-1 (<= (len (nthcdr n l)) (len l))
+  :rule-classes :linear)
+
+(defthm len-of-nthcdr-2
+  (implies (and (consp l) (integerp n) (> n 0))
+           (< (len (nthcdr n l)) (len l)))
+  :rule-classes :linear)
