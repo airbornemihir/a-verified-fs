@@ -47,3 +47,6 @@
 (defthm character-listp-of-nthcdr
   (implies (and (character-listp l))
            (character-listp (nthcdr n l))))
+
+(defthm already-a-character-list
+  (implies (character-listp x) (equal (make-character-list x) x)))

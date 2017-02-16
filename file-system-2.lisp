@@ -290,6 +290,24 @@
   (implies (and (l2-fs-p fs))
            (l2-fs-p (l2-unlink hns fs))))
 
+(defthm l2-wrchs-correctness-1-lemma-1
+  (implies (l2-fs-p fs)
+           (equal (delete-assoc-equal name (l2-to-l1-fs fs))
+                  (l2-to-l1-fs (delete-assoc-equal name fs)))))
+
+(defthm l2-wrchs-correctness-1-lemma-2
+  (implies (and (consp fs)
+                (l2-fs-p fs))
+           (consp (l2-to-l1-fs fs))))
+
+(defthm l2-wrchs-correctness-1
+  (implies (and (l2-fs-p fs)
+                (stringp text)
+                (natp start)
+                (symbol-listp (cdr hns)))
+           (equal (l1-wrchs hns (l2-to-l1-fs fs) start text)
+                  (l2-to-l1-fs (l2-wrchs hns fs start text)))))
+
 (defthm l2-read-after-write-1-lemma-1
   (implies (consp (assoc-equal name alist))
            (equal (car (assoc-equal name alist)) name)))
