@@ -22,10 +22,12 @@
                     (or (and (consp entry) (stringp (car entry)) (natp (cdr entry)))
                         (l2-fs-p entry))))))
          (l2-fs-p (cdr fs)))))
-;; this example - which evaluates to t - remains as a counterexample to an
+
+;; This example - which evaluates to t - remains as a counterexample to an
 ;; erstwhile bug.
 (defconst *test01* (l2-fs-p '((a  "Mihir" . 5) (b "Warren" . 6) (c))))
 
+;; This function transforms an instance of l2 into an equivalent instance of l1.
 (defun l2-to-l1-fs (fs)
   (declare (xargs :guard (l2-fs-p fs)))
   (if (atom fs)
@@ -39,6 +41,7 @@
                   (l2-to-l1-fs entry))))
           (l2-to-l1-fs (cdr fs)))))
 
+;; This theorem shows the type-correctness of l2-to-l1-fs.
 (defthm l2-to-l1-fs-correctness-1
   (implies (l2-fs-p fs)
            (l1-fs-p (l2-to-l1-fs fs))))
@@ -56,6 +59,7 @@
 (assert!
  (l2-fs-p '((a "Mihir" . 5) (b "Warren" . 6) (c (a "Mehta" . 5) (b "Hunt" . 4)))))
 
+;; This theorem allows a file or directory to be found in a filesystem given a path.
 (defun l2-stat (hns fs)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l2-fs-p fs))))
@@ -105,6 +109,8 @@
                 (l2-fs-p fs))
            (l2-fs-p (cdr (assoc-equal name fs)))))
 
+;; This is the first of two theorems showing the equivalence of the l2 and l1
+;; versions of stat.
 (defthm l2-stat-correctness-1
   (implies (and (symbol-listp hns)
                 (l2-fs-p fs)
@@ -121,6 +127,8 @@
   (implies (not (stringp fs))
            (not (stringp (l2-to-l1-fs fs)))))
 
+;; This is the second of two theorems showing the equivalence of the l2 and l1
+;; versions of stat.
 (defthm l2-stat-correctness-2
   (implies (and (symbol-listp hns)
                 (l2-fs-p fs)
@@ -129,6 +137,7 @@
                   (l2-to-l1-fs (l2-stat hns fs))))
   )
 
+;; This is simply a useful property of stat.
 (defthm l2-stat-of-stat
   (implies (and (symbol-listp inside)
                 (symbol-listp outside)
@@ -140,6 +149,8 @@
   (("Goal"
     :induct (l2-stat outside fs))))
 
+;; This function finds a text file given its path and reads a segment of
+;; that text file.
 (defun l2-rdchs (hns fs start n)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l2-fs-p fs)
@@ -164,6 +175,7 @@
   (implies (l2-fs-p fs)
            (not (stringp (l2-to-l1-fs fs)))))
 
+;; This theorem proves the equivalence of the l2 and l1 versions of stat.
 (defthm l2-rdchs-correctness-1
   (implies (and (symbol-listp hns)
                 (l2-fs-p fs)
@@ -202,20 +214,11 @@
 ;; (defthm l2-unlink-works (implies (l2-fs-p fs) (not (l2-stat hns (l2-unlink hns fs)))))
 
 (defthm l2-wrchs-guard-lemma-1
-  (implies (and (character-listp l)
-                (character-listp acc)
-                (<= n (len l)))
-           (character-listp (first-n-ac n l acc))))
-
-(defthm l2-wrchs-guard-lemma-2
-  (implies (and (character-listp l))
-           (character-listp (nthcdr n l))))
-
-(defthm l2-wrchs-guard-lemma-3
   (implies (and (stringp str))
            (character-listp (nthcdr n (coerce str 'list)))))
 
-; Add l2-wrchs...
+; This function writes a specified text string to a specified position to a
+; text file at a specified path.
 (defun l2-wrchs (hns fs start text)
   (declare (xargs :guard-debug t
                   :guard (and (symbol-listp hns)
@@ -251,8 +254,6 @@
                   (delete-assoc (car hns) fs))
             ))))))
 
-; Mihir, run some example and provide some ASSERT$ events.
-
 (defthm l2-wrchs-returns-fs-lemma-1
   (implies (and (consp (assoc-equal s fs))
                 (l2-fs-p fs))
@@ -282,10 +283,12 @@
                 (consp (assoc-equal name fs)))
            (symbolp name)))
 
+;; This theorem shows that the property l2-fs-p is preserved by wrchs.
 (defthm l2-wrchs-returns-fs
-  (implies (and (l2-fs-p fs))
+  (implies (l2-fs-p fs)
            (l2-fs-p (l2-wrchs hns fs start text))))
 
+;; This theorem shows that the property l2-fs-p is preserved by unlink.
 (defthm l2-unlink-returns-fs
   (implies (and (l2-fs-p fs))
            (l2-fs-p (l2-unlink hns fs))))
@@ -300,6 +303,7 @@
                 (l2-fs-p fs))
            (consp (l2-to-l1-fs fs))))
 
+;; This theorem shows the equivalence of the l2 and l1 versions of wrchs.
 (defthm l2-wrchs-correctness-1
   (implies (and (l2-fs-p fs)
                 (stringp text)
@@ -331,6 +335,8 @@
                                           (nthcdr end oldtext))))
                     (coerce newtext 'string)))))
 
+;; This is a new proof of the first read-after-write property, which
+;; does not rely upon the l1 proof of the same property.
 (defthm l2-read-after-write-1
   (implies (and (l2-fs-p fs)
                 (stringp text)
@@ -340,6 +346,8 @@
                 (stringp (l2-stat hns fs)))
            (equal (l2-rdchs hns (l2-wrchs hns fs start text) start n) text)))
 
+;; The following comment details the induction scheme for the proof of
+;; l2-read-after-write-2.
 ;; we want to prove
 ;; (implies (and (l2-fs-p fs)
 ;;               (stringp text2)
@@ -435,6 +443,8 @@
 
   )
 
+;; This is a new proof of the second read-after-write property, which does not
+;; rely on the same proof in l1.
 (defthm l2-read-after-write-2
   (implies (and (l2-fs-p fs)
                 (stringp text2)
@@ -448,6 +458,8 @@
            (equal (l2-rdchs hns1 (l2-wrchs hns2 fs start2 text2) start1 n1)
                   (l2-rdchs hns1 fs start1 n1))))
 
+;; This function checks that the file lengths associated with text files are
+;; accurate.
 (defun l2-fsck (fs)
   (declare (xargs :guard (l2-fs-p fs)))
   (or (atom fs)
@@ -482,15 +494,17 @@
                   (cddr (assoc-equal name fs))))
 )
 
+;; This theorem shows that l2-fsck is preserved by l2-wrchs
 (defthm l2-fsck-after-l2-wrchs
   (implies (and (l2-fs-p fs) (stringp text) (l2-fsck fs))
            (l2-fsck (l2-wrchs hns fs start text))))
 
+;; This theorem shows that l2-fsck is preserved by l2-unlink
 (defthm l2-fsck-after-l2-unlink
   (implies (and (l2-fs-p fs) (l2-fsck fs))
            (l2-fsck (l2-unlink hns fs))))
 
-; Find length of file
+; This function finds the length of the text file at a specified path
 (defun l2-wc-len (hns fs)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l2-fs-p fs))))
