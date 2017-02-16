@@ -6,46 +6,7 @@
 ; operations.
 
 (include-book "misc/assert" :dir :system)
-
-(defthm make-character-list-makes-character-list
-  (character-listp (make-character-list x)))
-
-(defthm len-of-binary-append
-  (equal (len (binary-append x y)) (+ (len x) (len y))))
-
-(defthm len-of-make-character-list
-  (equal (len (make-character-list x)) (len x)))
-
-(defthm len-of-revappend
-  (equal (len (revappend x y)) (+ (len x) (len y))))
-
-(defthm len-of-first-n-ac
-  (implies (natp i) (equal (len (first-n-ac i l ac)) (+ i (len ac)))))
-
-(defthm nthcdr-of-binary-append-1
-  (implies (and (integerp n) (>= n (len x)))
-           (equal (nthcdr n (binary-append x y))
-                  (nthcdr (- n (len x)) y)))
-  :hints (("Goal" :induct (nthcdr n x)) ))
-
-(defthm first-n-ac-of-binary-append-1
-  (implies (and (natp i) (<= i (len x)))
-           (equal (first-n-ac i (binary-append x y) ac)
-                  (first-n-ac i x ac))))
-
-(defthm by-slice-you-mean-the-whole-cake
-  (implies (true-listp l)
-           (equal (first-n-ac (len l) l ac)
-                  (revappend ac l)))
-  :hints (("Goal" :induct (revappend l ac)) )
-  :rule-classes ((:rewrite :corollary
-                           (implies (and (true-listp l) (equal i (len l)))
-                                    (equal (first-n-ac i l ac) (revappend ac l)))) ))
-
-(defthm assoc-after-delete-assoc
-  (implies (not (equal name1 name2))
-           (equal (assoc-equal name1 (delete-assoc name2 alist))
-                  (assoc-equal name1 alist))))
+(include-book "file-system-2")
 
 (defthmd revappend-is-append-of-rev
   (equal (revappend x (binary-append y z))
@@ -60,34 +21,11 @@
            :use (:instance revappend-is-append-of-rev
                            (x ac) (y nil) (z l)))))
 
-(defthm make-character-list-of-character-list
-  (implies (character-listp x)
-           (equal (make-character-list x) x)))
-
-(defthm character-listp-of-first-n-ac
-  (implies (and (character-listp l)
-                (character-listp acc)
-                (<= n (len l)))
-           (character-listp (first-n-ac n l acc))))
-
-(defthm character-listp-nthcdr
-  (implies (and (character-listp l))
-           (character-listp (nthcdr n l))))
-
-(defthm first-n-ac-of-binary-append
-  (implies (and (natp i) (<= i (len x)))
-           (equal (first-n-ac i (binary-append x y) ac)
-                  (first-n-ac i x ac))))
-
 (defthm take-of-take
   (implies (and (natp m) (integerp n) (<= m n) (<= n (len l)))
            (equal (take m (take n l)) (take m l)))
   :hints (("Goal" :in-theory (disable binary-append-take-nthcdr)
            :use (:instance binary-append-take-nthcdr (ac nil) (i n))) ))
-
-(defthm make-character-list-of-binary-append
-  (equal (make-character-list (binary-append x y))
-         (binary-append (make-character-list x) (make-character-list y))))
 
 (defconst *blocksize* 8)
 
@@ -159,7 +97,7 @@
              :use (:instance unmake-make-blocks-lemma-1 (n *blocksize*) (l
                                                                          text)))
             ("Subgoal *1/3.1'"
-             :in-theory (disable make-character-list-of-character-list
+             :in-theory (disable already-a-character-list
                                  take-of-too-many)
              :use ((:instance take-of-too-many (x text) (n *blocksize*))
                    (:instance unmake-make-blocks-lemma-1 (n *blocksize*) (l
@@ -223,7 +161,7 @@
          (fs-p (cdr fs)))))
 ;; this example - which evaluates to t - remains as a counterexample to an
 ;; erstwhile bug.
-(defconst *test01* (fs-p '((a  "Mihir" . 5) (b "Warren" . 6) (c))))
+;; (defconst *test01* (fs-p '((a  "Mihir" . 5) (b "Warren" . 6) (c))))
 
 (defthm alistp-fs-p
   (implies (fs-p fs)
@@ -295,13 +233,14 @@
 (defthm stat-of-stat
   (implies (and (symbol-listp inside)
                 (symbol-listp outside)
-                (stat outside fs)
-                (fs-p fs))
-           (equal (stat inside (stat outside fs))
-                  (stat (append outside inside) fs)))
+                (stat outside fs disk)
+                (fs-p fs)
+                (block-listp disk))
+           (equal (stat inside (stat outside fs disk) disk)
+                  (stat (append outside inside) fs disk)))
   :hints
   (("Goal"
-    :induct (stat outside fs))))
+    :induct (stat outside fs disk))))
 
 (defun rdchs (hns fs start n)
   (declare (xargs :guard (and (symbol-listp hns)

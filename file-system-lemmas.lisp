@@ -50,3 +50,7 @@
 
 (defthm already-a-character-list
   (implies (character-listp x) (equal (make-character-list x) x)))
+
+(defthm make-character-list-of-binary-append
+  (equal (make-character-list (binary-append x y))
+         (binary-append (make-character-list x) (make-character-list y))))
