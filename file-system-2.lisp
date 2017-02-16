@@ -6,6 +6,14 @@
 ; start with a file-system recognizer, and then we define various file-system
 ; operations.
 
+; The important functions are l2-to-l1-fs, l2-stat, l2-rdchs and
+; l2-wrchs. Each of them is preceded by an explanatory comment. Equivalence
+; theorems are stated and proved between each of these and the corresponding
+; function in file-system-1.lisp. Moreover, the theorems l2-read-after-write-1
+; and l2-read-after-write-2 prove two important properties of l2-rdchs and
+; l2-wrchs anew, although they were proved in file-system-1 for the filesystem
+; described therein.
+
 (include-book "misc/assert" :dir :system)
 (include-book "file-system-1")
 
