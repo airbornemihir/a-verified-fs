@@ -45,6 +45,18 @@
          (equal (len (car block-list)) *blocksize*)
          (block-listp (cdr block-list)))))
 
+(defthm make-blocks-correctness-2
+        (implies (character-listp text)
+                 (block-listp (make-blocks text))))
+
+(defthm block-listp-correctness-1
+  (implies (block-listp block-list)
+           (true-listp block-list)))
+
+(defthm block-listp-correctness-2
+  (implies (and (block-listp block-list1) (block-listp block-list2))
+           (block-listp (binary-append block-list1 block-list2))))
+
 (defun unmake-blocks (blocks n)
   (declare (xargs :guard (and (block-listp blocks)
                               (natp n)
@@ -124,6 +136,30 @@
            (equal (len (fetch-blocks-by-indices block-list index-list))
                   (len index-list))))
 
+(defun feasible-file-length-p (index-list file-length)
+  (declare (xargs :guard (and (natp file-length) (true-listp index-list))))
+  (and (> file-length
+          (* *blocksize* (- (len index-list) 1)))
+       (<= file-length
+           (* *blocksize* (len index-list)))))
+
+(defthm
+  make-blocks-correctness-1
+  (implies (character-listp text)
+           (and (< (- (* *blocksize* (len (make-blocks text)))
+                      *blocksize*)
+                   (len text))
+                (not (< (* *blocksize* (len (make-blocks text)))
+                        (len text)))))
+  :instructions (:induct (:change-goal (main . 2) t)
+                         :bash :promote
+                         (:claim (character-listp (nthcdr *blocksize* text)))
+                         (:casesplit (>= (len text) *blocksize*))
+                         :bash :bash (:demote 1)
+                         (:dive 1 1)
+                         :x
+                         :top :s))
+
 (defun fs-p (fs)
   (declare (xargs :guard t))
   (if (atom fs)
@@ -137,10 +173,7 @@
                     (or (and (consp entry)
                              (nat-listp (car entry))
                              (natp (cdr entry))
-                             (> (cdr entry)
-                                (* *blocksize* (- (len (car entry)) 1)))
-                             (<= (cdr entry)
-                                 (* *blocksize* (len (car entry)))))
+                             (feasible-file-length-p (car entry) (cdr entry)))
                         (fs-p entry))))))
          (fs-p (cdr fs)))))
 ;; this example - which evaluates to t - remains as a counterexample to an
@@ -226,12 +259,13 @@
   (("Goal"
     :induct (stat outside fs disk))))
 
-(defun rdchs (hns fs start n)
+(defun rdchs (hns fs disk start n)
   (declare (xargs :guard (and (symbol-listp hns)
                               (fs-p fs)
                               (natp start)
-                              (natp n))))
-  (let ((file (stat hns fs)))
+                              (natp n)
+                              (block-listp disk))))
+  (let ((file (stat hns fs disk)))
     (if (not (stringp file))
         nil
       (let ((file-length (length file))
@@ -242,7 +276,9 @@
 
 ; More for Mihir to do...
 
-; Delete file
+; Note that we don't need to say anything about the disk - the blocks can just
+; lie there, forever unreferred to. In a later model we might think about
+; re-using the blocks.
 (defun unlink (hns fs)
   (declare (xargs :guard (and (symbol-listp hns)
                               (fs-p fs))))
@@ -256,7 +292,7 @@
           (if (atom sd)
               fs
             (let ((contents (cdr sd)))
-              (if (stringp (car contents)) 
+              (if (and (consp contents) (nat-listp (car contents))) 
                   fs ;; we still have names but we're at a regular file - error
                 (cons (cons (car sd)
                             (unlink (cdr hns) contents))
@@ -269,61 +305,112 @@
 
 ;; (defthm unlink-works (implies (fs-p fs) (not (stat hns (unlink hns fs)))))
 
+(defun generate-index-list (disk-length block-list-length)
+  (declare (xargs :guard (and (natp disk-length) (natp block-list-length))))
+  (if (zp block-list-length)
+      nil
+    (cons disk-length
+          (generate-index-list (1+ disk-length) (1- block-list-length)))))
+
+(defthm
+    generate-index-list-correctness-1
+    (implies (and (natp disk-length)
+                  (natp block-list-length))
+             (nat-listp (generate-index-list disk-length block-list-length))))
+
+(defthm
+    generate-index-list-correctness-2
+    (implies (natp block-list-length)
+             (equal (len (generate-index-list disk-length block-list-length))
+                    block-list-length)))
+
 (defthm wrchs-guard-lemma-1
-  (implies (and (stringp str))
-           (character-listp (nthcdr n (coerce str 'list)))))
+  (implies (character-listp text)
+           (feasible-file-length-p (make-blocks text) (len text)))
+  :hints (("Goal" :in-theory (disable make-blocks-correctness-1)
+           :use make-blocks-correctness-1) ))
 
 ; Add wrchs...
-(defun wrchs (hns fs start text)
+(defun wrchs (hns fs disk start text)
   (declare (xargs :guard-debug t
                   :guard (and (symbol-listp hns)
                               (fs-p fs)
                               (natp start)
-                              (stringp text))
-                  :guard-hints
-                  (("Subgoal 1.4" :use (:instance character-listp-coerce (str ()))) )))
+                              (stringp text)
+                              (block-listp disk))
+                  ;; :guard-hints
+                  ;; (("Subgoal 1.4" :use (:instance character-listp-coerce (str ()))) )
+                  ))
   (if (atom hns)
-      fs ;; error - showed up at fs with no name  - so leave fs unchanged
+      (mv fs disk) ;; error - showed up at fs with no name  - so leave fs unchanged
     (if (atom fs)
-        nil ;; error, so leave fs unchanged
+        (mv nil disk) ;; error, so leave fs unchanged
       (let ((sd (assoc (car hns) fs)))
         (if (atom sd)
-            fs ;; file-not-found error, so leave fs unchanged
+            (mv fs disk) ;; file-not-found error, so leave fs unchanged
           (let ((contents (cdr sd)))
-            (cons (cons (car sd)
-                        (if (and (consp (cdr sd)) (stringp (cadr sd)))
-                            (let ((file (cdr sd)))
-                              (if (cdr hns)
-                                  file ;; error, so leave fs unchanged
-                                (let* (
-                                       (end (+ start (length text)))
-                                       (oldtext (coerce (car file) 'list))
-                                       (newtext (append (make-character-list (take start oldtext))
-                                                        (coerce text 'list)
-                                                        (nthcdr end oldtext)))
-                                       (newlength (len newtext)))
-                                  (cons
-                                   (coerce newtext 'string)
-                                   newlength))))
-                          (wrchs (cdr hns) contents start text)))
-                  (delete-assoc (car hns) fs))
+            (if (and (consp contents) (nat-listp (car contents)))
+                (if (cdr hns)
+                    (mv (cons (cons (car sd) contents)
+                              (delete-assoc (car hns) fs))
+                        disk) ;; error, so leave fs unchanged
+                  (let* (
+                         (end (+ start (length text)))
+                         (oldtext
+                          (unmake-blocks
+                           (fetch-blocks-by-indices disk (car contents))
+                           (cdr contents)))
+                         (newtext (append (make-character-list (take start oldtext))
+                                          (coerce text 'list)
+                                          (nthcdr end oldtext)))
+                         (newblocks (make-blocks newtext)))
+                    (mv (cons (cons (car sd)
+                                    (cons (generate-index-list
+                                           (len disk)
+                                           (len newblocks))
+                                          (len newtext)))
+                              (delete-assoc (car hns) fs))
+                        (binary-append disk newblocks))))
+              (mv-let (new-contents new-disk) (wrchs (cdr hns) contents disk start text)
+                (mv (cons (cons (car sd) new-contents)
+                          (delete-assoc (car hns) fs))
+                    new-disk)))
             ))))))
 
 ; Mihir, run some example and provide some ASSERT$ events.
 
-
 (defthm wrchs-returns-fs-lemma-1
   (implies (and (consp (assoc-equal s fs))
                 (fs-p fs))
-           (symbolp (car (assoc-equal s fs)))))
+           (and (equal (car (assoc-equal s fs)) s) (symbolp s))))
 
 (defthm wrchs-returns-fs-lemma-2
   (implies (fs-p fs)
            (fs-p (delete-assoc-equal s fs))))
 
+(defthm wrchs-returns-fs-lemma-3
+  (implies (and (consp (assoc-equal s fs))
+                (fs-p fs)
+                (consp (cdr (assoc-equal s fs)))
+                (nat-listp (cadr (assoc-equal s fs))))
+           (feasible-file-length-p
+            (cadr (assoc-equal s fs))
+            (cddr (assoc-equal s fs))))
+  :hints ( ("Goal" :in-theory (disable feasible-file-length-p)
+            :induct (assoc-equal s fs))))
+
 (defthm wrchs-returns-fs
-  (implies (and (fs-p fs))
-           (fs-p (wrchs hns fs start text))))
+  (implies (and (fs-p fs)
+                (block-listp disk)
+                (natp start)
+                (stringp text))
+           (mv-let (new-fs new-disk)
+             (wrchs hns fs disk start text)
+             (and (fs-p new-fs) (block-listp new-disk))))
+  :instructions (:INDUCT :BASH (:CHANGE-GOAL NIL T)
+                         (:CHANGE-GOAL NIL T)
+                         :BASH
+                         :BASH :BASH))
 
 (defthm unlink-returns-fs
   (implies (and (fs-p fs))
@@ -335,7 +422,7 @@
 
 (defthm read-after-write-1-lemma-2
   (implies (and (fs-p fs) (stringp text) (stringp (stat hns fs)))
-           (stringp (stat hns (wrchs hns fs start text)))))
+           (stringp (stat hns (wrchs hns fs disk start text)))))
 
 (defthm read-after-write-1-lemma-3
   (implies (rdchs hns fs start n)
