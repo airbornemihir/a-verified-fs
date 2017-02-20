@@ -160,6 +160,10 @@
                          :x
                          :top :s))
 
+; This function defines a valid filesystem. It's an alist where all the cars
+; are symbols and all the cdrs are either further filesystems or files,
+; separated into text (represented by a nat-list of indices which we use to
+; look up an external disk) and metadata (currently, only length).
 (defun l3-fs-p (fs)
   (declare (xargs :guard t))
   (if (atom fs)
@@ -199,6 +203,7 @@
            (character-listp (unmake-blocks blocks n)))
   :hints (("Goal" :in-theory (enable feasible-file-length-p)) ))
 
+;; This function transforms an instance of l3 into an equivalent instance of l2.
 (defun l3-to-l2-fs (fs disk)
   (declare (xargs :guard (and (l3-fs-p fs) (block-listp disk))
                   :guard-debug t
@@ -221,6 +226,7 @@
                     (l3-to-l2-fs entry disk))))
           (l3-to-l2-fs (cdr fs) disk))))
 
+;; This theorem shows the type-correctness of l2-to-l1-fs.
 (defthm l3-to-l2-fs-correctness-1
   (implies (and (l3-fs-p fs) (block-listp disk))
            (l2-fs-p (l3-to-l2-fs fs disk))))
@@ -250,6 +256,7 @@
                           (nat-listp (cadr (assoc-equal s fs))))))
            (l3-fs-p (cdr (assoc-equal s fs)))))
 
+;; This function allows a file or directory to be found in a filesystem given a path.
 (defun l3-stat (hns fs disk)
   (declare (xargs :guard-debug t
                   :guard (and (symbol-listp hns)
@@ -275,6 +282,7 @@
                       'string))
               (l3-stat (cdr hns) contents disk))))))))
 
+;; This is simply a useful property of stat.
 (defthm l3-stat-of-stat
   (implies (and (symbol-listp inside)
                 (symbol-listp outside)
@@ -287,6 +295,8 @@
   (("Goal"
     :induct (l3-stat outside fs disk))))
 
+;; This function finds a text file given its path and reads a segment of
+;; that text file.
 (defun l3-rdchs (hns fs disk start n)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l3-fs-p fs)
@@ -302,9 +312,9 @@
             nil
           (subseq file start (+ start n)))))))
 
-; More for Mihir to do...
+; This function deletes a file or directory given its path.
 
-; Note that we don't need to say anything about the disk - the blocks can just
+; Note that we don't need to do anything with the disk - the blocks can just
 ; lie there, forever unreferred to. In a later model we might think about
 ; re-using the blocks.
 (defun l3-unlink (hns fs)
@@ -384,7 +394,8 @@
                   (coerce text 'list)))
   :hints (("Goal" :in-theory (enable insert-text)) ))
 
-; Add l3-wrchs...
+; This function writes a specified text string to a specified position to a
+; text file at a specified path.
 (defun l3-wrchs (hns fs disk start text)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l3-fs-p fs)
@@ -447,6 +458,8 @@
             (cddr (assoc-equal s fs))))
   :hints ( ("Goal" :induct (assoc-equal s fs))))
 
+;; This theorem shows that the property l3-fs-p is preserved by wrchs, and
+;; additionally the property block-listp is preseved for the disk.
 (defthm l3-wrchs-returns-fs
   (implies (and (l3-fs-p fs)
                 (block-listp disk)
@@ -456,10 +469,14 @@
              (l3-wrchs hns fs disk start text)
              (and (l3-fs-p new-fs) (block-listp new-disk)))))
 
-
+;; This theorem shows that the property l3-fs-p is preserved by unlink.
 (defthm l3-unlink-returns-fs
   (implies (and (l3-fs-p fs))
            (l3-fs-p (l3-unlink hns fs))))
+
+;; The theorems from this point on do not succeed. What they should be and how
+;; they should be proved is under consideration; these are relics from the
+;; previous model that are kept as an aid to thinking.
 
 (defthm l3-read-after-write-1-lemma-2
   (implies (and (l3-fs-p fs) (stringp text) (stringp (l3-stat hns fs)))

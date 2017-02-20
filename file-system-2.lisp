@@ -17,6 +17,9 @@
 (include-book "misc/assert" :dir :system)
 (include-book "file-system-1")
 
+; This function defines a valid filesystem. It's an alist where all the cars
+; are symbols and all the cdrs are either further filesystems or files,
+; separated into text (a string) and metadata (currently, only file length).
 (defun l2-fs-p (fs)
   (declare (xargs :guard t))
   (if (atom fs)
@@ -67,7 +70,7 @@
 (assert!
  (l2-fs-p '((a "Mihir" . 5) (b "Warren" . 6) (c (a "Mehta" . 5) (b "Hunt" . 4)))))
 
-;; This theorem allows a file or directory to be found in a filesystem given a path.
+;; This function allows a file or directory to be found in a filesystem given a path.
 (defun l2-stat (hns fs)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l2-fs-p fs))))
@@ -192,9 +195,7 @@
            (equal (l2-rdchs hns fs start n)
                   (l1-rdchs hns (l2-to-l1-fs fs) start n))))
 
-; More for Mihir to do...
-
-; Delete file
+; This function deletes a file or directory given its path.
 (defun l2-unlink (hns fs)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l2-fs-p fs))))
