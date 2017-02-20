@@ -8,6 +8,8 @@
 (include-book "misc/assert" :dir :system)
 (include-book "file-system-2")
 
+;; just some lemmas that are specific to this file
+
 (defthmd revappend-is-append-of-rev
   (equal (revappend x (binary-append y z))
          (binary-append (revappend x y) z)))
@@ -27,8 +29,15 @@
   :hints (("Goal" :in-theory (disable binary-append-take-nthcdr)
            :use (:instance binary-append-take-nthcdr (ac nil) (i n))) ))
 
+;; I don't think blocks are 8 characters long in any system; I simply set this
+;; in order to actually get fragmentation without having to make unreasonably
+;; large examples.
 (defconst *blocksize* 8)
 
+;; This fragments a character-list into blocks that are *blocksize*-character
+;; long. If the character-list is not exactly aligned to a block boundary, we
+;; fill the space with null characters.
+;; It will be used in wrchs.
 (defun make-blocks (text)
   (declare (xargs :guard (character-listp text)
                   :measure (len text)))
@@ -37,6 +46,7 @@
     (cons (make-character-list (take *blocksize* text))
           (make-blocks (nthcdr *blocksize* text)))))
 
+;; Characterisation of a disk, which is a list of blocks as described before.
 (defun block-listp (block-list)
   (declare (xargs :guard t))
   (if (atom block-list)
@@ -45,18 +55,23 @@
          (equal (len (car block-list)) *blocksize*)
          (block-listp (cdr block-list)))))
 
+;; Proving that we get a proper block-list out of make-blocks.
 (defthm make-blocks-correctness-2
         (implies (character-listp text)
                  (block-listp (make-blocks text))))
-
+;; Lemma
 (defthm block-listp-correctness-1
   (implies (block-listp block-list)
            (true-listp block-list)))
 
+;; Lemma
 (defthm block-listp-correctness-2
   (implies (and (block-listp block-list1) (block-listp block-list2))
            (block-listp (binary-append block-list1 block-list2))))
 
+;; This is the counterpart of make-blocks that collapses blocks into a
+;; character-list of the appropriate length.
+;; It will be used in stat and, by extension, in rdchs.
 (defun unmake-blocks (blocks n)
   (declare (xargs :guard (and (block-listp blocks)
                               (natp n)
@@ -68,6 +83,8 @@
       (binary-append (car blocks)
                      (unmake-blocks (cdr blocks) (- n *blocksize*))))))
 
+;; Proving that we get a proper character-list out provided we don't ask for
+;; more characters than we have.
 (defthm unmake-blocks-correctness-1
   (implies (and (block-listp blocks) (natp n)
                 (<= n (* (len blocks) *blocksize*))
@@ -86,6 +103,8 @@
 (encapsulate ()
   (local (include-book "std/lists/repeat" :dir :system))
 
+  ;; Proving that make and unmake are, in a sense, inverse functions of each
+  ;; other.
   (defthm unmake-make-blocks
     (implies (and (character-listp text))
              (equal (unmake-blocks (make-blocks text) (len text)) text))
@@ -101,20 +120,19 @@
 
   )
 
+;; This is a function that might be needed later.
 (defun bounded-nat-listp (l b)
   (if (atom b)
       (eq l nil)
     (and (natp (car l)) (< (car l) b) (bounded-nat-listp (cdr l) b))))
 
-;; gonna start returning this when a block is not found
+;; This is to be returned when a block is not found. It's full of null
+;; characters and is *blocksize* long.
 (defconst *nullblock* (make-character-list (take *blocksize* nil)))
 
-;; i could have made bounded-nat-listp a guard for this function. i chose not
-;; to, because guard-checking later on would require me to look at the length
-;; of the disk while deciding l3-fs-p for an fs, which strikes me as a bit too
-;; much for this model. as a consequence, i'm not going to heedlessly use nth -
-;; instead, i'm going to leave out blocks that don't actually exist. thus,
-;; we'll have only blocks and no nils.
+;; This function serves to get the specified blocks from a disk. If the block
+;; is not found (most likely because of an invalid index) I return a null block
+;; as noted above.
 (defun fetch-blocks-by-indices (block-list index-list)
   (declare (xargs :guard (and (block-listp block-list)
                               (nat-listp index-list))))
@@ -127,15 +145,20 @@
               tail)
         ))))
 
+;; Prove that a proper block-list is returned.
 (defthm fetch-blocks-by-indices-correctness-1
   (implies (and (block-listp block-list) (nat-listp index-list))
            (block-listp (fetch-blocks-by-indices block-list index-list))))
 
+;; Prove that a list of the appropriate length is returned.
 (defthm fetch-blocks-by-indices-correctness-2
   (implies (and (block-listp block-list) (nat-listp index-list))
            (equal (len (fetch-blocks-by-indices block-list index-list))
                   (len index-list))))
 
+;; This function spells out how many characters can be in a file given the
+;; number of blocks associated with it. It is kept disabled in order to avoid
+;; huge arithmetic-heavy subgoals where they're not wanted.
 (defund feasible-file-length-p (index-list-length file-length)
   (declare (xargs :guard (and (natp file-length) (natp index-list-length))))
   (and (> file-length
