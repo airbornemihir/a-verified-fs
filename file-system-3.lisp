@@ -193,6 +193,38 @@
 (assert!
  (l3-fs-p '((a (1 2) . 10) (b (3 4) . 11) (c (a (5 6) . 12) (b (7 8) . 13)))))
 
+(defthm l3-to-l2-fs-guard-lemma-1
+  (implies (and (feasible-file-length-p (len blocks) n)
+                (block-listp blocks))
+           (character-listp (unmake-blocks blocks n)))
+  :hints (("Goal" :in-theory (enable feasible-file-length-p)) ))
+
+(defun l3-to-l2-fs (fs disk)
+  (declare (xargs :guard (and (l3-fs-p fs) (block-listp disk))
+                  :guard-debug t
+                  :guard-hints (("Subgoal 2.6" :in-theory (enable feasible-file-length-p)))
+                  ))
+  (if (atom fs)
+      nil
+    (cons (let* ((directory-or-file-entry (car fs))
+                 (name (car directory-or-file-entry))
+                 (entry (cdr directory-or-file-entry)))
+            (cons name
+                  (if (and (consp entry)
+                           (nat-listp (car entry))
+                           (natp (cdr entry))
+                           (feasible-file-length-p (len (car entry)) (cdr entry)))
+                      (cons (coerce (unmake-blocks
+                                     (fetch-blocks-by-indices disk (car entry))
+                                     (cdr entry)) 'string)
+                            (cdr entry))
+                    (l3-to-l2-fs entry disk))))
+          (l3-to-l2-fs (cdr fs) disk))))
+
+(defthm l3-to-l2-fs-correctness-1
+  (implies (and (l3-fs-p fs) (block-listp disk))
+           (l2-fs-p (l3-to-l2-fs fs disk))))
+
 (defthm l3-stat-guard-lemma-1
   (implies (and (consp fs)
                 (consp (assoc-equal name fs))
