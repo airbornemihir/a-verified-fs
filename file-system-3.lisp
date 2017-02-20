@@ -208,7 +208,8 @@
                 (>= (* *blocksize*
                        (len (cadr (assoc-equal name fs))))
                     (cddr (assoc-equal name fs)))))
-  :hints (("Goal" :in-theory (enable feasible-file-length-p)) ))
+  :hints (("Goal" :induct (assoc-equal name fs)
+           :in-theory (enable feasible-file-length-p)) ))
 
 (defthm stat-guard-lemma-2
   (implies (and (consp fs) (fs-p fs)
@@ -241,12 +242,6 @@
                                      (cdr contents))
                       'string))
               (stat (cdr hns) contents disk))))))))
-
-;; (defthm stat-of-stat-lemma-1
-;;   (implies (and (consp (assoc-equal (car outside) fs))
-;;                 (not (nat-listp (cadr (assoc-equal (car outside) fs))))
-;;                 (fs-p fs))
-;;            (fs-p (cdr (assoc-equal (car outside) fs)))))
 
 (defthm stat-of-stat
   (implies (and (symbol-listp inside)
