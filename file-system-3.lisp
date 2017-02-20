@@ -325,18 +325,41 @@
              (equal (len (generate-index-list disk-length block-list-length))
                     block-list-length)))
 
-(defthm wrchs-guard-lemma-1
-  (implies (and (character-listp cl)
-                (equal block-list-length (len (make-blocks cl)))
-                (equal cl-length (len cl)))
-           (feasible-file-length-p block-list-length cl-length))
+(defthm make-blocks-correctness-3
+  (implies (and (character-listp cl))
+           (feasible-file-length-p (len (make-blocks cl))  (len cl)))
   :hints (("Goal" :in-theory (e/d (feasible-file-length-p) (make-blocks-correctness-1))
            :use (:instance make-blocks-correctness-1 (text cl))) ))
 
+(defund insert-text (oldtext start text)
+  (declare (xargs :guard (and (character-listp oldtext)
+                              (natp start)
+                              (stringp text))))
+  (let* (
+         (end (+ start (length text)))
+         (newtext (append (make-character-list (take start oldtext))
+                          (coerce text 'list)
+                          (nthcdr end oldtext))))
+    newtext))
+
+(defthm insert-text-correctness-1
+  (implies (and (character-listp oldtext)
+                (natp start)
+                (stringp text))
+           (character-listp (insert-text oldtext start text)))
+  :hints (("Goal" :in-theory (enable insert-text)) ))
+
+(defthm insert-text-correctness-2
+  (implies (and (character-listp oldtext)
+                (natp start)
+                (stringp text))
+           (equal (subseq (insert-text oldtext start text) start (+ start (length text)))
+                  (coerce text 'list)))
+  :hints (("Goal" :in-theory (enable insert-text)) ))
+
 ; Add wrchs...
 (defun wrchs (hns fs disk start text)
-  (declare (xargs :guard-debug t
-                  :guard (and (symbol-listp hns)
+  (declare (xargs :guard (and (symbol-listp hns)
                               (fs-p fs)
                               (natp start)
                               (stringp text)
@@ -357,15 +380,11 @@
                     (mv (cons (cons (car sd) contents)
                               (delete-assoc (car hns) fs))
                         disk) ;; error, so leave fs unchanged
-                  (let* (
-                         (end (+ start (length text)))
-                         (oldtext
+                  (let* ((oldtext
                           (unmake-blocks
                            (fetch-blocks-by-indices disk (car contents))
                            (cdr contents)))
-                         (newtext (append (make-character-list (take start oldtext))
-                                          (coerce text 'list)
-                                          (nthcdr end oldtext)))
+                         (newtext (insert-text oldtext start text))
                          (newblocks (make-blocks newtext)))
                     (mv (cons (cons (car sd)
                                     (cons (generate-index-list
@@ -401,9 +420,6 @@
             (cddr (assoc-equal s fs))))
   :hints ( ("Goal" :induct (assoc-equal s fs))))
 
-;; this ludicrously complicated hint happened because of my failure to abstract
-;; out the logic of adding something to the file
-;; after the commit, this must be dealt with
 (defthm wrchs-returns-fs
   (implies (and (fs-p fs)
                 (block-listp disk)
@@ -411,56 +427,7 @@
                 (stringp text))
            (mv-let (new-fs new-disk)
              (wrchs hns fs disk start text)
-             (and (fs-p new-fs) (block-listp new-disk))))
-  :hints
-  (("subgoal *1/5''" :use
-    (:instance
-     wrchs-guard-lemma-1
-     (cl
-      (append
-       (make-character-list
-        (first-n-ac
-         start
-         (unmake-blocks
-          (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-          (cddr (assoc-equal (car hns) fs)))
-         nil))
-       (coerce text 'list)
-       (nthcdr
-        (+ start (len (coerce text 'list)))
-        (unmake-blocks
-         (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-         (cddr (assoc-equal (car hns) fs))))))
-     (cl-length
-      (len (append
-            (make-character-list
-             (first-n-ac
-              start
-              (unmake-blocks
-               (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-               (cddr (assoc-equal (car hns) fs)))
-              nil))
-            (coerce text 'list)
-            (nthcdr
-             (+ start (len (coerce text 'list)))
-             (unmake-blocks
-              (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-              (cddr (assoc-equal (car hns) fs)))))))
-     (block-list-length
-      (len (make-blocks (append
-                         (make-character-list
-                          (first-n-ac
-                           start
-                           (unmake-blocks
-                            (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-                            (cddr (assoc-equal (car hns) fs)))
-                           nil))
-                         (coerce text 'list)
-                         (nthcdr
-                          (+ start (len (coerce text 'list)))
-                          (unmake-blocks
-                           (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-                           (cddr (assoc-equal (car hns) fs)))))))))) ))
+             (and (fs-p new-fs) (block-listp new-disk)))))
 
 
 (defthm unlink-returns-fs
