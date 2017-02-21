@@ -1,4 +1,5 @@
 (in-package "ACL2")
+
 ;  file-system-1.lisp                                  Mihir Mehta
 
 ; Here we define the rudiments of a file system.  We first start with
@@ -106,7 +107,47 @@
                 (cons (cons (car sd) (l1-unlink (cdr hns) contents)) (delete-assoc (car hns) fs))))))))
     ))
 
-; Add l1-wrchs...
+(defund insert-text (oldtext start text)
+  (declare (xargs :guard (and (character-listp oldtext)
+                              (natp start)
+                              (stringp text))))
+  (let* (
+         (end (+ start (length text)))
+         (newtext (append (make-character-list (take start oldtext))
+                          (coerce text 'list)
+                          (nthcdr end oldtext))))
+    newtext))
+
+(defthm insert-text-correctness-1
+  (implies (and (character-listp oldtext)
+                (natp start)
+                (stringp text))
+           (character-listp (insert-text oldtext start text)))
+  :hints (("Goal" :in-theory (enable insert-text)) ))
+
+(defthm insert-text-correctness-2
+  (implies (and (character-listp oldtext)
+                (natp start)
+                (stringp text))
+           (equal (first-n-ac (+ start (- start)
+                                 (len (coerce text 'list)))
+                              (nthcdr start
+                                      (insert-text (coerce (cdr (assoc-equal (car hns) fs))
+                                                           'list)
+                                                   start text))
+                              nil)
+                  (coerce text 'list)))
+  :hints (("Goal" :in-theory (enable insert-text)) ))
+
+(defthm insert-text-correctness-3
+  (implies (and (character-listp oldtext)
+                (stringp text)
+                (natp start))
+           (<= (+ start (len (coerce text 'list)))
+               (len (insert-text oldtext start text))))
+  :hints (("Goal" :in-theory (enable insert-text)) )
+  :rule-classes :linear)
+
 ; The problem with this definition of l1-wrchs is that it deletes a directory if
 ; it's found where a text file is expected
 (defun l1-wrchs (hns fs start text)
@@ -118,13 +159,9 @@
       (let ((file fs))
         (if (not (stringp file))
             file ;; error, so leave fs unchanged
-          (let (
-                (end (+ start (length text))))
-            (coerce
-             (append (make-character-list (take start (coerce file 'list)))
-                     (coerce text 'list)
-                     (nthcdr end (coerce file 'list)))
-             'string))))
+          (coerce
+           (insert-text (coerce file 'list) start text)
+           'string)))
     (if (atom fs)
         fs ;; error, so leave fs unchanged
       (let ((sd (assoc (car hns) fs)))

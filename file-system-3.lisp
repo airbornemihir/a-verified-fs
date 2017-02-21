@@ -391,32 +391,6 @@
   :hints (("Goal" :in-theory (e/d (feasible-file-length-p) (make-blocks-correctness-1))
            :use (:instance make-blocks-correctness-1 (text cl))) ))
 
-(defund insert-text (oldtext start text)
-  (declare (xargs :guard (and (character-listp oldtext)
-                              (natp start)
-                              (stringp text))))
-  (let* (
-         (end (+ start (length text)))
-         (newtext (append (make-character-list (take start oldtext))
-                          (coerce text 'list)
-                          (nthcdr end oldtext))))
-    newtext))
-
-(defthm insert-text-correctness-1
-  (implies (and (character-listp oldtext)
-                (natp start)
-                (stringp text))
-           (character-listp (insert-text oldtext start text)))
-  :hints (("Goal" :in-theory (enable insert-text)) ))
-
-(defthm insert-text-correctness-2
-  (implies (and (character-listp oldtext)
-                (natp start)
-                (stringp text))
-           (equal (subseq (insert-text oldtext start text) start (+ start (length text)))
-                  (coerce text 'list)))
-  :hints (("Goal" :in-theory (enable insert-text)) ))
-
 ; This function writes a specified text string to a specified position to a
 ; text file at a specified path.
 (defun l3-wrchs (hns fs disk start text)
