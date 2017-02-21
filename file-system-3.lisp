@@ -25,7 +25,7 @@
 
 (defthm take-of-take
   (implies (and (natp m) (integerp n) (<= m n) (<= n (len l)))
-           (equal (take m (take n l)) (take m l)))
+           (equal (first-n-ac m (take n l) ac) (first-n-ac m l ac)))
   :hints (("Goal" :in-theory (disable binary-append-take-nthcdr)
            :use (:instance binary-append-take-nthcdr (ac nil) (i n))) ))
 
