@@ -249,12 +249,9 @@
                             (let ((file (cdr sd)))
                               (if (cdr hns)
                                   file ;; error, so leave fs unchanged
-                                (let* (
-                                       (end (+ start (length text)))
-                                       (oldtext (coerce (car file) 'list))
-                                       (newtext (append (make-character-list (take start oldtext))
-                                                        (coerce text 'list)
-                                                        (nthcdr end oldtext)))
+                                (let* ((oldtext (coerce (car file) 'list))
+                                       (newtext
+                                        (insert-text oldtext start text))
                                        (newlength (len newtext)))
                                   (cons
                                    (coerce newtext 'string)
@@ -333,16 +330,26 @@
   (implies (l2-rdchs hns fs start n)
            (stringp (l2-stat hns fs))))
 
+;; (defthm l2-read-after-write-1-lemma-4
+;;   (implies (and (l2-fs-p fs) (stringp text) (stringp (l2-stat hns fs)))
+;;            (equal (l2-stat hns (l2-wrchs hns fs start text))
+;;                   (let* (
+;;                          (end (+ start (length text)))
+;;                          (oldtext (coerce (l2-stat hns fs) 'list))
+;;                          (newtext (append (make-character-list (take start oldtext))
+;;                                           (coerce text 'list)
+;;                                           (nthcdr end oldtext))))
+;;                     (coerce newtext 'string)))))
+
 (defthm l2-read-after-write-1-lemma-4
-  (implies (and (l2-fs-p fs) (stringp text) (stringp (l2-stat hns fs)))
-           (equal (l2-stat hns (l2-wrchs hns fs start text))
-                  (let* (
-                         (end (+ start (length text)))
-                         (oldtext (coerce (l2-stat hns fs) 'list))
-                         (newtext (append (make-character-list (take start oldtext))
-                                          (coerce text 'list)
-                                          (nthcdr end oldtext))))
-                    (coerce newtext 'string)))))
+  (implies (and (l2-fs-p fs)
+                (stringp text)
+                (symbol-listp hns)
+                (natp start)
+                (stringp (l2-stat hns fs)))
+           (<= (+ start (len (coerce text 'list)))
+               (len (coerce (l2-stat hns (l2-wrchs hns fs start text))
+                            'list)))))
 
 ;; This is a new proof of the first read-after-write property, which
 ;; does not rely upon the l1 proof of the same property.
@@ -503,9 +510,19 @@
                   (cddr (assoc-equal name fs))))
 )
 
+(encapsulate ()
+  (local (include-book "std/strings/coerce" :dir :system))
+
+  (defthm l2-fsck-after-l2-wrchs-lemma-5
+    (implies (character-listp cl)
+             (equal (coerce (coerce cl 'string) 'list)
+                    cl)))
+
+  )
+
 ;; This theorem shows that l2-fsck is preserved by l2-wrchs
 (defthm l2-fsck-after-l2-wrchs
-  (implies (and (l2-fs-p fs) (stringp text) (l2-fsck fs))
+  (implies (and (l2-fs-p fs) (natp start) (stringp text) (l2-fsck fs))
            (l2-fsck (l2-wrchs hns fs start text))))
 
 ;; This theorem shows that l2-fsck is preserved by l2-unlink
@@ -522,7 +539,7 @@
         nil
       (length file))))
 
-; Prove (list-of-chars-to-string (string-to-chars str))
+-; Prove (list-of-chars-to-string (string-to-chars str))
 ;       (string-to-chars (list-of-chars-to-string char-list))
 ; and then, you will be positioned to use either form.
 #||From :doc STR::STD/STRINGS/COERCE
