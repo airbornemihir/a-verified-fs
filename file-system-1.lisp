@@ -132,9 +132,7 @@
            (equal (first-n-ac (+ start (- start)
                                  (len (coerce text 'list)))
                               (nthcdr start
-                                      (insert-text (coerce (cdr (assoc-equal (car hns) fs))
-                                                           'list)
-                                                   start text))
+                                      (insert-text oldtext start text))
                               nil)
                   (coerce text 'list)))
   :hints (("Goal" :in-theory (enable insert-text)) ))
