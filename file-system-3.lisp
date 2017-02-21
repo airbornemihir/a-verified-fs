@@ -305,6 +305,31 @@
                       'string))
               (l3-stat (cdr hns) contents disk))))))))
 
+(defthm l3-stat-correctness-1-lemma-1
+  (implies (and (l3-fs-p fs)
+                (block-listp disk)
+                (consp (cdr (assoc-equal name fs)))
+                (nat-listp (cadr (assoc-equal name fs))))
+           (and (natp (cddr (assoc-equal name fs)))
+                (feasible-file-length-p (len (cadr (assoc-equal name fs)))
+                                        (cddr (assoc-equal name fs))))))
+
+(defthm l3-stat-correctness-1-lemma-2
+  (implies (and (l3-fs-p fs)
+                (block-listp disk)
+                (consp (cdr (assoc-equal name fs)))
+                (nat-listp (cadr (assoc-equal name fs))))
+           (stringp (cadr (assoc-equal name (l3-to-l2-fs fs disk)))))
+  :hints ( ("Goal" :use l3-stat-correctness-1-lemma-1)))
+
+(defthm l3-stat-correctness-1
+  (implies (and (symbol-listp hns)
+                (l3-fs-p fs)
+                (block-listp disk)
+                (stringp (l3-stat hns fs disk)))
+           (equal (l2-stat hns (l3-to-l2-fs fs disk))
+                  (l3-stat hns fs disk))))
+
 ;; This is simply a useful property of stat.
 (defthm l3-stat-of-stat
   (implies (and (symbol-listp inside)
