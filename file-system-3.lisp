@@ -48,13 +48,24 @@
   (implies (and (block-listp block-list1) (block-listp block-list2))
            (block-listp (binary-append block-list1 block-list2))))
 
+;; This function spells out how many characters can be in a file given the
+;; number of blocks associated with it. It is kept disabled in order to avoid
+;; huge arithmetic-heavy subgoals where they're not wanted.
+(defund feasible-file-length-p (index-list-length file-length)
+  (declare (xargs :guard (and (natp file-length) (natp index-list-length))))
+  (and (> file-length
+          (* *blocksize* (- index-list-length 1)))
+       (<= file-length
+           (* *blocksize* index-list-length))))
+
 ;; This is the counterpart of make-blocks that collapses blocks into a
 ;; character-list of the appropriate length.
 ;; It will be used in stat and, by extension, in rdchs.
 (defun unmake-blocks (blocks n)
   (declare (xargs :guard (and (block-listp blocks)
                               (natp n)
-                              (< (- (* (len blocks) *blocksize*) n) *blocksize*))))
+                              (feasible-file-length-p (len blocks) n))
+                  :guard-hints (("Goal" :in-theory (enable feasible-file-length-p)) )))
   (if (atom blocks)
       nil
     (if (atom (cdr blocks))
@@ -65,10 +76,11 @@
 ;; Proving that we get a proper character-list out provided we don't ask for
 ;; more characters than we have.
 (defthm unmake-blocks-correctness-1
-  (implies (and (block-listp blocks) (natp n)
-                (<= n (* (len blocks) *blocksize*))
-                (< (- (* (len blocks) *blocksize*) n) *blocksize*))
-           (character-listp (unmake-blocks blocks n))))
+  (implies (and (block-listp blocks)
+                (natp n)
+                (feasible-file-length-p (len blocks) n))
+           (character-listp (unmake-blocks blocks n)))
+  :hints (("Goal" :in-theory (enable feasible-file-length-p)) ))
 
 (defthm unmake-make-blocks-lemma-1
         (implies (natp n)
@@ -135,16 +147,6 @@
            (equal (len (fetch-blocks-by-indices block-list index-list))
                   (len index-list))))
 
-;; This function spells out how many characters can be in a file given the
-;; number of blocks associated with it. It is kept disabled in order to avoid
-;; huge arithmetic-heavy subgoals where they're not wanted.
-(defund feasible-file-length-p (index-list-length file-length)
-  (declare (xargs :guard (and (natp file-length) (natp index-list-length))))
-  (and (> file-length
-          (* *blocksize* (- index-list-length 1)))
-       (<= file-length
-           (* *blocksize* index-list-length))))
-
 (defthm
   make-blocks-correctness-1
   (implies (character-listp text)
@@ -162,6 +164,28 @@
                          :x
                          :top :s))
 
+;; This function, which is kept disabled, recognises a regular file entry. I am
+;; deciding not to make things overly complicated by making getter and setter
+;; functions for file entries.
+(defund l3-regular-file-entry-p (entry)
+  (declare (xargs :guard t))
+  (and (consp entry)
+       (nat-listp (car entry))
+       (natp (cdr entry))
+       (feasible-file-length-p (len (car entry)) (cdr entry))))
+
+(defthm l3-regular-file-entry-p-correctness-1
+  (implies (l3-regular-file-entry-p entry)
+           (and (nat-listp (car entry))
+                (natp (cdr entry))
+                (feasible-file-length-p (len (car entry)) (cdr entry))))
+  :hints (("Goal" :in-theory (enable l3-regular-file-entry-p)) ))
+
+(defthm l3-regular-file-entry-p-correctness-2
+  (implies (l3-regular-file-entry-p entry)
+           (consp entry))
+  :hints (("Goal" :use l3-regular-file-entry-p-correctness-1) ))
+
 ; This function defines a valid filesystem. It's an alist where all the cars
 ; are symbols and all the cdrs are either further filesystems or files,
 ; separated into text (represented by a nat-list of indices which we use to
@@ -176,15 +200,17 @@
              (let ((name (car directory-or-file-entry))
                    (entry (cdr directory-or-file-entry)))
                (and (symbolp name)
-                    (or (and (consp entry)
-                             (nat-listp (car entry))
-                             (natp (cdr entry))
-                             (feasible-file-length-p (len (car entry)) (cdr entry)))
+                    (or (l3-regular-file-entry-p entry)
                         (l3-fs-p entry))))))
          (l3-fs-p (cdr fs)))))
 ;; this example - which evaluates to t - remains as a counterexample to an
 ;; erstwhile bug.
 ;; (defconst *test01* (l3-fs-p '((a  "Mihir" . 5) (b "Warren" . 6) (c))))
+
+(defthm l3-regular-file-entry-p-correctness-3
+  (implies (l3-regular-file-entry-p entry)
+           (not (l3-fs-p entry)))
+  :hints (("Goal" :in-theory (enable l3-regular-file-entry-p)) ))
 
 (defthm alistp-l3-fs-p
   (implies (l3-fs-p fs)
@@ -193,7 +219,7 @@
 (defthm l3-fs-p-assoc
   (implies (and (l3-fs-p fs)
                 (consp (assoc-equal name fs))
-                (consp (cddr (assoc-equal name fs))))
+                (not (l3-regular-file-entry-p (cdr (assoc-equal name fs)))))
            (l3-fs-p (cdr (assoc-equal name fs)))))
 
 (assert!
@@ -217,10 +243,7 @@
                  (name (car directory-or-file-entry))
                  (entry (cdr directory-or-file-entry)))
             (cons name
-                  (if (and (consp entry)
-                           (nat-listp (car entry))
-                           (natp (cdr entry))
-                           (feasible-file-length-p (len (car entry)) (cdr entry)))
+                  (if (l3-regular-file-entry-p entry)
                       (cons (coerce (unmake-blocks
                                      (fetch-blocks-by-indices disk (car entry))
                                      (cdr entry)) 'string)
@@ -233,41 +256,12 @@
   (implies (and (l3-fs-p fs) (block-listp disk))
            (l2-fs-p (l3-to-l2-fs fs disk))))
 
-(defthm l3-stat-guard-lemma-1
-  (implies (and (consp fs)
-                (consp (assoc-equal name fs))
-                (l3-fs-p fs)
-                (consp (cdr (assoc-equal name fs)))
-                (nat-listp (cadr (assoc-equal name fs)))
-                )
-           (and (natp (cddr (assoc-equal name fs)))
-                (< (+ (- (cddr (assoc-equal name fs)))
-                      (* *blocksize*
-                         (len (cadr (assoc-equal name fs)))))
-                   *blocksize*)
-                (>= (* *blocksize*
-                       (len (cadr (assoc-equal name fs))))
-                    (cddr (assoc-equal name fs)))))
-  :hints (("Goal" :induct (assoc-equal name fs)
-           :in-theory (enable feasible-file-length-p)) ))
-
-(defthm l3-stat-guard-lemma-2
-  (implies (and (consp fs) (l3-fs-p fs)
-                (consp (assoc-equal s fs))
-                (not (and (consp (cdr (assoc-equal s fs)))
-                          (nat-listp (cadr (assoc-equal s fs))))))
-           (l3-fs-p (cdr (assoc-equal s fs)))))
-
 ;; This function allows a file or directory to be found in a filesystem given a path.
 (defun l3-stat (hns fs disk)
   (declare (xargs :guard-debug t
                   :guard (and (symbol-listp hns)
                               (l3-fs-p fs)
-                              (block-listp disk))
-                  :guard-hints (("Subgoal 2.2'"
-                                 :in-theory (disable l3-stat-guard-lemma-1)
-                                 :use (:instance l3-stat-guard-lemma-1
-                                                 (name (car hns)))))))
+                              (block-listp disk))))
   (if (atom hns)
       fs
     (if (atom fs)
@@ -276,7 +270,7 @@
         (if (atom sd)
             nil
           (let ((contents (cdr sd)))
-            (if (and (consp contents) (nat-listp (car contents)))
+            (if (l3-regular-file-entry-p contents)
                 (and (null (cdr hns))
                      (coerce
                       (unmake-blocks (fetch-blocks-by-indices disk (car contents))
@@ -294,8 +288,7 @@
            (equal (l3-stat inside (l3-stat outside fs disk) disk)
                   (l3-stat (append outside inside) fs disk)))
   :hints
-  (("Goal"
-    :induct (l3-stat outside fs disk))))
+  (("Goal" :induct (l3-stat outside fs disk))))
 
 ;; This function finds a text file given its path and reads a segment of
 ;; that text file.
@@ -332,7 +325,7 @@
           (if (atom sd)
               fs
             (let ((contents (cdr sd)))
-              (if (and (consp contents) (nat-listp (car contents)))
+              (if (l3-regular-file-entry-p contents)
                   fs ;; we still have names but we're at a regular file - error
                 (cons (cons (car sd)
                             (l3-unlink (cdr hns) contents))
@@ -389,7 +382,7 @@
         (if (atom sd)
             (mv fs disk) ;; file-not-found error, so leave fs unchanged
           (let ((contents (cdr sd)))
-            (if (and (consp contents) (nat-listp (car contents)))
+            (if (l3-regular-file-entry-p contents)
                 (if (cdr hns)
                     (mv (cons (cons (car sd) contents)
                               (delete-assoc (car hns) fs))
@@ -428,11 +421,21 @@
   (implies (and (consp (assoc-equal s fs))
                 (l3-fs-p fs)
                 (consp (cdr (assoc-equal s fs)))
-                (nat-listp (cadr (assoc-equal s fs))))
+                (l3-regular-file-entry-p (cdr (assoc-equal s fs))))
            (feasible-file-length-p
             (len (cadr (assoc-equal s fs)))
             (cddr (assoc-equal s fs))))
   :hints ( ("Goal" :induct (assoc-equal s fs))))
+
+(defthm
+  l3-wrchs-returns-fs-lemma-4
+  (implies
+   (and (block-listp disk)
+        (character-listp cl))
+   (l3-regular-file-entry-p (cons (generate-index-list (len disk)
+                                                       (len (make-blocks cl)))
+                                  (len cl))))
+  :hints (("Goal" :in-theory (enable l3-regular-file-entry-p))))
 
 ;; This theorem shows that the property l3-fs-p is preserved by wrchs, and
 ;; additionally the property block-listp is preseved for the disk.
