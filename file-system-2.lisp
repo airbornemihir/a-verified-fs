@@ -539,7 +539,7 @@
         nil
       (length file))))
 
--; Prove (list-of-chars-to-string (string-to-chars str))
+; Prove (list-of-chars-to-string (string-to-chars str))
 ;       (string-to-chars (list-of-chars-to-string char-list))
 ; and then, you will be positioned to use either form.
 #||From :doc STR::STD/STRINGS/COERCE

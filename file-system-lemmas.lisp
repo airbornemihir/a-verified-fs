@@ -62,3 +62,22 @@
   (implies (and (consp l) (integerp n) (> n 0))
            (< (len (nthcdr n l)) (len l)))
   :rule-classes :linear)
+
+(defthmd revappend-is-append-of-rev
+  (equal (revappend x (binary-append y z))
+         (binary-append (revappend x y) z)))
+
+(defthm binary-append-take-nthcdr
+  (implies (and (natp i) (<= i (len l)))
+           (equal (binary-append (first-n-ac i l ac) (nthcdr i l))
+                  (revappend ac l)))
+  :hints (("Goal" :induct (first-n-ac i l ac))
+          ("Subgoal *1/1'''"
+           :use (:instance revappend-is-append-of-rev
+                           (x ac) (y nil) (z l)))))
+
+(defthm take-of-take
+  (implies (and (natp m) (integerp n) (<= m n) (<= n (len l)))
+           (equal (first-n-ac m (take n l) ac) (first-n-ac m l ac)))
+  :hints (("Goal" :in-theory (disable binary-append-take-nthcdr)
+           :use (:instance binary-append-take-nthcdr (ac nil) (i n))) ))
