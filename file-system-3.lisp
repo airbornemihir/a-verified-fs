@@ -278,22 +278,50 @@
                       'string))
               (l3-stat (cdr hns) contents disk))))))))
 
-(defthm l3-stat-correctness-1-lemma-1
+;; (defthm l3-stat-correctness-1-lemma-1
+;;   (implies (and (l3-fs-p fs)
+;;                 (block-listp disk)
+;;                 (consp (cdr (assoc-equal name fs)))
+;;                 (nat-listp (cadr (assoc-equal name fs))))
+;;            (and (natp (cddr (assoc-equal name fs)))
+;;                 (feasible-file-length-p (len (cadr (assoc-equal name fs)))
+;;                                         (cddr (assoc-equal name fs))))))
+
+;; (defthm l3-stat-correctness-1-lemma-2
+;;   (implies (and (l3-fs-p fs)
+;;                 (block-listp disk)
+;;                 (consp (cdr (assoc-equal name fs)))
+;;                 (nat-listp (cadr (assoc-equal name fs))))
+;;            (stringp (cadr (assoc-equal name (l3-to-l2-fs fs disk)))))
+;;   :hints ( ("Goal" :use l3-stat-correctness-1-lemma-1)))
+
+(defthm
+  l3-stat-correctness-1-lemma-1
   (implies (and (l3-fs-p fs)
+                (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (block-listp disk)
-                (consp (cdr (assoc-equal name fs)))
-                (nat-listp (cadr (assoc-equal name fs))))
-           (and (natp (cddr (assoc-equal name fs)))
-                (feasible-file-length-p (len (cadr (assoc-equal name fs)))
-                                        (cddr (assoc-equal name fs))))))
+                (consp (assoc-equal name fs)))
+           (stringp (cadr (assoc-equal name
+                                       (l3-to-l2-fs fs disk))))))
 
 (defthm l3-stat-correctness-1-lemma-2
-  (implies (and (l3-fs-p fs)
-                (block-listp disk)
-                (consp (cdr (assoc-equal name fs)))
-                (nat-listp (cadr (assoc-equal name fs))))
-           (stringp (cadr (assoc-equal name (l3-to-l2-fs fs disk)))))
-  :hints ( ("Goal" :use l3-stat-correctness-1-lemma-1)))
+  (implies (and (l3-fs-p fs) (block-listp disk))
+           (equal (consp (assoc-equal name (l3-to-l2-fs fs disk)))
+                  (consp (assoc-equal name fs)))))
+
+(defthm
+  l3-stat-correctness-1-lemma-3
+  (implies
+   (and (l3-fs-p fs)
+        (block-listp disk)
+        (consp (assoc-equal name fs))
+        (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+   (equal
+    (cadr (assoc-equal name (l3-to-l2-fs fs disk)))
+    (coerce (unmake-blocks
+             (fetch-blocks-by-indices disk (cadr (assoc-equal name fs)))
+             (cddr (assoc-equal name fs)))
+            'string))))
 
 (defthm l3-stat-correctness-1
   (implies (and (symbol-listp hns)
