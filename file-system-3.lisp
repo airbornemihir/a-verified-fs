@@ -331,18 +331,48 @@
                   (l3-to-l2-fs (cdr (assoc-equal name fs))
                                disk))))
 
+(defthm
+  l3-stat-correctness-1-lemma-5
+  (implies (and (consp (assoc-equal name fs))
+                (l3-fs-p fs)
+                (block-listp disk)
+                (not (l3-regular-file-entry-p (cdr (assoc-equal name fs)))))
+           (not (stringp (car (l3-to-l2-fs (cdr (assoc-equal name fs))
+                                           disk))))))
+
+;; This is the first of two theorems showing the equivalence of the l3 and l2
+;; versions of stat.
 (defthm l3-stat-correctness-1
   (implies (and (symbol-listp hns)
                 (l3-fs-p fs)
                 (block-listp disk)
                 (stringp (l3-stat hns fs disk)))
            (equal (l2-stat hns (l3-to-l2-fs fs disk))
-                  (l3-stat hns fs disk)))
-  :hints (("Subgoal *1/5.2'"
-           :in-theory (disable l3-fs-p-assoc l3-to-l2-fs-correctness-1)
-           :use ((:instance l3-to-l2-fs-correctness-1
-                            (fs (cdr (assoc-equal (car hns) fs))))
-                 (:instance l3-fs-p-assoc (name (car hns)))) ) ))
+                  (l3-stat hns fs disk))))
+
+(defthm l3-stat-correctness-2-lemma-1
+  (implies (l3-fs-p fs)
+           (equal (consp (l3-to-l2-fs fs disk))
+                  (consp fs))))
+
+(defthm l3-stat-correctness-2-lemma-2
+  (implies (and (consp (assoc-equal name fs))
+                (l3-fs-p fs)
+                (block-listp disk)
+                (stringp (cadr (assoc-equal name fs)))
+                (cdr hns))
+           (l3-regular-file-entry-p (cdr (assoc-equal name fs)))))
+
+;; This is the second of two theorems showing the equivalence of the l3 and l2
+;; versions of stat.
+(defthm l3-stat-correctness-2
+  (implies (and (symbol-listp hns)
+                (l3-fs-p fs)
+                (block-listp disk)
+                (l3-fs-p (l2-stat hns fs)))
+           (equal (l2-stat hns (l3-to-l2-fs fs disk))
+                  (l3-to-l2-fs (l3-stat hns fs disk) disk)))
+  )
 
 ;; This is simply a useful property of stat.
 (defthm l3-stat-of-stat
