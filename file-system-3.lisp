@@ -323,13 +323,26 @@
              (cddr (assoc-equal name fs)))
             'string))))
 
+(defthm l3-stat-correctness-1-lemma-4
+  (implies (and (l3-fs-p fs)
+                (block-listp disk)
+                (l3-fs-p (cdr (assoc-equal name fs))))
+           (equal (cdr (assoc-equal name (l3-to-l2-fs fs disk)))
+                  (l3-to-l2-fs (cdr (assoc-equal name fs))
+                               disk))))
+
 (defthm l3-stat-correctness-1
   (implies (and (symbol-listp hns)
                 (l3-fs-p fs)
                 (block-listp disk)
                 (stringp (l3-stat hns fs disk)))
            (equal (l2-stat hns (l3-to-l2-fs fs disk))
-                  (l3-stat hns fs disk))))
+                  (l3-stat hns fs disk)))
+  :hints (("Subgoal *1/5.2'"
+           :in-theory (disable l3-fs-p-assoc l3-to-l2-fs-correctness-1)
+           :use ((:instance l3-to-l2-fs-correctness-1
+                            (fs (cdr (assoc-equal (car hns) fs))))
+                 (:instance l3-fs-p-assoc (name (car hns)))) ) ))
 
 ;; This is simply a useful property of stat.
 (defthm l3-stat-of-stat
