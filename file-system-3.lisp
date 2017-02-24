@@ -403,6 +403,23 @@
             nil
           (subseq file start (+ start n)))))))
 
+(defthm l3-rdchs-correctness-1-lemma-1
+  (implies (and (symbol-listp hns)
+                (l3-fs-p fs)
+                (block-listp disk))
+           (equal (stringp (l2-stat hns (l3-to-l2-fs fs disk)))
+                  (stringp (l3-stat hns fs disk)))))
+
+;; This theorem proves the equivalence of the l3 and l2 versions of stat.
+(defthm l3-rdchs-correctness-1
+  (implies (and (symbol-listp hns)
+                (l3-fs-p fs)
+                (natp start)
+                (natp n)
+                (block-listp disk))
+           (equal (l2-rdchs hns (l3-to-l2-fs fs disk) start n)
+                  (l3-rdchs hns fs disk start n))))
+
 ; This function deletes a file or directory given its path.
 
 ; Note that we don't need to do anything with the disk - the blocks can just
