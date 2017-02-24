@@ -192,8 +192,8 @@
                 (l2-fs-p fs)
                 (natp start)
                 (natp n))
-           (equal (l2-rdchs hns fs start n)
-                  (l1-rdchs hns (l2-to-l1-fs fs) start n))))
+           (equal (l1-rdchs hns (l2-to-l1-fs fs) start n)
+                  (l2-rdchs hns fs start n))))
 
 ; This function deletes a file or directory given its path.
 (defun l2-unlink (hns fs)
@@ -330,17 +330,6 @@
   (implies (l2-rdchs hns fs start n)
            (stringp (l2-stat hns fs))))
 
-;; (defthm l2-read-after-write-1-lemma-4
-;;   (implies (and (l2-fs-p fs) (stringp text) (stringp (l2-stat hns fs)))
-;;            (equal (l2-stat hns (l2-wrchs hns fs start text))
-;;                   (let* (
-;;                          (end (+ start (length text)))
-;;                          (oldtext (coerce (l2-stat hns fs) 'list))
-;;                          (newtext (append (make-character-list (take start oldtext))
-;;                                           (coerce text 'list)
-;;                                           (nthcdr end oldtext))))
-;;                     (coerce newtext 'string)))))
-
 (defthm l2-read-after-write-1-lemma-4
   (implies (and (l2-fs-p fs)
                 (stringp text)
@@ -460,7 +449,7 @@
   )
 
 ;; This is a new proof of the second read-after-write property, which does not
-;; rely on the same proof in l1.
+;; rely on the equivalent proof in l1.
 (defthm l2-read-after-write-2
   (implies (and (l2-fs-p fs)
                 (stringp text2)
