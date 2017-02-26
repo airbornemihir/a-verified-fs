@@ -81,3 +81,13 @@
            (equal (first-n-ac m (take n l) ac) (first-n-ac m l ac)))
   :hints (("Goal" :in-theory (disable binary-append-take-nthcdr)
            :use (:instance binary-append-take-nthcdr (ac nil) (i n))) ))
+
+(defthm nth-of-binary-append
+  (implies (and (integerp n) (>= n (len x)))
+           (equal (nth n (binary-append x y))
+                  (nth (- n (len x)) y)))
+  :hints (("goal" :induct (nth n x))))
+
+(defthm binary-append-is-associative
+  (equal (binary-append (binary-append a b) c)
+         (binary-append a (binary-append b c))))
