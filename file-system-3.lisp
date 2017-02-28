@@ -113,6 +113,7 @@
 
 ;; This is a function that might be needed later.
 (defun bounded-nat-listp (l b)
+  (declare (xargs :guard (natp b)))
   (if (atom b)
       (eq l nil)
     (and (natp (car l)) (< (car l) b) (bounded-nat-listp (cdr l) b))))
@@ -224,6 +225,28 @@
 
 (assert!
  (l3-fs-p '((a (1 2) . 10) (b (3 4) . 11) (c (a (5 6) . 12) (b (7 8) . 13)))))
+
+(defund l3-bounded-fs-p (fs disk-length)
+  (declare (xargs :guard (natp disk-length)))
+  (if (atom fs)
+      (null fs)
+    (and (let ((directory-or-file-entry (car fs)))
+           (if (atom directory-or-file-entry)
+               nil
+             (let ((name (car directory-or-file-entry))
+                   (entry (cdr directory-or-file-entry)))
+               (and (symbolp name)
+                    (or (and (consp entry)
+                             (bounded-nat-listp (car entry) disk-length)
+                             (natp (cdr entry))
+                             (feasible-file-length-p (len (car entry)) (cdr entry)))
+                        (l3-bounded-fs-p entry disk-length))))))
+         (l3-bounded-fs-p (cdr fs) disk-length))))
+
+(defthm l3-bounded-fs-p-correctness-1
+  (implies (l3-bounded-fs-p fs disk-length)
+           (l3-fs-p fs))
+  :hints (("Goal" :in-theory (enable l3-bounded-fs-p feasible-file-length-p)) ))
 
 (defthm l3-to-l2-fs-guard-lemma-1
   (implies (and (feasible-file-length-p (len blocks) n)
