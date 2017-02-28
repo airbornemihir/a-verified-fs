@@ -470,6 +470,25 @@
              (equal (len (generate-index-list disk-length block-list-length))
                     block-list-length)))
 
+(encapsulate ()
+  (local (defun induction-scheme (x y)
+           (if (atom y)
+               x
+             (induction-scheme (binary-append x (cons (car y) nil)) (cdr y)))))
+
+  (defthm
+    generate-index-list-correctness-3
+    (implies
+     (and (block-listp disk)
+          (block-listp newblocks))
+     (equal (fetch-blocks-by-indices (binary-append disk newblocks)
+                                     (generate-index-list (len disk)
+                                                          (len newblocks)))
+            newblocks))
+     :hints (("Goal" :induct (induction-scheme disk newblocks))))
+  
+  )
+
 (defthm make-blocks-correctness-3
   (implies (and (character-listp cl))
            (feasible-file-length-p (len (make-blocks cl))  (len cl)))
@@ -565,6 +584,40 @@
 (defthm l3-unlink-returns-fs
   (implies (and (l3-fs-p fs))
            (l3-fs-p (l3-unlink hns fs))))
+
+(defthm l3-wrchs-correctness-1-lemma-1
+  (implies (and (l3-fs-p fs) (block-listp disk))
+           (equal (delete-assoc-equal name (l3-to-l2-fs fs disk))
+                  (l3-to-l2-fs (delete-assoc-equal name fs)
+                               disk))))
+
+(defthm
+  l3-wrchs-correctness-1-lemma-2
+  (implies (and (l3-fs-p fs)
+                (consp (assoc-equal name fs))
+                (not (l3-regular-file-entry-p (cdr (assoc-equal name fs)))))
+           (not (l3-regular-file-entry-p (cddr (assoc-equal name fs))))))
+
+(defthm l3-wrchs-correctness-1-lemma-3
+  (implies (and (consp fs)
+                (l3-fs-p fs)
+                (block-listp disk))
+           (consp (car (l3-to-l2-fs fs disk)))))
+
+;; This theorem shows the equivalence of the l3 and l2 versions of wrchs.
+(defthm l3-wrchs-correctness-1
+  (implies (and (l3-fs-p fs)
+                (stringp text)
+                (natp start)
+                (symbol-listp hns)
+                (block-listp disk))
+           (equal (l2-wrchs hns (l3-to-l2-fs fs disk) start text)
+                  (mv-let (new-fs new-disk) (l3-wrchs hns fs disk start text)
+                    (l3-to-l2-fs new-fs new-disk))))
+  :hints (("Subgoal *1/8.9'"
+           :in-theory (disable L3-WRCHS-RETURNS-FS)
+           :USE (:INSTANCE L3-WRCHS-RETURNS-FS (HNS (CDR HNS))
+                           (FS (CDR (ASSOC-EQUAL (CAR HNS) FS)))))))
 
 ;; The theorems from this point on do not succeed. What they should be and how
 ;; they should be proved is under consideration; these are relics from the
