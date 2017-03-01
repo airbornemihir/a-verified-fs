@@ -755,9 +755,16 @@
 ;; they should be proved is under consideration; these are relics from the
 ;; previous model that are kept as an aid to thinking.
 
-(defthm l3-read-after-write-1-lemma-2
-  (implies (and (l3-fs-p fs) (stringp text) (stringp (l3-stat hns fs)))
-           (stringp (l3-stat hns (l3-wrchs hns fs disk start text)))))
+(defthm l3-read-after-write-1-lemma-1
+  (implies (and (l3-fs-p fs) (stringp text) (block-listp disk) (integerp start)
+  (<= 0 start))
+           (equal (stringp (l3-stat hns (mv-nth 0 (l3-wrchs hns fs disk start text))
+                                    (mv-nth 1 (l3-wrchs hns fs disk start text))))
+                  (stringp (l3-stat hns fs disk))))
+  :hints (("Subgoal *1/7.2'" 
+           :in-theory (disable l3-wrchs-returns-fs)
+           :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
+                           (fs (cdr (assoc-equal (car hns) fs))))) ))
 
 (defthm l3-read-after-write-1-lemma-3
   (implies (l3-rdchs hns fs start n)
@@ -775,13 +782,25 @@
                     (coerce newtext 'string)))))
 
 (defthm l3-read-after-write-1
-  (implies (and (l3-fs-p fs)
+  (implies (and (l3-bounded-fs-p fs (len disk))
                 (stringp text)
                 (symbol-listp hns)
                 (natp start)
                 (equal n (length text))
-                (stringp (l3-stat hns fs)))
-           (equal (l3-rdchs hns (l3-wrchs hns fs start text) start n) text)))
+                (stringp (l3-stat hns fs disk)))
+           (mv-let (new-fs new-disk) (l3-wrchs hns fs disk start text)
+             (equal (l3-rdchs hns new-fs new-disk start n) text)))
+  :hints (("Goal" :do-not-induct t
+           :USE ((:INSTANCE L3-RDCHS-CORRECTNESS-1
+                            (FS (MV-NTH 0 (L3-WRCHS HNS FS DISK START TEXT)))
+                            (DISK (MV-NTH 1 (L3-WRCHS HNS FS DISK START TEXT)))
+                            (N (LENGTH TEXT)))
+                 L3-WRCHS-CORRECTNESS-1
+                 L2-READ-AFTER-WRITE-1))
+          ("Subgoal 66'" :in-theory (disable l3-wrchs-returns-fs)
+           :use l3-wrchs-returns-fs)
+          ("Subgoal 66'''" :in-theory (disable l3-wrchs-returns-fs)
+           :use l3-wrchs-returns-fs)))
 
 ;; we want to prove
 ;; (implies (and (l3-fs-p fs)
