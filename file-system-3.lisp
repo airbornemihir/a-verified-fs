@@ -1,3 +1,4 @@
+(in-package "ACL2")
 
 ;  file-system-3.lisp                                  Mihir Mehta
 
@@ -214,9 +215,6 @@
                     (or (l3-regular-file-entry-p entry)
                         (l3-fs-p entry))))))
          (l3-fs-p (cdr fs)))))
-;; this example - which evaluates to t - remains as a counterexample to an
-;; erstwhile bug.
-;; (defconst *test01* (l3-fs-p '((a  "Mihir" . 5) (b "Warren" . 6) (c))))
 
 (defthm l3-regular-file-entry-p-correctness-3
   (implies (l3-regular-file-entry-p entry)
@@ -236,6 +234,9 @@
 (assert!
  (l3-fs-p '((a (1 2) . 10) (b (3 4) . 11) (c (a (5 6) . 12) (b (7 8) . 13)))))
 
+; This function is a further restricted filesystem. This is not used as our
+; only filesystem definition because it has a dependence on the disk, which we
+; want to keep separate, at least at this stage.
 (defund l3-bounded-fs-p (fs disk-length)
   (declare (xargs :guard (natp disk-length)))
   (if (atom fs)
@@ -324,23 +325,6 @@
                                      (cdr contents))
                       'string))
               (l3-stat (cdr hns) contents disk))))))))
-
-;; (defthm l3-stat-correctness-1-lemma-1
-;;   (implies (and (l3-fs-p fs)
-;;                 (block-listp disk)
-;;                 (consp (cdr (assoc-equal name fs)))
-;;                 (nat-listp (cadr (assoc-equal name fs))))
-;;            (and (natp (cddr (assoc-equal name fs)))
-;;                 (feasible-file-length-p (len (cadr (assoc-equal name fs)))
-;;                                         (cddr (assoc-equal name fs))))))
-
-;; (defthm l3-stat-correctness-1-lemma-2
-;;   (implies (and (l3-fs-p fs)
-;;                 (block-listp disk)
-;;                 (consp (cdr (assoc-equal name fs)))
-;;                 (nat-listp (cadr (assoc-equal name fs))))
-;;            (stringp (cadr (assoc-equal name (l3-to-l2-fs fs disk)))))
-;;   :hints ( ("Goal" :use l3-stat-correctness-1-lemma-1)))
 
 (defthm
   l3-stat-correctness-1-lemma-1
@@ -498,6 +482,8 @@
 
 ;; (defthm l3-unlink-works (implies (l3-fs-p fs) (not (l3-stat hns (l3-unlink hns fs)))))
 
+;; If one's going to append some blocks at the end of the disk, one needs to
+;; generate the indices for those blocks - that's what this function does.
 (defun generate-index-list (disk-length block-list-length)
   (declare (xargs :guard (and (natp disk-length) (natp block-list-length))))
   (if (zp block-list-length)
@@ -652,15 +638,7 @@
                 (block-listp disk))
            (consp (car (l3-to-l2-fs fs disk)))))
 
-;; WTH?
-;; (defthm l3-wrchs-correctness-1-lemma-4
-;;   (implies (and (block-listp disk)
-;;                 (block-listp extra-blocks)
-;;                 (bounded-nat-listp fs (len disk)))
-;;            (equal (l3-to-l2-fs fs (binary-append disk extra-blocks))
-;;                   (l3-to-l2-fs fs disk))))
-
-(defthm l3-wrchs-correctness-1-lemma-5
+(defthm l3-wrchs-correctness-1-lemma-4
         (implies (and (l3-bounded-fs-p fs (len disk))
                       (block-listp disk)
                       (l3-regular-file-entry-p (cdr (car fs))))
@@ -668,7 +646,7 @@
                                     (len disk)))
         :hints (("Goal" :in-theory (enable l3-bounded-fs-p))))
 
-(defthm l3-wrchs-correctness-1-lemma-6
+(defthm l3-wrchs-correctness-1-lemma-5
   (implies (and (l3-bounded-fs-p fs (len disk))
                 (block-listp disk))
            (equal (l3-to-l2-fs fs (binary-append disk extra-blocks))
@@ -676,7 +654,7 @@
   :hints (("Goal" :in-theory (enable l3-bounded-fs-p))))
 
 (defthm
-  l3-wrchs-correctness-1-lemma-7
+  l3-wrchs-correctness-1-lemma-6
   (implies
    (and (consp (assoc-equal name fs))
         (l3-fs-p (cdr (assoc-equal name fs)))
@@ -687,14 +665,14 @@
           (l3-to-l2-fs (cdr (assoc-equal name fs))
                        (append disk extra-blocks)))))
 
-(defthm l3-wrchs-correctness-1-lemma-8
+(defthm l3-wrchs-correctness-1-lemma-7
   (implies (l3-bounded-fs-p fs disk-length)
            (l3-bounded-fs-p (delete-assoc-equal name fs)
                             disk-length))
   :hints (("Goal" :in-theory (enable l3-bounded-fs-p))))
 
 (defthm
-  l3-wrchs-correctness-1-lemma-9
+  l3-wrchs-correctness-1-lemma-8
   (implies (and (l3-regular-file-entry-p (cdr (assoc-equal (car hns) fs)))
                 (l3-fs-p fs)
                 (block-listp disk))
@@ -702,7 +680,7 @@
                                     (l3-to-l2-fs fs disk))))))
 
 (defthm
-  l3-wrchs-correctness-1-lemma-10
+  l3-wrchs-correctness-1-lemma-9
   (implies
    (and (consp (assoc-equal name fs))
         (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
@@ -718,7 +696,7 @@
      (cddr (assoc-equal name fs))))))
 
 (defthm
-  l3-wrchs-correctness-1-lemma-11
+  l3-wrchs-correctness-1-lemma-10
   (implies
    (and (l3-bounded-fs-p fs1 (len disk))
         (block-listp disk))
@@ -763,6 +741,7 @@
            :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
                            (fs (cdr (assoc-equal (car hns) fs))))) ))
 
+;; This is a proof of the first read-after-write property.
 (defthm l3-read-after-write-1
   (implies (and (l3-bounded-fs-p fs (len disk))
                 (stringp text)
@@ -785,49 +764,7 @@
                             (fs (l3-to-l2-fs fs disk)))
                  l3-wrchs-returns-fs))))
 
-;; The theorems from this point on do not succeed. What they should be and how
-;; they should be proved is under consideration; these are relics from the
-;; previous model that are kept as an aid to thinking.
-
-;; we want to prove
-;; (implies (and (l3-fs-p fs)
-;;               (stringp text2)
-;;               (symbol-listp hns1)
-;;               (symbol-listp hns2)
-;;               (not (equal hns1 hns2))
-;;               (natp start2)
-;;               (stringp (l3-stat hns1 fs)))
-;;          (equal (l3-stat hns1 (l3-wrchs hns2 fs start2 text2))
-;;                 (l3-stat hns1 fs)))
-;; now, let's semi-formally write the cases we want.
-;; case 1: (atom hns1) - this will violate the hypothesis
-;; (stringp (l3-stat hns1 fs))
-;; case 2: (and (consp hns1) (atom fs)) - this will yield nil in both cases
-;; case 3: (and (consp hns1) (consp fs) (atom (assoc (car hns1) fs))) - this
-;; will yield nil in both cases (might need a lemma)
-;; case 4: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
-;;              (atom hns2)) - in this case
-;; (l3-wrchs hns2 fs start2 text2) will be the same as fs
-;; case 5: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
-;;              (consp hns2) (not (equal (car hns1) (car hns2)))) - in this
-;; case, (assoc (car hns1) (l3-wrchs hns2 fs start2 text2)) =
-;; (assoc (car hns1) (delete-assoc (car hns2) fs)) =
-;; (assoc (car hns1) fs) and from here on the terms will be equal
-;; case 6: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
-;;              (consp hns2) (equal (car hns1) (car hns2)) (atom (cdr hns1))) -
-;; in this case (consp (cdr hns2)) is implicit because of
-;; (not (equal hns1 hns2)) and (stringp (l3-stat hns1 fs)) implies that
-;; (l3-wrchs hns2 fs start2 text2) = fs
-;; case 7: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
-;;              (consp hns2) (equal (car hns1) (car hns2)) (consp (cdr hns1))) -
-;; (l3-stat hns1 (l3-wrchs hns2 fs start2 text2)) =
-;; (l3-stat hns1 (cons (cons (car hns1)
-;;                        (l3-wrchs (cdr hns2) (cdr (assoc (car hns1) fs)) start2 text2))
-;;                  (delete-assoc (car hns1) fs)) =
-;; (l3-stat (cdr hns1) (l3-wrchs (cdr hns2) (cdr (assoc (car hns1) fs)) start2 text2)) =
-;; (l3-stat (cdr hns1) (cdr (assoc (car hns1) fs))) = (induction hypothesis)
-;; (l3-stat hns1 fs)
-
+;; This is a proof of the second read-after-write property.
 (defthm
   l3-read-after-write-2
   (implies (and (block-listp disk)
@@ -865,53 +802,12 @@
                             (start start1)
                             (text text1))))))
 
-(defun fsck (fs)
-  (declare (xargs :guard (l3-fs-p fs)))
-  (or (atom fs)
-    (and (let ((directory-or-file-entry (car fs)))
-           (let ((entry (cdr directory-or-file-entry)))
-             (if (and (consp entry) (stringp (car entry)))
-                 (equal (length (car entry)) (cdr entry))
-               (fsck entry))))
-         (fsck (cdr fs)))))
-
-(defthm fsck-after-l3-wrchs-lemma-1
-  (implies (and (l3-fs-p fs) (fsck fs))
-           (fsck (delete-assoc-equal name fs))))
-
-(defthm fsck-after-l3-wrchs-lemma-2
-  (implies (and (l3-fs-p fs) (fsck fs))
-           (fsck (cdr (assoc-equal (car hns) fs)))))
-
-(defthm fsck-after-l3-wrchs-lemma-3
-  (implies (and (l3-fs-p fs) (consp fs)) (not (stringp (car fs)))))
-
-(defthm fsck-after-l3-wrchs-lemma-4
-  (implies (and (consp fs)
-                (consp (assoc-equal name fs))
-                (l3-fs-p fs)
-                (stringp text)
-                (fsck fs)
-                (consp (cdr (assoc-equal name fs)))
-                (stringp (cadr (assoc-equal name fs))))
-           (equal (len (coerce (cadr (assoc-equal name fs))
-                               'list))
-                  (cddr (assoc-equal name fs))))
-)
-
-(defthm fsck-after-l3-wrchs
-  (implies (and (l3-fs-p fs) (stringp text) (fsck fs))
-           (fsck (l3-wrchs hns fs start text))))
-
-(defthm fsck-after-l3-unlink
-  (implies (and (l3-fs-p fs) (fsck fs))
-           (fsck (l3-unlink hns fs))))
-
 ; Find length of file
-(defun wc-len (hns fs)
+(defun wc-len (hns fs disk)
   (declare (xargs :guard (and (symbol-listp hns)
-                              (l3-fs-p fs))))
-  (let ((file (l3-stat hns fs)))
+                              (l3-fs-p fs)
+                              (block-listp disk))))
+  (let ((file (l3-stat hns fs disk)))
     (if (not (stringp file))
         nil
       (length file))))
@@ -940,29 +836,29 @@ That takes care of that
 
 ; and so on...
 
-(assign fs '((a "Mihir" . 5) (b "Warren" . 6) (c (a "Mehta" . 5) (b "Hunt" . 4))))
+;; (assign fs '((a "Mihir" . 5) (b "Warren" . 6) (c (a "Mehta" . 5) (b "Hunt" . 4))))
 
-(assign h1 '(a))
-(assign h2 '(a b))
-(assign h3 '(c b))
-(assign h4 '(c))
+;; (assign h1 '(a))
+;; (assign h2 '(a b))
+;; (assign h3 '(c b))
+;; (assign h4 '(c))
 
-(l3-stat (@ h1) (@ fs))
-(l3-stat (@ h2) (@ fs))
-(l3-stat (@ h3) (@ fs))
-(l3-stat (@ h4) (@ fs))
+;; (l3-stat (@ h1) (@ fs))
+;; (l3-stat (@ h2) (@ fs))
+;; (l3-stat (@ h3) (@ fs))
+;; (l3-stat (@ h4) (@ fs))
 
-(wc-len (@ h1) (@ fs))
-(wc-len (@ h2) (@ fs))
-(wc-len (@ h3) (@ fs))
-(wc-len (@ h4) (@ fs))
+;; (wc-len (@ h1) (@ fs))
+;; (wc-len (@ h2) (@ fs))
+;; (wc-len (@ h3) (@ fs))
+;; (wc-len (@ h4) (@ fs))
 
-(l3-wrchs (@ h1) (@ fs) 1 "athur")
-(l3-wrchs (@ h3) (@ fs) 1 "inojosa")
-(l3-wrchs (@ h3) (@ fs) 5 "Alvarez")
-(l3-wrchs (@ h2) (@ fs) 1 "athur") ;; buggy example
+;; (l3-wrchs (@ h1) (@ fs) 1 "athur")
+;; (l3-wrchs (@ h3) (@ fs) 1 "inojosa")
+;; (l3-wrchs (@ h3) (@ fs) 5 "Alvarez")
+;; (l3-wrchs (@ h2) (@ fs) 1 "athur")
 
-(l3-unlink (@ h1) (@ fs))
-(l3-unlink (@ h2) (@ fs))
-(l3-unlink (@ h3) (@ fs))
-(l3-unlink (@ h4) (@ fs))
+;; (l3-unlink (@ h1) (@ fs))
+;; (l3-unlink (@ h2) (@ fs))
+;; (l3-unlink (@ h3) (@ fs))
+;; (l3-unlink (@ h4) (@ fs))
