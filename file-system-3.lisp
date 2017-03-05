@@ -621,7 +621,8 @@
 (defthm l3-wrchs-returns-fs
   (implies (and (l3-fs-p fs)
                 (block-listp disk)
-                (natp start)
+                (integerp start)
+                (<= 0 start)
                 (stringp text))
            (mv-let (new-fs new-disk)
              (l3-wrchs hns fs disk start text)
@@ -751,10 +752,6 @@
            :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
                            (fs (cdr (assoc-equal (car hns) fs)))))))
 
-;; The theorems from this point on do not succeed. What they should be and how
-;; they should be proved is under consideration; these are relics from the
-;; previous model that are kept as an aid to thinking.
-
 (defthm l3-read-after-write-1-lemma-1
   (implies (and (l3-fs-p fs) (stringp text) (block-listp disk) (integerp start)
   (<= 0 start))
@@ -766,41 +763,31 @@
            :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
                            (fs (cdr (assoc-equal (car hns) fs))))) ))
 
-(defthm l3-read-after-write-1-lemma-3
-  (implies (l3-rdchs hns fs start n)
-           (stringp (l3-stat hns fs))))
-
-(defthm l3-read-after-write-1-lemma-4
-  (implies (and (l3-fs-p fs) (stringp text) (stringp (l3-stat hns fs)))
-           (equal (l3-stat hns (l3-wrchs hns fs start text))
-                  (let* (
-                         (end (+ start (length text)))
-                         (oldtext (coerce (l3-stat hns fs) 'list))
-                         (newtext (append (make-character-list (take start oldtext))
-                                          (coerce text 'list)
-                                          (nthcdr end oldtext))))
-                    (coerce newtext 'string)))))
-
 (defthm l3-read-after-write-1
   (implies (and (l3-bounded-fs-p fs (len disk))
                 (stringp text)
                 (symbol-listp hns)
                 (natp start)
                 (equal n (length text))
-                (stringp (l3-stat hns fs disk)))
-           (mv-let (new-fs new-disk) (l3-wrchs hns fs disk start text)
-             (equal (l3-rdchs hns new-fs new-disk start n) text)))
-  :hints (("Goal" :do-not-induct t
-           :USE ((:INSTANCE L3-RDCHS-CORRECTNESS-1
-                            (FS (MV-NTH 0 (L3-WRCHS HNS FS DISK START TEXT)))
-                            (DISK (MV-NTH 1 (L3-WRCHS HNS FS DISK START TEXT)))
-                            (N (LENGTH TEXT)))
-                 L3-WRCHS-CORRECTNESS-1
-                 L2-READ-AFTER-WRITE-1))
-          ("Subgoal 66'" :in-theory (disable l3-wrchs-returns-fs)
-           :use l3-wrchs-returns-fs)
-          ("Subgoal 66'''" :in-theory (disable l3-wrchs-returns-fs)
-           :use l3-wrchs-returns-fs)))
+                (stringp (l3-stat hns fs disk))
+                (block-listp disk))
+           (mv-let (new-fs new-disk)
+             (l3-wrchs hns fs disk start text)
+             (equal (l3-rdchs hns new-fs new-disk start n)
+                    text)))
+  :hints
+  (("Goal" :use ((:instance l3-rdchs-correctness-1
+                            (fs (mv-nth 0 (l3-wrchs hns fs disk start text)))
+                            (disk (mv-nth 1 (l3-wrchs hns fs disk start text)))
+                            (n (length text)))
+                 l3-wrchs-correctness-1
+                 (:instance l2-read-after-write-1
+                            (fs (l3-to-l2-fs fs disk)))
+                 l3-wrchs-returns-fs))))
+
+;; The theorems from this point on do not succeed. What they should be and how
+;; they should be proved is under consideration; these are relics from the
+;; previous model that are kept as an aid to thinking.
 
 ;; we want to prove
 ;; (implies (and (l3-fs-p fs)
@@ -841,64 +828,11 @@
 ;; (l3-stat (cdr hns1) (cdr (assoc (car hns1) fs))) = (induction hypothesis)
 ;; (l3-stat hns1 fs)
 
-(defthm l3-read-after-write-2-lemma-1
-  (implies (l3-fs-p fs)
-           (not (stringp (cdr (assoc-equal name fs))))))
-
-(defthm l3-read-after-write-2-lemma-2
-  (implies (and (consp hns1)
-                (consp fs)
-                (consp (assoc-equal (car hns1) fs))
-                (l3-fs-p fs)
-                (symbolp (car hns1))
-                (not (cdr hns1))
-                (stringp (l3-stat hns1 fs)))
-           (equal (l3-stat hns1 fs) (cadr (assoc (car hns1) fs)))))
-
-(encapsulate
-  ()
-  (local (defun induction-scheme (hns1 hns2 fs)
-           (if (atom hns1)
-               fs
-             (if (atom fs)
-                 nil
-               (let ((sd (assoc (car hns2) fs)))
-                 (if (atom sd)
-                     fs
-                   (if (atom hns2)
-                       fs
-                     (if (not (equal (car hns1) (car hns2)))
-                         fs
-                       (let ((contents (cdr sd)))
-                         (if (atom (cdr hns1))
-                             (cons (cons (car sd)
-                                         contents)
-                                   (delete-assoc (car hns2) fs))
-                           (cons (cons (car sd)
-                                       (induction-scheme (cdr hns1) (cdr hns2) contents))
-                                 (delete-assoc (car hns2) fs)))
-                         ))))
-                 )))))
-
-  (defthm l3-read-after-write-2-lemma-3
-    (implies (and (l3-fs-p fs)
-                  (stringp text2)
-                  (symbol-listp hns1)
-                  (symbol-listp hns2)
-                  (not (equal hns1 hns2))
-                  (natp start2)
-                  (stringp (l3-stat hns1 fs)))
-             (equal (l3-stat hns1 (l3-wrchs hns2 fs start2 text2)) (l3-stat hns1 fs)))
-    :hints (("Goal"  :induct (induction-scheme hns1 hns2 fs))
-            ("Subgoal *1/7.1''" :in-theory (disable alistp-l3-fs-p)
-             :use (:instance alistp-l3-fs-p (fs (l3-wrchs (cdr hns2)
-                                                    (cdr (assoc-equal (car hns1) fs))
-                                                    start2 text2))))))
-
-  )
-
-(defthm l3-read-after-write-2
-  (implies (and (l3-fs-p fs)
+(defthm
+  l3-read-after-write-2
+  (implies (and (block-listp disk)
+                (l3-bounded-fs-p fs (len disk))
+                (stringp text1)
                 (stringp text2)
                 (symbol-listp hns1)
                 (symbol-listp hns2)
@@ -906,9 +840,30 @@
                 (natp start1)
                 (natp start2)
                 (natp n1)
-                (stringp (l3-stat hns1 fs)))
-           (equal (l3-rdchs hns1 (l3-wrchs hns2 fs start2 text2) start1 n1)
-                  (l3-rdchs hns1 fs start1 n1))))
+                (natp n2)
+                (stringp (l3-stat hns1 fs disk)))
+           (mv-let (new-fs new-disk)
+             (l3-wrchs hns2 fs disk start2 text2)
+             (equal (l3-rdchs hns1 new-fs new-disk start1 n1)
+                    (l3-rdchs hns1 fs disk start1 n1))))
+  :hints
+  (("Goal" :use ((:instance l3-wrchs-returns-fs (hns hns2)
+                            (start start2)
+                            (text text2))
+                 (:instance l2-read-after-write-2
+                            (fs (l3-to-l2-fs fs disk)))
+                 (:instance l3-rdchs-correctness-1
+                            (fs (mv-nth 0 (l3-wrchs hns2 fs disk start2 text2)))
+                            (disk (mv-nth 1 (l3-wrchs hns2 fs disk start2 text2)))
+                            (hns hns1)
+                            (start start1)
+                            (n n1))
+                 (:instance l3-rdchs-correctness-1 (hns hns1)
+                            (start start1)
+                            (n n1))
+                 (:instance l3-wrchs-correctness-1 (hns hns1)
+                            (start start1)
+                            (text text1))))))
 
 (defun fsck (fs)
   (declare (xargs :guard (l3-fs-p fs)))
