@@ -2,9 +2,9 @@
 
 ;  file-system-3.lisp                                  Mihir Mehta
 
-; Here we define the rudiments of a file system with length tracking.  We first
-; start with a file-system recognizer, and then we define various file-system
-; operations.
+; Here we define a more complex file system with length tracking and a disk.
+; We first start with a file-system recognizer, and then we define various
+; file-system operations.
 
 (include-book "misc/assert" :dir :system)
 (include-book "file-system-2")
