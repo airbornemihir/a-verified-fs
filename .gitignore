@@ -1,3 +1,10 @@
 /*.lisp~
 /*.port
 /*.txt~
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.tex~
+*.toc
