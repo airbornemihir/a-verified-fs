@@ -194,6 +194,35 @@
   (implies (and (l1-fs-p fs))
            (l1-fs-p (l1-unlink hns fs))))
 
+(defun l1-create (hns fs text)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l1-fs-p fs)
+                              (stringp text))))
+  (if (atom hns)
+      fs ;; error - showed up at fs with no name  - so leave fs unchanged
+    (let ((sd (assoc (car hns) fs)))
+      (if (atom sd)
+          (cons
+           (cons
+            (car hns)
+            (if (atom (cdr hns))
+                text
+              (l1-create (cdr hns) nil text)))
+           fs)
+        (let ((contents (cdr sd)))
+          (cons (cons (car sd)
+                      (if (stringp (cdr sd))
+                          contents ;; file already exists, so leave fs unchanged
+                        (l1-create (cdr hns) contents text)))
+                (delete-assoc (car hns) fs))
+          )))))
+
+(defthm l1-create-returns-fs
+  (implies (and (symbol-listp hns)
+                (l1-fs-p fs)
+                (stringp text))
+           (l1-fs-p (l1-create hns fs text))))
+
 (defthm l1-read-after-write-1-lemma-1
   (implies (consp (assoc-equal name alist))
            (equal (car (assoc-equal name alist)) name)))
