@@ -476,6 +476,41 @@
                       (delete-assoc (car hns) fs))))))))
     ))
 
+(defthm l3-unlink-returns-fs-lemma-1
+  (implies (and (consp (assoc-equal s fs))
+                (l3-fs-p fs))
+           (and (equal (car (assoc-equal s fs)) s) (symbolp s))))
+
+;; This theorem shows that the property l3-fs-p is preserved by unlink.
+(defthm l3-unlink-returns-fs
+  (implies (and (l3-fs-p fs))
+           (l3-fs-p (l3-unlink hns fs))))
+
+(defthm l3-unlink-correctness-1-lemma-1
+  (implies (and (l3-fs-p fs) (block-listp disk))
+           (equal (delete-assoc-equal name (l3-to-l2-fs fs disk))
+                  (l3-to-l2-fs (delete-assoc-equal name fs)
+                               disk))))
+
+(defthm
+  l3-unlink-correctness-1-lemma-2
+  (implies
+   (and (consp (cdr hns))
+        (consp fs)
+        (l3-fs-p fs)
+        (block-listp disk))
+   (implies
+    (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+    (not (l3-regular-file-entry-p (l3-unlink (cdr hns)
+                                             (cdr (assoc-equal name fs))))))))
+
+(defthm l3-unlink-correctness-1
+  (implies (and (symbol-listp hns)
+                (l3-fs-p fs)
+                (block-listp disk))
+           (equal (l2-unlink hns (l3-to-l2-fs fs disk))
+                  (l3-to-l2-fs (l3-unlink hns fs) disk))))
+
 ;; putting these lemmas on the back burner because we would need to add uniquep
 ;; to our l3-fs-p definition to make this work
 ;; (defthm l3-unlink-works-lemma-1 (not (assoc-equal key (delete-assoc-equal key alist))))
@@ -574,15 +609,10 @@
 ; Mihir, run some example and provide some ASSERT$ events.
 
 (defthm l3-wrchs-returns-fs-lemma-1
-  (implies (and (consp (assoc-equal s fs))
-                (l3-fs-p fs))
-           (and (equal (car (assoc-equal s fs)) s) (symbolp s))))
-
-(defthm l3-wrchs-returns-fs-lemma-2
   (implies (l3-fs-p fs)
            (l3-fs-p (delete-assoc-equal s fs))))
 
-(defthm l3-wrchs-returns-fs-lemma-3
+(defthm l3-wrchs-returns-fs-lemma-2
   (implies (and (consp (assoc-equal s fs))
                 (l3-fs-p fs)
                 (consp (cdr (assoc-equal s fs)))
@@ -593,7 +623,7 @@
   :hints ( ("Goal" :induct (assoc-equal s fs))))
 
 (defthm
-  l3-wrchs-returns-fs-lemma-4
+  l3-wrchs-returns-fs-lemma-3
   (implies
    (and (block-listp disk)
         (character-listp cl))
@@ -614,31 +644,20 @@
              (l3-wrchs hns fs disk start text)
              (and (l3-fs-p new-fs) (block-listp new-disk)))))
 
-;; This theorem shows that the property l3-fs-p is preserved by unlink.
-(defthm l3-unlink-returns-fs
-  (implies (and (l3-fs-p fs))
-           (l3-fs-p (l3-unlink hns fs))))
-
-(defthm l3-wrchs-correctness-1-lemma-1
-  (implies (and (l3-fs-p fs) (block-listp disk))
-           (equal (delete-assoc-equal name (l3-to-l2-fs fs disk))
-                  (l3-to-l2-fs (delete-assoc-equal name fs)
-                               disk))))
-
 (defthm
-  l3-wrchs-correctness-1-lemma-2
+  l3-wrchs-correctness-1-lemma-1
   (implies (and (l3-fs-p fs)
                 (consp (assoc-equal name fs))
                 (not (l3-regular-file-entry-p (cdr (assoc-equal name fs)))))
            (not (l3-regular-file-entry-p (cddr (assoc-equal name fs))))))
 
-(defthm l3-wrchs-correctness-1-lemma-3
+(defthm l3-wrchs-correctness-1-lemma-2
   (implies (and (consp fs)
                 (l3-fs-p fs)
                 (block-listp disk))
            (consp (car (l3-to-l2-fs fs disk)))))
 
-(defthm l3-wrchs-correctness-1-lemma-4
+(defthm l3-wrchs-correctness-1-lemma-3
         (implies (and (l3-bounded-fs-p fs (len disk))
                       (block-listp disk)
                       (l3-regular-file-entry-p (cdr (car fs))))
@@ -646,7 +665,7 @@
                                     (len disk)))
         :hints (("Goal" :in-theory (enable l3-bounded-fs-p))))
 
-(defthm l3-wrchs-correctness-1-lemma-5
+(defthm l3-wrchs-correctness-1-lemma-4
   (implies (and (l3-bounded-fs-p fs (len disk))
                 (block-listp disk))
            (equal (l3-to-l2-fs fs (binary-append disk extra-blocks))
@@ -654,7 +673,7 @@
   :hints (("Goal" :in-theory (enable l3-bounded-fs-p))))
 
 (defthm
-  l3-wrchs-correctness-1-lemma-6
+  l3-wrchs-correctness-1-lemma-5
   (implies
    (and (consp (assoc-equal name fs))
         (l3-fs-p (cdr (assoc-equal name fs)))
@@ -665,14 +684,14 @@
           (l3-to-l2-fs (cdr (assoc-equal name fs))
                        (append disk extra-blocks)))))
 
-(defthm l3-wrchs-correctness-1-lemma-7
+(defthm l3-wrchs-correctness-1-lemma-6
   (implies (l3-bounded-fs-p fs disk-length)
            (l3-bounded-fs-p (delete-assoc-equal name fs)
                             disk-length))
   :hints (("Goal" :in-theory (enable l3-bounded-fs-p))))
 
 (defthm
-  l3-wrchs-correctness-1-lemma-8
+  l3-wrchs-correctness-1-lemma-7
   (implies (and (l3-regular-file-entry-p (cdr (assoc-equal (car hns) fs)))
                 (l3-fs-p fs)
                 (block-listp disk))
@@ -680,7 +699,7 @@
                                     (l3-to-l2-fs fs disk))))))
 
 (defthm
-  l3-wrchs-correctness-1-lemma-9
+  l3-wrchs-correctness-1-lemma-8
   (implies
    (and (consp (assoc-equal name fs))
         (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
@@ -696,7 +715,7 @@
      (cddr (assoc-equal name fs))))))
 
 (defthm
-  l3-wrchs-correctness-1-lemma-10
+  l3-wrchs-correctness-1-lemma-9
   (implies
    (and (l3-bounded-fs-p fs1 (len disk))
         (block-listp disk))
