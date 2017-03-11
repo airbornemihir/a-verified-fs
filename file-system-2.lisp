@@ -276,13 +276,12 @@
            (l2-fs-p (cdr (assoc-equal s fs)))))
 
 (defthm l2-wrchs-returns-fs-lemma-4
-  (implies (and (consp fs)
-                (consp (assoc-equal name fs))
+  (implies (and (consp (assoc-equal name fs))
                 (l2-fs-p fs)
                 (consp (cdr (assoc-equal name fs)))
-                (stringp (cadr (assoc-equal name fs)))
-                )
-           (natp (cddr (assoc-equal name fs)))))
+                (stringp (cadr (assoc-equal name fs))))
+           (and (integerp (cddr (assoc-equal name fs)))
+                (<= 0 (cddr (assoc-equal name fs))))))
 
 (defthm l2-wrchs-returns-fs-lemma-5
   (implies (and (l2-fs-p fs)
@@ -317,6 +316,36 @@
                 (symbol-listp (cdr hns)))
            (equal (l1-wrchs hns (l2-to-l1-fs fs) start text)
                   (l2-to-l1-fs (l2-wrchs hns fs start text)))))
+
+(defun l2-create (hns fs text)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l2-fs-p fs)
+                              (stringp text))))
+  (if (atom hns)
+      fs ;; error - showed up at fs with no name  - so leave fs unchanged
+    (let ((sd (assoc (car hns) fs)))
+      (if (atom sd)
+          (cons
+           (cons
+            (car hns)
+            (if (atom (cdr hns))
+                (cons text (len text))
+              (l2-create (cdr hns) nil text)))
+           fs)
+        (let ((contents (cdr sd)))
+          (cons (cons (car sd)
+                      (if (and (consp (cdr sd)) (stringp (cadr sd)))
+                          contents ;; file already exists, so leave fs unchanged
+                        (l2-create (cdr hns) contents text)))
+                (delete-assoc (car hns) fs))
+          )))))
+
+(defthm l2-create-returns-fs
+  (implies (and (symbol-listp hns)
+                (l2-fs-p fs)
+                (stringp text))
+           (l2-fs-p (l2-create hns fs text)))
+  :rule-classes (:rewrite :type-prescription))
 
 (defthm l2-read-after-write-1-lemma-1
   (implies (consp (assoc-equal name alist))
