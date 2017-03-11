@@ -347,6 +347,23 @@
            (l2-fs-p (l2-create hns fs text)))
   :rule-classes (:rewrite :type-prescription))
 
+(defthm l2-create-correctness-1-lemma-1
+  (implies (and (consp (assoc-equal name fs))
+                (l2-fs-p fs)
+                (not (consp (cdr (assoc-equal name fs)))))
+           (not (cdr (assoc-equal name fs)))))
+
+(defthm l2-create-correctness-1-lemma-2
+  (implies (l2-fs-p fs)
+           (not (stringp (car fs)))))
+
+(defthm l2-create-correctness-1
+  (implies (and (symbol-listp hns)
+                (l2-fs-p fs)
+                (stringp text))
+           (equal (l1-create hns (l2-to-l1-fs fs) text)
+                  (l2-to-l1-fs (l2-create hns fs text)))))
+
 (defthm l2-read-after-write-1-lemma-1
   (implies (consp (assoc-equal name alist))
            (equal (car (assoc-equal name alist)) name)))
