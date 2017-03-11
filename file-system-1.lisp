@@ -55,10 +55,10 @@
               (l1-stat (cdr hns) contents))))))))
 
 (defthm l1-stat-of-l1-stat-lemma-1
-  (implies (and (L1-FS-P FS)
-                (CONSP (ASSOC-EQUAL name FS))
-                (NOT (STRINGP (CDR (ASSOC-EQUAL name FS)))))
-           (L1-FS-P (CDR (ASSOC-EQUAL name FS)))))
+  (implies (and (l1-fs-p fs)
+                (consp (assoc-equal name fs))
+                (not (stringp (cdr (assoc-equal name fs)))))
+           (l1-fs-p (cdr (assoc-equal name fs)))))
 
 (defthm l1-stat-of-l1-stat
   (implies (and (symbol-listp inside)
@@ -221,7 +221,8 @@
   (implies (and (symbol-listp hns)
                 (l1-fs-p fs)
                 (stringp text))
-           (l1-fs-p (l1-create hns fs text))))
+           (l1-fs-p (l1-create hns fs text)))
+  :rule-classes (:rewrite :type-prescription))
 
 (defthm l1-read-after-write-1-lemma-1
   (implies (consp (assoc-equal name alist))
@@ -313,6 +314,108 @@
                 (natp n1)
                 (stringp (l1-stat hns1 fs)))
            (equal (l1-rdchs hns1 (l1-wrchs hns2 fs start2 text2) start1 n1)
+                  (l1-rdchs hns1 fs start1 n1))))
+
+(defthm l1-read-after-create-1
+  (implies (and (l1-fs-p fs)
+                (stringp text)
+                (symbol-listp hns)
+                (equal n (length text))
+                (not (l1-stat hns fs))
+                (stringp (l1-stat hns (l1-create hns fs text))))
+           (equal (l1-rdchs hns (l1-create hns fs text) 0 n) text)))
+
+;; Induction argument for the proof of
+;; (implies
+;;  (and (l1-fs-p fs)
+;;       (stringp text2)
+;;       (symbol-listp hns1)
+;;       (symbol-listp hns2)
+;;       (not (equal hns1 hns2))
+;;       (not (l1-stat hns2 fs))
+;;       (stringp (l1-stat hns2 (l1-create hns2 fs text2)))
+;;       (stringp (l1-stat hns1 fs)))
+;;  (equal (l1-stat hns1 (l1-create hns2 fs text2)) (l1-stat hns1 fs)))
+;; now, let's semi-formally write the cases we want.
+;; case 1: (atom hns1) - this will violate the hypothesis 
+;; (stringp (l1-stat hns1 fs))
+;; case 2: (and (consp hns1) (atom fs)) - this will violate the hypothesis
+;; (stringp (l1-stat hns1 fs))
+;; case 3: (and (consp hns1) (consp fs) (atom (assoc (car hns1) fs))) - this
+;; will violate the hypothesis (stringp (l1-stat hns1 fs))
+;; case 4: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
+;;              (atom hns2)) - this will violate the hypothesis
+;; (not (l1-stat hns2 fs))
+;; case 5: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
+;;              (consp hns2) (equal (car hns1) (car hns2))
+;;              (stringp (cdr (assoc (car hns1) fs)))) - this will violate the
+;; hypothesis (not (l1-stat hns2 fs))
+;; case 6: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
+;;              (consp hns2) (equal (car hns1) (car hns2))
+;;              (not (stringp (cdr (assoc (car hns1) fs))))) - in this case, 
+;; (l1-stat hns1 (l1-create hns2 fs text2)) =
+;; (l1-stat (cdr hns1) (cdr (assoc (car hns1) (l1-create hns2 fs text2)))) =
+;; (l1-stat (cdr hns1) (l1-create (cdr hns2) (cdr (assoc (car hns1) fs)) text2)) =
+;; (l1-stat (cdr hns1) (cdr (assoc (car hns1) fs))) = (induction hypothesis)
+;; (l1-stat hns1 fs)
+;; case 7: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
+;;              (consp hns2) (not (equal (car hns1) (car hns2)))) - in this
+;; case,
+;; (l1-stat hns1 (l1-create hns2 fs text2)) =
+;; (l1-stat (cdr hns1) (cdr (assoc (car hns1) fs))) =
+;; (l1-stat hns1 fs)
+
+(encapsulate ()
+
+  (local (defun induction-scheme (hns1 hns2 fs)
+           (if (atom hns1)
+               fs
+             (if (atom fs)
+                 nil
+               (let ((sd (assoc (car hns1) fs)))
+                 (if (atom sd)
+                     fs
+                   (if (atom hns2)
+                       fs
+                     (if (not (equal (car hns1) (car hns2)))
+                         fs
+                       (let ((contents (cdr sd)))
+                         (if (stringp (cdr sd))
+                             (cons (cons (car sd)
+                                         contents)
+                                   (delete-assoc (car hns2) fs))
+                           (cons (cons (car sd)
+                                       (induction-scheme (cdr hns1) (cdr hns2) contents))
+                                 (delete-assoc (car hns2) fs)))
+                         ))))
+                 )))))
+
+  (defthm l1-read-after-create-2-lemma-1
+    (implies
+     (and (l1-fs-p fs)
+          (stringp text2)
+          (symbol-listp hns1)
+          (symbol-listp hns2)
+          (not (equal hns1 hns2))
+          (not (l1-stat hns2 fs))
+          (stringp (l1-stat hns2 (l1-create hns2 fs text2)))
+          (stringp (l1-stat hns1 fs)))
+     (equal (l1-stat hns1 (l1-create hns2 fs text2)) (l1-stat hns1 fs)))
+    :hints (("Goal" :induct (induction-scheme hns1 hns2 fs)) ))
+  )
+
+(defthm l1-read-after-create-2
+  (implies (and (l1-fs-p fs)
+                (stringp text2)
+                (symbol-listp hns1)
+                (symbol-listp hns2)
+                (not (equal hns1 hns2))
+                (natp start1)
+                (natp n1)
+                (not (l1-stat hns2 fs))
+                (stringp (l1-stat hns2 (l1-create hns2 fs text2)))
+                (stringp (l1-stat hns1 fs)))
+           (equal (l1-rdchs hns1 (l1-create hns2 fs text2) start1 n1)
                   (l1-rdchs hns1 fs start1 n1))))
 
 ; Find length of file
