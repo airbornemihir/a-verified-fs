@@ -570,10 +570,7 @@
                               (l3-fs-p fs)
                               (natp start)
                               (stringp text)
-                              (block-listp disk))
-                  ;; :guard-hints
-                  ;; (("Subgoal 1.4" :use (:instance character-listp-coerce (str ()))) )
-                  ))
+                              (block-listp disk))))
   (if (atom hns)
       (mv fs disk) ;; error - showed up at fs with no name  - so leave fs unchanged
     (if (atom fs)
@@ -748,6 +745,50 @@
            :in-theory (disable l3-wrchs-returns-fs)
            :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
                            (fs (cdr (assoc-equal (car hns) fs)))))))
+
+(defun l3-create (hns fs disk text)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l3-fs-p fs)
+                              (stringp text)
+                              (block-listp disk))
+                  :guard-debug t))
+  (if (atom hns)
+      (mv fs disk) ;; error - showed up at fs with no name  - so leave fs unchanged
+    (let ((sd (assoc (car hns) fs)))
+      (if (atom sd)
+          (if (atom (cdr hns))
+              (let ((blocks (make-blocks (coerce text 'list))))
+                (mv (cons (cons (car hns)
+                                (cons (generate-index-list
+                                       (len disk)
+                                       (len blocks))
+                                      (length text)))
+                          fs)
+                    (binary-append disk blocks)))
+            (mv-let (new-fs new-disk) (l3-create (cdr hns) nil disk text)
+              (mv (cons (cons (car hns) new-fs) fs) new-disk)))
+        (let ((contents (cdr sd)))
+          (if (l3-regular-file-entry-p contents)
+              (mv (cons (cons (car sd) contents) ;; file already exists, so leave fs unchanged
+                        (delete-assoc (car hns) fs))
+                  disk)
+            (mv-let (new-fs new-disk) (l3-create (cdr hns) contents disk text)
+              (mv (cons (cons (car sd)
+                              new-fs)
+                        (delete-assoc (car hns) fs))
+                  new-disk)))
+          )))))
+
+;; This theorem shows that the property l3-fs-p is preserved by create, and
+;; additionally the property block-listp is preseved for the disk.
+(defthm l3-create-returns-fs
+  (implies (and (l3-fs-p fs)
+                (block-listp disk)
+                (stringp text)
+                (symbol-listp hns))
+           (mv-let (new-fs new-disk)
+             (l3-create hns fs disk text)
+             (and (l3-fs-p new-fs) (block-listp new-disk)))))
 
 (defthm l3-read-after-write-1-lemma-1
   (implies (and (l3-fs-p fs) (stringp text) (block-listp disk) (integerp start)
