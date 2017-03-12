@@ -509,6 +509,51 @@
            (equal (l2-rdchs hns1 (l2-wrchs hns2 fs start2 text2) start1 n1)
                   (l2-rdchs hns1 fs start1 n1))))
 
+(defthm l2-read-after-create-1
+  (implies (and (l2-fs-p fs)
+                (stringp text)
+                (symbol-listp hns)
+                (equal n (length text))
+                (not (l2-stat hns fs))
+                (stringp (l2-stat hns (l2-create hns fs text))))
+           (equal (l2-rdchs hns (l2-create hns fs text) 0 n) text)))
+
+(defthm l2-read-after-create-2
+  (implies (and (l2-fs-p fs)
+                (stringp text2)
+                (symbol-listp hns1)
+                (symbol-listp hns2)
+                (not (equal hns1 hns2))
+                (natp start1)
+                (natp n1)
+                (not (l2-stat hns2 fs))
+                (stringp (l2-stat hns2 (l2-create hns2 fs text2)))
+                (stringp (l2-stat hns1 fs)))
+           (equal (l2-rdchs hns1 (l2-create hns2 fs text2)
+                            start1 n1)
+                  (l2-rdchs hns1 fs start1 n1)))
+  :hints (("Goal" :use ((:instance
+                         l2-create-correctness-1 (hns hns2)
+                         (text text2))
+                        (:instance
+                         l2-rdchs-correctness-1 (hns hns1)
+                         (start start1)
+                         (n n1))
+                        (:instance
+                         l2-rdchs-correctness-1 (hns hns1)
+                         (start start1)
+                         (n n1))
+                        (:instance
+                         l2-rdchs-correctness-1 (hns hns1)
+                         (fs (l2-create hns2 fs text2))
+                         (start start1)
+                         (n n1))
+                        (:instance
+                         l2-create-returns-fs (hns hns2)
+                         (text text2))
+                        (:instance l1-read-after-create-2
+                                   (fs (l2-to-l1-fs fs)))))))
+
 ;; This function checks that the file lengths associated with text files are
 ;; accurate.
 (defun l2-fsck (fs)
