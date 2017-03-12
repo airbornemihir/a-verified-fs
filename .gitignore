@@ -8,3 +8,5 @@
 *.snm
 *.tex~
 *.toc
+*.cert
+*.lx64fsl

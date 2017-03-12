@@ -188,7 +188,9 @@
 (defthm l1-wrchs-returns-fs
   (implies (and (symbol-listp hns) (l1-fs-p fs))
            (l1-fs-p (l1-wrchs hns fs start text)))
-  :hints (("Subgoal *1/6''" :use (:instance l1-wrchs-returns-fs-lemma-3 (s (car hns)))) ))
+  :hints (("Subgoal *1/6''"
+           :use (:instance l1-wrchs-returns-fs-lemma-3 (s (car hns)))) )
+  :rule-classes (:rewrite :type-prescription))
 
 (defthm l1-unlink-returns-fs
   (implies (and (l1-fs-p fs))

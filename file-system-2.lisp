@@ -291,7 +291,8 @@
 ;; This theorem shows that the property l2-fs-p is preserved by wrchs.
 (defthm l2-wrchs-returns-fs
   (implies (l2-fs-p fs)
-           (l2-fs-p (l2-wrchs hns fs start text))))
+           (l2-fs-p (l2-wrchs hns fs start text)))
+  :rule-classes (:rewrite :type-prescription))
 
 ;; This theorem shows that the property l2-fs-p is preserved by unlink.
 (defthm l2-unlink-returns-fs
