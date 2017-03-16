@@ -400,7 +400,7 @@
   (implies (and (symbol-listp hns)
                 (l3-fs-p fs)
                 (block-listp disk)
-                (l3-fs-p (l2-stat hns fs)))
+                (l3-fs-p (l3-stat hns fs disk)))
            (equal (l2-stat hns (l3-to-l2-fs fs disk))
                   (l3-to-l2-fs (l3-stat hns fs disk) disk)))
   )
@@ -790,6 +790,44 @@
              (l3-create hns fs disk text)
              (and (l3-fs-p new-fs) (block-listp new-disk)))))
 
+(defthm l3-create-correctness-1-lemma-1
+  (equal (mv-nth 1
+                 (l3-create hns fs (binary-append disk1 disk2)
+                            text))
+         (binary-append disk1
+                        (mv-nth 1 (l3-create hns fs disk2 text)))))
+
+(defthm l3-create-correctness-1-lemma-2
+  (implies (and (l3-bounded-fs-p fs1 (len disk))
+                (l3-fs-p fs2)
+                (block-listp disk)
+                (stringp text)
+                (symbol-listp hns))
+           (equal (l3-to-l2-fs fs1
+                               (mv-nth 1
+                                       (l3-create hns fs2 disk text)))
+                  (l3-to-l2-fs fs1
+                               disk))))
+
+(defthm l3-create-correctness-1
+    (implies (and (l3-bounded-fs-p fs (len disk))
+                (stringp text)
+                (symbol-listp hns)
+                (block-listp disk))
+           (equal (l2-create hns (l3-to-l2-fs fs disk) text)
+                  (mv-let (new-fs new-disk) (l3-create hns fs disk text)
+                    (l3-to-l2-fs new-fs new-disk))))
+    :hints (("Subgoal *1/9'''"
+             :use (:instance l3-create-returns-fs (hns (cdr hns))
+                             (fs (cdr (assoc-equal (car hns) fs)))))
+            ("Subgoal *1/5.2'"
+             :use (:instance l3-create-returns-fs (hns (cdr hns))
+                             (fs nil)))
+            ("Subgoal *1/3.2'"
+             :use (:instance l3-create-returns-fs (hns (cdr hns))
+                             (fs nil)))
+            ("Subgoal *1/3.1'" :in-theory (enable l3-bounded-fs-p))))
+
 (defthm l3-read-after-write-1-lemma-1
   (implies (and (l3-fs-p fs) (stringp text) (block-listp disk) (integerp start)
   (<= 0 start))
@@ -861,6 +899,29 @@
                  (:instance l3-wrchs-correctness-1 (hns hns1)
                             (start start1)
                             (text text1))))))
+
+(defthm l3-read-after-create-1
+  (implies (and (l3-bounded-fs-p fs (len disk))
+                (stringp text)
+                (symbol-listp hns)
+                (equal n (length text))
+                (not (l3-stat hns fs disk))
+                (block-listp disk))
+           (mv-let (new-fs new-disk)
+             (l3-create hns fs disk text)
+             (implies
+              (stringp (l3-stat hns new-fs new-disk))
+              (equal (l3-rdchs hns new-fs new-disk 0 n) text))))
+  :hints (("Goal" :use ((:instance l2-read-after-create-1
+                                   (fs (l3-to-l2-fs fs disk)))
+                        l3-to-l2-fs-correctness-1
+                        (:instance l3-bounded-fs-p-correctness-1
+                                   (disk-length (len disk)))
+                        l3-create-correctness-1
+                        (:instance l3-stat-correctness-1
+                                   (fs (mv-nth 0 (l3-create hns fs disk text)))
+                                   (disk (mv-nth 1 (l3-create hns fs disk text))))
+                        l3-create-returns-fs))))
 
 ; Find length of file
 (defun wc-len (hns fs disk)
