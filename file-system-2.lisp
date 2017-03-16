@@ -330,7 +330,7 @@
            (cons
             (car hns)
             (if (atom (cdr hns))
-                (cons text (len text))
+                (cons text (length text))
               (l2-create (cdr hns) nil text)))
            fs)
         (let ((contents (cdr sd)))
