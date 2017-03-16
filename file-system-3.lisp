@@ -912,7 +912,14 @@
              (implies
               (stringp (l3-stat hns new-fs new-disk))
               (equal (l3-rdchs hns new-fs new-disk 0 n) text))))
-  :hints (("Goal" :use ((:instance l2-read-after-create-1
+  :hints (("Goal" :in-theory (disable
+                              (:rewrite l2-read-after-create-1)
+                              (:rewrite l3-to-l2-fs-correctness-1)
+                              (:rewrite l3-bounded-fs-p-correctness-1)
+                              (:rewrite l3-create-correctness-1)
+                              (:rewrite l3-stat-correctness-1)
+                              (:rewrite l3-create-returns-fs))
+           :use ((:instance l2-read-after-create-1
                                    (fs (l3-to-l2-fs fs disk)))
                         l3-to-l2-fs-correctness-1
                         (:instance l3-bounded-fs-p-correctness-1
@@ -922,6 +929,58 @@
                                    (fs (mv-nth 0 (l3-create hns fs disk text)))
                                    (disk (mv-nth 1 (l3-create hns fs disk text))))
                         l3-create-returns-fs))))
+
+(defthm l3-read-after-create-2
+  (implies (and (l3-bounded-fs-p fs (len disk))
+                (stringp text2)
+                (symbol-listp hns1)
+                (symbol-listp hns2)
+                (not (equal hns1 hns2))
+                (natp start1)
+                (natp n1)
+                (not (l3-stat hns2 fs disk))
+                (stringp (l3-stat hns1 fs disk))
+                (block-listp disk))
+           (mv-let (new-fs new-disk) (l3-create hns2 fs disk text2)
+             (implies
+              (stringp (l3-stat hns2 new-fs new-disk))
+              (equal (l3-rdchs hns1 new-fs new-disk start1 n1)
+                     (l3-rdchs hns1 fs disk start1 n1)))))
+  :hints (("Goal"
+           :in-theory (disable
+                       (:rewrite l2-read-after-create-2) 
+                       (:rewrite l3-to-l2-fs-correctness-1)
+                       (:rewrite l3-stat-correctness-2)
+                       (:rewrite l3-create-returns-fs)
+                       (:rewrite l3-stat-correctness-1)
+                       (:rewrite l3-create-correctness-1)
+                       (:rewrite l3-bounded-fs-p-correctness-1)
+                       (:rewrite l3-rdchs-correctness-1))
+           :use ((:instance l2-read-after-create-2
+                            (fs (l3-to-l2-fs fs disk)))
+                 l3-to-l2-fs-correctness-1
+                 (:instance l3-stat-correctness-2 (hns hns2))
+                 (:instance l3-stat-correctness-1 (hns hns1))
+                 (:instance l3-stat-correctness-1 (hns hns2)
+                            (fs (mv-nth 0 (l3-create hns2 fs disk text2)))
+                            (disk (mv-nth 1 (l3-create hns2 fs disk text2))))
+                 (:instance l3-create-returns-fs (hns hns2)
+                            (text text2))
+                 (:instance l3-stat-correctness-1 (hns hns2)
+                            (fs (mv-nth 0 (l3-create hns2 fs disk text2)))
+                            (disk (mv-nth 1 (l3-create hns2 fs disk text2))))
+                 (:instance l3-create-correctness-1 (hns hns2)
+                            (text text2))
+                 (:instance l3-bounded-fs-p-correctness-1
+                            (disk-length (len disk)))
+                 (:instance l3-rdchs-correctness-1 (hns hns1)
+                            (start start1)
+                            (n n1))
+                 (:instance l3-rdchs-correctness-1 (hns hns1)
+                            (start start1)
+                            (n n1)
+                            (fs (mv-nth 0 (l3-create hns2 fs disk text2)))
+                            (disk (mv-nth 1 (l3-create hns2 fs disk text2))))))))
 
 ; Find length of file
 (defun wc-len (hns fs disk)
