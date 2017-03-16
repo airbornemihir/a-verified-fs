@@ -186,7 +186,7 @@
   (implies (l2-fs-p fs)
            (not (stringp (l2-to-l1-fs fs)))))
 
-;; This theorem proves the equivalence of the l2 and l1 versions of stat.
+;; This theorem proves the equivalence of the l2 and l1 versions of rdchs.
 (defthm l2-rdchs-correctness-1
   (implies (and (symbol-listp hns)
                 (l2-fs-p fs)
@@ -318,6 +318,8 @@
            (equal (l1-wrchs hns (l2-to-l1-fs fs) start text)
                   (l2-to-l1-fs (l2-wrchs hns fs start text)))))
 
+;; This function creates a text file (and all necessary subdirectories) given a
+;; path and some initial text.
 (defun l2-create (hns fs text)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l2-fs-p fs)
@@ -341,6 +343,7 @@
                 (delete-assoc (car hns) fs))
           )))))
 
+;; This theorem shows that the property l2-fs-p is preserved by create.
 (defthm l2-create-returns-fs
   (implies (and (symbol-listp hns)
                 (l2-fs-p fs)
@@ -358,6 +361,7 @@
   (implies (l2-fs-p fs)
            (not (stringp (car fs)))))
 
+;; This theorem shows the equivalence of the l2 and l1 versions of create.
 (defthm l2-create-correctness-1
   (implies (and (symbol-listp hns)
                 (l2-fs-p fs)
@@ -510,6 +514,8 @@
            (equal (l2-rdchs hns1 (l2-wrchs hns2 fs start2 text2) start1 n1)
                   (l2-rdchs hns1 fs start1 n1))))
 
+;; This proves the equivalent of the first read-after-write property for
+;; create.
 (defthm l2-read-after-create-1
   (implies (and (l2-fs-p fs)
                 (stringp text)
@@ -519,6 +525,8 @@
                 (stringp (l2-stat hns (l2-create hns fs text))))
            (equal (l2-rdchs hns (l2-create hns fs text) 0 n) text)))
 
+;; This proves the equivalent of the second read-after-write property for
+;; create.
 (defthm l2-read-after-create-2
   (implies (and (l2-fs-p fs)
                 (stringp text2)

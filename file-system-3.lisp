@@ -441,7 +441,7 @@
            (equal (stringp (l2-stat hns (l3-to-l2-fs fs disk)))
                   (stringp (l3-stat hns fs disk)))))
 
-;; This theorem proves the equivalence of the l3 and l2 versions of stat.
+;; This theorem proves the equivalence of the l3 and l2 versions of rdchs.
 (defthm l3-rdchs-correctness-1
   (implies (and (symbol-listp hns)
                 (l3-fs-p fs)
@@ -504,6 +504,7 @@
     (not (l3-regular-file-entry-p (l3-unlink (cdr hns)
                                              (cdr (assoc-equal name fs))))))))
 
+;; This theorem shows the equivalence of the l3 and l2 versions of unlink.
 (defthm l3-unlink-correctness-1
   (implies (and (symbol-listp hns)
                 (l3-fs-p fs)
@@ -746,6 +747,8 @@
            :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
                            (fs (cdr (assoc-equal (car hns) fs)))))))
 
+;; This function creates a text file (and all necessary subdirectories) given a
+;; path and some initial text.
 (defun l3-create (hns fs disk text)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l3-fs-p fs)
@@ -809,6 +812,7 @@
                   (l3-to-l2-fs fs1
                                disk))))
 
+;; This theorem shows the equivalence of the l3 and l2 versions of create.
 (defthm l3-create-correctness-1
     (implies (and (l3-bounded-fs-p fs (len disk))
                 (stringp text)
@@ -900,6 +904,8 @@
                             (start start1)
                             (text text1))))))
 
+;; This proves the equivalent of the first read-after-write property for
+;; create.
 (defthm l3-read-after-create-1
   (implies (and (l3-bounded-fs-p fs (len disk))
                 (stringp text)
@@ -930,6 +936,8 @@
                                    (disk (mv-nth 1 (l3-create hns fs disk text))))
                         l3-create-returns-fs))))
 
+;; This proves the equivalent of the second read-after-write property for
+;; create.
 (defthm l3-read-after-create-2
   (implies (and (l3-bounded-fs-p fs (len disk))
                 (stringp text2)
