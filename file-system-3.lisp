@@ -115,16 +115,21 @@
 ;; This is a function that might be needed later.
 (defun bounded-nat-listp (l b)
   (declare (xargs :guard (natp b)))
-  (if (atom b)
-      (eq l nil)
+  (if (atom l)
+      (equal l nil)
     (and (natp (car l)) (< (car l) b) (bounded-nat-listp (cdr l) b))))
+
+(defthm bounded-nat-listp-correctness-1
+  (implies (bounded-nat-listp l b)
+           (nat-listp l))
+  :rule-classes (:rewrite :forward-chaining))
 
 ;; This is to be returned when a block is not found. It's full of null
 ;; characters and is *blocksize* long.
 (defconst *nullblock* (make-character-list (take *blocksize* nil)))
 
 ;; This function serves to get the specified blocks from a disk. If the block
-;; is not found (most likely because of an invalid index) I return a null block
+;; is not found (most likely because of an invalid index) we return a null block
 ;; as noted above.
 (defun fetch-blocks-by-indices (block-list index-list)
   (declare (xargs :guard (and (block-listp block-list)
@@ -157,7 +162,6 @@
    (equal (fetch-blocks-by-indices (binary-append block-list extra-blocks)
                                    index-list)
           (fetch-blocks-by-indices block-list index-list))))
-
 
 (defthm
   make-blocks-correctness-1
@@ -257,7 +261,7 @@
 (defthm l3-bounded-fs-p-correctness-1
   (implies (l3-bounded-fs-p fs disk-length)
            (l3-fs-p fs))
-  :hints (("Goal" :in-theory (enable l3-bounded-fs-p feasible-file-length-p)) )
+  :hints (("Goal" :in-theory (enable l3-bounded-fs-p l3-regular-file-entry-p)) )
   :rule-classes (:forward-chaining :rewrite))
 
 (defthm l3-bounded-fs-p-correctness-2
@@ -271,7 +275,7 @@
                 (consp (assoc-equal name fs))
                 (not (l3-regular-file-entry-p (cdr (assoc-equal name fs)))))
            (l3-bounded-fs-p (cdr (assoc-equal name fs)) disk-length))
-  :hints (("Goal" :in-theory (enable l3-bounded-fs-p feasible-file-length-p)) ))
+  :hints (("Goal" :in-theory (enable l3-bounded-fs-p l3-regular-file-entry-p)) ))
 
 (defthm l3-to-l2-fs-guard-lemma-1
   (implies (and (feasible-file-length-p (len blocks) n)
@@ -668,7 +672,7 @@
                 (block-listp disk))
            (equal (l3-to-l2-fs fs (binary-append disk extra-blocks))
                   (l3-to-l2-fs fs disk)))
-  :hints (("Goal" :in-theory (enable l3-bounded-fs-p))))
+  :hints (("Goal" :in-theory (enable l3-bounded-fs-p l3-regular-file-entry-p))))
 
 (defthm
   l3-wrchs-correctness-1-lemma-5

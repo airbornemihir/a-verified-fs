@@ -82,11 +82,16 @@
   :hints (("Goal" :in-theory (disable binary-append-take-nthcdr)
            :use (:instance binary-append-take-nthcdr (ac nil) (i n))) ))
 
-(defthm nth-of-binary-append
+(defthm nth-of-binary-append-1
   (implies (and (integerp n) (>= n (len x)))
            (equal (nth n (binary-append x y))
                   (nth (- n (len x)) y)))
   :hints (("goal" :induct (nth n x))))
+
+(defthm nth-of-binary-append-2
+  (implies (and (natp n) (< n (len x)))
+           (equal (nth n (binary-append x y))
+                  (nth n x))))
 
 (defthm binary-append-is-associative
   (equal (binary-append (binary-append a b) c)
