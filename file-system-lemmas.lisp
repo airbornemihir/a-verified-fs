@@ -91,3 +91,14 @@
 (defthm binary-append-is-associative
   (equal (binary-append (binary-append a b) c)
          (binary-append a (binary-append b c))))
+
+(defthm member-of-a-nat-list
+  (implies (and (nat-listp lst)
+                (member-equal x lst))
+           (and (integerp x) (<= 0 x)))
+  :rule-classes ((:rewrite :corollary (implies (and (nat-listp lst)
+                                                   (member-equal x lst))
+                                              (<= 0 x)))
+                 (:forward-chaining :corollary (implies (and (member-equal x lst)
+                                                             (nat-listp lst))
+                                                        (integerp x)))))
