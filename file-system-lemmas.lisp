@@ -107,3 +107,8 @@
                  (:forward-chaining :corollary (implies (and (member-equal x lst)
                                                              (nat-listp lst))
                                                         (integerp x)))))
+
+(defthm non-nil-nth
+  (implies (and (natp n) (nth n l))
+           (< n (len l)))
+  :rule-classes (:rewrite :linear))

@@ -30,7 +30,6 @@
 ;; ACL2 !>(find-n-free-blocks (list *nullblock* *nullblock* *nullblock*) (list t nil nil) 2 0)
 ;; (1 2)
 
-
 (defthm find-n-free-blocks-correctness-1
   (implies (and (boolean-listp alv)
                 (natp n))
@@ -170,3 +169,62 @@
     :hints (("Goal" :in-theory (disable set-indices-in-alv-helper-correctness-4)
              :use (:instance set-indices-in-alv-helper-correctness-4
                              (offset 0))) )))
+
+;; could be handled differently using repeat... let's see.
+(defun indices-marked-p (index-list alv)
+  (declare (xargs :guard (and (nat-listp index-list) (boolean-listp alv))))
+  (or (atom index-list)
+      (and (nth (car index-list) alv) (indices-marked-p (cdr index-list) alv))))
+
+(defthm indices-marked-p-correctness-1
+  (implies (and (nat-listp index-list) (indices-marked-p index-list alv))
+           (bounded-nat-listp index-list (len alv))))
+
+(defun l4-fs-p (fs alv)
+  (declare (xargs :guard (boolean-listp alv)))
+  (if (atom fs)
+      (null fs)
+    (and (let ((directory-or-file-entry (car fs)))
+           (if (atom directory-or-file-entry)
+               nil
+             (let ((name (car directory-or-file-entry))
+                   (entry (cdr directory-or-file-entry)))
+               (and (symbolp name)
+                    (or (and (consp entry)
+                             (bounded-nat-listp (car entry) (len alv))
+                             (indices-marked-p (car entry) alv)
+                             (natp (cdr entry))
+                             (feasible-file-length-p (len (car entry)) (cdr entry)))
+                        (l4-fs-p entry alv))))))
+         (l4-fs-p (cdr fs) alv))))
+
+(defthm l4-fs-p-correctness-1
+  (implies (l4-fs-p fs alv)
+           (l3-bounded-fs-p fs (len alv)))
+  :hints (("Goal" :in-theory (enable l3-bounded-fs-p)) ))
+
+(defun l4-stat (hns fs disk alv)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (boolean-listp alv)
+                              (l4-fs-p fs alv)
+                              (block-listp disk)
+                              (equal (len alv) (len disk)))
+                  :guard-hints (("Goal'"
+                                 :in-theory (disable l4-fs-p-correctness-1)
+                                 :use (l4-fs-p-correctness-1)) ))
+           (ignore alv))
+  (l3-stat hns fs disk))
+
+(defun l4-rdchs (hns fs disk alv start n)
+  (declare (xargs :guard-debug t
+                  :guard (and (symbol-listp hns)
+                              (boolean-listp alv)
+                              (l4-fs-p fs alv)
+                              (natp start)
+                              (natp n)
+                              (block-listp disk))
+                  :guard-hints (("Goal'"
+                                 :in-theory (disable l4-fs-p-correctness-1)
+                                 :use (l4-fs-p-correctness-1)) ))
+           (ignore alv))
+  (l3-rdchs hns fs disk start n))
