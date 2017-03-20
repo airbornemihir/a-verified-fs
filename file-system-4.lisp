@@ -8,32 +8,30 @@
 
 (include-book "file-system-3")
 
-(defun find-n-free-blocks (disk alv n start)
-  (declare (xargs :guard (and (block-listp disk)
-                              (boolean-listp alv)
-                              (equal (len disk) (len alv))
+(defun find-n-free-blocks-helper (alv n start)
+  (declare (xargs :guard (and (boolean-listp alv)
                               (natp n)
                               (natp start))))
   (if (or (atom alv) (zp n))
       nil
     (if (car alv)
         ;; this block is taken
-        (find-n-free-blocks (cdr disk) (cdr alv) n (+ start 1))
+        (find-n-free-blocks-helper (cdr alv) n (+ start 1))
       ;; this block isn't taken
-      (cons start (find-n-free-blocks (cdr disk) (cdr alv) (- n 1) (+ start 1))))))
+      (cons start (find-n-free-blocks-helper (cdr alv) (- n 1) (+ start 1))))))
 
 ;; Here are some examples showing how this works.
-;; ACL2 !>(find-n-free-blocks (list *nullblock* *nullblock* *nullblock*) (list t nil t) 1 0)
+;; ACL2 !>(find-n-free-blocks-helper (list t nil t) 1 0)
 ;; (1)
-;; ACL2 !>(find-n-free-blocks (list *nullblock* *nullblock* *nullblock*) (list t nil t) 2 0)
+;; ACL2 !>(find-n-free-blocks-helper (list t nil t) 2 0)
 ;; (1)
-;; ACL2 !>(find-n-free-blocks (list *nullblock* *nullblock* *nullblock*) (list t nil nil) 2 0)
+;; ACL2 !>(find-n-free-blocks-helper (list t nil nil) 2 0)
 ;; (1 2)
 
-(defthm find-n-free-blocks-correctness-1
+(defthm find-n-free-blocks-helper-correctness-1
   (implies (and (boolean-listp alv)
                 (natp n))
-           (<= (len (find-n-free-blocks disk alv n start)) n))
+           (<= (len (find-n-free-blocks-helper alv n start)) n))
   :rule-classes (:rewrite :linear))
 
 (defun count-free-blocks (alv)
@@ -44,35 +42,34 @@
         (count-free-blocks (cdr alv))
       (+ (count-free-blocks (cdr alv)) 1))))
 
-(defthm find-n-free-blocks-correctness-2
+(defthm find-n-free-blocks-helper-correctness-2
   (implies (and (boolean-listp alv)
                 (natp n)
                 (<= n (count-free-blocks alv)))
-           (equal (len (find-n-free-blocks disk alv n start)) n)))
+           (equal (len (find-n-free-blocks-helper alv n start)) n)))
 
-(defthm find-n-free-blocks-correctness-3
+(defthm find-n-free-blocks-helper-correctness-3
   (implies (and (boolean-listp alv)
                 (natp n) (natp start))
-           (nat-listp (find-n-free-blocks disk alv n start)))
+           (nat-listp (find-n-free-blocks-helper alv n start)))
   :rule-classes (:rewrite :type-prescription))
 
-(defthm find-n-free-blocks-correctness-4
+(defthm find-n-free-blocks-helper-correctness-4
   (implies (and (boolean-listp alv)
                 (natp n) (natp start)
-                (member-equal m (find-n-free-blocks disk alv n start)))
+                (member-equal m (find-n-free-blocks-helper alv n start)))
            (<= start m)))
 
 (defthm
-  find-n-free-blocks-correctness-5
+  find-n-free-blocks-helper-correctness-5
   (implies (and (boolean-listp alv)
                 (natp n)
                 (natp start)
                 (member-equal m
-                              (find-n-free-blocks disk alv n start)))
+                              (find-n-free-blocks-helper alv n start)))
            (not (nth (- m start) alv)))
-  :hints (("Subgoal *1/6.1'" :in-theory (disable find-n-free-blocks-correctness-4)
-           :use (:instance find-n-free-blocks-correctness-4
-                           (disk (cdr disk))
+  :hints (("Subgoal *1/6.1'" :in-theory (disable find-n-free-blocks-helper-correctness-4)
+           :use (:instance find-n-free-blocks-helper-correctness-4
                            (alv (cdr alv))
                            (start (+ 1 start)))) ))
 
