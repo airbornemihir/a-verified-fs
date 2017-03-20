@@ -50,6 +50,32 @@
                 (<= n (count-free-blocks alv)))
            (equal (len (find-n-free-blocks disk alv n start)) n)))
 
+(defthm find-n-free-blocks-correctness-3
+  (implies (and (boolean-listp alv)
+                (natp n) (natp start))
+           (nat-listp (find-n-free-blocks disk alv n start)))
+  :rule-classes (:rewrite :type-prescription))
+
+(defthm find-n-free-blocks-correctness-4
+  (implies (and (boolean-listp alv)
+                (natp n) (natp start)
+                (member-equal m (find-n-free-blocks disk alv n start)))
+           (<= start m)))
+
+(defthm
+  find-n-free-blocks-correctness-5
+  (implies (and (boolean-listp alv)
+                (natp n)
+                (natp start)
+                (member-equal m
+                              (find-n-free-blocks disk alv n start)))
+           (not (nth (- m start) alv)))
+  :hints (("Subgoal *1/6.1'" :in-theory (disable find-n-free-blocks-correctness-4)
+           :use (:instance find-n-free-blocks-correctness-4
+                           (disk (cdr disk))
+                           (alv (cdr alv))
+                           (start (+ 1 start)))) ))
+
 (encapsulate
   ( ((set-indices-in-alv * * *) => *) )
 
