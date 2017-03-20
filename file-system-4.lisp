@@ -80,116 +80,73 @@
                                  (natp n))))
      (find-n-free-blocks-helper alv n 0)))
 
-;; Here are some examples showing how this works.
-;; ACL2 !>(find-n-free-blocks (list t nil t) 1)
-;; (1)
-;; ACL2 !>(find-n-free-blocks (list t nil t) 2)
-;; (1)
-;; ACL2 !>(find-n-free-blocks (list t nil nil) 2)
-;; (1 2)
+  ;; Here are some examples showing how this works.
+  ;; ACL2 !>(find-n-free-blocks (list t nil t) 1)
+  ;; (1)
+  ;; ACL2 !>(find-n-free-blocks (list t nil t) 2)
+  ;; (1)
+  ;; ACL2 !>(find-n-free-blocks (list t nil nil) 2)
+  ;; (1 2)
 
-(defthm find-n-free-blocks-correctness-1
-  (implies (and (boolean-listp alv)
-                (natp n))
-           (<= (len (find-n-free-blocks alv n)) n))
-  :rule-classes (:rewrite :linear))
+  (defthm find-n-free-blocks-correctness-1
+    (implies (and (boolean-listp alv)
+                  (natp n))
+             (<= (len (find-n-free-blocks alv n)) n))
+    :rule-classes (:rewrite :linear))
 
-(defthm find-n-free-blocks-correctness-2
-  (implies (and (boolean-listp alv)
-                (natp n)
-                (<= n (count-free-blocks alv)))
-           (equal (len (find-n-free-blocks alv n)) n)))
+  (defthm find-n-free-blocks-correctness-2
+    (implies (and (boolean-listp alv)
+                  (natp n)
+                  (<= n (count-free-blocks alv)))
+             (equal (len (find-n-free-blocks alv n)) n)))
 
-(defthm find-n-free-blocks-correctness-3
-  (implies (and (boolean-listp alv)
-                (natp n))
-           (nat-listp (find-n-free-blocks alv n)))
-  :rule-classes (:rewrite :type-prescription))
+  (defthm find-n-free-blocks-correctness-3
+    (implies (and (boolean-listp alv)
+                  (natp n))
+             (nat-listp (find-n-free-blocks alv n)))
+    :rule-classes (:rewrite :type-prescription))
 
-(defthm
-  find-n-free-blocks-correctness-5
-  (implies (and (boolean-listp alv)
-                (natp n)
-                (member-equal m (find-n-free-blocks alv n)))
-           (not (nth m alv)))
-  :hints
-  (("Goal" :in-theory (disable find-n-free-blocks-helper-correctness-5)
-    :use (:instance find-n-free-blocks-helper-correctness-5
-                    (start 0)))))
-)
+  (defthm
+    find-n-free-blocks-correctness-5
+    (implies (and (boolean-listp alv)
+                  (natp n)
+                  (member-equal m (find-n-free-blocks alv n)))
+             (not (nth m alv)))
+    :hints
+    (("Goal" :in-theory (disable find-n-free-blocks-helper-correctness-5)
+      :use (:instance find-n-free-blocks-helper-correctness-5
+                      (start 0)))))
+  )
+
+(defun set-indices (v index-list value-list)
+  (declare (xargs :guard (and (true-listp v)
+                              (nat-listp index-list)
+                              (true-listp value-list)
+                              (equal (len index-list) (len value-list)))))
+  (if (atom index-list)
+      v
+    (set-indices (update-nth (car index-list) (car value-list) v)
+                        (cdr index-list)
+                        (cdr value-list))))
+
+(defthm set-indices-correctness-1
+  (implies (and (natp n)
+                (nat-listp index-list)
+                (not (member-equal n index-list)))
+           (equal (nth n (set-indices v index-list value-list))
+                  (nth n v))))
 
 (encapsulate
   ( ((set-indices-in-alv * * *) => *) )
 
-  (local
-   (defun set-indices-in-alv-helper (alv index-list value offset)
-     (declare (xargs :guard (and (boolean-listp alv)
-                                 (nat-listp index-list)
-                                 (booleanp value)
-                                 (natp offset))))
-     (if (atom alv)
-         nil
-       (let ((tail (set-indices-in-alv-helper
-                    (cdr alv)
-                    index-list value (+ offset 1))))
-         (if (member offset index-list)
-             (cons value tail)
-           (cons (car alv) tail))))))
-
-  (local
-   (defthm
-     set-indices-in-alv-helper-correctness-1
-     (implies
-      (and (boolean-listp alv)
-           (booleanp value))
-      (boolean-listp (set-indices-in-alv-helper alv index-list value offset)))
-     :rule-classes (:type-prescription :rewrite)))
-
-  (local
-   (defthm
-     set-indices-in-alv-helper-correctness-2
-     (implies
-      (boolean-listp alv)
-      (equal (len (set-indices-in-alv-helper alv index-list value offset))
-             (len alv)))))
-
-  (local
-   (defthm
-     set-indices-in-alv-helper-correctness-3
-     (implies
-      (and (boolean-listp alv)
-           (nat-listp index-list)
-           (booleanp value)
-           (natp offset)
-           (member-equal n index-list)
-           (>= n offset)
-           (< n (+ offset (len alv))))
-      (equal (nth (- n offset)
-                  (set-indices-in-alv-helper alv index-list value offset))
-             value))))
-
-  (local
-   (defthm
-     set-indices-in-alv-helper-correctness-4
-     (implies
-      (and (boolean-listp alv)
-           (nat-listp index-list)
-           (booleanp value)
-           (natp offset)
-           (natp n)
-           (not (member-equal n index-list))
-           (>= n offset)
-           (< n (+ offset (len alv))))
-      (equal (nth (- n offset)
-                  (set-indices-in-alv-helper alv index-list value offset))
-             (nth (- n offset) alv)))))
+  (local (include-book "std/lists/repeat" :dir :system))
 
   (local
    (defun set-indices-in-alv (alv index-list value)
      (declare (xargs :guard (and (boolean-listp alv)
-                                 (nat-listp index-list)
+                                 (bounded-nat-listp index-list (len alv))
                                  (booleanp value))))
-     (set-indices-in-alv-helper alv index-list value 0)))
+     (set-indices alv index-list (repeat (len index-list) value))))
 
   (defthm
     set-indices-in-alv-correctness-1
@@ -202,7 +159,9 @@
   (defthm
     set-indices-in-alv-correctness-2
     (implies
-     (boolean-listp alv)
+     (and (boolean-listp alv)
+          (booleanp value)
+          (bounded-nat-listp index-list (len alv)))
      (equal (len (set-indices-in-alv alv index-list value))
             (len alv))))
 
@@ -216,10 +175,7 @@
           (< n (len alv)))
      (equal (nth n
                  (set-indices-in-alv alv index-list value))
-            value))
-    :hints (("Goal" :in-theory (disable set-indices-in-alv-helper-correctness-3)
-             :use (:instance set-indices-in-alv-helper-correctness-3
-                             (offset 0))) ))
+            value)))
 
   (defthm
     set-indices-in-alv-correctness-4
@@ -233,10 +189,7 @@
           (< n (len alv)))
      (equal (nth n
                  (set-indices-in-alv alv index-list value))
-            (nth n alv)))
-    :hints (("Goal" :in-theory (disable set-indices-in-alv-helper-correctness-4)
-             :use (:instance set-indices-in-alv-helper-correctness-4
-                             (offset 0))) )))
+            (nth n alv)))))
 
 ;; could be handled differently using repeat... let's see.
 (defun indices-marked-p (index-list alv)
