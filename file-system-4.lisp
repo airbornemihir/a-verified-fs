@@ -247,7 +247,6 @@
      (and (boolean-listp alv)
           (nat-listp index-list)
           (booleanp value)
-          (natp offset)
           (natp n)
           (not (member-equal n index-list))
           (< n (len alv)))
@@ -284,17 +283,25 @@
    (indices-marked-p (binary-append x y) alv)
    (and (indices-marked-p x alv) (indices-marked-p y alv))))
 
-(verify
- (implies (and (nat-listp index-list) (boolean-listp alv)
-               (INDICES-MARKED-P
- index-list1
- alv))
- (INDICES-MARKED-P
- index-list1
- (SET-INDICES-IN-ALV
-  alv
-  index-list2
-  T))))
+(defthm indices-marked-p-correctness-3
+  (implies (and (nat-listp index-list1)
+                (nat-listp index-list2)
+                (boolean-listp alv)
+                (indices-marked-p index-list1 alv)
+                (bounded-nat-listp index-list1 (len alv)))
+           (indices-marked-p index-list1
+                             (set-indices-in-alv alv index-list2 t)))
+  :hints (("Subgoal *1/5''"
+           :use ((:instance set-indices-in-alv-correctness-3
+                            (value t)
+                            (n (car index-list1))
+                            (index-list index-list2))
+                 (:instance set-indices-in-alv-correctness-4
+                            (value t)
+                            (n (car index-list1))
+                            (index-list index-list2)))
+           :cases (member-equal (car index-list1)
+                                                   index-list2)) ))
 
 (defun l4-regular-file-entry-p (entry)
   (declare (xargs :guard t))
@@ -397,6 +404,7 @@
        (boolean-listp alv)
        (let ( (all-indices (l4-list-all-indices fs)))
          (and (no-duplicatesp all-indices)
+              (bounded-nat-listp all-indices (len alv))
               (indices-marked-p all-indices alv)))))
 
 (defthm l4-wrchs-returns-fs
