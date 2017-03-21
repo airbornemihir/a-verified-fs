@@ -93,8 +93,7 @@
 
   (local
    (defthm find-n-free-blocks-helper-correctness-4
-     (implies (and (boolean-listp alv)
-                   (natp n) (natp start)
+     (implies (and (natp n) (natp start)
                    (member-equal m (find-n-free-blocks-helper alv n start)))
               (<= start m))))
 
@@ -111,6 +110,19 @@
               :use (:instance find-n-free-blocks-helper-correctness-4
                               (alv (cdr alv))
                               (start (+ 1 start)))) )))
+
+  (local
+   (defthm
+     find-n-free-blocks-helper-correctness-6
+     (implies (and (natp n) (natp start))
+              (no-duplicatesp-equal (find-n-free-blocks-helper alv n start)))
+     :hints (("Subgoal *1/9''"
+              :in-theory (disable find-n-free-blocks-helper-correctness-4)
+              :use (:instance find-n-free-blocks-helper-correctness-4
+                              (m start)
+                              (alv (cdr alv))
+                              (n (+ -1 n))
+                              (start (+ 1 start)))))))
 
   (local
    (defun find-n-free-blocks (alv n)
@@ -154,6 +166,12 @@
     (("Goal" :in-theory (disable find-n-free-blocks-helper-correctness-5)
       :use (:instance find-n-free-blocks-helper-correctness-5
                       (start 0)))))
+
+  
+  (defthm
+    find-n-free-blocks-correctness-6
+    (implies (and (natp n))
+             (no-duplicatesp-equal (find-n-free-blocks alv n))))
   )
 
 (defun set-indices (v index-list value-list)
@@ -227,7 +245,21 @@
           (< n (len alv)))
      (equal (nth n
                  (set-indices-in-alv alv index-list value))
-            (nth n alv)))))
+            (nth n alv))))
+  )
+
+(defthm set-indices-correctness-2
+        (implies (and (true-listp v)
+                      (nat-listp index-list)
+                      (true-listp value-list)
+                      (equal (len index-list)
+                             (len value-list))
+                      (no-duplicatesp-equal index-list)
+                      (natp m)
+                      (< m (len index-list)))
+                 (equal (nth (nth m index-list)
+                             (set-indices v index-list value-list))
+                        (nth m value-list))))
 
 ;; could be handled differently using repeat... let's see.
 (defun indices-marked-p (index-list alv)
