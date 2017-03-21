@@ -279,6 +279,11 @@
   (implies (and (nat-listp index-list) (indices-marked-p index-list alv))
            (bounded-nat-listp index-list (len alv))))
 
+(defthm indices-marked-p-correctness-2
+  (equal
+   (indices-marked-p (binary-append x y) alv)
+   (and (indices-marked-p x alv) (indices-marked-p y alv))))
+
 (defun l4-regular-file-entry-p (entry)
   (declare (xargs :guard t))
   (l3-regular-file-entry-p entry))
@@ -335,13 +340,20 @@
                          (new-blocks (make-blocks new-text))
                          (new-indices
                           (find-n-free-blocks alv-after-free (len new-blocks))))
-                    (mv (cons (cons (car sd)
-                                    (cons new-indices (len new-text)))
-                              (delete-assoc (car hns) fs))
-                        ;; this (take) means we write as many blocks as we can
-                        ;; if we run out of space
-                        (set-indices disk new-indices (take (len new-indices) new-blocks))
-                        (set-indices-in-alv alv-after-free new-indices t))))
+                    (if (< (len new-indices) (len new-blocks))
+                        ;; we have an error because of insufficient disk space
+                        ;; - so we leave the fs unchanged
+                        (mv (cons (cons (car sd) contents)
+                                  (delete-assoc (car hns) fs))
+                            disk
+                            alv)
+                      (mv (cons (cons (car sd)
+                                      (cons new-indices (len new-text)))
+                                (delete-assoc (car hns) fs))
+                          ;; this (take) means we write as many blocks as we can
+                          ;; if we run out of space
+                          (set-indices disk new-indices new-blocks)
+                          (set-indices-in-alv alv-after-free new-indices t)))))
               (mv-let (new-contents new-disk new-alv)
                 (l4-wrchs (cdr hns) contents disk alv start text)
                 (mv (cons (cons (car sd) new-contents)
@@ -375,3 +387,95 @@
          (and (no-duplicatesp all-indices)
               (indices-marked-p all-indices alv)
               (equal (+ (len all-indices) (count-free-blocks alv)) (len alv))))))
+
+(defthm l4-wrchs-returns-fs
+  (implies (and (symbol-listp hns)
+                (l3-fs-p fs)
+                (boolean-listp alv)
+                (integerp start)
+                (<= 0 start)
+                (stringp text)
+                (block-listp disk))
+           (l4-fs-p (mv-nth 0 (l4-wrchs hns fs disk alv start text))))
+  :hints (("Subgoal *1/5'''" :in-theory (enable l3-regular-file-entry-p))
+          ("Subgoal *1/6'4'" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm l4-wrchs-returns-alv
+  (implies (and (symbol-listp hns)
+                (l3-fs-p fs)
+                (boolean-listp alv)
+                (integerp start)
+                (<= 0 start)
+                (stringp text)
+                (block-listp disk))
+           (boolean-listp (mv-nth 2 (l4-wrchs hns fs disk alv start text)))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-1
+  (implies (and (consp (assoc-equal name fs))
+                (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+                (l3-fs-p fs)
+                (boolean-listp alv)
+                (indices-marked-p (l4-list-all-indices fs)
+                                  alv))
+           (indices-marked-p (cadr (assoc-equal name fs))
+                             alv)))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-2
+  (implies
+   (and (l4-fs-p fs)
+        (boolean-listp alv)
+        (indices-marked-p (l4-list-all-indices fs)
+                          alv))
+   (indices-marked-p (l4-list-all-indices (delete-assoc-equal name fs))
+                     alv)))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-3
+  (implies (and (consp (assoc-equal name fs))
+                (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+                (l3-fs-p fs)
+                (boolean-listp alv)
+                (indices-marked-p (l4-list-all-indices fs)
+                                  alv))
+           (indices-marked-p (l4-list-all-indices (cdr (assoc-equal name fs)))
+                             alv)))
+
+(verify
+ (IMPLIES
+     (AND (SYMBOL-LISTP HNS)
+          (L3-FS-P FS)
+          (BOOLEAN-LISTP ALV)
+          (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
+                            ALV)
+          (INTEGERP START)
+          (<= 0 START)
+          (STRINGP TEXT)
+          (BLOCK-LISTP DISK)
+          (EQUAL (LEN ALV) (LEN DISK)))
+     (INDICES-MARKED-P
+          (L4-LIST-ALL-INDICES (CAR (L4-WRCHS HNS FS DISK ALV START TEXT)))
+          (MV-NTH 2
+                  (L4-WRCHS HNS FS DISK ALV START TEXT))))
+ :instructions (:induct :split
+                        :bash :bash :bash (:change-goal nil t)
+                        (:change-goal nil t)
+                        :bash
+                        :bash :bash
+                        :bash :bash))
+
+(defthm l4-wrchs-returns-stricter-fs
+  (implies (and (symbol-listp hns)
+                (l4-stricter-fs-p fs alv)
+                (natp start)
+                (stringp text)
+                (block-listp disk)
+                (equal (len alv) (len disk)))
+           (mv-let (new-fs new-disk new-alv)
+             (l4-wrchs hns fs disk alv start text)
+             (declare (ignore new-disk))
+             (l4-stricter-fs-p new-fs new-alv)))
+  :hints (("Subgoal 5" :in-theory (disable l4-wrchs-returns-fs)
+           :use l4-wrchs-returns-fs)
+          ("Subgoal 4" :in-theory (disable l4-wrchs-returns-fs)
+           :use l4-wrchs-returns-fs)))
