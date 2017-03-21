@@ -44,6 +44,14 @@
 ; the blocks as "free" before writing to them and they wouldn't have appeared
 ; anywhere else because of no-duplicatesp.
 
+; To sum up, we shouldn't try to charge on without proving equivalence to l3
+; because that's foolhardy. Yet, it's hard to think of a way to transform l4
+; instances to l3 instances - even with sorting of names - in such a way that
+; the disks will turn out to be the same in the two circumstances of
+; transforming and then writing, or writing and then transforming. I think we
+; might just have to start using defun-sk in order to quantify over all
+; names. We've known for a while that the time for this was coming.
+
 (include-book "file-system-3")
 
 (defun count-free-blocks (alv)
@@ -289,3 +297,51 @@
                               (natp n)
                               (block-listp disk))))
   (l3-rdchs hns fs disk start n))
+
+(defun l4-wrchs (hns fs disk alv start text)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l4-fs-p fs)
+                              (natp start)
+                              (stringp text)
+                              (block-listp disk)
+                              (boolean-listp alv)
+                              (equal (len alv) (len disk)))
+                  :guard-debug t))
+  (if (atom hns)
+      (mv fs disk alv) ;; error - showed up at fs with no name  - so leave fs unchanged
+    (if (atom fs)
+        (mv nil disk alv) ;; error, so leave fs unchanged
+      (let ((sd (assoc (car hns) fs)))
+        (if (atom sd)
+            (mv fs disk alv) ;; file-not-found error, so leave fs unchanged
+          (let ((contents (cdr sd)))
+            (if (l3-regular-file-entry-p contents)
+                (if (cdr hns)
+                    (mv (cons (cons (car sd) contents)
+                              (delete-assoc (car hns) fs))
+                        disk
+                        alv) ;; error, so leave fs unchanged
+                  (let* ((old-text
+                          (unmake-blocks
+                           (fetch-blocks-by-indices disk (car contents))
+                           (cdr contents)))
+                         (alv-after-free
+                          (set-indices-in-alv alv (car contents) nil))
+                         (new-text (insert-text old-text start text))
+                         (new-blocks (make-blocks new-text))
+                         (new-indices
+                          (find-n-free-blocks alv-after-free (len new-blocks))))
+                    (mv (cons (cons (car sd)
+                                    (cons new-indices (len new-text)))
+                              (delete-assoc (car hns) fs))
+                        ;; this (take) means we write as many blocks as we can
+                        ;; if we run out of space
+                        (set-indices disk new-indices (take (len new-indices) new-blocks))
+                        (set-indices-in-alv alv-after-free new-indices t))))
+              (mv-let (new-contents new-disk new-alv)
+                (l4-wrchs (cdr hns) contents disk alv start text)
+                (mv (cons (cons (car sd) new-contents)
+                          (delete-assoc (car hns) fs))
+                    new-disk
+                    new-alv)))
+            ))))))
