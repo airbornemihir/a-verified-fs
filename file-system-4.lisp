@@ -6,6 +6,44 @@
 ; We first start with a file-system recognizer, and then we define various
 ; file-system operations.
 
+; Some more information about the proper way to transform an instance of l4 to
+; an instance of l3: we need to do a depth-first traversal of the l4 tree and
+; append all the disk contents in the order in which they are visited in this
+; traversal (for a leaf node - that is, a file - arrival time and departure
+; time are the same.) This is, in fact, going to be part of our sanity check -
+; when we append all the disk indices we retrieve this way, we should get a set
+; of numbers that is unique and corresponds to only blocks marked "not free" in
+; the allocation vector. Then, like in the previous model, we can unlink
+; l4-fs-p and other conditions which are necessary to make it a valid
+; filesystem wrt the disk.
+
+; Why is uniqueness of indices between different text files important? We want
+; to avoid strange behaviour caused by a file deletion or overwrite of one of
+; the files that exposes the other file's contents to a state of being marked
+; "free" in the alv.
+
+; How do we prove uniqueness after a create/write/delete operation? 
+
+; For create, our contention is that all used blocks are marked "not free" in
+; the alv (according to the extended l4-fs-p predicate), and the function for
+; getting new blocks only returns blocks marked "free", therefore there cannot
+; be any overlap between these two sets.
+
+; For delete, the rationale is, removing something from a list that already
+; satisfies no-duplicatesp will give us the same thing. This is not going to be
+; straightforward because when we get the concatenated list of indices after
+; deleting, we will have a contiguous sublist missing which will be hard to
+; define.
+
+; In fact, without sorting the files in a directory by name (which we have so
+; far avoided doing), we can't make a consistent ordering which will give us
+; the nice properties of depth-first traversal we want.
+
+; Anyway, for write, it's going to be more complicated still - our claim is
+; that if we re-use anything that was used before, it's fine because we marked
+; the blocks as "free" before writing to them and they wouldn't have appeared
+; anywhere else because of no-duplicatesp.
+
 (include-book "file-system-3")
 
 (defun count-free-blocks (alv)
@@ -201,51 +239,21 @@
   (implies (and (nat-listp index-list) (indices-marked-p index-list alv))
            (bounded-nat-listp index-list (len alv))))
 
-(defun l4-fs-p (fs alv)
-  (declare (xargs :guard (boolean-listp alv)))
-  (if (atom fs)
-      (null fs)
-    (and (let ((directory-or-file-entry (car fs)))
-           (if (atom directory-or-file-entry)
-               nil
-             (let ((name (car directory-or-file-entry))
-                   (entry (cdr directory-or-file-entry)))
-               (and (symbolp name)
-                    (or (and (consp entry)
-                             (bounded-nat-listp (car entry) (len alv))
-                             (indices-marked-p (car entry) alv)
-                             (natp (cdr entry))
-                             (feasible-file-length-p (len (car entry)) (cdr entry)))
-                        (l4-fs-p entry alv))))))
-         (l4-fs-p (cdr fs) alv))))
+(defun l4-fs-p (fs)
+  (declare (xargs :guard t))
+  (l3-fs-p fs))
 
-(defthm l4-fs-p-correctness-1
-  (implies (l4-fs-p fs alv)
-           (l3-bounded-fs-p fs (len alv)))
-  :hints (("Goal" :in-theory (enable l3-bounded-fs-p)) ))
-
-(defun l4-stat (hns fs disk alv)
+(defun l4-stat (hns fs disk)
   (declare (xargs :guard (and (symbol-listp hns)
-                              (boolean-listp alv)
-                              (l4-fs-p fs alv)
-                              (block-listp disk)
-                              (equal (len alv) (len disk)))
-                  :guard-hints (("Goal'"
-                                 :in-theory (disable l4-fs-p-correctness-1)
-                                 :use (l4-fs-p-correctness-1)) ))
-           (ignore alv))
+                              (l4-fs-p fs)
+                              (block-listp disk))))
   (l3-stat hns fs disk))
 
-(defun l4-rdchs (hns fs disk alv start n)
+(defun l4-rdchs (hns fs disk start n)
   (declare (xargs :guard-debug t
                   :guard (and (symbol-listp hns)
-                              (boolean-listp alv)
-                              (l4-fs-p fs alv)
+                              (l4-fs-p fs)
                               (natp start)
                               (natp n)
-                              (block-listp disk))
-                  :guard-hints (("Goal'"
-                                 :in-theory (disable l4-fs-p-correctness-1)
-                                 :use (l4-fs-p-correctness-1)) ))
-           (ignore alv))
+                              (block-listp disk))))
   (l3-rdchs hns fs disk start n))
