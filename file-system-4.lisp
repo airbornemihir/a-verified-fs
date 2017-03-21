@@ -279,6 +279,10 @@
   (implies (and (nat-listp index-list) (indices-marked-p index-list alv))
            (bounded-nat-listp index-list (len alv))))
 
+(defun l4-regular-file-entry-p (entry)
+  (declare (xargs :guard t))
+  (l3-regular-file-entry-p entry))
+
 (defun l4-fs-p (fs)
   (declare (xargs :guard t))
   (l3-fs-p fs))
@@ -345,3 +349,29 @@
                     new-disk
                     new-alv)))
             ))))))
+
+(defun l4-list-all-indices (fs)
+  (declare (xargs :guard (l4-fs-p fs)))
+  (if (atom fs)
+      nil
+    (binary-append
+     (let ((directory-or-file-entry (car fs)))
+       (let ((entry (cdr directory-or-file-entry)))
+         (if (l4-regular-file-entry-p entry)
+             (car entry)
+           (l4-list-all-indices entry))))
+         (l4-list-all-indices (cdr fs))))
+  )
+
+(defthm l4-list-all-indices-correctness-1
+  (implies (l4-fs-p fs)
+   (nat-listp (l4-list-all-indices fs))))
+
+(defun l4-stricter-fs-p (fs alv)
+  (declare (xargs :guard t :guard-debug t))
+  (and (l4-fs-p fs)
+       (boolean-listp alv)
+       (let ( (all-indices (l4-list-all-indices fs)))
+         (and (no-duplicatesp all-indices)
+              (indices-marked-p all-indices alv)
+              (equal (+ (len all-indices) (count-free-blocks alv)) (len alv))))))
