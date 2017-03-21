@@ -284,6 +284,18 @@
    (indices-marked-p (binary-append x y) alv)
    (and (indices-marked-p x alv) (indices-marked-p y alv))))
 
+(verify
+ (implies (and (nat-listp index-list) (boolean-listp alv)
+               (INDICES-MARKED-P
+ index-list1
+ alv))
+ (INDICES-MARKED-P
+ index-list1
+ (SET-INDICES-IN-ALV
+  alv
+  index-list2
+  T))))
+
 (defun l4-regular-file-entry-p (entry)
   (declare (xargs :guard t))
   (l3-regular-file-entry-p entry))
@@ -340,7 +352,7 @@
                          (new-blocks (make-blocks new-text))
                          (new-indices
                           (find-n-free-blocks alv-after-free (len new-blocks))))
-                    (if (< (len new-indices) (len new-blocks))
+                    (if (not (equal (len new-indices) (len new-blocks)))
                         ;; we have an error because of insufficient disk space
                         ;; - so we leave the fs unchanged
                         (mv (cons (cons (car sd) contents)
@@ -385,8 +397,7 @@
        (boolean-listp alv)
        (let ( (all-indices (l4-list-all-indices fs)))
          (and (no-duplicatesp all-indices)
-              (indices-marked-p all-indices alv)
-              (equal (+ (len all-indices) (count-free-blocks alv)) (len alv))))))
+              (indices-marked-p all-indices alv)))))
 
 (defthm l4-wrchs-returns-fs
   (implies (and (symbol-listp hns)
