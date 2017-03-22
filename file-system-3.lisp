@@ -124,6 +124,13 @@
            (nat-listp l))
   :rule-classes (:rewrite :forward-chaining))
 
+(defthm bounded-nat-listp-correctness-2
+  (implies (true-listp x)
+           (equal (bounded-nat-listp (binary-append x y)
+                                     b)
+                  (and (bounded-nat-listp x b)
+                       (bounded-nat-listp y b)))))
+
 ;; This is to be returned when a block is not found. It's full of null
 ;; characters and is *blocksize* long.
 (defconst *nullblock* (make-character-list (take *blocksize* nil)))

@@ -122,3 +122,7 @@
            (nat-listp (binary-append x y))))
 
 (defthm eqlable-listp-if-nat-listp (implies (nat-listp l) (eqlable-listp l)))
+
+(defthm member-of-binary-append-1
+  (implies (member-equal x lst2)
+           (member-equal x (binary-append lst1 lst2))))
