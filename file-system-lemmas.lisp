@@ -123,6 +123,30 @@
 
 (defthm eqlable-listp-if-nat-listp (implies (nat-listp l) (eqlable-listp l)))
 
-(defthm member-of-binary-append-1
-  (implies (member-equal x lst2)
-           (member-equal x (binary-append lst1 lst2))))
+(defthm member-of-binary-append
+  (iff (member-equal x (binary-append lst1 lst2))
+       (or (member-equal x lst1)
+           (member-equal x lst2))))
+
+(defthm no-duplicatesp-lemma-1
+  (implies (and (member-equal a y)
+                (no-duplicatesp (binary-append x y)))
+           (not (member-equal a x))))
+
+(defthm no-duplicatesp-lemma-2
+  (implies (no-duplicatesp-equal (append a b))
+           (and (no-duplicatesp-equal a)
+                (no-duplicatesp-equal b))))
+
+(defthm no-duplicatesp-lemma-3
+  (implies (and (consp b)
+                (no-duplicatesp-equal (append a b))
+                (true-listp b)
+                (true-listp a))
+           (no-duplicatesp-equal (append a (cdr b)))))
+
+(defthm no-duplicatesp-binary-append-commutativity
+  (implies (and (no-duplicatesp-equal (binary-append a b))
+                (true-listp b)
+                (true-listp a))
+           (no-duplicatesp-equal (binary-append b a))))
