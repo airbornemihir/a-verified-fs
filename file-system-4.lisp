@@ -175,7 +175,6 @@
       :use (:instance find-n-free-blocks-helper-correctness-5
                       (start 0)))))
 
-  
   (defthm
     find-n-free-blocks-correctness-6
     (implies (and (natp n))
@@ -302,6 +301,34 @@
                             (index-list index-list2)))
            :cases (member-equal (car index-list1)
                                                    index-list2)) ))
+
+(defun induction-scheme (l1 l2)
+           (if (atom l2)
+               l1
+             (induction-scheme (binary-append l1 (cons (car l2) nil)) (cdr l2))))
+
+(defthm
+  indices-marked-p-correctness-4
+  (implies (and (boolean-listp alv)
+                (bounded-nat-listp index-list1 (len alv))
+                (bounded-nat-listp index-list2 (len alv)))
+           (indices-marked-p
+            index-list2
+            (set-indices-in-alv alv
+                                (binary-append index-list1 index-list2)
+                                t)))
+  :hints (("Goal" :induct (induction-scheme index-list1 index-list2))))
+
+(defthm
+  indices-marked-p-correctness-5
+  (implies (and (boolean-listp alv)
+                (bounded-nat-listp index-list (len alv)))
+           (indices-marked-p index-list
+                             (set-indices-in-alv alv index-list t)))
+  :hints (("Goal" :in-theory (disable indices-marked-p-correctness-4)
+           :use (:instance indices-marked-p-correctness-4
+                           (index-list2 index-list)
+                           (index-list1 nil)))))
 
 (defun l4-regular-file-entry-p (entry)
   (declare (xargs :guard t))
@@ -471,13 +498,13 @@
           (<= 0 START)
           (STRINGP TEXT)
           (BLOCK-LISTP DISK)
-          (EQUAL (LEN ALV) (LEN DISK)))
+          (EQUAL (LEN ALV) (LEN DISK))
+          (no-duplicatesp (L4-LIST-ALL-INDICES FS)))
      (INDICES-MARKED-P
           (L4-LIST-ALL-INDICES (CAR (L4-WRCHS HNS FS DISK ALV START TEXT)))
           (MV-NTH 2
                   (L4-WRCHS HNS FS DISK ALV START TEXT))))
- :instructions (:induct :split
-                        :bash :bash :bash (:change-goal nil t)
+ :instructions (:induct (:change-goal nil t)
                         (:change-goal nil t)
                         :bash
                         :bash :bash
