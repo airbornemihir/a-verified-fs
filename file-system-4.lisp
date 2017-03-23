@@ -133,6 +133,14 @@
                               (start (+ 1 start)))))))
 
   (local
+   (defthm find-n-free-blocks-helper-correctness-7
+     (implies (and (boolean-listp alv)
+                   (natp n) (natp start))
+              (bounded-nat-listp
+               (find-n-free-blocks-helper alv n start)
+               (+ start (len alv))))))
+
+  (local
    (defun find-n-free-blocks (alv n)
      (declare (xargs :guard (and (boolean-listp alv)
                                  (natp n))))
@@ -179,6 +187,13 @@
     find-n-free-blocks-correctness-6
     (implies (and (natp n))
              (no-duplicatesp-equal (find-n-free-blocks alv n))))
+
+  (defthm find-n-free-blocks-correctness-7
+    (implies (and (boolean-listp alv)
+                  (natp n))
+             (bounded-nat-listp
+              (find-n-free-blocks alv n)
+              (len alv))))
   )
 
 (defun set-indices (v index-list value-list)
@@ -302,22 +317,27 @@
            :cases (member-equal (car index-list1)
                                                    index-list2)) ))
 
-(defun induction-scheme (l1 l2)
+(encapsulate
+  ()
+
+  (local (defun induction-scheme (l1 l2)
            (if (atom l2)
                l1
-             (induction-scheme (binary-append l1 (cons (car l2) nil)) (cdr l2))))
+             (induction-scheme (binary-append l1 (cons (car l2) nil)) (cdr l2)))))
 
-(defthm
-  indices-marked-p-correctness-4
-  (implies (and (boolean-listp alv)
-                (bounded-nat-listp index-list1 (len alv))
-                (bounded-nat-listp index-list2 (len alv)))
-           (indices-marked-p
-            index-list2
-            (set-indices-in-alv alv
-                                (binary-append index-list1 index-list2)
-                                t)))
-  :hints (("Goal" :induct (induction-scheme index-list1 index-list2))))
+  (defthm
+    indices-marked-p-correctness-4
+    (implies (and (boolean-listp alv)
+                  (bounded-nat-listp index-list1 (len alv))
+                  (bounded-nat-listp index-list2 (len alv)))
+             (indices-marked-p
+              index-list2
+              (set-indices-in-alv alv
+                                  (binary-append index-list1 index-list2)
+                                  t)))
+    :hints (("Goal" :induct (induction-scheme index-list1 index-list2))))
+
+  )
 
 (defthm
   indices-marked-p-correctness-5
@@ -499,7 +519,7 @@
           (STRINGP TEXT)
           (BLOCK-LISTP DISK)
           (EQUAL (LEN ALV) (LEN DISK))
-          (no-duplicatesp (L4-LIST-ALL-INDICES FS)))
+          (no-duplicatesp-equal (L4-LIST-ALL-INDICES FS)))
      (INDICES-MARKED-P
           (L4-LIST-ALL-INDICES (CAR (L4-WRCHS HNS FS DISK ALV START TEXT)))
           (MV-NTH 2
