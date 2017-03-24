@@ -128,25 +128,17 @@
        (or (member-equal x lst1)
            (member-equal x lst2))))
 
-(defthm no-duplicatesp-lemma-1
-  (implies (and (member-equal a y)
-                (no-duplicatesp (binary-append x y)))
-           (not (member-equal a x))))
+(defthm no-duplicatesp-of-append
+  (equal (no-duplicatesp-equal (binary-append x y))
+         (and (no-duplicatesp x)
+              (no-duplicatesp y)
+              (not (intersectp-equal x y)))))
 
-(defthm no-duplicatesp-lemma-2
-  (implies (no-duplicatesp-equal (append a b))
-           (and (no-duplicatesp-equal a)
-                (no-duplicatesp-equal b))))
+(defthm intersectp-of-append
+  (equal (intersectp-equal z (binary-append x y))
+         (or (intersectp-equal z x)
+             (intersectp-equal z y))))
 
-(defthm no-duplicatesp-lemma-3
-  (implies (and (consp b)
-                (no-duplicatesp-equal (append a b))
-                (true-listp b)
-                (true-listp a))
-           (no-duplicatesp-equal (append a (cdr b)))))
-
-(defthm no-duplicatesp-binary-append-commutativity
-  (implies (and (no-duplicatesp-equal (binary-append a b))
-                (true-listp b)
-                (true-listp a))
-           (no-duplicatesp-equal (binary-append b a))))
+(defthmd intersectp-is-commutative
+  (equal (intersectp-equal x y)
+         (intersectp-equal y x)))
