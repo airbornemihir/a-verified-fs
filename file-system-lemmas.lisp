@@ -142,3 +142,17 @@
 (defthmd intersectp-is-commutative
   (equal (intersectp-equal x y)
          (intersectp-equal y x)))
+
+(defthm subsetp-of-binary-append-1
+  (subsetp-equal y (binary-append x y)))
+
+(defthm subsetp-of-binary-append-2
+  (subsetp-equal x (binary-append x y)))
+
+(defthm subsetp-of-binary-append-3
+  (equal (subsetp-equal (binary-append x y) z)
+         (and (subsetp-equal x z) (subsetp-equal y z))))
+
+(defthm subsetp-is-transitive
+  (implies (and (subsetp-equal x y) (subsetp-equal y z))
+           (subsetp-equal x z)))

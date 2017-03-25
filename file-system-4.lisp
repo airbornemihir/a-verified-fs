@@ -549,6 +549,29 @@
                 (no-duplicatesp-equal (l4-list-all-indices fs)))
            (no-duplicatesp-equal (l4-list-all-indices (cdr (assoc-equal name fs))))))
 
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-6
+  (implies
+   (l3-fs-p fs)
+   (subsetp-equal
+    (l4-collect-all-index-lists (delete-assoc-equal name fs))
+    (l4-collect-all-index-lists fs)))
+  :hints (("Subgoal *1/3.2'"
+           :in-theory (disable subsetp-of-binary-append-1)
+           :use (:instance subsetp-of-binary-append-1
+                           (x (cons (cadr (car fs)) nil))
+                           (y (l4-collect-all-index-lists (cdr fs)) )))))
+
+;; will not prove...
+(verify (IMPLIES
+           (AND (CONSP (ASSOC-EQUAL NAME FS))
+                (L3-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL NAME FS)))
+                (L3-FS-P FS)
+                (NO-DUPLICATESP-EQUAL (L4-LIST-ALL-INDICES FS)))
+           (NO-DUPLICATESP-EQUAL
+                (cons (CADR (ASSOC-EQUAL NAME FS))
+                      (l4-collect-all-index-lists (DELETE-ASSOC-EQUAL NAME FS))))))
+
 (thm (IMPLIES
            (AND (CONSP (ASSOC-EQUAL NAME FS))
                 (L3-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL NAME FS)))
