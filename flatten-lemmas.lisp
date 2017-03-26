@@ -68,3 +68,12 @@
   (implies (and (true-list-listp x)
                 (no-duplicatesp (flatten x)))
            (only-nil-duplicatesp-equal x)))
+
+(defun disjoint-list-listp (x)
+  (or (atom x)
+      (and (not-intersectp-list (car x) (cdr x))
+           (disjoint-list-listp (cdr x)))))
+
+(defthm flatten-disjoint-lists
+  (implies (no-duplicatesp (flatten (double-rewrite l)))
+           (disjoint-list-listp l)))

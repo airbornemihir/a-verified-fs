@@ -567,8 +567,16 @@
            (AND (CONSP (ASSOC-EQUAL NAME FS))
                 (L3-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL NAME FS)))
                 (L3-FS-P FS)
-                (NO-DUPLICATESP-EQUAL (L4-LIST-ALL-INDICES FS)))
-           (NO-DUPLICATESP-EQUAL
+                (only-nil-DUPLICATESP-EQUAL (L4-collect-ALL-INDex-lists FS)))
+           (only-nil-DUPLICATESP-EQUAL
+                (l4-collect-all-index-lists (DELETE-ASSOC-EQUAL NAME FS)))))
+
+(verify (IMPLIES
+           (AND (CONSP (ASSOC-EQUAL NAME FS))
+                (L3-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL NAME FS)))
+                (L3-FS-P FS)
+                (only-nil-DUPLICATESP-EQUAL (L4-collect-ALL-INDex-lists FS)))
+           (only-nil-DUPLICATESP-EQUAL
                 (cons (CADR (ASSOC-EQUAL NAME FS))
                       (l4-collect-all-index-lists (DELETE-ASSOC-EQUAL NAME FS))))))
 

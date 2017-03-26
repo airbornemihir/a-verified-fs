@@ -156,3 +156,8 @@
 (defthm subsetp-is-transitive
   (implies (and (subsetp-equal x y) (subsetp-equal y z))
            (subsetp-equal x z)))
+
+(defthm member-of-subset
+  (implies (and (subsetp-equal lst1 lst2)
+                (member-equal x lst1))
+           (member-equal x lst2)))
