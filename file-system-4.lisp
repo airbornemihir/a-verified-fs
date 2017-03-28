@@ -562,23 +562,69 @@
                            (x (cons (cadr (car fs)) nil))
                            (y (l4-collect-all-index-lists (cdr fs)) )))))
 
-;; will not prove...
-(verify (IMPLIES
-           (AND (CONSP (ASSOC-EQUAL NAME FS))
-                (L3-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL NAME FS)))
-                (L3-FS-P FS)
-                (only-nil-DUPLICATESP-EQUAL (L4-collect-ALL-INDex-lists FS)))
-           (only-nil-DUPLICATESP-EQUAL
-                (l4-collect-all-index-lists (DELETE-ASSOC-EQUAL NAME FS)))))
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-7
+  (implies (and (consp fs)
+                (l3-fs-p fs)
+                (not-intersectp-list x (l4-collect-all-index-lists fs)))
+           (not-intersectp-list
+            x
+            (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
 
-(verify (IMPLIES
-           (AND (CONSP (ASSOC-EQUAL NAME FS))
-                (L3-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL NAME FS)))
-                (L3-FS-P FS)
-                (only-nil-DUPLICATESP-EQUAL (L4-collect-ALL-INDex-lists FS)))
-           (only-nil-DUPLICATESP-EQUAL
-                (cons (CADR (ASSOC-EQUAL NAME FS))
-                      (l4-collect-all-index-lists (DELETE-ASSOC-EQUAL NAME FS))))))
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-8
+  (implies (and (l3-fs-p fs)
+                (disjoint-list-listp (l4-collect-all-index-lists fs)))
+           (disjoint-list-listp
+            (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-9
+  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+                (consp (assoc-equal name fs))
+                (l3-fs-p fs))
+           (member-equal (cadr (assoc-equal name fs))
+                         (l4-collect-all-index-lists fs))))
+
+;; too many hypotheses, because of too many hypotheses in
+;; member-intersectp-binary-append
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-10
+  (implies
+   (and
+    (not (l3-regular-file-entry-p (cdr (car fs))))
+    (l3-regular-file-entry-p (cdr (assoc-equal name (cdr fs))))
+    (not (equal name (car (car fs))))
+    (consp (assoc-equal name (cdr fs)))
+    (consp (car fs))
+    (symbolp (car (car fs)))
+    (l3-fs-p (cdr (car fs)))
+    (l3-fs-p (cdr fs))
+    (disjoint-list-listp (l4-collect-all-index-lists (cdr (car fs))))
+    (disjoint-list-listp (l4-collect-all-index-lists (cdr fs)))
+    (not (member-intersectp-equal (l4-collect-all-index-lists (cdr (car fs)))
+                                  (l4-collect-all-index-lists (cdr fs)))))
+   (not-intersectp-list (cadr (assoc-equal name (cdr fs)))
+                        (l4-collect-all-index-lists (cdr (car fs)))))
+  :hints
+  (("Goal"
+    :use (:instance member-intersectp-binary-append
+                    (lst1 (l4-collect-all-index-lists (cdr (car fs))))
+                    (lst2 (l4-collect-all-index-lists (cdr fs)))
+                    (x (cadr (assoc-equal name (cdr fs))))))))
+
+(verify
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l3-fs-p fs)
+        (disjoint-list-listp (l4-collect-all-index-lists fs)))
+   (disjoint-list-listp (if
+                            (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+                            (cons (cadr (assoc-equal name fs))
+                        (l4-collect-all-index-lists (delete-assoc-equal name
+                                                                        fs)))
+                          (binary-append (l4-collect-all-index-lists (cdr (assoc-equal name fs)))
+                        (l4-collect-all-index-lists (delete-assoc-equal name
+                                                                        fs)))))))
 
 (thm (IMPLIES
            (AND (CONSP (ASSOC-EQUAL NAME FS))

@@ -22,6 +22,16 @@
                 (member-equal y l))
            (not (intersectp-equal x y))))
 
+(defthm not-intersectp-list-of-append
+  (equal (not-intersectp-list x (binary-append l1 l2))
+         (and (not-intersectp-list x l1)
+              (not-intersectp-list x l2))))
+
+(defthm not-intersectp-equal-if-subset
+  (implies (and (not-intersectp-list x l2)
+                (subsetp-equal l1 l2))
+           (not-intersectp-list x l1)))
+
 (defthm flatten-subset-no-duplicatesp-lemma-1
   (implies (and (consp z)
                 (no-duplicatesp (flatten z))
@@ -54,21 +64,6 @@
                 (no-duplicatesp-equal x))
            (no-duplicatesp-equal (flatten x))))
 
-(defun only-nil-duplicatesp-equal (l)
-  (declare (xargs :guard (true-list-listp l)))
-  (cond ((endp l) t)
-        ((and (car l) (member-equal (car l) (cdr l))) nil)
-        (t (only-nil-duplicatesp-equal (cdr l)))))
-
-(defthm only-nil-duplicatesp-equal-correctness-1
-  (implies (no-duplicatesp l)
-           (only-nil-duplicatesp-equal l)))
-
-(defthm only-nil-duplicatesp-if-no-duplicatesp-of-flatten
-  (implies (and (true-list-listp x)
-                (no-duplicatesp (flatten x)))
-           (only-nil-duplicatesp-equal x)))
-
 (defun disjoint-list-listp (x)
   (or (atom x)
       (and (not-intersectp-list (car x) (cdr x))
@@ -77,3 +72,29 @@
 (defthm flatten-disjoint-lists
   (implies (no-duplicatesp (flatten (double-rewrite l)))
            (disjoint-list-listp l)))
+
+;; This theorem won't go through because both
+;; (disjoint-list-listp '((1 2) (3 4))) and
+;; (subsetp-equal '((1 2) (1 2)) '((1 2) (3 4))) are t.
+;; (verify (implies (and (subsetp-equal x y) (disjoint-list-listp y)) (disjoint-list-listp x)))
+
+(defun member-intersectp-equal (x y)
+  (and (consp x)
+       (or (not (not-intersectp-list (car x) y))
+           (member-intersectp-equal (cdr x) y))))
+
+(defthm when-append-is-disjoint-list-listp
+  (equal (disjoint-list-listp (binary-append x y))
+         (and (disjoint-list-listp x)
+              (disjoint-list-listp y) (not (member-intersectp-equal x y)))))
+
+(defthm member-intersectp-with-subset
+  (implies (and (member-intersectp-equal z x)
+                (subsetp-equal x y))
+           (member-intersectp-equal z y)))
+
+(defthm member-intersectp-binary-append
+  (implies (and (member-equal x lst2)
+                (disjoint-list-listp (binary-append lst1 lst2)))
+           (not-intersectp-list x lst1))
+  :hints (("Subgoal *1/5''" :use (:instance intersectp-is-commutative (y (car lst1)))) ))
