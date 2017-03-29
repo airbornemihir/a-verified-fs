@@ -599,32 +599,86 @@
     (symbolp (car (car fs)))
     (l3-fs-p (cdr (car fs)))
     (l3-fs-p (cdr fs))
-    (disjoint-list-listp (l4-collect-all-index-lists (cdr (car fs))))
-    (disjoint-list-listp (l4-collect-all-index-lists (cdr fs)))
     (not (member-intersectp-equal (l4-collect-all-index-lists (cdr (car fs)))
                                   (l4-collect-all-index-lists (cdr fs)))))
    (not-intersectp-list (cadr (assoc-equal name (cdr fs)))
                         (l4-collect-all-index-lists (cdr (car fs)))))
   :hints
   (("Goal"
-    :use (:instance member-intersectp-binary-append
+    :use (:instance intersectp-member-when-not-member-intersectp
                     (lst1 (l4-collect-all-index-lists (cdr (car fs))))
                     (lst2 (l4-collect-all-index-lists (cdr fs)))
                     (x (cadr (assoc-equal name (cdr fs))))))))
 
-(verify
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-11
+  (implies (and (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+                (consp (assoc-equal name fs))
+                (l3-fs-p fs)
+                (member-intersectp-equal
+                 (l4-collect-all-index-lists (cdr (assoc-equal name fs)))
+                 l))
+           (member-intersectp-equal l (l4-collect-all-index-lists fs))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-12
+  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+                (consp (assoc-equal name fs))
+                (l3-fs-p fs)
+                (not-intersectp-list l (l4-collect-all-index-lists fs))
+                (disjoint-list-listp (l4-collect-all-index-lists fs)))
+           (not (intersectp-equal (cadr (assoc-equal name fs))
+                                  l)))
+  :hints (("Goal" :use (:instance intersectp-is-commutative (y l)
+                                  (x (cadr (assoc-equal name fs)))))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-13
+  (implies (and (consp (assoc-equal name fs))
+                (l3-fs-p fs)
+                (disjoint-list-listp (l4-collect-all-index-lists fs))
+                (not (l3-regular-file-entry-p (cdr (assoc-equal name fs)))))
+           (disjoint-list-listp
+            (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-14
+  (implies (and (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+                (consp (assoc-equal name fs))
+                (l3-fs-p fs)
+                (not-intersectp-list l (l4-collect-all-index-lists fs)))
+           (not-intersectp-list
+            l
+            (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-15
   (implies
    (and (consp (assoc-equal name fs))
         (l3-fs-p fs)
         (disjoint-list-listp (l4-collect-all-index-lists fs)))
-   (disjoint-list-listp (if
-                            (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
-                            (cons (cadr (assoc-equal name fs))
-                        (l4-collect-all-index-lists (delete-assoc-equal name
-                                                                        fs)))
-                          (binary-append (l4-collect-all-index-lists (cdr (assoc-equal name fs)))
-                        (l4-collect-all-index-lists (delete-assoc-equal name
-                                                                        fs)))))))
+   (disjoint-list-listp
+    (if (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (cons (cadr (assoc-equal name fs))
+              (l4-collect-all-index-lists (delete-assoc-equal name fs)))
+        (binary-append
+         (l4-collect-all-index-lists (cdr (assoc-equal name fs)))
+         (l4-collect-all-index-lists (delete-assoc-equal name fs))))))
+  :hints
+  (("Subgoal *1/2.1''"
+    :use
+    ((:instance
+      member-intersectp-is-commutative
+      (x (l4-collect-all-index-lists (cdr (assoc-equal name (cdr fs)))))
+      (y
+       (cons
+        (cadr (car fs))
+        (l4-collect-all-index-lists (delete-assoc-equal name (cdr fs))))))
+     (:instance
+      member-intersectp-is-commutative
+      (x (l4-collect-all-index-lists (delete-assoc-equal name (cdr fs))))
+      (y (l4-collect-all-index-lists
+          (cdr (assoc-equal name (cdr fs))))))))))
 
 (thm (IMPLIES
            (AND (CONSP (ASSOC-EQUAL NAME FS))

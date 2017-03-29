@@ -93,8 +93,49 @@
                 (subsetp-equal x y))
            (member-intersectp-equal z y)))
 
-(defthm member-intersectp-binary-append
+(defthm intersectp-member-when-not-member-intersectp
   (implies (and (member-equal x lst2)
-                (disjoint-list-listp (binary-append lst1 lst2)))
+                (not (member-intersectp-equal lst1 lst2)))
            (not-intersectp-list x lst1))
-  :hints (("Subgoal *1/5''" :use (:instance intersectp-is-commutative (y (car lst1)))) ))
+  :hints (("Subgoal *1/4''" :use (:instance intersectp-is-commutative (y (car lst1)))) ))
+
+(defthm member-intersectp-binary-append
+  (equal (member-intersectp-equal e (binary-append x y))
+         (or (member-intersectp-equal e x)
+             (member-intersectp-equal e y))))
+
+(defthm member-intersectp-is-commutative-lemma-1
+  (implies (not (consp x))
+           (not (member-intersectp-equal y x))))
+
+(defthm
+  member-intersectp-is-commutative-lemma-2
+  (implies (and (consp x)
+                (not (not-intersectp-list (car x) y)))
+           (member-intersectp-equal y x))
+  :hints
+  (("Subgoal *1/2''" :use (:instance intersectp-is-commutative (x (car x))
+                                     (y (car y))))))
+
+(defthm
+  member-intersectp-is-commutative-lemma-3
+  (implies (and (consp x)
+                (not-intersectp-list (car x) y))
+           (equal (member-intersectp-equal y (cdr x))
+                  (member-intersectp-equal y x)))
+  :hints
+  (("Subgoal *1/1''" :use (:instance intersectp-is-commutative (x (car x))
+                                     (y (car y))))))
+
+(defthmd member-intersectp-is-commutative
+  (equal (member-intersectp-equal x y)
+         (member-intersectp-equal y x)))
+
+(defthm
+  another-lemma-about-member-intersectp
+  (implies (or (member-intersectp-equal x z)
+               (member-intersectp-equal y z))
+           (member-intersectp-equal z (binary-append x y)))
+  :hints (("Goal" :use ((:instance member-intersectp-is-commutative (y z))
+                        (:instance member-intersectp-is-commutative
+                                   (x z))))))
