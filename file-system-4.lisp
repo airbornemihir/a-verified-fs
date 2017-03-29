@@ -661,9 +661,31 @@
     (if (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
         (cons (cadr (assoc-equal name fs))
               (l4-collect-all-index-lists (delete-assoc-equal name fs)))
-        (binary-append
-         (l4-collect-all-index-lists (cdr (assoc-equal name fs)))
-         (l4-collect-all-index-lists (delete-assoc-equal name fs))))))
+      (binary-append
+       (l4-collect-all-index-lists (cdr (assoc-equal name fs)))
+       (l4-collect-all-index-lists (delete-assoc-equal name fs))))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (consp (assoc-equal name fs))
+          (l3-fs-p fs)
+          (disjoint-list-listp (l4-collect-all-index-lists fs))
+          (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+     (disjoint-list-listp
+      (cons (cadr (assoc-equal name fs))
+            (l4-collect-all-index-lists (delete-assoc-equal name fs))))))
+   (:rewrite
+    :corollary
+    (implies
+     (and (consp (assoc-equal name fs))
+          (l3-fs-p fs)
+          (disjoint-list-listp (l4-collect-all-index-lists fs))
+          (not (l3-regular-file-entry-p (cdr (assoc-equal name fs)))))
+     (disjoint-list-listp
+      (binary-append
+       (l4-collect-all-index-lists (cdr (assoc-equal name fs)))
+       (l4-collect-all-index-lists (delete-assoc-equal name fs)))))))
   :hints
   (("Subgoal *1/2.1''"
     :use
