@@ -66,7 +66,7 @@
 \begin{frame}{Progress so far}
   \begin{itemize}
     \item We've built three models, with the operations read, write,
-      and delete.
+      create, and delete.
       \begin{enumerate}
       \item In the first model, we represent the filesystem as a tree,
         allow for text files (stored as strings) and directories only,
@@ -86,14 +86,40 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Proof approaches and techniques}
+  \begin{itemize}
+  \item In the fourth model, we implement garbage collection in the
+    form of an allocation vector.
+  \item What guarantees do we need to show that a filesystem of this
+    kind is consistent?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Proof approaches and techniques}
+  \begin{enumerate}
+  \item The disk and the allocation vector must be in harmony
+    initially and updated in lockstep.
+  \item Every block referred to in the filesystem must be marked
+    "used" in the allocation vector.\\
+    \textit{What about the complementary problem - making sure unused
+      blocks are unmarked?}
+  \item If n blocks are available in the allocation vector, the
+    allocation algorithm must provide n blocks when requested.
+  \item No matter how many blocks are returned by the allocation
+    algorithm, they must be unique and disjoint with the blocks
+    allocated to other files.
+  \end{enumerate}
+\end{frame}
+
 \begin{frame}{Future work}
   \begin{itemize}
-  \item Add the create operation, and possibly open and close with the
-    introduction of file descriptors in future models.
-  \item In the next model, finitise the length of the disk and garbage
-    collect disk blocks that are left unused after a write or a delete
+  \item Finish finitising the length of the disk and garbage
+    collecting disk blocks that are left unused after a write or a delete
     operation.
-  \item In future models, linearise the tree, leaving only the disk.
+  \item Possibly, add the system call open and close with the
+    introduction of file descriptors.\\
+    \textit{This would be a step towards the study of concurrent FS operations.}
+  \item Linearise the tree, leaving only the disk.
   \item Eventually emulate the CP/M filesystem as a convincing proof
     of concept, and move on to fsck and file recovery tools.
   \end{itemize}
