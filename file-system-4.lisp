@@ -54,6 +54,12 @@
 
 (include-book "file-system-3")
 
+(defthm mv-nth-replacement
+  (equal (mv-nth n (cons a b))
+         (if (zp n) a (mv-nth (- n 1) b))))
+
+(in-theory (disable mv-nth))
+
 (defun count-free-blocks (alv)
   (declare (xargs :guard (and (boolean-listp alv))))
   (if (atom alv)
@@ -464,7 +470,7 @@
                 (<= 0 start)
                 (stringp text)
                 (block-listp disk))
-           (l4-fs-p (mv-nth 0 (l4-wrchs hns fs disk alv start text))))
+           (l3-fs-p (mv-nth 0 (l4-wrchs hns fs disk alv start text))))
   :hints (("Subgoal *1/5'''" :in-theory (enable l3-regular-file-entry-p))
           ("Subgoal *1/6'4'" :in-theory (enable l3-regular-file-entry-p))))
 
@@ -744,36 +750,45 @@
          (equal (len alv) (len disk))
          (no-duplicatesp-equal (l4-list-all-indices fs)))
     (indices-marked-p
-     (l4-list-all-indices (car (l4-wrchs hns fs disk alv start text)))
+     (l4-list-all-indices (mv-nth 0 (l4-wrchs hns fs disk alv start text)))
      (mv-nth 2
              (l4-wrchs hns fs disk alv start text))))))
 
-(DEFTHM
-  L4-WRCHS-RETURNS-STRICTER-FS-LEMMA-19
-  (IMPLIES
-       (AND (SYMBOL-LISTP HNS)
-            (L3-FS-P FS)
-            (BOOLEAN-LISTP ALV)
-            (NO-DUPLICATESP-EQUAL (L4-LIST-ALL-INDICES FS))
-            (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
-                              ALV)
-            (INTEGERP START)
-            (<= 0 START)
-            (STRINGP TEXT)
-            (BLOCK-LISTP DISK)
-            (EQUAL (LEN ALV) (LEN DISK)))
-       (BOUNDED-NAT-LISTP
-            (L4-LIST-ALL-INDICES (CAR (L4-WRCHS HNS FS DISK ALV START TEXT)))
-            (LEN (MV-NTH 2
-                         (L4-WRCHS HNS FS DISK ALV START TEXT)))))
-  :INSTRUCTIONS
-  (:PROMOTE (:REWRITE INDICES-MARKED-P-CORRECTNESS-1
-                      ((ALV (MV-NTH 2
-                                    (L4-WRCHS HNS FS DISK ALV START TEXT)))))
-            (:REWRITE L4-WRCHS-RETURNS-STRICTER-FS-LEMMA-18)
-            (:REWRITE L4-LIST-ALL-INDICES-CORRECTNESS-1)
-            (:BASH ("Goal" :IN-THEORY (DISABLE L4-WRCHS-RETURNS-FS)
-                           :USE L4-WRCHS-RETURNS-FS))))
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-19
+  (implies
+   (and (symbol-listp hns)
+        (l3-fs-p fs)
+        (boolean-listp alv)
+        (no-duplicatesp-equal (l4-list-all-indices fs))
+        (indices-marked-p (l4-list-all-indices fs)
+                          alv)
+        (integerp start)
+        (<= 0 start)
+        (stringp text)
+        (block-listp disk)
+        (equal (len alv) (len disk)))
+   (bounded-nat-listp
+    (l4-list-all-indices (mv-nth 0 (l4-wrchs hns fs disk alv start text)))
+    (len (mv-nth 2
+                 (l4-wrchs hns fs disk alv start text)))))
+  :hints
+  (("Goal"
+    :in-theory (disable l4-wrchs-returns-fs
+                        l4-list-all-indices-correctness-1
+                        indices-marked-p-correctness-1)
+    :use
+    ((:instance
+      indices-marked-p-correctness-1
+      (b (len (mv-nth 2
+                      (l4-wrchs hns fs disk alv start text))))
+      (index-list
+       (l4-list-all-indices (mv-nth 0 (l4-wrchs hns fs disk alv start text))))
+      (alv (mv-nth 2
+                   (l4-wrchs hns fs disk alv start text))))
+     (:instance l4-list-all-indices-correctness-1
+                (fs (mv-nth 0 (l4-wrchs hns fs disk alv start text))))
+     l4-wrchs-returns-fs))))
 
 (skip-proofs
  (defthm
@@ -791,7 +806,7 @@
           (BLOCK-LISTP DISK)
           (EQUAL (LEN ALV) (LEN DISK)))
      (NO-DUPLICATESP-EQUAL
-          (L4-LIST-ALL-INDICES (CAR (L4-WRCHS HNS FS DISK ALV START TEXT)))))))
+          (L4-LIST-ALL-INDICES (mv-nth 0 (L4-WRCHS HNS FS DISK ALV START TEXT)))))))
 
 (defthm l4-wrchs-returns-stricter-fs
   (implies (and (symbol-listp hns)
