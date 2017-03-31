@@ -599,24 +599,20 @@
   l4-wrchs-returns-stricter-fs-lemma-10
   (implies
    (and
-    (not (l3-regular-file-entry-p (cdr (car fs))))
-    (l3-regular-file-entry-p (cdr (assoc-equal name (cdr fs))))
-    (not (equal name (car (car fs))))
-    (consp (assoc-equal name (cdr fs)))
-    (consp (car fs))
-    (symbolp (car (car fs)))
-    (l3-fs-p (cdr (car fs)))
-    (l3-fs-p (cdr fs))
-    (not (member-intersectp-equal (l4-collect-all-index-lists (cdr (car fs)))
-                                  (l4-collect-all-index-lists (cdr fs)))))
-   (not-intersectp-list (cadr (assoc-equal name (cdr fs)))
-                        (l4-collect-all-index-lists (cdr (car fs)))))
+    (l3-fs-p fs1)
+    (l3-regular-file-entry-p (cdr (assoc-equal name fs2)))
+    (consp (assoc-equal name fs2))
+    (l3-fs-p fs2)
+    (not (member-intersectp-equal (l4-collect-all-index-lists fs1)
+                                  (l4-collect-all-index-lists fs2))))
+   (not-intersectp-list (cadr (assoc-equal name fs2))
+                        (l4-collect-all-index-lists fs1)))
   :hints
   (("Goal"
     :use (:instance intersectp-member-when-not-member-intersectp
-                    (lst1 (l4-collect-all-index-lists (cdr (car fs))))
-                    (lst2 (l4-collect-all-index-lists (cdr fs)))
-                    (x (cadr (assoc-equal name (cdr fs))))))))
+                    (lst1 (l4-collect-all-index-lists fs1))
+                    (lst2 (l4-collect-all-index-lists fs2))
+                    (x (cadr (assoc-equal name fs2)))))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-11
@@ -717,7 +713,7 @@
         (l3-fs-p fs))
    (not-intersectp-list
     l
-    (l4-collect-all-index-lists (delete-assoc-equal name (cdr fs))))))
+    (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-17
@@ -726,12 +722,12 @@
         (l3-fs-p fs))
    (not (intersectp-equal
          l
-         (l4-list-all-indices (delete-assoc-equal name (cdr fs))))))
+         (l4-list-all-indices (delete-assoc-equal name fs)))))
   :instructions
   (:promote
    (:dive 1 2)
    (:=
-    (flatten (l4-collect-all-index-lists (delete-assoc-equal name (cdr fs)))))
+    (flatten (l4-collect-all-index-lists (delete-assoc-equal name fs))))
    :up (:rewrite not-intersectp-list-correctness-1)
    :top :bash))
 
@@ -774,8 +770,7 @@
                  (l4-wrchs hns fs disk alv start text)))))
   :hints
   (("Goal"
-    :in-theory (disable l4-wrchs-returns-fs
-                        l4-list-all-indices-correctness-1
+    :in-theory (disable l4-list-all-indices-correctness-1
                         indices-marked-p-correctness-1)
     :use
     ((:instance
@@ -787,8 +782,7 @@
       (alv (mv-nth 2
                    (l4-wrchs hns fs disk alv start text))))
      (:instance l4-list-all-indices-correctness-1
-                (fs (mv-nth 0 (l4-wrchs hns fs disk alv start text))))
-     l4-wrchs-returns-fs))))
+                (fs (mv-nth 0 (l4-wrchs hns fs disk alv start text))))))))
 
 (skip-proofs
  (defthm
@@ -818,14 +812,4 @@
            (mv-let (new-fs new-disk new-alv)
              (l4-wrchs hns fs disk alv start text)
              (declare (ignore new-disk))
-             (l4-stricter-fs-p new-fs new-alv)))
-  :hints (("Subgoal 5" :in-theory (disable l4-wrchs-returns-fs)
-           :use l4-wrchs-returns-fs)
-          ("Subgoal 4" :in-theory (disable l4-wrchs-returns-fs)
-           :use l4-wrchs-returns-fs)
-          ("Subgoal 3" :in-theory (disable l4-wrchs-returns-fs)
-           :use l4-wrchs-returns-fs)
-          ("Subgoal 2" :in-theory (disable l4-wrchs-returns-fs)
-           :use l4-wrchs-returns-fs)
-          ("Goal''" :in-theory (disable l4-wrchs-returns-fs)
-           :use l4-wrchs-returns-fs)))
+             (l4-stricter-fs-p new-fs new-alv))))
