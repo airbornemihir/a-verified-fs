@@ -720,16 +720,24 @@
   (implies
    (and (not-intersectp-list l (l4-collect-all-index-lists fs))
         (l3-fs-p fs))
-   (not (intersectp-equal
-         l
-         (l4-list-all-indices (delete-assoc-equal name fs)))))
-  :instructions
-  (:promote
-   (:dive 1 2)
-   (:=
-    (flatten (l4-collect-all-index-lists (delete-assoc-equal name fs))))
-   :up (:rewrite not-intersectp-list-correctness-1)
-   :top :bash))
+   (not
+    (intersectp-equal
+     l
+     (flatten (l4-collect-all-index-lists (delete-assoc-equal name fs))))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies (and (not-intersectp-list l (l4-collect-all-index-lists fs))
+                  (l3-fs-p fs))
+             (not (intersectp-equal
+                   l
+                   (l4-list-all-indices (delete-assoc-equal name fs)))))))
+  :hints
+  (("Goal" :in-theory (disable not-intersectp-list-correctness-1)
+    :use
+    (:instance
+     not-intersectp-list-correctness-1 (x l)
+     (l (l4-collect-all-index-lists (delete-assoc-equal name fs)))))))
 
 (skip-proofs
  (defthm l4-wrchs-returns-stricter-fs-lemma-18
