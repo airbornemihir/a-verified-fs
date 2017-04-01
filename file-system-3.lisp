@@ -230,7 +230,10 @@
 (defthm l3-regular-file-entry-p-correctness-3
   (implies (l3-regular-file-entry-p entry)
            (not (l3-fs-p entry)))
-  :hints (("Goal" :in-theory (enable l3-regular-file-entry-p)) ))
+  :hints (("Goal" :in-theory (enable l3-regular-file-entry-p)) )
+  :rule-classes (:rewrite (:rewrite :corollary
+                                    (implies (l3-fs-p entry)
+                                             (not (l3-regular-file-entry-p entry))))))
 
 (defthm alistp-l3-fs-p
   (implies (l3-fs-p fs)

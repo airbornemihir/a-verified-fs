@@ -144,7 +144,7 @@
          (or (intersectp-equal x z)
              (intersectp-equal y z))))
 
-(defthmd intersectp-is-commutative
+(defthm intersectp-is-commutative
   (equal (intersectp-equal x y)
          (intersectp-equal y x)))
 

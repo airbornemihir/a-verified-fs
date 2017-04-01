@@ -46,9 +46,7 @@
                 (member-equal x z)
                 (member-equal y z)
                 (not (equal y x)))
-           (not (intersectp-equal x y)))
-  :hints (("Subgoal *1/2''" :use (:instance intersectp-is-commutative
-                                            (y (car z))))))
+           (not (intersectp-equal x y))))
 
 (defthm flatten-subset-no-duplicatesp-lemma-3
   (implies (and (member-equal z y)
@@ -69,9 +67,13 @@
       (and (not-intersectp-list (car x) (cdr x))
            (disjoint-list-listp (cdr x)))))
 
+(defun no-duplicates-listp (x)
+  (or (atom x)
+      (and (no-duplicatesp (car x)) (no-duplicates-listp (cdr x)))))
+
 (defthm flatten-disjoint-lists
-  (implies (no-duplicatesp (flatten (double-rewrite l)))
-           (disjoint-list-listp l)))
+  (equal (no-duplicatesp (flatten (double-rewrite l)))
+         (and (disjoint-list-listp l) (no-duplicates-listp l))))
 
 ;; This theorem won't go through because both
 ;; (disjoint-list-listp '((1 2) (3 4))) and
@@ -127,7 +129,7 @@
   (("Subgoal *1/1''" :use (:instance intersectp-is-commutative (x (car x))
                                      (y (car y))))))
 
-(defthmd member-intersectp-is-commutative
+(defthm member-intersectp-is-commutative
   (equal (member-intersectp-equal x y)
          (member-intersectp-equal y x)))
 
@@ -135,10 +137,7 @@
   another-lemma-about-member-intersectp
   (implies (or (member-intersectp-equal x z)
                (member-intersectp-equal y z))
-           (member-intersectp-equal z (binary-append x y)))
-  :hints (("Goal" :use ((:instance member-intersectp-is-commutative (y z))
-                        (:instance member-intersectp-is-commutative
-                                   (x z))))))
+           (member-intersectp-equal z (binary-append x y))))
 
 (defthm not-intersectp-list-of-append-2
   (equal (not-intersectp-list (binary-append x y) l)
