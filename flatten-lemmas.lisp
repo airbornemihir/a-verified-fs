@@ -22,7 +22,7 @@
                 (member-equal y l))
            (not (intersectp-equal x y))))
 
-(defthm not-intersectp-list-of-append
+(defthm not-intersectp-list-of-append-1
   (equal (not-intersectp-list x (binary-append l1 l2))
          (and (not-intersectp-list x l1)
               (not-intersectp-list x l2))))
@@ -139,3 +139,8 @@
   :hints (("Goal" :use ((:instance member-intersectp-is-commutative (y z))
                         (:instance member-intersectp-is-commutative
                                    (x z))))))
+
+(defthm not-intersectp-list-of-append-2
+  (equal (not-intersectp-list (binary-append x y) l)
+         (and (not-intersectp-list x l)
+              (not-intersectp-list y l))))

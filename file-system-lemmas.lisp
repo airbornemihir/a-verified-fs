@@ -134,10 +134,15 @@
               (no-duplicatesp y)
               (not (intersectp-equal x y)))))
 
-(defthm intersectp-of-append
+(defthm intersectp-of-append-1
   (equal (intersectp-equal z (binary-append x y))
          (or (intersectp-equal z x)
              (intersectp-equal z y))))
+
+(defthm intersectp-of-append-2
+  (equal (intersectp-equal (binary-append x y) z)
+         (or (intersectp-equal x z)
+             (intersectp-equal y z))))
 
 (defthmd intersectp-is-commutative
   (equal (intersectp-equal x y)

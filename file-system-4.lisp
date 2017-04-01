@@ -792,23 +792,148 @@
      (:instance l4-list-all-indices-correctness-1
                 (fs (mv-nth 0 (l4-wrchs hns fs disk alv start text))))))))
 
+(defthm
+ l4-wrchs-returns-stricter-fs-lemma-20
+ (implies
+  (and (l3-fs-p fs)
+       (not (intersectp-equal l (l4-list-all-indices fs))))
+  (not
+      (intersectp-equal l
+                        (l4-list-all-indices (delete-assoc-equal name fs))))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-21
+  (implies
+   (and (l3-fs-p fs)
+        (no-duplicatesp-equal (l4-list-all-indices fs)))
+   (no-duplicatesp-equal (l4-list-all-indices (delete-assoc-equal name fs)))))
+
+(defthm if-directory-then-not-file (implies (l3-fs-p fs) (not (l3-regular-file-entry-p fs))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-22
+  (implies (and (natp n)
+                (indices-marked-p index-list alv)
+                (boolean-listp alv)
+                (nat-listp index-list))
+           (not (intersectp-equal (find-n-free-blocks alv n)
+                                  index-list)))
+  :hints (("Subgoal *1/1''"
+           :use (:instance intersectp-is-commutative (x index-list)
+                           (y (find-n-free-blocks alv n))))
+          ("Subgoal *1/4''" :use ((:instance intersectp-is-commutative
+                                             (x (find-n-free-blocks alv n))
+                                             (y index-list))
+                                  (:instance intersectp-is-commutative
+                                             (x (find-n-free-blocks alv n))
+                                             (y (cdr index-list)))))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-23
+  (implies (and (nat-listp index-list1)
+                (nat-listp index-list2)
+                (indices-marked-p index-list1 alv)
+                (boolean-listp alv)
+                (not (intersectp-equal index-list1 index-list2)))
+           (indices-marked-p index-list1
+                             (set-indices-in-alv alv index-list2 nil))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-24
+  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+                (l3-fs-p fs)
+                (not (intersectp-equal (l4-list-all-indices fs)
+                                       l)))
+           (not (intersectp-equal l (cadr (assoc-equal name fs)))))
+   :hints (("Goal" :in-theory (enable intersectp-is-commutative))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-25
+  (implies
+   (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (l3-fs-p fs)
+        (no-duplicatesp-equal (l4-list-all-indices fs)))
+   (not (intersectp-equal (l4-list-all-indices (delete-assoc-equal name fs))
+                          (cadr (assoc-equal name fs)))))
+  :hints (("Goal" :in-theory (enable intersectp-is-commutative))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-26
+  (implies (and (character-listp cl)
+                (boolean-listp alv)
+                (<= (len (make-blocks cl))
+                    (count-free-blocks alv)))
+           (l3-regular-file-entry-p
+            (cons (find-n-free-blocks alv (len (make-blocks cl)))
+                  (len cl))))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
+
+(verify(IMPLIES
+ (AND
+  (CONSP HNS)
+  (CONSP FS)
+  (CONSP (ASSOC-EQUAL NAME FS))
+  (NOT (L3-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL NAME FS))))
+  (L3-FS-P FS)
+  (NO-DUPLICATESP-EQUAL (L4-LIST-ALL-INDICES FS))
+  )
+ (NOT (INTERSECTP-EQUAL
+           (L4-LIST-ALL-INDICES (CDR (ASSOC-EQUAL NAME FS)))
+           (L4-LIST-ALL-INDICES (DELETE-ASSOC-EQUAL NAME FS))))))
+
 (skip-proofs
  (defthm
-   L4-WRCHS-RETURNS-STRICTER-FS-LEMMA-20
-   (IMPLIES
-     (AND (SYMBOL-LISTP HNS)
-          (L3-FS-P FS)
-          (BOOLEAN-LISTP ALV)
-          (NO-DUPLICATESP-EQUAL (L4-LIST-ALL-INDICES FS))
-          (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
-                            ALV)
-          (INTEGERP START)
-          (<= 0 START)
-          (STRINGP TEXT)
-          (BLOCK-LISTP DISK)
-          (EQUAL (LEN ALV) (LEN DISK)))
-     (NO-DUPLICATESP-EQUAL
-          (L4-LIST-ALL-INDICES (mv-nth 0 (L4-WRCHS HNS FS DISK ALV START TEXT)))))))
+  L4-WRCHS-RETURNS-STRICTER-FS-LEMMA-27
+  (IMPLIES
+   (AND
+    (NO-DUPLICATESP-EQUAL
+     (L4-LIST-ALL-INDICES (MV-NTH 0
+                                  (L4-WRCHS hns
+                                            fs
+                                            DISK ALV START TEXT))))
+    (SYMBOL-LISTP hns)
+    (L3-FS-P FS)
+    (BOOLEAN-LISTP ALV)
+    (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
+                      ALV)
+    (INTEGERP START)
+    (<= 0 START)
+    (STRINGP TEXT)
+    (BLOCK-LISTP DISK)
+    (EQUAL (LEN ALV) (LEN DISK))
+    (nat-listp l)
+    (INDICES-MARKED-P l
+                      ALV)
+    (not (INTERSECTP-equal
+         (l4-list-all-indices fs)
+         l)))
+   (not (INTERSECTP-equal
+         (l4-list-all-indices (MV-NTH 0
+                                      (L4-WRCHS hns
+                                                fs
+                                                DISK ALV START TEXT)))
+         l)))
+   :hints (("Subgoal *1/7" :in-theory (enable l3-regular-file-entry-p)))))
+
+(defthm
+  L4-WRCHS-RETURNS-STRICTER-FS-LEMMA-28
+  (IMPLIES
+   (AND (SYMBOL-LISTP HNS)
+        (L3-FS-P FS)
+        (BOOLEAN-LISTP ALV)
+        (NO-DUPLICATESP-EQUAL (L4-LIST-ALL-INDICES FS))
+        (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
+                          ALV)
+        (INTEGERP START)
+        (<= 0 START)
+        (STRINGP TEXT)
+        (BLOCK-LISTP DISK)
+        (EQUAL (LEN ALV) (LEN DISK)))
+   (NO-DUPLICATESP-EQUAL
+    (L4-LIST-ALL-INDICES (mv-nth 0 (L4-WRCHS HNS FS DISK ALV START
+                                             TEXT)))))
+  :hints (("Subgoal *1/6" :in-theory (enable l3-regular-file-entry-p))
+          ("Subgoal *1/4" :in-theory (enable intersectp-is-commutative))
+          ("Subgoal *1/5" :in-theory (enable intersectp-is-commutative))))
 
 (defthm l4-wrchs-returns-stricter-fs
   (implies (and (symbol-listp hns)
@@ -821,3 +946,33 @@
              (l4-wrchs hns fs disk alv start text)
              (declare (ignore new-disk))
              (l4-stricter-fs-p new-fs new-alv))))
+
+(defun l4-to-l3-fs (fs disk)
+  (mv fs disk))
+
+(defthmd l4-to-l3-fs-correctness-1
+  (implies (and (l4-fs-p fs) (block-listp disk))
+           (mv-let (new-fs new-disk) (l4-to-l3-fs fs disk)
+             (and (l3-fs-p new-fs) (block-listp new-disk)))))
+
+;; We can't prove that equality keeps holding under this transformation. Thus,
+;; we will need to prove something stronger - any read, anywhere, after a create,
+;; write or delete operation, preserves the properties we want.
+
+;; We will probably need a new induction scheme.
+(defthm l4-wrchs-correctness-1
+  (implies (and (L4-STRICTER-FS-P FS ALV)
+                (equal (len disk) (len alv))
+                (>= (count-free-blocks alv) (len (make-blocks text))))
+           (equal (mv-let (new-fs2 new-disk2) (mv-let (new-fs4 new-disk4) (l4-to-l3-fs fs
+                                                                                       disk) (l3-wrchs hns new-fs4 new-disk4 start text)) (l3-stat hns1 new-fs2 new-disk2))
+                  (mv-let (new-fs3 new-disk3) (mv-let (new-fs5 new-disk5 new-alv5)
+                                                (l4-wrchs hns fs disk alv start text)
+                                                (declare (ignore new-alv5))
+                                                (l4-to-l3-fs new-fs5
+                                                             new-disk5))
+                    (l3-stat hns1 new-fs3 new-disk3))))
+  :hints ( ("Goal''" :induct (and (L4-WRCHS HNS FS DISK ALV START TEXT)
+                                (L3-WRCHS HNS FS DISK START TEXT)
+                                (L3-STAT HNS1 fs disk)))))
+
