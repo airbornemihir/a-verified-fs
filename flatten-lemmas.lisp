@@ -72,7 +72,7 @@
       (and (no-duplicatesp (car x)) (no-duplicates-listp (cdr x)))))
 
 (defthm flatten-disjoint-lists
-  (equal (no-duplicatesp (flatten (double-rewrite l)))
+  (equal (no-duplicatesp-equal (flatten l))
          (and (disjoint-list-listp l) (no-duplicates-listp l))))
 
 ;; This theorem won't go through because both

@@ -459,7 +459,7 @@
        (boolean-listp alv)
        (let ( (all-indices (l4-list-all-indices fs)))
          (and (no-duplicatesp all-indices)
-              (bounded-nat-listp all-indices (len alv))
+              (nat-listp all-indices)
               (indices-marked-p all-indices alv)))))
 
 (defthm l4-wrchs-returns-fs
@@ -541,6 +541,18 @@
            (equal (flatten (l4-collect-all-index-lists fs))
                   (l4-list-all-indices fs))))
 
+(defthm
+  l4-collect-all-index-lists-correctness-3
+  (implies
+   (l3-fs-p fs)
+   (equal (no-duplicatesp-equal (l4-list-all-indices fs))
+          (and (disjoint-list-listp (l4-collect-all-index-lists fs))
+               (no-duplicates-listp (l4-collect-all-index-lists fs)))))
+  :hints
+  (("goal" :in-theory (disable flatten-disjoint-lists)
+    :use ((:instance flatten-disjoint-lists
+                     (l (l4-collect-all-index-lists fs)))))))
+
 ;; this should be where the encapsulate ends
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-4
@@ -557,6 +569,65 @@
                 (no-duplicatesp-equal (l4-list-all-indices fs)))
            (no-duplicatesp-equal (l4-list-all-indices (cdr (assoc-equal name fs))))))
 
+(skip-proofs
+ (defthm l4-wrchs-returns-stricter-fs-lemma-6
+   (IMPLIES
+    (AND (SYMBOL-LISTP HNS)
+         (L3-FS-P FS)
+         (BOOLEAN-LISTP ALV)
+         (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+         (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+         (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
+                           ALV)
+         (INTEGERP START)
+         (<= 0 START)
+         (STRINGP TEXT)
+         (BLOCK-LISTP DISK)
+         (EQUAL (LEN ALV) (LEN DISK)))
+    (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS
+                          (MV-NTH 0
+                                  (L4-WRCHS HNS FS DISK ALV START TEXT)))))))
+
+(skip-proofs
+ (defthm l4-wrchs-returns-stricter-fs-lemma-7
+   (IMPLIES
+    (AND (SYMBOL-LISTP HNS)
+         (L3-FS-P FS)
+         (BOOLEAN-LISTP ALV)
+         (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+         (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+         (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
+                           ALV)
+         (INTEGERP START)
+         (<= 0 START)
+         (STRINGP TEXT)
+         (BLOCK-LISTP DISK)
+         (EQUAL (LEN ALV) (LEN DISK)))
+    (INDICES-MARKED-P
+     (L4-LIST-ALL-INDICES (MV-NTH 0
+                                  (L4-WRCHS HNS FS DISK ALV START TEXT)))
+     (MV-NTH 2
+             (L4-WRCHS HNS FS DISK ALV START TEXT))))))
+
+(skip-proofs
+ (defthm l4-wrchs-returns-stricter-fs-lemma-8
+   (IMPLIES
+    (AND (SYMBOL-LISTP HNS)
+         (L3-FS-P FS)
+         (BOOLEAN-LISTP ALV)
+         (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+         (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+         (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
+                           ALV)
+         (INTEGERP START)
+         (<= 0 START)
+         (STRINGP TEXT)
+         (BLOCK-LISTP DISK)
+         (EQUAL (LEN ALV) (LEN DISK)))
+    (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS
+                          (MV-NTH 0
+                                  (L4-WRCHS HNS FS DISK ALV START TEXT)))))))
+
 (defthm l4-wrchs-returns-stricter-fs
   (implies (and (symbol-listp hns)
                 (l4-stricter-fs-p fs alv)
@@ -567,7 +638,8 @@
            (mv-let (new-fs new-disk new-alv)
              (l4-wrchs hns fs disk alv start text)
              (declare (ignore new-disk))
-             (l4-stricter-fs-p new-fs new-alv))))
+             (l4-stricter-fs-p new-fs new-alv)))
+  :hints (("Subgoal *1/6.3'" :in-theory (enable L3-REGULAR-FILE-ENTRY-P)) ))
 
 (defun l4-to-l3-fs (fs disk)
   (mv fs disk))
