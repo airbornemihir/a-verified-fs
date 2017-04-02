@@ -63,17 +63,20 @@
            (no-duplicatesp-equal (flatten x))))
 
 (defun disjoint-list-listp (x)
-  (or (atom x)
-      (and (not-intersectp-list (car x) (cdr x))
-           (disjoint-list-listp (cdr x)))))
+  (if (atom x)
+      (equal x nil)
+    (and (not-intersectp-list (car x) (cdr x))
+         (disjoint-list-listp (cdr x)))))
 
 (defun no-duplicates-listp (x)
-  (or (atom x)
-      (and (no-duplicatesp (car x)) (no-duplicates-listp (cdr x)))))
+  (if (atom x)
+      (equal x nil)
+    (and (no-duplicatesp (car x)) (no-duplicates-listp (cdr x)))))
 
 (defthm flatten-disjoint-lists
-  (equal (no-duplicatesp-equal (flatten l))
-         (and (disjoint-list-listp l) (no-duplicates-listp l))))
+  (implies (true-listp l)
+           (equal (no-duplicatesp-equal (flatten l))
+                  (and (disjoint-list-listp l) (no-duplicates-listp l)))))
 
 ;; This theorem won't go through because both
 ;; (disjoint-list-listp '((1 2) (3 4))) and
@@ -86,9 +89,10 @@
            (member-intersectp-equal (cdr x) y))))
 
 (defthm when-append-is-disjoint-list-listp
-  (equal (disjoint-list-listp (binary-append x y))
-         (and (disjoint-list-listp x)
-              (disjoint-list-listp y) (not (member-intersectp-equal x y)))))
+  (implies (true-listp x)
+           (equal (disjoint-list-listp (binary-append x y))
+                  (and (disjoint-list-listp x)
+                       (disjoint-list-listp y) (not (member-intersectp-equal x y))))))
 
 (defthm member-intersectp-with-subset
   (implies (and (member-intersectp-equal z x)
@@ -143,3 +147,8 @@
   (equal (not-intersectp-list (binary-append x y) l)
          (and (not-intersectp-list x l)
               (not-intersectp-list y l))))
+
+(defthm no-duplicates-listp-of-append
+  (implies (true-listp x)
+           (equal (no-duplicates-listp (binary-append x y))
+                  (and (no-duplicates-listp x) (no-duplicates-listp y)))))

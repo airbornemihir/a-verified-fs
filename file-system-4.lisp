@@ -436,7 +436,7 @@
                     new-alv)))
             ))))))
 
-(defun l4-list-all-indices (fs)
+(defund l4-list-all-indices (fs)
   (declare (xargs :guard (l4-fs-p fs)))
   (if (atom fs)
       nil
@@ -451,7 +451,8 @@
 
 (defthm l4-list-all-indices-correctness-1
   (implies (l4-fs-p fs)
-   (nat-listp (l4-list-all-indices fs))))
+           (nat-listp (l4-list-all-indices fs)))
+  :hints (("Goal" :in-theory (enable l4-list-all-indices)) ))
 
 (defun l4-stricter-fs-p (fs alv)
   (declare (xargs :guard t :guard-debug t))
@@ -484,39 +485,6 @@
                 (block-listp disk))
            (boolean-listp (mv-nth 2 (l4-wrchs hns fs disk alv start text)))))
 
-(defthm l4-wrchs-returns-stricter-fs-lemma-1
-  (implies (and (consp (assoc-equal name fs))
-                (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
-                (l3-fs-p fs)
-                (boolean-listp alv)
-                (indices-marked-p (l4-list-all-indices fs)
-                                  alv))
-           (indices-marked-p (cadr (assoc-equal name fs))
-                             alv)))
-
-(defthm
-  l4-wrchs-returns-stricter-fs-lemma-2
-  (implies
-   (and (l4-fs-p fs)
-        (boolean-listp alv)
-        (indices-marked-p (l4-list-all-indices fs)
-                          alv))
-   (indices-marked-p (l4-list-all-indices (delete-assoc-equal name fs))
-                     alv)))
-
-(defthm
-  l4-wrchs-returns-stricter-fs-lemma-3
-  (implies (and (consp (assoc-equal name fs))
-                (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
-                (l3-fs-p fs)
-                (boolean-listp alv)
-                (indices-marked-p (l4-list-all-indices fs)
-                                  alv))
-           (indices-marked-p (l4-list-all-indices (cdr (assoc-equal name fs)))
-                             alv)))
-
-;; this should be where the encapsulate begins
-
 (defun l4-collect-all-index-lists (fs)
   (declare (xargs :guard (l4-fs-p fs)))
   (if (atom fs)
@@ -535,11 +503,13 @@
 
 (include-book "flatten-lemmas")
 
-;; This theorem shows the equivalence between two ways of listing indices
+  ;; This theorem shows the equivalence between two ways of listing indices
+
 (defthm l4-collect-all-index-lists-correctness-2
   (implies (l3-fs-p fs)
            (equal (flatten (l4-collect-all-index-lists fs))
-                  (l4-list-all-indices fs))))
+                  (l4-list-all-indices fs)))
+  :hints (("Goal" :in-theory (enable l4-list-all-indices)) ))
 
 (defthm
   l4-collect-all-index-lists-correctness-3
@@ -553,80 +523,309 @@
     :use ((:instance flatten-disjoint-lists
                      (l (l4-collect-all-index-lists fs)))))))
 
+(defun indices-marked-listp (l alv)
+  (if (atom l)
+      (equal l nil)
+    (and (indices-marked-p (car l) alv) (indices-marked-listp (cdr l) alv))))
+
+(defthm indices-marked-p-of-flatten
+  (implies (true-listp l)
+           (equal (indices-marked-p (flatten l) alv)
+                  (indices-marked-listp l alv))))
+
+(defthm l4-indices-marked-p-of-list-all-indices
+  (implies (l3-fs-p fs)
+           (equal (indices-marked-p (l4-list-all-indices fs)
+                                    alv)
+                  (indices-marked-listp (l4-collect-all-index-lists fs)
+                                        alv)))
+  :hints (("goal" :in-theory (disable indices-marked-p-of-flatten)
+           :use (:instance indices-marked-p-of-flatten
+                           (l (l4-collect-all-index-lists fs))))))
+
+(defthm indices-marked-listp-of-binary-append
+  (implies (true-listp l1)
+   (equal (indices-marked-listp (binary-append l1 l2) alv)
+          (and (indices-marked-listp l1 alv)
+               (indices-marked-listp l2 alv)))))
+
 ;; this should be where the encapsulate ends
 
+(defthm l4-wrchs-returns-stricter-fs-lemma-1
+  (implies
+   (and
+    (consp (assoc-equal name fs))
+    (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+    (l3-fs-p fs)
+    (disjoint-list-listp (l4-collect-all-index-lists fs)))
+   (disjoint-list-listp
+    (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-2
+  (implies
+   (and (consp (assoc-equal name fs))
+        (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+        (l3-fs-p fs)
+        (indices-marked-listp (l4-collect-all-index-lists fs)
+                              alv))
+   (indices-marked-listp
+    (l4-collect-all-index-lists (cdr (assoc-equal name fs)))
+    alv)))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-3
+  (implies
+   (and
+    (consp (assoc-equal name fs))
+    (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+    (l3-fs-p fs)
+    (no-duplicates-listp (l4-collect-all-index-lists fs)))
+   (no-duplicates-listp
+    (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
+
 (defthm l4-wrchs-returns-stricter-fs-lemma-4
-  (implies (and (consp (assoc-equal name fs))
-                (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+  (implies (member-intersectp-equal l b)
+           (member-intersectp-equal l (cons a b))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-5
+  (implies
+   (and (l3-fs-p fs)
+        (not (member-intersectp-equal (l4-collect-all-index-lists fs)
+                                      l)))
+   (not (member-intersectp-equal
+         l
+         (l4-collect-all-index-lists (delete-assoc-equal name fs))))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-6
+  (implies (and (l3-fs-p fs)
+                (not-intersectp-list l (l4-collect-all-index-lists fs)))
+           (not-intersectp-list
+            l
+            (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-7
+  (implies
+   (and (l3-fs-p fs)
+        (disjoint-list-listp (l4-collect-all-index-lists fs)))
+   (disjoint-list-listp
+    (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-8
+  (implies
+   (and (l3-fs-p fs)
+        (no-duplicates-listp (l4-collect-all-index-lists fs)))
+   (no-duplicates-listp
+    (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-9
+  (implies (and (l3-fs-p fs)
+                (boolean-listp alv)
+                (indices-marked-listp (l4-collect-all-index-lists fs)
+                                      alv))
+           (indices-marked-listp
+            (l4-collect-all-index-lists (delete-assoc-equal name fs))
+            alv)))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-10
+  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (l3-fs-p fs)
-                (no-duplicatesp-equal (l4-list-all-indices fs)))
-           (no-duplicatesp-equal (car (cdr (assoc-equal name fs))))))
+                (boolean-listp alv)
+                (indices-marked-listp (l4-collect-all-index-lists fs)
+                                      alv))
+           (indices-marked-p (cadr (assoc-equal name fs))
+                             alv)))
 
-(defthm l4-wrchs-returns-stricter-fs-lemma-5
-  (implies (and (consp (assoc-equal name fs))
-                (l3-fs-p (cdr (assoc-equal name fs)))
+(defthm l4-wrchs-returns-stricter-fs-lemma-11
+  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (l3-fs-p fs)
-                (no-duplicatesp-equal (l4-list-all-indices fs)))
-           (no-duplicatesp-equal (l4-list-all-indices (cdr (assoc-equal name fs))))))
+                (no-duplicates-listp (l4-collect-all-index-lists fs)))
+           (no-duplicatesp-equal (cadr (assoc-equal name fs)))))
 
-(skip-proofs
- (defthm l4-wrchs-returns-stricter-fs-lemma-6
-   (IMPLIES
-    (AND (SYMBOL-LISTP HNS)
-         (L3-FS-P FS)
-         (BOOLEAN-LISTP ALV)
-         (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-         (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-         (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
-                           ALV)
-         (INTEGERP START)
-         (<= 0 START)
-         (STRINGP TEXT)
-         (BLOCK-LISTP DISK)
-         (EQUAL (LEN ALV) (LEN DISK)))
-    (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS
-                          (MV-NTH 0
-                                  (L4-WRCHS HNS FS DISK ALV START TEXT)))))))
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-12
+  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+                (l3-fs-p fs)
+                (not-intersectp-list l (l4-collect-all-index-lists fs)))
+           (not (intersectp-equal l (cadr (assoc-equal name fs))))))
 
-(skip-proofs
- (defthm l4-wrchs-returns-stricter-fs-lemma-7
-   (IMPLIES
-    (AND (SYMBOL-LISTP HNS)
-         (L3-FS-P FS)
-         (BOOLEAN-LISTP ALV)
-         (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-         (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-         (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
-                           ALV)
-         (INTEGERP START)
-         (<= 0 START)
-         (STRINGP TEXT)
-         (BLOCK-LISTP DISK)
-         (EQUAL (LEN ALV) (LEN DISK)))
-    (INDICES-MARKED-P
-     (L4-LIST-ALL-INDICES (MV-NTH 0
-                                  (L4-WRCHS HNS FS DISK ALV START TEXT)))
-     (MV-NTH 2
-             (L4-WRCHS HNS FS DISK ALV START TEXT))))))
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-13
+  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+                (l3-fs-p fs)
+                (not (member-intersectp-equal (l4-collect-all-index-lists fs)
+                                              l)))
+           (not-intersectp-list (cadr (assoc-equal name fs))
+                                l)))
 
-(skip-proofs
- (defthm l4-wrchs-returns-stricter-fs-lemma-8
-   (IMPLIES
-    (AND (SYMBOL-LISTP HNS)
-         (L3-FS-P FS)
-         (BOOLEAN-LISTP ALV)
-         (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-         (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-         (INDICES-MARKED-P (L4-LIST-ALL-INDICES FS)
-                           ALV)
-         (INTEGERP START)
-         (<= 0 START)
-         (STRINGP TEXT)
-         (BLOCK-LISTP DISK)
-         (EQUAL (LEN ALV) (LEN DISK)))
-    (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS
-                          (MV-NTH 0
-                                  (L4-WRCHS HNS FS DISK ALV START TEXT)))))))
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-14
+  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+                (l3-fs-p fs)
+                (disjoint-list-listp (l4-collect-all-index-lists fs)))
+           (not-intersectp-list
+            (cadr (assoc-equal name fs))
+            (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-15
+  (implies (and (boolean-listp alv)
+                (indices-marked-p l alv)
+                (natp n))
+           (not (intersectp-equal l (find-n-free-blocks alv n)))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-16
+  (implies (and (natp n)
+                (l3-fs-p fs)
+                (boolean-listp alv)
+                (indices-marked-listp (l4-collect-all-index-lists fs)
+                                      alv))
+           (not-intersectp-list (find-n-free-blocks alv n)
+                                (l4-collect-all-index-lists fs))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-17
+  (implies (and (boolean-listp alv)
+                (nat-listp l)
+                (bounded-nat-listp index-list (len alv))
+                (indices-marked-p index-list alv)
+                (not (intersectp-equal l index-list)))
+           (indices-marked-p index-list
+                             (set-indices-in-alv alv l nil))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-18
+  (implies (and (l3-fs-p fs)
+                (nat-listp l)
+                (boolean-listp alv)
+                (indices-marked-listp (l4-collect-all-index-lists fs)
+                                      alv)
+                (not-intersectp-list l (l4-collect-all-index-lists fs)))
+           (indices-marked-listp (l4-collect-all-index-lists fs)
+                                 (set-indices-in-alv alv l nil))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-19
+  (implies (and (l3-fs-p fs)
+                (nat-listp l)
+                (boolean-listp alv)
+                (indices-marked-listp (l4-collect-all-index-lists fs)
+                                      alv))
+           (indices-marked-listp (l4-collect-all-index-lists fs)
+                                 (set-indices-in-alv alv l t))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-20
+  (implies
+   (and (consp (assoc-equal name fs))
+        (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+        (l3-fs-p fs)
+        (not (member-intersectp-equal l (l4-collect-all-index-lists fs))))
+   (not (member-intersectp-equal
+         l
+         (l4-collect-all-index-lists (cdr (assoc-equal name fs)))))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-21
+  (implies (and (natp n)
+                (boolean-listp alv)
+                (indices-marked-listp l alv))
+           (not-intersectp-list (find-n-free-blocks alv n)
+                                l)))
+
+;; (defthm l4-wrchs-returns-stricter-fs-lemma-22
+;;   (implies (and (boolean-listp alv)
+;;                 (indices-marked-p l alv)
+;;                 (not (intersectp-equal l index-list))
+;;                 (nat-listp index-list)
+;;                 (bounded-nat-listp l (len alv)))
+;;            (indices-marked-p l
+;;                              (set-indices-in-alv alv index-list nil))))
+
+(defun bounded-nat-list-listp (x b)
+  (if (atom x)
+      (equal x nil)
+    (and (bounded-nat-listp (car x) b) (bounded-nat-list-listp (cdr x) b))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-22
+  (implies (and (boolean-listp alv)
+                (nat-listp index-list)
+                (bounded-nat-list-listp l (len alv))
+                (indices-marked-listp l alv)
+                (not-intersectp-list index-list l))
+           (indices-marked-listp l
+                                 (set-indices-in-alv alv index-list nil))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-23
+  (implies (and (indices-marked-listp (l4-collect-all-index-lists fs)
+                                      alv)
+                (l3-fs-p fs))
+           (bounded-nat-list-listp (l4-collect-all-index-lists fs)
+                                   (len alv))))
+
+(thm (IMPLIES
+     (AND (L3-fs-P fs)
+          (INDICES-MARKED-LISTP
+               (L4-COLLECT-ALL-INDEX-LISTS
+                    (MV-NTH 0
+                            (L4-WRCHS hns
+                                      fs
+                                      DISK ALV START TEXT)))
+               (MV-NTH 2
+                       (L4-WRCHS hns
+                                 fs
+                                 DISK ALV START TEXT)))
+          (DISJOINT-LIST-LISTP
+               (L4-COLLECT-ALL-INDEX-LISTS
+                    (MV-NTH 0
+                            (L4-WRCHS hns
+                                      fs
+                                      DISK ALV START TEXT))))
+          (SYMBOL-LISTP hns)
+          (L3-FS-P FS)
+          (BOOLEAN-LISTP ALV)
+          (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+          (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+          (INDICES-MARKED-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS)
+                                ALV)
+          (INTEGERP START)
+          (<= 0 START)
+          (STRINGP TEXT)
+          (BLOCK-LISTP DISK)
+          (EQUAL (LEN ALV) (LEN DISK))
+          (NOT (MEMBER-INTERSECTP-EQUAL
+                l
+                (L4-COLLECT-ALL-INDEX-LISTS fs)))
+          (indices-marked-listp l alv))
+     (NOT (MEMBER-INTERSECTP-EQUAL
+               l
+               (L4-COLLECT-ALL-INDEX-LISTS
+                    (MV-NTH 0
+                            (L4-WRCHS hns
+                                      fs
+                                      DISK ALV START TEXT)))))))
+
+(thm(IMPLIES
+  (AND (SYMBOL-LISTP HNS)
+       (L3-FS-P FS)
+       (BOOLEAN-LISTP ALV)
+       (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+       (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+       (INDICES-MARKED-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS)
+                             ALV)
+       (INTEGERP START)
+       (<= 0 START)
+       (STRINGP TEXT)
+       (BLOCK-LISTP DISK)
+       (EQUAL (LEN ALV) (LEN DISK)))
+ (and(INDICES-MARKED-LISTP
+  (L4-COLLECT-ALL-INDEX-LISTS (MV-NTH 0
+                                      (L4-WRCHS HNS FS DISK ALV START TEXT)))
+  (MV-NTH 2
+          (L4-WRCHS HNS FS DISK ALV START TEXT)))
+  (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS
+                            (MV-NTH 0
+                                    (L4-WRCHS HNS FS DISK ALV START TEXT))))))
+    :hints (("Goal" :induct t) ("Subgoal *1/6" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))))
 
 (defthm l4-wrchs-returns-stricter-fs
   (implies (and (symbol-listp hns)
@@ -639,7 +838,7 @@
              (l4-wrchs hns fs disk alv start text)
              (declare (ignore new-disk))
              (l4-stricter-fs-p new-fs new-alv)))
-  :hints (("Subgoal *1/6.3'" :in-theory (enable L3-REGULAR-FILE-ENTRY-P)) ))
+  :hints (("Subgoal *1/6" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))))
 
 (defun l4-to-l3-fs (fs disk)
   (mv fs disk))
