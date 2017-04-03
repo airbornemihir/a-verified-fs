@@ -118,8 +118,9 @@
            (boolean-listp (update-nth key val l))))
 
 (defthm nat-listp-of-binary-append
-  (implies (and (nat-listp x) (nat-listp y))
-           (nat-listp (binary-append x y))))
+  (implies (true-listp x)
+           (equal (nat-listp (binary-append x y))
+                  (and (nat-listp x) (nat-listp y)))))
 
 (defthm eqlable-listp-if-nat-listp (implies (nat-listp l) (eqlable-listp l)))
 

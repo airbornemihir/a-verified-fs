@@ -199,7 +199,8 @@
 
 (defthm l3-regular-file-entry-p-correctness-1
   (implies (l3-regular-file-entry-p entry)
-           (and (nat-listp (car entry))
+           (and (true-listp (car entry))
+                (nat-listp (car entry))
                 (natp (cdr entry))
                 (feasible-file-length-p (len (car entry)) (cdr entry))))
   :hints (("Goal" :in-theory (enable l3-regular-file-entry-p)) ))

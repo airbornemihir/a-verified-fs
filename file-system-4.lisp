@@ -756,76 +756,36 @@
                                  (set-indices-in-alv alv index-list nil))))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-23
-  (implies (and (indices-marked-listp (l4-collect-all-index-lists fs)
-                                      alv)
-                (l3-fs-p fs))
-           (bounded-nat-list-listp (l4-collect-all-index-lists fs)
-                                   (len alv))))
+  (implies (and (true-list-listp l)
+                (indices-marked-listp l alv)
+                (nat-listp (flatten l)))
+           (bounded-nat-list-listp l (len alv))))
 
-(thm (IMPLIES
-     (AND (L3-fs-P fs)
-          (INDICES-MARKED-LISTP
-               (L4-COLLECT-ALL-INDEX-LISTS
-                    (MV-NTH 0
-                            (L4-WRCHS hns
-                                      fs
-                                      DISK ALV START TEXT)))
-               (MV-NTH 2
-                       (L4-WRCHS hns
-                                 fs
-                                 DISK ALV START TEXT)))
-          (DISJOINT-LIST-LISTP
-               (L4-COLLECT-ALL-INDEX-LISTS
-                    (MV-NTH 0
-                            (L4-WRCHS hns
-                                      fs
-                                      DISK ALV START TEXT))))
-          (SYMBOL-LISTP hns)
-          (L3-FS-P FS)
-          (BOOLEAN-LISTP ALV)
-          (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-          (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-          (INDICES-MARKED-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS)
-                                ALV)
-          (INTEGERP START)
-          (<= 0 START)
-          (STRINGP TEXT)
-          (BLOCK-LISTP DISK)
-          (EQUAL (LEN ALV) (LEN DISK))
-          (NOT (MEMBER-INTERSECTP-EQUAL
-                l
-                (L4-COLLECT-ALL-INDEX-LISTS fs)))
-          (indices-marked-listp l alv))
-     (NOT (MEMBER-INTERSECTP-EQUAL
-               l
-               (L4-COLLECT-ALL-INDEX-LISTS
-                    (MV-NTH 0
-                            (L4-WRCHS hns
-                                      fs
-                                      DISK ALV START TEXT)))))))
-
-(thm(IMPLIES
-  (AND (SYMBOL-LISTP HNS)
-       (L3-FS-P FS)
-       (BOOLEAN-LISTP ALV)
-       (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-       (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
-       (INDICES-MARKED-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS)
-                             ALV)
-       (INTEGERP START)
-       (<= 0 START)
-       (STRINGP TEXT)
-       (BLOCK-LISTP DISK)
-       (EQUAL (LEN ALV) (LEN DISK)))
- (and(INDICES-MARKED-LISTP
-  (L4-COLLECT-ALL-INDEX-LISTS (MV-NTH 0
-                                      (L4-WRCHS HNS FS DISK ALV START TEXT)))
-  (MV-NTH 2
-          (L4-WRCHS HNS FS DISK ALV START TEXT)))
-  (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS
-                            (MV-NTH 0
-                                    (L4-WRCHS HNS FS DISK ALV START TEXT))))))
-    :hints (("Goal" :induct t) ("Subgoal *1/6" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))))
+(skip-proofs
+ (defthm l4-wrchs-returns-stricter-fs-lemma-24
+   (implies
+    (and (symbol-listp hns)
+         (l3-fs-p fs)
+         (boolean-listp alv)
+         (disjoint-list-listp (l4-collect-all-index-lists fs))
+         (no-duplicates-listp (l4-collect-all-index-lists fs))
+         (indices-marked-listp (l4-collect-all-index-lists fs)
+                               alv)
+         (integerp start)
+         (<= 0 start)
+         (stringp text)
+         (block-listp disk)
+         (equal (len alv) (len disk)))
+    (and
+     (indices-marked-listp
+      (l4-collect-all-index-lists (mv-nth 0
+                                          (l4-wrchs hns fs disk alv start text)))
+      (mv-nth 2
+              (l4-wrchs hns fs disk alv start text)))
+     (disjoint-list-listp (l4-collect-all-index-lists
+                           (mv-nth 0
+                                   (l4-wrchs hns fs disk alv start text))))))
+   :hints (("Goal" :induct t))))
 
 (defthm l4-wrchs-returns-stricter-fs
   (implies (and (symbol-listp hns)
