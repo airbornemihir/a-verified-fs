@@ -812,11 +812,41 @@
 ;; we will need to prove something stronger - any read, anywhere, after a create,
 ;; write or delete operation, preserves the properties we want.
 
+(defun induction-scheme (hns1 hns fs)
+  (if (atom hns1)
+      fs
+    (if (atom (assoc (car hns1) fs))
+        fs
+      (if (atom hns)
+          fs
+        (if (atom (assoc (car hns1) fs))
+            fs
+          (if (not (equal (car hns1) (car fs)))
+              fs
+            (induction-scheme (cdr hns1) (cdr hns) (cdr (assoc (car hns) fs)))))))))
+
+(verify
+ (IMPLIES (AND
+           (L3-FS-P FS)
+           (BOOLEAN-LISTP ALV)
+           (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+           (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS))
+           (INDICES-MARKED-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS)
+                                 ALV)
+           (EQUAL (LEN DISK) (LEN ALV))
+           (<= (LEN (MAKE-BLOCKS TEXT))
+               (COUNT-FREE-BLOCKS ALV)))
+          (EQUAL (MV-NTH 0 (L3-WRCHS HNS FS DISK START TEXT))
+                 (MV-NTH 0
+                         (L4-WRCHS HNS FS DISK ALV START TEXT)))))
+
 ;; We will probably need a new induction scheme.
 (defthm l4-wrchs-correctness-1
   (implies (and (L4-STRICTER-FS-P FS ALV)
                 (equal (len disk) (len alv))
-                (>= (count-free-blocks alv) (len (make-blocks text))))
+                (>= (count-free-blocks alv) (len (make-blocks (binary-append
+                                                               (take start nil)
+                                                               (coerce text 'list))))))
            (equal (mv-let (new-fs2 new-disk2) (mv-let (new-fs4 new-disk4) (l4-to-l3-fs fs
                                                                                        disk) (l3-wrchs hns new-fs4 new-disk4 start text)) (l3-stat hns1 new-fs2 new-disk2))
                   (mv-let (new-fs3 new-disk3) (mv-let (new-fs5 new-disk5 new-alv5)
@@ -825,7 +855,5 @@
                                                 (l4-to-l3-fs new-fs5
                                                              new-disk5))
                     (l3-stat hns1 new-fs3 new-disk3))))
-  :hints ( ("Goal''" :induct (and (L4-WRCHS HNS FS DISK ALV START TEXT)
-                                (L3-WRCHS HNS FS DISK START TEXT)
-                                (L3-STAT HNS1 fs disk)))))
+  :hints ( ("Goal''" :induct (induction-scheme hns1 hns fs))))
 
