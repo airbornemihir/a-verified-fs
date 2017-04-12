@@ -907,57 +907,84 @@
        (l4-collect-all-index-lists (delete-assoc-equal name
                                                        (cdr fs)))))))))
 
-(thm(IMPLIES
-     (AND 
-          (SYMBOL-LISTP hns)
-          (L3-FS-P FS)
-          (BOOLEAN-LISTP ALV)
-         (indices-marked-listp (l4-collect-all-index-lists fs)
-                               alv)
-          (INTEGERP START)
-          (<= 0 START)
-          (STRINGP TEXT)
-          (BLOCK-LISTP DISK)
-          (EQUAL (LEN ALV) (LEN DISK))
-          (not-intersectp-list l (L4-COLLECT-ALL-INDEX-LISTS
-                                  fs))
-          (INDICES-MARKED-P
-           L alv)
-          (nat-listp l))
-     (not-INTERSECTP-list l
-               (L4-COLLECT-ALL-INDEX-LISTS
-                    (MV-NTH 0
-                            (L4-WRCHS hns
-                                      fs
-                                      DISK ALV START TEXT)))))
-    :hints (("Subgoal *1/6.2" :in-theory (enable l3-regular-file-entry-p))))
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-30
+  (implies
+   (and (symbol-listp hns)
+        (l3-fs-p fs)
+        (boolean-listp alv)
+        (indices-marked-listp (l4-collect-all-index-lists fs)
+                              alv)
+        (integerp start)
+        (<= 0 start)
+        (stringp text)
+        (block-listp disk)
+        (equal (len alv) (len disk))
+        (not-intersectp-list l (l4-collect-all-index-lists fs))
+        (indices-marked-p l alv)
+        (nat-listp l))
+   (not-intersectp-list l
+                        (l4-collect-all-index-lists
+                         (mv-nth 0
+                                 (l4-wrchs hns fs disk alv start text)))))
+  :hints (("subgoal *1/6.2" :in-theory (enable l3-regular-file-entry-p))
+          ("subgoal *1/5.2" :in-theory (enable l3-regular-file-entry-p))
+          ("subgoal *1/4.2" :in-theory (enable l3-regular-file-entry-p))
+          ("subgoal *1/3.2" :in-theory (enable l3-regular-file-entry-p))))
 
-(skip-proofs
- (defthm l4-wrchs-returns-stricter-fs-lemma-30
-   (implies
-    (and (symbol-listp hns)
-         (l3-fs-p fs)
-         (boolean-listp alv)
-         (disjoint-list-listp (l4-collect-all-index-lists fs))
-         (no-duplicates-listp (l4-collect-all-index-lists fs))
-         (indices-marked-listp (l4-collect-all-index-lists fs)
-                               alv)
-         (integerp start)
-         (<= 0 start)
-         (stringp text)
-         (block-listp disk)
-         (equal (len alv) (len disk)))
-    (and
-     (indices-marked-listp
-      (l4-collect-all-index-lists (mv-nth 0
-                                          (l4-wrchs hns fs disk alv start text)))
-      (mv-nth 2
-              (l4-wrchs hns fs disk alv start text)))
-     (disjoint-list-listp (l4-collect-all-index-lists
-                           (mv-nth 0
-                                   (l4-wrchs hns fs disk alv start text))))))
-   :hints (("Goal" :induct t)
-           ("Subgoal *1/7.2" :in-theory (disable l4-collect-all-index-lists-correctness-2)))))
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-31
+  (implies
+   (and (symbol-listp hns)
+        (l3-fs-p fs)
+        (boolean-listp alv)
+        (indices-marked-listp (l4-collect-all-index-lists fs)
+                              alv)
+        (integerp start)
+        (<= 0 start)
+        (stringp text)
+        (block-listp disk)
+        (equal (len alv) (len disk))
+        (not (member-intersectp-equal l (l4-collect-all-index-lists fs)))
+        (indices-marked-listp l alv)
+        (nat-listp (flatten l))
+        (true-list-listp l))
+   (not (member-intersectp-equal
+         l
+         (l4-collect-all-index-lists
+          (mv-nth 0
+                  (l4-wrchs hns fs disk alv start text))))))
+  :hints (("Goal" :induct (indices-marked-listp l alv))
+          ("Subgoal *1/2" :expand (flatten l))))
+
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-32
+  (implies
+   (and (symbol-listp hns)
+        (l3-fs-p fs)
+        (boolean-listp alv)
+        (disjoint-list-listp (l4-collect-all-index-lists fs))
+        (no-duplicates-listp (l4-collect-all-index-lists fs))
+        (indices-marked-listp (l4-collect-all-index-lists fs)
+                              alv)
+        (integerp start)
+        (<= 0 start)
+        (stringp text)
+        (block-listp disk)
+        (equal (len alv) (len disk)))
+   (and
+    (indices-marked-listp
+     (l4-collect-all-index-lists (mv-nth 0
+                                         (l4-wrchs hns fs disk alv start text)))
+     (mv-nth 2
+             (l4-wrchs hns fs disk alv start text)))
+    (disjoint-list-listp (l4-collect-all-index-lists
+                          (mv-nth 0
+                                  (l4-wrchs hns fs disk alv start text))))))
+  :hints (("Goal" :induct t)
+          ("Subgoal *1/7.2" :in-theory (disable l4-collect-all-index-lists-correctness-2))
+          ("Subgoal *1/7''" :in-theory (disable l4-collect-all-index-lists-correctness-2))
+          ("subgoal *1/6" :in-theory (enable l3-regular-file-entry-p))))
 
 ;; find a simpler problem that doesn't have all these details, that shows the
 ;; same kind of issue
