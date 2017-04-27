@@ -42,6 +42,81 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{What we need}
+  \begin{itemize}
+    \item Our filesystem should offer a set of operations that are
+      sufficient for running a workload.
+    \item However, as theorem proving researchers, we are loath to
+      construct more operations than necessary - so what's the minimal
+      set?
+    \item We could attempt to emulate the VFS and replicate the
+      operations for inodes, dentries, and files.
+    \item That would
+      mean 19 inode operations, 6 dentry operations and 22 file operations.
+  \end{itemize}
+\end{frame}
+
+%% \begin{frame}[fragile]
+%% \begin{verbatim}
+%% struct inode_operations {
+%%         int (*create) (struct inode *, struct dentry *, int);
+%%         struct dentry * (*lookup) (struct inode *, struct dentry *);
+%%         int (*link) (struct dentry *, struct inode *, struct dentry *);
+%%         int (*unlink) (struct inode *, struct dentry *);
+%%         int (*symlink) (struct inode *, struct dentry *, const char *);
+%%         int (*mkdir) (struct inode *, struct dentry *, int);
+%%         int (*rmdir) (struct inode *, struct dentry *);
+%%         int (*mknod) (struct inode *, struct dentry *, int, dev_t);
+%%         int (*rename) (struct inode *, struct dentry *, struct inode *, struct dentry *);
+%%         int (*readlink) (struct dentry *, char *,int);
+%%         int (*follow_link) (struct dentry *, struct nameidata *);
+%%         void (*truncate) (struct inode *);
+%%         int (*permission) (struct inode *, int);
+%%         int (*setattr) (struct dentry *, struct iattr *);
+%%         int (*getattr) (struct vfsmount *mnt, struct dentry *, struct kstat *);
+%%         int (*setxattr) (struct dentry *, const char *, const void *, size_t, int);
+%%         ssize_t (*getxattr) (struct dentry *, const char *, void *, size_t);
+%%         ssize_t (*listxattr) (struct dentry *, char *, size_t);
+%%         int (*removexattr) (struct dentry *, const char *);
+%% };
+%% \end{verbatim}
+%% \end{frame}
+
+\begin{frame}{Minimal set of operations?}
+  \begin{itemize}
+  \item There might be a better way, based on the Google file system.
+  \item Here, we have a minimal set of operations:
+    \begin{itemize}
+    \item \texttt{create}
+    \item \texttt{delete}
+    \item \texttt{open}
+    \item \texttt{close}
+    \item \texttt{read}
+    \item \texttt{write}
+    \end{itemize}
+  \item Further, we could leave \texttt{open} and \texttt{close} for
+    the time when we want to deal with multiprogramming and
+    concurrency.
+  \item Thus, we have a minimal set of filesystem operations which we
+    can model.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}
+  \item What should the filesystem look like?
+  \item We're used to thinking of the filesystem as a tree... how
+    about that?
+  \item Thinking along the lines of recursive datatypes, an \texttt{alist}
+    containing only strings or similar \texttt{alist}s in its
+    \texttt{strip-cdrs} could do the job.
+  \item The \texttt{strip-cars} would contain the file/directory
+    names.
+  \item Next, we'll look at a running example where we see what it
+    looks like to add/delete files from such a model.
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Our approach}
   \begin{itemize}
   \item Build a series of models, each providing a minimal set of
