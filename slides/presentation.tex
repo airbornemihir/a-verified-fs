@@ -1,5 +1,6 @@
 % titlepage-demo.tex
 \documentclass{beamer}
+\usepackage{graphicx}
 
 % items enclosed in square brackets are optional; explanation below
 \title{Verifying filesystems in ACL2}
@@ -102,7 +103,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}
+\begin{frame}{Modelling a filesystem}
   \begin{itemize}
   \item What should the filesystem look like?
   \item We're used to thinking of the filesystem as a tree... how
@@ -117,48 +118,178 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Our approach}
+\begin{frame}{Model 1}
+  \begin{figure}
+    \centering
+    \def\svgwidth{\columnwidth}
+    \input{l1-1.pdf_tex}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Model 1}
+  \begin{figure}
+    \centering
+    \def\svgwidth{\columnwidth}
+    \input{l1-2.pdf_tex}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Model 1}
+  \begin{figure}
+    \centering
+    \def\svgwidth{\columnwidth}
+    \input{l1-3.pdf_tex}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Model 1}
+  \begin{figure}
+    \centering
+    \def\svgwidth{\columnwidth}
+    \input{l1-4.pdf_tex}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Model 2}
   \begin{itemize}
-  \item Build a series of models, each providing a minimal set of
-    operations and proofs of correctness of these operations.
-  \item Per Ghemawat et al in SOSP 2003, a minimal set of operations
-    can suffice - create, delete, open, close, read, and write files.
-  \item Increasing the complexity of these operations with each model
-    while proving equivalence with the previous model as we go would
-    make the proofs tractable.
-  \item There are many properties that could be considered for
-    correctness, but the read-over-write theorems from the first-order
-    theory of arrays seem like a good place to start.
-    \begin {enumerate}
-    \item Reading from a location after writing to the same location
-      should yield the data that was written.
-    \item Reading from a location after writing to a different
-      location should yield the same result as reading before writing.
-    \end {enumerate}
+  \item Model 1 can hold unbounded text files and nested directory
+    structures.
+    \item However, there's no metadata, either to provide additional
+      information or to validate the contents of the file.
+    \item With an extra field for length, we can create a simple
+      version of fsck that checks file contents for consistency, and
+      verify that create, delete etc preserve this notion of
+      consistency.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Progress so far}
+\begin{frame}{Model 2}
+  \begin{figure}
+    \centering
+    \def\svgwidth{1.1\columnwidth}
+    \input{l2-1.pdf_tex}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Model 2}
+  \begin{figure}
+    \centering
+    \def\svgwidth{1.1\columnwidth}
+    \input{l2-2.pdf_tex}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Model 2}
+  \begin{figure}
+    \centering
+    \def\svgwidth{1.1\columnwidth}
+    \input{l2-3.pdf_tex}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Model 2}
+  \begin{figure}
+    \centering
+    \def\svgwidth{1.1\columnwidth}
+    \input{l2-4.pdf_tex}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Model 3}
   \begin{itemize}
-    \item We've built three models, with the operations read, write,
-      create, and delete.
-      \begin{enumerate}
-      \item In the first model, we represent the filesystem as a tree,
-        allow for text files (stored as strings) and directories only,
-        and store no metadata.
-      \item In the second model, we add some metadata to our tree
-        representation - namely, file length. We introduce a
-        rudimentary fsck and prove that our operations of writing and
-        deleting preserve correctness under fsck.
-      \item In the third model, we retain the tree but also introduce
-        an unlimited "disk" of fixed-length character blocks. We do
-        away with the explicit strings holding the contents of text
-        files and instead store lists of block indices in the tree.
-      \end{enumerate}
-    \item For each of these models, we have proofs of correctness of
-      the two read-after-write properties, based on the proofs of
-      equivalence between each model and its successor.
+  \item As the next step, we would like to begin externalising the
+    storage of file contents.
+  \item It would also be good to break up file contents into "blocks"
+    of a finite length.
+    \begin{itemize}
+    \item Note: this would mean storing file length is no longer
+      optional.
+    \end{itemize}
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Model 3}
+  \begin{figure}
+    %% \centering
+    \def\svgwidth{0.7\columnwidth}
+    \input{l3-1.pdf_tex}
+  \end{figure}
+  \begin{table}[]
+    %% \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Sun 19:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Model 3}
+  \begin{figure}
+    %% \centering
+    \def\svgwidth{0.7\columnwidth}
+    \input{l3-2.pdf_tex}
+  \end{figure}
+  \begin{table}[]
+    \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Sun 19:0 \\ \hline
+      0        \\ \hline
+      Tue 21:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Model 3}
+  \begin{figure}
+    %% \centering
+    \def\svgwidth{0.7\columnwidth}
+    \input{l3-3.pdf_tex}
+  \end{figure}
+  \begin{table}[]
+    \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Sun 19:0 \\ \hline
+      0        \\ \hline
+      Tue 21:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Model 3}
+  \begin{figure}
+    %% \centering
+    \def\svgwidth{0.7\columnwidth}
+    \input{l3-4.pdf_tex}
+  \end{figure}
+  \begin{table}[]
+    \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Sun 19:0 \\ \hline
+      0        \\ \hline
+      Tue 21:0 \\ \hline
+      0        \\ \hline
+      Wed 01:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
 \end{frame}
 
 \begin{frame}{Proof approaches and techniques}
@@ -170,9 +301,108 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Model 4}
+  \begin{figure}
+    %% \centering
+    \def\svgwidth{0.7\columnwidth}
+    \input{l4-1.pdf_tex}
+  \end{figure}
+  \begin{table}[]
+    %% \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Sun 19:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Model 4}
+  \begin{figure}
+    %% \centering
+    \def\svgwidth{0.7\columnwidth}
+    \input{l4-2.pdf_tex}
+  \end{figure}
+  \begin{table}[]
+    \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Sun 19:0 \\ \hline
+      0        \\ \hline
+      Tue 21:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Model 4}
+  \begin{figure}
+    %% \centering
+    \def\svgwidth{0.7\columnwidth}
+    \input{l4-3.pdf_tex}
+  \end{figure}
+  \begin{table}[]
+    \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Sun 19:0 \\ \hline
+      0        \\ \hline
+      Tue 21:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Model 4}
+  \begin{figure}
+    %% \centering
+    \def\svgwidth{0.7\columnwidth}
+    \input{l4-4.pdf_tex}
+  \end{figure}
+  \begin{table}[]
+    \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Wed 01:0 \\ \hline
+      0        \\ \hline
+      Tue 21:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Proof approaches and techniques}
+  \begin{itemize}
+  \item There are many properties that could be considered for
+    correctness, but the read-over-write theorems from the first-order
+    theory of arrays seem like a good place to start.
+    \begin {enumerate}
+    \item Reading from a location after writing to the same location
+      should yield the data that was written.
+    \item Reading from a location after writing to a different
+      location should yield the same result as reading before writing.
+    \end {enumerate}
+    \item For each of the models 1, 2 and 3, we have proofs of correctness of
+      the two read-after-write properties, based on the proofs of
+      equivalence between each model and its successor.
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Proof approaches and techniques}
   \begin{enumerate}
-  \item The disk and the allocation vector must be in harmony
+  \item For model 4, The disk and the allocation vector must be in harmony
     initially and updated in lockstep.
   \item Every block referred to in the filesystem must be marked
     "used" in the allocation vector.\\
@@ -197,6 +427,18 @@
   \item Linearise the tree, leaving only the disk.
   \item Eventually emulate the CP/M filesystem as a convincing proof
     of concept, and move on to fsck and file recovery tools.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Related work}
+  \begin{itemize}
+  \item In Haogang Chen's 2016 dissertation, the author uses Coq to
+    build a filesystem (named FSCQ) which is proven safe against
+    crashes.
+  \item His implementation was exported into Haskell, and showed
+    comparable performance to ext4 when run on FUSE.
+  \item Our work is different - we're building verified models of
+    actual filesystems with binary compatibility as the aim.
   \end{itemize}
 \end{frame}
 

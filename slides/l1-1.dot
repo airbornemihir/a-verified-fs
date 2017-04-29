@@ -4,7 +4,7 @@ digraph G {
   1 -> 2;
   3 [label="vmlinuz"];
   2 -> 3;
-  4 [label="\"\\0\\0\\0\""];
+  4 [label="\"\\textbackslash0\\textbackslash0\\textbackslash0\""];
   2 -> 4;
   5 [label="cons"];
   1 -> 5;
