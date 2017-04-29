@@ -124,6 +124,13 @@
            (nat-listp l))
   :rule-classes (:rewrite :forward-chaining))
 
+(defthm bounded-nat-listp-correctness-2
+  (implies (true-listp x)
+           (equal (bounded-nat-listp (binary-append x y)
+                                     b)
+                  (and (bounded-nat-listp x b)
+                       (bounded-nat-listp y b)))))
+
 ;; This is to be returned when a block is not found. It's full of null
 ;; characters and is *blocksize* long.
 (defconst *nullblock* (make-character-list (take *blocksize* nil)))
@@ -192,7 +199,8 @@
 
 (defthm l3-regular-file-entry-p-correctness-1
   (implies (l3-regular-file-entry-p entry)
-           (and (nat-listp (car entry))
+           (and (true-listp (car entry))
+                (nat-listp (car entry))
                 (natp (cdr entry))
                 (feasible-file-length-p (len (car entry)) (cdr entry))))
   :hints (("Goal" :in-theory (enable l3-regular-file-entry-p)) ))
@@ -223,7 +231,10 @@
 (defthm l3-regular-file-entry-p-correctness-3
   (implies (l3-regular-file-entry-p entry)
            (not (l3-fs-p entry)))
-  :hints (("Goal" :in-theory (enable l3-regular-file-entry-p)) ))
+  :hints (("Goal" :in-theory (enable l3-regular-file-entry-p)) )
+  :rule-classes (:rewrite (:rewrite :corollary
+                                    (implies (l3-fs-p entry)
+                                             (not (l3-regular-file-entry-p entry))))))
 
 (defthm alistp-l3-fs-p
   (implies (l3-fs-p fs)

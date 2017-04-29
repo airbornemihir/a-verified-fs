@@ -118,7 +118,52 @@
            (boolean-listp (update-nth key val l))))
 
 (defthm nat-listp-of-binary-append
-  (implies (and (nat-listp x) (nat-listp y))
-           (nat-listp (binary-append x y))))
+  (implies (true-listp x)
+           (equal (nat-listp (binary-append x y))
+                  (and (nat-listp x) (nat-listp y)))))
 
 (defthm eqlable-listp-if-nat-listp (implies (nat-listp l) (eqlable-listp l)))
+
+(defthm member-of-binary-append
+  (iff (member-equal x (binary-append lst1 lst2))
+       (or (member-equal x lst1)
+           (member-equal x lst2))))
+
+(defthm no-duplicatesp-of-append
+  (equal (no-duplicatesp-equal (binary-append x y))
+         (and (no-duplicatesp x)
+              (no-duplicatesp y)
+              (not (intersectp-equal x y)))))
+
+(defthm intersectp-of-append-1
+  (equal (intersectp-equal z (binary-append x y))
+         (or (intersectp-equal z x)
+             (intersectp-equal z y))))
+
+(defthm intersectp-of-append-2
+  (equal (intersectp-equal (binary-append x y) z)
+         (or (intersectp-equal x z)
+             (intersectp-equal y z))))
+
+(defthm intersectp-is-commutative
+  (equal (intersectp-equal x y)
+         (intersectp-equal y x)))
+
+(defthm subsetp-of-binary-append-1
+  (subsetp-equal y (binary-append x y)))
+
+(defthm subsetp-of-binary-append-2
+  (subsetp-equal x (binary-append x y)))
+
+(defthm subsetp-of-binary-append-3
+  (equal (subsetp-equal (binary-append x y) z)
+         (and (subsetp-equal x z) (subsetp-equal y z))))
+
+(defthm subsetp-is-transitive
+  (implies (and (subsetp-equal x y) (subsetp-equal y z))
+           (subsetp-equal x z)))
+
+(defthm member-of-subset
+  (implies (and (subsetp-equal lst1 lst2)
+                (member-equal x lst1))
+           (member-equal x lst2)))
