@@ -1,0 +1,145 @@
+\documentclass[format=sigconf,review=true]{acmart}
+\title{Verifying file systems with ACL2}
+\subtitle{Towards verifying data recovery tools}
+\author{Mihir P. Mehta}
+
+\affiliation{%
+  \institution{University of Texas at Austin}
+  \city{Austin}
+  \state{TX}
+  \country{USA}}
+\email{mihir@cs.utexas.edu}
+
+\thanks{This work is supported by a grant from the NSF. }
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+In this paper, we describe work in progress to model and verify
+filesystems using the ACL2 theorem prover.
+
+\section{Motivation}
+Filesystems are ubiquitous, and a critical factor in the security and
+performance of all applications. Yet, they remain poorly understood,
+a problem which has been exacerbated by the complexity of modern
+filesystems which use redundancy and caching in order to be faster and
+more reliable. As a consequence, many tools which interact deeply with
+the filesystem, such as file deletion and file recovery tools, have
+become more vulnerable to bugs because of the complexity of these
+tasks. Thus, it is worthwhile to work towards formally verifying the
+guarantees provided by a filesystem.
+
+\section{Modelling a filesystem}
+
+In order to make our proofs of correctness tractable, we choose to
+make several verified filesystem models in increasing order of
+complexity. This approach supports incremental proof strategies,
+providing us with a choice between proving a model equivalent to the
+next, and simply adapting existing proofs for the next model.
+
+While starting out, we faced a decision about the file system
+operations we should provide. We decided against implementing the
+entirety of the Linux VFS interface, reasoning that this would require
+us to implement 19 inode operations, 6 dentry operations and 22 file
+operations. Following the  example of the Google File System
+(citation), we decided to restrict ourselves to a small
+number of fundamental file system operations - namely reading, writing,
+creating, and deleting a file. This excludes the operations of opening
+and closing a file; we hope to implement these when they become
+necessary for verification in a multiprogramming environment.
+
+\section{Model 1}
+The intuitive mental model of a filesystem is a tree, which remains
+useful even though it fails for filesystems with links. Accordingly,
+it is appropriate for our first model, which will serve as a
+specification for all later models, to be a literal tree. Our
+filesystem recogniser, \texttt{l1-fs-p}, recognises
+\texttt{symbol-alist}s where each cdr of a pair in the alist satisfies
+either \texttt{stringp} (denoting a regular file) or \texttt{l1-fs-p}
+(denoting a subdirectory).
+
+\section{Model 2}
+Model 1 can hold unbounded text files and nested directory
+structures. However, real filesystems include metadata, and including
+metadata in our filesystem representation also allows us to define a
+notion of "consistency" wherein the actual contents of a regular or
+directory file are checked for agreement with the metadata. Thus, in
+our next model, we add an extra field for length of a
+regular file. We also create a simple version of fsck that checks
+file contents for consistency with the stated length, and verify
+that the operations for writing, creating and deleting preserve this
+notion of consistency.
+
+\section{Model 3}
+Next, we would like to move towards a more realistic file storage
+paradigm where the contents of a regular file are broken into
+fixed-size blocks and stored in an external table, which we will refer
+to as the disk. In this model, we store the text of a regular file in
+the disk, and retain only the indices of the relevant blocks in the
+filesystem tree. For now, we consider the disk to be unbounded and
+make no attempt at garbage collection. Thus, file creation and writing
+operations can be represented as append operations, where the new
+blocks representing the new contents of a file are simply placed at
+the end of the disk with no effort to free the old blocks or erase
+their contents. Similarly, deleting a file does not require any disk
+operations; the blocks of such a file remain in the disk but are no longer
+referred to.
+
+\section{Model 4}
+In this model, we finitise our disk; this necessitates garbage
+collection which we approximate through reference
+counting. Since we allow neither symbolic links nor hard links in our
+filesystem, the reference count of any block in the disk is either 0
+or 1; this allows us to implement reference counting through an
+allocation vector, i.e. an array of booleans with the same length as
+the disk. Thus, in every write or delete operation, the allocation
+vector entries corresponding to blocks which are no longer used must
+be marked free; similarly, in every write or create operation, the
+allocation vector must be scanned to find the appropriate number of
+free blocks. The lockstep updates described here allow us to prove
+that aliasing between different files does not occur.
+
+\section {Proof approach}
+
+Initially, we would like to prove two well-known properties from the
+first-order theory of arrays, namely the read-over-write properties.
+
+\begin {enumerate}
+\item Reading from a location after writing to the same location
+  should yield the data that was written.
+\item Reading from a location after writing to a different
+  location should yield the same result as reading before writing.
+\end {enumerate}
+
+\section{Future work}
+As previously mentioned, we would like to add the system calls open and close with the
+introduction of file descriptors. This would be a step towards the
+study of concurrent FS operations. We would also like to linearise
+the tree, leaving only the disk - this would be more in keeping
+with realistic file systems that do not require an in-memory tree
+representation, but still allow tree traversal through systematic
+lookups in the disk.
+
+Eventually, we would like to emulate the CP/M filesystem as a convincing proof
+of concept. This would be a step towards verified versions of fsck
+and file recovery tools, which could be based on our proofs about
+the underlying filesystem.
+
+\section{Related work}
+Currently, the state of the art is represented by Haogang
+Chen's dissertation work (reference), in which the author uses Coq to
+build a filesystem (named FSCQ) which is proven safe against
+crashes. This implementation was exported into Haskell, and showed
+comparable performance to ext4 when run on the Linux kernel
+through the FUSE layer.
+
+Our work takes a different approach - our aim is to produce verified
+models of existing filesystems that have binary compatibility with the
+filesystem layout read and written by the corresponding
+implementation. This allows us to find bugs in existing filesystems,
+which is not addressed by Chen's work.
+
+\end{document}
