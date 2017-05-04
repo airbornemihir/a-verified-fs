@@ -1,5 +1,6 @@
 \documentclass[format=sigconf,review=true]{acmart}
 \usepackage{tikz}
+\usepackage{listings}
 \title{Verifying file systems with ACL2}
 \subtitle{Towards verifying data recovery tools}
 \author{Mihir P. Mehta}
@@ -14,6 +15,7 @@
 \thanks{This work is supported by a grant from the NSF. }
 
 \begin{document}
+\lstset{language=Lisp}
 
 \maketitle
 
@@ -76,6 +78,24 @@ l1-fs-p, and a code listing.
       child { node {ticket2,{"}Tue 21:00{"}}}};
 \end{tikzpicture}
 
+\begin{lstlisting}
+(DEFUN
+  L1-FS-P (FS)
+  (DECLARE (XARGS :GUARD T))
+  (IF
+   (ATOM FS)
+   (NULL FS)
+   (AND
+    (LET ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
+         (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
+             NIL
+             (LET ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
+                   (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
+                  (AND (SYMBOLP NAME)
+                       (OR (STRINGP ENTRY) (L1-FS-P ENTRY))))))
+    (L1-FS-P (CDR FS)))))
+\end{lstlisting}
+
 \section{Model 2}
 Model 1 can hold unbounded text files and nested directory
 structures. However, real filesystems include metadata, and including
@@ -88,6 +108,9 @@ file contents for consistency with the stated length, and verify
 that the operations for writing, creating and deleting preserve this
 notion of consistency.
 
+Below, we include a sample of a filesystem tree that is recognised by
+l2-fs-p, and a code listing.
+
 \begin{tikzpicture}[sibling distance=10em,
   every node/.style = {shape=rectangle, rounded corners,
     draw, align=center,
@@ -98,6 +121,26 @@ notion of consistency.
       child { node {ticket1,{"}Sun 19:00{"},9}}
       child { node {ticket2,{"}Tue 21:00{"},9}}};
 \end{tikzpicture}
+
+\begin{lstlisting}
+(DEFUN
+  L2-FS-P (FS)
+  (DECLARE (XARGS :GUARD T))
+  (IF
+   (ATOM FS)
+   (NULL FS)
+   (AND (LET ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
+             (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
+                 NIL
+                 (LET ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
+                       (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
+                      (AND (SYMBOLP NAME)
+                           (OR (AND (CONSP ENTRY)
+                                    (STRINGP (CAR ENTRY))
+                                    (NATP (CDR ENTRY)))
+                               (L2-FS-P ENTRY))))))
+        (L2-FS-P (CDR FS)))))
+\end{lstlisting}
 
 \section{Model 3}
 Next, we would like to move towards a more realistic file storage
@@ -124,6 +167,32 @@ referred to.
       child { node {ticket1,(1 2),9}}
       child { node {ticket1,(3 4),9}}};
 \end{tikzpicture}
+
+\begin{lstlisting}
+(DEFUN L3-REGULAR-FILE-ENTRY-P (ENTRY)
+  (DECLARE (XARGS :GUARD T))
+  (AND (CONSP ENTRY)
+       (NAT-LISTP (CAR ENTRY))
+       (NATP (CDR ENTRY))
+       (FEASIBLE-FILE-LENGTH-P (LEN (CAR ENTRY))
+                               (CDR ENTRY))))
+
+(DEFUN
+  L3-FS-P (FS)
+  (DECLARE (XARGS :GUARD T))
+  (IF
+   (ATOM FS)
+   (NULL FS)
+   (AND (LET ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
+             (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
+                 NIL
+                 (LET ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
+                       (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
+                      (AND (SYMBOLP NAME)
+                           (OR (L3-REGULAR-FILE-ENTRY-P ENTRY)
+                               (L3-FS-P ENTRY))))))
+        (L3-FS-P (CDR FS)))))
+\end{lstlisting}
 
 \section{Model 4}
 In this model, we finitise our disk; this necessitates garbage
