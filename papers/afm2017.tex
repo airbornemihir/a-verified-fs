@@ -1,5 +1,6 @@
 \documentclass[format=sigconf,review=true]{acmart}
 \usepackage{tikz}
+\usetikzlibrary{matrix}
 \usepackage{listings}
 \title{Verifying file systems with ACL2}
 \subtitle{Towards verifying data recovery tools}
@@ -48,7 +49,7 @@ operations we should provide. We decided against implementing the
 entirety of the Linux VFS interface, reasoning that this would require
 us to implement 19 inode operations, 6 dentry operations and 22 file
 operations. Following the  example of the Google File System
-(citation), we decided to restrict ourselves to a small
+\cite{Ghemawat:2003:GFS:945445.945450}, we decided to restrict ourselves to a small
 number of fundamental file system operations - namely reading, writing,
 creating, and deleting a file. This excludes the operations of opening
 and closing a file; we hope to implement these when they become
@@ -89,10 +90,12 @@ l1-fs-p, and a code listing.
     (LET ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
          (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
              NIL
-             (LET ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
-                   (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
-                  (AND (SYMBOLP NAME)
-                       (OR (STRINGP ENTRY) (L1-FS-P ENTRY))))))
+             (LET
+              ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
+               (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
+              (AND (SYMBOLP NAME)
+                   (OR (STRINGP ENTRY)
+                       (L1-FS-P ENTRY))))))
     (L1-FS-P (CDR FS)))))
 \end{lstlisting}
 
@@ -129,16 +132,19 @@ l2-fs-p, and a code listing.
   (IF
    (ATOM FS)
    (NULL FS)
-   (AND (LET ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
-             (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
-                 NIL
-                 (LET ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
-                       (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
-                      (AND (SYMBOLP NAME)
-                           (OR (AND (CONSP ENTRY)
-                                    (STRINGP (CAR ENTRY))
-                                    (NATP (CDR ENTRY)))
-                               (L2-FS-P ENTRY))))))
+   (AND
+    (LET
+     ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
+     (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
+         NIL
+         (LET
+          ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
+           (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
+          (AND (SYMBOLP NAME)
+               (OR (AND (CONSP ENTRY)
+                        (STRINGP (CAR ENTRY))
+                        (NATP (CDR ENTRY)))
+                   (L2-FS-P ENTRY))))))
         (L2-FS-P (CDR FS)))))
 \end{lstlisting}
 
@@ -156,6 +162,9 @@ the end of the disk with no effort to free the old blocks or erase
 their contents. Similarly, deleting a file does not require any disk
 operations; the blocks of such a file remain in the disk but are no longer
 referred to.
+
+As before, we include a sample of a filesystem tree that is recognised by
+l3-fs-p and a code listing.
 
 \begin{tikzpicture}[sibling distance=10em,
   every node/.style = {shape=rectangle, rounded corners,
@@ -183,15 +192,18 @@ referred to.
   (IF
    (ATOM FS)
    (NULL FS)
-   (AND (LET ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
-             (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
-                 NIL
-                 (LET ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
-                       (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
-                      (AND (SYMBOLP NAME)
-                           (OR (L3-REGULAR-FILE-ENTRY-P ENTRY)
-                               (L3-FS-P ENTRY))))))
-        (L3-FS-P (CDR FS)))))
+   (AND
+    (LET
+     ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
+     (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
+         NIL
+         (LET
+          ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
+           (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
+          (AND (SYMBOLP NAME)
+               (OR (L3-REGULAR-FILE-ENTRY-P ENTRY)
+                   (L3-FS-P ENTRY))))))
+    (L3-FS-P (CDR FS)))))
 \end{lstlisting}
 
 \section{Model 4}
@@ -199,7 +211,7 @@ In this model, we finitise our disk; this necessitates garbage
 collection which we approximate through reference
 counting. Since we allow neither symbolic links nor hard links in our
 filesystem, the reference count of any block in the disk is either 0
-or 1; this allows us to implement reference counting through an
+or 1. This allows us to implement reference counting through an
 allocation vector, i.e. an array of booleans with the same length as
 the disk. Thus, in every write or delete operation, the allocation
 vector entries corresponding to blocks which are no longer used must
@@ -220,6 +232,78 @@ first-order theory of arrays, namely the read-over-write properties.
   location should yield the same result as reading before writing.
 \end {enumerate}
 
+These properties show the integrity of the filesystem. As noted
+before, we have modelled our filesystem incrementally in order to make
+our proofs tractable, thus, in each successive model, we prove a
+theorem showing the model to be equivalent to the previous one. For
+instance, we define the following function for transforming
+instances of model 2 to model 1.
+
+\begin{lstlisting}
+(DEFUN L2-TO-L1-FS (FS)
+  (DECLARE (XARGS :GUARD (L2-FS-P FS)))
+  (IF (ATOM FS)
+      FS
+      (CONS
+       (LET*
+        ((DIRECTORY-OR-FILE-ENTRY (CAR FS))
+         (NAME (CAR DIRECTORY-OR-FILE-ENTRY))
+         (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
+        (CONS NAME
+              (IF (AND (CONSP ENTRY)
+                       (STRINGP (CAR ENTRY)))
+                  (CAR ENTRY)
+                  (L2-TO-L1-FS ENTRY))))
+       (L2-TO-L1-FS (CDR FS)))))
+\end{lstlisting}
+
+Then, we can prove the implementation of the write operation in model
+2 correct with respect to the specification of model 1 by proving the
+property illustrated below.
+
+\begin{tikzpicture}
+  \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
+  {
+     l2 & l2 \\
+     l1 & l1 \\};
+  \path[-stealth]
+    (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
+            edge node [below] {write} (m-1-2)
+    (m-2-1.east|-m-2-2) edge node [below] {write} (m-2-2)
+    (m-1-2) edge node [left] {l2-to-l1-fs} (m-2-2);
+\end{tikzpicture}
+
+Similarly, we can prove the implementation of the read operation in
+model 2 correct with respect to the spec in model 1.
+
+\begin{tikzpicture}
+  \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
+  {
+     l2 & text \\
+     l1 \\};
+  \path[-stealth]
+    (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
+            edge node [below] {read} (m-1-2)
+    (m-2-1.east|-m-2-2) edge node [below] {read} (m-1-2);
+\end{tikzpicture}
+
+Combining these proofs as shown below, we are able to prove the read-after-write
+properties for model 2 based on our proof for model 1.
+
+\begin{tikzpicture}
+  \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
+  {
+     l2 & l2 & text \\
+     l1 & l1 \\};
+  \path[-stealth]
+    (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
+            edge node [below] {write} (m-1-2)
+    (m-2-1.east|-m-2-2) edge node [below] {write} (m-2-2)
+    (m-1-2) edge node [left] {l2-to-l1-fs} (m-2-2)
+            edge node [below] {read} (m-1-3)
+    (m-2-2.east) edge node [below] {read} (m-1-3);
+\end{tikzpicture}
+
 \section{Future work}
 As previously mentioned, we would like to add the system calls open and close with the
 introduction of file descriptors. This would be a step towards the
@@ -236,10 +320,10 @@ the underlying filesystem.
 
 \section{Related work}
 Currently, the state of the art is represented by Haogang
-Chen's dissertation work (reference), in which the author uses Coq to
-build a filesystem (named FSCQ) which is proven safe against
-crashes. This implementation was exported into Haskell, and showed
-comparable performance to ext4 when run on the Linux kernel
+Chen's dissertation work \cite{DBLP:conf/usenix/ChenZCCKZ16}, in which
+the author uses Coq to build a filesystem (named FSCQ) which is proven
+safe against crashes. This implementation was exported into Haskell,
+and showed comparable performance to ext4 when run on the Linux kernel
 through the FUSE layer.
 
 Our work takes a different approach - our aim is to produce verified
@@ -247,5 +331,8 @@ models of existing filesystems that have binary compatibility with the
 filesystem layout read and written by the corresponding
 implementation. This allows us to find bugs in existing filesystems,
 which is not addressed by Chen's work.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{afm2017}
 
 \end{document}
