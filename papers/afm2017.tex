@@ -220,6 +220,15 @@ allocation vector must be scanned to find the appropriate number of
 free blocks. The lockstep updates described here allow us to prove
 that aliasing between different files does not occur.
 
+The recogniser l4-fs-p is defined to be the same as l3-fs-p, which
+makes our equivalence proofs simpler. This arises from the fact that
+reference counting does not require any changes in the filesystem tree
+or the disk. At the time of writing, we are in the process of proving
+equivalence between model 4 and model 3; towards that end, we have
+proved uniqueness and disjointness properties that ensure our file
+update operations do not ever alias disk blocks in such a way that
+they are referred to by two different files, or twice by the same file.
+
 \section {Proof approach}
 
 Initially, we would like to prove two well-known properties from the
@@ -229,7 +238,7 @@ first-order theory of arrays, namely the read-over-write properties.
 \item Reading from a location after writing to the same location
   should yield the data that was written.
 \item Reading from a location after writing to a different
-  location should yield the same result as reading before writing.
+  location should yield the same result as reading before the write.
 \end {enumerate}
 
 These properties show the integrity of the filesystem. As noted
@@ -331,6 +340,20 @@ models of existing filesystems that have binary compatibility with the
 filesystem layout read and written by the corresponding
 implementation. This allows us to find bugs in existing filesystems,
 which is not addressed by Chen's work.
+
+\section{Conclusion}
+Through this work, we have gone into some depth on the nuts and bolts
+of implementing a filesystem at the byte level. In the process, we
+have demonstrated ACL2's capability to deal with systems-level
+problems in addition to the hardware verification problems to which
+it has traditionally been applied.
+
+\section{Obtaining the code}
+This work is hosted on GitHub, under the GPL 3.0 licence. The code
+repository can be cloned anonymously using the HTTPS URL
+https://github.com/airbornemihir/turbo-octo-sniffle.git, and the
+repository itself can be viewed at
+https://github.com/airbornemihir/turbo-octo-sniffle.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{afm2017}
