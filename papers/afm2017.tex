@@ -46,7 +46,7 @@ next, and simply adapting existing proofs for the next model.
 
 While starting out, we faced a decision about the file system
 operations we should provide. We decided against implementing the
-entirety of the Linux VFS interface, reasoning that this would require
+entirety of the Linux VFS interface\cite{johnson_1996}, reasoning that this would require
 us to implement 19 inode operations, 6 dentry operations and 22 file
 operations. Following the  example of the Google File System
 \cite{Ghemawat:2003:GFS:945445.945450}, we decided to restrict ourselves to a small
@@ -232,7 +232,9 @@ they are referred to by two different files, or twice by the same file.
 \section {Proof approach}
 
 Initially, we would like to prove two well-known properties from the
-first-order theory of arrays, namely the read-over-write properties.
+first-order theory of arrays, adapted to the filesystem context. These
+are the well-known read-over-write properties, which show the
+integrity of the filesystem.
 
 \begin {enumerate}
 \item Reading from a location after writing to the same location
@@ -241,7 +243,10 @@ first-order theory of arrays, namely the read-over-write properties.
   location should yield the same result as reading before the write.
 \end {enumerate}
 
-These properties show the integrity of the filesystem. As noted
+While these properties are simple enough to state, proving them turns
+out to be surprisingly subtle. As a point of reference, proving these
+properties for l1, our initial model, required us to manually specify
+an induction scheme with 6 conditional branches. As noted
 before, we have modelled our filesystem incrementally in order to make
 our proofs tractable, thus, in each successive model, we prove a
 theorem showing the model to be equivalent to the previous one. For
