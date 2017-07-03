@@ -1,7 +1,6 @@
 % titlepage-demo.tex
 \documentclass{beamer}
 \usepackage{graphicx}
-
 % items enclosed in square brackets are optional; explanation below
 \title{Verifying filesystems in ACL2}
 \subtitle{Towards verifying file recovery tools}
@@ -154,12 +153,12 @@
   \begin{itemize}
   \item Model 1 can hold unbounded text files and nested directory
     structures.
-    \item However, there's no metadata, either to provide additional
-      information or to validate the contents of the file.
-    \item With an extra field for length, we can create a simple
-      version of fsck that checks file contents for consistency, and
-      verify that create, delete etc preserve this notion of
-      consistency.
+  \item However, there's no metadata, either to provide additional
+    information or to validate the contents of the file.
+  \item With an extra field for length, we can create a simple
+    version of fsck that checks file contents for consistency, and
+    verify that create, delete etc preserve this notion of
+    consistency.
   \end{itemize}
 \end{frame}
 
