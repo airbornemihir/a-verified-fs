@@ -7,6 +7,7 @@
 ; file-system operations.
 
 (include-book "misc/assert" :dir :system)
+(include-book "bounded-nat-listp")
 (include-book "file-system-2")
 
 ;; I don't think blocks are 8 characters long in any system; I simply set this
@@ -113,24 +114,6 @@
   )
 
 ;; This is a function that might be needed later.
-(defun bounded-nat-listp (l b)
-  (declare (xargs :guard (natp b)))
-  (if (atom l)
-      (equal l nil)
-    (and (natp (car l)) (< (car l) b) (bounded-nat-listp (cdr l) b))))
-
-(defthm bounded-nat-listp-correctness-1
-  (implies (bounded-nat-listp l b)
-           (nat-listp l))
-  :rule-classes (:rewrite :forward-chaining))
-
-(defthm bounded-nat-listp-correctness-2
-  (implies (true-listp x)
-           (equal (bounded-nat-listp (binary-append x y)
-                                     b)
-                  (and (bounded-nat-listp x b)
-                       (bounded-nat-listp y b)))))
-
 ;; This is to be returned when a block is not found. It's full of null
 ;; characters and is *blocksize* long.
 (defconst *nullblock* (make-character-list (take *blocksize* nil)))
