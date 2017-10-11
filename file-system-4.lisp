@@ -54,98 +54,13 @@
 
 (include-book "file-system-3")
 (include-book "find-n-free-blocks")
+(include-book "set-indices")
 
 (defthm mv-nth-replacement
   (equal (mv-nth n (cons a b))
          (if (zp n) a (mv-nth (- n 1) b))))
 
 (in-theory (disable mv-nth))
-
-(defun set-indices (v index-list value-list)
-  (declare (xargs :guard (and (true-listp v)
-                              (nat-listp index-list)
-                              (true-listp value-list)
-                              (equal (len index-list) (len value-list)))))
-  (if (atom index-list)
-      v
-    (set-indices (update-nth (car index-list) (car value-list) v)
-                        (cdr index-list)
-                        (cdr value-list))))
-
-(defthm set-indices-correctness-1
-  (implies (and (natp n)
-                (nat-listp index-list)
-                (not (member-equal n index-list)))
-           (equal (nth n (set-indices v index-list value-list))
-                  (nth n v))))
-
-(encapsulate
-  ( ((set-indices-in-alv * * *) => *) )
-
-  (local (include-book "std/lists/repeat" :dir :system))
-
-  (local
-   (defun set-indices-in-alv (alv index-list value)
-     (declare (xargs :guard (and (boolean-listp alv)
-                                 (bounded-nat-listp index-list (len alv))
-                                 (booleanp value))))
-     (set-indices alv index-list (repeat (len index-list) value))))
-
-  (defthm
-    set-indices-in-alv-correctness-1
-    (implies
-     (and (boolean-listp alv)
-          (booleanp value))
-     (boolean-listp (set-indices-in-alv alv index-list value)))
-    :rule-classes (:type-prescription :rewrite))
-
-  (defthm
-    set-indices-in-alv-correctness-2
-    (implies
-     (and (boolean-listp alv)
-          (booleanp value)
-          (bounded-nat-listp index-list (len alv)))
-     (equal (len (set-indices-in-alv alv index-list value))
-            (len alv))))
-
-  (defthm
-    set-indices-in-alv-correctness-3
-    (implies
-     (and (boolean-listp alv)
-          (nat-listp index-list)
-          (booleanp value)
-          (member-equal n index-list)
-          (< n (len alv)))
-     (equal (nth n
-                 (set-indices-in-alv alv index-list value))
-            value)))
-
-  (defthm
-    set-indices-in-alv-correctness-4
-    (implies
-     (and (boolean-listp alv)
-          (nat-listp index-list)
-          (booleanp value)
-          (natp n)
-          (not (member-equal n index-list))
-          (< n (len alv)))
-     (equal (nth n
-                 (set-indices-in-alv alv index-list value))
-            (nth n alv))))
-  )
-
-(defthm set-indices-correctness-2
-        (implies (and (true-listp v)
-                      (nat-listp index-list)
-                      (true-listp value-list)
-                      (equal (len index-list)
-                             (len value-list))
-                      (no-duplicatesp-equal index-list)
-                      (natp m)
-                      (< m (len index-list)))
-                 (equal (nth (nth m index-list)
-                             (set-indices v index-list value-list))
-                        (nth m value-list))))
 
 ;; could be handled differently using repeat... let's see.
 (defun indices-marked-p (index-list alv)
