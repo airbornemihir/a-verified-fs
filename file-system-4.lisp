@@ -174,7 +174,10 @@
           (let ((contents (cdr sd)))
             (if (l3-regular-file-entry-p contents)
                 (if (cdr hns)
-                    (mv fs disk alv) ;; can't write text to a directory, so leave fs unchanged
+                    (mv (cons (cons (car sd) contents)
+                              (delete-assoc (car hns) fs))
+                        disk
+                        alv) ;; error, so leave fs unchanged
                   (let* ((old-text
                           (unmake-blocks
                            (fetch-blocks-by-indices disk (car contents))
@@ -188,7 +191,10 @@
                     (if (not (equal (len new-indices) (len new-blocks)))
                         ;; we have an error because of insufficient disk space
                         ;; - so we leave the fs unchanged
-                        (mv fs disk alv)
+                        (mv (cons (cons (car sd) contents)
+                                  (delete-assoc (car hns) fs))
+                            disk
+                            alv)
                       (mv (cons (cons (car sd)
                                       (cons new-indices (len new-text)))
                                 (delete-assoc (car hns) fs))
@@ -695,93 +701,10 @@
                         (l4-collect-all-index-lists
                          (mv-nth 0
                                  (l4-wrchs hns fs disk alv start text)))))
-  :instructions
-  ((:prove
-    :hints
-    (("subgoal *1/6.1.2'" :in-theory (enable l3-regular-file-entry-p))
-     ("subgoal *1/6.1.1'"
-      :expand
-      (l3-regular-file-entry-p
-       (cons
-        (find-n-free-blocks
-         (set-indices-in-alv alv (cadr (assoc-equal (car hns) fs))
-                             nil)
-         (len
-          (make-blocks
-           (insert-text
-            (unmake-blocks
-             (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-             (cddr (assoc-equal (car hns) fs)))
-            start text))))
-        (len
-         (insert-text
-          (unmake-blocks
-           (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-           (cddr (assoc-equal (car hns) fs)))
-          start text)))))
-     ("subgoal *1/5.1.2'" :in-theory (enable l3-regular-file-entry-p))
-     ("subgoal *1/5.1.1'"
-      :expand
-      (l3-regular-file-entry-p
-       (cons
-        (find-n-free-blocks
-         (set-indices-in-alv alv (cadr (assoc-equal (car hns) fs))
-                             nil)
-         (len
-          (make-blocks
-           (insert-text
-            (unmake-blocks
-             (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-             (cddr (assoc-equal (car hns) fs)))
-            start text))))
-        (len
-         (insert-text
-          (unmake-blocks
-           (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-           (cddr (assoc-equal (car hns) fs)))
-          start text)))))
-     ("subgoal *1/4.1.2'" :in-theory (enable l3-regular-file-entry-p))
-     ("subgoal *1/4.1.1'"
-      :expand
-      (l3-regular-file-entry-p
-       (cons
-        (find-n-free-blocks
-         (set-indices-in-alv alv (cadr (assoc-equal (car hns) fs))
-                             nil)
-         (len
-          (make-blocks
-           (insert-text
-            (unmake-blocks
-             (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-             (cddr (assoc-equal (car hns) fs)))
-            start text))))
-        (len
-         (insert-text
-          (unmake-blocks
-           (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-           (cddr (assoc-equal (car hns) fs)))
-          start text)))))
-     ("subgoal *1/3.1.2'" :in-theory (enable l3-regular-file-entry-p))
-     ("subgoal *1/3.1.1'"
-      :expand
-      (l3-regular-file-entry-p
-       (cons
-        (find-n-free-blocks
-         (set-indices-in-alv alv (cadr (assoc-equal (car hns) fs))
-                             nil)
-         (len
-          (make-blocks
-           (insert-text
-            (unmake-blocks
-             (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-             (cddr (assoc-equal (car hns) fs)))
-            start text))))
-        (len
-         (insert-text
-          (unmake-blocks
-           (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-           (cddr (assoc-equal (car hns) fs)))
-          start text)))))))))
+  :hints (("subgoal *1/6.2" :in-theory (enable l3-regular-file-entry-p))
+          ("subgoal *1/5.2" :in-theory (enable l3-regular-file-entry-p))
+          ("subgoal *1/4.2" :in-theory (enable l3-regular-file-entry-p))
+          ("subgoal *1/3.2" :in-theory (enable l3-regular-file-entry-p))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-31
