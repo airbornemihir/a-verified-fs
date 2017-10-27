@@ -1,6 +1,8 @@
 % titlepage-demo.tex
 \documentclass{beamer}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{matrix}
 % items enclosed in square brackets are optional; explanation below
 \title{Verifying filesystems in ACL2}
 \subtitle{Towards verifying file recovery tools}
@@ -10,7 +12,7 @@
   University of Texas at Austin\\[1ex]
   \texttt{mihir@cs.utexas.edu}
 }
-\date{09 March, 2017}
+\date{27 October, 2017}
 
 \begin{document}
 
@@ -36,7 +38,7 @@
     should.
   \item Modern filesystems have become increasingly complex, and so
     have the tools to analyse and recover data from them.
-  \item It might be nice, it might be nice to verify that the
+  \item It would be worthwhile to verify that the
     filesystems and the tools actually provide the guarantees they
     claim to provide.
   \end{itemize}
@@ -44,13 +46,11 @@
 
 \begin{frame}{What we need}
   \begin{itemize}
-    \item Our filesystem should offer a set of operations that are
-      sufficient for running a workload.
-    \item However, as theorem proving researchers, we are loath to
-      construct more operations than necessary - so what's the minimal
-      set?
-    \item We could attempt to emulate the VFS and replicate the
-      operations for inodes, dentries, and files.
+    \item Our filesystem's operations should suffice for running a
+      workload.
+    \item Yet, parsimony and avoidance of redundancy are essential for
+      theorem proving.
+    \item How about emulating the VFS interface?
     \item That would
       mean 19 inode operations, 6 dentry operations and 22 file operations.
   \end{itemize}
@@ -84,8 +84,8 @@
 
 \begin{frame}{Minimal set of operations?}
   \begin{itemize}
-  \item There might be a better way, based on the Google file system.
-  \item Here, we have a minimal set of operations:
+  \item There might be a better way.
+  \item The Google filesystem suggests a minimal set of operations:
     \begin{itemize}
     \item \texttt{create}
     \item \texttt{delete}
@@ -94,104 +94,138 @@
     \item \texttt{read}
     \item \texttt{write}
     \end{itemize}
-  \item Further, we could leave \texttt{open} and \texttt{close} for
-    the time when we want to deal with multiprogramming and
-    concurrency.
-  \item Thus, we have a minimal set of filesystem operations which we
-    can model.
+  \item Of these, \texttt{open} and \texttt{close} require the
+    maintenance of file descriptor state.
+  \item However, they are essential when describing concurrency and
+    multiprogramming behaviour.
+  \item Thus, we can start modelling a minimal set of filesystem
+    operations.
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Modelling a filesystem}
   \begin{itemize}
   \item What should the filesystem look like?
-  \item We're used to thinking of the filesystem as a tree... how
-    about that?
+  \item How about... a tree?
   \item Thinking along the lines of recursive datatypes, an \texttt{alist}
     containing only strings or similar \texttt{alist}s in its
     \texttt{strip-cdrs} could do the job.
   \item The \texttt{strip-cars} would contain the file/directory
     names.
-  \item Next, we'll look at a running example where we see what it
-    looks like to add/delete files from such a model.
+  \item Next, we'll look at a running example, and add/delete files
+    from such a model.
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Model 1}
-  \begin{figure}
-    \centering
-    \def\svgwidth{\columnwidth}
-    \input{l1-1.pdf_tex}
-  \end{figure}
+\begin{tikzpicture}[sibling distance=10em,
+  every node/.style = {shape=rectangle, rounded corners,
+    draw, align=center,
+    top color=white, bottom color=blue!20}]
+  \node {\textbackslash}
+    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
+    child { node {tmp}
+      child { node {ticket1,{"}Sun 19:00{"}}}};
+\end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Model 1}
-  \begin{figure}
-    \centering
-    \def\svgwidth{\columnwidth}
-    \input{l1-2.pdf_tex}
-  \end{figure}
+\begin{tikzpicture}[sibling distance=10em,
+  every node/.style = {shape=rectangle, rounded corners,
+    draw, align=center,
+    top color=white, bottom color=blue!20}]
+  \node {\textbackslash}
+    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
+    child { node {tmp}
+      child { node {ticket1,{"}Sun 19:00{"}}}
+      child { node {ticket2,{"}Tue 21:00{"}}}};
+\end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Model 1}
-  \begin{figure}
-    \centering
-    \def\svgwidth{\columnwidth}
-    \input{l1-3.pdf_tex}
-  \end{figure}
+\begin{tikzpicture}[sibling distance=10em,
+  every node/.style = {shape=rectangle, rounded corners,
+    draw, align=center,
+    top color=white, bottom color=blue!20}]
+  \node {\textbackslash}
+    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
+    child { node {tmp}
+      child { node {ticket2,{"}Tue 21:00{"}}}};
+\end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Model 1}
-  \begin{figure}
-    \centering
-    \def\svgwidth{\columnwidth}
-    \input{l1-4.pdf_tex}
-  \end{figure}
+\begin{tikzpicture}[sibling distance=10em,
+  every node/.style = {shape=rectangle, rounded corners,
+    draw, align=center,
+    top color=white, bottom color=blue!20}]
+  \node {\textbackslash}
+    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
+    child { node {tmp}
+      child { node {ticket2,{"}Wed 01:00{"}}}};
+\end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Model 2}
   \begin{itemize}
-  \item Model 1 can hold unbounded text files and nested directory
-    structures.
+  \item Model 1 supports nested directory structures, unbounded file
+    size and unbounded filesystem size.
   \item However, there's no metadata, either to provide additional
     information or to validate the contents of the file.
   \item With an extra field for length, we can create a simple
-    version of fsck that checks file contents for consistency, and
-    verify that create, delete etc preserve this notion of
-    consistency.
+    version of fsck that checks file contents for consistency.
+  \item Further, we can verify that create, write, delete etc preserve
+    this notion of consistency.
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Model 2}
-  \begin{figure}
-    \centering
-    \def\svgwidth{1.1\columnwidth}
-    \input{l2-1.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},3} }
+      child { node {tmp}
+        child { node {ticket1,{"}Sun 19:00{"},9}}};
+  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Model 2}
-  \begin{figure}
-    \centering
-    \def\svgwidth{1.1\columnwidth}
-    \input{l2-2.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},3} }
+      child { node {tmp}
+        child { node {ticket1,{"}Sun 19:00{"},9}}
+        child { node {ticket2,{"}Tue 21:00{"},9}}};
+  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Model 2}
-  \begin{figure}
-    \centering
-    \def\svgwidth{1.1\columnwidth}
-    \input{l2-3.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},3} }
+      child { node {tmp}
+        child { node {ticket2,{"}Tue 21:00{"},9}}};
+  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Model 2}
-  \begin{figure}
-    \centering
-    \def\svgwidth{1.1\columnwidth}
-    \input{l2-4.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},3} }
+      child { node {tmp}
+        child { node {ticket2,{"}Wed 01:00{"},9}}};
+  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Model 3}
@@ -208,11 +242,15 @@
 \end{frame}
 
 \begin{frame}{Model 3}
-  \begin{figure}
-    %% \centering
-    \def\svgwidth{0.7\columnwidth}
-    \input{l3-1.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,(0),3} }
+      child { node {tmp}
+        child { node {ticket1,(1 2),9}}};
+  \end{tikzpicture}
   \begin{table}[]
     %% \centering
     \caption{Disk}
@@ -227,32 +265,16 @@
 \end{frame}
 
 \begin{frame}{Model 3}
-  \begin{figure}
-    %% \centering
-    \def\svgwidth{0.7\columnwidth}
-    \input{l3-2.pdf_tex}
-  \end{figure}
-  \begin{table}[]
-    \centering
-    \caption{Disk}
-    \label{my-label}
-    \begin{tabular}{|l|}
-      \hline
-      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      Sun 19:0 \\ \hline
-      0        \\ \hline
-      Tue 21:0 \\ \hline
-      0        \\ \hline
-    \end{tabular}
-  \end{table}
-\end{frame}
-
-\begin{frame}{Model 3}
-  \begin{figure}
-    %% \centering
-    \def\svgwidth{0.7\columnwidth}
-    \input{l3-3.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,(0),3} }
+      child { node {tmp}
+        child { node {ticket1,(1 2),9}}
+        child { node {ticket2,(3 4),9}}};
+  \end{tikzpicture}
   \begin{table}[]
     \centering
     \caption{Disk}
@@ -269,11 +291,40 @@
 \end{frame}
 
 \begin{frame}{Model 3}
-  \begin{figure}
-    %% \centering
-    \def\svgwidth{0.7\columnwidth}
-    \input{l3-4.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,(0),3} }
+      child { node {tmp}
+        child { node {ticket2,(3 4),9}}};
+  \end{tikzpicture}
+  \begin{table}[]
+    \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Sun 19:0 \\ \hline
+      0        \\ \hline
+      Tue 21:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Model 3}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,(0),3} }
+      child { node {tmp}
+        child { node {ticket2,(5 6),9}}};
+  \end{tikzpicture}
   \begin{table}[]
     \centering
     \caption{Disk}
@@ -301,11 +352,15 @@
 \end{frame}
 
 \begin{frame}{Model 4}
-  \begin{figure}
-    %% \centering
-    \def\svgwidth{0.7\columnwidth}
-    \input{l4-1.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,(0),3} }
+      child { node {tmp}
+        child { node {ticket1,(1 2),9}}};
+  \end{tikzpicture}
   \begin{table}[]
     %% \centering
     \caption{Disk}
@@ -320,32 +375,16 @@
 \end{frame}
 
 \begin{frame}{Model 4}
-  \begin{figure}
-    %% \centering
-    \def\svgwidth{0.7\columnwidth}
-    \input{l4-2.pdf_tex}
-  \end{figure}
-  \begin{table}[]
-    \centering
-    \caption{Disk}
-    \label{my-label}
-    \begin{tabular}{|l|}
-      \hline
-      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      Sun 19:0 \\ \hline
-      0        \\ \hline
-      Tue 21:0 \\ \hline
-      0        \\ \hline
-    \end{tabular}
-  \end{table}
-\end{frame}
-
-\begin{frame}{Model 4}
-  \begin{figure}
-    %% \centering
-    \def\svgwidth{0.7\columnwidth}
-    \input{l4-3.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,(0),3} }
+      child { node {tmp}
+        child { node {ticket1,(1 2),9}}
+        child { node {ticket2,(3 4),9}}};
+  \end{tikzpicture}
   \begin{table}[]
     \centering
     \caption{Disk}
@@ -362,11 +401,40 @@
 \end{frame}
 
 \begin{frame}{Model 4}
-  \begin{figure}
-    %% \centering
-    \def\svgwidth{0.7\columnwidth}
-    \input{l4-4.pdf_tex}
-  \end{figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,(0),3} }
+      child { node {tmp}
+        child { node {ticket2,(3 4),9}}};
+  \end{tikzpicture}
+  \begin{table}[]
+    \centering
+    \caption{Disk}
+    \label{my-label}
+    \begin{tabular}{|l|}
+      \hline
+      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      Sun 19:0 \\ \hline
+      0        \\ \hline
+      Tue 21:0 \\ \hline
+      0        \\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Model 4}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {\textbackslash}
+      child { node {vmlinuz,(0),3} }
+      child { node {tmp}
+        child { node {ticket2,(1 2),9}}};
+  \end{tikzpicture}
   \begin{table}[]
     \centering
     \caption{Disk}
@@ -401,18 +469,42 @@
 
 \begin{frame}{Proof approaches and techniques}
   \begin{enumerate}
-  \item For model 4, The disk and the allocation vector must be in harmony
+  \item For model 4, the disk and the allocation vector must be in harmony
     initially and updated in lockstep.
   \item Every block referred to in the filesystem must be marked
     "used" in the allocation vector.\\
-    \textit{What about the complementary problem - making sure unused
-      blocks are unmarked?}
+    (The complementary problem - making sure unused
+      blocks are unmarked - is more complicated because it's non-local.)
   \item If n blocks are available in the allocation vector, the
     allocation algorithm must provide n blocks when requested.
   \item No matter how many blocks are returned by the allocation
     algorithm, they must be unique and disjoint with the blocks
     allocated to other files.
   \end{enumerate}
+\end{frame}
+
+\begin{frame}{Work in progress: permissions}
+  \begin{itemize}
+  \item What does permission checking look like in ACL2?
+  \item Top-down: picture the theorems that would prove correctness.
+    \begin{enumerate}
+    \item Read/write/execute permission is granted when the requesting
+      user has permission for themselves/their group, or when the
+      permission is granted to all.
+    \item Converse: read/write/execute permission is denied when none
+      of the above hold.
+    \item Reads that fail because of permissions return nil in our
+      model.
+    \item Writes that fail because of permissions return an unmodified
+      filesystem.
+    \end{enumerate}
+  \item Gee, how do we represent users and groups?
+    \begin{enumerate}
+    \item Users are natural numbers.
+    \item Groups are also natural numbers, and a vector (psst: a
+      nat-list) holds the group associated with each user.
+    \end{enumerate}
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Future work}
@@ -438,6 +530,9 @@
     comparable performance to ext4 when run on FUSE.
   \item Our work is different - we're building verified models of
     actual filesystems with binary compatibility as the aim.
+  \item Hyperkernel (Nelson et al, SOSP '17) is a "push-button"
+    verification effort, but approximates by changing POSIX system
+    calls for ease of verification.
   \end{itemize}
 \end{frame}
 
