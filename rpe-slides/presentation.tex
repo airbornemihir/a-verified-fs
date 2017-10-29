@@ -14,6 +14,14 @@
 }
 \date{27 October, 2017}
 
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>
+    \frametitle{Outline for section \thesection}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
 \begin{document}
 
 %--- the titlepage frame -------------------------%
@@ -22,14 +30,8 @@
 \end{frame}
 
 %--- the presentation begins here ----------------%
-\begin{frame}{Overview}
-  \begin{enumerate}
-  \item Why we need a verified filesystem
-  \item Our approach
-  \item Progress so far
-  \item Future work
-  \end{enumerate}
-\end{frame}
+
+\section{Motivation}
 
 \begin{frame}{Why we need a verified filesystem}
   \begin{itemize}
@@ -44,6 +46,8 @@
     ACL2 specifications.
   \end{itemize}
 \end{frame}
+
+\section{Our approach}
 
 \begin{frame}{Choosing an initial model}
   \begin{itemize}
@@ -339,7 +343,7 @@
   \end{table}
 \end{frame}
 
-\begin{frame}{Proof approaches and techniques}
+\begin{frame}{Model 4}
   \begin{itemize}
   \item In the fourth model, we implement garbage collection in the
     form of an allocation vector.
@@ -447,6 +451,7 @@
   \end{table}
 \end{frame}
 
+\section{Progress so far}
 \begin{frame}{Proof approaches and techniques}
   \begin{itemize}
   \item There are many properties that could be considered for
@@ -480,7 +485,9 @@
   \end{enumerate}
 \end{frame}
 
-\begin{frame}{Work in progress: permissions}
+\section{Future and related work}
+
+\begin{frame}{Permissions}
   \begin{itemize}
   \item What does permission checking look like in ACL2?
   \item Top-down: picture the theorems that would prove correctness.
@@ -504,7 +511,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Future work}
+\begin{frame}{Other future work}
   \begin{itemize}
   \item Finish finitising the length of the disk and garbage
     collecting disk blocks that are left unused after a write or a delete
