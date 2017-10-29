@@ -33,26 +33,27 @@
 
 \begin{frame}{Why we need a verified filesystem}
   \begin{itemize}
-  \item Filesystems are everywhere.
-  \item Yet they're poorly understood - especially by people who
-    should.
+  \item Filesystems are everywhere, even as operating systems move
+    towards making them invisible.
+  \item In the absence of a clear specification of filesystems, users
+    are underserved.
   \item Modern filesystems have become increasingly complex, and so
     have the tools to analyse and recover data from them.
-  \item It would be worthwhile to verify that the
-    filesystems and the tools actually provide the guarantees they
-    claim to provide.
+  \item It would be worthwhile to specify, in ACL2, the guarantees
+    claimed by filesystems and tools, and verify these based on their
+    ACL2 specifications.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{What we need}
+\begin{frame}{Choosing an initial model}
   \begin{itemize}
+    \item Our goal here is to verify the CP/M filesystem, but we need
+      a simpler model to begin with.
     \item Our filesystem's operations should suffice for running a
       workload.
     \item Yet, parsimony and avoidance of redundancy are essential for
       theorem proving.
-    \item How about emulating the VFS interface?
-    \item That would
-      mean 19 inode operations, 6 dentry operations and 22 file operations.
+    \item What's a necessary and sufficient set of operations?
   \end{itemize}
 \end{frame}
 
@@ -105,15 +106,11 @@
 
 \begin{frame}{Modelling a filesystem}
   \begin{itemize}
-  \item What should the filesystem look like?
-  \item How about... a tree?
-  \item Thinking along the lines of recursive datatypes, an \texttt{alist}
-    containing only strings or similar \texttt{alist}s in its
-    \texttt{strip-cdrs} could do the job.
-  \item The \texttt{strip-cars} would contain the file/directory
-    names.
-  \item Next, we'll look at a running example, and add/delete files
-    from such a model.
+  \item What should our first filesystem model look like?
+  \item A tree is a natural choice to model the directory structure.
+  \item Let's look at an example, and create/add/delete files.
+  \item This will be our running example, to show our design choices
+    in future models.
   \end{itemize}
 \end{frame}
 
