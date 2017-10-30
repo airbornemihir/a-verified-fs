@@ -22,7 +22,12 @@
   \end{frame}
 }
 
-\setbeamertemplate{footline}[frame number]
+\addtobeamertemplate{navigation symbols}{}{%
+    \usebeamerfont{footline}%
+    \usebeamercolor[fg]{footline}%
+    \hspace{1em}%
+    \insertframenumber/\inserttotalframenumber
+}
 
 \begin{document}
 
