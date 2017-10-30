@@ -280,7 +280,6 @@
 ;; This function transforms an instance of l3 into an equivalent instance of l2.
 (defun l3-to-l2-fs (fs disk)
   (declare (xargs :guard (and (l3-fs-p fs) (block-listp disk))
-                  :guard-debug t
                   :guard-hints (("Subgoal 2.6" :in-theory (enable feasible-file-length-p)))
                   ))
   (if (atom fs)
@@ -304,8 +303,7 @@
 
 ;; This function allows a file or directory to be found in a filesystem given a path.
 (defun l3-stat (hns fs disk)
-  (declare (xargs :guard-debug t
-                  :guard (and (symbol-listp hns)
+  (declare (xargs :guard (and (symbol-listp hns)
                               (l3-fs-p fs)
                               (block-listp disk))))
   (if (atom hns)
@@ -751,8 +749,7 @@
   (declare (xargs :guard (and (symbol-listp hns)
                               (l3-fs-p fs)
                               (stringp text)
-                              (block-listp disk))
-                  :guard-debug t))
+                              (block-listp disk))))
   (if (atom hns)
       (mv fs disk) ;; error - showed up at fs with no name  - so leave fs unchanged
     (let ((sd (assoc (car hns) fs)))
