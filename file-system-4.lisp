@@ -775,10 +775,7 @@
              (l4-stricter-fs-p new-fs new-alv)))
   :hints (("Subgoal *1/6" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))))
 
-(defun l4-to-l3-fs (fs disk)
-  (mv fs disk))
-
-(defthmd l4-to-l3-fs-correctness-1
-  (implies (and (l4-fs-p fs) (block-listp disk))
-           (mv-let (new-fs new-disk) (l4-to-l3-fs fs disk)
-             (and (l3-fs-p new-fs) (block-listp new-disk)))))
+(defun l4-to-l2-fs (fs disk)
+  (declare (xargs :guard (and (l4-fs-p fs) (block-listp disk))
+                  ))
+  (l3-to-l2-fs fs disk))
