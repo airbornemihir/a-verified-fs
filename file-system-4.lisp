@@ -779,3 +779,9 @@
   (declare (xargs :guard (and (l4-fs-p fs) (block-listp disk))
                   ))
   (l3-to-l2-fs fs disk))
+
+;; This theorem shows the type-correctness of l4-to-l2-fs.
+(defthm l4-to-l2-fs-correctness-1
+  (implies (and (l4-fs-p fs) (block-listp disk))
+           (l2-fs-p (l4-to-l2-fs fs disk))))
+

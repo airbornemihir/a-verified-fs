@@ -296,7 +296,7 @@
                     (l3-to-l2-fs entry disk))))
           (l3-to-l2-fs (cdr fs) disk))))
 
-;; This theorem shows the type-correctness of l2-to-l1-fs.
+;; This theorem shows the type-correctness of l3-to-l2-fs.
 (defthm l3-to-l2-fs-correctness-1
   (implies (and (l3-fs-p fs) (block-listp disk))
            (l2-fs-p (l3-to-l2-fs fs disk))))
