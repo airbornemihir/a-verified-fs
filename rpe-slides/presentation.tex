@@ -31,7 +31,7 @@
 
 %--- the presentation begins here ----------------%
 
-\section{Motivation}
+\section{Motivation and related work}
 
 \begin{frame}{Why we need a verified filesystem}
   \begin{itemize}
@@ -44,6 +44,19 @@
   \item It would be worthwhile to specify, in ACL2, the guarantees
     claimed by filesystems and tools, and verify these based on their
     ACL2 specifications.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Related work}
+  \begin{itemize}
+  \item In Haogang Chen's 2016 dissertation, the author uses Coq to
+    build a filesystem (named FSCQ) which is proven safe against
+    crashes.
+  \item His implementation was exported into Haskell, and showed
+    comparable performance to ext4 when run on FUSE.
+  \item Hyperkernel (Nelson et al, SOSP '17) is a "push-button"
+    verification effort, but approximates by changing POSIX system
+    calls for ease of verification.
   \end{itemize}
 \end{frame}
 
@@ -100,7 +113,7 @@
     \item \texttt{write}
     \end{itemize}
   \item Of these, \texttt{open} and \texttt{close} require the
-    maintenance of file descriptor state.
+    maintenance of file descriptor state - so they can wait.
   \item However, they are essential when describing concurrency and
     multiprogramming behaviour.
   \item Thus, we can start modelling a minimal set of filesystem
@@ -108,13 +121,15 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Modelling a filesystem}
+\begin{frame}{Quick overview of models}
   \begin{itemize}
-  \item What should our first filesystem model look like?
-  \item A tree is a natural choice to model the directory structure.
-  \item Let's look at an example, and create/add/delete files.
-  \item This will be our running example, to show our design choices
-    in future models.
+  \item Model 1: Tree representation of directory structure with unbounded
+    file size and unbounded filesystem size.
+  \item Model 2: Model 1 with file length as metadata.
+  \item Model 3: Tree representation of directory structure with
+    file contents stored in a "disk".
+  \item Model 4: Model 3 with bounded filesystem size and garbage
+    collection.
   \end{itemize}
 \end{frame}
 
@@ -348,7 +363,7 @@
   \item In the fourth model, we implement garbage collection in the
     form of an allocation vector.
   \item What guarantees do we need to show that a filesystem of this
-    kind is consistent?
+    kind is consistent? (\textit{We'll return to this question.})
   \end{itemize}
 \end{frame}
 
@@ -485,7 +500,7 @@
   \end{enumerate}
 \end{frame}
 
-\section{Future and related work}
+\section{Future work}
 
 \begin{frame}{Permissions}
   \begin{itemize}
@@ -513,30 +528,13 @@
 
 \begin{frame}{Other future work}
   \begin{itemize}
-  \item Finish finitising the length of the disk and garbage
-    collecting disk blocks that are left unused after a write or a delete
-    operation.
+  \item Finish read-over-write proofs for model 4.
   \item Possibly, add the system call open and close with the
     introduction of file descriptors.\\
     \textit{This would be a step towards the study of concurrent FS operations.}
   \item Linearise the tree, leaving only the disk.
   \item Eventually emulate the CP/M filesystem as a convincing proof
     of concept, and move on to fsck and file recovery tools.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Related work}
-  \begin{itemize}
-  \item In Haogang Chen's 2016 dissertation, the author uses Coq to
-    build a filesystem (named FSCQ) which is proven safe against
-    crashes.
-  \item His implementation was exported into Haskell, and showed
-    comparable performance to ext4 when run on FUSE.
-  \item Our work is different - we're building verified models of
-    actual filesystems with binary compatibility as the aim.
-  \item Hyperkernel (Nelson et al, SOSP '17) is a "push-button"
-    verification effort, but approximates by changing POSIX system
-    calls for ease of verification.
   \end{itemize}
 \end{frame}
 
