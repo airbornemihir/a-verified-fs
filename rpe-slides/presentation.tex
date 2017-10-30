@@ -14,6 +14,21 @@
 }
 \date{27 October, 2017}
 
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>
+    \frametitle{Outline for section \thesection}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\addtobeamertemplate{navigation symbols}{}{%
+    \usebeamerfont{footline}%
+    \usebeamercolor[fg]{footline}%
+    \hspace{1em}%
+    \large \insertframenumber/\inserttotalframenumber
+}
+
 \begin{document}
 
 %--- the titlepage frame -------------------------%
@@ -22,37 +37,47 @@
 \end{frame}
 
 %--- the presentation begins here ----------------%
-\begin{frame}{Overview}
-  \begin{enumerate}
-  \item Why we need a verified filesystem
-  \item Our approach
-  \item Progress so far
-  \item Future work
-  \end{enumerate}
-\end{frame}
+
+\section{Motivation and related work}
 
 \begin{frame}{Why we need a verified filesystem}
   \begin{itemize}
-  \item Filesystems are everywhere.
-  \item Yet they're poorly understood - especially by people who
-    should.
+  \item Filesystems are everywhere, even as operating systems move
+    towards making them invisible.
+  \item In the absence of a clear specification of filesystems, users
+    are underserved.
   \item Modern filesystems have become increasingly complex, and so
     have the tools to analyse and recover data from them.
-  \item It would be worthwhile to verify that the
-    filesystems and the tools actually provide the guarantees they
-    claim to provide.
+  \item It would be worthwhile to specify, in ACL2, the guarantees
+    claimed by filesystems and tools, and verify these based on their
+    ACL2 specifications.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{What we need}
+\begin{frame}{Related work}
   \begin{itemize}
+  \item In Haogang Chen's 2016 dissertation, the author uses Coq to
+    build a filesystem (named FSCQ) which is proven safe against
+    crashes.
+  \item His implementation was exported into Haskell, and showed
+    comparable performance to ext4 when run on FUSE.
+  \item Hyperkernel (Nelson et al, SOSP '17) is a "push-button"
+    verification effort, but approximates by changing POSIX system
+    calls for ease of verification.
+  \end{itemize}
+\end{frame}
+
+\section{Our approach}
+
+\begin{frame}{Choosing an initial model}
+  \begin{itemize}
+    \item Our goal here is to verify the CP/M filesystem, but we need
+      a simpler model to begin with.
     \item Our filesystem's operations should suffice for running a
       workload.
     \item Yet, parsimony and avoidance of redundancy are essential for
       theorem proving.
-    \item How about emulating the VFS interface?
-    \item That would
-      mean 19 inode operations, 6 dentry operations and 22 file operations.
+    \item What's a necessary and sufficient set of operations?
   \end{itemize}
 \end{frame}
 
@@ -95,7 +120,7 @@
     \item \texttt{write}
     \end{itemize}
   \item Of these, \texttt{open} and \texttt{close} require the
-    maintenance of file descriptor state.
+    maintenance of file descriptor state - so they can wait.
   \item However, they are essential when describing concurrency and
     multiprogramming behaviour.
   \item Thus, we can start modelling a minimal set of filesystem
@@ -103,17 +128,15 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Modelling a filesystem}
+\begin{frame}{Quick overview of models}
   \begin{itemize}
-  \item What should the filesystem look like?
-  \item How about... a tree?
-  \item Thinking along the lines of recursive datatypes, an \texttt{alist}
-    containing only strings or similar \texttt{alist}s in its
-    \texttt{strip-cdrs} could do the job.
-  \item The \texttt{strip-cars} would contain the file/directory
-    names.
-  \item Next, we'll look at a running example, and add/delete files
-    from such a model.
+  \item Model 1: Tree representation of directory structure with unbounded
+    file size and unbounded filesystem size.
+  \item Model 2: Model 1 with file length as metadata.
+  \item Model 3: Tree representation of directory structure with
+    file contents stored in a "disk".
+  \item Model 4: Model 3 with bounded filesystem size and garbage
+    collection.
   \end{itemize}
 \end{frame}
 
@@ -342,12 +365,12 @@
   \end{table}
 \end{frame}
 
-\begin{frame}{Proof approaches and techniques}
+\begin{frame}{Model 4}
   \begin{itemize}
   \item In the fourth model, we implement garbage collection in the
     form of an allocation vector.
   \item What guarantees do we need to show that a filesystem of this
-    kind is consistent?
+    kind is consistent? (\textit{We'll return to this question.})
   \end{itemize}
 \end{frame}
 
@@ -450,6 +473,7 @@
   \end{table}
 \end{frame}
 
+\section{Progress so far}
 \begin{frame}{Proof approaches and techniques}
   \begin{itemize}
   \item There are many properties that could be considered for
@@ -457,9 +481,18 @@
     theory of arrays seem like a good place to start.
     \begin {enumerate}
     \item Reading from a location after writing to the same location
-      should yield the data that was written.
+      should yield the data that was written. Formally, assuming \texttt{n =
+      length(text)} and suitable "type" hypotheses (omitted here): \\
+      \texttt{l1-rdchs(hns, l1-wrchs(hns, fs, start, text), start, n)
+      =
+      text}
     \item Reading from a location after writing to a different
-      location should yield the same result as reading before writing.
+      location should yield the same result as reading before
+      writing. Formally, assuming \texttt{hns1 != hns2} and suitable "type"
+      hypotheses (omitted here):\\
+      \texttt{l1-rdchs(hns1, l1-wrchs(hns2, fs, start2, text2), start1, n1)
+        =
+        l1-rdchs(hns1, fs, start1, n1)}
     \end {enumerate}
     \item For each of the models 1, 2 and 3, we have proofs of correctness of
       the two read-after-write properties, based on the proofs of
@@ -483,7 +516,9 @@
   \end{enumerate}
 \end{frame}
 
-\begin{frame}{Work in progress: permissions}
+\section{Future work}
+
+\begin{frame}{Permissions}
   \begin{itemize}
   \item What does permission checking look like in ACL2?
   \item Top-down: picture the theorems that would prove correctness.
@@ -493,8 +528,7 @@
       permission is granted to all.
     \item Converse: read/write/execute permission is denied when none
       of the above hold.
-    \item Reads that fail because of permissions return nil in our
-      model.
+    \item Reads that fail because of permissions do not return a value.
     \item Writes that fail because of permissions return an unmodified
       filesystem.
     \end{enumerate}
@@ -507,32 +541,15 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Future work}
+\begin{frame}{Other future work}
   \begin{itemize}
-  \item Finish finitising the length of the disk and garbage
-    collecting disk blocks that are left unused after a write or a delete
-    operation.
+  \item Finish read-over-write proofs for model 4.
   \item Possibly, add the system call open and close with the
     introduction of file descriptors.\\
     \textit{This would be a step towards the study of concurrent FS operations.}
   \item Linearise the tree, leaving only the disk.
   \item Eventually emulate the CP/M filesystem as a convincing proof
     of concept, and move on to fsck and file recovery tools.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Related work}
-  \begin{itemize}
-  \item In Haogang Chen's 2016 dissertation, the author uses Coq to
-    build a filesystem (named FSCQ) which is proven safe against
-    crashes.
-  \item His implementation was exported into Haskell, and showed
-    comparable performance to ext4 when run on FUSE.
-  \item Our work is different - we're building verified models of
-    actual filesystems with binary compatibility as the aim.
-  \item Hyperkernel (Nelson et al, SOSP '17) is a "push-button"
-    verification effort, but approximates by changing POSIX system
-    calls for ease of verification.
   \end{itemize}
 \end{frame}
 
