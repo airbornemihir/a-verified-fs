@@ -481,9 +481,18 @@
     theory of arrays seem like a good place to start.
     \begin {enumerate}
     \item Reading from a location after writing to the same location
-      should yield the data that was written.
+      should yield the data that was written. Formally, assuming \texttt{n =
+      length(text)} and suitable "type" hypotheses (omitted here): \\
+      \texttt{l1-rdchs(hns, l1-wrchs(hns, fs, start, text), start, n)
+      =
+      text}
     \item Reading from a location after writing to a different
-      location should yield the same result as reading before writing.
+      location should yield the same result as reading before
+      writing. Formally, assuming \texttt{hns1 != hns2} and suitable "type"
+      hypotheses (omitted here):\\
+      \texttt{l1-rdchs(hns1, l1-wrchs(hns2, fs, start2, text2), start1, n1)
+        =
+        l1-rdchs(hns1, fs, start1, n1)}
     \end {enumerate}
     \item For each of the models 1, 2 and 3, we have proofs of correctness of
       the two read-after-write properties, based on the proofs of
