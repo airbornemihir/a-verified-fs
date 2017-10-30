@@ -519,8 +519,7 @@
       permission is granted to all.
     \item Converse: read/write/execute permission is denied when none
       of the above hold.
-    \item Reads that fail because of permissions return nil in our
-      model.
+    \item Reads that fail because of permissions do not return a value.
     \item Writes that fail because of permissions return an unmodified
       filesystem.
     \end{enumerate}
