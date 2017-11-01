@@ -866,16 +866,6 @@
            (equal (l3-to-l2-fs fs (update-nth index value disk))
                   (l3-to-l2-fs fs disk))))
 
-;; (verify (IMPLIES (AND
-;;                (CONSP INDEX-LIST)
-;;                (MEMBER-EQUAL (CAR INDEX-LIST)
-;;                              (L4-LIST-ALL-INDICES FS))
-;;                (L3-FS-P FS)
-;;                (NAT-LISTP (CDR INDEX-LIST)))
-;;               (not (NOT-INTERSECTP-LIST INDEX-LIST
-;;                                         (L4-COLLECT-ALL-INDEX-LISTS FS))))
-;;  :instructions ((prove      :hints (("Goal" :in-theory (enable L4-LIST-ALL-INDICES)) ))))
-
 (defthm l4-wrchs-correctness-1-lemma-6 (IMPLIES (AND
                (CONSP INDEX-LIST)
                (MEMBER-EQUAL (CAR INDEX-LIST)
@@ -885,6 +875,48 @@
               (not (NOT-INTERSECTP-LIST INDEX-LIST
                                         (L4-COLLECT-ALL-INDEX-LISTS FS))))
      :hints (("Goal" :in-theory (enable L4-LIST-ALL-INDICES)) ))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-7
+  (implies (and (consp index-list)
+                (not (not-intersectp-list (cdr index-list)
+                                          (l4-collect-all-index-lists fs)))
+                (l3-fs-p fs))
+           (not (not-intersectp-list index-list
+                                     (l4-collect-all-index-lists fs))))
+  :hints (("goal" :in-theory (enable l4-collect-all-index-lists))))
+
+(defthm l4-wrchs-correctness-1-lemma-8
+  (implies (and (block-listp disk)
+                (natp key)
+                (< key (len disk))
+                (character-listp val)
+                (equal (len val) *blocksize*))
+           (block-listp (update-nth key val disk))))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-9
+  (implies (and (l3-fs-p fs)
+                (boolean-listp alv)
+                (stringp text)
+                (integerp start)
+                (<= 0 start)
+                (block-listp disk)
+                (<= 0 (count-free-blocks alv))
+                (not-intersectp-list index-list
+                                     (l4-collect-all-index-lists fs))
+                (bounded-nat-listp index-list (len disk))
+                (block-listp value-list)
+                (equal (len value-list)
+                       (len index-list)))
+           (equal (l3-to-l2-fs fs
+                               (set-indices disk index-list value-list))
+                  (l3-to-l2-fs fs disk)))
+  :hints
+  (("subgoal *1/7''" :in-theory (disable l4-wrchs-correctness-1-lemma-5)
+    :use (:instance l4-wrchs-correctness-1-lemma-5
+                    (index (car index-list))
+                    (value (car value-list))))))
 
 ;; This theorem shows the equivalence of the l4 and l2 versions of wrchs.
 (defthm l4-wrchs-correctness-1
@@ -916,30 +948,6 @@
   ;;   :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
   ;;                   (fs (cdr (assoc-equal (car hns) fs))))))
   )
-
-(thm
- (IMPLIES
-  (AND
-   (L3-FS-P FS)
-   (BOOLEAN-LISTP ALV)
-   (STRINGP TEXT)
-   (INTEGERP START)
-   (<= 0 START)
-   (BLOCK-LISTP DISK)
-   (<= 0 (COUNT-FREE-BLOCKS ALV))
-   (not-intersectp-list index-list (L4-COLLECT-ALL-INDEX-LISTS FS))
-   (bounded-nat-listp index-list (len disk)))
-  (EQUAL
-   (L3-TO-L2-FS
-    FS
-    (SET-INDICES
-     DISK
-     index-list
-     value-list))
-   (L3-TO-L2-FS FS DISK)))
- :hints (("Subgoal *1/5''" :in-theory (disable L4-WRCHS-CORRECTNESS-1-LEMMA-5)
-          :use (:instance  L4-WRCHS-CORRECTNESS-1-LEMMA-5 (index (car
- index-list)) (value (car value-list)))))) 
 
 (thm (IMPLIES
       (AND (L3-fs-P fs1)
