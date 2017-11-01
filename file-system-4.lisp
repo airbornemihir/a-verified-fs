@@ -1173,6 +1173,18 @@
             (cddr (assoc-equal (car hns) fs1)))
            start text))))))))))
 
+(defthm
+  l4-wrchs-correctness-1-lemma-13
+  (implies
+   (and (bounded-nat-listp index-list (len v))
+        (no-duplicatesp index-list)
+        (block-listp value-list)
+        (equal (len index-list)
+               (len value-list)))
+   (equal (fetch-blocks-by-indices (set-indices v index-list value-list)
+                                   index-list)
+          value-list)))
+
 ;; This theorem shows the equivalence of the l4 and l2 versions of wrchs.
 (defthm l4-wrchs-correctness-1
   (implies (and (l4-stricter-fs-p fs alv)
@@ -1180,13 +1192,29 @@
                 (natp start)
                 (symbol-listp hns)
                 (block-listp disk)
+                (EQUAL (LEN ALV) (LEN DISK))
                 (<= (len (make-blocks text)) (count-free-blocks alv)))
            (equal (l2-wrchs hns (l4-to-l2-fs fs disk) start text)
                   (mv-let (new-fs new-disk new-alv)
                     (l4-wrchs hns fs disk alv start text)
                     (declare (ignore new-alv))
                     (l4-to-l2-fs new-fs new-disk))))
-  :hints ()
+  :hints (("Subgoal *1/7.4.4" 
+      :in-theory (disable find-n-free-blocks-correctness-7)
+      :use
+      (:instance
+        find-n-free-blocks-correctness-7
+        (alv (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                      NIL))
+        (n
+  (LEN
+   (MAKE-BLOCKS
+    (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT))))))
+          ("Subgoal *1/7.4.2.2" :in-theory (enable l3-regular-file-entry-p)))
   ;; (("Subgoal *1/8.9'"
   ;;   :in-theory (disable l3-wrchs-returns-fs)
   ;;   :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
