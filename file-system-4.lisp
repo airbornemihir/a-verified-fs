@@ -853,12 +853,7 @@
 
 (defthm l4-wrchs-correctness-1-lemma-5
   (implies (and (l3-fs-p fs)
-                (boolean-listp alv)
-                (stringp text)
-                (integerp start)
-                (<= 0 start)
                 (block-listp disk)
-                (<= 0 (count-free-blocks alv))
                 (integerp index)
                 (<= 0 index)
                 (< index (len disk))
@@ -866,15 +861,15 @@
            (equal (l3-to-l2-fs fs (update-nth index value disk))
                   (l3-to-l2-fs fs disk))))
 
-(defthm l4-wrchs-correctness-1-lemma-6 (IMPLIES (AND
-               (CONSP INDEX-LIST)
-               (MEMBER-EQUAL (CAR INDEX-LIST)
-                             (L4-LIST-ALL-INDICES FS))
-               (L3-FS-P FS)
-               (NAT-LISTP (CDR INDEX-LIST)))
-              (not (NOT-INTERSECTP-LIST INDEX-LIST
-                                        (L4-COLLECT-ALL-INDEX-LISTS FS))))
-     :hints (("Goal" :in-theory (enable L4-LIST-ALL-INDICES)) ))
+(defthm l4-wrchs-correctness-1-lemma-6
+  (implies (and (consp index-list)
+                (member-equal (car index-list)
+                              (l4-list-all-indices fs))
+                (l3-fs-p fs)
+                (nat-listp (cdr index-list)))
+           (not (not-intersectp-list index-list
+                                     (l4-collect-all-index-lists fs))))
+  :hints (("goal" :in-theory (enable l4-list-all-indices))))
 
 (defthm
   l4-wrchs-correctness-1-lemma-7
@@ -897,12 +892,7 @@
 (defthm
   l4-wrchs-correctness-1-lemma-9
   (implies (and (l3-fs-p fs)
-                (boolean-listp alv)
-                (stringp text)
-                (integerp start)
-                (<= 0 start)
                 (block-listp disk)
-                (<= 0 (count-free-blocks alv))
                 (not-intersectp-list index-list
                                      (l4-collect-all-index-lists fs))
                 (bounded-nat-listp index-list (len disk))
@@ -968,6 +958,8 @@
            (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS1))
            (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS1))
            (INDICES-MARKED-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS1)
+                                 ALV)
+           (INDICES-MARKED-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS2)
                                  ALV)
            (STRINGP TEXT)
            (INTEGERP START)
