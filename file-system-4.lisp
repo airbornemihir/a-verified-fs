@@ -785,3 +785,194 @@
   (implies (and (l4-fs-p fs) (block-listp disk))
            (l2-fs-p (l4-to-l2-fs fs disk))))
 
+;; This is the first of two theorems showing the equivalence of the l4 and l2
+;; versions of stat.
+(defthm l4-stat-correctness-1
+  (implies (and (symbol-listp hns)
+                (l4-fs-p fs)
+                (block-listp disk)
+                (stringp (l4-stat hns fs disk)))
+           (equal (l2-stat hns (l4-to-l2-fs fs disk))
+                  (l4-stat hns fs disk))))
+
+;; This is the second of two theorems showing the equivalence of the l4 and l2
+;; versions of stat.
+(defthm l4-stat-correctness-2
+  (implies (and (symbol-listp hns)
+                (l4-fs-p fs)
+                (block-listp disk)
+                (l4-fs-p (l4-stat hns fs disk)))
+           (equal (l2-stat hns (l4-to-l2-fs fs disk))
+                  (l4-to-l2-fs (l4-stat hns fs disk) disk)))
+  )
+
+;; This theorem proves the equivalence of the l4 and l2 versions of rdchs.
+(defthm l4-rdchs-correctness-1
+  (implies (and (symbol-listp hns)
+                (l4-fs-p fs)
+                (natp start)
+                (natp n)
+                (block-listp disk))
+           (equal (l2-rdchs hns (l4-to-l2-fs fs disk) start n)
+                  (l4-rdchs hns fs disk start n))))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-1
+  (implies (and (natp key)
+                (< key (len block-list))
+                (block-listp block-list)
+                (nat-listp index-list)
+                (not (member-equal key index-list)))
+           (equal (fetch-blocks-by-indices (update-nth key val block-list)
+                                           index-list)
+                  (fetch-blocks-by-indices block-list index-list))))
+
+(defthm l4-wrchs-correctness-1-lemma-2
+  (implies (and (l3-regular-file-entry-p (cdr (car fs)))
+                (not (member-equal index (l4-list-all-indices fs))))
+           (not (member-equal index (cadr (car fs)))))
+  :hints (("goal" :in-theory (enable l4-list-all-indices))))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-3
+  (implies (and (consp fs)
+                (l3-fs-p fs)
+                (member-equal index (l4-list-all-indices (cdr fs))))
+           (member-equal index (l4-list-all-indices fs)))
+  :hints (("goal" :expand (l4-list-all-indices fs))))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-4
+  (implies (and (l3-fs-p fs)
+                (consp (car fs))
+                (l3-fs-p (cdr (car fs)))
+                (member-equal index
+                              (l4-list-all-indices (cdr (car fs)))))
+           (member-equal index (l4-list-all-indices fs)))
+  :hints (("goal" :expand (l4-list-all-indices fs))))
+
+(defthm l4-wrchs-correctness-1-lemma-5
+  (implies (and (l3-fs-p fs)
+                (boolean-listp alv)
+                (stringp text)
+                (integerp start)
+                (<= 0 start)
+                (block-listp disk)
+                (<= 0 (count-free-blocks alv))
+                (integerp index)
+                (<= 0 index)
+                (< index (len disk))
+                (not (member-equal index (l4-list-all-indices fs))))
+           (equal (l3-to-l2-fs fs (update-nth index value disk))
+                  (l3-to-l2-fs fs disk))))
+
+;; (verify (IMPLIES (AND
+;;                (CONSP INDEX-LIST)
+;;                (MEMBER-EQUAL (CAR INDEX-LIST)
+;;                              (L4-LIST-ALL-INDICES FS))
+;;                (L3-FS-P FS)
+;;                (NAT-LISTP (CDR INDEX-LIST)))
+;;               (not (NOT-INTERSECTP-LIST INDEX-LIST
+;;                                         (L4-COLLECT-ALL-INDEX-LISTS FS))))
+;;  :instructions ((prove      :hints (("Goal" :in-theory (enable L4-LIST-ALL-INDICES)) ))))
+
+(defthm l4-wrchs-correctness-1-lemma-6 (IMPLIES (AND
+               (CONSP INDEX-LIST)
+               (MEMBER-EQUAL (CAR INDEX-LIST)
+                             (L4-LIST-ALL-INDICES FS))
+               (L3-FS-P FS)
+               (NAT-LISTP (CDR INDEX-LIST)))
+              (not (NOT-INTERSECTP-LIST INDEX-LIST
+                                        (L4-COLLECT-ALL-INDEX-LISTS FS))))
+     :hints (("Goal" :in-theory (enable L4-LIST-ALL-INDICES)) ))
+
+;; This theorem shows the equivalence of the l4 and l2 versions of wrchs.
+(defthm l4-wrchs-correctness-1
+  (implies (and (l4-stricter-fs-p fs alv)
+                (stringp text)
+                (natp start)
+                (symbol-listp hns)
+                (block-listp disk)
+                (<= (len (make-blocks text)) (count-free-blocks alv)))
+           (equal (l2-wrchs hns (l4-to-l2-fs fs disk) start text)
+                  (mv-let (new-fs new-disk new-alv)
+                    (l4-wrchs hns fs disk alv start text)
+                    (declare (ignore new-alv))
+                    (l4-to-l2-fs new-fs new-disk))))
+  :hints ()
+  ;; (("Subgoal *1/8.9'"
+  ;;   :in-theory (disable l3-wrchs-returns-fs)
+  ;;   :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
+  ;;                   (fs (cdr (assoc-equal (car hns) fs)))))
+  ;;  ("Subgoal *1/8.1'"
+  ;;   :in-theory (disable l3-wrchs-returns-fs l3-fs-p-assoc)
+  ;;   :use ((:instance l3-wrchs-returns-fs
+  ;;                    (fs (cdr (assoc-equal (car hns) fs)))
+  ;;                    (hns (cdr hns)))
+  ;;         (:instance l3-fs-p-assoc
+  ;;                    (fs (cdr (assoc-equal (car hns) fs))))))
+  ;;  ("Subgoal *1/8'''"
+  ;;   :in-theory (disable l3-wrchs-returns-fs)
+  ;;   :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
+  ;;                   (fs (cdr (assoc-equal (car hns) fs))))))
+  )
+
+(thm
+ (IMPLIES
+  (AND
+   (L3-FS-P FS)
+   (BOOLEAN-LISTP ALV)
+   (STRINGP TEXT)
+   (INTEGERP START)
+   (<= 0 START)
+   (BLOCK-LISTP DISK)
+   (<= 0 (COUNT-FREE-BLOCKS ALV))
+   (not-intersectp-list index-list (L4-COLLECT-ALL-INDEX-LISTS FS))
+   (bounded-nat-listp index-list (len disk)))
+  (EQUAL
+   (L3-TO-L2-FS
+    FS
+    (SET-INDICES
+     DISK
+     index-list
+     value-list))
+   (L3-TO-L2-FS FS DISK)))
+ :hints (("Subgoal *1/5''" :in-theory (disable L4-WRCHS-CORRECTNESS-1-LEMMA-5)
+          :use (:instance  L4-WRCHS-CORRECTNESS-1-LEMMA-5 (index (car
+ index-list)) (value (car value-list)))))) 
+
+(thm (IMPLIES
+      (AND (L3-fs-P fs1)
+           (EQUAL (L2-WRCHS hns
+                            (L3-TO-L2-FS fs1
+                                         DISK)
+                            START TEXT)
+                  (L3-TO-L2-FS (MV-NTH 0
+                                       (L4-WRCHS hns
+                                                 fs1
+                                                 DISK ALV START TEXT))
+                               (MV-NTH 1
+                                       (L4-WRCHS hns
+                                                 fs1
+                                                 DISK ALV START TEXT))))
+           (L3-FS-P FS2)
+           (BOOLEAN-LISTP ALV)
+           (DISJOINT-LIST-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS1))
+           (NO-DUPLICATES-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS1))
+           (INDICES-MARKED-LISTP (L4-COLLECT-ALL-INDEX-LISTS FS1)
+                                 ALV)
+           (STRINGP TEXT)
+           (INTEGERP START)
+           (<= 0 START)
+           (SYMBOL-LISTP hns)
+           (BLOCK-LISTP DISK)
+           (<= 0 (COUNT-FREE-BLOCKS ALV))
+           (not (member-intersectp-equal (L4-COLLECT-ALL-INDEX-LISTS FS1)
+                                         (L4-COLLECT-ALL-INDEX-LISTS FS2))))
+      (EQUAL (L3-TO-L2-FS fs2
+                          (MV-NTH 1
+                                  (L4-WRCHS hns
+                                            fs1
+                                            DISK ALV START TEXT)))
+             (L3-TO-L2-FS fs2
+                          DISK))))
