@@ -18,3 +18,8 @@
                   (and (bounded-nat-listp x b)
                        (bounded-nat-listp y b)))))
 
+(defthm bounded-nat-listp-correctness-3
+  (implies (and (natp b)
+                (bounded-nat-listp l (+ b 1))
+                (not (bounded-nat-listp l b)))
+           (member-equal b l)))

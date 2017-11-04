@@ -22,6 +22,11 @@
          (+ (count-free-blocks x)
             (count-free-blocks y))))
 
+(defthm count-free-blocks-correctness-2
+  (equal (count-free-blocks (revappend x y))
+         (+ (count-free-blocks x)
+            (count-free-blocks y))))
+
 (encapsulate
   ( ((find-n-free-blocks * *) => *) )
 
