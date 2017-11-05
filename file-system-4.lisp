@@ -1185,6 +1185,79 @@
                                    index-list)
           value-list)))
 
+(defun count-free-blocks-alt (alv n)
+  (declare (xargs :guard (and (natp n) (boolean-listp alv))))
+  (if (zp n)
+      0
+    (+ (if (nth (- n 1) alv) 0 1)
+       (count-free-blocks-alt alv (- n 1)))))
+
+(defthm
+  count-free-blocks-alt-correctness-1
+  (implies (and (boolean-listp alv)
+                (boolean-listp ac)
+                (natp n)
+                (<= n (len alv)))
+           (equal (count-free-blocks-alt (revappend ac alv)
+                                         (+ n (len ac)))
+                  (count-free-blocks (first-n-ac n alv ac))))
+  :hints (("goal" :induct (first-n-ac n alv ac))))
+
+(defthm
+  count-free-blocks-alt-correctness-2
+  (implies (and (boolean-listp alv)
+                (equal n (len alv)))
+           (equal (count-free-blocks-alt alv n)
+                  (count-free-blocks alv)))
+  :hints (("goal" :in-theory (disable count-free-blocks-alt-correctness-1)
+           :use (:instance count-free-blocks-alt-correctness-1
+                           (ac nil)))))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-14
+  (implies (and (boolean-listp alv)
+                (integerp n)
+                (<= 0 n)
+                (<= n (len alv)))
+           (equal (count-free-blocks-alt (set-indices-in-alv alv nil nil)
+                                         n)
+                  (count-free-blocks-alt alv n))))
+
+(defun count-before-n (l b)
+      (declare (xargs :guard (and (natp b) (nat-listp l))))
+      (if (atom l) 0 (+ (if (< (car l) b) 1 0) (count-before-n (cdr l) b))))
+
+(defthm count-before-n-correctness-1
+  (<= (count-before-n l b) (len l))
+  :rule-classes (:linear))
+
+(defthm count-before-n-correctness-2
+  (implies (nat-listp l)
+           (iff (equal (count-before-n l b) (len l))
+                (bounded-nat-listp l b))))
+
+(thm
+ (IMPLIES
+     (AND (BOOLEAN-LISTP ALV)
+          (NATP N)
+          (<= N (LEN ALV))
+          (INDICES-MARKED-LISTP INDEX-LIST ALV)
+          (NO-DUPLICATESP-EQUAL INDEX-LIST))
+     (EQUAL (COUNT-FREE-BLOCKS-ALT (SET-INDICES-IN-ALV ALV INDEX-LIST NIL)
+                                   N)
+            (+ (COUNT-FREE-BLOCKS-ALT ALV N)
+               (COUNT-BEFORE-N INDEX-LIST N)))))
+
+(thm
+ (implies (and (boolean-listp alv) (natp n)
+  (<= n (len alv))
+  (INDICES-MARKED-LISTP index-list
+                        ALV)
+  (no-duplicatesp-equal index-list))
+  (equal (COUNT-FREE-BLOCKS (SET-INDICES-IN-ALV
+                  ALV INDEX-LIST nil))
+         (+ (COUNT-FREE-BLOCKS alv) (len index-list)))))
+
 ;; This theorem shows the equivalence of the l4 and l2 versions of wrchs.
 (defthm l4-wrchs-correctness-1
   (implies (and (l4-stricter-fs-p fs alv)
@@ -1193,7 +1266,7 @@
                 (symbol-listp hns)
                 (block-listp disk)
                 (EQUAL (LEN ALV) (LEN DISK))
-                (<= (len (make-blocks text)) (count-free-blocks alv)))
+                (<= (len (make-blocks (coerce text 'list))) (count-free-blocks alv)))
            (equal (l2-wrchs hns (l4-to-l2-fs fs disk) start text)
                   (mv-let (new-fs new-disk new-alv)
                     (l4-wrchs hns fs disk alv start text)
@@ -1214,7 +1287,7 @@
              (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
              (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
         START TEXT))))))
-          ("Subgoal *1/7.4.2.2" :in-theory (enable l3-regular-file-entry-p)))
+          ("Subgoal *1/7.4" :in-theory (enable l3-regular-file-entry-p)))
   ;; (("Subgoal *1/8.9'"
   ;;   :in-theory (disable l3-wrchs-returns-fs)
   ;;   :use (:instance l3-wrchs-returns-fs (hns (cdr hns))

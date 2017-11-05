@@ -23,3 +23,7 @@
                 (bounded-nat-listp l (+ b 1))
                 (not (bounded-nat-listp l b)))
            (member-equal b l)))
+
+(defthm bounded-nat-listp-correctness-4
+  (implies (bounded-nat-listp l b)
+           (not (member-equal b l))))
