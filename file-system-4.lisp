@@ -1236,27 +1236,115 @@
            (iff (equal (count-before-n l b) (len l))
                 (bounded-nat-listp l b))))
 
-(thm
- (IMPLIES
-     (AND (BOOLEAN-LISTP ALV)
-          (NATP N)
-          (<= N (LEN ALV))
-          (INDICES-MARKED-LISTP INDEX-LIST ALV)
-          (NO-DUPLICATESP-EQUAL INDEX-LIST))
-     (EQUAL (COUNT-FREE-BLOCKS-ALT (SET-INDICES-IN-ALV ALV INDEX-LIST NIL)
-                                   N)
-            (+ (COUNT-FREE-BLOCKS-ALT ALV N)
-               (COUNT-BEFORE-N INDEX-LIST N)))))
+(defthm count-before-n-correctness-3
+  (implies (nat-listp l)
+           (equal (count-before-n l 0) 0)))
 
-(thm
- (implies (and (boolean-listp alv) (natp n)
-  (<= n (len alv))
-  (INDICES-MARKED-LISTP index-list
-                        ALV)
-  (no-duplicatesp-equal index-list))
-  (equal (COUNT-FREE-BLOCKS (SET-INDICES-IN-ALV
-                  ALV INDEX-LIST nil))
-         (+ (COUNT-FREE-BLOCKS alv) (len index-list)))))
+(defthm
+  l4-wrchs-correctness-1-lemma-15
+  (implies
+   (and (consp index-list)
+        (boolean-listp alv)
+        (natp n)
+        (<= n (len alv))
+        (nat-listp index-list)
+        (indices-marked-p index-list alv)
+        (no-duplicatesp-equal index-list))
+   (equal
+    (count-free-blocks-alt (set-indices-in-alv alv index-list nil)
+                           n)
+    (if (< (car index-list) n)
+        (+ 1
+           (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
+                                                      nil)
+                                  n))
+        (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
+                                                   nil)
+                               n))))
+  :instructions ((:induct (count-free-blocks-alt alv n))
+                 (:change-goal nil t)
+                 :bash :split :bash :bash :bash (:dive 1)
+                 :x :nx :x :top :split
+                 (:claim (and (not (member-equal (+ -1 n) index-list))
+                              (< (+ -1 n) (len alv))))
+                 (:claim (nth (+ -1 n) alv))
+                 (:demote 13)
+                 (:dive 1 1)
+                 (:rewrite set-indices-in-alv-correctness-4)
+                 :top :s :bash :bash
+                 (:claim (and (nat-listp (cdr index-list))
+                              (not (member-equal (+ -1 n)
+                                                 (cdr index-list)))
+                              (< (+ -1 n) (len alv))))
+                 (:claim (nth (+ -1 n) alv))
+                 (:drop 13 14)
+                 :bash :bash
+                 (:claim (and (nat-listp index-list)
+                              (not (member-equal (+ -1 n) index-list))
+                              (< (+ -1 n) (len alv))))
+                 (:claim (nth (+ -1 n) alv))
+                 :bash
+                 (:claim (and (not (member-equal (+ -1 n)
+                                                 (cdr index-list)))
+                              (< (+ -1 n) (len alv))))
+                 (:claim (nth (+ -1 n) alv))
+                 :bash))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-16
+  (implies
+   (and (boolean-listp alv)
+        (natp n)
+        (<= n (len alv))
+        (nat-listp index-list)
+        (indices-marked-p index-list alv)
+        (no-duplicatesp-equal index-list))
+   (equal (count-free-blocks-alt (set-indices-in-alv alv index-list nil)
+                                 n)
+          (+ (count-free-blocks-alt alv n)
+             (count-before-n index-list n))))
+  :instructions
+  ((:induct (count-before-n index-list n))
+   (:change-goal nil t)
+   :bash
+   :split :bash :bash :bash (:dive 2 2)
+   :x
+   :up
+   (:= (if (< (car index-list) n)
+           (+ 1
+              (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
+                                                         nil)
+                                     n))
+           (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
+                                                      nil)
+                                  n)))
+   :top :bash))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-17
+  (implies (and (boolean-listp alv)
+                (indices-marked-p index-list alv)
+                (no-duplicatesp-equal index-list)
+                (bounded-nat-listp index-list (len alv)))
+           (equal (count-free-blocks (set-indices-in-alv alv index-list nil))
+                  (+ (count-free-blocks alv)
+                     (len index-list))))
+  :hints
+  (("goal"
+    :in-theory (disable count-free-blocks-alt-correctness-2
+                        count-free-blocks
+                        l4-wrchs-correctness-1-lemma-15
+                        count-before-n-correctness-2)
+    :use ((:instance count-free-blocks-alt-correctness-2
+                     (n (len alv)))
+          (:instance count-free-blocks-alt-correctness-2
+                     (alv (set-indices-in-alv alv index-list nil))
+                     (n (len (set-indices-in-alv alv index-list nil))))
+          (:instance l4-wrchs-correctness-1-lemma-15
+                     (n (len alv)))
+          (:instance count-before-n-correctness-2
+                     (l index-list)
+                     (b (len alv)))))))
 
 ;; This theorem shows the equivalence of the l4 and l2 versions of wrchs.
 (defthm l4-wrchs-correctness-1
