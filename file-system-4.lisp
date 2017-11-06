@@ -1276,23 +1276,7 @@
                                                  nil)
                              n))))
   :hints
-  (("goal" :induct (count-free-blocks-alt alv n))
-   ("subgoal *1/2.7" :in-theory (disable set-indices-in-alv-correctness-4)
-    :use ((:instance set-indices-in-alv-correctness-4
-                     (n (- n 1))
-                     (value nil))
-          (:instance set-indices-in-alv-correctness-4
-                     (n (- n 1))
-                     (value nil)
-                     (index-list (cdr index-list)))))
-   ("subgoal *1/2.5" :in-theory (disable set-indices-in-alv-correctness-4)
-    :use ((:instance set-indices-in-alv-correctness-4
-                     (n (- n 1))
-                     (value nil))
-          (:instance set-indices-in-alv-correctness-4
-                     (n (- n 1))
-                     (value nil)
-                     (index-list (cdr index-list)))))))
+  (("goal" :induct (count-free-blocks-alt alv n))))
 
 (defthm
   l4-wrchs-correctness-1-lemma-17
