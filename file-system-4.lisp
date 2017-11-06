@@ -1291,22 +1291,7 @@
                                  n)
           (+ (count-free-blocks-alt alv n)
              (count-before-n index-list n))))
-  :instructions
-  ((:induct (count-before-n index-list n))
-   (:change-goal nil t)
-   :bash
-   :split :bash :bash :bash (:dive 2 2)
-   :x
-   :up
-   (:= (if (< (car index-list) n)
-           (+ 1
-              (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
-                                                         nil)
-                                     n))
-           (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
-                                                      nil)
-                                  n)))
-   :top :bash))
+  :hints (("goal" :induct (count-before-n index-list n))))
 
 (defthm
   l4-wrchs-correctness-1-lemma-18
