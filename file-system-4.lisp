@@ -1240,38 +1240,19 @@
   (implies (nat-listp l)
            (equal (count-before-n l 0) 0)))
 
-(defthm
-  l4-wrchs-correctness-1-lemma-15
-  (implies
-   (and
-    (equal (count-free-blocks-alt (set-indices-in-alv alv index-list nil)
-                                  n)
-           (+ 1
-              (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
-                                                         nil)
-                                     n)))
-    (consp index-list)
-    (boolean-listp alv)
-    (<= 0 n)
-    (< n (len alv))
-    (integerp (car index-list))
-    (<= 0 (car index-list))
-    (nat-listp (cdr index-list))
-    (indices-marked-p (cdr index-list) alv)
-    (not (member-equal (car index-list)
-                       (cdr index-list)))
-    (< (car index-list) n))
-   (iff (nth n
-             (set-indices-in-alv alv index-list nil))
-        (nth n
-             (set-indices-in-alv alv (cdr index-list)
-                                 nil))))
-  :hints (("goal" :in-theory (disable set-indices-in-alv-correctness-4)
-           :use ((:instance set-indices-in-alv-correctness-4
-                            (value nil))
-                 (:instance set-indices-in-alv-correctness-4
-                            (value nil)
-                            (index-list (cdr index-list)))))))
+(defthm l4-wrchs-correctness-1-lemma-15
+  (implies (and (boolean-listp alv)
+                (nat-listp index-list)
+                (natp n)
+                (< n (len alv))
+                (not (equal n (car index-list))))
+           (iff (nth n
+                     (set-indices-in-alv alv index-list nil))
+                (nth n
+                     (set-indices-in-alv alv (cdr index-list)
+                                         nil))))
+  :instructions ((:casesplit (member-equal n (cdr index-list)))
+                 :bash :bash))
 
 (defthm
   l4-wrchs-correctness-1-lemma-16
@@ -1291,29 +1272,27 @@
            (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
                                                       nil)
                                   n))
-        (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
-                                                   nil)
-                               n))))
-  :instructions
-  ((:prove
-    :hints
-    (("goal" :induct (count-free-blocks-alt alv n))
-     ("subgoal *1/2.7" :in-theory (disable set-indices-in-alv-correctness-4)
-      :use ((:instance set-indices-in-alv-correctness-4
-                       (n (- n 1))
-                       (value nil))
-            (:instance set-indices-in-alv-correctness-4
-                       (n (- n 1))
-                       (value nil)
-                       (index-list (cdr index-list)))))
-     ("subgoal *1/2.5" :in-theory (disable set-indices-in-alv-correctness-4)
-      :use ((:instance set-indices-in-alv-correctness-4
-                       (n (- n 1))
-                       (value nil))
-            (:instance set-indices-in-alv-correctness-4
-                       (n (- n 1))
-                       (value nil)
-                       (index-list (cdr index-list)))))))))
+      (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
+                                                 nil)
+                             n))))
+  :hints
+  (("goal" :induct (count-free-blocks-alt alv n))
+   ("subgoal *1/2.7" :in-theory (disable set-indices-in-alv-correctness-4)
+    :use ((:instance set-indices-in-alv-correctness-4
+                     (n (- n 1))
+                     (value nil))
+          (:instance set-indices-in-alv-correctness-4
+                     (n (- n 1))
+                     (value nil)
+                     (index-list (cdr index-list)))))
+   ("subgoal *1/2.5" :in-theory (disable set-indices-in-alv-correctness-4)
+    :use ((:instance set-indices-in-alv-correctness-4
+                     (n (- n 1))
+                     (value nil))
+          (:instance set-indices-in-alv-correctness-4
+                     (n (- n 1))
+                     (value nil)
+                     (index-list (cdr index-list)))))))
 
 (defthm
   l4-wrchs-correctness-1-lemma-17
