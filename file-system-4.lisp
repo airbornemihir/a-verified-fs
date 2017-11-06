@@ -1243,6 +1243,39 @@
 (defthm
   l4-wrchs-correctness-1-lemma-15
   (implies
+   (and
+    (equal (count-free-blocks-alt (set-indices-in-alv alv index-list nil)
+                                  n)
+           (+ 1
+              (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
+                                                         nil)
+                                     n)))
+    (consp index-list)
+    (boolean-listp alv)
+    (<= 0 n)
+    (< n (len alv))
+    (integerp (car index-list))
+    (<= 0 (car index-list))
+    (nat-listp (cdr index-list))
+    (indices-marked-p (cdr index-list) alv)
+    (not (member-equal (car index-list)
+                       (cdr index-list)))
+    (< (car index-list) n))
+   (iff (nth n
+             (set-indices-in-alv alv index-list nil))
+        (nth n
+             (set-indices-in-alv alv (cdr index-list)
+                                 nil))))
+  :hints (("goal" :in-theory (disable set-indices-in-alv-correctness-4)
+           :use ((:instance set-indices-in-alv-correctness-4
+                            (value nil))
+                 (:instance set-indices-in-alv-correctness-4
+                            (value nil)
+                            (index-list (cdr index-list)))))))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-16
+  (implies
    (and (consp index-list)
         (boolean-listp alv)
         (natp n)
@@ -1261,37 +1294,29 @@
         (count-free-blocks-alt (set-indices-in-alv alv (cdr index-list)
                                                    nil)
                                n))))
-  :instructions ((:induct (count-free-blocks-alt alv n))
-                 (:change-goal nil t)
-                 :bash :split :bash :bash :bash (:dive 1)
-                 :x :nx :x :top :split
-                 (:claim (and (not (member-equal (+ -1 n) index-list))
-                              (< (+ -1 n) (len alv))))
-                 (:claim (nth (+ -1 n) alv))
-                 (:demote 13)
-                 (:dive 1 1)
-                 (:rewrite set-indices-in-alv-correctness-4)
-                 :top :s :bash :bash
-                 (:claim (and (nat-listp (cdr index-list))
-                              (not (member-equal (+ -1 n)
-                                                 (cdr index-list)))
-                              (< (+ -1 n) (len alv))))
-                 (:claim (nth (+ -1 n) alv))
-                 (:drop 13 14)
-                 :bash :bash
-                 (:claim (and (nat-listp index-list)
-                              (not (member-equal (+ -1 n) index-list))
-                              (< (+ -1 n) (len alv))))
-                 (:claim (nth (+ -1 n) alv))
-                 :bash
-                 (:claim (and (not (member-equal (+ -1 n)
-                                                 (cdr index-list)))
-                              (< (+ -1 n) (len alv))))
-                 (:claim (nth (+ -1 n) alv))
-                 :bash))
+  :instructions
+  ((:prove
+    :hints
+    (("goal" :induct (count-free-blocks-alt alv n))
+     ("subgoal *1/2.7" :in-theory (disable set-indices-in-alv-correctness-4)
+      :use ((:instance set-indices-in-alv-correctness-4
+                       (n (- n 1))
+                       (value nil))
+            (:instance set-indices-in-alv-correctness-4
+                       (n (- n 1))
+                       (value nil)
+                       (index-list (cdr index-list)))))
+     ("subgoal *1/2.5" :in-theory (disable set-indices-in-alv-correctness-4)
+      :use ((:instance set-indices-in-alv-correctness-4
+                       (n (- n 1))
+                       (value nil))
+            (:instance set-indices-in-alv-correctness-4
+                       (n (- n 1))
+                       (value nil)
+                       (index-list (cdr index-list)))))))))
 
 (defthm
-  l4-wrchs-correctness-1-lemma-16
+  l4-wrchs-correctness-1-lemma-17
   (implies
    (and (boolean-listp alv)
         (natp n)
@@ -1321,7 +1346,7 @@
    :top :bash))
 
 (defthm
-  l4-wrchs-correctness-1-lemma-17
+  l4-wrchs-correctness-1-lemma-18
   (implies (and (boolean-listp alv)
                 (indices-marked-p index-list alv)
                 (no-duplicatesp-equal index-list)
