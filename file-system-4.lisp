@@ -1436,6 +1436,67 @@
    :bash :bash
    :bash :bash))
 
+(defthm
+  l4-wrchs-correctness-1-lemma-20
+  (implies
+   (and (consp hns)
+        (l3-fs-p fs)
+        (boolean-listp alv)
+        (disjoint-list-listp (l4-collect-all-index-lists fs))
+        (no-duplicates-listp (l4-collect-all-index-lists fs))
+        (indices-marked-listp (l4-collect-all-index-lists fs)
+                              alv)
+        (stringp text)
+        (integerp start)
+        (<= 0 start)
+        (block-listp disk)
+        (equal (len alv) (len disk))
+        (<= (len (make-blocks (insert-text nil start text)))
+            (count-free-blocks alv))
+        (consp fs)
+        (consp (assoc-equal (car hns) fs))
+        (not (cdr hns))
+        (l3-regular-file-entry-p (cdr (assoc-equal (car hns) fs))))
+   (l3-regular-file-entry-p
+    (cons
+     (find-n-free-blocks
+      (set-indices-in-alv alv (cadr (assoc-equal (car hns) fs))
+                          nil)
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks
+          (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
+          (cddr (assoc-equal (car hns) fs)))
+         start text))))
+     (len
+      (insert-text
+       (unmake-blocks
+        (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
+        (cddr (assoc-equal (car hns) fs)))
+       start text)))))
+  :hints
+  (("goal"
+    :expand
+    (l3-regular-file-entry-p
+     (cons
+      (find-n-free-blocks
+       (set-indices-in-alv alv (cadr (assoc-equal (car hns) fs))
+                           nil)
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks
+           (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
+           (cddr (assoc-equal (car hns) fs)))
+          start text))))
+      (len
+       (insert-text
+        (unmake-blocks
+         (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
+         (cddr (assoc-equal (car hns) fs)))
+        start text)))))))
+
 ;; This theorem shows the equivalence of the l4 and l2 versions of wrchs.
 (defthm l4-wrchs-correctness-1
   (implies (and (l4-stricter-fs-p fs alv)
@@ -1638,20 +1699,4 @@
         (UNMAKE-BLOCKS
              (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
              (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
-        START TEXT))))))
-  ;; (("Subgoal *1/8.9'"
-  ;;   :in-theory (disable l3-wrchs-returns-fs)
-  ;;   :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
-  ;;                   (fs (cdr (assoc-equal (car hns) fs)))))
-  ;;  ("Subgoal *1/8.1'"
-  ;;   :in-theory (disable l3-wrchs-returns-fs l3-fs-p-assoc)
-  ;;   :use ((:instance l3-wrchs-returns-fs
-  ;;                    (fs (cdr (assoc-equal (car hns) fs)))
-  ;;                    (hns (cdr hns)))
-  ;;         (:instance l3-fs-p-assoc
-  ;;                    (fs (cdr (assoc-equal (car hns) fs))))))
-  ;;  ("Subgoal *1/8'''"
-  ;;   :in-theory (disable l3-wrchs-returns-fs)
-  ;;   :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
-  ;;                   (fs (cdr (assoc-equal (car hns) fs))))))
-  )
+        START TEXT)))))))
