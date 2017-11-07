@@ -1319,6 +1319,123 @@
                      (l index-list)
                      (b (len alv)))))))
 
+(encapsulate ()
+  (local (include-book "std/lists/nthcdr" :dir :system))
+
+  (local (defun nthcdr-*blocksize*-induction-2 (text1 text2)
+           (cond ((or (atom text1) (atom text2))
+                  (list text1 text2))
+                 (t (nthcdr-*blocksize*-induction-2 (nthcdr *blocksize* text1)
+                                                    (nthcdr *blocksize* text2))))))
+
+  (defthm
+    make-blocks-correctness-4
+    (implies (equal (len text1) (len text2))
+             (equal (len (make-blocks text1))
+                    (len (make-blocks text2))))
+    :hints (("goal" :induct (nthcdr-*blocksize*-induction-2 text1 text2)))))
+
+(defthm
+  len-of-make-unmake
+  (implies (and (block-listp blocks)
+                (natp n)
+                (feasible-file-length-p (len blocks) n))
+           (equal (len (make-blocks (unmake-blocks blocks n)))
+                  (len blocks)))
+  :hints
+  (("goal" :in-theory (enable feasible-file-length-p))
+   ("subgoal *1/8.1'"
+    :expand (append (car blocks)
+                    (unmake-blocks (cdr blocks) (+ -8 n))))
+   ("subgoal *1/5.1'"
+    :expand (append (car blocks)
+                    (unmake-blocks (cdr blocks) (+ -8 n))))
+   ("subgoal *1/2'4'" :expand (make-blocks (first-n-ac n (car blocks) nil)))
+   ("subgoal *1/2.1'" :in-theory (disable len-of-first-n-ac)
+    :use (:instance len-of-first-n-ac (i n)
+                    (l (car blocks))
+                    (ac nil)))
+   ("subgoal *1/5.2'" :cases ((atom (cdr blocks))))
+   ("subgoal *1/5.2'''" :expand (len (cdr blocks)))))
+
+(defthm
+  l4-wrchs-correctness-1-lemma-19
+  (implies
+   (and (boolean-listp alv)
+        (stringp text)
+        (integerp start)
+        (<= 0 start)
+        (block-listp disk)
+        (equal (len alv) (len disk))
+        (<= (len (make-blocks (insert-text nil start text)))
+            (count-free-blocks alv))
+        (l3-regular-file-entry-p entry)
+        (indices-marked-p (car entry) alv)
+        (no-duplicatesp-equal (car entry))
+        (bounded-nat-listp (car entry)
+                           (len alv)))
+   (equal
+    (len
+     (find-n-free-blocks
+      (set-indices-in-alv alv (car entry) nil)
+      (len
+       (make-blocks
+        (insert-text (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+                                    (cdr entry))
+                     start text)))))
+    (len
+     (make-blocks
+      (insert-text (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+                                  (cdr entry))
+                   start text)))))
+  :instructions
+  (:promote
+   (:dive 1)
+   (:rewrite find-n-free-blocks-correctness-2)
+   :top :bash :s-prop (:dive 1 1)
+   (:rewrite l4-wrchs-correctness-1-lemma-18)
+   :top
+   (:claim
+    (<=
+     (len
+      (make-blocks
+       (insert-text (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+                                   (cdr entry))
+                    start text)))
+     (+ (len (make-blocks (insert-text nil start text)))
+        (len (car entry))))
+    :hints :none)
+   :bash :s-prop
+   (:casesplit
+    (>= (len (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+                            (cdr entry)))
+        (+ start (len (coerce text 'list)))))
+   (:dive 1 2)
+   (:rewrite make-blocks-correctness-4
+             ((text2 (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+                                    (cdr entry)))))
+   (:dive 1)
+   :top
+   (:claim
+    (equal
+     (len
+      (make-blocks (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+                                  (cdr entry))))
+     (len (fetch-blocks-by-indices disk (car entry))))
+    :hints :none)
+   :bash (:change-goal nil t)
+   (:dive 1)
+   (:rewrite len-of-insert-text)
+   :top :bash :bash (:dive 1 2)
+   (:rewrite make-blocks-correctness-4
+             ((text2 (insert-text nil start text))))
+   :top :bash (:dive 1)
+   (:rewrite len-of-insert-text)
+   :nx (:rewrite len-of-insert-text)
+   :top
+   :bash :bash
+   :bash :bash))
+
 ;; This theorem shows the equivalence of the l4 and l2 versions of wrchs.
 (defthm l4-wrchs-correctness-1
   (implies (and (l4-stricter-fs-p fs alv)
@@ -1327,7 +1444,8 @@
                 (symbol-listp hns)
                 (block-listp disk)
                 (EQUAL (LEN ALV) (LEN DISK))
-                (<= (len (make-blocks (coerce text 'list))) (count-free-blocks alv)))
+                (<= (LEN (MAKE-BLOCKS (INSERT-TEXT nil START TEXT)))
+                    (count-free-blocks alv)))
            (equal (l2-wrchs hns (l4-to-l2-fs fs disk) start text)
                   (mv-let (new-fs new-disk new-alv)
                     (l4-wrchs hns fs disk alv start text)
@@ -1348,7 +1466,179 @@
              (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
              (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
         START TEXT))))))
-          ("Subgoal *1/7.4" :in-theory (enable l3-regular-file-entry-p)))
+          ("Subgoal *1/7.4" :in-theory (enable l3-regular-file-entry-p))
+          ("Subgoal *1/5.4.2'" :expand
+  (NOT
+   (L3-REGULAR-FILE-ENTRY-P
+    (CONS
+     (FIND-N-FREE-BLOCKS
+      (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                          NIL)
+      (LEN
+       (MAKE-BLOCKS
+        (INSERT-TEXT
+         (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+         START TEXT))))
+     (LEN
+      (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT))))))
+          ("Subgoal *1/2.4.1'" :expand
+   (L3-REGULAR-FILE-ENTRY-P
+    (CONS
+     (FIND-N-FREE-BLOCKS
+      (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                          NIL)
+      (LEN
+       (MAKE-BLOCKS
+        (INSERT-TEXT
+         (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+         START TEXT))))
+     (LEN
+      (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT)))))
+          ("Subgoal *1/2.4.2'" :expand
+   (L3-REGULAR-FILE-ENTRY-P
+    (CONS
+     (FIND-N-FREE-BLOCKS
+      (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                          NIL)
+      (LEN
+       (MAKE-BLOCKS
+        (INSERT-TEXT
+         (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+         START TEXT))))
+     (LEN
+      (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT)))))
+          ("Subgoal *1/3.4.1'" :expand
+   (L3-REGULAR-FILE-ENTRY-P
+    (CONS
+     (FIND-N-FREE-BLOCKS
+      (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                          NIL)
+      (LEN
+       (MAKE-BLOCKS
+        (INSERT-TEXT
+         (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+         START TEXT))))
+     (LEN
+      (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT)))))
+          ("Subgoal *1/3.4.2'" :expand
+   (L3-REGULAR-FILE-ENTRY-P
+    (CONS
+     (FIND-N-FREE-BLOCKS
+      (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                          NIL)
+      (LEN
+       (MAKE-BLOCKS
+        (INSERT-TEXT
+         (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+         START TEXT))))
+     (LEN
+      (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT)))))
+          ("Subgoal *1/4.4.2'" :expand
+   (L3-REGULAR-FILE-ENTRY-P
+    (CONS
+     (FIND-N-FREE-BLOCKS
+      (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                          NIL)
+      (LEN
+       (MAKE-BLOCKS
+        (INSERT-TEXT
+         (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+         START TEXT))))
+     (LEN
+      (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT)))))
+          ("Subgoal *1/4.4.1'" :expand
+   (L3-REGULAR-FILE-ENTRY-P
+    (CONS
+     (FIND-N-FREE-BLOCKS
+      (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                          NIL)
+      (LEN
+       (MAKE-BLOCKS
+        (INSERT-TEXT
+         (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+         START TEXT))))
+     (LEN
+      (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT)))))
+          ("Subgoal *1/5.4.1'" :expand
+   (L3-REGULAR-FILE-ENTRY-P
+    (CONS
+     (FIND-N-FREE-BLOCKS
+      (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                          NIL)
+      (LEN
+       (MAKE-BLOCKS
+        (INSERT-TEXT
+         (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+         START TEXT))))
+     (LEN
+      (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT)))))
+          ("Subgoal *1/5.4.2'" :expand
+   (L3-REGULAR-FILE-ENTRY-P
+    (CONS
+     (FIND-N-FREE-BLOCKS
+      (SET-INDICES-IN-ALV ALV (CADR (ASSOC-EQUAL (CAR HNS) FS))
+                          NIL)
+      (LEN
+       (MAKE-BLOCKS
+        (INSERT-TEXT
+         (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+         START TEXT))))
+     (LEN
+      (INSERT-TEXT
+        (UNMAKE-BLOCKS
+             (FETCH-BLOCKS-BY-INDICES DISK (CADR (ASSOC-EQUAL (CAR HNS) FS)))
+             (CDDR (ASSOC-EQUAL (CAR HNS) FS)))
+        START TEXT))))))
   ;; (("Subgoal *1/8.9'"
   ;;   :in-theory (disable l3-wrchs-returns-fs)
   ;;   :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
