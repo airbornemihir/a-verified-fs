@@ -1531,3 +1531,21 @@
           (cddr (assoc-equal (car hns) fs)))
          start text))))))
    ("subgoal *1/7.4" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm
+  l4-read-after-write-1
+  (implies (and (l4-stricter-fs-p fs alv)
+                (stringp text)
+                (natp start)
+                (symbol-listp hns)
+                (block-listp disk)
+                (equal (len alv) (len disk))
+                (<= (len (make-blocks (insert-text nil start text)))
+                    (count-free-blocks alv))
+                (equal n (length text))
+                (stringp (l4-stat hns fs disk)))
+           (mv-let (new-fs new-disk new-alv)
+             (l4-wrchs HNS FS DISK ALV START TEXT)
+             (declare (ignore new-alv))
+             (equal (l4-rdchs hns new-fs new-disk start n)
+                    text))))
