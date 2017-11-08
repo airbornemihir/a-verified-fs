@@ -881,23 +881,25 @@
              (equal (l3-rdchs hns1 new-fs new-disk start1 n1)
                     (l3-rdchs hns1 fs disk start1 n1))))
   :hints
-  (("Goal" :use ((:instance l3-wrchs-returns-fs (hns hns2)
-                            (start start2)
-                            (text text2))
-                 (:instance l2-read-after-write-2
-                            (fs (l3-to-l2-fs fs disk)))
-                 (:instance l3-rdchs-correctness-1
-                            (fs (mv-nth 0 (l3-wrchs hns2 fs disk start2 text2)))
-                            (disk (mv-nth 1 (l3-wrchs hns2 fs disk start2 text2)))
-                            (hns hns1)
-                            (start start1)
-                            (n n1))
-                 (:instance l3-rdchs-correctness-1 (hns hns1)
-                            (start start1)
-                            (n n1))
-                 (:instance l3-wrchs-correctness-1 (hns hns1)
-                            (start start1)
-                            (text text1))))))
+  (("goal"
+    :in-theory (disable l3-wrchs-returns-fs
+                        l2-read-after-write-2
+                        l3-rdchs-correctness-1
+                        l3-rdchs-correctness-1)
+    :use ((:instance l3-wrchs-returns-fs (hns hns2)
+                     (start start2)
+                     (text text2))
+          (:instance l2-read-after-write-2
+                     (fs (l3-to-l2-fs fs disk)))
+          (:instance l3-rdchs-correctness-1
+                     (fs (mv-nth 0 (l3-wrchs hns2 fs disk start2 text2)))
+                     (disk (mv-nth 1 (l3-wrchs hns2 fs disk start2 text2)))
+                     (hns hns1)
+                     (start start1)
+                     (n n1))
+          (:instance l3-rdchs-correctness-1 (hns hns1)
+                     (start start1)
+                     (n n1))))))
 
 ;; This proves the equivalent of the first read-after-write property for
 ;; create.
