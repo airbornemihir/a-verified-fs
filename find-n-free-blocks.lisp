@@ -17,6 +17,16 @@
         (count-free-blocks (cdr alv))
       (+ (count-free-blocks (cdr alv)) 1))))
 
+(defthm count-free-blocks-correctness-1
+  (equal (count-free-blocks (binary-append x y))
+         (+ (count-free-blocks x)
+            (count-free-blocks y))))
+
+(defthm count-free-blocks-correctness-2
+  (equal (count-free-blocks (revappend x y))
+         (+ (count-free-blocks x)
+            (count-free-blocks y))))
+
 (encapsulate
   ( ((find-n-free-blocks * *) => *) )
 
@@ -146,8 +156,9 @@
 
   (defthm find-n-free-blocks-correctness-7
     (implies (and (boolean-listp alv)
-                  (natp n))
+                  (natp n)
+                  (equal m (len alv)))
              (bounded-nat-listp
               (find-n-free-blocks alv n)
-              (len alv))))
+              m)))
   )
