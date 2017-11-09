@@ -17,7 +17,7 @@
 \AtBeginSection[]
 {
   \begin{frame}<beamer>
-    \frametitle{Outline for section \thesection}
+    \frametitle{Outline}
     \tableofcontents[currentsection]
   \end{frame}
 }
@@ -48,9 +48,8 @@
     are underserved.
   \item Modern filesystems have become increasingly complex, and so
     have the tools to analyse and recover data from them.
-  \item It would be worthwhile to specify, in ACL2, the guarantees
-    claimed by filesystems and tools, and verify these based on their
-    ACL2 specifications.
+  \item It would be worthwhile to specify and formally verify, in the
+    ACL2 theorem prover, the guarantees claimed by filesystems and tools.
   \end{itemize}
 \end{frame}
 
@@ -58,12 +57,14 @@
   \begin{itemize}
   \item In Haogang Chen's 2016 dissertation, the author uses Coq to
     build a filesystem (named FSCQ) which is proven safe against
-    crashes.
+    crashes in a new logical framework named Crash Hoare Logic.
   \item His implementation was exported into Haskell, and showed
     comparable performance to ext4 when run on FUSE.
   \item Hyperkernel (Nelson et al, SOSP '17) is a "push-button"
     verification effort, but approximates by changing POSIX system
     calls for ease of verification.
+  \item In our work, we instead aim to model an existing filesystem
+    faithfully and match the resulting disk image byte-to-byte.
   \end{itemize}
 \end{frame}
 
@@ -71,7 +72,7 @@
 
 \begin{frame}{Choosing an initial model}
   \begin{itemize}
-    \item Our goal here is to verify the CP/M filesystem, but we need
+    \item Our goal here is to verify the FAT32 filesystem, but we need
       a simpler model to begin with.
     \item Our filesystem's operations should suffice for running a
       workload.
@@ -109,7 +110,6 @@
 
 \begin{frame}{Minimal set of operations?}
   \begin{itemize}
-  \item There might be a better way.
   \item The Google filesystem suggests a minimal set of operations:
     \begin{itemize}
     \item \texttt{create}
@@ -123,8 +123,8 @@
     maintenance of file descriptor state - so they can wait.
   \item However, they are essential when describing concurrency and
     multiprogramming behaviour.
-  \item Thus, we can start modelling a minimal set of filesystem
-    operations.
+  \item Thus, we can start modelling a filesystem, and several
+    refinements thereof.
   \end{itemize}
 \end{frame}
 
@@ -253,9 +253,9 @@
 
 \begin{frame}{Model 3}
   \begin{itemize}
-  \item As the next step, we would like to begin externalising the
+  \item As the next step, we focus on externalising the
     storage of file contents.
-  \item It would also be good to break up file contents into "blocks"
+  \item We also choose to break up file contents into "blocks"
     of a finite length.
     \begin{itemize}
     \item Note: this would mean storing file length is no longer
@@ -367,10 +367,10 @@
 
 \begin{frame}{Model 4}
   \begin{itemize}
-  \item In the fourth model, we implement garbage collection in the
-    form of an allocation vector.
-  \item What guarantees do we need to show that a filesystem of this
-    kind is consistent? (\textit{We'll return to this question.})
+  \item In the fourth model, we attempt to implement garbage
+    collection in the form of an allocation vector.
+  \item The allocation vector tracks whether blocks in the filesystem
+    are in use by a file. This allows us to reuse unused blocks.
   \end{itemize}
 \end{frame}
 
@@ -393,6 +393,9 @@
       \textbackslash0\textbackslash0\textbackslash0   \\ \hline
       Sun 19:0 \\ \hline
       0        \\ \hline
+               \\ \hline
+               \\ \hline
+               \\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -419,6 +422,7 @@
       0        \\ \hline
       Tue 21:0 \\ \hline
       0        \\ \hline
+               \\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -444,6 +448,7 @@
       0        \\ \hline
       Tue 21:0 \\ \hline
       0        \\ \hline
+               \\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -469,6 +474,7 @@
       0        \\ \hline
       Tue 21:0 \\ \hline
       0        \\ \hline
+               \\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -477,8 +483,8 @@
 \begin{frame}{Proof approaches and techniques}
   \begin{itemize}
   \item There are many properties that could be considered for
-    correctness, but the read-over-write theorems from the first-order
-    theory of arrays seem like a good place to start.
+    correctness, but we choose to focus on the read-over-write
+    theorems from the first-order theory of arrays.
     \begin {enumerate}
     \item Reading from a location after writing to the same location
       should yield the data that was written. Formally, assuming \texttt{n =
@@ -494,25 +500,17 @@
         =
         l1-rdchs(hns1, fs, start1, n1)}
     \end {enumerate}
-    \item For each of the models 1, 2 and 3, we have proofs of correctness of
-      the two read-after-write properties, based on the proofs of
-      equivalence between each model and its successor.
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Proof approaches and techniques}
   \begin{enumerate}
-  \item For model 4, the disk and the allocation vector must be in harmony
-    initially and updated in lockstep.
-  \item Every block referred to in the filesystem must be marked
-    "used" in the allocation vector.\\
-    (The complementary problem - making sure unused
-      blocks are unmarked - is more complicated because it's non-local.)
-  \item If n blocks are available in the allocation vector, the
-    allocation algorithm must provide n blocks when requested.
-  \item No matter how many blocks are returned by the allocation
-    algorithm, they must be unique and disjoint with the blocks
-    allocated to other files.
+  \item For each of the models 1, 2, 3 and 4, we have proofs of correctness of
+    the two read-after-write properties, making use of the proofs of
+    equivalence between models and their successors.
+  \item Model 4 presented some unique challenges - proving the
+    read-after-write properties required proving an equivalence
+    between model 4 and model 2, rather than model 3.
   \end{enumerate}
 \end{frame}
 
@@ -532,23 +530,22 @@
     \item Writes that fail because of permissions return an unmodified
       filesystem.
     \end{enumerate}
-  \item Gee, how do we represent users and groups?
+  \item How can we represent users and groups?
     \begin{enumerate}
     \item Users are natural numbers.
-    \item Groups are also natural numbers, and a vector (psst: a
-      nat-list) holds the group associated with each user.
+    \item Groups are also natural numbers, and a vector holds the
+      group associated with each user.
     \end{enumerate}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Other future work}
   \begin{itemize}
-  \item Finish read-over-write proofs for model 4.
-  \item Possibly, add the system call open and close with the
+  \item Linearise the tree, leaving only the disk.
+  \item Add the system call open and close with the
     introduction of file descriptors.\\
     \textit{This would be a step towards the study of concurrent FS operations.}
-  \item Linearise the tree, leaving only the disk.
-  \item Eventually emulate the CP/M filesystem as a convincing proof
+  \item Eventually emulate the FAT32 filesystem as a convincing proof
     of concept, and move on to fsck and file recovery tools.
   \end{itemize}
 \end{frame}
