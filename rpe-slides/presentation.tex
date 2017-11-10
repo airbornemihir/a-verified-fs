@@ -553,31 +553,9 @@
 
 \section{Future work}
 
-\begin{frame}{Permissions}
-  \begin{itemize}
-  \item What does permission checking look like in ACL2?
-  \item Top-down: picture the theorems that would prove correctness.
-    \begin{enumerate}
-    \item Read/write/execute permission is granted when the requesting
-      user has permission for themselves/their group, or when the
-      permission is granted to all.
-    \item Converse: read/write/execute permission is denied when none
-      of the above hold.
-    \item Reads that fail because of permissions do not return a value.
-    \item Writes that fail because of permissions return an unmodified
-      filesystem.
-    \end{enumerate}
-  \item How can we represent users and groups?
-    \begin{enumerate}
-    \item Users are natural numbers.
-    \item Groups are also natural numbers, and a vector holds the
-      group associated with each user.
-    \end{enumerate}
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{Other future work}
   \begin{itemize}
+  \item Model and verify file permissions.
   \item Linearise the tree, leaving only the disk.
   \item Add the system call open and close with the
     introduction of file descriptors.\\
