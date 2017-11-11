@@ -258,7 +258,7 @@
   \item As the next step, we focus on externalising the
     storage of file contents.
   \item We also choose to break up file contents into "blocks"
-    of a constant length (8.)
+    of a constant length (8).
     \begin{itemize}
     \item Note: this would mean storing file length is no longer
       optional, to avoid reading garbage past end of file at the end
@@ -281,11 +281,11 @@
     %% \centering
     \caption{Disk}
     % \label{my-label}
-    \begin{tabular}{|l|}
+    \begin{tabular}{|l|l|}
       \hline
-      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      Sun 19:0 \\ \hline
-      0        \\ \hline
+      0 & \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      1 & Sun 19:0 \\ \hline
+      2 & 0        \\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -305,13 +305,13 @@
     \centering
     \caption{Disk}
     % \label{my-label}
-    \begin{tabular}{|l|}
+    \begin{tabular}{|l|l|}
       \hline
-      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      Sun 19:0 \\ \hline
-      0        \\ \hline
-      Tue 21:0 \\ \hline
-      0        \\ \hline
+      0 & \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      1 & Sun 19:0 \\ \hline
+      2 & 0        \\ \hline
+      3 & Tue 21:0 \\ \hline
+      4 & 0        \\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -330,13 +330,13 @@
     \centering
     \caption{Disk}
     % \label{my-label}
-    \begin{tabular}{|l|}
+    \begin{tabular}{|l|l|}
       \hline
-      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      Sun 19:0 \\ \hline
-      0        \\ \hline
-      Tue 21:0 \\ \hline
-      0        \\ \hline
+      0 & \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      1 & Sun 19:0 \\ \hline
+      2 & 0        \\ \hline
+      3 & Tue 21:0 \\ \hline
+      4 & 0        \\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -355,15 +355,15 @@
     \centering
     \caption{Disk}
     % \label{my-label}
-    \begin{tabular}{|l|}
+    \begin{tabular}{|l|l|}
       \hline
-      \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      Sun 19:0 \\ \hline
-      0        \\ \hline
-      Tue 21:0 \\ \hline
-      0        \\ \hline
-      Wed 01:0 \\ \hline
-      0        \\ \hline
+      0 & \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+      1 & Sun 19:0 \\ \hline
+      2 & 0        \\ \hline
+      3 & Tue 21:0 \\ \hline
+      4 & 0        \\ \hline
+      5 & Wed 01:0 \\ \hline
+      6 & 0        \\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -389,16 +389,15 @@
   \end{tikzpicture}
   \begin{table}[]
     %% \centering
-    \caption{Disk}
-    % \label{my-label}
-    \begin{tabular}{|l|l|}
+    \caption{Disk and allocation vector}
+    \begin{tabular}{|l|l|l|}
       \hline
-      \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
-      Sun 19:0 & true\\ \hline
-      0        & true\\ \hline
-               & false\\ \hline
-               & false\\ \hline
-               & false\\ \hline
+      0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
+      1 & Sun 19:0 & true\\ \hline
+      2 & 0        & true\\ \hline
+      3 &          & false\\ \hline
+      4 &          & false\\ \hline
+      5 &          & false\\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -416,16 +415,15 @@
   \end{tikzpicture}
   \begin{table}[]
     \centering
-    \caption{Disk}
-    % \label{my-label}
-    \begin{tabular}{|l|l|}
+    \caption{Disk and allocation vector}
+    \begin{tabular}{|l|l|l|}
       \hline
-      \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
-      Sun 19:0 & true\\ \hline
-      0        & true\\ \hline
-      Tue 21:0 & true\\ \hline
-      0        & true\\ \hline
-               & false\\ \hline
+      0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
+      1 & Sun 19:0 & true\\ \hline
+      2 & 0        & true\\ \hline
+      3 & Tue 21:0 & true\\ \hline
+      4 & 0        & true\\ \hline
+      5 &          & false\\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -442,16 +440,15 @@
   \end{tikzpicture}
   \begin{table}[]
     \centering
-    \caption{Disk}
-    % \label{my-label}
-    \begin{tabular}{|l|l|}
+    \caption{Disk and allocation vector}
+    \begin{tabular}{|l|l|l|}
       \hline
-      \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
-      Sun 19:0 & false\\ \hline
-      0        & false\\ \hline
-      Tue 21:0 & true\\ \hline
-      0        & true\\ \hline
-               & false\\ \hline
+      0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
+      1 & Sun 19:0 & false\\ \hline
+      2 & 0        & false\\ \hline
+      3 & Tue 21:0 & true\\ \hline
+      4 & 0        & true\\ \hline
+      5 &          & false\\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
@@ -468,16 +465,15 @@
   \end{tikzpicture}
   \begin{table}[]
     \centering
-    \caption{Disk}
-    % \label{my-label}
-    \begin{tabular}{|l|l|}
+    \caption{Disk and allocation vector}
+    \begin{tabular}{|l|l|l|}
       \hline
-      \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
-      Wed 01:0 & true\\ \hline
-      0        & true\\ \hline
-      Tue 21:0 & false\\ \hline
-      0        & false\\ \hline
-               & false\\ \hline
+      0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
+      1 & Wed 01:0 & true\\ \hline
+      2 & 0        & true\\ \hline
+      3 & Tue 21:0 & false\\ \hline
+      4 & 0        & false\\ \hline
+      5 &          & false\\ \hline
     \end{tabular}
   \end{table}
 \end{frame}
