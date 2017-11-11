@@ -12,7 +12,7 @@
   University of Texas at Austin\\[1ex]
   \texttt{mihir@cs.utexas.edu}
 }
-\date{27 October, 2017}
+\date{10 November, 2017}
 
 \AtBeginSection[]
 {
@@ -57,10 +57,9 @@
   \begin{itemize}
   \item In Haogang Chen's 2016 dissertation, the author uses Coq to
     build a filesystem (named FSCQ) which is proven safe against
-    crashes in a new logical framework named Crash Hoare Logic.
-  \item His implementation was exported into Haskell, and showed
-    comparable performance to ext4 when run on FUSE.
-  \item Hyperkernel (Nelson et al, SOSP '17) is a "push-button"
+    crashes in a new logical framework named Crash Hoare Logic. His
+    (exported) Haskell implementation performs comparably to ext4.
+  \item Hyperkernel (Nelson et al., SOSP '17) is a "push-button"
     verification effort, but approximates by changing POSIX system
     calls for ease of verification.
   \item In our work, we instead aim to model an existing filesystem (FAT32)
@@ -76,7 +75,7 @@
       a simpler model to begin with.
     \item Our filesystem's operations should suffice for running a
       workload.
-    \item Yet, parsimony and avoidance of redundancy are essential for
+    \item Yet, parsimony and avoidance of redundancy are helpful for
       theorem proving.
     \item What's a necessary and sufficient set of operations?
   \end{itemize}
@@ -130,13 +129,16 @@
 
 \begin{frame}{Quick overview of models}
   \begin{itemize}
+  \item What follows is a sequence of {\bf increasingly refined} models.
   \item Model 1: Tree representation of directory structure with unbounded
     file size and unbounded filesystem size.
   \item Model 2: Model 1 with file length as metadata.
   \item Model 3: Tree representation of directory structure with
-    file contents stored in a "disk".
+    file contents stored in a "disk" (unbounded in length).
   \item Model 4: Model 3 with bounded filesystem size and garbage
     collection.
+  \item In our running example, we'll observe file creation, deletion,
+    and overwriting in each of these models in turn.
   \end{itemize}
 \end{frame}
 
@@ -562,7 +564,7 @@
 
 \section{Future work}
 
-\begin{frame}{Other future work}
+\begin{frame}{Future work}
   \begin{itemize}
   \item Model and verify file permissions.
   \item Linearise the tree, leaving only the disk.
