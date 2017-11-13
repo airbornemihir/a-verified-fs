@@ -69,6 +69,18 @@
 
 \section{Our approach}
 
+\begin{frame}{File system models}
+\begin{tikzpicture}[sibling distance=10em,
+  every node/.style = {shape=rectangle, rounded corners,
+    draw, align=center,
+    top color=white, bottom color=blue!20}]
+  \node {Model 1 - tree}
+    child { node {Model 2 - length}
+      child { node {Model 3 - disk}}
+      child { node {Model 4 - garbage collection}}};
+\end{tikzpicture}
+\end{frame}
+
 \begin{frame}{Choosing an initial model}
   \begin{itemize}
     \item Our goal here is to verify the FAT32 filesystem, but we need
