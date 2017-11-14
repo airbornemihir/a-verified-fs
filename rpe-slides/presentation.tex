@@ -36,6 +36,10 @@
   \titlepage
 \end{frame}
 
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
 %--- the presentation begins here ----------------%
 
 \section{Motivation and related work}
@@ -516,9 +520,9 @@
                  start, n) =
   text
 \end{verbatim}
-  \item Second read-over-write-theorem: Reading from a location after writing to a different
-    location should yield the same result as reading before
-    writing. Formally, assuming \texttt{hns1 != hns2} and suitable "type"
+  \item The second read-over-write theorem defines the semantics of
+    reading from a location after writing to a different
+    location. Formally, assuming \texttt{hns1 != hns2} and suitable "type"
     hypotheses (omitted here):\\
 \begin{verbatim}
   l1-rdchs(hns1, l1-wrchs(hns2, fs, start2, text2),
@@ -539,7 +543,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Proof example: read-over-write in model 2}
+\begin{frame}{Proof example: first read-over-write in model 2}
   \begin{figure}
     \begin{tikzpicture}
       \matrix (m) [matrix of math nodes,row sep=4em,column sep=8em,minimum width=2em]
@@ -569,7 +573,7 @@
   \end{figure}
 \end{frame}
 
-\begin{frame}{Proof example: read-over-write in model 2}
+\begin{frame}{Proof example: first read-over-write in model 2}
   \begin{figure}
     \begin{tikzpicture}
       \matrix (m) [matrix of math nodes,row sep=4em,column sep=8em,minimum width=2em]
@@ -591,10 +595,10 @@
 \begin{frame}{Source analysis}
   \begin{table}[]
     \centering
-    \caption{Code (over ~3 semesters)}
+    \caption{Code written for this project}
     \label{my-label}
     \begin{tabular}{ll}
-      sloccount (lines of ACL2 code)      & 4964 \\
+      Source lines of code (ACL2)      & 4964 \\
       defun events (function definitions) & 106  \\
       defthm events (lemmas and proofs)   & 374 
     \end{tabular}
@@ -607,7 +611,7 @@
   \begin{itemize}
   \item Model and verify file permissions.
   \item Linearise the tree, leaving only the disk.
-  \item Add the system call open and close with the
+  \item Add the system calls open and close with the
     introduction of file descriptors.\\
     \textit{This would be a step towards the study of concurrent FS operations.}
   \item Eventually emulate the FAT32 filesystem as a convincing proof
