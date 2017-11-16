@@ -492,14 +492,26 @@
            (bounded-nat-listp (flatten l) (len alv))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-24
+  l4-wrchs-returns-disk-lemma-2
   (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (l3-fs-p fs)
                 (boolean-listp alv)
+                (bounded-nat-listp (l4-list-all-indices fs)
+                                   (len alv)))
+           (bounded-nat-listp (cadr (assoc-equal name fs))
+                              (len alv)))
+  :hints (("goal" :induct (l4-list-all-indices fs)
+           :in-theory (enable l4-list-all-indices))))
+
+(defthm l4-wrchs-returns-stricter-fs-lemma-24
+  (implies (and (l3-fs-p fs)
+                (boolean-listp alv)
                 (indices-marked-listp (l4-collect-all-index-lists fs)
                                       alv))
-           (bounded-nat-listp (cadr (assoc-equal name fs))
-                              (len alv))))
+           (bounded-nat-listp (l4-list-all-indices fs)
+                              (len alv)))
+  :hints (("goal" :induct (l4-list-all-indices fs)
+           :in-theory (enable l4-list-all-indices))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-25
@@ -1515,18 +1527,6 @@
                 (block-listp value-list)
                 (bounded-nat-listp index-list (len disk)))
            (block-listp (set-indices disk index-list value-list))))
-
-(defthm
-  l4-wrchs-returns-disk-lemma-2
-  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
-                (l3-fs-p fs)
-                (boolean-listp alv)
-                (bounded-nat-listp (l4-list-all-indices fs)
-                                   (len alv)))
-           (bounded-nat-listp (cadr (assoc-equal name fs))
-                              (len alv)))
-  :hints (("goal" :induct (l4-list-all-indices fs)
-           :in-theory (enable l4-list-all-indices))))
 
 (defthm
   l4-wrchs-returns-disk-lemma-3
