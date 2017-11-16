@@ -6,51 +6,12 @@
 ; We first start with a file-system recognizer, and then we define various
 ; file-system operations.
 
-; Some more information about the proper way to transform an instance of l4 to
-; an instance of l3: we need to do a depth-first traversal of the l4 tree and
-; append all the disk contents in the order in which they are visited in this
-; traversal (for a leaf node - that is, a file - arrival time and departure
-; time are the same.) This is, in fact, going to be part of our sanity check -
-; when we append all the disk indices we retrieve this way, we should get a set
-; of numbers that is unique and corresponds to only blocks marked "not free" in
-; the allocation vector. Then, like in the previous model, we can unlink
-; l4-fs-p and other conditions which are necessary to make it a valid
-; filesystem wrt the disk.
-
-; Why is uniqueness of indices between different text files important? We want
-; to avoid strange behaviour caused by a file deletion or overwrite of one of
-; the files that exposes the other file's contents to a state of being marked
-; "free" in the alv.
-
-; How do we prove uniqueness after a create/write/delete operation? 
-
-; For create, our contention is that all used blocks are marked "not free" in
-; the alv (according to the extended l4-fs-p predicate), and the function for
-; getting new blocks only returns blocks marked "free", therefore there cannot
-; be any overlap between these two sets.
-
-; For delete, the rationale is, removing something from a list that already
-; satisfies no-duplicatesp will give us the same thing. This is not going to be
-; straightforward because when we get the concatenated list of indices after
-; deleting, we will have a contiguous sublist missing which will be hard to
-; define.
-
-; In fact, without sorting the files in a directory by name (which we have so
-; far avoided doing), we can't make a consistent ordering which will give us
-; the nice properties of depth-first traversal we want.
-
-; Anyway, for write, it's going to be more complicated still - our claim is
-; that if we re-use anything that was used before, it's fine because we marked
-; the blocks as "free" before writing to them and they wouldn't have appeared
-; anywhere else because of no-duplicatesp.
-
-; To sum up, we shouldn't try to charge on without proving equivalence to l3
-; because that's foolhardy. Yet, it's hard to think of a way to transform l4
-; instances to l3 instances - even with sorting of names - in such a way that
-; the disks will turn out to be the same in the two circumstances of
-; transforming and then writing, or writing and then transforming. I think we
-; might just have to start using defun-sk in order to quantify over all
-; names. We've known for a while that the time for this was coming.
+; There used to be a long comment here about converting an instance of l4 to an
+; instance of l3. We ended up bypassing this by converting to l2 instead, so
+; the comment is no longer pertinent. Oblique thanks are due to the
+; acquaintance who invited me to an event so deathly boring I had no choice
+; but to stare at the ceiling and think about ACL2, eventually realising model
+; 2 was the way to the proof for model 4.
 
 (include-book "file-system-3")
 (include-book "find-n-free-blocks")
