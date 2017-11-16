@@ -463,15 +463,6 @@
            (not-intersectp-list (find-n-free-blocks alv n)
                                 l)))
 
-;; (defthm l4-wrchs-returns-stricter-fs-lemma-22
-;;   (implies (and (boolean-listp alv)
-;;                 (indices-marked-p l alv)
-;;                 (not (intersectp-equal l index-list))
-;;                 (nat-listp index-list)
-;;                 (bounded-nat-listp l (len alv)))
-;;            (indices-marked-p l
-;;                              (set-indices-in-alv alv index-list nil))))
-
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-22
   (implies (and (boolean-listp alv)
@@ -492,7 +483,7 @@
            (bounded-nat-listp (flatten l) (len alv))))
 
 (defthm
-  l4-wrchs-returns-disk-lemma-2
+  l4-wrchs-returns-stricter-fs-lemma-24
   (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (l3-fs-p fs)
                 (boolean-listp alv)
@@ -503,7 +494,7 @@
   :hints (("goal" :induct (l4-list-all-indices fs)
            :in-theory (enable l4-list-all-indices))))
 
-(defthm l4-wrchs-returns-stricter-fs-lemma-24
+(defthm l4-wrchs-returns-stricter-fs-lemma-25
   (implies (and (l3-fs-p fs)
                 (boolean-listp alv)
                 (indices-marked-listp (l4-collect-all-index-lists fs)
@@ -514,7 +505,7 @@
            :in-theory (enable l4-list-all-indices))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-25
+  l4-wrchs-returns-stricter-fs-lemma-26
   (implies (and (consp (assoc-equal name fs))
                 (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
                 (l3-fs-p fs)
@@ -524,7 +515,7 @@
             (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-26
+  l4-wrchs-returns-stricter-fs-lemma-27
   (implies
    (and
     (l3-fs-p fs)
@@ -573,7 +564,7 @@
                                   nil))))))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-27
+  l4-wrchs-returns-stricter-fs-lemma-28
   (implies
    (and (l3-fs-p fs)
         (symbol-listp hns)
@@ -596,7 +587,7 @@
   :hints (("Goal" :induct (indices-marked-listp l alv))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-28
+  l4-wrchs-returns-stricter-fs-lemma-29
   (implies
    (and (l3-fs-p fs)
         (boolean-listp alv)
@@ -628,7 +619,7 @@
                 (b (len alv)))))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-29
+  l4-wrchs-returns-stricter-fs-lemma-30
   (implies
    (and (consp (assoc-equal name fs))
         (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
@@ -652,7 +643,7 @@
                                                        (cdr fs)))))))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-30
+  l4-wrchs-returns-stricter-fs-lemma-31
   (implies
    (and (symbol-listp hns)
         (l3-fs-p fs)
@@ -677,7 +668,7 @@
           ("subgoal *1/3.2" :in-theory (enable l3-regular-file-entry-p))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-31
+  l4-wrchs-returns-stricter-fs-lemma-32
   (implies
    (and (symbol-listp hns)
         (l3-fs-p fs)
@@ -701,8 +692,7 @@
   :hints (("Goal" :induct (indices-marked-listp l alv))
           ("Subgoal *1/2" :expand (flatten l))))
 
-
-(defthm l4-wrchs-returns-stricter-fs-lemma-32
+(defthm l4-wrchs-returns-stricter-fs-lemma-33
   (implies
    (and (symbol-listp hns)
         (l3-fs-p fs)
@@ -1529,7 +1519,7 @@
            (block-listp (set-indices disk index-list value-list))))
 
 (defthm
-  l4-wrchs-returns-disk-lemma-3
+  l4-wrchs-returns-disk-lemma-2
   (implies
    (and (consp (assoc-equal name fs))
         (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
