@@ -1567,22 +1567,26 @@
              (declare (ignore new-alv))
              (equal (l4-rdchs hns1 new-fs new-disk start1 n1)
                     (l4-rdchs hns1 fs disk start1 n1))))
-  :instructions
-  (:split
-   (:in-theory (disable l4-rdchs-correctness-1))
-   (:use (:instance l4-rdchs-correctness-1 (hns hns1)
-                    (start start1)
-                    (n n1))
-         (:instance l4-rdchs-correctness-1 (hns hns1)
-                    (start start1)
-                    (n n1)
-                    (fs (mv-nth 0
-                                (l4-wrchs hns2 fs disk alv start2 text2)))
-                    (disk (mv-nth 1
-                                  (l4-wrchs hns2 fs disk alv start2 text2)))))
-   (:in-theory (disable l4-wrchs-correctness-1))
-   (:use (:instance l4-wrchs-correctness-1 (hns hns2)
-                    (start start2)
-                    (text text2)))
-   :bash))
+  :hints
+  (("goal"
+    :in-theory (disable l4-rdchs-correctness-1
+                        l4-wrchs-correctness-1
+                        l4-wrchs-returns-fs)
+    :use
+    ((:instance l4-rdchs-correctness-1 (hns hns1)
+                (start start1)
+                (n n1))
+     (:instance l4-rdchs-correctness-1 (hns hns1)
+                (start start1)
+                (n n1)
+                (fs (mv-nth 0
+                            (l4-wrchs hns2 fs disk alv start2 text2)))
+                (disk (mv-nth 1
+                              (l4-wrchs hns2 fs disk alv start2 text2))))
+     (:instance l4-wrchs-correctness-1 (hns hns2)
+                (start start2)
+                (text text2))
+     (:instance l4-wrchs-returns-fs (hns hns2)
+                (start start2)
+                (text text2))))))
 
