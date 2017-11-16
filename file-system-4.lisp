@@ -1518,15 +1518,12 @@
 
 (defthm
   l4-wrchs-returns-disk-lemma-2
-  (implies (and (consp hns)
-                (consp (assoc-equal (car hns) fs))
-                (l3-regular-file-entry-p (cdr (assoc-equal (car hns) fs)))
-                (not (cdr hns))
+  (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (l3-fs-p fs)
                 (boolean-listp alv)
                 (bounded-nat-listp (l4-list-all-indices fs)
                                    (len alv)))
-           (bounded-nat-listp (cadr (assoc-equal (car hns) fs))
+           (bounded-nat-listp (cadr (assoc-equal name fs))
                               (len alv)))
   :hints (("goal" :induct (l4-list-all-indices fs)
            :in-theory (enable l4-list-all-indices))))
@@ -1534,16 +1531,13 @@
 (defthm
   l4-wrchs-returns-disk-lemma-3
   (implies
-   (and (consp hns)
-        (consp fs)
-        (consp (assoc-equal (car hns) fs))
-        (not (l3-regular-file-entry-p (cdr (assoc-equal (car hns) fs))))
-        (symbol-listp (cdr hns))
+   (and (consp (assoc-equal name fs))
+        (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
         (l3-fs-p fs)
         (boolean-listp alv)
         (bounded-nat-listp (l4-list-all-indices fs)
                            (len alv)))
-   (bounded-nat-listp (l4-list-all-indices (cdr (assoc-equal (car hns) fs)))
+   (bounded-nat-listp (l4-list-all-indices (cdr (assoc-equal name fs)))
                       (len alv)))
   :hints (("goal" :in-theory (enable l4-list-all-indices)
            :induct (l4-list-all-indices fs))))
