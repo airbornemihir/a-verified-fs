@@ -8,10 +8,7 @@
 
 ; There used to be a long comment here about converting an instance of l4 to an
 ; instance of l3. We ended up bypassing this by converting to l2 instead, so
-; the comment is no longer pertinent. Oblique thanks are due to the
-; acquaintance who invited me to an event so deathly boring I had no choice
-; but to stare at the ceiling and think about ACL2, eventually realising model
-; 2 was the way to the proof for model 4.
+; the comment is no longer pertinent.
 
 (include-book "file-system-3")
 (include-book "find-n-free-blocks")
