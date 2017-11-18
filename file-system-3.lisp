@@ -280,7 +280,6 @@
 ;; This function transforms an instance of l3 into an equivalent instance of l2.
 (defun l3-to-l2-fs (fs disk)
   (declare (xargs :guard (and (l3-fs-p fs) (block-listp disk))
-                  :guard-debug t
                   :guard-hints (("Subgoal 2.6" :in-theory (enable feasible-file-length-p)))
                   ))
   (if (atom fs)
@@ -297,15 +296,14 @@
                     (l3-to-l2-fs entry disk))))
           (l3-to-l2-fs (cdr fs) disk))))
 
-;; This theorem shows the type-correctness of l2-to-l1-fs.
+;; This theorem shows the type-correctness of l3-to-l2-fs.
 (defthm l3-to-l2-fs-correctness-1
   (implies (and (l3-fs-p fs) (block-listp disk))
            (l2-fs-p (l3-to-l2-fs fs disk))))
 
 ;; This function allows a file or directory to be found in a filesystem given a path.
 (defun l3-stat (hns fs disk)
-  (declare (xargs :guard-debug t
-                  :guard (and (symbol-listp hns)
+  (declare (xargs :guard (and (symbol-listp hns)
                               (l3-fs-p fs)
                               (block-listp disk))))
   (if (atom hns)
@@ -751,8 +749,7 @@
   (declare (xargs :guard (and (symbol-listp hns)
                               (l3-fs-p fs)
                               (stringp text)
-                              (block-listp disk))
-                  :guard-debug t))
+                              (block-listp disk))))
   (if (atom hns)
       (mv fs disk) ;; error - showed up at fs with no name  - so leave fs unchanged
     (let ((sd (assoc (car hns) fs)))
@@ -884,23 +881,25 @@
              (equal (l3-rdchs hns1 new-fs new-disk start1 n1)
                     (l3-rdchs hns1 fs disk start1 n1))))
   :hints
-  (("Goal" :use ((:instance l3-wrchs-returns-fs (hns hns2)
-                            (start start2)
-                            (text text2))
-                 (:instance l2-read-after-write-2
-                            (fs (l3-to-l2-fs fs disk)))
-                 (:instance l3-rdchs-correctness-1
-                            (fs (mv-nth 0 (l3-wrchs hns2 fs disk start2 text2)))
-                            (disk (mv-nth 1 (l3-wrchs hns2 fs disk start2 text2)))
-                            (hns hns1)
-                            (start start1)
-                            (n n1))
-                 (:instance l3-rdchs-correctness-1 (hns hns1)
-                            (start start1)
-                            (n n1))
-                 (:instance l3-wrchs-correctness-1 (hns hns1)
-                            (start start1)
-                            (text text1))))))
+  (("goal"
+    :in-theory (disable l3-wrchs-returns-fs
+                        l2-read-after-write-2
+                        l3-rdchs-correctness-1
+                        l3-rdchs-correctness-1)
+    :use ((:instance l3-wrchs-returns-fs (hns hns2)
+                     (start start2)
+                     (text text2))
+          (:instance l2-read-after-write-2
+                     (fs (l3-to-l2-fs fs disk)))
+          (:instance l3-rdchs-correctness-1
+                     (fs (mv-nth 0 (l3-wrchs hns2 fs disk start2 text2)))
+                     (disk (mv-nth 1 (l3-wrchs hns2 fs disk start2 text2)))
+                     (hns hns1)
+                     (start start1)
+                     (n n1))
+          (:instance l3-rdchs-correctness-1 (hns hns1)
+                     (start start1)
+                     (n n1))))))
 
 ;; This proves the equivalent of the first read-after-write property for
 ;; create.

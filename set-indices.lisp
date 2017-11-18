@@ -34,6 +34,11 @@
                              (set-indices v index-list value-list))
                         (nth m value-list))))
 
+(defthm set-indices-correctness-3
+  (implies (bounded-nat-listp index-list (len v))
+           (equal (len (set-indices v index-list value-list))
+                  (len v))))
+
 (encapsulate
   ( ((set-indices-in-alv * * *) => *) )
 
