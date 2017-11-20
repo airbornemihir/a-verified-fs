@@ -23,54 +23,48 @@
     ((l5-regular-file-user-write *) => *)
     ((l5-regular-file-other-read *) => *)
     ((l5-regular-file-other-write *) => *))
-  (local (include-book "std/util/defaggregate" :dir :system))
-
-  (std::defaggregate
-   regular-file
-   (contents length user-read user-write other-read other-write)
-   :tag :l5-regular-file)
 
   (local
    (defun l5-regular-file-entry-p (entry)
      (declare (xargs :guard t))
-     (and (regular-file-p entry)
-          (nat-listp (regular-file->contents entry))
-          (natp (regular-file->length entry))
-          (feasible-file-length-p (len (regular-file->contents entry)) (regular-file->length entry))
-          (booleanp (regular-file->user-read entry))
-          (booleanp (regular-file->user-write entry))
-          (booleanp (regular-file->other-read entry))
-          (booleanp (regular-file->other-write entry)))))
+     (and (equal (len entry) 5)
+          (nat-listp (car entry))
+          (natp (cadr entry))
+          (feasible-file-length-p (len (car entry)) (cadr entry))
+          (booleanp (car (cddr entry)))
+          (booleanp (cadr (cddr entry)))
+          (booleanp (car (cddr (cddr entry))))
+          (booleanp (cdr (cddr (cddr entry)))))))
 
   (local
    (defun l5-regular-file-contents (entry)
      (declare (xargs :guard (l5-regular-file-entry-p entry)))
-     (regular-file->contents entry)))
+     (car entry)))
 
   (local
    (defun l5-regular-file-length (entry)
      (declare (xargs :guard (l5-regular-file-entry-p entry)))
-     (regular-file->length entry)))
+     (cadr entry)))
 
   (local
    (defun l5-regular-file-user-read (entry)
      (declare (xargs :guard (l5-regular-file-entry-p entry)))
-     (regular-file->user-read entry)))
+     (car (cddr entry))))
 
   (local
    (defun l5-regular-file-user-write (entry)
      (declare (xargs :guard (l5-regular-file-entry-p entry)))
-     (regular-file->user-write entry)))
+     (cadr (cddr entry))))
 
   (local
    (defun l5-regular-file-other-read (entry)
      (declare (xargs :guard (l5-regular-file-entry-p entry)))
-     (regular-file->other-read entry)))
+     (car (cddr (cddr entry)))))
 
   (local
    (defun l5-regular-file-other-write (entry)
      (declare (xargs :guard (l5-regular-file-entry-p entry)))
-     (regular-file->other-write entry)))
+     (cdr (cddr (cddr entry)))))
 
   (local
    (defun l5-make-regular-file
@@ -84,13 +78,11 @@
                           (booleanp user-write)
                           (booleanp other-read)
                           (booleanp other-write))))
-     (make-regular-file
-      :contents contents
-      :length length
-      :user-read user-read
-      :user-write user-write
-      :other-read other-read
-      :other-write other-write)))
+     (cons contents
+           (cons length
+                 (cons user-read
+                       (cons user-write
+                             (cons other-read other-write)))))))
 
   (defthm l5-make-regular-file-correctness-1
     (implies (and (nat-listp contents)
