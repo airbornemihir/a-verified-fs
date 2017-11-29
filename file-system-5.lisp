@@ -93,6 +93,34 @@
                                      l5-make-regular-file))))
 
 (defthm
+  l5-make-regular-file-correctness-2
+  (let ((entry (l5-make-regular-file contents length user-read user-write
+                                     other-read other-write user)))
+       (and (equal (l5-regular-file-contents entry)
+                   contents)
+            (equal (l5-regular-file-length entry)
+                   length)
+            (equal (l5-regular-file-user-read entry)
+                   user-read)
+            (equal (l5-regular-file-user-write entry)
+                   user-write)
+            (equal (l5-regular-file-other-read entry)
+                   other-read)
+            (equal (l5-regular-file-other-write entry)
+                   other-write)
+            (equal (l5-regular-file-user entry)
+                   user)))
+  :hints (("goal" :in-theory (enable l5-regular-file-entry-p
+                                     l5-make-regular-file
+                                     l5-regular-file-contents
+                                     l5-regular-file-length
+                                     l5-regular-file-user-read
+                                     l5-regular-file-user-write
+                                     l5-regular-file-other-read
+                                     l5-regular-file-other-write
+                                     l5-regular-file-user))))
+
+(defthm
   l5-regular-file-entry-p-correctness-1
   (implies (l5-regular-file-entry-p entry)
            (and (nat-listp (l5-regular-file-contents entry))
@@ -252,7 +280,14 @@
                             disk
                             alv)
                       (mv (cons (cons (car sd)
-                                      (cons new-indices (len new-text)))
+                                      (l5-make-regular-file
+                                       new-indices
+                                       (len new-text)
+                                       (l5-regular-file-user-read (cdr sd))
+                                       (l5-regular-file-user-write (cdr sd))
+                                       (l5-regular-file-other-read (cdr sd))
+                                       (l5-regular-file-other-write (cdr sd))
+                                       (l5-regular-file-user (cdr sd))))
                                 (delete-assoc (car hns) fs))
                           ;; this (take) means we write as many blocks as we can
                           ;; if we run out of space
@@ -363,3 +398,104 @@
            (equal (l4-stat hns (l5-to-l4-fs fs) disk)
                   (l5-to-l4-fs (l5-stat hns fs disk user) )))
   )
+
+(defthm l5-wrchs-returns-fs-lemma-1
+  (implies (l5-fs-p fs)
+           (l5-fs-p (delete-assoc-equal name fs))))
+
+(defthm l5-wrchs-returns-fs (IMPLIES
+ (AND
+  (L5-fs-P fs)
+  (STRINGP TEXT)
+  (INTEGERP START)
+  (<= 0 START)
+  (INTEGERP USER)
+  (<= 0 USER)
+  (SYMBOL-LISTP hns)
+  (BLOCK-LISTP DISK)
+  (EQUAL (LEN ALV) (LEN DISK))
+  (BOOLEAN-LISTP ALV)
+  )(L5-fs-P (MV-NTH 0
+                                   (L5-WRCHS hns fs DISK ALV START TEXT USER))))
+)
+
+(defthm l5-wrchs-correctness-1-lemma-1
+  (implies (l5-fs-p fs)
+           (equal (delete-assoc-equal name (l5-to-l4-fs fs))
+                  (l5-to-l4-fs (delete-assoc-equal name fs)))))
+
+;; not provable
+;; (thm
+;;  (implies (l4-stricter-fs-p (l5-to-l4-fs fs) alv)
+;;           (l5-fs-p fs)))
+
+(defthm
+  l5-wrchs-correctness-1-lemma-2
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l5-fs-p (cdr (assoc-equal name fs)))
+        (l5-fs-p fs)
+        (boolean-listp alv)
+        (indices-marked-listp (l4-collect-all-index-lists (l5-to-l4-fs fs))
+                              alv))
+   (indices-marked-listp
+    (l4-collect-all-index-lists (l5-to-l4-fs (cdr (assoc-equal name fs))))
+    alv)))
+
+(defthm
+  l5-wrchs-correctness-1-lemma-3
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l5-fs-p (cdr (assoc-equal name fs)))
+        (l5-fs-p fs)
+        (disjoint-list-listp (l4-collect-all-index-lists (l5-to-l4-fs fs))))
+   (disjoint-list-listp
+    (l4-collect-all-index-lists (l5-to-l4-fs (cdr (assoc-equal name fs)))))))
+
+(defthm
+  l5-wrchs-correctness-1-lemma-4
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l5-fs-p (cdr (assoc-equal name fs)))
+        (l5-fs-p fs)
+        (no-duplicates-listp (l4-collect-all-index-lists (l5-to-l4-fs fs))))
+   (no-duplicates-listp
+    (l4-collect-all-index-lists (l5-to-l4-fs (cdr (assoc-equal name fs)))))))
+
+(defthm
+  l5-wrchs-correctness-1-lemma-5
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l5-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (l5-fs-p fs))
+   (equal (cdr (assoc-equal name (l5-to-l4-fs fs)))
+          (cons (l5-regular-file-contents (cdr (assoc-equal name fs)))
+                (l5-regular-file-length (cdr (assoc-equal name fs)))))))
+
+(defthm l5-wrchs-correctness-1-lemma-6
+  (implies (and (l5-fs-p fs))
+           (iff (consp (assoc-equal name (l5-to-l4-fs fs)))
+                (consp (assoc-equal name fs)))))
+
+(defthm
+  l5-wrchs-correctness-1
+  (implies (and (l5-fs-p fs)
+                (stringp text)
+                (natp start)
+                (natp user)
+                (symbol-listp hns)
+                (block-listp disk)
+                (equal (len alv) (len disk))
+                (<= (len (make-blocks (insert-text nil start text)))
+                    (count-free-blocks alv)))
+           (let ((l4-fs (l5-to-l4-fs fs))
+                 (file (L5-STAT HNS FS DISK USER)))
+             (implies (and
+                       (l4-stricter-fs-p l4-fs alv)
+                       (or (not (l5-regular-file-entry-p file))
+                           (l5-regular-file-writable-p file user)))
+            (equal (l4-wrchs hns l4-fs disk alv start text)
+                   (mv-let (new-fs new-disk new-alv)
+                     (l5-wrchs hns fs disk alv start text user)
+                     (mv (l5-to-l4-fs new-fs) new-disk new-alv))))))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
