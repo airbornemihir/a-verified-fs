@@ -194,7 +194,7 @@
   :hints (("Goal" :use l3-regular-file-entry-p-correctness-1) ))
 
 ; This function defines a valid filesystem. It's an alist where all the cars
-; are symbols and all the cdrs are either further filesystems or files,
+; are symbols and all the cdrs are either further filesystems or regular files,
 ; separated into text (represented by a nat-list of indices which we use to
 ; look up an external disk) and metadata (currently, only length).
 (defun l3-fs-p (fs)
