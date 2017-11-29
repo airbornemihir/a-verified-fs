@@ -382,9 +382,9 @@
   l5-stat-correctness-2-lemma-1
   (implies
    (and (consp (assoc-equal name (l5-to-l4-fs fs)))
-        (l5-fs-p fs)
-        (l5-regular-file-entry-p (cdr (assoc-equal name fs))))
-   (l3-regular-file-entry-p (cdr (assoc-equal name (l5-to-l4-fs fs)))))
+        (l5-fs-p fs))
+   (iff (l3-regular-file-entry-p (cdr (assoc-equal name (l5-to-l4-fs fs))))
+        (l5-regular-file-entry-p (cdr (assoc-equal name fs)))))
   :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
 ;; This is the second of two theorems showing the equivalence of the l3 and l2
@@ -403,21 +403,20 @@
   (implies (l5-fs-p fs)
            (l5-fs-p (delete-assoc-equal name fs))))
 
-(defthm l5-wrchs-returns-fs (IMPLIES
- (AND
-  (L5-fs-P fs)
-  (STRINGP TEXT)
-  (INTEGERP START)
-  (<= 0 START)
-  (INTEGERP USER)
-  (<= 0 USER)
-  (SYMBOL-LISTP hns)
-  (BLOCK-LISTP DISK)
-  (EQUAL (LEN ALV) (LEN DISK))
-  (BOOLEAN-LISTP ALV)
-  )(L5-fs-P (MV-NTH 0
-                                   (L5-WRCHS hns fs DISK ALV START TEXT USER))))
-)
+(defthm
+  l5-wrchs-returns-fs
+  (implies (and (l5-fs-p fs)
+                (stringp text)
+                (integerp start)
+                (<= 0 start)
+                (integerp user)
+                (<= 0 user)
+                (symbol-listp hns)
+                (block-listp disk)
+                (equal (len alv) (len disk))
+                (boolean-listp alv))
+           (l5-fs-p (mv-nth 0
+                            (l5-wrchs hns fs disk alv start text user)))))
 
 (defthm l5-wrchs-correctness-1-lemma-1
   (implies (l5-fs-p fs)
@@ -499,3 +498,47 @@
                      (l5-wrchs hns fs disk alv start text user)
                      (mv (l5-to-l4-fs new-fs) new-disk new-alv))))))
   :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm l5-rdchs-correctness-1-lemma-1
+  (implies (and (symbol-listp hns)
+                (l5-fs-p fs)
+                (block-listp disk)
+                (integerp user)
+                (<= 0 user))
+           (iff (stringp (l3-stat hns (l5-to-l4-fs fs) disk))
+                (l5-regular-file-entry-p (l5-stat hns fs disk user))))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm l5-rdchs-correctness-1-lemma-2
+(IMPLIES
+ (AND (CONSP HNS)
+      (CONSP (ASSOC-EQUAL (CAR HNS) FS))
+      (L5-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL (CAR HNS) FS)))
+      (NOT (CDR HNS))
+      (SYMBOLP (CAR HNS))
+      (L5-FS-P FS)
+      (BLOCK-LISTP DISK)
+      )
+ (equal (COERCE (L3-STAT HNS (L5-TO-L4-FS FS) DISK)
+                      'LIST) (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (L5-REGULAR-FILE-CONTENTS (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+            (L5-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))))
+:hints (("Goal" :in-theory (enable L3-REGULAR-FILE-ENTRY-P)) ("Subgoal *1/1''" :in-theory (disable L5-STAT-CORRECTNESS-1-LEMMA-2) :use L5-STAT-CORRECTNESS-1-LEMMA-2)))
+
+;; This theorem proves the equivalence of the l5 and l4 versions of rdchs.
+(defthm l5-rdchs-correctness-1
+  (implies (and (symbol-listp hns)
+                (l5-fs-p fs)
+                (natp start)
+                (natp n)
+                (block-listp disk)
+                (let
+                    ((file (l5-stat hns fs disk user)))
+                  (and (or (not  (l5-regular-file-entry-p file))
+                       (l5-regular-file-readable-p file user))))
+                       (natp user))
+           
+           (equal (l4-rdchs hns (l5-to-l4-fs fs) disk start n)
+                  (l5-rdchs hns fs disk start n user))))
