@@ -161,13 +161,20 @@
                         (l5-fs-p entry))))))
          (l5-fs-p (cdr fs)))))
 
-(defthm l5-regular-file-entry-p-correctness-3
+(defthm
+  l5-regular-file-entry-p-correctness-3
   (implies (l5-regular-file-entry-p entry)
            (not (l5-fs-p entry)))
-  :hints (("Goal" :in-theory (enable l5-regular-file-entry-p)) )
-  :rule-classes (:rewrite (:rewrite :corollary
-                                    (implies (l5-fs-p entry)
-                                             (not (l5-regular-file-entry-p entry))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite :corollary (implies (l5-fs-p entry)
+                                 (not (l5-regular-file-entry-p entry)))))
+  :hints (("goal" :in-theory (enable l5-regular-file-entry-p))))
+
+(defthm l5-regular-file-entry-p-correctness-4
+  (implies (l5-regular-file-entry-p entry)
+           (consp entry))
+  :hints (("Goal" :in-theory (enable l5-regular-file-entry-p)) ))
 
 (defthm alistp-l5-fs-p
   (implies (l5-fs-p fs)
@@ -315,7 +322,6 @@
                (cons name (l5-to-l4-fs entry)))))
          (l5-to-l4-fs (cdr fs)))))
 
-;; change the storage of this thing!
 (defthm
   l5-to-l4-fs-correctness-1
   (implies (l5-fs-p fs)
@@ -371,53 +377,83 @@
           (l5-regular-file-readable-p file user)
           (natp user))
      (equal
-      (l4-stat hns (l5-to-l4-fs fs) disk)
+      (l3-stat hns (l5-to-l4-fs fs) disk)
       (coerce
        (unmake-blocks
         (fetch-blocks-by-indices disk (l5-regular-file-contents file))
         (l5-regular-file-length file))
-       'string))))))
+       'string)))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (symbol-listp hns)
+          (l5-fs-p fs)
+          (block-listp disk))
+     (let
+      ((file (l5-stat hns fs disk user)))
+      (implies
+       (and (l5-regular-file-entry-p file)
+            (l5-regular-file-readable-p file user)
+            (natp user))
+       (equal
+        (l4-stat hns (l5-to-l4-fs fs) disk)
+        (coerce
+         (unmake-blocks
+          (fetch-blocks-by-indices disk (l5-regular-file-contents file))
+          (l5-regular-file-length file))
+         'string))))))))
 
 (defthm
   l5-stat-correctness-2-lemma-1
   (implies
    (and (consp (assoc-equal name (l5-to-l4-fs fs)))
-        (l5-fs-p fs)
-        (l5-regular-file-entry-p (cdr (assoc-equal name fs))))
-   (l3-regular-file-entry-p (cdr (assoc-equal name (l5-to-l4-fs fs)))))
+        (l5-fs-p fs))
+   (iff (l3-regular-file-entry-p (cdr (assoc-equal name (l5-to-l4-fs fs))))
+        (l5-regular-file-entry-p (cdr (assoc-equal name fs)))))
   :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
 ;; This is the second of two theorems showing the equivalence of the l3 and l2
 ;; versions of stat.
-(defthm l5-stat-correctness-2
+(defthm
+  l5-stat-correctness-2
   (implies (and (symbol-listp hns)
                 (l5-fs-p fs)
                 (block-listp disk)
                 (natp user)
                 (l5-fs-p (l5-stat hns fs disk user)))
-           (equal (l4-stat hns (l5-to-l4-fs fs) disk)
-                  (l5-to-l4-fs (l5-stat hns fs disk user) )))
-  )
+           (equal (l3-stat hns (l5-to-l4-fs fs) disk)
+                  (l5-to-l4-fs (l5-stat hns fs disk user))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary (implies (and (symbol-listp hns)
+                             (l5-fs-p fs)
+                             (block-listp disk)
+                             (natp user)
+                             (l5-fs-p (l5-stat hns fs disk user)))
+                        (equal (l4-stat hns (l5-to-l4-fs fs) disk)
+                               (l5-to-l4-fs (l5-stat hns fs disk user)))))))
 
 (defthm l5-wrchs-returns-fs-lemma-1
   (implies (l5-fs-p fs)
            (l5-fs-p (delete-assoc-equal name fs))))
 
-(defthm l5-wrchs-returns-fs (IMPLIES
- (AND
-  (L5-fs-P fs)
-  (STRINGP TEXT)
-  (INTEGERP START)
-  (<= 0 START)
-  (INTEGERP USER)
-  (<= 0 USER)
-  (SYMBOL-LISTP hns)
-  (BLOCK-LISTP DISK)
-  (EQUAL (LEN ALV) (LEN DISK))
-  (BOOLEAN-LISTP ALV)
-  )(L5-fs-P (MV-NTH 0
-                                   (L5-WRCHS hns fs DISK ALV START TEXT USER))))
-)
+(defthm
+  l5-wrchs-returns-fs
+  (implies (and (l5-fs-p fs)
+                (stringp text)
+                (integerp start)
+                (<= 0 start)
+                (integerp user)
+                (<= 0 user)
+                (symbol-listp hns)
+                (block-listp disk)
+                (equal (len alv) (len disk))
+                (boolean-listp alv))
+           (l5-fs-p (mv-nth 0
+                            (l5-wrchs hns fs disk alv start text user)))))
 
 (defthm l5-wrchs-correctness-1-lemma-1
   (implies (l5-fs-p fs)
@@ -499,3 +535,641 @@
                      (l5-wrchs hns fs disk alv start text user)
                      (mv (l5-to-l4-fs new-fs) new-disk new-alv))))))
   :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm l5-rdchs-correctness-1-lemma-1
+  (implies (and (symbol-listp hns)
+                (l5-fs-p fs)
+                (block-listp disk)
+                (integerp user)
+                (<= 0 user))
+           (iff (stringp (l3-stat hns (l5-to-l4-fs fs) disk))
+                (l5-regular-file-entry-p (l5-stat hns fs disk user))))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm
+  l5-rdchs-correctness-1-lemma-2
+  (implies
+   (and (consp hns)
+        (consp (assoc-equal (car hns) fs))
+        (l5-regular-file-entry-p (cdr (assoc-equal (car hns) fs)))
+        (not (cdr hns))
+        (symbolp (car hns))
+        (l5-fs-p fs)
+        (block-listp disk))
+   (equal
+    (coerce (l3-stat hns (l5-to-l4-fs fs) disk)
+            'list)
+    (unmake-blocks
+     (fetch-blocks-by-indices
+      disk
+      (l5-regular-file-contents (cdr (assoc-equal (car hns) fs))))
+     (l5-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+  :hints
+  (("goal" :in-theory (enable l3-regular-file-entry-p))
+   ("subgoal *1/1''" :in-theory (disable l5-stat-correctness-1-lemma-2)
+    :use l5-stat-correctness-1-lemma-2)))
+
+;; This theorem proves the equivalence of the l5 and l4 versions of rdchs.
+(defthm l5-rdchs-correctness-1
+  (implies (and (symbol-listp hns)
+                (l5-fs-p fs)
+                (natp start)
+                (natp n)
+                (block-listp disk)
+                (let ((file (l5-stat hns fs disk user)))
+                     (and (or (not (l5-regular-file-entry-p file))
+                              (l5-regular-file-readable-p file user))))
+                (natp user))
+           (equal (l4-rdchs hns (l5-to-l4-fs fs)
+                            disk start n)
+                  (l5-rdchs hns fs disk start n user))))
+
+(defthm
+  l5-wrchs-returns-disk-lemma-1
+  (implies
+   (l5-regular-file-entry-p entry)
+   (equal (bounded-nat-listp (binary-append (l5-regular-file-contents entry)
+                                            y)
+                             b)
+          (and (bounded-nat-listp (l5-regular-file-contents entry)
+                                  b)
+               (bounded-nat-listp y b))))
+  :hints (("goal" :in-theory (disable bounded-nat-listp-correctness-2)
+           :use (:instance bounded-nat-listp-correctness-2
+                           (x (l5-regular-file-contents entry))))))
+
+(defthm
+  l5-wrchs-returns-disk-lemma-2
+  (implies
+   (and
+    (l5-fs-p fs)
+    (boolean-listp alv)
+    (bounded-nat-listp (l4-list-all-indices (l5-to-l4-fs fs))
+                       b))
+   (bounded-nat-listp
+    (l4-list-all-indices (l5-to-l4-fs (cdr fs)))
+    b))
+  :hints (("goal" :in-theory (enable l4-list-all-indices))))
+
+(defthm
+  l5-wrchs-returns-disk-lemma-3
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l5-fs-p (cdr (assoc-equal name fs)))
+        (l5-fs-p fs)
+        (boolean-listp alv)
+        (bounded-nat-listp (l4-list-all-indices (l5-to-l4-fs fs))
+                           b))
+   (bounded-nat-listp
+    (l4-list-all-indices (l5-to-l4-fs (cdr (assoc-equal name fs))))
+    b))
+  :hints (("goal" :in-theory (enable l4-list-all-indices))))
+
+(defthm
+  l5-wrchs-returns-disk-lemma-4
+  (implies
+   (and
+    (consp (assoc-equal name fs))
+    (l5-regular-file-entry-p (cdr (assoc-equal name fs)))
+    (l5-fs-p fs)
+    (bounded-nat-listp (l4-list-all-indices (l5-to-l4-fs fs)) b))
+   (bounded-nat-listp
+    (l5-regular-file-contents (cdr (assoc-equal name fs))) b))
+  :hints (("goal" :in-theory (enable l4-list-all-indices l3-regular-file-entry-p)) ))
+
+(defthm
+  l5-wrchs-returns-disk
+  (implies (and (l5-fs-p fs)
+                (stringp text)
+                (integerp start)
+                (<= 0 start)
+                (integerp user)
+                (<= 0 user)
+                (symbol-listp hns)
+                (block-listp disk)
+                (equal (len alv) (len disk))
+                (boolean-listp alv)
+                (bounded-nat-listp (l4-list-all-indices (l5-to-l4-fs fs))
+                                   (len disk)))
+           (block-listp (mv-nth 1
+                                (l5-wrchs hns fs disk alv start text user)))))
+
+(defthm
+  l5-read-after-write-1-lemma-1
+  (implies (and (l5-fs-p fs)
+                (boolean-listp alv)
+                (stringp text)
+                (integerp start)
+                (<= 0 start)
+                (symbol-listp hns)
+                (block-listp disk)
+                (equal (len alv) (len disk))
+                (integerp user)
+                (<= 0 user)
+                (l5-regular-file-entry-p (l5-stat hns fs disk user)))
+           (l5-regular-file-entry-p
+            (l5-stat hns
+                     (mv-nth 0
+                             (l5-wrchs hns fs disk alv start text user))
+                     (mv-nth 1
+                             (l5-wrchs hns fs disk alv start text user))
+                     user)))
+  :hints (("subgoal *1/5'''"
+           :in-theory (disable l5-wrchs-returns-disk)
+           :use (:instance l5-wrchs-returns-disk (hns (cdr hns))
+                           (fs (cdr (assoc-equal (car hns) fs)))))))
+
+(defthm
+  l5-read-after-write-1-lemma-2
+  (implies
+   (and (l5-fs-p fs)
+        (boolean-listp alv)
+        (stringp text)
+        (integerp start)
+        (<= 0 start)
+        (symbol-listp hns)
+        (block-listp disk)
+        (equal (len alv) (len disk))
+        (integerp user)
+        (<= 0 user))
+   (let
+    ((file (l5-stat hns fs disk user))
+     (new-file (l5-stat hns
+                        (mv-nth 0
+                                (l5-wrchs hns fs disk alv start text user))
+                        (mv-nth 1
+                                (l5-wrchs hns fs disk alv start text user))
+                        user)))
+    (implies (l5-regular-file-entry-p file)
+             (and (equal (l5-regular-file-user-read new-file)
+                         (l5-regular-file-user-read file))
+                  (equal (l5-regular-file-user new-file)
+                         (l5-regular-file-user file))
+                  (equal (l5-regular-file-other-read new-file)
+                         (l5-regular-file-other-read file)))))))
+
+(defthm
+ l5-read-after-write-1
+ (implies (and (l5-fs-p fs)
+               (l4-stricter-fs-p (l5-to-l4-fs fs) alv)
+               (stringp text)
+               (natp start)
+               (symbol-listp hns)
+               (boolean-listp alv)
+               (block-listp disk)
+               (equal (len alv) (len disk))
+               (natp user)
+               (<= (len (make-blocks (insert-text nil start text)))
+                   (count-free-blocks alv))
+               (equal n (length text))
+               (l5-regular-file-entry-p (l5-stat hns fs disk user))
+               (l5-regular-file-readable-p (l5-stat hns fs disk user)
+                                           user)
+               (l5-regular-file-writable-p (l5-stat hns fs disk user)
+                                           user))
+          (mv-let (new-fs new-disk new-alv)
+                  (l5-wrchs hns fs disk alv start text user)
+                  (declare (ignore new-alv))
+                  (equal (l5-rdchs hns new-fs new-disk start n user)
+                         text)))
+ :instructions
+ (:promote
+  :s-prop
+  (:claim
+   (equal
+       (l5-rdchs hns
+                 (mv-nth 0
+                         (l5-wrchs hns fs disk alv start text user))
+                 (mv-nth 1
+                         (l5-wrchs hns fs disk alv start text user))
+                 start n user)
+       (l4-rdchs
+            hns
+            (l5-to-l4-fs (mv-nth 0
+                                 (l5-wrchs hns fs disk alv start text user)))
+            (mv-nth 1
+                    (l5-wrchs hns fs disk alv start text user))
+            start n))
+   :hints :none)
+  (:change-goal nil t)
+  (:dive 2)
+  (:rewrite l5-rdchs-correctness-1)
+  :top
+  :bash :bash :bash :bash :bash (:dive 1)
+  := (:drop 15)
+  (:dive 2)
+  :top
+  (:claim
+   (and
+     (equal (l5-to-l4-fs (mv-nth 0
+                                 (l5-wrchs hns fs disk alv start text user)))
+            (mv-nth 0
+                    (l4-wrchs hns (l5-to-l4-fs fs)
+                              disk alv start text)))
+     (equal (mv-nth 1
+                    (l5-wrchs hns fs disk alv start text user))
+            (mv-nth 1
+                    (l4-wrchs hns (l5-to-l4-fs fs)
+                              disk alv start text))))
+   :hints :none)
+  (:dive 1 2)
+  := (:drop 15)
+  :nx := (:drop 15)
+  :top (:dive 1)
+  (:rewrite l4-read-after-write-1)
+  :top :bash :bash
+  (:in-theory (disable l5-wrchs-correctness-1))
+  (:use l5-wrchs-correctness-1)
+  :bash (:dive 2 2)
+  := (:drop 1)
+  :top :bash (:dive 2 2)
+  := (:drop 1)
+  :top :bash (:dive 2 2)
+  := (:drop 1)
+  :top
+  :bash (:dive 2 2)
+  := (:drop 1)
+  :top :bash))
+
+(defthm
+  l5-read-after-write-2-lemma-1
+  (implies
+   (and (symbol-listp hns)
+        (l5-fs-p fs)
+        (natp start)
+        (stringp text)
+        (block-listp disk)
+        (boolean-listp alv)
+        (equal (len alv) (len disk)))
+   (equal
+    (consp (assoc-equal name
+                        (mv-nth 0
+                                (l5-wrchs hns fs disk alv start text user))))
+    (consp (assoc-equal name fs)))))
+
+(defthm
+  l5-read-after-write-2-lemma-2
+  (implies
+   (and (symbol-listp hns)
+        (l5-fs-p fs)
+        (natp start)
+        (stringp text)
+        (block-listp disk)
+        (boolean-listp alv)
+        (equal (len alv) (len disk))
+        (consp (assoc-equal name fs))
+        (l5-regular-file-entry-p (cdr (assoc-equal name fs))))
+   (l5-regular-file-entry-p
+    (cdr (assoc-equal name
+                      (mv-nth 0
+                              (l5-wrchs hns fs disk alv start text user)))))))
+
+(defthm
+  l5-read-after-write-2-lemma-3
+  (implies (and (symbol-listp hns)
+                (l5-fs-p fs)
+                (natp start)
+                (stringp text)
+                (block-listp disk)
+                (boolean-listp alv)
+                (equal (len alv) (len disk)))
+           (equal (consp (mv-nth 0
+                                 (l5-wrchs hns fs disk alv start text user)))
+                  (consp fs))))
+
+(defthmd
+  l5-read-after-write-2-lemma-4
+  (implies (and (l5-fs-p fs))
+           (equal (l5-regular-file-entry-p (l5-stat hns fs disk1 user))
+                  (l5-regular-file-entry-p (l5-stat hns fs disk2 user)))))
+
+(defthmd
+  l5-read-after-write-2-lemma-6
+  (implies
+   (and (l5-fs-p fs))
+   (and (equal (l5-regular-file-user-read (l5-stat hns fs disk1 user))
+               (l5-regular-file-user-read (l5-stat hns fs disk2 user)))
+        (equal (l5-regular-file-user-write (l5-stat hns fs disk1 user))
+               (l5-regular-file-user-write (l5-stat hns fs disk2 user)))
+        (equal (l5-regular-file-other-read (l5-stat hns fs disk1 user))
+               (l5-regular-file-other-read (l5-stat hns fs disk2 user)))
+        (equal (l5-regular-file-other-write (l5-stat hns fs disk1 user))
+               (l5-regular-file-other-write (l5-stat hns fs disk2 user)))
+        (equal (l5-regular-file-user (l5-stat hns fs disk1 user))
+               (l5-regular-file-user (l5-stat hns fs disk2 user))))))
+
+;; begin encapsulate
+(defun induction-scheme (hns1 hns2 fs)
+  (if (atom hns1)
+      fs
+    (if (atom fs)
+        nil
+      (let ((sd (assoc (car hns2) fs)))
+        (if (atom sd)
+            fs
+          (if (atom hns2)
+              fs
+            (if (not (equal (car hns1) (car hns2)))
+                fs
+              (let ((contents (cdr sd)))
+                (if (atom (cdr hns1))
+                    (cons (cons (car sd)
+                                contents)
+                          (delete-assoc (car hns2) fs))
+                  (cons (cons (car sd)
+                              (induction-scheme (cdr hns1) (cdr hns2) contents))
+                        (delete-assoc (car hns2) fs)))
+                ))))
+        ))))
+
+(defthm
+  l5-read-after-write-2-lemma-5
+  (implies
+   (and (l4-stricter-fs-p (l5-to-l4-fs fs) alv)
+        (l5-fs-p fs)
+        (natp user)
+        (stringp text2)
+        (natp start2)
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (not (equal hns1 hns2))
+        (natp n2)
+        (block-listp disk)
+        (boolean-listp alv)
+        (equal (len alv) (len disk))
+        (<= (len (make-blocks (insert-text nil start2 text2)))
+            (count-free-blocks alv))
+        (l5-regular-file-readable-p (l5-stat hns1 fs disk user)
+                                    user))
+   (equal (l5-regular-file-entry-p
+           (l5-stat hns1
+                    (mv-nth 0
+                            (l5-wrchs hns2 fs disk alv start2 text2 user))
+                    (mv-nth 1
+                            (l5-wrchs hns2 fs disk alv start2 text2 user))
+                    user))
+          (l5-regular-file-entry-p (l5-stat hns1 fs disk user))))
+  :instructions
+  ((:induct (induction-scheme hns1 hns2 fs))
+   :bash (:change-goal nil t)
+   (:change-goal nil t)
+   :bash :bash :bash :bash
+   (:bash ("goal" :expand ((l5-wrchs hns2 fs disk alv start2 text2 user)
+                           (l5-stat hns1 fs disk user))))
+   (:bash
+    ("goal"
+     :use
+     ((:instance l5-read-after-write-2-lemma-4
+                 (hns (cdr hns1))
+                 (fs (cdr (assoc-equal (car hns1) fs)))
+                 (disk1 (mv-nth 1
+                                (l5-wrchs (cdr hns2)
+                                          (cdr (assoc-equal (car hns2) fs))
+                                          disk alv start2 text2 user)))
+                 (disk2 disk))
+      (:instance
+       l5-read-after-write-2-lemma-4
+       (hns (cdr hns1))
+       (fs (cdr (assoc-equal (car hns1) fs)))
+       (disk1
+        (set-indices
+         disk
+         (find-n-free-blocks
+          (set-indices-in-alv
+           alv
+           (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs)))
+           nil)
+          (len
+           (make-blocks
+            (insert-text
+             (unmake-blocks
+              (fetch-blocks-by-indices
+               disk
+               (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs))))
+              (l5-regular-file-length (cdr (assoc-equal (car hns2) fs))))
+             start2 text2))))
+         (make-blocks
+          (insert-text
+           (unmake-blocks
+            (fetch-blocks-by-indices
+             disk
+             (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs))))
+            (l5-regular-file-length (cdr (assoc-equal (car hns2) fs))))
+           start2 text2))))
+       (disk2 disk)))))))
+;; end encapsulate
+
+(defthm
+  l5-read-after-write-2-lemma-7
+  (implies
+   (and (l4-stricter-fs-p (l5-to-l4-fs fs) alv)
+        (l5-fs-p fs)
+        (natp user)
+        (stringp text2)
+        (natp start2)
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (not (equal hns1 hns2))
+        (natp n2)
+        (block-listp disk)
+        (boolean-listp alv)
+        (equal (len alv) (len disk))
+        (<= (len (make-blocks (insert-text nil start2 text2)))
+            (count-free-blocks alv)))
+   (let
+    ((file (l5-stat hns1 fs disk user))
+     (new-file (l5-stat hns1
+                        (mv-nth 0
+                                (l5-wrchs hns2 fs disk alv start2 text2 user))
+                        (mv-nth 1
+                                (l5-wrchs hns2 fs disk alv start2 text2 user))
+                        user)))
+    (implies (l5-regular-file-entry-p file)
+             (and (equal (l5-regular-file-user new-file)
+                         (l5-regular-file-user file))
+                  (equal (l5-regular-file-user-read new-file)
+                         (l5-regular-file-user-read file))
+                  (equal (l5-regular-file-user-write new-file)
+                         (l5-regular-file-user-write file))
+                  (equal (l5-regular-file-other-read new-file)
+                         (l5-regular-file-other-read file))
+                  (equal (l5-regular-file-other-write new-file)
+                         (l5-regular-file-other-write file))))))
+  :instructions
+  ((:induct (induction-scheme hns1 hns2 fs))
+   :bash (:change-goal nil t)
+   (:change-goal nil t)
+   :bash :bash :bash :bash
+   (:bash ("goal" :expand ((l5-wrchs hns2 fs disk alv start2 text2 user)
+                           (l5-stat hns1 fs disk user))))
+   (:bash
+    ("goal"
+     :expand ((l5-wrchs hns2 fs disk alv start2 text2 user)
+              (l5-stat hns1 fs disk user))
+     :use
+     ((:instance l5-read-after-write-2-lemma-6
+                 (hns (cdr hns1))
+                 (fs (cdr (assoc-equal (car hns1) fs)))
+                 (disk1 (mv-nth 1
+                                (l5-wrchs (cdr hns2)
+                                          (cdr (assoc-equal (car hns2) fs))
+                                          disk alv start2 text2 user)))
+                 (disk2 disk))
+      (:instance
+       l5-read-after-write-2-lemma-6
+       (hns (cdr hns1))
+       (fs (cdr (assoc-equal (car hns1) fs)))
+       (disk1
+        (set-indices
+         disk
+         (find-n-free-blocks
+          (set-indices-in-alv
+           alv
+           (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs)))
+           nil)
+          (len
+           (make-blocks
+            (insert-text
+             (unmake-blocks
+              (fetch-blocks-by-indices
+               disk
+               (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs))))
+              (l5-regular-file-length (cdr (assoc-equal (car hns2) fs))))
+             start2 text2))))
+         (make-blocks
+          (insert-text
+           (unmake-blocks
+            (fetch-blocks-by-indices
+             disk
+             (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs))))
+            (l5-regular-file-length (cdr (assoc-equal (car hns2) fs))))
+           start2 text2))))
+       (disk2 disk)))))))
+
+(defthm
+  l5-read-after-write-2-lemma-8
+  (implies
+   (and (l4-stricter-fs-p (l5-to-l4-fs fs) alv)
+        (l5-fs-p fs)
+        (natp user)
+        (stringp text1)
+        (stringp text2)
+        (natp start1)
+        (natp start2)
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (not (equal hns1 hns2))
+        (natp n1)
+        (natp n2)
+        (block-listp disk)
+        (boolean-listp alv)
+        (equal (len alv) (len disk))
+        (<= (len (make-blocks (insert-text nil start2 text2)))
+            (count-free-blocks alv))
+        (l5-regular-file-entry-p (l5-stat hns1 fs disk user))
+        (l5-regular-file-readable-p (l5-stat hns1 fs disk user)
+                                    user)
+        (l5-regular-file-writable-p (l5-stat hns2 fs disk user)
+                                    user))
+   (l5-regular-file-readable-p
+    (l5-stat hns1
+             (mv-nth 0
+                     (l5-wrchs hns2 fs disk alv start2 text2 user))
+             (mv-nth 1
+                     (l5-wrchs hns2 fs disk alv start2 text2 user))
+             user)
+    user))
+  :instructions ((:induct (induction-scheme hns1 hns2 fs))
+                 :bash (:change-goal nil t)
+                 (:change-goal nil t)
+                 :bash :bash
+                 :bash :bash
+                 :bash :bash))
+
+(defthm
+  l5-read-after-write-2
+  (implies (and (l4-stricter-fs-p (l5-to-l4-fs fs) alv)
+                (l5-fs-p fs)
+                (natp user)
+                (stringp text1)
+                (stringp text2)
+                (natp start1)
+                (natp start2)
+                (symbol-listp hns1)
+                (symbol-listp hns2)
+                (not (equal hns1 hns2))
+                (natp n1)
+                (natp n2)
+                (block-listp disk)
+                (boolean-listp alv)
+                (equal (len alv) (len disk))
+                (<= (len (make-blocks (insert-text nil start2 text2)))
+                    (count-free-blocks alv))
+                (l5-regular-file-entry-p (l5-stat hns1 fs disk user))
+                (l5-regular-file-readable-p (l5-stat hns1 fs disk user)
+                                            user)
+                (l5-regular-file-writable-p (l5-stat hns2 fs disk user)
+                                            user))
+           (mv-let (new-fs new-disk new-alv)
+             (l5-wrchs hns2 fs disk alv start2 text2 user)
+             (declare (ignore new-alv))
+             (equal (l5-rdchs hns1 new-fs new-disk start1 n1 user)
+                    (l5-rdchs hns1 fs disk start1 n1 user))))
+  :instructions
+  (:promote
+   :s-prop
+   (:claim
+    (equal
+     (l5-rdchs hns1
+               (mv-nth 0
+                       (l5-wrchs hns2 fs disk alv start2 text2 user))
+               (mv-nth 1
+                       (l5-wrchs hns2 fs disk alv start2 text2 user))
+               start1 n1 user)
+     (l4-rdchs
+      hns1
+      (l5-to-l4-fs (mv-nth 0
+                           (l5-wrchs hns2 fs disk alv start2 text2 user)))
+      (mv-nth 1
+              (l5-wrchs hns2 fs disk alv start2 text2 user))
+      start1 n1))
+    :hints :none)
+   (:dive 1)
+   := (:drop 20)
+   (:change-goal (main . 1) t)
+   (:dive 2)
+   (:rewrite l5-rdchs-correctness-1)
+   :top
+   :bash :bash :bash (:change-goal nil t)
+   :bash :top
+   (:claim (equal (let ((mv (l5-wrchs hns2 fs disk alv start2 text2 user)))
+                       (let ((new-fs (mv-nth 0 mv))
+                             (new-disk (mv-nth 1 mv))
+                             (new-alv (mv-nth 2 mv)))
+                            (list (l5-to-l4-fs new-fs)
+                                  new-disk new-alv)))
+                  (l4-wrchs hns2 (l5-to-l4-fs fs)
+                            disk alv start2 text2))
+           :hints :none)
+   (:change-goal (main . 2) t)
+   (:dive 2)
+   (:rewrite l5-wrchs-correctness-1)
+   :top
+   :bash :bash :bash (:change-goal nil t)
+   (:dive 1 2)
+   (:= (mv-nth 0
+               (l4-wrchs hns2 (l5-to-l4-fs fs)
+                         disk alv start2 text2)))
+   :nx
+   (:= (mv-nth 1
+               (l4-wrchs hns2 (l5-to-l4-fs fs)
+                         disk alv start2 text2)))
+   :top (:dive 1)
+   (:rewrite l4-read-after-write-2)
+   (:change-goal (main . 5) t)
+   :bash :bash :bash (:change-goal nil t)
+   :top (:dive 1)
+   (:rewrite l5-rdchs-correctness-1)
+   :top
+   :bash :bash
+   :bash :bash))
