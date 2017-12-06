@@ -115,70 +115,9 @@
   \node {/}
     child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
     child { node {tmp/}
-      child { node {ticket1,{"}Sun 19:00{"}}}};
-\end{tikzpicture}
-\end{frame}
-
-\begin{frame}{Model 1}
-\begin{tikzpicture}[sibling distance=10em,
-  every node/.style = {shape=rectangle, rounded corners,
-    draw, align=center,
-    top color=white, bottom color=blue!20}]
-  \node {/}
-    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
-    child { node {tmp/}
       child { node {ticket1,{"}Sun 19:00{"}}}
       child { node {ticket2,{"}Tue 21:00{"}}}};
 \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{Model 1}
-\begin{tikzpicture}[sibling distance=10em,
-  every node/.style = {shape=rectangle, rounded corners,
-    draw, align=center,
-    top color=white, bottom color=blue!20}]
-  \node {/}
-    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
-    child { node {tmp/}
-      child { node {ticket2,{"}Tue 21:00{"}}}};
-\end{tikzpicture}
-\end{frame}
-
-\begin{frame}{Model 1}
-\begin{tikzpicture}[sibling distance=10em,
-  every node/.style = {shape=rectangle, rounded corners,
-    draw, align=center,
-    top color=white, bottom color=blue!20}]
-  \node {/}
-    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
-    child { node {tmp/}
-      child { node {ticket2,{"}Wed 01:00{"}}}};
-\end{tikzpicture}
-\end{frame}
-
-\begin{frame}{Model 2}
-  \begin{itemize}
-  \item Model 1 supports nested directory structures, unbounded file
-    size and unbounded filesystem size.
-  \item However, there's no metadata, either to provide additional
-    information or to validate the contents of the file.
-  \item With an extra field for length, we can create a simple
-    version of fsck that checks file contents for consistency.
-  \item Further, we can verify that create, write, delete etc preserve
-    this notion of consistency.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Model 2}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},{\bf 3}} }
-      child { node {tmp/}
-        child { node {ticket1,{"}Sun 19:00{"},{\bf 9}}}};
-  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Model 2}
@@ -194,67 +133,6 @@
   \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Model 2}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},{\bf 3}} }
-      child { node {tmp/}
-        child { node {ticket2,{"}Tue 21:00{"},{\bf 9}}}};
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{Model 2}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},{\bf 3}} }
-      child { node {tmp/}
-        child { node {ticket2,{"}Wed 01:00{"},{\bf 9}}}};
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{Model 3}
-  \begin{itemize}
-  \item As the next step, we focus on externalising the
-    storage of file contents.
-  \item We also choose to break up file contents into "blocks"
-    of a constant length (8).
-    \begin{itemize}
-    \item Note: this would mean storing file length is no longer
-      optional, to avoid reading garbage past end of file at the end
-      of a block.
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Model 3}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,(0),3} }
-      child { node {tmp/}
-        child { node {ticket1,(1 2),9}}};
-  \end{tikzpicture}
-  \begin{table}[]
-    %% \centering
-    \caption{Disk}
-    % \label{my-label}
-    \begin{tabular}{|l|l|}
-      \hline
-      0 & \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      1 & Sun 19:0 \\ \hline
-      2 & 0        \\ \hline
-    \end{tabular}
-  \end{table}
-\end{frame}
-
 \begin{frame}{Model 3}
   \begin{tikzpicture}[sibling distance=10em,
       every node/.style = {shape=rectangle, rounded corners,
@@ -281,92 +159,6 @@
   \end{table}
 \end{frame}
 
-\begin{frame}{Model 3}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,(0),3} }
-      child { node {tmp/}
-        child { node {ticket2,(3 4),9}}};
-  \end{tikzpicture}
-  \begin{table}[]
-    \centering
-    \caption{Disk}
-    % \label{my-label}
-    \begin{tabular}{|l|l|}
-      \hline
-      0 & \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      1 & Sun 19:0 \\ \hline
-      2 & 0        \\ \hline
-      3 & Tue 21:0 \\ \hline
-      4 & 0        \\ \hline
-    \end{tabular}
-  \end{table}
-\end{frame}
-
-\begin{frame}{Model 3}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,(0),3} }
-      child { node {tmp/}
-        child { node {ticket2,(5 6),9}}};
-  \end{tikzpicture}
-  \begin{table}[]
-    \centering
-    \caption{Disk}
-    % \label{my-label}
-    \begin{tabular}{|l|l|}
-      \hline
-      0 & \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      1 & Sun 19:0 \\ \hline
-      2 & 0        \\ \hline
-      3 & Tue 21:0 \\ \hline
-      4 & 0        \\ \hline
-      5 & Wed 01:0 \\ \hline
-      6 & 0        \\ \hline
-    \end{tabular}
-  \end{table}
-\end{frame}
-
-\begin{frame}{Model 4}
-  \begin{itemize}
-  \item In the fourth model, we attempt to implement garbage
-    collection in the form of an allocation vector.
-  \item The allocation vector tracks whether blocks in the filesystem
-    are in use by a file. This allows us to reuse unused blocks.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Model 4}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,(0),3} }
-      child { node {tmp/}
-        child { node {ticket1,(1 2),9}}};
-  \end{tikzpicture}
-  \begin{table}[]
-    %% \centering
-    \caption{Disk and allocation vector}
-    \begin{tabular}{|l|l|l|}
-      \hline
-      0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
-      1 & Sun 19:0 & true\\ \hline
-      2 & 0        & true\\ \hline
-      3 &          & false\\ \hline
-      4 &          & false\\ \hline
-      5 &          & false\\ \hline
-    \end{tabular}
-  \end{table}
-\end{frame}
-
 \begin{frame}{Model 4}
   \begin{tikzpicture}[sibling distance=10em,
       every node/.style = {shape=rectangle, rounded corners,
@@ -388,56 +180,6 @@
       2 & 0        & true\\ \hline
       3 & Tue 21:0 & true\\ \hline
       4 & 0        & true\\ \hline
-      5 &          & false\\ \hline
-    \end{tabular}
-  \end{table}
-\end{frame}
-
-\begin{frame}{Model 4}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,(0),3} }
-      child { node {tmp/}
-        child { node {ticket2,(3 4),9}}};
-  \end{tikzpicture}
-  \begin{table}[]
-    \centering
-    \caption{Disk and allocation vector}
-    \begin{tabular}{|l|l|l|}
-      \hline
-      0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
-      1 & Sun 19:0 & false\\ \hline
-      2 & 0        & false\\ \hline
-      3 & Tue 21:0 & true\\ \hline
-      4 & 0        & true\\ \hline
-      5 &          & false\\ \hline
-    \end{tabular}
-  \end{table}
-\end{frame}
-
-\begin{frame}{Model 4}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,(0),3} }
-      child { node {tmp/}
-        child { node {ticket2,(1 2),9}}};
-  \end{tikzpicture}
-  \begin{table}[]
-    \centering
-    \caption{Disk and allocation vector}
-    \begin{tabular}{|l|l|l|}
-      \hline
-      0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
-      1 & Wed 01:0 & true\\ \hline
-      2 & 0        & true\\ \hline
-      3 & Tue 21:0 & false\\ \hline
-      4 & 0        & false\\ \hline
       5 &          & false\\ \hline
     \end{tabular}
   \end{table}
@@ -483,12 +225,13 @@
 
 \begin{frame}{Proof approaches and techniques}
   \begin{itemize}
-  \item For each of the models 1, 2, 3 and 4, we have proofs of correctness of
+  \item For each of the models 1 through 5, we have proofs of correctness of
     the two read-after-write properties, making use of the proofs of
     equivalence between models and their successors.
-  \item Model 4 presented some unique challenges - proving the
-    read-after-write properties required proving an equivalence
-    between model 4 and model 2, rather than model 3.
+  \item For model 5, the proof assumes the permissions are
+    granted.
+  \item The proof of the converse property - that reads and writes
+    fail when permissions are not granted - remains to be done.
   \end{itemize}
 \end{frame}
 
@@ -552,20 +295,6 @@
       defthm events (lemmas and proofs)   & 374 
     \end{tabular}
   \end{table}
-\end{frame}
-
-\section{Future work}
-
-\begin{frame}{Future work}
-  \begin{itemize}
-  \item Model and verify file permissions.
-  \item Linearise the tree, leaving only the disk.
-  \item Add the system calls open and close with the
-    introduction of file descriptors.\\
-    \textit{This would be a step towards the study of concurrent FS operations.}
-  \item Eventually emulate the FAT32 filesystem as a convincing proof
-    of concept, and move on to fsck and file recovery tools.
-  \end{itemize}
 \end{frame}
 
 \end{document}
