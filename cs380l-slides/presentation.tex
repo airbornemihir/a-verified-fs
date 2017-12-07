@@ -14,14 +14,6 @@
 }
 \date{07 December, 2017}
 
-\AtBeginSection[]
-{
-  \begin{frame}<beamer>
-    \frametitle{Outline}
-    \tableofcontents[currentsection]
-  \end{frame}
-}
-
 \addtobeamertemplate{navigation symbols}{}{%
     \usebeamerfont{footline}%
     \usebeamercolor[fg]{footline}%
@@ -36,13 +28,7 @@
   \titlepage
 \end{frame}
 
-\begin{frame}{Outline}
-  \tableofcontents
-\end{frame}
-
 %--- the presentation begins here ----------------%
-
-\section{Motivation}
 
 \begin{frame}{Why we need a verified filesystem}
   \begin{itemize}
@@ -56,8 +42,6 @@
   \item This talk will be focussed on the 4th and 5th models.
   \end{itemize}
 \end{frame}
-
-\section{Our approach}
 
 \begin{frame}{File system models}
 \begin{tikzpicture}[sibling distance=10em,
@@ -185,7 +169,6 @@
   \end{table}
 \end{frame}
 
-\section{Progress so far}
 \begin{frame}{Proof approaches and techniques}
   \begin{itemize}
   \item There are many properties that could be considered for
