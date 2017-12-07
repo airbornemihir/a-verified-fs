@@ -39,7 +39,8 @@
     tools.
   \item Work on this project started last year - since then I've built
     5 increasingly complex models.
-  \item This talk will be focussed on the 4th and 5th models.
+  \item The plan is to model FAT32, adding features in every model and
+    maintaining proofs of correctness.
   \end{itemize}
 \end{frame}
 
@@ -76,9 +77,8 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Quick overview of models}
+\begin{frame}{More about the models}
   \begin{itemize}
-  \item What follows is a sequence of {\bf increasingly refined} models.
   \item Model 1: Tree representation of directory structure with unbounded
     file size and unbounded filesystem size.
   \item Model 2: Model 1 with file length as metadata.
@@ -89,84 +89,6 @@
   \item Model 5: Model 4 with permissions for read/write for the user
     and others (no groups as yet)
   \end{itemize}
-\end{frame}
-
-\begin{frame}{Model 1}
-\begin{tikzpicture}[sibling distance=10em,
-  every node/.style = {shape=rectangle, rounded corners,
-    draw, align=center,
-    top color=white, bottom color=blue!20}]
-  \node {/}
-    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
-    child { node {tmp/}
-      child { node {ticket1,{"}Sun 19:00{"}}}
-      child { node {ticket2,{"}Tue 21:00{"}}}};
-\end{tikzpicture}
-\end{frame}
-
-\begin{frame}{Model 2}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},{\bf 3}} }
-      child { node {tmp/}
-        child { node {ticket1,{"}Sun 19:00{"},{\bf 9}}}
-        child { node {ticket2,{"}Tue 21:00{"},{\bf 9}}}};
-  \end{tikzpicture}
-\end{frame}
-
-\begin{frame}{Model 3}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,(0),3} }
-      child { node {tmp/}
-        child { node {ticket1,(1 2),9}}
-        child { node {ticket2,(3 4),9}}};
-  \end{tikzpicture}
-  \begin{table}[]
-    \centering
-    \caption{Disk}
-    % \label{my-label}
-    \begin{tabular}{|l|l|}
-      \hline
-      0 & \textbackslash0\textbackslash0\textbackslash0   \\ \hline
-      1 & Sun 19:0 \\ \hline
-      2 & 0        \\ \hline
-      3 & Tue 21:0 \\ \hline
-      4 & 0        \\ \hline
-    \end{tabular}
-  \end{table}
-\end{frame}
-
-\begin{frame}{Model 4}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]]
-      \node {/}
-      child { node {vmlinuz,(0),3} }
-      child { node {tmp/}
-        child { node {ticket1,(1 2),9}}
-        child { node {ticket2,(3 4),9}}};
-  \end{tikzpicture}
-  \begin{table}[]
-    \centering
-    \caption{Disk and allocation vector}
-    \begin{tabular}{|l|l|l|}
-      \hline
-      0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
-      1 & Sun 19:0 & true\\ \hline
-      2 & 0        & true\\ \hline
-      3 & Tue 21:0 & true\\ \hline
-      4 & 0        & true\\ \hline
-      5 &          & false\\ \hline
-    \end{tabular}
-  \end{table}
 \end{frame}
 
 \begin{frame}{Proof approaches and techniques}
