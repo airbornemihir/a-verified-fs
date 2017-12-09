@@ -170,36 +170,14 @@ integrity of the filesystem.
 \end {enumerate}
 
 While these properties are simple enough to state, proving them turns
-out to be surprisingly subtle. As a point of reference, proving these
-properties for l1, our initial model, required us to manually specify
-an induction scheme with 6 conditional branches. As noted
+out to be surprisingly subtle. To help with the proof effort, as noted
 before, we have modelled our filesystem incrementally in order to make
-our proofs tractable, thus, in each successive model, we prove a
-theorem showing the model to be equivalent to the previous one. For
-instance, we define the following function for transforming
-instances of model 2 to model 1.
-
-\begin{lstlisting}
-(DEFUN L2-TO-L1-FS (FS)
-  (DECLARE (XARGS :GUARD (L2-FS-P FS)))
-  (IF (ATOM FS)
-      FS
-      (CONS
-       (LET*
-        ((DIRECTORY-OR-FILE-ENTRY (CAR FS))
-         (NAME (CAR DIRECTORY-OR-FILE-ENTRY))
-         (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
-        (CONS NAME
-              (IF (AND (CONSP ENTRY)
-                       (STRINGP (CAR ENTRY)))
-                  (CAR ENTRY)
-                  (L2-TO-L1-FS ENTRY))))
-       (L2-TO-L1-FS (CDR FS)))))
-\end{lstlisting}
-
-Then, we can prove the implementation of the write operation in model
-2 correct with respect to the specification of model 1 by proving the
-property illustrated below.
+our proofs tractable. Thus, in each successive model, we prove a
+theorem showing the model to be equivalent to the previous one.
+For instance, we define the function l2-to-l1-fs for transforming
+instances of model 2 to model 1. Then, we can prove the implementation
+of the write operation in model 2 correct with respect to the
+specification of model 1 by proving the property illustrated below.
 
 \begin{tikzpicture}
   \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
@@ -243,6 +221,24 @@ properties for model 2 based on our proof for model 1.
             edge node [below] {read} (m-1-3)
     (m-2-2.east) edge node [below] {read} (m-1-3);
 \end{tikzpicture}
+
+\section{Evaluation}
+At present, the codebase spans 6017 lines of code, including 118
+function definitions and 419 defthm events.
+
+\begin{table}[]
+  \centering
+  \caption{Time take to prove models}
+  \label{my-label}
+  \begin{tabular}{ll}
+    Model 1 & 1.167s \\
+    Model 2 & 5.672s \\
+    Model 3 & 14.164s \\
+    Model 4 & 40.636s \\
+    Model 5 & 216.316s \\
+    Miscellaneous shared lemmas & 2.577s \\
+  \end{tabular}
+\end{table}
 
 \section{Future work}
 As previously mentioned, we would like to add the system calls open and close with the
