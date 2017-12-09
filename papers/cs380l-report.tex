@@ -119,18 +119,31 @@ operations; the blocks of such a file remain in the disk but are no longer
 referred to.
 
 As before, we include a sample of a filesystem tree that is recognised by
-l3-fs-p.
+l3-fs-p, and the corresponding disk in table \ref{model3-disk}.
 
 \begin{tikzpicture}[sibling distance=10em,
-  every node/.style = {shape=rectangle, rounded corners,
-    draw, align=center,
-    top color=white, bottom color=blue!20}]]
-  \node {\textbackslash}
+    every node/.style = {shape=rectangle, rounded corners,
+      draw, align=center,
+      top color=white, bottom color=blue!20}]]
+    \node {/}
     child { node {vmlinuz,(0),3} }
-    child { node {tmp}
+    child { node {tmp/}
       child { node {ticket1,(1 2),9}}
       child { node {ticket2,(3 4),9}}};
 \end{tikzpicture}
+\begin{table}[]
+  \centering
+  \caption{Model 3 - disk}
+  \label{model3-disk}
+  \begin{tabular}{|l|l|}
+    \hline
+    0 & \textbackslash0\textbackslash0\textbackslash0   \\ \hline
+    1 & Sun 19:0 \\ \hline
+    2 & 0        \\ \hline
+    3 & Tue 21:0 \\ \hline
+    4 & 0        \\ \hline
+  \end{tabular}
+\end{table}
 
 \section{Model 4}
 In this model, we finitise our disk; this necessitates garbage
@@ -149,7 +162,33 @@ that aliasing between different files does not occur.
 The recogniser l4-fs-p is defined to be the same as l3-fs-p, which
 makes our equivalence proofs simpler. This arises from the fact that
 reference counting does not require any changes in the filesystem tree
-or the disk.
+or the disk. A sample filesystem tree follows, with the corresponding
+disk and allocation in table \ref{model4-disk-alv}.
+
+\begin{tikzpicture}[sibling distance=10em,
+    every node/.style = {shape=rectangle, rounded corners,
+      draw, align=center,
+      top color=white, bottom color=blue!20}]]
+    \node {/}
+    child { node {vmlinuz,(0),3} }
+    child { node {tmp/}
+      child { node {ticket1,(1 2),9}}
+      child { node {ticket2,(3 4),9}}};
+\end{tikzpicture}
+\begin{table}[]
+  \centering
+  \caption{Model 4 - disk and allocation vector}
+  \label{model4-disk-alv}
+  \begin{tabular}{|l|l|l|}
+    \hline
+    0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
+    1 & Sun 19:0 & true\\ \hline
+    2 & 0        & true\\ \hline
+    3 & Tue 21:0 & true\\ \hline
+    4 & 0        & true\\ \hline
+    5 &          & false\\ \hline
+  \end{tabular}
+\end{table}
 
 An interesting insight from the proofs of correctness for model 4 was
 that there is no simple transformation from instances of model 4 to
@@ -240,8 +279,9 @@ properties for model 2 based on our proof for model 1.
 \end{tikzpicture}
 
 \section{Evaluation}
-At present, the codebase spans 6017 lines of code, including 118
-function definitions and 419 defthm events.
+At present, the codebase spans 6017 lines of ACL2 code, including 118
+function definitions and 419 defthm events. Some of this data was
+obtained by David A. Wheeler's sloccount tool.
 
 In table \ref{certification-timing-table} we note the time taken to certify
 the models in ACL2, as well as some infrastructure upon which the
