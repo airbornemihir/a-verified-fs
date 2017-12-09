@@ -46,7 +46,7 @@ next, and manually adapting existing proofs for the next model.
 
 While starting out, we faced a decision about the file system
 operations we should provide. Following the  example of the Google
-File System \cite{Ghemawat:2003:GFS:945445.945450}, we decided to
+File System \cite{ghemawat2003google}, we decided to
 restrict ourselves to a small number of fundamental file system
 operations - namely reading, writing, creating, and deleting a
 file. This excludes the operations of opening and closing a file; we
@@ -287,6 +287,12 @@ safe against crashes. This implementation was exported into Haskell,
 and showed comparable performance to ext4 when run on the Linux kernel
 through the FUSE layer.
 
+Another recent work in this space, Hyperkernel
+\cite{Nelson:2017:HPV:3132747.3132748} is a "push-button" kernel verification
+effort. However, in order to accommodate the limitations of the
+verifier, Hyperkernel approximates by changing POSIX system calls for
+ease of verification.
+
 Our work takes a different approach - our aim is to produce verified
 models of existing filesystems that have binary compatibility with the
 filesystem layout read and written by the corresponding
@@ -309,6 +315,6 @@ repository itself can be viewed at
 https://github.com/airbornemihir/turbo-octo-sniffle.
 
 \bibliographystyle{ACM-Reference-Format}
-\bibliography{afm2017}
+\bibliography{cs380l-report}
 
 \end{document}
