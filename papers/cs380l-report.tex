@@ -162,6 +162,16 @@ the common definition of l4-fs-p and l3-fs-p, we were able to reuse
 the already defined l3-to-l2-fs here, which again simplified our proof
 effort.
 
+\section{Model 5}
+This model extends model 4 with the addition of a new kind of
+metadata, namely file permissions. Incorporating read/write permissions
+for the user and others, this model develops the necessary
+infrastructure for more complex permissions checking mechanisms,
+including user groups and access control lists. We opted to keep the
+block allocation and garbage collection algorithms the same; this made
+it easier to prove an equivalence between model 5 and model 4, and in
+turn, the read-over-write theorems.
+
 \section {Proof approach}
 
 Initially, we would like to prove two well-known properties from the
@@ -261,7 +271,9 @@ lookups in the disk.
 
 We are also planning to add the system calls open and close with the
 introduction of file descriptors. This would be a step towards the
-study of concurrent FS operations.
+study of concurrent FS operations. An alternative approach would be to
+model concurrent operations after the fashion of Sun NFS; this is also
+under consideration.
 
 Eventually, we would like to emulate the FAT32 filesystem. This would
 be a step towards verified versions of fsck and file recovery tools,
