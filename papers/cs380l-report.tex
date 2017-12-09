@@ -312,8 +312,8 @@ lookups in the disk.
 We are also planning to add the system calls open and close with the
 introduction of file descriptors. This would be a step towards the
 study of concurrent FS operations. An alternative approach would be to
-model concurrent operations after the fashion of Sun NFS; this is also
-under consideration.
+model concurrent operations after the fashion of Sun NFS
+\cite{sandberg1985design}; this is also under consideration.
 
 Eventually, we would like to emulate the FAT32 filesystem. This would
 be a step towards verified versions of fsck and file recovery tools,
@@ -329,9 +329,9 @@ through the FUSE layer.
 
 Another recent work in this space, Hyperkernel
 \cite{Nelson:2017:HPV:3132747.3132748} is a "push-button" kernel verification
-effort. However, in order to accommodate the limitations of the
-verifier, Hyperkernel approximates by changing POSIX system calls for
-ease of verification.
+effort using the Z3 SMT solver. However, in order to accommodate the
+limitations of Z3, Hyperkernel approximates by changing POSIX system
+calls for ease of verification.
 
 Our work takes a different approach - our aim is to produce verified
 models of existing filesystems that have binary compatibility with the
