@@ -226,10 +226,14 @@ properties for model 2 based on our proof for model 1.
 At present, the codebase spans 6017 lines of code, including 118
 function definitions and 419 defthm events.
 
+In table \ref{certification-timing-table} we note the time taken to certify
+the models in ACL2, as well as some infrastructure upon which the
+models are built.
+
 \begin{table}[]
   \centering
   \caption{Time take to prove models}
-  \label{my-label}
+  \label{certification-timing-table}
   \begin{tabular}{ll}
     Model 1 & 1.167s \\
     Model 2 & 5.672s \\
@@ -249,10 +253,9 @@ with realistic file systems that do not require an in-memory tree
 representation, but still allow tree traversal through systematic
 lookups in the disk.
 
-Eventually, we would like to emulate the CP/M filesystem as a convincing proof
-of concept. This would be a step towards verified versions of fsck
-and file recovery tools, which could be based on our proofs about
-the underlying filesystem.
+Eventually, we would like to emulate the FAT32 filesystem. This would
+be a step towards verified versions of fsck and file recovery tools,
+which would be based on our proofs about the underlying filesystem.
 
 \section{Related work}
 Currently, the state of the art is represented by Haogang
