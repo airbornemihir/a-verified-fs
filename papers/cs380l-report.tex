@@ -39,10 +39,10 @@ guarantees provided by a filesystem.
 \section{Modelling a filesystem}
 
 In order to make our proofs of correctness tractable, we choose to
-make several verified filesystem models in increasing order of
+make a series of verified filesystem models in increasing order of
 complexity. This approach supports incremental proof strategies,
 providing us with a choice between proving a model equivalent to the
-next, and simply adapting existing proofs for the next model.
+next, and manually adapting existing proofs for the next model.
 
 While starting out, we faced a decision about the file system
 operations we should provide. Following the  example of the Google
@@ -90,7 +90,7 @@ that the operations for writing, creating and deleting preserve this
 notion of consistency.
 
 Below, we include a sample of a filesystem tree that is recognised by
-l2-fs-p, and a code listing.
+l2-fs-p.
 
 \begin{tikzpicture}[sibling distance=10em,
   every node/.style = {shape=rectangle, rounded corners,
@@ -102,29 +102,6 @@ l2-fs-p, and a code listing.
       child { node {ticket1,{"}Sun 19:00{"},9}}
       child { node {ticket2,{"}Tue 21:00{"},9}}};
 \end{tikzpicture}
-
-\begin{lstlisting}
-(DEFUN
-  L2-FS-P (FS)
-  (DECLARE (XARGS :GUARD T))
-  (IF
-   (ATOM FS)
-   (NULL FS)
-   (AND
-    (LET
-     ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
-     (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
-         NIL
-         (LET
-          ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
-           (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
-          (AND (SYMBOLP NAME)
-               (OR (AND (CONSP ENTRY)
-                        (STRINGP (CAR ENTRY))
-                        (NATP (CDR ENTRY)))
-                   (L2-FS-P ENTRY))))))
-        (L2-FS-P (CDR FS)))))
-\end{lstlisting}
 
 \section{Model 3}
 Next, we would like to move towards a more realistic file storage
@@ -142,7 +119,7 @@ operations; the blocks of such a file remain in the disk but are no longer
 referred to.
 
 As before, we include a sample of a filesystem tree that is recognised by
-l3-fs-p and a code listing.
+l3-fs-p.
 
 \begin{tikzpicture}[sibling distance=10em,
   every node/.style = {shape=rectangle, rounded corners,
@@ -154,35 +131,6 @@ l3-fs-p and a code listing.
       child { node {ticket1,(1 2),9}}
       child { node {ticket2,(3 4),9}}};
 \end{tikzpicture}
-
-\begin{lstlisting}
-(DEFUN L3-REGULAR-FILE-ENTRY-P (ENTRY)
-  (DECLARE (XARGS :GUARD T))
-  (AND (CONSP ENTRY)
-       (NAT-LISTP (CAR ENTRY))
-       (NATP (CDR ENTRY))
-       (FEASIBLE-FILE-LENGTH-P (LEN (CAR ENTRY))
-                               (CDR ENTRY))))
-
-(DEFUN
-  L3-FS-P (FS)
-  (DECLARE (XARGS :GUARD T))
-  (IF
-   (ATOM FS)
-   (NULL FS)
-   (AND
-    (LET
-     ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
-     (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
-         NIL
-         (LET
-          ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
-           (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
-          (AND (SYMBOLP NAME)
-               (OR (L3-REGULAR-FILE-ENTRY-P ENTRY)
-                   (L3-FS-P ENTRY))))))
-    (L3-FS-P (CDR FS)))))
-\end{lstlisting}
 
 \section{Model 4}
 In this model, we finitise our disk; this necessitates garbage
