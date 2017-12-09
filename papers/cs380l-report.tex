@@ -149,11 +149,18 @@ that aliasing between different files does not occur.
 The recogniser l4-fs-p is defined to be the same as l3-fs-p, which
 makes our equivalence proofs simpler. This arises from the fact that
 reference counting does not require any changes in the filesystem tree
-or the disk. At the time of writing, we are in the process of proving
-equivalence between model 4 and model 3; towards that end, we have
-proved uniqueness and disjointness properties that ensure our file
-update operations do not ever alias disk blocks in such a way that
-they are referred to by two different files, or twice by the same file.
+or the disk.
+
+An interesting insight from the proofs of correctness for model 4 was
+that there is no simple transformation from instances of model 4 to
+instances of model 3. The contents of a single file are always
+contiguous in model 3 but not in model 4, and this makes it difficult
+to derive a transformation that will support a read-over-write
+proof. Thus, we chose a different strategy: defining a transformation
+l4-to-l2-fs from instances of l4 to instances of model 2. Thanks to
+the common definition of l4-fs-p and l3-fs-p, we were able to reuse
+the already defined l3-to-l2-fs here, which again simplified our proof
+effort.
 
 \section {Proof approach}
 
