@@ -245,13 +245,16 @@ models are built.
 \end{table}
 
 \section{Future work}
-As previously mentioned, we would like to add the system calls open and close with the
-introduction of file descriptors. This would be a step towards the
-study of concurrent FS operations. We would also like to linearise
-the tree, leaving only the disk - this would be more in keeping
+Having incorporated garbage collection and metadata into the
+filesystem model, the next challenge is the linearisation of the
+filesystem model. This would be more in keeping
 with realistic file systems that do not require an in-memory tree
 representation, but still allow tree traversal through systematic
 lookups in the disk.
+
+We are also planning to add the system calls open and close with the
+introduction of file descriptors. This would be a step towards the
+study of concurrent FS operations.
 
 Eventually, we would like to emulate the FAT32 filesystem. This would
 be a step towards verified versions of fsck and file recovery tools,
@@ -272,11 +275,12 @@ implementation. This allows us to find bugs in existing filesystems,
 which is not addressed by Chen's work.
 
 \section{Conclusion}
-Through this work, we have gone into some depth on the nuts and bolts
-of implementing a filesystem at the byte level. In the process, we
-have demonstrated ACL2's capability to deal with systems-level
-problems in addition to the hardware verification problems to which
-it has traditionally been applied.
+Through this work, we have demonstrated an approach towards modelling
+a filesystem with several essential features (block allocation,
+file-level metadata, garbage collection) found in real filesystem. In
+the process, we have demonstrated ACL2's capability to deal with
+systems-level problems in addition to the hardware verification
+problems to which it has traditionally been applied.
 
 \section{Obtaining the code}
 This work is hosted on GitHub, under the GPL 3.0 licence. The code
