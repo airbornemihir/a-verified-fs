@@ -69,10 +69,10 @@ l1-fs-p.
 \begin{tikzpicture}[sibling distance=10em,
   every node/.style = {shape=rectangle, rounded corners,
     draw, align=center,
-    top color=white, bottom color=blue!20}]]
-  \node {\textbackslash}
+    top color=white, bottom color=blue!20}]
+  \node {/}
     child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
-    child { node {tmp}
+    child { node {tmp/}
       child { node {ticket1,{"}Sun 19:00{"}}}
       child { node {ticket2,{"}Tue 21:00{"}}}};
 \end{tikzpicture}
@@ -93,14 +93,14 @@ Below, we include a sample of a filesystem tree that is recognised by
 l2-fs-p.
 
 \begin{tikzpicture}[sibling distance=10em,
-  every node/.style = {shape=rectangle, rounded corners,
-    draw, align=center,
-    top color=white, bottom color=blue!20}]]
-  \node {\textbackslash}
-    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},3} }
-    child { node {tmp}
-      child { node {ticket1,{"}Sun 19:00{"},9}}
-      child { node {ticket2,{"}Tue 21:00{"},9}}};
+    every node/.style = {shape=rectangle, rounded corners,
+      draw, align=center,
+      top color=white, bottom color=blue!20}]]
+    \node {/}
+    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},{\bf 3}} }
+    child { node {tmp/}
+      child { node {ticket1,{"}Sun 19:00{"},{\bf 9}}}
+      child { node {ticket2,{"}Tue 21:00{"},{\bf 9}}}};
 \end{tikzpicture}
 
 \section{Model 3}
