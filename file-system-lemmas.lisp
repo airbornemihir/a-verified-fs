@@ -188,3 +188,19 @@
   (implies (booleanp val)
            (equal (boolean-listp (make-list-ac n val ac))
                   (boolean-listp ac))))
+
+(defthm booleanp-of-car-make-list
+  (implies (and (booleanp val)
+                (boolean-listp ac)
+                (> (+ n (len ac)) 0))
+           (booleanp (car (make-list-ac n val ac)))))
+
+(defthm car-of-make-list
+  (equal (car (make-list-ac n val ac))
+         (if (zp n) (car ac) val)))
+
+(defthm cdr-of-make-list
+  (equal (cdr (make-list-ac n val ac))
+         (if (zp n)
+             (cdr ac)
+             (make-list-ac (- n 1) val ac))))
