@@ -57,7 +57,6 @@
   set-indices-in-alv-correctness-1
   (implies
    (and (boolean-listp alv)
-        (nat-listp index-list)
         (booleanp value))
    (boolean-listp (set-indices-in-alv alv index-list value)))
   :rule-classes (:type-prescription :rewrite)
