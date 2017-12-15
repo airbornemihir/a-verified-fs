@@ -49,7 +49,7 @@
 
 (defund set-indices-in-alv (alv index-list value)
   (declare (xargs :guard (and (boolean-listp alv)
-                              (bounded-nat-listp index-list (len alv))
+                              (nat-listp index-list)
                               (booleanp value))))
   (set-indices alv index-list (make-list (len index-list) :initial-element value)))
 
