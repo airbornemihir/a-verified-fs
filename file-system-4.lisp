@@ -37,7 +37,8 @@
    (indices-marked-p (binary-append x y) alv)
    (and (indices-marked-p x alv) (indices-marked-p y alv))))
 
-(defthm indices-marked-p-correctness-3
+(defthm
+  indices-marked-p-correctness-3
   (implies (and (nat-listp index-list1)
                 (nat-listp index-list2)
                 (boolean-listp alv)
@@ -45,17 +46,19 @@
                 (bounded-nat-listp index-list1 (len alv)))
            (indices-marked-p index-list1
                              (set-indices-in-alv alv index-list2 t)))
-  :hints (("Subgoal *1/5''"
-           :use ((:instance set-indices-in-alv-correctness-3
-                            (value t)
-                            (n (car index-list1))
-                            (index-list index-list2))
-                 (:instance set-indices-in-alv-correctness-4
-                            (value t)
-                            (n (car index-list1))
-                            (index-list index-list2)))
-           :cases (member-equal (car index-list1)
-                                                   index-list2)) ))
+  :hints
+  (("subgoal *1/5''" :in-theory (disable set-indices-in-alv-correctness-3
+                                         set-indices-in-alv-correctness-4)
+    :use ((:instance set-indices-in-alv-correctness-3
+                     (value t)
+                     (n (car index-list1))
+                     (index-list index-list2))
+          (:instance set-indices-in-alv-correctness-4
+                     (value t)
+                     (n (car index-list1))
+                     (index-list index-list2)))
+    :cases (member-equal (car index-list1)
+                         index-list2))))
 
 (encapsulate
   ()
@@ -412,6 +415,20 @@
                                       alv))
            (not-intersectp-list (find-n-free-blocks alv n)
                                 (l4-collect-all-index-lists fs))))
+
+(encapsulate ()
+  (local (include-book "std/basic/inductions" :dir :system))
+
+  (defcong list-equiv equal (indices-marked-p index-list alv) 1
+    :hints
+    (("goal"
+      :induct (cdr-cdr-induct index-list index-list-equiv)))))
+
+(defcong list-equiv equal (indices-marked-p index-list alv) 2)
+
+(defcong list-equiv list-equiv 
+  (set-indices-in-alv alv index-list value) 1
+  :hints (("goal" :in-theory (enable set-indices-in-alv))))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-17
   (implies (and (boolean-listp alv)
