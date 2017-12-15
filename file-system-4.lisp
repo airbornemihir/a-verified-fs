@@ -105,8 +105,7 @@
   (l3-stat hns fs disk))
 
 (defun l4-rdchs (hns fs disk start n)
-  (declare (xargs :guard-debug t
-                  :guard (and (symbol-listp hns)
+  (declare (xargs :guard (and (symbol-listp hns)
                               (l4-fs-p fs)
                               (natp start)
                               (natp n)
@@ -120,8 +119,7 @@
                               (stringp text)
                               (block-listp disk)
                               (boolean-listp alv)
-                              (equal (len alv) (len disk)))
-                  :guard-debug t))
+                              (equal (len alv) (len disk)))))
   (if (atom hns)
       (mv fs disk alv) ;; error - showed up at fs with no name  - so leave fs unchanged
     (if (atom fs)
@@ -187,7 +185,7 @@
   :hints (("Goal" :in-theory (enable l4-list-all-indices)) ))
 
 (defun l4-stricter-fs-p (fs alv)
-  (declare (xargs :guard t :guard-debug t))
+  (declare (xargs :guard t))
   (and (l4-fs-p fs)
        (boolean-listp alv)
        (let ( (all-indices (l4-list-all-indices fs)))
