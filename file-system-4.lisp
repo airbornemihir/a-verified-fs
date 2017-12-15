@@ -478,6 +478,8 @@
            (not-intersectp-list (find-n-free-blocks alv n)
                                 l)))
 
+(defcong list-equiv equal (INDICES-MARKED-LISTP L ALV) 2)
+
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-22
   (implies (and (boolean-listp alv)
