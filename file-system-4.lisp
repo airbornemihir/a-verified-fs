@@ -169,18 +169,18 @@
                     new-alv)))
             ))))))
 
-(defund l4-list-all-indices (fs)
+(defund
+  l4-list-all-indices (fs)
   (declare (xargs :guard (l4-fs-p fs)))
   (if (atom fs)
       nil
-    (binary-append
-     (let ((directory-or-file-entry (car fs)))
-       (let ((entry (cdr directory-or-file-entry)))
-         (if (l4-regular-file-entry-p entry)
-             (car entry)
-           (l4-list-all-indices entry))))
-         (l4-list-all-indices (cdr fs))))
-  )
+      (binary-append
+       (let ((directory-or-file-entry (car fs)))
+            (let ((entry (cdr directory-or-file-entry)))
+                 (if (l4-regular-file-entry-p entry)
+                     (car entry)
+                     (l4-list-all-indices entry))))
+       (l4-list-all-indices (cdr fs)))))
 
 (defthm l4-list-all-indices-correctness-1
   (implies (l4-fs-p fs)
@@ -422,7 +422,26 @@
   (defcong list-equiv equal (indices-marked-p index-list alv) 1
     :hints
     (("goal"
-      :induct (cdr-cdr-induct index-list index-list-equiv)))))
+      :induct (cdr-cdr-induct index-list index-list-equiv))))
+
+  (defcong list-equiv equal (fetch-blocks-by-indices block-list index-list) 2
+    :hints
+    (("goal"
+      :induct (cdr-cdr-induct index-list index-list-equiv))))
+
+  
+  (defcong list-equiv equal (l4-list-all-indices fs) 1
+    :hints (("Goal" :in-theory (enable l4-list-all-indices)
+             :induct (cdr-cdr-induct fs fs-equiv))
+            ("Subgoal *1/2''" :expand ((l4-list-all-indices fs)
+                                       (l4-list-all-indices fs-equiv)))))
+
+  (defcong list-equiv equal (l3-to-l2-fs fs disk) 1
+    :hints (("goal" :induct (cdr-cdr-induct fs fs-equiv))
+            ("Subgoal *1/2''" :expand ((l3-to-l2-fs fs disk)
+                                       (l3-to-l2-fs fs-equiv disk)))))
+
+  )
 
 (defcong list-equiv equal (indices-marked-p index-list alv) 2)
 
@@ -793,6 +812,8 @@
            (equal (l2-rdchs hns (l4-to-l2-fs fs disk) start n)
                   (l4-rdchs hns fs disk start n))))
 
+(defcong list-equiv equal (fetch-blocks-by-indices block-list index-list) 1)
+
 (defthm
   l4-wrchs-correctness-1-lemma-1
   (implies (and (natp key)
@@ -827,6 +848,8 @@
                               (l4-list-all-indices (cdr (car fs)))))
            (member-equal index (l4-list-all-indices fs)))
   :hints (("goal" :expand (l4-list-all-indices fs))))
+
+(defcong list-equiv equal (l3-to-l2-fs fs disk) 2)
 
 (defthm l4-wrchs-correctness-1-lemma-5
   (implies (and (l3-fs-p fs)
