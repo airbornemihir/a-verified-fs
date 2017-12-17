@@ -214,7 +214,7 @@
                    (cdr sd))
             (l5-stat (cdr hns) (cdr sd) disk user)))))))
 
-(defun l5-regular-file-writable-p (entry user)
+(defund l5-regular-file-writable-p (entry user)
   (declare (xargs :guard (l5-regular-file-entry-p entry)))
   (if (equal (l5-regular-file-user entry) user)
       (l5-regular-file-user-write entry)
