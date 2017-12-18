@@ -535,8 +535,7 @@
                        (l5-wrchs hns fs disk alv start text user)
                        (mv (l5-to-l4-fs new-fs)
                            new-disk new-alv))))))
-  :hints (("goal" :in-theory (e/d (l3-regular-file-entry-p)
-                                  (l5-regular-file-writable-p))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p)
            :induct (l5-stat hns fs disk user))))
 
 (defthm l5-rdchs-correctness-1-lemma-1
