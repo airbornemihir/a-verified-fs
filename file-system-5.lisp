@@ -186,7 +186,7 @@
                 (not (l5-regular-file-entry-p (cdr (assoc-equal name fs)))))
            (l5-fs-p (cdr (assoc-equal name fs)))))
 
-(defun l5-regular-file-readable-p (entry user)
+(defund l5-regular-file-readable-p (entry user)
   (declare (xargs :guard (l5-regular-file-entry-p entry)))
   (if (equal (l5-regular-file-user entry) user)
       (l5-regular-file-user-read entry)
@@ -695,20 +695,23 @@
         (integerp user)
         (<= 0 user))
    (let
-    ((file (l5-stat hns fs disk user))
-     (new-file (l5-stat hns
-                        (mv-nth 0
-                                (l5-wrchs hns fs disk alv start text user))
-                        (mv-nth 1
-                                (l5-wrchs hns fs disk alv start text user))
-                        user)))
-    (implies (l5-regular-file-entry-p file)
-             (and (equal (l5-regular-file-user-read new-file)
-                         (l5-regular-file-user-read file))
-                  (equal (l5-regular-file-user new-file)
-                         (l5-regular-file-user file))
-                  (equal (l5-regular-file-other-read new-file)
-                         (l5-regular-file-other-read file)))))))
+       ((file (l5-stat hns fs disk user))
+        (new-file (l5-stat hns
+                           (mv-nth 0
+                                   (l5-wrchs hns fs disk alv start text user))
+                           (mv-nth 1
+                                   (l5-wrchs hns fs disk alv start text user))
+                           user)))
+     (implies (l5-regular-file-entry-p file)
+              (and (equal (l5-regular-file-user-read new-file)
+                          (l5-regular-file-user-read file))
+                   (equal (l5-regular-file-user new-file)
+                          (l5-regular-file-user file))
+                   (equal (l5-regular-file-other-read new-file)
+                          (l5-regular-file-other-read file))
+                   (equal (l5-regular-file-readable-p new-file user)
+                          (l5-regular-file-readable-p file user))))))
+  :hints (("goal" :in-theory (enable l5-regular-file-readable-p))))
 
 (defthm
  l5-read-after-write-1
@@ -1081,7 +1084,8 @@
                      (l5-wrchs hns2 fs disk alv start2 text2 user))
              user)
     user))
-  :instructions ((:induct (induction-scheme hns1 hns2 fs))
+  :instructions ((:in-theory (enable l5-regular-file-readable-p))
+                 (:induct (induction-scheme hns1 hns2 fs))
                  :bash (:change-goal nil t)
                  (:change-goal nil t)
                  :bash :bash
