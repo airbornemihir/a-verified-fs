@@ -414,7 +414,7 @@
         (l5-regular-file-entry-p (cdr (assoc-equal name fs)))))
   :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
-;; This is the second of two theorems showing the equivalence of the l3 and l2
+;; This is the second of two theorems showing the equivalence of the l5 and l4
 ;; versions of stat.
 (defthm
   l5-stat-correctness-2
