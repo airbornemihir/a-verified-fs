@@ -7,12 +7,10 @@
 ; at this point. Thus, only read and write permissions exist, and they are
 ; limited to being on/off for the creating user, and on/off for others.
 
-; This will have to begin with defining an aggregate to hold the contents of a
-; regular file. I'm not changing anything about directories at this point.
-
-; begin encapsulate
+; Further, I'm not changing anything about directories at this point.
 
 (include-book "file-system-4")
+(in-theory (disable l4-stricter-fs-p))
 
 (defund l5-regular-file-entry-p (entry)
   (declare (xargs :guard t))
@@ -498,6 +496,15 @@
    (no-duplicates-listp
     (l4-collect-all-index-lists (l5-to-l4-fs (cdr (assoc-equal name fs)))))))
 
+(defthm l5-wrchs-correctness-1-lemma-7
+  (implies (and (l5-fs-p fs)
+                (consp (assoc-equal name fs))
+                (l5-fs-p (cdr (assoc-equal name fs)))
+                (l4-stricter-fs-p (l5-to-l4-fs fs) alv))
+           (l4-stricter-fs-p (l5-to-l4-fs (cdr (assoc-equal name fs)))
+                             alv))
+  :hints (("goal" :in-theory (enable l4-stricter-fs-p))))
+
 (defthm
   l5-wrchs-correctness-1-lemma-5
   (implies
@@ -512,6 +519,12 @@
   (implies (and (l5-fs-p fs))
            (equal (consp (assoc-equal name (l5-to-l4-fs fs)))
                   (consp (assoc-equal name fs)))))
+
+(defthm l5-wrchs-correctness-1-lemma-8
+  (implies (l4-stricter-fs-p fs alv)
+           (and (boolean-listp alv)
+                (bounded-nat-listp (l4-list-all-indices fs) (len alv))))
+  :hints (("goal" :in-theory (enable l4-stricter-fs-p))))
 
 (defthm
   l5-wrchs-correctness-1
