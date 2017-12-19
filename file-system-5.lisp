@@ -410,8 +410,8 @@
   (implies
    (and (consp (assoc-equal name (l5-to-l4-fs fs)))
         (l5-fs-p fs))
-   (iff (l3-regular-file-entry-p (cdr (assoc-equal name (l5-to-l4-fs fs))))
-        (l5-regular-file-entry-p (cdr (assoc-equal name fs)))))
+   (equal (l3-regular-file-entry-p (cdr (assoc-equal name (l5-to-l4-fs fs))))
+          (l5-regular-file-entry-p (cdr (assoc-equal name fs)))))
   :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
 ;; This is the second of two theorems showing the equivalence of the l5 and l4
@@ -510,8 +510,8 @@
 
 (defthm l5-wrchs-correctness-1-lemma-6
   (implies (and (l5-fs-p fs))
-           (iff (consp (assoc-equal name (l5-to-l4-fs fs)))
-                (consp (assoc-equal name fs)))))
+           (equal (consp (assoc-equal name (l5-to-l4-fs fs)))
+                  (consp (assoc-equal name fs)))))
 
 (defthm
   l5-wrchs-correctness-1
@@ -544,8 +544,8 @@
                 (block-listp disk)
                 (integerp user)
                 (<= 0 user))
-           (iff (stringp (l3-stat hns (l5-to-l4-fs fs) disk))
-                (l5-regular-file-entry-p (l5-stat hns fs disk user))))
+           (equal (stringp (l3-stat hns (l5-to-l4-fs fs) disk))
+                  (l5-regular-file-entry-p (l5-stat hns fs disk user))))
   :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
 (defthm
