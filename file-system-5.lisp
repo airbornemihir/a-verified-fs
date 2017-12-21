@@ -496,7 +496,7 @@
    (no-duplicates-listp
     (l4-collect-all-index-lists (l5-to-l4-fs (cdr (assoc-equal name fs)))))))
 
-(defthm l5-wrchs-correctness-1-lemma-7
+(defthm l5-wrchs-correctness-1-lemma-5
   (implies (and (l5-fs-p fs)
                 (consp (assoc-equal name fs))
                 (l5-fs-p (cdr (assoc-equal name fs)))
@@ -506,7 +506,7 @@
   :hints (("goal" :in-theory (enable l4-stricter-fs-p))))
 
 (defthm
-  l5-wrchs-correctness-1-lemma-5
+  l5-wrchs-correctness-1-lemma-6
   (implies
    (and (consp (assoc-equal name fs))
         (l5-regular-file-entry-p (cdr (assoc-equal name fs)))
@@ -515,7 +515,7 @@
           (cons (l5-regular-file-contents (cdr (assoc-equal name fs)))
                 (l5-regular-file-length (cdr (assoc-equal name fs)))))))
 
-(defthm l5-wrchs-correctness-1-lemma-6
+(defthm l5-wrchs-correctness-1-lemma-7
   (implies (and (l5-fs-p fs))
            (equal (consp (assoc-equal name (l5-to-l4-fs fs)))
                   (consp (assoc-equal name fs)))))
