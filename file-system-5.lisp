@@ -169,11 +169,6 @@
                                  (not (l5-regular-file-entry-p entry)))))
   :hints (("goal" :in-theory (enable l5-regular-file-entry-p))))
 
-(defthm l5-regular-file-entry-p-correctness-4
-  (implies (l5-regular-file-entry-p entry)
-           (consp entry))
-  :hints (("Goal" :in-theory (enable l5-regular-file-entry-p)) ))
-
 (defthm alistp-l5-fs-p
   (implies (l5-fs-p fs)
            (alistp fs)))
@@ -785,52 +780,6 @@
      (:instance l4-read-after-write-1
                 (fs (l5-to-l4-fs fs)))))))
 
-(defthm
-  l5-read-after-write-2-lemma-1
-  (implies
-   (and (symbol-listp hns)
-        (l5-fs-p fs)
-        (natp start)
-        (stringp text)
-        (block-listp disk)
-        (boolean-listp alv)
-        (equal (len alv) (len disk)))
-   (equal
-    (consp (assoc-equal name
-                        (mv-nth 0
-                                (l5-wrchs hns fs disk alv start text user))))
-    (consp (assoc-equal name fs)))))
-
-(defthm
-  l5-read-after-write-2-lemma-2
-  (implies
-   (and (symbol-listp hns)
-        (l5-fs-p fs)
-        (natp start)
-        (stringp text)
-        (block-listp disk)
-        (boolean-listp alv)
-        (equal (len alv) (len disk))
-        (consp (assoc-equal name fs))
-        (l5-regular-file-entry-p (cdr (assoc-equal name fs))))
-   (l5-regular-file-entry-p
-    (cdr (assoc-equal name
-                      (mv-nth 0
-                              (l5-wrchs hns fs disk alv start text user)))))))
-
-(defthm
-  l5-read-after-write-2-lemma-3
-  (implies (and (symbol-listp hns)
-                (l5-fs-p fs)
-                (natp start)
-                (stringp text)
-                (block-listp disk)
-                (boolean-listp alv)
-                (equal (len alv) (len disk)))
-           (equal (consp (mv-nth 0
-                                 (l5-wrchs hns fs disk alv start text user)))
-                  (consp fs))))
-
 (defthmd
   l5-read-after-write-2-lemma-4
   (implies (and (l5-fs-p fs))
@@ -940,7 +889,95 @@
                   (equal (l5-regular-file-other-write new-file)
                          (l5-regular-file-other-write file))))))
   :hints
-  (("goal" :induct (induction-scheme hns1 hns2 fs))
+  (("goal" :induct (induction-scheme hns1 hns2 fs)
+    :in-theory (disable
+                (:DEFINITION TAKE)
+                (:REWRITE BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE)
+                (:REWRITE BLOCK-LISTP-CORRECTNESS-1)
+                (:REWRITE L2-CREATE-CORRECTNESS-1-LEMMA-1)
+                (:DEFINITION NTH)
+                (:LINEAR NON-NIL-NTH)
+                (:DEFINITION MAKE-BLOCKS)
+                (:DEFINITION UNMAKE-BLOCKS)
+                (:DEFINITION L2-FS-P)
+                (:DEFINITION FIRST-N-AC)
+                (:DEFINITION TRUE-LISTP)
+                (:REWRITE
+                 L3-REGULAR-FILE-ENTRY-P-CORRECTNESS-2)
+                (:TYPE-PRESCRIPTION L3-REGULAR-FILE-ENTRY-P)
+                (:REWRITE DEFAULT-CDR)
+                (:TYPE-PRESCRIPTION L2-FS-P)
+                (:REWRITE DEFAULT-CAR)
+                (:REWRITE ALREADY-A-CHARACTER-LIST)
+                (:REWRITE L2-STAT-CORRECTNESS-1-LEMMA-5)
+                (:DEFINITION L3-FS-P)
+                (:REWRITE CHARACTER-LISTP-OF-FIRST-N-AC)
+                (:DEFINITION CHARACTER-LISTP)
+                (:REWRITE L3-UNLINK-RETURNS-FS-LEMMA-1)
+                (:REWRITE L2-WRCHS-RETURNS-FS-LEMMA-3)
+                (:REWRITE L2-FS-P-ASSOC)
+                (:REWRITE DEFAULT-+-2)
+                (:DEFINITION FETCH-BLOCKS-BY-INDICES)
+                (:REWRITE DEFAULT-+-1)
+                (:REWRITE FIND-N-FREE-BLOCKS-CORRECTNESS-2)
+                (:REWRITE ZP-OPEN)
+                (:REWRITE L3-FS-P-ASSOC)
+                (:REWRITE L3-STAT-CORRECTNESS-2-LEMMA-2)
+                (:TYPE-PRESCRIPTION L3-FS-P)
+                (:LINEAR INSERT-TEXT-CORRECTNESS-3)
+                (:REWRITE FIND-N-FREE-BLOCKS-CORRECTNESS-5)
+                (:DEFINITION MAKE-CHARACTER-LIST)
+                (:REWRITE
+                 L3-REGULAR-FILE-ENTRY-P-CORRECTNESS-1)
+                (:REWRITE L3-TO-L2-FS-GUARD-LEMMA-1)
+                (:DEFINITION BOOLEAN-LISTP)
+                (:REWRITE INSERT-TEXT-CORRECTNESS-1)
+                (:REWRITE L2-FSCK-AFTER-L2-WRCHS-LEMMA-3)
+                (:REWRITE L2-CREATE-CORRECTNESS-1-LEMMA-2)
+                (:DEFINITION DELETE-ASSOC-EQUAL)
+                (:DEFINITION SET-INDICES)
+                (:TYPE-PRESCRIPTION FETCH-BLOCKS-BY-INDICES)
+                (:REWRITE
+                 FETCH-BLOCKS-BY-INDICES-CORRECTNESS-2)
+                (:REWRITE DEFAULT-<-1)
+                (:REWRITE NON-NIL-NTH)
+                (:REWRITE DEFAULT-<-2)
+                (:TYPE-PRESCRIPTION TRUE-LISTP)
+                (:REWRITE L2-WRCHS-RETURNS-FS-LEMMA-5)
+                (:REWRITE L3-BOUNDED-FS-P-CORRECTNESS-1)
+                (:REWRITE L4-WRCHS-CORRECTNESS-1-LEMMA-18)
+                (:TYPE-PRESCRIPTION MAKE-BLOCKS)
+                (:DEFINITION UPDATE-NTH)
+                (:DEFINITION INDICES-MARKED-P)
+                (:REWRITE MEMBER-OF-A-NAT-LIST)
+                (:DEFINITION COUNT-FREE-BLOCKS)
+                (:REWRITE UNMAKE-BLOCKS-CORRECTNESS-1)
+                (:DEFINITION BINARY-APPEND)
+                (:REWRITE
+                 FETCH-BLOCKS-BY-INDICES-CORRECTNESS-1)
+                (:REWRITE COMMUTATIVITY-OF-+)
+                (:REWRITE
+                 L5-REGULAR-FILE-ENTRY-P-CORRECTNESS-1)
+                (:TYPE-PRESCRIPTION NAT-LISTP)
+                (:TYPE-PRESCRIPTION
+                 TRUE-LISTP-FIRST-N-AC-TYPE-PRESCRIPTION)
+                (:REWRITE RATIONALP-IMPLIES-ACL2-NUMBERP)
+                (:TYPE-PRESCRIPTION INDICES-MARKED-P)
+                (:DEFINITION NAT-LISTP)
+                (:DEFINITION NTHCDR)
+                (:TYPE-PRESCRIPTION FEASIBLE-FILE-LENGTH-P)
+                (:REWRITE MAKE-BLOCKS-CORRECTNESS-4)
+                (:TYPE-PRESCRIPTION
+                 SET-INDICES-IN-ALV-CORRECTNESS-1)
+                (:TYPE-PRESCRIPTION SET-INDICES-IN-ALV)
+                (:TYPE-PRESCRIPTION NATP)
+                (:REWRITE DEFAULT-COERCE-2)
+                (:REWRITE DEFAULT-COERCE-1)
+                (:REWRITE BOUNDED-NAT-LISTP-CORRECTNESS-1)
+                (:REWRITE L3-WRCHS-RETURNS-FS-LEMMA-1)
+                (:TYPE-PRESCRIPTION UNMAKE-BLOCKS)
+                (:TYPE-PRESCRIPTION L5-MAKE-REGULAR-FILE)
+                (:TYPE-PRESCRIPTION INDUCTION-SCHEME)))
    ("subgoal *1/5"
     :expand ((l5-wrchs hns2 fs disk alv start2 text2 user)
              (l5-stat hns1 fs disk))
