@@ -769,49 +769,21 @@
              (declare (ignore new-alv))
              (equal (l5-rdchs hns new-fs new-disk start n user1)
                     text)))
-  :instructions
-  (:promote
-   :s-prop
-   (:claim
-    (equal
-     (l5-rdchs hns
-               (mv-nth 0
-                       (l5-wrchs hns fs disk alv start text user2))
-               (mv-nth 1
-                       (l5-wrchs hns fs disk alv start text user2))
-               start n user1)
-     (l4-rdchs
-      hns
-      (l5-to-l4-fs (mv-nth 0
-                           (l5-wrchs hns fs disk alv start text user2)))
-      (mv-nth 1
-              (l5-wrchs hns fs disk alv start text user2))
-      start n))
-    :hints :none)
-   (:change-goal (main . 1) t)
-   (:dive 2)
-   (:rewrite l5-rdchs-correctness-1 ((user user1)))
-   :top :bash :bash :bash :bash (:dive 1)
-   := (:drop 16)
-   (:claim
-    (and
-     (equal (l5-to-l4-fs (mv-nth 0
-                                 (l5-wrchs hns fs disk alv start text user2)))
-            (mv-nth 0
-                    (l4-wrchs hns (l5-to-l4-fs fs)
-                              disk alv start text)))
-     (equal (mv-nth 1
-                    (l5-wrchs hns fs disk alv start text user2))
-            (mv-nth 1
-                    (l4-wrchs hns (l5-to-l4-fs fs)
-                              disk alv start text)))))
-   (:dive 2)
-   := (:drop 16)
-   :nx := (:drop 16)
-   :top (:dive 1)
-   (:rewrite l4-read-after-write-1)
-   :top
-   :bash :bash))
+  :hints
+  (("goal"
+    :in-theory (disable l5-rdchs-correctness-1
+                        l5-wrchs-correctness-1
+                        l4-read-after-write-1)
+    :use
+    ((:instance l5-rdchs-correctness-1
+                (fs (mv-nth 0
+                            (l5-wrchs hns fs disk alv start text user2)))
+                (disk (mv-nth 1
+                              (l5-wrchs hns fs disk alv start text user2)))
+                (user user1))
+     (:instance l5-wrchs-correctness-1 (user user2))
+     (:instance l4-read-after-write-1
+                (fs (l5-to-l4-fs fs)))))))
 
 (defthm
   l5-read-after-write-2-lemma-1
