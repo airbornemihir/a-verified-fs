@@ -1043,8 +1043,10 @@
                 (symbol-listp hns1)
                 (symbol-listp hns2)
                 (not (equal hns1 hns2))
-                (natp n1)
-                (natp n2)
+                (integerp n1)
+                (<= 0 n1)
+                (integerp n2)
+                (<= 0 n2)
                 (block-listp disk)
                 (boolean-listp alv)
                 (equal (len alv) (len disk))
@@ -1060,53 +1062,28 @@
              (declare (ignore new-alv))
              (equal (l5-rdchs hns1 new-fs new-disk start1 n1 user1)
                     (l5-rdchs hns1 fs disk start1 n1 user1))))
-  :instructions
-  (:promote
-   :s-prop
-   (:claim
-    (equal
-     (l5-rdchs hns1
-               (mv-nth 0
-                       (l5-wrchs hns2 fs disk alv start2 text2 user2))
-               (mv-nth 1
-                       (l5-wrchs hns2 fs disk alv start2 text2 user2))
-               start1 n1 user1)
-     (l4-rdchs
-      hns1
-      (l5-to-l4-fs (mv-nth 0
-                           (l5-wrchs hns2 fs disk alv start2 text2 user2)))
-      (mv-nth 1
-              (l5-wrchs hns2 fs disk alv start2 text2 user2))
-      start1 n1))
-    :hints :none)
-   (:dive 1)
-   := (:drop 21)
-   (:change-goal (main . 1) t)
-   (:dive 2)
-   (:rewrite l5-rdchs-correctness-1 ((user user1)))
-   :top :bash :bash :bash :bash
-   (:claim (equal (let ((mv (l5-wrchs hns2 fs disk alv start2 text2 user2)))
-                       (let ((new-fs (mv-nth 0 mv))
-                             (new-disk (mv-nth 1 mv))
-                             (new-alv (mv-nth 2 mv)))
-                            (list (l5-to-l4-fs new-fs)
-                                  new-disk new-alv)))
-                  (l4-wrchs hns2 (l5-to-l4-fs fs)
-                            disk alv start2 text2))
-           :hints :none)
-   (:change-goal (main . 2) t)
-   (:dive 2)
-   (:rewrite l5-wrchs-correctness-1 ((user user2)))
-   :top :bash (:dive 2)
-   (:= (mv-nth 0
-               (l4-wrchs hns2 (l5-to-l4-fs fs)
-                         disk alv start2 text2)))
-   :nx
-   (:= (mv-nth 1
-               (l4-wrchs hns2 (l5-to-l4-fs fs)
-                         disk alv start2 text2)))
-   :top (:dive 1)
-   (:rewrite l4-read-after-write-2)
-   :top
-   :bash :bash
-   :bash :bash))
+  :hints
+  (("goal"
+    :in-theory (disable l5-rdchs-correctness-1
+                        l5-wrchs-correctness-1
+                        l4-read-after-write-2)
+    :use
+    ((:instance
+      l5-rdchs-correctness-1 (hns hns1)
+      (fs (mv-nth 0
+                  (l5-wrchs hns2 fs disk alv start2 text2 user2)))
+      (disk (mv-nth 1
+                    (l5-wrchs hns2 fs disk alv start2 text2 user2)))
+      (start start1)
+      (n n1)
+      (user user1))
+     (:instance l5-rdchs-correctness-1 (hns hns1)
+                (start start1)
+                (n n1)
+                (user user1))
+     (:instance l5-wrchs-correctness-1 (hns hns2)
+                (text text2)
+                (start start2)
+                (user user2))
+     (:instance l4-read-after-write-2
+                (fs (l5-to-l4-fs fs)))))))
