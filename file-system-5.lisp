@@ -940,7 +940,7 @@
                   (equal (l5-regular-file-other-write new-file)
                          (l5-regular-file-other-write file))))))
   :hints
-  (("goal" :induct (induction-scheme hns1 hns2 fs))
+  (("goal" :induct (induction-scheme hns1 hns2 fs) :in-theory (disable l5-wrchs))
    ("subgoal *1/5"
     :expand ((l5-wrchs hns2 fs disk alv start2 text2 user)
              (l5-stat hns1 fs disk))
