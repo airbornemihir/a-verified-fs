@@ -902,7 +902,6 @@
                       (l5-wrchs hns2 fs disk alv start2 text2 user))))
     (l5-regular-file-entry-p (l5-stat hns1 fs disk))))
   :hints (("goal" :induct (induction-scheme hns1 hns2 fs))))
-;; end encapsulate
 
 (defthm
   l5-read-after-write-2-lemma-7
@@ -923,11 +922,12 @@
             (count-free-blocks alv)))
    (let
     ((file (l5-stat hns1 fs disk))
-     (new-file (l5-stat hns1
-                        (mv-nth 0
-                                (l5-wrchs hns2 fs disk alv start2 text2 user))
-                        (mv-nth 1
-                                (l5-wrchs hns2 fs disk alv start2 text2 user)))))
+     (new-file
+      (l5-stat hns1
+               (mv-nth 0
+                       (l5-wrchs hns2 fs disk alv start2 text2 user))
+               (mv-nth 1
+                       (l5-wrchs hns2 fs disk alv start2 text2 user)))))
     (implies (l5-regular-file-entry-p file)
              (and (equal (l5-regular-file-user new-file)
                          (l5-regular-file-user file))
@@ -939,56 +939,51 @@
                          (l5-regular-file-other-read file))
                   (equal (l5-regular-file-other-write new-file)
                          (l5-regular-file-other-write file))))))
-  :instructions
-  ((:induct (induction-scheme hns1 hns2 fs))
-   :bash (:change-goal nil t)
-   (:change-goal nil t)
-   :bash :bash :bash :bash
-   (:bash ("goal" :expand ((l5-wrchs hns2 fs disk alv start2 text2 user)
-                           (l5-stat hns1 fs disk))))
-   (:bash
-    ("goal"
-     :expand ((l5-wrchs hns2 fs disk alv start2 text2 user)
-              (l5-stat hns1 fs disk))
-     :use
-     ((:instance l5-read-after-write-2-lemma-6
-                 (hns (cdr hns1))
-                 (fs (cdr (assoc-equal (car hns1) fs)))
-                 (disk1 (mv-nth 1
-                                (l5-wrchs (cdr hns2)
-                                          (cdr (assoc-equal (car hns2) fs))
-                                          disk alv start2 text2 user)))
-                 (disk2 disk))
-      (:instance
-       l5-read-after-write-2-lemma-6
-       (hns (cdr hns1))
-       (fs (cdr (assoc-equal (car hns1) fs)))
-       (disk1
-        (set-indices
-         disk
-         (find-n-free-blocks
-          (set-indices-in-alv
-           alv
-           (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs)))
-           nil)
-          (len
-           (make-blocks
-            (insert-text
-             (unmake-blocks
-              (fetch-blocks-by-indices
-               disk
-               (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs))))
-              (l5-regular-file-length (cdr (assoc-equal (car hns2) fs))))
-             start2 text2))))
-         (make-blocks
-          (insert-text
-           (unmake-blocks
-            (fetch-blocks-by-indices
-             disk
-             (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs))))
-            (l5-regular-file-length (cdr (assoc-equal (car hns2) fs))))
-           start2 text2))))
-       (disk2 disk)))))))
+  :hints
+  (("goal" :induct (induction-scheme hns1 hns2 fs))
+   ("subgoal *1/5"
+    :expand ((l5-wrchs hns2 fs disk alv start2 text2 user)
+             (l5-stat hns1 fs disk))
+    :use
+    ((:instance l5-read-after-write-2-lemma-6
+                (hns (cdr hns1))
+                (fs (cdr (assoc-equal (car hns1) fs)))
+                (disk1 (mv-nth 1
+                               (l5-wrchs (cdr hns2)
+                                         (cdr (assoc-equal (car hns2) fs))
+                                         disk alv start2 text2 user)))
+                (disk2 disk))
+     (:instance
+      l5-read-after-write-2-lemma-6
+      (hns (cdr hns1))
+      (fs (cdr (assoc-equal (car hns1) fs)))
+      (disk1
+       (set-indices
+        disk
+        (find-n-free-blocks
+         (set-indices-in-alv
+          alv
+          (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs)))
+          nil)
+         (len
+          (make-blocks
+           (insert-text
+            (unmake-blocks
+             (fetch-blocks-by-indices
+              disk
+              (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs))))
+             (l5-regular-file-length (cdr (assoc-equal (car hns2) fs))))
+            start2 text2))))
+        (make-blocks
+         (insert-text
+          (unmake-blocks
+           (fetch-blocks-by-indices
+            disk
+            (l5-regular-file-contents (cdr (assoc-equal (car hns2) fs))))
+           (l5-regular-file-length (cdr (assoc-equal (car hns2) fs))))
+          start2 text2))))
+      (disk2 disk))))))
+;; end encapsulate
 
 (defthm
   l5-read-after-write-2-lemma-8
