@@ -780,52 +780,6 @@
      (:instance l4-read-after-write-1
                 (fs (l5-to-l4-fs fs)))))))
 
-(defthm
-  l5-read-after-write-2-lemma-1
-  (implies
-   (and (symbol-listp hns)
-        (l5-fs-p fs)
-        (natp start)
-        (stringp text)
-        (block-listp disk)
-        (boolean-listp alv)
-        (equal (len alv) (len disk)))
-   (equal
-    (consp (assoc-equal name
-                        (mv-nth 0
-                                (l5-wrchs hns fs disk alv start text user))))
-    (consp (assoc-equal name fs)))))
-
-(defthm
-  l5-read-after-write-2-lemma-2
-  (implies
-   (and (symbol-listp hns)
-        (l5-fs-p fs)
-        (natp start)
-        (stringp text)
-        (block-listp disk)
-        (boolean-listp alv)
-        (equal (len alv) (len disk))
-        (consp (assoc-equal name fs))
-        (l5-regular-file-entry-p (cdr (assoc-equal name fs))))
-   (l5-regular-file-entry-p
-    (cdr (assoc-equal name
-                      (mv-nth 0
-                              (l5-wrchs hns fs disk alv start text user)))))))
-
-(defthm
-  l5-read-after-write-2-lemma-3
-  (implies (and (symbol-listp hns)
-                (l5-fs-p fs)
-                (natp start)
-                (stringp text)
-                (block-listp disk)
-                (boolean-listp alv)
-                (equal (len alv) (len disk)))
-           (equal (consp (mv-nth 0
-                                 (l5-wrchs hns fs disk alv start text user)))
-                  (consp fs))))
-
 (defthmd
   l5-read-after-write-2-lemma-4
   (implies (and (l5-fs-p fs))
@@ -1010,11 +964,8 @@
                 (:REWRITE RATIONALP-IMPLIES-ACL2-NUMBERP)
                 (:TYPE-PRESCRIPTION INDICES-MARKED-P)
                 (:DEFINITION NAT-LISTP)
-                (:REWRITE L5-READ-AFTER-WRITE-2-LEMMA-3)
-                (:REWRITE L5-READ-AFTER-WRITE-2-LEMMA-1)
                 (:DEFINITION NTHCDR)
                 (:TYPE-PRESCRIPTION FEASIBLE-FILE-LENGTH-P)
-                (:REWRITE L5-READ-AFTER-WRITE-2-LEMMA-2)
                 (:REWRITE MAKE-BLOCKS-CORRECTNESS-4)
                 (:TYPE-PRESCRIPTION
                  SET-INDICES-IN-ALV-CORRECTNESS-1)
