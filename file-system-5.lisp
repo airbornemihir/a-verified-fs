@@ -169,11 +169,6 @@
                                  (not (l5-regular-file-entry-p entry)))))
   :hints (("goal" :in-theory (enable l5-regular-file-entry-p))))
 
-(defthm l5-regular-file-entry-p-correctness-4
-  (implies (l5-regular-file-entry-p entry)
-           (consp entry))
-  :hints (("Goal" :in-theory (enable l5-regular-file-entry-p)) ))
-
 (defthm alistp-l5-fs-p
   (implies (l5-fs-p fs)
            (alistp fs)))
@@ -955,8 +950,6 @@
                 (:DEFINITION TRUE-LISTP)
                 (:REWRITE
                  L3-REGULAR-FILE-ENTRY-P-CORRECTNESS-2)
-                (:REWRITE
-                 L5-REGULAR-FILE-ENTRY-P-CORRECTNESS-4)
                 (:TYPE-PRESCRIPTION L3-REGULAR-FILE-ENTRY-P)
                 (:REWRITE DEFAULT-CDR)
                 (:TYPE-PRESCRIPTION L2-FS-P)
