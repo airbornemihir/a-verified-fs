@@ -118,7 +118,7 @@
                                      l5-regular-file-other-write
                                      l5-regular-file-user))))
 
-(defthmd
+(defthm
   l5-regular-file-entry-p-correctness-1
   (implies (l5-regular-file-entry-p entry)
            (and (nat-listp (l5-regular-file-contents entry))
@@ -214,34 +214,26 @@
 
 ;; This function finds a text file given its path and reads a segment of
 ;; that text file.
-(defun
-    l5-rdchs (hns fs disk start n user)
-  (declare
-   (xargs
-    :guard (and (symbol-listp hns)
-                (l5-fs-p fs)
-                (natp start)
-                (natp n)
-                (block-listp disk)
-                (natp user))
-    :guard-hints
-    (("goal" :in-theory
-      (enable l5-regular-file-entry-p-correctness-1)))))
-  (let
-      ((file (l5-stat hns fs disk)))
-    (if
-        (or (not (l5-regular-file-entry-p file))
+(defun l5-rdchs (hns fs disk start n user)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l5-fs-p fs)
+                              (natp start)
+                              (natp n)
+                              (block-listp disk)
+                              (natp user))))
+  (let ((file (l5-stat hns fs disk)))
+    (if (or (not (l5-regular-file-entry-p file)) 
             (not (l5-regular-file-readable-p file user)))
         nil
-      (let*
-          ((file-text
-            (coerce (unmake-blocks
-                     (fetch-blocks-by-indices
-                      disk (l5-regular-file-contents file))
-                     (l5-regular-file-length file))
-                    'string))
-           (file-length (length file-text))
-           (end (+ start n)))
+      (let* ((file-text 
+              (coerce
+               (unmake-blocks (fetch-blocks-by-indices
+                               disk
+                               (l5-regular-file-contents file))
+                              (l5-regular-file-length file))
+               'string))
+             (file-length (length file-text))
+             (end (+ start n)))
         (if (< file-length end)
             nil
           (subseq file-text start (+ start n)))))))
@@ -254,9 +246,7 @@
                               (block-listp disk)
                               (boolean-listp alv)
                               (equal (len alv) (len disk)))
-                  :guard-hints
-                  (("goal" :in-theory
-                    (enable l5-regular-file-entry-p-correctness-1)))))
+                  :guard-debug t))
   (if (atom hns)
       (mv fs disk alv) ;; error - showed up at fs with no name  - so leave fs unchanged
     (if (atom fs)
@@ -329,11 +319,10 @@
   (implies (l5-fs-p fs)
            (l3-fs-p (l5-to-l4-fs fs)))
   :rule-classes
-  (:rewrite (:rewrite :corollary (implies (l5-fs-p fs)
-                                          (l4-fs-p (l5-to-l4-fs fs)))))
-  :hints
-  (("goal" :in-theory (enable l3-regular-file-entry-p
-                              l5-regular-file-entry-p-correctness-1))))
+  (:rewrite
+   (:rewrite :corollary (implies (l5-fs-p fs)
+                                 (l4-fs-p (l5-to-l4-fs fs)))))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
 (defthm l5-stat-correctness-1-lemma-1
   (implies (and (l5-fs-p fs)
@@ -357,8 +346,7 @@
         (equal (cddr (assoc-equal name
                                   (l5-to-l4-fs fs)))
                (l5-regular-file-length (cdr (assoc-equal name fs))))))
-  :hints (("goal" :in-theory (enable l3-regular-file-entry-p
-                                     l5-regular-file-entry-p-correctness-1)) ))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p)) ))
 
 (defthm l5-stat-correctness-1-lemma-4
   (implies (and (l5-fs-p fs)
@@ -415,8 +403,7 @@
         (l5-fs-p fs))
    (equal (l3-regular-file-entry-p (cdr (assoc-equal name (l5-to-l4-fs fs))))
           (l5-regular-file-entry-p (cdr (assoc-equal name fs)))))
-  :hints (("goal" :in-theory (enable l3-regular-file-entry-p
-                                     l5-regular-file-entry-p-correctness-1))))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
 ;; This is the second of two theorems showing the equivalence of the l5 and l4
 ;; versions of stat.
@@ -457,8 +444,7 @@
                 (equal (len alv) (len disk))
                 (boolean-listp alv))
            (l5-fs-p (mv-nth 0
-                            (l5-wrchs hns fs disk alv start text user))))
-  :hints (("goal" :in-theory (enable l5-regular-file-entry-p-correctness-1))))
+                            (l5-wrchs hns fs disk alv start text user)))))
 
 (defthm l5-wrchs-correctness-1-lemma-1
   (implies (l5-fs-p fs)
@@ -555,8 +541,7 @@
                        (l5-wrchs hns fs disk alv start text user)
                        (mv (l5-to-l4-fs new-fs)
                            new-disk new-alv))))))
-  :hints (("goal" :in-theory (enable l3-regular-file-entry-p
-                                     l5-regular-file-entry-p-correctness-1)
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p)
            :induct (l5-stat hns fs disk))))
 
 (defthm l5-rdchs-correctness-1-lemma-1
@@ -567,8 +552,7 @@
                 (<= 0 user))
            (equal (stringp (l3-stat hns (l5-to-l4-fs fs) disk))
                   (l5-regular-file-entry-p (l5-stat hns fs disk))))
-  :hints (("goal" :in-theory (enable l3-regular-file-entry-p
-                                     l5-regular-file-entry-p-correctness-1))))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
 (defthm
   l5-rdchs-correctness-1-lemma-2
