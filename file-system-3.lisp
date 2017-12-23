@@ -474,7 +474,7 @@
                       (delete-assoc (car hns) fs))))))))
     ))
 
-(defthm l3-unlink-returns-fs-lemma-1
+(defthmd l3-unlink-returns-fs-lemma-1
   (implies (and (consp (assoc-equal s fs))
                 (l3-fs-p fs))
            (and (equal (car (assoc-equal s fs)) s) (symbolp s))))
@@ -482,7 +482,8 @@
 ;; This theorem shows that the property l3-fs-p is preserved by unlink.
 (defthm l3-unlink-returns-fs
   (implies (and (l3-fs-p fs))
-           (l3-fs-p (l3-unlink hns fs))))
+           (l3-fs-p (l3-unlink hns fs)))
+  :hints (("Goal" :in-theory (enable l3-unlink-returns-fs-lemma-1)) ))
 
 (defthm l3-unlink-correctness-1-lemma-1
   (implies (and (l3-fs-p fs) (block-listp disk))
@@ -638,7 +639,8 @@
                 (stringp text))
            (mv-let (new-fs new-disk)
              (l3-wrchs hns fs disk start text)
-             (and (l3-fs-p new-fs) (block-listp new-disk)))))
+             (and (l3-fs-p new-fs) (block-listp new-disk))))
+  :hints (("Goal" :in-theory (enable l3-unlink-returns-fs-lemma-1)) ))
 
 (defthm
   l3-wrchs-correctness-1-lemma-1
