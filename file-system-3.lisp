@@ -43,7 +43,8 @@
 ;; Lemma
 (defthm block-listp-correctness-1
   (implies (block-listp block-list)
-           (true-listp block-list)))
+           (true-listp block-list))
+  :rule-classes (:forward-chaining))
 
 ;; Lemma
 (defthm block-listp-correctness-2

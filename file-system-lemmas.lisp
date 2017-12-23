@@ -32,7 +32,7 @@
                   (revappend ac l)))
   :hints (("Goal" :induct (revappend l ac)) )
   :rule-classes ((:rewrite :corollary
-                           (implies (and (true-listp l) (equal i (len l)))
+                           (implies (and (equal i (len l)) (true-listp l))
                                     (equal (first-n-ac i l ac) (revappend ac l)))) ))
 
 (defthm assoc-after-delete-assoc
