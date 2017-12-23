@@ -351,10 +351,11 @@
   :rule-classes (:rewrite :type-prescription))
 
 (defthm l2-create-correctness-1-lemma-1
-  (implies (and (consp (assoc-equal name fs))
-                (l2-fs-p fs)
-                (not (consp (cdr (assoc-equal name fs)))))
-           (not (cdr (assoc-equal name fs)))))
+  (implies (and (not (consp (cdr (assoc-equal name fs))))
+                (consp (assoc-equal name fs))
+                (l2-fs-p fs))
+           (not (cdr (assoc-equal name fs))))
+  :rule-classes (:forward-chaining))
 
 (defthm l2-create-correctness-1-lemma-2
   (implies (l2-fs-p fs)

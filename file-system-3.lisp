@@ -192,7 +192,8 @@
 (defthm l3-regular-file-entry-p-correctness-2
   (implies (l3-regular-file-entry-p entry)
            (consp entry))
-  :hints (("Goal" :use l3-regular-file-entry-p-correctness-1) ))
+  :hints (("Goal" :use l3-regular-file-entry-p-correctness-1) )
+  :rule-classes (:forward-chaining))
 
 ; This function defines a valid filesystem. It's an alist where all the cars
 ; are symbols and all the cdrs are either further filesystems or regular files,
