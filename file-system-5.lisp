@@ -924,7 +924,6 @@
                (:rewrite l3-stat-correctness-2-lemma-2)
                (:type-prescription l3-fs-p)
                (:linear insert-text-correctness-3)
-               (:rewrite find-n-free-blocks-correctness-5)
                (:definition make-character-list)
                (:rewrite l3-regular-file-entry-p-correctness-1)
                (:rewrite l3-to-l2-fs-guard-lemma-1)
@@ -1127,7 +1126,6 @@
                         (:TYPE-PRESCRIPTION FETCH-BLOCKS-BY-INDICES)
                         (:TYPE-PRESCRIPTION L3-FS-P)
                         (:REWRITE L5-FS-P-ASSOC)
-                        (:REWRITE FIND-N-FREE-BLOCKS-CORRECTNESS-5)
                         (:REWRITE UNMAKE-MAKE-BLOCKS-LEMMA-1)
                         (:DEFINITION DELETE-ASSOC-EQUAL)
                         (:REWRITE
