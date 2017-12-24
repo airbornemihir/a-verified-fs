@@ -583,9 +583,6 @@
   (implies (and (l2-fs-p fs) (l2-fsck fs))
            (l2-fsck (cdr (assoc-equal (car hns) fs)))))
 
-(defthm l2-fsck-after-l2-wrchs-lemma-3
-  (implies (and (l2-fs-p fs) (consp fs)) (not (stringp (car fs)))))
-
 (defthm l2-fsck-after-l2-wrchs-lemma-4
   (implies (and (consp fs)
                 (consp (assoc-equal name fs))
