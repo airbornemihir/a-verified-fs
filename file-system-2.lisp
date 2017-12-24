@@ -357,7 +357,7 @@
            (not (cdr (assoc-equal name fs))))
   :rule-classes (:forward-chaining))
 
-(defthm l2-create-correctness-1-lemma-2
+(defthmd l2-create-correctness-1-lemma-2
   (implies (l2-fs-p fs)
            (not (stringp (car fs)))))
 
@@ -367,7 +367,8 @@
                 (l2-fs-p fs)
                 (stringp text))
            (equal (l1-create hns (l2-to-l1-fs fs) text)
-                  (l2-to-l1-fs (l2-create hns fs text)))))
+                  (l2-to-l1-fs (l2-create hns fs text))))
+  :hints (("Goal" :in-theory (enable l2-create-correctness-1-lemma-2)) ))
 
 (defthm l2-read-after-write-1-lemma-1
   (implies (consp (assoc-equal name alist))
@@ -577,7 +578,8 @@
 
 (defthm l2-fsck-after-l2-wrchs-lemma-1
   (implies (and (l2-fs-p fs) (l2-fsck fs))
-           (l2-fsck (delete-assoc-equal name fs))))
+           (l2-fsck (delete-assoc-equal name fs)))
+  :hints (("Goal" :in-theory (enable l2-create-correctness-1-lemma-2)) ))
 
 (defthm l2-fsck-after-l2-wrchs-lemma-2
   (implies (and (l2-fs-p fs) (l2-fsck fs))
@@ -609,7 +611,8 @@
 ;; This theorem shows that l2-fsck is preserved by l2-wrchs
 (defthm l2-fsck-after-l2-wrchs
   (implies (and (l2-fs-p fs) (natp start) (stringp text) (l2-fsck fs))
-           (l2-fsck (l2-wrchs hns fs start text))))
+           (l2-fsck (l2-wrchs hns fs start text)))
+  :hints (("Goal" :in-theory (enable l2-create-correctness-1-lemma-2)) ))
 
 ;; This theorem shows that l2-fsck is preserved by l2-unlink
 (defthm l2-fsck-after-l2-unlink
