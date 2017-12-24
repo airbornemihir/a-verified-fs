@@ -258,7 +258,7 @@
   (implies (l3-bounded-fs-p fs disk-length)
            (l3-fs-p fs))
   :hints (("Goal" :in-theory (enable l3-bounded-fs-p l3-regular-file-entry-p)) )
-  :rule-classes (:forward-chaining :rewrite))
+  :rule-classes (:forward-chaining))
 
 (defthm l3-bounded-fs-p-correctness-2
   (implies (l3-regular-file-entry-p entry)
@@ -922,7 +922,6 @@
   :hints (("Goal" :in-theory (disable
                               (:rewrite l2-read-after-create-1)
                               (:rewrite l3-to-l2-fs-correctness-1)
-                              (:rewrite l3-bounded-fs-p-correctness-1)
                               (:rewrite l3-create-correctness-1)
                               (:rewrite l3-stat-correctness-1)
                               (:rewrite l3-create-returns-fs))
@@ -963,7 +962,6 @@
                        (:rewrite l3-create-returns-fs)
                        (:rewrite l3-stat-correctness-1)
                        (:rewrite l3-create-correctness-1)
-                       (:rewrite l3-bounded-fs-p-correctness-1)
                        (:rewrite l3-rdchs-correctness-1))
            :use ((:instance l2-read-after-create-2
                             (fs (l3-to-l2-fs fs disk)))
