@@ -429,7 +429,7 @@
     (("goal"
       :induct (cdr-cdr-induct index-list index-list-equiv))))
 
-  
+
   (defcong list-equiv equal (l4-list-all-indices fs) 1
     :hints (("Goal" :in-theory (enable l4-list-all-indices)
              :induct (cdr-cdr-induct fs fs-equiv))
@@ -445,7 +445,7 @@
 
 (defcong list-equiv equal (indices-marked-p index-list alv) 2)
 
-(defcong list-equiv list-equiv 
+(defcong list-equiv list-equiv
   (set-indices-in-alv alv index-list value) 1
   :hints (("goal" :in-theory (enable set-indices-in-alv))))
 

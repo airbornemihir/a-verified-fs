@@ -222,10 +222,10 @@
                               (block-listp disk)
                               (natp user))))
   (let ((file (l5-stat hns fs disk)))
-    (if (or (not (l5-regular-file-entry-p file)) 
+    (if (or (not (l5-regular-file-entry-p file))
             (not (l5-regular-file-readable-p file user)))
         nil
-      (let* ((file-text 
+      (let* ((file-text
               (coerce
                (unmake-blocks (fetch-blocks-by-indices
                                disk
