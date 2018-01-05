@@ -1673,9 +1673,7 @@
                     ;; - so we leave the fs unchanged
                     (mv sd disk alv)
                   (mv (cons (cons (car hns)
-                                  (cons (generate-index-list
-                                         (len disk)
-                                         (len blocks))
+                                  (cons indices
                                         (length text)))
                             fs)
                       (set-indices disk indices blocks)
@@ -1695,6 +1693,23 @@
                   new-disk
                   new-alv)))
           )))))
+
+(defthm
+  l4-create-returns-fs
+  (implies
+   (and (symbol-listp hns)
+        (l3-fs-p fs)
+        (boolean-listp alv)
+        (stringp text)
+        (block-listp disk))
+   (l3-fs-p (mv-nth 0 (l4-create hns fs disk alv text))))
+  :hints
+  (("subgoal *1/3'4'"
+    :in-theory (enable l3-regular-file-entry-p))
+   ("subgoal *1/2'4'"
+    :in-theory (disable consp-assoc-equal)
+    :use (:instance consp-assoc-equal (name (car hns))
+                    (l fs)))))
 
 (defthm
   l4-create-correctness-1-lemma-1
@@ -1739,19 +1754,5 @@
                     (declare (ignore new-alv))
                     (l4-to-l2-fs new-fs new-disk))))
   :hints
-  (("subgoal *1/7.4.4"
-    :in-theory (disable find-n-free-blocks-correctness-7)
-    :use
-    (:instance
-     find-n-free-blocks-correctness-7
-     (alv (set-indices-in-alv alv (cadr (assoc-equal (car hns) fs))
-                              nil))
-     (n
-      (len
-       (make-blocks
-        (insert-text
-         (unmake-blocks
-          (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-          (cddr (assoc-equal (car hns) fs)))
-         start text))))))
-   ("subgoal *1/7.4" :in-theory (enable l3-regular-file-entry-p))))
+  (   ("Subgoal *1/3.1''" :in-theory (enable l3-regular-file-entry-p))
+      ("Subgoal *1/3.2''" :in-theory (enable l3-regular-file-entry-p))))
