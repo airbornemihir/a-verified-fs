@@ -1753,3 +1753,45 @@
   :hints
   (   ("Subgoal *1/3.1''" :in-theory (enable l3-regular-file-entry-p))
       ("Subgoal *1/3.2''" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm l4-create-returns-disk
+  (implies (and (symbol-listp hns)
+                (l3-fs-p fs)
+                (boolean-listp alv)
+                (stringp text)
+                (block-listp disk)
+                (equal (len disk) (len alv))
+                (bounded-nat-listp (l4-list-all-indices fs) (len disk)))
+           (block-listp (mv-nth 1 (l4-create hns fs disk alv text)))))
+
+(defthm
+  l4-read-after-create-1
+  (implies (and (l4-stricter-fs-p fs alv)
+                (stringp text)
+                (symbol-listp hns)
+                (block-listp disk)
+                (equal (len alv) (len disk))
+                (<= (len (make-blocks (coerce text 'list)))
+                    (count-free-blocks alv))
+                (equal n (length text))
+                (not (l4-stat hns fs disk)))
+           (mv-let (new-fs new-disk new-alv)
+             (l4-create hns fs disk alv text)
+             (declare (ignore new-alv))
+             (implies (stringp (l4-stat hns new-fs new-disk))
+                      (equal (l4-rdchs hns new-fs new-disk 0 n)
+                             text))))
+  :hints
+  (("goal"
+    :in-theory (disable l4-rdchs-correctness-1
+                        l2-read-after-create-1
+                        l4-create-correctness-1)
+    :use ((:instance l4-rdchs-correctness-1
+                     (fs (mv-nth 0 (l4-create hns fs disk alv text)))
+                     (disk (mv-nth 1 (l4-create hns fs disk alv text)))
+                     (start 0)
+                     (n (length text)))
+          (:instance l2-read-after-create-1 (n (length text))
+                     (fs (l4-to-l2-fs fs disk)))
+          l4-create-correctness-1))))
+
