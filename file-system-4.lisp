@@ -1892,3 +1892,21 @@
                   (mv (cons (cons (car sd) new-fs)
                             (delete-assoc (car hns) fs))
                       new-alv))))))))))
+
+(defthm l4-unlink-returns-fs
+  (implies (and (symbol-listp hns)
+                (l3-fs-p fs)
+                (boolean-listp alv))
+           (l3-fs-p (mv-nth 0 (l4-unlink hns fs alv)))))
+
+(defthm
+    l4-unlink-correctness-1
+  (implies (and (l4-stricter-fs-p fs alv)
+                (symbol-listp hns)
+                (block-listp disk)
+                (equal (len alv) (len disk)))
+           (equal (l2-unlink hns (l4-to-l2-fs fs disk))
+                  (mv-let (new-fs new-alv)
+                    (l4-unlink hns fs alv)
+                    (declare (ignore new-alv))
+                    (l4-to-l2-fs new-fs disk)))))
