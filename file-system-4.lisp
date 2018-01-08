@@ -1856,3 +1856,39 @@
       (fs (mv-nth 0 (l4-create hns2 fs disk alv text2)))
       (disk (mv-nth 1
                     (l4-create hns2 fs disk alv text2))))))))
+
+; This function deletes a file or directory given its path.
+(defun
+  l4-unlink (hns fs alv)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l3-fs-p fs)
+                              (boolean-listp alv))))
+  (if
+   (atom hns)
+   (mv fs alv) ;;error case, basically
+   (if
+    (atom (cdr hns))
+    (mv
+     (delete-assoc (car hns) fs)
+     (if
+      (and (consp (assoc (car hns) fs))
+           (l3-regular-file-entry-p (cdr (assoc (car hns) fs))))
+      (set-indices-in-alv alv (car (cdr (assoc (car hns) fs)))
+                          nil)
+      alv))
+    (if
+     (atom fs)
+     (mv nil alv)
+     (let
+      ((sd (assoc (car hns) fs)))
+      (if
+       (atom sd)
+       (mv fs alv)
+       (let ((contents (cdr sd)))
+            (if (l3-regular-file-entry-p contents)
+                (mv fs alv) ;; we still have names but we're at a regular file - error
+                (mv-let (new-fs new-alv)
+                  (l4-unlink (cdr hns) contents alv)
+                  (mv (cons (cons (car sd) new-fs)
+                            (delete-assoc (car hns) fs))
+                      new-alv))))))))))

@@ -452,8 +452,7 @@
 ; This function deletes a file or directory given its path.
 
 ; Note that we don't need to do anything with the disk - the blocks can just
-; lie there, forever unreferred to. In a later model we might think about
-; re-using the blocks.
+; lie there, forever unreferred to. In model 4, we start re-using the blocks.
 (defun l3-unlink (hns fs)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l3-fs-p fs))))
