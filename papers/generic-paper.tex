@@ -337,9 +337,13 @@ In table \ref{certification-timing-table} we note the time taken to certify
 the models in ACL2, as well as some infrastructure upon which the
 models are built.
 
+Additionally, for model 5, we ran some tests involving writing a
+string to a file in the filesystem. The results are shown in table
+\ref{write-timing-table}.
+
 \begin{table}[]
   \centering
-  \caption{Time take to prove models}
+  \caption{Time taken to prove models}
   \label{certification-timing-table}
   \begin{tabular}{ll}
     Model 1 & 1.167s \\
@@ -349,6 +353,20 @@ models are built.
     Model 5 & 19.925s \\
     Miscellaneous shared lemmas & 2.577s \\
   \end{tabular}
+\end{table}
+
+\begin{table}[]
+\centering
+\caption{Time taken to write strings}
+\label{write-timing-table}
+\begin{tabular}{ll}
+Length of string    & Time taken  \\
+4096    & 0.05s  \\
+16384   & 0.10s  \\
+65536   & 0.34s  \\
+262144  & 1.55s  \\
+1048576 & 10.75s
+\end{tabular}
 \end{table}
 
 \section{Future work}
