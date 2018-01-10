@@ -459,14 +459,15 @@ which would be based on our proofs about the underlying filesystem.
 
 \section{Related work}
 Fileystem verification is a research topic of long standing. An early
-effort is \cite{}, where the authors opted to use an interactive
-theorem prover (Athena) to prove a simulation relation between their
-implementation and a specification of their own creation.
+effort is \cite{arkoudas2004verifying}, where the authors opted to use
+an interactive theorem prover (Athena) to prove a simulation relation
+between their implementation and a specification of their own
+creation.
 
-A landmark paper in the kernel verification space is \cite{}. The authors,
-here, took a microkernel approach, and as a consequence filesystem
-operations do not appear in the kernel they verified. They did, later,
-take up the problem in \cite{}.
+A landmark paper in the kernel verification space is
+\cite{klein2009sel4}. The authors, here, took a microkernel approach,
+and as a consequence filesystem operations do not appear in the kernel
+they verified.
 
 Currently, the state of the art is represented by Haogang
 Chen's dissertation work \cite{DBLP:conf/usenix/ChenZCCKZ16}, in which
@@ -482,10 +483,13 @@ limitations of Z3, Hyperkernel approximates by changing POSIX system
 calls for ease of verification.
 
 Our work takes a different approach - our aim is to produce verified
-models of existing filesystems that have binary compatibility with the
-filesystem layout read and written by the corresponding
-implementation. This allows us to find bugs in existing filesystems,
-which is not addressed by Chen's work.
+models of existing filesystems that are \textit{executable}, with
+\textit{binary compatibility} with the filesystem layout read and
+written by the corresponding implementation. This allows us to find
+bugs in existing filesystems, which is not addressed by Chen's
+work. \cite{ridge2015sibylfs} is a paper featuring an executable
+specification, but not binary compatibility, which remains an unsolved
+problem.
 
 \section{Conclusion}
 Through this work, we have gone into some depth on an approach towards
