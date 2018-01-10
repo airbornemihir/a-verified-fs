@@ -223,11 +223,44 @@ that aliasing between different files does not occur.
 The recogniser l4-fs-p is defined to be the same as l3-fs-p, which
 makes our equivalence proofs simpler. This arises from the fact that
 reference counting does not require any changes in the filesystem tree
-or the disk. At the time of writing, we are in the process of proving
-equivalence between model 4 and model 3; towards that end, we have
-proved uniqueness and disjointness properties that ensure our file
-update operations do not ever alias disk blocks in such a way that
-they are referred to by two different files, or twice by the same file.
+or the disk. A sample filesystem tree follows, with the corresponding
+disk and allocation in table \ref{model4-disk-alv}.
+
+\begin{tikzpicture}[sibling distance=10em,
+    every node/.style = {shape=rectangle, rounded corners,
+      draw, align=center,
+      top color=white, bottom color=blue!20}]]
+    \node {/}
+    child { node {vmlinuz,(0),3} }
+    child { node {tmp/}
+      child { node {ticket1,(1 2),9}}
+      child { node {ticket2,(3 4),9}}};
+\end{tikzpicture}
+\begin{table}[]
+  \centering
+  \caption{Model 4 - disk and allocation vector}
+  \label{model4-disk-alv}
+  \begin{tabular}{|l|l|l|}
+    \hline
+    0 & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
+    1 & Sun 19:0 & true\\ \hline
+    2 & 0        & true\\ \hline
+    3 & Tue 21:0 & true\\ \hline
+    4 & 0        & true\\ \hline
+    5 &          & false\\ \hline
+  \end{tabular}
+\end{table}
+
+An interesting insight from the proofs of correctness for model 4 was
+that there is no simple transformation from instances of model 4 to
+instances of model 3. The contents of a single file are always
+contiguous in model 3 but not in model 4, and this makes it difficult
+to derive a transformation that will support a read-over-write
+proof. Thus, we chose a different strategy: defining a transformation
+l4-to-l2-fs from instances of l4 to instances of model 2. Thanks to
+the common definition of l4-fs-p and l3-fs-p, we were able to reuse
+the already defined l3-to-l2-fs here, which again simplified our proof
+effort.
 
 \section{Model 5}
 This model extends model 4 with the addition of a new kind of
@@ -238,6 +271,43 @@ including user groups and access control lists. We opted to keep the
 block allocation and garbage collection algorithms the same; this made
 it easier to prove an equivalence between model 5 and model 4, and in
 turn, the read-over-write theorems.
+
+No new data structures are added to this model - only metadata for
+file permissions and ownership. However, this is the first model for
+which we added getter and setter functions for the data and metadata
+in a regular file, allowing us to keep the recogniser for a regular
+file disabled and simplify our proof effort.
+
+Below, we provide a code listing for l5-fs-p and
+l5-regular-file-entry-p.
+
+\begin{lstlisting}
+(DEFUND L5-REGULAR-FILE-ENTRY-P (ENTRY)
+  (DECLARE (XARGS :GUARD T))
+  (AND (EQUAL (LEN ENTRY) 6)
+       (NAT-LISTP (CAR ENTRY))
+       (NATP (CADR ENTRY))
+       (FEASIBLE-FILE-LENGTH-P (LEN (CAR ENTRY)) (CADR ENTRY))
+       (BOOLEANP (CAR (CDDR ENTRY)))
+       (BOOLEANP (CADR (CDDR ENTRY)))
+       (BOOLEANP (CAR (CDDR (CDDR ENTRY))))
+       (BOOLEANP (CADR (CDDR (CDDR ENTRY))))
+       (NATP (CDDR (CDDR (CDDR ENTRY))))))
+
+(DEFUN L5-FS-P (FS)
+  (DECLARE (XARGS :GUARD T))
+  (IF (ATOM FS)
+      (NULL FS)
+    (AND (LET ((DIRECTORY-OR-FILE-ENTRY (CAR FS)))
+           (IF (ATOM DIRECTORY-OR-FILE-ENTRY)
+               NIL
+             (LET ((NAME (CAR DIRECTORY-OR-FILE-ENTRY))
+                   (ENTRY (CDR DIRECTORY-OR-FILE-ENTRY)))
+               (AND (SYMBOLP NAME)
+                    (OR (L5-REGULAR-FILE-ENTRY-P ENTRY)
+                        (L5-FS-P ENTRY))))))
+         (L5-FS-P (CDR FS)))))
+\end{lstlisting}
 
 \section {Proof approach}
 
@@ -388,6 +458,16 @@ be a step towards verified versions of fsck and file recovery tools,
 which would be based on our proofs about the underlying filesystem.
 
 \section{Related work}
+Fileystem verification is a research topic of long standing. An early
+effort is \cite{}, where the authors opted to use an interactive
+theorem prover (Athena) to prove a simulation relation between their
+implementation and a specification of their own creation.
+
+A landmark paper in the kernel verification space is \cite{}. The authors,
+here, took a microkernel approach, and as a consequence filesystem
+operations do not appear in the kernel they verified. They did, later,
+take up the problem in \cite{}.
+
 Currently, the state of the art is represented by Haogang
 Chen's dissertation work \cite{DBLP:conf/usenix/ChenZCCKZ16}, in which
 the author uses Coq to build a filesystem (named FSCQ) which is proven
@@ -410,7 +490,7 @@ which is not addressed by Chen's work.
 \section{Conclusion}
 Through this work, we have gone into some depth on an approach towards
 implementing a filesystem with several essential features (block
-allocation,file-level metadata, garbage collection) found in real
+allocation, file-level metadata, garbage collection) found in real
 filesystems. In the process, we have demonstrated ACL2's capability to
 deal with systems-level problems in addition to the hardware
 verification problems to which it has traditionally been applied.
