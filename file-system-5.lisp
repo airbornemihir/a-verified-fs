@@ -7,7 +7,7 @@
 ; at this point. Thus, only read and write permissions exist, and they are
 ; limited to being on/off for the creating user, and on/off for others.
 
-; Further, I'm not changing anything about directories at this point.
+; Further, we're not changing anything about directories at this point.
 
 (include-book "file-system-4")
 (in-theory (disable l4-stricter-fs-p))
