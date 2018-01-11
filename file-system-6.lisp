@@ -48,6 +48,16 @@
        (natp (cdr entry))
        (feasible-file-length-p (len (car entry)) (cdr entry))))
 
+(defund l6-regular-file-first-cluster (entry)
+  (declare (xargs :guard (l6-regular-file-entry-p entry)
+                  :guard-hints (("Goal" :in-theory (enable l6-regular-file-entry-p)))))
+  (car entry))
+
+(defund l6-regular-file-length (entry)
+  (declare (xargs :guard (l6-regular-file-entry-p entry)
+                  :guard-hints (("Goal" :in-theory (enable l6-regular-file-entry-p)))))
+  (cdr entry))
+
 ; This function defines a valid filesystem. It's an alist where all the cars
 ; are symbols and all the cdrs are either further filesystems or regular files.
 (defun l6-fs-p (fs)
@@ -73,3 +83,73 @@
                 (consp (assoc-equal name fs))
                 (not (l6-regular-file-entry-p (cdr (assoc-equal name fs)))))
            (l6-fs-p (cdr (assoc-equal name fs)))))
+
+;; taken from page 18 of the fat overview - the constant 268435448 is written
+;; out as 0xFFFFFF8 therein
+(defund l6-is-eof (fat-content)
+  (>= fat-content 268435448))
+
+;; we have what we need to define a disk traversal to get the contents of the
+;; file
+
+;; let's define it as an operation to get an index list
+
+;; the trouble with doing it "directly" is that one cannot prove termination
+;; because an arbitrary file allocation table may have loops in the way entries
+;; point to each other
+
+;; thus, we are obliged to define a function which always terminates, and in
+;; the sane case returns the list we want
+
+(defund
+  masked-set-difference
+  (fa-table index-list)
+  (if (atom fa-table)
+      0
+    (+ (masked-set-difference (cdr fa-table)
+                              index-list)
+       (if (member (logand (car fa-table) (- (ash 1 28) 1))
+                   index-list)
+           0 1))))
+
+(in-theory (e/d (masked-set-difference) (ash)))
+
+(defthm
+  l6-build-index-list-measure-lemma-1
+  (implies (and (member-equal next-cluster fa-table)
+                (not (member-equal (logand next-cluster (- (ash 1 28) 1))
+                                   acc)))
+           (< (masked-set-difference fa-table
+                                     (cons (logand next-cluster (- (ash 1 28) 1))
+                                           acc))
+              (masked-set-difference fa-table acc)))
+  :rule-classes (:rewrite :linear))
+
+(defun
+  l6-build-index-list
+  (fa-table masked-current-cluster acc)
+  (declare
+   (xargs
+    :measure (masked-set-difference fa-table acc)
+    :hints
+    (("subgoal 1'"
+      :in-theory (disable l6-build-index-list-measure-lemma-1)
+      :use
+      (:instance
+       l6-build-index-list-measure-lemma-1
+       (next-cluster (nth masked-current-cluster fa-table)))))))
+  (if
+   (or (< masked-current-cluster 2)
+       (>= masked-current-cluster (len fa-table)))
+   (reverse acc)
+   (let
+    ((masked-next-cluster
+      (logand (nth masked-current-cluster fa-table)
+              (- (ash 1 28) 1))))
+    (if (or (l6-is-eof masked-next-cluster)
+            (member masked-next-cluster acc))
+        (reverse acc)
+        (l6-build-index-list fa-table masked-next-cluster
+                             (cons masked-next-cluster acc))))))
+
+(in-theory (e/d (ash) (masked-set-difference)))

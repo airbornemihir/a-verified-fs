@@ -204,3 +204,7 @@
          (if (zp n)
              (cdr ac)
              (make-list-ac (- n 1) val ac))))
+
+(defthm member-equal-of-nth
+        (implies (and (natp n) (< n (len l)))
+                 (member-equal (nth n l) l)))
