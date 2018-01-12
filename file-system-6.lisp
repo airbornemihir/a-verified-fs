@@ -26,6 +26,11 @@
 
 (in-theory (enable fat32-entry-p fat32-entry-fix))
 
+;; Use a mask to take the low 28 bits.
+(defund fat32-entry-mask (x)
+  (declare (xargs :guard (fat32-entry-p x)))
+  (logand x (- (ash 1 28) 1)))
+
 (fty::deffixtype fat32-entry
                  :pred   fat32-entry-p
                  :fix    fat32-entry-fix
@@ -108,7 +113,7 @@
       0
     (+ (masked-set-difference (cdr fa-table)
                               index-list)
-       (if (member (logand (car fa-table) (- (ash 1 28) 1))
+       (if (member (fat32-entry-mask (car fa-table))
                    index-list)
            0 1))))
 
@@ -117,10 +122,10 @@
 (defthm
   l6-build-index-list-measure-lemma-1
   (implies (and (member-equal next-cluster fa-table)
-                (not (member-equal (logand next-cluster (- (ash 1 28) 1))
+                (not (member-equal (fat32-entry-mask next-cluster)
                                    acc)))
            (< (masked-set-difference fa-table
-                                     (cons (logand next-cluster (- (ash 1 28) 1))
+                                     (cons (fat32-entry-mask next-cluster)
                                            acc))
               (masked-set-difference fa-table acc)))
   :rule-classes (:rewrite :linear))
@@ -144,8 +149,7 @@
    (reverse acc)
    (let
     ((masked-next-cluster
-      (logand (nth masked-current-cluster fa-table)
-              (- (ash 1 28) 1))))
+      (fat32-entry-mask (nth masked-current-cluster fa-table))))
     (if (or (l6-is-eof masked-next-cluster)
             (member masked-next-cluster acc))
         (reverse acc)
@@ -153,3 +157,13 @@
                              (cons masked-next-cluster acc))))))
 
 (in-theory (e/d (ash) (masked-set-difference)))
+
+(defund find-n-free-clusters-helper (fa-table n start)
+  (if (or (atom fa-table) (zp n))
+      nil
+    (if (not (equal  (fat32-entry-mask (car fa-table)) 0))
+        ;; this block is taken
+        (find-n-free-clusters-helper (cdr fa-table) n (+ start 1))
+      ;; this block isn't taken
+      (cons start (find-n-free-clusters-helper (cdr fa-table) (- n 1) (+ start 1))))))
+
