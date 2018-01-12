@@ -106,57 +106,85 @@
 ;; thus, we are obliged to define a function which always terminates, and in
 ;; the sane case returns the list we want
 
-(defund
-  masked-set-difference
-  (fa-table index-list)
-  (if (atom fa-table)
-      0
-    (+ (masked-set-difference (cdr fa-table)
-                              index-list)
-       (if (member (fat32-entry-mask (car fa-table))
-                   index-list)
-           0 1))))
+(encapsulate
+  ()
 
-(in-theory (e/d (masked-set-difference) (ash)))
+  (local
+   (defun
+       masked-set-difference
+       (fa-table index-list)
+     (if (atom fa-table)
+         0
+       (+ (masked-set-difference (cdr fa-table)
+                                 index-list)
+          (if (member (fat32-entry-mask (car fa-table))
+                      index-list)
+              0 1)))))
 
-(defthm
-  l6-build-index-list-measure-lemma-1
-  (implies (and (member-equal next-cluster fa-table)
-                (not (member-equal (fat32-entry-mask next-cluster)
-                                   acc)))
-           (< (masked-set-difference fa-table
-                                     (cons (fat32-entry-mask next-cluster)
-                                           acc))
-              (masked-set-difference fa-table acc)))
-  :rule-classes (:rewrite :linear))
+  (local
+   (defthm
+     l6-build-index-list-measure-lemma-1
+     (implies (and (member-equal next-cluster fa-table)
+                   (not (member-equal (fat32-entry-mask next-cluster)
+                                      acc)))
+              (< (masked-set-difference fa-table
+                                        (cons (fat32-entry-mask next-cluster)
+                                              acc))
+                 (masked-set-difference fa-table acc)))
+     :rule-classes (:rewrite :linear)))
 
-(defun
-  l6-build-index-list
-  (fa-table masked-current-cluster acc)
-  (declare
-   (xargs
-    :measure (masked-set-difference fa-table acc)
-    :hints
-    (("subgoal 1'"
-      :in-theory (disable l6-build-index-list-measure-lemma-1)
-      :use
-      (:instance
-       l6-build-index-list-measure-lemma-1
-       (next-cluster (nth masked-current-cluster fa-table)))))))
-  (if
-   (or (< masked-current-cluster 2)
-       (>= masked-current-cluster (len fa-table)))
-   (reverse acc)
-   (let
-    ((masked-next-cluster
-      (fat32-entry-mask (nth masked-current-cluster fa-table))))
-    (if (or (l6-is-eof masked-next-cluster)
-            (member masked-next-cluster acc))
+  (local
+   (defun
+       l6-build-index-list
+       (fa-table masked-current-cluster acc)
+     (declare
+      (xargs
+       :measure (masked-set-difference fa-table acc)
+       :hints
+       (("subgoal 1'"
+         :in-theory (disable l6-build-index-list-measure-lemma-1)
+         :use
+         (:instance
+          l6-build-index-list-measure-lemma-1
+          (next-cluster (nth masked-current-cluster fa-table)))))))
+     (if
+         (or (< masked-current-cluster 2)
+             (>= masked-current-cluster (len fa-table)))
+         (reverse acc)
+       (let
+           ((masked-next-cluster
+             (fat32-entry-mask (nth masked-current-cluster fa-table))))
+         (if (or (l6-is-eof masked-next-cluster)
+                 (member masked-next-cluster acc))
+             (reverse acc)
+           (l6-build-index-list fa-table masked-next-cluster
+                                (cons masked-next-cluster acc)))))))
+
+  (defun
+      l6-build-index-list
+      (fa-table masked-current-cluster acc)
+    (declare
+     (xargs
+      :measure (:? acc fa-table)
+      :hints
+      (("subgoal 1'"
+        :in-theory (disable l6-build-index-list-measure-lemma-1)
+        :use
+        (:instance
+         l6-build-index-list-measure-lemma-1
+         (next-cluster (nth masked-current-cluster fa-table)))))))
+    (if
+        (or (< masked-current-cluster 2)
+            (>= masked-current-cluster (len fa-table)))
         (reverse acc)
-        (l6-build-index-list fa-table masked-next-cluster
-                             (cons masked-next-cluster acc))))))
-
-(in-theory (e/d (ash) (masked-set-difference)))
+      (let
+          ((masked-next-cluster
+            (fat32-entry-mask (nth masked-current-cluster fa-table))))
+        (if (or (l6-is-eof masked-next-cluster)
+                (member masked-next-cluster acc))
+            (reverse acc)
+          (l6-build-index-list fa-table masked-next-cluster
+                               (cons masked-next-cluster acc)))))))
 
 (defund find-n-free-clusters-helper (fa-table n start)
   (if (or (atom fa-table) (zp n))
