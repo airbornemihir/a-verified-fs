@@ -131,7 +131,7 @@
                                         (cons (fat32-entry-mask next-cluster)
                                               acc))
                  (masked-set-difference fa-table acc)))
-     :rule-classes (:rewrite :linear)))
+     :rule-classes (:linear)))
 
   (local
    (defun
@@ -189,9 +189,12 @@
 (defund find-n-free-clusters-helper (fa-table n start)
   (if (or (atom fa-table) (zp n))
       nil
-    (if (not (equal  (fat32-entry-mask (car fa-table)) 0))
+    (if (not (equal (fat32-entry-mask (car fa-table)) 0))
         ;; this block is taken
         (find-n-free-clusters-helper (cdr fa-table) n (+ start 1))
       ;; this block isn't taken
       (cons start (find-n-free-clusters-helper (cdr fa-table) (- n 1) (+ start 1))))))
 
+(defund find-n-free-clusters (fa-table n)
+  ;; the first 2 clusters are excluded
+  (find-n-free-clusters-helper (nthcdr 2 fa-table) n 2))
