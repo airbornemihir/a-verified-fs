@@ -198,3 +198,21 @@
 (defund find-n-free-clusters (fa-table n)
   ;; the first 2 clusters are excluded
   (find-n-free-clusters-helper (nthcdr 2 fa-table) n 2))
+
+;; This function allows a file or directory to be found in a filesystem given a
+;; path.
+(defun l6-stat (hns fs disk)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l6-fs-p fs)
+                              (block-listp disk))))
+  (if (atom hns)
+      fs
+    (if (atom fs)
+        nil
+      (let ((sd (assoc (car hns) fs)))
+        (if (atom sd)
+            nil
+          (if (l6-regular-file-entry-p (cdr sd))
+              (and (null (cdr hns))
+                   (cdr sd))
+            (l6-stat (cdr hns) (cdr sd) disk)))))))
