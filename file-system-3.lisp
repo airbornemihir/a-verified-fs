@@ -64,16 +64,22 @@
 ;; This is the counterpart of make-blocks that collapses blocks into a
 ;; character-list of the appropriate length.
 ;; It will be used in stat and, by extension, in rdchs.
-(defun unmake-blocks (blocks n)
-  (declare (xargs :guard (and (block-listp blocks)
-                              (natp n))
-                  :guard-hints (("Goal" :in-theory (enable feasible-file-length-p)) )))
+(defun
+  unmake-blocks (blocks n)
+  (declare
+   (xargs
+    :guard (and (block-listp blocks)
+                (natp n)
+                (feasible-file-length-p (len blocks) n))
+    :guard-hints
+    (("goal" :in-theory (enable feasible-file-length-p)))))
   (if (atom blocks)
       nil
-    (if (atom (cdr blocks))
-        (take n (car blocks))
-      (binary-append (car blocks)
-                     (unmake-blocks (cdr blocks) (- n *blocksize*))))))
+      (if (atom (cdr blocks))
+          (take n (car blocks))
+          (binary-append (car blocks)
+                         (unmake-blocks (cdr blocks)
+                                        (- n *blocksize*))))))
 
 ;; Proving that we get a proper character-list out provided we don't ask for
 ;; more characters than we have.
