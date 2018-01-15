@@ -66,8 +66,7 @@
 ;; It will be used in stat and, by extension, in rdchs.
 (defun unmake-blocks (blocks n)
   (declare (xargs :guard (and (block-listp blocks)
-                              (natp n)
-                              (feasible-file-length-p (len blocks) n))
+                              (natp n))
                   :guard-hints (("Goal" :in-theory (enable feasible-file-length-p)) )))
   (if (atom blocks)
       nil
