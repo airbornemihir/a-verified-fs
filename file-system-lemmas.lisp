@@ -208,3 +208,16 @@
 (defthm member-equal-of-nth
         (implies (and (natp n) (< n (len l)))
                  (member-equal (nth n l) l)))
+
+(encapsulate
+  ()
+
+  (local (include-book "ihs/logops-lemmas" :dir :system))
+
+  (local (include-book "arithmetic-5/top" :dir :system))
+
+  (defthm
+    logand-ash-lemma-1
+    (implies (and (natp c))
+             (unsigned-byte-p c (logand i (- (ash 1 c) 1)))))
+  )

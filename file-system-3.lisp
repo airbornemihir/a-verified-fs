@@ -122,17 +122,21 @@
 ;; This function serves to get the specified blocks from a disk. If the block
 ;; is not found (most likely because of an invalid index) we return a null block
 ;; as noted above.
-(defun fetch-blocks-by-indices (block-list index-list)
+(defun
+  fetch-blocks-by-indices
+  (block-list index-list)
   (declare (xargs :guard (and (block-listp block-list)
                               (nat-listp index-list))))
-  (if (atom index-list)
-      nil
-    (let ((tail (fetch-blocks-by-indices block-list (cdr index-list))) )
-      (if (>= (car index-list) (len block-list))
-          (cons *nullblock* tail)
+  (if
+   (atom index-list)
+   nil
+   (let
+    ((tail
+      (fetch-blocks-by-indices block-list (cdr index-list))))
+    (if (>= (car index-list) (len block-list))
+        (cons *nullblock* tail)
         (cons (nth (car index-list) block-list)
-              tail)
-        ))))
+              tail)))))
 
 ;; Prove that a proper block-list is returned.
 (defthm fetch-blocks-by-indices-correctness-1
