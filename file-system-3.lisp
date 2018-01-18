@@ -64,17 +64,22 @@
 ;; This is the counterpart of make-blocks that collapses blocks into a
 ;; character-list of the appropriate length.
 ;; It will be used in stat and, by extension, in rdchs.
-(defun unmake-blocks (blocks n)
-  (declare (xargs :guard (and (block-listp blocks)
-                              (natp n)
-                              (feasible-file-length-p (len blocks) n))
-                  :guard-hints (("Goal" :in-theory (enable feasible-file-length-p)) )))
+(defun
+  unmake-blocks (blocks n)
+  (declare
+   (xargs
+    :guard (and (block-listp blocks)
+                (natp n)
+                (feasible-file-length-p (len blocks) n))
+    :guard-hints
+    (("goal" :in-theory (enable feasible-file-length-p)))))
   (if (atom blocks)
       nil
-    (if (atom (cdr blocks))
-        (take n (car blocks))
-      (binary-append (car blocks)
-                     (unmake-blocks (cdr blocks) (- n *blocksize*))))))
+      (if (atom (cdr blocks))
+          (take n (car blocks))
+          (binary-append (car blocks)
+                         (unmake-blocks (cdr blocks)
+                                        (- n *blocksize*))))))
 
 ;; Proving that we get a proper character-list out provided we don't ask for
 ;; more characters than we have.
@@ -122,17 +127,21 @@
 ;; This function serves to get the specified blocks from a disk. If the block
 ;; is not found (most likely because of an invalid index) we return a null block
 ;; as noted above.
-(defun fetch-blocks-by-indices (block-list index-list)
+(defun
+  fetch-blocks-by-indices
+  (block-list index-list)
   (declare (xargs :guard (and (block-listp block-list)
                               (nat-listp index-list))))
-  (if (atom index-list)
-      nil
-    (let ((tail (fetch-blocks-by-indices block-list (cdr index-list))) )
-      (if (>= (car index-list) (len block-list))
-          (cons *nullblock* tail)
+  (if
+   (atom index-list)
+   nil
+   (let
+    ((tail
+      (fetch-blocks-by-indices block-list (cdr index-list))))
+    (if (>= (car index-list) (len block-list))
+        (cons *nullblock* tail)
         (cons (nth (car index-list) block-list)
-              tail)
-        ))))
+              tail)))))
 
 ;; Prove that a proper block-list is returned.
 (defthm fetch-blocks-by-indices-correctness-1

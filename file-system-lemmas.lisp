@@ -204,3 +204,49 @@
          (if (zp n)
              (cdr ac)
              (make-list-ac (- n 1) val ac))))
+
+(defthm member-equal-of-nth
+        (implies (and (natp n) (< n (len l)))
+                 (member-equal (nth n l) l)))
+
+(encapsulate
+  ()
+
+  (local (include-book "ihs/logops-lemmas" :dir :system))
+
+  (local (include-book "arithmetic-5/top" :dir :system))
+
+  (defthm
+    logand-ash-lemma-1
+    (implies (and (natp c))
+             (unsigned-byte-p c (logand i (- (ash 1 c) 1)))))
+  )
+
+(defthm make-character-list-of-revappend
+  (equal (make-character-list (revappend x y))
+         (revappend (make-character-list x)
+                    (make-character-list y))))
+
+(defthm
+  first-n-ac-of-make-character-list
+  (implies (and (<= i (len l)))
+           (equal (first-n-ac i (make-character-list l)
+                              (make-character-list ac))
+                  (make-character-list (first-n-ac i l ac)))))
+
+(defthm
+  take-more
+  (implies
+   (and (true-listp l)
+        (natp i)
+        (>= i (len l)))
+   (equal (binary-append (first-n-ac i l ac1) ac2)
+          (revappend ac1
+                     (binary-append l
+                                    (make-list-ac (- i (len l)) nil ac2)))))
+  :hints
+  (("goal'" :induct (first-n-ac i l ac1))
+   ("subgoal *1/6'''" :expand (make-list-ac i nil ac2))
+   ("subgoal *1/1''" :use (:instance revappend-is-append-of-rev (x ac1)
+                                     (y l)
+                                     (z ac2)))))
