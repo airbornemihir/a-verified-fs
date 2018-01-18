@@ -308,47 +308,106 @@
            (and (character-listp x)
                 (equal (len x) *blocksize*))))
 
+(defun
+  unmake-blocks-without-feasibility
+  (blocks n)
+  (declare (xargs :guard (and (block-listp blocks) (natp n))))
+  (mbe
+   :exec
+   (if
+    (atom blocks)
+    (make-character-list (take n nil))
+    (if
+     (< n *blocksize*)
+     (take n (car blocks))
+     (binary-append
+      (car blocks)
+      (unmake-blocks-without-feasibility (cdr blocks)
+                                         (- n *blocksize*)))))
+   :logic
+   (if
+    (atom blocks)
+    (make-character-list (take n nil))
+    (let ((head (make-character-list (car blocks))))
+         (if (or (not (integerp n)) (< n (len head)))
+             (take n head)
+             (binary-append head
+                            (unmake-blocks-without-feasibility
+                             (cdr blocks)
+                             (- n (len (car blocks))))))))))
+
+(defthm unmake-blocks-without-feasibility-correctness-1
+  (character-listp (unmake-blocks-without-feasibility blocks n)))
+
+(defthm unmake-blocks-without-feasibility-correctness-2
+  (equal (len (unmake-blocks-without-feasibility blocks n))
+         (nfix n)))
+
+(defthm
+  unmake-without-feasibility-make-blocks
+  (implies
+   (and (character-listp text))
+   (equal (unmake-blocks-without-feasibility (make-blocks text)
+                                             (len text))
+          text))
+  :hints
+  (("subgoal *1/3.2'"
+    :in-theory (disable first-n-ac-of-make-character-list)
+    :use (:instance first-n-ac-of-make-character-list
+                    (i (len text))
+                    (l (first-n-ac 8 text nil))
+                    (ac nil)))
+   ("subgoal *1/3.2'4'"
+    :in-theory (disable take-more)
+    :use (:instance take-more (i *blocksize*)
+                    (l text)
+                    (ac1 nil)
+                    (ac2 nil)))))
+
 ;; This function finds a text file given its path and reads a segment of
 ;; that text file.
-(defun l6-rdchs (hns fs disk fa-table start n)
-  (declare (xargs :guard-debug t
-                  :guard (and (symbol-listp hns)
-                              (l6-fs-p fs)
-                              (natp start)
-                              (natp n)
-                              (block-listp disk)
-                              (fat32-entry-list-p fa-table))
-                  :guard-hints (("SubGoal 3" :in-theory (e/d (fat32-masked-entry-p)
-                                                         (l6-regular-file-entry-p-correctness-1))
-                                 :use (:instance
-                                       l6-regular-file-entry-p-correctness-1
-                                       (entry (L6-STAT HNS FS DISK))))
-                                ("SubGoal 2.8" :in-theory (e/d (fat32-masked-entry-p)
-                                                         (l6-regular-file-entry-p-correctness-1))
-                                 :use (:instance
-                                       l6-regular-file-entry-p-correctness-1
-                                       (entry (L6-STAT HNS FS DISK))))
-                                ("Subgoal 2.5" :in-theory (disable
-                                                             l6-rdchs-guard-lemma-1
-                                                             MEMBER-EQUAL-OF-NTH)
-                                 :use ((:instance l6-rdchs-guard-lemma-1 (lst disk) (x (NTH (L6-REGULAR-FILE-FIRST-CLUSTER (L6-STAT HNS FS DISK))
-                        DISK))) (:instance MEMBER-EQUAL-OF-NTH (n (L6-REGULAR-FILE-FIRST-CLUSTER (L6-STAT HNS FS DISK))) (l DISK)))))))
-  (let ((file (l6-stat hns fs disk)))
-    (if (not (l6-regular-file-entry-p file))
+(defun
+  l6-rdchs (hns fs disk fa-table start n)
+  (declare
+   (xargs
+    :guard (and (symbol-listp hns)
+                (l6-fs-p fs)
+                (natp start)
+                (natp n)
+                (block-listp disk)
+                (fat32-entry-list-p fa-table))
+    :guard-hints
+    (("subgoal 2.6"
+      :in-theory (e/d (fat32-masked-entry-p)
+                      (l6-regular-file-entry-p-correctness-1))
+      :use (:instance l6-regular-file-entry-p-correctness-1
+                      (entry (l6-stat hns fs disk))))
+     ("subgoal 3"
+      :in-theory (e/d (fat32-masked-entry-p)
+                      (l6-regular-file-entry-p-correctness-1))
+      :use (:instance l6-regular-file-entry-p-correctness-1
+                      (entry (l6-stat hns fs disk)))))))
+  (let
+   ((file (l6-stat hns fs disk)))
+   (if
+    (not (l6-regular-file-entry-p file))
+    nil
+    (let*
+     ((first-cluster (l6-regular-file-first-cluster file))
+      (index-list
+       (if
+        (< first-cluster 2)
         nil
-      (let* ((first-cluster (l6-regular-file-first-cluster file))
-             (index-list (if (< first-cluster 2)
-                             nil
-                           (list* first-cluster (l6-build-index-list fa-table first-cluster nil))))
-             (file-text
-              (coerce
-               (unmake-blocks (fetch-blocks-by-indices
-                               disk
-                               index-list)
-                              (l6-regular-file-length file))
+        (list*
+         first-cluster
+         (l6-build-index-list fa-table first-cluster nil))))
+      (file-text
+       (coerce (unmake-blocks-without-feasibility
+                (fetch-blocks-by-indices disk index-list)
+                (l6-regular-file-length file))
                'string))
-             (file-length (length file-text))
-             (end (+ start n)))
-        (if (< file-length end)
-            nil
-          (subseq file-text start (+ start n)))))))
+      (file-length (length file-text))
+      (end (+ start n)))
+     (if (< file-length end)
+         nil
+         (subseq file-text start (+ start n)))))))
