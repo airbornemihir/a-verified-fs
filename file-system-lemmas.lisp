@@ -76,12 +76,6 @@
            :use (:instance revappend-is-append-of-rev
                            (x ac) (y nil) (z l)))))
 
-(defthm take-of-take
-  (implies (and (natp m) (integerp n) (<= m n) (<= n (len l)))
-           (equal (first-n-ac m (take n l) ac) (first-n-ac m l ac)))
-  :hints (("Goal" :in-theory (disable binary-append-take-nthcdr)
-           :use (:instance binary-append-take-nthcdr (ac nil) (i n))) ))
-
 (defthm nth-of-binary-append-1
   (implies (and (integerp n) (>= n (len x)))
            (equal (nth n (binary-append x y))
@@ -250,3 +244,32 @@
    ("subgoal *1/1''" :use (:instance revappend-is-append-of-rev (x ac1)
                                      (y l)
                                      (z ac2)))))
+
+(defthm
+  take-of-take
+  (implies (and (true-listp l)
+                (natp m)
+                (integerp n)
+                (<= m n)
+                (<= m (len l)))
+           (equal (first-n-ac m (take n l) ac)
+                  (first-n-ac m l ac)))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (disable binary-append-take-nthcdr
+                        first-n-ac-of-binary-append-1)
+    :use ((:instance binary-append-take-nthcdr (ac nil)
+                     (i n))
+          (:instance first-n-ac-of-binary-append-1 (i m)
+                     (x (first-n-ac n l nil))
+                     (y (nthcdr n l)))))
+   ("goal'4'" :in-theory (disable take-more)
+    :use (:instance take-more (i n)
+                    (ac1 nil)
+                    (ac2 nil)))
+   ("goal'6'"
+    :in-theory (disable first-n-ac-of-binary-append-1)
+    :use (:instance first-n-ac-of-binary-append-1 (i m)
+                    (x l)
+                    (y (make-list-ac (+ n (- (len l)))
+                                     nil nil))))))
