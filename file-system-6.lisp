@@ -80,6 +80,78 @@
                 (fat32-entry-list-p lst))
            (fat32-entry-p x)))
 
+(defthm set-indices-in-fa-table-guard-lemma-1
+  (implies (and (natp key)
+                (< key (len l))
+                (fat32-entry-list-p l)
+                (fat32-entry-p val))
+           (fat32-entry-list-p (update-nth key val l))))
+
+(defthm set-indices-in-fa-table-guard-lemma-2
+  (implies (fat32-entry-p x) (natp x))
+  :hints (("goal" :in-theory (enable fat32-entry-p)))
+  :rule-classes (:forward-chaining))
+
+(defthm set-indices-in-fa-table-guard-lemma-3
+  (implies (and (fat32-entry-list-p l)
+                (natp n)
+                (< n (len l)))
+           (fat32-entry-p (nth n l))))
+
+(defund
+  fat32-update-lower-28
+  (entry masked-entry)
+  (declare
+   (xargs
+    :guard-hints
+    (("goal"
+      :in-theory (enable fat32-entry-p fat32-masked-entry-p)))
+    :guard (and (fat32-entry-p entry)
+                (fat32-masked-entry-p masked-entry))))
+  (logior (logand entry (- (ash 1 32) (ash 1 28)))
+          masked-entry))
+
+(encapsulate
+  ()
+
+  (local (include-book "ihs/logops-lemmas" :dir :system))
+
+  (defthm
+    fat32-update-lower-28-correctness-1
+    (implies
+     (and (fat32-entry-p entry)
+          (fat32-masked-entry-p masked-entry))
+     (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
+    :hints
+    (("goal"
+      :in-theory (e/d nil (unsigned-byte-p logand logior)
+                      (fat32-entry-p fat32-masked-entry-p
+                                     fat32-update-lower-28)))
+     ("goal''" :in-theory (enable unsigned-byte-p)))))
+
+(defun
+  set-indices-in-fa-table
+  (v index-list value-list)
+  (declare
+   (xargs :guard (and (fat32-entry-list-p v)
+                      (bounded-nat-listp index-list (len v))
+                      (fat32-masked-entry-list-p value-list)
+                      (equal (len index-list)
+                             (len value-list)))))
+  (if
+   (atom index-list)
+   v
+   (set-indices-in-fa-table
+    (let*
+     ((current-index (car index-list))
+      (old-value (nth current-index v)))
+     (update-nth
+      current-index
+      (fat32-update-lower-28 old-value (car value-list))
+      v))
+    (cdr index-list)
+    (cdr value-list))))
+
 ;; question: if fat entries are 28 bits long, then how is the maximum size
 ;; determined to be 4 GB?
 ;; also, how are we gonna do this without a feasible length restriction?
@@ -308,6 +380,21 @@
            (and (character-listp x)
                 (equal (len x) *blocksize*))))
 
+;; a note on why this function needs to exist and why it should not replace
+;; unmake-blocks
+;; unmake-blocks has been used thus far in contexts where the length of the
+;; file can be checked to line up with the contents of the file (with only the
+;; assumption that the disk satisfies block-listp, nothing more - this is
+;; what's checked by feasible-file-length-p)
+;; i could have replaced the unmake-blocks function with this one, given that
+;; its guard is less restrictive (these clauses are a strict subset of those
+;; clauses)
+;; i opted not to do so because, in my opinion, the guard verification that
+;; takes place with the more restrictive guard is valuable - it shows that
+;; we're not leaving room for more than (*blocksize* - 1) characters of junk
+;; being added anywhere, as long as we can still verify these things with
+;; "local" checks (by which i mean, checks that don't refer too much to the
+;; disk, which i consider "not local" for these purposes)
 (defun
   unmake-blocks-without-feasibility
   (blocks n)
@@ -411,3 +498,67 @@
      (if (< file-length end)
          nil
          (subseq file-text start (+ start n)))))))
+
+(defun l6-wrchs (hns fs disk fa-table start text user)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l6-fs-p fs)
+                              (natp start)
+                              (stringp text)
+                              (fat32-entry-list-p fa-table)
+                              (boolean-listp alv)
+                              (equal (len fa-table) (len disk)))
+                  :guard-debug t))
+  (if (atom hns)
+      (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
+    (if (atom fs)
+        (mv nil disk fa-table) ;; error, so leave fs unchanged
+      (let ((sd (assoc (car hns) fs)))
+        (if (atom sd)
+            (mv fs disk fa-table) ;; file-not-found error, so leave fs unchanged
+            (if (l6-regular-file-entry-p (cdr sd))
+                (if (cdr hns)
+                    (mv (cons (cons (car sd) (cdr sd))
+                              (delete-assoc (car hns) fs))
+                        disk
+                        alv) ;; error, so leave fs unchanged
+                  (let* ((old-first-cluster (l6-regular-file-first-cluster file))
+                         (old-indices
+                          (if
+                              (< old-first-cluster 2)
+                              nil
+                            (list*
+                             old-first-cluster
+                             (l6-build-index-list fa-table old-first-cluster nil))))
+                         (old-text
+                          (unmake-blocks
+                           (fetch-blocks-by-indices disk old-indices)
+                           (l6-regular-file-length (cdr sd))))
+                         (fa-table-after-free
+                          (set-indices-in-fa-table
+                           fa-table
+                           old-indices
+                           (make-list (len old-indices) :initial-element 0)))
+                         (new-text (insert-text old-text start text))
+                         (new-blocks (make-blocks new-text))
+                         (new-indices
+                          (find-n-free-blocks fa-table-after-free (len new-blocks))))
+                    (if (not (equal (len new-indices) (len new-blocks)))
+                        ;; we have an error because of insufficient disk space
+                        ;; - so we leave the fs unchanged
+                        (mv (cons (cons (car sd) (cdr sd))
+                                  (delete-assoc (car hns) fs))
+                            disk
+                            alv)
+                      (mv (cons (cons (car sd)
+                                      (l6-make-regular-file
+                                       (car new-indices)
+                                       (len new-text)))
+                                (delete-assoc (car hns) fs))
+                          (set-indices disk new-indices new-blocks)
+                          (set-indices-in-fa-table fa-table-after-free new-indices t)))))
+              (mv-let (new-contents new-disk new-fa-table)
+                (l6-wrchs (cdr hns) (cdr sd) disk fa-table start text user)
+                (mv (cons (cons (car sd) new-contents)
+                          (delete-assoc (car hns) fs))
+                    new-disk
+                    new-fa-table))))))))
