@@ -152,6 +152,17 @@
     (cdr index-list)
     (cdr value-list))))
 
+(defthm
+  set-indices-in-fa-table-correctness-1
+  (implies
+   (and (fat32-entry-list-p v)
+        (bounded-nat-listp index-list (len v))
+        (fat32-masked-entry-list-p value-list)
+        (equal (len index-list)
+               (len value-list)))
+   (fat32-entry-list-p
+    (set-indices-in-fa-table v index-list value-list))))
+
 ;; question: if fat entries are 28 bits long, then how is the maximum size
 ;; determined to be 4 GB?
 ;; also, how are we gonna do this without a feasible length restriction?
@@ -372,6 +383,10 @@
       ;; this block isn't taken
       (cons start (find-n-free-clusters-helper (cdr fa-table) (- n 1) (+ start 1))))))
 
+(defthm find-n-free-clusters-guard-lemma-1
+  (implies (fat32-entry-list-p l)
+           (fat32-entry-list-p (nthcdr n l))))
+
 (defund find-n-free-clusters (fa-table n)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
                               (natp n))))
@@ -520,10 +535,6 @@
      (if (< file-length end)
          nil
          (subseq file-text start (+ start n)))))))
-
-(defthm l6-wrchs-guard-lemma-1
-  (implies (fat32-entry-list-p l)
-           (fat32-entry-list-p (nthcdr n l))))
 
 (defun l6-wrchs (hns fs disk fa-table start text)
   (declare (xargs :guard (and (symbol-listp hns)
