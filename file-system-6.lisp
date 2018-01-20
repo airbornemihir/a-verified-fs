@@ -361,6 +361,9 @@
     (l6-build-index-list fa-table masked-current-cluster acc))))
 
 (defund find-n-free-clusters-helper (fa-table n start)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (natp n)
+                              (natp start))))
   (if (or (atom fa-table) (zp n))
       nil
     (if (not (equal (fat32-entry-mask (car fa-table)) 0))
@@ -370,6 +373,8 @@
       (cons start (find-n-free-clusters-helper (cdr fa-table) (- n 1) (+ start 1))))))
 
 (defund find-n-free-clusters (fa-table n)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (natp n))))
   ;; the first 2 clusters are excluded
   (find-n-free-clusters-helper (nthcdr 2 fa-table) n 2))
 
@@ -516,13 +521,17 @@
          nil
          (subseq file-text start (+ start n)))))))
 
-(defun l6-wrchs (hns fs disk fa-table start text user)
+(defthm l6-wrchs-guard-lemma-1
+  (implies (fat32-entry-list-p l)
+           (fat32-entry-list-p (nthcdr n l))))
+
+(defun l6-wrchs (hns fs disk fa-table start text)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l6-fs-p fs)
                               (natp start)
                               (stringp text)
+                              (block-listp disk)
                               (fat32-entry-list-p fa-table)
-                              (boolean-listp alv)
                               (equal (len fa-table) (len disk)))
                   :guard-debug t))
   (if (atom hns)
@@ -537,8 +546,9 @@
                     (mv (cons (cons (car sd) (cdr sd))
                               (delete-assoc (car hns) fs))
                         disk
-                        alv) ;; error, so leave fs unchanged
-                  (let* ((old-first-cluster (l6-regular-file-first-cluster file))
+                        fa-table) ;; error, so leave fs unchanged
+                  (let* ((old-first-cluster (l6-regular-file-first-cluster (cdr
+  sd)))
                          (old-indices
                           (if
                               (< old-first-cluster 2)
@@ -547,7 +557,7 @@
                              old-first-cluster
                              (l6-build-index-list fa-table old-first-cluster nil))))
                          (old-text
-                          (unmake-blocks
+                          (unmake-blocks-without-feasibility
                            (fetch-blocks-by-indices disk old-indices)
                            (l6-regular-file-length (cdr sd))))
                          (fa-table-after-free
@@ -558,14 +568,14 @@
                          (new-text (insert-text old-text start text))
                          (new-blocks (make-blocks new-text))
                          (new-indices
-                          (find-n-free-blocks fa-table-after-free (len new-blocks))))
+                          (find-n-free-clusters fa-table-after-free (len new-blocks))))
                     (if (not (equal (len new-indices) (len new-blocks)))
                         ;; we have an error because of insufficient disk space
                         ;; - so we leave the fs unchanged
                         (mv (cons (cons (car sd) (cdr sd))
                                   (delete-assoc (car hns) fs))
                             disk
-                            alv)
+                            fa-table)
                       (mv (cons (cons (car sd)
                                       (l6-make-regular-file
                                        (car new-indices)
@@ -574,7 +584,7 @@
                           (set-indices disk new-indices new-blocks)
                           (set-indices-in-fa-table fa-table-after-free new-indices t)))))
               (mv-let (new-contents new-disk new-fa-table)
-                (l6-wrchs (cdr hns) (cdr sd) disk fa-table start text user)
+                (l6-wrchs (cdr hns) (cdr sd) disk fa-table start text)
                 (mv (cons (cons (car sd) new-contents)
                           (delete-assoc (car hns) fs))
                     new-disk
