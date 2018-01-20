@@ -181,6 +181,23 @@
                                      l6-regular-file-first-cluster
                                      l6-regular-file-length))))
 
+(defund
+  l6-make-regular-file
+  (first-cluster length)
+  (declare
+   (xargs :guard (and (fat32-masked-entry-p first-cluster)
+                      (natp length))))
+  (cons first-cluster length))
+
+(defthm
+  l6-make-regular-file-correctness-1
+  (implies (and (fat32-masked-entry-p first-cluster)
+                (natp length))
+           (l6-regular-file-entry-p
+            (l6-make-regular-file first-cluster length)))
+  :hints (("goal" :in-theory (enable l6-regular-file-entry-p
+                                     l6-make-regular-file))))
+
 ; This function defines a valid filesystem. It's an alist where all the cars
 ; are symbols and all the cdrs are either further filesystems or regular files.
 (defun l6-fs-p (fs)
