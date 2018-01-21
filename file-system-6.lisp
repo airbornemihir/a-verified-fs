@@ -383,6 +383,18 @@
       ;; this block isn't taken
       (cons start (find-n-free-clusters-helper (cdr fa-table) (- n 1) (+ start 1))))))
 
+(defthmd
+  find-n-free-clusters-helper-correctness-1
+  (implies (and (fat32-entry-list-p fa-table)
+                (natp n)
+                (natp start)
+                (equal b (+ start (len fa-table))))
+           (bounded-nat-listp
+            (find-n-free-clusters-helper fa-table n start)
+            b))
+  :hints
+  (("goal'" :in-theory (enable find-n-free-clusters-helper))))
+
 (defthm find-n-free-clusters-guard-lemma-1
   (implies (fat32-entry-list-p l)
            (fat32-entry-list-p (nthcdr n l))))
@@ -392,6 +404,22 @@
                               (natp n))))
   ;; the first 2 clusters are excluded
   (find-n-free-clusters-helper (nthcdr 2 fa-table) n 2))
+
+(defthm
+  find-n-free-clusters-correctness-1
+  (implies (and (fat32-entry-list-p fa-table)
+                (natp n)
+                (equal b (len fa-table))
+                (>= (len fa-table) 2))
+           (bounded-nat-listp (find-n-free-clusters fa-table n)
+                              b))
+  :hints
+  (("goal"
+    :in-theory (enable find-n-free-clusters)
+    :use ((:instance find-n-free-clusters-helper-correctness-1
+                    (start 2)
+                    (fa-table (nthcdr 2 fa-table))
+                    (b (len fa-table)))))))
 
 ;; This function allows a file or directory to be found in a filesystem given a
 ;; path.
@@ -535,6 +563,17 @@
      (if (< file-length end)
          nil
          (subseq file-text start (+ start n)))))))
+
+(defthm l6-wrchs-guard-lemma-1
+  (implies (fat32-masked-entry-p x) (natp x))
+  :hints (("goal" :in-theory (enable fat32-masked-entry-p)))
+  :rule-classes (:forward-chaining))
+
+(defthm
+  l6-wrchs-guard-lemma-2
+  (implies (and (fat32-masked-entry-p val)
+                (fat32-masked-entry-list-p ac))
+           (fat32-masked-entry-list-p (make-list-ac n val ac))))
 
 (defun l6-wrchs (hns fs disk fa-table start text)
   (declare (xargs :guard (and (symbol-listp hns)
