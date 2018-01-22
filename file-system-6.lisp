@@ -75,7 +75,7 @@
 
 (in-theory (disable fat32-entry-p fat32-entry-fix fat32-masked-entry-p fat32-masked-entry-fix))
 
-(defthm member-of-fat32-entry-list-p
+(defthm member-of-fat32-entry-list
   (implies (and (member-equal x lst)
                 (fat32-entry-list-p lst))
            (fat32-entry-p x)))
@@ -296,9 +296,9 @@
        (("subgoal 4" :in-theory (enable fat32-masked-entry-p))
         ("subgoal 2'" :in-theory (enable fat32-masked-entry-p))
         ("subgoal 1'"
-         :in-theory (disable member-of-fat32-entry-list-p)
+         :in-theory (disable member-of-fat32-entry-list)
          :use
-         (:instance member-of-fat32-entry-list-p
+         (:instance member-of-fat32-entry-list
                     (lst fa-table)
                     (x (nth masked-current-cluster fa-table)))))
        :measure (masked-set-difference fa-table acc)
@@ -337,9 +337,9 @@
       (("subgoal 4" :in-theory (enable fat32-masked-entry-p))
        ("subgoal 2'" :in-theory (enable fat32-masked-entry-p))
        ("subgoal 1'"
-        :in-theory (disable member-of-fat32-entry-list-p)
+        :in-theory (disable member-of-fat32-entry-list)
         :use
-        (:instance member-of-fat32-entry-list-p
+        (:instance member-of-fat32-entry-list
                    (lst fa-table)
                    (x (nth masked-current-cluster fa-table)))))
       :measure (:? fa-table acc)
@@ -442,10 +442,11 @@
             (l6-stat (cdr hns) (cdr sd) disk)))))))
 
 (defthm l6-rdchs-guard-lemma-1
-  (implies (and (block-listp lst)
-                (member-equal x lst))
+  (implies (and (member-equal x lst)
+                (block-listp lst))
            (and (character-listp x)
-                (equal (len x) *blocksize*))))
+                (equal (len x) *blocksize*)))
+  :rule-classes (:forward-chaining))
 
 ;; a note on why this function needs to exist and why it should not replace
 ;; unmake-blocks
@@ -585,7 +586,8 @@
                 (and (character-listp x)
                      (equal (len x) *blocksize*)))))
 
-(defthm l6-wrchs-guard-lemma-5
+(defthm
+  l6-wrchs-guard-lemma-4
   (implies
    (and
     (block-listp disk)
@@ -593,14 +595,43 @@
     (symbolp name)
     (consp (assoc-equal name fs))
     (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
-    (< (l6-regular-file-first-cluster (cdr (assoc-equal name fs)))
-       (len disk)))
+    (<
+     (l6-regular-file-first-cluster (cdr (assoc-equal name fs)))
+     (len disk)))
    (member-equal
-    (nth (l6-regular-file-first-cluster (cdr (assoc-equal name fs)))
-         disk)
+    (nth
+     (l6-regular-file-first-cluster (cdr (assoc-equal name fs)))
+     disk)
     disk))
-  :hints (("Goal" :in-theory (disable l6-wrchs-guard-lemma-1) :use
-  (:instance l6-wrchs-guard-lemma-1 (x (l6-regular-file-first-cluster (cdr (assoc-equal name fs)))))) ))
+  :hints
+  (("goal"
+    :in-theory (disable l6-wrchs-guard-lemma-1)
+    :use (:instance l6-wrchs-guard-lemma-1
+                    (x (l6-regular-file-first-cluster
+                        (cdr (assoc-equal name fs))))))))
+
+;; this is daft, but worth a try
+;; this should take care of  (EXTRA-INFO '(:GUARD (:BODY L6-WRCHS)) '(<
+;; OLD-FIRST-CLUSTER 2)) 
+(defthm
+  l6-wrchs-guard-lemma-5
+  (implies
+   (and (l6-fs-p fs)
+        (symbolp name)
+        (consp fs)
+        (consp (assoc-equal name fs))
+        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (<= 2
+            (l6-regular-file-first-cluster
+             (cdr (assoc-equal name fs)))))
+   (rationalp (l6-regular-file-first-cluster
+               (cdr (assoc-equal name fs))))))
+
+(defthm
+  l6-wrchs-guard-lemma-6
+  (equal (fat32-masked-entry-list-p x)
+         (bounded-nat-listp x (expt 2 28)))
+  :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
 
 (defun l6-wrchs (hns fs disk fa-table start text)
   (declare (xargs :guard (and (symbol-listp hns)
@@ -610,10 +641,22 @@
                               (block-listp disk)
                               (fat32-entry-list-p fa-table)
                               (equal (len fa-table) (len disk))
+                              (<= (len disk) (expt 2 28))
                               (>= (len fa-table) 2))
                   :guard-debug t
                   :guard-hints
-                  (("Subgoal 4'"
+                  (("Subgoal 3.7.2" :in-theory (disable BOUNDED-NAT-LISTP-CORRECTNESS-5) :use (:instance BOUNDED-NAT-LISTP-CORRECTNESS-5
+                (X (LEN FA-TABLE)) (y (expt 2 28)) (l
+    (FIND-N-FREE-CLUSTERS
+     FA-TABLE
+     (LEN
+      (MAKE-BLOCKS
+       (INSERT-TEXT
+        (FIRST-N-AC (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS)))
+                    '(#\  #\  #\  #\  #\  #\  #\  #\ )
+                    NIL)
+        START TEXT)))))))
+                   ("Subgoal 4'"
                     :in-theory (disable l6-wrchs-guard-lemma-1)
                     :use (:instance l6-wrchs-guard-lemma-1
                                     (x (l6-regular-file-first-cluster
@@ -667,11 +710,23 @@
                             fa-table)
                       (mv (cons (cons (car sd)
                                       (l6-make-regular-file
-                                       (car new-indices)
+                                       (if (consp new-indices)
+                                           (car new-indices)
+                                         ;; 0 is chosen for now but it has to
+                                         ;; be one of those end of file markers
+                                         0)
                                        (len new-text)))
                                 (delete-assoc (car hns) fs))
                           (set-indices disk new-indices new-blocks)
-                          (set-indices-in-fa-table fa-table-after-free new-indices t)))))
+                          (set-indices-in-fa-table fa-table-after-free
+                                                   new-indices
+                                                   (binary-append
+                                                    (if (consp new-indices)
+                                                        (cdr new-indices)
+                                                      nil)
+                                                    ;; 0 is chosen for now but it has to
+                                                    ;; be one of those end of file markers
+                                                    (list 0)))))))
               (mv-let (new-contents new-disk new-fa-table)
                 (l6-wrchs (cdr hns) (cdr sd) disk fa-table start text)
                 (mv (cons (cons (car sd) new-contents)
