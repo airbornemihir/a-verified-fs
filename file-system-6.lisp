@@ -134,12 +134,14 @@
   (v index-list value-list)
   (declare
    (xargs :guard (and (fat32-entry-list-p v)
-                      (bounded-nat-listp index-list (len v))
+                      (nat-listp index-list)
                       (fat32-masked-entry-list-p value-list)
                       (equal (len index-list)
                              (len value-list)))))
   (if
-   (atom index-list)
+   (or (atom index-list)
+       (not (natp index-list))
+       (>= (car index-list) (len v)))
    v
    (set-indices-in-fa-table
     (let*
@@ -575,6 +577,31 @@
                 (fat32-masked-entry-list-p ac))
            (fat32-masked-entry-list-p (make-list-ac n val ac))))
 
+(defthm l6-wrchs-guard-lemma-3
+  (implies (and (block-listp l)
+                (natp n)
+                (< n (len l)))
+           (let ((x (nth n l)))
+                (and (character-listp x)
+                     (equal (len x) *blocksize*)))))
+
+(defthm l6-wrchs-guard-lemma-5
+  (implies
+   (and
+    (block-listp disk)
+    (l6-fs-p fs)
+    (symbolp name)
+    (consp (assoc-equal name fs))
+    (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+    (< (l6-regular-file-first-cluster (cdr (assoc-equal name fs)))
+       (len disk)))
+   (member-equal
+    (nth (l6-regular-file-first-cluster (cdr (assoc-equal name fs)))
+         disk)
+    disk))
+  :hints (("Goal" :in-theory (disable l6-wrchs-guard-lemma-1) :use
+  (:instance l6-wrchs-guard-lemma-1 (x (l6-regular-file-first-cluster (cdr (assoc-equal name fs)))))) ))
+
 (defun l6-wrchs (hns fs disk fa-table start text)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l6-fs-p fs)
@@ -582,8 +609,20 @@
                               (stringp text)
                               (block-listp disk)
                               (fat32-entry-list-p fa-table)
-                              (equal (len fa-table) (len disk)))
-                  :guard-debug t))
+                              (equal (len fa-table) (len disk))
+                              (>= (len fa-table) 2))
+                  :guard-debug t
+                  :guard-hints
+                  (("Subgoal 4'"
+                    :in-theory (disable l6-wrchs-guard-lemma-1)
+                    :use (:instance l6-wrchs-guard-lemma-1
+                                    (x (l6-regular-file-first-cluster
+                                        (cdr (assoc-equal (car hns) fs))))))
+                   ("Subgoal 3.4" :in-theory (disable L6-RDCHS-GUARD-LEMMA-1)
+                    :use (:instance L6-RDCHS-GUARD-LEMMA-1
+                                    (lst disk)
+                                    (x (NTH (L6-REGULAR-FILE-FIRST-CLUSTER
+                                             (CDR (ASSOC-EQUAL (CAR HNS) FS))) DISK)))))))
   (if (atom hns)
       (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
     (if (atom fs)
@@ -597,8 +636,8 @@
                               (delete-assoc (car hns) fs))
                         disk
                         fa-table) ;; error, so leave fs unchanged
-                  (let* ((old-first-cluster (l6-regular-file-first-cluster (cdr
-  sd)))
+                  (let* ((old-first-cluster
+                          (l6-regular-file-first-cluster (cdr sd)))
                          (old-indices
                           (if
                               (< old-first-cluster 2)
