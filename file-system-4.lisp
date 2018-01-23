@@ -115,6 +115,8 @@
                               (block-listp disk))))
   (l3-rdchs hns fs disk start n))
 
+; This function writes a specified text string to a specified position to a
+; text file at a specified path.
 (defun l4-wrchs (hns fs disk alv start text)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l4-fs-p fs)

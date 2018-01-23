@@ -238,6 +238,8 @@
             nil
           (subseq file-text start (+ start n)))))))
 
+; This function writes a specified text string to a specified position to a
+; text file at a specified path.
 (defun l5-wrchs (hns fs disk alv start text user)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l5-fs-p fs)
