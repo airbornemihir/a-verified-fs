@@ -31,3 +31,7 @@
 (defthmd bounded-nat-listp-correctness-5
   (implies (and (<= x y) (bounded-nat-listp l x))
            (bounded-nat-listp l y)))
+
+(defthm bounded-nat-listp-correctness-6
+  (implies (and (bounded-nat-listp ac b) (natp val) (< val b))
+           (bounded-nat-listp (make-list-ac n val ac) b)))
