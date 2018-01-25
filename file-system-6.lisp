@@ -664,83 +664,52 @@
 (defthm
   l6-wrchs-guard-lemma-7
   (implies
-   (and
-    (<= 2 (len fa-table))
-    (<= (len fa-table) (expt 2 28))
-    (fat32-entry-list-p fa-table)
-    (stringp text)
-    (integerp start)
-    (<= 0 start)
-    (l6-fs-p fs)
-    (symbolp (car hns))
-    (consp hns)
-    (consp fs)
-    (consp (assoc-equal (car hns) fs))
-    (l6-regular-file-entry-p (cdr (assoc-equal (car hns) fs)))
-    (not (cdr hns))
-    (<= (len fa-table)
-        (l6-regular-file-first-cluster
-         (cdr (assoc-equal (car hns) fs))))
-    (equal
-     (len
+   (and (<= 2 (len fa-table))
+        (<= (len fa-table) (expt 2 28))
+        (fat32-entry-list-p fa-table)
+        (stringp text)
+        (integerp start)
+        (<= 0 start)
+        (l6-fs-p fs)
+        (symbolp name)
+        (consp fs)
+        (consp (assoc-equal name fs))
+        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (<= (len fa-table)
+            (l6-regular-file-first-cluster
+             (cdr (assoc-equal name fs)))))
+   (let
+    ((found-clusters
       (find-n-free-clusters
        fa-table
        (len
         (make-blocks
          (insert-text
           (make-character-list
-           (first-n-ac (l6-regular-file-length
-                        (cdr (assoc-equal (car hns) fs)))
-                       nil nil))
-          start text)))))
-     (len
-      (make-blocks
-       (insert-text
-        (make-character-list
-         (first-n-ac (l6-regular-file-length
-                      (cdr (assoc-equal (car hns) fs)))
-                     nil nil))
-        start text))))
-    (consp
-     (find-n-free-clusters
-      fa-table
-      (len
-       (make-blocks
-        (insert-text
-         (make-character-list
-          (first-n-ac (l6-regular-file-length
-                       (cdr (assoc-equal (car hns) fs)))
-                      nil nil))
-         start text))))))
-   (and
-    (bounded-nat-listp
-     (cdr
-      (find-n-free-clusters
-       fa-table
+           (first-n-ac
+            (l6-regular-file-length (cdr (assoc-equal name fs)))
+            nil nil))
+          start text))))))
+    (implies
+     (and
+      (equal
+       (len found-clusters)
        (len
         (make-blocks
          (insert-text
           (make-character-list
-           (first-n-ac (l6-regular-file-length
-                        (cdr (assoc-equal (car hns) fs)))
-                       nil nil))
-          start text)))))
-     268435456)
-    (fat32-masked-entry-p
-     (car
-      (find-n-free-clusters
-       fa-table
-       (len
-        (make-blocks
-         (insert-text
-          (make-character-list
-           (first-n-ac (l6-regular-file-length
-                        (cdr (assoc-equal (car hns) fs)))
-                       nil nil))
-          start text))))))))
+           (first-n-ac
+            (l6-regular-file-length (cdr (assoc-equal name fs)))
+            nil nil))
+          start text))))
+      (consp found-clusters))
+     (and (bounded-nat-listp (cdr found-clusters)
+                             268435456)
+          (fat32-masked-entry-p (car found-clusters))
+          (nat-listp found-clusters)))))
   :hints
-  (("goal" :do-not-induct t)
-   ("subgoal 4"
+  (("goal"
+    :do-not-induct t
     :use
     (:instance
      bounded-nat-listp-correctness-5
@@ -753,60 +722,9 @@
         (make-blocks
          (insert-text
           (make-character-list
-           (first-n-ac (l6-regular-file-length
-                        (cdr (assoc-equal (car hns) fs)))
-                       nil nil))
-          start text)))))))
-   ("subgoal 3"
-    :use
-    (:instance
-     bounded-nat-listp-correctness-5
-     (x (len fa-table))
-     (y (expt 2 28))
-     (l
-      (find-n-free-clusters
-       fa-table
-       (len
-        (make-blocks
-         (insert-text
-          (make-character-list
-           (first-n-ac (l6-regular-file-length
-                        (cdr (assoc-equal (car hns) fs)))
-                       nil nil))
-          start text)))))))
-   ("subgoal 2"
-    :use
-    (:instance
-     bounded-nat-listp-correctness-5
-     (x (len fa-table))
-     (y (expt 2 28))
-     (l
-      (find-n-free-clusters
-       fa-table
-       (len
-        (make-blocks
-         (insert-text
-          (make-character-list
-           (first-n-ac (l6-regular-file-length
-                        (cdr (assoc-equal (car hns) fs)))
-                       nil nil))
-          start text)))))))
-   ("subgoal 1"
-    :use
-    (:instance
-     bounded-nat-listp-correctness-5
-     (x (len fa-table))
-     (y (expt 2 28))
-     (l
-      (find-n-free-clusters
-       fa-table
-       (len
-        (make-blocks
-         (insert-text
-          (make-character-list
-           (first-n-ac (l6-regular-file-length
-                        (cdr (assoc-equal (car hns) fs)))
-                       nil nil))
+           (first-n-ac
+            (l6-regular-file-length (cdr (assoc-equal name fs)))
+            nil nil))
           start text)))))))))
 
 (defun l6-wrchs (hns fs disk fa-table start text)
