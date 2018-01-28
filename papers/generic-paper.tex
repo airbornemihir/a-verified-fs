@@ -119,10 +119,12 @@ l2-fs-p, and a code listing.
     draw, align=center,
     top color=white, bottom color=blue!20}]]
   \node {\textbackslash}
-    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},3} }
+    child { node
+      {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"},
+        {\bf 3}} }
     child { node {tmp}
-      child { node {ticket1,{"}Sun 19:00{"},9}}
-      child { node {ticket2,{"}Tue 21:00{"},9}}};
+      child { node {ticket1,{"}Sun 19:00{"},{\bf 9}}}
+      child { node {ticket2,{"}Tue 21:00{"},{\bf 9}}}};
 \end{tikzpicture}
 
 \begin{lstlisting}
@@ -171,10 +173,10 @@ l3-fs-p and a code listing.
     draw, align=center,
     top color=white, bottom color=blue!20}]]
   \node {\textbackslash}
-    child { node {vmlinuz,(0),3} }
+    child { node {vmlinuz,{\bf (0)},3} }
     child { node {tmp}
-      child { node {ticket1,(1 2),9}}
-      child { node {ticket2,(3 4),9}}};
+      child { node {ticket1,{\bf (1 2)},9}}
+      child { node {ticket2,{\bf (3 4)},9}}};
 \end{tikzpicture}
 
 \begin{lstlisting}
@@ -309,9 +311,26 @@ l5-regular-file-entry-p.
          (L5-FS-P (CDR FS)))))
 \end{lstlisting}
 
+\section{Model 6}
+Next, we take another step towards modelling a FAT32 filesystem by
+replacing the allocation vector with a file allocation table. We
+choose to keep the same block allocation and garbage collection
+mechanisms, which is allowed by the FAT32
+specification\cite{}. However, this change creates a number of proof
+challenges, arising from the fact that the reading a regular file of
+length $ n $ now requires $ \floor{n/8} - 1 $ lookups in the file
+allocation table, compared to the previous models (4, and 5) where no
+lookups in the allocation vector were required for the read
+operation. Thus, a regular file in our model is now susceptible to
+cycles in the file allocation table, and we are obliged to provide a
+file read semantics that makes sense in scenarios like this one. We
+choose to skip error codes for now, and provide a "completion
+semantics" of returning strings of the requested length for a read
+even in the scenario of a file length mismatch or a cycle.
+
 \section {Proof approach}
 
-Initially, we would like to prove two well-known properties from the
+Initially, we would like to prove two properties from the
 first-order theory of arrays, adapted to the filesystem context. These
 are the well-known read-over-write properties, which show the
 integrity of the filesystem.

@@ -565,11 +565,16 @@
   
   )
 
-(defthm make-blocks-correctness-3
+(defthm
+  make-blocks-correctness-3
   (implies (and (character-listp cl))
-           (feasible-file-length-p (len (make-blocks cl))  (len cl)))
-  :hints (("Goal" :in-theory (e/d (feasible-file-length-p) (make-blocks-correctness-1))
-           :use (:instance make-blocks-correctness-1 (text cl))) ))
+           (feasible-file-length-p (len (make-blocks cl))
+                                   (len cl)))
+  :hints
+  (("goal"
+    :in-theory (e/d (feasible-file-length-p)
+                    (make-blocks-correctness-1))
+    :use (:instance make-blocks-correctness-1 (text cl)))))
 
 ; This function writes a specified text string to a specified position to a
 ; text file at a specified path.
