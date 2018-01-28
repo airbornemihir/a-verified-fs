@@ -10,6 +10,8 @@
 (include-book "file-system-4")
 (include-book "centaur/fty/top" :dir :system)
 
+(defconst *expt-2-28* (expt 2 28))
+
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))
   (unsigned-byte-p 32 x))
@@ -652,14 +654,14 @@
 (defthm
   l6-wrchs-guard-lemma-6
   (equal (fat32-masked-entry-list-p x)
-         (bounded-nat-listp x (expt 2 28)))
+         (bounded-nat-listp x *expt-2-28*))
   :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
 
 (defthm
   l6-wrchs-guard-lemma-7
   (implies
    (and (<= 2 (len fa-table))
-        (<= (len fa-table) (expt 2 28))
+        (<= (len fa-table) *expt-2-28*)
         (fat32-entry-list-p fa-table)
         (stringp text)
         (integerp start)
@@ -695,7 +697,7 @@
           start text))))
       (consp found-clusters))
      (and (bounded-nat-listp (cdr found-clusters)
-                             268435456)
+                             *expt-2-28*)
           (fat32-masked-entry-p (car found-clusters))
           (nat-listp found-clusters)))))
   :hints
@@ -705,7 +707,7 @@
     (:instance
      bounded-nat-listp-correctness-5
      (x (len fa-table))
-     (y (expt 2 28))
+     (y *expt-2-28*)
      (l
       (find-n-free-clusters
        fa-table
@@ -722,15 +724,15 @@
   l6-wrchs-guard-lemma-8
   (implies (and (fat32-entry-list-p fa-table)
                 (natp n)
-                (<= (len fa-table) (expt 2 28))
+                (<= (len fa-table) *expt-2-28*)
                 (>= (len fa-table) 2))
            (bounded-nat-listp (find-n-free-clusters fa-table n)
-                              (expt 2 28)))
+                              *expt-2-28*))
   :hints
   (("goal" :use (:instance bounded-nat-listp-correctness-5
                            (l (find-n-free-clusters fa-table n))
                            (x (len fa-table))
-                           (y (expt 2 28))))))
+                           (y *expt-2-28*)))))
 
 (defthm
   l6-wrchs-guard-lemma-9
@@ -744,7 +746,7 @@
   (implies
    (and
     (<= 2 (len disk))
-    (<= (len disk) (expt 2 28))
+    (<= (len disk) *expt-2-28*)
     (equal (len fa-table) (len disk))
     (fat32-entry-list-p fa-table)
     (block-listp disk)
@@ -781,7 +783,7 @@
                 (block-listp disk)
                 (fat32-entry-list-p fa-table)
                 (equal (len fa-table) (len disk))
-                (<= (len disk) (expt 2 28))
+                (<= (len disk) *expt-2-28*)
                 (>= (len fa-table) 2))
     :guard-debug t
     :guard-hints
