@@ -936,3 +936,70 @@
                         (delete-assoc (car hns) fs))
                   new-disk
                   new-fa-table))))))))
+
+(defun l6-create
+    (hns fs disk fa-table text)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l3-fs-p fs)
+                              (stringp text)
+                              (block-listp disk)
+                              (fat32-entry-list-p fa-table)
+                              (equal (len fa-table) (len disk))
+                              (<= (len disk) *expt-2-28*)
+                              (>= (len fa-table) 2))
+                  :guard-hints
+                  (("subgoal 1'"
+                    :in-theory
+                    (disable l6-wrchs-guard-lemma-8)
+                    :use
+                    ((:instance
+                      l6-wrchs-guard-lemma-8
+                      (n (len (make-blocks (explode text))))))))))
+  (if (atom hns)
+      (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
+    (let ((sd (assoc (car hns) fs)))
+      (if (atom sd)
+          (if (atom (cdr hns))
+              (let* ((blocks (make-blocks (coerce text 'list)))
+                     (indices (find-n-free-clusters fa-table (len blocks))))
+                (if (not (equal (len indices) (len blocks)))
+                    ;; we have an error because of insufficient disk space
+                    ;; - so we leave the fs unchanged
+                    (mv sd disk fa-table)
+                  (if (consp indices)
+                      (mv (cons (cons (car hns)
+                                      (l6-make-regular-file
+                                       (car indices)
+                                       (length text)))
+                                fs)
+                          (set-indices disk indices blocks)
+                          (set-indices-in-fa-table fa-table
+                                                   indices
+                                                   (binary-append
+                                                    (cdr indices)
+                                                    ;; 0 is chosen for now but it has to
+                                                    ;; be one of those end of file markers
+                                                    (list 0))))
+                    (mv (cons (cons (car hns)
+                                    (cons indices
+                                          (length text)))
+                              fs)
+                        disk
+                        fa-table))))
+            (mv-let (new-fs new-disk new-fa-table)
+              (l6-create (cdr hns) nil disk fa-table text)
+              (mv (cons (cons (car hns) new-fs) fs) new-disk new-fa-table)))
+        (let ((contents (cdr sd)))
+          (if (l3-regular-file-entry-p contents)
+              (mv (cons (cons (car sd) contents) ;; file already exists, so leave fs unchanged
+                        (delete-assoc (car hns) fs))
+                  disk
+                  fa-table)
+            (mv-let (new-fs new-disk new-fa-table)
+              (l6-create (cdr hns) contents disk fa-table text)
+              (mv (cons (cons (car sd)
+                              new-fs)
+                        (delete-assoc (car hns) fs))
+                  new-disk
+                  new-fa-table)))
+          )))))
