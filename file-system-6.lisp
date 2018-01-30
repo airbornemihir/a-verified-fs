@@ -538,6 +538,34 @@
                     (ac1 nil)
                     (ac2 nil)))))
 
+(defun l6-file-index-list (file fa-table)
+  (xargs
+    :guard (and (symbol-listp hns)
+                (l6-fs-p fs)
+                (natp start)
+                (natp n)
+                (block-listp disk)
+                (fat32-entry-list-p fa-table))
+    :guard-hints
+    (("subgoal 2.6"
+      :in-theory (e/d (fat32-masked-entry-p)
+                      (l6-regular-file-entry-p-correctness-1))
+      :use (:instance l6-regular-file-entry-p-correctness-1
+                      (entry (l6-stat hns fs disk))))
+     ("subgoal 3"
+      :in-theory (e/d (fat32-masked-entry-p)
+                      (l6-regular-file-entry-p-correctness-1))
+      :use (:instance l6-regular-file-entry-p-correctness-1
+                      (entry (l6-stat hns fs disk))))))
+  (let
+     ((first-cluster (l6-regular-file-first-cluster file)))
+       (if
+        (or (< first-cluster 2) (>= first-cluster (expt 2 28)))
+        nil
+        (list*
+         first-cluster
+         (l6-build-index-list fa-table first-cluster nil)))))
+
 ;; This function finds a text file given its path and reads a segment of
 ;; that text file.
 (defun
@@ -1072,3 +1100,31 @@
            (equal (nth n (merge-alv lst1 lst2))
                   (or (nth n lst1) (nth n lst2))))
   :hints (("goal" :in-theory (enable merge-alv))))
+
+(defthm l6-to-l4-fs (fs fa-table)
+  (declare (xargs :guard (and (l6-fs-p fs)
+                              (fat32-entry-list-p fa-table)
+                              (<= (len fa-table) *expt-2-28*)
+                              (>= (len fa-table) 2))))
+  (if (atom fs)
+      (mv fs
+          ;; this is for creating a new allocation vector with only the first
+          ;; two slots filled in
+          (take (len fa-table) (list t t))
+          )
+    (let ((directory-or-file-entry (car fs))
+          (tail (l6-to-l4-fs (cdr fs) fa-table)))
+      (let ((name (car directory-or-file-entry))
+            (entry (cdr directory-or-file-entry))
+            (tail-fs (mv-nth 0 tail))
+            (tail-alv (mv-nth 1 tail)))
+        (if (l6-regular-file-entry-p entry)
+            (mv (list*
+                 (cons name (cons () (l6-regular-file-length entry)))
+                 tail-fs)
+                (set-indices-in-alv tail-alv () t))
+          (mv-let (head-fs head-alv)
+              (l6-to-l4-fs entry fa-table)
+              (mv
+               (list* (cons name head-fs) tail-fs)
+               (merge-alv head-alv tail-alv))))))))
