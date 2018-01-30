@@ -1051,3 +1051,24 @@
                   (mv (cons (cons (car sd) new-fs)
                             (delete-assoc (car hns) fs))
                       new-fa-table))))))))))
+
+(defund
+  merge-alv (lst1 lst2)
+  (declare (xargs :guard (and (boolean-listp lst1)
+                              (boolean-listp lst2)
+                              (equal (len lst1) (len lst2)))))
+  (if (atom lst1)
+      nil
+      (list* (or (car lst1) (car lst2))
+             (merge-alv (cdr lst1) (cdr lst2)))))
+
+(defthm merge-alv-correctness-1
+  (equal (len (merge-alv lst1 lst2))
+         (len lst1))
+  :hints (("goal" :in-theory (enable merge-alv))))
+
+(defthm merge-alv-correctness-2
+  (implies (equal (len lst1) (len lst2))
+           (equal (nth n (merge-alv lst1 lst2))
+                  (or (nth n lst1) (nth n lst2))))
+  :hints (("goal" :in-theory (enable merge-alv))))
