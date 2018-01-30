@@ -940,7 +940,7 @@
 (defun l6-create
     (hns fs disk fa-table text)
   (declare (xargs :guard (and (symbol-listp hns)
-                              (l3-fs-p fs)
+                              (l6-fs-p fs)
                               (stringp text)
                               (block-listp disk)
                               (fat32-entry-list-p fa-table)
@@ -990,7 +990,7 @@
               (l6-create (cdr hns) nil disk fa-table text)
               (mv (cons (cons (car hns) new-fs) fs) new-disk new-fa-table)))
         (let ((contents (cdr sd)))
-          (if (l3-regular-file-entry-p contents)
+          (if (l6-regular-file-entry-p contents)
               (mv (cons (cons (car sd) contents) ;; file already exists, so leave fs unchanged
                         (delete-assoc (car hns) fs))
                   disk
@@ -1003,3 +1003,51 @@
                   new-disk
                   new-fa-table)))
           )))))
+
+; This function deletes a file or directory given its path.
+(defun
+    l6-unlink (hns fs fa-table)
+  (declare (xargs :guard (and (symbol-listp hns)
+                              (l6-fs-p fs)
+                              (fat32-entry-list-p fa-table)
+                              (<= (len fa-table) *expt-2-28*)
+                              (>= (len fa-table) 2))))
+  (if
+      (atom hns)
+      (mv fs fa-table) ;;error case, basically
+    (if
+        (atom (cdr hns))
+        (mv
+         (delete-assoc (car hns) fs)
+         (if
+             (and (consp (assoc (car hns) fs))
+                  (l6-regular-file-entry-p (cdr (assoc (car hns) fs))))
+             (let* ((old-first-cluster
+                     (l6-regular-file-first-cluster (cdr (assoc (car hns) fs))))
+                    (old-indices
+                     (if
+                         (or (< old-first-cluster 2) (>= old-first-cluster
+                                                         (len fa-table)))
+                         nil
+                       (list*
+                        old-first-cluster
+                        (l6-build-index-list fa-table old-first-cluster nil)))))
+               (set-indices-in-fa-table fa-table old-indices
+                                        (make-list (len old-indices) :initial-element 0)))
+           fa-table))
+      (if
+          (atom fs)
+          (mv nil fa-table)
+        (let
+            ((sd (assoc (car hns) fs)))
+          (if
+              (atom sd)
+              (mv fs fa-table)
+            (let ((contents (cdr sd)))
+              (if (l6-regular-file-entry-p contents)
+                  (mv fs fa-table) ;; we still have names but we're at a regular file - error
+                (mv-let (new-fs new-fa-table)
+                  (l6-unlink (cdr hns) contents fa-table)
+                  (mv (cons (cons (car sd) new-fs)
+                            (delete-assoc (car hns) fs))
+                      new-fa-table))))))))))
