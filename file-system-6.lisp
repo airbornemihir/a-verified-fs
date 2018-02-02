@@ -189,29 +189,40 @@
 
 (defthm
   l6-regular-file-entry-p-correctness-1
-  (implies (l6-regular-file-entry-p entry)
-           (and (fat32-masked-entry-p (l6-regular-file-first-cluster entry))
-                (integerp (l6-regular-file-first-cluster entry))
-                (>= (l6-regular-file-first-cluster entry)
-                    0)
-                (integerp (l6-regular-file-length entry))
-                (>= (l6-regular-file-length entry) 0)))
+  (implies
+   (l6-regular-file-entry-p entry)
+   (and
+    (fat32-masked-entry-p (l6-regular-file-first-cluster entry))
+    (integerp (l6-regular-file-first-cluster entry))
+    (>= (l6-regular-file-first-cluster entry)
+        0)
+    (< (l6-regular-file-first-cluster entry)
+       *expt-2-28*)
+    (integerp (l6-regular-file-length entry))
+    (>= (l6-regular-file-length entry) 0)))
   :rule-classes
   ((:rewrite
     :corollary
+    (implies
+     (l6-regular-file-entry-p entry)
+     (and (fat32-masked-entry-p
+           (l6-regular-file-first-cluster entry))
+          (integerp (l6-regular-file-first-cluster entry))
+          (integerp (l6-regular-file-length entry)))))
+   (:linear
+    :corollary
     (implies (l6-regular-file-entry-p entry)
-             (and (fat32-masked-entry-p (l6-regular-file-first-cluster entry))
-                  (integerp (l6-regular-file-first-cluster entry))
-                  (integerp (l6-regular-file-length entry)))))
-   (:linear :corollary (implies (l6-regular-file-entry-p entry)
-                                (and (>= (l6-regular-file-first-cluster entry)
-                                         0)
-                                     (>= (l6-regular-file-length entry)
-                                         0)))))
-  :hints (("goal" :in-theory (enable l6-regular-file-entry-p
-                                     l6-regular-file-first-cluster
-                                     l6-regular-file-length
-                                     fat32-masked-entry-p))))
+             (and (>= (l6-regular-file-first-cluster entry)
+                      0)
+                  (< (l6-regular-file-first-cluster entry)
+                     *expt-2-28*)
+                  (>= (l6-regular-file-length entry)
+                      0)))))
+  :hints
+  (("goal" :in-theory (enable l6-regular-file-entry-p
+                              l6-regular-file-first-cluster
+                              l6-regular-file-length
+                              fat32-masked-entry-p))))
 
 (defund
   l6-make-regular-file
@@ -538,33 +549,26 @@
                     (ac1 nil)
                     (ac2 nil)))))
 
-(defun l6-file-index-list (file fa-table)
-  (xargs
-    :guard (and (symbol-listp hns)
-                (l6-fs-p fs)
-                (natp start)
-                (natp n)
-                (block-listp disk)
-                (fat32-entry-list-p fa-table))
-    :guard-hints
-    (("subgoal 2.6"
-      :in-theory (e/d (fat32-masked-entry-p)
-                      (l6-regular-file-entry-p-correctness-1))
-      :use (:instance l6-regular-file-entry-p-correctness-1
-                      (entry (l6-stat hns fs disk))))
-     ("subgoal 3"
-      :in-theory (e/d (fat32-masked-entry-p)
-                      (l6-regular-file-entry-p-correctness-1))
-      :use (:instance l6-regular-file-entry-p-correctness-1
-                      (entry (l6-stat hns fs disk))))))
+(defund
+  l6-file-index-list (file fa-table)
+  (declare (xargs :guard (and (l6-regular-file-entry-p file)
+                              (fat32-entry-list-p fa-table))))
   (let
-     ((first-cluster (l6-regular-file-first-cluster file)))
-       (if
-        (or (< first-cluster 2) (>= first-cluster (expt 2 28)))
+      ((first-cluster (l6-regular-file-first-cluster file)))
+    (if
+        (< first-cluster 2)
         nil
-        (list*
-         first-cluster
-         (l6-build-index-list fa-table first-cluster nil)))))
+      (list* first-cluster
+             (l6-build-index-list fa-table first-cluster nil)))))
+
+(defthm
+  l6-file-index-list-correctness-1
+  (implies (and (l6-regular-file-entry-p file)
+                              (fat32-entry-list-p fa-table))
+   (fat32-masked-entry-list-p
+    (l6-file-index-list file fa-table)))
+  :hints (("Goal" :in-theory (enable
+  l6-file-index-list)) ))
 
 ;; This function finds a text file given its path and reads a segment of
 ;; that text file.
@@ -1083,8 +1087,7 @@
 (defund
   merge-alv (lst1 lst2)
   (declare (xargs :guard (and (boolean-listp lst1)
-                              (boolean-listp lst2)
-                              (equal (len lst1) (len lst2)))))
+                              (boolean-listp lst2))))
   (if (atom lst1)
       nil
       (list* (or (car lst1) (car lst2))
@@ -1101,8 +1104,15 @@
                   (or (nth n lst1) (nth n lst2))))
   :hints (("goal" :in-theory (enable merge-alv))))
 
-(defthm l6-to-l4-fs (fs fa-table)
-  (declare (xargs :guard (and (l6-fs-p fs)
+(defthm merge-alv-correctness-3
+  (implies (and (boolean-listp lst1)
+                (boolean-listp lst2))
+           (boolean-listp (merge-alv lst1 lst2)))
+  :hints (("goal" :in-theory (enable merge-alv))))
+
+(defun l6-to-l4-fs (fs fa-table)
+  (declare (xargs :verify-guards nil
+                  :guard (and (l6-fs-p fs)
                               (fat32-entry-list-p fa-table)
                               (<= (len fa-table) *expt-2-28*)
                               (>= (len fa-table) 2))))
@@ -1112,19 +1122,27 @@
           ;; two slots filled in
           (take (len fa-table) (list t t))
           )
-    (let ((directory-or-file-entry (car fs))
-          (tail (l6-to-l4-fs (cdr fs) fa-table)))
-      (let ((name (car directory-or-file-entry))
-            (entry (cdr directory-or-file-entry))
-            (tail-fs (mv-nth 0 tail))
-            (tail-alv (mv-nth 1 tail)))
+    (let* ((directory-or-file-entry (car fs))
+           (name (car directory-or-file-entry))
+           (entry (cdr directory-or-file-entry)))
+      (mv-let (   tail-fs
+            tail-alv) (l6-to-l4-fs (cdr fs) fa-table)
         (if (l6-regular-file-entry-p entry)
             (mv (list*
-                 (cons name (cons () (l6-regular-file-length entry)))
+                 (cons name (cons (l6-file-index-list entry fa-table) (l6-regular-file-length entry)))
                  tail-fs)
-                (set-indices-in-alv tail-alv () t))
+                (set-indices-in-alv tail-alv (l6-file-index-list entry fa-table) t))
           (mv-let (head-fs head-alv)
               (l6-to-l4-fs entry fa-table)
               (mv
                (list* (cons name head-fs) tail-fs)
                (merge-alv head-alv tail-alv))))))))
+
+(defthm l6-to-l4-fs-correctness-1
+  (implies (and (l6-fs-p fs)
+                (fat32-entry-list-p fa-table))
+           (mv-let (l4-fs l4-alv) (l6-to-l4-fs fs fa-table)
+             (declare (ignore l4-fs))
+                  (boolean-listp l4-alv))))
+
+(verify-guards l6-to-l4-fs)
