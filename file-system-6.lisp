@@ -599,14 +599,8 @@
     (not (l6-regular-file-entry-p file))
     nil
     (let*
-     ((first-cluster (l6-regular-file-first-cluster file))
-      (index-list
-       (if
-        (< first-cluster 2)
-        nil
-        (list*
-         first-cluster
-         (l6-build-index-list fa-table first-cluster nil))))
+     ((index-list
+       (l6-file-index-list file fa-table))
       (file-text
        (coerce (unmake-blocks-without-feasibility
                 (fetch-blocks-by-indices disk index-list)
@@ -1110,33 +1104,40 @@
            (boolean-listp (merge-alv lst1 lst2)))
   :hints (("goal" :in-theory (enable merge-alv))))
 
-(defun l6-to-l4-fs (fs fa-table)
+(defun
+  l6-to-l4-fs (fs fa-table)
   (declare (xargs :verify-guards nil
                   :guard (and (l6-fs-p fs)
                               (fat32-entry-list-p fa-table)
                               (<= (len fa-table) *expt-2-28*)
                               (>= (len fa-table) 2))))
-  (if (atom fs)
-      (mv fs
-          ;; this is for creating a new allocation vector with only the first
-          ;; two slots filled in
-          (take (len fa-table) (list t t))
-          )
-    (let* ((directory-or-file-entry (car fs))
-           (name (car directory-or-file-entry))
-           (entry (cdr directory-or-file-entry)))
-      (mv-let (   tail-fs
-            tail-alv) (l6-to-l4-fs (cdr fs) fa-table)
-        (if (l6-regular-file-entry-p entry)
-            (mv (list*
-                 (cons name (cons (l6-file-index-list entry fa-table) (l6-regular-file-length entry)))
-                 tail-fs)
-                (set-indices-in-alv tail-alv (l6-file-index-list entry fa-table) t))
-          (mv-let (head-fs head-alv)
-              (l6-to-l4-fs entry fa-table)
-              (mv
-               (list* (cons name head-fs) tail-fs)
-               (merge-alv head-alv tail-alv))))))))
+  (if
+   (atom fs)
+   (mv fs
+       ;; this is for creating a new allocation vector with only the first
+       ;; two slots filled in
+       (take (len fa-table) (list t t)))
+   (let*
+    ((directory-or-file-entry (car fs))
+     (name (car directory-or-file-entry))
+     (entry (cdr directory-or-file-entry)))
+    (mv-let
+      (tail-fs tail-alv)
+      (l6-to-l4-fs (cdr fs) fa-table)
+      (if
+       (l6-regular-file-entry-p entry)
+       (mv
+        (list* (cons name
+                     (cons (l6-file-index-list entry fa-table)
+                           (l6-regular-file-length entry)))
+               tail-fs)
+        (set-indices-in-alv tail-alv
+                            (l6-file-index-list entry fa-table)
+                            t))
+       (mv-let (head-fs head-alv)
+         (l6-to-l4-fs entry fa-table)
+         (mv (list* (cons name head-fs) tail-fs)
+             (merge-alv head-alv tail-alv))))))))
 
 (defthm l6-to-l4-fs-correctness-1
   (implies (and (l6-fs-p fs)
