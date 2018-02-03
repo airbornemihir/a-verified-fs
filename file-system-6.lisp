@@ -556,7 +556,7 @@
   (let
       ((first-cluster (l6-regular-file-first-cluster file)))
     (if
-        (< first-cluster 2)
+        (or (< first-cluster 2) (>= first-cluster (len fa-table)))
         nil
       (list* first-cluster
              (l6-build-index-list fa-table first-cluster nil)))))
@@ -813,7 +813,7 @@
                 (>= (len fa-table) 2))
     :guard-debug t
     :guard-hints
-    (("subgoal 4.4"
+    (("Goal" :in-theory (enable l6-file-index-list))("subgoal 3.4"
       :in-theory
       (disable l6-wrchs-guard-lemma-8
                (:rewrite l6-regular-file-entry-p-correctness-1))
@@ -845,7 +845,7 @@
        (:instance
         (:rewrite l6-regular-file-entry-p-correctness-1)
         (entry (cdr (assoc-equal (car hns) fs))))))
-     ("subgoal 4.3"
+     ("subgoal 3.3"
       :in-theory
       (disable l6-wrchs-guard-lemma-8
                (:rewrite l6-regular-file-entry-p-correctness-1)
@@ -903,16 +903,8 @@
                             (delete-assoc (car hns) fs))
                       disk
                       fa-table) ;; error, so leave fs unchanged
-                (let* ((old-first-cluster
-                        (l6-regular-file-first-cluster (cdr sd)))
-                       (old-indices
-                        (if
-                            (or (< old-first-cluster 2) (>= old-first-cluster
-                                                            (len fa-table)))
-                            nil
-                          (list*
-                           old-first-cluster
-                           (l6-build-index-list fa-table old-first-cluster nil))))
+                (let* ((old-indices
+                        (l6-file-index-list (cdr sd) fa-table))
                        (old-text
                         (unmake-blocks-without-feasibility
                          (fetch-blocks-by-indices disk old-indices)
