@@ -662,7 +662,7 @@
 
 ;; this is daft, but worth a try
 ;; this should take care of  (EXTRA-INFO '(:GUARD (:BODY L6-WRCHS)) '(<
-;; OLD-FIRST-CLUSTER 2)) 
+;; OLD-FIRST-CLUSTER 2))
 (defthm
   l6-wrchs-guard-lemma-5
   (implies
@@ -1139,3 +1139,16 @@
                   (boolean-listp l4-alv))))
 
 (verify-guards l6-to-l4-fs)
+
+;; we'll return to this later
+(defun l6-list-all-indices (fs fa-table)
+  (declare (xargs :guard (and (l6-fs-p fs) (fat32-entry-list-p fa-table))))
+  (if (atom fs)
+      nil
+    (binary-append
+     (let* ((directory-or-file-entry (car fs))
+            (entry (cdr directory-or-file-entry)))
+       (if (l6-regular-file-entry-p entry)
+           (l6-file-index-list entry fa-table)
+         (l6-list-all-indices entry fa-table)))
+     (l6-list-all-indices (cdr fs) fa-table))))
