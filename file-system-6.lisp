@@ -1149,6 +1149,9 @@
      (let* ((directory-or-file-entry (car fs))
             (entry (cdr directory-or-file-entry)))
        (if (l6-regular-file-entry-p entry)
-           (l6-file-index-list entry fa-table)
+           (let ((index-list (l6-file-index-list entry fa-table)) )
+             (if (feasible-file-length-p (len index-list) (l6-regular-file-length entry))
+                 index-list
+               nil))
          (l6-list-all-indices entry fa-table)))
      (l6-list-all-indices (cdr fs) fa-table))))
