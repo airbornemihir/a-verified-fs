@@ -564,11 +564,10 @@
 (defthm
   l6-file-index-list-correctness-1
   (implies (and (l6-regular-file-entry-p file)
-                              (fat32-entry-list-p fa-table))
-   (fat32-masked-entry-list-p
-    (l6-file-index-list file fa-table)))
-  :hints (("Goal" :in-theory (enable
-  l6-file-index-list)) ))
+                (fat32-entry-list-p fa-table))
+           (fat32-masked-entry-list-p
+            (l6-file-index-list file fa-table)))
+  :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 ;; This function finds a text file given its path and reads a segment of
 ;; that text file.
@@ -677,7 +676,7 @@
    (rationalp (l6-regular-file-first-cluster
                (cdr (assoc-equal name fs))))))
 
-(defthm
+(defthmd
   l6-wrchs-guard-lemma-6
   (equal (fat32-masked-entry-list-p x)
          (bounded-nat-listp x *expt-2-28*))
@@ -698,37 +697,37 @@
         (consp (assoc-equal name fs))
         (l6-regular-file-entry-p (cdr (assoc-equal name fs))))
    (let
-    ((found-clusters
-      (find-n-free-clusters
-       fa-table
-       (len
-        (make-blocks
-         (insert-text
-          (make-character-list
-           (first-n-ac
-            (l6-regular-file-length (cdr (assoc-equal name fs)))
-            nil nil))
-          start text))))))
-    (implies
-     (and
-      (equal
-       (len found-clusters)
-       (len
-        (make-blocks
-         (insert-text
-          (make-character-list
-           (first-n-ac
-            (l6-regular-file-length (cdr (assoc-equal name fs)))
-            nil nil))
-          start text))))
-      (consp found-clusters))
-     (and (bounded-nat-listp (cdr found-clusters)
-                             *expt-2-28*)
-          (fat32-masked-entry-p (car found-clusters))
-          (nat-listp found-clusters)))))
+       ((found-clusters
+         (find-n-free-clusters
+          fa-table
+          (len
+           (make-blocks
+            (insert-text
+             (make-character-list
+              (first-n-ac
+               (l6-regular-file-length (cdr (assoc-equal name fs)))
+               nil nil))
+             start text))))))
+     (implies
+      (and
+       (equal
+        (len found-clusters)
+        (len
+         (make-blocks
+          (insert-text
+           (make-character-list
+            (first-n-ac
+             (l6-regular-file-length (cdr (assoc-equal name fs)))
+             nil nil))
+           start text))))
+       (consp found-clusters))
+      (and (bounded-nat-listp (cdr found-clusters)
+                              *expt-2-28*)
+           (fat32-masked-entry-p (car found-clusters))
+           (nat-listp found-clusters)))))
   :hints
   (("goal"
-    :do-not-induct t
+    :in-theory (enable l6-wrchs-guard-lemma-6)
     :use
     (:instance
      bounded-nat-listp-correctness-5
@@ -813,7 +812,9 @@
                 (>= (len fa-table) 2))
     :guard-debug t
     :guard-hints
-    (("Goal" :in-theory (enable l6-file-index-list))("subgoal 3.4"
+    (("goal" :in-theory (enable l6-file-index-list
+                                l6-wrchs-guard-lemma-6))
+     ("subgoal 3.4"
       :in-theory
       (disable l6-wrchs-guard-lemma-8
                (:rewrite l6-regular-file-entry-p-correctness-1))
@@ -845,11 +846,38 @@
        (:instance
         (:rewrite l6-regular-file-entry-p-correctness-1)
         (entry (cdr (assoc-equal (car hns) fs))))))
+     ("subgoal 3.4.11"
+      :in-theory (disable l6-wrchs-guard-lemma-6)
+      :use
+      (:instance
+       l6-wrchs-guard-lemma-6
+       (x
+        (find-n-free-clusters
+         (update-nth
+          (l6-regular-file-first-cluster
+           (cdr (assoc-equal (car hns) fs)))
+          (fat32-update-lower-28
+           (nth (l6-regular-file-first-cluster
+                 (cdr (assoc-equal (car hns) fs)))
+                fa-table)
+           0)
+          fa-table)
+         (len
+          (make-blocks
+           (insert-text
+            (first-n-ac
+             (l6-regular-file-length
+              (cdr (assoc-equal (car hns) fs)))
+             (nth (l6-regular-file-first-cluster
+                   (cdr (assoc-equal (car hns) fs)))
+                  disk)
+             nil)
+            start text)))))))
      ("subgoal 3.3"
       :in-theory
       (disable l6-wrchs-guard-lemma-8
                (:rewrite l6-regular-file-entry-p-correctness-1)
-               l6-wrchs-guard-lemma-3)
+               l6-wrchs-guard-lemma-3 l6-wrchs-guard-lemma-6)
       :use
       ((:instance
         l6-wrchs-guard-lemma-8
@@ -879,7 +907,7 @@
                 (l6-regular-file-first-cluster
                  (cdr (assoc-equal (car hns) fs)))
                 nil))
-              (+ -8
+              (- *blocksize*
                  (l6-regular-file-length
                   (cdr (assoc-equal (car hns) fs))))))
             start text)))))
@@ -889,7 +917,39 @@
        (:instance l6-wrchs-guard-lemma-3
                   (n (l6-regular-file-first-cluster
                       (cdr (assoc-equal (car hns) fs))))
-                  (l disk)))))))
+                  (l disk))
+       (:instance
+        l6-wrchs-guard-lemma-6
+        (x
+         (find-n-free-clusters
+          (update-nth
+           (l6-regular-file-first-cluster
+            (cdr (assoc-equal (car hns) fs)))
+           (fat32-update-lower-28
+            (nth (l6-regular-file-first-cluster
+                  (cdr (assoc-equal (car hns) fs)))
+                 fa-table)
+            0)
+           fa-table)
+          (len
+           (make-blocks
+            (insert-text
+             (append
+              (nth (l6-regular-file-first-cluster
+                    (cdr (assoc-equal (car hns) fs)))
+                   disk)
+              (unmake-blocks-without-feasibility
+               (fetch-blocks-by-indices
+                disk
+                (l6-build-index-list
+                 fa-table
+                 (l6-regular-file-first-cluster
+                  (cdr (assoc-equal (car hns) fs)))
+                 nil))
+               (- *blocksize*
+                  (l6-regular-file-length
+                   (cdr (assoc-equal (car hns) fs))))))
+             start text)))))))))))
   (if (atom hns)
       (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
     (if (atom fs)
@@ -1141,7 +1201,7 @@
 (verify-guards l6-to-l4-fs)
 
 ;; we'll return to this later
-(defun l6-list-all-indices (fs fa-table)
+(defund l6-list-all-indices (fs fa-table)
   (declare (xargs :guard (and (l6-fs-p fs) (fat32-entry-list-p fa-table))))
   (if (atom fs)
       nil
@@ -1155,3 +1215,8 @@
                nil))
          (l6-list-all-indices entry fa-table)))
      (l6-list-all-indices (cdr fs) fa-table))))
+
+(defthm l6-list-all-indices-correctness-1
+  (implies (l6-fs-p fs)
+           (fat32-masked-entry-list-p (l6-list-all-indices fs fa-table)))
+  :hints (("Goal" :in-theory (enable l6-list-all-indices)) ))
