@@ -988,8 +988,71 @@
     :use (:instance l6-wrchs-guard-lemma-2
                     (x (l6-file-index-list file fa-table))))))
 
-(defthm l6-list-all-indices-correctness-1
+(defthm
+  l6-list-all-indices-correctness-1
   (implies (and (fat32-entry-list-p fa-table)
                 (l6-fs-p fs))
-           (fat32-masked-entry-list-p (l6-list-all-indices fs fa-table)))
-  :hints (("goal" :in-theory (enable l6-list-all-indices)) ))
+           (fat32-masked-entry-list-p
+            (l6-list-all-indices fs fa-table)))
+  :hints (("goal" :in-theory (enable l6-list-all-indices))))
+
+;; We can't prove just yet that every l6 instance transformed into an l4
+;; instance satisfies l4-fs-p, since l6 accepts some instances where the file
+;; lengths are not feasible.
+
+;; Yet, we can try to prove that listing the indices of an l6 instance is
+;; equivalent to transforming to l4 and then listing. This won't run into a
+;; guard problem since guards are not pertinent to defthm events.
+
+(defthm
+  l6-list-all-indices-correctness-2-lemma-1
+  (implies (l6-regular-file-entry-p fs)
+           (not (l6-fs-p fs)))
+  :rule-classes
+  (:rewrite
+   (:rewrite :corollary (implies (l6-fs-p fs)
+                                 (not (l6-regular-file-entry-p fs)))))
+  :hints (("goal" :in-theory (enable l6-regular-file-entry-p))))
+
+(defthm
+  l6-list-all-indices-correctness-2-lemma-2
+  (implies
+   (and (l6-fs-p fs)
+        (fat32-entry-list-p fa-table))
+   (not (l3-regular-file-entry-p (mv-nth 0 (l6-to-l4-fs fs fa-table)))))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm l6-list-all-indices-correctness-2-lemma-3
+  (implies (natp x) (not (l3-fs-p x))))
+
+(defthm
+  l6-list-all-indices-correctness-2
+  (implies
+   (and (l6-fs-p fs)
+        (fat32-entry-list-p fa-table))
+   (mv-let (l4-fs l4-alv)
+     (l6-to-l4-fs fs fa-table)
+     (declare (ignore l4-alv))
+     (implies (l4-fs-p l4-fs)
+              (equal (l4-list-all-indices l4-fs)
+                     (l6-list-all-indices fs fa-table)))))
+  :hints
+  (("goal" :in-theory (enable l6-list-all-indices
+                              l4-list-all-indices))
+   ("subgoal *1/4"
+    :in-theory (disable l3-regular-file-entry-p-correctness-1)
+    :use
+    (:instance
+     l3-regular-file-entry-p-correctness-1
+     (entry (cons (l6-file-index-list (cdr (car fs))
+                                      fa-table)
+                  (l6-regular-file-length (cdr (car fs)))))))
+   ("subgoal *1/4'''"
+    :expand
+    ((l6-list-all-indices fs fa-table)
+     (l4-list-all-indices
+      (cons (list* (car (car fs))
+                   (l6-file-index-list (cdr (car fs))
+                                       fa-table)
+                   (l6-regular-file-length (cdr (car fs))))
+            (mv-nth 0 (l6-to-l4-fs (cdr fs) fa-table))))))))
