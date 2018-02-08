@@ -780,8 +780,8 @@
                   new-disk
                   new-fa-table))))))))
 
-(defun l6-create
-    (hns fs disk fa-table text)
+(defun
+  l6-create (hns fs disk fa-table text)
   (declare (xargs :guard (and (symbol-listp hns)
                               (l6-fs-p fs)
                               (stringp text)
@@ -789,15 +789,7 @@
                               (fat32-entry-list-p fa-table)
                               (equal (len fa-table) (len disk))
                               (<= (len disk) *expt-2-28*)
-                              (>= (len fa-table) 2))
-                  :guard-hints
-                  (("subgoal 1'"
-                    :in-theory
-                    (disable l6-wrchs-guard-lemma-8)
-                    :use
-                    ((:instance
-                      l6-wrchs-guard-lemma-8
-                      (n (len (make-blocks (explode text))))))))))
+                              (>= (len fa-table) 2))))
   (if (atom hns)
       (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
     (let ((sd (assoc (car hns) fs)))
