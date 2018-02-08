@@ -273,3 +273,13 @@
                     (x l)
                     (y (make-list-ac (+ n (- (len l)))
                                      nil nil))))))
+
+(defthm boolean-listp-of-revappend
+  (implies (boolean-listp x)
+           (equal (boolean-listp (revappend x y))
+                  (boolean-listp y))))
+
+(defthm boolean-listp-of-first-n-ac
+  (implies (and (boolean-listp l)
+                (boolean-listp ac))
+           (boolean-listp (first-n-ac i l ac))))
