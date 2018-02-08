@@ -973,7 +973,23 @@
          (l6-list-all-indices entry fa-table)))
      (l6-list-all-indices (cdr fs) fa-table))))
 
+(defthm
+  l6-file-index-list-correctness-1-lemma-1
+  (implies
+   (and (l6-regular-file-entry-p file)
+        (fat32-entry-list-p fa-table)
+        (fat32-masked-entry-list-p y))
+   (fat32-masked-entry-list-p
+    (binary-append (l6-file-index-list file fa-table)
+                   y)))
+  :hints
+  (("goal"
+    :in-theory (disable l6-wrchs-guard-lemma-2)
+    :use (:instance l6-wrchs-guard-lemma-2
+                    (x (l6-file-index-list file fa-table))))))
+
 (defthm l6-list-all-indices-correctness-1
-  (implies (l6-fs-p fs)
+  (implies (and (fat32-entry-list-p fa-table)
+                (l6-fs-p fs))
            (fat32-masked-entry-list-p (l6-list-all-indices fs fa-table)))
-  :hints (("Goal" :in-theory (enable l6-list-all-indices)) ))
+  :hints (("goal" :in-theory (enable l6-list-all-indices)) ))
