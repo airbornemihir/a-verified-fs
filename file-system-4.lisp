@@ -193,10 +193,9 @@
   (declare (xargs :guard t))
   (and (l4-fs-p fs)
        (boolean-listp alv)
-       (let ( (all-indices (l4-list-all-indices fs)))
-         (and (nat-listp all-indices)
-              (no-duplicatesp all-indices)
-              (indices-marked-p all-indices alv)))))
+       (let ((all-indices (l4-list-all-indices fs)))
+            (and (no-duplicatesp all-indices)
+                 (indices-marked-p all-indices alv)))))
 
 (defthm l4-wrchs-returns-fs
   (implies (and (symbol-listp hns)
