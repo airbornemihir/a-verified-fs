@@ -1065,3 +1065,67 @@
 ;; any irregular files were found. This is a good idea because it avoids
 ;; creating two versions of l6-stricter-fs-p, which I specifically do not want
 ;; to do.
+
+;; This function should return exactly what the helper returned - in addition
+;; to a boolean indicating the absence of irregular files
+(defund
+  l6-list-all-ok-indices (fs fa-table)
+  (declare (xargs :guard (and (l6-fs-p fs)
+                              (fat32-entry-list-p fa-table))))
+  (if
+   (atom fs)
+   (mv nil t)
+   (mv-let
+     (tail-index-list tail-ok)
+     (l6-list-all-ok-indices (cdr fs)
+                             fa-table)
+     (let*
+      ((directory-or-file-entry (car fs))
+       (entry (cdr directory-or-file-entry)))
+      (if
+       (l6-regular-file-entry-p entry)
+       (let
+        ((head-index-list (l6-file-index-list entry fa-table)))
+        (if
+         (feasible-file-length-p (len head-index-list)
+                                 (l6-regular-file-length entry))
+         (mv (binary-append head-index-list tail-index-list)
+             tail-ok)
+         (mv tail-index-list nil)))
+       (mv-let
+         (head-index-list head-ok)
+         (l6-list-all-ok-indices entry fa-table)
+         (mv (binary-append head-index-list tail-index-list)
+             (and head-ok tail-ok))))))))
+
+(defthm
+  l6-list-all-ok-indices-correctness-2
+  (mv-let (index-list ok)
+    (l6-list-all-ok-indices fs fa-table)
+    (declare (ignore index-list))
+    (booleanp ok))
+  :rule-classes (:type-prescription :rewrite)
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-list-all-ok-indices-correctness-3
+  (implies (and (fat32-entry-list-p fa-table)
+                (l6-fs-p fs))
+           (mv-let (index-list ok)
+             (l6-list-all-ok-indices fs fa-table)
+             (declare (ignore ok))
+             (fat32-masked-entry-list-p index-list))))
+
+(defthm
+  l6-list-all-ok-indices-correctness-4
+  (implies (and (l6-fs-p fs)
+                (fat32-entry-list-p fa-table))
+           (mv-let (index-list ok)
+             (l6-list-all-ok-indices fs fa-table)
+             (declare (ignore index-list))
+             (mv-let (l4-fs l4-alv)
+               (l6-to-l4-fs fs fa-table)
+               (declare (ignore l4-alv))
+               (equal ok (l4-fs-p l4-fs)))))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices
+                                     l3-regular-file-entry-p))))
