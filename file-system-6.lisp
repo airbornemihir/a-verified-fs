@@ -957,8 +957,7 @@
 
 (verify-guards l6-to-l4-fs)
 
-;; we'll return to this later
-(defund l6-list-all-indices (fs fa-table)
+(defund l6-list-all-ok-indices-helper (fs fa-table)
   (declare (xargs :guard (and (l6-fs-p fs) (fat32-entry-list-p fa-table))))
   (if (atom fs)
       nil
@@ -970,11 +969,11 @@
              (if (feasible-file-length-p (len index-list) (l6-regular-file-length entry))
                  index-list
                nil))
-         (l6-list-all-indices entry fa-table)))
-     (l6-list-all-indices (cdr fs) fa-table))))
+         (l6-list-all-ok-indices-helper entry fa-table)))
+     (l6-list-all-ok-indices-helper (cdr fs) fa-table))))
 
 (defthm
-  l6-file-index-list-correctness-1-lemma-1
+  l6-list-all-ok-indices-helper-correctness-1-lemma-1
   (implies
    (and (l6-regular-file-entry-p file)
         (fat32-entry-list-p fa-table)
@@ -989,12 +988,12 @@
                     (x (l6-file-index-list file fa-table))))))
 
 (defthm
-  l6-list-all-indices-correctness-1
+  l6-list-all-ok-indices-helper-correctness-1
   (implies (and (fat32-entry-list-p fa-table)
                 (l6-fs-p fs))
            (fat32-masked-entry-list-p
-            (l6-list-all-indices fs fa-table)))
-  :hints (("goal" :in-theory (enable l6-list-all-indices))))
+            (l6-list-all-ok-indices-helper fs fa-table)))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices-helper))))
 
 ;; We can't prove just yet that every l6 instance transformed into an l4
 ;; instance satisfies l4-fs-p, since l6 accepts some instances where the file
@@ -1005,7 +1004,7 @@
 ;; guard problem since guards are not pertinent to defthm events.
 
 (defthm
-  l6-list-all-indices-correctness-2-lemma-1
+  l6-list-all-ok-indices-helper-correctness-2-lemma-1
   (implies (l6-regular-file-entry-p fs)
            (not (l6-fs-p fs)))
   :rule-classes
@@ -1015,18 +1014,18 @@
   :hints (("goal" :in-theory (enable l6-regular-file-entry-p))))
 
 (defthm
-  l6-list-all-indices-correctness-2-lemma-2
+  l6-list-all-ok-indices-helper-correctness-2-lemma-2
   (implies
    (and (l6-fs-p fs)
         (fat32-entry-list-p fa-table))
    (not (l3-regular-file-entry-p (mv-nth 0 (l6-to-l4-fs fs fa-table)))))
   :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
-(defthm l6-list-all-indices-correctness-2-lemma-3
+(defthm l6-list-all-ok-indices-helper-correctness-2-lemma-3
   (implies (natp x) (not (l3-fs-p x))))
 
 (defthm
-  l6-list-all-indices-correctness-2
+  l6-list-all-ok-indices-helper-correctness-2
   (implies
    (and (l6-fs-p fs)
         (fat32-entry-list-p fa-table))
@@ -1035,9 +1034,9 @@
      (declare (ignore l4-alv))
      (implies (l4-fs-p l4-fs)
               (equal (l4-list-all-indices l4-fs)
-                     (l6-list-all-indices fs fa-table)))))
+                     (l6-list-all-ok-indices-helper fs fa-table)))))
   :hints
-  (("goal" :in-theory (enable l6-list-all-indices
+  (("goal" :in-theory (enable l6-list-all-ok-indices-helper
                               l4-list-all-indices))
    ("subgoal *1/4"
     :in-theory (disable l3-regular-file-entry-p-correctness-1)
@@ -1049,7 +1048,7 @@
                   (l6-regular-file-length (cdr (car fs)))))))
    ("subgoal *1/4'''"
     :expand
-    ((l6-list-all-indices fs fa-table)
+    ((l6-list-all-ok-indices-helper fs fa-table)
      (l4-list-all-indices
       (cons (list* (car (car fs))
                    (l6-file-index-list (cdr (car fs))
