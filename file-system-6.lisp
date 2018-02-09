@@ -1056,3 +1056,13 @@
                                        fa-table)
                    (l6-regular-file-length (cdr (car fs))))
             (mv-nth 0 (l6-to-l4-fs (cdr fs) fa-table))))))))
+
+;; Does (L4-FS-P (MV-NTH 0 (L6-TO-L4-FS FS FA-TABLE))) actually mean much? It
+;; just says that file lengths are found to be feasible... after we filter out
+;; all the files where they aren't. That's meaningless.
+
+;; It might be better to just make l6-list-all indices return an mv of two
+;; values: a list of indices, as in l4, and a boolean value indicating whether
+;; any irregular files were found. This is a good idea because it avoids
+;; creating two versions of l6-stricter-fs-p, which I specifically do not want
+;; to do.
