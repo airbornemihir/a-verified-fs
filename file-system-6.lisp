@@ -957,175 +957,209 @@
 
 (verify-guards l6-to-l4-fs)
 
-(defund l6-list-all-ok-indices-helper (fs fa-table)
-  (declare (xargs :guard (and (l6-fs-p fs) (fat32-entry-list-p fa-table))))
-  (if (atom fs)
-      nil
-    (binary-append
-     (let* ((directory-or-file-entry (car fs))
-            (entry (cdr directory-or-file-entry)))
-       (if (l6-regular-file-entry-p entry)
-           (let ((index-list (l6-file-index-list entry fa-table)) )
-             (if (feasible-file-length-p (len index-list) (l6-regular-file-length entry))
-                 index-list
-               nil))
-         (l6-list-all-ok-indices-helper entry fa-table)))
-     (l6-list-all-ok-indices-helper (cdr fs) fa-table))))
+(encapsulate
+  ()
 
-(defthm
-  l6-list-all-ok-indices-helper-correctness-1-lemma-1
-  (implies
-   (and (l6-regular-file-entry-p file)
-        (fat32-entry-list-p fa-table)
-        (fat32-masked-entry-list-p y))
-   (fat32-masked-entry-list-p
-    (binary-append (l6-file-index-list file fa-table)
-                   y)))
-  :hints
-  (("goal"
-    :in-theory (disable l6-wrchs-guard-lemma-2)
-    :use (:instance l6-wrchs-guard-lemma-2
-                    (x (l6-file-index-list file fa-table))))))
+  (local
+   (defund l6-list-all-ok-indices-helper (fs fa-table)
+     (declare (xargs :guard (and (l6-fs-p fs) (fat32-entry-list-p fa-table))))
+     (if (atom fs)
+         nil
+       (binary-append
+        (let* ((directory-or-file-entry (car fs))
+               (entry (cdr directory-or-file-entry)))
+          (if (l6-regular-file-entry-p entry)
+              (let ((index-list (l6-file-index-list entry fa-table)) )
+                (if (feasible-file-length-p (len index-list) (l6-regular-file-length entry))
+                    index-list
+                  nil))
+            (l6-list-all-ok-indices-helper entry fa-table)))
+        (l6-list-all-ok-indices-helper (cdr fs) fa-table)))))
 
-(defthm
-  l6-list-all-ok-indices-helper-correctness-1
-  (implies (and (fat32-entry-list-p fa-table)
-                (l6-fs-p fs))
-           (fat32-masked-entry-list-p
-            (l6-list-all-ok-indices-helper fs fa-table)))
-  :hints (("goal" :in-theory (enable l6-list-all-ok-indices-helper))))
+  (local
+   (defthm
+     l6-list-all-ok-indices-helper-correctness-1-lemma-1
+     (implies
+      (and (l6-regular-file-entry-p file)
+           (fat32-entry-list-p fa-table)
+           (fat32-masked-entry-list-p y))
+      (fat32-masked-entry-list-p
+       (binary-append (l6-file-index-list file fa-table)
+                      y)))
+     :hints
+     (("goal"
+       :in-theory (disable l6-wrchs-guard-lemma-2)
+       :use (:instance l6-wrchs-guard-lemma-2
+                       (x (l6-file-index-list file fa-table)))))))
 
-;; We can't prove just yet that every l6 instance transformed into an l4
-;; instance satisfies l4-fs-p, since l6 accepts some instances where the file
-;; lengths are not feasible.
+  (local
+   (defthm
+     l6-list-all-ok-indices-helper-correctness-1
+     (implies (and (fat32-entry-list-p fa-table)
+                   (l6-fs-p fs))
+              (fat32-masked-entry-list-p
+               (l6-list-all-ok-indices-helper fs fa-table)))
+     :hints (("goal" :in-theory (enable l6-list-all-ok-indices-helper)))))
 
-;; Yet, we can try to prove that listing the indices of an l6 instance is
-;; equivalent to transforming to l4 and then listing. This won't run into a
-;; guard problem since guards are not pertinent to defthm events.
+  ;; We can't prove just yet that every l6 instance transformed into an l4
+  ;; instance satisfies l4-fs-p, since l6 accepts some instances where the file
+  ;; lengths are not feasible.
 
-(defthm
-  l6-list-all-ok-indices-helper-correctness-2-lemma-1
-  (implies (l6-regular-file-entry-p fs)
-           (not (l6-fs-p fs)))
-  :rule-classes
-  (:rewrite
-   (:rewrite :corollary (implies (l6-fs-p fs)
-                                 (not (l6-regular-file-entry-p fs)))))
-  :hints (("goal" :in-theory (enable l6-regular-file-entry-p))))
+  ;; Yet, we can try to prove that listing the indices of an l6 instance is
+  ;; equivalent to transforming to l4 and then listing. This won't run into a
+  ;; guard problem since guards are not pertinent to defthm events.
 
-(defthm
-  l6-list-all-ok-indices-helper-correctness-2-lemma-2
-  (implies
-   (and (l6-fs-p fs)
-        (fat32-entry-list-p fa-table))
-   (not (l3-regular-file-entry-p (mv-nth 0 (l6-to-l4-fs fs fa-table)))))
-  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
+  (defthm
+    l6-list-all-ok-indices-helper-correctness-2-lemma-1
+    (implies (l6-regular-file-entry-p fs)
+             (not (l6-fs-p fs)))
+    :rule-classes
+    (:rewrite
+     (:rewrite :corollary (implies (l6-fs-p fs)
+                                   (not (l6-regular-file-entry-p fs)))))
+    :hints (("goal" :in-theory (enable l6-regular-file-entry-p))))
 
-(defthm l6-list-all-ok-indices-helper-correctness-2-lemma-3
-  (implies (natp x) (not (l3-fs-p x))))
 
-(defthm
-  l6-list-all-ok-indices-helper-correctness-2
-  (implies
-   (and (l6-fs-p fs)
-        (fat32-entry-list-p fa-table))
-   (mv-let (l4-fs l4-alv)
-     (l6-to-l4-fs fs fa-table)
-     (declare (ignore l4-alv))
-     (implies (l4-fs-p l4-fs)
-              (equal (l4-list-all-indices l4-fs)
-                     (l6-list-all-ok-indices-helper fs fa-table)))))
-  :hints
-  (("goal" :in-theory (enable l6-list-all-ok-indices-helper
-                              l4-list-all-indices))
-   ("subgoal *1/4"
-    :in-theory (disable l3-regular-file-entry-p-correctness-1)
-    :use
-    (:instance
-     l3-regular-file-entry-p-correctness-1
-     (entry (cons (l6-file-index-list (cdr (car fs))
-                                      fa-table)
-                  (l6-regular-file-length (cdr (car fs)))))))
-   ("subgoal *1/4'''"
-    :expand
-    ((l6-list-all-ok-indices-helper fs fa-table)
-     (l4-list-all-indices
-      (cons (list* (car (car fs))
-                   (l6-file-index-list (cdr (car fs))
-                                       fa-table)
-                   (l6-regular-file-length (cdr (car fs))))
-            (mv-nth 0 (l6-to-l4-fs (cdr fs) fa-table))))))))
+  (defthm
+    l6-list-all-ok-indices-helper-correctness-2-lemma-2
+    (implies
+     (and (l6-fs-p fs)
+          (fat32-entry-list-p fa-table))
+     (not (l3-regular-file-entry-p (mv-nth 0 (l6-to-l4-fs fs fa-table)))))
+    :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
 
-;; Does (L4-FS-P (MV-NTH 0 (L6-TO-L4-FS FS FA-TABLE))) actually mean much? It
-;; just says that file lengths are found to be feasible... after we filter out
-;; all the files where they aren't. That's meaningless.
+  (defthm l6-list-all-ok-indices-helper-correctness-2-lemma-3
+    (implies (natp x) (not (l3-fs-p x))))
 
-;; It might be better to just make l6-list-all indices return an mv of two
-;; values: a list of indices, as in l4, and a boolean value indicating whether
-;; any irregular files were found. This is a good idea because it avoids
-;; creating two versions of l6-stricter-fs-p, which I specifically do not want
-;; to do.
+  (local
+   (defthm
+     l6-list-all-ok-indices-helper-correctness-2
+     (implies
+      (and (l6-fs-p fs)
+           (fat32-entry-list-p fa-table))
+      (mv-let (l4-fs l4-alv)
+        (l6-to-l4-fs fs fa-table)
+        (declare (ignore l4-alv))
+        (implies (l4-fs-p l4-fs)
+                 (equal (l4-list-all-indices l4-fs)
+                        (l6-list-all-ok-indices-helper fs fa-table)))))
+     :hints
+     (("goal" :in-theory (enable l6-list-all-ok-indices-helper
+                                 l4-list-all-indices))
+      ("subgoal *1/4"
+       :in-theory (disable l3-regular-file-entry-p-correctness-1)
+       :use
+       (:instance
+        l3-regular-file-entry-p-correctness-1
+        (entry (cons (l6-file-index-list (cdr (car fs))
+                                         fa-table)
+                     (l6-regular-file-length (cdr (car fs)))))))
+      ("subgoal *1/4'''"
+       :expand
+       ((l6-list-all-ok-indices-helper fs fa-table)
+        (l4-list-all-indices
+         (cons (list* (car (car fs))
+                      (l6-file-index-list (cdr (car fs))
+                                          fa-table)
+                      (l6-regular-file-length (cdr (car fs))))
+               (mv-nth 0 (l6-to-l4-fs (cdr fs) fa-table)))))))))
 
-;; This function should return exactly what the helper returned - in addition
-;; to a boolean indicating the absence of irregular files
-(defund
-  l6-list-all-ok-indices (fs fa-table)
-  (declare (xargs :guard (and (l6-fs-p fs)
-                              (fat32-entry-list-p fa-table))))
-  (if
-   (atom fs)
-   (mv nil t)
-   (mv-let
-     (tail-index-list tail-ok)
-     (l6-list-all-ok-indices (cdr fs)
-                             fa-table)
-     (let*
-      ((directory-or-file-entry (car fs))
-       (entry (cdr directory-or-file-entry)))
-      (if
-       (l6-regular-file-entry-p entry)
-       (let
-        ((head-index-list (l6-file-index-list entry fa-table)))
-        (if
-         (feasible-file-length-p (len head-index-list)
-                                 (l6-regular-file-length entry))
-         (mv (binary-append head-index-list tail-index-list)
-             tail-ok)
-         (mv tail-index-list nil)))
-       (mv-let
-         (head-index-list head-ok)
-         (l6-list-all-ok-indices entry fa-table)
-         (mv (binary-append head-index-list tail-index-list)
-             (and head-ok tail-ok))))))))
+  ;; Does (L4-FS-P (MV-NTH 0 (L6-TO-L4-FS FS FA-TABLE))) actually mean much? It
+  ;; just says that file lengths are found to be feasible... after we filter out
+  ;; all the files where they aren't. That's meaningless.
 
-(defthm
-  l6-list-all-ok-indices-correctness-2
-  (mv-let (index-list ok)
-    (l6-list-all-ok-indices fs fa-table)
-    (declare (ignore index-list))
-    (booleanp ok))
-  :rule-classes (:type-prescription :rewrite)
-  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+  ;; It might be better to just make l6-list-all indices return an mv of two
+  ;; values: a list of indices, as in l4, and a boolean value indicating whether
+  ;; any irregular files were found. This is a good idea because it avoids
+  ;; creating two versions of l6-stricter-fs-p, which I specifically do not want
+  ;; to do.
 
-(defthm
-  l6-list-all-ok-indices-correctness-3
-  (implies (and (fat32-entry-list-p fa-table)
-                (l6-fs-p fs))
-           (mv-let (index-list ok)
-             (l6-list-all-ok-indices fs fa-table)
-             (declare (ignore ok))
-             (fat32-masked-entry-list-p index-list))))
+  ;; This function should return exactly what the helper returned - in addition
+  ;; to a boolean indicating the absence of irregular files
+  (defund
+    l6-list-all-ok-indices (fs fa-table)
+    (declare (xargs :guard (and (l6-fs-p fs)
+                                (fat32-entry-list-p fa-table))))
+    (if
+        (atom fs)
+        (mv nil t)
+      (mv-let
+        (tail-index-list tail-ok)
+        (l6-list-all-ok-indices (cdr fs)
+                                fa-table)
+        (let*
+            ((directory-or-file-entry (car fs))
+             (entry (cdr directory-or-file-entry)))
+          (if
+              (l6-regular-file-entry-p entry)
+              (let
+                  ((head-index-list (l6-file-index-list entry fa-table)))
+                (if
+                    (feasible-file-length-p (len head-index-list)
+                                            (l6-regular-file-length entry))
+                    (mv (binary-append head-index-list tail-index-list)
+                        tail-ok)
+                  (mv tail-index-list nil)))
+            (mv-let
+              (head-index-list head-ok)
+              (l6-list-all-ok-indices entry fa-table)
+              (mv (binary-append head-index-list tail-index-list)
+                  (and head-ok tail-ok))))))))
 
-(defthm
-  l6-list-all-ok-indices-correctness-4
-  (implies (and (l6-fs-p fs)
-                (fat32-entry-list-p fa-table))
-           (mv-let (index-list ok)
-             (l6-list-all-ok-indices fs fa-table)
-             (declare (ignore index-list))
-             (mv-let (l4-fs l4-alv)
-               (l6-to-l4-fs fs fa-table)
-               (declare (ignore l4-alv))
-               (equal ok (l4-fs-p l4-fs)))))
-  :hints (("goal" :in-theory (enable l6-list-all-ok-indices
-                                     l3-regular-file-entry-p))))
+  (local
+   (defthm
+     l6-list-all-ok-indices-correctness-1
+     (mv-let (index-list ok)
+       (l6-list-all-ok-indices fs fa-table)
+       (declare (ignore ok))
+       (equal index-list
+              (l6-list-all-ok-indices-helper fs fa-table)))
+     :hints
+     (("goal" :in-theory (enable l6-list-all-ok-indices-helper
+                                 l6-list-all-ok-indices)))))
+
+  (defthm
+    l6-list-all-ok-indices-correctness-2
+    (mv-let (index-list ok)
+      (l6-list-all-ok-indices fs fa-table)
+      (declare (ignore index-list))
+      (booleanp ok))
+    :rule-classes (:type-prescription :rewrite)
+    :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+  (defthm
+    l6-list-all-ok-indices-correctness-3
+    (implies (and (fat32-entry-list-p fa-table)
+                  (l6-fs-p fs))
+             (mv-let (index-list ok)
+               (l6-list-all-ok-indices fs fa-table)
+               (declare (ignore ok))
+               (fat32-masked-entry-list-p index-list))))
+
+  (defthm
+    l6-list-all-ok-indices-correctness-4
+    (implies (and (l6-fs-p fs)
+                  (fat32-entry-list-p fa-table))
+             (mv-let (index-list ok)
+               (l6-list-all-ok-indices fs fa-table)
+               (declare (ignore index-list))
+               (mv-let (l4-fs l4-alv)
+                 (l6-to-l4-fs fs fa-table)
+                 (declare (ignore l4-alv))
+                 (equal (l4-fs-p l4-fs) ok))))
+    :hints (("goal" :in-theory (enable l6-list-all-ok-indices
+                                       l3-regular-file-entry-p))))
+
+  (defthm
+    l6-list-all-ok-indices-correctness-5
+    (implies
+     (and (l6-fs-p fs)
+          (fat32-entry-list-p fa-table))
+     (mv-let (l4-fs l4-alv)
+       (l6-to-l4-fs fs fa-table)
+       (declare (ignore l4-alv))
+       (mv-let (index-list ok)
+         (l6-list-all-ok-indices fs fa-table)
+         (implies ok
+                  (equal (l4-list-all-indices l4-fs)
+                         index-list)))))))
