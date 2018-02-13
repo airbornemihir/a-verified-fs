@@ -1225,6 +1225,19 @@
 
 ;; The theorem prover doesn't agree - we need to prove that these indices are
 ;; marked.
+
+;; This might be a difficult or impossible undertaking, given that I'm no
+;; longer sure that all the indices drawn from a file are valid indices.
+;; Update: Oh my...
+;; ACL2 !>       (l6-build-index-list
+;;        '(0 0 3 4 5) 2 nil)
+;; (3 4 5)
+;; Update: what about taking the cdr as soon as a non-compliant (that is,
+;; pointing beyond the end of the fa-table) index is found?
+;;
+;; That's not a great idea. We also need to figure out our completion
+;; semantics... this seems like the right time to re-work.
+
 (defthm l6-stricter-fs-p-correctness-1
   (implies
    (and (l6-fs-p fs)
