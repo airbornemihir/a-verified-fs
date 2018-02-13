@@ -396,6 +396,14 @@
        (l6-build-index-list fa-table masked-next-cluster
                             (cons masked-next-cluster acc)))))))
 
+;; (defthm
+;;   l6-build-index-list-correctness-2
+;;   (implies (and
+;;             (bounded-nat-listp acc (len fa-table))
+;;             (equal b (len fa-table)))
+;;    (bounded-nat-listp
+;;     (l6-build-index-list fa-table masked-current-cluster acc) b)))
+
 (defthm
   l6-build-index-list-correctness-1
   (implies
@@ -572,6 +580,15 @@
         nil
       (list* first-cluster
              (l6-build-index-list fa-table first-cluster nil)))))
+
+;; (defthm
+;;   l6-file-index-list-correctness-2
+;;   (implies (and (l6-regular-file-entry-p file)
+;;                 (fat32-entry-list-p fa-table)
+;;                 (equal b (len fa-table)))
+;;            (bounded-nat-listp
+;;             (l6-file-index-list file fa-table) b))
+;;   :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
   l6-file-index-list-correctness-1
@@ -955,6 +972,13 @@
              (declare (ignore l4-fs))
                   (boolean-listp l4-alv))))
 
+(defthm l6-to-l4-fs-correctness-2
+  (implies (and (l6-fs-p fs)
+                (fat32-entry-list-p fa-table))
+           (mv-let (l4-fs l4-alv) (l6-to-l4-fs fs fa-table)
+             (declare (ignore l4-fs))
+                  (equal (len l4-alv) (len fa-table)))))
+
 (verify-guards l6-to-l4-fs)
 
 (encapsulate
@@ -1163,3 +1187,49 @@
          (implies ok
                   (equal (l4-list-all-indices l4-fs)
                          index-list)))))))
+
+;; What's the file allocation table analog of
+;;                 (indices-marked-p all-indices alv)?
+
+;; It would be a proposition that says all these indices which are claimed by
+;; the various files are actually used (not 0 or 1) in the file allocation
+;; table. But this is, to some extent, self-evident... Except for the first
+;; index, which is indicated in the filesystem tree itself, everything else
+;; is pointed to by something else.
+
+;; So I'm thinking there's not a need for such a proposition right now.
+
+;; I'm keeping this definition disabled for now because I recall having to
+;; disable l4-stricter-fs-p earlier for getting proofs through
+(defund l6-stricter-fs-p (fs fa-table)
+  (declare (xargs :guard t))
+  (and (l6-fs-p fs)
+       (fat32-entry-list-p fa-table)
+       (mv-let (all-indices ok) (l6-list-all-ok-indices fs fa-table)
+         (and ok
+              (no-duplicatesp all-indices)))))
+
+(defthm
+  l6-stricter-fs-p-correctness-1-lemma-1
+  (implies (and (equal (len alv1) (len alv2))
+                (indices-marked-p index-list alv1))
+           (indices-marked-p index-list (merge-alv alv1 alv2)))
+  :hints (("goal" :in-theory (enable merge-alv))))
+
+(defthm
+  l6-stricter-fs-p-correctness-1-lemma-2
+  (implies (and (equal (len alv1) (len alv2))
+                (indices-marked-p index-list alv2))
+           (indices-marked-p index-list (merge-alv alv1 alv2)))
+  :hints (("goal" :in-theory (enable merge-alv))))
+
+;; The theorem prover doesn't agree - we need to prove that these indices are
+;; marked.
+(defthm l6-stricter-fs-p-correctness-1
+  (implies
+   (and (l6-fs-p fs)
+        (fat32-entry-list-p fa-table))
+   (mv-let (l4-fs l4-alv) (l6-to-l4-fs fs fa-table)
+     (equal (L4-STRICTER-FS-P l4-FS l4-ALV)
+            (l6-stricter-fs-p fs fa-table))))
+  :hints (("Goal" :in-theory (enable l6-stricter-fs-p)) ))
