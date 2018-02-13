@@ -874,16 +874,8 @@
          (if
              (and (consp (assoc (car hns) fs))
                   (l6-regular-file-entry-p (cdr (assoc (car hns) fs))))
-             (let* ((old-first-cluster
-                     (l6-regular-file-first-cluster (cdr (assoc (car hns) fs))))
-                    (old-indices
-                     (if
-                         (or (< old-first-cluster 2) (>= old-first-cluster
-                                                         (len fa-table)))
-                         nil
-                       (list*
-                        old-first-cluster
-                        (l6-build-index-list fa-table old-first-cluster nil)))))
+             (let ((old-indices
+                    (l6-file-index-list (cdr (assoc (car hns) fs)) fa-table)))
                (set-indices-in-fa-table fa-table old-indices
                                         (make-list (len old-indices) :initial-element 0)))
            fa-table))
