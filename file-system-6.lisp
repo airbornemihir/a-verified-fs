@@ -37,6 +37,11 @@
 
 (in-theory (enable fat32-entry-p fat32-entry-fix fat32-masked-entry-p fat32-masked-entry-fix))
 
+(defthm fat32-masked-entry-p-correctness-1
+  (implies (fat32-masked-entry-p x)
+           (natp x))
+  :rule-classes :forward-chaining)
+
 ;; Use a mask to take the low 28 bits.
 (defund fat32-entry-mask (x)
   (declare (xargs :guard (fat32-entry-p x)))
@@ -277,129 +282,51 @@
 ;; we have what we need to define a disk traversal to get the contents of the
 ;; file
 
-;; let's define it as an operation to get an index list
-
-;; the trouble with doing it "directly" is that one cannot prove termination
-;; because an arbitrary file allocation table may have loops in the way entries
-;; point to each other
-
-;; thus, we are obliged to define a function which always terminates, and in
-;; the sane case returns the list we want
-
-(encapsulate
-  ()
-
-  (local
-   (defun
-       masked-set-difference
-       (fa-table index-list)
-     (if (atom fa-table)
-         0
-       (+ (masked-set-difference (cdr fa-table)
-                                 index-list)
-          (if (member (fat32-entry-mask (car fa-table))
-                      index-list)
-              0 1)))))
-
-  (local
-   (defthm
-     l6-build-index-list-measure-lemma-1
-     (implies (and (member-equal next-cluster fa-table)
-                   (not (member-equal (fat32-entry-mask next-cluster)
-                                      acc)))
-              (< (masked-set-difference fa-table
-                                        (cons (fat32-entry-mask next-cluster)
-                                              acc))
-                 (masked-set-difference fa-table acc)))
-     :rule-classes (:linear)))
-
-  (local
-   (defun
-       l6-build-index-list
-       (fa-table masked-current-cluster acc)
-     (declare
-      (xargs
-       :guard (and (fat32-entry-list-p fa-table)
-                   (fat32-masked-entry-p masked-current-cluster)
-                   (true-listp acc))
-       :guard-hints
-       (("subgoal 4" :in-theory (enable fat32-masked-entry-p))
-        ("subgoal 2'" :in-theory (enable fat32-masked-entry-p))
-        ("subgoal 1'"
-         :in-theory (disable member-of-fat32-entry-list)
-         :use
-         (:instance member-of-fat32-entry-list
-                    (lst fa-table)
-                    (x (nth masked-current-cluster fa-table)))))
-       :measure (masked-set-difference fa-table acc)
-       :hints
-       (("subgoal 1'"
-         :in-theory (disable l6-build-index-list-measure-lemma-1)
-         :use
-         (:instance
-          l6-build-index-list-measure-lemma-1
-          (next-cluster
-           (nth masked-current-cluster fa-table)))))))
-     (if
-         (or (< masked-current-cluster 2)
-             (>= masked-current-cluster (len fa-table)))
-         (reverse acc)
-       (let
-           ((masked-next-cluster
-             (fat32-entry-mask
-              (nth masked-current-cluster fa-table))))
-         (if
-             (or (l6-is-eof masked-next-cluster)
-                 (member masked-next-cluster acc))
-             (reverse acc)
-           (l6-build-index-list fa-table masked-next-cluster
-                                (cons masked-next-cluster acc)))))))
-
-  (defun
-    l6-build-index-list
-    (fa-table masked-current-cluster acc)
-    (declare
-     (xargs
-      :guard (and (fat32-entry-list-p fa-table)
-                  (fat32-masked-entry-p masked-current-cluster)
-                  (true-listp acc))
-      :guard-hints
-      (("subgoal 4" :in-theory (enable fat32-masked-entry-p))
-       ("subgoal 2'" :in-theory (enable fat32-masked-entry-p))
-       ("subgoal 1'"
-        :in-theory (disable member-of-fat32-entry-list)
-        :use
-        (:instance member-of-fat32-entry-list
-                   (lst fa-table)
-                   (x (nth masked-current-cluster fa-table)))))
-      :measure (:? fa-table acc)
-      :hints
-      (("subgoal 1'"
-        :in-theory (disable l6-build-index-list-measure-lemma-1)
-        :use
-        (:instance
-         l6-build-index-list-measure-lemma-1
-         (next-cluster
-          (nth masked-current-cluster fa-table)))))))
+(defun
+  l6-build-index-list
+  (fa-table masked-current-cluster length)
+  (declare
+   (xargs
+    :measure (acl2-count length)
+    :guard (and (fat32-entry-list-p fa-table)
+                (fat32-masked-entry-p masked-current-cluster)
+                (natp length))
+    :guard-hints
+    (("goal"
+      :in-theory (disable fat32-entry-mask-correctness-1)
+      :use
+      (:instance fat32-entry-mask-correctness-1
+                 (x (nth masked-current-cluster fa-table)))))))
+  (if
+   (or (not (integerp length))
+       (<= length 0)
+       (< masked-current-cluster 2)
+       (>= masked-current-cluster (len fa-table)))
+   nil
+   (let
+    ((masked-next-cluster
+      (fat32-entry-mask (nth masked-current-cluster fa-table))))
     (if
-     (or (< masked-current-cluster 2)
-         (>= masked-current-cluster (len fa-table)))
-     (reverse acc)
-     (let
-      ((masked-next-cluster
-        (fat32-entry-mask
-         (nth masked-current-cluster fa-table))))
-      (if
-       (or (l6-is-eof masked-next-cluster)
-           (member masked-next-cluster acc))
-       (reverse acc)
-       (l6-build-index-list fa-table masked-next-cluster
-                            (cons masked-next-cluster acc)))))))
+     (l6-is-eof masked-next-cluster)
+     (list masked-current-cluster)
+     (list*
+      masked-current-cluster
+      (l6-build-index-list fa-table masked-next-cluster
+                           (nfix (- length *blocksize*))))))))
 
 (defthm
   l6-build-index-list-correctness-1
   (implies
-   (fat32-masked-entry-list-p acc)
+   (and (equal b (len fa-table))
+        (fat32-masked-entry-p masked-current-cluster))
+   (bounded-nat-listp
+    (l6-build-index-list fa-table masked-current-cluster length)
+    b)))
+
+(defthm
+  l6-build-index-list-correctness-2
+  (implies
+   (fat32-masked-entry-p masked-current-cluster)
    (fat32-masked-entry-list-p
     (l6-build-index-list fa-table masked-current-cluster acc))))
 
@@ -567,11 +494,20 @@
                               (fat32-entry-list-p fa-table))))
   (let
       ((first-cluster (l6-regular-file-first-cluster file)))
-    (if
-        (or (< first-cluster 2) (>= first-cluster (len fa-table)))
+    (if (or (< first-cluster 2)
+            (>= first-cluster (len fa-table)))
         nil
-      (list* first-cluster
-             (l6-build-index-list fa-table first-cluster nil)))))
+      (l6-build-index-list fa-table first-cluster
+                           (l6-regular-file-length file)))))
+
+(defthm
+  l6-file-index-list-correctness-2
+  (implies (and (l6-regular-file-entry-p file)
+                (fat32-entry-list-p fa-table)
+                (equal b (len fa-table)))
+           (bounded-nat-listp
+            (l6-file-index-list file fa-table) b))
+  :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
   l6-file-index-list-correctness-1
@@ -857,16 +793,8 @@
          (if
              (and (consp (assoc (car hns) fs))
                   (l6-regular-file-entry-p (cdr (assoc (car hns) fs))))
-             (let* ((old-first-cluster
-                     (l6-regular-file-first-cluster (cdr (assoc (car hns) fs))))
-                    (old-indices
-                     (if
-                         (or (< old-first-cluster 2) (>= old-first-cluster
-                                                         (len fa-table)))
-                         nil
-                       (list*
-                        old-first-cluster
-                        (l6-build-index-list fa-table old-first-cluster nil)))))
+             (let ((old-indices
+                    (l6-file-index-list (cdr (assoc (car hns) fs)) fa-table)))
                (set-indices-in-fa-table fa-table old-indices
                                         (make-list (len old-indices) :initial-element 0)))
            fa-table))
@@ -954,6 +882,13 @@
            (mv-let (l4-fs l4-alv) (l6-to-l4-fs fs fa-table)
              (declare (ignore l4-fs))
                   (boolean-listp l4-alv))))
+
+(defthm l6-to-l4-fs-correctness-2
+  (implies (and (l6-fs-p fs)
+                (fat32-entry-list-p fa-table))
+           (mv-let (l4-fs l4-alv) (l6-to-l4-fs fs fa-table)
+             (declare (ignore l4-fs))
+                  (equal (len l4-alv) (len fa-table)))))
 
 (verify-guards l6-to-l4-fs)
 
@@ -1163,3 +1098,64 @@
          (implies ok
                   (equal (l4-list-all-indices l4-fs)
                          index-list)))))))
+
+;; What's the file allocation table analog of
+;;                 (indices-marked-p all-indices alv)?
+
+;; It would be a proposition that says all these indices which are claimed by
+;; the various files are actually used (not 0 or 1) in the file allocation
+;; table. But this is, to some extent, self-evident... Except for the first
+;; index, which is indicated in the filesystem tree itself, everything else
+;; is pointed to by something else.
+
+;; So I'm thinking there's not a need for such a proposition right now.
+
+;; I'm keeping this definition disabled for now because I recall having to
+;; disable l4-stricter-fs-p earlier for getting proofs through
+(defund l6-stricter-fs-p (fs fa-table)
+  (declare (xargs :guard t))
+  (and (l6-fs-p fs)
+       (fat32-entry-list-p fa-table)
+       (mv-let (all-indices ok) (l6-list-all-ok-indices fs fa-table)
+         (and ok
+              (no-duplicatesp all-indices)))))
+
+(defthm
+  l6-stricter-fs-p-correctness-1-lemma-1
+  (implies (and (equal (len alv1) (len alv2))
+                (indices-marked-p index-list alv1))
+           (indices-marked-p index-list (merge-alv alv1 alv2)))
+  :hints (("goal" :in-theory (enable merge-alv))))
+
+(defthm
+  l6-stricter-fs-p-correctness-1-lemma-2
+  (implies (and (equal (len alv1) (len alv2))
+                (indices-marked-p index-list alv2))
+           (indices-marked-p index-list (merge-alv alv1 alv2)))
+  :hints (("goal" :in-theory (enable merge-alv))))
+
+;; The theorem prover doesn't agree - we need to prove that these indices are
+;; marked.
+
+;; This might be a difficult or impossible undertaking, given that I'm no
+;; longer sure that all the indices drawn from a file are valid indices.
+;; Update: Oh my...
+;; ACL2 !>       (l6-build-index-list
+;;        '(0 0 3 4 5) 2 nil)
+;; (3 4 5)
+;; Update: what about taking the cdr as soon as a non-compliant (that is,
+;; pointing beyond the end of the fa-table) index is found?
+;;
+;; That's not a great idea. We also need to figure out our completion
+;; semantics... this seems like the right time to re-work.
+
+(defthm
+  l6-stricter-fs-p-correctness-1
+  (implies (and (l6-fs-p fs)
+                (fat32-entry-list-p fa-table))
+           (mv-let (l4-fs l4-alv)
+             (l6-to-l4-fs fs fa-table)
+             (equal (l4-stricter-fs-p l4-fs l4-alv)
+                    (l6-stricter-fs-p fs fa-table))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p
+                                     l6-list-all-ok-indices))))
