@@ -37,6 +37,11 @@
 
 (in-theory (enable fat32-entry-p fat32-entry-fix fat32-masked-entry-p fat32-masked-entry-fix))
 
+(defthm fat32-masked-entry-p-correctness-1
+  (implies (fat32-masked-entry-p x)
+           (natp x))
+  :rule-classes :forward-chaining)
+
 ;; Use a mask to take the low 28 bits.
 (defund fat32-entry-mask (x)
   (declare (xargs :guard (fat32-entry-p x)))
@@ -276,6 +281,47 @@
 
 ;; we have what we need to define a disk traversal to get the contents of the
 ;; file
+
+(defun
+  l6-build-index-list
+  (fa-table masked-current-cluster length)
+  (declare
+   (xargs
+    :measure (acl2-count length)
+    :guard (and (fat32-entry-list-p fa-table)
+                (fat32-masked-entry-p masked-current-cluster)
+                (natp length))
+    :guard-hints
+    (("goal"
+      :in-theory (disable fat32-entry-mask-correctness-1)
+      :use
+      (:instance fat32-entry-mask-correctness-1
+                 (x (nth masked-current-cluster fa-table)))))))
+  (if
+   (or (not (integerp length))
+       (<= length 0)
+       (< masked-current-cluster 2)
+       (>= masked-current-cluster (len fa-table)))
+   nil
+   (let
+    ((masked-next-cluster
+      (fat32-entry-mask (nth masked-current-cluster fa-table))))
+    (if
+     (l6-is-eof masked-next-cluster)
+     (list masked-current-cluster)
+     (list*
+      masked-current-cluster
+      (l6-build-index-list fa-table masked-next-cluster
+                           (nfix (- length *blocksize*))))))))
+
+(defthm
+  l6-build-index-list-correctness-1
+  (implies
+   (and (equal b (len fa-table))
+        (fat32-masked-entry-p masked-current-cluster))
+   (bounded-nat-listp
+    (l6-build-index-list fa-table masked-current-cluster length)
+    b)))
 
 ;; let's define it as an operation to get an index list
 
