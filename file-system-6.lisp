@@ -494,20 +494,20 @@
                               (fat32-entry-list-p fa-table))))
   (let
       ((first-cluster (l6-regular-file-first-cluster file)))
-    (if
-        (or (< first-cluster 2) (>= first-cluster (len fa-table)))
+    (if (or (< first-cluster 2)
+            (>= first-cluster (len fa-table)))
         nil
-      (list* first-cluster
-             (l6-build-index-list fa-table first-cluster nil)))))
+      (l6-build-index-list fa-table first-cluster
+                           (l6-regular-file-length file)))))
 
-;; (defthm
-;;   l6-file-index-list-correctness-2
-;;   (implies (and (l6-regular-file-entry-p file)
-;;                 (fat32-entry-list-p fa-table)
-;;                 (equal b (len fa-table)))
-;;            (bounded-nat-listp
-;;             (l6-file-index-list file fa-table) b))
-;;   :hints (("goal" :in-theory (enable l6-file-index-list))))
+(defthm
+  l6-file-index-list-correctness-2
+  (implies (and (l6-regular-file-entry-p file)
+                (fat32-entry-list-p fa-table)
+                (equal b (len fa-table)))
+           (bounded-nat-listp
+            (l6-file-index-list file fa-table) b))
+  :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
   l6-file-index-list-correctness-1
@@ -1149,11 +1149,13 @@
 ;; That's not a great idea. We also need to figure out our completion
 ;; semantics... this seems like the right time to re-work.
 
-(defthm l6-stricter-fs-p-correctness-1
-  (implies
-   (and (l6-fs-p fs)
-        (fat32-entry-list-p fa-table))
-   (mv-let (l4-fs l4-alv) (l6-to-l4-fs fs fa-table)
-     (equal (L4-STRICTER-FS-P l4-FS l4-ALV)
-            (l6-stricter-fs-p fs fa-table))))
-  :hints (("Goal" :in-theory (enable l6-stricter-fs-p)) ))
+(defthm
+  l6-stricter-fs-p-correctness-1
+  (implies (and (l6-fs-p fs)
+                (fat32-entry-list-p fa-table))
+           (mv-let (l4-fs l4-alv)
+             (l6-to-l4-fs fs fa-table)
+             (equal (l4-stricter-fs-p l4-fs l4-alv)
+                    (l6-stricter-fs-p fs fa-table))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p
+                                     l6-list-all-ok-indices))))
