@@ -1108,8 +1108,6 @@
 ;; index, which is indicated in the filesystem tree itself, everything else
 ;; is pointed to by something else.
 
-;; So I'm thinking there's not a need for such a proposition right now.
-
 ;; I'm keeping this definition disabled for now because I recall having to
 ;; disable l4-stricter-fs-p earlier for getting proofs through
 (defund l6-stricter-fs-p (fs fa-table)
@@ -1134,21 +1132,6 @@
            (indices-marked-p index-list (merge-alv alv1 alv2)))
   :hints (("goal" :in-theory (enable merge-alv))))
 
-;; The theorem prover doesn't agree - we need to prove that these indices are
-;; marked.
-
-;; This might be a difficult or impossible undertaking, given that I'm no
-;; longer sure that all the indices drawn from a file are valid indices.
-;; Update: Oh my...
-;; ACL2 !>       (l6-build-index-list
-;;        '(0 0 3 4 5) 2 nil)
-;; (3 4 5)
-;; Update: what about taking the cdr as soon as a non-compliant (that is,
-;; pointing beyond the end of the fa-table) index is found?
-;;
-;; That's not a great idea. We also need to figure out our completion
-;; semantics... this seems like the right time to re-work.
-
 (defthm
   l6-stricter-fs-p-correctness-1
   (implies (and (l6-fs-p fs)
@@ -1159,3 +1142,5 @@
                     (l6-stricter-fs-p fs fa-table))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p
                                      l6-list-all-ok-indices))))
+
+;; Completion semantics for reading and writing still need to be figured out...
