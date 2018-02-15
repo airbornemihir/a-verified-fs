@@ -467,6 +467,15 @@
   (equal (len (unmake-blocks-without-feasibility blocks n))
          (nfix n)))
 
+(defthm unmake-blocks-without-feasibility-correctness-3
+  (implies (and (block-listp blocks)
+                (natp n)
+                (feasible-file-length-p (len blocks) n))
+           (equal (unmake-blocks-without-feasibility blocks n)
+                  (unmake-blocks blocks n)))
+  :hints (("goal" :in-theory (enable feasible-file-length-p))
+          ("subgoal *1/2''" :expand (len (cdr blocks)))))
+
 (defthm
   unmake-without-feasibility-make-blocks
   (implies
@@ -1144,3 +1153,261 @@
                                      l6-list-all-ok-indices))))
 
 ;; Completion semantics for reading and writing still need to be figured out...
+
+(defthm
+  l6-stat-correctness-1-lemma-1
+  (implies
+   (and
+    (consp (mv-nth 0 (l6-to-l4-fs fs fa-table)))
+    (consp (assoc-equal name
+                        (mv-nth 0 (l6-to-l4-fs fs fa-table))))
+    (symbolp name)
+    (block-listp disk)
+    (fat32-entry-list-p fa-table)
+    (l6-stricter-fs-p fs fa-table)
+    (consp fs)
+    (consp (assoc-equal name fs))
+    (not (l6-regular-file-entry-p (cdr (assoc-equal name fs)))))
+   (l6-stricter-fs-p (cdr (assoc-equal name fs))
+                     fa-table))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p
+                                     l6-list-all-ok-indices))))
+
+(defthm
+  l6-stat-correctness-1-lemma-2
+  (implies
+   (and (symbolp name)
+        (block-listp disk)
+        (fat32-entry-list-p fa-table)
+        (l6-stricter-fs-p fs fa-table)
+        (consp (assoc-equal name fs)))
+   (equal
+    (l3-regular-file-entry-p
+     (cdr (assoc-equal name
+                       (mv-nth 0 (l6-to-l4-fs fs fa-table)))))
+    (l6-regular-file-entry-p (cdr (assoc-equal name fs)))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p
+                                     l6-list-all-ok-indices))
+          ("subgoal *1/5'''"
+           :in-theory (enable l3-regular-file-entry-p))
+          ("subgoal *1/6"
+           :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm
+  l6-stat-correctness-1-lemma-3
+  (implies
+   (and (symbolp name)
+        (fat32-entry-list-p fa-table)
+        (l6-fs-p fs))
+   (equal
+    (consp (assoc-equal name
+                        (mv-nth 0 (l6-to-l4-fs fs fa-table))))
+    (consp (assoc-equal name fs)))))
+
+(defthm
+  l6-stat-correctness-1-lemma-4
+  (implies
+   (and
+    (consp (assoc-equal name fs))
+    (not
+     (l6-regular-file-entry-p (cdr (assoc-equal name fs))))
+    (symbolp name)
+    (fat32-entry-list-p fa-table)
+    (l6-fs-p fs)
+    (mv-nth 1 (l6-list-all-ok-indices fs fa-table)))
+   (mv-nth
+    1
+    (l6-list-all-ok-indices (cdr (assoc-equal name fs))
+                            fa-table)))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-stat-correctness-1-lemma-5
+  (implies
+   (and
+    (consp (assoc-equal name fs))
+    (not
+     (l6-regular-file-entry-p (cdr (assoc-equal name fs))))
+    (symbolp name)
+    (fat32-entry-list-p fa-table)
+    (l6-fs-p fs)
+    (no-duplicatesp-equal
+     (mv-nth 0
+             (l6-list-all-ok-indices fs fa-table))))
+   (no-duplicatesp-equal
+    (mv-nth 0
+            (l6-list-all-ok-indices (cdr (assoc-equal name fs))
+                                    fa-table))))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-stat-correctness-1-lemma-6
+  (implies
+   (and
+    (consp (assoc-equal name fs))
+    (not (l6-regular-file-entry-p (cdr (assoc-equal name fs))))
+    (symbolp name)
+    (block-listp disk)
+    (fat32-entry-list-p fa-table)
+    (l6-fs-p fs))
+   (equal
+    (cdr (assoc-equal name
+                      (mv-nth 0 (l6-to-l4-fs fs fa-table))))
+    (mv-nth 0
+            (l6-to-l4-fs (cdr (assoc-equal name fs))
+                         fa-table)))))
+
+(defthm
+  l6-stat-correctness-1-lemma-7
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (symbolp name)
+        (block-listp disk)
+        (fat32-entry-list-p fa-table)
+        (l6-fs-p fs))
+   (equal
+    (cdr (assoc-equal name
+                      (mv-nth 0 (l6-to-l4-fs fs fa-table))))
+    (cons
+     (l6-file-index-list (cdr (assoc-equal name fs))
+                         fa-table)
+     (l6-regular-file-length (cdr (assoc-equal name fs)))))))
+
+(defthm
+  l6-stat-correctness-1-lemma-8
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (block-listp disk)
+        (fat32-entry-list-p fa-table)
+        (l6-fs-p fs)
+        (mv-nth 1 (l6-list-all-ok-indices fs fa-table)))
+   (feasible-file-length-p
+    (len (l6-file-index-list (cdr (assoc-equal name fs))
+                             fa-table))
+    (l6-regular-file-length (cdr (assoc-equal name fs)))))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+;; This is the first of two theorems showing the equivalence of the l6 and l4
+;; versions of stat.
+(defthm
+  l6-stat-correctness-1
+  (implies
+   (and (symbol-listp hns)
+        (block-listp disk)
+        (fat32-entry-list-p fa-table)
+        (l6-stricter-fs-p fs fa-table))
+   (b*
+       (((mv l4-fs &) (l6-to-l4-fs fs fa-table))
+        (l6-file (l6-stat hns fs disk)))
+     (implies
+      (l6-regular-file-entry-p l6-file)
+      (equal
+       (l3-stat hns l4-fs disk)
+       (coerce (unmake-blocks
+                (fetch-blocks-by-indices
+                 disk
+                 (l6-file-index-list l6-file fa-table))
+                (l6-regular-file-length l6-file))
+               'string)))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p))
+          ("subgoal *1/9.2" :expand (l6-to-l4-fs fs fa-table))
+          ("subgoal *1/4.4'"
+           :in-theory (enable l3-regular-file-entry-p))))
+
+;; This is the second of two theorems showing the equivalence of the l6 and l4
+;; versions of stat.
+(defthm
+  l6-stat-correctness-2
+  (implies
+   (and (symbol-listp hns)
+        (fat32-entry-list-p fa-table)
+        (l6-stricter-fs-p fs fa-table)
+        (block-listp disk)
+        (l6-fs-p (l6-stat hns fs disk)))
+   (b*
+       (((mv l4-fs &) (l6-to-l4-fs fs fa-table))
+        (l6-fs (l6-stat hns fs disk)))
+     (implies (l6-fs-p l6-fs)
+              (equal (l3-stat hns l4-fs disk)
+                     (mv-nth 0
+                             (l6-to-l4-fs (l6-stat hns fs disk)
+                                          fa-table))))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p))
+          ("subgoal *1/5''"
+           :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm
+  l6-rdchs-correctness-1-lemma-1
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (fat32-entry-list-p fa-table)
+        (symbol-listp hns)
+        (block-listp disk))
+   (equal
+    (stringp (l3-stat hns (mv-nth 0 (l6-to-l4-fs fs fa-table))
+                      disk))
+    (l6-regular-file-entry-p (l6-stat hns fs disk))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
+
+;; This lemma should be where unmake-blocks is defined - it isn't, currently,
+;; because placing it there leaves us with a beast of a proof-builder lemma to
+;; debug in file-system-4.lisp (which shouldn't be reliant on the proof builder
+;; in the first place - oh well)
+(defthm unmake-blocks-correctness-2
+  (implies (and (block-listp blocks)
+                (natp n)
+                (feasible-file-length-p (len blocks) n))
+           (equal (len (unmake-blocks blocks n))
+                  n))
+  :hints (("goal" :in-theory (enable feasible-file-length-p))
+          ("subgoal *1/5'''" :expand (len (cdr blocks)))))
+
+(defthm
+  l6-rdchs-correctness-1-lemma-2
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (fat32-entry-list-p fa-table)
+        (symbol-listp hns)
+        (block-listp disk)
+        (l6-regular-file-entry-p (l6-stat hns fs disk))
+        (<= 0
+            (l6-regular-file-length (l6-stat hns fs disk))))
+   (equal
+    (len (unmake-blocks
+          (fetch-blocks-by-indices
+           disk
+           (l6-file-index-list (l6-stat hns fs disk)
+                               fa-table))
+          (l6-regular-file-length (l6-stat hns fs disk))))
+    (l6-regular-file-length (l6-stat hns fs disk))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
+
+(defthm
+  l6-rdchs-correctness-1-lemma-3
+  (implies (and (l6-stricter-fs-p fs fa-table)
+                (fat32-entry-list-p fa-table)
+                (symbol-listp hns)
+                (block-listp disk)
+                (l6-regular-file-entry-p (l6-stat hns fs disk)))
+           (feasible-file-length-p
+            (len (l6-file-index-list (l6-stat hns fs disk)
+                                     fa-table))
+            (l6-regular-file-length (l6-stat hns fs disk))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
+
+(defthm
+  l6-rdchs-correctness-1
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (natp start)
+        (natp n)
+        (fat32-entry-list-p fa-table)
+        (symbol-listp hns)
+        (block-listp disk))
+   (mv-let (l4-fs l4-alv)
+     (l6-to-l4-fs fs fa-table)
+     (declare (ignore l4-alv))
+     (equal (l4-rdchs hns l4-fs disk start n)
+            (l6-rdchs hns fs disk fa-table start n)))))

@@ -104,22 +104,29 @@
 
   ;; Proving that make and unmake are, in a sense, inverse functions of each
   ;; other.
-  (defthm unmake-make-blocks
+  (defthm
+    unmake-make-blocks
     (implies (and (character-listp text))
-             (equal (unmake-blocks (make-blocks text) (len text)) text))
-    :hints (("Subgoal *1/3.2" :in-theory (disable unmake-make-blocks-lemma-1)
-             :use (:instance unmake-make-blocks-lemma-1 (n *blocksize*) (l
-                                                                         text)))
-            ("Subgoal *1/3.1'"
+             (equal (unmake-blocks (make-blocks text)
+                                   (len text))
+                    text))
+    :hints (("subgoal *1/3.2"
+             :in-theory (disable unmake-make-blocks-lemma-1)
+             :use (:instance unmake-make-blocks-lemma-1
+                             (n *blocksize*)
+                             (l text)))
+            ("subgoal *1/3.1'"
              :in-theory (disable already-a-character-list
                                  take-of-too-many)
-             :use ((:instance take-of-too-many (x text) (n *blocksize*))
-                   (:instance unmake-make-blocks-lemma-1 (n *blocksize*) (l
-                                                                          text))))))
+             :use ((:instance take-of-too-many (x text)
+                              (n *blocksize*))
+                   (:instance unmake-make-blocks-lemma-1
+                              (n *blocksize*)
+                              (l text))))))
 
   )
 
-;; This is a function that might be needed later.
+;; This is a constant that might be needed later.
 ;; This is to be returned when a block is not found. It's full of null
 ;; characters and is *blocksize* long.
 (defconst *nullblock* (make-character-list (take *blocksize* nil)))

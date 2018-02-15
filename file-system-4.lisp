@@ -800,8 +800,8 @@
                 (block-listp disk)
                 (l4-fs-p (l4-stat hns fs disk)))
            (equal (l2-stat hns (l4-to-l2-fs fs disk))
-                  (l4-to-l2-fs (l4-stat hns fs disk) disk)))
-  )
+                  (l4-to-l2-fs (l4-stat hns fs disk)
+                               disk))))
 
 ;; This theorem proves the equivalence of the l4 and l2 versions of rdchs.
 (defthm l4-rdchs-correctness-1
