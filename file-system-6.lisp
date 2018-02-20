@@ -896,53 +896,52 @@
   :hints (("goal" :in-theory (enable fa-table-to-alv))))
 
 (defun
+  l6-to-l4-fs-helper (fs fa-table)
+  (declare (xargs :guard (and (l6-fs-p fs)
+                              (fat32-entry-list-p fa-table)
+                              (<= (len fa-table) *expt-2-28*)
+                              (>= (len fa-table) 2))))
+  (if
+      (atom fs)
+      fs
+   (let*
+    ((directory-or-file-entry (car fs))
+     (name (car directory-or-file-entry))
+     (entry (cdr directory-or-file-entry)))
+    (let
+        ((tail-fs
+          (l6-to-l4-fs-helper (cdr fs) fa-table)))
+      (if
+       (l6-regular-file-entry-p entry)
+        (list* (cons name
+                     (cons (l6-file-index-list entry fa-table)
+                           (l6-regular-file-length entry)))
+               tail-fs)
+        (list* (cons name (l6-to-l4-fs-helper entry fa-table)) tail-fs))))))
+
+(defun
   l6-to-l4-fs (fs fa-table)
   (declare (xargs :verify-guards nil
                   :guard (and (l6-fs-p fs)
                               (fat32-entry-list-p fa-table)
                               (<= (len fa-table) *expt-2-28*)
                               (>= (len fa-table) 2))))
-  (if
-   (atom fs)
-   (mv fs
-       ;; this is for creating a new allocation vector with only the first
-       ;; two slots filled in
-       (take (len fa-table) (list t t)))
-   (let*
-    ((directory-or-file-entry (car fs))
-     (name (car directory-or-file-entry))
-     (entry (cdr directory-or-file-entry)))
-    (mv-let
-      (tail-fs tail-alv)
-      (l6-to-l4-fs (cdr fs) fa-table)
-      (if
-       (l6-regular-file-entry-p entry)
-       (mv
-        (list* (cons name
-                     (cons (l6-file-index-list entry fa-table)
-                           (l6-regular-file-length entry)))
-               tail-fs)
-        (set-indices-in-alv tail-alv
-                            (l6-file-index-list entry fa-table)
-                            t))
-       (mv-let (head-fs head-alv)
-         (l6-to-l4-fs entry fa-table)
-         (mv (list* (cons name head-fs) tail-fs)
-             (merge-alv head-alv tail-alv))))))))
+  (mv (l6-to-l4-fs-helper fs fa-table) (fa-table-to-alv fa-table)))
 
 (defthm l6-to-l4-fs-correctness-1
   (implies (and (l6-fs-p fs)
                 (fat32-entry-list-p fa-table))
            (mv-let (l4-fs l4-alv) (l6-to-l4-fs fs fa-table)
              (declare (ignore l4-fs))
-                  (boolean-listp l4-alv))))
+             (boolean-listp l4-alv))))
 
 (defthm l6-to-l4-fs-correctness-2
   (implies (and (l6-fs-p fs)
-                (fat32-entry-list-p fa-table))
+                (fat32-entry-list-p fa-table)
+                (>= (len fa-table) 2))
            (mv-let (l4-fs l4-alv) (l6-to-l4-fs fs fa-table)
              (declare (ignore l4-fs))
-                  (equal (len l4-alv) (len fa-table)))))
+             (equal (len l4-alv) (len fa-table)))))
 
 (verify-guards l6-to-l4-fs)
 
