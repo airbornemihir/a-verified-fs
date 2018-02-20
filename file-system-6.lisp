@@ -858,7 +858,43 @@
 ;; From the FAT specification, page 18: "The list of free clusters in the FAT
 ;; is nothing more than the list of all clusters that contain the value 0 in
 ;; their FAT cluster entry."
-;; This function needs to be brought into compliance with that idea.
+(defund fa-table-to-alv-helper (fa-table)
+  (declare (xargs :guard (fat32-entry-list-p fa-table)))
+  (if (atom fa-table)
+      nil
+      (cons (not (equal (fat32-entry-mask (car fa-table))
+                        0))
+            (fa-table-to-alv-helper (cdr fa-table)))))
+
+(defthm
+  fa-table-to-alv-helper-correctness-1
+  (equal (len (fa-table-to-alv-helper fa-table))
+         (len fa-table))
+  :hints (("goal" :in-theory (enable fa-table-to-alv-helper))))
+
+(defthm
+  fa-table-to-alv-helper-correctness-2
+  (boolean-listp (fa-table-to-alv-helper fa-table))
+  :hints (("goal" :in-theory (enable fa-table-to-alv-helper))))
+
+(defund fa-table-to-alv (fa-table)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (<= (len fa-table) *expt-2-28*)
+                              (>= (len fa-table) 2))))
+  (make-list-ac 2 t (fa-table-to-alv-helper (nthcdr 2 fa-table))))
+
+(defthm
+  fa-table-to-alv-correctness-1
+  (implies (>= (len fa-table) 2)
+           (equal (len (fa-table-to-alv fa-table))
+                  (len fa-table)))
+  :hints (("goal" :in-theory (enable fa-table-to-alv))))
+
+(defthm
+  fa-table-to-alv-correctness-2
+  (boolean-listp (fa-table-to-alv fa-table))
+  :hints (("goal" :in-theory (enable fa-table-to-alv))))
+
 (defun
   l6-to-l4-fs (fs fa-table)
   (declare (xargs :verify-guards nil
