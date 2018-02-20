@@ -283,3 +283,7 @@
   (implies (and (boolean-listp l)
                 (boolean-listp ac))
            (boolean-listp (first-n-ac i l ac))))
+
+(defthm consp-of-first-n-ac
+  (iff (consp (first-n-ac i l ac))
+       (or (consp ac) (not (zp i)))))
