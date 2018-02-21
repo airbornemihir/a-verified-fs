@@ -829,32 +829,6 @@
                             (delete-assoc (car hns) fs))
                       new-fa-table))))))))))
 
-(defund
-  merge-alv (lst1 lst2)
-  (declare (xargs :guard (and (boolean-listp lst1)
-                              (boolean-listp lst2))))
-  (if (atom lst1)
-      nil
-      (list* (or (car lst1) (car lst2))
-             (merge-alv (cdr lst1) (cdr lst2)))))
-
-(defthm merge-alv-correctness-1
-  (equal (len (merge-alv lst1 lst2))
-         (len lst1))
-  :hints (("goal" :in-theory (enable merge-alv))))
-
-(defthm merge-alv-correctness-2
-  (implies (equal (len lst1) (len lst2))
-           (equal (nth n (merge-alv lst1 lst2))
-                  (or (nth n lst1) (nth n lst2))))
-  :hints (("goal" :in-theory (enable merge-alv))))
-
-(defthm merge-alv-correctness-3
-  (implies (and (boolean-listp lst1)
-                (boolean-listp lst2))
-           (boolean-listp (merge-alv lst1 lst2)))
-  :hints (("goal" :in-theory (enable merge-alv))))
-
 ;; From the FAT specification, page 18: "The list of free clusters in the FAT
 ;; is nothing more than the list of all clusters that contain the value 0 in
 ;; their FAT cluster entry."
@@ -1066,20 +1040,6 @@
               (no-duplicatesp all-indices)))))
 
 (defthm
-  l6-stricter-fs-p-correctness-1-lemma-1
-  (implies (and (equal (len alv1) (len alv2))
-                (indices-marked-p index-list alv1))
-           (indices-marked-p index-list (merge-alv alv1 alv2)))
-  :hints (("goal" :in-theory (enable merge-alv))))
-
-(defthm
-  l6-stricter-fs-p-correctness-1-lemma-2
-  (implies (and (equal (len alv1) (len alv2))
-                (indices-marked-p index-list alv2))
-           (indices-marked-p index-list (merge-alv alv1 alv2)))
-  :hints (("goal" :in-theory (enable merge-alv))))
-
-(defthm
   l6-stricter-fs-p-correctness-1
   (implies (and (l6-fs-p fs)
                 (fat32-entry-list-p fa-table))
@@ -1088,7 +1048,11 @@
              (equal (l4-stricter-fs-p l4-fs l4-alv)
                     (l6-stricter-fs-p fs fa-table))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p
-                                     l6-list-all-ok-indices))))
+                                     l6-list-all-ok-indices))
+          ("Subgoal 5'" :in-theory (disable
+  l6-list-all-ok-indices-correctness-4) :use l6-list-all-ok-indices-correctness-4)
+          ("Subgoal 3'" :in-theory (disable
+  l6-list-all-ok-indices-correctness-4) :use l6-list-all-ok-indices-correctness-4)))
 
 (defthm
   l6-stricter-fs-p-correctness-2
