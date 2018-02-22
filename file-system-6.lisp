@@ -1314,25 +1314,49 @@
    (and (symbol-listp hns)
         (block-listp disk)
         (fat32-entry-list-p fa-table)
-        (l6-stricter-fs-p fs fa-table))
-   (b*
-       (((mv l4-fs &) (l6-to-l4-fs fs fa-table))
-        (l6-file (l6-stat hns fs disk)))
-     (implies
-      (l6-regular-file-entry-p l6-file)
-      (equal
-       (l3-stat hns l4-fs disk)
-       (coerce (unmake-blocks
-                (fetch-blocks-by-indices
-                 disk
-                 (l6-file-index-list l6-file fa-table))
-                (l6-regular-file-length l6-file))
-               'string)))))
+        (l6-fs-p fs)
+        (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+        (no-duplicatesp-equal
+         (mv-nth 0 (l6-list-all-ok-indices fs fa-table)))
+        (l6-regular-file-entry-p (l6-stat hns fs disk)))
+   (equal
+    (l3-stat hns (l6-to-l4-fs-helper fs fa-table)
+             disk)
+    (implode
+     (unmake-blocks
+      (fetch-blocks-by-indices
+       disk
+       (l6-file-index-list (l6-stat hns fs disk)
+                           fa-table))
+      (l6-regular-file-length (l6-stat hns fs disk))))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p))
           ("subgoal *1/4'''"
            :in-theory (enable l3-regular-file-entry-p))
           ("subgoal *1/11.2'"
-           :in-theory (enable l3-regular-file-entry-p))))
+           :in-theory (enable l3-regular-file-entry-p)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (symbol-listp hns)
+          (block-listp disk)
+          (fat32-entry-list-p fa-table)
+          (l6-stricter-fs-p fs fa-table))
+     (b*
+         (((mv l4-fs &) (l6-to-l4-fs fs fa-table))
+          (l6-file (l6-stat hns fs disk)))
+       (implies
+        (l6-regular-file-entry-p l6-file)
+        (equal
+         (l3-stat hns l4-fs disk)
+         (coerce (unmake-blocks
+                  (fetch-blocks-by-indices
+                   disk
+                   (l6-file-index-list l6-file fa-table))
+                  (l6-regular-file-length l6-file))
+                 'string)))))
+    :hints (("goal" :in-theory (enable l6-stricter-fs-p))))))
 
 ;; This is the second of two theorems showing the equivalence of the l6 and l4
 ;; versions of stat.
@@ -1368,15 +1392,26 @@
 (defthm
   l6-rdchs-correctness-1-lemma-1
   (implies
-   (and (l6-stricter-fs-p fs fa-table)
+   (and (l6-fs-p fs)
         (fat32-entry-list-p fa-table)
+        (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+        (no-duplicatesp-equal (mv-nth 0 (l6-list-all-ok-indices fs fa-table)))
         (symbol-listp hns)
         (block-listp disk))
-   (equal
-    (stringp (l3-stat hns (mv-nth 0 (l6-to-l4-fs fs fa-table))
-                      disk))
-    (l6-regular-file-entry-p (l6-stat hns fs disk))))
-  :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
+   (equal (stringp (l3-stat hns (l6-to-l4-fs-helper fs fa-table)
+                            disk))
+          (l6-regular-file-entry-p (l6-stat hns fs disk))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p))
+          ("Subgoal *1/5''" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))
+          ("Subgoal *1/4.1'" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))
+          ("Subgoal *1/10.2'"
+           :in-theory (disable l6-stat-correctness-1-lemma-3)
+           :use (:instance l6-stat-correctness-1-lemma-3
+                           (name (car hns))))
+          ("Subgoal *1/10.1'"
+           :in-theory (disable l6-stat-correctness-1-lemma-3)
+           :use (:instance l6-stat-correctness-1-lemma-3
+                           (name (car hns))))))
 
 ;; This lemma should be where unmake-blocks is defined - it isn't, currently,
 ;; because placing it there leaves us with a beast of a proof-builder lemma to
@@ -1437,7 +1472,8 @@
      (l6-to-l4-fs fs fa-table)
      (declare (ignore l4-alv))
      (equal (l4-rdchs hns l4-fs disk start n)
-            (l6-rdchs hns fs disk fa-table start n)))))
+            (l6-rdchs hns fs disk fa-table start n))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
 
 (defthm l6-wrchs-correctness-1-lemma-1
   (implies (and (l6-fs-p fs)
