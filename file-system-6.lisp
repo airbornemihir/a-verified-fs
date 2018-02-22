@@ -282,6 +282,14 @@
 ;; we have what we need to define a disk traversal to get the contents of the
 ;; file
 
+;; this function, as currently defined, allows zeroes and ones to get into the
+;; list, which is not good. i wish i could quickly cite the fat specification,
+;; but anyway i recall reading somewhere that files were allowed to end with a
+;; 0 or 1 instead of an EOC marker. That's kinda icky because that violates the
+;; invariant that the only zeroes in the file allocation table occur in
+;; clusters which are free and open for business. but i think i might have to
+;; allow for the possibility, and skate for a bit around the possibility of it
+;; actually happening.
 (defun
   l6-build-index-list
   (fa-table masked-current-cluster length)
@@ -851,6 +859,18 @@
   (boolean-listp (fa-table-to-alv-helper fa-table))
   :hints (("goal" :in-theory (enable fa-table-to-alv-helper))))
 
+(defthm
+  fa-table-to-alv-helper-correctness-3
+  (implies
+   (and (natp n) (< n (len fa-table)))
+   (equal (nth n (fa-table-to-alv-helper fa-table))
+          (not (equal (fat32-entry-mask (nth n fa-table))
+                      0))))
+  :hints (("goal" :in-theory (enable fa-table-to-alv-helper))))
+
+;; The reason why we're having to do this is because we want to assume
+;; arbitrary contents in the first two clusters in the fa-table. We could
+;; plausibly assume those will be non-zero, but we don't want to.
 (defund fa-table-to-alv (fa-table)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
                               (<= (len fa-table) *expt-2-28*)
@@ -867,6 +887,15 @@
 (defthm
   fa-table-to-alv-correctness-2
   (boolean-listp (fa-table-to-alv fa-table))
+  :hints (("goal" :in-theory (enable fa-table-to-alv))))
+
+(defthm
+  fa-table-to-alv-correctness-3
+  (implies
+   (and (integerp n) (>= n 2) (< n (len fa-table)))
+   (equal (nth n (fa-table-to-alv fa-table))
+          (not (equal (fat32-entry-mask (nth n fa-table))
+                      0))))
   :hints (("goal" :in-theory (enable fa-table-to-alv))))
 
 (defun
@@ -1039,6 +1068,68 @@
          (and ok
               (no-duplicatesp all-indices)))))
 
+(thm-cp (IMPLIES (AND (FAT32-ENTRY-LIST-P FA-TABLE)
+              (integerp MASKED-CURRENT-CLUSTER) (<= 2 MASKED-CURRENT-CLUSTER)
+              (< MASKED-CURRENT-CLUSTER (LEN FA-TABLE)))
+         (INDICES-MARKED-P
+              (L6-BUILD-INDEX-LIST FA-TABLE MASKED-CURRENT-CLUSTER LENGTH)
+              (FA-TABLE-TO-ALV FA-TABLE))) )
+
+(thm-cp
+  (IMPLIES
+     (AND
+          (L6-REGULAR-FILE-ENTRY-P entry)
+          (FAT32-ENTRY-LIST-P FA-TABLE))
+     (INDICES-MARKED-P (L6-FILE-INDEX-LIST entry
+                                           FA-TABLE)
+                       (FA-TABLE-TO-ALV FA-TABLE)))
+  :hints (("Goal" :in-theory (enable L6-FILE-INDEX-LIST))
+          ("Subgoal 2" :induct  (L6-BUILD-INDEX-LIST FA-TABLE
+                                        (L6-REGULAR-FILE-FIRST-CLUSTER ENTRY)
+                                        (L6-REGULAR-FILE-LENGTH ENTRY)))))
+
+(defthm l6-stricter-fs-p-correctness-1-lemma-1
+  (IMPLIES
+     (AND
+          (L6-REGULAR-FILE-ENTRY-P entry)
+          (FAT32-ENTRY-LIST-P FA-TABLE))
+     (INDICES-MARKED-P (L6-FILE-INDEX-LIST entry
+                                           FA-TABLE)
+                       (FA-TABLE-TO-ALV FA-TABLE)))
+  :hints (("Goal" :in-theory (enable L6-FILE-INDEX-LIST fa-table-to-alv)) ))
+
+(thm-cp
+  (implies
+   (and (l6-fs-p fs)
+        (fat32-entry-list-p fa-table))
+   (indices-marked-p
+    (l4-list-all-indices (l6-to-l4-fs-helper fs fa-table))
+    (fa-table-to-alv fa-table)))
+  :hints (("Goal" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))
+          ("Subgoal *1/7''" :expand ((L4-LIST-ALL-INDICES (CONS (CONS (CAR (CAR FS))
+                                       (L6-TO-L4-FS-HELPER (CDR (CAR FS))
+                                                           FA-TABLE))
+                                                               (L6-TO-L4-FS-HELPER
+                                                                (CDR FS) FA-TABLE)))))
+          ("Subgoal *1/3''" :expand
+   (L4-LIST-ALL-INDICES (CONS (LIST* (CAR (CAR FS))
+                                     (L6-FILE-INDEX-LIST (CDR (CAR FS))
+                                                         FA-TABLE)
+                                     (L6-REGULAR-FILE-LENGTH (CDR (CAR FS))))
+                              (L6-TO-L4-FS-HELPER (CDR FS) FA-TABLE))))))
+
+(defthm l6-stricter-fs-p-correctness-1-lemma-1
+  (implies
+   (and (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+        (l6-fs-p fs)
+        (fat32-entry-list-p fa-table)
+        (l3-fs-p (l6-to-l4-fs-helper fs fa-table))
+        (no-duplicatesp-equal
+         (l4-list-all-indices (l6-to-l4-fs-helper fs fa-table))))
+   (indices-marked-listp
+    (l4-collect-all-index-lists (l6-to-l4-fs-helper fs fa-table))
+    (fa-table-to-alv fa-table))))
+
 (defthm
   l6-stricter-fs-p-correctness-1
   (implies (and (l6-fs-p fs)
@@ -1047,12 +1138,9 @@
              (l6-to-l4-fs fs fa-table)
              (equal (l4-stricter-fs-p l4-fs l4-alv)
                     (l6-stricter-fs-p fs fa-table))))
-  :hints (("goal" :in-theory (enable l6-stricter-fs-p
-                                     l6-list-all-ok-indices))
-          ("Subgoal 5'" :in-theory (disable
-  l6-list-all-ok-indices-correctness-4) :use l6-list-all-ok-indices-correctness-4)
-          ("Subgoal 3'" :in-theory (disable
-  l6-list-all-ok-indices-correctness-4) :use l6-list-all-ok-indices-correctness-4)))
+  :hints (("goal" :in-theory (e/d (l6-stricter-fs-p
+                                     l6-list-all-ok-indices) (L4-COLLECT-ALL-INDEX-LISTS-CORRECTNESS-3
+  l6-list-all-ok-indices-correctness-4)) :use l6-list-all-ok-indices-correctness-4)))
 
 (defthm
   l6-stricter-fs-p-correctness-2

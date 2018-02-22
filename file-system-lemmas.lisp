@@ -287,3 +287,13 @@
 (defthm consp-of-first-n-ac
   (iff (consp (first-n-ac i l ac))
        (or (consp ac) (not (zp i)))))
+
+(defthm nth-of-make-list-ac
+  (implies (and (natp n) (natp m))
+           (equal (nth n (make-list-ac m val ac))
+                  (if (< n m) val (nth (- n m) ac)))))
+
+(defthm nth-of-nthcdr
+  (implies (and (natp n1) (natp n2))
+           (equal (nth n1 (nthcdr n2 l))
+                  (nth (+ n1 n2) l))))
