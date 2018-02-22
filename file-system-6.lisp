@@ -262,6 +262,15 @@
                         (l6-fs-p entry))))))
          (l6-fs-p (cdr fs)))))
 
+(defthm
+  l6-regular-file-entry-p-correctness-2
+  (implies (l6-regular-file-entry-p entry)
+           (not (l6-fs-p entry)))
+  :hints (("goal" :in-theory (enable l6-regular-file-entry-p)))
+  :rule-classes (:rewrite (:rewrite :corollary
+  (implies (l6-fs-p entry)
+           (not (l6-regular-file-entry-p entry))))))
+
 (defthm alistp-l6-fs-p
   (implies (l6-fs-p fs)
            (alistp fs)))
@@ -1201,11 +1210,9 @@
         (fat32-entry-list-p fa-table)
         (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
         (consp (assoc-equal name fs)))
-   (equal
-    (l3-regular-file-entry-p
-     (cdr (assoc-equal name
-                       (mv-nth 0 (l6-to-l4-fs fs fa-table)))))
-    (l6-regular-file-entry-p (cdr (assoc-equal name fs)))))
+   (equal (l3-regular-file-entry-p
+           (cdr (assoc-equal name (l6-to-l4-fs-helper fs fa-table))))
+          (l6-regular-file-entry-p (cdr (assoc-equal name fs)))))
   :hints
   (("goal" :in-theory (enable l6-list-all-ok-indices))
    ("subgoal *1/5" :in-theory (enable l3-regular-file-entry-p))
@@ -1219,7 +1226,7 @@
         (l6-fs-p fs))
    (equal
     (consp (assoc-equal name
-                        (mv-nth 0 (l6-to-l4-fs fs fa-table))))
+                        (l6-to-l4-fs-helper fs fa-table)))
     (consp (assoc-equal name fs)))))
 
 (defthm
@@ -1259,33 +1266,24 @@
 
 (defthm
   l6-stat-correctness-1-lemma-7
-  (implies
-   (and
-    (consp (assoc-equal name fs))
-    (not (l6-regular-file-entry-p (cdr (assoc-equal name fs))))
-    (fat32-entry-list-p fa-table)
-    (l6-fs-p fs))
-   (equal
-    (cdr (assoc-equal name
-                      (mv-nth 0 (l6-to-l4-fs fs fa-table))))
-    (mv-nth 0
-            (l6-to-l4-fs (cdr (assoc-equal name fs))
-                         fa-table)))))
+  (implies (and (consp (assoc-equal name fs))
+                (not (l6-regular-file-entry-p (cdr (assoc-equal name fs))))
+                (fat32-entry-list-p fa-table)
+                (l6-fs-p fs))
+           (equal (cdr (assoc-equal name (l6-to-l4-fs-helper fs fa-table)))
+                  (l6-to-l4-fs-helper (cdr (assoc-equal name fs))
+                                      fa-table))))
 
 (defthm
   l6-stat-correctness-1-lemma-8
-  (implies
-   (and (consp (assoc-equal name fs))
-        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
-        (fat32-entry-list-p fa-table)
-        (l6-fs-p fs))
-   (equal
-    (cdr (assoc-equal name
-                      (mv-nth 0 (l6-to-l4-fs fs fa-table))))
-    (cons
-     (l6-file-index-list (cdr (assoc-equal name fs))
-                         fa-table)
-     (l6-regular-file-length (cdr (assoc-equal name fs)))))))
+  (implies (and (consp (assoc-equal name fs))
+                (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+                (fat32-entry-list-p fa-table)
+                (l6-fs-p fs))
+           (equal (cdr (assoc-equal name (l6-to-l4-fs-helper fs fa-table)))
+                  (cons (l6-file-index-list (cdr (assoc-equal name fs))
+                                            fa-table)
+                        (l6-regular-file-length (cdr (assoc-equal name fs)))))))
 
 (defthm
   l6-stat-correctness-1-lemma-9
@@ -1300,6 +1298,13 @@
                              fa-table))
     (l6-regular-file-length (cdr (assoc-equal name fs)))))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-stat-correctness-1-lemma-10
+  (implies
+   (l6-fs-p fs)
+   (equal (consp (l6-to-l4-fs-helper fs fa-table))
+          (consp fs))))
 
 ;; This is the first of two theorems showing the equivalence of the l6 and l4
 ;; versions of stat.
@@ -1324,8 +1329,9 @@
                 (l6-regular-file-length l6-file))
                'string)))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p))
-          ("subgoal *1/9.2" :expand (l6-to-l4-fs fs fa-table))
-          ("subgoal *1/4.4'"
+          ("subgoal *1/4'''"
+           :in-theory (enable l3-regular-file-entry-p))
+          ("subgoal *1/11.2'"
            :in-theory (enable l3-regular-file-entry-p))))
 
 ;; This is the second of two theorems showing the equivalence of the l6 and l4
@@ -1346,9 +1352,18 @@
                      (mv-nth 0
                              (l6-to-l4-fs (l6-stat hns fs disk)
                                           fa-table))))))
-  :hints (("goal" :in-theory (enable l6-stricter-fs-p))
-          ("subgoal *1/5''"
-           :in-theory (enable l3-regular-file-entry-p))))
+  :hints
+  (("goal" :in-theory (enable l6-stricter-fs-p))
+   ("subgoal *1/5''"
+    :in-theory (enable l3-regular-file-entry-p))
+   ("subgoal *1/11.2'"
+    :in-theory (disable l6-stat-correctness-1-lemma-3)
+    :use (:instance l6-stat-correctness-1-lemma-3
+                    (name (car hns))))
+   ("subgoal *1/11.1'"
+    :in-theory (disable l6-stat-correctness-1-lemma-3)
+    :use (:instance l6-stat-correctness-1-lemma-3
+                    (name (car hns))))))
 
 (defthm
   l6-rdchs-correctness-1-lemma-1
