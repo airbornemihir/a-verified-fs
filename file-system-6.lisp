@@ -1362,20 +1362,33 @@
 ;; versions of stat.
 (defthm
   l6-stat-correctness-2
-  (implies
-   (and (symbol-listp hns)
-        (fat32-entry-list-p fa-table)
-        (l6-stricter-fs-p fs fa-table)
-        (block-listp disk)
-        (l6-fs-p (l6-stat hns fs disk)))
-   (b*
-       (((mv l4-fs &) (l6-to-l4-fs fs fa-table))
-        (l6-fs (l6-stat hns fs disk)))
-     (implies (l6-fs-p l6-fs)
-              (equal (l3-stat hns l4-fs disk)
-                     (mv-nth 0
-                             (l6-to-l4-fs (l6-stat hns fs disk)
-                                          fa-table))))))
+  (implies (and (symbol-listp hns)
+                (fat32-entry-list-p fa-table)
+                (l6-stricter-fs-p fs fa-table)
+                (block-listp disk)
+                (l6-fs-p (l6-stat hns fs disk)))
+           (equal (l3-stat hns (l6-to-l4-fs-helper fs fa-table)
+                           disk)
+                  (l6-to-l4-fs-helper (l6-stat hns fs disk)
+                                      fa-table)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (symbol-listp hns)
+          (fat32-entry-list-p fa-table)
+          (l6-stricter-fs-p fs fa-table)
+          (block-listp disk)
+          (l6-fs-p (l6-stat hns fs disk)))
+     (b*
+         (((mv l4-fs &) (l6-to-l4-fs fs fa-table))
+          (l6-fs (l6-stat hns fs disk)))
+       (implies (l6-fs-p l6-fs)
+                (equal (l3-stat hns l4-fs disk)
+                       (mv-nth 0
+                               (l6-to-l4-fs (l6-stat hns fs disk)
+                                            fa-table))))))))
   :hints
   (("goal" :in-theory (enable l6-stricter-fs-p))
    ("subgoal *1/5''"
@@ -1475,11 +1488,11 @@
             (l6-rdchs hns fs disk fa-table start n))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
 
-(defthm l6-wrchs-correctness-1-lemma-1
-  (implies (and (l6-fs-p fs)
-                (fat32-entry-list-p fa-table))
-           (equal (consp (mv-nth 0 (l6-to-l4-fs fs fa-table)))
-                  (consp fs))))
+;; (defthm l6-wrchs-correctness-1-lemma-1
+;;   (implies (and (l6-fs-p fs)
+;;                 (fat32-entry-list-p fa-table))
+;;            (equal (consp (mv-nth 0 (l6-to-l4-fs fs fa-table)))
+;;                   (consp fs))))
 
 (defthm l6-wrchs-returns-fs-lemma-1
   (implies (and (l6-fs-p fs))
@@ -1676,15 +1689,11 @@
 
 (defthm
   l6-wrchs-correctness-1-lemma-3
-  (implies
-   (and (l6-fs-p fs)
-        (fat32-entry-list-p fa-table))
-   (equal
-    (delete-assoc-equal name
-                        (mv-nth 0 (l6-to-l4-fs fs fa-table)))
-    (mv-nth 0
-            (l6-to-l4-fs (delete-assoc-equal name fs)
-                         fa-table)))))
+  (implies (and (l6-fs-p fs)
+                (fat32-entry-list-p fa-table))
+           (equal (delete-assoc-equal name (l6-to-l4-fs-helper fs fa-table))
+                  (l6-to-l4-fs-helper (delete-assoc-equal name fs)
+                                      fa-table))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-4
@@ -1817,6 +1826,39 @@
    :expand
    :top :split))
 
+(defthm
+  l6-wrchs-correctness-1-lemma-15
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (natp n))
+   (equal
+    (find-n-free-blocks-helper (fa-table-to-alv-helper fa-table)
+                               n start)
+    (find-n-free-clusters-helper fa-table n start)))
+  :hints (("goal" :in-theory (enable find-n-free-blocks-helper
+                                     find-n-free-clusters-helper
+                                     fa-table-to-alv-helper))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-16
+  (implies (and (fat32-entry-list-p fa-table)
+                (>= (len fa-table) 2))
+           (equal (find-n-free-blocks (fa-table-to-alv fa-table)
+                                      n)
+                  (find-n-free-clusters fa-table n)))
+  :hints
+  (("goal"
+    :in-theory (enable find-n-free-blocks
+                       fa-table-to-alv find-n-free-clusters
+                       find-n-free-blocks-helper
+                       find-n-free-clusters-helper))
+   ("goal'"
+    :expand
+    (make-list-ac
+     2 t
+     (fa-table-to-alv-helper (nthcdr 2 fa-table))))))
+
+;; This is eventually going to become l6-wrchs-correctness-1
 (thm-cp
   (implies (and (l6-stricter-fs-p fs fa-table)
                 (fat32-entry-list-p fa-table)
@@ -1840,9 +1882,7 @@
                             start text)
                   (mv l4-fs-after-write disk-after-write
                       l4-alv-after-write)))))
-  :hints (("Goal" :induct (and (l6-to-l4-fs
-                                                              fs fa-table)
-                               (L6-WRCHS HNS FS DISK FA-TABLE START TEXT)))
+  :hints (("Goal" :induct (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
           ("Subgoal *1/6'" :in-theory (disable (:DEFINITION L6-WRCHS)
              (:DEFINITION MAX)
              (:DEFINITION NFIX)
