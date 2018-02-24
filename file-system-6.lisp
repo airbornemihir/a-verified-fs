@@ -1894,32 +1894,50 @@
                               fa-table)))))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
+;; this theorem is messed up precisely because we allow for a scenario where
+;; files end with a cluster that points to 0 as the next cluster, instead of
+;; end-of-file.
+;; although the same problem occurs when a file has length 0 and 
 (thm-cp (implies (AND (FAT32-ENTRY-LIST-P FA-TABLE)
-                             (FAT32-MASKED-ENTRY-P MASKED-CURRENT-CLUSTER)
-                             (NATP LENGTH) (natp key) (< key (len fa-table))
-                             (not (member-equal key (L6-BUILD-INDEX-LIST
-               FA-TABLE MASKED-CURRENT-CLUSTER LENGTH) ))) (equal (L6-BUILD-INDEX-LIST
-(update-nth key val               FA-TABLE) MASKED-CURRENT-CLUSTER LENGTH) (L6-BUILD-INDEX-LIST
+                      (FAT32-MASKED-ENTRY-P MASKED-CURRENT-CLUSTER)
+                      (NATP LENGTH)
+                      (natp key)
+                      (< key (len fa-table))
+                      (>= (len fa-table) 2)
+                      (not (member-equal key (L6-BUILD-INDEX-LIST
+                                              FA-TABLE MASKED-CURRENT-CLUSTER
+                                              LENGTH) ))
+                      (>= key 2))
+                 (equal (L6-BUILD-INDEX-LIST
+                         (update-nth key val               FA-TABLE) MASKED-CURRENT-CLUSTER LENGTH)
+                        (L6-BUILD-INDEX-LIST
 FA-TABLE MASKED-CURRENT-CLUSTER LENGTH)))
-:hints (("Goal" :in-theory (disable update-nth)) ("Subgoal *1/1'" :expand (L6-BUILD-INDEX-LIST (UPDATE-NTH KEY VAL FA-TABLE)
-                                   MASKED-CURRENT-CLUSTER LENGTH))))
+        :hints (("Goal" :in-theory (disable update-nth))
+                ("Subgoal *1/1'" :expand (L6-BUILD-INDEX-LIST (UPDATE-NTH KEY VAL FA-TABLE)
+                                                              MASKED-CURRENT-CLUSTER
+                                                              LENGTH))
+                ("Subgoal *1/2'" :cases (< (FAT32-ENTRY-MASK (NTH
+                                                              MASKED-CURRENT-CLUSTER
+                                                              (UPDATE-NTH KEY VAL FA-TABLE)))
+                                           2))))
 
 (defthm l6-wrchs-correctness-1-lemma-19
 (IMPLIES
- (AND (< key
+ (AND (natp key)
+      (< key
          (LEN fa-table))
       (NOT (member-EQUAL key (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))))
       (FAT32-ENTRY-LIST-P FA-TABLE)
       (L6-FS-P FS1)
       (fat32-entry-p value))
  (EQUAL
-  (L6-TO-L4-FS-HELPER FS1 FA-TABLE)
   (L6-TO-L4-FS-HELPER
     FS1
     (UPDATE-NTH
      key
      value
-     FA-TABLE))))
+     FA-TABLE))
+  (L6-TO-L4-FS-HELPER FS1 FA-TABLE)))
 :hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES)) ))
 
 (defthm l6-wrchs-correctness-1-lemma-19
@@ -1941,11 +1959,11 @@ FA-TABLE MASKED-CURRENT-CLUSTER LENGTH)))
   (l6-fs-p fs1) (l6-fs-p fs2))
  (EQUAL
       (L6-TO-L4-FS-HELPER fs1
-                          FA-TABLE)
-      (L6-TO-L4-FS-HELPER fs1
                           (MV-NTH 2
                                   (L6-WRCHS hns fs2
-                                            DISK FA-TABLE START TEXT)))))
+                                            DISK FA-TABLE START TEXT)))
+      (L6-TO-L4-FS-HELPER fs1
+                          FA-TABLE)))
   :hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES))))
 
 ;; This is eventually going to become l6-wrchs-correctness-1
