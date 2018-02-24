@@ -291,14 +291,6 @@
 ;; we have what we need to define a disk traversal to get the contents of the
 ;; file
 
-;; this function, as currently defined, allows zeroes and ones to get into the
-;; list, which is not good. i wish i could quickly cite the fat specification,
-;; but anyway i recall reading somewhere that files were allowed to end with a
-;; 0 or 1 instead of an EOC marker. That's kinda icky because that violates the
-;; invariant that the only zeroes in the file allocation table occur in
-;; clusters which are free and open for business. but i think i might have to
-;; allow for the possibility, and skate for a bit around the possibility of it
-;; actually happening.
 (defun
     l6-build-index-list
     (fa-table masked-current-cluster length)
@@ -1166,8 +1158,18 @@
   l6-stricter-fs-p-correctness-2
   (implies (and (l6-stricter-fs-p fs fa-table)
                 (fat32-entry-list-p fa-table))
-           (l6-fs-p fs))
+           (and (l6-fs-p fs)
+                (mv-nth 1 (l6-list-all-ok-indices fs fa-table))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
+
+(defthm
+  l6-to-l4-fs-correctness-3
+  (implies (and (l6-fs-p fs)
+                (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+                (fat32-entry-list-p fa-table))
+           (l3-fs-p (l6-to-l4-fs-helper fs fa-table)))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices
+                                     l3-regular-file-entry-p))))
 
 ;; Completion semantics for reading and writing still need to be figured out...
 
@@ -1858,6 +1860,94 @@
      2 t
      (fa-table-to-alv-helper (nthcdr 2 fa-table))))))
 
+(defthm
+  l6-wrchs-correctness-1-lemma-17
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l6-fs-p fs)
+        (fat32-entry-list-p fa-table)
+        (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+        (<= (len fa-table) 268435456)
+        (<= 2 (len fa-table))
+        (l6-fs-p (cdr (assoc-equal name fs))))
+   (l3-fs-p (l6-to-l4-fs-helper (cdr (assoc-equal name fs))
+                                fa-table)))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-18
+  (implies
+   (and
+    (consp (assoc-equal name fs2))
+    (not (l6-regular-file-entry-p (cdr (assoc-equal name fs2))))
+    (not (intersectp-equal
+          (mv-nth 0 (l6-list-all-ok-indices fs1 fa-table))
+          (mv-nth 0
+                  (l6-list-all-ok-indices fs2 fa-table))))
+    (fat32-entry-list-p fa-table))
+   (not
+    (intersectp-equal
+     (mv-nth 0 (l6-list-all-ok-indices fs1 fa-table))
+     (mv-nth
+      0
+      (l6-list-all-ok-indices (cdr (assoc-equal name fs2))
+                              fa-table)))))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(thm-cp (implies (AND (FAT32-ENTRY-LIST-P FA-TABLE)
+                             (FAT32-MASKED-ENTRY-P MASKED-CURRENT-CLUSTER)
+                             (NATP LENGTH) (natp key) (< key (len fa-table))
+                             (not (member-equal key (L6-BUILD-INDEX-LIST
+               FA-TABLE MASKED-CURRENT-CLUSTER LENGTH) ))) (equal (L6-BUILD-INDEX-LIST
+(update-nth key val               FA-TABLE) MASKED-CURRENT-CLUSTER LENGTH) (L6-BUILD-INDEX-LIST
+FA-TABLE MASKED-CURRENT-CLUSTER LENGTH)))
+:hints (("Goal" :in-theory (disable update-nth)) ("Subgoal *1/1'" :expand (L6-BUILD-INDEX-LIST (UPDATE-NTH KEY VAL FA-TABLE)
+                                   MASKED-CURRENT-CLUSTER LENGTH))))
+
+(defthm l6-wrchs-correctness-1-lemma-19
+(IMPLIES
+ (AND (< key
+         (LEN fa-table))
+      (NOT (member-EQUAL key (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))))
+      (FAT32-ENTRY-LIST-P FA-TABLE)
+      (L6-FS-P FS1)
+      (fat32-entry-p value))
+ (EQUAL
+  (L6-TO-L4-FS-HELPER FS1 FA-TABLE)
+  (L6-TO-L4-FS-HELPER
+    FS1
+    (UPDATE-NTH
+     key
+     value
+     FA-TABLE))))
+:hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES)) ))
+
+(defthm l6-wrchs-correctness-1-lemma-19
+  (IMPLIES
+ (AND
+  (not (intersectp-equal (mv-nth 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
+                         (mv-nth 0 (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE))))
+  (FAT32-ENTRY-LIST-P FA-TABLE)
+  (STRINGP TEXT)
+  (INTEGERP START)
+  (<= 0 START)
+  (SYMBOL-LISTP hns)
+  (BLOCK-LISTP DISK)
+  (EQUAL (LEN FA-TABLE) (LEN DISK))
+  (<= (LEN DISK) 268435456)
+  (<= 2 (LEN DISK))
+  (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
+      (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
+  (l6-fs-p fs1) (l6-fs-p fs2))
+ (EQUAL
+      (L6-TO-L4-FS-HELPER fs1
+                          FA-TABLE)
+      (L6-TO-L4-FS-HELPER fs1
+                          (MV-NTH 2
+                                  (L6-WRCHS hns fs2
+                                            DISK FA-TABLE START TEXT)))))
+  :hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES))))
+
 ;; This is eventually going to become l6-wrchs-correctness-1
 (thm-cp
   (implies (and (l6-stricter-fs-p fs fa-table)
@@ -1883,6 +1973,13 @@
                   (mv l4-fs-after-write disk-after-write
                       l4-alv-after-write)))))
   :hints (("Goal" :induct (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
+          ("Subgoal *1/7'" :in-theory (disable (:DEFINITION L6-WRCHS)
+             (:DEFINITION NOT)
+             (:DEFINITION SET-INDICES-IN-FA-TABLE)
+             (:REWRITE CAR-OF-MAKE-LIST)
+             (:REWRITE CONSP-OF-FIRST-N-AC)
+             (:REWRITE L6-WRCHS-CORRECTNESS-1-LEMMA-9 . 1)
+             (:REWRITE ZP-OPEN)))
           ("Subgoal *1/6'" :in-theory (disable (:DEFINITION L6-WRCHS)
              (:DEFINITION MAX)
              (:DEFINITION NFIX)
