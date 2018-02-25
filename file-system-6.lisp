@@ -1432,12 +1432,20 @@
 ;; because placing it there leaves us with a beast of a proof-builder lemma to
 ;; debug in file-system-4.lisp (which shouldn't be reliant on the proof builder
 ;; in the first place - oh well)
-(defthm unmake-blocks-correctness-2
+(defthm
+  unmake-blocks-correctness-2
   (implies (and (block-listp blocks)
                 (natp n)
                 (feasible-file-length-p (len blocks) n))
            (equal (len (unmake-blocks blocks n))
                   n))
+  :rule-classes
+  (:rewrite
+   (:rewrite :corollary (implies (and (block-listp blocks)
+                                      (natp n)
+                                      (feasible-file-length-p (len blocks) n))
+                                 (iff (consp (unmake-blocks blocks n))
+                                      (not (zp n))))))
   :hints (("goal" :in-theory (enable feasible-file-length-p))
           ("subgoal *1/5'''" :expand (len (cdr blocks)))))
 
@@ -1894,6 +1902,27 @@
                               fa-table)))))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
+(defthm
+  l6-wrchs-correctness-1-lemma-19
+  (implies
+   (and
+    (< 0 length)
+    (<= 2 masked-current-cluster)
+    (< masked-current-cluster (len fa-table))
+    (< (fat32-entry-mask (nth masked-current-cluster fa-table))
+       2)
+    (fat32-entry-list-p fa-table)
+    (fat32-masked-entry-p masked-current-cluster)
+    (integerp length)
+    (<= 0 length)
+    (integerp key)
+    (<= 0 key)
+    (< key (len fa-table))
+    (<= 2 (len fa-table))
+    (not (equal key masked-current-cluster)))
+   (not (l6-build-index-list (update-nth key val fa-table)
+                             masked-current-cluster length))))
+
 ;; this theorem is messed up precisely because we allow for a scenario where
 ;; files end with a cluster that points to 0 as the next cluster, instead of
 ;; end-of-file.
@@ -1907,21 +1936,27 @@
                       (not (member-equal key (L6-BUILD-INDEX-LIST
                                               FA-TABLE MASKED-CURRENT-CLUSTER
                                               LENGTH) ))
-                      (>= key 2))
+                      (not (equal key masked-current-cluster))
+                      (> (LEN FA-TABLE)
+                          MASKED-CURRENT-CLUSTER)
+                      (<= 2
+                          MASKED-CURRENT-CLUSTER))
                  (equal (L6-BUILD-INDEX-LIST
                          (update-nth key val               FA-TABLE) MASKED-CURRENT-CLUSTER LENGTH)
                         (L6-BUILD-INDEX-LIST
-FA-TABLE MASKED-CURRENT-CLUSTER LENGTH)))
-        :hints (("Goal" :in-theory (disable update-nth))
-                ("Subgoal *1/1'" :expand (L6-BUILD-INDEX-LIST (UPDATE-NTH KEY VAL FA-TABLE)
+                         FA-TABLE MASKED-CURRENT-CLUSTER LENGTH)))
+        :hints (("Subgoal *1/1'" :expand (L6-BUILD-INDEX-LIST (UPDATE-NTH KEY VAL FA-TABLE)
                                                               MASKED-CURRENT-CLUSTER
                                                               LENGTH))
-                ("Subgoal *1/2'" :cases (< (FAT32-ENTRY-MASK (NTH
-                                                              MASKED-CURRENT-CLUSTER
-                                                              (UPDATE-NTH KEY VAL FA-TABLE)))
-                                           2))))
+                ("Subgoal *1/8.1.1'" :expand (L6-BUILD-INDEX-LIST
+                  FA-TABLE
+                  (FAT32-ENTRY-MASK (NTH MASKED-CURRENT-CLUSTER FA-TABLE))
+                  (+ -8 LENGTH))
+                 )
+                ("Subgoal *1/9''" :expand (L6-BUILD-INDEX-LIST (UPDATE-NTH KEY VAL FA-TABLE)
+                             MASKED-CURRENT-CLUSTER LENGTH))))
 
-(defthm l6-wrchs-correctness-1-lemma-19
+(defthm l6-wrchs-correctness-1-lemma-20
 (IMPLIES
  (AND (natp key)
       (< key
@@ -1940,7 +1975,7 @@ FA-TABLE MASKED-CURRENT-CLUSTER LENGTH)))
   (L6-TO-L4-FS-HELPER FS1 FA-TABLE)))
 :hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES)) ))
 
-(defthm l6-wrchs-correctness-1-lemma-19
+(defthm l6-wrchs-correctness-1-lemma-21
   (IMPLIES
  (AND
   (not (intersectp-equal (mv-nth 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
@@ -1991,13 +2026,6 @@ FA-TABLE MASKED-CURRENT-CLUSTER LENGTH)))
                   (mv l4-fs-after-write disk-after-write
                       l4-alv-after-write)))))
   :hints (("Goal" :induct (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
-          ("Subgoal *1/7'" :in-theory (disable (:DEFINITION L6-WRCHS)
-             (:DEFINITION NOT)
-             (:DEFINITION SET-INDICES-IN-FA-TABLE)
-             (:REWRITE CAR-OF-MAKE-LIST)
-             (:REWRITE CONSP-OF-FIRST-N-AC)
-             (:REWRITE L6-WRCHS-CORRECTNESS-1-LEMMA-9 . 1)
-             (:REWRITE ZP-OPEN)))
           ("Subgoal *1/6'" :in-theory (disable (:DEFINITION L6-WRCHS)
              (:DEFINITION MAX)
              (:DEFINITION NFIX)
