@@ -1099,7 +1099,7 @@
                  (l6-list-all-ok-indices fs fa-table))
                 ((mv l4-fs &)
                  (l6-to-l4-fs fs fa-table)))
-             (equal (l3-fs-p l4-fs) ok)))
+             (implies ok (l3-fs-p l4-fs))))
   :hints
   (("goal" :in-theory (enable l6-list-all-ok-indices
                               l3-regular-file-entry-p))
