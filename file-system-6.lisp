@@ -11,6 +11,10 @@
 (include-book "centaur/fty/top" :dir :system)
 
 (defconst *expt-2-28* (expt 2 28))
+;; from include/uapi/asm-generic/errno-base.h
+(defconst *EIO* 5) ;; I/O error
+(defconst *ENOSPC* 28) ;; No space left on device
+(defconst *ENOENT* 2) ;; No such file or directory
 
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))
@@ -291,6 +295,10 @@
 ;; we have what we need to define a disk traversal to get the contents of the
 ;; file
 
+;; we're going to make this return a rather literal exit status, as the second
+;; element of the mv. that will be 0 if we successfully got a list of indices,
+;; and -EIO if we did not for reasons shown in the function
+;; fs/fat/cache.c:fat_get_cluster
 (defun
     l6-build-index-list
     (fa-table masked-current-cluster length)
@@ -299,7 +307,9 @@
     :measure (acl2-count length)
     :guard (and (fat32-entry-list-p fa-table)
                 (fat32-masked-entry-p masked-current-cluster)
-                (natp length))
+                (natp length)
+                (>= masked-current-cluster 2)
+                (< masked-current-cluster (len fa-table)))
     :guard-hints
     (("goal"
       :in-theory (disable fat32-entry-mask-correctness-1)
@@ -308,38 +318,62 @@
                  (x (nth masked-current-cluster fa-table)))))))
   (if
       (or (not (integerp length))
-          (<= length 0)
-          (< masked-current-cluster 2)
-          (>= masked-current-cluster (len fa-table)))
-      nil
+          (<= length 0))
+      ;; This represents a problem case because masked-current-cluster is a
+      ;; valid non-free cluster, but the length is 0. This loosely corresponds
+      ;; to the infinite loop protection in the function
+      ;; fs/fat/cache.c:fat_get_cluster
+      (mv nil (- *eio*))
     (let
         ((masked-next-cluster
           (fat32-entry-mask (nth masked-current-cluster fa-table))))
-      (if (< masked-next-cluster 2)
-          nil
+      (if
+          (< masked-next-cluster 2)
+          (mv (list masked-current-cluster)
+              (- *eio*))
         (if
-            (l6-is-eof masked-next-cluster)
-            (list masked-current-cluster)
-          (list*
-           masked-current-cluster
-           (l6-build-index-list fa-table masked-next-cluster
-                                (nfix (- length *blocksize*)))))))))
+            (or (l6-is-eof masked-next-cluster)
+                (>= masked-next-cluster (len fa-table)))
+            (mv (list masked-current-cluster) 0)
+          (b*
+              (((mv tail-index-list tail-error)
+                (l6-build-index-list fa-table masked-next-cluster
+                                     (nfix (- length *blocksize*)))))
+            (mv (list* masked-current-cluster tail-index-list)
+                tail-error)))))))
 
 (defthm
   l6-build-index-list-correctness-1
   (implies
    (and (equal b (len fa-table))
-        (fat32-masked-entry-p masked-current-cluster))
-   (bounded-nat-listp
-    (l6-build-index-list fa-table masked-current-cluster length)
-    b)))
+        (fat32-masked-entry-p masked-current-cluster)
+        (>= masked-current-cluster 2)
+        (< masked-current-cluster (len fa-table)))
+   (b* (((mv index-list &)
+         (l6-build-index-list fa-table
+                              masked-current-cluster length)))
+     (bounded-nat-listp index-list b))))
 
 (defthm
   l6-build-index-list-correctness-2
   (implies
-   (fat32-masked-entry-p masked-current-cluster)
-   (fat32-masked-entry-list-p
-    (l6-build-index-list fa-table masked-current-cluster acc))))
+   (and
+    (fat32-masked-entry-p masked-current-cluster)
+    (>= masked-current-cluster 2)
+    (< masked-current-cluster (len fa-table)))
+   (b* (((mv index-list &)
+         (l6-build-index-list fa-table
+                              masked-current-cluster length)))
+     (fat32-masked-entry-list-p index-list))))
+
+(defthm
+  l6-build-index-list-correctness-3
+  (b* (((mv & error-code)
+        (l6-build-index-list fa-table
+                             masked-current-cluster length)))
+    (and (integerp error-code)
+         (or (equal error-code 0)
+             (equal error-code (- *eio*))))))
 
 (defund find-n-free-clusters-helper (fa-table n start)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
@@ -521,26 +555,44 @@
       ((first-cluster (l6-regular-file-first-cluster file)))
     (if (or (< first-cluster 2)
             (>= first-cluster (len fa-table)))
-        nil
+        (mv nil 0)
       (l6-build-index-list fa-table first-cluster
                            (l6-regular-file-length file)))))
 
 (defthm
-  l6-file-index-list-correctness-2
+  l6-file-index-list-correctness-1
   (implies (and (l6-regular-file-entry-p file)
                 (fat32-entry-list-p fa-table)
                 (equal b (len fa-table)))
-           (bounded-nat-listp
-            (l6-file-index-list file fa-table) b))
+           (b* (((mv index-list &)
+                 (l6-file-index-list file fa-table)))
+             (bounded-nat-listp index-list b)))
   :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
-  l6-file-index-list-correctness-1
+  l6-file-index-list-correctness-2
   (implies (and (l6-regular-file-entry-p file)
                 (fat32-entry-list-p fa-table))
-           (fat32-masked-entry-list-p
-            (l6-file-index-list file fa-table)))
+           (b* (((mv index-list &)
+                 (l6-file-index-list file fa-table)))
+             (fat32-masked-entry-list-p index-list)))
   :hints (("goal" :in-theory (enable l6-file-index-list))))
+
+(defthm
+  l6-file-index-list-correctness-3
+  (b* (((mv & error-code)
+        (l6-file-index-list file fa-table)))
+    (and (integerp error-code)
+         (or (equal error-code 0)
+             (equal error-code (- *eio*)))))
+  :hints
+  (("goal" :in-theory (enable l6-file-index-list))
+   ("Goal'''"
+    :in-theory (disable l6-build-index-list-correctness-3)
+    :use (:instance l6-build-index-list-correctness-3
+                    (masked-current-cluster
+                     (l6-regular-file-first-cluster file))
+                    (length (l6-regular-file-length file))))))
 
 ;; This function finds a text file given its path and reads a segment of
 ;; that text file.
@@ -569,9 +621,9 @@
    ((file (l6-stat hns fs disk)))
    (if
     (not (l6-regular-file-entry-p file))
-    nil
-    (let*
-     ((index-list
+    (mv nil (- *EIO*))
+    (b*
+     (((mv index-list error-code)
        (l6-file-index-list file fa-table))
       (file-text
        (coerce (unmake-blocks-without-feasibility
@@ -581,8 +633,8 @@
       (file-length (length file-text))
       (end (+ start n)))
      (if (< file-length end)
-         nil
-         (subseq file-text start (+ start n)))))))
+         (mv nil error-code)
+         (mv (subseq file-text start (+ start n)) error-code))))))
 
 (defthm
   l6-wrchs-guard-lemma-1
@@ -625,8 +677,8 @@
 ; This function writes a specified text string to a specified position to a
 ; text file at a specified path.
 (defun
-  l6-wrchs
-  (hns fs disk fa-table start text)
+    l6-wrchs
+    (hns fs disk fa-table start text)
   (declare
    (xargs
     :guard (and (symbol-listp hns)
@@ -643,8 +695,11 @@
     (("goal" :do-not-induct t)
      ("subgoal 5"
       :expand
-      (len (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                               fa-table)))
+      (len
+       (mv-nth
+        0
+        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                            fa-table))))
      ("subgoal 4"
       :in-theory (disable l6-wrchs-guard-lemma-4)
       :use
@@ -653,13 +708,16 @@
        (fa-table
         (update-nth
          (car
-          (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                              fa-table))
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                               fa-table)))
          (fat32-update-lower-28
           (nth
-           (car
-            (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                fa-table))
+           (car (mv-nth 0
+                        (l6-file-index-list
+                         (cdr (assoc-equal (car hns) fs))
+                         fa-table)))
            fa-table)
           0)
          fa-table))
@@ -670,47 +728,49 @@
            (unmake-blocks-without-feasibility
             (fetch-blocks-by-indices
              disk
-             (l6-file-index-list
-              (cdr (assoc-equal (car hns) fs))
-              fa-table))
+             (mv-nth 0
+                     (l6-file-index-list
+                      (cdr (assoc-equal (car hns) fs))
+                      fa-table)))
             (l6-regular-file-length
              (cdr (assoc-equal (car hns) fs))))
            start text)))))))))
   (if (atom hns)
-      (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
+      (mv fs disk fa-table (- *enoent*)) ;; error - showed up at fs with no
+    ;; name  - so leave fs unchanged
     (if (atom fs)
-        (mv nil disk fa-table) ;; error, so leave fs unchanged
+        (mv nil disk fa-table (- *enoent*)) ;; error, so leave fs unchanged
       (let ((sd (assoc (car hns) fs)))
         (if (atom sd)
-            (mv fs disk fa-table) ;; file-not-found error, so leave fs unchanged
+            (mv fs disk fa-table (- *enoent*)) ;; file-not-found error, so leave fs unchanged
           (if (l6-regular-file-entry-p (cdr sd))
               (if (cdr hns)
                   (mv (cons (cons (car sd) (cdr sd))
                             (delete-assoc (car hns) fs))
                       disk
-                      fa-table) ;; error, so leave fs unchanged
-                (let* ((old-indices
-                        (l6-file-index-list (cdr sd) fa-table))
-                       (old-text
-                        (unmake-blocks-without-feasibility
-                         (fetch-blocks-by-indices disk old-indices)
-                         (l6-regular-file-length (cdr sd))))
-                       (fa-table-after-free
-                        (set-indices-in-fa-table
-                         fa-table
-                         old-indices
-                         (make-list (len old-indices) :initial-element 0)))
-                       (new-text (insert-text old-text start text))
-                       (new-blocks (make-blocks new-text))
-                       (new-indices
-                        (find-n-free-clusters fa-table-after-free (len new-blocks))))
+                      fa-table (- *enoent*)) ;; error, so leave fs unchanged
+                (b* (((mv old-indices read-error-code)
+                      (l6-file-index-list (cdr sd) fa-table))
+                     (old-text
+                      (unmake-blocks-without-feasibility
+                       (fetch-blocks-by-indices disk old-indices)
+                       (l6-regular-file-length (cdr sd))))
+                     (fa-table-after-free
+                      (set-indices-in-fa-table
+                       fa-table
+                       old-indices
+                       (make-list (len old-indices) :initial-element 0)))
+                     (new-text (insert-text old-text start text))
+                     (new-blocks (make-blocks new-text))
+                     (new-indices
+                      (find-n-free-clusters fa-table-after-free (len new-blocks))))
                   (if (not (equal (len new-indices) (len new-blocks)))
                       ;; we have an error because of insufficient disk space
                       ;; - so we leave the fs unchanged
                       (mv (cons (cons (car sd) (cdr sd))
                                 (delete-assoc (car hns) fs))
                           disk
-                          fa-table)
+                          fa-table (- *enospc*))
                     (if (consp new-indices)
                         (mv (cons (cons (car sd)
                                         (l6-make-regular-file
@@ -724,7 +784,7 @@
                                                       (cdr new-indices)
                                                       ;; 0 is chosen for now but it has to
                                                       ;; be one of those end of file markers
-                                                      (list 0))))
+                                                      (list 0))) read-error-code)
                       (mv (cons (cons (car sd)
                                       (l6-make-regular-file
                                        ;; 0 is chosen for now but it has to
@@ -733,13 +793,15 @@
                                        (len new-text)))
                                 (delete-assoc (car hns) fs))
                           disk
-                          fa-table-after-free)))))
-            (mv-let (new-contents new-disk new-fa-table)
+                          fa-table-after-free
+                          read-error-code)))))
+            (mv-let (new-contents new-disk new-fa-table error-code)
               (l6-wrchs (cdr hns) (cdr sd) disk fa-table start text)
               (mv (cons (cons (car sd) new-contents)
                         (delete-assoc (car hns) fs))
                   new-disk
-                  new-fa-table))))))))
+                  new-fa-table
+                  error-code))))))))
 
 (defun
   l6-create (hns fs disk fa-table text)
@@ -810,35 +872,40 @@
                               (>= (len fa-table) 2))))
   (if
       (atom hns)
-      (mv fs fa-table) ;;error case, basically
+      (mv fs fa-table (- *ENOENT*)) ;;error case, basically
     (if
         (atom (cdr hns))
-        (mv
-         (delete-assoc (car hns) fs)
-         (if
-             (and (consp (assoc (car hns) fs))
-                  (l6-regular-file-entry-p (cdr (assoc (car hns) fs))))
-             (let ((old-indices
-                    (l6-file-index-list (cdr (assoc (car hns) fs)) fa-table)))
+        (if
+            (and (consp (assoc (car hns) fs))
+                 (l6-regular-file-entry-p (cdr (assoc (car hns) fs))))
+            (b* (((mv old-indices read-error-code)
+                  (l6-file-index-list (cdr (assoc (car hns) fs)) fa-table)))
+              (mv
+               (delete-assoc (car hns) fs)
                (set-indices-in-fa-table fa-table old-indices
-                                        (make-list (len old-indices) :initial-element 0)))
-           fa-table))
+                                        (make-list (len old-indices) :initial-element 0))
+               read-error-code))
+          (mv
+           (delete-assoc (car hns) fs)
+           fa-table
+           0))
       (if
           (atom fs)
-          (mv nil fa-table)
+          (mv nil fa-table (- *ENOENT*)) ;; another error case
         (let
             ((sd (assoc (car hns) fs)))
           (if
               (atom sd)
-              (mv fs fa-table)
+              (mv fs fa-table (- *ENOENT*)) ;; yet another error case
             (let ((contents (cdr sd)))
               (if (l6-regular-file-entry-p contents)
-                  (mv fs fa-table) ;; we still have names but we're at a regular file - error
-                (mv-let (new-fs new-fa-table)
+                  (mv fs fa-table (- *enoent*)) ;; we still have names but
+                ;; we're at a regular file - error
+                (mv-let (new-fs new-fa-table new-error-code)
                   (l6-unlink (cdr hns) contents fa-table)
                   (mv (cons (cons (car sd) new-fs)
                             (delete-assoc (car hns) fs))
-                      new-fa-table))))))))))
+                      new-fa-table new-error-code))))))))))
 
 ;; From the FAT specification, page 18: "The list of free clusters in the FAT
 ;; is nothing more than the list of all clusters that contain the value 0 in
@@ -908,22 +975,24 @@
                               (<= (len fa-table) *expt-2-28*)
                               (>= (len fa-table) 2))))
   (if
-      (atom fs)
-      fs
+   (atom fs)
+   fs
    (let*
     ((directory-or-file-entry (car fs))
      (name (car directory-or-file-entry))
      (entry (cdr directory-or-file-entry)))
     (let
-        ((tail-fs
-          (l6-to-l4-fs-helper (cdr fs) fa-table)))
-      (if
-       (l6-regular-file-entry-p entry)
-        (list* (cons name
-                     (cons (l6-file-index-list entry fa-table)
-                           (l6-regular-file-length entry)))
-               tail-fs)
-        (list* (cons name (l6-to-l4-fs-helper entry fa-table)) tail-fs))))))
+     ((tail-fs (l6-to-l4-fs-helper (cdr fs) fa-table)))
+     (if (l6-regular-file-entry-p entry)
+         (b* (((mv index-list &)
+               (l6-file-index-list entry fa-table)))
+           (list* (cons name
+                        (cons index-list
+                              (l6-regular-file-length entry)))
+                  tail-fs))
+         (list* (cons name
+                      (l6-to-l4-fs-helper entry fa-table))
+                tail-fs))))))
 
 (defun
   l6-to-l4-fs (fs fa-table)
@@ -969,30 +1038,32 @@
                   :guard (and (l6-fs-p fs)
                               (fat32-entry-list-p fa-table))))
   (if
-      (atom fs)
-      (mv nil t)
-    (mv-let
-      (tail-index-list tail-ok)
-      (l6-list-all-ok-indices (cdr fs)
-                              fa-table)
-      (let*
-          ((directory-or-file-entry (car fs))
-           (entry (cdr directory-or-file-entry)))
-        (if
-            (l6-regular-file-entry-p entry)
-            (let
-                ((head-index-list (l6-file-index-list entry fa-table)))
-              (if
-                  (feasible-file-length-p (len head-index-list)
-                                          (l6-regular-file-length entry))
-                  (mv (binary-append head-index-list tail-index-list)
-                      tail-ok)
-                (mv tail-index-list nil)))
-          (mv-let
-            (head-index-list head-ok)
-            (l6-list-all-ok-indices entry fa-table)
-            (mv (binary-append head-index-list tail-index-list)
-                (and head-ok tail-ok))))))))
+   (atom fs)
+   (mv nil t)
+   (mv-let
+     (tail-index-list tail-ok)
+     (l6-list-all-ok-indices (cdr fs)
+                             fa-table)
+     (let*
+      ((directory-or-file-entry (car fs))
+       (entry (cdr directory-or-file-entry)))
+      (if
+       (l6-regular-file-entry-p entry)
+       (b*
+           (((mv head-index-list head-error-code)
+             (l6-file-index-list entry fa-table)))
+         (if (and head-error-code
+                  (feasible-file-length-p
+                   (len head-index-list)
+                   (l6-regular-file-length entry)))
+             (mv (binary-append head-index-list tail-index-list)
+                 tail-ok)
+             (mv tail-index-list nil)))
+       (mv-let
+         (head-index-list head-ok)
+         (l6-list-all-ok-indices entry fa-table)
+         (mv (binary-append head-index-list tail-index-list)
+             (and head-ok tail-ok))))))))
 
 (defthm
   l6-list-all-ok-indices-correctness-2
@@ -1011,7 +1082,12 @@
              (l6-list-all-ok-indices fs fa-table)
              (declare (ignore ok))
              (fat32-masked-entry-list-p index-list)))
-  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+  :hints
+  (("goal" :in-theory (enable l6-list-all-ok-indices))
+   ("subgoal *1/3''"
+    :in-theory (disable l6-file-index-list-correctness-2)
+    :use ((:instance l6-file-index-list-correctness-2
+                     (file (cdr (car fs))))))))
 
 (verify-guards l6-list-all-ok-indices)
 
