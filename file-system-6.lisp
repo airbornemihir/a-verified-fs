@@ -1970,7 +1970,8 @@
 (defthm
   l6-wrchs-correctness-1-lemma-12
   (implies (equal (cdr file) 0)
-           (not (l6-file-index-list file fa-table)))
+           (b* (((mv file-index-list &) (l6-file-index-list file fa-table)) )
+           (not file-index-list)))
   :hints
   (("goal" :in-theory (enable l6-file-index-list
                               l6-regular-file-entry-p
@@ -1987,18 +1988,21 @@
   (implies (and (consp (assoc-equal name fs))
                 (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (l6-stricter-fs-p fs fa-table)
-                (fat32-entry-list-p fa-table)
-                (consp (l6-file-index-list (cdr (assoc-equal name fs))
-                                           fa-table)))
-           (< (car (l6-file-index-list (cdr (assoc-equal name fs))
-                                       fa-table))
-              (len fa-table)))
+                (fat32-entry-list-p fa-table))
+           (b* (((mv file-index-list &)
+                 (l6-file-index-list (cdr (assoc-equal name fs))
+                                     fa-table)))
+             (implies (consp file-index-list)
+                      (< (car file-index-list)
+                         (len fa-table)))))
   :instructions
   (:promote
-   (:claim (bounded-nat-listp (l6-file-index-list (cdr (assoc-equal name fs))
-                                                  fa-table)
-                              (len fa-table)))
-   (:demote 6)
+   (:claim
+    (bounded-nat-listp (mv-nth 0
+                               (l6-file-index-list (cdr (assoc-equal name fs))
+                                                   fa-table))
+                       (len fa-table)))
+   :expand :expand :promote (:demote 5)
    (:dive 1)
    :expand
    :top :split))
@@ -2072,23 +2076,58 @@
 (defthm
   l6-wrchs-correctness-1-lemma-19
   (implies
-   (and
-    (< 0 length)
-    (<= 2 masked-current-cluster)
-    (< masked-current-cluster (len fa-table))
-    (< (fat32-entry-mask (nth masked-current-cluster fa-table))
-       2)
-    (fat32-entry-list-p fa-table)
-    (fat32-masked-entry-p masked-current-cluster)
-    (integerp length)
-    (<= 0 length)
-    (integerp key)
-    (<= 0 key)
-    (< key (len fa-table))
-    (<= 2 (len fa-table))
-    (not (equal key masked-current-cluster)))
-   (not (l6-build-index-list (update-nth key val fa-table)
-                             masked-current-cluster length))))
+   (and (fat32-entry-list-p fa-table)
+        (fat32-masked-entry-p masked-current-cluster)
+        (natp length)
+        (natp key)
+        (< key (len fa-table))
+        (>= (len fa-table) 2)
+        (not (equal key masked-current-cluster))
+        (> (len fa-table)
+           masked-current-cluster)
+        (<= 2 masked-current-cluster))
+   (b*
+       (((mv index-list error-code)
+         (l6-build-index-list fa-table
+                              masked-current-cluster length)))
+     (implies
+      (and (equal error-code 0)
+           (not (member-equal key index-list)))
+      (equal (l6-build-index-list (update-nth key val fa-table)
+                                  masked-current-cluster length)
+             (mv index-list error-code)))))
+  :hints
+  (("subgoal *1/3'"
+    :expand (l6-build-index-list (update-nth key val fa-table)
+                                 masked-current-cluster length))
+   ("subgoal *1/7.1"
+    :expand
+    (l6-build-index-list
+     fa-table
+     (fat32-entry-mask (nth masked-current-cluster fa-table))
+     (- length *blocksize*)))))
+
+;; (defthm
+;;   l6-wrchs-correctness-1-lemma-19
+;;   (implies
+;;    (and
+;;     (< 0 length)
+;;     (<= 2 masked-current-cluster)
+;;     (< masked-current-cluster (len fa-table))
+;;     (< (fat32-entry-mask (nth masked-current-cluster fa-table))
+;;        2)
+;;     (fat32-entry-list-p fa-table)
+;;     (fat32-masked-entry-p masked-current-cluster)
+;;     (integerp length)
+;;     (<= 0 length)
+;;     (integerp key)
+;;     (<= 0 key)
+;;     (< key (len fa-table))
+;;     (<= 2 (len fa-table))
+;;     (not (equal key masked-current-cluster)))
+;;    (b* (((mv index-list &)  (l6-build-index-list (update-nth key val fa-table)
+;;                              masked-current-cluster length)) )
+;;    (not index-list))))
 
 ;; this theorem is messed up precisely because we allow for a scenario where
 ;; files end with a cluster that points to 0 as the next cluster, instead of
