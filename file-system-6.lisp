@@ -2075,6 +2075,16 @@
 
 (defthm
   l6-wrchs-correctness-1-lemma-19
+  (b*
+      (((mv index-list error-code)
+        (l6-build-index-list fa-table
+                             masked-current-cluster length)))
+    (implies (equal error-code 0)
+             (member-equal masked-current-cluster index-list)))
+  :hints (("goal" :in-theory (enable l6-build-index-list))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-20
   (implies
    (and (fat32-entry-list-p fa-table)
         (fat32-masked-entry-p masked-current-cluster)
@@ -2099,13 +2109,7 @@
   :hints
   (("subgoal *1/3'"
     :expand (l6-build-index-list (update-nth key val fa-table)
-                                 masked-current-cluster length))
-   ("subgoal *1/7.1"
-    :expand
-    (l6-build-index-list
-     fa-table
-     (fat32-entry-mask (nth masked-current-cluster fa-table))
-     (- length *blocksize*)))))
+                                 masked-current-cluster length))))
 
 (defthm l6-wrchs-correctness-1-lemma-20
 (IMPLIES
