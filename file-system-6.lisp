@@ -2107,61 +2107,6 @@
      (fat32-entry-mask (nth masked-current-cluster fa-table))
      (- length *blocksize*)))))
 
-;; (defthm
-;;   l6-wrchs-correctness-1-lemma-19
-;;   (implies
-;;    (and
-;;     (< 0 length)
-;;     (<= 2 masked-current-cluster)
-;;     (< masked-current-cluster (len fa-table))
-;;     (< (fat32-entry-mask (nth masked-current-cluster fa-table))
-;;        2)
-;;     (fat32-entry-list-p fa-table)
-;;     (fat32-masked-entry-p masked-current-cluster)
-;;     (integerp length)
-;;     (<= 0 length)
-;;     (integerp key)
-;;     (<= 0 key)
-;;     (< key (len fa-table))
-;;     (<= 2 (len fa-table))
-;;     (not (equal key masked-current-cluster)))
-;;    (b* (((mv index-list &)  (l6-build-index-list (update-nth key val fa-table)
-;;                              masked-current-cluster length)) )
-;;    (not index-list))))
-
-;; this theorem is messed up precisely because we allow for a scenario where
-;; files end with a cluster that points to 0 as the next cluster, instead of
-;; end-of-file.
-;; although the same problem occurs when a file has length 0 and 
-(thm-cp (implies (AND (FAT32-ENTRY-LIST-P FA-TABLE)
-                      (FAT32-MASKED-ENTRY-P MASKED-CURRENT-CLUSTER)
-                      (NATP LENGTH)
-                      (natp key)
-                      (< key (len fa-table))
-                      (>= (len fa-table) 2)
-                      (not (member-equal key (L6-BUILD-INDEX-LIST
-                                              FA-TABLE MASKED-CURRENT-CLUSTER
-                                              LENGTH) ))
-                      (not (equal key masked-current-cluster))
-                      (> (LEN FA-TABLE)
-                          MASKED-CURRENT-CLUSTER)
-                      (<= 2
-                          MASKED-CURRENT-CLUSTER))
-                 (equal (L6-BUILD-INDEX-LIST
-                         (update-nth key val               FA-TABLE) MASKED-CURRENT-CLUSTER LENGTH)
-                        (L6-BUILD-INDEX-LIST
-                         FA-TABLE MASKED-CURRENT-CLUSTER LENGTH)))
-        :hints (("Subgoal *1/1'" :expand (L6-BUILD-INDEX-LIST (UPDATE-NTH KEY VAL FA-TABLE)
-                                                              MASKED-CURRENT-CLUSTER
-                                                              LENGTH))
-                ("Subgoal *1/8.1.1'" :expand (L6-BUILD-INDEX-LIST
-                  FA-TABLE
-                  (FAT32-ENTRY-MASK (NTH MASKED-CURRENT-CLUSTER FA-TABLE))
-                  (+ -8 LENGTH))
-                 )
-                ("Subgoal *1/9''" :expand (L6-BUILD-INDEX-LIST (UPDATE-NTH KEY VAL FA-TABLE)
-                             MASKED-CURRENT-CLUSTER LENGTH))))
-
 (defthm l6-wrchs-correctness-1-lemma-20
 (IMPLIES
  (AND (natp key)
