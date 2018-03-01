@@ -2116,8 +2116,7 @@
    (and (natp key)
         (< key (len fa-table))
         (fat32-entry-list-p fa-table)
-        (l6-fs-p fs)
-        (fat32-entry-p value))
+        (l6-fs-p fs))
    (b*
        (((mv index-list ok)
          (l6-list-all-ok-indices fs fa-table)))
@@ -2140,9 +2139,187 @@
 (defthm
   l6-wrchs-correctness-1-lemma-22
   (implies
+   (and (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+        (consp (assoc-equal name fs))
+        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (fat32-entry-list-p fa-table)
+        (l6-fs-p fs))
+   (subsetp-equal
+    (mv-nth 0
+            (l6-file-index-list (cdr (assoc-equal name fs))
+                                fa-table))
+    (mv-nth 0
+            (l6-list-all-ok-indices fs fa-table))))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-23
+  (IMPLIES
+ (AND
+  (CONSP HNS)
+  (CONSP FS2)
+  (CONSP (ASSOC-EQUAL (CAR HNS) FS2))
+  (L6-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL (CAR HNS) FS2)))
+  (NOT (CDR HNS))
+  (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
+  (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE))
+  (NOT (INTERSECTP-EQUAL (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
+                         (MV-NTH 0
+                                 (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE))))
+  (FAT32-ENTRY-LIST-P FA-TABLE)
+  (STRINGP TEXT)
+  (INTEGERP START)
+  (<= 0 START)
+  (SYMBOLP (CAR HNS))
+  (BLOCK-LISTP DISK)
+  (EQUAL (LEN FA-TABLE) (LEN DISK))
+  (<= (LEN DISK) 268435456)
+  (<= 2 (LEN DISK))
+  (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
+      (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
+  (L6-FS-P FS1)
+  (L6-FS-P FS2)
+  (CONSP
+     (FIND-N-FREE-CLUSTERS FA-TABLE
+                           (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT))))))
+ (not
+  (MEMBER-EQUAL
+   (CAR
+     (FIND-N-FREE-CLUSTERS FA-TABLE
+                           (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))))
+   (MV-NTH 0
+           (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))))))
+
+;; (thm-cp
+;;  (IMPLIES
+;;  (AND
+;;       (CONSP (ASSOC-EQUAL NAME FS2))
+;;       (L6-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL NAME FS2)))
+;;       (consp (MV-NTH 0
+;;                       (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL NAME FS2))
+;;                                           FA-TABLE)))
+;;       (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
+;;       (NOT (INTERSECTP-EQUAL (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
+;;                              (MV-NTH 0
+;;                                      (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE))))
+;;       (FAT32-ENTRY-LIST-P FA-TABLE)
+;;       (<= (LEN FA-TABLE) 268435456)
+;;       (<= 2 (LEN FA-TABLE))
+;;       (L6-FS-P FS1)
+;;       (L6-FS-P FS2)
+;;       (EQUAL (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL NAME FS2)))
+;;              0)) (not (intersectp-EQUAL
+;;  (MV-NTH 0
+;;                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL NAME FS2))
+;;                                             FA-TABLE))
+;;            (MV-NTH 0
+;;                    (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE)))))
+;;  :hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES)) ))
+
+(thm-cp
+ (IMPLIES
+    (AND (INTEGERP LENGTH)
+         (< 0 LENGTH)
+         (or
+         (> 2
+             (FAT32-ENTRY-MASK (NTH MASKED-CURRENT-CLUSTER FA-TABLE)))
+          (<= (LEN FA-TABLE)
+              (FAT32-ENTRY-MASK (NTH MASKED-CURRENT-CLUSTER FA-TABLE)))
+         (L6-IS-EOF (FAT32-ENTRY-MASK (NTH MASKED-CURRENT-CLUSTER FA-TABLE))))
+         (FAT32-ENTRY-LIST-P FA-TABLE)
+         (INTEGERP START)
+         (<= 2 START))
+    (NOT (MEMBER-EQUAL MASKED-CURRENT-CLUSTER
+                       (FIND-N-FREE-CLUSTERS-HELPER (NTHCDR START FA-TABLE)
+                                                    N START))))
+ :hints (("Goal" :in-theory (enable find-n-free-clusters-helper)) ))
+
+(thm-cp
+ (implies (and (fat32-entry-list-p fa-table) (integerp start) (>= start 2))
+          (b* (((mv index-list error-code)
+                   (L6-BUILD-INDEX-LIST FA-TABLE masked-current-cluster
+                                        length)) )
+            (implies (equal error-code 0)
+          (NOT (INTERSECTP-EQUAL
+           (FIND-N-FREE-CLUSTERS-HELPER (NTHCDR start FA-TABLE)
+                                        N start) index-list))))))
+
+(thm-cp (IMPLIES
+ (AND
+     (L6-REGULAR-FILE-ENTRY-P file)
+     (EQUAL (MV-NTH 1
+                    (L6-FILE-INDEX-LIST file
+                                        FA-TABLE))
+            0)
+     (FAT32-ENTRY-LIST-P FA-TABLE))
+ (NOT (INTERSECTP-EQUAL
+                        (MV-NTH 0
+                                (L6-FILE-INDEX-LIST file
+                                                    FA-TABLE)) (FIND-N-FREE-CLUSTERS FA-TABLE N))))
+        :hints (("Goal" :in-theory (e/d (L6-FILE-INDEX-LIST
+                                         find-n-free-clusters) (nthcdr))) ))
+
+(thm-cp (IMPLIES
+ (AND
+  (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS FA-TABLE))
+  (FAT32-ENTRY-LIST-P FA-TABLE)
+  (L6-FS-P FS)
+  )
+ (not  (intersectp-equal (FIND-N-FREE-CLUSTERS FA-TABLE n)
+                         (MV-NTH 0
+                                 (L6-LIST-ALL-OK-INDICES FS FA-TABLE)))))
+        :hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES)) ))
+
+(thm-cp (IMPLIES
+ (AND
+  (CONSP HNS)
+  (CONSP FS2)
+  (CONSP (ASSOC-EQUAL (CAR HNS) FS2))
+  (L6-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL (CAR HNS) FS2)))
+  (NOT (CDR HNS))
+  (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
+  (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE))
+  (NOT (INTERSECTP-EQUAL (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
+                         (MV-NTH 0
+                                 (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE))))
+  (FAT32-ENTRY-LIST-P FA-TABLE)
+  (STRINGP TEXT)
+  (INTEGERP START)
+  (<= 0 START)
+  (SYMBOL-LISTP HNS)
+  (BLOCK-LISTP DISK)
+  (EQUAL (LEN FA-TABLE) (LEN DISK))
+  (<= (LEN DISK) 268435456)
+  (<= 2 (LEN DISK))
+  (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
+      (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
+  (L6-FS-P FS1)
+  (L6-FS-P FS2))
+ (EQUAL
+    (L6-TO-L4-FS-HELPER FS1
+                        (MV-NTH 2
+                                (L6-WRCHS HNS FS2 DISK FA-TABLE START TEXT)))
+    (L6-TO-L4-FS-HELPER FS1 FA-TABLE))) :hints (("Subgoal 8''" :in-theory (disable  l6-wrchs-correctness-1-lemma-21) :use (:instance  l6-wrchs-correctness-1-lemma-21 (fs fs1) (key
+    (CAR
+     (FIND-N-FREE-CLUSTERS FA-TABLE
+                           (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))))) (val
+    (FAT32-UPDATE-LOWER-28
+     (NTH (CAR (FIND-N-FREE-CLUSTERS
+                    FA-TABLE
+                    (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))))
+          FA-TABLE)
+     (CAR
+         (APPEND (CDR (FIND-N-FREE-CLUSTERS
+                           FA-TABLE
+                           (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))))
+                 '(0))))))) ))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-23
+  (implies
    (and
-    (equal (mv-nth 1 (l6-list-all-ok-indices fs1 fa-table))
-           0)
+    (mv-nth 1 (l6-list-all-ok-indices fs1 fa-table))
+    (mv-nth 1 (l6-list-all-ok-indices fs2 fa-table))
     (not (intersectp-equal
           (mv-nth 0 (l6-list-all-ok-indices fs1 fa-table))
           (mv-nth 0
@@ -2166,7 +2343,47 @@
      (mv-nth 2
              (l6-wrchs hns fs2 disk fa-table start text)))
     (l6-to-l4-fs-helper fs1 fa-table)))
-  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))
+          ("Subgoal *1/7.1''" :in-theory (disable
+  l6-wrchs-correctness-1-lemma-21 intersectp-is-commutative
+  l6-wrchs-correctness-1-lemma-22) :use ( (:instance
+  l6-wrchs-correctness-1-lemma-21 (fs fs1) (key
+    (CAR (MV-NTH 0
+                 (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS2))
+                                     FA-TABLE)))) (val
+    (FAT32-UPDATE-LOWER-28
+      (NTH (CAR (MV-NTH 0
+                        (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS2))
+                                            FA-TABLE)))
+           FA-TABLE)
+      0))) (:instance intersect-with-subset (x (MV-NTH 0
+                        (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS2))
+                                            FA-TABLE))) (y
+  (MV-NTH 0
+                                     (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE))) (z (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))))
+  (:instance intersectp-is-commutative (x (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))) (y
+                             (MV-NTH 0
+                                     (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE)))) (:instance
+  l6-wrchs-correctness-1-lemma-22 (name (car hns)) (fs fs2))))
+          ("Subgoal *1/6'" :in-theory (disable (:DEFINITION L6-WRCHS)
+             (:DEFINITION MAX)
+             (:DEFINITION NFIX)
+             (:DEFINITION NOT)
+             (:DEFINITION SET-INDICES-IN-FA-TABLE)
+             (:DEFINITION SYMBOL-LISTP)
+             (:META MV-NTH-CONS-META)
+             (:REWRITE CAR-OF-MAKE-LIST)
+             (:REWRITE NTH-UPDATE-NTH)
+             (:REWRITE ZP-OPEN)))
+          ("Subgoal *1/5'" :in-theory (disable (:DEFINITION L6-WRCHS)
+             (:DEFINITION MAX)
+             (:DEFINITION NFIX)
+             (:DEFINITION NOT)
+             (:DEFINITION SET-INDICES-IN-FA-TABLE)
+             (:DEFINITION SYMBOL-LISTP)
+             (:REWRITE CAR-OF-MAKE-LIST)
+             (:REWRITE NTH-UPDATE-NTH)
+             (:REWRITE ZP-OPEN)))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-23

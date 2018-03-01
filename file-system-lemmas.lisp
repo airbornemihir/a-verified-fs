@@ -297,3 +297,8 @@
   (implies (and (natp n1) (natp n2))
            (equal (nth n1 (nthcdr n2 l))
                   (nth (+ n1 n2) l))))
+
+(defthmd intersect-with-subset
+  (implies (and (subsetp-equal x y)
+                (intersectp-equal x z))
+           (intersectp-equal y z)))
