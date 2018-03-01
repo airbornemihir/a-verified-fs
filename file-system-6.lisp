@@ -2152,6 +2152,94 @@
             (l6-list-all-ok-indices fs fa-table))))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
+(skip-proofs
+ (defthm
+   l6-wrchs-correctness-1-lemma-23
+   (implies
+    (and
+     (l6-stricter-fs-p fs1 fa-table)
+     (l6-stricter-fs-p fs2 fa-table)
+     (fat32-entry-list-p fa-table)
+     (stringp text)
+     (integerp start)
+     (<= 0 start)
+     (symbol-listp hns)
+     (block-listp disk)
+     (equal (len fa-table) (len disk))
+     (<= (len disk) 268435456)
+     (<= 2 (len disk))
+     (<= (len (make-blocks (insert-text nil start text)))
+         (count-free-blocks (fa-table-to-alv fa-table)))
+     (not (intersectp-equal
+           (mv-nth 0 (l6-list-all-ok-indices fs1 fa-table))
+           (mv-nth 0 (l6-list-all-ok-indices fs2 fa-table)))))
+    (equal
+     (l6-to-l4-fs-helper fs1
+                         (mv-nth 2
+                                 (l6-wrchs hns
+                                           fs2
+                                           disk fa-table start text)))
+     (l6-to-l4-fs-helper fs1
+                         fa-table)))))
+
+(skip-proofs
+(defthm
+  l6-wrchs-correctness-1-lemma-24
+  (IMPLIES
+ (AND
+  (L6-STRICTER-FS-P FS FA-TABLE)
+  (FAT32-ENTRY-LIST-P FA-TABLE))
+ (L6-STRICTER-FS-P (DELETE-ASSOC-EQUAL name FS)
+                         FA-TABLE))
+  :hints (("Goal" :in-theory (enable L6-STRICTER-FS-P L6-LIST-ALL-OK-INDICES)) )))
+
+(skip-proofs
+ (defthm
+   l6-wrchs-correctness-1-lemma-25
+   (implies
+    (and
+     (consp (assoc-equal name fs))
+     (not (l6-regular-file-entry-p (cdr (assoc-equal name fs))))
+     (l6-stricter-fs-p fs fa-table)
+     (fat32-entry-list-p fa-table))
+    (not (intersectp-equal
+          (mv-nth 0
+                  (l6-list-all-ok-indices (delete-assoc-equal name fs)
+                                          fa-table))
+          (mv-nth 0
+                  (l6-list-all-ok-indices (cdr (assoc-equal name fs))
+                                          fa-table)))))
+   :hints (("goal" :in-theory (disable l6-list-all-ok-indices)) )))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-27
+  (implies
+   (and
+    (fat32-entry-list-p fa-table)
+    (< 0
+       (count-free-blocks (fa-table-to-alv-helper fa-table)))
+    (integerp n)
+    (<= 0 n))
+   (iff (consp (find-n-free-clusters-helper fa-table n start))
+        (not (equal n 0))))
+  :hints (("goal" :in-theory (enable find-n-free-clusters-helper
+                                     fa-table-to-alv-helper))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-28
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (< 0
+           (count-free-blocks (fa-table-to-alv fa-table)))
+        (natp n))
+   (iff (consp (find-n-free-clusters fa-table n))
+        (not (equal n 0))))
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters
+                              find-n-free-clusters-helper))
+   ("subgoal 2" :in-theory (enable fa-table-to-alv
+                                   fa-table-to-alv-helper))))
+
 ;; This is eventually going to become l6-wrchs-correctness-1
 (thm-cp
   (implies (and (l6-stricter-fs-p fs fa-table)
@@ -2190,7 +2278,14 @@
              (:DEFINITION NOT)
              (:DEFINITION SET-INDICES-IN-FA-TABLE)
              (:REWRITE CAR-OF-MAKE-LIST)
-             (:REWRITE ZP-OPEN)))))
+             (:REWRITE ZP-OPEN)))
+          ("Subgoal *1/8.2" :in-theory (disable
+   l6-wrchs-correctness-1-lemma-23) :use (:instance
+                                          l6-wrchs-correctness-1-lemma-23 (fs1
+                                                                           (DELETE-ASSOC-EQUAL (CAR HNS) FS)) (fs2
+                                            (CDR (ASSOC-EQUAL (CAR HNS) FS)))
+   (hns (cdr hns))))
+          ))
 
 ;; This theorem shows the equivalence of the l6 and l4 versions of wrchs.
 (defthm
