@@ -2096,65 +2096,90 @@
         (> (len fa-table)
            masked-current-cluster)
         (<= 2 masked-current-cluster))
-   (b*
-       (((mv index-list error-code)
+   (b* (((mv index-list error-code)
          (l6-build-index-list fa-table
                               masked-current-cluster length)))
-     (implies
-      (and (equal error-code 0)
-           (not (member-equal key index-list)))
-      (equal (l6-build-index-list (update-nth key val fa-table)
-                                  masked-current-cluster length)
-             (mv index-list error-code)))))
+     (implies (and (equal error-code 0)
+                   (not (member-equal key index-list)))
+              (equal (l6-build-index-list (update-nth key val fa-table)
+                                          masked-current-cluster length)
+                     (l6-build-index-list fa-table
+                                          masked-current-cluster length)))))
   :hints
   (("subgoal *1/3'"
     :expand (l6-build-index-list (update-nth key val fa-table)
                                  masked-current-cluster length))))
 
-(defthm l6-wrchs-correctness-1-lemma-20
-(IMPLIES
- (AND (natp key)
-      (< key
-         (LEN fa-table))
-      (NOT (member-EQUAL key (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))))
-      (FAT32-ENTRY-LIST-P FA-TABLE)
-      (L6-FS-P FS1)
-      (fat32-entry-p value))
- (EQUAL
-  (L6-TO-L4-FS-HELPER
-    FS1
-    (UPDATE-NTH
-     key
-     value
-     FA-TABLE))
-  (L6-TO-L4-FS-HELPER FS1 FA-TABLE)))
-:hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES)) ))
+(defthm
+  l6-wrchs-correctness-1-lemma-21
+  (implies
+   (and (natp key)
+        (< key (len fa-table))
+        (fat32-entry-list-p fa-table)
+        (l6-fs-p fs)
+        (fat32-entry-p value))
+   (b*
+       (((mv index-list ok)
+         (l6-list-all-ok-indices fs fa-table)))
+     (implies
+      (and ok (not (member-equal key index-list)))
+      (equal
+       (l6-to-l4-fs-helper fs (update-nth key val fa-table))
+       (l6-to-l4-fs-helper fs fa-table)))))
+  :hints
+  (("goal" :in-theory (enable l6-list-all-ok-indices))
+   ("subgoal *1/5''"
+    :in-theory (e/d (l6-file-index-list) (l6-wrchs-correctness-1-lemma-20))
+    :use
+    (:instance
+     l6-wrchs-correctness-1-lemma-20
+     (masked-current-cluster
+      (l6-regular-file-first-cluster (cdr (car fs))))
+     (length (l6-regular-file-length (cdr (car fs))))))))
 
-(defthm l6-wrchs-correctness-1-lemma-21
-  (IMPLIES
- (AND
-  (not (intersectp-equal (mv-nth 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
-                         (mv-nth 0 (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE))))
-  (FAT32-ENTRY-LIST-P FA-TABLE)
-  (STRINGP TEXT)
-  (INTEGERP START)
-  (<= 0 START)
-  (SYMBOL-LISTP hns)
-  (BLOCK-LISTP DISK)
-  (EQUAL (LEN FA-TABLE) (LEN DISK))
-  (<= (LEN DISK) 268435456)
-  (<= 2 (LEN DISK))
-  (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
-      (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
-  (l6-fs-p fs1) (l6-fs-p fs2))
- (EQUAL
-      (L6-TO-L4-FS-HELPER fs1
-                          (MV-NTH 2
-                                  (L6-WRCHS hns fs2
-                                            DISK FA-TABLE START TEXT)))
-      (L6-TO-L4-FS-HELPER fs1
-                          FA-TABLE)))
-  :hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES))))
+(defthm
+  l6-wrchs-correctness-1-lemma-22
+  (implies
+   (and
+    (equal (mv-nth 1 (l6-list-all-ok-indices fs1 fa-table))
+           0)
+    (not (intersectp-equal
+          (mv-nth 0 (l6-list-all-ok-indices fs1 fa-table))
+          (mv-nth 0
+                  (l6-list-all-ok-indices fs2 fa-table))))
+    (fat32-entry-list-p fa-table)
+    (stringp text)
+    (integerp start)
+    (<= 0 start)
+    (symbol-listp hns)
+    (block-listp disk)
+    (equal (len fa-table) (len disk))
+    (<= (len disk) 268435456)
+    (<= 2 (len disk))
+    (<= (len (make-blocks (insert-text nil start text)))
+        (count-free-blocks (fa-table-to-alv fa-table)))
+    (l6-fs-p fs1)
+    (l6-fs-p fs2))
+   (equal
+    (l6-to-l4-fs-helper
+     fs1
+     (mv-nth 2
+             (l6-wrchs hns fs2 disk fa-table start text)))
+    (l6-to-l4-fs-helper fs1 fa-table)))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-23
+  (implies
+   (and (l6-fs-p fs)
+        (equal (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+               0))
+   (equal
+    (mv-nth
+     1
+     (l6-list-all-ok-indices (delete-assoc-equal (car hns) fs)
+                             fa-table))
+    0)))
 
 ;; This is eventually going to become l6-wrchs-correctness-1
 (thm-cp
@@ -2181,6 +2206,11 @@
                   (mv l4-fs-after-write disk-after-write
                       l4-alv-after-write)))))
   :hints (("Goal" :induct (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
+          ("Subgoal *1/8.2" :in-theory (e/d
+  (l6-stricter-fs-p) (l6-wrchs-correctness-1-lemma-22)) :use (:instance
+  l6-wrchs-correctness-1-lemma-22 (fs1 (DELETE-ASSOC-EQUAL (CAR HNS) FS)) (fs2
+                                            (CDR (ASSOC-EQUAL (CAR HNS) FS)))
+  (hns (cdr hns))))
           ("Subgoal *1/6'" :in-theory (disable (:DEFINITION L6-WRCHS)
              (:DEFINITION MAX)
              (:DEFINITION NFIX)
