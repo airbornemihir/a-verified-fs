@@ -11,6 +11,8 @@
 (include-book "centaur/fty/top" :dir :system)
 
 (defconst *expt-2-28* (expt 2 28))
+;; from page 18 of the FAT specification
+(defconst *MS-EOC* (- *expt-2-28* 1))
 ;; from include/uapi/asm-generic/errno-base.h
 (defconst *EIO* 5) ;; I/O error
 (defconst *ENOSPC* 28) ;; No space left on device
@@ -681,6 +683,13 @@
                      (x (len fa-table))
                      (y *expt-2-28*))))))
 
+;; l6-wrchs and l6-create are in some cases asked to create a zero length file
+;; or zero the length of an existing file; the following comment from page 17
+;; of the FAT specification applies.
+
+;; Note that a zero-length file a file that has no data allocated to it has a
+;; first cluster number of 0 placed in its directory entry.
+
 ; This function writes a specified text string to a specified position to a
 ; text file at a specified path.
 (defun
@@ -789,13 +798,10 @@
                                                      new-indices
                                                      (binary-append
                                                       (cdr new-indices)
-                                                      ;; 0 is chosen for now but it has to
-                                                      ;; be one of those end of file markers
-                                                      (list 0))) read-error-code)
+                                                      (list *MS-EOC*))) read-error-code)
                       (mv (cons (cons (car sd)
                                       (l6-make-regular-file
-                                       ;; 0 is chosen for now but it has to
-                                       ;; be one of those end of file markers
+                                       ;; 0 is chosen by default
                                        0
                                        (len new-text)))
                                 (delete-assoc (car hns) fs))
@@ -842,9 +848,7 @@
                                                    indices
                                                    (binary-append
                                                     (cdr indices)
-                                                    ;; 0 is chosen for now but it has to
-                                                    ;; be one of those end of file markers
-                                                    (list 0))))
+                                                    (list *MS-EOC*))))
                     (mv (cons (cons (car hns)
                                     (cons indices
                                           (length text)))
