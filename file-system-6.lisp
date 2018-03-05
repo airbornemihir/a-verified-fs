@@ -2363,6 +2363,22 @@
                                      fa-table)))
     nil)))
 
+(defthm l6-wrchs-correctness-1-lemma-37
+  (IMPLIES
+ (AND
+  (FAT32-ENTRY-LIST-P FA-TABLE)
+  (consp
+   (FIND-N-FREE-CLUSTERS FA-TABLE n)))
+ (EQUAL
+  (FAT32-ENTRY-MASK
+  (NTH (CAR (FIND-N-FREE-CLUSTERS
+             FA-TABLE n))
+       FA-TABLE))
+  0))
+  :hints (("Goal" :in-theory (enable FIND-N-FREE-CLUSTERS))
+          ("Goal'" :expand (FIND-N-FREE-CLUSTERS-HELPER (NTHCDR 2 FA-TABLE)
+                                                       N 2))))
+
 (skip-proofs
  (defthm
    l6-wrchs-correctness-1-lemma-23
