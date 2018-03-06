@@ -18,19 +18,6 @@
 (defconst *ENOSPC* 28) ;; No space left on device
 (defconst *ENOENT* 2) ;; No such file or directory
 
-(defun my-preprocess (term wrld)
-      (declare (ignore wrld))
-      (cond ((equal term (list 'quote *expt-2-28*))
-              *expt-2-28*)
-             ((equal term (list 'quote *MS-EOC*))
-              *MS-EOC*)
-             (t
-              nil)))
-
-(table user-defined-functions-table
-           'untranslate-preprocess
-           'my-preprocess)
-
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))
   (unsigned-byte-p 32 x))
@@ -2553,7 +2540,6 @@
           ("subgoal *1/1'''"
            :in-theory (enable intersectp-is-commutative))))
 
-;; for Subgoal *1/6.41.1'
 (defthm
   l6-wrchs-correctness-1-lemma-38
   (implies
@@ -2576,7 +2562,7 @@
        (nth (car (find-n-free-clusters fa-table n))
             fa-table)
        (car (append (cdr (find-n-free-clusters fa-table n))
-                    '(*ms-eoc*))))
+                    (list *ms-eoc*))))
       fa-table))
     (l6-to-l4-fs-helper fs fa-table)))
   :hints
@@ -2591,7 +2577,7 @@
        (nth (car (find-n-free-clusters fa-table n))
             fa-table)
        (car (append (cdr (find-n-free-clusters fa-table n))
-                    '(*ms-eoc*)))))
+                    (list *ms-eoc*)))))
      (key (car (find-n-free-clusters fa-table n)))))
    ("goal'''"
     :in-theory (disable l6-wrchs-correctness-1-lemma-39)
@@ -2656,6 +2642,9 @@
                                           fa-table)))))
    :hints (("goal" :in-theory (disable l6-list-all-ok-indices)) )))
 
+(accumulated-persistence nil)
+(accumulated-persistence t)
+
 ;; This is eventually going to become l6-wrchs-correctness-1
 (thm-cp
   (implies (and (l6-stricter-fs-p fs fa-table)
@@ -2680,7 +2669,11 @@
                             start text)
                   (mv l4-fs-after-write disk-after-write
                       l4-alv-after-write)))))
-  :hints (("Goal" :induct (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
+  :hints (("Goal" :in-theory (disable (:REWRITE
+                                       BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE)
+                                      (:REWRITE CHARACTER-LISTP-OF-FIRST-N-AC)
+                                      (:REWRITE UNMAKE-BLOCKS-CORRECTNESS-2 . 1))
+           :induct (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
           ("Subgoal *1/7.9" :expand (len (mv-nth 0
                        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
                                            fa-table))))
@@ -2696,11 +2689,6 @@
                                                                            (DELETE-ASSOC-EQUAL (CAR HNS) FS)) (fs2
                                             (CDR (ASSOC-EQUAL (CAR HNS) FS)))
                                                                            (hns (cdr hns))))
-          ("Subgoal *1/6.41.1'" :in-theory (disable
-                                            l6-wrchs-correctness-1-lemma-38)
-           :use (:instance l6-wrchs-correctness-1-lemma-38 (fs
-                                                            (DELETE-ASSOC-EQUAL
-                                                             (CAR HNS) FS)) (n (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT))))))
           ))
 
 ;; This theorem shows the equivalence of the l6 and l4 versions of wrchs.
