@@ -302,6 +302,3 @@
   (implies (and (subsetp-equal x y)
                 (intersectp-equal x z))
            (intersectp-equal y z)))
-
-(defthm car-of-nthcdr
-  (equal (car (nthcdr n l)) (nth n l)))
