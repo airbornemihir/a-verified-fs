@@ -18,6 +18,19 @@
 (defconst *ENOSPC* 28) ;; No space left on device
 (defconst *ENOENT* 2) ;; No such file or directory
 
+(defun my-preprocess (term wrld)
+      (declare (ignore wrld))
+      (cond ((equal term (list 'quote *expt-2-28*))
+              *expt-2-28*)
+             ((equal term (list 'quote *MS-EOC*))
+              *MS-EOC*)
+             (t
+              nil)))
+
+(table user-defined-functions-table
+           'untranslate-preprocess
+           'my-preprocess)
+
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))
   (unsigned-byte-p 32 x))
@@ -2496,100 +2509,93 @@
   (("goal" :in-theory (e/d (l6-build-index-list)
                            (intersectp-is-commutative)))))
 
-(defthm l6-wrchs-correctness-1-lemma-40
-  (IMPLIES
- (AND
-      (L6-REGULAR-FILE-ENTRY-P entry)
-      (EQUAL (MV-NTH 1
-                     (L6-FILE-INDEX-LIST entry
-                                         FA-TABLE))
-             0)
-      (FAT32-ENTRY-LIST-P FA-TABLE)
-      (INTEGERP N)
-      (<= 0 N)
-      (<= (LEN FA-TABLE) 268435456)
-      (<= 2 (LEN FA-TABLE)))
- (NOT (INTERSECTP-EQUAL (FIND-N-FREE-CLUSTERS FA-TABLE N)
-                        (MV-NTH 0
-                                (L6-FILE-INDEX-LIST entry
-                                                    FA-TABLE)))))
-:hints (("Goal" :in-theory (enable L6-FILE-INDEX-LIST)) ))
+(defthm
+  l6-wrchs-correctness-1-lemma-40
+  (implies
+   (and (l6-regular-file-entry-p entry)
+        (equal (mv-nth 1 (l6-file-index-list entry fa-table))
+               0)
+        (fat32-entry-list-p fa-table)
+        (integerp n)
+        (<= 0 n)
+        (<= (len fa-table) 268435456)
+        (<= 2 (len fa-table)))
+   (not (intersectp-equal
+         (find-n-free-clusters fa-table n)
+         (mv-nth 0
+                 (l6-file-index-list entry fa-table)))))
+  :hints
+  (("goal" :in-theory (enable l6-file-index-list))
+   ("subgoal 2"
+    :in-theory (disable l6-wrchs-correctness-1-lemma-41)
+    :use (:instance l6-wrchs-correctness-1-lemma-41
+                    (masked-current-cluster
+                     (l6-regular-file-first-cluster entry))
+                    (length (l6-regular-file-length entry))))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-39
-  (IMPLIES
-   (AND
-    (L6-FS-P FS)
-    (FAT32-ENTRY-LIST-P FA-TABLE)
-    (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS FA-TABLE))
-    (NO-DUPLICATESP-EQUAL (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS FA-TABLE)))
-    (INTEGERP N)
-    (<= 0 N)
-    (<= (LEN FA-TABLE) 268435456)
-    (<= 2 (LEN FA-TABLE)))
-   (not  (intersectp-EQUAL
-          (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS FA-TABLE))
-          (FIND-N-FREE-CLUSTERS FA-TABLE N))))
-  :hints (("Goal'" :in-theory (e/d (l6-list-all-ok-indices)
+  (implies
+   (and (l6-fs-p fs)
+        (fat32-entry-list-p fa-table)
+        (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+        (no-duplicatesp-equal
+         (mv-nth 0 (l6-list-all-ok-indices fs fa-table)))
+        (integerp n)
+        (<= 0 n)
+        (<= (len fa-table) 268435456)
+        (<= 2 (len fa-table)))
+   (not (intersectp-equal
+         (mv-nth 0 (l6-list-all-ok-indices fs fa-table))
+         (find-n-free-clusters fa-table n))))
+  :hints (("goal'" :in-theory (e/d (l6-list-all-ok-indices)
                                    (intersectp-is-commutative)))
-          ("Subgoal *1/1'''" :in-theory (enable intersectp-is-commutative))))
+          ("subgoal *1/1'''"
+           :in-theory (enable intersectp-is-commutative))))
 
 ;; for Subgoal *1/6.41.1'
 (defthm
   l6-wrchs-correctness-1-lemma-38
-  (IMPLIES
- (AND
-  (L6-STRICTER-FS-P FS FA-TABLE)
-  (FAT32-ENTRY-LIST-P FA-TABLE)
-  (natp n)
-  (<= (LEN fa-table) 268435456)
-  (<= 2 (LEN fa-table))
-   (consp
-     (FIND-N-FREE-CLUSTERS FA-TABLE
-                           n))
-  (<
-   (CAR
-     (FIND-N-FREE-CLUSTERS FA-TABLE
-                           n))
-   (LEN fa-table))
-  (<= n
-      (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))))
- (EQUAL
-  (L6-TO-L4-FS-HELPER
-   fs
-   (UPDATE-NTH
-    (CAR
-     (FIND-N-FREE-CLUSTERS FA-TABLE
-                           n))
-    (FAT32-UPDATE-LOWER-28
-     (NTH (CAR (FIND-N-FREE-CLUSTERS
-                    FA-TABLE
-                    n))
-          FA-TABLE)
-     (CAR
-         (APPEND (CDR (FIND-N-FREE-CLUSTERS
-                           FA-TABLE
-                           n))
-                 '(*ms-eoc*))))
-    FA-TABLE))
-  (L6-TO-L4-FS-HELPER fs
-                      FA-TABLE)))
-  :hints (("Goal" :in-theory (e/d (l6-stricter-fs-p)
-                                  (L6-WRCHS-CORRECTNESS-1-LEMMA-21)) :use
-                                  (:instance L6-WRCHS-CORRECTNESS-1-LEMMA-21
-                                             (val
-    (FAT32-UPDATE-LOWER-28
-     (NTH (CAR (FIND-N-FREE-CLUSTERS
-                    FA-TABLE
-                    n))
-          FA-TABLE)
-     (CAR
-         (APPEND (CDR (FIND-N-FREE-CLUSTERS
-                           FA-TABLE
-                           n))
-                 '(*ms-eoc*))))) (key (CAR
-     (FIND-N-FREE-CLUSTERS FA-TABLE
-                           n))))) ))
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (fat32-entry-list-p fa-table)
+        (natp n)
+        (<= (len fa-table) 268435456)
+        (<= 2 (len fa-table))
+        (consp (find-n-free-clusters fa-table n))
+        (< (car (find-n-free-clusters fa-table n))
+           (len fa-table))
+        (<= n
+            (count-free-blocks (fa-table-to-alv fa-table))))
+   (equal
+    (l6-to-l4-fs-helper
+     fs
+     (update-nth
+      (car (find-n-free-clusters fa-table n))
+      (fat32-update-lower-28
+       (nth (car (find-n-free-clusters fa-table n))
+            fa-table)
+       (car (append (cdr (find-n-free-clusters fa-table n))
+                    '(*ms-eoc*))))
+      fa-table))
+    (l6-to-l4-fs-helper fs fa-table)))
+  :hints
+  (("goal"
+    :in-theory (e/d (l6-stricter-fs-p)
+                    (l6-wrchs-correctness-1-lemma-21))
+    :use
+    (:instance
+     l6-wrchs-correctness-1-lemma-21
+     (val
+      (fat32-update-lower-28
+       (nth (car (find-n-free-clusters fa-table n))
+            fa-table)
+       (car (append (cdr (find-n-free-clusters fa-table n))
+                    '(*ms-eoc*)))))
+     (key (car (find-n-free-clusters fa-table n)))))
+   ("goal'''"
+    :in-theory (disable l6-wrchs-correctness-1-lemma-39)
+    :use l6-wrchs-correctness-1-lemma-39)))
 
 (skip-proofs
  (defthm
@@ -2689,7 +2695,12 @@
                                           l6-wrchs-correctness-1-lemma-23 (fs1
                                                                            (DELETE-ASSOC-EQUAL (CAR HNS) FS)) (fs2
                                             (CDR (ASSOC-EQUAL (CAR HNS) FS)))
-   (hns (cdr hns))))
+                                                                           (hns (cdr hns))))
+          ("Subgoal *1/6.41.1'" :in-theory (disable
+                                            l6-wrchs-correctness-1-lemma-38)
+           :use (:instance l6-wrchs-correctness-1-lemma-38 (fs
+                                                            (DELETE-ASSOC-EQUAL
+                                                             (CAR HNS) FS)) (n (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT))))))
           ))
 
 ;; This theorem shows the equivalence of the l6 and l4 versions of wrchs.
