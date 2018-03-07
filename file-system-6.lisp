@@ -13,7 +13,9 @@
 (in-theory (disable (:REWRITE BOUNDED-NAT-LISTP-CORRECTNESS-3) (:DEFINITION
                                                                 MAKE-BLOCKS)
                     (:REWRITE
-                     L3-REGULAR-FILE-ENTRY-P-CORRECTNESS-1)))
+                     L3-REGULAR-FILE-ENTRY-P-CORRECTNESS-1)
+                    (:REWRITE L2-WRCHS-RETURNS-FS-LEMMA-5)
+                    (:REWRITE NO-DUPLICATESP-OF-MEMBER)))
 
 (defconst *expt-2-28* (expt 2 28))
 ;; from page 18 of the FAT specification
@@ -1183,20 +1185,20 @@
   :rule-classes (:type-prescription :rewrite)
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
-(defthm
-  l6-list-all-ok-indices-correctness-3
-  (implies (and (fat32-entry-list-p fa-table)
-                (l6-fs-p fs))
-           (mv-let (index-list ok)
-             (l6-list-all-ok-indices fs fa-table)
-             (declare (ignore ok))
-             (fat32-masked-entry-list-p index-list)))
-  :hints
-  (("goal" :in-theory (enable l6-list-all-ok-indices))
-   ("subgoal *1/3''"
-    :in-theory (disable l6-file-index-list-correctness-2)
-    :use ((:instance l6-file-index-list-correctness-2
-                     (file (cdr (car fs))))))))
+;; (defthm
+;;   l6-list-all-ok-indices-correctness-3
+;;   (implies (and (fat32-entry-list-p fa-table)
+;;                 (l6-fs-p fs))
+;;            (mv-let (index-list ok)
+;;              (l6-list-all-ok-indices fs fa-table)
+;;              (declare (ignore ok))
+;;              (fat32-masked-entry-list-p index-list)))
+;;   :hints
+;;   (("goal" :in-theory (enable l6-list-all-ok-indices))
+;;    ("subgoal *1/3''"
+;;     :in-theory (disable l6-file-index-list-correctness-2)
+;;     :use ((:instance l6-file-index-list-correctness-2
+;;                      (file (cdr (car fs))))))))
 
 (verify-guards l6-list-all-ok-indices)
 
