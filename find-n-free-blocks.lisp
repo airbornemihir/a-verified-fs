@@ -27,6 +27,11 @@
          (+ (count-free-blocks x)
             (count-free-blocks y))))
 
+(defthm count-free-blocks-correctness-3
+  (implies (and (nth key l) (not val))
+           (equal (count-free-blocks (update-nth key val l))
+                  (+ 1 (count-free-blocks l)))))
+
 (defund find-n-free-blocks-helper (alv n start)
   (declare (xargs :guard (and (boolean-listp alv)
                               (natp n)
