@@ -1613,8 +1613,7 @@
            (equal (len (unmake-blocks blocks n))
                   n))
   :rule-classes
-  (:rewrite
-   (:rewrite :corollary (implies (and (block-listp blocks)
+  ((:rewrite :corollary (implies (and (block-listp blocks)
                                       (natp n)
                                       (feasible-file-length-p (len blocks) n))
                                  (iff (consp (unmake-blocks blocks n))
@@ -1641,7 +1640,22 @@
             (fetch-blocks-by-indices disk file-index-list)
             (l6-regular-file-length (l6-stat hns fs disk))))
       (l6-regular-file-length (l6-stat hns fs disk)))))
-  :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
+  :hints
+  (("goal" :in-theory (enable l6-stricter-fs-p))
+   ("subgoal *1/4'''"
+    :in-theory (enable unmake-blocks-correctness-2)
+    :use
+    (:instance
+     unmake-blocks-correctness-2
+     (blocks
+      (fetch-blocks-by-indices
+       disk
+       (mv-nth
+        0
+        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                            fa-table))))
+     (n (l6-regular-file-length
+         (cdr (assoc-equal (car hns) fs))))))))
 
 (defthm
   l6-rdchs-correctness-1-lemma-3
