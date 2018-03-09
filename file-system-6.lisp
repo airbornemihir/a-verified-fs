@@ -103,10 +103,7 @@
 (defthm set-indices-in-fa-table-guard-lemma-2
   (implies (fat32-entry-p x) (natp x))
   :hints (("goal" :in-theory (enable fat32-entry-p)))
-  :rule-classes
-  (:forward-chaining
-   (:rewrite :corollary (implies (fat32-entry-p x)
-                                 (integerp x)))))
+  :rule-classes :forward-chaining)
 
 (defthm set-indices-in-fa-table-guard-lemma-3
   (implies (and (fat32-entry-list-p l)
