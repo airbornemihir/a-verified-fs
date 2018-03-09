@@ -181,7 +181,7 @@
   (implies (l6-regular-file-entry-p entry)
            (not (l6-fs-p entry)))
   :hints (("goal" :in-theory (enable l6-regular-file-entry-p)))
-  :rule-classes (:rewrite (:rewrite :corollary
+  :rule-classes (:forward-chaining (:forward-chaining :corollary
   (implies (l6-fs-p entry)
            (not (l6-regular-file-entry-p entry))))))
 
@@ -1236,11 +1236,11 @@
    (indices-marked-listp (l4-collect-all-index-lists
                           (l6-to-l4-fs-helper fs fa-table))
                          (fa-table-to-alv fa-table)))
-  :hints (("goal" :in-theory (enable l6-list-all-ok-indices
-                                     l3-regular-file-entry-p))
-          ("subgoal *1/10.5'"
-           :expand (l6-to-l4-fs-helper (cdr (car fs))
-                                       fa-table))))
+  :hints
+  (("goal" :in-theory (enable l6-list-all-ok-indices
+                              l3-regular-file-entry-p))
+   ("subgoal *1/10" :expand (l6-to-l4-fs-helper (cdr (car fs))
+                                                fa-table))))
 
 (defthm
   l6-stricter-fs-p-correctness-1
@@ -3284,89 +3284,39 @@
          (fetch-blocks-by-indices
           disk
           (mv-nth 0
-                  (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                      fa-table)))
-         (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-        start text)))))
-   (not
-    (intersectp-equal
-     (find-n-free-clusters
-      (set-indices-in-fa-table
-       fa-table
-       (mv-nth 0
-               (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                   fa-table))
-       (make-list-ac
-        (len (mv-nth 0
-                     (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                         fa-table)))
-        0 nil))
-      (len
-       (make-blocks
-        (insert-text
-         (unmake-blocks
-          (fetch-blocks-by-indices
-           disk
-           (mv-nth 0
-                   (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                       fa-table)))
-          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-         start text))))
-     (mv-nth
-      0
-      (l6-list-all-ok-indices
-       (delete-assoc-equal (car hns) fs)
-       (set-indices-in-fa-table
-        fa-table
-        (mv-nth 0
-                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                    fa-table))
-        (make-list-ac
-         (len (mv-nth 0
-                      (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                          fa-table)))
-         0 nil)))))))
-  :hints
-  (("goal"
-    :in-theory (disable intersectp-is-commutative)
-    :use
-    (:instance
-     intersectp-is-commutative
-     (x
-      (find-n-free-clusters
-       (set-indices-in-fa-table
-        fa-table
-        (mv-nth 0
-                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                    fa-table))
-        (make-list-ac
-         (len (mv-nth 0
-                      (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                          fa-table)))
-         0 nil))
-       (len
-        (make-blocks
-         (insert-text
-          (unmake-blocks
-           (fetch-blocks-by-indices
-            disk
-            (mv-nth 0
-                    (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                        fa-table)))
-           (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-          start text)))))
-     (y
-      (mv-nth
-       0
-       (l6-list-all-ok-indices
-        (delete-assoc-equal (car hns) fs)
-        (set-indices-in-fa-table
-         fa-table
-         (mv-nth 0
-                 (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                     fa-table))
-         (make-list-ac
-          (len (mv-nth 0
+                  (l6-list-all-ok-indices (cdr (assoc-equal name fs))
+                                          fa-table)))))
+   :hints (("goal" :in-theory (disable l6-list-all-ok-indices)) )))
+
+;; This is eventually going to become l6-wrchs-correctness-1
+(thm-cp
+  (implies (and (l6-stricter-fs-p fs fa-table)
+                (fat32-entry-list-p fa-table)
+                (stringp text)
+                (natp start)
+                (symbol-listp hns)
+                (block-listp disk)
+                (equal (len fa-table) (len disk))
+                (<= (len disk) *expt-2-28*)
+                (>= (len fa-table) 2))
+           (b* (((mv l4-fs-before-write l4-alv-before-write) (l6-to-l4-fs
+                                                              fs fa-table))
+                ((mv fs-after-write disk-after-write fa-table-after-write)
+                 (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
+                ((mv l4-fs-after-write l4-alv-after-write) (l6-to-l4-fs
+                                                            fs-after-write fa-table-after-write)))
+             (implies
+                (<= (len (make-blocks (insert-text nil start text)))
+                    (count-free-blocks l4-alv-before-write))
+           (equal (l4-wrchs hns l4-fs-before-write disk l4-alv-before-write
+                            start text)
+                  (mv l4-fs-after-write disk-after-write
+                      l4-alv-after-write)))))
+  :hints (("Goal" :in-theory (disable (:REWRITE
+                                       BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE)
+                                      (:REWRITE CHARACTER-LISTP-OF-FIRST-N-AC))
+           :induct (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
+          ("Subgoal *1/7.9" :expand (len (mv-nth 0
                        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
                                            fa-table)))
           0 nil)))))))))
