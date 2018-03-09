@@ -2656,9 +2656,6 @@
                                           fa-table)))))
    :hints (("goal" :in-theory (disable l6-list-all-ok-indices)) )))
 
-(accumulated-persistence nil)
-(accumulated-persistence t)
-
 ;; This is eventually going to become l6-wrchs-correctness-1
 (thm-cp
   (implies (and (l6-stricter-fs-p fs fa-table)
