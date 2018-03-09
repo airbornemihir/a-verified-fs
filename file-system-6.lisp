@@ -1973,7 +1973,8 @@
   l6-wrchs-correctness-1-lemma-8
   (iff
    (equal 0 (len (make-blocks text)))
-   (not (consp text))))
+   (not (consp text)))
+  :hints (("Goal" :in-theory (enable make-blocks))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-9
@@ -2679,8 +2680,7 @@
                       l4-alv-after-write)))))
   :hints (("Goal" :in-theory (disable (:REWRITE
                                        BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE)
-                                      (:REWRITE CHARACTER-LISTP-OF-FIRST-N-AC)
-                                      (:REWRITE UNMAKE-BLOCKS-CORRECTNESS-2 . 1))
+                                      (:REWRITE CHARACTER-LISTP-OF-FIRST-N-AC))
            :induct (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
           ("Subgoal *1/7.9" :expand (len (mv-nth 0
                        (l6-file-index-list (cdr (assoc-equal (car hns) fs))

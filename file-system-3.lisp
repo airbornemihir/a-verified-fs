@@ -19,7 +19,7 @@
 ;; long. If the character-list is not exactly aligned to a block boundary, we
 ;; fill the space with null characters.
 ;; It will be used in wrchs.
-(defun make-blocks (text)
+(defund make-blocks (text)
   (declare (xargs :guard (character-listp text)
                   :measure (len text)))
   (if (atom text)
@@ -39,7 +39,9 @@
 ;; Proving that we get a proper block-list out of make-blocks.
 (defthm make-blocks-correctness-2
         (implies (character-listp text)
-                 (block-listp (make-blocks text))))
+                 (block-listp (make-blocks text)))
+        :hints (("Goal" :in-theory (enable make-blocks))))
+
 ;; Lemma
 (defthm block-listp-correctness-1
   (implies (block-listp block-list)
@@ -110,7 +112,8 @@
              (equal (unmake-blocks (make-blocks text)
                                    (len text))
                     text))
-    :hints (("subgoal *1/3.2"
+        :hints (("Goal" :in-theory (enable make-blocks))
+                ("subgoal *1/3.2"
              :in-theory (disable unmake-make-blocks-lemma-1)
              :use (:instance unmake-make-blocks-lemma-1
                              (n *blocksize*)
@@ -178,14 +181,15 @@
                    (len text))
                 (not (< (* *blocksize* (len (make-blocks text)))
                         (len text)))))
-  :instructions (:induct (:change-goal (main . 2) t)
-                         :bash :promote
-                         (:claim (character-listp (nthcdr *blocksize* text)))
-                         (:casesplit (>= (len text) *blocksize*))
-                         :bash :bash (:demote 1)
-                         (:dive 1 1)
-                         :x
-                         :top :s))
+  :instructions ((:in-theory (enable make-blocks))
+                 :induct (:change-goal (main . 2) t)
+                 :bash :promote
+                 (:claim (character-listp (nthcdr *blocksize* text)))
+                 (:casesplit (>= (len text) *blocksize*))
+                 :bash :bash (:demote 1)
+                 (:dive 1 1)
+                 :x
+                 :top :s))
 
 ;; This function, which is kept disabled, recognises a regular file entry. I am
 ;; deciding not to make things overly complicated by making getter and setter

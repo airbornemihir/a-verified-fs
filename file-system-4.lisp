@@ -1358,7 +1358,8 @@
     (implies (equal (len text1) (len text2))
              (equal (len (make-blocks text1))
                     (len (make-blocks text2))))
-    :hints (("goal" :induct (nthcdr-*blocksize*-induction-2 text1 text2)))))
+    :hints (("goal" :in-theory (enable make-blocks)
+             :induct (nthcdr-*blocksize*-induction-2 text1 text2)))))
 
 (defthm
   len-of-make-unmake
@@ -1368,7 +1369,7 @@
            (equal (len (make-blocks (unmake-blocks blocks n)))
                   (len blocks)))
   :hints
-  (("goal" :in-theory (enable feasible-file-length-p))
+  (("goal" :in-theory (enable make-blocks feasible-file-length-p))
    ("subgoal *1/8.1'"
     :expand (append (car blocks)
                     (unmake-blocks (cdr blocks) (+ -8 n))))
