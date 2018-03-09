@@ -27,7 +27,8 @@
 
 (defthm bounded-nat-listp-correctness-4
   (implies (bounded-nat-listp l b)
-           (not (member-equal b l))))
+           (not (member-equal b l)))
+  :rule-classes :forward-chaining)
 
 (defthmd bounded-nat-listp-correctness-5
   (implies (and (<= x y) (bounded-nat-listp l x))
