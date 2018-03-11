@@ -142,7 +142,7 @@
                                      fat32-update-lower-28)))
      ("goal''" :in-theory (enable unsigned-byte-p)))))
 
-(defun
+(defund
   set-indices-in-fa-table
   (v index-list value-list)
   (declare
@@ -178,7 +178,14 @@
         (equal (len index-list)
                (len value-list)))
    (fat32-entry-list-p
-    (set-indices-in-fa-table v index-list value-list))))
+    (set-indices-in-fa-table v index-list value-list)))
+  :hints (("Goal" :in-theory (enable set-indices-in-fa-table))))
+
+(defthm
+  set-indices-in-fa-table-correctness-2
+  (equal (len (set-indices-in-fa-table v index-list value-list))
+         (len v))
+  :hints (("goal" :in-theory (enable set-indices-in-fa-table))))
 
 ;; question: if fat entries are 28 bits long, then how is the maximum size
 ;; determined to be 4 GB?
@@ -740,19 +747,29 @@
                 (natp n)
                 (>= (len fa-table) 2)
                 (<= (len fa-table) *expt-2-28*))
-           (fat32-masked-entry-list-p
-            (find-n-free-clusters fa-table n)))
-  :hints
-  (("goal"
-    :in-theory (disable find-n-free-clusters-correctness-1)
-    :use ((:instance find-n-free-clusters-correctness-1
-                     (b (len fa-table)))
-          (:instance l6-wrchs-guard-lemma-3
-                     (x (find-n-free-clusters fa-table n)))
-          (:instance bounded-nat-listp-correctness-5
-                     (l (find-n-free-clusters fa-table n))
-                     (x (len fa-table))
-                     (y *expt-2-28*))))))
+           (fat32-masked-entry-list-p (find-n-free-clusters fa-table n)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (fat32-entry-list-p fa-table)
+          (natp n)
+          (>= (len fa-table) 2)
+          (<= (len fa-table) *expt-2-28*))
+     (let ((l (find-n-free-clusters fa-table n)))
+       (implies (consp l)
+                (and (fat32-masked-entry-list-p (cdr l))
+                     (fat32-masked-entry-p (car l))))))))
+  :hints (("goal" :in-theory (disable find-n-free-clusters-correctness-1)
+           :use ((:instance find-n-free-clusters-correctness-1
+                            (b (len fa-table)))
+                 (:instance l6-wrchs-guard-lemma-3
+                            (x (find-n-free-clusters fa-table n)))
+                 (:instance bounded-nat-listp-correctness-5
+                            (l (find-n-free-clusters fa-table n))
+                            (x (len fa-table))
+                            (y *expt-2-28*))))))
 
 ;; l6-wrchs and l6-create are in some cases asked to create a zero length file
 ;; or zero the length of an existing file; the following comment from page 17
@@ -776,52 +793,7 @@
                 (fat32-entry-list-p fa-table)
                 (equal (len fa-table) (len disk))
                 (<= (len disk) *expt-2-28*)
-                (>= (len fa-table) 2))
-    :guard-debug t
-    :guard-hints
-    (("goal" :do-not-induct t)
-     ("subgoal 5"
-      :expand
-      (len
-       (mv-nth
-        0
-        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                            fa-table))))
-     ("subgoal 4"
-      :in-theory (disable l6-wrchs-guard-lemma-4)
-      :use
-      (:instance
-       l6-wrchs-guard-lemma-4
-       (fa-table
-        (update-nth
-         (car
-          (mv-nth
-           0
-           (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                               fa-table)))
-         (fat32-update-lower-28
-          (nth
-           (car (mv-nth 0
-                        (l6-file-index-list
-                         (cdr (assoc-equal (car hns) fs))
-                         fa-table)))
-           fa-table)
-          0)
-         fa-table))
-       (n
-        (len
-         (make-blocks
-          (insert-text
-           (unmake-blocks-without-feasibility
-            (fetch-blocks-by-indices
-             disk
-             (mv-nth 0
-                     (l6-file-index-list
-                      (cdr (assoc-equal (car hns) fs))
-                      fa-table)))
-            (l6-regular-file-length
-             (cdr (assoc-equal (car hns) fs))))
-           start text)))))))))
+                (>= (len fa-table) 2))))
   (if (atom hns)
       (mv fs disk fa-table (- *enoent*)) ;; error - showed up at fs with no
     ;; name  - so leave fs unchanged
