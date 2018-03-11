@@ -143,8 +143,8 @@
      ("goal''" :in-theory (enable unsigned-byte-p)))))
 
 (defun
-  set-indices-in-fa-table
-  (v index-list value-list)
+    set-indices-in-fa-table
+    (v index-list value-list)
   (declare
    (xargs :guard (and (fat32-entry-list-p v)
                       (nat-listp index-list)
@@ -152,17 +152,19 @@
                       (equal (len index-list)
                              (len value-list)))))
   (if
-   (atom index-list)
-   v
-   (let
-    ((current-index (car index-list)))
-    (if (or (not (natp current-index))
-            (>= current-index (len v)))
-        v
-        (update-nth current-index
-                    (fat32-update-lower-28 (nth current-index v)
-                                           (car value-list))
-                    v)))))
+      (atom index-list)
+      v
+    (let
+        ((current-index (car index-list)))
+      (if (or (not (natp current-index))
+              (>= current-index (len v)))
+          v
+        (set-indices-in-fa-table
+         (update-nth current-index
+                     (fat32-update-lower-28 (nth current-index v)
+                                            (car value-list))
+                     v)
+         )))))
 
 (defthm
   set-indices-in-fa-table-correctness-1
@@ -2127,7 +2129,7 @@
     (cdr (assoc-equal name
                       (l6-to-l4-fs-helper fs fa-table))))))
 
-(defthm l6-wrchs-correctness-1-lemma-3
+(defthm l6-wrchs-correctness-1-lemma-2
   (implies
    (and
     (consp hns)
@@ -2170,29 +2172,30 @@
                                       fa-table)))
          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
         start text))))
-    (consp
-     (find-n-free-clusters
-      (set-indices-in-fa-table
-       fa-table
-       (mv-nth 0
-               (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                   fa-table))
-       (make-list-ac
-        (len (mv-nth 0
-                     (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                         fa-table)))
-        0 nil))
-      (len
-       (make-blocks
-        (insert-text
-         (unmake-blocks-without-feasibility
-          (fetch-blocks-by-indices
-           disk
-           (mv-nth 0
-                   (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                       fa-table)))
-          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-         start text)))))
+    (not
+     (consp
+      (find-n-free-clusters
+       (set-indices-in-fa-table
+        fa-table
+        (mv-nth 0
+                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                    fa-table))
+        (make-list-ac
+         (len (mv-nth 0
+                      (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                          fa-table)))
+         0 nil))
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks-without-feasibility
+           (fetch-blocks-by-indices
+            disk
+            (mv-nth 0
+                    (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                        fa-table)))
+           (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+          start text))))))
     (l6-stricter-fs-p fs fa-table)
     (fat32-entry-list-p fa-table)
     (stringp text)
@@ -2277,7 +2280,7 @@
                                (l6-wrchs hns fs disk fa-table start text))))))))
 
 (skip-proofs
- (defthm l6-wrchs-correctness-1-lemma-2
+ (defthm l6-wrchs-correctness-1-lemma-3
    (implies
     (and
      (consp hns)
@@ -2320,30 +2323,29 @@
                                        fa-table)))
           (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
          start text))))
-     (not
-      (consp
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         fa-table
-         (mv-nth 0
-                 (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                     fa-table))
-         (make-list-ac
-          (len (mv-nth 0
-                       (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                           fa-table)))
-          0 nil))
-        (len
-         (make-blocks
-          (insert-text
-           (unmake-blocks-without-feasibility
-            (fetch-blocks-by-indices
-             disk
-             (mv-nth 0
-                     (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                         fa-table)))
-            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-           start text))))))
+     (consp
+      (find-n-free-clusters
+       (set-indices-in-fa-table
+        fa-table
+        (mv-nth 0
+                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                    fa-table))
+        (make-list-ac
+         (len (mv-nth 0
+                      (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                          fa-table)))
+         0 nil))
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks-without-feasibility
+           (fetch-blocks-by-indices
+            disk
+            (mv-nth 0
+                    (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                        fa-table)))
+           (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+          start text)))))
      (l6-stricter-fs-p fs fa-table)
      (fat32-entry-list-p fa-table)
      (stringp text)
