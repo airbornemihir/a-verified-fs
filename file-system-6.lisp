@@ -143,28 +143,31 @@
      ("goal''" :in-theory (enable unsigned-byte-p)))))
 
 (defun
-    set-indices-in-fa-table
-    (v index-list value-list)
+  set-indices-in-fa-table
+  (v index-list value-list)
   (declare
-   (xargs :guard (and (fat32-entry-list-p v)
+   (xargs :measure (acl2-count index-list)
+          :guard (and (fat32-entry-list-p v)
                       (nat-listp index-list)
                       (fat32-masked-entry-list-p value-list)
                       (equal (len index-list)
                              (len value-list)))))
   (if
-      (atom index-list)
-      v
-    (let
-        ((current-index (car index-list)))
-      (if (or (not (natp current-index))
-              (>= current-index (len v)))
-          v
-        (set-indices-in-fa-table
-         (update-nth current-index
-                     (fat32-update-lower-28 (nth current-index v)
-                                            (car value-list))
-                     v)
-         )))))
+   (atom index-list)
+   v
+   (let
+    ((current-index (car index-list)))
+    (if
+     (or (not (natp current-index))
+         (>= current-index (len v)))
+     v
+     (set-indices-in-fa-table
+      (update-nth current-index
+                  (fat32-update-lower-28 (nth current-index v)
+                                         (car value-list))
+                  v)
+      (cdr index-list)
+      (cdr value-list))))))
 
 (defthm
   set-indices-in-fa-table-correctness-1
@@ -251,12 +254,17 @@
   :hints (("goal" :in-theory (enable l6-regular-file-entry-p
                                      l6-make-regular-file))))
 
-(defthm l6-make-regular-file-correctness-2
-  (let ((entry (l6-make-regular-file
-                first-cluster length)) )
-    (and (equal (l6-regular-file-first-cluster entry) first-cluster)
-         (equal (l6-regular-file-length entry) length)))
-  :hints (("Goal" :in-theory (enable l6-make-regular-file l6-regular-file-first-cluster l6-regular-file-length)) ))
+(defthm
+  l6-make-regular-file-correctness-2
+  (let ((entry (l6-make-regular-file first-cluster length)))
+       (and (equal (l6-regular-file-first-cluster entry)
+                   first-cluster)
+            (equal (l6-regular-file-length entry)
+                   length)))
+  :hints
+  (("goal" :in-theory (enable l6-make-regular-file
+                              l6-regular-file-first-cluster
+                              l6-regular-file-length))))
 
 ; This function defines a valid filesystem. It's an alist where all the cars
 ; are symbols and all the cdrs are either further filesystems or regular files.
