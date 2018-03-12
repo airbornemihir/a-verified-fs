@@ -2138,26 +2138,37 @@
     (<= 2 (len fa-table))
     (<= (len (make-blocks (insert-text nil start text)))
         (count-free-blocks (fa-table-to-alv fa-table)))
-    (<=
+    (equal
+     (len
+      (find-n-free-blocks
+       (set-indices-in-alv
+        (fa-table-to-alv fa-table)
+        (mv-nth 0
+                (l6-file-index-list (cdr (assoc-equal name fs))
+                                    fa-table))
+        nil)
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks
+           (fetch-blocks-by-indices
+            disk
+            (mv-nth 0
+                    (l6-file-index-list (cdr (assoc-equal name fs))
+                                        fa-table)))
+           (l6-regular-file-length (cdr (assoc-equal name fs))))
+          start text)))))
      (len
       (make-blocks
        (insert-text
         (unmake-blocks
          (fetch-blocks-by-indices
           disk
-          (mv-nth
-           0
-           (l6-file-index-list (cdr (assoc-equal name fs))
-                               fa-table)))
+          (mv-nth 0
+                  (l6-file-index-list (cdr (assoc-equal name fs))
+                                      fa-table)))
          (l6-regular-file-length (cdr (assoc-equal name fs))))
-        start text)))
-     (count-free-blocks
-      (set-indices-in-alv
-       (fa-table-to-alv fa-table)
-       (mv-nth 0
-               (l6-file-index-list (cdr (assoc-equal name fs))
-                                   fa-table))
-       nil))))
+        start text)))))
    (equal
     (len
      (find-n-free-clusters
@@ -2167,10 +2178,9 @@
                (l6-file-index-list (cdr (assoc-equal name fs))
                                    fa-table))
        (make-list-ac
-        (len
-         (mv-nth 0
-                 (l6-file-index-list (cdr (assoc-equal name fs))
-                                     fa-table)))
+        (len (mv-nth 0
+                     (l6-file-index-list (cdr (assoc-equal name fs))
+                                         fa-table)))
         0 nil))
       (len
        (make-blocks
@@ -2178,10 +2188,9 @@
          (unmake-blocks
           (fetch-blocks-by-indices
            disk
-           (mv-nth
-            0
-            (l6-file-index-list (cdr (assoc-equal name fs))
-                                fa-table)))
+           (mv-nth 0
+                   (l6-file-index-list (cdr (assoc-equal name fs))
+                                       fa-table)))
           (l6-regular-file-length (cdr (assoc-equal name fs))))
          start text)))))
     (len
@@ -2198,8 +2207,7 @@
   :hints
   (("goal"
     :in-theory (disable l6-wrchs-correctness-1-lemma-7
-                        l6-wrchs-correctness-1-lemma-19
-                        find-n-free-blocks-correctness-2)
+                        l6-wrchs-correctness-1-lemma-19)
     :use
     ((:instance
       l6-wrchs-correctness-1-lemma-7
@@ -2210,11 +2218,9 @@
                 (l6-file-index-list (cdr (assoc-equal name fs))
                                     fa-table))
         (make-list-ac
-         (len
-          (mv-nth
-           0
-           (l6-file-index-list (cdr (assoc-equal name fs))
-                               fa-table)))
+         (len (mv-nth 0
+                      (l6-file-index-list (cdr (assoc-equal name fs))
+                                          fa-table)))
          0 nil)))
       (n
        (len
@@ -2223,10 +2229,9 @@
           (unmake-blocks
            (fetch-blocks-by-indices
             disk
-            (mv-nth
-             0
-             (l6-file-index-list (cdr (assoc-equal name fs))
-                                 fa-table)))
+            (mv-nth 0
+                    (l6-file-index-list (cdr (assoc-equal name fs))
+                                        fa-table)))
            (l6-regular-file-length (cdr (assoc-equal name fs))))
           start text)))))
      (:instance
@@ -2235,34 +2240,10 @@
        (mv-nth 0
                (l6-file-index-list (cdr (assoc-equal name fs))
                                    fa-table)))
-      (n
-       (len
-        (mv-nth 0
-                (l6-file-index-list (cdr (assoc-equal name fs))
-                                    fa-table))))
-      (val 0))
-     (:instance
-      find-n-free-blocks-correctness-2
-      (alv
-       (set-indices-in-alv
-        (fa-table-to-alv fa-table)
-        (mv-nth 0
-                (l6-file-index-list (cdr (assoc-equal name fs))
-                                    fa-table))
-        nil))
-      (n
-       (len
-        (make-blocks
-         (insert-text
-          (unmake-blocks
-           (fetch-blocks-by-indices
-            disk
-            (mv-nth
-             0
-             (l6-file-index-list (cdr (assoc-equal name fs))
-                                 fa-table)))
-           (l6-regular-file-length (cdr (assoc-equal name fs))))
-          start text)))))))))
+      (n (len (mv-nth 0
+                      (l6-file-index-list (cdr (assoc-equal name fs))
+                                          fa-table))))
+      (val 0))))))
 
 (skip-proofs
  (defthm l6-wrchs-correctness-1-lemma-1
@@ -2539,28 +2520,4 @@
           ("Subgoal *1/7'" :in-theory (disable l6-wrchs-correctness-1-lemma-2)
            :use l6-wrchs-correctness-1-lemma-2)
           ("Subgoal *1/6'" :in-theory (disable l6-wrchs-correctness-1-lemma-3)
-           :use l6-wrchs-correctness-1-lemma-3)
-          ("Subgoal *1/5''" :use
-     (:instance
-      find-n-free-blocks-correctness-2
-      (alv
-       (set-indices-in-alv
-        (fa-table-to-alv fa-table)
-        (mv-nth 0
-                (l6-file-index-list (cdr (assoc-equal name fs))
-                                    fa-table))
-        nil))
-      (n
-       (len
-        (make-blocks
-         (insert-text
-          (unmake-blocks
-           (fetch-blocks-by-indices
-            disk
-            (mv-nth
-             0
-             (l6-file-index-list (cdr (assoc-equal name fs))
-                                 fa-table)))
-           (l6-regular-file-length (cdr (assoc-equal name fs))))
-          start text))))) :in-theory (disable
-      find-n-free-blocks-correctness-2))))
+           :use l6-wrchs-correctness-1-lemma-3)))
