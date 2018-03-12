@@ -792,7 +792,7 @@
                 (block-listp disk)
                 (fat32-entry-list-p fa-table)
                 (equal (len fa-table) (len disk))
-                (<= (len disk) *expt-2-28*)
+                (<= (len fa-table) *expt-2-28*)
                 (>= (len fa-table) 2))))
   (if (atom hns)
       (mv fs disk fa-table (- *enoent*)) ;; error - showed up at fs with no
@@ -867,7 +867,7 @@
                               (block-listp disk)
                               (fat32-entry-list-p fa-table)
                               (equal (len fa-table) (len disk))
-                              (<= (len disk) *expt-2-28*)
+                              (<= (len fa-table) *expt-2-28*)
                               (>= (len fa-table) 2))))
   (if (atom hns)
       (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
@@ -1714,8 +1714,8 @@
     (block-listp disk)
     (fat32-entry-list-p fa-table)
     (equal (len fa-table) (len disk))
-    (<= (len disk) *expt-2-28*)
-    (<= 2 (len disk)))
+    (<= (len fa-table) *expt-2-28*)
+    (<= 2 (len fa-table)))
    (l6-regular-file-entry-p
     (l6-make-regular-file
      (car
@@ -1838,7 +1838,7 @@
                 (block-listp disk)
                 (fat32-entry-list-p fa-table)
                 (equal (len fa-table) (len disk))
-                (<= (len disk) *expt-2-28*)
+                (<= (len fa-table) *expt-2-28*)
                 (>= (len fa-table) 2))
            (b* (((mv new-fs & &)
                  (l6-wrchs hns fs disk fa-table start text)))
@@ -2184,8 +2184,8 @@
     (symbol-listp hns)
     (block-listp disk)
     (equal (len fa-table) (len disk))
-    (<= (len disk) *expt-2-28*)
-    (<= 2 (len disk))
+    (<= (len fa-table) *expt-2-28*)
+    (<= 2 (len fa-table))
     (<= (len (make-blocks (insert-text nil start text)))
         (count-free-blocks (fa-table-to-alv fa-table))))
    (equal
@@ -2241,8 +2241,8 @@
      (symbol-listp hns)
      (block-listp disk)
      (equal (len fa-table) (len disk))
-     (<= (len disk) *expt-2-28*)
-     (<= 2 (len disk))
+     (<= (len fa-table) *expt-2-28*)
+     (<= 2 (len fa-table))
      (<= (len (make-blocks (insert-text nil start text)))
          (count-free-blocks (fa-table-to-alv fa-table))))
     (equal
@@ -2334,8 +2334,8 @@
      (symbol-listp hns)
      (block-listp disk)
      (equal (len fa-table) (len disk))
-     (<= (len disk) *expt-2-28*)
-     (<= 2 (len disk))
+     (<= (len fa-table) *expt-2-28*)
+     (<= 2 (len fa-table))
      (<= (len (make-blocks (insert-text nil start text)))
          (count-free-blocks (fa-table-to-alv fa-table))))
     (equal
@@ -2405,8 +2405,8 @@
      (symbol-listp hns)
      (block-listp disk)
      (equal (len fa-table) (len disk))
-     (<= (len disk) *expt-2-28*)
-     (<= 2 (len disk))
+     (<= (len fa-table) *expt-2-28*)
+     (<= 2 (len fa-table))
      (<= (len (make-blocks (insert-text nil start text)))
          (count-free-blocks (fa-table-to-alv fa-table))))
     (equal
@@ -2433,7 +2433,7 @@
                 (symbol-listp hns)
                 (block-listp disk)
                 (equal (len fa-table) (len disk))
-                (<= (len disk) *expt-2-28*)
+                (<= (len fa-table) *expt-2-28*)
                 (>= (len fa-table) 2))
            (b* (((mv l4-fs-before-write l4-alv-before-write) (l6-to-l4-fs
                                                               fs fa-table))
