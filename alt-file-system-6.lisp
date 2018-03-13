@@ -582,6 +582,45 @@
                   new-fa-table)))
           )))))
 
+(defthm l6-stat-after-write-1
+  (implies
+   (and (symbol-listp hns)
+        (l6-fs-p fs)
+        (fat32-entry-list-p fa-table)
+        (block-listp disk)
+        (equal (len disk) (len fa-table))
+        (natp start)
+        (stringp text))
+   (let
+       ((old-entry (l6-stat hns fs disk)) )
+     (implies
+      (l6-regular-file-entry-p old-entry)
+      (b*
+          (((mv old-indices read-error-code)
+            (l6-file-index-list old-entry fa-table))
+           (old-text
+            (unmake-blocks-without-feasibility
+             (fetch-blocks-by-indices disk old-indices)
+             (l6-regular-file-length old-entry)))
+           ((mv new-fs new-disk  & write-error-code)
+            (l6-wrchs hns fs disk fa-table start text))
+           (new-entry (l6-stat hns new-fs new-disk)))
+        (implies
+         (equal write-error-code 0)
+         (and
+          (l6-regular-file-entry-p new-entry)
+          (equal read-error-code 0)
+          (b*
+              (((mv new-indices read-error-code)
+                (l6-file-index-list new-entry fa-table))
+               (new-text
+                (unmake-blocks-without-feasibility
+                 (fetch-blocks-by-indices disk new-indices)
+                 (l6-regular-file-length new-entry))))
+            (and
+             (equal read-error-code 0)
+             (equal new-text (insert-text old-text start text)))))))))))
+
 (defconst *sample-fs-1* nil)
 (defconst *sample-disk-1* (make-list 6 :initial-element *nullblock*))
 (defconst *sample-fa-table-1* (make-list 6 :initial-element 0))
