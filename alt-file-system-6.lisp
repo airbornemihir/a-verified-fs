@@ -1,3 +1,6 @@
+(include-book "bounded-nat-listp")
+(include-book "file-system-lemmas")
+
 ;; I don't think blocks are 8 characters long in any system; I simply set this
 ;; in order to actually get fragmentation without having to make unreasonably
 ;; large examples.
@@ -167,6 +170,29 @@
 
 (fty::deflist fat32-masked-entry-list :elt-type fat32-masked-entry-p :true-listp t)
 
+(defthm member-of-fat32-entry-list
+  (implies (and (member-equal x lst)
+                (fat32-entry-list-p lst))
+           (fat32-entry-p x)))
+
+(defthm set-indices-in-fa-table-guard-lemma-1
+  (implies (and (natp key)
+                (< key (len l))
+                (fat32-entry-list-p l)
+                (fat32-entry-p val))
+           (fat32-entry-list-p (update-nth key val l))))
+
+(defthm set-indices-in-fa-table-guard-lemma-2
+  (implies (fat32-entry-p x) (natp x))
+  :hints (("goal" :in-theory (enable fat32-entry-p)))
+  :rule-classes :forward-chaining)
+
+(defthm set-indices-in-fa-table-guard-lemma-3
+  (implies (and (fat32-entry-list-p l)
+                (natp n)
+                (< n (len l)))
+           (fat32-entry-p (nth n l))))
+
 (defund
   fat32-update-lower-28
   (entry masked-entry)
@@ -180,27 +206,63 @@
   (logior (logand entry (- (ash 1 32) (ash 1 28)))
           masked-entry))
 
-(defun
+(encapsulate
+  ()
+
+  (local (include-book "ihs/logops-lemmas" :dir :system))
+
+  (defthm
+    fat32-update-lower-28-correctness-1
+    (implies
+     (and (fat32-entry-p entry)
+          (fat32-masked-entry-p masked-entry))
+     (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
+    :hints
+    (("goal"
+      :in-theory (e/d nil (unsigned-byte-p logand logior)
+                      (fat32-entry-p fat32-masked-entry-p
+                                     fat32-update-lower-28)))
+     ("goal''" :in-theory (enable unsigned-byte-p)))))
+
+(defund
   set-indices-in-fa-table
   (v index-list value-list)
   (declare
-   (xargs :guard (and (fat32-entry-list-p v)
-                      (nat-listp index-list)
-                      (fat32-masked-entry-list-p value-list)
-                      (equal (len index-list)
-                             (len value-list)))))
+   (xargs :measure (acl2-count index-list)))
   (if
-   (atom index-list)
-   v
-   (let
-    ((current-index (car index-list)))
-    (if (or (not (natp current-index))
-            (>= current-index (len v)))
-        v
-        (update-nth current-index
-                    (fat32-update-lower-28 (nth current-index v)
-                                           (car value-list))
-                    v)))))
+      (atom index-list)
+      v
+    (let
+        ((current-index (car index-list)))
+      (if
+          (or (not (natp current-index))
+              (>= current-index (len v)))
+          v
+        (set-indices-in-fa-table
+         (update-nth current-index
+                     (fat32-update-lower-28 (nth current-index v)
+                                            (car value-list))
+                     v)
+         (cdr index-list)
+         (cdr value-list))))))
+
+(defthm
+  set-indices-in-fa-table-correctness-1
+  (implies
+   (and (fat32-entry-list-p v)
+        (bounded-nat-listp index-list (len v))
+        (fat32-masked-entry-list-p value-list)
+        (equal (len index-list)
+               (len value-list)))
+   (fat32-entry-list-p
+    (set-indices-in-fa-table v index-list value-list)))
+  :hints (("Goal" :in-theory (enable set-indices-in-fa-table))))
+
+(defthm
+  set-indices-in-fa-table-correctness-2
+  (equal (len (set-indices-in-fa-table v index-list value-list))
+         (len v))
+  :hints (("goal" :in-theory (enable set-indices-in-fa-table))))
 
 ;; question: if fat entries are 28 bits long, then how is the maximum size
 ;; determined to be 4 GB?
