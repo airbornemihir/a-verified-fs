@@ -2245,6 +2245,141 @@
                                           fa-table))))
       (val 0))))))
 
+(defthm
+  l6-wrchs-correctness-1-lemma-21
+  (implies
+   (and
+    (consp (assoc-equal name fs))
+    (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+    (consp
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth 0
+               (l6-file-index-list (cdr (assoc-equal name fs))
+                                   fa-table))
+       (make-list-ac
+        (len
+         (mv-nth 0
+                 (l6-file-index-list (cdr (assoc-equal name fs))
+                                     fa-table)))
+        0 nil))
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks
+          (fetch-blocks-by-indices
+           disk
+           (mv-nth
+            0
+            (l6-file-index-list (cdr (assoc-equal name fs))
+                                fa-table)))
+          (l6-regular-file-length (cdr (assoc-equal name fs))))
+         start text)))))
+    (l6-stricter-fs-p fs fa-table)
+    (fat32-entry-list-p fa-table)
+    (stringp text)
+    (integerp start)
+    (<= 0 start)
+    (symbolp name)
+    (<= (len fa-table) *expt-2-28*)
+    (<= 2 (len fa-table))
+    (<= (len (make-blocks (insert-text nil start text)))
+        (count-free-blocks (fa-table-to-alv fa-table)))
+    (equal
+     (len
+      (find-n-free-blocks
+       (set-indices-in-alv
+        (fa-table-to-alv fa-table)
+        (mv-nth 0
+                (l6-file-index-list (cdr (assoc-equal name fs))
+                                    fa-table))
+        nil)
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks
+           (fetch-blocks-by-indices
+            disk
+            (mv-nth
+             0
+             (l6-file-index-list (cdr (assoc-equal name fs))
+                                 fa-table)))
+           (l6-regular-file-length (cdr (assoc-equal name fs))))
+          start text)))))
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks
+         (fetch-blocks-by-indices
+          disk
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal name fs))
+                               fa-table)))
+         (l6-regular-file-length (cdr (assoc-equal name fs))))
+        start text)))))
+   (equal
+    (find-n-free-blocks
+     (set-indices-in-alv
+      (fa-table-to-alv fa-table)
+      (mv-nth 0
+              (l6-file-index-list (cdr (assoc-equal name fs))
+                                  fa-table))
+      nil)
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks
+         (fetch-blocks-by-indices
+          disk
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal name fs))
+                               fa-table)))
+         (l6-regular-file-length (cdr (assoc-equal name fs))))
+        start text))))
+    (find-n-free-clusters
+     (set-indices-in-fa-table
+      fa-table
+      (mv-nth 0
+              (l6-file-index-list (cdr (assoc-equal name fs))
+                                  fa-table))
+      (make-list-ac
+       (len
+        (mv-nth 0
+                (l6-file-index-list (cdr (assoc-equal name fs))
+                                    fa-table)))
+       0 nil))
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks
+         (fetch-blocks-by-indices
+          disk
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal name fs))
+                               fa-table)))
+         (l6-regular-file-length (cdr (assoc-equal name fs))))
+        start text))))))
+  :hints
+  (("goal"
+    :in-theory (disable l6-wrchs-correctness-1-lemma-19)
+    :use
+    (:instance
+     l6-wrchs-correctness-1-lemma-19
+     (index-list
+      (mv-nth 0
+              (l6-file-index-list (cdr (assoc-equal name fs))
+                                  fa-table)))
+     (n
+      (len
+       (mv-nth 0
+               (l6-file-index-list (cdr (assoc-equal name fs))
+                                   fa-table))))
+     (val 0)))))
+
 (skip-proofs
  (defthm l6-wrchs-correctness-1-lemma-1
    (implies
