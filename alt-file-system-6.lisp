@@ -1,3 +1,5 @@
+(in-package "ACL2")
+
 (include-book "bounded-nat-listp")
 (include-book "file-system-lemmas")
 
@@ -308,6 +310,25 @@
                         (l6-fs-p entry))))))
          (l6-fs-p (cdr fs)))))
 
+(defthm
+  l6-regular-file-entry-p-correctness-2
+  (implies (l6-regular-file-entry-p entry)
+           (not (l6-fs-p entry)))
+  :hints (("goal" :in-theory (enable l6-regular-file-entry-p)))
+  :rule-classes (:rewrite (:rewrite :corollary
+  (implies (l6-fs-p entry)
+           (not (l6-regular-file-entry-p entry))))))
+
+(defthm alistp-l6-fs-p
+  (implies (l6-fs-p fs)
+           (alistp fs)))
+
+(defthm l6-fs-p-assoc
+  (implies (and (l6-fs-p fs)
+                (consp (assoc-equal name fs))
+                (not (l6-regular-file-entry-p (cdr (assoc-equal name fs)))))
+           (l6-fs-p (cdr (assoc-equal name fs)))))
+
 ;; taken from page 18 of the fat overview - the constant 268435448 is written
 ;; out as 0xFFFFFF8 therein
 (defund l6-is-eof (fat-content)
@@ -438,28 +459,34 @@
       (l6-build-index-list fa-table first-cluster
                            (l6-regular-file-length file)))))
 
+(defund l6-file-text (file disk fa-table)
+  (mv-let
+    (index-list error-code)
+    (l6-file-index-list file fa-table)
+    (mv
+     (coerce (unmake-blocks-without-feasibility
+              (fetch-blocks-by-indices disk index-list)
+              (l6-regular-file-length file))
+             'string)
+     error-code)))
+
 ;; This function finds a text file given its path and reads a segment of
 ;; that text file.
 (defun
-  l6-rdchs (hns fs disk fa-table start n)
+    l6-rdchs (hns fs disk fa-table start n)
   (let
-   ((file (l6-stat hns fs disk)))
-   (if
-    (not (l6-regular-file-entry-p file))
-    (mv nil (- *EIO*))
-    (b*
-     (((mv index-list error-code)
-       (l6-file-index-list file fa-table))
-      (file-text
-       (coerce (unmake-blocks-without-feasibility
-                (fetch-blocks-by-indices disk index-list)
-                (l6-regular-file-length file))
-               'string))
-      (file-length (length file-text))
-      (end (+ start n)))
-     (if (< file-length end)
-         (mv nil error-code)
-         (mv (subseq file-text start (+ start n)) error-code))))))
+      ((file (l6-stat hns fs disk)))
+    (if
+        (not (l6-regular-file-entry-p file))
+        (mv nil (- *EIO*))
+      (b*
+          (((mv file-text error-code)
+            (l6-file-text file disk fa-table))
+           (file-length (length file-text))
+           (end (+ start n)))
+        (if (< file-length end)
+            (mv nil error-code)
+          (mv (subseq file-text start (+ start n)) error-code))))))
 
 ; This function writes a specified text string to a specified position to a
 ; text file at a specified path.
@@ -484,10 +511,8 @@
                       fa-table (- *enoent*)) ;; error, so leave fs unchanged
                 (b* (((mv old-indices read-error-code)
                       (l6-file-index-list (cdr sd) fa-table))
-                     (old-text
-                      (unmake-blocks-without-feasibility
-                       (fetch-blocks-by-indices disk old-indices)
-                       (l6-regular-file-length (cdr sd))))
+                     ((mv old-text &)
+                      (l6-file-text (cdr sd) disk fa-table))
                      (fa-table-after-free
                       (set-indices-in-fa-table
                        fa-table
@@ -595,31 +620,28 @@
        ((old-entry (l6-stat hns fs disk)) )
      (implies
       (l6-regular-file-entry-p old-entry)
-      (b*
-          (((mv old-indices read-error-code)
-            (l6-file-index-list old-entry fa-table))
-           (old-text
-            (unmake-blocks-without-feasibility
-             (fetch-blocks-by-indices disk old-indices)
-             (l6-regular-file-length old-entry)))
-           ((mv new-fs new-disk  & write-error-code)
-            (l6-wrchs hns fs disk fa-table start text))
-           (new-entry (l6-stat hns new-fs new-disk)))
+      (mv-let
+        (old-text read-error-code)
+        (l6-file-text old-entry disk fa-table)
         (implies
-         (equal write-error-code 0)
-         (and
-          (l6-regular-file-entry-p new-entry)
-          (equal read-error-code 0)
-          (b*
-              (((mv new-indices read-error-code)
-                (l6-file-index-list new-entry fa-table))
-               (new-text
-                (unmake-blocks-without-feasibility
-                 (fetch-blocks-by-indices disk new-indices)
-                 (l6-regular-file-length new-entry))))
+         (equal read-error-code 0)
+         (b*
+             (((mv new-fs new-disk new-fa-table write-error-code)
+               (l6-wrchs hns fs disk fa-table start text))
+              (new-entry (l6-stat hns new-fs new-disk)))
+           (implies
+            (equal write-error-code 0)
             (and
-             (equal read-error-code 0)
-             (equal new-text (insert-text old-text start text)))))))))))
+             (l6-regular-file-entry-p new-entry)
+             (mv-let
+               (new-text read-error-code)
+               (l6-file-text new-entry disk new-fa-table)
+               (and
+                (equal read-error-code 0)
+                (equal new-text (insert-text old-text start text))))))))))))
+  :hints (("Goal" :in-theory (enable car-of-assoc-equal))
+          ("Subgoal *1/4.2.3" :in-theory (enable l6-regular-file-entry-p)) )
+  :rule-classes nil)
 
 (defconst *sample-fs-1* nil)
 (defconst *sample-disk-1* (make-list 6 :initial-element *nullblock*))

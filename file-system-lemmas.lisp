@@ -314,3 +314,7 @@
                   (update-nth (- key n)
                               val (nthcdr n l)))))
 
+(defthmd car-of-assoc-equal
+  (let ((sd (assoc-equal x alist)))
+       (implies (consp sd) (equal (car sd) x)))
+  :instructions (:prove))
