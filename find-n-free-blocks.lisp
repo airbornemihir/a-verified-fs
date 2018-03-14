@@ -55,10 +55,9 @@
 (defthmd
   find-n-free-blocks-helper-correctness-2
   (implies (and (boolean-listp alv)
-                (natp n)
-                (<= n (count-free-blocks alv)))
+                (natp n))
            (equal (len (find-n-free-blocks-helper alv n start))
-                  n))
+                  (min (count-free-blocks alv) n)))
  :hints (("goal" :in-theory (enable find-n-free-blocks-helper))))
 
 (defthmd
@@ -143,10 +142,9 @@
 (defthm
   find-n-free-blocks-correctness-2
   (implies (and (boolean-listp alv)
-                (natp n)
-                (<= n (count-free-blocks alv)))
+                (natp n))
            (equal (len (find-n-free-blocks alv n))
-                  n))
+                  (min (count-free-blocks alv) n)))
   :hints
   (("goal" :in-theory (enable find-n-free-blocks
                               find-n-free-blocks-helper-correctness-2))))
