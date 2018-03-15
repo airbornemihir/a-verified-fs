@@ -731,6 +731,48 @@
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-32
   (implies
+   (and
+    (l3-fs-p fs)
+    (boolean-listp alv)
+    (indices-marked-listp (l4-collect-all-index-lists fs)
+                          alv)
+    (integerp start)
+    (<= 0 start)
+    (stringp text)
+    (block-listp disk)
+    (equal (len alv) (len disk))
+    (consp fs)
+    (consp (assoc-equal name fs))
+    (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+    (equal
+     (count-free-blocks (set-indices-in-alv alv (cadr (assoc-equal name fs))
+                                            nil))
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks
+         (fetch-blocks-by-indices disk (cadr (assoc-equal name fs)))
+         (cddr (assoc-equal name fs)))
+        start text)))))
+   (l3-regular-file-entry-p
+    (cons
+     (find-n-free-blocks
+      (set-indices-in-alv alv (cadr (assoc-equal name fs))
+                          nil)
+      (count-free-blocks (set-indices-in-alv alv (cadr (assoc-equal name fs))
+                                             nil)))
+     (len
+      (insert-text
+       (unmake-blocks
+        (fetch-blocks-by-indices disk (cadr (assoc-equal name fs)))
+        (cddr (assoc-equal name fs)))
+       start text)))))
+  :hints (("goal" :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
+           :use l4-wrchs-returns-stricter-fs-lemma-31)))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-33
+  (implies
    (and (symbol-listp hns)
         (l3-fs-p fs)
         (boolean-listp alv)
@@ -744,31 +786,13 @@
         (not-intersectp-list l (l4-collect-all-index-lists fs))
         (indices-marked-p l alv)
         (nat-listp l))
-   (not-intersectp-list
-    l
-    (l4-collect-all-index-lists
-     (mv-nth 0
-             (l4-wrchs hns fs disk alv start text)))))
-  :hints
-  (("subgoal *1/6.3"
-    :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
-    :use (:instance l4-wrchs-returns-stricter-fs-lemma-31
-                    (name (car hns))))
-   ("subgoal *1/5.3"
-    :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
-    :use (:instance l4-wrchs-returns-stricter-fs-lemma-31
-                    (name (car hns))))
-   ("subgoal *1/4.3"
-    :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
-    :use (:instance l4-wrchs-returns-stricter-fs-lemma-31
-                    (name (car hns))))
-   ("subgoal *1/3.3"
-    :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
-    :use (:instance l4-wrchs-returns-stricter-fs-lemma-31
-                    (name (car hns))))))
+   (not-intersectp-list l
+                        (l4-collect-all-index-lists
+                         (mv-nth 0
+                                 (l4-wrchs hns fs disk alv start text))))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-33
+  l4-wrchs-returns-stricter-fs-lemma-34
   (implies
    (and (symbol-listp hns)
         (l3-fs-p fs)
@@ -792,33 +816,30 @@
   :hints (("Goal" :induct (indices-marked-listp l alv))
           ("Subgoal *1/2" :expand (flatten l))))
 
-(defthm l4-wrchs-returns-stricter-fs-lemma-34
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-35
   (implies
    (and (symbol-listp hns)
         (l3-fs-p fs)
         (boolean-listp alv)
-        (disjoint-list-listp (l4-collect-all-index-lists fs))
-        (no-duplicates-listp (l4-collect-all-index-lists fs))
         (indices-marked-listp (l4-collect-all-index-lists fs)
                               alv)
         (integerp start)
         (<= 0 start)
         (stringp text)
         (block-listp disk)
-        (equal (len alv) (len disk)))
-   (and
-    (indices-marked-listp
-     (l4-collect-all-index-lists (mv-nth 0
-                                         (l4-wrchs hns fs disk alv start text)))
-     (mv-nth 2
-             (l4-wrchs hns fs disk alv start text)))
-    (disjoint-list-listp (l4-collect-all-index-lists
-                          (mv-nth 0
-                                  (l4-wrchs hns fs disk alv start text))))))
-  :hints (("Goal" :induct t)
-          ("Subgoal *1/7.2" :in-theory (disable l4-collect-all-index-lists-correctness-2))
-          ("Subgoal *1/7''" :in-theory (disable l4-collect-all-index-lists-correctness-2))
-          ("subgoal *1/6" :in-theory (enable l3-regular-file-entry-p))))
+        (equal (len alv) (len disk))
+        (not (member-intersectp-equal l (l4-collect-all-index-lists fs)))
+        (indices-marked-listp l alv)
+        (nat-listp (flatten l))
+        (true-list-listp l))
+   (not (member-intersectp-equal
+         l
+         (l4-collect-all-index-lists
+          (mv-nth 0
+                  (l4-wrchs hns fs disk alv start text))))))
+ :hints (("goal" :induct (indices-marked-listp l alv))
+         ("subgoal *1/2" :expand (flatten l))))
 
 ;; find a simpler problem that doesn't have all these details, that shows the
 ;; same kind of issue
@@ -1506,6 +1527,64 @@
                       (cdr entry))))))
    ("subgoal 2" :in-theory (enable len-of-insert-text))))
 
+(defthm
+  l4-wrchs-correctness-1-lemma-20
+  (implies
+   (and (l3-fs-p fs)
+        (boolean-listp alv)
+        (disjoint-list-listp (l4-collect-all-index-lists fs))
+        (no-duplicates-listp (l4-collect-all-index-lists fs))
+        (indices-marked-listp (l4-collect-all-index-lists fs)
+                              alv)
+        (stringp text)
+        (integerp start)
+        (<= 0 start)
+        (block-listp disk)
+        (equal (len alv) (len disk))
+        (<= (len (make-blocks (insert-text nil start text)))
+            (count-free-blocks alv))
+        (consp (assoc-equal name fs))
+        (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+   (l3-regular-file-entry-p
+    (cons
+     (find-n-free-blocks
+      (set-indices-in-alv alv (cadr (assoc-equal name fs))
+                          nil)
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks (fetch-blocks-by-indices
+                         disk (cadr (assoc-equal name fs)))
+                        (cddr (assoc-equal name fs)))
+         start text))))
+     (len
+      (insert-text
+       (unmake-blocks (fetch-blocks-by-indices
+                       disk (cadr (assoc-equal name fs)))
+                      (cddr (assoc-equal name fs)))
+       start text)))))
+  :hints
+  (("goal"
+    :expand
+    (l3-regular-file-entry-p
+     (cons
+      (find-n-free-blocks
+       (set-indices-in-alv alv (cadr (assoc-equal name fs))
+                           nil)
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks (fetch-blocks-by-indices
+                          disk (cadr (assoc-equal name fs)))
+                         (cddr (assoc-equal name fs)))
+          start text))))
+      (len
+       (insert-text
+        (unmake-blocks (fetch-blocks-by-indices
+                        disk (cadr (assoc-equal name fs)))
+                       (cddr (assoc-equal name fs)))
+        start text)))))))
+
 ;; This theorem shows the equivalence of the l4 and l2 versions of wrchs.
 (defthm
   l4-wrchs-correctness-1
@@ -1522,24 +1601,7 @@
                   (mv-let (new-fs new-disk new-alv)
                     (l4-wrchs hns fs disk alv start text)
                     (declare (ignore new-alv))
-                    (l4-to-l2-fs new-fs new-disk))))
-  :hints
-  (("subgoal *1/7.4.4"
-    :in-theory (disable find-n-free-blocks-correctness-7)
-    :use
-    (:instance
-     find-n-free-blocks-correctness-7
-     (alv (set-indices-in-alv alv (cadr (assoc-equal (car hns) fs))
-                              nil))
-     (n
-      (len
-       (make-blocks
-        (insert-text
-         (unmake-blocks
-          (fetch-blocks-by-indices disk (cadr (assoc-equal (car hns) fs)))
-          (cddr (assoc-equal (car hns) fs)))
-         start text))))))
-   ("subgoal *1/7.4" :in-theory (enable l3-regular-file-entry-p))))
+                    (l4-to-l2-fs new-fs new-disk)))))
 
 (defthm
   l4-read-after-write-1
@@ -1689,7 +1751,7 @@
         (block-listp disk))
    (l3-fs-p (mv-nth 0 (l4-create hns fs disk alv text))))
   :hints
-  (("subgoal *1/3'4'"
+  (("subgoal *1/3"
     :in-theory (enable l3-regular-file-entry-p))
    ("subgoal *1/2'4'"
     :in-theory (disable consp-assoc-equal)
