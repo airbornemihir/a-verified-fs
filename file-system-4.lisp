@@ -197,17 +197,20 @@
             (and (no-duplicatesp all-indices)
                  (indices-marked-p all-indices alv)))))
 
-(defthm l4-wrchs-returns-fs
-  (implies (and (symbol-listp hns)
-                (l3-fs-p fs)
-                (boolean-listp alv)
-                (integerp start)
-                (<= 0 start)
-                (stringp text)
-                (block-listp disk))
-           (l3-fs-p (mv-nth 0 (l4-wrchs hns fs disk alv start text))))
-  :hints (("Subgoal *1/5'''" :in-theory (enable l3-regular-file-entry-p))
-          ("Subgoal *1/6'4'" :in-theory (enable l3-regular-file-entry-p))))
+(defthm
+  l4-wrchs-returns-fs
+  (implies
+   (and (symbol-listp hns)
+        (l3-fs-p fs)
+        (boolean-listp alv)
+        (integerp start)
+        (<= 0 start)
+        (stringp text)
+        (block-listp disk))
+   (l3-fs-p (mv-nth 0
+                    (l4-wrchs hns fs disk alv start text))))
+  :hints (("subgoal *1/6"
+           :in-theory (enable l3-regular-file-entry-p))))
 
 (defthm l4-wrchs-returns-alv
   (implies (and (symbol-listp hns)
@@ -682,6 +685,52 @@
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-31
   (implies
+   (and
+    (l3-fs-p fs)
+    (boolean-listp alv)
+    (indices-marked-listp (l4-collect-all-index-lists fs)
+                          alv)
+    (integerp start)
+    (<= 0 start)
+    (stringp text)
+    (block-listp disk)
+    (equal (len alv) (len disk))
+    (consp (assoc-equal name fs))
+    (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
+    (<=
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks (fetch-blocks-by-indices
+                        disk (cadr (assoc-equal name fs)))
+                       (cddr (assoc-equal name fs)))
+        start text)))
+     (count-free-blocks
+      (set-indices-in-alv alv (cadr (assoc-equal name fs))
+                          nil))))
+   (l3-regular-file-entry-p
+    (cons
+     (find-n-free-blocks
+      (set-indices-in-alv alv (cadr (assoc-equal name fs))
+                          nil)
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks (fetch-blocks-by-indices
+                         disk (cadr (assoc-equal name fs)))
+                        (cddr (assoc-equal name fs)))
+         start text))))
+     (len
+      (insert-text
+       (unmake-blocks (fetch-blocks-by-indices
+                       disk (cadr (assoc-equal name fs)))
+                      (cddr (assoc-equal name fs)))
+       start text)))))
+  :hints (("goal" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-32
+  (implies
    (and (symbol-listp hns)
         (l3-fs-p fs)
         (boolean-listp alv)
@@ -695,17 +744,31 @@
         (not-intersectp-list l (l4-collect-all-index-lists fs))
         (indices-marked-p l alv)
         (nat-listp l))
-   (not-intersectp-list l
-                        (l4-collect-all-index-lists
-                         (mv-nth 0
-                                 (l4-wrchs hns fs disk alv start text)))))
-  :hints (("subgoal *1/6.2" :in-theory (enable l3-regular-file-entry-p))
-          ("subgoal *1/5.2" :in-theory (enable l3-regular-file-entry-p))
-          ("subgoal *1/4.2" :in-theory (enable l3-regular-file-entry-p))
-          ("subgoal *1/3.2" :in-theory (enable l3-regular-file-entry-p))))
+   (not-intersectp-list
+    l
+    (l4-collect-all-index-lists
+     (mv-nth 0
+             (l4-wrchs hns fs disk alv start text)))))
+  :hints
+  (("subgoal *1/6.3"
+    :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
+    :use (:instance l4-wrchs-returns-stricter-fs-lemma-31
+                    (name (car hns))))
+   ("subgoal *1/5.3"
+    :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
+    :use (:instance l4-wrchs-returns-stricter-fs-lemma-31
+                    (name (car hns))))
+   ("subgoal *1/4.3"
+    :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
+    :use (:instance l4-wrchs-returns-stricter-fs-lemma-31
+                    (name (car hns))))
+   ("subgoal *1/3.3"
+    :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
+    :use (:instance l4-wrchs-returns-stricter-fs-lemma-31
+                    (name (car hns))))))
 
 (defthm
-  l4-wrchs-returns-stricter-fs-lemma-32
+  l4-wrchs-returns-stricter-fs-lemma-33
   (implies
    (and (symbol-listp hns)
         (l3-fs-p fs)
@@ -729,7 +792,7 @@
   :hints (("Goal" :induct (indices-marked-listp l alv))
           ("Subgoal *1/2" :expand (flatten l))))
 
-(defthm l4-wrchs-returns-stricter-fs-lemma-33
+(defthm l4-wrchs-returns-stricter-fs-lemma-34
   (implies
    (and (symbol-listp hns)
         (l3-fs-p fs)
@@ -1413,54 +1476,89 @@
      (make-blocks
       (insert-text (unmake-blocks (fetch-blocks-by-indices disk (car entry))
                                   (cdr entry))
-                   start text)))))
-  :instructions
-  (:promote
-   (:dive 1)
-   (:rewrite find-n-free-blocks-correctness-2)
-   :top :bash :s-prop (:dive 1 1)
-   (:rewrite l4-wrchs-correctness-1-lemma-18)
-   :top
-   (:claim
-    (<=
-     (len
-      (make-blocks
-       (insert-text (unmake-blocks (fetch-blocks-by-indices disk (car entry))
-                                   (cdr entry))
-                    start text)))
-     (+ (len (make-blocks (insert-text nil start text)))
-        (len (car entry))))
-    :hints :none)
-   :bash :s-prop
-   (:casesplit
-    (>= (len (unmake-blocks (fetch-blocks-by-indices disk (car entry))
-                            (cdr entry)))
-        (+ start (len (coerce text 'list)))))
-   (:dive 1 2)
-   (:rewrite make-blocks-correctness-4
-             ((text2 (unmake-blocks (fetch-blocks-by-indices disk (car entry))
-                                    (cdr entry)))))
-   (:dive 1)
-   :top
-   (:claim
-    (equal
-     (len
-      (make-blocks (unmake-blocks (fetch-blocks-by-indices disk (car entry))
-                                  (cdr entry))))
-     (len (fetch-blocks-by-indices disk (car entry))))
-    :hints :none)
-   :bash (:change-goal nil t)
-   (:dive 1)
-   (:rewrite len-of-insert-text)
-   :top :bash :bash (:dive 1 2)
-   (:rewrite make-blocks-correctness-4
-             ((text2 (insert-text nil start text))))
-   :top :bash (:dive 1)
-   (:rewrite len-of-insert-text)
-   :nx (:rewrite len-of-insert-text)
-   :top
-   :bash :bash
-   :bash :bash))
+                   start text))))) :hints (("Goal'" :do-not-induct t :use (:instance make-blocks-correctness-4 (text1
+        (insert-text (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+                                    (cdr entry))
+                     start text)) (text2
+        (insert-text nil
+                     start text))))))
+;; (defthm
+;;   l4-wrchs-correctness-1-lemma-19
+;;   (implies
+;;    (and (boolean-listp alv)
+;;         (stringp text)
+;;         (integerp start)
+;;         (<= 0 start)
+;;         (block-listp disk)
+;;         (equal (len alv) (len disk))
+;;         (<= (len (make-blocks (insert-text nil start text)))
+;;             (count-free-blocks alv))
+;;         (l3-regular-file-entry-p entry)
+;;         (indices-marked-p (car entry) alv)
+;;         (no-duplicatesp-equal (car entry))
+;;         (bounded-nat-listp (car entry)
+;;                            (len alv)))
+;;    (equal
+;;     (len
+;;      (find-n-free-blocks
+;;       (set-indices-in-alv alv (car entry) nil)
+;;       (len
+;;        (make-blocks
+;;         (insert-text (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+;;                                     (cdr entry))
+;;                      start text)))))
+;;     (len
+;;      (make-blocks
+;;       (insert-text (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+;;                                   (cdr entry))
+;;                    start text)))))
+;;   :instructions
+;;   (:promote
+;;    (:dive 1)
+;;    (:rewrite find-n-free-blocks-correctness-2)
+;;    :top :bash :s-prop (:dive 1 1)
+;;    (:rewrite l4-wrchs-correctness-1-lemma-18)
+;;    :top
+;;    (:claim
+;;     (<=
+;;      (len
+;;       (make-blocks
+;;        (insert-text (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+;;                                    (cdr entry))
+;;                     start text)))
+;;      (+ (len (make-blocks (insert-text nil start text)))
+;;         (len (car entry))))
+;;     :hints :none)
+;;    :bash :s-prop
+;;    (:casesplit
+;;     (>= (len (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+;;                             (cdr entry)))
+;;         (+ start (len (coerce text 'list)))))
+;;    (:dive 1 2)
+;;    (:rewrite make-blocks-correctness-4
+;;              ((text2 (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+;;                                     (cdr entry)))))
+;;    (:dive 1)
+;;    :top
+;;    (:claim
+;;     (equal
+;;      (len
+;;       (make-blocks (unmake-blocks (fetch-blocks-by-indices disk (car entry))
+;;                                   (cdr entry))))
+;;      (len (fetch-blocks-by-indices disk (car entry))))
+;;     :hints :none)
+;;    :bash (:change-goal nil t)
+;;    (:dive 1)
+;;    (:rewrite len-of-insert-text)
+;;    :top :bash :bash (:dive 1 2)
+;;    (:rewrite make-blocks-correctness-4
+;;              ((text2 (insert-text nil start text))))
+;;    :top :bash (:dive 1)
+;;    (:rewrite len-of-insert-text)
+;;    :nx (:rewrite len-of-insert-text)
+;;    :top
+;;    :bash :bash
+;;    :bash :bash))
 
 (defthm
   l4-wrchs-correctness-1-lemma-20
