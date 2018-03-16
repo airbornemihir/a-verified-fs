@@ -2378,15 +2378,13 @@
                                    fa-table))))
      (val 0)))))
 
-;; (defun
-;;   induction-scheme
-;;   (free-index-list some-kinda-length)
-;;   (if
-;;    (or (not (integerp some-kinda-length))
-;;        (<= some-kinda-length 0))
-;;    free-index-list
-;;    (induction-scheme (cdr free-index-list)
-;;                      (nfix (- some-kinda-length *blocksize*)))))
+;; We cannot reason with find-n-free-clusters and find-n-free clusters-helper
+;; here. We're going to have to abstract away its properties and treat it like
+;; a list of integers, all greater than equal to 2, all less than the length of
+;; the disk.
+
+;; This might also be a good time to add a constant in place of 2. I don't like
+;; the idea of considering 2 to be special here.
 
 (Thm-cp
  (IMPLIES
