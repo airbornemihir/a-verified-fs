@@ -13,6 +13,8 @@
 (defconst *expt-2-28* (expt 2 28))
 ;; from page 18 of the FAT specification
 (defconst *MS-EOC* (- *expt-2-28* 1))
+;; from page 14 of the FAT specification
+(defconst *first-data-cluster* 2)
 ;; from include/uapi/asm-generic/errno-base.h
 (defconst *EIO* 5) ;; I/O error
 (defconst *ENOSPC* 28) ;; No space left on device
@@ -140,7 +142,20 @@
       :in-theory (e/d nil (unsigned-byte-p logand logior)
                       (fat32-entry-p fat32-masked-entry-p
                                      fat32-update-lower-28)))
-     ("goal''" :in-theory (enable unsigned-byte-p)))))
+     ("goal''" :in-theory (enable unsigned-byte-p))))
+
+  (defthm
+    fat32-update-lower-28-correctness-2
+    (implies
+     (and (fat32-entry-p entry)
+          (fat32-masked-entry-p masked-entry))
+    (equal
+     (fat32-entry-mask (fat32-update-lower-28 entry masked-entry)) masked-entry))
+    :hints
+    (("goal"
+      :in-theory (e/d nil (unsigned-byte-p logand logior)
+                      (fat32-entry-p fat32-masked-entry-p
+                                     fat32-update-lower-28 fat32-entry-mask))))))
 
 (defund
   set-indices-in-fa-table
@@ -186,6 +201,16 @@
   (equal (len (set-indices-in-fa-table v index-list value-list))
          (len v))
   :hints (("goal" :in-theory (enable set-indices-in-fa-table))))
+
+;; Well, it might not be a great idea to borrow a numbering scheme from
+;; set-indices.lisp
+(defthm set-indices-in-fa-table-correctness-3
+  (implies (and (natp n)
+                (nat-listp index-list)
+                (not (member-equal n index-list)))
+           (equal (nth n (set-indices-in-fa-table v index-list value-list))
+                  (nth n v)))
+  :hints (("Goal" :in-theory (enable set-indices-in-fa-table))))
 
 ;; question: if fat entries are 28 bits long, then how is the maximum size
 ;; determined to be 4 GB?
@@ -2386,70 +2411,294 @@
 ;; This might also be a good time to add a constant in place of 2. I don't like
 ;; the idea of considering 2 to be special here.
 
+(defund lower-bounded-integer-listp (l b)
+  (declare (xargs :guard (integerp b)))
+  (if (atom l)
+      (equal l nil)
+    (and (integerp (car l)) (>= (car l) b) (lower-bounded-integer-listp (cdr l) b))))
+
+(defthmd lower-bounded-integer-listp-correctness-5
+  (implies (and (<= y x) (lower-bounded-integer-listp l x))
+           (lower-bounded-integer-listp l y))
+  :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-22
+  (implies (integerp start)
+           (lower-bounded-integer-listp
+            (find-n-free-clusters-helper fa-table n start)
+            start))
+  :hints
+  (("goal" :in-theory (enable lower-bounded-integer-listp
+                              find-n-free-clusters-helper))
+   ("subgoal *1/5.1'"
+    :use
+    (:instance lower-bounded-integer-listp-correctness-5
+               (l (find-n-free-clusters-helper (cdr fa-table)
+                                               (+ -1 n)
+                                               (+ 1 start)))
+               (x (+ 1 start))
+               (y start)))
+   ("subgoal *1/3''"
+    :use
+    (:instance lower-bounded-integer-listp-correctness-5
+               (l (find-n-free-clusters-helper (cdr fa-table)
+                                               n (+ 1 start)))
+               (x (+ 1 start))
+               (y start)))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-23
+  (lower-bounded-integer-listp
+   (find-n-free-clusters fa-table n)
+   *first-data-cluster*)
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters))))
+
+(defthm
+  find-n-free-clusters-correctness-6
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (>= (len fa-table) *first-data-cluster*)
+        (natp n))
+   (no-duplicatesp-equal (find-n-free-clusters fa-table n)))
+  :hints
+  (("goal" :in-theory (disable find-n-free-blocks-correctness-6)
+    :use (:instance find-n-free-blocks-correctness-6
+                    (alv (fa-table-to-alv fa-table))))))
+
+(defun
+    induction-scheme
+    (file-index-list file-length)
+  (if
+      (or (not (integerp file-length))
+          (<= file-length 0))
+      file-index-list
+    (induction-scheme (cdr file-index-list)
+                      (nfix (- file-length *blocksize*)))))
+
+(verify
+ (IMPLIES
+  (AND (NATP FILE-LENGTH)
+       (NO-DUPLICATESP-EQUAL FILE-INDEX-LIST)
+       (FEASIBLE-FILE-LENGTH-P (LEN FILE-INDEX-LIST)
+                               FILE-LENGTH)
+       (LOWER-BOUNDED-INTEGER-LISTP FILE-INDEX-LIST *FIRST-DATA-CLUSTER*)
+       (BOUNDED-NAT-LISTP FILE-INDEX-LIST (LEN FA-TABLE))
+       (<= (LEN FILE-INDEX-LIST)
+           (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
+       (CONSP FILE-INDEX-LIST)
+       (L6-STRICTER-FS-P FS FA-TABLE)
+       (FAT32-ENTRY-LIST-P FA-TABLE)
+       (<= (LEN FA-TABLE) *EXPT-2-28*)
+       (<= *FIRST-DATA-CLUSTER* (LEN FA-TABLE)))
+  (EQUAL
+   (MV-NTH 0
+           (L6-BUILD-INDEX-LIST
+            (SET-INDICES-IN-FA-TABLE FA-TABLE FILE-INDEX-LIST
+                                     (APPEND (CDR FILE-INDEX-LIST)
+                                             (LIST *MS-EOC*)))
+            (CAR FILE-INDEX-LIST)
+            FILE-LENGTH))
+   FILE-INDEX-LIST))
+ :instructions
+ ((:IN-THEORY (ENABLE L6-BUILD-INDEX-LIST
+                         SET-INDICES-IN-FA-TABLE
+                         LOWER-BOUNDED-INTEGER-LISTP))
+     (:INDUCT (INDUCTION-SCHEME FILE-INDEX-LIST FILE-LENGTH))
+     (:CHANGE-GOAL NIL T)
+     (:BASH ("Goal" :IN-THEORY (ENABLE FEASIBLE-FILE-LENGTH-P)))
+     :PROMOTE (:DEMOTE 1 2)
+     (:DIVE 1 1)
+     :S :TOP
+     (:CLAIM (AND (NO-DUPLICATESP-EQUAL (CDR FILE-INDEX-LIST))
+                  (LOWER-BOUNDED-INTEGER-LISTP (CDR FILE-INDEX-LIST)
+                                               2)
+                  (BOUNDED-NAT-LISTP (CDR FILE-INDEX-LIST)
+                                     (LEN FA-TABLE))
+                  (NOT (< (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))
+                          (LEN (CDR FILE-INDEX-LIST))))))
+     (:CLAIM (FEASIBLE-FILE-LENGTH-P (LEN (CDR FILE-INDEX-LIST))
+                                     (IF (< (+ -8 FILE-LENGTH) 0)
+                                         0 (+ -8 FILE-LENGTH)))
+             :HINTS (("Goal" :IN-THEORY (ENABLE FEASIBLE-FILE-LENGTH-P))))
+     (:DIVE 1 2 1)
+     :S :TOP :PROMOTE
+     (:CLAIM (< (CAR FILE-INDEX-LIST)
+                (LEN FA-TABLE)))
+     (:IN-THEORY (DISABLE SET-INDICES-IN-FA-TABLE-CORRECTNESS-3))
+     (:USE
+      (:INSTANCE
+          SET-INDICES-IN-FA-TABLE-CORRECTNESS-3
+          (N (CAR FILE-INDEX-LIST))
+          (V (UPDATE-NTH
+                  (CAR FILE-INDEX-LIST)
+                  (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
+                                         (CAR (APPEND (CDR FILE-INDEX-LIST)
+                                                      '(268435455))))
+                  FA-TABLE))
+          (INDEX-LIST (CDR FILE-INDEX-LIST))
+          (VALUE-LIST (CDR (APPEND (CDR FILE-INDEX-LIST)
+                                   '(268435455))))))
+     :PROMOTE
+     (:CLAIM (NOT (MEMBER-EQUAL (CAR FILE-INDEX-LIST)
+                                (CDR FILE-INDEX-LIST))))
+     (:DEMOTE 1)
+     (:DIVE 1 1)
+     :S
+     :UP :S-PROP :TOP :PROMOTE (:DIVE 1 2 1)
+     :X (:IN-THEORY (DISABLE NTH-UPDATE-NTH))
+     :TOP
+     (:USE
+        (:INSTANCE
+             NTH-UPDATE-NTH (M (CAR FILE-INDEX-LIST))
+             (N (CAR FILE-INDEX-LIST))
+             (VAL (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
+                                         (CAR (APPEND (CDR FILE-INDEX-LIST)
+                                                      '(268435455)))))
+             (L FA-TABLE)))
+     :PROMOTE (:DEMOTE 1)
+     (:DIVE 1 2)
+     :S :TOP :PROMOTE (:DIVE 1 2)
+     :X))
+
 (Thm-cp
  (IMPLIES
   (AND
-   (character-listp new-text)
+   (natp file-length)
+   (no-duplicatesp-equal file-index-list)
+   (feasible-file-length-p (len file-index-list) file-length)
+   (lower-bounded-integer-listp file-index-list *first-data-cluster*)
+   (bounded-nat-listp file-index-list (len fa-table))
    (<=
     (LEN
-     (MAKE-BLOCKS
-      new-text))
+     file-index-list)
     (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
    (CONSP
-    (FIND-N-FREE-CLUSTERS
-     fa-table
-     (LEN
-      (MAKE-BLOCKS
-       new-text))))
+    file-index-list)
    (L6-STRICTER-FS-P FS FA-TABLE)
    (FAT32-ENTRY-LIST-P FA-TABLE)
-   (STRINGP TEXT)
-   (INTEGERP START)
-   (<= 0 START)
-   (BLOCK-LISTP DISK)
-   (EQUAL (LEN DISK) (LEN FA-TABLE))
-   (<= (LEN DISK) 268435456)
-   (<= 2 (LEN DISK))
-   (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
-       (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))))
+   (<= (LEN fa-table) *expt-2-28*)
+   (<= *first-data-cluster* (LEN fa-table)))
   (EQUAL
    (MV-NTH
     0
     (L6-BUILD-INDEX-LIST
      (SET-INDICES-IN-FA-TABLE
       fa-table
-      (FIND-N-FREE-CLUSTERS
-       fa-table
-       (LEN
-        (MAKE-BLOCKS
-         new-text)))
+      file-index-list
       (APPEND
        (CDR
-        (FIND-N-FREE-CLUSTERS
-         fa-table
-         (LEN
-          (MAKE-BLOCKS
-           new-text))))
+        file-index-list)
        (list *ms-eoc*)))
      (CAR
-      (FIND-N-FREE-CLUSTERS
-       fa-table
-       (LEN
-        (MAKE-BLOCKS
-         new-text))))
-     (LEN new-text)))
-   (FIND-N-FREE-CLUSTERS
-    fa-table
-    (LEN
-     (MAKE-BLOCKS
-      new-text)))))
- :hints (("Goal" :in-theory (enable l6-build-index-list SET-INDICES-IN-FA-TABLE  (:INDUCTION MAKE-BLOCKS))
-          :induct
-          (MAKE-BLOCKS
-           new-text))
-         ("Subgoal *1/1'''" :in-theory (enable find-n-free-clusters
-                                               find-n-free-clusters-helper))
-         ("Subgoal *1/2'" :in-theory (enable make-blocks)) ))
+      file-index-list)
+     file-length))
+   file-index-list))
+ :hints (("Goal" :in-theory (enable l6-build-index-list
+                                    SET-INDICES-IN-FA-TABLE
+                                    LOWER-BOUNDED-INTEGER-LISTP)
+          :induct (induction-scheme
+                   file-index-list file-length))
+         ("Subgoal *1/2" :in-theory (enable feasible-file-length-p) :expand
+          ((SET-INDICES-IN-FA-TABLE FA-TABLE FILE-INDEX-LIST '(268435455))
+    (SET-INDICES-IN-FA-TABLE
+      (UPDATE-NTH (CAR FILE-INDEX-LIST)
+                  (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
+                                         268435455)
+                  FA-TABLE)
+      NIL NIL)
+          (lower-bounded-integer-listp file-index-list *first-data-cluster*)
+   (L6-BUILD-INDEX-LIST
+      (UPDATE-NTH (CAR FILE-INDEX-LIST)
+                  (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
+                                         268435455)
+                  FA-TABLE)
+      (CAR FILE-INDEX-LIST)
+      FILE-LENGTH)))
+         ("Subgoal *1/2.26'"
+          :expand
+          ((SET-INDICES-IN-FA-TABLE FA-TABLE FILE-INDEX-LIST
+                                    (CONS (CADR FILE-INDEX-LIST)
+                                          (APPEND (CDDR FILE-INDEX-LIST)
+                                                  '(268435455))))
+           (L6-BUILD-INDEX-LIST
+            (SET-INDICES-IN-FA-TABLE
+             (UPDATE-NTH (CAR FILE-INDEX-LIST)
+                         (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
+                                                (CADR FILE-INDEX-LIST))
+                         FA-TABLE)
+             (CDR FILE-INDEX-LIST)
+             (APPEND (CDDR FILE-INDEX-LIST)
+                     '(268435455)))
+            (CAR FILE-INDEX-LIST)
+            FILE-LENGTH)))
+         ("Subgoal *1/1'''" :in-theory (enable feasible-file-length-p)) ))
+
+;; (Thm-cp
+;;  (IMPLIES
+;;   (AND
+;;    (character-listp new-text)
+;;    (<=
+;;     (LEN
+;;      (MAKE-BLOCKS
+;;       new-text))
+;;     (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
+;;    (CONSP
+;;     (FIND-N-FREE-CLUSTERS
+;;      fa-table
+;;      (LEN
+;;       (MAKE-BLOCKS
+;;        new-text))))
+;;    (L6-STRICTER-FS-P FS FA-TABLE)
+;;    (FAT32-ENTRY-LIST-P FA-TABLE)
+;;    (STRINGP TEXT)
+;;    (INTEGERP START)
+;;    (<= 0 START)
+;;    (BLOCK-LISTP DISK)
+;;    (EQUAL (LEN DISK) (LEN FA-TABLE))
+;;    (<= (LEN DISK) 268435456)
+;;    (<= 2 (LEN DISK))
+;;    (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
+;;        (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))))
+;;   (EQUAL
+;;    (MV-NTH
+;;     0
+;;     (L6-BUILD-INDEX-LIST
+;;      (SET-INDICES-IN-FA-TABLE
+;;       fa-table
+;;       (FIND-N-FREE-CLUSTERS
+;;        fa-table
+;;        (LEN
+;;         (MAKE-BLOCKS
+;;          new-text)))
+;;       (APPEND
+;;        (CDR
+;;         (FIND-N-FREE-CLUSTERS
+;;          fa-table
+;;          (LEN
+;;           (MAKE-BLOCKS
+;;            new-text))))
+;;        (list *ms-eoc*)))
+;;      (CAR
+;;       (FIND-N-FREE-CLUSTERS
+;;        fa-table
+;;        (LEN
+;;         (MAKE-BLOCKS
+;;          new-text))))
+;;      (LEN new-text)))
+;;    (FIND-N-FREE-CLUSTERS
+;;     fa-table
+;;     (LEN
+;;      (MAKE-BLOCKS
+;;       new-text)))))
+;;  :hints (("Goal" :in-theory (enable l6-build-index-list SET-INDICES-IN-FA-TABLE  (:INDUCTION MAKE-BLOCKS))
+;;           :induct
+;;           (MAKE-BLOCKS
+;;            new-text))
+;;          ("Subgoal *1/1'''" :in-theory (enable find-n-free-clusters
+;;                                                find-n-free-clusters-helper))
+;;          ("Subgoal *1/2'" :in-theory (enable make-blocks)) ))
 
 (thm-cp
  (IMPLIES
