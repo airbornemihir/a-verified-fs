@@ -2473,6 +2473,13 @@
     (induction-scheme (cdr file-index-list)
                       (nfix (- file-length *blocksize*)))))
 
+;; With this proof, we've bumped up against a problem: a subgoal that asks if
+;; l6-is-eof can be satisfied by an allocated block. In other words, can
+;; find-n-free-clusters return a value >= 0xFFFFFF8? the answer, according to
+;; the current implementation, is yes. We should take the advice from page 18
+;; of the FAT32 specification - "To avoid possible confusion by disk utilities,
+;; no FAT32 volume should ever be configured such that 0x0FFFFFF7 is an
+;; allocatable cluster number."
 (Thm-cp
  (IMPLIES
   (AND
