@@ -318,3 +318,8 @@
   (let ((sd (assoc-equal x alist)))
        (implies (consp sd) (equal (car sd) x)))
   :instructions (:prove))
+
+(defthm update-nth-of-update-nth
+  (implies (not (equal (nfix key1) (nfix key2)))
+           (equal (update-nth key1 val1 (update-nth key2 val2 l))
+                  (update-nth key2 val2 (update-nth key1 val1 l)))))
