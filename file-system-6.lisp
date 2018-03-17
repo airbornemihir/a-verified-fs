@@ -2526,13 +2526,6 @@
     (induction-scheme (cdr file-index-list)
                       (nfix (- file-length *blocksize*)))))
 
-;; With this proof, we've bumped up against a problem: a subgoal that asks if
-;; l6-is-eof can be satisfied by an allocated block. In other words, can
-;; find-n-free-clusters return a value >= 0xFFFFFF8? the answer, according to
-;; the current implementation, is yes. We should take the advice from page 18
-;; of the FAT32 specification - "To avoid possible confusion by disk utilities,
-;; no FAT32 volume should ever be configured such that 0x0FFFFFF7 is an
-;; allocatable cluster number."
 (Thm-cp
  (IMPLIES
   (AND
@@ -2552,8 +2545,6 @@
    (<= (LEN fa-table) *ms-bad-cluster*)
    (<= *ms-first-data-cluster* (LEN fa-table)))
   (EQUAL
-   (MV-NTH
-    0
     (L6-BUILD-INDEX-LIST
      (SET-INDICES-IN-FA-TABLE
       fa-table
@@ -2564,8 +2555,8 @@
        (list *ms-end-of-clusterchain*)))
      (CAR
       file-index-list)
-     file-length))
-   file-index-list))
+     file-length) (mv
+   file-index-list 0)))
  :hints (("Goal" :in-theory (enable l6-build-index-list
                                     SET-INDICES-IN-FA-TABLE
                                     LOWER-BOUNDED-INTEGER-LISTP)
@@ -2580,137 +2571,7 @@
                                             (masked-entry
                                              (CADR FILE-INDEX-LIST))))
          ("Subgoal *1/2.19.2" :in-theory (enable fat32-masked-entry-p))
-         ("Subgoal *1/2.19.1" :in-theory (disable
-                                          l6-wrchs-correctness-1-lemma-24
-                                          l6-wrchs-correctness-1-lemma-25)
-          :use ((:instance
-                l6-wrchs-correctness-1-lemma-24
-                (key (CAR FILE-INDEX-LIST))
-                (val
-                  (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
-                                         (CADR FILE-INDEX-LIST)))
-                (fa-table
-                  (SET-INDICES-IN-FA-TABLE FA-TABLE (CDR FILE-INDEX-LIST)
-                                           (APPEND (CDDR FILE-INDEX-LIST)
-                                                   (list *ms-end-of-clusterchain*))))
-                (masked-current-cluster
-                 (CADR FILE-INDEX-LIST))
-                (length
-                 (- FILE-LENGTH *blocksize*)))
-                l6-wrchs-correctness-1-lemma-25)
-          :expand (SET-INDICES-IN-FA-TABLE FA-TABLE FILE-INDEX-LIST
-                                         (CONS (CADR FILE-INDEX-LIST)
-                                               (APPEND (CDDR FILE-INDEX-LIST)
-                                                       (list *ms-end-of-clusterchain*)))))
          ("Subgoal *1/1'''" :in-theory (enable feasible-file-length-p)) ))
-
-(verify
- (IMPLIES
-  (AND (NATP FILE-LENGTH)
-       (NO-DUPLICATESP-EQUAL FILE-INDEX-LIST)
-       (FEASIBLE-FILE-LENGTH-P (LEN FILE-INDEX-LIST)
-                               FILE-LENGTH)
-       (LOWER-BOUNDED-INTEGER-LISTP FILE-INDEX-LIST *MS-FIRST-DATA-CLUSTER*)
-       (BOUNDED-NAT-LISTP FILE-INDEX-LIST (LEN FA-TABLE))
-       (<= (LEN FILE-INDEX-LIST)
-           (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
-       (CONSP FILE-INDEX-LIST)
-       (L6-STRICTER-FS-P FS FA-TABLE)
-       (FAT32-ENTRY-LIST-P FA-TABLE)
-       (<= (LEN FA-TABLE) *MS-BAD-CLUSTER*)
-       (<= *MS-FIRST-DATA-CLUSTER* (LEN FA-TABLE)))
-  (EQUAL
-   (MV-NTH 0
-           (L6-BUILD-INDEX-LIST
-            (SET-INDICES-IN-FA-TABLE FA-TABLE FILE-INDEX-LIST
-                                     (APPEND (CDR FILE-INDEX-LIST)
-                                             (LIST *MS-END-OF-CLUSTERCHAIN*)))
-            (CAR FILE-INDEX-LIST)
-            FILE-LENGTH))
-   FILE-INDEX-LIST))
- :instructions
- ((:IN-THEORY (ENABLE L6-BUILD-INDEX-LIST
-                      SET-INDICES-IN-FA-TABLE
-                      LOWER-BOUNDED-INTEGER-LISTP))
-  (:INDUCT (INDUCTION-SCHEME FILE-INDEX-LIST FILE-LENGTH))
-  (:CHANGE-GOAL NIL T)
-  (:BASH ("Goal" :IN-THEORY (ENABLE FEASIBLE-FILE-LENGTH-P)))
-  :PROMOTE (:DEMOTE 1 2)
-  (:DIVE 1 1)
-  :S :TOP
-  (:CLAIM (AND (NO-DUPLICATESP-EQUAL (CDR FILE-INDEX-LIST))
-               (LOWER-BOUNDED-INTEGER-LISTP (CDR FILE-INDEX-LIST)
-                                            2)
-               (BOUNDED-NAT-LISTP (CDR FILE-INDEX-LIST)
-                                  (LEN FA-TABLE))
-               (NOT (< (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))
-                       (LEN (CDR FILE-INDEX-LIST))))))
-  (:CLAIM (FEASIBLE-FILE-LENGTH-P (LEN (CDR FILE-INDEX-LIST))
-                                  (IF (< (+ -8 FILE-LENGTH) 0)
-                                      0 (+ -8 FILE-LENGTH)))
-          :HINTS (("Goal" :IN-THEORY (ENABLE FEASIBLE-FILE-LENGTH-P))))
-  (:DIVE 1 2 1)
-  :S :TOP :PROMOTE
-  (:CLAIM (< (CAR FILE-INDEX-LIST)
-             (LEN FA-TABLE)))
-  (:IN-THEORY (DISABLE SET-INDICES-IN-FA-TABLE-CORRECTNESS-3))
-  (:USE
-   (:INSTANCE
-    SET-INDICES-IN-FA-TABLE-CORRECTNESS-3
-    (N (CAR FILE-INDEX-LIST))
-    (V (UPDATE-NTH
-        (CAR FILE-INDEX-LIST)
-        (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
-                               (CAR (APPEND (CDR FILE-INDEX-LIST)
-                                            '(268435455))))
-        FA-TABLE))
-    (INDEX-LIST (CDR FILE-INDEX-LIST))
-    (VALUE-LIST (CDR (APPEND (CDR FILE-INDEX-LIST)
-                             '(268435455))))))
-  :PROMOTE
-  (:CLAIM (NOT (MEMBER-EQUAL (CAR FILE-INDEX-LIST)
-                             (CDR FILE-INDEX-LIST))))
-  (:DEMOTE 1)
-  (:DIVE 1 1)
-  :S
-  :UP :S-PROP :TOP :PROMOTE (:DIVE 1 2 1)
-  :X (:IN-THEORY (DISABLE NTH-UPDATE-NTH))
-  :TOP
-  (:USE
-   (:INSTANCE
-    NTH-UPDATE-NTH (M (CAR FILE-INDEX-LIST))
-    (N (CAR FILE-INDEX-LIST))
-    (VAL (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
-                                (CAR (APPEND (CDR FILE-INDEX-LIST)
-                                             '(268435455)))))
-    (L FA-TABLE)))
-  :PROMOTE (:DEMOTE 1)
-  (:DIVE 1 2)
-  :S :TOP :PROMOTE
-  (:IN-THEORY (DISABLE FAT32-UPDATE-LOWER-28-CORRECTNESS-2))
-  (:USE (:INSTANCE FAT32-UPDATE-LOWER-28-CORRECTNESS-2
-                   (ENTRY (NTH (CAR FILE-INDEX-LIST) FA-TABLE))
-                   (MASKED-ENTRY (CAR (APPEND (CDR FILE-INDEX-LIST)
-                                              '(268435455))))))
-  :PROMOTE
-  (:CLAIM (FAT32-ENTRY-P (NTH (CAR FILE-INDEX-LIST) FA-TABLE)))
-  (:CLAIM (FAT32-MASKED-ENTRY-P (CAR (APPEND (CDR FILE-INDEX-LIST)
-                                             '(268435455))))
-          :HINTS (("Goal" :IN-THEORY (ENABLE FAT32-MASKED-ENTRY-P))))
-  (:DEMOTE 1)
-  (:DIVE 1 1)
-  :S :UP :S :TOP :PROMOTE
-  (:CLAIM
-   (IMPLIES (CONSP (CDR FILE-INDEX-LIST))
-            (<= 2 (CADR FILE-INDEX-LIST)))
-   :HINTS
-   (("Goal" :EXPAND (LOWER-BOUNDED-INTEGER-LISTP (CDR FILE-INDEX-LIST)
-                                                 2))))
-  :BASH (:CHANGE-GOAL NIL T)
-  (:CHANGE-GOAL NIL T)
-  (:CHANGE-GOAL NIL T)
-  (:CHANGE-GOAL NIL T)
-  (:CHANGE-GOAL NIL T)))
 
 (Thm-cp
  (IMPLIES
