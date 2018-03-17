@@ -12,9 +12,10 @@
 
 (defconst *expt-2-28* (expt 2 28))
 ;; from page 18 of the FAT specification
-(defconst *MS-EOC* (- *expt-2-28* 1))
+(defconst *MS-END-OF-CLUSTERCHAIN* (- *expt-2-28* 1))
 ;; from page 14 of the FAT specification
-(defconst *first-data-cluster* 2)
+(defconst *ms-first-data-cluster* 2)
+
 ;; from include/uapi/asm-generic/errno-base.h
 (defconst *EIO* 5) ;; I/O error
 (defconst *ENOSPC* 28) ;; No space left on device
@@ -862,7 +863,7 @@
                                                      new-indices
                                                      (binary-append
                                                       (cdr new-indices)
-                                                      (list *MS-EOC*))) read-error-code)
+                                                      (list *MS-END-OF-CLUSTERCHAIN*))) read-error-code)
                       (mv (cons (cons (car sd)
                                       (l6-make-regular-file
                                        ;; 0 is chosen by default
@@ -912,7 +913,7 @@
                                                    indices
                                                    (binary-append
                                                     (cdr indices)
-                                                    (list *MS-EOC*))))
+                                                    (list *MS-END-OF-CLUSTERCHAIN*))))
                     (mv (cons (cons (car hns)
                                     (cons indices
                                           (length text)))
@@ -2447,7 +2448,7 @@
   l6-wrchs-correctness-1-lemma-23
   (lower-bounded-integer-listp
    (find-n-free-clusters fa-table n)
-   *first-data-cluster*)
+   *ms-first-data-cluster*)
   :hints
   (("goal" :in-theory (enable find-n-free-clusters))))
 
@@ -2455,7 +2456,7 @@
   find-n-free-clusters-correctness-6
   (implies
    (and (fat32-entry-list-p fa-table)
-        (>= (len fa-table) *first-data-cluster*)
+        (>= (len fa-table) *ms-first-data-cluster*)
         (natp n))
    (no-duplicatesp-equal (find-n-free-clusters fa-table n)))
   :hints
@@ -2486,7 +2487,7 @@
    (natp file-length)
    (no-duplicatesp-equal file-index-list)
    (feasible-file-length-p (len file-index-list) file-length)
-   (lower-bounded-integer-listp file-index-list *first-data-cluster*)
+   (lower-bounded-integer-listp file-index-list *ms-first-data-cluster*)
    (bounded-nat-listp file-index-list (len fa-table))
    (<=
     (LEN
@@ -2497,7 +2498,7 @@
    (L6-STRICTER-FS-P FS FA-TABLE)
    (FAT32-ENTRY-LIST-P FA-TABLE)
    (<= (LEN fa-table) *expt-2-28*)
-   (<= *first-data-cluster* (LEN fa-table)))
+   (<= *ms-first-data-cluster* (LEN fa-table)))
   (EQUAL
    (MV-NTH
     0
@@ -2508,7 +2509,7 @@
       (APPEND
        (CDR
         file-index-list)
-       (list *ms-eoc*)))
+       (list *ms-end-of-clusterchain*)))
      (CAR
       file-index-list)
      file-length))
@@ -2534,7 +2535,7 @@
        (NO-DUPLICATESP-EQUAL FILE-INDEX-LIST)
        (FEASIBLE-FILE-LENGTH-P (LEN FILE-INDEX-LIST)
                                FILE-LENGTH)
-       (LOWER-BOUNDED-INTEGER-LISTP FILE-INDEX-LIST *FIRST-DATA-CLUSTER*)
+       (LOWER-BOUNDED-INTEGER-LISTP FILE-INDEX-LIST *MS-FIRST-DATA-CLUSTER*)
        (BOUNDED-NAT-LISTP FILE-INDEX-LIST (LEN FA-TABLE))
        (<= (LEN FILE-INDEX-LIST)
            (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
@@ -2542,13 +2543,13 @@
        (L6-STRICTER-FS-P FS FA-TABLE)
        (FAT32-ENTRY-LIST-P FA-TABLE)
        (<= (LEN FA-TABLE) *EXPT-2-28*)
-       (<= *FIRST-DATA-CLUSTER* (LEN FA-TABLE)))
+       (<= *MS-FIRST-DATA-CLUSTER* (LEN FA-TABLE)))
   (EQUAL
    (MV-NTH 0
            (L6-BUILD-INDEX-LIST
             (SET-INDICES-IN-FA-TABLE FA-TABLE FILE-INDEX-LIST
                                      (APPEND (CDR FILE-INDEX-LIST)
-                                             (LIST *MS-EOC*)))
+                                             (LIST *MS-END-OF-CLUSTERCHAIN*)))
             (CAR FILE-INDEX-LIST)
             FILE-LENGTH))
    FILE-INDEX-LIST))
@@ -2642,7 +2643,7 @@
    (natp file-length)
    (no-duplicatesp-equal file-index-list)
    (feasible-file-length-p (len file-index-list) file-length)
-   (lower-bounded-integer-listp file-index-list *first-data-cluster*)
+   (lower-bounded-integer-listp file-index-list *ms-first-data-cluster*)
    (bounded-nat-listp file-index-list (len fa-table))
    (<=
     (LEN
@@ -2653,7 +2654,7 @@
    (L6-STRICTER-FS-P FS FA-TABLE)
    (FAT32-ENTRY-LIST-P FA-TABLE)
    (<= (LEN fa-table) *expt-2-28*)
-   (<= *first-data-cluster* (LEN fa-table)))
+   (<= *ms-first-data-cluster* (LEN fa-table)))
   (EQUAL
    (MV-NTH
     0
@@ -2664,7 +2665,7 @@
       (APPEND
        (CDR
         file-index-list)
-       (list *ms-eoc*)))
+       (list *ms-end-of-clusterchain*)))
      (CAR
       file-index-list)
      file-length))
@@ -2682,7 +2683,7 @@
                                          268435455)
                   FA-TABLE)
       NIL NIL)
-          (lower-bounded-integer-listp file-index-list *first-data-cluster*)
+          (lower-bounded-integer-listp file-index-list *ms-first-data-cluster*)
    (L6-BUILD-INDEX-LIST
       (UPDATE-NTH (CAR FILE-INDEX-LIST)
                   (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
@@ -2753,7 +2754,7 @@
 ;;          (LEN
 ;;           (MAKE-BLOCKS
 ;;            new-text))))
-;;        (list *ms-eoc*)))
+;;        (list *ms-end-of-clusterchain*)))
 ;;      (CAR
 ;;       (FIND-N-FREE-CLUSTERS
 ;;        fa-table
@@ -2891,7 +2892,7 @@
                  file-index-list)
             file-length)
            START TEXT)))))
-      (list *MS-EOC*)))))
+      (list *MS-END-OF-CLUSTERCHAIN*)))))
   (FIND-N-FREE-CLUSTERS
    (SET-INDICES-IN-FA-TABLE
        FA-TABLE
