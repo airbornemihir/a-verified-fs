@@ -211,6 +211,15 @@
                   (nth n v)))
   :hints (("Goal" :in-theory (enable set-indices-in-fa-table))))
 
+(defthm set-indices-in-fa-table-correctness-4
+  (implies (and (natp key)
+                (< key (len l))
+                (nat-listp index-list)
+                (not (member-equal key index-list)))
+           (equal (set-indices-in-fa-table (update-nth key val l) index-list value-list)
+                  (update-nth key val (set-indices-in-fa-table l index-list value-list))))
+  :hints (("Goal" :in-theory (enable set-indices-in-fa-table))))
+
 ;; question: if fat entries are 28 bits long, then how is the maximum size
 ;; determined to be 4 GB?
 ;; also, how are we gonna do this without a feasible length restriction?
@@ -2488,6 +2497,14 @@
                          masked-current-cluster length))))
 
 (defthm
+  l6-wrchs-correctness-1-lemma-25
+  (implies
+   (and (bounded-nat-listp file-index-list (len fa-table))
+        (<= (len fa-table) *ms-bad-cluster*))
+   (fat32-masked-entry-list-p file-index-list))
+  :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
+
+(defthm
   find-n-free-clusters-correctness-6
   (implies
    (and (fat32-entry-list-p fa-table)
@@ -2563,6 +2580,28 @@
                                             (masked-entry
                                              (CADR FILE-INDEX-LIST))))
          ("Subgoal *1/2.19.2" :in-theory (enable fat32-masked-entry-p))
+         ("Subgoal *1/2.19.1" :in-theory (disable
+                                          l6-wrchs-correctness-1-lemma-24
+                                          l6-wrchs-correctness-1-lemma-25)
+          :use ((:instance
+                l6-wrchs-correctness-1-lemma-24
+                (key (CAR FILE-INDEX-LIST))
+                (val
+                  (FAT32-UPDATE-LOWER-28 (NTH (CAR FILE-INDEX-LIST) FA-TABLE)
+                                         (CADR FILE-INDEX-LIST)))
+                (fa-table
+                  (SET-INDICES-IN-FA-TABLE FA-TABLE (CDR FILE-INDEX-LIST)
+                                           (APPEND (CDDR FILE-INDEX-LIST)
+                                                   (list *ms-end-of-clusterchain*))))
+                (masked-current-cluster
+                 (CADR FILE-INDEX-LIST))
+                (length
+                 (- FILE-LENGTH *blocksize*)))
+                l6-wrchs-correctness-1-lemma-25)
+          :expand (SET-INDICES-IN-FA-TABLE FA-TABLE FILE-INDEX-LIST
+                                         (CONS (CADR FILE-INDEX-LIST)
+                                               (APPEND (CDDR FILE-INDEX-LIST)
+                                                       (list *ms-end-of-clusterchain*)))))
          ("Subgoal *1/1'''" :in-theory (enable feasible-file-length-p)) ))
 
 (verify
