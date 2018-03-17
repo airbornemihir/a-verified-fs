@@ -530,13 +530,13 @@
 (defthm
   find-n-free-clusters-correctness-3
   (implies (member-equal x (find-n-free-clusters fa-table n))
-           (and (integerp x) (<= 2 x)))
+           (and (integerp x) (<= *ms-first-data-cluster* x)))
   :hints
   (("goal" :in-theory (enable find-n-free-clusters))
    ("goal'"
     :use (:instance find-n-free-clusters-helper-correctness-3
-                    (start 2)
-                    (fa-table (nthcdr 2 fa-table))))))
+                    (start *ms-first-data-cluster*)
+                    (fa-table (nthcdr *ms-first-data-cluster* fa-table))))))
 
 (defthm
   find-n-free-clusters-correctness-4
@@ -2619,164 +2619,168 @@
                   (masked-entry (cadr file-index-list)))))
      ("subgoal *1/1'''" :in-theory (enable feasible-file-length-p)))))
 
-(thm-cp
- (IMPLIES
- (AND
-  (<=
-   (LEN
-    (MAKE-BLOCKS
-     (INSERT-TEXT
-       (UNMAKE-BLOCKS
-            (FETCH-BLOCKS-BY-INDICES
-                 DISK
-                 file-index-list)
-            file-length)
-       START TEXT)))
-   (COUNT-FREE-BLOCKS
-        (SET-INDICES-IN-ALV
-             (FA-TABLE-TO-ALV FA-TABLE)
-             file-index-list
-             NIL)))
-  (CONSP
-   (FIND-N-FREE-CLUSTERS
-    (SET-INDICES-IN-FA-TABLE
-       FA-TABLE
-       file-index-list
-       (MAKE-LIST-AC
-            (LEN file-index-list)
-            0 NIL))
-    (LEN
-     (MAKE-BLOCKS
-      (INSERT-TEXT
-       (UNMAKE-BLOCKS
-            (FETCH-BLOCKS-BY-INDICES
-                 DISK
-                 file-index-list)
-            file-length)
-       START TEXT)))))
-  (L6-STRICTER-FS-P FS FA-TABLE)
-  (FAT32-ENTRY-LIST-P FA-TABLE)
-  (STRINGP TEXT)
-  (INTEGERP START)
-  (<= 0 START)
-  (BLOCK-LISTP DISK)
-  (EQUAL (LEN DISK) (LEN FA-TABLE))
-  (<= (LEN DISK) *ms-bad-cluster*)
-  (<= 2 (LEN DISK))
-  (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
-      (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))))
- (EQUAL
-  (MV-NTH
-   0
-   (L6-FILE-INDEX-LIST
-    (L6-MAKE-REGULAR-FILE
-     (CAR
-      (FIND-N-FREE-CLUSTERS
-       (SET-INDICES-IN-FA-TABLE
-        FA-TABLE
-        file-index-list
-        (MAKE-LIST-AC
-            (LEN file-index-list)
-            0 NIL))
-       (LEN
-        (MAKE-BLOCKS
-         (INSERT-TEXT
-          (UNMAKE-BLOCKS
-            (FETCH-BLOCKS-BY-INDICES
-                 DISK
-                 file-index-list)
-            file-length)
-          START TEXT)))))
-     (LEN
-      (INSERT-TEXT
-       (UNMAKE-BLOCKS
-            (FETCH-BLOCKS-BY-INDICES
-                 DISK
-                 file-index-list)
-            file-length)
-       START TEXT)))
-    (SET-INDICES-IN-FA-TABLE
-     (SET-INDICES-IN-FA-TABLE
-       FA-TABLE
-       file-index-list
-       (MAKE-LIST-AC
-            (LEN file-index-list)
-            0 NIL))
-     (FIND-N-FREE-CLUSTERS
-      (SET-INDICES-IN-FA-TABLE
-       FA-TABLE
-       file-index-list
-       (MAKE-LIST-AC
-            (LEN file-index-list)
-            0 NIL))
-      (LEN
-       (MAKE-BLOCKS
-        (INSERT-TEXT
-         (UNMAKE-BLOCKS
-            (FETCH-BLOCKS-BY-INDICES
-                 DISK
-                 file-index-list)
-            file-length)
-         START TEXT))))
-     (APPEND
-      (CDR
-       (FIND-N-FREE-CLUSTERS
-        (SET-INDICES-IN-FA-TABLE
-         FA-TABLE
-         file-index-list
-         (MAKE-LIST-AC
-            (LEN file-index-list)
-            0 NIL))
-        (LEN
-         (MAKE-BLOCKS
-          (INSERT-TEXT
-           (UNMAKE-BLOCKS
-            (FETCH-BLOCKS-BY-INDICES
-                 DISK
-                 file-index-list)
-            file-length)
-           START TEXT)))))
-      (list *MS-END-OF-CLUSTERCHAIN*)))))
-  (FIND-N-FREE-CLUSTERS
-   (SET-INDICES-IN-FA-TABLE
-       FA-TABLE
-       file-index-list
-       (MAKE-LIST-AC
-            (LEN file-index-list)
-            0 NIL))
-   (LEN
-    (MAKE-BLOCKS
-     (INSERT-TEXT
-       (UNMAKE-BLOCKS
-            (FETCH-BLOCKS-BY-INDICES
-                 DISK
-                 file-index-list)
-            file-length)
-       START TEXT))))))
- :hints (("Goal" :in-theory (enable l6-file-index-list))
-         ("Subgoal 3'" :in-theory (disable
-  find-n-free-clusters-correctness-3) :use (:instance
-  find-n-free-clusters-correctness-3 (x
-  (CAR
-   (FIND-N-FREE-CLUSTERS
-    (SET-INDICES-IN-FA-TABLE FA-TABLE FILE-INDEX-LIST
-                             (MAKE-LIST-AC (LEN FILE-INDEX-LIST)
-                                           0 NIL))
-    (LEN
-      (MAKE-BLOCKS
-           (INSERT-TEXT
-                (UNMAKE-BLOCKS (FETCH-BLOCKS-BY-INDICES DISK FILE-INDEX-LIST)
-                               FILE-LENGTH)
-                START TEXT)))))) (fa-table
-    (SET-INDICES-IN-FA-TABLE FA-TABLE FILE-INDEX-LIST
-                             (MAKE-LIST-AC (LEN FILE-INDEX-LIST)
-                                           0 NIL))) (n
-    (LEN
-      (MAKE-BLOCKS
-           (INSERT-TEXT
-                (UNMAKE-BLOCKS (FETCH-BLOCKS-BY-INDICES DISK FILE-INDEX-LIST)
-                               FILE-LENGTH)
-                START TEXT)))))) ))
+(defthm
+  l6-wrchs-correctness-1-lemma-27
+  (implies
+   (and
+    (feasible-file-length-p (len file-index-list)
+                            file-length)
+    (natp file-length)
+    (bounded-nat-listp file-index-list (len fa-table))
+    (<=
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                       file-length)
+        start text)))
+     (count-free-blocks (set-indices-in-alv (fa-table-to-alv fa-table)
+                                            file-index-list nil)))
+    (consp
+     (find-n-free-clusters
+      (set-indices-in-fa-table fa-table file-index-list
+                               (make-list-ac (len file-index-list)
+                                             0 nil))
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                        file-length)
+         start text)))))
+    (fat32-entry-list-p fa-table)
+    (stringp text)
+    (integerp start)
+    (<= 0 start)
+    (block-listp disk)
+    (equal (len disk) (len fa-table))
+    (<= (len disk) *ms-bad-cluster*)
+    (<= 2 (len disk))
+    (<= (len (make-blocks (insert-text nil start text)))
+        (count-free-blocks (fa-table-to-alv fa-table))))
+   (equal
+    (mv-nth
+     0
+     (l6-file-index-list
+      (l6-make-regular-file
+       (car
+        (find-n-free-clusters
+         (set-indices-in-fa-table fa-table file-index-list
+                                  (make-list-ac (len file-index-list)
+                                                0 nil))
+         (len
+          (make-blocks
+           (insert-text
+            (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                           file-length)
+            start text)))))
+       (len (insert-text
+             (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                            file-length)
+             start text)))
+      (set-indices-in-fa-table
+       (set-indices-in-fa-table fa-table file-index-list
+                                (make-list-ac (len file-index-list)
+                                              0 nil))
+       (find-n-free-clusters
+        (set-indices-in-fa-table fa-table file-index-list
+                                 (make-list-ac (len file-index-list)
+                                               0 nil))
+        (len
+         (make-blocks
+          (insert-text
+           (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                          file-length)
+           start text))))
+       (append
+        (cdr
+         (find-n-free-clusters
+          (set-indices-in-fa-table fa-table file-index-list
+                                   (make-list-ac (len file-index-list)
+                                                 0 nil))
+          (len
+           (make-blocks
+            (insert-text
+             (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                            file-length)
+             start text)))))
+        (list *ms-end-of-clusterchain*)))))
+    (find-n-free-clusters
+     (set-indices-in-fa-table fa-table file-index-list
+                              (make-list-ac (len file-index-list)
+                                            0 nil))
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                       file-length)
+        start text))))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (l6-file-index-list)
+     (l6-wrchs-correctness-1-lemma-26 find-n-free-clusters-correctness-3
+                                      find-n-free-clusters-correctness-1))
+    :use
+    ((:instance
+      l6-wrchs-correctness-1-lemma-26
+      (fa-table (set-indices-in-fa-table fa-table file-index-list
+                                         (make-list-ac (len file-index-list)
+                                                       0 nil)))
+      (file-index-list
+       (find-n-free-clusters
+        (set-indices-in-fa-table fa-table file-index-list
+                                 (make-list-ac (len file-index-list)
+                                               0 nil))
+        (len
+         (make-blocks
+          (insert-text
+           (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                          file-length)
+           start text)))))
+      (file-length
+       (len
+        (insert-text
+         (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                        file-length)
+         start text))))
+     (:instance
+      find-n-free-clusters-correctness-3
+      (x
+       (car
+        (find-n-free-clusters
+         (set-indices-in-fa-table fa-table file-index-list
+                                  (make-list-ac (len file-index-list)
+                                                0 nil))
+         (len
+          (make-blocks
+           (insert-text
+            (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                           file-length)
+            start text))))))
+      (fa-table (set-indices-in-fa-table fa-table file-index-list
+                                         (make-list-ac (len file-index-list)
+                                                       0 nil)))
+      (n
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                         file-length)
+          start text)))))
+     (:instance
+      find-n-free-clusters-correctness-1
+      (fa-table (set-indices-in-fa-table fa-table file-index-list
+                                         (make-list-ac (len file-index-list)
+                                                       0 nil)))
+      (n
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
+                         file-length)
+          start text))))
+      (b (len disk)))))))
 
 (defthm l6-wrchs-correctness-1-lemma-3
   (implies
@@ -2868,8 +2872,7 @@
      (mv-nth 1
              (l6-wrchs hns fs disk fa-table start text))
      (fa-table-to-alv (mv-nth 2
-                              (l6-wrchs hns fs disk fa-table start text))))))
-  :hints (("Subgoal 7" :in-theory (disable ) :use (:instance )) ))
+                              (l6-wrchs hns fs disk fa-table start text)))))))
 
 (skip-proofs
  (defthm l6-wrchs-correctness-1-lemma-1
