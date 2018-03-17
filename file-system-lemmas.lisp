@@ -302,3 +302,19 @@
   (implies (and (subsetp-equal x y)
                 (intersectp-equal x z))
            (intersectp-equal y z)))
+
+(defthm update-nth-of-make-list
+  (implies (and (integerp key) (>= key n) (natp n))
+           (equal (update-nth key val (make-list-ac n l ac))
+                  (make-list-ac n l (update-nth (- key n) val ac)))))
+
+(defthm nthcdr-of-update-nth
+  (implies (and (natp n) (integerp key) (>= key n))
+           (equal (nthcdr n (update-nth key val l))
+                  (update-nth (- key n)
+                              val (nthcdr n l)))))
+
+(defthmd car-of-assoc-equal
+  (let ((sd (assoc-equal x alist)))
+       (implies (consp sd) (equal (car sd) x)))
+  :instructions (:prove))

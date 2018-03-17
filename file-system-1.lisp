@@ -155,9 +155,7 @@
                   (stringp text)
                   (natp start))
              (equal (len (insert-text oldtext start text))
-                    (+ start (len (coerce text 'list))
-                       (nfix (+ (len oldtext)
-                                (- (+ start (len (coerce text 'list)))))))))
+                    (max (+ start (len (coerce text 'list))) (len oldtext))))
     :hints (("goal" :do-not-induct t
              :expand (insert-text oldtext start text)))))
 
