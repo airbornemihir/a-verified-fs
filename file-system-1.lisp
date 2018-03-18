@@ -159,6 +159,18 @@
     :hints (("goal" :do-not-induct t
              :expand (insert-text oldtext start text)))))
 
+(defthm
+  insert-text-correctness-4
+  (implies (and (character-listp oldtext)
+                (stringp text)
+                (natp start))
+           (iff (consp (insert-text oldtext start text))
+                (or (> start 0)
+                    (> (len (coerce text 'list)) 0)
+                    (consp oldtext))))
+  :hints (("goal" :use len-of-insert-text)
+          ("subgoal 4'''" :expand (len (insert-text nil 0 text)))
+          ("subgoal 1'4'" :expand (len oldtext))))
 
 ; The problem with this definition of l1-wrchs is that it deletes a directory if
 ; it's found where a text file is expected
