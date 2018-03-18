@@ -2906,6 +2906,64 @@
     *ms-first-data-cluster*))
   :hints (("goal" :in-theory (enable l6-file-index-list))))
 
+(defthm
+  l6-wrchs-correctness-1-lemma-34
+  (implies
+   (and
+    (l6-regular-file-entry-p file)
+    (fat32-entry-list-p fa-table)
+    (equal (mv-nth 1 (l6-file-index-list file fa-table))
+           0)
+    (not (member-equal
+          key
+          (mv-nth 0 (l6-file-index-list file fa-table))))
+    (fat32-masked-entry-p key)
+    (< key (len fa-table)))
+   (equal
+    (l6-file-index-list file (update-nth key val fa-table))
+    (l6-file-index-list file fa-table)))
+  :hints (("goal" :in-theory (enable l6-file-index-list))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-35
+  (implies
+   (and
+    (l6-fs-p fs)
+    (fat32-entry-list-p fa-table)
+    (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+    (no-duplicatesp-equal
+     (mv-nth 0 (l6-list-all-ok-indices fs fa-table)))
+    (not (member-equal
+          key
+          (mv-nth 0
+                  (l6-list-all-ok-indices fs fa-table))))
+    (fat32-masked-entry-p key)
+    (< key (len fa-table)))
+   (equal
+    (l6-list-all-ok-indices fs (update-nth key val fa-table))
+    (l6-list-all-ok-indices fs fa-table)))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-36
+  (implies
+   (and
+    (l6-stricter-fs-p fs fa-table)
+    (fat32-masked-entry-p index-list)
+    (fat32-entry-list-p value-list)
+    (equal (len index-list)
+           (len value-list))
+    (not (intersectp-equal
+          (mv-nth 0 (l6-list-all-ok-indices fs fa-table))
+          index-list)))
+   (l6-stricter-fs-p
+    fs
+    (set-indices-in-fa-table fa-table index-list value-list)))
+  :hints
+  (("goal"
+    :in-theory (enable l6-stricter-fs-p l6-list-all-ok-indices
+                       set-indices-in-fa-table))))
+
 (defthm l6-wrchs-correctness-1-lemma-3
   (implies
    (and
