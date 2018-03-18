@@ -2796,38 +2796,37 @@
     (< masked-current-cluster (len fa-table))
     (fat32-masked-entry-p masked-current-cluster)
     (feasible-file-length-p
-     (len (mv-nth 0
-                  (l6-build-index-list fa-table
-                                       masked-current-cluster length)))
+     (len
+      (mv-nth
+       0
+       (l6-build-index-list fa-table
+                            masked-current-cluster length)))
      length)
     (fat32-entry-list-p fa-table)
-    (no-duplicatesp-equal
-     (mv-nth 0
-             (l6-build-index-list fa-table
-                                  masked-current-cluster length)))
-    (not (intersectp-equal
-          disjoint-index-list
-          (mv-nth 0
-                  (l6-build-index-list fa-table
-                                       masked-current-cluster length))))
-    (equal
-     (mv-nth 1
-             (l6-build-index-list fa-table masked-current-cluster length))
-     0))
-   (equal
-    (l6-build-index-list
-     (set-indices-in-fa-table fa-table disjoint-index-list value-list)
-     masked-current-cluster length)
-    (l6-build-index-list fa-table
-                         masked-current-cluster length)))
+    (not
+     (intersectp-equal
+      disjoint-index-list
+      (mv-nth
+       0
+       (l6-build-index-list fa-table
+                            masked-current-cluster length))))
+    (equal (mv-nth 1
+                   (l6-build-index-list
+                    fa-table masked-current-cluster length))
+           0))
+   (equal (l6-build-index-list
+           (set-indices-in-fa-table
+            fa-table disjoint-index-list value-list)
+           masked-current-cluster length)
+          (l6-build-index-list fa-table
+                               masked-current-cluster length)))
   :hints (("goal" :in-theory (enable l6-build-index-list
                                      lower-bounded-integer-listp
                                      set-indices-in-fa-table))))
 
-(defthm
-  l6-wrchs-correctness-1-lemma-29
+(thm-cp
   (implies
-   (and (l6-stricter-fs-p fs fa-table)
+   (and (l6-fs-p fs)
         (fat32-entry-list-p fa-table)
         (equal (len disjoint-index-list)
                (len value-list))
@@ -2836,10 +2835,10 @@
                                      *ms-first-data-cluster*)
         (fat32-masked-entry-list-p disjoint-index-list))
    (b*
-       (((mv index-list &)
+       (((mv index-list ok)
          (l6-list-all-ok-indices fs fa-table)))
-     (implies
-      (not (intersectp-equal disjoint-index-list index-list))
+     (implies (and ok
+      (not (intersectp-equal disjoint-index-list index-list)))
       (equal
        (l6-to-l4-fs-helper
         fs
@@ -2849,8 +2848,56 @@
   :hints
   (("goal" :in-theory (enable l6-list-all-ok-indices
                               l6-stricter-fs-p))
-   ("subgoal *1/6''" :in-theory (enable l6-file-index-list))
-   ("subgoal *1/2''" :in-theory (enable l6-file-index-list))))
+   ("subgoal *1/5''" :in-theory (enable l6-file-index-list))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-29
+  (implies
+   (and (l6-fs-p fs)
+        (fat32-entry-list-p fa-table)
+        (equal (len disjoint-index-list)
+               (len value-list))
+        (fat32-masked-entry-list-p value-list)
+        (lower-bounded-integer-listp disjoint-index-list
+                                     *ms-first-data-cluster*)
+        (fat32-masked-entry-list-p disjoint-index-list))
+   (b*
+       (((mv index-list ok)
+         (l6-list-all-ok-indices fs fa-table)))
+     (implies
+      (and ok
+           (not (intersectp-equal disjoint-index-list index-list)))
+      (equal (l6-to-l4-fs-helper
+              fs
+              (set-indices-in-fa-table fa-table
+                                       disjoint-index-list value-list))
+             (l6-to-l4-fs-helper fs fa-table)))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (l6-stricter-fs-p fs fa-table)
+          (fat32-entry-list-p fa-table)
+          (equal (len disjoint-index-list)
+                 (len value-list))
+          (fat32-masked-entry-list-p value-list)
+          (lower-bounded-integer-listp disjoint-index-list
+                                       *ms-first-data-cluster*)
+          (fat32-masked-entry-list-p disjoint-index-list))
+     (b*
+         (((mv index-list &)
+           (l6-list-all-ok-indices fs fa-table)))
+       (implies
+        (not (intersectp-equal disjoint-index-list index-list))
+        (equal (l6-to-l4-fs-helper
+                fs
+                (set-indices-in-fa-table fa-table
+                                         disjoint-index-list value-list))
+               (l6-to-l4-fs-helper fs fa-table)))))))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices
+                                     l6-stricter-fs-p))
+          ("subgoal *1/5''" :in-theory (enable l6-file-index-list))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-30
