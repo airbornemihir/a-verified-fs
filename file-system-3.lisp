@@ -27,6 +27,18 @@
     (cons (make-character-list (take *blocksize* text))
           (make-blocks (nthcdr *blocksize* text)))))
 
+(defthm
+  make-blocks-correctness-5
+  (iff (consp (make-blocks text))
+       (consp text))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary (iff (equal (len (make-blocks text)) 0)
+                    (atom text))
+    :hints (("goal''" :expand (len (make-blocks text))))))
+  :hints (("goal" :in-theory (enable make-blocks))))
+
 ;; Characterisation of a disk, which is a list of blocks as described before.
 (defun block-listp (block-list)
   (declare (xargs :guard t))
