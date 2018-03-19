@@ -2195,19 +2195,34 @@
    ("subgoal *1/1''" :in-theory (enable set-indices-in-alv))
    ("subgoal *1/3.4'" :in-theory (e/d (set-indices-in-alv)))))
 
-(skip-proofs
- (defthm
-   l6-wrchs-correctness-1-lemma-19
-   (implies
-    (and (fat32-entry-list-p fa-table)
-         (equal (len index-list) n))
-    (equal
-     (fa-table-to-alv (set-indices-in-fa-table
-                       fa-table
-                       index-list (make-list-ac n val nil)))
-     (set-indices-in-alv (fa-table-to-alv fa-table)
-                         index-list (not (equal val 0)))))
-   :hints (("goal" :in-theory (enable set-indices-in-alv)))))
+(include-book "std/lists/repeat" :dir :system)
+
+(defthm
+  l6-wrchs-correctness-1-lemma-19
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (>= (len fa-table) *ms-first-data-cluster*)
+        (fat32-masked-entry-list-p index-list)
+        (bounded-nat-listp index-list (len fa-table)))
+   (equal
+    (fa-table-to-alv (set-indices-in-fa-table
+                      fa-table
+                      index-list (make-list-ac (len index-list) 0 nil)))
+    (set-indices-in-alv (fa-table-to-alv fa-table)
+                        index-list nil)))
+  :hints
+  (("goal" :in-theory (enable set-indices-in-fa-table)
+    :induct
+    (set-indices-in-fa-table
+                      fa-table
+                      index-list (make-list-ac (len index-list) 0 nil)))
+   ("Subgoal *1/3.3'" :in-theory (enable set-indices-in-alv))
+   ("Subgoal *1/3.3''" :expand
+    (SET-INDICES (FA-TABLE-TO-ALV FA-TABLE)
+                 INDEX-LIST
+                 (MAKE-LIST-AC (LEN (CDR INDEX-LIST))
+                               NIL '(NIL))))
+   ("subgoal *1/1'''" :in-theory (enable set-indices-in-alv))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-49
