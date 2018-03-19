@@ -2294,6 +2294,36 @@
      ("subgoal *1/1'''" :in-theory (enable set-indices-in-alv)))))
 
 (defthm
+  l6-wrchs-correctness-1-lemma-52
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (fat32-masked-entry-p masked-current-cluster)
+        (natp length)
+        (>= masked-current-cluster 2)
+        (< masked-current-cluster (len fa-table)))
+   (lower-bounded-integer-listp
+    (mv-nth 0
+            (l6-build-index-list
+             fa-table masked-current-cluster length))
+    *ms-first-data-cluster*))
+  :hints
+  (("goal" :in-theory (enable l6-build-index-list
+                              lower-bounded-integer-listp))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-53
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (l6-stricter-fs-p fs fa-table))
+   (lower-bounded-integer-listp
+    (mv-nth 0
+            (l6-file-index-list (cdr (assoc-equal name fs))
+                                fa-table))
+    *ms-first-data-cluster*))
+  :hints (("goal" :in-theory (enable l6-file-index-list))))
+
+(defthm
   l6-wrchs-correctness-1-lemma-20
   (implies
    (and
@@ -2404,7 +2434,17 @@
       (index-list
        (mv-nth 0
                (l6-file-index-list (cdr (assoc-equal name fs))
-                                   fa-table))))))))
+                                   fa-table))))))
+   ("goal'''"
+    :in-theory (disable
+                        l6-wrchs-correctness-1-lemma-19)
+    :use
+    ((:instance
+      l6-wrchs-correctness-1-lemma-19
+      (index-list
+            (MV-NTH 0
+                    (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL NAME FS))
+                                        FA-TABLE))))))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-21
@@ -2533,13 +2573,7 @@
      (index-list
       (mv-nth 0
               (l6-file-index-list (cdr (assoc-equal name fs))
-                                  fa-table)))
-     (n
-      (len
-       (mv-nth 0
-               (l6-file-index-list (cdr (assoc-equal name fs))
-                                   fa-table))))
-     (val 0)))))
+                                  fa-table)))))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-22
