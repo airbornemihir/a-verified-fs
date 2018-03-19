@@ -2145,24 +2145,47 @@
     (cdr (assoc-equal name
                       (l6-to-l4-fs-helper fs fa-table))))))
 
-(thm-cp
- (implies
-  (AND (FAT32-ENTRY-LIST-P FA-TABLE)
-       (>= (LEN FA-TABLE) *ms-first-data-cluster*)
-       (FAT32-MASKED-ENTRY-LIST-P VALUE-LIST)
-       (EQUAL (LEN INDEX-LIST)
-              (LEN VALUE-LIST))
-       (lower-bounded-integer-listp index-list
-                                    *ms-first-data-cluster*)
-       (lower-bounded-integer-listp value-list
-                                    *ms-first-data-cluster*))
-  (equal
-   (fa-table-to-alv (SET-INDICES-IN-FA-TABLE
-                     fa-table INDEX-LIST VALUE-LIST))
-   (set-indices-in-alv
-    (fa-table-to-alv fa-table)
-    index-list
-    t))))
+;; We cannot reason with find-n-free-clusters and find-n-free clusters-helper
+;; here. We're going to have to abstract away its properties and treat it like
+;; a list of integers, all greater than equal to 2, all less than the length of
+;; the disk.
+
+;; This might also be a good time to add a constant in place of 2. I don't like
+;; the idea of considering 2 to be special here.
+
+(defund lower-bounded-integer-listp (l b)
+  (declare (xargs :guard (integerp b)))
+  (if (atom l)
+      (equal l nil)
+    (and (integerp (car l)) (>= (car l) b) (lower-bounded-integer-listp (cdr l) b))))
+
+(defthmd lower-bounded-integer-listp-correctness-5
+  (implies (and (<= y x) (lower-bounded-integer-listp l x))
+           (lower-bounded-integer-listp l y))
+  :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-48
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (>= (len fa-table)
+            *ms-first-data-cluster*)
+        (fat32-masked-entry-list-p value-list)
+        (equal (len index-list)
+               (len value-list))
+        (lower-bounded-integer-listp index-list *ms-first-data-cluster*)
+        (bounded-nat-listp index-list (len fa-table))
+        (lower-bounded-integer-listp value-list *ms-first-data-cluster*))
+   (equal
+    (fa-table-to-alv (set-indices-in-fa-table fa-table index-list value-list))
+    (set-indices-in-alv (fa-table-to-alv fa-table)
+                        index-list t)))
+  :hints
+  (("goal" :in-theory (enable set-indices-in-fa-table
+                              lower-bounded-integer-listp)
+    :induct (set-indices-in-fa-table fa-table index-list value-list))
+   ("subgoal *1/1''" :in-theory (enable set-indices-in-alv))
+   ("subgoal *1/3.4'" :in-theory (e/d (set-indices-in-alv)))))
 
 (skip-proofs
  (defthm
@@ -2434,25 +2457,6 @@
                (l6-file-index-list (cdr (assoc-equal name fs))
                                    fa-table))))
      (val 0)))))
-
-;; We cannot reason with find-n-free-clusters and find-n-free clusters-helper
-;; here. We're going to have to abstract away its properties and treat it like
-;; a list of integers, all greater than equal to 2, all less than the length of
-;; the disk.
-
-;; This might also be a good time to add a constant in place of 2. I don't like
-;; the idea of considering 2 to be special here.
-
-(defund lower-bounded-integer-listp (l b)
-  (declare (xargs :guard (integerp b)))
-  (if (atom l)
-      (equal l nil)
-    (and (integerp (car l)) (>= (car l) b) (lower-bounded-integer-listp (cdr l) b))))
-
-(defthmd lower-bounded-integer-listp-correctness-5
-  (implies (and (<= y x) (lower-bounded-integer-listp l x))
-           (lower-bounded-integer-listp l y))
-  :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-22
