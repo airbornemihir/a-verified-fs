@@ -158,28 +158,28 @@
 
 (defund
   set-indices-in-fa-table
-  (v index-list value-list)
+  (fa-table index-list value-list)
   (declare
    (xargs :measure (acl2-count index-list)
-          :guard (and (fat32-entry-list-p v)
+          :guard (and (fat32-entry-list-p fa-table)
                       (nat-listp index-list)
                       (fat32-masked-entry-list-p value-list)
                       (equal (len index-list)
                              (len value-list)))))
   (if
    (atom index-list)
-   v
+   fa-table
    (let
     ((current-index (car index-list)))
     (if
      (or (not (natp current-index))
-         (>= current-index (len v)))
-     v
+         (>= current-index (len fa-table)))
+     fa-table
      (set-indices-in-fa-table
       (update-nth current-index
-                  (fat32-update-lower-28 (nth current-index v)
+                  (fat32-update-lower-28 (nth current-index fa-table)
                                          (car value-list))
-                  v)
+                  fa-table)
       (cdr index-list)
       (cdr value-list))))))
 
@@ -2759,169 +2759,6 @@
                   (masked-entry (cadr file-index-list)))))
      ("subgoal *1/1'''" :in-theory (enable feasible-file-length-p)))))
 
-;; (defthm
-;;   l6-wrchs-correctness-1-lemma-27
-;;   (implies
-;;    (and
-;;     (feasible-file-length-p (len file-index-list)
-;;                             file-length)
-;;     (natp file-length)
-;;     (bounded-nat-listp file-index-list (len fa-table))
-;;     (<=
-;;      (len
-;;       (make-blocks
-;;        (insert-text
-;;         (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                        file-length)
-;;         start text)))
-;;      (count-free-blocks (set-indices-in-alv (fa-table-to-alv fa-table)
-;;                                             file-index-list nil)))
-;;     (consp
-;;      (find-n-free-clusters
-;;       (set-indices-in-fa-table fa-table file-index-list
-;;                                (make-list-ac (len file-index-list)
-;;                                              0 nil))
-;;       (len
-;;        (make-blocks
-;;         (insert-text
-;;          (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                         file-length)
-;;          start text)))))
-;;     (fat32-entry-list-p fa-table)
-;;     (stringp text)
-;;     (integerp start)
-;;     (<= 0 start)
-;;     (block-listp disk)
-;;     (equal (len disk) (len fa-table))
-;;     (<= (len disk) *ms-bad-cluster*)
-;;     (<= 2 (len disk))
-;;     (<= (len (make-blocks (insert-text nil start text)))
-;;         (count-free-blocks (fa-table-to-alv fa-table))))
-;;    (equal
-;;     (mv-nth
-;;      0
-;;      (l6-file-index-list
-;;       (l6-make-regular-file
-;;        (car
-;;         (find-n-free-clusters
-;;          (set-indices-in-fa-table fa-table file-index-list
-;;                                   (make-list-ac (len file-index-list)
-;;                                                 0 nil))
-;;          (len
-;;           (make-blocks
-;;            (insert-text
-;;             (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                            file-length)
-;;             start text)))))
-;;        (len (insert-text
-;;              (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                             file-length)
-;;              start text)))
-;;       (set-indices-in-fa-table
-;;        (set-indices-in-fa-table fa-table file-index-list
-;;                                 (make-list-ac (len file-index-list)
-;;                                               0 nil))
-;;        (find-n-free-clusters
-;;         (set-indices-in-fa-table fa-table file-index-list
-;;                                  (make-list-ac (len file-index-list)
-;;                                                0 nil))
-;;         (len
-;;          (make-blocks
-;;           (insert-text
-;;            (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                           file-length)
-;;            start text))))
-;;        (append
-;;         (cdr
-;;          (find-n-free-clusters
-;;           (set-indices-in-fa-table fa-table file-index-list
-;;                                    (make-list-ac (len file-index-list)
-;;                                                  0 nil))
-;;           (len
-;;            (make-blocks
-;;             (insert-text
-;;              (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                             file-length)
-;;              start text)))))
-;;         (list *ms-end-of-clusterchain*)))))
-;;     (find-n-free-clusters
-;;      (set-indices-in-fa-table fa-table file-index-list
-;;                               (make-list-ac (len file-index-list)
-;;                                             0 nil))
-;;      (len
-;;       (make-blocks
-;;        (insert-text
-;;         (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                        file-length)
-;;         start text))))))
-;;   :hints
-;;   (("goal"
-;;     :in-theory
-;;     (e/d
-;;      (l6-file-index-list)
-;;      (l6-wrchs-correctness-1-lemma-26 find-n-free-clusters-correctness-3
-;;                                       find-n-free-clusters-correctness-1))
-;;     :use
-;;     ((:instance
-;;       l6-wrchs-correctness-1-lemma-26
-;;       (fa-table (set-indices-in-fa-table fa-table file-index-list
-;;                                          (make-list-ac (len file-index-list)
-;;                                                        0 nil)))
-;;       (file-index-list
-;;        (find-n-free-clusters
-;;         (set-indices-in-fa-table fa-table file-index-list
-;;                                  (make-list-ac (len file-index-list)
-;;                                                0 nil))
-;;         (len
-;;          (make-blocks
-;;           (insert-text
-;;            (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                           file-length)
-;;            start text)))))
-;;       (file-length
-;;        (len
-;;         (insert-text
-;;          (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                         file-length)
-;;          start text))))
-;;      (:instance
-;;       find-n-free-clusters-correctness-3
-;;       (x
-;;        (car
-;;         (find-n-free-clusters
-;;          (set-indices-in-fa-table fa-table file-index-list
-;;                                   (make-list-ac (len file-index-list)
-;;                                                 0 nil))
-;;          (len
-;;           (make-blocks
-;;            (insert-text
-;;             (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                            file-length)
-;;             start text))))))
-;;       (fa-table (set-indices-in-fa-table fa-table file-index-list
-;;                                          (make-list-ac (len file-index-list)
-;;                                                        0 nil)))
-;;       (n
-;;        (len
-;;         (make-blocks
-;;          (insert-text
-;;           (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                          file-length)
-;;           start text)))))
-;;      (:instance
-;;       find-n-free-clusters-correctness-1
-;;       (fa-table (set-indices-in-fa-table fa-table file-index-list
-;;                                          (make-list-ac (len file-index-list)
-;;                                                        0 nil)))
-;;       (n
-;;        (len
-;;         (make-blocks
-;;          (insert-text
-;;           (unmake-blocks (fetch-blocks-by-indices disk file-index-list)
-;;                          file-length)
-;;           start text))))
-;;       (b (len disk)))))))
-
 (defthm
   l6-wrchs-correctness-1-lemma-28
   (implies
@@ -3045,26 +2882,24 @@
 (defthm
   l6-wrchs-correctness-1-lemma-32
   (implies
-   (and
-    (fat32-masked-entry-p masked-current-cluster)
-    (<= 2 masked-current-cluster)
-    (< masked-current-cluster (len fa-table)))
+   (and (fat32-masked-entry-p masked-current-cluster)
+        (<= *ms-first-data-cluster*
+            masked-current-cluster))
    (lower-bounded-integer-listp
     (mv-nth 0
             (l6-build-index-list
              fa-table masked-current-cluster length))
-    2))
+    *ms-first-data-cluster*))
   :hints
   (("goal" :in-theory (enable l6-build-index-list
                               lower-bounded-integer-listp))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-33
-  (implies
-   (and (l6-regular-file-entry-p file))
-   (lower-bounded-integer-listp
-    (mv-nth 0 (l6-file-index-list file fa-table))
-    *ms-first-data-cluster*))
+  (implies (and (l6-regular-file-entry-p file))
+           (lower-bounded-integer-listp
+            (mv-nth 0 (l6-file-index-list file fa-table))
+            *ms-first-data-cluster*))
   :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
@@ -3975,6 +3810,356 @@
                           :bash :bash))
 
 (defthm
+  l6-wrchs-correctness-1-lemma-55
+  (implies
+   (and
+    (consp hns)
+    (consp fs)
+    (consp (assoc-equal (car hns) fs))
+    (l6-regular-file-entry-p (cdr (assoc-equal (car hns) fs)))
+    (not (cdr hns))
+    (<=
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks
+         (fetch-blocks-by-indices
+          disk
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                               fa-table)))
+         (l6-regular-file-length
+          (cdr (assoc-equal (car hns) fs))))
+        start text)))
+     (+
+      (count-free-blocks (fa-table-to-alv fa-table))
+      (len
+       (mv-nth
+        0
+        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                            fa-table)))))
+    (consp
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth
+        0
+        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                            fa-table))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                              fa-table)))
+        0 nil))
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks
+          (fetch-blocks-by-indices
+           disk
+           (mv-nth
+            0
+            (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                fa-table)))
+          (l6-regular-file-length
+           (cdr (assoc-equal (car hns) fs))))
+         start text)))))
+    (l6-stricter-fs-p fs fa-table)
+    (stringp text)
+    (integerp start)
+    (<= 0 start)
+    (symbolp (car hns))
+    (block-listp disk)
+    (equal (len disk) (len fa-table))
+    (<= (len disk) 268435447)
+    (<= 2 (len disk))
+    (<= (len (make-blocks (insert-text nil start text)))
+        (count-free-blocks (fa-table-to-alv fa-table)))
+    (equal
+     (+
+      1
+      (len
+       (cdr
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          fa-table
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                               fa-table))
+          (make-list-ac
+           (len (mv-nth 0
+                        (l6-file-index-list
+                         (cdr (assoc-equal (car hns) fs))
+                         fa-table)))
+           0 nil))
+         (len
+          (make-blocks
+           (insert-text
+            (unmake-blocks
+             (fetch-blocks-by-indices
+              disk
+              (mv-nth 0
+                      (l6-file-index-list
+                       (cdr (assoc-equal (car hns) fs))
+                       fa-table)))
+             (l6-regular-file-length
+              (cdr (assoc-equal (car hns) fs))))
+            start text)))))))
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks
+         (fetch-blocks-by-indices
+          disk
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                               fa-table)))
+         (l6-regular-file-length
+          (cdr (assoc-equal (car hns) fs))))
+        start text)))))
+   (lower-bounded-integer-listp
+    (cdr
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth
+        0
+        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                            fa-table))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                              fa-table)))
+        0 nil))
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks
+          (fetch-blocks-by-indices
+           disk
+           (mv-nth
+            0
+            (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                fa-table)))
+          (l6-regular-file-length
+           (cdr (assoc-equal (car hns) fs))))
+         start text)))))
+    *ms-first-data-cluster*))
+  :hints
+  (("goal"
+    :use
+    (:instance
+     lower-bounded-integer-listp
+     (l
+      (find-n-free-clusters
+       (set-indices-in-fa-table
+        fa-table
+        (mv-nth
+         0
+         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                             fa-table))
+        (make-list-ac
+         (len
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                               fa-table)))
+         0 nil))
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks
+           (fetch-blocks-by-indices
+            disk
+            (mv-nth 0
+                    (l6-file-index-list
+                     (cdr (assoc-equal (car hns) fs))
+                     fa-table)))
+           (l6-regular-file-length
+            (cdr (assoc-equal (car hns) fs))))
+          start text)))))
+     (b *ms-first-data-cluster*)))))
+
+(DEFTHM
+ L6-WRCHS-CORRECTNESS-1-LEMMA-56
+ (IMPLIES
+  (AND
+   (CONSP HNS)
+   (CONSP FS)
+   (CONSP (ASSOC-EQUAL (CAR HNS) FS))
+   (L6-REGULAR-FILE-ENTRY-P (CDR (ASSOC-EQUAL (CAR HNS) FS)))
+   (NOT (CDR HNS))
+   (<=
+    (LEN
+     (MAKE-BLOCKS
+      (INSERT-TEXT
+       (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+       START TEXT)))
+    (+ (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))
+       (LEN (MV-NTH 0
+                    (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                        FA-TABLE)))))
+   (CONSP
+    (FIND-N-FREE-CLUSTERS
+     (SET-INDICES-IN-FA-TABLE
+       FA-TABLE
+       (MV-NTH 0
+               (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                   FA-TABLE))
+       (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL))
+     (LEN
+      (MAKE-BLOCKS
+       (INSERT-TEXT
+        (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+        START TEXT)))))
+   (L6-STRICTER-FS-P FS FA-TABLE)
+   (STRINGP TEXT)
+   (INTEGERP START)
+   (<= 0 START)
+   (SYMBOLP (CAR HNS))
+   (BLOCK-LISTP DISK)
+   (EQUAL (LEN DISK) (LEN FA-TABLE))
+   (<= (LEN DISK) 268435447)
+   (<= 2 (LEN DISK))
+   (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
+       (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
+   (EQUAL
+    (+
+     1
+     (LEN
+      (CDR
+       (FIND-N-FREE-CLUSTERS
+        (SET-INDICES-IN-FA-TABLE
+         FA-TABLE
+         (MV-NTH 0
+                 (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                     FA-TABLE))
+         (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL))
+        (LEN
+         (MAKE-BLOCKS
+          (INSERT-TEXT
+           (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+           START TEXT)))))))
+    (LEN
+     (MAKE-BLOCKS
+      (INSERT-TEXT
+       (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+       START TEXT)))))
+  (NOT
+   (INTERSECTP-EQUAL
+    (MV-NTH 0
+            (L6-LIST-ALL-OK-INDICES (DELETE-ASSOC-EQUAL (CAR HNS) FS)
+                                    FA-TABLE))
+    (FIND-N-FREE-CLUSTERS
+     (SET-INDICES-IN-FA-TABLE
+       FA-TABLE
+       (MV-NTH 0
+               (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                   FA-TABLE))
+       (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL))
+     (LEN
+      (MAKE-BLOCKS
+       (INSERT-TEXT
+        (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+        START TEXT)))))))
+ :INSTRUCTIONS
+ (:PROMOTE
+  (:DIVE 1)
+  (:IN-THEORY (DISABLE L6-WRCHS-CORRECTNESS-1-LEMMA-44
+                       L6-WRCHS-CORRECTNESS-1-LEMMA-43))
+  :TOP
+  (:USE
+   (:INSTANCE
+    L6-WRCHS-CORRECTNESS-1-LEMMA-43
+    (FS (DELETE-ASSOC-EQUAL (CAR HNS) FS))
+    (DISJOINT-INDEX-LIST
+         (MV-NTH 0
+                 (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                     FA-TABLE)))
+    (VALUE-LIST
+       (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL)))
+   (:INSTANCE
+    L6-WRCHS-CORRECTNESS-1-LEMMA-44
+    (FS (DELETE-ASSOC-EQUAL (CAR HNS) FS))
+    (FA-TABLE
+     (SET-INDICES-IN-FA-TABLE
+       FA-TABLE
+       (MV-NTH 0
+               (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                   FA-TABLE))
+       (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL)))
+    (N
+     (LEN
+      (MAKE-BLOCKS
+       (INSERT-TEXT
+        (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+        START TEXT))))))
+  :BASH))
+
+(defthm
   l6-wrchs-correctness-1-lemma-3
   (implies
    (and
@@ -4070,8 +4255,11 @@
   :hints
   (("goal"
     :do-not-induct t
+    :in-theory (e/d (LOWER-BOUNDED-INTEGER-LISTP))
     :use ((:instance l6-file-index-list (file
-                                         (CDR (ASSOC-EQUAL (CAR HNS) FS)))) ))))
+                                         (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+          (:instance SET-INDICES-IN-FA-TABLE (index-list nil)
+                                (value-list nil)) ))))
 
 ;; This theorem shows the equivalence of the l6 and l4 versions of wrchs.
 (defthm
