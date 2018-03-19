@@ -3705,14 +3705,22 @@
                     (l6-file-index-list (cdr (assoc-equal (car hns) fs))
                                         fa-table)))
        0 nil)))))
-  :instructions
-  (:promote (:dive 2)
-            (:rewrite (:rewrite l6-wrchs-correctness-1-lemma-29 . 2))
-            :top
-            :bash :bash
-            :bash :bash
-            :bash :bash
-            :bash :bash))
+  :hints (("Goal" :in-theory (disable
+                              L6-WRCHS-CORRECTNESS-1-LEMMA-29)
+           :use (:instance
+                 L6-WRCHS-CORRECTNESS-1-LEMMA-29
+                 (fs
+                  (DELETE-ASSOC-EQUAL (CAR HNS) FS))
+                 (disjoint-index-list
+                  (MV-NTH 0
+                          (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                              FA-TABLE)))
+                 (value-list
+       (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL)))) ))
 
 ;; This theorem shows the equivalence of the l6 and l4 versions of wrchs.
 (defthm
