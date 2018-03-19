@@ -2159,6 +2159,14 @@
       (equal l nil)
     (and (integerp (car l)) (>= (car l) b) (lower-bounded-integer-listp (cdr l) b))))
 
+(defthm lower-bounded-integer-listp-correctness-2
+  (implies (true-listp x)
+           (equal (lower-bounded-integer-listp (binary-append x y)
+                                     b)
+                  (and (lower-bounded-integer-listp x b)
+                       (lower-bounded-integer-listp y b))))
+  :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
+
 (defthmd lower-bounded-integer-listp-correctness-5
   (implies (and (<= y x) (lower-bounded-integer-listp l x))
            (lower-bounded-integer-listp l y))
@@ -3661,7 +3669,8 @@
   :hints
   (("goal"
     :do-not-induct t :in-theory (disable
-                                 l6-wrchs-correctness-1-lemma-29)
+                                 l6-wrchs-correctness-1-lemma-29
+                                 l6-wrchs-correctness-1-lemma-48)
     :use ((:instance
           l6-wrchs-correctness-1-lemma-29
           (fs
@@ -3739,7 +3748,93 @@
             (LEN (MV-NTH 0
                          (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
                                              FA-TABLE)))
-            0 NIL))))) ))
+            0 NIL)))
+           (:instance l6-wrchs-correctness-1-lemma-48
+                    (fa-table
+  (SET-INDICES-IN-FA-TABLE
+       FA-TABLE
+       (MV-NTH 0
+               (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                   FA-TABLE))
+       (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL)))
+                    (index-list
+  (FIND-N-FREE-CLUSTERS
+   (SET-INDICES-IN-FA-TABLE
+       FA-TABLE
+       (MV-NTH 0
+               (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                   FA-TABLE))
+       (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL))
+   (LEN
+    (MAKE-BLOCKS
+     (INSERT-TEXT
+       (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+       START TEXT)))))
+                    (value-list
+  (APPEND
+   (CDR
+    (FIND-N-FREE-CLUSTERS
+     (SET-INDICES-IN-FA-TABLE
+       FA-TABLE
+       (MV-NTH 0
+               (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                   FA-TABLE))
+       (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL))
+     (LEN
+      (MAKE-BLOCKS
+       (INSERT-TEXT
+        (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+        START TEXT)))))
+   '(268435455))))
+    (:instance lower-bounded-integer-listp
+               (l
+                (FIND-N-FREE-CLUSTERS
+                 (SET-INDICES-IN-FA-TABLE
+                  FA-TABLE
+                  (MV-NTH 0
+                          (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                              FA-TABLE))
+                  (MAKE-LIST-AC
+                   (LEN (MV-NTH 0
+                                (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                                    FA-TABLE)))
+                   0 NIL))
+                 (LEN
+                  (MAKE-BLOCKS
+                   (INSERT-TEXT
+                    (UNMAKE-BLOCKS
+                     (FETCH-BLOCKS-BY-INDICES
+                      DISK
+                      (MV-NTH 0
+                              (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                                  FA-TABLE)))
+                     (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+                    START TEXT)))))
+               (b *ms-first-data-cluster*)))) ))
 
 ;; This theorem shows the equivalence of the l6 and l4 versions of wrchs.
 (defthm
