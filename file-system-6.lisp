@@ -3666,7 +3666,4 @@
                                        fa-table)))
                  (l6-regular-file-length
                   (cdr (assoc-equal (car hns) fs))))
-                start text))))))
-          ("Subgoal *1/6'" :in-theory (disable
-                                       L6-WRCHS-CORRECTNESS-1-LEMMA-3)
-           :use L6-WRCHS-CORRECTNESS-1-LEMMA-3)))
+                start text))))))))
