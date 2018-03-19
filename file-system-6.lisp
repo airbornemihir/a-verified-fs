@@ -2221,29 +2221,17 @@
     (integerp start)
     (<= 0 start)
     (<= (len fa-table) *ms-bad-cluster*)
-    (<= 2 (len fa-table))
+    (<= *ms-first-data-cluster* (len fa-table))
     (<= (len (make-blocks (insert-text nil start text)))
         (count-free-blocks (fa-table-to-alv fa-table)))
-    (equal
-     (len
-      (find-n-free-blocks
-       (set-indices-in-alv
-        (fa-table-to-alv fa-table)
-        (mv-nth 0
-                (l6-file-index-list (cdr (assoc-equal name fs))
-                                    fa-table))
-        nil)
-       (len
-        (make-blocks
-         (insert-text
-          (unmake-blocks
-           (fetch-blocks-by-indices
-            disk
-            (mv-nth 0
-                    (l6-file-index-list (cdr (assoc-equal name fs))
-                                        fa-table)))
-           (l6-regular-file-length (cdr (assoc-equal name fs))))
-          start text)))))
+    (>=
+     (count-free-blocks
+      (set-indices-in-alv
+       (fa-table-to-alv fa-table)
+       (mv-nth 0
+               (l6-file-index-list (cdr (assoc-equal name fs))
+                                   fa-table))
+       nil))
      (len
       (make-blocks
        (insert-text
@@ -3834,7 +3822,32 @@
                                                   FA-TABLE)))
                      (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
                     START TEXT)))))
-               (b *ms-first-data-cluster*)))) ))
+               (b *ms-first-data-cluster*))))
+   ("subgoal 6" :in-theory (disable L6-WRCHS-CORRECTNESS-1-LEMMA-20)
+    :use (:instance L6-WRCHS-CORRECTNESS-1-LEMMA-20 (name (car hns)))
+    :expand (LEN
+       (FIND-N-FREE-CLUSTERS
+        (SET-INDICES-IN-FA-TABLE
+         FA-TABLE
+         (MV-NTH 0
+                 (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                     FA-TABLE))
+         (MAKE-LIST-AC
+            (LEN (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            0 NIL))
+        (LEN
+         (MAKE-BLOCKS
+          (INSERT-TEXT
+           (UNMAKE-BLOCKS
+            (FETCH-BLOCKS-BY-INDICES
+                 DISK
+                 (MV-NTH 0
+                         (L6-FILE-INDEX-LIST (CDR (ASSOC-EQUAL (CAR HNS) FS))
+                                             FA-TABLE)))
+            (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
+           START TEXT)))))) ))
 
 ;; This theorem shows the equivalence of the l6 and l4 versions of wrchs.
 (defthm
