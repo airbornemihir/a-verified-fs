@@ -2195,35 +2195,6 @@
    ("subgoal *1/1''" :in-theory (enable set-indices-in-alv))
    ("subgoal *1/3.4'" :in-theory (e/d (set-indices-in-alv)))))
 
-(include-book "std/lists/repeat" :dir :system)
-
-(defthm
-  l6-wrchs-correctness-1-lemma-19
-  (implies
-   (and (fat32-entry-list-p fa-table)
-        (>= (len fa-table) *ms-first-data-cluster*)
-        (fat32-masked-entry-list-p index-list)
-        (bounded-nat-listp index-list (len fa-table)))
-   (equal
-    (fa-table-to-alv (set-indices-in-fa-table
-                      fa-table
-                      index-list (make-list-ac (len index-list) 0 nil)))
-    (set-indices-in-alv (fa-table-to-alv fa-table)
-                        index-list nil)))
-  :hints
-  (("goal" :in-theory (enable set-indices-in-fa-table)
-    :induct
-    (set-indices-in-fa-table
-                      fa-table
-                      index-list (make-list-ac (len index-list) 0 nil)))
-   ("Subgoal *1/3.3'" :in-theory (enable set-indices-in-alv))
-   ("Subgoal *1/3.3''" :expand
-    (SET-INDICES (FA-TABLE-TO-ALV FA-TABLE)
-                 INDEX-LIST
-                 (MAKE-LIST-AC (LEN (CDR INDEX-LIST))
-                               NIL '(NIL))))
-   ("subgoal *1/1'''" :in-theory (enable set-indices-in-alv))))
-
 (defthm
   l6-wrchs-correctness-1-lemma-49
   (implies
@@ -2250,6 +2221,77 @@
                                           fa-table))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p
                                      l6-list-all-ok-indices))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-51
+  (implies
+   (and (< key (len fa-table))
+        (<= *ms-first-data-cluster* key)
+        (<= *ms-first-data-cluster* (len fa-table))
+        (fat32-entry-list-p fa-table)
+        (natp key)
+        (fat32-entry-p val)
+        (equal (fat32-entry-mask val) 0))
+   (equal (fa-table-to-alv (update-nth key val fa-table))
+          (update-nth key nil (fa-table-to-alv fa-table))))
+  :hints (("goal" :in-theory (enable fa-table-to-alv))))
+
+(encapsulate
+  ()
+  
+  (local (include-book "std/lists/repeat" :dir :system))
+
+  (defthm
+    l6-wrchs-correctness-1-lemma-19
+    (implies
+     (and (<= *ms-first-data-cluster* (len fa-table))
+          (fat32-entry-list-p fa-table)
+          (lower-bounded-integer-listp
+           index-list *ms-first-data-cluster*)
+          (bounded-nat-listp index-list (len fa-table)))
+     (equal (fa-table-to-alv
+             (set-indices-in-fa-table
+              fa-table index-list
+              (make-list-ac (len index-list) 0 nil)))
+            (set-indices-in-alv (fa-table-to-alv fa-table)
+                                index-list nil)))
+    :hints
+    (("goal''"
+      :in-theory (enable set-indices-in-fa-table)
+      :induct (set-indices-in-fa-table
+               fa-table index-list
+               (make-list-ac (len index-list) 0 nil)))
+     ("subgoal *1/7'''"
+      :in-theory
+      (e/d (set-indices-in-alv lower-bounded-integer-listp)
+           (l6-wrchs-correctness-1-lemma-51))
+      :use
+      (:instance
+       l6-wrchs-correctness-1-lemma-51
+       (key (car index-list))
+       (val
+        (fat32-update-lower-28 (nth (car index-list) fa-table)
+                               0)))
+      :expand (set-indices (fa-table-to-alv fa-table)
+                           index-list
+                           (repeat (+ 1 (len (cdr index-list)))
+                                   nil)))
+     ("subgoal *1/5''"
+      :in-theory
+      (e/d (set-indices-in-alv lower-bounded-integer-listp)
+           (l6-wrchs-correctness-1-lemma-51))
+      :use
+      (:instance
+       l6-wrchs-correctness-1-lemma-51
+       (key (car index-list))
+       (val
+        (fat32-update-lower-28 (nth (car index-list) fa-table)
+                               0)))
+      :expand (set-indices (fa-table-to-alv fa-table)
+                           index-list
+                           (repeat (+ 1 (len (cdr index-list)))
+                                   nil)))
+     ("subgoal *1/1'''" :in-theory (enable set-indices-in-alv)))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-20
@@ -2326,7 +2368,6 @@
   :hints
   (("goal"
     :in-theory (disable l6-wrchs-correctness-1-lemma-7
-                        l6-wrchs-correctness-1-lemma-19
                         l4-wrchs-correctness-1-lemma-18)
     :use
     ((:instance
@@ -2357,18 +2398,6 @@
                                  fa-table)))
            (l6-regular-file-length (cdr (assoc-equal name fs))))
           start text)))))
-     (:instance
-      l6-wrchs-correctness-1-lemma-19
-      (index-list
-       (mv-nth 0
-               (l6-file-index-list (cdr (assoc-equal name fs))
-                                   fa-table)))
-      (n
-       (len
-        (mv-nth 0
-                (l6-file-index-list (cdr (assoc-equal name fs))
-                                    fa-table))))
-      (val 0))
      (:instance
       l4-wrchs-correctness-1-lemma-18
       (alv (fa-table-to-alv fa-table))
