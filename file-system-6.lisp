@@ -2210,6 +2210,33 @@
    :hints (("goal" :in-theory (enable set-indices-in-alv)))))
 
 (defthm
+  l6-wrchs-correctness-1-lemma-49
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (l6-stricter-fs-p fs fa-table))
+   (indices-marked-p
+    (mv-nth 0
+            (l6-file-index-list (cdr (assoc-equal name fs))
+                                fa-table))
+    (fa-table-to-alv fa-table)))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p
+                                     l6-list-all-ok-indices))))
+
+(defthm
+  l6-wrchs-correctness-1-lemma-50
+  (implies
+   (and (consp (assoc-equal name fs))
+        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (l6-stricter-fs-p fs fa-table))
+   (no-duplicatesp-equal
+              (mv-nth 0
+                      (l6-file-index-list (cdr (assoc-equal name fs))
+                                          fa-table))))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p
+                                     l6-list-all-ok-indices))))
+
+(defthm
   l6-wrchs-correctness-1-lemma-20
   (implies
    (and
@@ -2238,9 +2265,10 @@
         (unmake-blocks
          (fetch-blocks-by-indices
           disk
-          (mv-nth 0
-                  (l6-file-index-list (cdr (assoc-equal name fs))
-                                      fa-table)))
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal name fs))
+                               fa-table)))
          (l6-regular-file-length (cdr (assoc-equal name fs))))
         start text)))))
    (equal
@@ -2252,9 +2280,10 @@
                (l6-file-index-list (cdr (assoc-equal name fs))
                                    fa-table))
        (make-list-ac
-        (len (mv-nth 0
-                     (l6-file-index-list (cdr (assoc-equal name fs))
-                                         fa-table)))
+        (len
+         (mv-nth 0
+                 (l6-file-index-list (cdr (assoc-equal name fs))
+                                     fa-table)))
         0 nil))
       (len
        (make-blocks
@@ -2262,9 +2291,10 @@
          (unmake-blocks
           (fetch-blocks-by-indices
            disk
-           (mv-nth 0
-                   (l6-file-index-list (cdr (assoc-equal name fs))
-                                       fa-table)))
+           (mv-nth
+            0
+            (l6-file-index-list (cdr (assoc-equal name fs))
+                                fa-table)))
           (l6-regular-file-length (cdr (assoc-equal name fs))))
          start text)))))
     (len
@@ -2281,7 +2311,8 @@
   :hints
   (("goal"
     :in-theory (disable l6-wrchs-correctness-1-lemma-7
-                        l6-wrchs-correctness-1-lemma-19)
+                        l6-wrchs-correctness-1-lemma-19
+                        l4-wrchs-correctness-1-lemma-18)
     :use
     ((:instance
       l6-wrchs-correctness-1-lemma-7
@@ -2292,9 +2323,11 @@
                 (l6-file-index-list (cdr (assoc-equal name fs))
                                     fa-table))
         (make-list-ac
-         (len (mv-nth 0
-                      (l6-file-index-list (cdr (assoc-equal name fs))
-                                          fa-table)))
+         (len
+          (mv-nth
+           0
+           (l6-file-index-list (cdr (assoc-equal name fs))
+                               fa-table)))
          0 nil)))
       (n
        (len
@@ -2303,9 +2336,10 @@
           (unmake-blocks
            (fetch-blocks-by-indices
             disk
-            (mv-nth 0
-                    (l6-file-index-list (cdr (assoc-equal name fs))
-                                        fa-table)))
+            (mv-nth
+             0
+             (l6-file-index-list (cdr (assoc-equal name fs))
+                                 fa-table)))
            (l6-regular-file-length (cdr (assoc-equal name fs))))
           start text)))))
      (:instance
@@ -2314,10 +2348,19 @@
        (mv-nth 0
                (l6-file-index-list (cdr (assoc-equal name fs))
                                    fa-table)))
-      (n (len (mv-nth 0
-                      (l6-file-index-list (cdr (assoc-equal name fs))
-                                          fa-table))))
-      (val 0))))))
+      (n
+       (len
+        (mv-nth 0
+                (l6-file-index-list (cdr (assoc-equal name fs))
+                                    fa-table))))
+      (val 0))
+     (:instance
+      l4-wrchs-correctness-1-lemma-18
+      (alv (fa-table-to-alv fa-table))
+      (index-list
+       (mv-nth 0
+               (l6-file-index-list (cdr (assoc-equal name fs))
+                                   fa-table))))))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-21
