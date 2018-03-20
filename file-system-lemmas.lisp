@@ -169,14 +169,24 @@
                       (nth (- (len x) (+ n 1)) x)
                       (nth (- n (len x)) y)))))
 
+;; The following is redundant with the eponymous function in
+;; books/misc/gentle.lisp, from where it was taken with thanks to
+;; Messrs. Boyer, Hunt and Davis.
 (defthm true-listp-of-make-list-ac
-  (implies (true-listp ac)
-           (true-listp (make-list-ac n val ac))))
+  (equal (true-listp (make-list-ac n val ac))
+         (true-listp ac))
+  :rule-classes ((:rewrite)
+                 (:type-prescription
+                  :corollary
+                  (implies (true-listp ac)
+                           (true-listp (make-list-ac n val ac))))))
 
+;; The following is redundant with the eponymous function in
+;; books/centaur/ubdds/param.lisp, from where it was taken with thanks to
+;; Messrs. Boyer and Hunt.
 (defthm len-of-make-list-ac
-  (implies (and (integerp n) (>= n 0))
-           (equal (len (make-list-ac n val ac))
-                  (+ n (len ac)))))
+  (equal (len (make-list-ac n val acc))
+         (+ (nfix n) (len acc))))
 
 (defthm boolean-listp-of-make-list-ac
   (implies (booleanp val)
@@ -283,3 +293,43 @@
   (implies (and (boolean-listp l)
                 (boolean-listp ac))
            (boolean-listp (first-n-ac i l ac))))
+
+(defthm consp-of-first-n-ac
+  (iff (consp (first-n-ac i l ac))
+       (or (consp ac) (not (zp i)))))
+
+(defthm nth-of-make-list-ac
+  (implies (and (natp n) (natp m))
+           (equal (nth n (make-list-ac m val ac))
+                  (if (< n m) val (nth (- n m) ac)))))
+
+(defthm nth-of-nthcdr
+  (implies (and (natp n1) (natp n2))
+           (equal (nth n1 (nthcdr n2 l))
+                  (nth (+ n1 n2) l))))
+
+(defthmd intersect-with-subset
+  (implies (and (subsetp-equal x y)
+                (intersectp-equal x z))
+           (intersectp-equal y z)))
+
+(defthm update-nth-of-make-list
+  (implies (and (integerp key) (>= key n) (natp n))
+           (equal (update-nth key val (make-list-ac n l ac))
+                  (make-list-ac n l (update-nth (- key n) val ac)))))
+
+(defthm nthcdr-of-update-nth
+  (implies (and (natp n) (integerp key) (>= key n))
+           (equal (nthcdr n (update-nth key val l))
+                  (update-nth (- key n)
+                              val (nthcdr n l)))))
+
+(defthmd car-of-assoc-equal
+  (let ((sd (assoc-equal x alist)))
+       (implies (consp sd) (equal (car sd) x)))
+  :instructions (:prove))
+
+(defthm update-nth-of-update-nth
+  (implies (not (equal (nfix key1) (nfix key2)))
+           (equal (update-nth key1 val1 (update-nth key2 val2 l))
+                  (update-nth key2 val2 (update-nth key1 val1 l)))))
