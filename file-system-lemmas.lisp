@@ -169,10 +169,6 @@
                       (nth (- (len x) (+ n 1)) x)
                       (nth (- n (len x)) y)))))
 
-(defthm true-listp-of-make-list-ac
-  (implies (true-listp ac)
-           (true-listp (make-list-ac n val ac))))
-
 (defthm len-of-make-list-ac
   (implies (and (integerp n) (>= n 0))
            (equal (len (make-list-ac n val ac))

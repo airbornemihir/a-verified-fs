@@ -47,11 +47,16 @@
                        (len value-list)))
            (boolean-listp (set-indices v index-list value-list))))
 
-(defund set-indices-in-alv (alv index-list value)
-  (declare (xargs :guard (and (boolean-listp alv)
-                              (nat-listp index-list)
-                              (booleanp value))))
-  (set-indices alv index-list (make-list (len index-list) :initial-element value)))
+(encapsulate
+  ()
+
+  (local (include-book "misc/gentle" :dir :system))
+
+  (defund set-indices-in-alv (alv index-list value)
+    (declare (xargs :guard (and (boolean-listp alv)
+                                (nat-listp index-list)
+                                (booleanp value))))
+    (set-indices alv index-list (make-list (len index-list) :initial-element value))))
 
 (defthm
   set-indices-in-alv-correctness-1
