@@ -185,6 +185,22 @@
                                    index-list)
           (fetch-blocks-by-indices block-list index-list))))
 
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/nthcdr" :dir :system))
+
+  (defthm
+    make-blocks-correctness-1
+    (implies (character-listp text)
+             (and (< (- (* *blocksize* (len (make-blocks text)))
+                        *blocksize*)
+                     (len text))
+                  (not (< (* *blocksize* (len (make-blocks text)))
+                          (len text)))))
+    :hints (("goal" :in-theory (enable make-blocks)
+             :induct t))))
+
 (defthm
   make-blocks-correctness-1
   (implies (character-listp text)
