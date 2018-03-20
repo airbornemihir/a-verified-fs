@@ -169,14 +169,24 @@
                       (nth (- (len x) (+ n 1)) x)
                       (nth (- n (len x)) y)))))
 
+;; The following is redundant with the eponymous function in
+;; books/misc/gentle.lisp, from where it was taken with thanks to
+;; Messrs. Boyer, Hunt and Davis.
 (defthm true-listp-of-make-list-ac
-  (implies (true-listp ac)
-           (true-listp (make-list-ac n val ac))))
+  (equal (true-listp (make-list-ac n val ac))
+         (true-listp ac))
+  :rule-classes ((:rewrite)
+                 (:type-prescription
+                  :corollary
+                  (implies (true-listp ac)
+                           (true-listp (make-list-ac n val ac))))))
 
+;; The following is redundant with the eponymous function in
+;; books/centaur/ubdds/param.lisp, from where it was taken with thanks to
+;; Messrs. Boyer and Hunt.
 (defthm len-of-make-list-ac
-  (implies (and (integerp n) (>= n 0))
-           (equal (len (make-list-ac n val ac))
-                  (+ n (len ac)))))
+  (equal (len (make-list-ac n val acc))
+         (+ (nfix n) (len acc))))
 
 (defthm boolean-listp-of-make-list-ac
   (implies (booleanp val)
