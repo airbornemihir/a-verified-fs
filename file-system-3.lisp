@@ -109,9 +109,9 @@
                  (iff (consp (nthcdr n l)) (> (len l) n)))
         :hints (("Goal" :induct (nthcdr n l))))
 
-(defthm unmake-make-blocks-lemma-2
-  (implies (and (natp n) (>= (len l) n))
-           (equal (len (nthcdr n l)) (- (len l) n))))
+;; (defthm unmake-make-blocks-lemma-2
+;;   (implies (and (natp n) (>= (len l) n))
+;;            (equal (len (nthcdr n l)) (- (len l) n))))
 
 (encapsulate ()
   (local (include-book "std/lists/repeat" :dir :system))
@@ -124,22 +124,17 @@
              (equal (unmake-blocks (make-blocks text)
                                    (len text))
                     text))
-        :hints (("Goal" :in-theory (enable make-blocks))
-                ("subgoal *1/3.2"
-             :in-theory (disable unmake-make-blocks-lemma-1)
-             :use (:instance unmake-make-blocks-lemma-1
-                             (n *blocksize*)
-                             (l text)))
-            ("subgoal *1/3.1'"
-             :in-theory (disable already-a-character-list
-                                 take-of-too-many)
-             :use ((:instance take-of-too-many (x text)
-                              (n *blocksize*))
-                   (:instance unmake-make-blocks-lemma-1
-                              (n *blocksize*)
-                              (l text))))))
-
-  )
+    :hints
+    (("goal" :in-theory (enable make-blocks))
+     ("subgoal *1/3.3'"
+      :in-theory (disable first-n-ac-of-make-character-list
+                          take-of-too-many)
+      :use ((:instance first-n-ac-of-make-character-list
+                       (i (len text))
+                       (l (first-n-ac 8 text nil))
+                       (ac nil))
+            (:instance take-of-too-many (x text)
+                       (n *blocksize*)))))))
 
 ;; This is a constant that might be needed later.
 ;; This is to be returned when a block is not found. It's full of null

@@ -55,13 +55,13 @@
   (equal (make-character-list (binary-append x y))
          (binary-append (make-character-list x) (make-character-list y))))
 
-(defthm len-of-nthcdr-1 (<= (len (nthcdr n l)) (len l))
-  :rule-classes :linear)
-
-(defthm len-of-nthcdr-2
-  (implies (and (consp l) (integerp n) (> n 0))
-           (< (len (nthcdr n l)) (len l)))
-  :rule-classes :linear)
+;; The following is redundant with the definition in
+;; books/std/lists/nthcdr.lisp, from where it was taken with thanks to Jared
+;; Davis.
+(defthm len-of-nthcdr
+  (equal (len (nthcdr n l))
+         (nfix (- (len l) (nfix n))))
+  :hints (("Goal" :induct (nthcdr n l))))
 
 (defthmd revappend-is-append-of-rev
   (equal (revappend x (binary-append y z))
@@ -96,8 +96,8 @@
                 (member-equal x lst))
            (and (integerp x) (<= 0 x)))
   :rule-classes ((:rewrite :corollary (implies (and (nat-listp lst)
-                                                   (member-equal x lst))
-                                              (<= 0 x)))
+                                                    (member-equal x lst))
+                                               (<= 0 x)))
                  (:forward-chaining :corollary (implies (and (member-equal x lst)
                                                              (nat-listp lst))
                                                         (integerp x)))))
@@ -167,7 +167,7 @@
            (equal (nth n (revappend x y))
                   (if (< n (len x))
                       (nth (- (len x) (+ n 1)) x)
-                      (nth (- n (len x)) y)))))
+                    (nth (- n (len x)) y)))))
 
 ;; The following is redundant with the eponymous function in
 ;; books/misc/gentle.lisp, from where it was taken with thanks to
@@ -207,11 +207,11 @@
   (equal (cdr (make-list-ac n val ac))
          (if (zp n)
              (cdr ac)
-             (make-list-ac (- n 1) val ac))))
+           (make-list-ac (- n 1) val ac))))
 
 (defthm member-equal-of-nth
-        (implies (and (natp n) (< n (len l)))
-                 (member-equal (nth n l) l)))
+  (implies (and (natp n) (< n (len l)))
+           (member-equal (nth n l) l)))
 
 (encapsulate
   ()
@@ -326,7 +326,7 @@
 
 (defthmd car-of-assoc-equal
   (let ((sd (assoc-equal x alist)))
-       (implies (consp sd) (equal (car sd) x))))
+    (implies (consp sd) (equal (car sd) x))))
 
 (defthm update-nth-of-update-nth
   (implies (not (equal (nfix key1) (nfix key2)))
