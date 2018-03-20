@@ -147,14 +147,18 @@
                                      fat32-update-lower-28)))
      ("goal''" :in-theory (enable unsigned-byte-p)))))
 
-(skip-proofs
- (defthm
-   fat32-update-lower-28-correctness-2
-   (implies
-    (and (fat32-entry-p entry)
-         (fat32-masked-entry-p masked-entry))
-    (equal
-     (fat32-entry-mask (fat32-update-lower-28 entry masked-entry)) masked-entry))))
+
+(include-book "centaur/gl/gl" :dir :system)
+
+  ;; Matt's comment
+  ;; As it turns out I can use 32 and 28 instead of 33 and 29, but I wasn't
+  ;; sure if I needed a sign bit, so I played it safe.  Note that 33 and 29 are
+  ;; the logs base 2 of the strict bounds on those numbers.
+
+(def-gl-thm fat32-update-lower-28-correctness-2
+  :hyp (and (fat32-entry-p entry)
+            (fat32-masked-entry-p masked-entry))
+  :concl (fat32-entry-mask (fat32-update-lower-28 entry masked-entry))
 
 (defund
   set-indices-in-fa-table
