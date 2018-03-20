@@ -7,6 +7,10 @@
 ; set our cluster size to 1 sector, and our sector size to 8 bytes. This is
 ; based on every character in ACL2 being a byte.
 
+; The following is in file-system-6.acl2, but we include it here as well for
+; when we are doing interactive development, in order to read gl:: symbols.
+(include-book "centaur/gl/portcullis" :dir :system)
+
 (include-book "file-system-4")
 (include-book "centaur/fty/top" :dir :system)
 
@@ -147,6 +151,8 @@
                                      fat32-update-lower-28)))
      ("goal''" :in-theory (enable unsigned-byte-p)))))
 
+; :Redef helps here for overcoming lemmas that are incompatible here (and
+; finding all such lemmas in the process).
 (encapsulate
   ()
 
@@ -157,7 +163,9 @@
    (def-gl-thm fat32-update-lower-28-correctness-2
      :hyp (and (fat32-entry-p entry)
                (fat32-masked-entry-p masked-entry))
-     :concl (fat32-entry-mask (fat32-update-lower-28 entry masked-entry))
+     :concl (equal (fat32-entry-mask (fat32-update-lower-28 entry
+                                                            masked-entry))
+                   masked-entry)
      :g-bindings (gl::auto-bindings (:nat entry 33) (:nat masked-entry 29))))
 
   (defthm
@@ -1517,7 +1525,7 @@
         (no-duplicatesp-equal
          (mv-nth 0 (l6-list-all-ok-indices fs fa-table)))
         (l6-regular-file-entry-p (l6-stat hns fs disk)))
-   (b* (((mv file-index-list &) 
+   (b* (((mv file-index-list &)
        (l6-file-index-list (l6-stat hns fs disk)
                            fa-table)) )
    (equal
@@ -2247,7 +2255,7 @@
 
 (encapsulate
   ()
-  
+
   (local (include-book "std/lists/repeat" :dir :system))
 
   (defthm
