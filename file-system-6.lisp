@@ -4173,68 +4173,188 @@
                        feasible-file-length-p))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-58
+  l6-wrchs-correctness-1-lemma-59
   (implies
-   (and
-    (consp hns)
-    (consp fs)
-    (consp (assoc-equal (car hns) fs))
-    (l6-regular-file-entry-p (cdr (assoc-equal (car hns) fs)))
-    (not (cdr hns))
-    (<=
+   (and (consp (assoc-equal name fs))
+        (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+        (l6-stricter-fs-p fs fa-table))
+   (equal
+    (mv-nth 1
+            (l6-file-index-list (cdr (assoc-equal name fs))
+                                fa-table))
+    0))
+  :hints (("goal" :in-theory (enable l6-stricter-fs-p
+                                     l6-list-all-ok-indices))))
+
+(defthm
+ l6-wrchs-correctness-1-lemma-58
+ (implies
+  (and
+   (consp hns)
+   (consp fs)
+   (consp (assoc-equal (car hns) fs))
+   (l6-regular-file-entry-p (cdr (assoc-equal (car hns) fs)))
+   (not (cdr hns))
+   (<=
+    (len
+     (make-blocks
+      (insert-text
+       (unmake-blocks
+            (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+       start text)))
+    (+ (count-free-blocks (fa-table-to-alv fa-table))
+       (len (mv-nth 0
+                    (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                        fa-table)))))
+   (consp
+    (find-n-free-clusters
+     (set-indices-in-fa-table
+       fa-table
+       (mv-nth 0
+               (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                   fa-table))
+       (make-list-ac
+            (len (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            0 nil))
      (len
       (make-blocks
        (insert-text
         (unmake-blocks
-         (fetch-blocks-by-indices
-          disk
-          (mv-nth 0
-                  (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                      fa-table)))
-         (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+            (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+        start text)))))
+   (l6-stricter-fs-p fs fa-table)
+   (stringp text)
+   (integerp start)
+   (<= 0 start)
+   (symbolp (car hns))
+   (block-listp disk)
+   (equal (len disk) (len fa-table))
+   (<= (len disk) 268435447)
+   (<= 2 (len disk))
+   (<= (len (make-blocks (insert-text nil start text)))
+       (count-free-blocks (fa-table-to-alv fa-table)))
+   (equal
+    (+
+     1
+     (len
+      (cdr
+       (find-n-free-clusters
+        (set-indices-in-fa-table
+         fa-table
+         (mv-nth 0
+                 (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                     fa-table))
+         (make-list-ac
+            (len (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            0 nil))
+        (len
+         (make-blocks
+          (insert-text
+           (unmake-blocks
+            (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+           start text)))))))
+    (len
+     (make-blocks
+      (insert-text
+       (unmake-blocks
+            (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+       start text)))))
+  (equal
+   (mv-nth
+    0
+    (l6-file-index-list
+     (l6-make-regular-file
+      (car
+       (find-n-free-clusters
+        (set-indices-in-fa-table
+         fa-table
+         (mv-nth 0
+                 (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                     fa-table))
+         (make-list-ac
+            (len (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            0 nil))
+        (len
+         (make-blocks
+          (insert-text
+           (unmake-blocks
+            (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+           start text)))))
+      (len
+       (insert-text
+        (unmake-blocks
+            (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
         start text)))
-     (+ (count-free-blocks (fa-table-to-alv fa-table))
-        (len (mv-nth 0
-                     (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                         fa-table)))))
-    (consp
-     (find-n-free-clusters
+     (set-indices-in-fa-table
       (set-indices-in-fa-table
        fa-table
        (mv-nth 0
                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
                                    fa-table))
        (make-list-ac
-        (len (mv-nth 0
-                     (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                         fa-table)))
-        0 nil))
-      (len
-       (make-blocks
-        (insert-text
-         (unmake-blocks
-          (fetch-blocks-by-indices
-           disk
-           (mv-nth 0
-                   (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                       fa-table)))
-          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-         start text)))))
-    (l6-stricter-fs-p fs fa-table)
-    (stringp text)
-    (integerp start)
-    (<= 0 start)
-    (symbolp (car hns))
-    (block-listp disk)
-    (equal (len disk) (len fa-table))
-    (<= (len disk) 268435447)
-    (<= 2 (len disk))
-    (<= (len (make-blocks (insert-text nil start text)))
-        (count-free-blocks (fa-table-to-alv fa-table)))
-    (equal
-     (+
-      1
-      (len
+            (len (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            0 nil))
+      (find-n-free-clusters
+       (set-indices-in-fa-table
+        fa-table
+        (mv-nth 0
+                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                    fa-table))
+        (make-list-ac
+            (len (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            0 nil))
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks
+            (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+          start text))))
+      (append
        (cdr
         (find-n-free-clusters
          (set-indices-in-fa-table
@@ -4243,225 +4363,642 @@
                   (l6-file-index-list (cdr (assoc-equal (car hns) fs))
                                       fa-table))
           (make-list-ac
-           (len (mv-nth 0
-                        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                            fa-table)))
-           0 nil))
-         (len
-          (make-blocks
-           (insert-text
-            (unmake-blocks
-             (fetch-blocks-by-indices
-              disk
-              (mv-nth 0
-                      (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                          fa-table)))
-             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-            start text)))))))
-     (len
-      (make-blocks
-       (insert-text
-        (unmake-blocks
-         (fetch-blocks-by-indices
-          disk
-          (mv-nth 0
-                  (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                      fa-table)))
-         (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-        start text)))))
-   (equal
-    (mv-nth
-     0
-     (l6-file-index-list
-      (l6-make-regular-file
-       (car
-        (find-n-free-clusters
-         (set-indices-in-fa-table
-          fa-table
-          (mv-nth 0
-                  (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                      fa-table))
-          (make-list-ac
-           (len (mv-nth 0
-                        (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                            fa-table)))
-           0 nil))
-         (len
-          (make-blocks
-           (insert-text
-            (unmake-blocks
-             (fetch-blocks-by-indices
-              disk
-              (mv-nth 0
-                      (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                          fa-table)))
-             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-            start text)))))
-       (len
-        (insert-text
-         (unmake-blocks
-          (fetch-blocks-by-indices
-           disk
-           (mv-nth 0
-                   (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                       fa-table)))
-          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-         start text)))
-      (set-indices-in-fa-table
-       (set-indices-in-fa-table
-        fa-table
-        (mv-nth 0
-                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                    fa-table))
-        (make-list-ac
-         (len (mv-nth 0
-                      (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                          fa-table)))
-         0 nil))
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         fa-table
-         (mv-nth 0
-                 (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                     fa-table))
-         (make-list-ac
-          (len (mv-nth 0
-                       (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                           fa-table)))
-          0 nil))
-        (len
-         (make-blocks
-          (insert-text
-           (unmake-blocks
-            (fetch-blocks-by-indices
-             disk
-             (mv-nth 0
-                     (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                         fa-table)))
-            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-           start text))))
-       (append
-        (cdr
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           fa-table
-           (mv-nth 0
-                   (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                       fa-table))
-           (make-list-ac
             (len (mv-nth 0
                          (l6-file-index-list (cdr (assoc-equal (car hns) fs))
                                              fa-table)))
             0 nil))
-          (len
-           (make-blocks
-            (insert-text
-             (unmake-blocks
-              (fetch-blocks-by-indices
-               disk
-               (mv-nth 0
-                       (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                           fa-table)))
-              (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-             start text)))))
-        '(268435455)))))
-    (find-n-free-clusters
+         (len
+          (make-blocks
+           (insert-text
+            (unmake-blocks
+             (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+            start text)))))
+       '(268435455)))))
+   (find-n-free-clusters
+    (set-indices-in-fa-table
+       fa-table
+       (mv-nth 0
+               (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                   fa-table))
+       (make-list-ac
+            (len (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            0 nil))
+    (len
+     (make-blocks
+      (insert-text
+       (unmake-blocks
+            (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+       start text))))))
+ :instructions
+ ((:in-theory
+   (e/d
+       (l6-file-index-list lower-bounded-integer-listp)
+       (l6-wrchs-correctness-1-lemma-23 find-n-free-clusters-correctness-1)))
+  (:use
+   (:instance
+    l6-wrchs-correctness-1-lemma-23
+    (fa-table
+     (set-indices-in-fa-table
+       fa-table
+       (mv-nth 0
+               (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                   fa-table))
+       (make-list-ac
+            (len (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            0 nil)))
+    (n
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks
+            (fetch-blocks-by-indices
+                 disk
+                 (mv-nth 0
+                         (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                             fa-table)))
+            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+        start text)))))
+   (:instance find-n-free-clusters-correctness-1
+              (b (len disk))
+              (fa-table (set-indices-in-fa-table fa-table nil nil))
+              (n (len (make-blocks (insert-text nil start text)))))
+   (:instance
+    find-n-free-clusters-correctness-1
+    (b (len disk))
+    (fa-table
      (set-indices-in-fa-table
       fa-table
-      (mv-nth 0
-              (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                  fa-table))
+      (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
       (make-list-ac
-       (len (mv-nth 0
-                    (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                        fa-table)))
-       0 nil))
+       (len
+        (mv-nth
+         0
+         (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+       0 nil)))
+    (n
      (len
       (make-blocks
        (insert-text
         (unmake-blocks
          (fetch-blocks-by-indices
           disk
-          (mv-nth 0
-                  (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                      fa-table)))
+          (mv-nth
+           0
+           (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
         start text))))))
-  :hints (("Goal" :do-not-induct t
-           :in-theory (e/d (l6-file-index-list lower-bounded-integer-listp)
-                           (l6-wrchs-correctness-1-lemma-23
-                            find-n-free-clusters-correctness-1))
-           :use ((:instance
-                  l6-wrchs-correctness-1-lemma-23
-                  (fa-table
-                   (set-indices-in-fa-table
-                    fa-table
-                    (mv-nth 0
-                            (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                                fa-table))
-                    (make-list-ac
-                     (len (mv-nth 0
-                                  (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                                      fa-table)))
-                     0 nil)))
-                  (n
-                   (len
-                    (make-blocks
-                     (insert-text
-                      (unmake-blocks
-                       (fetch-blocks-by-indices
-                        disk
-                        (mv-nth 0
-                                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                                    fa-table)))
-                       (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
-                      start text)))))
-                 (:instance
-                  find-n-free-clusters-correctness-1
-                  (b (len disk))
-                  (fa-table
-                   (SET-INDICES-IN-FA-TABLE FA-TABLE NIL NIL))
-                  (n
-                   (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))))
-                 (:instance
-                  find-n-free-clusters-correctness-1
-                  (b (len disk))
-                  (fa-table
-                   (SET-INDICES-IN-FA-TABLE
-                    FA-TABLE
-                    (MV-NTH
-                     0
-                     (L6-BUILD-INDEX-LIST
-                      FA-TABLE
-                      (L6-REGULAR-FILE-FIRST-CLUSTER (CDR (ASSOC-EQUAL (CAR HNS) FS)))
-                      (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS)))))
-                    (MAKE-LIST-AC
-                     (LEN
-                      (MV-NTH
-                       0
-                       (L6-BUILD-INDEX-LIST
-                        FA-TABLE
-                        (L6-REGULAR-FILE-FIRST-CLUSTER
-                         (CDR (ASSOC-EQUAL (CAR HNS) FS)))
-                        (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))))
-                     0 NIL)))
-                  (n
-                   (LEN
-                    (MAKE-BLOCKS
-                     (INSERT-TEXT
-                      (UNMAKE-BLOCKS
-                       (FETCH-BLOCKS-BY-INDICES
-                        DISK
-                        (MV-NTH
-                         0
-                         (L6-BUILD-INDEX-LIST
-                          FA-TABLE
-                          (L6-REGULAR-FILE-FIRST-CLUSTER
-                           (CDR (ASSOC-EQUAL (CAR HNS) FS)))
-                          (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))))
-                       (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
-                      START TEXT)))))
-                 )) ))
+  :bash (:dive 1 2)
+  (:claim
+   (and
+    (no-duplicatesp-equal
+     (find-n-free-clusters (set-indices-in-fa-table fa-table nil nil)
+                           (len (make-blocks (insert-text nil start text)))))
+    (feasible-file-length-p
+         (len (find-n-free-clusters
+                   (set-indices-in-fa-table fa-table nil nil)
+                   (len (make-blocks (insert-text nil start text)))))
+         (len (insert-text nil start text)))
+    (lower-bounded-integer-listp
+      (find-n-free-clusters (set-indices-in-fa-table fa-table nil nil)
+                            (len (make-blocks (insert-text nil start text))))
+      2)
+    (bounded-nat-listp
+      (find-n-free-clusters (set-indices-in-fa-table fa-table nil nil)
+                            (len (make-blocks (insert-text nil start text))))
+      (len (set-indices-in-fa-table fa-table nil nil)))
+    (<= (len (find-n-free-clusters
+                  (set-indices-in-fa-table fa-table nil nil)
+                  (len (make-blocks (insert-text nil start text)))))
+        (count-free-blocks
+             (fa-table-to-alv (set-indices-in-fa-table fa-table nil nil))))
+    (fat32-entry-list-p (set-indices-in-fa-table fa-table nil nil))
+    (<= (len (set-indices-in-fa-table fa-table nil nil))
+        268435447)
+    (<= 2
+        (len (set-indices-in-fa-table fa-table nil nil))))
+   :hints :none)
+  (:rewrite l6-wrchs-correctness-1-lemma-26)
+  :top :bash :bash
+  (:use (:instance find-n-free-clusters-correctness-2
+                   (fa-table (set-indices-in-fa-table fa-table nil nil))
+                   (n (len (make-blocks (insert-text nil start text))))))
+  :promote (:demote 1)
+  (:dive 1)
+  :x :top :s
+  (:bash ("goal" :in-theory (enable set-indices-in-alv)))
+  (:dive 1 2)
+  (:claim
+   (and
+    (no-duplicatesp-equal
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+        0 nil))
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks
+          (fetch-blocks-by-indices
+           disk
+           (mv-nth
+            0
+            (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+         start text)))))
+    (feasible-file-length-p
+     (len
+      (find-n-free-clusters
+       (set-indices-in-fa-table
+        fa-table
+        (mv-nth
+         0
+         (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+        (make-list-ac
+         (len
+          (mv-nth
+           0
+           (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+         0 nil))
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks
+           (fetch-blocks-by-indices
+            disk
+            (mv-nth
+             0
+             (l6-build-index-list
+                 fa-table
+                 (l6-regular-file-first-cluster
+                      (cdr (assoc-equal (car hns) fs)))
+                 (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+           (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+          start text)))))
+     (len
+      (insert-text
+       (unmake-blocks
+        (fetch-blocks-by-indices
+         disk
+         (mv-nth
+          0
+          (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+        (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+       start text)))
+    (lower-bounded-integer-listp
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+        0 nil))
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks
+          (fetch-blocks-by-indices
+           disk
+           (mv-nth
+            0
+            (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+         start text))))
+     2)
+    (bounded-nat-listp
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+        0 nil))
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks
+          (fetch-blocks-by-indices
+           disk
+           (mv-nth
+            0
+            (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+         start text))))
+     (len
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+        0 nil))))
+    (<=
+     (len
+      (find-n-free-clusters
+       (set-indices-in-fa-table
+        fa-table
+        (mv-nth
+         0
+         (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+        (make-list-ac
+         (len
+          (mv-nth
+           0
+           (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+         0 nil))
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks
+           (fetch-blocks-by-indices
+            disk
+            (mv-nth
+             0
+             (l6-build-index-list
+                 fa-table
+                 (l6-regular-file-first-cluster
+                      (cdr (assoc-equal (car hns) fs)))
+                 (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+           (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+          start text)))))
+     (count-free-blocks
+      (fa-table-to-alv
+       (set-indices-in-fa-table
+        fa-table
+        (mv-nth
+         0
+         (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+        (make-list-ac
+         (len
+          (mv-nth
+           0
+           (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+         0 nil)))))
+    (fat32-entry-list-p
+     (set-indices-in-fa-table
+      fa-table
+      (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+      (make-list-ac
+       (len
+        (mv-nth
+         0
+         (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+       0 nil)))
+    (<=
+     (len
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+        0 nil)))
+     268435447)
+    (<=
+     2
+     (len
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+        0 nil)))))
+   :hints :none)
+  (:rewrite l6-wrchs-correctness-1-lemma-26)
+  :top :bash :bash
+  (:use
+   (:instance
+    find-n-free-clusters-correctness-2
+    (fa-table
+     (set-indices-in-fa-table
+      fa-table
+      (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+      (make-list-ac
+       (len
+        (mv-nth
+         0
+         (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+       0 nil)))
+    (n
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks
+         (fetch-blocks-by-indices
+          disk
+          (mv-nth
+           0
+           (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+         (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+        start text))))))
+  :promote (:demote 1)
+  (:dive 1)
+  :x :up :s (:change-goal nil t)
+  (:change-goal nil t)
+  (:dive 1 2)
+  (:claim
+   (and
+    (no-duplicatesp-equal
+     (find-n-free-clusters (set-indices-in-fa-table fa-table nil nil)
+                           (len (make-blocks (insert-text nil start text)))))
+    (feasible-file-length-p
+         (len (find-n-free-clusters
+                   (set-indices-in-fa-table fa-table nil nil)
+                   (len (make-blocks (insert-text nil start text)))))
+         (len (insert-text nil start text)))
+    (lower-bounded-integer-listp
+      (find-n-free-clusters (set-indices-in-fa-table fa-table nil nil)
+                            (len (make-blocks (insert-text nil start text))))
+      2)
+    (bounded-nat-listp
+      (find-n-free-clusters (set-indices-in-fa-table fa-table nil nil)
+                            (len (make-blocks (insert-text nil start text))))
+      (len (set-indices-in-fa-table fa-table nil nil)))
+    (<= (len (find-n-free-clusters
+                  (set-indices-in-fa-table fa-table nil nil)
+                  (len (make-blocks (insert-text nil start text)))))
+        (count-free-blocks
+             (fa-table-to-alv (set-indices-in-fa-table fa-table nil nil))))
+    (fat32-entry-list-p (set-indices-in-fa-table fa-table nil nil))
+    (<= (len (set-indices-in-fa-table fa-table nil nil))
+        268435447)
+    (<= 2
+        (len (set-indices-in-fa-table fa-table nil nil))))
+   :hints :none)
+  (:rewrite l6-wrchs-correctness-1-lemma-26)
+  :top :bash :bash
+  (:use (:instance find-n-free-clusters-correctness-2
+                   (fa-table (set-indices-in-fa-table fa-table nil nil))
+                   (n (len (make-blocks (insert-text nil start text))))))
+  :pro (:demote 1)
+  (:dive 1)
+  :x :top :s
+  (:bash ("goal" :in-theory (enable set-indices-in-alv)))
+  (:dive 1 2)
+  (:claim
+   (and
+    (no-duplicatesp-equal
+     (find-n-free-clusters (set-indices-in-fa-table fa-table nil nil)
+                           (len (make-blocks (insert-text nil start text)))))
+    (feasible-file-length-p
+         (len (find-n-free-clusters
+                   (set-indices-in-fa-table fa-table nil nil)
+                   (len (make-blocks (insert-text nil start text)))))
+         (len (insert-text nil start text)))
+    (lower-bounded-integer-listp
+      (find-n-free-clusters (set-indices-in-fa-table fa-table nil nil)
+                            (len (make-blocks (insert-text nil start text))))
+      2)
+    (bounded-nat-listp
+      (find-n-free-clusters (set-indices-in-fa-table fa-table nil nil)
+                            (len (make-blocks (insert-text nil start text))))
+      (len (set-indices-in-fa-table fa-table nil nil)))
+    (<= (len (find-n-free-clusters
+                  (set-indices-in-fa-table fa-table nil nil)
+                  (len (make-blocks (insert-text nil start text)))))
+        (count-free-blocks
+             (fa-table-to-alv (set-indices-in-fa-table fa-table nil nil))))
+    (fat32-entry-list-p (set-indices-in-fa-table fa-table nil nil))
+    (<= (len (set-indices-in-fa-table fa-table nil nil))
+        268435447)
+    (<= 2
+        (len (set-indices-in-fa-table fa-table nil nil))))
+   :hints :none)
+  (:rewrite l6-wrchs-correctness-1-lemma-26)
+  :top :bash :bash
+  (:use (:instance find-n-free-clusters-correctness-2
+                   (fa-table (set-indices-in-fa-table fa-table nil nil))
+                   (n (len (make-blocks (insert-text nil start text))))))
+  :pro (:demote 1)
+  (:dive 1)
+  :x :top :s
+  (:bash ("goal" :in-theory (enable set-indices-in-alv)))
+  (:demote 26)
+  (:dive 1 1)
+  (:claim
+   (and
+    (boolean-listp (fa-table-to-alv fa-table))
+    (indices-marked-p
+     (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+     (fa-table-to-alv fa-table))
+    (no-duplicatesp-equal
+     (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))))
+    (bounded-nat-listp
+     (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+     (len (fa-table-to-alv fa-table))))
+   :hints :none)
+  (:rewrite l4-wrchs-correctness-1-lemma-18)
+  :top :bash :bash
+  (:claim
+   (and
+    (fat32-entry-list-p fa-table)
+    (integerp
+         (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs))))
+    (< (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+       (len fa-table))
+    (equal
+     (mv-nth
+        1
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+     0))
+   :hints :none)
+  (:rewrite l6-stricter-fs-p-correctness-1-lemma-1)
+  :bash :demote :promote
+  (:use (:instance l6-wrchs-correctness-1-lemma-59
+                   (name (car hns))))
+  (:bash ("goal" :in-theory (enable l6-file-index-list)))
+  (:use (:instance l6-wrchs-correctness-1-lemma-50
+                   (name (car hns))))
+  (:bash ("goal" :in-theory (enable l6-file-index-list)))
+  (:rewrite make-blocks-correctness-3)
+  (:rewrite insert-text-correctness-1)
+  (:claim
+   (and
+    (block-listp
+     (fetch-blocks-by-indices
+      disk
+      (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))))
+    (natp (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+    (feasible-file-length-p
+     (len
+      (fetch-blocks-by-indices
+       disk
+       (mv-nth
+        0
+        (l6-build-index-list
+             fa-table
+             (l6-regular-file-first-cluster (cdr (assoc-equal (car hns) fs)))
+             (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))))
+     (l6-regular-file-length (cdr (assoc-equal (car hns) fs)))))
+   :hints :none)
+  (:rewrite unmake-blocks-correctness-1)
+  :bash
+  (:use (:instance l6-stat-correctness-1-lemma-9
+                   (name (car hns))))
+  (:bash ("goal" :in-theory (enable l6-file-index-list)))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-3
