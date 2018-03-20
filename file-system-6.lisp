@@ -403,17 +403,14 @@
             (mv (list* masked-current-cluster tail-index-list)
                 tail-error)))))))
 
-(defthm
-  l6-build-index-list-correctness-1
-  (implies
-   (and (equal b (len fa-table))
-        (fat32-masked-entry-p masked-current-cluster)
-        (>= masked-current-cluster 2)
-        (< masked-current-cluster (len fa-table)))
-   (b* (((mv index-list &)
-         (l6-build-index-list fa-table
-                              masked-current-cluster length)))
-     (bounded-nat-listp index-list b))))
+(defthm l6-build-index-list-correctness-1
+  (implies (and (equal b (len fa-table))
+                (fat32-masked-entry-p masked-current-cluster)
+                (< masked-current-cluster (len fa-table)))
+           (b* (((mv index-list &)
+                 (l6-build-index-list fa-table
+                                      masked-current-cluster length)))
+             (bounded-nat-listp index-list b))))
 
 (defthm
   l6-build-index-list-correctness-2
@@ -4463,7 +4460,8 @@
                            (CDR (ASSOC-EQUAL (CAR HNS) FS)))
                           (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))))
                        (L6-REGULAR-FILE-LENGTH (CDR (ASSOC-EQUAL (CAR HNS) FS))))
-                      START TEXT))))))) ))
+                      START TEXT)))))
+                 )) ))
 
 (defthm
   l6-wrchs-correctness-1-lemma-3
