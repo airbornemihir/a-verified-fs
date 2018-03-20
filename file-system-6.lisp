@@ -147,14 +147,26 @@
                                      fat32-update-lower-28)))
      ("goal''" :in-theory (enable unsigned-byte-p)))))
 
-(skip-proofs
- (defthm
-   fat32-update-lower-28-correctness-2
-   (implies
-    (and (fat32-entry-p entry)
-         (fat32-masked-entry-p masked-entry))
-    (equal
-     (fat32-entry-mask (fat32-update-lower-28 entry masked-entry)) masked-entry))))
+(encapsulate
+  ()
+
+  (local
+   (include-book "centaur/gl/gl" :dir :system))
+
+  (local
+   (def-gl-thm fat32-update-lower-28-correctness-2
+     :hyp (and (fat32-entry-p entry)
+               (fat32-masked-entry-p masked-entry))
+     :concl (fat32-entry-mask (fat32-update-lower-28 entry masked-entry))
+     :g-bindings (gl::auto-bindings (:nat entry 33) (:nat masked-entry 29))))
+
+  (defthm
+    fat32-update-lower-28-correctness-2
+    (implies
+     (and (fat32-entry-p entry)
+          (fat32-masked-entry-p masked-entry))
+     (equal
+      (fat32-entry-mask (fat32-update-lower-28 entry masked-entry)) masked-entry))))
 
 (defund
   set-indices-in-fa-table
