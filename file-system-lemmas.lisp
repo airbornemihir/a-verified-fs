@@ -326,8 +326,7 @@
 
 (defthmd car-of-assoc-equal
   (let ((sd (assoc-equal x alist)))
-       (implies (consp sd) (equal (car sd) x)))
-  :instructions (:prove))
+       (implies (consp sd) (equal (car sd) x))))
 
 (defthm update-nth-of-update-nth
   (implies (not (equal (nfix key1) (nfix key2)))
