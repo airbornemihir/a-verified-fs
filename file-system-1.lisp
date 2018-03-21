@@ -146,18 +146,15 @@
   :hints (("Goal" :in-theory (enable insert-text)) )
   :rule-classes :linear)
 
-(encapsulate ()
-  (local (INCLUDE-BOOK "std/lists/nthcdr" :dir :system))
-
-  (defthmd
-    len-of-insert-text
-    (implies (and (character-listp oldtext)
-                  (stringp text)
-                  (natp start))
-             (equal (len (insert-text oldtext start text))
-                    (max (+ start (len (coerce text 'list))) (len oldtext))))
-    :hints (("goal" :do-not-induct t
-             :expand (insert-text oldtext start text)))))
+(defthmd
+  len-of-insert-text
+  (implies (and (character-listp oldtext)
+                (stringp text)
+                (natp start))
+           (equal (len (insert-text oldtext start text))
+                  (max (+ start (len (coerce text 'list))) (len oldtext))))
+  :hints (("goal" :do-not-induct t
+           :expand (insert-text oldtext start text))))
 
 (defthm
   insert-text-correctness-4
