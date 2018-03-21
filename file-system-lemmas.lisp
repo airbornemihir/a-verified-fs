@@ -162,12 +162,13 @@
                 (member-equal x lst1))
            (member-equal x lst2)))
 
+;; The following is redundant with the eponymous function in
+;; books/std/lists/nth.lisp, from where it was taken with thanks.
 (defthm nth-of-revappend
-  (implies (and (natp n))
-           (equal (nth n (revappend x y))
-                  (if (< n (len x))
-                      (nth (- (len x) (+ n 1)) x)
-                    (nth (- n (len x)) y)))))
+  (equal (nth n (revappend x y))
+         (if (< (nfix n) (len x))
+             (nth (- (len x) (+ 1 (nfix n))) x)
+           (nth (- n (len x)) y))))
 
 ;; The following is redundant with the eponymous function in
 ;; books/misc/gentle.lisp, from where it was taken with thanks to
@@ -298,15 +299,19 @@
   (iff (consp (first-n-ac i l ac))
        (or (consp ac) (not (zp i)))))
 
+;; The following is redundant with the eponymous function in
+;; books/std/lists/nth.lisp, from where it was taken with thanks.
 (defthm nth-of-make-list-ac
-  (implies (and (natp n) (natp m))
-           (equal (nth n (make-list-ac m val ac))
-                  (if (< n m) val (nth (- n m) ac)))))
+  (equal (nth n (make-list-ac m val acc))
+         (if (< (nfix n) (nfix m))
+             val
+           (nth (- n (nfix m)) acc))))
 
+;; The following is redundant with the eponymous function in
+;; books/std/lists/nth.lisp, from where it was taken with thanks.
 (defthm nth-of-nthcdr
-  (implies (and (natp n1) (natp n2))
-           (equal (nth n1 (nthcdr n2 l))
-                  (nth (+ n1 n2) l))))
+  (equal (nth n (nthcdr m x))
+         (nth (+ (nfix n) (nfix m)) x)))
 
 (defthmd intersect-with-subset
   (implies (and (subsetp-equal x y)
@@ -318,11 +323,13 @@
            (equal (update-nth key val (make-list-ac n l ac))
                   (make-list-ac n l (update-nth (- key n) val ac)))))
 
+;; The following is redundant with the eponymous function in
+;; books/std/lists/update-nth.lisp, from where it was taken with thanks.
 (defthm nthcdr-of-update-nth
-  (implies (and (natp n) (integerp key) (>= key n))
-           (equal (nthcdr n (update-nth key val l))
-                  (update-nth (- key n)
-                              val (nthcdr n l)))))
+  (equal (nthcdr n1 (update-nth n2 val x))
+         (if (< (nfix n2) (nfix n1))
+             (nthcdr n1 x)
+           (update-nth (- (nfix n2) (nfix n1)) val (nthcdr n1 x)))))
 
 (defthmd car-of-assoc-equal
   (let ((sd (assoc-equal x alist)))

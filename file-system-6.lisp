@@ -567,17 +567,25 @@
   :hints
   (("goal"
     :in-theory (enable find-n-free-clusters)
-    :use (:instance find-n-free-clusters-helper-correctness-4
-                    (start 2)
-                    (fa-table (nthcdr 2 fa-table))))
-   ("goal'''"
-    :in-theory (disable nth-of-nthcdr)
-    :use ((:instance nth-of-nthcdr (n1 (- x 2))
-                     (n2 2)
-                     (l fa-table))
-          (:instance find-n-free-clusters-helper-correctness-3
-                     (fa-table (nthcdr 2 fa-table))
-                     (start 2))))))
+    :use
+    (:instance
+     find-n-free-clusters-helper-correctness-4
+     (start *ms-first-data-cluster*)
+     (fa-table (nthcdr *ms-first-data-cluster* fa-table))))
+   ("goal''"
+    :in-theory (disable member-of-a-nat-list)
+    :use
+    ((:instance
+      member-of-a-nat-list
+      (lst (find-n-free-clusters-helper
+            (nthcdr *ms-first-data-cluster* fa-table)
+            n *ms-first-data-cluster*)))))
+   ("subgoal 2"
+    :use
+    (:instance
+     find-n-free-clusters-helper-correctness-3
+     (fa-table (nthcdr *ms-first-data-cluster* fa-table))
+     (start *ms-first-data-cluster*)))))
 
 ;; This function allows a file or directory to be found in a filesystem given a
 ;; path.
