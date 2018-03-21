@@ -109,10 +109,6 @@
                  (iff (consp (nthcdr n l)) (> (len l) n)))
         :hints (("Goal" :induct (nthcdr n l))))
 
-;; (defthm unmake-make-blocks-lemma-2
-;;   (implies (and (natp n) (>= (len l) n))
-;;            (equal (len (nthcdr n l)) (- (len l) n))))
-
 (encapsulate ()
   (local (include-book "std/lists/repeat" :dir :system))
 
@@ -180,21 +176,17 @@
                                    index-list)
           (fetch-blocks-by-indices block-list index-list))))
 
-(encapsulate
-  ()
 
-  (local (include-book "std/lists/nthcdr" :dir :system))
-
-  (defthm
-    make-blocks-correctness-1
-    (implies (character-listp text)
-             (and (< (- (* *blocksize* (len (make-blocks text)))
-                        *blocksize*)
-                     (len text))
-                  (not (< (* *blocksize* (len (make-blocks text)))
-                          (len text)))))
-    :hints (("goal" :in-theory (enable make-blocks)
-             :induct t))))
+(defthm
+  make-blocks-correctness-1
+  (implies (character-listp text)
+           (and (< (- (* *blocksize* (len (make-blocks text)))
+                      *blocksize*)
+                   (len text))
+                (not (< (* *blocksize* (len (make-blocks text)))
+                        (len text)))))
+  :hints (("goal" :in-theory (enable make-blocks)
+           :induct t)))
 
 (defthm
   make-blocks-correctness-1
