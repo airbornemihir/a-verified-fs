@@ -188,24 +188,6 @@
   :hints (("goal" :in-theory (enable make-blocks)
            :induct t)))
 
-(defthm
-  make-blocks-correctness-1
-  (implies (character-listp text)
-           (and (< (- (* *blocksize* (len (make-blocks text)))
-                      *blocksize*)
-                   (len text))
-                (not (< (* *blocksize* (len (make-blocks text)))
-                        (len text)))))
-  :instructions ((:in-theory (enable make-blocks))
-                 :induct (:change-goal (main . 2) t)
-                 :bash :promote
-                 (:claim (character-listp (nthcdr *blocksize* text)))
-                 (:casesplit (>= (len text) *blocksize*))
-                 :bash :bash (:demote 1)
-                 (:dive 1 1)
-                 :x
-                 :top :s))
-
 ;; This function, which is kept disabled, recognises a regular file entry. I am
 ;; deciding not to make things overly complicated by making getter and setter
 ;; functions for file entries.

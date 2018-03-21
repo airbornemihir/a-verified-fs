@@ -162,7 +162,7 @@
                 (member-equal x lst1))
            (member-equal x lst2)))
 
-;; The following is redundant with the eponymous function in
+;; The following is redundant with the eponymous theorem in
 ;; books/std/lists/nth.lisp, from where it was taken with thanks.
 (defthm nth-of-revappend
   (equal (nth n (revappend x y))
@@ -170,7 +170,7 @@
              (nth (- (len x) (+ 1 (nfix n))) x)
            (nth (- n (len x)) y))))
 
-;; The following is redundant with the eponymous function in
+;; The following is redundant with the eponymous theorem in
 ;; books/misc/gentle.lisp, from where it was taken with thanks to
 ;; Messrs. Boyer, Hunt and Davis.
 (defthm true-listp-of-make-list-ac
@@ -182,7 +182,7 @@
                   (implies (true-listp ac)
                            (true-listp (make-list-ac n val ac))))))
 
-;; The following is redundant with the eponymous function in
+;; The following is redundant with the eponymous theorem in
 ;; books/centaur/ubdds/param.lisp, from where it was taken with thanks to
 ;; Messrs. Boyer and Hunt.
 (defthm len-of-make-list-ac
@@ -299,7 +299,7 @@
   (iff (consp (first-n-ac i l ac))
        (or (consp ac) (not (zp i)))))
 
-;; The following is redundant with the eponymous function in
+;; The following is redundant with the eponymous theorem in
 ;; books/std/lists/nth.lisp, from where it was taken with thanks.
 (defthm nth-of-make-list-ac
   (equal (nth n (make-list-ac m val acc))
@@ -307,7 +307,7 @@
              val
            (nth (- n (nfix m)) acc))))
 
-;; The following is redundant with the eponymous function in
+;; The following is redundant with the eponymous theorem in
 ;; books/std/lists/nth.lisp, from where it was taken with thanks.
 (defthm nth-of-nthcdr
   (equal (nth n (nthcdr m x))
@@ -323,7 +323,7 @@
            (equal (update-nth key val (make-list-ac n l ac))
                   (make-list-ac n l (update-nth (- key n) val ac)))))
 
-;; The following is redundant with the eponymous function in
+;; The following is redundant with the eponymous theorem in
 ;; books/std/lists/update-nth.lisp, from where it was taken with thanks.
 (defthm nthcdr-of-update-nth
   (equal (nthcdr n1 (update-nth n2 val x))
