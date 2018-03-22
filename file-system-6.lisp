@@ -560,12 +560,10 @@
     :corollary (implies (consp (find-n-free-clusters fa-table n))
                         (<= 0
                             (car (find-n-free-clusters fa-table n))))))
-  :instructions
-  ((:prove
-    :hints
-    (("goal"
-      :in-theory (enable find-n-free-clusters
-                         find-n-free-clusters-helper-correctness-2))))))
+  :hints
+  (("goal"
+    :in-theory (enable find-n-free-clusters
+                       find-n-free-clusters-helper-correctness-2))))
 
 (defthm
   find-n-free-clusters-correctness-3
