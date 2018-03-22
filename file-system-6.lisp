@@ -3794,8 +3794,8 @@
     (symbolp (car hns))
     (block-listp disk)
     (equal (len disk) (len fa-table))
-    (<= (len disk) 268435447)
-    (<= 2 (len disk))
+    (<= (len disk) *ms-bad-cluster*)
+    (<= *ms-first-data-cluster* (len disk))
     (<= (len (make-blocks (insert-text nil start text)))
         (count-free-blocks (fa-table-to-alv fa-table)))
     (equal
@@ -3874,11 +3874,50 @@
                       (l6-file-index-list (cdr (assoc-equal (car hns) fs))
                                           fa-table)))
          0 nil)))))))
-  :instructions (:promote (:dive 1)
-                          (:rewrite intersectp-is-commutative)
-                          (:rewrite l6-wrchs-correctness-1-lemma-44)
-                          :bash :bash
-                          :bash :bash))
+  :hints
+  (("goal"
+    :in-theory (disable intersectp-is-commutative)
+    :use
+    (:instance
+     intersectp-is-commutative
+     (x
+      (find-n-free-clusters
+       (set-indices-in-fa-table
+        fa-table
+        (mv-nth 0
+                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                    fa-table))
+        (make-list-ac
+         (len (mv-nth 0
+                      (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                          fa-table)))
+         0 nil))
+       (len
+        (make-blocks
+         (insert-text
+          (unmake-blocks
+           (fetch-blocks-by-indices
+            disk
+            (mv-nth 0
+                    (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                        fa-table)))
+           (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+          start text)))))
+     (y
+      (mv-nth
+       0
+       (l6-list-all-ok-indices
+        (delete-assoc-equal (car hns) fs)
+        (set-indices-in-fa-table
+         fa-table
+         (mv-nth 0
+                 (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                     fa-table))
+         (make-list-ac
+          (len (mv-nth 0
+                       (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                           fa-table)))
+          0 nil)))))))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-55
