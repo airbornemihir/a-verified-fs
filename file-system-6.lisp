@@ -4644,9 +4644,15 @@
                (fat32-entry-list-p *sample-fa-table-2*)
                (block-listp *sample-disk-2*)
                (equal (len *sample-disk-2*) (len *sample-fa-table-2*))
-               (equal (L6-RDCHS (list :tmp :name1) *sample-fs-2*
-                                *sample-disk-2* *sample-fa-table-2*
-                                0 24))))
+               ;; (mv-let
+               ;;   (character-list error-code)
+               ;;   (L6-RDCHS (list :tmp :name1) *sample-fs-2*
+               ;;             *sample-disk-2* *sample-fa-table-2*
+               ;;             0 24)
+               ;;   (declare (ignore error-code))
+               ;;   (equal character-list
+               ;;          (coerce "Herbert Charles McMurray" 'list)))
+               ))
 
 (defconst *sample-fs-3*
   (mv-let (fs disk fa-table error-code)
