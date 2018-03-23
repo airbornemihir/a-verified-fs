@@ -4620,50 +4620,53 @@
 
 (defconst *sample-fs-2*
   (mv-let (fs disk fa-table)
-    (l6-create (list :tmp :ticket1) *sample-fs-1*
+    (l6-create (list :tmp :name1) *sample-fs-1*
                *sample-disk-1*
-               *sample-fa-table-1* "good for the goose")
+               *sample-fa-table-1* "Herbert Charles McMurray")
     (declare (ignore disk fa-table))
     fs))
 (defconst *sample-disk-2*
   (mv-let (fs disk fa-table)
-    (l6-create (list :tmp :ticket1) *sample-fs-1*
+    (l6-create (list :tmp :name1) *sample-fs-1*
                *sample-disk-1*
-               *sample-fa-table-1* "good for the goose")
+               *sample-fa-table-1* "Herbert Charles McMurray")
     (declare (ignore fs fa-table))
     disk))
 (defconst *sample-fa-table-2*
   (mv-let (fs disk fa-table)
-    (l6-create (list :tmp :ticket1) *sample-fs-1*
+    (l6-create (list :tmp :name1) *sample-fs-1*
                *sample-disk-1*
-               *sample-fa-table-1* "good for the goose")
+               *sample-fa-table-1* "Herbert Charles McMurray")
     (declare (ignore disk fs))
     fa-table))
 (assert-event (and
                (l6-fs-p *sample-fs-2*)
                (fat32-entry-list-p *sample-fa-table-2*)
                (block-listp *sample-disk-2*)
-               (equal (len *sample-disk-2*) (len *sample-fa-table-2*))))
+               (equal (len *sample-disk-2*) (len *sample-fa-table-2*))
+               (equal (L6-RDCHS (list :tmp :name1) *sample-fs-2*
+                                *sample-disk-2* *sample-fa-table-2*
+                                0 24))))
 
 (defconst *sample-fs-3*
   (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :ticket1) *sample-fs-2*
+    (l6-wrchs (list :tmp :name1) *sample-fs-2*
                *sample-disk-2*
-               *sample-fa-table-2* 0 "good for the gander")
+               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
     (declare (ignore disk fa-table error-code))
     fs))
 (defconst *sample-disk-3*
   (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :ticket1) *sample-fs-2*
+    (l6-wrchs (list :tmp :name1) *sample-fs-2*
                *sample-disk-2*
-               *sample-fa-table-2* 0 "good for the gander")
+               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
     (declare (ignore fs fa-table error-code))
     disk))
 (defconst *sample-fa-table-3*
   (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :ticket1) *sample-fs-2*
+    (l6-wrchs (list :tmp :name1) *sample-fs-2*
                *sample-disk-2*
-               *sample-fa-table-2* 0 "good for the gander")
+               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
     (declare (ignore disk fs error-code))
     fa-table))
 (assert-event (and
