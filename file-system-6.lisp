@@ -4644,14 +4644,14 @@
                (fat32-entry-list-p *sample-fa-table-2*)
                (block-listp *sample-disk-2*)
                (equal (len *sample-disk-2*) (len *sample-fa-table-2*))
-               ;; (mv-let
-               ;;   (character-list error-code)
-               ;;   (L6-RDCHS (list :tmp :name1) *sample-fs-2*
-               ;;             *sample-disk-2* *sample-fa-table-2*
-               ;;             0 24)
-               ;;   (declare (ignore error-code))
-               ;;   (equal character-list
-               ;;          (coerce "Herbert Charles McMurray" 'list)))
+               (mv-let
+                 (character-list error-code)
+                 (L6-RDCHS (list :tmp :name1) *sample-fs-2*
+                           *sample-disk-2* *sample-fa-table-2*
+                           0 24)
+                 (and (equal error-code 0)
+                      (equal character-list
+                             "Herbert Charles McMurray")))
                ))
 
 (defconst *sample-fs-3*
@@ -4680,3 +4680,38 @@
                (fat32-entry-list-p *sample-fa-table-3*)
                (block-listp *sample-disk-3*)
                (equal (len *sample-disk-3*) (len *sample-fa-table-3*))))
+
+(defconst *sample-fs-3*
+  (mv-let (fs disk fa-table error-code)
+    (l6-wrchs (list :tmp :name1) *sample-fs-2*
+               *sample-disk-2*
+               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
+    (declare (ignore disk fa-table error-code))
+    fs))
+(defconst *sample-disk-3*
+  (mv-let (fs disk fa-table error-code)
+    (l6-wrchs (list :tmp :name1) *sample-fs-2*
+               *sample-disk-2*
+               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
+    (declare (ignore fs fa-table error-code))
+    disk))
+(defconst *sample-fa-table-3*
+  (mv-let (fs disk fa-table error-code)
+    (l6-wrchs (list :tmp :name1) *sample-fs-2*
+               *sample-disk-2*
+               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
+    (declare (ignore disk fs error-code))
+    fa-table))
+(assert-event (and
+               (l6-fs-p *sample-fs-3*)
+               (fat32-entry-list-p *sample-fa-table-3*)
+               (block-listp *sample-disk-3*)
+               (equal (len *sample-disk-3*) (len *sample-fa-table-3*))))
+
+(assert-event 
+  (mv-let (fs disk fa-table error-code)
+    (l6-wrchs (list :tmp :name1) *sample-fs-2*
+               *sample-disk-2*
+               *sample-fa-table-2* 0 "Herbert Charles McMurray Robinson")
+    (declare (ignore disk fs fa-table))
+    (equal error-code (- *ENOSPC*))))
