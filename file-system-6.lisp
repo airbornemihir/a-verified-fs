@@ -4608,3 +4608,66 @@
                 start text))))))
           ("Subgoal *1/6'" :in-theory (disable l6-wrchs-correctness-1-lemma-3)
            :use l6-wrchs-correctness-1-lemma-3)))
+
+(defconst *sample-fs-1* nil)
+(defconst *sample-disk-1* (make-list 6 :initial-element *nullblock*))
+(defconst *sample-fa-table-1* (make-list 6 :initial-element 0))
+(assert-event (and
+               (l6-fs-p *sample-fs-1*)
+               (fat32-entry-list-p *sample-fa-table-1*)
+               (block-listp *sample-disk-1*)
+               (equal (len *sample-disk-1*) (len *sample-fa-table-1*))))
+
+(defconst *sample-fs-2*
+  (mv-let (fs disk fa-table)
+    (l6-create (list :tmp :ticket1) *sample-fs-1*
+               *sample-disk-1*
+               *sample-fa-table-1* "good for the goose")
+    (declare (ignore disk fa-table))
+    fs))
+(defconst *sample-disk-2*
+  (mv-let (fs disk fa-table)
+    (l6-create (list :tmp :ticket1) *sample-fs-1*
+               *sample-disk-1*
+               *sample-fa-table-1* "good for the goose")
+    (declare (ignore fs fa-table))
+    disk))
+(defconst *sample-fa-table-2*
+  (mv-let (fs disk fa-table)
+    (l6-create (list :tmp :ticket1) *sample-fs-1*
+               *sample-disk-1*
+               *sample-fa-table-1* "good for the goose")
+    (declare (ignore disk fs))
+    fa-table))
+(assert-event (and
+               (l6-fs-p *sample-fs-2*)
+               (fat32-entry-list-p *sample-fa-table-2*)
+               (block-listp *sample-disk-2*)
+               (equal (len *sample-disk-2*) (len *sample-fa-table-2*))))
+
+(defconst *sample-fs-3*
+  (mv-let (fs disk fa-table error-code)
+    (l6-wrchs (list :tmp :ticket1) *sample-fs-2*
+               *sample-disk-2*
+               *sample-fa-table-2* 0 "good for the gander")
+    (declare (ignore disk fa-table error-code))
+    fs))
+(defconst *sample-disk-3*
+  (mv-let (fs disk fa-table error-code)
+    (l6-wrchs (list :tmp :ticket1) *sample-fs-2*
+               *sample-disk-2*
+               *sample-fa-table-2* 0 "good for the gander")
+    (declare (ignore fs fa-table error-code))
+    disk))
+(defconst *sample-fa-table-3*
+  (mv-let (fs disk fa-table error-code)
+    (l6-wrchs (list :tmp :ticket1) *sample-fs-2*
+               *sample-disk-2*
+               *sample-fa-table-2* 0 "good for the gander")
+    (declare (ignore disk fs error-code))
+    fa-table))
+(assert-event (and
+               (l6-fs-p *sample-fs-3*)
+               (fat32-entry-list-p *sample-fa-table-3*)
+               (block-listp *sample-disk-3*)
+               (equal (len *sample-disk-3*) (len *sample-fa-table-3*))))
