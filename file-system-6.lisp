@@ -2009,7 +2009,7 @@
                                      l6-stricter-fs-p))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-9
+  l6-wrchs-correctness-1-lemma-7
   (implies
    (and (natp start)
         (natp n)
@@ -2022,7 +2022,7 @@
   (("goal" :in-theory (enable find-n-free-blocks-helper))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-10
+  l6-wrchs-correctness-1-lemma-8
   (implies
    (and (fat32-entry-list-p fa-table))
    (equal
@@ -2035,7 +2035,7 @@
                               find-n-free-blocks-helper))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-8
+  l6-wrchs-correctness-1-lemma-9
   (implies (and (fat32-entry-list-p fa-table)
                 (>= (len fa-table) *ms-first-data-cluster*))
            (equal (find-n-free-blocks (fa-table-to-alv fa-table)
@@ -2047,7 +2047,7 @@
                        fa-table-to-alv find-n-free-blocks))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-7
+  l6-wrchs-correctness-1-lemma-10
   (implies (and (>= (len fa-table)
                     *ms-first-data-cluster*)
                 (fat32-entry-list-p fa-table)
@@ -2059,6 +2059,18 @@
   (:rewrite
    (:rewrite
     :corollary
+    (implies
+     (and (>= (len fa-table)
+              *ms-first-data-cluster*)
+          (fat32-entry-list-p fa-table)
+          (natp n))
+     (iff (consp (find-n-free-clusters fa-table n))
+          (not (or (equal (count-free-blocks (fa-table-to-alv fa-table))
+                          0)
+                   (equal n 0)))))
+    :hints (("goal" :expand (len (find-n-free-clusters fa-table n)))))
+   (:rewrite
+    :corollary
     (implies (and (>= (len fa-table)
                       *ms-first-data-cluster*)
                   (fat32-entry-list-p fa-table)
@@ -2068,8 +2080,8 @@
                     (- (min (count-free-blocks (fa-table-to-alv fa-table))
                             n)
                        1)))))
-  :hints (("goal" :in-theory (disable l6-wrchs-correctness-1-lemma-8)
-           :use l6-wrchs-correctness-1-lemma-8)))
+  :hints (("goal" :in-theory (disable l6-wrchs-correctness-1-lemma-9)
+           :use l6-wrchs-correctness-1-lemma-9)))
 
 (defthm
   l6-wrchs-correctness-1-lemma-13
@@ -4550,64 +4562,23 @@
                 (block-listp disk)
                 (equal (len disk) (len fa-table))
                 (<= (len fa-table) *ms-bad-cluster*)
-                (>= (len fa-table) 2))
+                (>= (len fa-table) *ms-first-data-cluster*))
            (b* (((mv l4-fs-before-write l4-alv-before-write) (l6-to-l4-fs
                                                               fs fa-table))
-                ((mv fs-after-write disk-after-write fa-table-after-write)
+                ((mv fs-after-write disk-after-write fa-table-after-write error-code)
                  (l6-wrchs hns fs disk fa-table start text))
                 ((mv l4-fs-after-write l4-alv-after-write) (l6-to-l4-fs
                                                             fs-after-write fa-table-after-write)))
              (implies
               (<= (len (make-blocks (insert-text nil start text)))
                   (count-free-blocks l4-alv-before-write))
-              (equal (l4-wrchs hns l4-fs-before-write disk l4-alv-before-write
-                               start text)
-                     (mv l4-fs-after-write disk-after-write
-                         l4-alv-after-write)))))
-  :hints (("goal'5'" :induct (l6-wrchs hns fs disk fa-table start text))
-          ("subgoal *1/10'" :in-theory (disable l6-wrchs-correctness-1-lemma-1)
-           :use l6-wrchs-correctness-1-lemma-1)
-          ("Subgoal *1/7'"
-           :expand (len (find-n-free-clusters fa-table 0))
-           :in-theory
-           (e/d
-            (find-n-free-blocks find-n-free-blocks-helper
-                                l6-file-index-list set-indices-in-alv
-                                set-indices-in-fa-table)
-            (l6-wrchs-correctness-1-lemma-7))
-           :use
-           (:instance
-            l6-wrchs-correctness-1-lemma-7
-            (fa-table
-             (set-indices-in-fa-table
-              fa-table
-              (mv-nth
-               0
-               (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                   fa-table))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                     fa-table)))
-               0 nil)))
-            (n
-             (len
-              (make-blocks
-               (insert-text
-                (unmake-blocks
-                 (fetch-blocks-by-indices
-                  disk
-                  (mv-nth
-                   0
-                   (l6-file-index-list (cdr (assoc-equal (car hns) fs))
-                                       fa-table)))
-                 (l6-regular-file-length
-                  (cdr (assoc-equal (car hns) fs))))
-                start text))))))
-          ("Subgoal *1/6'" :in-theory (disable l6-wrchs-correctness-1-lemma-3)
-           :use l6-wrchs-correctness-1-lemma-3)))
+              (and
+               (equal error-code 0)
+               (equal (l4-wrchs hns l4-fs-before-write disk l4-alv-before-write
+                                start text)
+                      (mv l4-fs-after-write disk-after-write
+                          l4-alv-after-write))))))
+  :hints (("goal" :induct (l6-wrchs hns fs disk fa-table start text))))
 
 (defconst *sample-fs-1* nil)
 (defconst *sample-disk-1* (make-list 6 :initial-element *nullblock*))
