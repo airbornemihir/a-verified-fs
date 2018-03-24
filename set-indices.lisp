@@ -47,6 +47,9 @@
                        (len value-list)))
            (boolean-listp (set-indices v index-list value-list))))
 
+;; the name set-indices-correctness-5 is probably never going to be used
+;; because the function is enabled and the property is too obvious.
+
 (defund set-indices-in-alv (alv index-list value)
   (declare (xargs :guard (and (boolean-listp alv)
                               (nat-listp index-list)
@@ -97,4 +100,9 @@
    (equal (nth n
                (set-indices-in-alv alv index-list value))
           (nth n alv)))
+  :hints (("Goal" :in-theory (enable set-indices-in-alv))))
+
+(defthm
+  set-indices-in-alv-correctness-5
+  (equal (set-indices-in-alv alv nil value) alv)
   :hints (("Goal" :in-theory (enable set-indices-in-alv))))

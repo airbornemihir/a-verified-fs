@@ -116,6 +116,12 @@
                               (+ start (len alv))))
   :hints (("goal" :in-theory (enable find-n-free-blocks-helper))))
 
+(defthm
+  find-n-free-blocks-helper-correctness-8
+  (equal (find-n-free-blocks-helper alv 0 start)
+         nil)
+  :hints (("goal" :in-theory (enable find-n-free-blocks-helper))))
+
 
 (defund find-n-free-blocks (alv n)
   (declare (xargs :guard (and (boolean-listp alv)
@@ -187,3 +193,9 @@
   :hints (("goal" :in-theory (enable find-n-free-blocks)
            :use (:instance find-n-free-blocks-helper-correctness-7
                            (start 0)))))
+
+(defthm
+  find-n-free-blocks-correctness-8
+  (equal (find-n-free-blocks alv 0)
+         nil)
+  :hints (("goal" :in-theory (enable find-n-free-blocks))))
