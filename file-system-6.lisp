@@ -26,6 +26,7 @@
 (defconst *EIO* 5) ;; I/O error
 (defconst *ENOSPC* 28) ;; No space left on device
 (defconst *ENOENT* 2) ;; No such file or directory
+(defconst *EEXIST* 17) ;; File exists
 
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))
@@ -952,9 +953,9 @@
                               (fat32-entry-list-p fa-table)
                               (equal (len disk) (len fa-table))
                               (<= (len fa-table) *ms-bad-cluster*)
-                              (>= (len fa-table) 2))))
+                              (>= (len fa-table) *ms-first-data-cluster*))))
   (if (atom hns)
-      (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
+      (mv fs disk fa-table (- *enoent*)) ;; error - showed up at fs with no name  - so leave fs unchanged
     (let ((sd (assoc (car hns) fs)))
       (if (atom sd)
           (if (atom (cdr hns))
@@ -963,7 +964,7 @@
                 (if (not (equal (len indices) (len blocks)))
                     ;; we have an error because of insufficient disk space
                     ;; - so we leave the fs unchanged
-                    (mv sd disk fa-table)
+                    (mv sd disk fa-table (- *enoent*))
                   (if (consp indices)
                       (mv (cons (cons (car hns)
                                       (l6-make-regular-file
@@ -975,29 +976,37 @@
                                                    indices
                                                    (binary-append
                                                     (cdr indices)
-                                                    (list *MS-END-OF-CLUSTERCHAIN*))))
+                                                    (list
+                                                     *MS-END-OF-CLUSTERCHAIN*)))
+                          0)
                     (mv (cons (cons (car hns)
-                                    (cons indices
-                                          (length text)))
+                                    (l6-make-regular-file
+                                     0 0))
                               fs)
                         disk
-                        fa-table))))
-            (mv-let (new-fs new-disk new-fa-table)
+                        fa-table
+                        0))))
+            (mv-let (new-fs new-disk new-fa-table error-code)
               (l6-create (cdr hns) nil disk fa-table text)
-              (mv (cons (cons (car hns) new-fs) fs) new-disk new-fa-table)))
+              (mv (cons (cons (car hns) new-fs) fs)
+                  new-disk
+                  new-fa-table
+                  error-code)))
         (let ((contents (cdr sd)))
           (if (l6-regular-file-entry-p contents)
               (mv (cons (cons (car sd) contents) ;; file already exists, so leave fs unchanged
                         (delete-assoc (car hns) fs))
                   disk
-                  fa-table)
-            (mv-let (new-fs new-disk new-fa-table)
+                  fa-table
+                  (- *EEXIST*))
+            (mv-let (new-fs new-disk new-fa-table error-code)
               (l6-create (cdr hns) contents disk fa-table text)
               (mv (cons (cons (car sd)
                               new-fs)
                         (delete-assoc (car hns) fs))
                   new-disk
-                  new-fa-table)))
+                  new-fa-table
+                  error-code)))
           )))))
 
 ; This function deletes a file or directory given its path.
@@ -1007,7 +1016,7 @@
                               (l6-fs-p fs)
                               (fat32-entry-list-p fa-table)
                               (<= (len fa-table) *ms-bad-cluster*)
-                              (>= (len fa-table) 2))))
+                              (>= (len fa-table) *ms-first-data-cluster*))))
   (if
       (atom hns)
       (mv fs fa-table (- *ENOENT*)) ;;error case, basically
@@ -4529,25 +4538,25 @@
                (equal (len *sample-disk-1*) (len *sample-fa-table-1*))))
 
 (defconst *sample-fs-2*
-  (mv-let (fs disk fa-table)
+  (mv-let (fs disk fa-table error-code)
     (l6-create (list :tmp :name1) *sample-fs-1*
                *sample-disk-1*
                *sample-fa-table-1* "Herbert Charles McMurray")
-    (declare (ignore disk fa-table))
+    (declare (ignore disk fa-table error-code))
     fs))
 (defconst *sample-disk-2*
-  (mv-let (fs disk fa-table)
+  (mv-let (fs disk fa-table error-code)
     (l6-create (list :tmp :name1) *sample-fs-1*
                *sample-disk-1*
                *sample-fa-table-1* "Herbert Charles McMurray")
-    (declare (ignore fs fa-table))
+    (declare (ignore fs fa-table error-code))
     disk))
 (defconst *sample-fa-table-2*
-  (mv-let (fs disk fa-table)
+  (mv-let (fs disk fa-table error-code)
     (l6-create (list :tmp :name1) *sample-fs-1*
                *sample-disk-1*
                *sample-fa-table-1* "Herbert Charles McMurray")
-    (declare (ignore disk fs))
+    (declare (ignore disk fs error-code))
     fa-table))
 (assert-event (and
                (l6-fs-p *sample-fs-2*)
@@ -4590,38 +4599,3 @@
                (fat32-entry-list-p *sample-fa-table-3*)
                (block-listp *sample-disk-3*)
                (equal (len *sample-disk-3*) (len *sample-fa-table-3*))))
-
-(defconst *sample-fs-3*
-  (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :name1) *sample-fs-2*
-               *sample-disk-2*
-               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
-    (declare (ignore disk fa-table error-code))
-    fs))
-(defconst *sample-disk-3*
-  (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :name1) *sample-fs-2*
-               *sample-disk-2*
-               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
-    (declare (ignore fs fa-table error-code))
-    disk))
-(defconst *sample-fa-table-3*
-  (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :name1) *sample-fs-2*
-               *sample-disk-2*
-               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
-    (declare (ignore disk fs error-code))
-    fa-table))
-(assert-event (and
-               (l6-fs-p *sample-fs-3*)
-               (fat32-entry-list-p *sample-fa-table-3*)
-               (block-listp *sample-disk-3*)
-               (equal (len *sample-disk-3*) (len *sample-fa-table-3*))))
-
-(assert-event 
-  (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :name1) *sample-fs-2*
-               *sample-disk-2*
-               *sample-fa-table-2* 0 "Herbert Charles McMurray Robinson")
-    (declare (ignore disk fs fa-table))
-    (equal error-code (- *ENOSPC*))))
