@@ -2729,7 +2729,7 @@
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-51
+  l6-wrchs-correctness-1-lemma-33
   (implies (l6-stricter-fs-p fs fa-table)
            (l6-stricter-fs-p (delete-assoc-equal name fs)
                              fa-table))
@@ -2738,7 +2738,7 @@
           ("goal'" :induct t)))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-70
+  l6-wrchs-correctness-1-lemma-34
   (implies
    (and (fat32-masked-entry-p masked-current-cluster)
         (<= *ms-first-data-cluster*
@@ -2753,7 +2753,7 @@
                               lower-bounded-integer-listp))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-33
+  l6-wrchs-correctness-1-lemma-35
   (implies (and (l6-regular-file-entry-p file))
            (lower-bounded-integer-listp
             (mv-nth 0 (l6-file-index-list file fa-table))
@@ -2761,7 +2761,7 @@
   :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-34
+  l6-wrchs-correctness-1-lemma-36
   (implies
    (and
     (l6-regular-file-entry-p file)
@@ -2779,7 +2779,7 @@
   :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-35
+  l6-wrchs-correctness-1-lemma-37
   (implies
    (and
     (l6-fs-p fs)
@@ -2799,7 +2799,7 @@
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-36
+  l6-wrchs-correctness-1-lemma-38
   (implies
    (and
     (l6-stricter-fs-p fs fa-table)
@@ -2819,7 +2819,7 @@
                        set-indices-in-fa-table))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-37
+  l6-wrchs-correctness-1-lemma-39
   (implies
    (and
     (consp (assoc-equal name fs))
@@ -2839,7 +2839,7 @@
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-38
+  l6-wrchs-correctness-1-lemma-40
   (implies
    (and (consp (assoc-equal name fs))
         (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
@@ -2857,7 +2857,7 @@
                                      l6-list-all-ok-indices))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-39
+  l6-wrchs-correctness-1-lemma-41
   (implies
    (and
     (equal (l6-regular-file-length (cdr (assoc-equal name fs)))
@@ -2904,7 +2904,7 @@
                        feasible-file-length-p))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-40
+  l6-wrchs-correctness-1-lemma-42
   (implies (and (l6-fs-p fs)
                 (fat32-entry-list-p fa-table))
            (equal (delete-assoc-equal name
@@ -2923,7 +2923,7 @@
     :hints (("goal" :in-theory (enable l6-stricter-fs-p))))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-41
+  l6-wrchs-correctness-1-lemma-43
   (implies
    (and
     (consp (assoc-equal name fs))
@@ -2943,7 +2943,7 @@
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-42
+  l6-wrchs-correctness-1-lemma-44
   (implies
    (and
     (l6-regular-file-entry-p file)
@@ -2971,7 +2971,7 @@
   :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-43
+  l6-wrchs-correctness-1-lemma-45
   (implies
    (and (l6-fs-p fs)
         (fat32-entry-list-p fa-table)
@@ -3000,7 +3000,7 @@
    ("subgoal *1/5''" :in-theory (enable l6-file-index-list))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-44
+  l6-wrchs-correctness-1-lemma-46
   (implies
    (and (l6-fs-p fs)
         (fat32-entry-list-p fa-table)
@@ -3026,7 +3026,7 @@
      l6-stricter-fs-p-correctness-1-lemma-3))))
 
 (defthmd
-  l6-wrchs-correctness-1-lemma-45
+  l6-wrchs-correctness-1-lemma-47
   (implies
    (and
     (consp hns)
@@ -3148,7 +3148,7 @@
             :bash (:change-goal nil t)
             :bash :bash :bash :bash (:dive 1)
             (:rewrite intersectp-is-commutative)
-            (:rewrite l6-wrchs-correctness-1-lemma-44)
+            (:rewrite l6-wrchs-correctness-1-lemma-46)
             :bash :bash :bash
             (:rewrite (:rewrite l6-wrchs-correctness-1-lemma-31 . 1))
             :top :bash
@@ -3159,7 +3159,7 @@
             :top :bash))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-46
+  l6-wrchs-correctness-1-lemma-48
   (implies
    (and
     (l6-stricter-fs-p fs2 fa-table)
@@ -3187,7 +3187,7 @@
     (l6-to-l4-fs-helper fs1 fa-table)))
   :hints
   (("goal" :in-theory (enable l6-stricter-fs-p
-                              l6-wrchs-correctness-1-lemma-45))
+                              l6-wrchs-correctness-1-lemma-47))
    ("subgoal *1/6.8'"
     :in-theory (disable l6-wrchs-correctness-1-lemma-31
                         intersectp-is-commutative)
@@ -3298,7 +3298,7 @@
         '(268435455))))))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-47
+  l6-wrchs-correctness-1-lemma-49
   (implies
    (and (consp (assoc-equal name fs))
         (l6-fs-p (cdr (assoc-equal name fs)))
@@ -3389,7 +3389,7 @@
                               (l6-wrchs hns fs disk fa-table start text)))))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-54
+  l6-wrchs-correctness-1-lemma-50
   (implies
    (and
     (consp hns)
@@ -3569,7 +3569,7 @@
           0 nil)))))))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-55
+  l6-wrchs-correctness-1-lemma-51
   (implies
    (and
     (consp hns)
@@ -3747,7 +3747,7 @@
      (b *ms-first-data-cluster*)))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-56
+  l6-wrchs-correctness-1-lemma-52
   (implies
    (and
     (consp hns)
@@ -3872,11 +3872,11 @@
          start text)))))))
   :hints
   (("goal"
-    :in-theory (disable l6-wrchs-correctness-1-lemma-44
-                        l6-wrchs-correctness-1-lemma-43)
+    :in-theory (disable l6-wrchs-correctness-1-lemma-46
+                        l6-wrchs-correctness-1-lemma-45)
     :use
     ((:instance
-      l6-wrchs-correctness-1-lemma-43
+      l6-wrchs-correctness-1-lemma-45
       (fs (delete-assoc-equal (car hns) fs))
       (disjoint-index-list
        (mv-nth 0
@@ -3889,7 +3889,7 @@
                                          fa-table)))
         0 nil)))
      (:instance
-      l6-wrchs-correctness-1-lemma-44
+      l6-wrchs-correctness-1-lemma-46
       (fs (delete-assoc-equal (car hns) fs))
       (fa-table
        (set-indices-in-fa-table
@@ -3916,7 +3916,7 @@
           start text)))))))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-57
+  l6-wrchs-correctness-1-lemma-53
   (implies
    (and (consp (assoc-equal name fs))
         (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
@@ -3935,7 +3935,7 @@
                        feasible-file-length-p))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-59
+  l6-wrchs-correctness-1-lemma-54
   (implies
    (and (consp (assoc-equal name fs))
         (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
@@ -3949,7 +3949,7 @@
                                      l6-list-all-ok-indices))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-58
+  l6-wrchs-correctness-1-lemma-55
   (implies
    (and
     (consp hns)
