@@ -952,7 +952,7 @@
                               (fat32-entry-list-p fa-table)
                               (equal (len disk) (len fa-table))
                               (<= (len fa-table) *ms-bad-cluster*)
-                              (>= (len fa-table) 2))))
+                              (>= (len fa-table) *ms-first-data-cluster*))))
   (if (atom hns)
       (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
     (let ((sd (assoc (car hns) fs)))
