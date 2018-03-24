@@ -2009,12 +2009,12 @@
                                      l6-stricter-fs-p))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-9
+  l6-wrchs-correctness-1-lemma-7
   (implies
    (and (natp start)
         (natp n)
         (fat32-entry-list-p fa-table)
-        (<= 2 (len fa-table)))
+        (<= *ms-first-data-cluster* (len fa-table)))
    (equal (find-n-free-blocks-helper (make-list-ac n t ac)
                                      m start)
           (find-n-free-blocks-helper ac m (+ n start))))
@@ -2022,7 +2022,7 @@
   (("goal" :in-theory (enable find-n-free-blocks-helper))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-10
+  l6-wrchs-correctness-1-lemma-8
   (implies
    (and (fat32-entry-list-p fa-table))
    (equal
@@ -2035,7 +2035,7 @@
                               find-n-free-blocks-helper))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-8
+  l6-wrchs-correctness-1-lemma-9
   (implies (and (fat32-entry-list-p fa-table)
                 (>= (len fa-table) *ms-first-data-cluster*))
            (equal (find-n-free-blocks (fa-table-to-alv fa-table)
@@ -2047,7 +2047,7 @@
                        fa-table-to-alv find-n-free-blocks))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-7
+  l6-wrchs-correctness-1-lemma-10
   (implies (and (>= (len fa-table)
                     *ms-first-data-cluster*)
                 (fat32-entry-list-p fa-table)
@@ -2068,8 +2068,8 @@
                     (- (min (count-free-blocks (fa-table-to-alv fa-table))
                             n)
                        1)))))
-  :hints (("goal" :in-theory (disable l6-wrchs-correctness-1-lemma-8)
-           :use l6-wrchs-correctness-1-lemma-8)))
+  :hints (("goal" :in-theory (disable l6-wrchs-correctness-1-lemma-9)
+           :use l6-wrchs-correctness-1-lemma-9)))
 
 (defthm
   l6-wrchs-correctness-1-lemma-13
@@ -4574,10 +4574,10 @@
             (find-n-free-blocks find-n-free-blocks-helper
                                 l6-file-index-list set-indices-in-alv
                                 set-indices-in-fa-table)
-            (l6-wrchs-correctness-1-lemma-7))
+            (l6-wrchs-correctness-1-lemma-10))
            :use
            (:instance
-            l6-wrchs-correctness-1-lemma-7
+            l6-wrchs-correctness-1-lemma-10
             (fa-table
              (set-indices-in-fa-table
               fa-table
