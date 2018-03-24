@@ -2072,7 +2072,7 @@
            :use l6-wrchs-correctness-1-lemma-9)))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-13
+  l6-wrchs-correctness-1-lemma-11
   (implies
    (natp key)
    (equal (fa-table-to-alv-helper (update-nth key val fa-table))
@@ -2084,7 +2084,7 @@
 (defthm
   l6-wrchs-correctness-1-lemma-12
   (implies
-   (and (integerp key) (>= key 2))
+   (and (integerp key) (>= key *ms-first-data-cluster*))
    (equal (fa-table-to-alv (update-nth key val fa-table))
           (update-nth key
                       (not (equal (fat32-entry-mask val) 0))
@@ -2092,19 +2092,19 @@
   :hints (("goal" :in-theory (enable fa-table-to-alv))))
 
 (defthmd
-  l6-wrchs-correctness-1-lemma-15
+  l6-wrchs-correctness-1-lemma-13
   (implies
    (and (fat32-entry-list-p fa-table)
         (fat32-masked-entry-p masked-current-cluster)
         (natp length)
-        (>= masked-current-cluster 2)
+        (>= masked-current-cluster *ms-first-data-cluster*)
         (< masked-current-cluster (len fa-table))
         (member-equal
          x
          (mv-nth 0
                  (l6-build-index-list fa-table
                                       masked-current-cluster length))))
-   (and (integerp x) (>= x 2)))
+   (and (integerp x) (>= x *ms-first-data-cluster*)))
   :hints (("goal" :in-theory (enable l6-build-index-list))))
 
 (defthm
@@ -2119,13 +2119,13 @@
   :hints
   (("goal"
     :in-theory (enable l6-file-index-list)
-    :use (:instance l6-wrchs-correctness-1-lemma-15
+    :use (:instance l6-wrchs-correctness-1-lemma-13
                     (masked-current-cluster
                      (l6-regular-file-first-cluster file))
                     (length (l6-regular-file-length file))))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-17
+  l6-wrchs-correctness-1-lemma-15
   (implies
    (and (l6-regular-file-entry-p file)
         (feasible-file-length-p
@@ -2140,56 +2140,56 @@
     :expand (len (mv-nth 0
                          (l6-file-index-list file fa-table))))))
 
-(defthm
-  l6-wrchs-correctness-1-lemma-16
-  (implies
-   (and
-    (consp (assoc-equal name fs))
-    (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
-    (not
-     (consp
-      (mv-nth 0
-              (l6-file-index-list (cdr (assoc-equal name fs))
-                                  fa-table))))
-    (consp
-     (find-n-free-clusters
-      fa-table
-      (len
-       (make-blocks
-        (insert-text
-         (make-character-list
-          (first-n-ac
-           (l6-regular-file-length (cdr (assoc-equal name fs)))
-           nil nil))
-         start text)))))
-    (l6-stricter-fs-p fs fa-table)
-    (fat32-entry-list-p fa-table)
-    (stringp text)
-    (integerp start)
-    (<= 0 start)
-    (<= 2 (len fa-table))
-    (<= (len (make-blocks (insert-text nil start text)))
-        (count-free-blocks (fa-table-to-alv fa-table))))
-   (equal
-    (len
-     (find-n-free-clusters
-      fa-table
-      (len
-       (make-blocks
-        (insert-text
-         (make-character-list
-          (first-n-ac
-           (l6-regular-file-length (cdr (assoc-equal name fs)))
-           nil nil))
-         start text)))))
-    (len
-     (make-blocks
-      (insert-text
-       (make-character-list
-        (first-n-ac
-         (l6-regular-file-length (cdr (assoc-equal name fs)))
-         nil nil))
-       start text))))))
+;; (defthm
+;;   l6-wrchs-correctness-1-lemma-16
+;;   (implies
+;;    (and
+;;     (consp (assoc-equal name fs))
+;;     (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
+;;     (not
+;;      (consp
+;;       (mv-nth 0
+;;               (l6-file-index-list (cdr (assoc-equal name fs))
+;;                                   fa-table))))
+;;     (consp
+;;      (find-n-free-clusters
+;;       fa-table
+;;       (len
+;;        (make-blocks
+;;         (insert-text
+;;          (make-character-list
+;;           (first-n-ac
+;;            (l6-regular-file-length (cdr (assoc-equal name fs)))
+;;            nil nil))
+;;          start text)))))
+;;     (l6-stricter-fs-p fs fa-table)
+;;     (fat32-entry-list-p fa-table)
+;;     (stringp text)
+;;     (integerp start)
+;;     (<= 0 start)
+;;     (<= 2 (len fa-table))
+;;     (<= (len (make-blocks (insert-text nil start text)))
+;;         (count-free-blocks (fa-table-to-alv fa-table))))
+;;    (equal
+;;     (len
+;;      (find-n-free-clusters
+;;       fa-table
+;;       (len
+;;        (make-blocks
+;;         (insert-text
+;;          (make-character-list
+;;           (first-n-ac
+;;            (l6-regular-file-length (cdr (assoc-equal name fs)))
+;;            nil nil))
+;;          start text)))))
+;;     (len
+;;      (make-blocks
+;;       (insert-text
+;;        (make-character-list
+;;         (first-n-ac
+;;          (l6-regular-file-length (cdr (assoc-equal name fs)))
+;;          nil nil))
+;;        start text))))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-18
