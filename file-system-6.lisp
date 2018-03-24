@@ -2140,66 +2140,15 @@
     :expand (len (mv-nth 0
                          (l6-file-index-list file fa-table))))))
 
-;; (defthm
-;;   l6-wrchs-correctness-1-lemma-16
-;;   (implies
-;;    (and
-;;     (consp (assoc-equal name fs))
-;;     (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
-;;     (not
-;;      (consp
-;;       (mv-nth 0
-;;               (l6-file-index-list (cdr (assoc-equal name fs))
-;;                                   fa-table))))
-;;     (consp
-;;      (find-n-free-clusters
-;;       fa-table
-;;       (len
-;;        (make-blocks
-;;         (insert-text
-;;          (make-character-list
-;;           (first-n-ac
-;;            (l6-regular-file-length (cdr (assoc-equal name fs)))
-;;            nil nil))
-;;          start text)))))
-;;     (l6-stricter-fs-p fs fa-table)
-;;     (fat32-entry-list-p fa-table)
-;;     (stringp text)
-;;     (integerp start)
-;;     (<= 0 start)
-;;     (<= 2 (len fa-table))
-;;     (<= (len (make-blocks (insert-text nil start text)))
-;;         (count-free-blocks (fa-table-to-alv fa-table))))
-;;    (equal
-;;     (len
-;;      (find-n-free-clusters
-;;       fa-table
-;;       (len
-;;        (make-blocks
-;;         (insert-text
-;;          (make-character-list
-;;           (first-n-ac
-;;            (l6-regular-file-length (cdr (assoc-equal name fs)))
-;;            nil nil))
-;;          start text)))))
-;;     (len
-;;      (make-blocks
-;;       (insert-text
-;;        (make-character-list
-;;         (first-n-ac
-;;          (l6-regular-file-length (cdr (assoc-equal name fs)))
-;;          nil nil))
-;;        start text))))))
-
 (defthm
-  l6-wrchs-correctness-1-lemma-18
+  l6-wrchs-correctness-1-lemma-16
   (implies
    (and
     (consp (assoc-equal name fs))
     (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
     (l6-stricter-fs-p fs fa-table)
     (fat32-entry-list-p fa-table)
-    (<= 2 (len fa-table)))
+    (<= *ms-first-data-cluster* (len fa-table)))
    (l3-regular-file-entry-p
     (cdr (assoc-equal name
                       (l6-to-l4-fs-helper fs fa-table))))))
@@ -2232,7 +2181,7 @@
   :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-48
+  l6-wrchs-correctness-1-lemma-17
   (implies
    (and (fat32-entry-list-p fa-table)
         (>= (len fa-table)
@@ -2255,7 +2204,7 @@
    ("subgoal *1/3.4'" :in-theory (e/d (set-indices-in-alv)))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-49
+  l6-wrchs-correctness-1-lemma-18
   (implies
    (and (consp (assoc-equal name fs))
         (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
@@ -2269,7 +2218,7 @@
                                      l6-list-all-ok-indices))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-50
+  l6-wrchs-correctness-1-lemma-19
   (implies
    (and (consp (assoc-equal name fs))
         (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
@@ -2282,7 +2231,7 @@
                                      l6-list-all-ok-indices))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-51
+  l6-wrchs-correctness-1-lemma-20
   (implies
    (and (< key (len fa-table))
         (<= *ms-first-data-cluster* key)
@@ -2301,7 +2250,7 @@
   (local (include-book "std/lists/repeat" :dir :system))
 
   (defthm
-    l6-wrchs-correctness-1-lemma-19
+    l6-wrchs-correctness-1-lemma-21
     (implies
      (and (<= *ms-first-data-cluster* (len fa-table))
           (fat32-entry-list-p fa-table)
@@ -2323,10 +2272,10 @@
      ("subgoal *1/7'''"
       :in-theory
       (e/d (set-indices-in-alv lower-bounded-integer-listp)
-           (l6-wrchs-correctness-1-lemma-51))
+           (l6-wrchs-correctness-1-lemma-20))
       :use
       (:instance
-       l6-wrchs-correctness-1-lemma-51
+       l6-wrchs-correctness-1-lemma-20
        (key (car index-list))
        (val
         (fat32-update-lower-28 (nth (car index-list) fa-table)
@@ -2338,10 +2287,10 @@
      ("subgoal *1/5''"
       :in-theory
       (e/d (set-indices-in-alv lower-bounded-integer-listp)
-           (l6-wrchs-correctness-1-lemma-51))
+           (l6-wrchs-correctness-1-lemma-20))
       :use
       (:instance
-       l6-wrchs-correctness-1-lemma-51
+       l6-wrchs-correctness-1-lemma-20
        (key (car index-list))
        (val
         (fat32-update-lower-28 (nth (car index-list) fa-table)
@@ -2353,12 +2302,12 @@
      ("subgoal *1/1'''" :in-theory (enable set-indices-in-alv)))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-52
+  l6-wrchs-correctness-1-lemma-22
   (implies
    (and (fat32-entry-list-p fa-table)
         (fat32-masked-entry-p masked-current-cluster)
         (natp length)
-        (>= masked-current-cluster 2)
+        (>= masked-current-cluster *ms-first-data-cluster*)
         (< masked-current-cluster (len fa-table)))
    (lower-bounded-integer-listp
     (mv-nth 0
@@ -2370,7 +2319,7 @@
                               lower-bounded-integer-listp))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-53
+  l6-wrchs-correctness-1-lemma-23
   (implies
    (and (consp (assoc-equal name fs))
         (l6-regular-file-entry-p (cdr (assoc-equal name fs)))
@@ -2383,7 +2332,7 @@
   :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-21
+  l6-wrchs-correctness-1-lemma-51
   (implies
    (and
     (consp (assoc-equal name fs))
@@ -2502,17 +2451,17 @@
         start text))))))
   :hints
   (("goal"
-    :in-theory (disable l6-wrchs-correctness-1-lemma-19)
+    :in-theory (disable l6-wrchs-correctness-1-lemma-21)
     :use
     (:instance
-     l6-wrchs-correctness-1-lemma-19
+     l6-wrchs-correctness-1-lemma-21
      (index-list
       (mv-nth 0
               (l6-file-index-list (cdr (assoc-equal name fs))
                                   fa-table)))))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-22
+  l6-wrchs-correctness-1-lemma-49
   (implies (integerp start)
            (lower-bounded-integer-listp
             (find-n-free-clusters-helper fa-table n start)
@@ -2537,7 +2486,7 @@
                (y start)))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-23
+  l6-wrchs-correctness-1-lemma-52
   (lower-bounded-integer-listp (find-n-free-clusters fa-table n)
                                *ms-first-data-cluster*)
   :rule-classes
