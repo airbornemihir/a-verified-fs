@@ -1,0 +1,75 @@
+% titlepage-demo.tex
+\documentclass{beamer}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{matrix}
+% items enclosed in square brackets are optional; explanation below
+\title{Verifying the FAT32 filesystem in ACL2}
+\author{Mihir Mehta}
+\institute{
+  Department of Computer Science\\
+  University of Texas at Austin\\[1ex]
+  \texttt{mihir@cs.utexas.edu}
+}
+\date{06 April, 2018}
+
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>
+    \frametitle{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\addtobeamertemplate{navigation symbols}{}{%
+    \usebeamerfont{footline}%
+    \usebeamercolor[fg]{footline}%
+    \hspace{1em}%
+    \large \insertframenumber/\inserttotalframenumber
+}
+
+\begin{document}
+
+%--- the titlepage frame -------------------------%
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+%--- the presentation begins here ----------------%
+
+\section{Motivation and related work}
+
+\begin{frame}{Why we need a verified filesystem}
+  \begin{itemize}
+  \item Filesystems are everywhere, even as operating systems move
+    towards making them invisible.
+  \item In the absence of a clear specification of filesystems, users
+    (and sysadmins in particular) are underserved.
+  \item Modern filesystems have become increasingly complex, and so
+    have the tools to analyse and recover data from them.
+  \item It would be worthwhile to specify and formally verify, in the
+    ACL2 theorem prover, the guarantees claimed by filesystems and tools.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Related work}
+  \begin{itemize}
+  \item In Haogang Chen's 2016 dissertation, the author uses Coq to
+    build a filesystem (named FSCQ) which is proven safe against
+    crashes in a new logical framework named Crash Hoare Logic. His
+    (exported) Haskell implementation performs comparably to ext4.
+  \item Hyperkernel (Nelson et al., SOSP '17) is a "push-button"
+    verification effort, but approximates by changing POSIX system
+    calls for ease of verification.
+  \item In our work, we instead aim to model an existing filesystem (FAT32)
+    faithfully and match the resulting disk image byte-to-byte.
+  \end{itemize}
+\end{frame}
+
+\section{Our approach}
+
+\end{document}
