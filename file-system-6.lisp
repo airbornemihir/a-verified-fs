@@ -1088,15 +1088,21 @@
 ;; The reason why we're having to do this is because we want to assume
 ;; arbitrary contents in the first two clusters in the fa-table. We could
 ;; plausibly assume those will be non-zero, but we don't want to.
-(defund fa-table-to-alv (fa-table)
-  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
-                              (<= (len fa-table) *ms-bad-cluster*)
-                              (>= (len fa-table) 2))))
-  (make-list-ac 2 t (fa-table-to-alv-helper (nthcdr 2 fa-table))))
+(defun
+  fa-table-to-alv (fa-table)
+  (declare
+   (xargs :guard (and (fat32-entry-list-p fa-table)
+                      (<= (len fa-table) *ms-bad-cluster*)
+                      (>= (len fa-table)
+                          *ms-first-data-cluster*))))
+  (make-list-ac
+   *ms-first-data-cluster* t
+   (fa-table-to-alv-helper
+    (nthcdr *ms-first-data-cluster* fa-table))))
 
 (defthm
   fa-table-to-alv-correctness-1
-  (implies (>= (len fa-table) 2)
+  (implies (>= (len fa-table) *ms-first-data-cluster*)
            (equal (len (fa-table-to-alv fa-table))
                   (len fa-table)))
   :hints (("goal" :in-theory (enable fa-table-to-alv))))
@@ -1109,7 +1115,9 @@
 (defthm
   fa-table-to-alv-correctness-3
   (implies
-   (and (integerp n) (>= n 2) (< n (len fa-table)))
+   (and (integerp n)
+        (>= n *ms-first-data-cluster*)
+        (< n (len fa-table)))
    (equal (nth n (fa-table-to-alv fa-table))
           (not (equal (fat32-entry-mask (nth n fa-table))
                       0))))
@@ -1117,10 +1125,12 @@
 
 (defun
   l6-to-l4-fs-helper (fs fa-table)
-  (declare (xargs :guard (and (l6-fs-p fs)
-                              (fat32-entry-list-p fa-table)
-                              (<= (len fa-table) *ms-bad-cluster*)
-                              (>= (len fa-table) 2))))
+  (declare
+   (xargs :guard (and (l6-fs-p fs)
+                      (fat32-entry-list-p fa-table)
+                      (<= (len fa-table) *ms-bad-cluster*)
+                      (>= (len fa-table)
+                          *ms-first-data-cluster*))))
   (if
    (atom fs)
    fs
@@ -1143,12 +1153,15 @@
 
 (defun
   l6-to-l4-fs (fs fa-table)
-  (declare (xargs :verify-guards nil
-                  :guard (and (l6-fs-p fs)
-                              (fat32-entry-list-p fa-table)
-                              (<= (len fa-table) *ms-bad-cluster*)
-                              (>= (len fa-table) 2))))
-  (mv (l6-to-l4-fs-helper fs fa-table) (fa-table-to-alv fa-table)))
+  (declare
+   (xargs :verify-guards nil
+          :guard (and (l6-fs-p fs)
+                      (fat32-entry-list-p fa-table)
+                      (<= (len fa-table) *ms-bad-cluster*)
+                      (>= (len fa-table)
+                          *ms-first-data-cluster*))))
+  (mv (l6-to-l4-fs-helper fs fa-table)
+      (fa-table-to-alv fa-table)))
 
 (defthm l6-to-l4-fs-correctness-1
   (implies (and (l6-fs-p fs)
@@ -3642,7 +3655,7 @@
     (symbolp (car hns))
     (block-listp disk)
     (equal (len disk) (len fa-table))
-    (<= (len disk) 268435447)
+    (<= (len disk) *ms-bad-cluster*)
     (<= 2 (len disk))
     (<= (len (make-blocks (insert-text nil start text)))
         (count-free-blocks (fa-table-to-alv fa-table)))
@@ -3810,8 +3823,8 @@
     (symbolp (car hns))
     (block-listp disk)
     (equal (len disk) (len fa-table))
-    (<= (len disk) 268435447)
-    (<= 2 (len disk))
+    (<= (len disk) *ms-bad-cluster*)
+    (<= *ms-first-data-cluster* (len disk))
     (<= (len (make-blocks (insert-text nil start text)))
         (count-free-blocks (fa-table-to-alv fa-table)))
     (equal
@@ -4022,8 +4035,8 @@
     (symbolp (car hns))
     (block-listp disk)
     (equal (len disk) (len fa-table))
-    (<= (len disk) 268435447)
-    (<= 2 (len disk))
+    (<= (len disk) *ms-bad-cluster*)
+    (<= *ms-first-data-cluster* (len disk))
     (<= (len (make-blocks (insert-text nil start text)))
         (count-free-blocks (fa-table-to-alv fa-table)))
     (equal
