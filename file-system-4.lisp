@@ -1946,6 +1946,7 @@
                 (boolean-listp alv))
            (l3-fs-p (mv-nth 0 (l4-unlink hns fs alv)))))
 
+;; This theorem shows the equivalence of the l4 and l2 versions of unlink.
 (defthm
     l4-unlink-correctness-1
   (implies (and (l4-stricter-fs-p fs alv)

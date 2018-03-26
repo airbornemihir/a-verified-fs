@@ -4469,7 +4469,7 @@
                 (block-listp disk)
                 (equal (len disk) (len fa-table))
                 (<= (len fa-table) *ms-bad-cluster*)
-                (>= (len fa-table) 2))
+                (>= (len fa-table) *ms-first-data-cluster*))
            (b* (((mv l4-fs-before-write l4-alv-before-write) (l6-to-l4-fs
                                                               fs fa-table))
                 ((mv fs-after-write disk-after-write fa-table-after-write)
@@ -4527,6 +4527,107 @@
                 start text))))))
           ("Subgoal *1/6'" :in-theory (disable l6-wrchs-correctness-1-lemma-3)
            :use l6-wrchs-correctness-1-lemma-3)))
+
+(defthm
+  l6-create-returns-fs
+  (implies
+   (and (l6-fs-p fs)
+        (stringp text)
+        (symbol-listp hns)
+        (block-listp disk)
+        (fat32-entry-list-p fa-table)
+        (equal (len disk) (len fa-table))
+        (>= (len fa-table)
+            *ms-first-data-cluster*)
+        (<= (len fa-table) *ms-bad-cluster*))
+   (l6-fs-p (mv-nth 0
+                    (l6-create hns fs disk fa-table text))))
+  :hints
+  (("subgoal *1/2"
+    :use (:instance consp-assoc-equal (name (car hns))
+                    (l fs)))))
+
+(defthm
+  l6-create-correctness-1-lemma-1
+  (implies
+   (and
+    (l6-stricter-fs-p fs2 fa-table)
+    (l6-stricter-fs-p fs1 fa-table)
+    (not (intersectp-equal
+          (mv-nth 0 (l6-list-all-ok-indices fs1 fa-table))
+          (mv-nth 0
+                  (l6-list-all-ok-indices fs2 fa-table))))
+    (fat32-entry-list-p fa-table)
+    (stringp text)
+    (symbol-listp hns)
+    (block-listp disk)
+    (equal (len disk) (len fa-table))
+    (<= (len disk) *ms-bad-cluster*)
+    (<= *ms-first-data-cluster* (len disk))
+    (<= (len (make-blocks (coerce text 'list)))
+        (count-free-blocks (fa-table-to-alv fa-table))))
+   (equal (l6-to-l4-fs-helper
+           fs1
+           (mv-nth 2
+                   (l6-create hns fs2 disk fa-table text)))
+          (l6-to-l4-fs-helper fs1 fa-table)))
+  :hints
+  (("subgoal *1/5" :in-theory (enable l6-stricter-fs-p
+                                      l6-list-all-ok-indices))))
+
+;; This theorem shows the equivalence of the l6 and l4 versions of create.
+(defthm
+  l6-create-correctness-1
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (fat32-entry-list-p fa-table)
+        (stringp text)
+        (symbol-listp hns)
+        (block-listp disk)
+        (equal (len disk) (len fa-table))
+        (<= (len fa-table) *ms-bad-cluster*)
+        (>= (len fa-table)
+            *ms-first-data-cluster*))
+   (b*
+       (((mv l4-fs-before-create
+             l4-alv-before-create)
+         (l6-to-l4-fs fs fa-table))
+        ((mv fs-after-create disk-after-create
+             fa-table-after-create &)
+         (l6-create hns fs disk fa-table text))
+        ((mv l4-fs-after-create l4-alv-after-create)
+         (l6-to-l4-fs fs-after-create fa-table-after-create)))
+     (implies (<= (len (make-blocks (coerce text 'list)))
+                  (count-free-blocks l4-alv-before-create))
+              (equal (l4-create hns l4-fs-before-create
+                                disk l4-alv-before-create text)
+                     (mv l4-fs-after-create disk-after-create
+                         l4-alv-after-create)))))
+  :hints
+  (("goal" :induct (l6-create hns fs disk fa-table text))
+   ("subgoal *1/5" :in-theory (enable l6-stricter-fs-p
+                                      l6-list-all-ok-indices))
+   ("subgoal *1/4"
+    :in-theory (enable l6-file-index-list set-indices-in-alv))
+   ("subgoal *1/3"
+    :in-theory (e/d (l6-file-index-list)
+                    (find-n-free-clusters-correctness-1))
+    :use (:instance find-n-free-clusters-correctness-1
+                    (n (len (make-blocks (explode text))))
+                    (b (len disk))))
+   ("subgoal *1/3.2"
+    :in-theory (disable l6-wrchs-correctness-1-lemma-29
+                        make-blocks-correctness-3)
+    :use
+    ((:instance
+      l6-wrchs-correctness-1-lemma-29
+      (file-index-list
+       (find-n-free-clusters
+        fa-table
+        (count-free-blocks (fa-table-to-alv fa-table))))
+      (file-length (len (explode text))))
+     (:instance make-blocks-correctness-3
+                (cl (coerce text 'list)))))))
 
 (defconst *sample-fs-1* nil)
 (defconst *sample-disk-1* (make-list 6 :initial-element *nullblock*))
