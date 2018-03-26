@@ -26,6 +26,7 @@
 (defconst *EIO* 5) ;; I/O error
 (defconst *ENOSPC* 28) ;; No space left on device
 (defconst *ENOENT* 2) ;; No such file or directory
+(defconst *EEXIST* 17) ;; File exists
 
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))
@@ -954,7 +955,7 @@
                               (<= (len fa-table) *ms-bad-cluster*)
                               (>= (len fa-table) *ms-first-data-cluster*))))
   (if (atom hns)
-      (mv fs disk fa-table) ;; error - showed up at fs with no name  - so leave fs unchanged
+      (mv fs disk fa-table (- *enoent*)) ;; error - showed up at fs with no name  - so leave fs unchanged
     (let ((sd (assoc (car hns) fs)))
       (if (atom sd)
           (if (atom (cdr hns))
@@ -963,7 +964,7 @@
                 (if (not (equal (len indices) (len blocks)))
                     ;; we have an error because of insufficient disk space
                     ;; - so we leave the fs unchanged
-                    (mv sd disk fa-table)
+                    (mv sd disk fa-table (- *enoent*))
                   (if (consp indices)
                       (mv (cons (cons (car hns)
                                       (l6-make-regular-file
@@ -975,29 +976,37 @@
                                                    indices
                                                    (binary-append
                                                     (cdr indices)
-                                                    (list *MS-END-OF-CLUSTERCHAIN*))))
+                                                    (list
+                                                     *MS-END-OF-CLUSTERCHAIN*)))
+                          0)
                     (mv (cons (cons (car hns)
-                                    (cons indices
-                                          (length text)))
+                                    (l6-make-regular-file
+                                     0 0))
                               fs)
                         disk
-                        fa-table))))
-            (mv-let (new-fs new-disk new-fa-table)
+                        fa-table
+                        0))))
+            (mv-let (new-fs new-disk new-fa-table error-code)
               (l6-create (cdr hns) nil disk fa-table text)
-              (mv (cons (cons (car hns) new-fs) fs) new-disk new-fa-table)))
+              (mv (cons (cons (car hns) new-fs) fs)
+                  new-disk
+                  new-fa-table
+                  error-code)))
         (let ((contents (cdr sd)))
           (if (l6-regular-file-entry-p contents)
               (mv (cons (cons (car sd) contents) ;; file already exists, so leave fs unchanged
                         (delete-assoc (car hns) fs))
                   disk
-                  fa-table)
-            (mv-let (new-fs new-disk new-fa-table)
+                  fa-table
+                  (- *EEXIST*))
+            (mv-let (new-fs new-disk new-fa-table error-code)
               (l6-create (cdr hns) contents disk fa-table text)
               (mv (cons (cons (car sd)
                               new-fs)
                         (delete-assoc (car hns) fs))
                   new-disk
-                  new-fa-table)))
+                  new-fa-table
+                  error-code)))
           )))))
 
 ; This function deletes a file or directory given its path.
@@ -1007,7 +1016,7 @@
                               (l6-fs-p fs)
                               (fat32-entry-list-p fa-table)
                               (<= (len fa-table) *ms-bad-cluster*)
-                              (>= (len fa-table) 2))))
+                              (>= (len fa-table) *ms-first-data-cluster*))))
   (if
       (atom hns)
       (mv fs fa-table (- *ENOENT*)) ;;error case, basically
@@ -4460,7 +4469,7 @@
                 (block-listp disk)
                 (equal (len disk) (len fa-table))
                 (<= (len fa-table) *ms-bad-cluster*)
-                (>= (len fa-table) 2))
+                (>= (len fa-table) *ms-first-data-cluster*))
            (b* (((mv l4-fs-before-write l4-alv-before-write) (l6-to-l4-fs
                                                               fs fa-table))
                 ((mv fs-after-write disk-after-write fa-table-after-write)
@@ -4519,6 +4528,159 @@
           ("Subgoal *1/6'" :in-theory (disable l6-wrchs-correctness-1-lemma-3)
            :use l6-wrchs-correctness-1-lemma-3)))
 
+(defthm
+  l6-create-returns-fs
+  (implies
+   (and (l6-fs-p fs)
+        (stringp text)
+        (symbol-listp hns)
+        (block-listp disk)
+        (fat32-entry-list-p fa-table)
+        (equal (len disk) (len fa-table))
+        (>= (len fa-table)
+            *ms-first-data-cluster*)
+        (<= (len fa-table) *ms-bad-cluster*))
+   (l6-fs-p (mv-nth 0
+                    (l6-create hns fs disk fa-table text))))
+  :hints
+  (("subgoal *1/2"
+    :use (:instance consp-assoc-equal (name (car hns))
+                    (l fs)))))
+
+(defthm
+  l6-create-correctness-1-lemma-1
+  (implies
+   (and
+    (l6-stricter-fs-p fs2 fa-table)
+    (l6-stricter-fs-p fs1 fa-table)
+    (not (intersectp-equal
+          (mv-nth 0 (l6-list-all-ok-indices fs1 fa-table))
+          (mv-nth 0
+                  (l6-list-all-ok-indices fs2 fa-table))))
+    (fat32-entry-list-p fa-table)
+    (stringp text)
+    (symbol-listp hns)
+    (block-listp disk)
+    (equal (len disk) (len fa-table))
+    (<= (len disk) *ms-bad-cluster*)
+    (<= *ms-first-data-cluster* (len disk))
+    (<= (len (make-blocks (coerce text 'list)))
+        (count-free-blocks (fa-table-to-alv fa-table))))
+   (equal (l6-to-l4-fs-helper
+           fs1
+           (mv-nth 2
+                   (l6-create hns fs2 disk fa-table text)))
+          (l6-to-l4-fs-helper fs1 fa-table)))
+  :hints
+  (("subgoal *1/5" :in-theory (enable l6-stricter-fs-p
+                                      l6-list-all-ok-indices))))
+
+;; This theorem shows the equivalence of the l6 and l4 versions of create.
+(defthm
+  l6-create-correctness-1
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (fat32-entry-list-p fa-table)
+        (stringp text)
+        (symbol-listp hns)
+        (block-listp disk)
+        (equal (len disk) (len fa-table))
+        (<= (len fa-table) *ms-bad-cluster*)
+        (>= (len fa-table)
+            *ms-first-data-cluster*))
+   (b*
+       (((mv l4-fs-before-create
+             l4-alv-before-create)
+         (l6-to-l4-fs fs fa-table))
+        ((mv fs-after-create disk-after-create
+             fa-table-after-create &)
+         (l6-create hns fs disk fa-table text))
+        ((mv l4-fs-after-create l4-alv-after-create)
+         (l6-to-l4-fs fs-after-create fa-table-after-create)))
+     (implies (<= (len (make-blocks (coerce text 'list)))
+                  (count-free-blocks l4-alv-before-create))
+              (equal (l4-create hns l4-fs-before-create
+                                disk l4-alv-before-create text)
+                     (mv l4-fs-after-create disk-after-create
+                         l4-alv-after-create)))))
+  :hints
+  (("goal" :induct (l6-create hns fs disk fa-table text))
+   ("subgoal *1/5" :in-theory (enable l6-stricter-fs-p
+                                      l6-list-all-ok-indices))
+   ("subgoal *1/4"
+    :in-theory (enable l6-file-index-list set-indices-in-alv))
+   ("subgoal *1/3"
+    :in-theory (e/d (l6-file-index-list)
+                    (find-n-free-clusters-correctness-1))
+    :use (:instance find-n-free-clusters-correctness-1
+                    (n (len (make-blocks (explode text))))
+                    (b (len disk))))
+   ("subgoal *1/3.2"
+    :in-theory (disable l6-wrchs-correctness-1-lemma-29
+                        make-blocks-correctness-3)
+    :use
+    ((:instance
+      l6-wrchs-correctness-1-lemma-29
+      (file-index-list
+       (find-n-free-clusters
+        fa-table
+        (count-free-blocks (fa-table-to-alv fa-table))))
+      (file-length (len (explode text))))
+     (:instance make-blocks-correctness-3
+                (cl (coerce text 'list)))))))
+
+(defthm
+  l6-unlink-returns-fs
+  (implies
+   (and (l6-fs-p fs)
+        (symbol-listp hns)
+        (fat32-entry-list-p fa-table)
+        (>= (len fa-table)
+            *ms-first-data-cluster*))
+   (l6-fs-p (mv-nth 0
+                    (l6-unlink hns fs fa-table)))))
+
+(defthm
+  l6-unlink-correctness-1-lemma-1
+  (implies
+   (and
+    (l6-stricter-fs-p fs2 fa-table)
+    (l6-stricter-fs-p fs1 fa-table)
+    (not (intersectp-equal
+          (mv-nth 0 (l6-list-all-ok-indices fs1 fa-table))
+          (mv-nth 0
+                  (l6-list-all-ok-indices fs2 fa-table))))
+    (fat32-entry-list-p fa-table)
+    (symbol-listp hns)
+    (<= *ms-first-data-cluster* (len fa-table)))
+   (equal (l6-to-l4-fs-helper
+           fs1
+           (mv-nth 1
+                   (l6-unlink hns fs2 fa-table)))
+          (l6-to-l4-fs-helper fs1 fa-table))))
+
+;; This theorem shows the equivalence of the l6 and l4 versions of unlink.
+(defthm
+  l6-unlink-correctness-1
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (fat32-entry-list-p fa-table)
+        (symbol-listp hns)
+        (>= (len fa-table)
+            *ms-first-data-cluster*))
+   (b* (((mv l4-fs-before-unlink
+             l4-alv-before-unlink)
+         (l6-to-l4-fs fs fa-table))
+        ((mv fs-after-unlink fa-table-after-unlink &)
+         (l6-unlink hns fs fa-table))
+        ((mv l4-fs-after-unlink l4-alv-after-unlink)
+         (l6-to-l4-fs fs-after-unlink fa-table-after-unlink)))
+     (equal (l4-unlink hns l4-fs-before-unlink
+                       l4-alv-before-unlink)
+            (mv l4-fs-after-unlink
+                l4-alv-after-unlink))))
+  :hints (("goal" :induct (l6-unlink hns fs fa-table))))
+
 (defconst *sample-fs-1* nil)
 (defconst *sample-disk-1* (make-list 6 :initial-element *nullblock*))
 (defconst *sample-fa-table-1* (make-list 6 :initial-element 0))
@@ -4529,25 +4691,25 @@
                (equal (len *sample-disk-1*) (len *sample-fa-table-1*))))
 
 (defconst *sample-fs-2*
-  (mv-let (fs disk fa-table)
+  (mv-let (fs disk fa-table error-code)
     (l6-create (list :tmp :name1) *sample-fs-1*
                *sample-disk-1*
                *sample-fa-table-1* "Herbert Charles McMurray")
-    (declare (ignore disk fa-table))
+    (declare (ignore disk fa-table error-code))
     fs))
 (defconst *sample-disk-2*
-  (mv-let (fs disk fa-table)
+  (mv-let (fs disk fa-table error-code)
     (l6-create (list :tmp :name1) *sample-fs-1*
                *sample-disk-1*
                *sample-fa-table-1* "Herbert Charles McMurray")
-    (declare (ignore fs fa-table))
+    (declare (ignore fs fa-table error-code))
     disk))
 (defconst *sample-fa-table-2*
-  (mv-let (fs disk fa-table)
+  (mv-let (fs disk fa-table error-code)
     (l6-create (list :tmp :name1) *sample-fs-1*
                *sample-disk-1*
                *sample-fa-table-1* "Herbert Charles McMurray")
-    (declare (ignore disk fs))
+    (declare (ignore disk fs error-code))
     fa-table))
 (assert-event (and
                (l6-fs-p *sample-fs-2*)
@@ -4590,38 +4752,3 @@
                (fat32-entry-list-p *sample-fa-table-3*)
                (block-listp *sample-disk-3*)
                (equal (len *sample-disk-3*) (len *sample-fa-table-3*))))
-
-(defconst *sample-fs-3*
-  (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :name1) *sample-fs-2*
-               *sample-disk-2*
-               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
-    (declare (ignore disk fa-table error-code))
-    fs))
-(defconst *sample-disk-3*
-  (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :name1) *sample-fs-2*
-               *sample-disk-2*
-               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
-    (declare (ignore fs fa-table error-code))
-    disk))
-(defconst *sample-fa-table-3*
-  (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :name1) *sample-fs-2*
-               *sample-disk-2*
-               *sample-fa-table-2* 0 "Herbert Charles McMurray Alvarez")
-    (declare (ignore disk fs error-code))
-    fa-table))
-(assert-event (and
-               (l6-fs-p *sample-fs-3*)
-               (fat32-entry-list-p *sample-fa-table-3*)
-               (block-listp *sample-disk-3*)
-               (equal (len *sample-disk-3*) (len *sample-fa-table-3*))))
-
-(assert-event 
-  (mv-let (fs disk fa-table error-code)
-    (l6-wrchs (list :tmp :name1) *sample-fs-2*
-               *sample-disk-2*
-               *sample-fa-table-2* 0 "Herbert Charles McMurray Robinson")
-    (declare (ignore disk fs fa-table))
-    (equal error-code (- *ENOSPC*))))
