@@ -4629,6 +4629,58 @@
      (:instance make-blocks-correctness-3
                 (cl (coerce text 'list)))))))
 
+(defthm
+  l6-unlink-returns-fs
+  (implies
+   (and (l6-fs-p fs)
+        (symbol-listp hns)
+        (fat32-entry-list-p fa-table)
+        (>= (len fa-table)
+            *ms-first-data-cluster*))
+   (l6-fs-p (mv-nth 0
+                    (l6-unlink hns fs fa-table)))))
+
+(defthm
+  l6-unlink-correctness-1-lemma-1
+  (implies
+   (and
+    (l6-stricter-fs-p fs2 fa-table)
+    (l6-stricter-fs-p fs1 fa-table)
+    (not (intersectp-equal
+          (mv-nth 0 (l6-list-all-ok-indices fs1 fa-table))
+          (mv-nth 0
+                  (l6-list-all-ok-indices fs2 fa-table))))
+    (fat32-entry-list-p fa-table)
+    (symbol-listp hns)
+    (<= *ms-first-data-cluster* (len fa-table)))
+   (equal (l6-to-l4-fs-helper
+           fs1
+           (mv-nth 1
+                   (l6-unlink hns fs2 fa-table)))
+          (l6-to-l4-fs-helper fs1 fa-table))))
+
+;; This theorem shows the equivalence of the l6 and l4 versions of unlink.
+(defthm
+  l6-unlink-correctness-1
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (fat32-entry-list-p fa-table)
+        (symbol-listp hns)
+        (>= (len fa-table)
+            *ms-first-data-cluster*))
+   (b* (((mv l4-fs-before-unlink
+             l4-alv-before-unlink)
+         (l6-to-l4-fs fs fa-table))
+        ((mv fs-after-unlink fa-table-after-unlink &)
+         (l6-unlink hns fs fa-table))
+        ((mv l4-fs-after-unlink l4-alv-after-unlink)
+         (l6-to-l4-fs fs-after-unlink fa-table-after-unlink)))
+     (equal (l4-unlink hns l4-fs-before-unlink
+                       l4-alv-before-unlink)
+            (mv l4-fs-after-unlink
+                l4-alv-after-unlink))))
+  :hints (("goal" :induct (l6-unlink hns fs fa-table))))
+
 (defconst *sample-fs-1* nil)
 (defconst *sample-disk-1* (make-list 6 :initial-element *nullblock*))
 (defconst *sample-fa-table-1* (make-list 6 :initial-element 0))
