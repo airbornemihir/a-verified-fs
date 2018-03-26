@@ -72,4 +72,88 @@
 
 \section{Our approach}
 
+\begin{frame}{Modelling a filesystem}
+  \begin{itemize}
+  \item We opt to iteratively model a filesystem, incrementally
+    adding features of FAT32.
+  \item This also allows us to prove correctness in an iterative
+    fashion, by proving equivalences and thereby reusing correctness
+    results from previous models.
+  \item Apart from noting that some of these models were based on
+    the previous technology target, the CP/M filesystem, we will not
+    dwell on these.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Modelling a filesystem}
+  \begin{itemize}
+  \item In our most recent model, we separate our filesystem into:
+    \begin{itemize}
+    \item a tree, in which non-leaf nodes represent (sub)directories
+      and leaf nodes represent regular files;
+    \item a disk, containing the textual contents of regular files
+      broken into fixed-size blocks;
+    \item and a file allocation table, mapping each block in a regular
+      file to the next, this allowing us to read the contents of the
+      entire file.
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Verifying the model}
+  \begin{itemize}
+  \item We've focussed so far on two filesystem properties, derived
+    from the theory of arrays where they are known as the
+    read-over-write properties.
+    \begin{enumerate}
+    \item After a write, a read of the same length at the same
+      location should yield that which was written.
+    \item After a write, a read at a different location should yield
+      the same results as a read before the write.
+    \end{enumerate}
+  \item These properties have been proven for all models so far,
+    including the present model which features a file allocation
+    table.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Proof challenges}
+  \begin{itemize}
+  \item How do we define a "good state" of a filesystem, which shows
+    that reading, writing and other operations can be safely carried
+    out?
+  \item Answering this question involves a trade-off between
+    simplicity (to help with verification) and generality (to model as
+    many real-world situations as possible.)
+  \item We choose to require:
+    \begin{itemize}
+    \item that each block on the disk is attributed to at most one
+      regular file;
+    \item that the clusters attributed to each non-empty regular file
+      end with a legal EOF value, as defined by the FAT specification.
+    \item that each regular file is annotated with "length", a
+      metadata field that corresponds to the actual length of the file
+      as determined by traversing the file allocation table and
+      reading the corresponding blocks.
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Validating the model}
+\end{frame}
+
+\begin{frame}{Future work}
+  \begin{enumerate}
+  \item Complete the FAT32 model, by means of
+    \begin{itemize}
+    \item supporting variable cluster sizes,
+    \item moving the file allocation table onto the disk, and
+    \item moving all file and directory metadata from the tree to the
+      disk.
+    \end{itemize}
+  \item Model a more complex filesystem, for instance NTFS, by
+    re-using algorithms and proofs from the models built so far.
+  \end{enumerate}
+\end{frame}
+
 \end{document}
