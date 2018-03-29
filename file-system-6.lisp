@@ -2736,7 +2736,6 @@
    (and
     (fat32-entry-list-p fa-table)
     (l6-fs-p fs)
-    (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
     (not (intersectp-equal
           l
           (mv-nth 0
@@ -4805,68 +4804,56 @@
                                    fa-table)))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
-(thm-cp
-        (implies
- (AND
-        (EQUAL (L4-LIST-ALL-INDICES (L6-TO-L4-FS-HELPER FS FA-TABLE))
-               (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS FA-TABLE)))
-        (L6-FS-P FS)
-        (FAT32-ENTRY-LIST-P FA-TABLE)
-        (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS FA-TABLE))
-        (DISJOINT-LIST-LISTP
-             (L4-COLLECT-ALL-INDEX-LISTS (L6-TO-L4-FS-HELPER FS FA-TABLE)))
-        (NO-DUPLICATES-LISTP
-             (L4-COLLECT-ALL-INDEX-LISTS (L6-TO-L4-FS-HELPER FS FA-TABLE)))
-        (STRINGP TEXT)
-        (INTEGERP START)
-        (<= 0 START)
-        (SYMBOL-LISTP HNS)
-        (BLOCK-LISTP DISK)
-        (EQUAL (LEN FA-TABLE) (LEN DISK))
-        (<= 2 (LEN DISK))
-        (<= (LEN DISK) 268435447)
-        (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
-            (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE)))
-        (L6-REGULAR-FILE-ENTRY-P (L6-STAT HNS FS DISK)))
-         (NO-DUPLICATESP-EQUAL
-            (MV-NTH
-                 0
-                 (L6-LIST-ALL-OK-INDICES
-                      (MV-NTH 0
-                              (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
-                      (MV-NTH 2
-                              (L6-WRCHS HNS FS DISK FA-TABLE START TEXT)))))))
-
-(thm-cp
- (IMPLIES
- (AND
-  (L6-FS-P FS)
-  (symbol-listp hns)
-  (INTEGERP START)
-  (<= 0 START)
-  (STRINGP TEXT)
-  (FAT32-ENTRY-LIST-P FA-TABLE)
-  (<= (LEN fa-table) *ms-bad-cluster*)
-  (<= *ms-first-data-cluster* (LEN fa-table))
-  (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS FA-TABLE))
-  (bounded-nat-listp index-list (len fa-table))
-  (LOWER-BOUNDED-INTEGER-LISTP INDEX-LIST *ms-first-data-cluster*)
-  (not (intersectp-equal
-        (MV-NTH
-         0
-         (L6-LIST-ALL-OK-INDICES fs fa-table))
-        index-list))
-  (fat32-masked-entry-list-p value-list)
-  (equal (len index-list) (len value-list)))
- (MV-NTH
-  1
-  (L6-LIST-ALL-OK-INDICES
-   FS
-   (SET-INDICES-IN-FA-TABLE
-    FA-TABLE
-    index-list
-    value-list))))
+(defthm
+  l6-wrchs-returns-stricter-fs-lemma-2
+  (implies
+   (and (l6-fs-p fs)
+        (no-duplicatesp-equal (mv-nth 0 (l6-list-all-ok-indices fs fa-table)))
+        (fat32-entry-list-p fa-table))
+   (no-duplicatesp-equal
+    (mv-nth 0
+            (l6-list-all-ok-indices (delete-assoc-equal name fs)
+                                    fa-table))))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-wrchs-returns-stricter-fs-lemma-3
+  (implies
+   (and
+    (l6-fs-p fs)
+    (fat32-entry-list-p fa-table)
+    (<= (len fa-table) *ms-bad-cluster*)
+    (<= *ms-first-data-cluster* (len fa-table))
+    (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+    (bounded-nat-listp index-list (len fa-table))
+    (lower-bounded-integer-listp
+     index-list *ms-first-data-cluster*)
+    (not (intersectp-equal
+          (mv-nth 0 (l6-list-all-ok-indices fs fa-table))
+          index-list))
+    (fat32-masked-entry-list-p value-list)
+    (equal (len index-list)
+           (len value-list)))
+   (mv-nth
+    1
+    (l6-list-all-ok-indices
+     fs
+     (set-indices-in-fa-table fa-table index-list value-list))))
+  :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(defthm
+  l6-wrchs-returns-stricter-fs-lemma-4
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (<= *ms-first-data-cluster* (len fa-table))
+        (indices-marked-p l (fa-table-to-alv fa-table))
+        (natp n))
+   (not (intersectp-equal l (find-n-free-clusters fa-table n))))
+  :hints
+  (("goal"
+    :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-15)
+    :use (:instance l4-wrchs-returns-stricter-fs-lemma-15
+                    (alv (fa-table-to-alv fa-table))))))
 
 (thm-cp
  (IMPLIES
@@ -4883,7 +4870,10 @@
   (<= (LEN DISK) 268435447)
   (<= 2 (LEN DISK))
   (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
-  (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE)))
+  (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE))
+  (NOT (INTERSECTP-EQUAL
+          (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS1 FA-TABLE))
+          (MV-NTH 0 (L6-LIST-ALL-OK-INDICES FS2 FA-TABLE)))))
  (MV-NTH
    1
    (L6-LIST-ALL-OK-INDICES fs1
@@ -4892,6 +4882,37 @@
                                              fs2
                                              DISK FA-TABLE START TEXT)))))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
+
+(thm-cp
+        (implies
+ (AND
+        (L6-FS-P FS)
+         (NO-DUPLICATESP-EQUAL
+            (MV-NTH
+                 0
+                 (L6-LIST-ALL-OK-INDICES
+                  fs
+                  fa-table)))
+        (FAT32-ENTRY-LIST-P FA-TABLE)
+        (STRINGP TEXT)
+        (INTEGERP START)
+        (<= 0 START)
+        (SYMBOL-LISTP HNS)
+        (BLOCK-LISTP DISK)
+        (EQUAL (LEN FA-TABLE) (LEN DISK))
+        (<= 2 (LEN DISK))
+        (<= (LEN DISK) 268435447)
+        (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
+            (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))))
+         (NO-DUPLICATESP-EQUAL
+            (MV-NTH
+                 0
+                 (L6-LIST-ALL-OK-INDICES
+                      (MV-NTH 0
+                              (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
+                      (MV-NTH 2
+                              (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))))))
+        :hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES)) ))
 
 (thm-cp
   (implies
