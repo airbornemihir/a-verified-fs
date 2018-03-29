@@ -1311,7 +1311,7 @@
   l6-stricter-fs-p-correctness-1-lemma-1
   (implies (and (fat32-entry-list-p fa-table)
                 (integerp masked-current-cluster)
-                (<= 2 masked-current-cluster)
+                (<= *ms-first-data-cluster* masked-current-cluster)
                 (< masked-current-cluster (len fa-table)))
            (b* (((mv index-list error-code)
                  (l6-build-index-list fa-table
@@ -1362,10 +1362,27 @@
                           (l6-file-index-list (cdr (car fs))
                                               fa-table))
                   (l6-regular-file-length (cdr (car fs))))
-           (l6-to-l4-fs-helper (cdr fs) fa-table))))
-   ("Subgoal *1/4.1" :in-theory (disable
-  l6-stricter-fs-p-correctness-1-lemma-2) :use (:instance
-  l6-stricter-fs-p-correctness-1-lemma-2 (entry (CDR (CAR FS)))))))
+           (l6-to-l4-fs-helper (cdr fs)
+                               fa-table))))
+   ("subgoal *1/4.1"
+    :in-theory (disable l6-stricter-fs-p-correctness-1-lemma-2)
+    :use (:instance l6-stricter-fs-p-correctness-1-lemma-2
+                    (entry (cdr (car fs))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (l6-fs-p fs)
+          (fat32-entry-list-p fa-table)
+          (mv-nth 1 (l6-list-all-ok-indices fs fa-table)))
+     (indices-marked-p
+      (mv-nth 0 (l6-list-all-ok-indices fs fa-table))
+      (fa-table-to-alv fa-table)))
+    :hints
+    (("goal"
+      :in-theory (disable l6-list-all-ok-indices-correctness-5)
+      :use l6-list-all-ok-indices-correctness-5)))))
 
 (defthm
   l6-stricter-fs-p-correctness-1-lemma-4
