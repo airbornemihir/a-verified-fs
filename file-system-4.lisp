@@ -1651,7 +1651,6 @@
 (defthm
   l4-read-after-write-2
   (implies (and (l4-stricter-fs-p fs alv)
-                (stringp text1)
                 (stringp text2)
                 (natp start1)
                 (natp start2)
@@ -1659,7 +1658,6 @@
                 (symbol-listp hns2)
                 (not (equal hns1 hns2))
                 (natp n1)
-                (natp n2)
                 (block-listp disk)
                 (boolean-listp alv)
                 (equal (len alv) (len disk))
