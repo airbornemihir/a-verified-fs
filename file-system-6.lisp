@@ -5384,41 +5384,67 @@
 
 (defthm
   l6-read-after-write-2
-  (implies (and (l6-stricter-fs-p fs fa-table)
-                (stringp text2)
-                (natp start1)
-                (natp start2)
-                (symbol-listp hns1)
-                (symbol-listp hns2)
-                (not (equal hns1 hns2))
-                (natp n1)
-                (block-listp disk)
-                (equal (len fa-table) (len disk))
-                (<= *ms-first-data-cluster* (len fa-table))
-                (<= (len fa-table) *ms-bad-cluster*)
-                (<= (len (make-blocks (insert-text nil start2 text2)))
-                    (count-free-blocks (fa-table-to-alv fa-table)))
-                (l6-regular-file-entry-p (l6-stat hns1 fs fa-table)))
-           (mv-let (new-fs new-disk new-fa-table error-code)
-             (l6-wrchs hns2 fs disk fa-table start2 text2)
-             (declare (ignore error-code))
-             (equal (mv-nth 0 (l6-rdchs hns1 new-fs new-disk new-fa-table start1 n1))
-                    (mv-nth 0 (l6-rdchs hns1 fs disk fa-table start1 n1)))))
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (stringp text2)
+        (natp start1)
+        (natp start2)
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (not (equal hns1 hns2))
+        (natp n1)
+        (block-listp disk)
+        (equal (len fa-table) (len disk))
+        (<= *ms-first-data-cluster* (len fa-table))
+        (<= (len fa-table) *ms-bad-cluster*)
+        (<= (len (make-blocks (insert-text nil start2 text2)))
+            (count-free-blocks (fa-table-to-alv fa-table)))
+        (l6-regular-file-entry-p (l6-stat hns1 fs disk)))
+   (mv-let
+     (new-fs new-disk new-fa-table error-code)
+     (l6-wrchs hns2 fs disk fa-table start2 text2)
+     (declare (ignore error-code))
+     (equal
+      (mv-nth 0
+              (l6-rdchs hns1
+                        new-fs new-disk new-fa-table start1 n1))
+      (mv-nth 0
+              (l6-rdchs hns1 fs disk fa-table start1 n1)))))
   :hints
-  (("goal" :do-not-induct t :in-theory (disable l4-read-after-write-2 l4-stricter-fs-p
-  l6-wrchs-returns-stricter-fs-lemma-10 l4-rdchs l6-rdchs l6-rdchs-correctness-1 l6-wrchs-correctness-1
-  l6-stat-correctness-1) :use ((:instance l4-read-after-write-2 (fs (l6-to-l4-fs-helper fs fa-table)) (alv (fa-table-to-alv fa-table)))
-  l6-wrchs-returns-stricter-fs-lemma-10 (:instance l6-rdchs-correctness-1 (hns
-  hns1) (fs
-                  (MV-NTH 0
-                          (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))) (disk
-                  (MV-NTH 1
-                          (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))) (fa-table
-                  (MV-NTH 2
-                          (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))) (start start1) (n n1)) (:instance l6-rdchs-correctness-1 (hns
-  hns1) (start start1) (n n1)) (:instance l6-wrchs-correctness-1 (hns hns2)
-  (start start2) (text text2)) (:instance
-  l6-stat-correctness-1 (hns hns1)))) ("Subgoal 2" :in-theory (enable l6-stricter-fs-p))))
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable l4-read-after-write-2 l4-stricter-fs-p
+                        l6-wrchs-returns-stricter-fs-lemma-10
+                        l4-rdchs l6-rdchs l6-rdchs-correctness-1
+                        l6-wrchs-correctness-1
+                        l6-stat-correctness-1)
+    :use
+    ((:instance l4-read-after-write-2
+                (fs (l6-to-l4-fs-helper fs fa-table))
+                (alv (fa-table-to-alv fa-table)))
+     l6-wrchs-returns-stricter-fs-lemma-10
+     (:instance
+      l6-rdchs-correctness-1 (hns hns1)
+      (fs
+       (mv-nth 0
+               (l6-wrchs hns2 fs disk fa-table start2 text2)))
+      (disk
+       (mv-nth 1
+               (l6-wrchs hns2 fs disk fa-table start2 text2)))
+      (fa-table
+       (mv-nth 2
+               (l6-wrchs hns2 fs disk fa-table start2 text2)))
+      (start start1)
+      (n n1))
+     (:instance l6-rdchs-correctness-1 (hns hns1)
+                (start start1)
+                (n n1))
+     (:instance l6-wrchs-correctness-1 (hns hns2)
+                (start start2)
+                (text text2))
+     (:instance l6-stat-correctness-1 (hns hns1))))
+   ("subgoal 2" :in-theory (enable l6-stricter-fs-p))
+   ("subgoal 1" :in-theory (enable l6-stricter-fs-p))))
 
 (defconst *sample-fs-1* nil)
 (defconst *sample-disk-1* (make-list 6 :initial-element *nullblock*))
