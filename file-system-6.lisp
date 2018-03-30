@@ -4956,68 +4956,6 @@
                                            fa-table)))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
-;; (thm-cp
-;;  (IMPLIES
-;;  (AND
-;;   (CONSP (ASSOC-EQUAL NAME FS))
-;;   (L6-fs-p (CDR (ASSOC-EQUAL NAME FS)))
-;;   (L6-FS-P FS)
-;;   (fat32-entry-list-p fa-table)
-;;   (MV-NTH 1 (L6-LIST-ALL-OK-INDICES FS FA-TABLE))
-;;   (NO-DUPLICATESP-EQUAL
-;;    (MV-NTH
-;;     0
-;;     (L6-LIST-ALL-OK-INDICES
-;;      fs
-;;      fa-table))))
-;;  (NOT (INTERSECTP-EQUAL
-;;            (MV-NTH 0
-;;                    (L6-LIST-ALL-OK-INDICES (DELETE-ASSOC-EQUAL NAME FS)
-;;                                            FA-TABLE))
-;;            (MV-NTH 0
-;;                    (L6-LIST-ALL-OK-INDICES (CDR (ASSOC-EQUAL NAME FS))
-;;                                            FA-TABLE)))))
-;;  :hints (("Goal" :do-not-induct t :in-theory
-;;                                  (disable L6-LIST-ALL-OK-INDICES-CORRECTNESS-5)
-;;           :use ((:INSTANCE L6-LIST-ALL-OK-INDICES-CORRECTNESS-5
-;;                                (FS (DELETE-ASSOC-EQUAL NAME FS)))
-;;                     (:INSTANCE L6-LIST-ALL-OK-INDICES-CORRECTNESS-5
-;;                                (FS (CDR (ASSOC-EQUAL NAME FS))))))
-;;          ("Subgoal 1" :in-theory (disable
-;;   l6-wrchs-correctness-1-lemma-5) :use
-;;   l6-wrchs-correctness-1-lemma-5) ))
-
-;; (thm-cp
-;;         (implies
-;;  (AND
-;;         (L6-FS-P FS)
-;;          (NO-DUPLICATESP-EQUAL
-;;             (MV-NTH
-;;                  0
-;;                  (L6-LIST-ALL-OK-INDICES
-;;                   fs
-;;                   fa-table)))
-;;         (FAT32-ENTRY-LIST-P FA-TABLE)
-;;         (STRINGP TEXT)
-;;         (INTEGERP START)
-;;         (<= 0 START)
-;;         (SYMBOL-LISTP HNS)
-;;         (BLOCK-LISTP DISK)
-;;         (EQUAL (LEN FA-TABLE) (LEN DISK))
-;;         (<= 2 (LEN DISK))
-;;         (<= (LEN DISK) 268435447)
-;;         (<= (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START TEXT)))
-;;             (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))))
-;;          (NO-DUPLICATESP-EQUAL
-;;             (MV-NTH
-;;                  0
-;;                  (L6-LIST-ALL-OK-INDICES
-;;                       (MV-NTH 0
-;;                               (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))
-;;                       (MV-NTH 2
-;;                               (L6-WRCHS HNS FS DISK FA-TABLE START TEXT))))))
-;;         :hints (("Goal" :in-theory (enable L6-LIST-ALL-OK-INDICES)) ))
-
 (defthm
   l6-wrchs-returns-stricter-fs-lemma-8
   (implies
@@ -5325,55 +5263,6 @@
                          (cdr (assoc-equal (car hns) fs)))
                    (delete-assoc-equal (car hns) fs))
              fa-table))))
-
-;; (defthm
-;;   l6-wrchs-returns-fs
-;;   (implies
-;;    (and (symbol-listp hns)
-;;         (l6-fs-p fs)
-;;         (integerp start)
-;;         (<= 0 start)
-;;         (stringp text)
-;;         (block-listp disk)
-;;         (equal (len disk) (len fa-table))
-;;         (<= (len disk) 268435447)
-;;         (<= 2 (len disk))
-;;         (fat32-entry-list-p fa-table))
-;;    (l6-fs-p
-;;     (mv-nth 0
-;;             (l6-wrchs hns fs disk fa-table start text)))))
-
-;; (defthm
-;;   l6-wrchs-returns-fa-table
-;;   (implies
-;;    (and (symbol-listp hns)
-;;         (l6-fs-p fs)
-;;         (integerp start)
-;;         (<= 0 start)
-;;         (stringp text)
-;;         (block-listp disk)
-;;         (equal (len disk) (len fa-table))
-;;         (<= (len disk) 268435447)
-;;         (<= 2 (len disk))
-;;         (fat32-entry-list-p fa-table))
-;;    (fat32-entry-list-p (mv-nth 2
-;;                                (l6-wrchs hns fs disk fa-table start text)))))
-
-;; (defthm
-;;    l6-wrchs-returns-stricter-fs-lemma-10
-;;    (implies (and (l6-fs-p fs)
-;;                  (fat32-entry-list-p fa-table))
-;;             (mv-let (l4-fs l4-alv)
-;;               (l6-to-l4-fs fs fa-table)
-;;               (implies
-;;                (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
-;;                (equal
-;;                 (l4-stricter-fs-p l4-fs l4-alv)
-;;                 (l6-stricter-fs-p fs fa-table)))))
-;;    :hints
-;;    (("goal" :do-not-induct t
-;;      :in-theory (e/d (l6-stricter-fs-p) (l6-stricter-fs-p-correctness-1))
-;;      :use l6-stricter-fs-p-correctness-1)))
 
 (defthm
   l6-wrchs-returns-stricter-fs-lemma-10
