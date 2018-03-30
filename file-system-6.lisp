@@ -5326,48 +5326,172 @@
                    (delete-assoc-equal (car hns) fs))
              fa-table))))
 
+;; (defthm
+;;   l6-wrchs-returns-fs
+;;   (implies
+;;    (and (symbol-listp hns)
+;;         (l6-fs-p fs)
+;;         (integerp start)
+;;         (<= 0 start)
+;;         (stringp text)
+;;         (block-listp disk)
+;;         (equal (len disk) (len fa-table))
+;;         (<= (len disk) 268435447)
+;;         (<= 2 (len disk))
+;;         (fat32-entry-list-p fa-table))
+;;    (l6-fs-p
+;;     (mv-nth 0
+;;             (l6-wrchs hns fs disk fa-table start text)))))
+
+;; (defthm
+;;   l6-wrchs-returns-fa-table
+;;   (implies
+;;    (and (symbol-listp hns)
+;;         (l6-fs-p fs)
+;;         (integerp start)
+;;         (<= 0 start)
+;;         (stringp text)
+;;         (block-listp disk)
+;;         (equal (len disk) (len fa-table))
+;;         (<= (len disk) 268435447)
+;;         (<= 2 (len disk))
+;;         (fat32-entry-list-p fa-table))
+;;    (fat32-entry-list-p (mv-nth 2
+;;                                (l6-wrchs hns fs disk fa-table start text)))))
+
+;; (defthm
+;;    l6-wrchs-returns-stricter-fs-lemma-10
+;;    (implies (and (l6-fs-p fs)
+;;                  (fat32-entry-list-p fa-table))
+;;             (mv-let (l4-fs l4-alv)
+;;               (l6-to-l4-fs fs fa-table)
+;;               (implies
+;;                (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+;;                (equal
+;;                 (l4-stricter-fs-p l4-fs l4-alv)
+;;                 (l6-stricter-fs-p fs fa-table)))))
+;;    :hints
+;;    (("goal" :do-not-induct t
+;;      :in-theory (e/d (l6-stricter-fs-p) (l6-stricter-fs-p-correctness-1))
+;;      :use l6-stricter-fs-p-correctness-1)))
+
+(defthm
+  l6-wrchs-returns-stricter-fs-lemma-10
+  (implies
+   (and (l6-fs-p fs)
+        (fat32-entry-list-p fa-table))
+   (mv-let
+     (l4-fs l4-alv)
+     (l6-to-l4-fs fs fa-table)
+     (implies (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+              (equal (l4-stricter-fs-p l4-fs l4-alv)
+                     (l6-stricter-fs-p fs fa-table)))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (l6-stricter-fs-p)
+                    (l4-collect-all-index-lists-correctness-3
+                     l6-list-all-ok-indices-correctness-5))
+    :use ((:instance l4-collect-all-index-lists-correctness-3
+                     (fs (l6-to-l4-fs-helper fs fa-table)))
+          l6-list-all-ok-indices-correctness-5))))
+
+(defthm
+  l6-wrchs-returns-stricter-fs-lemma-11
+  (implies
+   (and (symbol-listp hns)
+        (l6-fs-p fs)
+        (natp start)
+        (stringp text)
+        (block-listp disk)
+        (equal (len disk) (len fa-table))
+        (<= (len fa-table) *ms-bad-cluster*)
+        (>= (len fa-table)
+            *ms-first-data-cluster*)
+        (l6-stricter-fs-p fs fa-table)
+        (<= (len (make-blocks (insert-text nil start text)))
+            (count-free-blocks (fa-table-to-alv fa-table))))
+   (l6-stricter-fs-p
+    (mv-nth 0
+            (l6-wrchs hns fs disk fa-table start text))
+    (mv-nth 2
+            (l6-wrchs hns fs disk fa-table start text))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (l6-stricter-fs-p)
+         (l4-wrchs-returns-stricter-fs
+          l4-collect-all-index-lists-correctness-3
+          l6-list-all-ok-indices-correctness-5
+          l6-wrchs-correctness-1))
+    :use
+    ((:instance l4-wrchs-returns-stricter-fs
+                (fs (l6-to-l4-fs-helper fs fa-table))
+                (alv (fa-table-to-alv fa-table)))
+     (:instance l4-collect-all-index-lists-correctness-3
+                (fs (l6-to-l4-fs-helper fs fa-table)))
+     l6-list-all-ok-indices-correctness-5
+     l6-wrchs-correctness-1
+     (:instance
+      l6-list-all-ok-indices-correctness-5
+      (fs (mv-nth 0
+                  (l6-wrchs hns fs disk fa-table start text)))
+      (fa-table
+       (mv-nth 2
+               (l6-wrchs hns fs disk fa-table start text)))))
+    :do-not-induct t)))
+
 (defthm
   l6-read-after-write-1
-  (implies (and (l6-stricter-fs-p fs fa-table)
-                (stringp text)
-                (natp start)
-                (symbol-listp hns)
-                (block-listp disk)
-                (equal (len fa-table) (len disk))
-                (>= (len fa-table) *ms-first-data-cluster*)
-                (<= (len fa-table) *ms-bad-cluster*)
-                (<= (len (make-blocks (insert-text nil start text)))
-                    (count-free-blocks (fa-table-to-alv fa-table)))
-                (equal n (length text))
-                (l6-regular-file-entry-p (l6-stat hns fs disk)))
-           (mv-let (new-fs new-disk new-fa-table error-code)
-             (l6-wrchs hns fs disk fa-table start text)
-             (declare (ignore error-code))
-             (mv-let (read-result error-code)
-               (l6-rdchs hns new-fs new-disk new-fa-table start n)
-               (declare (ignore error-code))
-               (equal read-result
-                      text))))
-  :instructions
-  ((:in-theory (e/d (l6-stricter-fs-p)
-                    ( l6-rdchs l6-wrchs l4-rdchs
-                               l4-wrchs l6-rdchs-correctness-1
-                               l6-wrchs-correctness-1 l4-read-after-write-1
-                               l6-list-all-ok-indices-correctness-5)))
-   (:use (:instance l6-rdchs-correctness-1
-                    (fs (mv-nth 0
-                                (l6-wrchs hns fs disk fa-table start text)))
-                    (disk (mv-nth 1
-                                  (l6-wrchs hns fs disk fa-table start text)))
-                    (fa-table (mv-nth 2
-                                      (l6-wrchs hns fs disk fa-table start
-                                                text))))
-         l6-wrchs-correctness-1
-         (:instance l4-read-after-write-1
-                    (fs (l6-to-l4-fs-helper fs fa-table))
-                    (alv (fa-table-to-alv fa-table)))
-         l6-list-all-ok-indices-correctness-5)
-   bash))
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (stringp text)
+        (natp start)
+        (symbol-listp hns)
+        (block-listp disk)
+        (equal (len fa-table) (len disk))
+        (>= (len fa-table)
+            *ms-first-data-cluster*)
+        (<= (len fa-table) *ms-bad-cluster*)
+        (<= (len (make-blocks (insert-text nil start text)))
+            (count-free-blocks (fa-table-to-alv fa-table)))
+        (equal n (length text))
+        (l6-regular-file-entry-p (l6-stat hns fs disk)))
+   (mv-let
+     (new-fs new-disk new-fa-table error-code)
+     (l6-wrchs hns fs disk fa-table start text)
+     (declare (ignore error-code))
+     (mv-let (read-result error-code)
+       (l6-rdchs hns
+                 new-fs new-disk new-fa-table start n)
+       (declare (ignore error-code))
+       (equal read-result text))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (l6-stricter-fs-p)
+         (l6-rdchs l6-wrchs
+                   l4-rdchs l4-wrchs l6-rdchs-correctness-1
+                   l6-wrchs-correctness-1
+                   l4-read-after-write-1
+                   l6-list-all-ok-indices-correctness-5
+                   l6-wrchs-returns-stricter-fs-lemma-11))
+    :use
+    ((:instance
+      l6-rdchs-correctness-1
+      (fs (mv-nth 0
+                  (l6-wrchs hns fs disk fa-table start text)))
+      (disk (mv-nth 1
+                    (l6-wrchs hns fs disk fa-table start text)))
+      (fa-table
+       (mv-nth 2
+               (l6-wrchs hns fs disk fa-table start text))))
+     l6-wrchs-correctness-1
+     (:instance l4-read-after-write-1
+                (fs (l6-to-l4-fs-helper fs fa-table))
+                (alv (fa-table-to-alv fa-table)))
+     l6-list-all-ok-indices-correctness-5
+     l6-wrchs-returns-stricter-fs-lemma-11))))
 
 (defconst *sample-fs-1* nil)
 (defconst *sample-disk-1* (make-list 6 :initial-element *nullblock*))
