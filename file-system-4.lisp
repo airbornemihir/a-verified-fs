@@ -993,13 +993,6 @@
                     (index (car index-list))
                     (value (car value-list))))))
 
-(defthm
-  l4-wrchs-correctness-1-lemma-10
-  (implies (and (natp n)
-                (boolean-listp alv)
-                (indices-marked-p index-list alv))
-           (not (intersectp-equal index-list (find-n-free-blocks alv n)))))
-
 (defthm l4-wrchs-correctness-1-lemma-11
   (implies (and (natp n)
                 (boolean-listp alv)
