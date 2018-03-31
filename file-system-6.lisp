@@ -578,7 +578,7 @@
     :in-theory (enable find-n-free-clusters
                        find-n-free-clusters-helper-correctness-2))))
 
-(defthm
+(defthmd
   find-n-free-clusters-correctness-3
   (implies (member-equal x (find-n-free-clusters fa-table n))
            (and (integerp x) (<= *ms-first-data-cluster* x)))
@@ -589,7 +589,7 @@
                     (start *ms-first-data-cluster*)
                     (fa-table (nthcdr *ms-first-data-cluster* fa-table))))))
 
-(defthm
+(defthmd
   find-n-free-clusters-correctness-4
   (implies
    (and (fat32-entry-list-p fa-table)
@@ -2158,7 +2158,7 @@
    (and (integerp x) (>= x *ms-first-data-cluster*)))
   :hints (("goal" :in-theory (enable l6-build-index-list))))
 
-(defthm
+(defthmd
   l6-wrchs-correctness-1-lemma-14
   (implies
    (and (l6-regular-file-entry-p file)
@@ -2191,7 +2191,7 @@
     :expand (len (mv-nth 0
                          (l6-file-index-list file fa-table))))))
 
-(defthm
+(defthmd
   l6-wrchs-correctness-1-lemma-16
   (implies
    (and
@@ -3982,7 +3982,7 @@
            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
           start text)))))))))
 
-(defthm
+(defthmd
   l6-wrchs-correctness-1-lemma-53
   (implies
    (and (consp (assoc-equal name fs))
