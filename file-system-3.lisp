@@ -630,7 +630,7 @@
   (implies (l3-fs-p fs)
            (l3-fs-p (delete-assoc-equal s fs))))
 
-(defthm l3-wrchs-returns-fs-lemma-2
+(defthmd l3-wrchs-returns-fs-lemma-2
   (implies (and (consp (assoc-equal s fs))
                 (l3-fs-p fs)
                 (consp (cdr (assoc-equal s fs)))

@@ -554,7 +554,7 @@
             l
             (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
 
-(defthm
+(defthmd
   l4-wrchs-returns-stricter-fs-lemma-27
   (implies
    (and
@@ -618,13 +618,18 @@
         (equal (len alv) (len disk))
         (bounded-nat-listp (flatten l)
                            (len alv))
-        (not (member-intersectp-equal l (l4-collect-all-index-lists fs)))
+        (not (member-intersectp-equal
+              l (l4-collect-all-index-lists fs)))
         (indices-marked-listp l alv)
         (true-list-listp l))
-   (indices-marked-listp l
-                         (mv-nth 2
-                                 (l4-wrchs hns fs disk alv start text))))
-  :hints (("Goal" :induct (indices-marked-listp l alv))))
+   (indices-marked-listp
+    l
+    (mv-nth 2
+            (l4-wrchs hns fs disk alv start text))))
+  :hints
+  (("goal"
+    :in-theory (enable l4-wrchs-returns-stricter-fs-lemma-27)
+    :induct (indices-marked-listp l alv))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-29
@@ -1461,7 +1466,7 @@
    ("subgoal *1/5.2'" :cases ((atom (cdr blocks))))
    ("subgoal *1/5.2'''" :expand (len (cdr blocks)))))
 
-(defthm
+(defthmd
   l4-wrchs-correctness-1-lemma-19
   (implies
    (and (boolean-listp alv)
@@ -1558,6 +1563,7 @@
        start text)))))
   :hints
   (("goal"
+    :in-theory (enable l4-wrchs-correctness-1-lemma-19)
     :expand
     (l3-regular-file-entry-p
      (cons
@@ -1594,7 +1600,10 @@
                   (mv-let (new-fs new-disk new-alv)
                     (l4-wrchs hns fs disk alv start text)
                     (declare (ignore new-alv))
-                    (l4-to-l2-fs new-fs new-disk)))))
+                    (l4-to-l2-fs new-fs new-disk))))
+  :hints
+  (("goal"
+    :in-theory (enable l4-wrchs-correctness-1-lemma-19))))
 
 (defthm
   l4-read-after-write-1
@@ -1612,7 +1621,10 @@
              (l4-wrchs hns fs disk alv start text)
              (declare (ignore new-alv))
              (equal (l4-rdchs hns new-fs new-disk start n)
-                    text))))
+                    text)))
+  :hints
+  (("goal"
+    :in-theory (enable l4-wrchs-correctness-1-lemma-19))))
 
 (defthm l4-wrchs-returns-disk-lemma-1
   (implies (and (equal (len index-list)
