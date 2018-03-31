@@ -365,7 +365,7 @@
             (l4-collect-all-index-lists (delete-assoc-equal name fs))
             alv)))
 
-(defthm l4-wrchs-returns-stricter-fs-lemma-10
+(defthmd l4-wrchs-returns-stricter-fs-lemma-10
   (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (l3-fs-p fs)
                 (boolean-listp alv)
@@ -374,7 +374,7 @@
            (indices-marked-p (cadr (assoc-equal name fs))
                              alv)))
 
-(defthm l4-wrchs-returns-stricter-fs-lemma-11
+(defthmd l4-wrchs-returns-stricter-fs-lemma-11
   (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (l3-fs-p fs)
                 (no-duplicates-listp (l4-collect-all-index-lists fs)))
@@ -848,7 +848,8 @@
 
 ;; find a simpler problem that doesn't have all these details, that shows the
 ;; same kind of issue
-(defthm l4-wrchs-returns-stricter-fs
+(defthm
+  l4-wrchs-returns-stricter-fs
   (implies (and (symbol-listp hns)
                 (l4-stricter-fs-p fs alv)
                 (natp start)
@@ -859,7 +860,9 @@
              (l4-wrchs hns fs disk alv start text)
              (declare (ignore new-disk))
              (l4-stricter-fs-p new-fs new-alv)))
-  :hints (("Subgoal *1/6" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))))
+  :hints (("goal" :in-theory (enable l4-wrchs-returns-stricter-fs-lemma-10
+                                     l4-wrchs-returns-stricter-fs-lemma-11))
+          ("subgoal *1/6" :in-theory (enable l3-regular-file-entry-p))))
 
 (defun l4-to-l2-fs (fs disk)
   (declare (xargs :guard (and (l4-fs-p fs) (block-listp disk))
@@ -1563,6 +1566,8 @@
        start text)))))
   :hints
   (("goal"
+    :in-theory (enable l4-wrchs-returns-stricter-fs-lemma-10
+                       l4-wrchs-returns-stricter-fs-lemma-11)
     :expand
     (l3-regular-file-entry-p
      (cons
@@ -1599,7 +1604,11 @@
                   (mv-let (new-fs new-disk new-alv)
                     (l4-wrchs hns fs disk alv start text)
                     (declare (ignore new-alv))
-                    (l4-to-l2-fs new-fs new-disk)))))
+                    (l4-to-l2-fs new-fs new-disk))))
+  :hints
+  (("goal"
+    :in-theory (enable l4-wrchs-returns-stricter-fs-lemma-10
+                       l4-wrchs-returns-stricter-fs-lemma-11))))
 
 (defthm
   l4-read-after-write-1
@@ -1617,7 +1626,11 @@
              (l4-wrchs hns fs disk alv start text)
              (declare (ignore new-alv))
              (equal (l4-rdchs hns new-fs new-disk start n)
-                    text))))
+                    text)))
+  :hints
+  (("goal"
+    :in-theory (enable l4-wrchs-returns-stricter-fs-lemma-10
+                       l4-wrchs-returns-stricter-fs-lemma-11))))
 
 (defthm l4-wrchs-returns-disk-lemma-1
   (implies (and (equal (len index-list)
