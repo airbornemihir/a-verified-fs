@@ -623,21 +623,19 @@
 
 ;; This function allows a file or directory to be found in a filesystem given a
 ;; path.
-(defun l6-stat (hns fs disk)
-  (declare (xargs :guard (and (symbol-listp hns)
-                              (l6-fs-p fs)
-                              (block-listp disk))))
+(defun
+  l6-stat (hns fs)
+  (declare (xargs :guard (and (symbol-listp hns) (l6-fs-p fs))))
   (if (atom hns)
       fs
-    (if (atom fs)
-        nil
-      (let ((sd (assoc (car hns) fs)))
-        (if (atom sd)
-            nil
-          (if (l6-regular-file-entry-p (cdr sd))
-              (and (null (cdr hns))
-                   (cdr sd))
-            (l6-stat (cdr hns) (cdr sd) disk)))))))
+      (if (atom fs)
+          nil
+          (let ((sd (assoc (car hns) fs)))
+               (if (atom sd)
+                   nil
+                   (if (l6-regular-file-entry-p (cdr sd))
+                       (and (null (cdr hns)) (cdr sd))
+                       (l6-stat (cdr hns) (cdr sd))))))))
 
 (defthm l6-rdchs-guard-lemma-1
   (implies (and (member-equal x lst)
@@ -795,14 +793,14 @@
       :in-theory (e/d (fat32-masked-entry-p)
                       (l6-regular-file-entry-p-correctness-1))
       :use (:instance l6-regular-file-entry-p-correctness-1
-                      (entry (l6-stat hns fs disk))))
+                      (entry (l6-stat hns fs))))
      ("subgoal 3"
       :in-theory (e/d (fat32-masked-entry-p)
                       (l6-regular-file-entry-p-correctness-1))
       :use (:instance l6-regular-file-entry-p-correctness-1
-                      (entry (l6-stat hns fs disk)))))))
+                      (entry (l6-stat hns fs)))))))
   (let
-   ((file (l6-stat hns fs disk)))
+   ((file (l6-stat hns fs)))
    (if
     (not (l6-regular-file-entry-p file))
     (mv nil (- *EIO*))
@@ -1604,9 +1602,9 @@
         (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
         (no-duplicatesp-equal
          (mv-nth 0 (l6-list-all-ok-indices fs fa-table)))
-        (l6-regular-file-entry-p (l6-stat hns fs disk)))
+        (l6-regular-file-entry-p (l6-stat hns fs)))
    (b* (((mv file-index-list &)
-       (l6-file-index-list (l6-stat hns fs disk)
+       (l6-file-index-list (l6-stat hns fs)
                            fa-table)) )
    (equal
     (l3-stat hns (l6-to-l4-fs-helper fs fa-table)
@@ -1616,7 +1614,7 @@
       (fetch-blocks-by-indices
        disk
        file-index-list)
-      (l6-regular-file-length (l6-stat hns fs disk)))))))
+      (l6-regular-file-length (l6-stat hns fs)))))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p))
           ("subgoal *1/4'''"
            :in-theory (enable l3-regular-file-entry-p))
@@ -1633,7 +1631,7 @@
           (l6-stricter-fs-p fs fa-table))
      (b*
          (((mv l4-fs &) (l6-to-l4-fs fs fa-table))
-          (l6-file (l6-stat hns fs disk))
+          (l6-file (l6-stat hns fs))
           ((mv file-index-list &) (l6-file-index-list l6-file fa-table)))
        (implies
         (l6-regular-file-entry-p l6-file)
@@ -1655,10 +1653,10 @@
                 (fat32-entry-list-p fa-table)
                 (l6-stricter-fs-p fs fa-table)
                 (block-listp disk)
-                (l6-fs-p (l6-stat hns fs disk)))
+                (l6-fs-p (l6-stat hns fs)))
            (equal (l3-stat hns (l6-to-l4-fs-helper fs fa-table)
                            disk)
-                  (l6-to-l4-fs-helper (l6-stat hns fs disk)
+                  (l6-to-l4-fs-helper (l6-stat hns fs)
                                       fa-table)))
   :rule-classes
   (:rewrite
@@ -1669,14 +1667,14 @@
           (fat32-entry-list-p fa-table)
           (l6-stricter-fs-p fs fa-table)
           (block-listp disk)
-          (l6-fs-p (l6-stat hns fs disk)))
+          (l6-fs-p (l6-stat hns fs)))
      (b*
          (((mv l4-fs &) (l6-to-l4-fs fs fa-table))
-          (l6-fs (l6-stat hns fs disk)))
+          (l6-fs (l6-stat hns fs)))
        (implies (l6-fs-p l6-fs)
                 (equal (l3-stat hns l4-fs disk)
                        (mv-nth 0
-                               (l6-to-l4-fs (l6-stat hns fs disk)
+                               (l6-to-l4-fs (l6-stat hns fs)
                                             fa-table))))))))
   :hints
   (("goal" :in-theory (enable l6-stricter-fs-p))
@@ -1702,7 +1700,7 @@
         (block-listp disk))
    (equal (stringp (l3-stat hns (l6-to-l4-fs-helper fs fa-table)
                             disk))
-          (l6-regular-file-entry-p (l6-stat hns fs disk))))
+          (l6-regular-file-entry-p (l6-stat hns fs))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p))
           ("Subgoal *1/5''" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))
           ("Subgoal *1/4.1'" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))
@@ -1722,18 +1720,18 @@
         (fat32-entry-list-p fa-table)
         (symbol-listp hns)
         (block-listp disk)
-        (l6-regular-file-entry-p (l6-stat hns fs disk))
+        (l6-regular-file-entry-p (l6-stat hns fs))
         (<= 0
-            (l6-regular-file-length (l6-stat hns fs disk))))
+            (l6-regular-file-length (l6-stat hns fs))))
    (b*
        (((mv file-index-list &)
-         (l6-file-index-list (l6-stat hns fs disk)
+         (l6-file-index-list (l6-stat hns fs)
                              fa-table)))
      (equal
       (len (unmake-blocks
             (fetch-blocks-by-indices disk file-index-list)
-            (l6-regular-file-length (l6-stat hns fs disk))))
-      (l6-regular-file-length (l6-stat hns fs disk)))))
+            (l6-regular-file-length (l6-stat hns fs))))
+      (l6-regular-file-length (l6-stat hns fs)))))
   :hints
   (("goal" :in-theory (enable l6-stricter-fs-p))
    ("subgoal *1/4'''"
@@ -1758,13 +1756,13 @@
         (fat32-entry-list-p fa-table)
         (symbol-listp hns)
         (block-listp disk)
-        (l6-regular-file-entry-p (l6-stat hns fs disk)))
+        (l6-regular-file-entry-p (l6-stat hns fs)))
    (b* (((mv file-index-list &)
-         (l6-file-index-list (l6-stat hns fs disk)
+         (l6-file-index-list (l6-stat hns fs)
                              fa-table)))
      (feasible-file-length-p
       (len file-index-list)
-      (l6-regular-file-length (l6-stat hns fs disk)))))
+      (l6-regular-file-length (l6-stat hns fs)))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
 
 (defthm
@@ -4775,12 +4773,10 @@
           (equal (len fa-table) (len disk))
           (<= *ms-first-data-cluster* (len fa-table))
           (<= (len fa-table) *ms-bad-cluster*)
-          (l6-regular-file-entry-p (l6-stat hns1 fs disk)))
+          (l6-regular-file-entry-p (l6-stat hns1 fs)))
      (l6-regular-file-entry-p
       (l6-stat hns1
                (mv-nth 0
-                       (l6-wrchs hns2 fs disk fa-table start text))
-               (mv-nth 1
                        (l6-wrchs hns2 fs disk fa-table start text)))))
     :hints (("goal" :induct (induction-scheme hns1 hns2 fs)))))
 
@@ -5324,7 +5320,7 @@
         (<= (len (make-blocks (insert-text nil start text)))
             (count-free-blocks (fa-table-to-alv fa-table)))
         (equal n (length text))
-        (l6-regular-file-entry-p (l6-stat hns fs disk)))
+        (l6-regular-file-entry-p (l6-stat hns fs)))
    (mv-let
      (new-fs new-disk new-fa-table error-code)
      (l6-wrchs hns fs disk fa-table start text)
@@ -5378,7 +5374,7 @@
         (<= (len fa-table) *ms-bad-cluster*)
         (<= (len (make-blocks (insert-text nil start2 text2)))
             (count-free-blocks (fa-table-to-alv fa-table)))
-        (l6-regular-file-entry-p (l6-stat hns1 fs disk)))
+        (l6-regular-file-entry-p (l6-stat hns1 fs)))
    (mv-let
      (new-fs new-disk new-fa-table error-code)
      (l6-wrchs hns2 fs disk fa-table start2 text2)
