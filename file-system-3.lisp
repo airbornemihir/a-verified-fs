@@ -104,6 +104,22 @@
            (character-listp (unmake-blocks blocks n)))
   :hints (("Goal" :in-theory (enable feasible-file-length-p)) ))
 
+(defthm
+  unmake-blocks-correctness-2
+  (implies (and (block-listp blocks)
+                (natp n)
+                (feasible-file-length-p (len blocks) n))
+           (equal (len (unmake-blocks blocks n))
+                  n))
+  :rule-classes
+  ((:rewrite :corollary (implies (and (block-listp blocks)
+                                      (natp n)
+                                      (feasible-file-length-p (len blocks) n))
+                                 (iff (consp (unmake-blocks blocks n))
+                                      (not (zp n))))))
+  :hints (("goal" :in-theory (enable feasible-file-length-p))
+          ("subgoal *1/5'''" :expand (len (cdr blocks)))))
+
 (defthm unmake-make-blocks-lemma-1
         (implies (natp n)
                  (iff (consp (nthcdr n l)) (> (len l) n)))
@@ -630,7 +646,7 @@
   (implies (l3-fs-p fs)
            (l3-fs-p (delete-assoc-equal s fs))))
 
-(defthm l3-wrchs-returns-fs-lemma-2
+(defthmd l3-wrchs-returns-fs-lemma-2
   (implies (and (consp (assoc-equal s fs))
                 (l3-fs-p fs)
                 (consp (cdr (assoc-equal s fs)))

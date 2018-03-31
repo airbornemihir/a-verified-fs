@@ -578,7 +578,7 @@
     :in-theory (enable find-n-free-clusters
                        find-n-free-clusters-helper-correctness-2))))
 
-(defthm
+(defthmd
   find-n-free-clusters-correctness-3
   (implies (member-equal x (find-n-free-clusters fa-table n))
            (and (integerp x) (<= *ms-first-data-cluster* x)))
@@ -589,7 +589,7 @@
                     (start *ms-first-data-cluster*)
                     (fa-table (nthcdr *ms-first-data-cluster* fa-table))))))
 
-(defthm
+(defthmd
   find-n-free-clusters-correctness-4
   (implies
    (and (fat32-entry-list-p fa-table)
@@ -1715,26 +1715,6 @@
            :use (:instance l6-stat-correctness-1-lemma-3
                            (name (car hns))))))
 
-;; This lemma should be where unmake-blocks is defined - it isn't, currently,
-;; because placing it there leaves us with a beast of a proof-builder lemma to
-;; debug in file-system-4.lisp (which shouldn't be reliant on the proof builder
-;; in the first place - oh well)
-(defthm
-  unmake-blocks-correctness-2
-  (implies (and (block-listp blocks)
-                (natp n)
-                (feasible-file-length-p (len blocks) n))
-           (equal (len (unmake-blocks blocks n))
-                  n))
-  :rule-classes
-  ((:rewrite :corollary (implies (and (block-listp blocks)
-                                      (natp n)
-                                      (feasible-file-length-p (len blocks) n))
-                                 (iff (consp (unmake-blocks blocks n))
-                                      (not (zp n))))))
-  :hints (("goal" :in-theory (enable feasible-file-length-p))
-          ("subgoal *1/5'''" :expand (len (cdr blocks)))))
-
 (defthm
   l6-rdchs-correctness-1-lemma-2
   (implies
@@ -2158,7 +2138,7 @@
    (and (integerp x) (>= x *ms-first-data-cluster*)))
   :hints (("goal" :in-theory (enable l6-build-index-list))))
 
-(defthm
+(defthmd
   l6-wrchs-correctness-1-lemma-14
   (implies
    (and (l6-regular-file-entry-p file)
@@ -2191,7 +2171,7 @@
     :expand (len (mv-nth 0
                          (l6-file-index-list file fa-table))))))
 
-(defthm
+(defthmd
   l6-wrchs-correctness-1-lemma-16
   (implies
    (and
@@ -2938,8 +2918,7 @@
                                      fa-table)))
     0))
   :rule-classes
-  (:rewrite
-   (:rewrite
+  ((:rewrite
     :corollary
     (implies
      (and
@@ -3982,7 +3961,7 @@
            (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
           start text)))))))))
 
-(defthm
+(defthmd
   l6-wrchs-correctness-1-lemma-53
   (implies
    (and (consp (assoc-equal name fs))

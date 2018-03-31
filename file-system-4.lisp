@@ -554,7 +554,7 @@
             l
             (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
 
-(defthm
+(defthmd
   l4-wrchs-returns-stricter-fs-lemma-27
   (implies
    (and
@@ -618,13 +618,18 @@
         (equal (len alv) (len disk))
         (bounded-nat-listp (flatten l)
                            (len alv))
-        (not (member-intersectp-equal l (l4-collect-all-index-lists fs)))
+        (not (member-intersectp-equal
+              l (l4-collect-all-index-lists fs)))
         (indices-marked-listp l alv)
         (true-list-listp l))
-   (indices-marked-listp l
-                         (mv-nth 2
-                                 (l4-wrchs hns fs disk alv start text))))
-  :hints (("Goal" :induct (indices-marked-listp l alv))))
+   (indices-marked-listp
+    l
+    (mv-nth 2
+            (l4-wrchs hns fs disk alv start text))))
+  :hints
+  (("goal"
+    :in-theory (enable l4-wrchs-returns-stricter-fs-lemma-27)
+    :induct (indices-marked-listp l alv))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-29
