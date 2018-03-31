@@ -274,7 +274,7 @@
                 (not (stringp (cadr (assoc-equal s fs)))))
            (l2-fs-p (cdr (assoc-equal s fs)))))
 
-(defthm l2-wrchs-returns-fs-lemma-4
+(defthmd l2-wrchs-returns-fs-lemma-4
   (implies (and (consp (assoc-equal name fs))
                 (l2-fs-p fs)
                 (consp (cdr (assoc-equal name fs)))
@@ -289,10 +289,11 @@
   :rule-classes :forward-chaining)
 
 ;; This theorem shows that the property l2-fs-p is preserved by wrchs.
-(defthm l2-wrchs-returns-fs
+(defthm
+  l2-wrchs-returns-fs
   (implies (l2-fs-p fs)
            (l2-fs-p (l2-wrchs hns fs start text)))
-  :rule-classes (:rewrite :type-prescription))
+  :hints (("goal" :in-theory (enable l2-wrchs-returns-fs-lemma-4))))
 
 ;; This theorem shows that the property l2-fs-p is preserved by unlink.
 (defthm l2-unlink-returns-fs
@@ -344,12 +345,13 @@
           )))))
 
 ;; This theorem shows that the property l2-fs-p is preserved by create.
-(defthm l2-create-returns-fs
+(defthm
+  l2-create-returns-fs
   (implies (and (symbol-listp hns)
                 (l2-fs-p fs)
                 (stringp text))
            (l2-fs-p (l2-create hns fs text)))
-  :rule-classes (:rewrite :type-prescription))
+  :hints (("goal" :in-theory (enable l2-wrchs-returns-fs-lemma-4))))
 
 (defthm l2-create-correctness-1-lemma-1
   (implies (and (not (consp (cdr (assoc-equal name fs))))
