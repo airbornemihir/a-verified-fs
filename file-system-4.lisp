@@ -1466,7 +1466,7 @@
    ("subgoal *1/5.2'" :cases ((atom (cdr blocks))))
    ("subgoal *1/5.2'''" :expand (len (cdr blocks)))))
 
-(defthmd
+(defthm
   l4-wrchs-correctness-1-lemma-19
   (implies
    (and (boolean-listp alv)
@@ -1563,7 +1563,6 @@
        start text)))))
   :hints
   (("goal"
-    :in-theory (enable l4-wrchs-correctness-1-lemma-19)
     :expand
     (l3-regular-file-entry-p
      (cons
@@ -1600,10 +1599,7 @@
                   (mv-let (new-fs new-disk new-alv)
                     (l4-wrchs hns fs disk alv start text)
                     (declare (ignore new-alv))
-                    (l4-to-l2-fs new-fs new-disk))))
-  :hints
-  (("goal"
-    :in-theory (enable l4-wrchs-correctness-1-lemma-19))))
+                    (l4-to-l2-fs new-fs new-disk)))))
 
 (defthm
   l4-read-after-write-1
@@ -1621,10 +1617,7 @@
              (l4-wrchs hns fs disk alv start text)
              (declare (ignore new-alv))
              (equal (l4-rdchs hns new-fs new-disk start n)
-                    text)))
-  :hints
-  (("goal"
-    :in-theory (enable l4-wrchs-correctness-1-lemma-19))))
+                    text))))
 
 (defthm l4-wrchs-returns-disk-lemma-1
   (implies (and (equal (len index-list)

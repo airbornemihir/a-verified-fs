@@ -2938,8 +2938,7 @@
                                      fa-table)))
     0))
   :rule-classes
-  (:rewrite
-   (:rewrite
+  ((:rewrite
     :corollary
     (implies
      (and
