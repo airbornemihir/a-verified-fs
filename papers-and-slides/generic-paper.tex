@@ -21,6 +21,8 @@
 \usepackage{amssymb}
 \setcounter{tocdepth}{3}
 \usepackage{graphicx}
+\usepackage{graphicx}
+\usepackage{tikz}
 
 \usepackage{url}
 \urldef{\mailsa}\path|{mihir,|
@@ -131,12 +133,30 @@ the magnitude of the proof effort and the running time of the proofs.
   \end{tabular}
 \end{table}
 
+\begin{figure}
+  \centering
+  \caption{Refinement relationships between models}
+  \label{refinement-figure}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]
+    \node {l1 - tree}
+    child { node {l2 - length}
+      child { node {l3 - disk}}
+      child { node {l4 - garbage collection}
+        child { node {l5 - permissions}}
+        child { node {l6 - file allocation table}}}};
+  \end{tikzpicture}
+\end{figure}
+
 At this point in development, we have six models of the filesystem,
 here referred to as \texttt{l1} through \texttt{l6} (see
 table \ref{model-description-table}). Each new model
 \textit{refines} a previous model, adding some features and
 complexity, and thereby approaching closer to a model which is binary
-compatible with FAT32. Broadly, we characterise the filesystem
+compatible with FAT32. These refinement relationships are shown in
+figure \ref{refinement-figure}. Broadly, we characterise the filesystem
 operations we offer as either \textit{write} operations, which do
 modify the filesystem, or \textit{read} operations, which do not. In
 each model, we have been able to prove \textit{read-over-write}
