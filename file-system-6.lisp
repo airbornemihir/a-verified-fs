@@ -1715,26 +1715,6 @@
            :use (:instance l6-stat-correctness-1-lemma-3
                            (name (car hns))))))
 
-;; This lemma should be where unmake-blocks is defined - it isn't, currently,
-;; because placing it there leaves us with a beast of a proof-builder lemma to
-;; debug in file-system-4.lisp (which shouldn't be reliant on the proof builder
-;; in the first place - oh well)
-(defthm
-  unmake-blocks-correctness-2
-  (implies (and (block-listp blocks)
-                (natp n)
-                (feasible-file-length-p (len blocks) n))
-           (equal (len (unmake-blocks blocks n))
-                  n))
-  :rule-classes
-  ((:rewrite :corollary (implies (and (block-listp blocks)
-                                      (natp n)
-                                      (feasible-file-length-p (len blocks) n))
-                                 (iff (consp (unmake-blocks blocks n))
-                                      (not (zp n))))))
-  :hints (("goal" :in-theory (enable feasible-file-length-p))
-          ("subgoal *1/5'''" :expand (len (cdr blocks)))))
-
 (defthm
   l6-rdchs-correctness-1-lemma-2
   (implies
