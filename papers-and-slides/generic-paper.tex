@@ -86,56 +86,63 @@ the structure of the names in the running heads and the author index.}%
 \end{abstract}
 
 
-\section{Introduction}
+\section{Overview}
 
 Filesystems are ubiquitous in computing, and they have been of
 interest to the formal verification community for nearly as long as it
-has existed. Here, we detail an effort to advance the state of the art
+has existed.
+
+Here, we detail an effort to advance the state of the art
 by means of modelling the FAT32 filesystem at the binary level, and
 validating this model both through theorem proving and through
-co-simulation with the kernel implementation of FAT32.
+co-simulation with the kernel implementation of FAT32. We begin with
+an overview of the model and the properties proved with examples; we
+proceed to a high-level explanation of the proof techniques used; and
+further we offer some insights about the low-level issues encountered
+while working the proofs. We end with some statistics pertaining to
+the magnitude of the proof effort and the running time of the proofs.
 
-\subsection{Checking the PDF File}
+\section{The model}
 
-Kindly assure that the Contact Volume Editor is given the name and email
-address of the contact author for your paper. The Contact Volume Editor
-uses these details to compile a list for our production department at
-SPS in India. Once the files have been worked upon, SPS sends a copy of
-the final pdf of each paper to its contact author. The contact author is
-asked to check through the final pdf to make sure that no errors have
-crept in during the transfer or preparation of the files. This should
-not be seen as an opportunity to update or copyedit the papers, which is
-not possible due to time constraints. Only errors introduced during the
-preparation of the files will be corrected.
+\begin{table}[]
+  \centering
+  \caption{Models and their features}
+  \label{model-description-table}
+  \begin{tabular}{|l|p{120mm}|}
+    \hline
+    \texttt{l1} & The filesystem is represented as a tree, with leaf
+    nodes for regular files and non-leaf nodes for
+    directories. The contents of regular files are represented as
+    strings stored in the nodes of the tree; the storage available for
+    these is unbounded. \\ \hline
+    \texttt{l2} & A single element of metadata, \textit{length}, is
+    stored within each regular file.  \\ \hline
+    \texttt{l3} & The contents of regular files are divided into
+    blocks of fixed size. These blocks are stored in an external
+    "disk" data structure; the storage for these blocks remains
+    unbounded. \\ \hline
+    \texttt{l4} & The storage available for blocks is now bounded. An
+    allocation vector data structure is introduced to help allocate
+    and garbage collect blocks. \\ \hline
+    \texttt{l5} & Additional metadata for file ownership and access
+    permissions is stored within each regular file. \\ \hline
+    \texttt{l6} & The allocation vector is replaced by a file
+    allocation table, per the official FAT specification. \\ \hline
+  \end{tabular}
+\end{table}
 
-This round of checking takes place about two weeks after the files have
-been sent to the Editorial by the Contact Volume Editor, i.e., roughly
-seven weeks before the start of the conference for conference
-proceedings, or seven weeks before the volume leaves the printer's, for
-post-proceedings. If SPS does not receive a reply from a particular
-contact author, within the timeframe given, then it is presumed that the
-author has found no errors in the paper. The tight publication schedule
-of LNCS does not allow SPS to send reminders or search for alternative
-email addresses on the Internet.
-
-In some cases, it is the Contact Volume Editor that checks all the final
-pdfs. In such cases, the authors are not involved in the checking phase.
-
-\subsection{Additional Information Required by the Volume Editor}
-
-If you have more than one surname, please make sure that the Volume Editor
-knows how you are to be listed in the author index.
-
-\subsection{Copyright Forms}
-
-The copyright form may be downloaded from the ``For Authors"
-(Information for LNCS Authors) section of the LNCS Website:
-\texttt{www.springer.com/lncs}. Please send your signed copyright form
-to the Contact Volume Editor, either as a scanned pdf or by fax or by
-courier. One author may sign on behalf of all of the other authors of a
-particular paper. Digital signatures are acceptable.
-
-\section{Paper Preparation}
+At this point in development, we have six models of the filesystem,
+here referred to as \texttt{l1} through \texttt{l6} (see
+table \ref{model-description-table}). Each new model
+\textit{refines} a previous model, adding some features and
+complexity, and thereby approaching closer to a model which is binary
+compatible with FAT32. Broadly, we characterise the filesystem
+operations we offer as either \textit{write} operations, which do
+modify the filesystem, or \textit{read} operations, which do not. In
+each model, we have been able to prove \textit{read-over-write}
+properties which show that write operations have
+their effects made available immediately for reads at the same
+location, but also that they do not affect reads at other locations.
 
 Springer provides you with a complete integrated \LaTeX{} document class
 (\texttt{llncs.cls}) for multi-author books such as those in the LNCS
