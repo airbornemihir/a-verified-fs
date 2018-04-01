@@ -23,6 +23,7 @@
 \usepackage{graphicx}
 \usepackage{graphicx}
 \usepackage{tikz}
+\usetikzlibrary{matrix}
 
 \usepackage{url}
 \urldef{\mailsa}\path|{mihir,|
@@ -92,7 +93,15 @@ the structure of the names in the running heads and the author index.}%
 
 Filesystems are ubiquitous in computing, and they have been of
 interest to the formal verification community for nearly as long as it
-has existed.
+has existed. Indeed, an early application of the ACL2 theorem prover
+was in this domain, \cite{bevier1996executable}, and since then
+multiple approaches such as \cite{DBLP:conf/usenix/ChenZCCKZ16} have
+been made to verify filesystem properties including crash consistency
+through interactive theorem provers. Non-interactive theorem provers
+have also been used \cite{Nelson:2017:HPV:3132747.3132748}, which
+necessitates abstracting away some of the low-level details of the
+filesystem; although to some extent this has been a requirement of all
+the approaches until now.
 
 Here, we detail an effort to advance the state of the art
 by means of modelling the FAT32 filesystem at the binary level, and
@@ -236,13 +245,97 @@ throwaway lemma.
 
 In \textit{l1}, our simplest model, the read-over-write properties
 were, of necessity, proven from scratch, with the use of some rather
-complicated induction schemes. For reference, code listing 42 shows
+complicated induction schemes. For reference, the following code listing shows
 the induction scheme used for \texttt{l1-read-after-write-2}.
+
+\medskip
+
+\noindent
+\begin{verbatim}
+(defun induction-scheme (hns1 hns2 fs)
+  (if (atom hns1)
+      fs
+    (if (atom fs)
+        nil
+      (let ((sd (assoc (car hns2) fs)))
+        (if (atom sd)
+            fs
+          (if (atom hns2)
+              fs
+            (if (not (equal (car hns1) (car hns2)))
+                fs
+              (let ((contents (cdr sd)))
+                (if (atom (cdr hns1))
+                    (cons (cons (car sd)
+                                contents)
+                          (delete-assoc (car hns2) fs))
+                  (cons (cons (car sd)
+                              (induction-scheme (cdr hns1) (cdr hns2) contents))
+                                (delete-assoc (car hns2) fs)))))))))))
+\end{verbatim}
 
 In each subsequent model, the read-over-write properties are proven as
 corollaries of equivalence proofs which establish the correctness of
 read and write operations in the respective model with respect to a
-previous model. A representation of such an equivalence proof follows.
+previous model. A representation of such an equivalence proof can be
+seen in figures \ref{l2-wrchs-correctness-1},
+\ref{l2-rdchs-correctness-1} and \ref{l2-read-over-write-1}, which
+respectively show the equivalence proof for \texttt{l2-wrchs}, the
+equivalence proof for \texttt{l2-rdchs} and the composition of these
+to obtain the first read-over-write theorem for model \texttt{l2}.
+
+
+\begin{figure}
+  \centering
+  \caption{l2-wrchs-correctness-1}
+  \label{l2-wrchs-correctness-1}
+  \begin{tikzpicture}
+    \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
+            {
+              l2 & l2 \\
+              l1 & l1 \\};
+            \path[-stealth]
+            (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
+            edge node [below] {write} (m-1-2)
+            (m-2-1.east|-m-2-2) edge node [below] {write} (m-2-2)
+            (m-1-2) edge node [left] {l2-to-l1-fs} (m-2-2);
+  \end{tikzpicture}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \caption{l2-rdchs-correctness-1}
+  \label{l2-rdchs-correctness-1}
+  \begin{tikzpicture}
+    \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
+            {
+              l2 & text \\
+              l1 \\};
+            \path[-stealth]
+            (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
+            edge node [below] {read} (m-1-2)
+            (m-2-1.east|-m-2-2) edge node [below] {read} (m-1-2);
+  \end{tikzpicture}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \caption{l2-read-over-write-1}
+  \label{l2-read-over-write-1}
+  \begin{tikzpicture}
+    \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
+            {
+              l2 & l2 & text \\
+              l1 & l1 \\};
+            \path[-stealth]
+            (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
+            edge node [below] {write} (m-1-2)
+            (m-2-1.east|-m-2-2) edge node [below] {write} (m-2-2)
+            (m-1-2) edge node [left] {l2-to-l1-fs} (m-2-2)
+            edge node [below] {read} (m-1-3)
+            (m-2-2.east) edge node [below] {read} (m-1-3);
+  \end{tikzpicture}
+\end{figure}
 
 \section{Some proof details}
 
@@ -264,9 +357,9 @@ These properties, in the form of the predicates
 \texttt{indices-marked-listp} and \texttt{no-duplicatesp}, are
 packaged together into the \texttt{l4-stricter-fs-p} predicate, for
 which a listing follows.%%  It is interesting to note that disabling this
-%% function brought down the compilation time for l4 from 20 seconds to and the
+%% function brings down the compilation time for l4 from 20 seconds to and the
 %% that for l6 from 84 seconds to .
-It is interesting to note that disabling l6-wrchs brought down the
+It is interesting to note that disabling l6-wrchs brings down the
 certification time for \texttt{l6} from 84 seconds to 64 seconds.
 
 \medskip
@@ -318,58 +411,10 @@ publication of the book:
 \subsubsection*{Acknowledgments.} The heading should be treated as a
 subsubsection heading and should not be assigned a number.
 
-\section{The References Section}\label{references}
+\section{References}\label{references}
 
-In order to permit cross referencing within LNCS-Online, and eventually
-between different publishers and their online databases, LNCS will,
-from now on, be standardizing the format of the references. This new
-feature will increase the visibility of publications and facilitate
-academic research considerably. Please base your references on the
-examples below. References that don't adhere to this style will be
-reformatted by Springer. You should therefore check your references
-thoroughly when you receive the final pdf of your paper.
-The reference section must be complete. You may not omit references.
-Instructions as to where to find a fuller version of the references are
-not permissible.
-
-We only accept references written using the latin alphabet. If the title
-of the book you are referring to is in Russian or Chinese, then please write
-(in Russian) or (in Chinese) at the end of the transcript or translation
-of the title.
-
-The following section shows a sample reference list with entries for
-journal articles \cite{jour}, an LNCS chapter \cite{lncschap}, a book
-\cite{book}, proceedings without editors \cite{proceeding1} and
-\cite{proceeding2}, as well as a URL \cite{url}.
-Please note that proceedings published in LNCS are not cited with their
-full titles, but with their acronyms!
-
-\begin{thebibliography}{4}
-
-\bibitem{jour} Smith, T.F., Waterman, M.S.: Identification of Common Molecular
-Subsequences. J. Mol. Biol. 147, 195--197 (1981)
-
-\bibitem{lncschap} May, P., Ehrlich, H.C., Steinke, T.: ZIB Structure Prediction Pipeline:
-Composing a Complex Biological Workflow through Web Services. In: Nagel,
-W.E., Walter, W.V., Lehner, W. (eds.) Euro-Par 2006. LNCS, vol. 4128,
-pp. 1148--1158. Springer, Heidelberg (2006)
-
-\bibitem{book} Foster, I., Kesselman, C.: The Grid: Blueprint for a New Computing
-Infrastructure. Morgan Kaufmann, San Francisco (1999)
-
-\bibitem{proceeding1} Czajkowski, K., Fitzgerald, S., Foster, I., Kesselman, C.: Grid
-Information Services for Distributed Resource Sharing. In: 10th IEEE
-International Symposium on High Performance Distributed Computing, pp.
-181--184. IEEE Press, New York (2001)
-
-\bibitem{proceeding2} Foster, I., Kesselman, C., Nick, J., Tuecke, S.: The Physiology of the
-Grid: an Open Grid Services Architecture for Distributed Systems
-Integration. Technical report, Global Grid Forum (2002)
-
-\bibitem{url} National Center for Biotechnology Information, \url{http://www.ncbi.nlm.nih.gov}
-
-\end{thebibliography}
-
+\bibliographystyle{splncs}
+\bibliography{references}
 
 \section*{Appendix: Springer-Author Discount}
 
