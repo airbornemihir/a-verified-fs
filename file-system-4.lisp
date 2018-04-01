@@ -222,31 +222,37 @@
                 (block-listp disk))
            (boolean-listp (mv-nth 2 (l4-wrchs hns fs disk alv start text)))))
 
-(defun l4-collect-all-index-lists (fs)
+(defund
+  l4-collect-all-index-lists (fs)
   (declare (xargs :guard (l4-fs-p fs)))
-  (if (atom fs)
-      nil
-    (let* ((directory-or-file-entry (car fs))
-           (entry (cdr directory-or-file-entry))
-           (tail (l4-collect-all-index-lists (cdr fs))))
-      (if (l4-regular-file-entry-p entry)
-          (cons (car entry) tail)
-        (binary-append (l4-collect-all-index-lists entry) tail))))
-  )
+  (if
+   (atom fs)
+   nil
+   (let* ((directory-or-file-entry (car fs))
+          (entry (cdr directory-or-file-entry))
+          (tail (l4-collect-all-index-lists (cdr fs))))
+         (if (l4-regular-file-entry-p entry)
+             (cons (car entry) tail)
+             (binary-append (l4-collect-all-index-lists entry)
+                            tail)))))
 
-(defthm l4-collect-all-index-lists-correctness-1
+(defthm
+  l4-collect-all-index-lists-correctness-1
   (implies (l3-fs-p fs)
-           (true-list-listp (l4-collect-all-index-lists fs))))
+           (true-list-listp (l4-collect-all-index-lists fs)))
+  :hints (("goal" :in-theory (enable l4-collect-all-index-lists))))
 
 (include-book "flatten-lemmas")
 
-  ;; This theorem shows the equivalence between two ways of listing indices
+;; This theorem shows the equivalence between two ways of listing indices
 
-(defthm l4-collect-all-index-lists-correctness-2
+(defthm
+  l4-collect-all-index-lists-correctness-2
   (implies (l3-fs-p fs)
            (equal (flatten (l4-collect-all-index-lists fs))
                   (l4-list-all-indices fs)))
-  :hints (("Goal" :in-theory (enable l4-list-all-indices)) ))
+  :hints (("goal" :in-theory (enable l4-list-all-indices
+                                     l4-collect-all-index-lists))))
 
 (defthm
   l4-collect-all-index-lists-correctness-3
@@ -287,16 +293,16 @@
                (indices-marked-listp l2 alv)))))
 
 ;; this should be where the encapsulate ends
+(in-theory (enable l4-collect-all-index-lists))
 
-(defthm l4-wrchs-returns-stricter-fs-lemma-1
-  (implies
-   (and
-    (consp (assoc-equal name fs))
-    (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
-    (l3-fs-p fs)
-    (disjoint-list-listp (l4-collect-all-index-lists fs)))
-   (disjoint-list-listp
-    (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
+(defthm
+  l4-wrchs-returns-stricter-fs-lemma-1
+  (implies (and (consp (assoc-equal name fs))
+                (not (l3-regular-file-entry-p (cdr (assoc-equal name fs))))
+                (l3-fs-p fs)
+                (disjoint-list-listp (l4-collect-all-index-lists fs)))
+           (disjoint-list-listp
+            (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-2
   (implies
@@ -420,6 +426,8 @@
            (not-intersectp-list (find-n-free-blocks alv n)
                                 (l4-collect-all-index-lists fs))))
 
+(in-theory (disable l4-collect-all-index-lists))
+
 (encapsulate ()
   (local (include-book "std/basic/inductions" :dir :system))
 
@@ -452,6 +460,8 @@
 (defcong list-equiv list-equiv
   (set-indices-in-alv alv index-list value) 1
   :hints (("goal" :in-theory (enable set-indices-in-alv))))
+
+(in-theory (enable l4-collect-all-index-lists))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-17
   (implies (and (boolean-listp alv)
@@ -494,6 +504,8 @@
          l
          (l4-collect-all-index-lists (cdr (assoc-equal name fs)))))))
 
+(in-theory (disable l4-collect-all-index-lists))
+
 (defthm l4-wrchs-returns-stricter-fs-lemma-21
   (implies (and (natp n)
                 (boolean-listp alv)
@@ -534,6 +546,8 @@
   :hints (("goal" :induct (l4-list-all-indices fs)
            :in-theory (enable l4-list-all-indices))))
 
+(in-theory (enable l4-collect-all-index-lists))
+
 (defthm l4-wrchs-returns-stricter-fs-lemma-25
   (implies (and (l3-fs-p fs)
                 (boolean-listp alv)
@@ -553,6 +567,8 @@
            (not-intersectp-list
             l
             (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
+
+(in-theory (disable l4-collect-all-index-lists))
 
 (defthmd
   l4-wrchs-returns-stricter-fs-lemma-27
@@ -631,6 +647,8 @@
     :in-theory (enable l4-wrchs-returns-stricter-fs-lemma-27)
     :induct (indices-marked-listp l alv))))
 
+(in-theory (enable l4-collect-all-index-lists))
+
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-29
   (implies
@@ -686,6 +704,8 @@
        (cadr (car fs))
        (l4-collect-all-index-lists (delete-assoc-equal name
                                                        (cdr fs)))))))))
+
+(in-theory (disable l4-collect-all-index-lists))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-31
@@ -775,6 +795,8 @@
   :hints (("goal" :in-theory (disable l4-wrchs-returns-stricter-fs-lemma-31)
            :use l4-wrchs-returns-stricter-fs-lemma-31)))
 
+(in-theory (enable l4-collect-all-index-lists))
+
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-33
   (implies
@@ -795,6 +817,8 @@
                         (l4-collect-all-index-lists
                          (mv-nth 0
                                  (l4-wrchs hns fs disk alv start text))))))
+
+(in-theory (disable l4-collect-all-index-lists))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-34
@@ -846,9 +870,25 @@
  :hints (("goal" :induct (indices-marked-listp l alv))
          ("subgoal *1/2" :expand (flatten l))))
 
-;; find a simpler problem that doesn't have all these details, that shows the
-;; same kind of issue
-(defthm l4-wrchs-returns-stricter-fs
+;; (defthm
+;;   l4-wrchs-returns-stricter-fs
+;;   (implies (and (symbol-listp hns)
+;;                 (l4-stricter-fs-p fs alv)
+;;                 (natp start)
+;;                 (stringp text)
+;;                 (block-listp disk)
+;;                 (equal (len alv) (len disk)))
+;;            (mv-let (new-fs new-disk new-alv)
+;;              (l4-wrchs hns fs disk alv start text)
+;;              (declare (ignore new-disk))
+;;              (l4-stricter-fs-p new-fs new-alv)))
+;;   :hints
+;;   (("goal" :induct (l4-wrchs hns fs disk alv start text)
+;;     :in-theory (enable l4-collect-all-index-lists))
+;;    ("subgoal *1/6" :in-theory (enable l3-regular-file-entry-p))))
+
+(defthm
+  l4-wrchs-returns-stricter-fs
   (implies (and (symbol-listp hns)
                 (l4-stricter-fs-p fs alv)
                 (natp start)
@@ -859,7 +899,13 @@
              (l4-wrchs hns fs disk alv start text)
              (declare (ignore new-disk))
              (l4-stricter-fs-p new-fs new-alv)))
-  :hints (("Subgoal *1/6" :in-theory (enable L3-REGULAR-FILE-ENTRY-P))))
+  :hints
+  (("goal" :induct (l4-wrchs hns fs disk alv start text))
+   ("subgoal *1/7" :in-theory (enable l4-collect-all-index-lists))
+   ("subgoal *1/6" :in-theory (enable l4-collect-all-index-lists
+                                      l3-regular-file-entry-p))
+   ("subgoal *1/5" :in-theory (enable l4-collect-all-index-lists))
+   ("subgoal *1/4" :in-theory (enable l4-collect-all-index-lists))))
 
 (defun l4-to-l2-fs (fs disk)
   (declare (xargs :guard (and (l4-fs-p fs) (block-listp disk))
@@ -959,7 +1005,8 @@
                 (nat-listp (cdr index-list)))
            (not (not-intersectp-list index-list
                                      (l4-collect-all-index-lists fs))))
-  :hints (("goal" :in-theory (enable l4-list-all-indices))))
+  :hints (("goal" :in-theory (enable l4-list-all-indices
+                                     l4-collect-all-index-lists))))
 
 (defthm
   l4-wrchs-correctness-1-lemma-7
@@ -993,7 +1040,8 @@
                                (set-indices disk index-list value-list))
                   (l3-to-l2-fs fs disk)))
   :hints
-  (("subgoal *1/7''" :in-theory (disable l4-wrchs-correctness-1-lemma-5)
+  (("goal" :in-theory (enable l4-collect-all-index-lists))
+   ("subgoal *1/7''" :in-theory (disable l4-wrchs-correctness-1-lemma-5)
     :use (:instance l4-wrchs-correctness-1-lemma-5
                     (index (car index-list))
                     (value (car value-list))))))
