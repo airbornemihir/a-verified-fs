@@ -5284,7 +5284,8 @@
   (("goal"
     :in-theory
     (e/d (l6-stricter-fs-p)
-         (l4-wrchs-returns-stricter-fs
+         (l6-wrchs
+          l4-wrchs-returns-stricter-fs
           l4-collect-all-index-lists-correctness-3
           l6-list-all-ok-indices-correctness-5
           l6-wrchs-correctness-1))
@@ -5391,6 +5392,7 @@
     :in-theory (disable l4-read-after-write-2 l4-stricter-fs-p
                         l6-wrchs-returns-stricter-fs-lemma-10
                         l4-rdchs l6-rdchs l6-rdchs-correctness-1
+                        l6-wrchs
                         l6-wrchs-correctness-1
                         l6-stat-correctness-1)
     :use
