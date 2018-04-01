@@ -555,8 +555,6 @@
 ;;  (implies (l4-stricter-fs-p (l5-to-l4-fs fs) alv)
 ;;           (l5-fs-p fs)))
 
-(in-theory (enable l4-collect-all-index-lists))
-
 (defthm
   l5-wrchs-correctness-1-lemma-2
   (implies
@@ -589,8 +587,6 @@
         (no-duplicates-listp (l4-collect-all-index-lists (l5-to-l4-fs fs))))
    (no-duplicates-listp
     (l4-collect-all-index-lists (l5-to-l4-fs (cdr (assoc-equal name fs)))))))
-
-(in-theory (disable l4-collect-all-index-lists))
 
 (defthm l5-wrchs-correctness-1-lemma-5
   (implies (and (l5-fs-p fs)
