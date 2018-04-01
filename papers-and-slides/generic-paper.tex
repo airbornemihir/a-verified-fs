@@ -156,7 +156,13 @@ table \ref{model-description-table}). Each new model
 \textit{refines} a previous model, adding some features and
 complexity, and thereby approaching closer to a model which is binary
 compatible with FAT32. These refinement relationships are shown in
-figure \ref{refinement-figure}. Broadly, we characterise the filesystem
+figure \ref{refinement-figure}. \texttt{l0} is the simplest of these,
+representing the filesystem as a literal tree; later models feature
+file metadata (including ownership and permissions), externalisation
+of file contents, and allocation/file allocation using an allocation
+vector after the fashion of the CP/M file system.
+
+Broadly, we characterise the filesystem
 operations we offer as either \textit{write} operations, which do
 modify the filesystem, or \textit{read} operations, which do not. In
 each model, we have been able to prove \textit{read-over-write}
@@ -169,10 +175,62 @@ write of some text at some location, a read of the same length at the
 same location yields the same text. The second read-after-write
 theorem states that after a write of some text at some location, a
 read at any other location returns exactly what it would have returned
-before the write.
+before the write. As an example, listings for the \texttt{l1} versions
+of these theorems follow.
+
+\medskip
+
+\noindent
+\begin{verbatim}
+(defthm l1-read-after-write-1
+  (implies (and (l1-fs-p fs)
+                (stringp text)
+                (symbol-listp hns)
+                (natp start)
+                (equal n (length text))
+                (stringp (l1-stat hns fs)))
+           (equal (l1-rdchs hns (l1-wrchs hns fs start text) start n) text)))
+
+(defthm l1-read-after-write-2
+  (implies (and (l1-fs-p fs)
+                (stringp text2)
+                (symbol-listp hns1)
+                (symbol-listp hns2)
+                (not (equal hns1 hns2))
+                (natp start1)
+                (natp start2)
+                (natp n1)
+                (stringp (l1-stat hns1 fs)))
+           (equal (l1-rdchs hns1 (l1-wrchs hns2 fs start2 text2) start1 n1)
+                  (l1-rdchs hns1 fs start1 n1))))
+\end{verbatim}
 
 By composing these properties, we can reason about executions
-involving multiple reads and writes.
+involving multiple reads and writes, as shown in the following
+throwaway lemma.
+
+\medskip
+
+\noindent
+\begin{verbatim}
+(thm
+ (implies (and (l1-fs-p fs)
+               (stringp text1)
+               (stringp text2)
+               (symbol-listp hns1)
+               (symbol-listp hns2)
+               (not (equal hns1 hns2))
+               (natp start1)
+               (natp start2)
+               (stringp (l1-stat hns1 fs))
+               (equal n1 (length text1)))
+          (equal (l1-rdchs hns1
+                           (l1-wrchs hns2 (l1-wrchs hns1 fs start1 text1)
+                                     start2 text2)
+                           start1 n1)
+                 (l1-rdchs hns1 (l1-wrchs hns1 fs start1 text1)
+                           start1 n1))))
+\end{verbatim}
 
 \section{Proof methodology}
 
