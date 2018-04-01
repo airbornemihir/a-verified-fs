@@ -339,6 +339,8 @@ to obtain the first read-over-write theorem for model \texttt{l2}.
 
 \section{Some proof details}
 
+\subsection{Invariants}
+
 As the models grow more complex, with the addition of more auxiliary
 data the "sanity" criteria for filesystem instances become more
 complex. For instance, in \texttt{l4}, the predicate \texttt{l4-fs-p}
@@ -356,11 +358,7 @@ modified through a write to a different regular file.
 These properties, in the form of the predicates
 \texttt{indices-marked-listp} and \texttt{no-duplicatesp}, are
 packaged together into the \texttt{l4-stricter-fs-p} predicate, for
-which a listing follows.%%  It is interesting to note that disabling this
-%% function brings down the compilation time for l4 from 20 seconds to and the
-%% that for l6 from 84 seconds to .
-It is interesting to note that disabling l6-wrchs brings down the
-certification time for \texttt{l6} from 84 seconds to 64 seconds.
+which a listing follows.
 
 \medskip
 
@@ -374,6 +372,32 @@ certification time for \texttt{l6} from 84 seconds to 64 seconds.
             (and (no-duplicatesp all-indices)
                  (indices-marked-p all-indices alv)))))
 \end{verbatim}
+
+\subsection{Performance hacking}
+
+As in all ACL2 verification efforts, our work accumulated a number of
+helper functions and lemmata in the service of the big-picture proofs,
+and these were prone to slow down our proofs somewhat. Thus, using
+ACL2's \texttt{accumulated-persistence} tool, we made an effort to
+trim the number of enabled rules by focussing on the rules which the
+tool suggested to be \textit{useless}. This was important in helping us reduce
+the certification time for \texttt{l6} from 229 seconds to 84 seconds,
+but from this point onwards results were mixed. As an illustrative
+example, disabling the function \texttt{l6-wrchs} brought down the
+certification time for \textt{l6} from 84 seconds to 60 seconds, yet
+disabling another function, \texttt{l4-collect-all-index-lists}, had a
+negligible effect on other books and actually served to increase the
+certification time from 60 seconds to 69 seconds. Needless to say, the
+latter change was rolled back; a pertinent explanation can be found in
+the ACL2 documentation topic \texttt{accumulated-persistence-subtleties}.
+
+%%  It is interesting to note that disabling
+%%  l4-collect-all-index-lists brings down the certification time for l4
+%%  from 19 seconds to 18 seconds, the certification time for l5 from
+%%  21 seconds to 22 seconds and the
+%% that for l6 from 60 seconds to 69 seconds.
+%% It is interesting to note that disabling l6-wrchs brings down the
+%% certification time for \texttt{l6} from 84 seconds to 60 seconds.
 
 \subsubsection*{Acknowledgments.} This work has been supported by a
 grant from the NSF.
