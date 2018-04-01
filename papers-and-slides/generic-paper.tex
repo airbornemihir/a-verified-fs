@@ -104,7 +104,7 @@ further we offer some insights about the low-level issues encountered
 while working the proofs. We end with some statistics pertaining to
 the magnitude of the proof effort and the running time of the proofs.
 
-\section{The model}
+\section{The models}
 
 \begin{table}[]
   \centering
@@ -205,7 +205,11 @@ modified through a write to a different regular file.
 These properties, in the form of the predicates
 \texttt{indices-marked-listp} and \texttt{no-duplicatesp}, are
 packaged together into the \texttt{l4-stricter-fs-p} predicate, for
-which a listing follows.
+which a listing follows.%%  It is interesting to note that disabling this
+%% function brought down the compilation time for l4 from 20 seconds to and the
+%% that for l6 from 84 seconds to .
+It is interesting to note that disabling l6-wrchs brought down the
+certification time for \texttt{l6} from 84 seconds to 64 seconds.
 
 \medskip
 
