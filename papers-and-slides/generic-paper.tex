@@ -117,12 +117,14 @@ processes and file descriptors. Later, Klein et al with the SeL4 project
 \cite{klein2009sel4} used Isabelle/HOL to verify a microkernel;
 however their design abstracted away file operations in order to keep
 their trusted computing base small. More recently, the COGENT project,
-again using Isabelle/HOL built on SeL4 to generate filesystem code
+again using Isabelle/HOL, built on SeL4 to generate filesystem code
 from a specification in a manner that was guaranteed to avoid many of
-the errors that SeL4 proved impossible, and elsewhere the FSCQ filesystem
-\cite{DBLP:conf/usenix/ChenZCCKZ16}, a much more sophisticated project
-using Coq, was built to have formally verified crash consistency
-properties.
+the errors that SeL4 proved impossible, and elsewhere the SibylFS
+project \cite{ridge2015sibylfs} provided an executable filesystem at a
+level of abstraction that could operate across multiple operating
+systems. Coq has also been used, for instance, for the the FSCQ filesystem
+\cite{DBLP:conf/usenix/ChenZCCKZ16}, which was built to have formally
+verified crash consistency properties.
 
 \subsection{Non-interactive theorem provers and other techniques}
 Non-interactive theorem provers such as Z3
