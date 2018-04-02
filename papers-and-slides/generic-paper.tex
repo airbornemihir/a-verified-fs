@@ -107,34 +107,55 @@ proof effort and the running time of the proofs.
 
 \section{Related work}
 
-\subsection{Interactive theorem provers}
-Many efforts in the operating system verification domain have used
-interactive theorem provers, such as Coq, Isabelle/HOL and ACL2
-\cite{kaufmann1996acl2}. An early attempt was by Bevier and Cohen
-\cite{bevier1996executable}, who specified the Synergy filesystem and
-created an executable model of the same in ACL2, down to the level of
-processes and file descriptors. Later, Klein et al with the SeL4 project
-\cite{klein2009sel4} used Isabelle/HOL to verify a microkernel;
-however their design abstracted away file operations in order to keep
-their trusted computing base small. More recently, the COGENT project,
-again using Isabelle/HOL, built on SeL4 to generate filesystem code
-from a specification in a manner that was guaranteed to avoid many of
-the errors that SeL4 proved impossible, and elsewhere the SibylFS
-project \cite{ridge2015sibylfs} provided an executable filesystem at a
-level of abstraction that could operate across multiple operating
-systems. Coq has also been used, for instance, for the the FSCQ filesystem
-\cite{DBLP:conf/usenix/ChenZCCKZ16}, which was built to have formally
-verified crash consistency properties.
+Verifying even simple filesystems is a fairly complex task; thus, the
+pertinent work in the literature has centred on the use of theorem
+provers rather than on ad hoc verification techniques. In listing a
+few of these verification endeavours, it's important to note that each
+is, to some degree, abstracted away from the byte-level reality which
+is our goal; yet there's a difference between the extent to which
+interactive and non-interactive theorem provers need these
+abstractions.
 
-\subsection{Non-interactive theorem provers and other techniques}
-Non-interactive theorem provers such as Z3
+\subsection{Interactive theorem provers}
+An early attempt in the filesystem verification domain was by Bevier
+and Cohen, who specified the Synergy filesystem and created an
+executable model of the same in ACL2
+\cite{kaufmann_manolios_moore_2000}, down to the level of processes
+and file descriptors. On the proof front, they certified their model
+to preserve well-formedness of their data structures as invariants;
+however, they did not attempt to prove, for instance, read-over-write
+properties or crash consistency. Later, Klein et al with the SeL4
+project \cite{klein2009sel4} used Isabelle/HOL
+\cite{nipkow2002isabelle} to verify a microkernel;
+while their design abstracted away file operations in order to keep
+their trusted computing base small, it served as a precursor to their
+more recent COGENT project. Here the authors built a "verified
+compiler" of sorts, generating C-language code from specifications in
+their domain-specific in a manner guaranteed to avoid many common
+filesystem bugs. Elsewhere, the SibylFS project
+\cite{ridge2015sibylfs}, again using Isabelle/HOL, provided
+anexecutable specification for filesystems at a level of abstraction
+that could function across multiple operating systems including OSX
+and Unix. The Coq prover \cite{bertot2013interactive} has also been
+used, for instance, for FSCQ
+\cite{DBLP:conf/usenix/ChenZCCKZ16}, a state-of-the art filesystem
+which was built to have high performance and formally verified crash
+consistency properties. We note here that these systems, while working
+from some kind of specification, all produce a completely novel
+filesystem instead of attempting to specify an existing, widely used
+filesystem, such as FAT32 which is our technology target.
+
+\subsection{Non-interactive theorem provers}
+Non-interactive theorem provers such as Z3 \cite{de2008z3}
 have also been used; Hyperkernel
 \cite{Nelson:2017:HPV:3132747.3132748} is a recent effort which
-focusses on simplifying an operating system until the point that Z3
-can verify it with its SMT solving techniques. However, it also shows
-some of the limitations of this approach - in assuming finite limits,
-among other abstractions, it imposes a limit on how much the verified
-system can be considered to be realistic.
+focusses on simplifying the xv6 microkernel until the point that Z3
+can verify it with its SMT solving techniques. However, towards this
+end, all system calls in Hyperkernel are replaced with analogs which
+can terminate in constant time; while this approach is theoretically
+sound, it increases the chances of discrepancies between the model and
+the implementation which may diminish the utility of the proofs or
+even render them moot.
 
 \section{The FAT32 filesystem}
 
