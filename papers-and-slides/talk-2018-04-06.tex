@@ -41,7 +41,7 @@
 
 %--- the presentation begins here ----------------%
 
-\section{Motivation and related work}
+\section{Introduction}
 
 \begin{frame}{Why we need a verified filesystem}
   \begin{itemize}
@@ -56,21 +56,38 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Related work}
+\begin{frame}{Why FAT32?}
   \begin{itemize}
-  \item In Haogang Chen's 2016 dissertation, the author uses Coq to
-    build a filesystem (named FSCQ) which is proven safe against
-    crashes in a new logical framework named Crash Hoare Logic. His
-    (exported) Haskell implementation performs comparably to ext4.
-  \item Hyperkernel (Nelson et al., SOSP '17) is a "push-button"
-    verification effort, but approximates by changing POSIX system
-    calls for ease of verification.
-  \item In our work, we instead aim to model an existing filesystem (FAT32)
-    faithfully and match the resulting disk image byte-to-byte.
+  \item FAT32 was widely used in the days of Windows 2000; while the
+    closely related FAT12 and FAT16 have mostly fallen into disuse,
+    FAT32 continues to be used in removable media.
+  \item It offers a simple design compared to other filesystems; while
+    it lacks journalling, arguably an essential feature, it's a much
+    easier target for verification.
+  \item It's also not as unsophisticated as, say, the CP/M filesystem
+    which doesn't support subdirectories. Thus, a verification effort
+    for FAT32 can form a basis for verifying more complex filesystems.
   \end{itemize}
 \end{frame}
 
 \section{Our approach}
+
+\begin{frame}{Refinement mappings (Abadi, 1991)}
+  \begin{itemize}
+  \item For a pair of transition systems $S_1$ and $S_2$, $S_1$ is said to
+    \textit{implement} $S_2$ if every externally visible
+    behaviour allowed by $S_1$ is also allowed by $S_2$.
+  \item This implementation relation can be proved if (but not only
+    if) a \textit{refinement mapping} can be discovered that maps
+    each (state, transition) pair of $S_1$ to a legal (state,
+    transition) pair of $S_2$.
+  \item Proving an implementation relation of this kind, by starting
+    with a simple system which can easily be reasoned about and
+    refining one or more times to get to a system of sufficient
+    complexity, is often a more tractable alternative to proving the
+    correctness of the complex system from scratch.
+  \end{itemize}
+\end{frame}
 
 \begin{frame}{Modelling a filesystem}
   \begin{itemize}
@@ -102,12 +119,11 @@
 
 \begin{frame}{Verifying the model}
   \begin{itemize}
-  \item We've focussed so far on two filesystem properties, derived
-    from the theory of arrays where they are known as the
-    read-over-write properties.
+  \item We've focussed so far on two filesystem properties, known in
+    the literature as the \textit{read-over-write} properties.
     \begin{enumerate}
-    \item After a write, a read of the same length at the same
-      location should yield that which was written.
+    \item After a write of some text at some location, a read of the
+      same length at the same location should yield the text.
     \item After a write, a read at a different location should yield
       the same results as a read before the write.
     \end{enumerate}
@@ -154,6 +170,24 @@
   \item Model a more complex filesystem, for instance NTFS, by
     re-using algorithms and proofs from the models built so far.
   \end{enumerate}
+\end{frame}
+
+\section{Related work and conclusion}
+
+\begin{frame}{Related work}
+  \begin{itemize}
+  \item FSCQ (Chen, 2016) - Coq is used to build a filesystem , proven
+    safe against crashes in a new logical framework named Crash Hoare
+    Logic. Implementation (exported to Haskell) performs comparably to
+    ext4.
+  \item SibylFS (Ridge, 2015) - a "verifying compiler" of sorts is
+    provided to translate specs in a DSL to C implementations.
+  \item Hyperkernel (Nelson, 2017) - xv6 microkernel is implemented
+    with system calls changed to make them constant-time, in return,
+    verification burden becomes lightweight enough for Z3 SMT solver.
+  \item In our work, we instead aim to model an existing filesystem (FAT32)
+    faithfully and match the resulting disk image byte-to-byte.
+  \end{itemize}
 \end{frame}
 
 \end{document}
