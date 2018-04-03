@@ -4,7 +4,7 @@
 \usepackage{tikz}
 \usetikzlibrary{matrix}
 % items enclosed in square brackets are optional; explanation below
-\title{Verifying the FAT32 filesystem in ACL2}
+\title{Partially verifying the FAT32 filesystem in ACL2}
 \author{Mihir Mehta}
 \institute{
   Department of Computer Science\\
@@ -45,66 +45,117 @@
 
 \begin{frame}{Why we need a verified filesystem}
   \begin{itemize}
-  \item Filesystems are everywhere, even as operating systems move
-    towards making them invisible.
-  \item In the absence of a clear specification of filesystems, users
-    (and sysadmins in particular) are underserved.
-  \item Modern filesystems have become increasingly complex, and so
-    have the tools to analyse and recover data from them.
-  \item It would be worthwhile to specify and formally verify, in the
-    ACL2 theorem prover, the guarantees claimed by filesystems and tools.
+  \item Ubiquity of filesystems, even as operating systems move
+    towards making them invisible
+  \item Increasing complexity of modern filesystems and the tools
+    which analyse and recover data
+  \item Inadequacy of POSIX, especially as a basis for a formal
+    verification effort
+  \item Opportunity to formally verify guarantees claimed by these
+    filesystems and tools
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Why FAT32?}
   \begin{itemize}
-  \item FAT32 was widely used in the days of Windows 2000; while the
-    closely related FAT12 and FAT16 have mostly fallen into disuse,
-    FAT32 continues to be used in removable media.
-  \item It offers a simple design compared to other filesystems; while
-    it lacks journalling, arguably an essential feature, it's a much
-    easier target for verification.
-  \item It's also not as unsophisticated as, say, the CP/M filesystem
-    which doesn't support subdirectories. Thus, a verification effort
-    for FAT32 can form a basis for verifying more complex filesystems.
+  \item Officially supported by Windows in the past and still used in USB
+    thumb drives and the like
+  \item Relatively simple, without journalling or transactions
+  \item Supports, for example, nested subdirectories and long filenames
+  \item Tractable from verification standpoint, and yet capable of
+    providing a basis for verification of more complex filesystems
   \end{itemize}
 \end{frame}
 
-\section{Our approach}
+\section{Analysing and approaching the problem}
 
-\begin{frame}{Refinement mappings (Abadi, 1991)}
+\begin{frame}{Verification task}
+  In order to build a formal model of FAT32, we need to incorporate
   \begin{itemize}
-  \item For a pair of transition systems $S_1$ and $S_2$, $S_1$ is said to
-    \textit{implement} $S_2$ if every externally visible
+  \item A file allocation table - this serves as a linked list for
+    contents of regular files and directories
+  \item Clusters (a.k.a. extents) - groups of adjacent sectors, read
+    and written all at once
+  \item Metadata for regular files and directories
+  \item Error codes, to signify insufficient space and the like
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Verifying through refinement}
+  \begin{itemize}
+  \item Intuition - start simply, instead of modelling all
+    filesystem features at once
+  \item Justification - reasoning about input/output behaviour of a
+    complex system is hard, but an equivalent approach is to reason
+    about the input/output behaviour of a simple system, and prove the
+    complex system \textit{implements} (Abadi, 1991) the simple system
+  \item Definition - For a pair of transition systems $S_1$ and $S_2$,
+    $S_1$ is said to implement $S_2$ if every externally visible
     behaviour allowed by $S_1$ is also allowed by $S_2$.
-  \item This implementation relation can be proved if (but not only
-    if) a \textit{refinement mapping} can be discovered that maps
-    each (state, transition) pair of $S_1$ to a legal (state,
-    transition) pair of $S_2$.
-  \item Proving an implementation relation of this kind, by starting
-    with a simple system which can easily be reasoned about and
-    refining one or more times to get to a system of sufficient
-    complexity, is often a more tractable alternative to proving the
-    correctness of the complex system from scratch.
+  \item One way of proving this implementation relation - finding a
+    \textit{refinement mapping} can be discovered that maps each
+    (state, transition) pair of $S_1$ to a legal (state, transition)
+    pair of $S_2$.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Modelling a filesystem}
-  \begin{itemize}
-  \item We opt to iteratively model a filesystem, incrementally
+\begin{frame}{Models and their features}
+  The filesystem is modelled iteratively, incrementally
     adding features of FAT32.
-  \item This also allows us to prove correctness in an iterative
-    fashion, by proving equivalences and thereby reusing correctness
-    results from previous models.
-  \item Apart from noting that some of these models were based on
-    the previous technology target, the CP/M filesystem, we will not
-    dwell on these.
+  \begin{enumerate}
+  \item Filesystem represented as a tree - leaf
+    nodes for regular files and non-leaf nodes for
+    directories; regular file contents represented as ACL2
+    strings; unbounded storage.
+  \item \textit{Length} added as metadata for each regular file.
+  \item Regular file contents divided into
+    blocks of fixed size, which are stored in an external
+    "disk" data structure of unbounded size.
+  \item Disk size bounded; allocation vector data structure
+    (\textit{\`{a} la} CP/M) introduced to help allocate and garbage
+    collect blocks.
+  \item Metadata for \textit{file ownership} and \textit{access
+    permissions} added for regular files.
+  \item Allocation vector replaced by file allocation table.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Conceptualising proofs}
+  \begin{itemize}
+  \item Initial focus on read-over-write properties (more details follow)
+  \item Transition system formulation - filesystem instances
+    (storing some files and directories with some metadata) become
+    states, and file operations (reading, writing) become transitions
+  \item Small number of file operations, consistently named across
+    models - \textit{stat, read, create, write, unlink}
+  \item Discovering refinement mappings - discovering functions that
+    map each instance of a given model to an equivalent instance of a
+    previously verified model
+  \item Proof burden for \texttt{l1} (base model) - satisfaction of
+    read-over-write properties
+  \item Proof burden for \texttt{l2} (and following models) - mapping
+    from \texttt{l2} instances to \texttt{l1} composes correctly with
+    file operations in both \texttt{l2} and \texttt{l1}.
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Models and their refinement relationships}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]
+    \node {l1 - tree}
+    child { node {l2 - length}
+      child { node {l3 - disk}}
+      child { node {l4 - garbage collection}
+        child { node {l5 - permissions}}
+        child { node {l6 - file allocation table}}}};
+  \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Modelling a filesystem}
   \begin{itemize}
-  \item In our most recent model, we separate our filesystem into:
+  \item In \texttt{l6}, we separate our filesystem model into:
     \begin{itemize}
     \item a tree, in which non-leaf nodes represent (sub)directories
       and leaf nodes represent regular files;
@@ -117,7 +168,9 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Verifying the model}
+\section{The proofs}
+
+\begin{frame}{Verifying the models}
   \begin{itemize}
   \item We've focussed so far on two filesystem properties, known in
     the literature as the \textit{read-over-write} properties.
@@ -133,8 +186,60 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Proof example: first read-over-write in \texttt{l2}}
+  \begin{figure}
+    \begin{tikzpicture}
+      \matrix (m) [matrix of math nodes,row sep=4em,column sep=8em,minimum width=2em]
+              {
+                l2 \pgfmatrixnextcell l2 \\
+                l1 \pgfmatrixnextcell l1 \\};
+              \path[-stealth]
+              (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
+              edge node [below] {write(text)} (m-1-2)
+              (m-2-1.east|-m-2-2) edge node [below] {write(text)} (m-2-2)
+              (m-1-2) edge node [left] {l2-to-l1-fs} (m-2-2);
+    \end{tikzpicture}
+    \caption{l2-wrchs-correctness-1}
+  \end{figure}
+  \begin{figure}
+    \begin{tikzpicture}
+      \matrix (m) [matrix of math nodes,row sep=4em,column sep=8em,minimum width=2em]
+              {
+                l2 \pgfmatrixnextcell text \\
+                l1 \\};
+              \path[-stealth]
+              (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
+              edge node [below] {read} (m-1-2)
+              (m-2-1.east|-m-2-2) edge node [below] {read} (m-1-2);
+    \end{tikzpicture}
+    \caption{l2-rdchs-correctness-1}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Proof example: first read-over-write in \texttt{l2}}
+  \begin{figure}
+    \begin{tikzpicture}
+      \matrix (m) [matrix of math nodes,row sep=4em,column sep=8em,minimum width=2em]
+              {
+                l2 \pgfmatrixnextcell l2 \pgfmatrixnextcell text \\
+                l1 \pgfmatrixnextcell l1 \\};
+              \path[-stealth]
+              (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
+              edge node [below] {write(text)} (m-1-2)
+              (m-2-1.east|-m-2-2) edge node [below] {write(text)} (m-2-2)
+              (m-1-2) edge node [left] {l2-to-l1-fs} (m-2-2)
+              edge node [below] {read} (m-1-3)
+              (m-2-2.east) edge node [below] {read} (m-1-3);
+    \end{tikzpicture}
+    \caption{l2-read-over-write-1}
+  \end{figure}
+\end{frame}
+
 \begin{frame}{Proof challenges}
   \begin{itemize}
+  \item Many lemmas proved about \texttt{assoc},
+    \texttt{delete-assoc} and \texttt{no-duplicatesp} but invariants
+    are really the core of the proof
   \item How do we define a "good state" of a filesystem, which shows
     that reading, writing and other operations can be safely carried
     out?
@@ -155,8 +260,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Validating the model}
-\end{frame}
+\section{Future work, related work and conclusion}
 
 \begin{frame}{Future work}
   \begin{enumerate}
@@ -167,26 +271,36 @@
     \item moving all file and directory metadata from the tree to the
       disk.
     \end{itemize}
+  \item Validate the model through co-simulation with an implementation.
   \item Model a more complex filesystem, for instance NTFS, by
     re-using algorithms and proofs from the models built so far.
   \end{enumerate}
 \end{frame}
 
-\section{Related work and conclusion}
-
 \begin{frame}{Related work}
   \begin{itemize}
-  \item FSCQ (Chen, 2016) - Coq is used to build a filesystem , proven
-    safe against crashes in a new logical framework named Crash Hoare
-    Logic. Implementation (exported to Haskell) performs comparably to
+  \item FSCQ (Chen, 2016) - novel filesystem, proven
+    safe against crashes using Coq, performs comparably to
     ext4.
-  \item SibylFS (Ridge, 2015) - a "verifying compiler" of sorts is
-    provided to translate specs in a DSL to C implementations.
-  \item Hyperkernel (Nelson, 2017) - xv6 microkernel is implemented
-    with system calls changed to make them constant-time, in return,
+  \item COGENT (Amani, 2016) - "verifying compiler" translates specs
+    in a DSL to C implementations free of some classes of bugs.
+  \item SibylFS (Ridge, 2015) - "executable specification" for
+    filesystem validates or rejects filesystem traces across multiple
+    OSes.
+  \item Hyperkernel (Nelson, 2017) - xv6 microkernel implemented
+    with system calls changed to make them constant-time; in return,
     verification burden becomes lightweight enough for Z3 SMT solver.
-  \item In our work, we instead aim to model an existing filesystem (FAT32)
+  \item Our work's distinct aim: model an existing filesystem (FAT32)
     faithfully and match the resulting disk image byte-to-byte.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusion}
+  \begin{itemize}
+  \item FAT32-adjacent filesystem formalised with
+    a binary compatible file allocation table.
+  \item Read-over-write properties proven by means of refinement
+    through a series of models.
   \end{itemize}
 \end{frame}
 

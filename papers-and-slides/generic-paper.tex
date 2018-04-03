@@ -77,7 +77,6 @@ the structure of the names in the running heads and the author index.}%
 \tocauthor{Mihir Mehta}
 \maketitle
 
-
 \begin{abstract}
   We describe an effort to formally verify the FAT32 filesystem, based
   on a specification put together from Microsoft's published
@@ -117,24 +116,24 @@ interactive and non-interactive theorem provers need these
 abstractions.
 
 \subsection{Interactive theorem provers}
-An early attempt in the filesystem verification domain was by Bevier
-and Cohen, who specified the Synergy filesystem and created an
-executable model of the same in ACL2
+An early effort in the filesystem verification domain was by Bevier
+and Cohen \cite{bevier1996executable}, who specified the Synergy
+filesystem and created an executable model of the same in ACL2
 \cite{kaufmann_manolios_moore_2000}, down to the level of processes
 and file descriptors. On the proof front, they certified their model
-to preserve well-formedness of their data structures as invariants;
-however, they did not attempt to prove, for instance, read-over-write
-properties or crash consistency. Later, Klein et al with the SeL4
-project \cite{klein2009sel4} used Isabelle/HOL
-\cite{nipkow2002isabelle} to verify a microkernel;
+to preserve well-formedness of their data structures through their
+various file operations; however, they did not attempt to prove, for
+instance, read-over-write properties or crash consistency. Later,
+Klein et al with the SeL4 project \cite{klein2009sel4} used
+Isabelle/HOL \cite{nipkow2002isabelle} to verify a microkernel;
 while their design abstracted away file operations in order to keep
-their trusted computing base small, it served as a precursor to their
-more recent COGENT project. Here the authors built a "verified
-compiler" of sorts, generating C-language code from specifications in
-their domain-specific in a manner guaranteed to avoid many common
-filesystem bugs. Elsewhere, the SibylFS project
+their trusted computing base small, it did serve as a precursor to their
+more recent COGENT project \cite{amani2016cogent}. Here the authors
+built a "verified compiler" of sorts, generating C-language code from
+specifications in their domain-specific in a manner guaranteed to
+avoid many common filesystem bugs. Elsewhere, the SibylFS project
 \cite{ridge2015sibylfs}, again using Isabelle/HOL, provided
-anexecutable specification for filesystems at a level of abstraction
+an executable specification for filesystems at a level of abstraction
 that could function across multiple operating systems including OSX
 and Unix. The Coq prover \cite{bertot2013interactive} has also been
 used, for instance, for FSCQ
@@ -239,7 +238,7 @@ table \ref{model-description-table}). Each new model
 \textit{refines} a previous model, adding some features and
 complexity, and thereby approaching closer to a model which is binary
 compatible with FAT32. These refinement relationships are shown in
-figure \ref{refinement-figure}. \texttt{l0} is the simplest of these,
+figure \ref{refinement-figure}. \texttt{l1} is the simplest of these,
 representing the filesystem as a literal tree; later models feature
 file metadata (including ownership and permissions), externalisation
 of file contents, and allocation/file allocation using an allocation
