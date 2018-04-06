@@ -68,19 +68,19 @@
   \end{itemize}
 \end{frame}
 
-\section{Analysing and approaching the problem}
-
 \begin{frame}{Verification task}
   A formal model of FAT32 must have
   \begin{itemize}
   \item A file allocation table - this serves as a linked list for
-    contents of regular files and directories
+    contents of regular files and directories \checkmark
   \item Clusters (a.k.a. extents) - groups of adjacent sectors, read
     and written all at once
   \item Metadata for regular files and directories
-  \item Error codes, to signify insufficient space and the like
+  \item Error codes, to signify insufficient space and the like \checkmark
   \end{itemize}
 \end{frame}
+
+\section{Analysing and modelling the problem}
 
 \begin{frame}{Verifying through refinement}
   \begin{itemize}
@@ -121,51 +121,99 @@
   \end{enumerate}
 \end{frame}
 
-\begin{frame}{Conceptualising proofs}
-  \begin{itemize}
-  \item Initial focus on read-over-write properties (more details follow)
-  \item Transition system formulation - filesystem instances
-    (storing some files and directories with some metadata) become
-    states, and file operations (reading, writing) become transitions
-  \item Small number of file operations, consistently named across
-    models - \textit{stat, read, create, write, unlink}
-  \item Discovering refinement mappings - discovering functions that
-    map each instance of a given model to an equivalent instance of a
-    previously verified model
-  \item Proof burden for \texttt{l1} (base model) - satisfaction of
-    read-over-write properties
-  \item Proof burden for \texttt{l2} (and following models) - mapping
-    from \texttt{l2} instances to \texttt{l1} composes correctly with
-    file operations in both \texttt{l2} and \texttt{l1}.
-  \end{itemize}
-\end{frame}
-
 \begin{frame}{Models and their refinement relationships}
   \begin{tikzpicture}[sibling distance=10em,
       every node/.style = {shape=rectangle, rounded corners,
         draw, align=center,
         top color=white, bottom color=blue!20}]
-    \node {l1 - tree}
-    child { node {l2 - length}
-      child { node {l3 - disk}}
-      child { node {l4 - garbage collection}
-        child { node {l5 - permissions}}
-        child { node {l6 - file allocation table}}}};
+    \node {L1 - tree}
+    child { node {L2 - length}
+      child { node {L3 - disk}}
+      child { node {L4 - garbage collection}
+        child { node {L5 - permissions}}
+        child { node {L6 - file allocation table}}}};
   \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Modelling a filesystem}
   \begin{itemize}
-  \item In \texttt{l6}, we separate our filesystem model into:
+  \item \texttt{L1} filesystem representation: literal
+    directory tree, in which non-leaf nodes represent (sub)directories
+      and leaf nodes represent regular files
+  \item \texttt{L6} filesystem representation:
     \begin{itemize}
-    \item a tree, in which non-leaf nodes represent (sub)directories
-      and leaf nodes represent regular files;
+    \item a tree, as above
     \item a disk, containing the textual contents of regular files
       broken into fixed-size blocks;
     \item and a file allocation table, mapping each block in a regular
       file to the next, this allowing us to read the contents of the
       entire file.
     \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Model 1 example}
+\begin{tikzpicture}[sibling distance=10em,
+  every node/.style = {shape=rectangle, rounded corners,
+    draw, align=center,
+    top color=white, bottom color=blue!20}]
+  \node {/}
+    child { node {vmlinuz,{"}\textbackslash0\textbackslash0\textbackslash0{"}} }
+    child { node {tmp/}
+      child { node {ticket1,{"}Sun 19:00{"}}}
+      child { node {ticket2,{"}Tue 21:00{"}}}};
+\end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Model 6 example}
+  \begin{table}[]
+    \begin{minipage}[t]{.7\textwidth }
+      \begin{tikzpicture}[sibling distance=10em,
+          every node/.style = {shape=rectangle, rounded corners,
+            draw, align=center,
+            top color=white, bottom color=blue!20}]]
+          \node {/}
+          child { node {vmlinuz, 2, 3} }
+          child { node {tmp/}
+            child { node {ticket1, 3, 9}}
+            child { node {ticket2, 5, 9}}};
+      \end{tikzpicture}
+    \end{minipage}
+    \begin{minipage}[t]{.3\textwidth }
+      \centering
+      \caption{Disk and allocation vector}
+      \begin{tabular}{|l|l|l|}
+        \hline
+        0 & & \\ \hline
+        1 & & \\ \hline
+        2 & \textbackslash0\textbackslash0\textbackslash0   & EOC\\ \hline
+        3 & Sun 19:0 & 4\\ \hline
+        4 & 0        & EOC\\ \hline
+        5 & Tue 21:0 & 6\\ \hline
+        6 & 0        & EOC\\ \hline
+        7 &          & 0\\ \hline
+      \end{tabular}
+    \end{minipage}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Conceptualising proofs}
+  \begin{itemize}
+  \item Initial focus on read-over-write properties (more details follow)
+  \item Transition system formulation - filesystem instances
+    (storing some files and directories with some metadata) become
+    states, and file operations (reading, writing) become externally
+    visible actions
+  \item Small number of file operations, consistently named across
+    models - \textit{stat, read, create, write, unlink}
+  \item Refinement mappings - simply find functions that map each
+    instance of a given model to an equivalent instance of a
+    previously verified model
+  \item Proof burden for \texttt{L1} (base model) - satisfaction of
+    read-over-write properties
+  \item Proof burden for \texttt{L2} (and following models) - mapping
+    from \texttt{L2} instances to \texttt{L1} composes correctly with
+    file operations in both \texttt{L2} and \texttt{L1}.
   \end{itemize}
 \end{frame}
 
@@ -187,7 +235,7 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Proof example: first read-over-write in \texttt{l2}}
+\begin{frame}{Proof example: first read-over-write in \texttt{L2}}
   \begin{figure}
     \begin{tikzpicture}
       \matrix (m) [matrix of math nodes,row sep=4em,column sep=8em,minimum width=2em]
@@ -217,7 +265,7 @@
   \end{figure}
 \end{frame}
 
-\begin{frame}{Proof example: first read-over-write in \texttt{l2}}
+\begin{frame}{Proof example: first read-over-write in \texttt{L2}}
   \begin{figure}
     \begin{tikzpicture}
       \matrix (m) [matrix of math nodes,row sep=4em,column sep=8em,minimum width=2em]
