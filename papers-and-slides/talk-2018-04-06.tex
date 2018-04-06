@@ -2,6 +2,7 @@
 \documentclass{beamer}
 \usepackage{graphicx}
 \usepackage{tikz}
+\usepackage{xcolor}
 \usetikzlibrary{matrix}
 % items enclosed in square brackets are optional; explanation below
 \title{Verifying Filesystem Data Structure Properties}
@@ -28,6 +29,8 @@
     \hspace{1em}%
     \large \insertframenumber/\inserttotalframenumber
 }
+
+\definecolor{orange}{rgb}{1,0.5,0}
 
 \begin{document}
 
@@ -165,35 +168,57 @@
 \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Model 6 example}
+\begin{frame}{Model 4 example}
+  \begin{tikzpicture}[sibling distance=10em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {/}
+      child { node {vmlinuz, {\color[rgb]{1,0,1} (0)},3} }
+      child { node {tmp/}
+        child { node {ticket1, {\color[rgb]{1,0,1} (1 2)},9}}
+        child { node {ticket2,{\color[rgb]{1,0,1} (3 4)},9}}};
+  \end{tikzpicture}
   \begin{table}[]
-    \begin{minipage}[t]{.7\textwidth }
-      \begin{tikzpicture}[sibling distance=10em,
-          every node/.style = {shape=rectangle, rounded corners,
-            draw, align=center,
-            top color=white, bottom color=blue!20}]]
-          \node {/}
-          child { node {vmlinuz, 2, 3} }
-          child { node {tmp/}
-            child { node {ticket1, 3, 9}}
-            child { node {ticket2, 5, 9}}};
-      \end{tikzpicture}
-    \end{minipage}
-    \begin{minipage}[t]{.3\textwidth }
-      \centering
-      \caption{Disk and allocation vector}
+    \centering
+    \caption{Disk and allocation vector}
+    \begin{tabular}{|l|l|l|}
+      \hline
+      {\color[rgb]{1,0,1} 0} & \textbackslash0\textbackslash0\textbackslash0   & true\\ \hline
+      {\color[rgb]{1,0,1} 1} & Sun 19:0 & true\\ \hline
+      {\color[rgb]{1,0,1} 2} & 0        & true\\ \hline
+      {\color[rgb]{1,0,1} 3} & Tue 21:0 & true\\ \hline
+      {\color[rgb]{1,0,1} 4} & 0        & true\\ \hline
+      {\color[rgb]{1,0,1} 5} &          & false\\ \hline
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+\begin{frame}{Model 6 example}
+  \begin{tikzpicture}[sibling distance=8em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=blue!20}]]
+      \node {/}
+      child { node {vmlinuz, {\color[rgb]{1,0,1} 2}, 3} }
+      child { node {tmp/}
+        child { node {ticket1, {\color[rgb]{1,0,1} 3}, 9}}
+        child { node {ticket2, {\color[rgb]{1,0,1} 5}, 9}}};
+  \end{tikzpicture}
+  \begin{table}[]
+    \centering
+    \caption{Disk and file allocation table}
       \begin{tabular}{|l|l|l|}
         \hline
-        0 & & \\ \hline
-        1 & & \\ \hline
-        2 & \textbackslash0\textbackslash0\textbackslash0   & EOC\\ \hline
-        3 & Sun 19:0 & 4\\ \hline
-        4 & 0        & EOC\\ \hline
-        5 & Tue 21:0 & 6\\ \hline
-        6 & 0        & EOC\\ \hline
-        7 &          & 0\\ \hline
+        {\color[rgb]{1,0,1} 0} & & \\ \hline
+        {\color[rgb]{1,0,1} 1} & & \\ \hline
+        {\color[rgb]{1,0,1} 2} & \textbackslash0\textbackslash0\textbackslash0   & EOC\\ \hline
+        {\color[rgb]{1,0,1} 3} & Sun 19:0 & 4\\ \hline
+        {\color[rgb]{1,0,1} 4} & 0        & EOC\\ \hline
+        {\color[rgb]{1,0,1} 5} & Tue 21:0 & 6\\ \hline
+        {\color[rgb]{1,0,1} 6} & 0        & EOC\\ \hline
+        {\color[rgb]{1,0,1} 7} &          & 0\\ \hline
       \end{tabular}
-    \end{minipage}
   \end{table}
 \end{frame}
 
