@@ -110,17 +110,17 @@
   \item Filesystem represented as a tree - leaf
     nodes for regular files and non-leaf nodes for
     directories; regular file contents represented as ACL2
-    strings; unbounded storage.
-  \item \textit{Length} added as metadata for each regular file.
+    strings; unbounded storage
+  \item \textit{Length} added as metadata for each regular file
   \item Regular file contents divided into
     blocks of fixed size, which are stored in an external
-    "disk" data structure of unbounded size.
+    "disk" data structure of unbounded size
   \item Disk size bounded; allocation vector data structure
     (\textit{\`{a} la} CP/M) introduced to help allocate and garbage
-    collect blocks.
+    collect blocks
   \item Metadata for \textit{file ownership} and \textit{access
-    permissions} added for regular files.
-  \item Allocation vector replaced by file allocation table.
+    permissions} added for regular files
+  \item Allocation vector replaced by file allocation table
   \end{enumerate}
 \end{frame}
 
@@ -143,19 +143,24 @@
   \item \texttt{L1} filesystem representation: literal
     directory tree, in which non-leaf nodes represent (sub)directories
       and leaf nodes represent regular files
-  \item \texttt{L6} filesystem representation:
+  \item \texttt{L4} filesystem representation:
     \begin{itemize}
     \item a tree, as above
     \item a disk, containing the textual contents of regular files
       broken into fixed-size blocks;
+    \item and an allocation vector showing which blocks are in use
+    \end{itemize}
+  \item \texttt{L6} filesystem representation:
+    \begin{itemize}
+    \item a tree, as above
+    \item a disk, as above
     \item and a file allocation table, mapping each block in a regular
-      file to the next, this allowing us to read the contents of the
-      entire file.
+      file to the next
     \end{itemize}
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Model 1 example}
+\begin{frame}{L1 example}
 \begin{tikzpicture}[sibling distance=10em,
   every node/.style = {shape=rectangle, rounded corners,
     draw, align=center,
@@ -168,7 +173,7 @@
 \end{tikzpicture}
 \end{frame}
 
-\begin{frame}{Model 4 example}
+\begin{frame}{L4 example}
   \begin{tikzpicture}[sibling distance=10em,
       every node/.style = {shape=rectangle, rounded corners,
         draw, align=center,
@@ -194,7 +199,7 @@
   \end{table}
 \end{frame}
 
-\begin{frame}{Model 6 example}
+\begin{frame}{L6 example}
   \begin{tikzpicture}[sibling distance=8em,
       every node/.style = {shape=rectangle, rounded corners,
         draw, align=center,
@@ -311,26 +316,45 @@
 
 \begin{frame}{Proof challenges}
   \begin{itemize}
-  \item Many lemmas proved about \texttt{assoc},
-    \texttt{delete-assoc} and \texttt{no-duplicatesp} but invariants
-    are really the core of the proof
-  \item How do we define a "good state" of a filesystem, which shows
-    that reading, writing and other operations can be safely carried
-    out?
-  \item Answering this question involves a trade-off between
-    simplicity (to help with verification) and generality (to model as
-    many real-world situations as possible.)
-  \item We choose to require:
+  \item Invariant choice vital - core of the proof
+  \item Define a "good state" of a filesystem, from which reading,
+    writing and other operations can be safely carried out
+  \item Do we make it simple, to help with verification? Do we make it
+    general, to model as many real-world situations as possible?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Some choices}
+  For our invariants, we choose to require:
     \begin{itemize}
     \item that each block on the disk is attributed to at most one
-      regular file;
+      regular file {\color[rgb]{0,0,1} (thus excluding hard links and
+        soft links)}
     \item that the clusters attributed to each non-empty regular file
-      end with a legal EOF value, as defined by the FAT specification.
+      end with a legal EOF value, as defined by the FAT specification
+      {\color[rgb]{0,0,1} (thus excluding a class of errors)}
     \item that each regular file is annotated with "length", a
       metadata field that corresponds to the actual length of the file
       as determined by traversing the file allocation table and
-      reading the corresponding blocks.
+      reading the corresponding blocks {\color[rgb]{0,0,1} (thus
+        adding an extra field of metadata)}
     \end{itemize}
+\end{frame}
+
+\begin{frame}{Where does modelling effort go?}
+  Some expectations while modelling and verifying a filesystem with external storage:
+  \begin{itemize}
+  \item Proving exact results about available space on the disk and
+    whether or not a write operation will succeed
+  \item Proving file operations do not result in ill-formed regular
+    files or subdirectories
+  \item Defining good abstractions for well-formedness of regular
+    files and subdirectories, and structuring proof around these
+    abstractions
+  \item Proving some general lemmata about built-in functions and
+    later making them compatible with other books
+  \item "Proof hacking" to reduce the use of the proof builder, use
+    fewer hints and auxiliary lemmata, and reduce certification time
   \end{itemize}
 \end{frame}
 
@@ -372,9 +396,9 @@
 \begin{frame}{Conclusion}
   \begin{itemize}
   \item FAT32-adjacent filesystem formalised with
-    a binary compatible file allocation table.
+    a binary compatible file allocation table
   \item Read-over-write properties proven by means of refinement
-    through a series of models.
+    through a series of models
   \end{itemize}
 \end{frame}
 
