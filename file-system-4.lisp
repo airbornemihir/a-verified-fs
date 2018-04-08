@@ -1292,34 +1292,6 @@
                                    index-list)
           value-list)))
 
-(defun count-free-blocks-alt (alv n)
-  (declare (xargs :guard (and (natp n) (boolean-listp alv))))
-  (if (zp n)
-      0
-    (+ (if (nth (- n 1) alv) 0 1)
-       (count-free-blocks-alt alv (- n 1)))))
-
-(defthm
-  count-free-blocks-alt-correctness-1
-  (implies (and (boolean-listp alv)
-                (boolean-listp ac)
-                (natp n)
-                (<= n (len alv)))
-           (equal (count-free-blocks-alt (revappend ac alv)
-                                         (+ n (len ac)))
-                  (count-free-blocks (first-n-ac n alv ac))))
-  :hints (("goal" :induct (first-n-ac n alv ac))))
-
-(defthm
-  count-free-blocks-alt-correctness-2
-  (implies (and (boolean-listp alv)
-                (equal n (len alv)))
-           (equal (count-free-blocks-alt alv n)
-                  (count-free-blocks alv)))
-  :hints (("goal" :in-theory (disable count-free-blocks-alt-correctness-1)
-           :use (:instance count-free-blocks-alt-correctness-1
-                           (ac nil)))))
-
 (defthm
   l4-wrchs-correctness-1-lemma-14
   (implies (and (boolean-listp alv)
@@ -1329,23 +1301,6 @@
            (equal (count-free-blocks-alt (set-indices-in-alv alv nil nil)
                                          n)
                   (count-free-blocks-alt alv n))))
-
-(defun count-before-n (l b)
-      (declare (xargs :guard (and (natp b) (nat-listp l))))
-      (if (atom l) 0 (+ (if (< (car l) b) 1 0) (count-before-n (cdr l) b))))
-
-(defthm count-before-n-correctness-1
-  (<= (count-before-n l b) (len l))
-  :rule-classes (:linear))
-
-(defthm count-before-n-correctness-2
-  (implies (nat-listp l)
-           (iff (equal (count-before-n l b) (len l))
-                (bounded-nat-listp l b))))
-
-(defthm count-before-n-correctness-3
-  (implies (nat-listp l)
-           (equal (count-before-n l 0) 0)))
 
 (defthm l4-wrchs-correctness-1-lemma-15
   (implies (and (boolean-listp alv)
