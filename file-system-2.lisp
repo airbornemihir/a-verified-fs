@@ -371,10 +371,6 @@
   (implies (consp (assoc-equal name alist))
            (equal (car (assoc-equal name alist)) name)))
 
-(defthm l2-read-after-write-1-lemma-2
-  (implies (and (l2-fs-p fs) (stringp text) (stringp (l2-stat hns fs)))
-           (stringp (l2-stat hns (l2-wrchs hns fs start text)))))
-
 (defthm l2-read-after-write-1-lemma-3
   (implies (l2-rdchs hns fs start n)
            (stringp (l2-stat hns fs))))
@@ -388,58 +384,6 @@
            (<= (+ start (len (coerce text 'list)))
                (len (coerce (l2-stat hns (l2-wrchs hns fs start text))
                             'list)))))
-
-;; This is a new proof of the first read-after-write property, which
-;; does not rely upon the l1 proof of the same property.
-(defthm l2-read-after-write-1
-  (implies (and (l2-fs-p fs)
-                (stringp text)
-                (symbol-listp hns)
-                (natp start)
-                (equal n (length text))
-                (stringp (l2-stat hns fs)))
-           (equal (l2-rdchs hns (l2-wrchs hns fs start text) start n) text)))
-
-;; The following comment details the induction scheme for the proof of
-;; l2-read-after-write-2.
-;; we want to prove
-;; (implies (and (l2-fs-p fs)
-;;               (stringp text2)
-;;               (symbol-listp hns1)
-;;               (symbol-listp hns2)
-;;               (not (equal hns1 hns2))
-;;               (natp start2)
-;;               (stringp (l2-stat hns1 fs)))
-;;          (equal (l2-stat hns1 (l2-wrchs hns2 fs start2 text2))
-;;                 (l2-stat hns1 fs)))
-;; now, let's semi-formally write the cases we want.
-;; case 1: (atom hns1) - this will violate the hypothesis
-;; (stringp (l2-stat hns1 fs))
-;; case 2: (and (consp hns1) (atom fs)) - this will yield nil in both cases
-;; case 3: (and (consp hns1) (consp fs) (atom (assoc (car hns1) fs))) - this
-;; will yield nil in both cases (might need a lemma)
-;; case 4: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
-;;              (atom hns2)) - in this case
-;; (l2-wrchs hns2 fs start2 text2) will be the same as fs
-;; case 5: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
-;;              (consp hns2) (not (equal (car hns1) (car hns2)))) - in this
-;; case, (assoc (car hns1) (l2-wrchs hns2 fs start2 text2)) =
-;; (assoc (car hns1) (delete-assoc (car hns2) fs)) =
-;; (assoc (car hns1) fs) and from here on the terms will be equal
-;; case 6: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
-;;              (consp hns2) (equal (car hns1) (car hns2)) (atom (cdr hns1))) -
-;; in this case (consp (cdr hns2)) is implicit because of
-;; (not (equal hns1 hns2)) and (stringp (l2-stat hns1 fs)) implies that
-;; (l2-wrchs hns2 fs start2 text2) = fs
-;; case 7: (and (consp hns1) (consp fs) (consp (assoc (car hns1) fs))
-;;              (consp hns2) (equal (car hns1) (car hns2)) (consp (cdr hns1))) -
-;; (l2-stat hns1 (l2-wrchs hns2 fs start2 text2)) =
-;; (l2-stat hns1 (cons (cons (car hns1)
-;;                        (l2-wrchs (cdr hns2) (cdr (assoc (car hns1) fs)) start2 text2))
-;;                  (delete-assoc (car hns1) fs)) =
-;; (l2-stat (cdr hns1) (l2-wrchs (cdr hns2) (cdr (assoc (car hns1) fs)) start2 text2)) =
-;; (l2-stat (cdr hns1) (cdr (assoc (car hns1) fs))) = (induction hypothesis)
-;; (l2-stat hns1 fs)
 
 (defthm l2-read-after-write-2-lemma-1
   (implies (l2-fs-p fs)
@@ -477,47 +421,6 @@
                      (fs (l2-wrchs hns2 fs start2 text2)))
           (:instance l2-stat-correctness-1 (hns hns1))))))
 
-;; (encapsulate
-;;   ()
-
-;;   (local
-;;    (defun
-;;      induction-scheme (hns1 hns2 fs)
-;;      (if
-;;       (atom hns1)
-;;       fs
-;;       (if
-;;        (atom fs)
-;;        nil
-;;        (let
-;;         ((sd (assoc (car hns2) fs)))
-;;         (if
-;;          (atom sd)
-;;          fs
-;;          (if
-;;           (atom hns2)
-;;           fs
-;;           (if (not (equal (car hns1) (car hns2)))
-;;               fs
-;;               (let ((contents (cdr sd)))
-;;                    (if (atom (cdr hns1))
-;;                        (cons (cons (car sd) contents)
-;;                              (delete-assoc (car hns2) fs))
-;;                        (cons (cons (car sd)
-;;                                    (induction-scheme (cdr hns1)
-;;                                                      (cdr hns2)
-;;                                                      contents))
-;;                              (delete-assoc (car hns2) fs))))))))))))
-
-;;   (defthm
-;;     l2-read-after-write-2-lemma-4
-;;     (implies
-;;      (l2-fs-p fs)
-;;      (equal
-;;       (stringp (l2-stat hns1 (l2-wrchs hns2 fs start2 text2)))
-;;       (stringp (l2-stat hns1 fs))))
-;;     :hints (("goal" :induct (induction-scheme hns1 hns2 fs)))))
-
 (defthm
   l2-stat-after-write
   (implies
@@ -543,6 +446,15 @@
                      (fs (l2-wrchs hns2 fs start2 text2)))
           (:instance l1-stat-after-write
                      (fs (l2-to-l1-fs fs)))))))
+
+(defthm l2-read-after-write-1
+  (implies (and (l2-fs-p fs)
+                (stringp text)
+                (symbol-listp hns)
+                (natp start)
+                (equal n (length text))
+                (stringp (l2-stat hns fs)))
+           (equal (l2-rdchs hns (l2-wrchs hns fs start text) start n) text)))
 
 (defthm
   l2-read-after-write-2
