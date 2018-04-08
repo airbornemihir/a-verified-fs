@@ -873,6 +873,86 @@
            :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
                            (fs (cdr (assoc-equal (car hns) fs))))) ))
 
+(defthm l3-read-after-write-1-lemma-2
+  (implies (and (l3-fs-p fs)
+                (block-listp disk)
+                (not (stringp (l3-stat hns fs disk))))
+           (l3-fs-p (l3-stat hns fs disk))))
+
+(defthm
+  l3-read-after-write-1-lemma-3
+  (implies
+   (and (l3-bounded-fs-p fs (len disk))
+        (block-listp disk)
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (stringp text2)
+        (natp start2))
+   (mv-let (new-fs new-disk)
+     (l3-wrchs hns2 fs disk start2 text2)
+     (equal (stringp (l3-stat hns1 new-fs new-disk))
+            (stringp (l3-stat hns1 fs disk)))))
+  :hints
+  (("goal"
+    :in-theory (disable l2-read-after-write-2-lemma-4
+                        l3-stat-correctness-1
+                        l3-stat-correctness-2
+                        l3-wrchs-returns-fs)
+    :use
+    ((:instance l2-read-after-write-2-lemma-4
+                (fs (l3-to-l2-fs fs disk)))
+     (:instance
+      l3-stat-correctness-1 (hns hns1)
+      (fs (mv-nth 0 (l3-wrchs hns2 fs disk start2 text2)))
+      (disk (mv-nth 1
+                    (l3-wrchs hns2 fs disk start2 text2))))
+     (:instance
+      l3-stat-correctness-2 (hns hns1)
+      (fs (mv-nth 0 (l3-wrchs hns2 fs disk start2 text2)))
+      (disk (mv-nth 1
+                    (l3-wrchs hns2 fs disk start2 text2))))
+     (:instance l3-wrchs-returns-fs (hns hns2)
+                (start start2)
+                (text text2))))))
+
+(defthm
+  l3-stat-after-write
+  (implies
+   (and (l3-bounded-fs-p fs (len disk))
+        (stringp text2)
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (natp start2)
+        (stringp (l3-stat hns1 fs disk))
+        (block-listp disk))
+   (mv-let
+     (new-fs new-disk)
+     (l3-wrchs hns2 fs disk start2 text2)
+     (equal
+      (l3-stat hns1 new-fs new-disk)
+      (if
+       (equal hns1 hns2)
+       (coerce (insert-text (coerce (l3-stat hns1 fs disk) 'list)
+                            start2 text2)
+               :string)
+       (l3-stat hns1 fs disk)))))
+  :hints
+  (("goal"
+    :in-theory (disable l3-stat-correctness-1
+                        l2-stat-after-write l3-wrchs-returns-fs)
+    :use
+    ((:instance l3-stat-correctness-1 (hns hns1))
+     (:instance
+      l3-stat-correctness-1 (hns hns1)
+      (fs (mv-nth 0 (l3-wrchs hns2 fs disk start2 text2)))
+      (disk (mv-nth 1
+                    (l3-wrchs hns2 fs disk start2 text2))))
+     (:instance l2-stat-after-write
+                (fs (l3-to-l2-fs fs disk)))
+     (:instance l3-wrchs-returns-fs (hns hns2)
+                (start start2)
+                (text text2))))))
+
 ;; This is a proof of the first read-after-write property.
 (defthm l3-read-after-write-1
   (implies (and (l3-bounded-fs-p fs (len disk))
