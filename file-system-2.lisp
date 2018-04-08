@@ -216,16 +216,6 @@
                       (delete-assoc (car hns) fs))))))))
     ))
 
-;; putting these lemmas on the back burner because we would need to add uniquep
-;; to our l2-fs-p definition to make this work
-;; (defthm l2-unlink-works-lemma-1 (not (assoc-equal key (delete-assoc-equal key alist))))
-
-;; (defthm l2-unlink-works (implies (l2-fs-p fs) (not (l2-stat hns (l2-unlink hns fs)))))
-
-(defthm l2-wrchs-guard-lemma-1
-  (implies (and (stringp str))
-           (character-listp (nthcdr n (coerce str 'list)))))
-
 ; This function writes a specified text string to a specified position to a
 ; text file at a specified path.
 (defun l2-wrchs (hns fs start text)
@@ -311,13 +301,20 @@
            (consp (l2-to-l1-fs fs))))
 
 ;; This theorem shows the equivalence of the l2 and l1 versions of wrchs.
-(defthm l2-wrchs-correctness-1
+(defthm
+  l2-wrchs-correctness-1
   (implies (and (l2-fs-p fs)
                 (stringp text)
                 (natp start)
-                (symbol-listp (cdr hns)))
-           (equal (l1-wrchs hns (l2-to-l1-fs fs) start text)
-                  (l2-to-l1-fs (l2-wrchs hns fs start text)))))
+                (symbol-listp hns))
+           (equal (l1-wrchs hns (l2-to-l1-fs fs)
+                            start text)
+                  (l2-to-l1-fs (l2-wrchs hns fs start text))))
+  :hints
+  (("subgoal *1/6.1''"
+    :in-theory (disable l2-wrchs-returns-fs)
+    :use (:instance l2-wrchs-returns-fs (hns (cdr hns))
+                    (fs (cdr (assoc-equal (car hns) fs)))))))
 
 ;; This function creates a text file (and all necessary subdirectories) given a
 ;; path and some initial text.
@@ -462,49 +459,115 @@
 
 (encapsulate
   ()
-  (local (defun induction-scheme (hns1 hns2 fs)
-           (if (atom hns1)
-               fs
-             (if (atom fs)
-                 nil
-               (let ((sd (assoc (car hns2) fs)))
-                 (if (atom sd)
-                     fs
-                   (if (atom hns2)
-                       fs
-                     (if (not (equal (car hns1) (car hns2)))
-                         fs
-                       (let ((contents (cdr sd)))
-                         (if (atom (cdr hns1))
-                             (cons (cons (car sd)
-                                         contents)
-                                   (delete-assoc (car hns2) fs))
-                           (cons (cons (car sd)
-                                       (induction-scheme (cdr hns1) (cdr hns2) contents))
-                                 (delete-assoc (car hns2) fs)))
-                         ))))
-                 )))))
 
-  (defthm l2-read-after-write-2-lemma-3
-    (implies (and (l2-fs-p fs)
-                  (stringp text2)
-                  (symbol-listp hns1)
-                  (symbol-listp hns2)
-                  (not (equal hns1 hns2))
-                  (natp start2)
-                  (stringp (l2-stat hns1 fs)))
-             (equal (l2-stat hns1 (l2-wrchs hns2 fs start2 text2)) (l2-stat hns1 fs)))
-    :hints (("Goal"  :induct (induction-scheme hns1 hns2 fs))
-            ("Subgoal *1/7.1''" :in-theory (disable alistp-l2-fs-p)
-             :use (:instance alistp-l2-fs-p (fs (l2-wrchs (cdr hns2)
-                                                    (cdr (assoc-equal (car hns1) fs))
-                                                    start2 text2))))))
+  (local
+   (defun
+     induction-scheme (hns1 hns2 fs)
+     (if
+      (atom hns1)
+      fs
+      (if
+       (atom fs)
+       nil
+       (let
+        ((sd (assoc (car hns2) fs)))
+        (if
+         (atom sd)
+         fs
+         (if
+          (atom hns2)
+          fs
+          (if (not (equal (car hns1) (car hns2)))
+              fs
+              (let ((contents (cdr sd)))
+                   (if (atom (cdr hns1))
+                       (cons (cons (car sd) contents)
+                             (delete-assoc (car hns2) fs))
+                       (cons (cons (car sd)
+                                   (induction-scheme (cdr hns1)
+                                                     (cdr hns2)
+                                                     contents))
+                             (delete-assoc (car hns2) fs))))))))))))
 
-  )
+  (defthm
+    l2-read-after-write-2-lemma-4
+    (implies
+     (l2-fs-p fs)
+     (equal
+      (stringp (l2-stat hns1 (l2-wrchs hns2 fs start2 text2)))
+      (stringp (l2-stat hns1 fs))))
+    :hints (("goal" :induct (induction-scheme hns1 hns2 fs)))))
 
-;; This is a new proof of the second read-after-write property, which does not
-;; rely on the equivalent proof in l1.
-(defthm l2-read-after-write-2
+(defthm
+  l2-stat-after-write
+  (implies
+   (and (l2-fs-p fs)
+        (stringp text2)
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (natp start2)
+        (stringp (l2-stat hns1 fs)))
+   (equal
+    (l2-stat hns1 (l2-wrchs hns2 fs start2 text2))
+    (if (equal hns1 hns2)
+        (coerce (insert-text (coerce (l2-stat hns1 fs) 'list)
+                             start2 text2)
+                :string)
+        (l2-stat hns1 fs))))
+  :hints
+  (("goal"
+    :in-theory (disable l2-stat-correctness-1
+                        l1-stat-after-write)
+    :use ((:instance l2-stat-correctness-1 (hns hns1))
+          (:instance l2-stat-correctness-1 (hns hns1)
+                     (fs (l2-wrchs hns2 fs start2 text2)))
+          (:instance l1-stat-after-write
+                     (fs (l2-to-l1-fs fs)))))))
+
+;; (encapsulate
+;;   ()
+;;   (local (defun induction-scheme (hns1 hns2 fs)
+;;            (if (atom hns1)
+;;                fs
+;;              (if (atom fs)
+;;                  nil
+;;                (let ((sd (assoc (car hns2) fs)))
+;;                  (if (atom sd)
+;;                      fs
+;;                    (if (atom hns2)
+;;                        fs
+;;                      (if (not (equal (car hns1) (car hns2)))
+;;                          fs
+;;                        (let ((contents (cdr sd)))
+;;                          (if (atom (cdr hns1))
+;;                              (cons (cons (car sd)
+;;                                          contents)
+;;                                    (delete-assoc (car hns2) fs))
+;;                            (cons (cons (car sd)
+;;                                        (induction-scheme (cdr hns1) (cdr hns2) contents))
+;;                                  (delete-assoc (car hns2) fs)))
+;;                          ))))
+;;                  )))))
+
+;;   (defthm l2-read-after-write-2-lemma-3
+;;     (implies (and (l2-fs-p fs)
+;;                   (stringp text2)
+;;                   (symbol-listp hns1)
+;;                   (symbol-listp hns2)
+;;                   (not (equal hns1 hns2))
+;;                   (natp start2)
+;;                   (stringp (l2-stat hns1 fs)))
+;;              (equal (l2-stat hns1 (l2-wrchs hns2 fs start2 text2)) (l2-stat hns1 fs)))
+;;     :hints (("Goal"  :induct (induction-scheme hns1 hns2 fs))
+;;             ("Subgoal *1/7.1''" :in-theory (disable alistp-l2-fs-p)
+;;              :use (:instance alistp-l2-fs-p (fs (l2-wrchs (cdr hns2)
+;;                                                     (cdr (assoc-equal (car hns1) fs))
+;;                                                     start2 text2))))))
+
+;;   )
+
+(defthm
+  l2-read-after-write-2
   (implies (and (l2-fs-p fs)
                 (stringp text2)
                 (symbol-listp hns1)
@@ -512,9 +575,9 @@
                 (not (equal hns1 hns2))
                 (natp start1)
                 (natp start2)
-                (natp n1)
-                (stringp (l2-stat hns1 fs)))
-           (equal (l2-rdchs hns1 (l2-wrchs hns2 fs start2 text2) start1 n1)
+                (natp n1))
+           (equal (l2-rdchs hns1 (l2-wrchs hns2 fs start2 text2)
+                            start1 n1)
                   (l2-rdchs hns1 fs start1 n1))))
 
 ;; This proves the equivalent of the first read-after-write property for
