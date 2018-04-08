@@ -258,15 +258,6 @@
            (equal (stringp (l1-stat hns (l1-wrchs hns fs start text)))
                   (stringp (l1-stat hns fs)))))
 
-(defthm l1-read-after-write-1
-  (implies (and (l1-fs-p fs)
-                (stringp text)
-                (symbol-listp hns)
-                (natp start)
-                (equal n (length text))
-                (stringp (l1-stat hns fs)))
-           (equal (l1-rdchs hns (l1-wrchs hns fs start text) start n) text)))
-
 (defthm l1-read-after-write-2-lemma-1
   (implies (l1-fs-p fs)
            (not (stringp (assoc-equal name fs)))))
@@ -314,6 +305,15 @@
                            (delete-assoc (car hns2) fs))))))))))))
 
   (defthm
+    l1-read-after-write-2-lemma-3
+    (implies
+     (l1-fs-p fs)
+     (equal
+      (stringp (l1-stat hns1 (l1-wrchs hns2 fs start2 text2)))
+      (stringp (l1-stat hns1 fs))))
+    :hints (("goal" :induct (induction-scheme hns1 hns2 fs))))
+
+  (defthm
     l1-stat-after-write
     (implies (and (l1-fs-p fs)
                   (stringp text2)
@@ -329,8 +329,15 @@
                                 :string))))
     :hints (("goal" :induct (induction-scheme hns1 hns2 fs)))))
 
-;; to be revisited - (stringp (l1-stat hns1 fs)) is not a necessary condition
-;; but the proof doesn't go through without it
+(defthm l1-read-after-write-1
+  (implies (and (l1-fs-p fs)
+                (stringp text)
+                (symbol-listp hns)
+                (natp start)
+                (equal n (length text))
+                (stringp (l1-stat hns fs)))
+           (equal (l1-rdchs hns (l1-wrchs hns fs start text) start n) text)))
+
 (defthm l1-read-after-write-2
   (implies (and (l1-fs-p fs)
                 (stringp text2)
@@ -339,8 +346,7 @@
                 (not (equal hns1 hns2))
                 (natp start1)
                 (natp start2)
-                (natp n1)
-                (stringp (l1-stat hns1 fs)))
+                (natp n1))
            (equal (l1-rdchs hns1 (l1-wrchs hns2 fs start2 text2) start1 n1)
                   (l1-rdchs hns1 fs start1 n1))))
 
