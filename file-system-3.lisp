@@ -954,7 +954,8 @@
                 (text text2))))))
 
 ;; This is a proof of the first read-after-write property.
-(defthm l3-read-after-write-1
+(defthm
+  l3-read-after-write-1
   (implies (and (l3-bounded-fs-p fs (len disk))
                 (stringp text)
                 (symbol-listp hns)
@@ -967,53 +968,42 @@
              (equal (l3-rdchs hns new-fs new-disk start n)
                     text)))
   :hints
-  (("Goal" :use ((:instance l3-rdchs-correctness-1
-                            (fs (mv-nth 0 (l3-wrchs hns fs disk start text)))
-                            (disk (mv-nth 1 (l3-wrchs hns fs disk start text)))
-                            (n (length text)))
-                 l3-wrchs-correctness-1
-                 (:instance l2-read-after-write-1
-                            (fs (l3-to-l2-fs fs disk)))
-                 l3-wrchs-returns-fs))))
+  (("goal"
+    :in-theory (disable l3-read-after-write-1-lemma-3
+                        l3-stat-after-write)
+    :use ((:instance l3-read-after-write-1-lemma-3 (hns1 hns)
+                     (hns2 hns)
+                     (start2 start)
+                     (text2 text))
+          (:instance l3-stat-after-write (hns1 hns)
+                     (hns2 hns)
+                     (start2 start)
+                     (text2 text))))))
 
 ;; This is a proof of the second read-after-write property.
 (defthm
   l3-read-after-write-2
-  (implies (and (block-listp disk)
-                (l3-bounded-fs-p fs (len disk))
-                (stringp text1)
-                (stringp text2)
-                (symbol-listp hns1)
-                (symbol-listp hns2)
-                (not (equal hns1 hns2))
-                (natp start1)
-                (natp start2)
-                (natp n1)
-                (natp n2))
-           (mv-let (new-fs new-disk)
-             (l3-wrchs hns2 fs disk start2 text2)
-             (equal (l3-rdchs hns1 new-fs new-disk start1 n1)
-                    (l3-rdchs hns1 fs disk start1 n1))))
+  (implies
+   (and (block-listp disk)
+        (l3-bounded-fs-p fs (len disk))
+        (stringp text1)
+        (stringp text2)
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (not (equal hns1 hns2))
+        (natp start1)
+        (natp start2)
+        (natp n1)
+        (natp n2))
+   (mv-let (new-fs new-disk)
+     (l3-wrchs hns2 fs disk start2 text2)
+     (equal (l3-rdchs hns1 new-fs new-disk start1 n1)
+            (l3-rdchs hns1 fs disk start1 n1))))
   :hints
   (("goal"
-    :in-theory (disable l3-wrchs-returns-fs
-                        l2-read-after-write-2
-                        l3-rdchs-correctness-1
-                        l3-rdchs-correctness-1)
-    :use ((:instance l3-wrchs-returns-fs (hns hns2)
-                     (start start2)
-                     (text text2))
-          (:instance l2-read-after-write-2
-                     (fs (l3-to-l2-fs fs disk)))
-          (:instance l3-rdchs-correctness-1
-                     (fs (mv-nth 0 (l3-wrchs hns2 fs disk start2 text2)))
-                     (disk (mv-nth 1 (l3-wrchs hns2 fs disk start2 text2)))
-                     (hns hns1)
-                     (start start1)
-                     (n n1))
-          (:instance l3-rdchs-correctness-1 (hns hns1)
-                     (start start1)
-                     (n n1))))))
+    :in-theory (disable l3-read-after-write-1-lemma-3
+                        l3-stat-after-write)
+    :use (l3-read-after-write-1-lemma-3 l3-stat-after-write))))
 
 ;; This proves the equivalent of the first read-after-write property for
 ;; create.
