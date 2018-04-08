@@ -254,12 +254,13 @@
            (equal (car (assoc-equal name alist)) name)))
 
 (defthm l1-read-after-write-1-lemma-2
-  (implies (and (l1-fs-p fs) (stringp text) (stringp (l1-stat hns fs)))
-           (stringp (l1-stat hns (l1-wrchs hns fs start text)))))
+  (implies (l1-fs-p fs)
+           (equal (stringp (l1-stat hns (l1-wrchs hns fs start text)))
+                  (stringp (l1-stat hns fs)))))
 
-(defthm l1-read-after-write-1-lemma-3
-  (implies (l1-rdchs hns fs start n)
-           (stringp (l1-stat hns fs))))
+;; (defthm l1-read-after-write-1-lemma-3
+;;   (implies (l1-rdchs hns fs start n)
+;;            (stringp (l1-stat hns fs))))
 
 (defthm l1-read-after-write-1
   (implies (and (l1-fs-p fs)
