@@ -26,8 +26,9 @@
 \usetikzlibrary{matrix}
 
 \usepackage{url}
-\urldef{\mailsa}\path|{mihir,|
-\urldef{\mailsc}\path|hunt}@cs.utexas.edu|
+\urldef{\mailsa}\path|mihir@cs.utexas.edu|
+%% \urldef{\mailsa}\path|{mihir,|
+%% \urldef{\mailsc}\path|hunt}@cs.utexas.edu|
 \newcommand{\keywords}[1]{\par\addvspace\baselineskip
 \noindent\keywordname\enspace\ignorespaces#1}
 
@@ -48,11 +49,7 @@
 % their surnames. This ensures that the names appear correctly in
 % the running heads and the author index.
 %
-\author{Mihir Parang Mehta%
-\thanks{Please note that the LNCS Editorial assumes that all authors have used
-the western naming convention, with given names preceding surnames. This determines
-the structure of the names in the running heads and the author index.}%
-\and Warren A. Hunt, Jr.}
+\author{Mihir Parang Mehta}
 %
 \authorrunning{Lecture Notes in Computer Science: Authors' Instructions}
 % (feature abused for this document to repeat the title also on left hand pages)
@@ -60,11 +57,7 @@ the structure of the names in the running heads and the author index.}%
 % the affiliations are given next; don't give your e-mail address
 % unless you accept that it will be published
 \institute{University of Texas at Austin, Department of Computer Science,\\
-2317 Speedway, Austin, TX 78712, USA\\
-\mailsa\\
-\mailsb\\
-\mailsc\\
-\url{http://www.cs.utexas.edu}}
+2317 Speedway, Austin, TX 78712, USA\\}
 
 %
 % NB: a more complex sample for affiliations and the mapping to the
@@ -483,7 +476,7 @@ models are built.
 
 \begin{table}[]
   \centering
-  \caption{Time take to prove models}
+  \caption{Time taken to prove models}
   \label{certification-timing-table}
   \begin{tabular}{ll}
     \texttt{l1} & 1s \\
@@ -524,8 +517,6 @@ binary compatibility.
 
 \subsubsection*{Acknowledgments.} This work has been supported by a
 grant from the NSF.
-
-\section{References}\label{references}
 
 \bibliographystyle{splncs}
 \bibliography{references}
