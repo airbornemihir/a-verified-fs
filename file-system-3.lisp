@@ -62,8 +62,10 @@
 
 ;; Lemma
 (defthm block-listp-correctness-2
-  (implies (and (block-listp block-list1) (block-listp block-list2))
-           (block-listp (binary-append block-list1 block-list2))))
+  (implies (true-listp block-list1)
+           (equal (block-listp (binary-append block-list1 block-list2))
+                  (and (block-listp block-list1)
+                       (block-listp block-list2)))))
 
 ;; This function spells out how many characters can be in a file given the
 ;; number of blocks associated with it. It is kept disabled in order to avoid
@@ -759,27 +761,19 @@
           (l3-to-l2-fs fs1 disk))))
 
 ;; This theorem shows the equivalence of the l3 and l2 versions of wrchs.
-(defthm l3-wrchs-correctness-1
+(defthm
+  l3-wrchs-correctness-1
   (implies (and (l3-bounded-fs-p fs (len disk))
                 (stringp text)
                 (natp start)
                 (symbol-listp hns)
                 (block-listp disk))
-           (equal (l2-wrchs hns (l3-to-l2-fs fs disk) start text)
-                  (mv-let (new-fs new-disk) (l3-wrchs hns fs disk start text)
+           (equal (l2-wrchs hns (l3-to-l2-fs fs disk)
+                            start text)
+                  (mv-let (new-fs new-disk)
+                    (l3-wrchs hns fs disk start text)
                     (l3-to-l2-fs new-fs new-disk))))
-  :hints (("Subgoal *1/8.9'"
-           :in-theory (disable l3-wrchs-returns-fs)
-           :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
-                           (fs (cdr (assoc-equal (car hns) fs)))))
-          ("Subgoal *1/8.1'"
-           :in-theory (disable l3-wrchs-returns-fs l3-fs-p-assoc)
-           :use ((:instance l3-wrchs-returns-fs
-                            (fs (cdr (assoc-equal (car hns) fs)))
-                            (hns (cdr hns)))
-                 (:instance l3-fs-p-assoc
-                            (fs (cdr (assoc-equal (car hns) fs))))))
-          ("Subgoal *1/8'''"
+  :hints (("subgoal *1/8'''"
            :in-theory (disable l3-wrchs-returns-fs)
            :use (:instance l3-wrchs-returns-fs (hns (cdr hns))
                            (fs (cdr (assoc-equal (car hns) fs)))))))
@@ -915,8 +909,7 @@
                 (natp start1)
                 (natp start2)
                 (natp n1)
-                (natp n2)
-                (stringp (l3-stat hns1 fs disk)))
+                (natp n2))
            (mv-let (new-fs new-disk)
              (l3-wrchs hns2 fs disk start2 text2)
              (equal (l3-rdchs hns1 new-fs new-disk start1 n1)
