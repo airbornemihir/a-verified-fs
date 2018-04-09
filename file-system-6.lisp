@@ -4565,59 +4565,59 @@
                 l4-alv-after-unlink))))
   :hints (("goal" :induct (l6-unlink hns fs fa-table))))
 
-(encapsulate
-  ()
+;; (encapsulate
+;;   ()
 
-  (local
-   (defun
-       induction-scheme (hns1 hns2 fs)
-     (if
-         (atom hns1)
-         fs
-       (if
-           (atom fs)
-           nil
-         (let
-             ((sd (assoc (car hns2) fs)))
-           (if
-               (atom sd)
-               fs
-             (if
-                 (atom hns2)
-                 fs
-               (if (not (equal (car hns1) (car hns2)))
-                   fs
-                 (let ((contents (cdr sd)))
-                   (if (atom (cdr hns1))
-                       (cons (cons (car sd) contents)
-                             (delete-assoc (car hns2) fs))
-                     (cons (cons (car sd)
-                                 (induction-scheme (cdr hns1)
-                                                   (cdr hns2)
-                                                   contents))
-                           (delete-assoc (car hns2) fs))))))))))))
+;;   (local
+;;    (defun
+;;        induction-scheme (hns1 hns2 fs)
+;;      (if
+;;          (atom hns1)
+;;          fs
+;;        (if
+;;            (atom fs)
+;;            nil
+;;          (let
+;;              ((sd (assoc (car hns2) fs)))
+;;            (if
+;;                (atom sd)
+;;                fs
+;;              (if
+;;                  (atom hns2)
+;;                  fs
+;;                (if (not (equal (car hns1) (car hns2)))
+;;                    fs
+;;                  (let ((contents (cdr sd)))
+;;                    (if (atom (cdr hns1))
+;;                        (cons (cons (car sd) contents)
+;;                              (delete-assoc (car hns2) fs))
+;;                      (cons (cons (car sd)
+;;                                  (induction-scheme (cdr hns1)
+;;                                                    (cdr hns2)
+;;                                                    contents))
+;;                            (delete-assoc (car hns2) fs))))))))))))
 
-  (defthm
-    l6-read-after-write-1-lemma-1
-    (implies
-     (and (l6-fs-p fs)
-          (fat32-entry-list-p fa-table)
-          (stringp text)
-          (integerp start)
-          (<= 0 start)
-          (symbol-listp hns1)
-          (symbol-listp hns2)
-          (block-listp disk)
-          (equal (len fa-table) (len disk))
-          (<= *ms-first-data-cluster* (len fa-table))
-          (<= (len fa-table) *ms-bad-cluster*)
-          (l6-regular-file-entry-p (l6-stat hns1 fs)))
-     (l6-regular-file-entry-p
-      (l6-stat hns1
-               (mv-nth 0
-                       (l6-wrchs hns2 fs disk fa-table start text)))))
-    :hints (("goal" :in-theory (enable l6-wrchs)
-             :induct (induction-scheme hns1 hns2 fs)))))
+;;   (defthm
+;;     l6-read-after-write-1-lemma-1
+;;     (implies
+;;      (and (l6-fs-p fs)
+;;           (fat32-entry-list-p fa-table)
+;;           (stringp text)
+;;           (integerp start)
+;;           (<= 0 start)
+;;           (symbol-listp hns1)
+;;           (symbol-listp hns2)
+;;           (block-listp disk)
+;;           (equal (len fa-table) (len disk))
+;;           (<= *ms-first-data-cluster* (len fa-table))
+;;           (<= (len fa-table) *ms-bad-cluster*)
+;;           (l6-regular-file-entry-p (l6-stat hns1 fs)))
+;;      (l6-regular-file-entry-p
+;;       (l6-stat hns1
+;;                (mv-nth 0
+;;                        (l6-wrchs hns2 fs disk fa-table start text)))))
+;;     :hints (("goal" :in-theory (enable l6-wrchs)
+;;              :induct (induction-scheme hns1 hns2 fs)))))
 
 (defthm
   l6-wrchs-returns-fa-table
@@ -5214,8 +5214,7 @@
         (<= *ms-first-data-cluster* (len fa-table))
         (<= (len fa-table) *ms-bad-cluster*)
         (<= (len (make-blocks (insert-text nil start2 text2)))
-            (count-free-blocks (fa-table-to-alv fa-table)))
-        (l6-regular-file-entry-p (l6-stat hns1 fs)))
+            (count-free-blocks (fa-table-to-alv fa-table))))
    (mv-let
      (new-fs new-disk new-fa-table error-code)
      (l6-wrchs hns2 fs disk fa-table start2 text2)
