@@ -4565,60 +4565,6 @@
                 l4-alv-after-unlink))))
   :hints (("goal" :induct (l6-unlink hns fs fa-table))))
 
-;; (encapsulate
-;;   ()
-
-;;   (local
-;;    (defun
-;;        induction-scheme (hns1 hns2 fs)
-;;      (if
-;;          (atom hns1)
-;;          fs
-;;        (if
-;;            (atom fs)
-;;            nil
-;;          (let
-;;              ((sd (assoc (car hns2) fs)))
-;;            (if
-;;                (atom sd)
-;;                fs
-;;              (if
-;;                  (atom hns2)
-;;                  fs
-;;                (if (not (equal (car hns1) (car hns2)))
-;;                    fs
-;;                  (let ((contents (cdr sd)))
-;;                    (if (atom (cdr hns1))
-;;                        (cons (cons (car sd) contents)
-;;                              (delete-assoc (car hns2) fs))
-;;                      (cons (cons (car sd)
-;;                                  (induction-scheme (cdr hns1)
-;;                                                    (cdr hns2)
-;;                                                    contents))
-;;                            (delete-assoc (car hns2) fs))))))))))))
-
-;;   (defthm
-;;     l6-read-after-write-1-lemma-1
-;;     (implies
-;;      (and (l6-fs-p fs)
-;;           (fat32-entry-list-p fa-table)
-;;           (stringp text)
-;;           (integerp start)
-;;           (<= 0 start)
-;;           (symbol-listp hns1)
-;;           (symbol-listp hns2)
-;;           (block-listp disk)
-;;           (equal (len fa-table) (len disk))
-;;           (<= *ms-first-data-cluster* (len fa-table))
-;;           (<= (len fa-table) *ms-bad-cluster*)
-;;           (l6-regular-file-entry-p (l6-stat hns1 fs)))
-;;      (l6-regular-file-entry-p
-;;       (l6-stat hns1
-;;                (mv-nth 0
-;;                        (l6-wrchs hns2 fs disk fa-table start text)))))
-;;     :hints (("goal" :in-theory (enable l6-wrchs)
-;;              :induct (induction-scheme hns1 hns2 fs)))))
-
 (defthm
   l6-wrchs-returns-fa-table
   (implies
@@ -5146,6 +5092,50 @@
        (mv-nth 2
                (l6-wrchs hns fs disk fa-table start text)))))
     :do-not-induct t)))
+
+(defthm l6-stat-after-write
+  (implies
+   (and (l6-stricter-fs-p fs fa-table)
+        (stringp text2)
+        (natp start1)
+        (natp start2)
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (natp n1)
+        (block-listp disk)
+        (equal (len fa-table) (len disk))
+        (<= *ms-first-data-cluster* (len fa-table))
+        (<= (len fa-table) *ms-bad-cluster*)
+        (<= (len (make-blocks (insert-text nil start2 text2)))
+            (count-free-blocks (fa-table-to-alv fa-table)))
+        (l6-regular-file-entry-p (l6-stat hns1 fs)))
+   (b* ((file (l6-stat hns1 fs))
+        ((mv index-list &) (l6-file-index-list file fa-table))
+        ((mv new-fs new-disk new-fa-table &)
+         (l6-wrchs hns2 fs disk fa-table start2 text2))
+        (new-file (l6-stat hns1 new-fs))
+        ((mv new-index-list &) (l6-file-index-list new-file new-fa-table)))
+     (equal
+      (UNMAKE-BLOCKS-WITHOUT-FEASIBILITY
+       (FETCH-BLOCKS-BY-INDICES new-DISK new-INDEX-LIST)
+       (L6-REGULAR-FILE-LENGTH new-FILE))
+      (if (equal hns1 hns2)
+          (insert-text
+           (UNMAKE-BLOCKS-WITHOUT-FEASIBILITY
+            (FETCH-BLOCKS-BY-INDICES DISK index-list)
+            (L6-REGULAR-FILE-LENGTH file))
+           start2 text2)
+        (UNMAKE-BLOCKS-WITHOUT-FEASIBILITY
+         (FETCH-BLOCKS-BY-INDICES DISK index-list)
+         (L6-REGULAR-FILE-LENGTH file))))))
+  :hints (("Goal" :do-not-induct t :in-theory (disable l4-stat-after-write
+                                                       l4-stricter-fs-p
+                                                       l6-to-l4-fs)
+           :use (:instance l4-stat-after-write
+                           (fs (mv-nth 0 (l6-to-l4-fs fs fa-table)))
+                           (alv (mv-nth 1 (l6-to-l4-fs fs fa-table)))))
+          ("Subgoal 4'" :in-theory (enable l6-to-l4-fs))
+          ("Subgoal 3" :in-theory (enable l6-to-l4-fs)) ))
 
 (defthm
   l6-read-after-write-1
