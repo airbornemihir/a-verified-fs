@@ -154,7 +154,8 @@
     \item a tree, as above
     \item a disk, as above
     \item and a file allocation table, mapping each block in a regular
-      file to the next
+      file to the next, forming a linked list which ends with a
+      special value (EOC)
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -259,8 +260,7 @@
       the same results as a read before the write.
     \end{enumerate}
   \item These properties have been proven for all models so far,
-    including the present model which features a file allocation
-    table.
+    including \texttt{L6}.
   \end{itemize}
 \end{frame}
 
@@ -327,8 +327,7 @@
   For our invariants, we choose to require:
     \begin{itemize}
     \item that each block on the disk is attributed to at most one
-      regular file {\color[rgb]{0,0,1} (thus excluding hard links and
-        soft links)}
+      regular file {\color[rgb]{0,0,1} (thus excluding hard links)}
     \item that the clusters attributed to each non-empty regular file
       end with a legal EOF value, as defined by the FAT specification
       {\color[rgb]{0,0,1} (thus excluding a class of errors)}
@@ -340,7 +339,7 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Where does modelling effort go?}
+\begin{frame}{Where does verification effort go?}
   Some expectations while modelling and verifying a filesystem with external storage:
   \begin{itemize}
   \item Proving exact results about available space on the disk and
