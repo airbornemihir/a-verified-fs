@@ -5093,6 +5093,137 @@
                (l6-wrchs hns fs disk fa-table start text)))))
     :do-not-induct t)))
 
+(defthm l6-stat-after-write-lemma-1
+  (implies
+   (and
+    (l6-fs-p fs)
+    (not (l6-regular-file-entry-p (l6-stat hns fs)))
+    (not (l6-fs-p (l6-stat hns fs))))
+   (equal (l6-stat hns fs) nil)))
+
+(defthm
+  l6-stat-after-write-lemma-2
+  (implies
+   (and (symbol-listp hns)
+        (l6-fs-p fs)
+        (fat32-entry-list-p fa-table)
+        (stringp text)
+        (integerp start)
+        (<= 0 start)
+        (block-listp disk)
+        (equal (len fa-table) (len disk))
+        (<= *ms-first-data-cluster* (len disk))
+        (<= (len disk) *ms-bad-cluster*)
+        (consp (assoc-equal name fs)))
+   (equal
+    (consp
+     (assoc-equal
+      name
+      (mv-nth 0
+              (l6-wrchs hns fs disk fa-table start text))))
+    (consp (assoc-equal name fs))))
+  :hints (("goal" :induct t
+           :in-theory (enable l6-wrchs))))
+
+(defthm
+  l6-stat-after-write-lemma-3
+  (implies
+   (and (symbol-listp hns)
+        (l6-fs-p fs)
+        (fat32-entry-list-p fa-table)
+        (stringp text)
+        (integerp start)
+        (<= 0 start)
+        (block-listp disk)
+        (equal (len fa-table) (len disk))
+        (<= *ms-first-data-cluster* (len disk))
+        (<= (len disk) *ms-bad-cluster*)
+        (consp (assoc-equal name fs)))
+   (equal
+    (consp
+     (assoc-equal
+      name
+      (mv-nth 0
+              (l6-wrchs hns fs disk fa-table start text))))
+    (consp (assoc-equal name fs))))
+  :hints
+  (("goal" :induct t
+    :in-theory (enable l6-wrchs))
+   ("subgoal *1/8"
+    :in-theory (disable l6-wrchs-returns-fs)
+    :use (:instance l6-wrchs-returns-fs (hns (cdr hns))
+                    (fs (cdr (assoc-equal (car hns) fs)))))))
+
+(defthm
+  l6-stat-after-write-lemma-4
+  (implies
+   (and (symbol-listp hns)
+        (l6-fs-p fs)
+        (fat32-entry-list-p fa-table)
+        (stringp text)
+        (integerp start)
+        (<= 0 start)
+        (block-listp disk)
+        (equal (len fa-table) (len disk))
+        (<= *ms-first-data-cluster* (len disk))
+        (<= (len disk) *ms-bad-cluster*)
+        (consp (assoc-equal name fs)))
+   (equal
+    (l6-regular-file-entry-p
+     (cdr
+      (assoc-equal
+       name
+       (mv-nth 0
+               (l6-wrchs hns fs disk fa-table start text)))))
+    (l6-regular-file-entry-p (cdr (assoc-equal name fs)))))
+  :hints (("goal" :in-theory (enable l6-wrchs))))
+
+(defthm
+  l6-stat-after-write-lemma-5
+  (implies
+   (and (symbol-listp hns)
+        (l6-fs-p fs)
+        (natp start)
+        (stringp text)
+        (block-listp disk)
+        (fat32-entry-list-p fa-table)
+        (equal (len disk) (len fa-table))
+        (<= (len fa-table) *ms-bad-cluster*)
+        (>= (len fa-table)
+            *ms-first-data-cluster*))
+   (iff
+    (consp (mv-nth 0
+                   (l6-wrchs hns fs disk fa-table start text)))
+    (consp fs)))
+  :hints (("goal" :in-theory (enable l6-wrchs))))
+
+(thm-cp
+(IMPLIES
+ (AND
+  (L6-FS-P FS)
+  (fat32-entry-list-p fa-table)
+  (STRINGP TEXT2)
+  (INTEGERP START2)
+  (<= 0 START2)
+  (BLOCK-LISTP DISK)
+  (EQUAL (LEN FA-TABLE) (LEN DISK))
+  (<= *ms-first-data-cluster* (LEN DISK))
+  (<= (len disk) *ms-bad-cluster*)
+  (L6-REGULAR-FILE-ENTRY-P (L6-STAT HNS1 FS))
+  (symbol-listp hns2))
+ (EQUAL
+  (l6-regular-file-entry-p (L6-STAT HNS1
+                                    (MV-NTH 0
+                                            (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))))
+  (l6-regular-file-entry-p (L6-STAT HNS1 fs))))
+:hints (("Goal" :in-theory (enable l6-wrchs)) ("subgoal *1/2"
+    :in-theory (disable l6-wrchs-returns-fs
+  l6-stat-after-write-lemma-5)
+    :use ((:instance l6-wrchs-returns-fs (hns hns2) (start start2) (text
+                                                                    text2))
+          (:instance
+  l6-stat-after-write-lemma-5 (hns hns2) (start start2) (text text2))))))
+
 (defthm l6-stat-after-write
   (implies
    (and (l6-stricter-fs-p fs fa-table)
@@ -5135,7 +5266,35 @@
                            (fs (mv-nth 0 (l6-to-l4-fs fs fa-table)))
                            (alv (mv-nth 1 (l6-to-l4-fs fs fa-table)))))
           ("Subgoal 4'" :in-theory (enable l6-to-l4-fs))
-          ("Subgoal 3" :in-theory (enable l6-to-l4-fs)) ))
+          ("Subgoal 3" :in-theory (enable l6-to-l4-fs))
+          ("Subgoal 2" :in-theory (disable l6-stat-correctness-1
+                                           L6-WRCHS-RETURNS-STRICTER-FS
+                                           l6-stat-after-write-lemma-1)
+           :use
+           (
+            (:instance
+             l6-stat-correctness-1
+             (hns hns1)
+             (fs
+              (MV-NTH 0
+                      (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2)))
+             (disk
+              (MV-NTH 1
+                      (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2)))
+             (fa-table
+              (MV-NTH 2
+                      (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))))
+            (:instance
+             L6-WRCHS-RETURNS-STRICTER-FS
+             (hns hns2)
+             (start start2)
+             (text text2))
+            (:instance
+             l6-stat-after-write-lemma-1
+             (hns hns1)
+             (fs
+              (MV-NTH 0
+                      (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))))))))
 
 (defthm
   l6-read-after-write-1
