@@ -44,3 +44,25 @@ ls -lR $MOUNTPOINT
 sudo umount $MOUNTPOINT
 $OD_STEP -t x4 -j16384 -N32 $DISK
 rmdir $MOUNTPOINT
+# 0x20 reserved sectors + 0x3fe sectors for FAT + 0x3fe sectors for
+# FAT = 0x81c sectors before data = 0x103800 bytes before data =
+# 1062912 bytes before data
+echo "Directory entry for vmlinuz"
+$OD_STEP -t x4 -j1062912 -N32 $DISK
+$OD_STEP -t x1z -j1062912 -N11 $DISK
+echo "Directory entry for tmp"
+$OD_STEP -t x4 -j1062944 -N32 $DISK
+$OD_STEP -t x1z -j1062944 -N11 $DISK
+$OD_STEP -t x2 -j1062964 -N8 $DISK
+echo "Directory entry for tmp/."
+$OD_STEP -t x4 -j1071104 -N32 $DISK
+$OD_STEP -t x1z -j1071104 -N11 $DISK
+echo "Directory entry for tmp/.."
+$OD_STEP -t x4 -j1071136 -N32 $DISK
+$OD_STEP -t x1z -j1071136 -N11 $DISK
+echo "Directory entry for tmp/ticket1"
+$OD_STEP -t x4 -j1071168 -N32 $DISK
+$OD_STEP -t x1z -j1071168 -N11 $DISK
+echo "Directory entry for tmp/.."
+$OD_STEP -t x4 -j1071200 -N32 $DISK
+$OD_STEP -t x1z -j1071200 -N11 $DISK
