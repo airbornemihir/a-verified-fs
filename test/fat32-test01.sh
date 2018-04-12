@@ -39,7 +39,7 @@ sudo mkdir -p $MOUNTPOINT/tmp/
 mount_od_umount
 sudo dd of=$MOUNTPOINT/tmp/ticket1.txt if=/dev/zero bs=4 count=1
 mount_od_umount
-sudo dd of=$MOUNTPOINT/tmp/ticket2.txt if=/dev/zero bs=4 count=1
+sudo dd of=$MOUNTPOINT/tmp/ticket2.txt if=/dev/zero bs=512 count=9
 ls -lR $MOUNTPOINT
 sudo umount $MOUNTPOINT
 $OD_STEP -t x4 -j16384 -N32 $DISK
@@ -57,12 +57,14 @@ $OD_STEP -t x2 -j1062964 -N8 $DISK
 echo "Directory entry for tmp/."
 $OD_STEP -t x4 -j1071104 -N32 $DISK
 $OD_STEP -t x1z -j1071104 -N11 $DISK
+$OD_STEP -t x2 -j1071124 -N8 $DISK
 echo "Directory entry for tmp/.."
 $OD_STEP -t x4 -j1071136 -N32 $DISK
 $OD_STEP -t x1z -j1071136 -N11 $DISK
+$OD_STEP -t x2 -j1071156 -N8 $DISK
 echo "Directory entry for tmp/ticket1"
 $OD_STEP -t x4 -j1071168 -N32 $DISK
 $OD_STEP -t x1z -j1071168 -N11 $DISK
-echo "Directory entry for tmp/.."
+echo "Directory entry for tmp/ticket2"
 $OD_STEP -t x4 -j1071200 -N32 $DISK
 $OD_STEP -t x1z -j1071200 -N11 $DISK
