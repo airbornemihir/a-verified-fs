@@ -5198,31 +5198,35 @@
   :hints (("goal" :in-theory (enable l6-wrchs))))
 
 (thm-cp
-(IMPLIES
- (AND
-  (L6-FS-P FS)
-  (fat32-entry-list-p fa-table)
-  (STRINGP TEXT2)
-  (INTEGERP START2)
-  (<= 0 START2)
-  (BLOCK-LISTP DISK)
-  (EQUAL (LEN FA-TABLE) (LEN DISK))
-  (<= *ms-first-data-cluster* (LEN DISK))
-  (<= (len disk) *ms-bad-cluster*)
-  (L6-REGULAR-FILE-ENTRY-P (L6-STAT HNS1 FS))
-  (symbol-listp hns2))
- (EQUAL
-  (l6-regular-file-entry-p (L6-STAT HNS1
-                                    (MV-NTH 0
-                                            (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))))
-  (l6-regular-file-entry-p (L6-STAT HNS1 fs))))
-:hints (("Goal" :in-theory (enable l6-wrchs)) ("subgoal *1/2"
-    :in-theory (disable l6-wrchs-returns-fs
-  l6-stat-after-write-lemma-5)
-    :use ((:instance l6-wrchs-returns-fs (hns hns2) (start start2) (text
-                                                                    text2))
-          (:instance
-  l6-stat-after-write-lemma-5 (hns hns2) (start start2) (text text2))))))
+ (IMPLIES
+  (AND
+   (L6-stricter-FS-P FS fa-table)
+   (STRINGP TEXT2)
+   (INTEGERP START2)
+   (<= 0 START2)
+   (BLOCK-LISTP DISK)
+   (EQUAL (LEN FA-TABLE) (LEN DISK))
+   (<= *ms-first-data-cluster* (LEN DISK))
+   (<= (len disk) *ms-bad-cluster*)
+   (L6-REGULAR-FILE-ENTRY-P (L6-STAT HNS1 FS))
+   (symbol-listp hns1)
+   (symbol-listp hns2)
+          (>= (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))
+             (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START2 TEXT2)))))
+  (EQUAL
+   (l6-regular-file-entry-p (L6-STAT HNS1
+                                     (MV-NTH 0
+                                             (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))))
+   (l6-regular-file-entry-p (L6-STAT HNS1 fs))))
+ :hints 
+ (("goal" 
+   :in-theory (enable l6-wrchs)) ("Subgoal *1/6.7'" :in-theory (disable L6-STAT-CORRECTNESS-1-LEMMA-3) :use (:instance L6-STAT-CORRECTNESS-1-LEMMA-3 (name (CAR HNS1)) (fs
+                       (MV-NTH 0
+                               (L6-WRCHS HNS2
+                                         FS DISK FA-TABLE START2 TEXT2))) (fa-table
+                       (MV-NTH 2
+                               (L6-WRCHS HNS2
+                                         FS DISK FA-TABLE START2 TEXT2)))))))
 
 (defthm l6-stat-after-write
   (implies
