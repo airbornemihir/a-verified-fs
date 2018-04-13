@@ -1,0 +1,98 @@
+This is a design doc for a proposed modelling and verification effort
+for the FAT32 filesystem. We describe some essential features of the
+filesystem, describe our iterative approach to modelling the
+filesystem, and outline a strategy for proving properties about our
+model as well as validating it through co-simulation with an
+implementation.
+
+--FAT32--
+FAT32 makes two fundamental design choices, which are well-known in
+the filesystem literature. The first is the treatment of directories
+like regular files, but with a special attribute indicating they
+contain directory entries. (As a corollary, we will use the term
+"file" in the rest of this document to refer to both regular files and
+directories, using the more specific terms where appropriate.)
+The second is the layout of file and
+directory data in units called clusters, fixed in size for a given
+FAT32 volume, in order to facilitate longer sequential reads and
+writes and avoid seek latency.
+
+At a lower level, FAT32 chooses to record file ownership of clusters
+in a data structure named a file allocation table, which contains, for
+each file, a linked list of entries each pointing to the next. Further
+it chooses to eschew the maintainance of a free list, which frees some
+space, but at the cost of increasing the time taken to allocate free
+clusters found by iterating through the file allocation table and
+searching for free entries.
+
+FAT32 limits filenames to being up to 12 characters long, with up to 8
+characters preceding a period and a 3 (or fewer) character extension
+following the period. A variant, named VFAT, adds support for longer
+filenames while maintaining compatibility with older FAT32 code which
+cannot process these filenames.
+
+--Modelling--
+In order to manage the complexity inherent in modelling a filesystem,
+we propose to model it in two stages, wherein we will name the models
+M1 and M2.
+
+An instance of M1 shall contain a tree representation of the directory
+tree in a filesystem, and will thus lack the complexity of an actual
+disk-based filesystem. Yet, a measure of "available space" shall be
+maintained across file operations, so that file operations can be
+rejected with appropriate error codes for lack of space, for
+instance.
+
+An instance of M2 will be a disk image, containing a
+linearised representation of the directory tree along with all the
+volume-level metadata that belongs in a real FAT32 volume. This is
+intended to match FAT32's data layout at the byte level, implementing
+the FAT32 file operations the same way as the Linux kernel
+implementation.
+
+Initially, M1 and M2 are planned to only feature 3 regular file
+operations - read_iter (for buffered reading from a file) write_iter
+(for buffered writing to a file) and fsync (for synchronising the
+buffer with the disk.) For directory files, we plan to implement the
+operations iterate_shared and fsync, which will allow us to read and
+modify directories in the buffer, and synchronise the buffer with the
+disk. In tandem, we plan to co-simulate with the kernel
+implementation, trying out a few common file and directory operations
+and adding more file operations to this initial set as needed.
+
+--Proofs--
+The central property we are trying to prove is the refinement relation
+between L1 and L2; we can then prove properties of interest (such as
+read-over-write properties) for L1 and derive them for L2 through
+refinement. One way to prove refinement is by the construction of a
+refinement mapping; this is our method of choice, made simpler by
+keeping the set of file operations offered by M1 and M2 to be exactly
+the same.
+
+From past experience, it is expected that certain assumptions will
+have to be made about the filesystem - including an assumption that
+clusters are not shared between different files, and an assumption that
+clusterchains (FAT32's term for the linked lists showing the clusters
+held by individual files) end with a legal EOF value, instead of 0 or
+1. This will simplify our reasoning about the number of available
+clusters, and help us to show that file operations have localised
+effects and do not affect other files.
+
+--Goals and conclusion--
+At the end of this exercise, we hope to have a pair of models, the
+more complex of which models FAT32 up to co-simulation. We also hope to
+show the correctness of the more complex model through refinement
+proofs, which should help us show that the Linux FAT32 implementation
+has these desirable read-over-write properties, or alternatively show
+that bugs exist which can be fixed by bringing it into compliance with
+our model.
+
+For the moment, we exclude from our scope the verification of
+utilities such as mkfs.fat(8), which generate a filesystem. We also
+exclude a detailed treatment of the effects of file operations on
+memory, including sanitisation of user pointers and the like.
+
+We do not intend to conclude this verification effort with FAT32; we
+plan to generate as many artefacts as possible during this
+verification process as possible which will be of use in verification
+efforts for more complex filesystems, such as ext4.
