@@ -1605,6 +1605,25 @@
    (equal (consp (l6-to-l4-fs-helper fs fa-table))
           (consp fs))))
 
+(defthm
+  l6-stat-correctness-1-lemma-11
+  (implies
+   (and (symbol-listp hns)
+        (block-listp disk)
+        (fat32-entry-list-p fa-table)
+        (l6-fs-p fs)
+        (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+        (no-duplicatesp-equal
+         (mv-nth 0
+                 (l6-list-all-ok-indices fs fa-table))))
+   (equal (stringp (l3-stat hns (l6-to-l4-fs-helper fs fa-table)
+                            disk))
+          (l6-regular-file-entry-p (l6-stat hns fs))))
+  :hints (("subgoal *1/5''"
+           :in-theory (enable l3-regular-file-entry-p))
+          ("subgoal *1/4.1"
+           :in-theory (enable l3-regular-file-entry-p))))
+
 ;; This is the first of two theorems showing the equivalence of the l6 and l4
 ;; versions of stat.
 (defthm
@@ -5194,54 +5213,59 @@
   :hints (("goal" :in-theory (enable l6-wrchs))))
 
 (defthm
-  l6-stat-after-write-lemma-5
+  l6-stat-after-write-lemma-6
   (implies
-   (and (symbol-listp hns)
-        (l6-fs-p fs)
-        (natp start)
-        (stringp text)
+   (and (l6-stricter-fs-p fs fa-table)
+        (stringp text2)
+        (integerp start2)
+        (<= 0 start2)
         (block-listp disk)
-        (fat32-entry-list-p fa-table)
-        (equal (len disk) (len fa-table))
-        (<= (len fa-table) *ms-bad-cluster*)
-        (>= (len fa-table)
-            *ms-first-data-cluster*))
-   (iff
-    (consp (mv-nth 0
-                   (l6-wrchs hns fs disk fa-table start text)))
-    (consp fs)))
-  :hints (("goal" :in-theory (enable l6-wrchs))))
-
-(thm-cp
- (IMPLIES
-  (AND
-   (L6-stricter-FS-P FS fa-table)
-   (STRINGP TEXT2)
-   (INTEGERP START2)
-   (<= 0 START2)
-   (BLOCK-LISTP DISK)
-   (EQUAL (LEN FA-TABLE) (LEN DISK))
-   (<= *ms-first-data-cluster* (LEN DISK))
-   (<= (len disk) *ms-bad-cluster*)
-   (L6-REGULAR-FILE-ENTRY-P (L6-STAT HNS1 FS))
-   (symbol-listp hns1)
-   (symbol-listp hns2)
-          (>= (COUNT-FREE-BLOCKS (FA-TABLE-TO-ALV FA-TABLE))
-             (LEN (MAKE-BLOCKS (INSERT-TEXT NIL START2 TEXT2)))))
-  (EQUAL
-   (l6-regular-file-entry-p (L6-STAT HNS1
-                                     (MV-NTH 0
-                                             (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))))
-   (l6-regular-file-entry-p (L6-STAT HNS1 fs))))
- :hints 
- (("goal" 
-   :in-theory (enable l6-wrchs)) ("Subgoal *1/6.7'" :in-theory (disable L6-STAT-CORRECTNESS-1-LEMMA-3) :use (:instance L6-STAT-CORRECTNESS-1-LEMMA-3 (name (CAR HNS1)) (fs
-                       (MV-NTH 0
-                               (L6-WRCHS HNS2
-                                         FS DISK FA-TABLE START2 TEXT2))) (fa-table
-                       (MV-NTH 2
-                               (L6-WRCHS HNS2
-                                         FS DISK FA-TABLE START2 TEXT2)))))))
+        (equal (len fa-table) (len disk))
+        (<= *ms-first-data-cluster* (len disk))
+        (<= (len disk) *ms-bad-cluster*)
+        (l6-regular-file-entry-p (l6-stat hns1 fs))
+        (symbol-listp hns1)
+        (symbol-listp hns2)
+        (>= (count-free-blocks (fa-table-to-alv fa-table))
+            (len (make-blocks (insert-text nil start2 text2))))
+        (<= (len fa-table) 268435447)
+        (<= 2 (len fa-table)))
+   (equal
+    (l6-regular-file-entry-p
+     (l6-stat
+      hns1
+      (mv-nth 0
+              (l6-wrchs hns2 fs disk fa-table start2 text2))))
+    (l6-regular-file-entry-p (l6-stat hns1 fs))))
+  :hints
+  (("goal"
+    :in-theory (disable l4-stat-after-write-lemma-1
+                        l4-stricter-fs-p
+                        l6-stricter-fs-p-correctness-1
+                        l6-stat-correctness-1-lemma-11
+                        l6-wrchs-correctness-1)
+    :use
+    ((:instance l4-stat-after-write-lemma-1
+                (fs (l6-to-l4-fs-helper fs fa-table))
+                (alv (fa-table-to-alv fa-table)))
+     l6-stricter-fs-p-correctness-1
+     (:instance
+      l6-stat-correctness-1-lemma-11
+      (hns hns1)
+      (fs
+       (mv-nth 0
+               (l6-wrchs hns2 fs disk fa-table start2 text2)))
+      (disk
+       (mv-nth 1
+               (l6-wrchs hns2 fs disk fa-table start2 text2)))
+      (fa-table
+       (mv-nth 2
+               (l6-wrchs hns2 fs disk fa-table start2 text2))))
+     (:instance l6-wrchs-correctness-1 (hns hns2)
+                (start start2)
+                (text text2))
+     (:instance l6-stat-correctness-1-lemma-11
+                (hns hns1))))))
 
 (defthm l6-stat-after-write
   (implies
