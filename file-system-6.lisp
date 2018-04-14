@@ -1429,10 +1429,25 @@
 
 (defthm
   l6-stricter-fs-p-correctness-2
-  (implies (l6-stricter-fs-p fs fa-table)
-           (and (l6-fs-p fs)
-                (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
-                (fat32-entry-list-p fa-table)))
+  (implies
+   (l6-stricter-fs-p fs fa-table)
+   (and (l6-fs-p fs)
+        (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+        (no-duplicatesp-equal (mv-nth 0 (l6-list-all-ok-indices fs fa-table)))
+        (fat32-entry-list-p fa-table)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (l6-stricter-fs-p fs fa-table)
+     (and
+      (mv-nth 1 (l6-list-all-ok-indices fs fa-table))
+      (no-duplicatesp-equal (mv-nth 0
+                                    (l6-list-all-ok-indices fs fa-table))))))
+   (:forward-chaining
+    :corollary (implies (l6-stricter-fs-p fs fa-table)
+                        (and (l6-fs-p fs)
+                             (fat32-entry-list-p fa-table)))))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p))))
 
 (defthm
