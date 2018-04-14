@@ -5267,15 +5267,14 @@
      (:instance l6-stat-correctness-1-lemma-11
                 (hns hns1))))))
 
-(defthm l6-stat-after-write
+(defthm
+  l6-stat-after-write
   (implies
    (and (l6-stricter-fs-p fs fa-table)
         (stringp text2)
-        (natp start1)
         (natp start2)
         (symbol-listp hns1)
         (symbol-listp hns2)
-        (natp n1)
         (block-listp disk)
         (equal (len fa-table) (len disk))
         (<= *ms-first-data-cluster* (len fa-table))
@@ -5283,61 +5282,38 @@
         (<= (len (make-blocks (insert-text nil start2 text2)))
             (count-free-blocks (fa-table-to-alv fa-table)))
         (l6-regular-file-entry-p (l6-stat hns1 fs)))
-   (b* ((file (l6-stat hns1 fs))
-        ((mv index-list &) (l6-file-index-list file fa-table))
+   (b*
+       ((file (l6-stat hns1 fs))
+        ((mv index-list &)
+         (l6-file-index-list file fa-table))
         ((mv new-fs new-disk new-fa-table &)
          (l6-wrchs hns2 fs disk fa-table start2 text2))
         (new-file (l6-stat hns1 new-fs))
-        ((mv new-index-list &) (l6-file-index-list new-file new-fa-table)))
+        ((mv new-index-list &)
+         (l6-file-index-list new-file new-fa-table)))
      (equal
-      (UNMAKE-BLOCKS-WITHOUT-FEASIBILITY
-       (FETCH-BLOCKS-BY-INDICES new-DISK new-INDEX-LIST)
-       (L6-REGULAR-FILE-LENGTH new-FILE))
+      (unmake-blocks-without-feasibility
+       (fetch-blocks-by-indices new-disk new-index-list)
+       (l6-regular-file-length new-file))
       (if (equal hns1 hns2)
           (insert-text
-           (UNMAKE-BLOCKS-WITHOUT-FEASIBILITY
-            (FETCH-BLOCKS-BY-INDICES DISK index-list)
-            (L6-REGULAR-FILE-LENGTH file))
+           (unmake-blocks-without-feasibility
+            (fetch-blocks-by-indices disk index-list)
+            (l6-regular-file-length file))
            start2 text2)
-        (UNMAKE-BLOCKS-WITHOUT-FEASIBILITY
-         (FETCH-BLOCKS-BY-INDICES DISK index-list)
-         (L6-REGULAR-FILE-LENGTH file))))))
-  :hints (("Goal" :do-not-induct t :in-theory (disable l4-stat-after-write
-                                                       l4-stricter-fs-p
-                                                       l6-to-l4-fs)
-           :use (:instance l4-stat-after-write
-                           (fs (mv-nth 0 (l6-to-l4-fs fs fa-table)))
-                           (alv (mv-nth 1 (l6-to-l4-fs fs fa-table)))))
-          ("Subgoal 4'" :in-theory (enable l6-to-l4-fs))
-          ("Subgoal 3" :in-theory (enable l6-to-l4-fs))
-          ("Subgoal 2" :in-theory (disable l6-stat-correctness-1
-                                           L6-WRCHS-RETURNS-STRICTER-FS
-                                           l6-stat-after-write-lemma-1)
-           :use
-           (
-            (:instance
-             l6-stat-correctness-1
-             (hns hns1)
-             (fs
-              (MV-NTH 0
-                      (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2)))
-             (disk
-              (MV-NTH 1
-                      (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2)))
-             (fa-table
-              (MV-NTH 2
-                      (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))))
-            (:instance
-             L6-WRCHS-RETURNS-STRICTER-FS
-             (hns hns2)
-             (start start2)
-             (text text2))
-            (:instance
-             l6-stat-after-write-lemma-1
-             (hns hns1)
-             (fs
-              (MV-NTH 0
-                      (L6-WRCHS HNS2 FS DISK FA-TABLE START2 TEXT2))))))))
+          (unmake-blocks-without-feasibility
+           (fetch-blocks-by-indices disk index-list)
+           (l6-regular-file-length file))))))
+  :instructions
+  (:promote
+   (:in-theory (disable l4-stat-after-write
+                        l4-stricter-fs-p l6-to-l4-fs))
+   (:use (:instance l4-stat-after-write
+                    (fs (mv-nth 0 (l6-to-l4-fs fs fa-table)))
+                    (alv (mv-nth 1 (l6-to-l4-fs fs fa-table)))))
+   :bash
+   (:bash ("goal" :in-theory (enable l6-to-l4-fs)))
+   (:bash ("goal" :in-theory (enable l6-to-l4-fs)))))
 
 (defthm
   l6-read-after-write-1
