@@ -934,7 +934,7 @@
        (equal hns1 hns2)
        (coerce (insert-text (coerce (l3-stat hns1 fs disk) 'list)
                             start2 text2)
-               :string)
+               'string)
        (l3-stat hns1 fs disk)))))
   :hints
   (("goal"
