@@ -5223,13 +5223,10 @@
         (equal (len fa-table) (len disk))
         (<= *ms-first-data-cluster* (len disk))
         (<= (len disk) *ms-bad-cluster*)
-        (l6-regular-file-entry-p (l6-stat hns1 fs))
         (symbol-listp hns1)
         (symbol-listp hns2)
         (>= (count-free-blocks (fa-table-to-alv fa-table))
-            (len (make-blocks (insert-text nil start2 text2))))
-        (<= (len fa-table) 268435447)
-        (<= 2 (len fa-table)))
+            (len (make-blocks (insert-text nil start2 text2)))))
    (equal
     (l6-regular-file-entry-p
      (l6-stat
