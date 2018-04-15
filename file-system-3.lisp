@@ -11,94 +11,6 @@
 (include-book "block-listp")
 (include-book "file-system-2")
 
-;; This function spells out how many characters can be in a file given the
-;; number of blocks associated with it. It is kept disabled in order to avoid
-;; huge arithmetic-heavy subgoals where they're not wanted.
-(defund feasible-file-length-p (index-list-length file-length)
-  (declare (xargs :guard (and (natp file-length) (natp index-list-length))))
-  (and (> file-length
-          (* *blocksize* (- index-list-length 1)))
-       (<= file-length
-           (* *blocksize* index-list-length))))
-
-;; This is the counterpart of make-blocks that collapses blocks into a
-;; character-list of the appropriate length.
-;; It will be used in stat and, by extension, in rdchs.
-(defun
-  unmake-blocks (blocks n)
-  (declare
-   (xargs
-    :guard (and (block-listp blocks)
-                (natp n)
-                (feasible-file-length-p (len blocks) n))
-    :guard-hints
-    (("goal" :in-theory (enable feasible-file-length-p)))))
-  (if (atom blocks)
-      nil
-      (if (atom (cdr blocks))
-          (take n (car blocks))
-          (binary-append (car blocks)
-                         (unmake-blocks (cdr blocks)
-                                        (- n *blocksize*))))))
-
-;; Proving that we get a proper character-list out provided we don't ask for
-;; more characters than we have.
-(defthm unmake-blocks-correctness-1
-  (implies (and (block-listp blocks)
-                (natp n)
-                (feasible-file-length-p (len blocks) n))
-           (character-listp (unmake-blocks blocks n)))
-  :hints (("Goal" :in-theory (enable feasible-file-length-p)) ))
-
-(defthm
-  unmake-blocks-correctness-2
-  (implies (and (block-listp blocks)
-                (natp n)
-                (feasible-file-length-p (len blocks) n))
-           (equal (len (unmake-blocks blocks n))
-                  n))
-  :rule-classes
-  ((:rewrite :corollary (implies (and (block-listp blocks)
-                                      (natp n)
-                                      (feasible-file-length-p (len blocks) n))
-                                 (iff (consp (unmake-blocks blocks n))
-                                      (not (zp n))))))
-  :hints (("goal" :in-theory (enable feasible-file-length-p))
-          ("subgoal *1/5'''" :expand (len (cdr blocks)))))
-
-(defthm unmake-make-blocks-lemma-1
-        (implies (natp n)
-                 (iff (consp (nthcdr n l)) (> (len l) n)))
-        :hints (("Goal" :induct (nthcdr n l))))
-
-(encapsulate ()
-  (local (include-book "std/lists/repeat" :dir :system))
-
-  ;; Proving that make and unmake are, in a sense, inverse functions of each
-  ;; other.
-  (defthm
-    unmake-make-blocks
-    (implies (and (character-listp text))
-             (equal (unmake-blocks (make-blocks text)
-                                   (len text))
-                    text))
-    :hints
-    (("goal" :in-theory (enable make-blocks))
-     ("subgoal *1/3.3'"
-      :in-theory (disable first-n-ac-of-make-character-list
-                          take-of-too-many)
-      :use ((:instance first-n-ac-of-make-character-list
-                       (i (len text))
-                       (l (first-n-ac 8 text nil))
-                       (ac nil))
-            (:instance take-of-too-many (x text)
-                       (n *blocksize*)))))))
-
-;; This is a constant that might be needed later.
-;; This is to be returned when a block is not found. It's full of null
-;; characters and is *blocksize* long.
-(defconst *nullblock* (make-character-list (take *blocksize* nil)))
-
 ;; This function serves to get the specified blocks from a disk. If the block
 ;; is not found (most likely because of an invalid index) we return a null block
 ;; as noted above.
@@ -137,18 +49,6 @@
    (equal (fetch-blocks-by-indices (binary-append block-list extra-blocks)
                                    index-list)
           (fetch-blocks-by-indices block-list index-list))))
-
-
-(defthm
-  make-blocks-correctness-1
-  (implies (character-listp text)
-           (and (< (- (* *blocksize* (len (make-blocks text)))
-                      *blocksize*)
-                   (len text))
-                (not (< (* *blocksize* (len (make-blocks text)))
-                        (len text)))))
-  :hints (("goal" :in-theory (enable make-blocks)
-           :induct t)))
 
 ;; This function, which is kept disabled, recognises a regular file entry. I am
 ;; deciding not to make things overly complicated by making getter and setter
@@ -534,17 +434,6 @@
      :hints (("Goal" :induct (induction-scheme disk newblocks))))
   
   )
-
-(defthm
-  make-blocks-correctness-3
-  (implies (and (character-listp cl))
-           (feasible-file-length-p (len (make-blocks cl))
-                                   (len cl)))
-  :hints
-  (("goal"
-    :in-theory (e/d (feasible-file-length-p)
-                    (make-blocks-correctness-1))
-    :use (:instance make-blocks-correctness-1 (text cl)))))
 
 ; This function writes a specified text string to a specified position to a
 ; text file at a specified path.
