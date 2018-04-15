@@ -5,7 +5,7 @@ filesystem, and outline a strategy for proving properties about our
 model as well as validating it through co-simulation with an
 implementation.
 
---FAT32--
+--The FAT32 filesystem--
 FAT32 makes two fundamental design choices, which are well-known in
 the filesystem literature. The first is the treatment of directories
 like regular files, but with a special attribute indicating they
@@ -29,6 +29,32 @@ characters preceding a period and a 3 (or fewer) character extension
 following the period. A variant, named VFAT, adds support for longer
 filenames while maintaining compatibility with older FAT32 code which
 cannot process these filenames.
+
+--Linux implementation of FAT32--
+FAT32 includes a notion of file permissions; permission errors (EPERM)
+are returned in the following scenarios:
+- during ioctl(2), when a file is marked as a system file (ATTR_SYS is
+set) and the Linux capability for modifying immutable files is not
+held.
+- when setting file attributes, if file permissions (user/group/other)
+are not in order.
+
+Due to its use of caching, FAT32 is also suceptible to running out of
+memory (ENOMEM) in the following scenarios:
+- while zeroing out blocks, when a block is found which is already
+zeroed.
+- when allocating storage for a new directory, or when adding entries
+to an existing directory, and no space is available in the buffer.
+- when building a new inode, and no space is available.
+- when the inode cache,FAT cache or superblock information data
+structure cannot be created during initialisation.
+- when allocating or freeing entries.
+
+Finally, FAT32, like all filesystems, is susceptible to running out of
+available space on the volume (ENOSPC). This leads to errors in the
+following scenarios:
+- when adding entries to a directory.
+- more generally, when allocating clusters for a file operation.
 
 --Modelling--
 In order to manage the complexity inherent in modelling a filesystem,
