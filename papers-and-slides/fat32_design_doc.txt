@@ -6,15 +6,16 @@ model as well as validating it through co-simulation with an
 implementation.
 
 --The FAT32 filesystem--
-FAT32 makes two fundamental design choices, which are well-known in
-the filesystem literature. The first is the treatment of directories
-like regular files, but with a special attribute indicating they
-contain directory entries. (As a consequence, we will use the term
-"file" in the rest of this document to refer to both regular files and
-directories, using the more specific terms where appropriate.)
-The second is the layout of file data in units called clusters, fixed
-in size for a given FAT32 volume, in order to facilitate longer
-sequential reads and writes and avoid seek latency.
+FAT32~\cite{microsoft_2000}~makes two fundamental design choices, which
+are well-known in the filesystem literature. The first is the
+treatment of directories like regular files, but with a special
+attribute indicating they contain directory entries. (As a
+consequence, we will use the term "file" in the rest of this document
+to refer to both regular files and directories, using the more
+specific terms where appropriate.) The second is the layout of file
+data in units called clusters, fixed in size for a given FAT32 volume,
+in order to facilitate longer sequential reads and writes and reduce
+seek latency.
 
 At a lower level, FAT32 chooses to record file ownership of clusters
 in a data structure named a file allocation table, which contains, for
@@ -24,7 +25,7 @@ space, but at the cost of increasing the time taken to allocate free
 clusters found by iterating through the file allocation table and
 searching for free entries.
 
-FAT32 limits filenames to being up to 12 characters long, with up to 8
+FAT32 limits filenames a maximum length of 12 characters, with up to 8
 characters preceding a period and a 3 (or fewer) character extension
 following the period. A variant, named VFAT, adds support for longer
 filenames while maintaining compatibility with older FAT32 code which
@@ -142,6 +143,10 @@ We do not intend to conclude this verification effort with FAT32; we
 plan to generate as many artefacts as possible during this
 verification process as possible which will be of use in verification
 efforts for more complex filesystems, such as ext4. Examples of these
+/*BOZO: Cite Jonathan Corbet's LWN article about the asynchronous
+read/write interface, and possibly talk more about the nature of this
+asynchronous stuff. Also mention iterate_shared - I think this is how
+things get added to directories... */
 include our planned implementations of llseek, read_iter and
 write_iter - FAT32 chooses to use Linux' generic implementations of
 these file operations, and thus they are likely to be of use when
