@@ -5342,29 +5342,30 @@
        (equal read-result text))))
   :hints
   (("goal"
-    :in-theory
-    (e/d (l6-stricter-fs-p)
-         (l6-rdchs l4-rdchs l4-wrchs l6-rdchs-correctness-1
-                   l6-wrchs-correctness-1
-                   l4-read-after-write-1
-                   l6-list-all-ok-indices-correctness-5
-                   l6-wrchs-returns-stricter-fs))
+    :do-not-induct t
+    :in-theory (disable insert-text-correctness-1
+                        insert-text-correctness-2)
     :use
     ((:instance
-      l6-rdchs-correctness-1
-      (fs (mv-nth 0
-                  (l6-wrchs hns fs disk fa-table start text)))
-      (disk (mv-nth 1
-                    (l6-wrchs hns fs disk fa-table start text)))
-      (fa-table
-       (mv-nth 2
-               (l6-wrchs hns fs disk fa-table start text))))
-     l6-wrchs-correctness-1
-     (:instance l4-read-after-write-1
-                (fs (l6-to-l4-fs-helper fs fa-table))
-                (alv (fa-table-to-alv fa-table)))
-     l6-list-all-ok-indices-correctness-5
-     l6-wrchs-returns-stricter-fs))))
+      insert-text-correctness-1
+      (oldtext
+       (unmake-blocks
+        (fetch-blocks-by-indices
+         disk
+         (mv-nth 0
+                 (l6-file-index-list (l6-stat hns fs)
+                                     fa-table)))
+        (l6-regular-file-length (l6-stat hns fs)))))
+     (:instance
+      insert-text-correctness-2
+      (oldtext
+       (unmake-blocks
+        (fetch-blocks-by-indices
+         disk
+         (mv-nth 0
+                 (l6-file-index-list (l6-stat hns fs)
+                                     fa-table)))
+        (l6-regular-file-length (l6-stat hns fs)))))))))
 
 (defthm
   l6-read-after-write-2
