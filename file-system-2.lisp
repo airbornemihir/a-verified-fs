@@ -435,7 +435,7 @@
     (if (equal hns1 hns2)
         (coerce (insert-text (coerce (l2-stat hns1 fs) 'list)
                              start2 text2)
-                :string)
+                'string)
         (l2-stat hns1 fs))))
   :hints
   (("goal"
