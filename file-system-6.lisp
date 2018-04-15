@@ -5471,7 +5471,8 @@
   :instructions
   (:promote
    (:in-theory (disable l4-stat-after-write
-                        l4-stricter-fs-p l6-to-l4-fs))
+                        l4-stricter-fs-p l6-to-l4-fs
+                        l6-stat-after-write-lemma-7))
    (:use (:instance l4-stat-after-write
                     (fs (mv-nth 0 (l6-to-l4-fs fs fa-table)))
                     (alv (mv-nth 1 (l6-to-l4-fs fs fa-table)))))
