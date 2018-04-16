@@ -4,11 +4,13 @@ MOUNTPOINT=/tmp/mount1
 FUSEPOINT=/tmp/mount2
 SIZE=512M
 BBFS=$HOME/src/fuse-tutorial-2018-02-04/src/bbfs
+UID=`id -u`
+GID=`id -g`
 OD_STEP="od -v -Ax --endian=little"
 function mount_od_umount {
     sudo umount $MOUNTPOINT
     $OD_STEP -t x4 -j16384 -N32 $DISK
-    sudo mount -o loop -t msdos $DISK $MOUNTPOINT
+    sudo mount -o loop,uid=$UID,gid=$GID -t msdos $DISK $MOUNTPOINT
 }
 rm -f $DISK
 rm -rf $MOUNTPOINT
@@ -36,16 +38,16 @@ $OD_STEP -t x4 -j44 -N4 $DISK
 mkdir -p $MOUNTPOINT
 mkdir -p $FUSEPOINT
 $OD_STEP -t x4 -j16384 -N32 $DISK
-sudo mount -o loop -t msdos $DISK $MOUNTPOINT
+sudo mount -o loop,uid=$UID,gid=$GID -t msdos $DISK $MOUNTPOINT
 $BBFS $MOUNTPOINT $FUSEPOINT
-sudo dd of=$MOUNTPOINT/vmlinuz if=/dev/zero bs=4 count=1
+dd of=$FUSEPOINT/vmlinuz if=/dev/zero bs=4 count=1
 mount_od_umount
-sudo mkdir -p $MOUNTPOINT/tmp/
+mkdir -p $FUSEPOINT/tmp/
 mount_od_umount
-sudo dd of=$MOUNTPOINT/tmp/ticket1.txt if=/dev/zero bs=4 count=1
+dd of=$FUSEPOINT/tmp/ticket1.txt if=/dev/zero bs=4 count=1
 mount_od_umount
-sudo dd of=$MOUNTPOINT/tmp/ticket2.txt if=/dev/zero bs=512 count=9
-ls -lR $MOUNTPOINT
+dd of=$FUSEPOINT/tmp/ticket2.txt if=/dev/zero bs=512 count=9
+ls -lR $FUSEPOINT
 sudo umount $MOUNTPOINT
 fusermount -u $FUSEPOINT
 $OD_STEP -t x4 -j16384 -N32 $DISK
