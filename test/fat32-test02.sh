@@ -4,6 +4,7 @@ MOUNTPOINT=/tmp/mount1
 FUSEPOINT=/tmp/mount2
 SIZE=512M
 BBFS=$HOME/src/fuse-tutorial-2018-02-04/src/bbfs
+# snippet from https://unix.stackexchange.com/a/438158/286440
 UID=`id -u`
 GID=`id -g`
 OD_STEP="od -v -Ax --endian=little"
@@ -48,6 +49,7 @@ dd of=$FUSEPOINT/tmp/ticket1.txt if=/dev/zero bs=4 count=1
 mount_od_umount
 dd of=$FUSEPOINT/tmp/ticket2.txt if=/dev/zero bs=512 count=9
 ls -lR $FUSEPOINT
+cat $FUSEPOINT/vmlinuz
 sudo umount $MOUNTPOINT
 fusermount -u $FUSEPOINT
 $OD_STEP -t x4 -j16384 -N32 $DISK
@@ -75,3 +77,9 @@ $OD_STEP -t x1z -j1071168 -N11 $DISK
 echo "Directory entry for tmp/ticket2"
 $OD_STEP -t x4 -j1071200 -N32 $DISK
 $OD_STEP -t x1z -j1071200 -N11 $DISK
+grep -o -e "^bb_[[:alnum:]]*" bbfs.log | sort | uniq > bbfs_operations.txt
+# snippet from https://stackoverflow.com/a/1521498/6213541
+while read p; do
+  echo -n "$p: "; grep -c -e "^$p" bbfs.log
+done < bbfs_operations.txt
+grep -o -e "[[:alnum:]]*[[:space:]]\+returned" bbfs.log | sort | uniq
