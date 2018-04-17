@@ -12,12 +12,21 @@
 (local (include-book "file-system-lemmas"))
 
 (defconst *expt-2-28* (expt 2 28))
+
 ;; from page 18 of the FAT specification
-(defconst *MS-END-OF-CLUSTERCHAIN* (- *expt-2-28* 1))
+(defconst *ms-end-of-clusterchain* (- *expt-2-28* 1))
+
 ;; from page 14 of the FAT specification
 (defconst *ms-first-data-cluster* 2)
+
 ;; from page 18 of the FAT specification
 (defconst *ms-bad-cluster* 268435447)
+
+;; from page 15 of the FAT specification
+(defconst *ms-fat32-min-count-of-clusters* 65525)
+
+;; from page 9 of the FAT specification
+(defconst *ms-min-bytes-per-sector* 512)
 
 ;; from include/uapi/asm-generic/errno-base.h
 (defconst *EIO* 5) ;; I/O error
