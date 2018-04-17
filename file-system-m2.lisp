@@ -101,4 +101,9 @@
     (fat :type (array (unsigned-byte 32) (*ms-fat32-min-count-of-clusters*))
          :resizable t
          ;; per spec
+         :initially 0)
+
+    (data_region :type (array (unsigned-byte 8) (*ms-min-data-region-size*))
+         :resizable t
+         ;; per spec
          :initially 0)))

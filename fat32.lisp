@@ -28,6 +28,11 @@
 ;; from page 9 of the FAT specification
 (defconst *ms-min-bytes-per-sector* 512)
 
+;; inferred - there can be as few as one sectors in a cluster
+(defconst *ms-min-data-region-size* (* *ms-min-bytes-per-sector*
+                                       1
+                                       *ms-fat32-min-count-of-clusters*))
+
 ;; from include/uapi/asm-generic/errno-base.h
 (defconst *EIO* 5) ;; I/O error
 (defconst *ENOSPC* 28) ;; No space left on device
