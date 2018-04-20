@@ -125,8 +125,7 @@
       :in-theory (disable fat32-in-memoryp
                           state-p unsigned-byte-p)))
     :stobjs (state fat32-in-memory)))
-  (b*
-      (((mv byte state)
+  (b* (((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
         (mv fat32-in-memory state -1))
@@ -213,31 +212,11 @@
        ((unless (and value (not (equal value 'fail))))
         (mv fat32-in-memory state -1))
        (fat32-in-memory
-        (update-bpb_rsvdseccnt value fat32-in-memory))
-       ((mv byte state)
-        (read-byte$ channel state))
-       ((unless byte)
-        (mv fat32-in-memory state -1))
-       (fat32-in-memory (update-bpb_numfats byte fat32-in-memory))
-       ((mv value state)
-        (read-bytes$ channel
-                     :bytes 2
-                     :end :little))
-       ((unless (and value (not (equal value 'fail))))
-        (mv fat32-in-memory state -1))
-       (fat32-in-memory
-        (update-bpb_rootentcnt value fat32-in-memory))
-       ((mv value state)
-        (read-bytes$ channel
-                     :bytes 2
-                     :end :little))
-       ((unless (and value (not (equal value 'fail))))
-        (mv fat32-in-memory state -1))
-       (fat32-in-memory
-        (update-bpb_totsec16 value fat32-in-memory)))
+        (update-bpb_rsvdseccnt value fat32-in-memory)))
     (mv fat32-in-memory state 0)))
 
-(defun slurp-disk-image
+(defun
+  slurp-disk-image
   (fat32-in-memory image-path state)
   (declare
    (xargs
@@ -246,18 +225,14 @@
                 (fat32-in-memoryp fat32-in-memory))
     :guard-hints
     (("goal" :do-not-induct t
-      :in-theory (disable fat32-in-memoryp
-                          state-p)))
+      :in-theory (disable fat32-in-memoryp state-p)))
     :stobjs (state fat32-in-memory)))
-         (b* (((mv channel state)
-               (open-input-channel image-path
-                                   :byte state))
-              ((unless channel)
-               (mv fat32-in-memory
-                   state
-                   -1))
-              ((mv fat32-in-memory state error-code)
-               (read-reserved-area
-                fat32-in-memory channel state))
-              (state (close-input-channel channel state)))
-             (mv fat32-in-memory state error-code)))
+  (b* (((mv channel state)
+        (open-input-channel image-path
+                            :byte state))
+       ((unless channel)
+        (mv fat32-in-memory state -1))
+       ((mv fat32-in-memory state error-code)
+        (read-reserved-area fat32-in-memory channel state))
+       (state (close-input-channel channel state)))
+    (mv fat32-in-memory state error-code)))
