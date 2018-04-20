@@ -207,9 +207,12 @@
              (cdr ac)
            (make-list-ac (- n 1) val ac))))
 
-(defthm member-equal-of-nth
-  (implies (and (natp n) (< n (len l)))
-           (member-equal (nth n l) l)))
+;; The following is redundant with the eponymous theorem in
+;; books/data-structures/list-defthms.lisp, from where it was taken with thanks.
+(defthm member-equal-nth
+  (implies (< (nfix n) (len l))
+           (member-equal (nth n l) l))
+  :hints (("Goal" :in-theory (enable nth))))
 
 (encapsulate
   ()
