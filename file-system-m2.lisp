@@ -128,67 +128,92 @@
   (b* (((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_jmpbooti 0 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_jmpbooti 1 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_jmpbooti 2 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_oemnamei 0 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_oemnamei 1 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_oemnamei 2 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_oemnamei 3 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_oemnamei 4 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_oemnamei 5 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_oemnamei 6 byte fat32-in-memory))
        ((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
-        (mv fat32-in-memory channel state -1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_oemnamei 7 byte fat32-in-memory)))
-    (mv fat32-in-memory channel state 0)))
+    (mv fat32-in-memory state 0)))
+
+(defun slurp-disk-image
+  (fat32-in-memory image-path state)
+  (declare
+   (xargs
+    :guard (and (state-p state)
+                (stringp image-path)
+                (fat32-in-memoryp fat32-in-memory))
+    :guard-hints
+    (("goal" :do-not-induct t
+      :in-theory (disable fat32-in-memoryp
+                          state-p)))
+    :stobjs (state fat32-in-memory)))
+         (b* (((mv channel state)
+               (open-input-channel image-path
+                                   :byte state))
+              ((unless channel)
+               (mv fat32-in-memory
+                   state
+                   -1))
+              ((mv fat32-in-memory state error-code)
+               (read-reserved-area
+                fat32-in-memory channel state))
+              (state (close-input-channel channel state)))
+             (mv fat32-in-memory state error-code)))
