@@ -76,16 +76,13 @@
            :use (:instance revappend-is-append-of-rev
                            (x ac) (y nil) (z l)))))
 
-(defthm nth-of-binary-append-1
-  (implies (and (integerp n) (>= n (len x)))
-           (equal (nth n (binary-append x y))
-                  (nth (- n (len x)) y)))
-  :hints (("goal" :induct (nth n x))))
-
-(defthm nth-of-binary-append-2
-  (implies (and (natp n) (< n (len x)))
-           (equal (nth n (binary-append x y))
-                  (nth n x))))
+;; The following is redundant with the definition in std/lists/nth.lisp, from
+;; where it was taken with thanks.
+(defthm nth-of-append
+  (equal (nth n (append x y))
+         (if (< (nfix n) (len x))
+             (nth n x)
+           (nth (- n (len x)) y))))
 
 (defthm binary-append-is-associative
   (equal (binary-append (binary-append a b) c)
@@ -210,9 +207,12 @@
              (cdr ac)
            (make-list-ac (- n 1) val ac))))
 
-(defthm member-equal-of-nth
-  (implies (and (natp n) (< n (len l)))
-           (member-equal (nth n l) l)))
+;; The following is redundant with the eponymous theorem in
+;; books/data-structures/list-defthms.lisp, from where it was taken with thanks.
+(defthm member-equal-nth
+  (implies (< (nfix n) (len l))
+           (member-equal (nth n l) l))
+  :hints (("Goal" :in-theory (enable nth))))
 
 (encapsulate
   ()
