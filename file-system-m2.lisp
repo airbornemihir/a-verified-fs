@@ -125,7 +125,8 @@
       :in-theory (disable fat32-in-memoryp
                           state-p unsigned-byte-p)))
     :stobjs (state fat32-in-memory)))
-  (b* (((mv byte state)
+  (b*
+      (((mv byte state)
         (read-byte$ channel state))
        ((unless byte)
         (mv fat32-in-memory state -1))
@@ -190,7 +191,50 @@
        ((unless byte)
         (mv fat32-in-memory state -1))
        (fat32-in-memory
-        (update-bs_oemnamei 7 byte fat32-in-memory)))
+        (update-bs_oemnamei 7 byte fat32-in-memory))
+       ((mv value state)
+        (read-bytes$ channel
+                     :bytes 2
+                     :end :little))
+       ((unless (and value (not (equal value 'fail))))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bpb_bytspersec value fat32-in-memory))
+       ((mv byte state)
+        (read-byte$ channel state))
+       ((unless byte)
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bpb_secperclus byte fat32-in-memory))
+       ((mv value state)
+        (read-bytes$ channel
+                     :bytes 2
+                     :end :little))
+       ((unless (and value (not (equal value 'fail))))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bpb_rsvdseccnt value fat32-in-memory))
+       ((mv byte state)
+        (read-byte$ channel state))
+       ((unless byte)
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory (update-bpb_numfats byte fat32-in-memory))
+       ((mv value state)
+        (read-bytes$ channel
+                     :bytes 2
+                     :end :little))
+       ((unless (and value (not (equal value 'fail))))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bpb_rootentcnt value fat32-in-memory))
+       ((mv value state)
+        (read-bytes$ channel
+                     :bytes 2
+                     :end :little))
+       ((unless (and value (not (equal value 'fail))))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bpb_totsec16 value fat32-in-memory)))
     (mv fat32-in-memory state 0)))
 
 (defun slurp-disk-image
