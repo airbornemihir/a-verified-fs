@@ -110,26 +110,37 @@
          :initially 0)))
 
 ;; This must be called after the file is opened.
-(defun read-reserved-area (fat32-in-memory channel state)
-  (declare (xargs :guard (and (state-p state)
-                              (symbolp channel)
-                              (open-input-channel-p channel
-                                                    :byte state)
-                              (FAT32-IN-MEMORYP FAT32-IN-MEMORY))
-                  :guard-hints (("Goal" :do-not-induct t :in-theory (disable
-                                                                     BYTEP-OF-READ-BYTE$
-                                                                     FAT32-IN-MEMORYP
-                                                                     STATE-P
-                                                                     UNSIGNED-BYTE-P)
-                                 :use BYTEP-OF-READ-BYTE$)
-                                ("Goal'''" :expand (READ-BYTE$ CHANNEL STATE))
-                                ("Goal'6'" :expand (OPEN-INPUT-CHANNEL-P1 CHANNEL
-                                     :BYTE STATE)) )
-                  :stobjs (state
-                           fat32-in-memory)))
-  (b*
-      (((mv byte state) (read-byte$ channel state))
-       ((unless byte) (mv fat32-in-memory channel state -1))
+(defun
+  read-reserved-area
+  (fat32-in-memory channel state)
+  (declare
+   (xargs
+    :guard (and (state-p state)
+                (symbolp channel)
+                (open-input-channel-p channel
+                                      :byte state)
+                (fat32-in-memoryp fat32-in-memory))
+    :guard-hints
+    (("goal" :do-not-induct t
+      :in-theory (disable fat32-in-memoryp
+                          state-p unsigned-byte-p)))
+    :stobjs (state fat32-in-memory)))
+  (b* (((mv byte state)
+        (read-byte$ channel state))
+       ((unless byte)
+        (mv fat32-in-memory channel state -1))
        (fat32-in-memory
-        (update-bs_jmpbooti 0 byte fat32-in-memory)))
+        (update-bs_jmpbooti 0 byte fat32-in-memory))
+       ((mv byte state)
+        (read-byte$ channel state))
+       ((unless byte)
+        (mv fat32-in-memory channel state -1))
+       (fat32-in-memory
+        (update-bs_jmpbooti 1 byte fat32-in-memory))
+       ((mv byte state)
+        (read-byte$ channel state))
+       ((unless byte)
+        (mv fat32-in-memory channel state -1))
+       (fat32-in-memory
+        (update-bs_jmpbooti 2 byte fat32-in-memory)))
     (mv fat32-in-memory channel state 0)))
