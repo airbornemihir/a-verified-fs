@@ -110,7 +110,7 @@
          ;; per spec
          :initially 0)
 
-    (data_region :type (array (unsigned-byte 8) (*ms-min-data-region-size*))
+    (data-region :type (array (unsigned-byte 8) (*ms-min-data-region-size*))
          :resizable t
          ;; per spec
          :initially 0)))
@@ -444,6 +444,11 @@
     (mv-nth 0 (read-32ule-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
+(update-stobj
+ update-data-region
+ data-region-length
+ 8 update-data-regioni fat32-in-memory fat32-in-memoryp)
+
 (defun
   read-fat (fat32-in-memory channel state)
   (declare
@@ -458,14 +463,26 @@
       :in-theory (disable state-p unsigned-byte-p nth)))
     :stobjs (state fat32-in-memory)))
   (b*
-      ((fat32-in-memory (resize-fat (bpb_fatsz32 fat32-in-memory)
-                                    fat32-in-memory))
+      ((tmp_datasz (bpb_fatsz32 fat32-in-memory))
+       (tmp_bytspersec (bpb_bytspersec fat32-in-memory))
+       (tmp_secperclus (bpb_secperclus fat32-in-memory))
+       (tmp_databytcnt (* tmp_datasz tmp_secperclus tmp_bytspersec))
        ((mv fa-table state)
-        (read-32ule-n (bpb_fatsz32 fat32-in-memory)
+        (read-32ule-n tmp_datasz
                       channel state))
        ((unless (not (equal fa-table 'fail)))
         (mv fat32-in-memory state -1))
-       (fat32-in-memory (update-fat fa-table fat32-in-memory)))
+       ((mv data-region state)
+        (read-byte$-n tmp_databytcnt
+                      channel state))
+       ((unless (not (equal data-region 'fail)))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory (resize-fat tmp_datasz
+                                    fat32-in-memory))
+       (fat32-in-memory (update-fat fa-table fat32-in-memory))
+       (fat32-in-memory (resize-data-region tmp_databytcnt
+                                            fat32-in-memory))
+       (fat32-in-memory (update-data-region data-region fat32-in-memory)))
     (mv fat32-in-memory state 0)))
 
 (defun
@@ -487,5 +504,11 @@
         (mv fat32-in-memory state -1))
        ((mv fat32-in-memory state error-code)
         (read-reserved-area fat32-in-memory channel state))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory state error-code))
+       ((mv fat32-in-memory state error-code)
+        (read-fat fat32-in-memory channel state))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory state error-code))
        (state (close-input-channel channel state)))
     (mv fat32-in-memory state error-code)))
