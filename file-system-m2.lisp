@@ -8,6 +8,7 @@
 (include-book "fat32")
 (include-book "std/io/read-ints" :dir :system)
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
+(include-book "std/lists/resize-list" :dir :system)
 
 (make-event
  `(defstobj fat32-in-memory
@@ -116,30 +117,50 @@
 
 (defconst *initialbytcnt* 16)
 
-(defun
-  update-bs_jmpboot (v fat32-in-memory)
-  (declare
-   (xargs
-    :guard (and (unsigned-byte-listp 8 v)
-                (<= (len v)
-                    (bs_jmpboot-length fat32-in-memory))
-                (fat32-in-memoryp fat32-in-memory))
-    :guard-hints
-    (("goal" :in-theory
-      (disable fat32-in-memoryp unsigned-byte-p nth)))
-    :stobjs (fat32-in-memory)))
-  (if
-   (atom v)
-   fat32-in-memory
-   (let*
-    ((fat32-in-memory
-      (update-bs_jmpbooti (- (bs_jmpboot-length fat32-in-memory)
-                             (len v))
-                          (car v)
-                          fat32-in-memory))
-     (fat32-in-memory (update-bs_jmpboot (cdr v)
-                                         fat32-in-memory)))
-    fat32-in-memory)))
+(defmacro
+  update-stobj
+  (name array-length bit-width
+        array-updater stobj stobj-recogniser)
+  (declare (ignore))
+  (list
+   'defun
+   name (list 'v stobj)
+   (list
+    'declare
+    (list 'xargs
+          ':guard
+          (list 'and
+                (list 'unsigned-byte-listp bit-width 'v)
+                (list '<=
+                      '(len v)
+                      (list array-length stobj))
+                (list stobj-recogniser stobj))
+          ':guard-hints
+          (list (list '"goal"
+                      ':in-theory
+                      (list 'disable
+                            stobj-recogniser 'unsigned-byte-p
+                            'nth)))
+          ':stobjs
+          (list stobj)))
+   (list 'if
+         '(atom v)
+         stobj
+         (list 'let*
+               (list (list stobj
+                           (list array-updater
+                                 (list '-
+                                       (list array-length stobj)
+                                       '(len v))
+                                 '(car v)
+                                 stobj))
+                     (list stobj (list name '(cdr v) stobj)))
+               stobj))))
+
+(update-stobj
+ update-bs_jmpboot
+ bs_jmpboot-length
+ 8 update-bs_jmpbooti fat32-in-memory fat32-in-memoryp)
 
 (defthm
   read-reserved-area-guard-lemma-1
@@ -403,6 +424,49 @@
           (update-bs_filsystypei 7 (nth (+ 82 (- *initialbytcnt*) 7) remaining_rsvdbyts)
                                  fat32-in-memory)))
       (mv fat32-in-memory state 0))))
+
+(update-stobj
+ update-fat
+ fat-length
+ 32 update-fati fat32-in-memory fat32-in-memoryp)
+
+(defthm
+  read-fat-guard-lemma-1
+  (implies
+   (and (state-p1 state)
+        (symbolp channel)
+        (open-input-channel-p1 channel
+                               :byte state)
+        (not (equal (mv-nth 0 (read-32ule-n n channel state))
+                    'fail)))
+   (unsigned-byte-listp
+    32
+    (mv-nth 0 (read-32ule-n n channel state))))
+  :hints (("goal" :in-theory (disable unsigned-byte-p))))
+
+(defun
+  read-fat (fat32-in-memory channel state)
+  (declare
+   (xargs
+    :guard (and (state-p state)
+                (symbolp channel)
+                (open-input-channel-p channel
+                                      :byte state)
+                (fat32-in-memoryp fat32-in-memory))
+    :guard-hints
+    (("goal" :do-not-induct t
+      :in-theory (disable state-p unsigned-byte-p nth)))
+    :stobjs (state fat32-in-memory)))
+  (b*
+      ((fat32-in-memory (resize-fat (bpb_fatsz32 fat32-in-memory)
+                                    fat32-in-memory))
+       ((mv fa-table state)
+        (read-32ule-n (bpb_fatsz32 fat32-in-memory)
+                      channel state))
+       ((unless (not (equal fa-table 'fail)))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory (update-fat fa-table fat32-in-memory)))
+    (mv fat32-in-memory state 0)))
 
 (defun
   slurp-disk-image
