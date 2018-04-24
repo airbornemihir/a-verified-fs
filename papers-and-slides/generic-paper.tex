@@ -38,7 +38,7 @@
 
 % first the title is needed
 \title{Verifying filesystems in the ACL2 theorem prover:\\ an
-  application to FAT32}
+  application to a FAT32-like filesystem}
 
 % a short form should be given in case it is too long for the running head
 \titlerunning{ACL2 filesystem verification}
@@ -533,29 +533,22 @@ models are built.
 
 \section{Future work}
 
-We are pursuing future work in a few different directions.
+We are pursuing future work in a few different directions. Primarily,
+our next goal is to dispense with the tree representation and
+implement filesystem traversal by looking up entries in directory
+files. This will yield a model which is entirely contained in a disk
+data structure and which can further be validated by co-simulation
+with a FAT32 implementation, such as the one shipped with the Linux
+kernel.
 
-\subsection{FAT32}
+Next, we hope to re-use some artefacts of verifying FAT32 in order to
+verify a more complex filesystem, such as ext4. Choosing a filesystem
+with journalling will allow us to model crash consistency.
 
-Having modelled the file allocation table, the next step is to
-dispense with the tree representation and implement filesystem
-traversal by looking up entries in directory files. This will yield a
-model which is entirely contained in a disk data structure and which
-can further be validated by co-simulation with a FAT32 implementation,
-such as the one shipped with the Linux kernel.
-
-\subsection{Other filesystems}
-
-We plan to model a filesystem with journalling in order to prove crash
-consistency; we are considering ext4 and NTFS. We may also incorporate
-reasoning about non-determinism in multiprogramming environments where
-the filesystem is accessed by multiple processes concurrently.
-
-\subsection{fsck}
-Another goal of this work is to provide a basis for reasoning about
-\texttt{fsck} and other tools for sanity checking and recovering data
-from a filesystem. This is a large part of the motivation for pursuing
-binary compatibility.
+Finally, we hope to support "code proofs", by providing a basis for
+reasoning about filesystem operations in filesystem-specific utilities
+such as \texttt{fsck}, as well as other application programs. This is
+a large part of the motivation for pursuing binary compatibility.
 
 \subsubsection*{Acknowledgments.} This work has been supported by a
 grant from the NSF.
