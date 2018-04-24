@@ -83,9 +83,9 @@
 
 \section{Overview}
 
-Filesystems are ubiquitous in computing, and they have been of
-interest to the formal verification community for nearly as long as it
-has existed. We have chosen to use the ACL2 theorem prover
+Filesystems are ubiquitous in computing, and formally modelling them
+has been a problem of longstanding interest to the formal verification
+community. We have chosen to use the ACL2 theorem prover
 to model FAT32 down to the byte level. By starting with a high-level
 abstract model and refining \cite{abadi1991existence} it with
 successive models which add more of the complexity of the real
@@ -99,43 +99,41 @@ proof effort and the running time of the proofs.
 
 \section{Related work}
 
-Verifying even simple filesystems is a fairly complex task; thus, the
-pertinent work in the literature has centred on the use of theorem
-provers rather than on ad hoc verification techniques. In listing a
-few of these verification endeavours, it's important to note that each
-is, to some degree, abstracted away from the byte-level reality which
-is our goal; yet there's a difference between the extent to which
-interactive and non-interactive theorem provers need these
-abstractions.
+In the literature, much of the work on verifying filesytems has
+followed a pattern of synthesising a new filesystem based on a
+specification chosen for its ease in proving properties of interest,
+such as crash consistency of a journalling system. While we are trying
+to work with the specification of an existing filesystem, namely
+FAT32, many of these efforts use theorem proving tools like we
+do. Interactive theorem provers offer manual control the proof
+process, as opposed to non-interactive theorem provers which are more
+automated in their functioning; this is a key differentiator.
 
 \subsection{Interactive theorem provers}
 An early effort in the filesystem verification domain was by Bevier
-and Cohen \cite{bevier1996executable}, who specified the Synergy
+and Cohen~\cite{bevier1996executable}, who specified the Synergy
 filesystem and created an executable model of the same in ACL2
 \cite{kaufmann_manolios_moore_2000}, down to the level of processes
 and file descriptors. On the proof front, they certified their model
 to preserve well-formedness of their data structures through their
 various file operations; however, they did not attempt to prove, for
 instance, read-over-write properties or crash consistency. Later,
-Klein et al with the SeL4 project \cite{klein2009sel4} used
-Isabelle/HOL \cite{nipkow2002isabelle} to verify a microkernel;
+Klein et al with the SeL4 project~\cite{klein2009sel4} used
+Isabelle/HOL~\cite{nipkow2002isabelle} to verify a microkernel;
 while their design abstracted away file operations in order to keep
 their trusted computing base small, it did serve as a precursor to their
-more recent COGENT project \cite{amani2016cogent}. Here the authors
+more recent COGENT project~\cite{amani2016cogent}. Here the authors
 built a "verified compiler" of sorts, generating C-language code from
 specifications in their domain-specific in a manner guaranteed to
-avoid many common filesystem bugs. Elsewhere, the SibylFS project
-\cite{ridge2015sibylfs}, again using Isabelle/HOL, provided
+avoid many common filesystem bugs. Elsewhere, the SibylFS
+project~\cite{ridge2015sibylfs}, again using Isabelle/HOL, provided
 an executable specification for filesystems at a level of abstraction
 that could function across multiple operating systems including OSX
 and Unix. The Coq prover \cite{bertot2013interactive} has also been
 used, for instance, for FSCQ
 \cite{DBLP:conf/usenix/ChenZCCKZ16}, a state-of-the art filesystem
 which was built to have high performance and formally verified crash
-consistency properties. We note here that these systems, while working
-from some kind of specification, all produce a completely novel
-filesystem instead of attempting to specify an existing, widely used
-filesystem, such as FAT32 which is our technology target.
+consistency properties.
 
 \subsection{Non-interactive theorem provers}
 Non-interactive theorem provers such as Z3 \cite{de2008z3}
@@ -147,7 +145,38 @@ end, all system calls in Hyperkernel are replaced with analogs which
 can terminate in constant time; while this approach is theoretically
 sound, it increases the chances of discrepancies between the model and
 the implementation which may diminish the utility of the proofs or
-even render them moot.
+even render them moot. A stronger effort in the same domain is
+Yggdrasil~\cite{sigurbjarnarson2016push}, which focusses on verifying
+filesystems with the use of Z3. While the authors make substantial
+progress in terms of the number of filesystem calls they support and
+the crash consistency guarantees they provide, they are subject to
+the limits of SMT solving which prevent them from modelling essential
+filesystem features such as extents, which are central to FAT32 among
+others.
+
+\section{Theoretical foundations}
+
+One traditional approach for verification of complex systems is
+axiomatic, wherein the desired properties of a system are enumerated
+and then verified. This is in contrast with abstraction refinement,
+where a system is proved to refine a simpler system, possibly a state
+machine or a pseudocode program, which is known to show the desired
+properties either by inspection or by proof. The relative merits of
+these approaches have been debated in the literature;
+Lamport~\cite{lamport1993verification} makes the argument that the
+axiomatic style is hopelessly tedious for any but the simplest
+systems.
+
+In the present verification endeavour, we choose to verify
+refinement properties in a series of successive models. This is also
+the approach chosen by Yggdrasil~\cite{sigurbjarnarson2016push}. We do
+choose read-over-write properties as axioms, which we prove true in all
+models; however, these proofs are obtained more or less "for free"
+once a proof is formulated for the base model. Yet, the value of the
+refinement approach is attested to by the ease of verification of
+several incidental properties, such as the ability of write operations
+to succeed as long as there is sufficient space in a filesystem of
+finite size.
 
 \section{The FAT32 filesystem}
 
@@ -170,9 +199,9 @@ contiguous reads and writes; in the literature optimisations such as
 this have been shown to decrease external fragmentation at the cost of
 increasing internal fragmentation.
 
-The file allocation table itself is, very simply, a linked list. It
-maps each cluster index used by a file to either the next cluster index
-for that file or an end-of-file value defined by the
+The file allocation table itself contains, very simply, a number of
+linked lists. It maps each cluster index used by a file to either the
+next cluster index for that file or an end-of-file value defined by the
 specification. This allows the contents of a file to be reconstructed
 by reading just the first cluster index from its directory entry, and
 reconstructing the list of clusters using the table. Unused clusters
@@ -180,6 +209,12 @@ are mapped to 0 in the table; this is used for counting and allocating
 free clusters.
 
 \section{The models}
+
+For every read or write operation, FAT32 requires one or more lookups
+into the file allocation table, followed by the corresponding lookups
+into the data region. This makes proof efforts about these operations
+complex, which serves as the motivation for modelling the filesystem
+in a series of steps.
 
 \begin{table}[]
   \centering
@@ -438,6 +473,13 @@ which a listing follows.
             (and (no-duplicatesp all-indices)
                  (indices-marked-p all-indices alv)))))
 \end{verbatim}
+
+This is another instance where a refinement methodology simplifies the
+verification task. Having proved that our block allocation algorithm
+in \texttt{L4}
+yields lists of unused blocks with no duplicates, we find it much
+simpler to show this also holds in \texttt{L6}, and this makes proving
+the absence of aliasing situations easier.
 
 \subsection{Performance hacking}
 
