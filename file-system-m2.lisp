@@ -444,10 +444,35 @@
     (mv-nth 0 (read-32ule-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
-(update-stobj
- update-data-region
- data-region-length
- 8 update-data-regioni fat32-in-memory fat32-in-memoryp)
+;; (update-stobj
+;;  update-data-region
+;;  data-region-length
+;;  8 update-data-regioni fat32-in-memory fat32-in-memoryp)
+(defun
+  update-data-region (n fat32-in-memory)
+  (declare
+   (xargs
+    :guard (and (natp n)
+                (<= n
+                    (data-region-length fat32-in-memory))
+                (fat32-in-memoryp fat32-in-memory))
+    :guard-hints
+    (("goal" :in-theory
+      (disable fat32-in-memoryp unsigned-byte-p nth)))
+    :stobjs (fat32-in-memory)))
+  (if
+   (zp n)
+   fat32-in-memory
+   (let*
+    ((fat32-in-memory
+      (update-data-regioni
+       (- (data-region-length fat32-in-memory)
+          n)
+       3
+       fat32-in-memory))
+     (fat32-in-memory (update-data-region (- n 1)
+                                          fat32-in-memory)))
+    fat32-in-memory)))
 
 (defun
   read-fat (fat32-in-memory channel state)
@@ -472,17 +497,17 @@
                       channel state))
        ((unless (not (equal fa-table 'fail)))
         (mv fat32-in-memory state -1))
-       ((mv data-region state)
+       ((mv & state)
         (read-byte$-n tmp_databytcnt
                       channel state))
-       ((unless (not (equal data-region 'fail)))
-        (mv fat32-in-memory state -1))
+       ;; ((unless (not (equal data-region 'fail)))
+       ;;  (mv fat32-in-memory state -1))
        (fat32-in-memory (resize-fat tmp_datasz
                                     fat32-in-memory))
        (fat32-in-memory (update-fat fa-table fat32-in-memory))
        (fat32-in-memory (resize-data-region tmp_databytcnt
                                             fat32-in-memory))
-       (fat32-in-memory (update-data-region data-region fat32-in-memory)))
+       (fat32-in-memory (update-data-region tmp_databytcnt fat32-in-memory)))
     (mv fat32-in-memory state 0)))
 
 (defun
