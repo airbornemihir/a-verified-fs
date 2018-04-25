@@ -9,6 +9,7 @@
 (include-book "std/io/read-ints" :dir :system)
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
 (include-book "std/lists/resize-list" :dir :system)
+(include-book "std/io/read-file-characters" :dir :system)
 
 (make-event
  `(defstobj fat32-in-memory
@@ -444,10 +445,40 @@
     (mv-nth 0 (read-32ule-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
-(update-stobj
- update-data-region
- data-region-length
- 8 update-data-regioni fat32-in-memory fat32-in-memoryp)
+(defun
+  update-data-region
+  (fat32-in-memory str init pos)
+  (declare
+   (xargs
+    :measure (nfix (- (data-region-length fat32-in-memory)
+                      pos))
+    :guard (and (natp init)
+                (natp pos)
+                (stringp str)
+                (<= (+ init
+                       (data-region-length fat32-in-memory))
+                    (length str))
+                (fat32-in-memoryp fat32-in-memory))
+    :guard-hints
+    (("goal" :in-theory (disable fat32-in-memoryp nth)))
+    :stobjs (fat32-in-memory)))
+  (if
+   (mbe :logic (or (not (natp pos))
+                   (zp (- (data-region-length fat32-in-memory)
+                          pos)))
+        :exec (>= pos
+                  (data-region-length fat32-in-memory)))
+   fat32-in-memory
+   (let*
+    ((fat32-in-memory
+      (update-data-regioni
+       pos
+       (the (unsigned-byte 8)
+            (char-code (char str (+ init pos))))
+       fat32-in-memory))
+     (fat32-in-memory
+      (update-data-region fat32-in-memory str init (+ pos 1))))
+    fat32-in-memory)))
 
 (defun
   read-fat (fat32-in-memory channel state)
