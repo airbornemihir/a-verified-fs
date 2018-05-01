@@ -154,7 +154,7 @@ the limits of SMT solving which prevent them from modelling essential
 filesystem features such as extents, which are central to FAT32 among
 others.
 
-\section{Theoretical foundations}
+\section{Refinement}
 
 One traditional approach for verification of complex systems is
 axiomatic, wherein the desired properties of a system are enumerated
@@ -345,35 +345,7 @@ throwaway lemma.
 \section{Proof methodology}
 
 In \textit{l1}, our simplest model, the read-over-write properties
-were, of necessity, proven from scratch, with the use of some rather
-complicated induction schemes. For reference, the following code listing shows
-the induction scheme used for \texttt{l1-read-after-write-2}.
-
-\medskip
-
-\noindent
-\begin{verbatim}
-(defun induction-scheme (hns1 hns2 fs)
-  (if (atom hns1)
-      fs
-    (if (atom fs)
-        nil
-      (let ((sd (assoc (car hns2) fs)))
-        (if (atom sd)
-            fs
-          (if (atom hns2)
-              fs
-            (if (not (equal (car hns1) (car hns2)))
-                fs
-              (let ((contents (cdr sd)))
-                (if (atom (cdr hns1))
-                    (cons (cons (car sd)
-                                contents)
-                          (delete-assoc (car hns2) fs))
-                  (cons (cons (car sd)
-                              (induction-scheme (cdr hns1) (cdr hns2) contents))
-                                (delete-assoc (car hns2) fs)))))))))))
-\end{verbatim}
+were, of necessity, proven from scratch.
 
 In each subsequent model, the read-over-write properties are proven as
 corollaries of equivalence proofs which establish the correctness of
