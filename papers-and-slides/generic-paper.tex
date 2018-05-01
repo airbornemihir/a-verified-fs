@@ -222,23 +222,23 @@ in a series of steps.
   \label{model-description-table}
   \begin{tabular}{|l|p{120mm}|}
     \hline
-    \texttt{l1} & The filesystem is represented as a tree, with leaf
+    \texttt{L1} & The filesystem is represented as a tree, with leaf
     nodes for regular files and non-leaf nodes for
     directories. The contents of regular files are represented as
     strings stored in the nodes of the tree; the storage available for
     these is unbounded. \\ \hline
-    \texttt{l2} & A single element of metadata, \textit{length}, is
+    \texttt{L2} & A single element of metadata, \textit{length}, is
     stored within each regular file.  \\ \hline
-    \texttt{l3} & The contents of regular files are divided into
+    \texttt{L3} & The contents of regular files are divided into
     blocks of fixed size. These blocks are stored in an external
     "disk" data structure; the storage for these blocks remains
     unbounded. \\ \hline
-    \texttt{l4} & The storage available for blocks is now bounded. An
+    \texttt{L4} & The storage available for blocks is now bounded. An
     allocation vector data structure is introduced to help allocate
     and garbage collect blocks. \\ \hline
-    \texttt{l5} & Additional metadata for file ownership and access
+    \texttt{L5} & Additional metadata for file ownership and access
     permissions is stored within each regular file. \\ \hline
-    \texttt{l6} & The allocation vector is replaced by a file
+    \texttt{L6} & The allocation vector is replaced by a file
     allocation table, per the official FAT specification. \\ \hline
   \end{tabular}
 \end{table}
@@ -251,22 +251,22 @@ in a series of steps.
       every node/.style = {shape=rectangle, rounded corners,
         draw, align=center,
         top color=white, bottom color=blue!20}]
-    \node {l1 - tree}
-    child { node {l2 - length}
-      child { node {l3 - disk}}
-      child { node {l4 - garbage collection}
-        child { node {l5 - permissions}}
-        child { node {l6 - file allocation table}}}};
+    \node {L1 - tree}
+    child { node {L2 - length}
+      child { node {L3 - disk}}
+      child { node {L4 - garbage collection}
+        child { node {L5 - permissions}}
+        child { node {L6 - file allocation table}}}};
   \end{tikzpicture}
 \end{figure}
 
 At this point in development, we have six models of the filesystem,
-here referred to as \texttt{l1} through \texttt{l6} (see
+here referred to as \texttt{L1} through \texttt{L6} (see
 table \ref{model-description-table}). Each new model
 \textit{refines} a previous model, adding some features and
 complexity, and thereby approaching closer to a model which is binary
 compatible with FAT32. These refinement relationships are shown in
-figure \ref{refinement-figure}. \texttt{l1} is the simplest of these,
+figure \ref{refinement-figure}. \texttt{L1} is the simplest of these,
 representing the filesystem as a literal tree; later models feature
 file metadata (including ownership and permissions), externalisation
 of file contents, and allocation/file allocation using an allocation
@@ -285,7 +285,7 @@ write of some text at some location, a read of the same length at the
 same location yields the same text. The second read-after-write
 theorem states that after a write of some text at some location, a
 read at any other location returns exactly what it would have returned
-before the write. As an example, listings for the \texttt{l1} versions
+before the write. As an example, listings for the \texttt{L1} versions
 of these theorems follow.
 
 \medskip
@@ -383,7 +383,7 @@ seen in figures \ref{l2-wrchs-correctness-1},
 \ref{l2-rdchs-correctness-1} and \ref{l2-read-over-write-1}, which
 respectively show the equivalence proof for \texttt{l2-wrchs}, the
 equivalence proof for \texttt{l2-rdchs} and the composition of these
-to obtain the first read-over-write theorem for model \texttt{l2}.
+to obtain the first read-over-write theorem for model \texttt{L2}.
 
 
 \begin{figure}
@@ -444,7 +444,7 @@ to obtain the first read-over-write theorem for model \texttt{l2}.
 
 As the models grow more complex, with the addition of more auxiliary
 data the "sanity" criteria for filesystem instances become more
-complex. For instance, in \texttt{l4}, the predicate \texttt{l4-fs-p}
+complex. For instance, in \texttt{L4}, the predicate \texttt{l4-fs-p}
 is defined to be the same as \texttt{l3-fs-p}, which recursively
 defines the shape of a valid filesystem. However, a "sane" filesystem
 requires also that each disk index assigned to a regular file be
@@ -489,7 +489,7 @@ and these were prone to slow down our proofs somewhat. Thus, using
 ACL2's \texttt{accumulated-persistence} tool, we made an effort to
 trim the number of enabled rules by focussing on the rules which the
 tool suggested to be \textit{useless}. This was important in helping us reduce
-the certification time for \texttt{l6} from 229 seconds to 84 seconds,
+the certification time for \texttt{L6} from 229 seconds to 84 seconds,
 but from this point onwards results were mixed. As an illustrative
 example, disabling the function \texttt{l6-wrchs} brought down the
 certification time for \textt{l6} from 84 seconds to 60 seconds, yet
@@ -505,7 +505,7 @@ the ACL2 documentation topic \texttt{accumulated-persistence-subtleties}.
 %%  21 seconds to 22 seconds and the
 %% that for l6 from 60 seconds to 69 seconds.
 %% It is interesting to note that disabling l6-wrchs brings down the
-%% certification time for \texttt{l6} from 84 seconds to 60 seconds.
+%% certification time for \texttt{L6} from 84 seconds to 60 seconds.
 
 \section{Evaluation}
 At present, the codebase spans 11710 lines of ACL2 code, including 152
@@ -521,12 +521,12 @@ models are built.
   \caption{Time taken to prove models}
   \label{certification-timing-table}
   \begin{tabular}{ll}
-    \texttt{l1} & 1s \\
-    \texttt{l2} & 5s \\
-    \texttt{l3} & 6s \\
-    \texttt{l4} & 19s \\
-    \texttt{l5} & 21s \\
-    \texttt{l6} & 60s \\
+    \texttt{L1} & 1s \\
+    \texttt{L2} & 5s \\
+    \texttt{L3} & 6s \\
+    \texttt{L4} & 19s \\
+    \texttt{L5} & 21s \\
+    \texttt{L6} & 60s \\
     Misc. & 4s \\
   \end{tabular}
 \end{table}
