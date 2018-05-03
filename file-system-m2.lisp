@@ -150,55 +150,64 @@
 
 (defmacro
   update-stobj
-  (name array-length bit-width
-        array-updater stobj stobj-recogniser lemma-name)
+  (name array-length bit-width array-updater
+        stobj stobj-recogniser lemma-name)
   (declare (ignore))
-  (list 'encapsulate 'nil
-        (list
-         'defun
-         name (list 'v stobj)
-         (list
-          'declare
-          (list 'xargs
-                ':guard
-                (list 'and
-                      (list 'unsigned-byte-listp bit-width 'v)
-                      (list '<=
-                            '(len v)
-                            (list array-length stobj))
-                      (list stobj-recogniser stobj))
-                ':guard-hints
-                (list (list '"goal"
-                            ':in-theory
-                            (list 'disable
-                                  stobj-recogniser 'unsigned-byte-p
-                                  'nth)))
-                ':stobjs
-                (list stobj)))
-         (list 'if
-               '(atom v)
-               stobj
-               (list 'let*
-                     (list (list stobj
-                                 (list array-updater
-                                       (list '-
-                                             (list array-length stobj)
-                                             '(len v))
-                                       '(car v)
-                                       stobj))
-                           (list stobj (list name '(cdr v) stobj)))
-                     stobj)))
-        (list 'DEFTHM
-              lemma-name
-              (list 'IMPLIES
-                    (list 'AND (list 'UNSIGNED-BYTE-LISTP bit-width 'V)
-                         (list '<= (list 'LEN 'V)
-                             (list array-length stobj))
-                         (list stobj-recogniser stobj))
-                    (list stobj-recogniser (list name 'V stobj)))
-               ':HINTS
-               (list (list '"goal" ':IN-THEORY (list 'DISABLE stobj-recogniser))
-                (list '"subgoal *1/4" ':IN-THEORY (list 'ENABLE stobj-recogniser))))))
+  (list
+   'encapsulate
+   'nil
+   (list
+    'defun
+    name (list 'v stobj)
+    (list
+     'declare
+     (list 'xargs
+           ':guard
+           (list 'and
+                 (list 'unsigned-byte-listp bit-width 'v)
+                 (list '<=
+                       '(len v)
+                       (list array-length stobj))
+                 (list stobj-recogniser stobj))
+           ':guard-hints
+           (list (list '"goal"
+                       ':in-theory
+                       (list 'disable
+                             stobj-recogniser 'unsigned-byte-p
+                             'nth)))
+           ':stobjs
+           (list stobj)))
+    (list
+     'if
+     '(atom v)
+     stobj
+     (list 'let*
+           (list (list stobj
+                       (list array-updater
+                             (list '-
+                                   (list array-length stobj)
+                                   '(len v))
+                             '(car v)
+                             stobj))
+                 (list stobj (list name '(cdr v) stobj)))
+           stobj)))
+   (list 'defthm
+         lemma-name
+         (list 'implies
+               (list 'and
+                     (list 'unsigned-byte-listp bit-width 'v)
+                     (list '<=
+                           (list 'len 'v)
+                           (list array-length stobj))
+                     (list stobj-recogniser stobj))
+               (list stobj-recogniser (list name 'v stobj)))
+         ':hints
+         (list (list '"goal"
+                     ':in-theory
+                     (list 'disable stobj-recogniser))
+               (list '"subgoal *1/4"
+                     ':in-theory
+                     (list 'enable stobj-recogniser))))))
 
 (update-stobj
  update-bs_jmpboot
@@ -702,26 +711,6 @@
            (integerp (* x y))))
 
 (defthm
-  slurp-disk-image-guard-lemma-18
-  (implies (and (unsigned-byte-listp 8 v)
-                (<= (len v)
-                    (bs_oemname-length fat32-in-memory))
-                (fat32-in-memoryp fat32-in-memory))
-           (fat32-in-memoryp (update-bs_oemname v fat32-in-memory)))
-  :hints (("goal" :in-theory (disable fat32-in-memoryp))
-          ("subgoal *1/4" :in-theory (enable fat32-in-memoryp))))
-
-(defthm
-  slurp-disk-image-guard-lemma-19
-  (implies (and (unsigned-byte-listp 8 v)
-                (<= (len v)
-                    (bs_jmpboot-length fat32-in-memory))
-                (fat32-in-memoryp fat32-in-memory))
-           (fat32-in-memoryp (update-bs_jmpboot v fat32-in-memory)))
-  :hints (("goal" :in-theory (disable fat32-in-memoryp))
-          ("subgoal *1/4" :in-theory (enable fat32-in-memoryp))))
-
-(defthm
   slurp-disk-image-guard-lemma-20
   (implies (and (unsigned-byte-p 16 v)
                 (fat32-in-memoryp fat32-in-memory))
@@ -744,16 +733,6 @@
            (fat32-in-memoryp
             (update-bpb_bytspersec v fat32-in-memory)))
   :hints (("Goal" :in-theory (enable update-bpb_bytspersec)) ))
-
-(defthm
-  slurp-disk-image-guard-lemma-23
-  (implies (and (unsigned-byte-listp 8 v)
-                (<= (len v)
-                    (bs_filsystype-length fat32-in-memory))
-                (fat32-in-memoryp fat32-in-memory))
-           (fat32-in-memoryp (update-bs_filsystype v fat32-in-memory)))
-  :hints (("goal" :in-theory (disable fat32-in-memoryp))
-          ("subgoal *1/4" :in-theory (enable fat32-in-memoryp))))
 
 (defthm
   slurp-disk-image-guard-lemma-24
@@ -797,11 +776,2020 @@
                                 0 3)
                         fat32-in-memory)))
    :hints :none)
-  (:rewrite slurp-disk-image-guard-lemma-18)
+  (:rewrite update-bs_oemname-correctness-1)
   :bash
   (:use (:instance read-byte$-n-data (n 16)))
-  :bash
-  :bash :bash))
+  :bash :bash :bash
+  (:claim
+   (and
+    (unsigned-byte-listp
+     8
+     (subseq
+      (mv-nth
+       0
+       (read-byte$-n
+        (+
+         (* (combine16u (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+            (combine16u (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+         -16)
+        channel
+        (mv-nth 1 (read-byte$-n 16 channel state))))
+      66 74))
+    (<=
+     (len
+      (subseq
+       (mv-nth
+        0
+        (read-byte$-n
+         (+
+          (*
+           (combine16u (nth 15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+           (combine16u (nth 12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+          -16)
+         channel
+         (mv-nth 1 (read-byte$-n 16 channel state))))
+       66 74))
+     (bs_filsystype-length
+      (update-bpb_rootclus
+       (combine32u
+        (nth
+         54
+         (mv-nth
+          0
+          (read-byte$-n
+           (+
+            (*
+             (combine16u (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+             (combine16u
+              (nth 12
+                   (mv-nth 0 (read-byte$-n 16 channel state)))
+              (nth 11
+                   (mv-nth 0 (read-byte$-n 16 channel state)))))
+            -16)
+           channel
+           (mv-nth 1 (read-byte$-n 16 channel state)))))
+        (nth
+         53
+         (mv-nth
+          0
+          (read-byte$-n
+           (+
+            (*
+             (combine16u (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+             (combine16u
+              (nth 12
+                   (mv-nth 0 (read-byte$-n 16 channel state)))
+              (nth 11
+                   (mv-nth 0 (read-byte$-n 16 channel state)))))
+            -16)
+           channel
+           (mv-nth 1 (read-byte$-n 16 channel state)))))
+        (nth
+         52
+         (mv-nth
+          0
+          (read-byte$-n
+           (+
+            (*
+             (combine16u (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+             (combine16u
+              (nth 12
+                   (mv-nth 0 (read-byte$-n 16 channel state)))
+              (nth 11
+                   (mv-nth 0 (read-byte$-n 16 channel state)))))
+            -16)
+           channel
+           (mv-nth 1 (read-byte$-n 16 channel state)))))
+        (nth
+         51
+         (mv-nth
+          0
+          (read-byte$-n
+           (+
+            (*
+             (combine16u (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+             (combine16u
+              (nth 12
+                   (mv-nth 0 (read-byte$-n 16 channel state)))
+              (nth 11
+                   (mv-nth 0 (read-byte$-n 16 channel state)))))
+            -16)
+           channel
+           (mv-nth 1 (read-byte$-n 16 channel state))))))
+       (update-bs_bootsig
+        (nth
+         50
+         (mv-nth
+          0
+          (read-byte$-n
+           (+
+            (*
+             (combine16u (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+             (combine16u
+              (nth 12
+                   (mv-nth 0 (read-byte$-n 16 channel state)))
+              (nth 11
+                   (mv-nth 0 (read-byte$-n 16 channel state)))))
+            -16)
+           channel
+           (mv-nth 1 (read-byte$-n 16 channel state)))))
+        (update-bs_reserved1
+         (nth
+          49
+          (mv-nth
+           0
+           (read-byte$-n
+            (+ (* (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+               -16)
+            channel
+            (mv-nth 1 (read-byte$-n 16 channel state)))))
+         (update-bs_drvnum
+          (nth
+           48
+           (mv-nth
+            0
+            (read-byte$-n
+             (+ (* (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                -16)
+             channel
+             (mv-nth 1 (read-byte$-n 16 channel state)))))
+          (update-bpb_bkbootsec
+           (combine16u
+            (nth
+             35
+             (mv-nth
+              0
+              (read-byte$-n
+               (+
+                (* (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                -16)
+               channel
+               (mv-nth 1 (read-byte$-n 16 channel state)))))
+            (nth
+             34
+             (mv-nth
+              0
+              (read-byte$-n
+               (+
+                (* (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                -16)
+               channel
+               (mv-nth 1 (read-byte$-n 16 channel state))))))
+           (update-bpb_fsinfo
+            (combine16u
+             (nth
+              33
+              (mv-nth
+               0
+               (read-byte$-n
+                (+
+                 (*
+                  (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+                 -16)
+                channel
+                (mv-nth 1 (read-byte$-n 16 channel state)))))
+             (nth
+              32
+              (mv-nth
+               0
+               (read-byte$-n
+                (+
+                 (*
+                  (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+                 -16)
+                channel
+                (mv-nth 1 (read-byte$-n 16 channel state))))))
+            (update-bpb_rootclus
+             (combine32u
+              (nth
+               31
+               (mv-nth
+                0
+                (read-byte$-n
+                 (+
+                  (*
+                   (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                  -16)
+                 channel
+                 (mv-nth 1 (read-byte$-n 16 channel state)))))
+              (nth
+               30
+               (mv-nth
+                0
+                (read-byte$-n
+                 (+
+                  (*
+                   (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                  -16)
+                 channel
+                 (mv-nth 1 (read-byte$-n 16 channel state)))))
+              (nth
+               29
+               (mv-nth
+                0
+                (read-byte$-n
+                 (+
+                  (*
+                   (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                  -16)
+                 channel
+                 (mv-nth 1 (read-byte$-n 16 channel state)))))
+              (nth
+               28
+               (mv-nth
+                0
+                (read-byte$-n
+                 (+
+                  (*
+                   (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                  -16)
+                 channel
+                 (mv-nth 1 (read-byte$-n 16 channel state))))))
+             (update-bpb_fsver_major
+              (nth
+               27
+               (mv-nth
+                0
+                (read-byte$-n
+                 (+
+                  (*
+                   (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                  -16)
+                 channel
+                 (mv-nth 1 (read-byte$-n 16 channel state)))))
+              (update-bpb_fsver_minor
+               (nth
+                26
+                (mv-nth
+                 0
+                 (read-byte$-n
+                  (+
+                   (*
+                    (combine16u
+                     (nth 15
+                          (mv-nth 0 (read-byte$-n 16 channel state)))
+                     (nth 14
+                          (mv-nth 0 (read-byte$-n 16 channel state))))
+                    (combine16u
+                     (nth 12
+                          (mv-nth 0 (read-byte$-n 16 channel state)))
+                     (nth 11
+                          (mv-nth 0 (read-byte$-n 16 channel state)))))
+                   -16)
+                  channel
+                  (mv-nth 1 (read-byte$-n 16 channel state)))))
+               (update-bpb_extflags
+                (combine16u
+                 (nth
+                  25
+                  (mv-nth
+                   0
+                   (read-byte$-n
+                    (+
+                     (*
+                      (combine16u
+                       (nth 15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                      (combine16u
+                       (nth 12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                     -16)
+                    channel
+                    (mv-nth 1 (read-byte$-n 16 channel state)))))
+                 (nth
+                  24
+                  (mv-nth
+                   0
+                   (read-byte$-n
+                    (+
+                     (*
+                      (combine16u
+                       (nth 15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                      (combine16u
+                       (nth 12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                     -16)
+                    channel
+                    (mv-nth 1 (read-byte$-n 16 channel state))))))
+                (update-bpb_fatsz32
+                 (combine32u
+                  (nth
+                   23
+                   (mv-nth
+                    0
+                    (read-byte$-n
+                     (+
+                      (*
+                       (combine16u
+                        (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                       (combine16u
+                        (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                      -16)
+                     channel
+                     (mv-nth 1 (read-byte$-n 16 channel state)))))
+                  (nth
+                   22
+                   (mv-nth
+                    0
+                    (read-byte$-n
+                     (+
+                      (*
+                       (combine16u
+                        (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                       (combine16u
+                        (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                      -16)
+                     channel
+                     (mv-nth 1 (read-byte$-n 16 channel state)))))
+                  (nth
+                   21
+                   (mv-nth
+                    0
+                    (read-byte$-n
+                     (+
+                      (*
+                       (combine16u
+                        (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                       (combine16u
+                        (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                      -16)
+                     channel
+                     (mv-nth 1 (read-byte$-n 16 channel state)))))
+                  (nth
+                   20
+                   (mv-nth
+                    0
+                    (read-byte$-n
+                     (+
+                      (*
+                       (combine16u
+                        (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                       (combine16u
+                        (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                      -16)
+                     channel
+                     (mv-nth 1 (read-byte$-n 16 channel state))))))
+                 (update-bpb_totsec32
+                  (combine32u
+                   (nth
+                    19
+                    (mv-nth
+                     0
+                     (read-byte$-n
+                      (+
+                       (*
+                        (combine16u
+                         (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                        (combine16u
+                         (nth 12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth
+                          11
+                          (mv-nth 0 (read-byte$-n 16 channel state)))))
+                       -16)
+                      channel
+                      (mv-nth 1 (read-byte$-n 16 channel state)))))
+                   (nth
+                    18
+                    (mv-nth
+                     0
+                     (read-byte$-n
+                      (+
+                       (*
+                        (combine16u
+                         (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                        (combine16u
+                         (nth 12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth
+                          11
+                          (mv-nth 0 (read-byte$-n 16 channel state)))))
+                       -16)
+                      channel
+                      (mv-nth 1 (read-byte$-n 16 channel state)))))
+                   (nth
+                    17
+                    (mv-nth
+                     0
+                     (read-byte$-n
+                      (+
+                       (*
+                        (combine16u
+                         (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                        (combine16u
+                         (nth 12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth
+                          11
+                          (mv-nth 0 (read-byte$-n 16 channel state)))))
+                       -16)
+                      channel
+                      (mv-nth 1 (read-byte$-n 16 channel state)))))
+                   (nth
+                    16
+                    (mv-nth
+                     0
+                     (read-byte$-n
+                      (+
+                       (*
+                        (combine16u
+                         (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                        (combine16u
+                         (nth 12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth
+                          11
+                          (mv-nth 0 (read-byte$-n 16 channel state)))))
+                       -16)
+                      channel
+                      (mv-nth 1 (read-byte$-n 16 channel state))))))
+                  (update-bpb_hiddsec
+                   (combine32u
+                    (nth
+                     15
+                     (mv-nth
+                      0
+                      (read-byte$-n
+                       (+
+                        (*
+                         (combine16u
+                          (nth 15
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           14
+                           (mv-nth 0 (read-byte$-n 16 channel state))))
+                         (combine16u
+                          (nth 12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           11
+                           (mv-nth 0 (read-byte$-n 16 channel state)))))
+                        -16)
+                       channel
+                       (mv-nth 1 (read-byte$-n 16 channel state)))))
+                    (nth
+                     14
+                     (mv-nth
+                      0
+                      (read-byte$-n
+                       (+
+                        (*
+                         (combine16u
+                          (nth 15
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           14
+                           (mv-nth 0 (read-byte$-n 16 channel state))))
+                         (combine16u
+                          (nth 12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           11
+                           (mv-nth 0 (read-byte$-n 16 channel state)))))
+                        -16)
+                       channel
+                       (mv-nth 1 (read-byte$-n 16 channel state)))))
+                    (nth
+                     13
+                     (mv-nth
+                      0
+                      (read-byte$-n
+                       (+
+                        (*
+                         (combine16u
+                          (nth 15
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           14
+                           (mv-nth 0 (read-byte$-n 16 channel state))))
+                         (combine16u
+                          (nth 12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           11
+                           (mv-nth 0 (read-byte$-n 16 channel state)))))
+                        -16)
+                       channel
+                       (mv-nth 1 (read-byte$-n 16 channel state)))))
+                    (nth
+                     12
+                     (mv-nth
+                      0
+                      (read-byte$-n
+                       (+
+                        (*
+                         (combine16u
+                          (nth 15
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           14
+                           (mv-nth 0 (read-byte$-n 16 channel state))))
+                         (combine16u
+                          (nth 12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           11
+                           (mv-nth 0 (read-byte$-n 16 channel state)))))
+                        -16)
+                       channel
+                       (mv-nth 1 (read-byte$-n 16 channel state))))))
+                   (update-bpb_numheads
+                    (combine16u
+                     (nth
+                      11
+                      (mv-nth
+                       0
+                       (read-byte$-n
+                        (+
+                         (*
+                          (combine16u
+                           (nth
+                            15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (nth
+                            14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                          (combine16u
+                           (nth
+                            12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (nth
+                            11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                         -16)
+                        channel
+                        (mv-nth 1 (read-byte$-n 16 channel state)))))
+                     (nth
+                      10
+                      (mv-nth
+                       0
+                       (read-byte$-n
+                        (+
+                         (*
+                          (combine16u
+                           (nth
+                            15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (nth
+                            14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                          (combine16u
+                           (nth
+                            12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (nth
+                            11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                         -16)
+                        channel
+                        (mv-nth 1 (read-byte$-n 16 channel state))))))
+                    (update-bpb_secpertrk
+                     (combine16u
+                      (nth
+                       9
+                       (mv-nth
+                        0
+                        (read-byte$-n
+                         (+
+                          (*
+                           (combine16u
+                            (nth
+                             15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                           (combine16u
+                            (nth
+                             12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                          -16)
+                         channel
+                         (mv-nth 1 (read-byte$-n 16 channel state)))))
+                      (nth
+                       8
+                       (mv-nth
+                        0
+                        (read-byte$-n
+                         (+
+                          (*
+                           (combine16u
+                            (nth
+                             15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                           (combine16u
+                            (nth
+                             12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                          -16)
+                         channel
+                         (mv-nth 1 (read-byte$-n 16 channel state))))))
+                     (update-bpb_fatsz16
+                      (combine16u
+                       (nth
+                        7
+                        (mv-nth
+                         0
+                         (read-byte$-n
+                          (+
+                           (*
+                            (combine16u
+                             (nth
+                              15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                             (nth
+                              14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                            (combine16u
+                             (nth
+                              12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                             (nth
+                              11
+                              (mv-nth
+                               0 (read-byte$-n 16 channel state)))))
+                           -16)
+                          channel
+                          (mv-nth 1 (read-byte$-n 16 channel state)))))
+                       (nth
+                        6
+                        (mv-nth
+                         0
+                         (read-byte$-n
+                          (+
+                           (*
+                            (combine16u
+                             (nth
+                              15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                             (nth
+                              14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                            (combine16u
+                             (nth
+                              12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                             (nth
+                              11
+                              (mv-nth
+                               0 (read-byte$-n 16 channel state)))))
+                           -16)
+                          channel
+                          (mv-nth 1 (read-byte$-n 16 channel state))))))
+                      (update-bpb_media
+                       (nth
+                        5
+                        (mv-nth
+                         0
+                         (read-byte$-n
+                          (+
+                           (*
+                            (combine16u
+                             (nth
+                              15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                             (nth
+                              14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                            (combine16u
+                             (nth
+                              12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                             (nth
+                              11
+                              (mv-nth
+                               0 (read-byte$-n 16 channel state)))))
+                           -16)
+                          channel
+                          (mv-nth 1 (read-byte$-n 16 channel state)))))
+                       (update-bpb_totsec16
+                        (combine16u
+                         (nth
+                          4
+                          (mv-nth
+                           0
+                           (read-byte$-n
+                            (+
+                             (*
+                              (combine16u
+                               (nth
+                                15
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                14
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state))))
+                              (combine16u
+                               (nth
+                                12
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                11
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))))
+                             -16)
+                            channel
+                            (mv-nth 1 (read-byte$-n 16 channel state)))))
+                         (nth
+                          3
+                          (mv-nth
+                           0
+                           (read-byte$-n
+                            (+
+                             (*
+                              (combine16u
+                               (nth
+                                15
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                14
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state))))
+                              (combine16u
+                               (nth
+                                12
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                11
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))))
+                             -16)
+                            channel
+                            (mv-nth 1 (read-byte$-n 16 channel state))))))
+                        (update-bpb_rootentcnt
+                         (combine16u
+                          (nth
+                           2
+                           (mv-nth
+                            0
+                            (read-byte$-n
+                             (+
+                              (*
+                               (combine16u
+                                (nth
+                                 15
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state)))
+                                (nth
+                                 14
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state))))
+                               (combine16u
+                                (nth
+                                 12
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state)))
+                                (nth
+                                 11
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state)))))
+                              -16)
+                             channel
+                             (mv-nth 1 (read-byte$-n 16 channel state)))))
+                          (nth
+                           1
+                           (mv-nth
+                            0
+                            (read-byte$-n
+                             (+
+                              (*
+                               (combine16u
+                                (nth
+                                 15
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state)))
+                                (nth
+                                 14
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state))))
+                               (combine16u
+                                (nth
+                                 12
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state)))
+                                (nth
+                                 11
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state)))))
+                              -16)
+                             channel
+                             (mv-nth
+                              1 (read-byte$-n 16 channel state))))))
+                         (update-bpb_numfats
+                          (nth
+                           0
+                           (mv-nth
+                            0
+                            (read-byte$-n
+                             (+
+                              (*
+                               (combine16u
+                                (nth
+                                 15
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state)))
+                                (nth
+                                 14
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state))))
+                               (combine16u
+                                (nth
+                                 12
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state)))
+                                (nth
+                                 11
+                                 (mv-nth
+                                  0 (read-byte$-n 16 channel state)))))
+                              -16)
+                             channel
+                             (mv-nth 1 (read-byte$-n 16 channel state)))))
+                          (update-bpb_rsvdseccnt
+                           (combine16u
+                            (nth
+                             15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                           (update-bpb_secperclus
+                            (nth
+                             13
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (update-bpb_bytspersec
+                             (combine16u
+                              (nth
+                               12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                              (nth
+                               11
+                               (mv-nth
+                                0 (read-byte$-n 16 channel state))))
+                             (update-bs_oemname
+                              (subseq
+                               (mv-nth 0 (read-byte$-n 16 channel state))
+                               3 8)
+                              (update-bs_jmpboot
+                               (subseq
+                                (mv-nth 0 (read-byte$-n 16 channel state))
+                                0 3)
+                               fat32-in-memory)))))))))))))))))))))))))))
+    (fat32-in-memoryp
+     (update-bpb_rootclus
+      (combine32u
+       (nth
+        54
+        (mv-nth
+         0
+         (read-byte$-n
+          (+
+           (*
+            (combine16u (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+            (combine16u (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+           -16)
+          channel
+          (mv-nth 1 (read-byte$-n 16 channel state)))))
+       (nth
+        53
+        (mv-nth
+         0
+         (read-byte$-n
+          (+
+           (*
+            (combine16u (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+            (combine16u (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+           -16)
+          channel
+          (mv-nth 1 (read-byte$-n 16 channel state)))))
+       (nth
+        52
+        (mv-nth
+         0
+         (read-byte$-n
+          (+
+           (*
+            (combine16u (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+            (combine16u (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+           -16)
+          channel
+          (mv-nth 1 (read-byte$-n 16 channel state)))))
+       (nth
+        51
+        (mv-nth
+         0
+         (read-byte$-n
+          (+
+           (*
+            (combine16u (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+            (combine16u (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+           -16)
+          channel
+          (mv-nth 1 (read-byte$-n 16 channel state))))))
+      (update-bs_bootsig
+       (nth
+        50
+        (mv-nth
+         0
+         (read-byte$-n
+          (+
+           (*
+            (combine16u (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+            (combine16u (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+           -16)
+          channel
+          (mv-nth 1 (read-byte$-n 16 channel state)))))
+       (update-bs_reserved1
+        (nth
+         49
+         (mv-nth
+          0
+          (read-byte$-n
+           (+
+            (*
+             (combine16u (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+             (combine16u
+              (nth 12
+                   (mv-nth 0 (read-byte$-n 16 channel state)))
+              (nth 11
+                   (mv-nth 0 (read-byte$-n 16 channel state)))))
+            -16)
+           channel
+           (mv-nth 1 (read-byte$-n 16 channel state)))))
+        (update-bs_drvnum
+         (nth
+          48
+          (mv-nth
+           0
+           (read-byte$-n
+            (+ (* (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+               -16)
+            channel
+            (mv-nth 1 (read-byte$-n 16 channel state)))))
+         (update-bpb_bkbootsec
+          (combine16u
+           (nth
+            35
+            (mv-nth
+             0
+             (read-byte$-n
+              (+
+               (* (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+               -16)
+              channel
+              (mv-nth 1 (read-byte$-n 16 channel state)))))
+           (nth
+            34
+            (mv-nth
+             0
+             (read-byte$-n
+              (+
+               (* (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+               -16)
+              channel
+              (mv-nth 1 (read-byte$-n 16 channel state))))))
+          (update-bpb_fsinfo
+           (combine16u
+            (nth
+             33
+             (mv-nth
+              0
+              (read-byte$-n
+               (+
+                (* (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                -16)
+               channel
+               (mv-nth 1 (read-byte$-n 16 channel state)))))
+            (nth
+             32
+             (mv-nth
+              0
+              (read-byte$-n
+               (+
+                (* (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                -16)
+               channel
+               (mv-nth 1 (read-byte$-n 16 channel state))))))
+           (update-bpb_rootclus
+            (combine32u
+             (nth
+              31
+              (mv-nth
+               0
+               (read-byte$-n
+                (+
+                 (*
+                  (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+                 -16)
+                channel
+                (mv-nth 1 (read-byte$-n 16 channel state)))))
+             (nth
+              30
+              (mv-nth
+               0
+               (read-byte$-n
+                (+
+                 (*
+                  (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+                 -16)
+                channel
+                (mv-nth 1 (read-byte$-n 16 channel state)))))
+             (nth
+              29
+              (mv-nth
+               0
+               (read-byte$-n
+                (+
+                 (*
+                  (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+                 -16)
+                channel
+                (mv-nth 1 (read-byte$-n 16 channel state)))))
+             (nth
+              28
+              (mv-nth
+               0
+               (read-byte$-n
+                (+
+                 (*
+                  (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+                 -16)
+                channel
+                (mv-nth 1 (read-byte$-n 16 channel state))))))
+            (update-bpb_fsver_major
+             (nth
+              27
+              (mv-nth
+               0
+               (read-byte$-n
+                (+
+                 (*
+                  (combine16u
+                   (nth 15
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 14
+                        (mv-nth 0 (read-byte$-n 16 channel state))))
+                  (combine16u
+                   (nth 12
+                        (mv-nth 0 (read-byte$-n 16 channel state)))
+                   (nth 11
+                        (mv-nth 0 (read-byte$-n 16 channel state)))))
+                 -16)
+                channel
+                (mv-nth 1 (read-byte$-n 16 channel state)))))
+             (update-bpb_fsver_minor
+              (nth
+               26
+               (mv-nth
+                0
+                (read-byte$-n
+                 (+
+                  (*
+                   (combine16u
+                    (nth 15
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 14
+                         (mv-nth 0 (read-byte$-n 16 channel state))))
+                   (combine16u
+                    (nth 12
+                         (mv-nth 0 (read-byte$-n 16 channel state)))
+                    (nth 11
+                         (mv-nth 0 (read-byte$-n 16 channel state)))))
+                  -16)
+                 channel
+                 (mv-nth 1 (read-byte$-n 16 channel state)))))
+              (update-bpb_extflags
+               (combine16u
+                (nth
+                 25
+                 (mv-nth
+                  0
+                  (read-byte$-n
+                   (+
+                    (*
+                     (combine16u
+                      (nth 15
+                           (mv-nth 0 (read-byte$-n 16 channel state)))
+                      (nth 14
+                           (mv-nth 0 (read-byte$-n 16 channel state))))
+                     (combine16u
+                      (nth 12
+                           (mv-nth 0 (read-byte$-n 16 channel state)))
+                      (nth 11
+                           (mv-nth 0 (read-byte$-n 16 channel state)))))
+                    -16)
+                   channel
+                   (mv-nth 1 (read-byte$-n 16 channel state)))))
+                (nth
+                 24
+                 (mv-nth
+                  0
+                  (read-byte$-n
+                   (+
+                    (*
+                     (combine16u
+                      (nth 15
+                           (mv-nth 0 (read-byte$-n 16 channel state)))
+                      (nth 14
+                           (mv-nth 0 (read-byte$-n 16 channel state))))
+                     (combine16u
+                      (nth 12
+                           (mv-nth 0 (read-byte$-n 16 channel state)))
+                      (nth 11
+                           (mv-nth 0 (read-byte$-n 16 channel state)))))
+                    -16)
+                   channel
+                   (mv-nth 1 (read-byte$-n 16 channel state))))))
+               (update-bpb_fatsz32
+                (combine32u
+                 (nth
+                  23
+                  (mv-nth
+                   0
+                   (read-byte$-n
+                    (+
+                     (*
+                      (combine16u
+                       (nth 15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                      (combine16u
+                       (nth 12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                     -16)
+                    channel
+                    (mv-nth 1 (read-byte$-n 16 channel state)))))
+                 (nth
+                  22
+                  (mv-nth
+                   0
+                   (read-byte$-n
+                    (+
+                     (*
+                      (combine16u
+                       (nth 15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                      (combine16u
+                       (nth 12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                     -16)
+                    channel
+                    (mv-nth 1 (read-byte$-n 16 channel state)))))
+                 (nth
+                  21
+                  (mv-nth
+                   0
+                   (read-byte$-n
+                    (+
+                     (*
+                      (combine16u
+                       (nth 15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                      (combine16u
+                       (nth 12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                     -16)
+                    channel
+                    (mv-nth 1 (read-byte$-n 16 channel state)))))
+                 (nth
+                  20
+                  (mv-nth
+                   0
+                   (read-byte$-n
+                    (+
+                     (*
+                      (combine16u
+                       (nth 15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                      (combine16u
+                       (nth 12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                       (nth 11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                     -16)
+                    channel
+                    (mv-nth 1 (read-byte$-n 16 channel state))))))
+                (update-bpb_totsec32
+                 (combine32u
+                  (nth
+                   19
+                   (mv-nth
+                    0
+                    (read-byte$-n
+                     (+
+                      (*
+                       (combine16u
+                        (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                       (combine16u
+                        (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                      -16)
+                     channel
+                     (mv-nth 1 (read-byte$-n 16 channel state)))))
+                  (nth
+                   18
+                   (mv-nth
+                    0
+                    (read-byte$-n
+                     (+
+                      (*
+                       (combine16u
+                        (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                       (combine16u
+                        (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                      -16)
+                     channel
+                     (mv-nth 1 (read-byte$-n 16 channel state)))))
+                  (nth
+                   17
+                   (mv-nth
+                    0
+                    (read-byte$-n
+                     (+
+                      (*
+                       (combine16u
+                        (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                       (combine16u
+                        (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                      -16)
+                     channel
+                     (mv-nth 1 (read-byte$-n 16 channel state)))))
+                  (nth
+                   16
+                   (mv-nth
+                    0
+                    (read-byte$-n
+                     (+
+                      (*
+                       (combine16u
+                        (nth 15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                       (combine16u
+                        (nth 12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                        (nth 11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                      -16)
+                     channel
+                     (mv-nth 1 (read-byte$-n 16 channel state))))))
+                 (update-bpb_hiddsec
+                  (combine32u
+                   (nth
+                    15
+                    (mv-nth
+                     0
+                     (read-byte$-n
+                      (+
+                       (*
+                        (combine16u
+                         (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                        (combine16u
+                         (nth 12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth
+                          11
+                          (mv-nth 0 (read-byte$-n 16 channel state)))))
+                       -16)
+                      channel
+                      (mv-nth 1 (read-byte$-n 16 channel state)))))
+                   (nth
+                    14
+                    (mv-nth
+                     0
+                     (read-byte$-n
+                      (+
+                       (*
+                        (combine16u
+                         (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                        (combine16u
+                         (nth 12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth
+                          11
+                          (mv-nth 0 (read-byte$-n 16 channel state)))))
+                       -16)
+                      channel
+                      (mv-nth 1 (read-byte$-n 16 channel state)))))
+                   (nth
+                    13
+                    (mv-nth
+                     0
+                     (read-byte$-n
+                      (+
+                       (*
+                        (combine16u
+                         (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                        (combine16u
+                         (nth 12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth
+                          11
+                          (mv-nth 0 (read-byte$-n 16 channel state)))))
+                       -16)
+                      channel
+                      (mv-nth 1 (read-byte$-n 16 channel state)))))
+                   (nth
+                    12
+                    (mv-nth
+                     0
+                     (read-byte$-n
+                      (+
+                       (*
+                        (combine16u
+                         (nth 15
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth 14
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                        (combine16u
+                         (nth 12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                         (nth
+                          11
+                          (mv-nth 0 (read-byte$-n 16 channel state)))))
+                       -16)
+                      channel
+                      (mv-nth 1 (read-byte$-n 16 channel state))))))
+                  (update-bpb_numheads
+                   (combine16u
+                    (nth
+                     11
+                     (mv-nth
+                      0
+                      (read-byte$-n
+                       (+
+                        (*
+                         (combine16u
+                          (nth 15
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           14
+                           (mv-nth 0 (read-byte$-n 16 channel state))))
+                         (combine16u
+                          (nth 12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           11
+                           (mv-nth 0 (read-byte$-n 16 channel state)))))
+                        -16)
+                       channel
+                       (mv-nth 1 (read-byte$-n 16 channel state)))))
+                    (nth
+                     10
+                     (mv-nth
+                      0
+                      (read-byte$-n
+                       (+
+                        (*
+                         (combine16u
+                          (nth 15
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           14
+                           (mv-nth 0 (read-byte$-n 16 channel state))))
+                         (combine16u
+                          (nth 12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth
+                           11
+                           (mv-nth 0 (read-byte$-n 16 channel state)))))
+                        -16)
+                       channel
+                       (mv-nth 1 (read-byte$-n 16 channel state))))))
+                   (update-bpb_secpertrk
+                    (combine16u
+                     (nth
+                      9
+                      (mv-nth
+                       0
+                       (read-byte$-n
+                        (+
+                         (*
+                          (combine16u
+                           (nth
+                            15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (nth
+                            14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                          (combine16u
+                           (nth
+                            12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (nth
+                            11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                         -16)
+                        channel
+                        (mv-nth 1 (read-byte$-n 16 channel state)))))
+                     (nth
+                      8
+                      (mv-nth
+                       0
+                       (read-byte$-n
+                        (+
+                         (*
+                          (combine16u
+                           (nth
+                            15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (nth
+                            14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                          (combine16u
+                           (nth
+                            12
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (nth
+                            11
+                            (mv-nth 0 (read-byte$-n 16 channel state)))))
+                         -16)
+                        channel
+                        (mv-nth 1 (read-byte$-n 16 channel state))))))
+                    (update-bpb_fatsz16
+                     (combine16u
+                      (nth
+                       7
+                       (mv-nth
+                        0
+                        (read-byte$-n
+                         (+
+                          (*
+                           (combine16u
+                            (nth
+                             15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                           (combine16u
+                            (nth
+                             12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                          -16)
+                         channel
+                         (mv-nth 1 (read-byte$-n 16 channel state)))))
+                      (nth
+                       6
+                       (mv-nth
+                        0
+                        (read-byte$-n
+                         (+
+                          (*
+                           (combine16u
+                            (nth
+                             15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                           (combine16u
+                            (nth
+                             12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                          -16)
+                         channel
+                         (mv-nth 1 (read-byte$-n 16 channel state))))))
+                     (update-bpb_media
+                      (nth
+                       5
+                       (mv-nth
+                        0
+                        (read-byte$-n
+                         (+
+                          (*
+                           (combine16u
+                            (nth
+                             15
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             14
+                             (mv-nth 0 (read-byte$-n 16 channel state))))
+                           (combine16u
+                            (nth
+                             12
+                             (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth
+                             11
+                             (mv-nth 0 (read-byte$-n 16 channel state)))))
+                          -16)
+                         channel
+                         (mv-nth 1 (read-byte$-n 16 channel state)))))
+                      (update-bpb_totsec16
+                       (combine16u
+                        (nth
+                         4
+                         (mv-nth
+                          0
+                          (read-byte$-n
+                           (+
+                            (*
+                             (combine16u
+                              (nth
+                               15
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                              (nth
+                               14
+                               (mv-nth
+                                0 (read-byte$-n 16 channel state))))
+                             (combine16u
+                              (nth
+                               12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                              (nth
+                               11
+                               (mv-nth
+                                0 (read-byte$-n 16 channel state)))))
+                            -16)
+                           channel
+                           (mv-nth 1 (read-byte$-n 16 channel state)))))
+                        (nth
+                         3
+                         (mv-nth
+                          0
+                          (read-byte$-n
+                           (+
+                            (*
+                             (combine16u
+                              (nth
+                               15
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                              (nth
+                               14
+                               (mv-nth
+                                0 (read-byte$-n 16 channel state))))
+                             (combine16u
+                              (nth
+                               12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                              (nth
+                               11
+                               (mv-nth
+                                0 (read-byte$-n 16 channel state)))))
+                            -16)
+                           channel
+                           (mv-nth 1 (read-byte$-n 16 channel state))))))
+                       (update-bpb_rootentcnt
+                        (combine16u
+                         (nth
+                          2
+                          (mv-nth
+                           0
+                           (read-byte$-n
+                            (+
+                             (*
+                              (combine16u
+                               (nth
+                                15
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                14
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state))))
+                              (combine16u
+                               (nth
+                                12
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                11
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))))
+                             -16)
+                            channel
+                            (mv-nth 1 (read-byte$-n 16 channel state)))))
+                         (nth
+                          1
+                          (mv-nth
+                           0
+                           (read-byte$-n
+                            (+
+                             (*
+                              (combine16u
+                               (nth
+                                15
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                14
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state))))
+                              (combine16u
+                               (nth
+                                12
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                11
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))))
+                             -16)
+                            channel
+                            (mv-nth 1 (read-byte$-n 16 channel state))))))
+                        (update-bpb_numfats
+                         (nth
+                          0
+                          (mv-nth
+                           0
+                           (read-byte$-n
+                            (+
+                             (*
+                              (combine16u
+                               (nth
+                                15
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                14
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state))))
+                              (combine16u
+                               (nth
+                                12
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))
+                               (nth
+                                11
+                                (mv-nth
+                                 0 (read-byte$-n 16 channel state)))))
+                             -16)
+                            channel
+                            (mv-nth 1 (read-byte$-n 16 channel state)))))
+                         (update-bpb_rsvdseccnt
+                          (combine16u
+                           (nth
+                            15
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (nth
+                            14
+                            (mv-nth 0 (read-byte$-n 16 channel state))))
+                          (update-bpb_secperclus
+                           (nth
+                            13
+                            (mv-nth 0 (read-byte$-n 16 channel state)))
+                           (update-bpb_bytspersec
+                            (combine16u
+                             (nth
+                              12
+                              (mv-nth 0 (read-byte$-n 16 channel state)))
+                             (nth
+                              11
+                              (mv-nth 0 (read-byte$-n 16 channel state))))
+                            (update-bs_oemname
+                             (subseq
+                              (mv-nth 0 (read-byte$-n 16 channel state))
+                              3 8)
+                             (update-bs_jmpboot
+                              (subseq
+                               (mv-nth 0 (read-byte$-n 16 channel state))
+                               0 3)
+                              fat32-in-memory)))))))))))))))))))))))))))
+   :hints :none)
+  (:rewrite update-bs_filsystype-correctness-1)))
 
 ;; state-p actually needs to be enabled for this guard proof because all the
 ;; lemmas are in terms of state-p1
