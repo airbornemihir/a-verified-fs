@@ -875,38 +875,44 @@
   :hints (("goal" :in-theory (disable read-byte$-n-data)
            :use read-byte$-n-data)))
 
-(defthm
-  read-reserved-area-correctness-1
-  (implies (and (state-p state)
-                (symbolp channel)
-                (open-input-channel-p channel
-                                      :byte state)
-                (fat32-in-memoryp fat32-in-memory))
-           (fat32-in-memoryp
-            (mv-nth 0
-                    (read-reserved-area fat32-in-memory channel state))))
-  :instructions
-  ((:in-theory (disable fat32-in-memoryp))
-   :bash
-   (:use
-    (:instance
-     read-byte$-n-data
-     (state (mv-nth 1 (read-byte$-n 16 channel state)))
-     (n (+ -16
-           (* (combine16u (nth 12
-                               (mv-nth 0 (read-byte$-n 16 channel state)))
-                          (nth 11
-                               (mv-nth 0 (read-byte$-n 16 channel state))))
-              (combine16u (nth 15
-                               (mv-nth 0 (read-byte$-n 16 channel state)))
-                          (nth 14
-                               (mv-nth 0
-                                       (read-byte$-n 16 channel state)))))))))
-   :promote (:demote 1)
-   (:dive 1 1)
-   :s :up
-   :s :top
-   :promote :bash))
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top"
+                       :dir :system))
+
+  (defthm
+    read-reserved-area-correctness-1
+    (implies (and (state-p state)
+                  (symbolp channel)
+                  (open-input-channel-p channel
+                                        :byte state)
+                  (fat32-in-memoryp fat32-in-memory))
+             (fat32-in-memoryp
+              (mv-nth 0
+                      (read-reserved-area fat32-in-memory channel state))))
+    :instructions
+    ((:in-theory (disable fat32-in-memoryp))
+     :bash
+     (:use
+      (:instance
+       read-byte$-n-data
+       (state (mv-nth 1 (read-byte$-n 16 channel state)))
+       (n (+ -16
+             (* (combine16u (nth 12
+                                 (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth 11
+                                 (mv-nth 0 (read-byte$-n 16 channel state))))
+                (combine16u (nth 15
+                                 (mv-nth 0 (read-byte$-n 16 channel state)))
+                            (nth 14
+                                 (mv-nth 0
+                                         (read-byte$-n 16 channel state)))))))))
+     :promote (:demote 1)
+     (:dive 1 1)
+     :s :up
+     :s :top
+     :promote :bash)))
 
 ;; state-p actually needs to be enabled for this guard proof because all the
 ;; lemmas are in terms of state-p1
