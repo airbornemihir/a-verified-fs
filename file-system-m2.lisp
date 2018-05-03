@@ -584,10 +584,22 @@
                 (MV-NTH 1 (READ-BYTE$-N 16 CHANNEL STATE))))))))
 
 (in-theory (disable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
-                    bpb_numfats bpb_bytspersec bpb_rootclus
+                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
+                    bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
+                    bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
+                    bpb_secpertrk bpb_numheads bpb_rootentcnt
+                    bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
+                    bpb_rootentcnt bpb_totsec16
                     update-bpb_secperclus update-bpb_rsvdseccnt
                     update-bpb_bytspersec update-bpb_numfats
-                    update-bpb_rootclus))
+                    update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
+                    update-bs_drvnum update-bs_reserved1 update-bs_bootsig
+                    update-bpb_media update-bpb_fsver_minor
+                    update-bpb_fsver_major update-bpb_fatsz16
+                    update-bpb_secpertrk update-bpb_numheads
+                    update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
+                    update-bpb_fatsz32 update-bpb_rootentcnt
+                    update-bpb_totsec16))
 
 (defthm
   slurp-disk-image-guard-lemma-2
@@ -748,6 +760,78 @@
                                  fat32-in-memoryp
                                  update-bpb_rootclus-correctness-1)
 
+(update-stobj-scalar-correctness 32 update-bpb_rootclus fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_rootclus-correctness-1)
+
+(update-stobj-scalar-correctness 16 update-bpb_fsinfo fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_fsinfo-correctness-1)
+
+(update-stobj-scalar-correctness 16 update-bpb_bkbootsec fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_bkbootsec-correctness-1)
+
+(update-stobj-scalar-correctness 8 update-bs_drvnum fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bs_drvnum-correctness-1)
+
+(update-stobj-scalar-correctness 8 update-bs_reserved1 fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bs_reserved1-correctness-1)
+
+(update-stobj-scalar-correctness 8 update-bs_bootsig fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bs_bootsig-correctness-1)
+
+(update-stobj-scalar-correctness 8 update-bpb_media fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_media-correctness-1)
+
+(update-stobj-scalar-correctness 8 update-bpb_fsver_minor fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_fsver_minor-correctness-1)
+
+(update-stobj-scalar-correctness 8 update-bpb_fsver_major fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_fsver_major-correctness-1)
+
+(update-stobj-scalar-correctness 16 update-bpb_fatsz16 fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_fatsz16-correctness-1)
+
+(update-stobj-scalar-correctness 16 update-bpb_secpertrk fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_secpertrk-correctness-1)
+
+(update-stobj-scalar-correctness 16 update-bpb_numheads fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_numheads-correctness-1)
+
+(update-stobj-scalar-correctness 16 update-bpb_extflags fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_extflags-correctness-1)
+
+(update-stobj-scalar-correctness 32 update-bpb_hiddsec fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_hiddsec-correctness-1)
+
+(update-stobj-scalar-correctness 32 update-bpb_totsec32 fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_totsec32-correctness-1)
+
+(update-stobj-scalar-correctness 32 update-bpb_fatsz32 fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_fatsz32-correctness-1)
+
+(update-stobj-scalar-correctness 16 update-bpb_rootentcnt fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_rootentcnt-correctness-1)
+
+(update-stobj-scalar-correctness 16 update-bpb_totsec16 fat32-in-memory
+                                 fat32-in-memoryp
+                                 update-bpb_totsec16-correctness-1)
+
 (defthm
   slurp-disk-image-guard-lemma-18
   (equal (stringp (mv-nth 0 (read-byte$-n n channel state)))
@@ -755,7 +839,7 @@
   :hints (("goal" :in-theory (disable read-byte$-n-data)
            :use read-byte$-n-data)))
 
-(verify
+(thm-cp
  (implies
   (and (state-p state)
        (symbolp channel)
@@ -765,18 +849,8 @@
   (fat32-in-memoryp
    (mv-nth 0
            (read-reserved-area
-            fat32-in-memory channel state))))
- :instructions
- ((:in-theory (disable fat32-in-memoryp))
-  :promote (:dive 1 2)
-  (:expand t)
-  :top :split :bash (:change-goal nil t)
-  (:change-goal nil t)
-  (:rewrite update-bs_filsystype-correctness-1)
-  (:change-goal nil t)
-  :bash :bash (:change-goal nil t)
-  (:rewrite update-bpb_rootclus-correctness-1)
-  :bash))
+            fat32-in-memory channel state)))) :hints
+ (("Goal" :in-theory (disable fat32-in-memoryp) :do-not-induct t)))
 
 ;; state-p actually needs to be enabled for this guard proof because all the
 ;; lemmas are in terms of state-p1
@@ -826,6 +900,19 @@
     (mv fat32-in-memory state error-code)))
 
 (in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
-                   bpb_numfats bpb_bytspersec update-bpb_secperclus
-                   update-bpb_rsvdseccnt update-bpb_bytspersec
-                   update-bpb_numfats))
+                   bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
+                   bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
+                   bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
+                   bpb_secpertrk bpb_numheads bpb_rootentcnt
+                   bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
+                   bpb_rootentcnt bpb_totsec16
+                   update-bpb_secperclus update-bpb_rsvdseccnt
+                   update-bpb_bytspersec update-bpb_numfats
+                   update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
+                   update-bs_drvnum update-bs_reserved1 update-bs_bootsig
+                   update-bpb_media update-bpb_fsver_minor
+                   update-bpb_fsver_major update-bpb_fatsz16
+                   update-bpb_secpertrk update-bpb_numheads
+                   update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
+                   update-bpb_fatsz32 update-bpb_rootentcnt
+                   update-bpb_totsec16))
