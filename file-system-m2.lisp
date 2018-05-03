@@ -11,6 +11,14 @@
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
 
+;; Consider moving this to one of the main books
+(defthm unsigned-byte-listp-of-update-nth
+  (implies (and (unsigned-byte-listp n l)
+                (< key (len l)))
+           (equal (unsigned-byte-listp n (update-nth key val l))
+                  (unsigned-byte-p n val)))
+  :hints (("goal" :in-theory (enable unsigned-byte-listp))))
+
 (make-event
  `(defstobj fat32-in-memory
 
@@ -116,62 +124,99 @@
          ;; per spec
          :initially 0)))
 
+(defthm bs_oemnamep-alt
+  (equal (bs_oemnamep x)
+         (unsigned-byte-listp 8 x))
+  :rule-classes :definition)
+
+(defthm bs_jmpbootp-alt
+  (equal (bs_jmpbootp x)
+         (unsigned-byte-listp 8 x))
+  :rule-classes :definition)
+
+(defthm bs_filsystypep-alt
+  (equal (bs_filsystypep x)
+         (unsigned-byte-listp 8 x))
+  :rule-classes :definition)
+
+(defthm fatp-alt
+  (equal (fatp x)
+         (unsigned-byte-listp 32 x))
+  :rule-classes :definition)
+
+(in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp))
+
 (defconst *initialbytcnt* 16)
 
 (defmacro
   update-stobj
   (name array-length bit-width
-        array-updater stobj stobj-recogniser)
+        array-updater stobj stobj-recogniser lemma-name)
   (declare (ignore))
-  (list
-   'defun
-   name (list 'v stobj)
-   (list
-    'declare
-    (list 'xargs
-          ':guard
-          (list 'and
-                (list 'unsigned-byte-listp bit-width 'v)
-                (list '<=
-                      '(len v)
-                      (list array-length stobj))
-                (list stobj-recogniser stobj))
-          ':guard-hints
-          (list (list '"goal"
-                      ':in-theory
-                      (list 'disable
-                            stobj-recogniser 'unsigned-byte-p
-                            'nth)))
-          ':stobjs
-          (list stobj)))
-   (list 'if
-         '(atom v)
-         stobj
-         (list 'let*
-               (list (list stobj
-                           (list array-updater
-                                 (list '-
-                                       (list array-length stobj)
-                                       '(len v))
-                                 '(car v)
-                                 stobj))
-                     (list stobj (list name '(cdr v) stobj)))
-               stobj))))
+  (list 'encapsulate 'nil
+        (list
+         'defun
+         name (list 'v stobj)
+         (list
+          'declare
+          (list 'xargs
+                ':guard
+                (list 'and
+                      (list 'unsigned-byte-listp bit-width 'v)
+                      (list '<=
+                            '(len v)
+                            (list array-length stobj))
+                      (list stobj-recogniser stobj))
+                ':guard-hints
+                (list (list '"goal"
+                            ':in-theory
+                            (list 'disable
+                                  stobj-recogniser 'unsigned-byte-p
+                                  'nth)))
+                ':stobjs
+                (list stobj)))
+         (list 'if
+               '(atom v)
+               stobj
+               (list 'let*
+                     (list (list stobj
+                                 (list array-updater
+                                       (list '-
+                                             (list array-length stobj)
+                                             '(len v))
+                                       '(car v)
+                                       stobj))
+                           (list stobj (list name '(cdr v) stobj)))
+                     stobj)))
+        (list 'DEFTHM
+              lemma-name
+              (list 'IMPLIES
+                    (list 'AND (list 'UNSIGNED-BYTE-LISTP bit-width 'V)
+                         (list '<= (list 'LEN 'V)
+                             (list array-length stobj))
+                         (list stobj-recogniser stobj))
+                    (list stobj-recogniser (list name 'V stobj)))
+               ':HINTS
+               (list (list '"goal" ':IN-THEORY (list 'DISABLE stobj-recogniser))
+                (list '"subgoal *1/4" ':IN-THEORY (list 'ENABLE stobj-recogniser))))))
 
 (update-stobj
  update-bs_jmpboot
  bs_jmpboot-length
- 8 update-bs_jmpbooti fat32-in-memory fat32-in-memoryp)
+ 8 update-bs_jmpbooti fat32-in-memory fat32-in-memoryp
+ update-bs_jmpboot-correctness-1)
 
 (update-stobj
  update-bs_oemname
  bs_oemname-length
- 8 update-bs_oemnamei fat32-in-memory fat32-in-memoryp)
+ 8 update-bs_oemnamei fat32-in-memory fat32-in-memoryp
+ update-bs_oemname-correctness-1)
 
 (update-stobj
  update-bs_filsystype
  bs_filsystype-length
- 8 update-bs_filsystypei fat32-in-memory fat32-in-memoryp)
+ 8 update-bs_filsystypei fat32-in-memory fat32-in-memoryp
+ update-bs_filsystype-correctness-1)
 
 (defthm
   read-reserved-area-guard-lemma-1
@@ -411,7 +456,8 @@
 (update-stobj
  update-fat
  fat-length
- 32 update-fati fat32-in-memory fat32-in-memoryp)
+ 32 update-fati fat32-in-memory fat32-in-memoryp
+ update-fat-correctness-1)
 
 (defthm
   read-fat-guard-lemma-1
@@ -497,17 +543,279 @@
        )
     (mv fat32-in-memory state 0)))
 
+(defthm slurp-disk-image-guard-lemma-1
+  (implies
+   (and (state-p state)
+                  (symbolp channel)
+                  (open-input-channel-p channel
+                                        :byte state)
+                  (fat32-in-memoryp fat32-in-memory))
+  (state-p1 (mv-nth 1
+                   (read-reserved-area
+                    fat32-in-memory channel state))))
+  :hints
+    (("goal" :do-not-induct t
+      :in-theory (disable fat32-in-memoryp)
+        :use ((:instance
+               read-byte$-n-state
+               (n *initialbytcnt*))
+              (:instance
+               read-byte$-n-state
+               (n
+                (+ -16
+                   (* (COMBINE16U (NTH 12
+                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))
+                                  (NTH 11
+                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE))))
+                      (COMBINE16U (NTH 15
+                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))
+                                  (NTH 14
+                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))))))
+               (state
+                (MV-NTH 1 (READ-BYTE$-N 16 CHANNEL STATE))))))))
+
+(in-theory (disable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
+                    bpb_numfats bpb_bytspersec update-bpb_secperclus
+                    update-bpb_rsvdseccnt update-bpb_bytspersec
+                    update-bpb_numfats))
+
+(defthm
+  slurp-disk-image-guard-lemma-2
+  (implies (member n
+                   (list *bpb_secperclus*
+                         *bpb_fatsz32* *bpb_numfats*
+                         *bpb_rsvdseccnt* *data-regioni*))
+           (equal (nth n (update-fat v fat32-in-memory))
+                  (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable update-fat))))
+
+(defthm slurp-disk-image-guard-lemma-3
+  (equal (bpb_secperclus
+              (update-fat v fat32-in-memory))
+         (bpb_secperclus fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
+
+(defthm slurp-disk-image-guard-lemma-4
+  (equal (bpb_fatsz32
+              (update-fat v fat32-in-memory))
+         (bpb_fatsz32 fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
+
+(defthm slurp-disk-image-guard-lemma-5
+  (equal (bpb_numfats
+              (update-fat v fat32-in-memory))
+         (bpb_numfats fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_numfats)) ))
+
+(defthm slurp-disk-image-guard-lemma-6
+  (equal (bpb_rsvdseccnt
+              (update-fat v fat32-in-memory))
+         (bpb_rsvdseccnt fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-7
+  (implies
+   (not (equal key *bpb_fatsz32*))
+   (equal
+    (bpb_fatsz32 (update-nth key val fat32-in-memory))
+    (bpb_fatsz32 fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_fatsz32))))
+
+(defthm
+  slurp-disk-image-guard-lemma-8
+  (implies
+   (not (equal key *bpb_secperclus*))
+   (equal
+    (bpb_secperclus (update-nth key val fat32-in-memory))
+    (bpb_secperclus fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_secperclus))))
+
+(defthm
+  slurp-disk-image-guard-lemma-9
+  (implies
+   (not (equal key *bpb_rsvdseccnt*))
+   (equal
+    (bpb_rsvdseccnt (update-nth key val fat32-in-memory))
+    (bpb_rsvdseccnt fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_rsvdseccnt))))
+
+(defthm
+  slurp-disk-image-guard-lemma-10
+  (implies
+   (not (equal key *bpb_numfats*))
+   (equal
+    (bpb_numfats (update-nth key val fat32-in-memory))
+    (bpb_numfats fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_numfats))))
+
+;; Check out Subgoal 1.3.3'
+
+(defthm
+  slurp-disk-image-guard-lemma-11
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (integerp
+    (bpb_secperclus fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_secperclus))))
+
+(defthm
+  slurp-disk-image-guard-lemma-12
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (integerp
+    (bpb_rsvdseccnt fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_rsvdseccnt))))
+
+(defthm
+  slurp-disk-image-guard-lemma-13
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (integerp
+    (bpb_numfats fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_numfats))))
+
+(defthm
+  slurp-disk-image-guard-lemma-14
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (integerp
+    (bpb_fatsz32 fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_fatsz32))))
+
+(defthm
+  slurp-disk-image-guard-lemma-15
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (integerp
+    (bpb_bytspersec fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_bytspersec))))
+
+(defthm
+  slurp-disk-image-guard-lemma-16
+  (implies (and (integerp x) (integerp y))
+           (integerp (+ x y))))
+
+(defthm
+  slurp-disk-image-guard-lemma-17
+  (implies (and (integerp x) (integerp y))
+           (integerp (* x y))))
+
+(defthm
+  slurp-disk-image-guard-lemma-18
+  (implies (and (unsigned-byte-listp 8 v)
+                (<= (len v)
+                    (bs_oemname-length fat32-in-memory))
+                (fat32-in-memoryp fat32-in-memory))
+           (fat32-in-memoryp (update-bs_oemname v fat32-in-memory)))
+  :hints (("goal" :in-theory (disable fat32-in-memoryp))
+          ("subgoal *1/4" :in-theory (enable fat32-in-memoryp))))
+
+(defthm
+  slurp-disk-image-guard-lemma-19
+  (implies (and (unsigned-byte-listp 8 v)
+                (<= (len v)
+                    (bs_jmpboot-length fat32-in-memory))
+                (fat32-in-memoryp fat32-in-memory))
+           (fat32-in-memoryp (update-bs_jmpboot v fat32-in-memory)))
+  :hints (("goal" :in-theory (disable fat32-in-memoryp))
+          ("subgoal *1/4" :in-theory (enable fat32-in-memoryp))))
+
+(defthm
+  slurp-disk-image-guard-lemma-20
+  (implies (and (unsigned-byte-p 16 v)
+                (fat32-in-memoryp fat32-in-memory))
+           (fat32-in-memoryp
+            (update-bpb_rsvdseccnt v fat32-in-memory)))
+  :hints (("Goal" :in-theory (enable update-bpb_rsvdseccnt)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-21
+  (implies (and (unsigned-byte-p 8 v)
+                (fat32-in-memoryp fat32-in-memory))
+           (fat32-in-memoryp
+            (update-bpb_secperclus v fat32-in-memory)))
+  :hints (("Goal" :in-theory (enable update-bpb_secperclus)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-22
+  (implies (and (unsigned-byte-p 16 v)
+                (fat32-in-memoryp fat32-in-memory))
+           (fat32-in-memoryp
+            (update-bpb_bytspersec v fat32-in-memory)))
+  :hints (("Goal" :in-theory (enable update-bpb_bytspersec)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-23
+  (implies (and (unsigned-byte-listp 8 v)
+                (<= (len v)
+                    (bs_filsystype-length fat32-in-memory))
+                (fat32-in-memoryp fat32-in-memory))
+           (fat32-in-memoryp (update-bs_filsystype v fat32-in-memory)))
+  :hints (("goal" :in-theory (disable fat32-in-memoryp))
+          ("subgoal *1/4" :in-theory (enable fat32-in-memoryp))))
+
+(defthm
+  slurp-disk-image-guard-lemma-24
+  (implies (and (unsigned-byte-p 8 v)
+                (fat32-in-memoryp fat32-in-memory))
+           (fat32-in-memoryp
+            (update-bpb_numfats v fat32-in-memory)))
+  :hints (("Goal" :in-theory (enable update-bpb_numfats)) ))
+
+(verify
+ (implies
+  (and (state-p state)
+       (symbolp channel)
+       (open-input-channel-p channel
+                             :byte state)
+       (fat32-in-memoryp fat32-in-memory))
+  (fat32-in-memoryp
+   (mv-nth 0
+           (read-reserved-area
+            fat32-in-memory channel state))))
+ :instructions
+ ((:in-theory (disable fat32-in-memoryp))
+  :promote (:dive 1 2)
+  (:expand t)
+  :top :split
+  (:claim
+   (and
+    (unsigned-byte-listp
+     8
+     (subseq (mv-nth 0 (read-byte$-n 16 channel state))
+             3 8))
+    (<= (len (subseq (mv-nth 0 (read-byte$-n 16 channel state))
+                     3 8))
+        (bs_oemname-length
+         (update-bs_jmpboot
+          (subseq (mv-nth 0 (read-byte$-n 16 channel state))
+                  0 3)
+          fat32-in-memory)))
+    (fat32-in-memoryp
+     (update-bs_jmpboot (subseq (mv-nth 0 (read-byte$-n 16 channel state))
+                                0 3)
+                        fat32-in-memory)))
+   :hints :none)
+  (:rewrite slurp-disk-image-guard-lemma-18)
+  :bash
+  (:use (:instance read-byte$-n-data (n 16)))
+  :bash
+  :bash :bash))
+
+;; state-p actually needs to be enabled for this guard proof because all the
+;; lemmas are in terms of state-p1
 (defun
   slurp-disk-image
   (fat32-in-memory image-path state)
   (declare
    (xargs
-    :guard (and (state-p state)
-                (stringp image-path)
+    :guard (and (stringp image-path)
                 (fat32-in-memoryp fat32-in-memory))
     :guard-hints
     (("goal" :do-not-induct t
-      :in-theory (disable fat32-in-memoryp state-p)))
+      :in-theory (disable fat32-in-memoryp state-p
+                          read-reserved-area)))
     :stobjs (state fat32-in-memory)))
   (b* (((mv channel state)
         (open-input-channel image-path
@@ -528,12 +836,21 @@
                     (+ (bpb_rsvdseccnt fat32-in-memory)
                        (* (BPB_NumFATs fat32-in-memory) (BPB_FATSz32
                                                          fat32-in-memory)))))
-       (fat32-in-memory
-               (UPDATE-DATA-REGION
-                FAT32-IN-MEMORY
+       (str
                 (read-file-into-string image-path :start
                                        tmp_INIT
                                        :bytes
-                                       (data-region-LENGTH fat32-in-memory))
+                                       (data-region-LENGTH fat32-in-memory)))
+       ((unless (stringp str))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+               (UPDATE-DATA-REGION
+                FAT32-IN-MEMORY
+                str
                 0)))
     (mv fat32-in-memory state error-code)))
+
+(in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
+                   bpb_numfats bpb_bytspersec update-bpb_secperclus
+                   update-bpb_rsvdseccnt update-bpb_bytspersec
+                   update-bpb_numfats))
