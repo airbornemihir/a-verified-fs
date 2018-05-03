@@ -149,7 +149,7 @@
 (defconst *initialbytcnt* 16)
 
 (defmacro
-  update-stobj
+  update-stobj-array
   (name array-length bit-width array-updater
         stobj stobj-recogniser lemma-name)
   (declare (ignore))
@@ -209,19 +209,19 @@
                      ':in-theory
                      (list 'enable stobj-recogniser))))))
 
-(update-stobj
+(update-stobj-array
  update-bs_jmpboot
  bs_jmpboot-length
  8 update-bs_jmpbooti fat32-in-memory fat32-in-memoryp
  update-bs_jmpboot-correctness-1)
 
-(update-stobj
+(update-stobj-array
  update-bs_oemname
  bs_oemname-length
  8 update-bs_oemnamei fat32-in-memory fat32-in-memoryp
  update-bs_oemname-correctness-1)
 
-(update-stobj
+(update-stobj-array
  update-bs_filsystype
  bs_filsystype-length
  8 update-bs_filsystypei fat32-in-memory fat32-in-memoryp
@@ -462,7 +462,7 @@
                                      (+ 82 (- *initialbytcnt*) 8)) fat32-in-memory)))
       (mv fat32-in-memory state 0))))
 
-(update-stobj
+(update-stobj-array
  update-fat
  fat-length
  32 update-fati fat32-in-memory fat32-in-memoryp
@@ -735,12 +735,19 @@
   :hints (("Goal" :in-theory (enable update-bpb_bytspersec)) ))
 
 (defthm
-  slurp-disk-image-guard-lemma-24
+  slurp-disk-image-guard-lemma-23
   (implies (and (unsigned-byte-p 8 v)
                 (fat32-in-memoryp fat32-in-memory))
            (fat32-in-memoryp
             (update-bpb_numfats v fat32-in-memory)))
   :hints (("Goal" :in-theory (enable update-bpb_numfats)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-24
+  (equal (stringp (mv-nth 0 (read-byte$-n n channel state)))
+         nil)
+  :hints (("goal" :in-theory (disable read-byte$-n-data)
+           :use read-byte$-n-data)))
 
 (verify
  (implies
