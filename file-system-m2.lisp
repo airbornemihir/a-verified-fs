@@ -148,6 +148,172 @@
 
 (in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp))
 
+(defmacro
+  update-stobj-scalar-correctness
+  (bit-width updater accessor
+             stobj stobj-recogniser lemma-name1 lemma-name2)
+  (list 'encapsulate 'nil
+        (list 'defthm
+              lemma-name1
+              (list 'implies
+                    (list 'and
+                          (list 'unsigned-byte-p bit-width 'v)
+                          (list stobj-recogniser stobj))
+                    (list stobj-recogniser
+                          (list updater 'v stobj)))
+              ':hints
+              (list (list '"goal"
+                          ':in-theory
+                          (list 'enable updater))))
+        (list 'defthm
+              lemma-name2
+              (list 'implies
+                    (list stobj-recogniser stobj)
+   (list 'unsigned-byte-p bit-width (list accessor stobj)))
+  ':hints (list (list '"goal" ':in-theory (list 'enable accessor)))
+  ':rule-classes
+  (list ':rewrite
+   (list ':rewrite
+    ':corollary
+    (list 'implies (list stobj-recogniser stobj)
+             (list 'integerp (list accessor stobj)))
+    ':hints
+    (list (list '"goal"
+                ':use
+                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
+                      (list 'n bit-width)
+                      (list 'x (list accessor stobj))))))
+   (list ':rewrite
+    ':corollary
+    (list 'implies (list stobj-recogniser stobj)
+             (list 'acl2-numberp (list accessor stobj)))
+    ':hints
+    (list (list '"goal"
+                ':use
+                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
+                      (list 'n bit-width)
+                      (list 'x (list accessor stobj))))))
+   (list ':rewrite
+    ':corollary
+    (list 'implies (list stobj-recogniser stobj)
+             (list 'rationalp (list accessor stobj)))
+    ':hints
+    (list (list '"goal"
+                ':use
+                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
+                      (list 'n bit-width)
+                      (list 'x (list accessor stobj))))))))))
+
+(update-stobj-scalar-correctness 16 update-bpb_rsvdseccnt bpb_rsvdseccnt
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_rsvdseccnt-correctness-1
+                                 update-bpb_rsvdseccnt-correctness-2)
+
+(update-stobj-scalar-correctness 8 update-bpb_secperclus bpb_secperclus
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_secperclus-correctness-1
+                                 update-bpb_secperclus-correctness-2)
+
+(update-stobj-scalar-correctness 16 update-bpb_bytspersec bpb_bytspersec
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_bytspersec-correctness-1
+                                 update-bpb_bytspersec-correctness-2)
+
+(update-stobj-scalar-correctness 8 update-bpb_numfats bpb_numfats
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_numfats-correctness-1
+                                 update-bpb_numfats-correctness-2)
+
+(update-stobj-scalar-correctness 32 update-bpb_rootclus bpb_rootclus
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_rootclus-correctness-1
+                                 update-bpb_rootclus-correctness-2)
+
+(update-stobj-scalar-correctness 16 update-bpb_fsinfo bpb_fsinfo
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_fsinfo-correctness-1
+                                 update-bpb_fsinfo-correctness-2)
+
+(update-stobj-scalar-correctness 16 update-bpb_bkbootsec bpb_bkbootsec
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_bkbootsec-correctness-1
+                                 update-bpb_bkbootsec-correctness-2)
+
+(update-stobj-scalar-correctness 8 update-bs_drvnum bs_drvnum
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bs_drvnum-correctness-1
+                                 update-bs_drvnum-correctness-2)
+
+(update-stobj-scalar-correctness 8 update-bs_reserved1 bs_reserved1
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bs_reserved1-correctness-1
+                                 update-bs_reserved1-correctness-2)
+
+(update-stobj-scalar-correctness 8 update-bs_bootsig bs_bootsig
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bs_bootsig-correctness-1
+                                 update-bs_bootsig-correctness-2)
+
+(update-stobj-scalar-correctness 8 update-bpb_media bpb_media
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_media-correctness-1
+                                 update-bpb_media-correctness-2)
+
+(update-stobj-scalar-correctness 8 update-bpb_fsver_minor bpb_fsver_minor
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_fsver_minor-correctness-1
+                                 update-bpb_fsver_minor-correctness-2)
+
+(update-stobj-scalar-correctness 8 update-bpb_fsver_major bpb_fsver_major
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_fsver_major-correctness-1
+                                 update-bpb_fsver_major-correctness-2)
+
+(update-stobj-scalar-correctness 16 update-bpb_fatsz16 bpb_fatsz16
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_fatsz16-correctness-1
+                                 update-bpb_fatsz16-correctness-2)
+
+(update-stobj-scalar-correctness 16 update-bpb_secpertrk bpb_secpertrk
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_secpertrk-correctness-1
+                                 update-bpb_secpertrk-correctness-2)
+
+(update-stobj-scalar-correctness 16 update-bpb_numheads bpb_numheads
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_numheads-correctness-1
+                                 update-bpb_numheads-correctness-2)
+
+(update-stobj-scalar-correctness 16 update-bpb_extflags bpb_extflags
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_extflags-correctness-1
+                                 update-bpb_extflags-correctness-2)
+
+(update-stobj-scalar-correctness 32 update-bpb_hiddsec bpb_hiddsec
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_hiddsec-correctness-1
+                                 update-bpb_hiddsec-correctness-2)
+
+(update-stobj-scalar-correctness 32 update-bpb_totsec32 bpb_totsec32
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_totsec32-correctness-1
+                                 update-bpb_totsec32-correctness-2)
+
+(update-stobj-scalar-correctness 32 update-bpb_fatsz32 bpb_fatsz32
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_fatsz32-correctness-1
+                                 update-bpb_fatsz32-correctness-2)
+
+(update-stobj-scalar-correctness 16 update-bpb_rootentcnt bpb_rootentcnt
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_rootentcnt-correctness-1
+                                 update-bpb_rootentcnt-correctness-2)
+
+(update-stobj-scalar-correctness 16 update-bpb_totsec16 bpb_totsec16
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bpb_totsec16-correctness-1
+                                 update-bpb_totsec16-correctness-2)
+
 (defconst *initialbytcnt* 16)
 
 (defmacro
@@ -700,172 +866,6 @@
   slurp-disk-image-guard-lemma-12
   (implies (and (integerp x) (integerp y))
            (integerp (* x y))))
-
-(defmacro
-  update-stobj-scalar-correctness
-  (bit-width updater accessor
-             stobj stobj-recogniser lemma-name1 lemma-name2)
-  (list 'encapsulate 'nil
-        (list 'defthm
-              lemma-name1
-              (list 'implies
-                    (list 'and
-                          (list 'unsigned-byte-p bit-width 'v)
-                          (list stobj-recogniser stobj))
-                    (list stobj-recogniser
-                          (list updater 'v stobj)))
-              ':hints
-              (list (list '"goal"
-                          ':in-theory
-                          (list 'enable updater))))
-        (list 'defthm
-              lemma-name2
-              (list 'implies
-                    (list stobj-recogniser stobj)
-   (list 'unsigned-byte-p bit-width (list accessor stobj)))
-  ':hints (list (list '"goal" ':in-theory (list 'enable accessor)))
-  ':rule-classes
-  (list ':rewrite
-   (list ':rewrite
-    ':corollary
-    (list 'implies (list stobj-recogniser stobj)
-             (list 'integerp (list accessor stobj)))
-    ':hints
-    (list (list '"goal"
-                ':use
-                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
-                      (list 'n bit-width)
-                      (list 'x (list accessor stobj))))))
-   (list ':rewrite
-    ':corollary
-    (list 'implies (list stobj-recogniser stobj)
-             (list 'acl2-numberp (list accessor stobj)))
-    ':hints
-    (list (list '"goal"
-                ':use
-                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
-                      (list 'n bit-width)
-                      (list 'x (list accessor stobj))))))
-   (list ':rewrite
-    ':corollary
-    (list 'implies (list stobj-recogniser stobj)
-             (list 'rationalp (list accessor stobj)))
-    ':hints
-    (list (list '"goal"
-                ':use
-                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
-                      (list 'n bit-width)
-                      (list 'x (list accessor stobj))))))))))
-
-(update-stobj-scalar-correctness 16 update-bpb_rsvdseccnt bpb_rsvdseccnt
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_rsvdseccnt-correctness-1
-                                 update-bpb_rsvdseccnt-correctness-2)
-
-(update-stobj-scalar-correctness 8 update-bpb_secperclus bpb_secperclus
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_secperclus-correctness-1
-                                 update-bpb_secperclus-correctness-2)
-
-(update-stobj-scalar-correctness 16 update-bpb_bytspersec bpb_bytspersec
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_bytspersec-correctness-1
-                                 update-bpb_bytspersec-correctness-2)
-
-(update-stobj-scalar-correctness 8 update-bpb_numfats bpb_numfats
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_numfats-correctness-1
-                                 update-bpb_numfats-correctness-2)
-
-(update-stobj-scalar-correctness 32 update-bpb_rootclus bpb_rootclus
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_rootclus-correctness-1
-                                 update-bpb_rootclus-correctness-2)
-
-(update-stobj-scalar-correctness 16 update-bpb_fsinfo bpb_fsinfo
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_fsinfo-correctness-1
-                                 update-bpb_fsinfo-correctness-2)
-
-(update-stobj-scalar-correctness 16 update-bpb_bkbootsec bpb_bkbootsec
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_bkbootsec-correctness-1
-                                 update-bpb_bkbootsec-correctness-2)
-
-(update-stobj-scalar-correctness 8 update-bs_drvnum bs_drvnum
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bs_drvnum-correctness-1
-                                 update-bs_drvnum-correctness-2)
-
-(update-stobj-scalar-correctness 8 update-bs_reserved1 bs_reserved1
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bs_reserved1-correctness-1
-                                 update-bs_reserved1-correctness-2)
-
-(update-stobj-scalar-correctness 8 update-bs_bootsig bs_bootsig
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bs_bootsig-correctness-1
-                                 update-bs_bootsig-correctness-2)
-
-(update-stobj-scalar-correctness 8 update-bpb_media bpb_media
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_media-correctness-1
-                                 update-bpb_media-correctness-2)
-
-(update-stobj-scalar-correctness 8 update-bpb_fsver_minor bpb_fsver_minor
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_fsver_minor-correctness-1
-                                 update-bpb_fsver_minor-correctness-2)
-
-(update-stobj-scalar-correctness 8 update-bpb_fsver_major bpb_fsver_major
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_fsver_major-correctness-1
-                                 update-bpb_fsver_major-correctness-2)
-
-(update-stobj-scalar-correctness 16 update-bpb_fatsz16 bpb_fatsz16
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_fatsz16-correctness-1
-                                 update-bpb_fatsz16-correctness-2)
-
-(update-stobj-scalar-correctness 16 update-bpb_secpertrk bpb_secpertrk
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_secpertrk-correctness-1
-                                 update-bpb_secpertrk-correctness-2)
-
-(update-stobj-scalar-correctness 16 update-bpb_numheads bpb_numheads
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_numheads-correctness-1
-                                 update-bpb_numheads-correctness-2)
-
-(update-stobj-scalar-correctness 16 update-bpb_extflags bpb_extflags
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_extflags-correctness-1
-                                 update-bpb_extflags-correctness-2)
-
-(update-stobj-scalar-correctness 32 update-bpb_hiddsec bpb_hiddsec
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_hiddsec-correctness-1
-                                 update-bpb_hiddsec-correctness-2)
-
-(update-stobj-scalar-correctness 32 update-bpb_totsec32 bpb_totsec32
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_totsec32-correctness-1
-                                 update-bpb_totsec32-correctness-2)
-
-(update-stobj-scalar-correctness 32 update-bpb_fatsz32 bpb_fatsz32
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_fatsz32-correctness-1
-                                 update-bpb_fatsz32-correctness-2)
-
-(update-stobj-scalar-correctness 16 update-bpb_rootentcnt bpb_rootentcnt
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_rootentcnt-correctness-1
-                                 update-bpb_rootentcnt-correctness-2)
-
-(update-stobj-scalar-correctness 16 update-bpb_totsec16 bpb_totsec16
-                                 fat32-in-memory fat32-in-memoryp
-                                 update-bpb_totsec16-correctness-1
-                                 update-bpb_totsec16-correctness-2)
 
 (defthm
   slurp-disk-image-guard-lemma-13
