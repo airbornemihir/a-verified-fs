@@ -880,7 +880,18 @@
          (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
          (cons 'update-bpb_fsinfo *bpb_fsinfo*)
          (cons 'update-bpb_fsver_major *bpb_fsver_major*)
-         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*))
+         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
+         (cons 'update-bpb_extflags *bpb_extflags*)
+         (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
+         (cons 'update-bpb_totsec32 *bpb_totsec32*)
+         (cons 'update-bpb_hiddsec *bpb_hiddsec*)
+         (cons 'update-bpb_numheads *bpb_numheads*)
+         (cons 'update-bpb_secpertrk *bpb_secpertrk*)
+         (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
+         (cons 'update-bpb_media *bpb_media*)
+         (cons 'update-bpb_totsec16 *bpb_totsec16*)
+         (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
+         (cons 'update-bpb_numfats *bpb_numfats*))
         'fat32-in-memory)))
 
   (make-event
@@ -992,25 +1003,7 @@
         (read-reserved-area
          fat32-in-memory channel state))))
   :rule-classes :linear
-  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))
-          ("Subgoal 3''" :in-theory (enable
-                       update-bpb_extflags update-bpb_fatsz32
-                       update-bpb_totsec32 update-bpb_hiddsec
-                       update-bpb_numheads update-bpb_secpertrk))
-          ("Subgoal 3'4'"
-           :in-theory (enable
-                       update-bpb_fatsz16 update-bpb_media
-                       update-bpb_totsec16 update-bpb_rootentcnt
-                       update-bpb_numfats))
-          ("Subgoal 2''" :in-theory (enable
-                       update-bpb_extflags update-bpb_fatsz32
-                       update-bpb_totsec32 update-bpb_hiddsec
-                       update-bpb_numheads update-bpb_secpertrk))
-          ("Subgoal 2'4'"
-           :in-theory (enable
-                       update-bpb_fatsz16 update-bpb_media
-                       update-bpb_totsec16 update-bpb_rootentcnt
-                       update-bpb_numfats))))
+  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
   slurp-disk-image-guard-lemma-20
