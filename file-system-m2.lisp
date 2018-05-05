@@ -451,6 +451,13 @@
                 (unsigned-byte-listp width l))
            (rationalp (nth n l))))
 
+(defthm
+  read-reserved-area-guard-lemma-5
+  (equal (stringp (mv-nth 0 (read-byte$-n n channel state)))
+         nil)
+  :hints (("goal" :in-theory (disable read-byte$-n-data)
+           :use read-byte$-n-data)))
+
 ;; This must be called after the file is opened.
 (defun
     read-reserved-area
@@ -468,23 +475,6 @@
       :in-theory (disable fat32-in-memoryp
                           state-p unsigned-byte-p nth)
       :use ((:instance
-             read-byte$-n-data
-             (n *initialbytcnt*))
-            (:instance
-             read-byte$-n-data
-             (n
-              (+ -16
-                 (* (combine16u (nth 12
-                                     (mv-nth 0 (read-byte$-n 16 channel state)))
-                                (nth 11
-                                     (mv-nth 0 (read-byte$-n 16 channel state))))
-                    (combine16u (nth 15
-                                     (mv-nth 0 (read-byte$-n 16 channel state)))
-                                (nth 14
-                                     (mv-nth 0 (read-byte$-n 16 channel state)))))))
-             (state
-              (mv-nth 1 (read-byte$-n 16 channel state))))
-            (:instance
              unsigned-byte-listp-of-take
              (width 8)
              (n 3)
@@ -968,13 +958,6 @@
                        update-bpb_fatsz16 update-bpb_media
                        update-bpb_totsec16 update-bpb_rootentcnt
                        update-bpb_numfats update-bpb_rsvdseccnt))))
-
-(defthm
-  slurp-disk-image-guard-lemma-20
-  (equal (stringp (mv-nth 0 (read-byte$-n n channel state)))
-         nil)
-  :hints (("goal" :in-theory (disable read-byte$-n-data)
-           :use read-byte$-n-data)))
 
 (defthm
   read-reserved-area-correctness-1
