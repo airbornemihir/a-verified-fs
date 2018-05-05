@@ -493,6 +493,10 @@
        (fat32-in-memory
         (update-bpb_secperclus 1
                                fat32-in-memory))
+       ;; also needs to be unconditional
+       (fat32-in-memory
+        (update-bpb_rsvdseccnt 1
+                               fat32-in-memory))
        ;; common stuff for fat filesystems
        ((mv initial-bytes state)
         (read-byte$-n *initialbytcnt* channel state))
