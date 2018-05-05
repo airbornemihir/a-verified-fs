@@ -13,7 +13,7 @@
 (local (include-book "rtl/rel9/arithmetic/top"
                      :dir :system))
 
-;; Consider moving this to one of the main books
+;; This was moved to one of the main books, but still kept
 (defthm unsigned-byte-listp-of-update-nth
   (implies (and (unsigned-byte-listp n l)
                 (< key (len l)))
@@ -280,6 +280,11 @@
     (mv-nth 0 (read-byte$-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
+(defthm read-reserved-area-guard-lemma-4
+  (implies (and (< (nfix n) (len l))
+                (unsigned-byte-listp width l))
+           (rationalp (nth n l))))
+
 ;; This must be called after the file is opened.
 (defun
     read-reserved-area
@@ -291,6 +296,7 @@
                 (open-input-channel-p channel
                                       :byte state)
                 (fat32-in-memoryp fat32-in-memory))
+    :guard-debug t
     :guard-hints
     (("goal" :do-not-induct t
       :in-theory (disable fat32-in-memoryp
@@ -317,10 +323,21 @@
              (width 8)
              (n 3)
              (x
-              (mv-nth 0 (read-byte$-n 16 channel state)))))))
+              (mv-nth 0 (read-byte$-n 16 channel state))))))
+     ("subgoal 5" :in-theory (disable read-reserved-area-guard-lemma-4)
+      :use (:instance read-reserved-area-guard-lemma-4 (n 13) (l
+                 (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE))) (width 8)))
+     ("subgoal 4" :in-theory (disable read-reserved-area-guard-lemma-4)
+      :use (:instance read-reserved-area-guard-lemma-4 (n 13) (l
+                 (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE))) (width 8))))
     :stobjs (state fat32-in-memory)))
   (b*
-      (;; common stuff for fat filesystems
+      (;; we want to do this unconditionally, in order to prove a strong linear
+       ;; rule
+       (fat32-in-memory
+        (update-bpb_secperclus 1
+                               fat32-in-memory))
+       ;; common stuff for fat filesystems
        ((mv initial-bytes state)
         (read-byte$-n *initialbytcnt* channel state))
        ((unless (not (equal initial-bytes 'fail)))
@@ -335,8 +352,13 @@
         (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bpb_bytspersec tmp_bytspersec fat32-in-memory))
+       (tmp_secperclus (nth 13 initial-bytes))
+       ;; this is actually a proxy for testing membership in the set {1, 2, 4,
+       ;; 8, 16, 32, 64, 128}
+       ((unless (>= tmp_secperclus 1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
-        (update-bpb_secperclus (nth 13 initial-bytes)
+        (update-bpb_secperclus tmp_secperclus
                                fat32-in-memory))
        (tmp_rsvdseccnt (combine16u (nth (+ 14 1) initial-bytes)
                                    (nth (+ 14 0) initial-bytes)))
@@ -836,7 +858,101 @@
   :rule-classes :linear)
 
 (defthm
+  slurp-disk-image-guard-lemma-14
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (<= 0 (bpb_fatsz32 fat32-in-memory)))
+  :hints (("Goal" :use update-bpb_fatsz32-correctness-2) )
+  :rule-classes :linear)
+
+(defthm
+  slurp-disk-image-guard-lemma-15
+  (equal (bpb_secperclus (update-bs_oemname v fat32-in-memory))
+         (bpb_secperclus fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-16
+  (equal (bpb_secperclus (update-bs_jmpboot v fat32-in-memory))
+         (bpb_secperclus fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-17
+  (equal (bpb_secperclus (update-bpb_secperclus v fat32-in-memory))
+         v)
+  :hints (("Goal" :in-theory (enable bpb_secperclus
+                                     update-bpb_secperclus))))
+
+(defthm
   slurp-disk-image-guard-lemma-18
+  (equal (bpb_secperclus (update-bs_filsystype v fat32-in-memory))
+         (bpb_secperclus fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-19
+  (<= 1
+      (bpb_secperclus
+       (mv-nth
+        0
+        (read-reserved-area
+         fat32-in-memory channel state))))
+  :rule-classes :linear
+  :hints (("goal" :do-not-induct t)
+          ("subgoal 2.8" :in-theory (enable update-bpb_bytspersec))
+          ("subgoal 2.6" :in-theory (enable update-bpb_rsvdseccnt))
+          ("subgoal 2.5'"
+           :in-theory (enable
+                       update-bpb_rootclus update-bs_bootsig))
+          ("subgoal 2.5''"
+           :in-theory (enable
+                       update-bs_reserved1 update-bs_drvnum))
+          ("subgoal 2.5'4'"
+           :in-theory (enable update-bpb_bkbootsec update-bpb_fsinfo))
+          ("subgoal 2.5'6'"
+           :in-theory (enable update-bpb_fsver_major update-bpb_fsver_minor))
+          ("subgoal 2.5'8'"
+           :in-theory (enable update-bpb_extflags update-bpb_fatsz32))
+          ("subgoal 2.5'10'"
+           :in-theory (enable update-bpb_totsec32 update-bpb_hiddsec))
+          ("Subgoal 2.5'12'"
+           :in-theory (enable update-bpb_numheads update-bpb_secpertrk
+                              update-bpb_fatsz16 update-bpb_media
+                              update-bpb_totsec16 update-bpb_rootentcnt
+                              update-bpb_numfats update-bpb_rsvdseccnt))
+          ("Subgoal 2.4" :in-theory (disable READ-BYTE$-N-DATA) :use
+            (:instance
+             read-byte$-n-data
+             (n
+              (+ -16
+                 (* (combine16u (nth 12
+                                     (mv-nth 0 (read-byte$-n 16 channel state)))
+                                (nth 11
+                                     (mv-nth 0 (read-byte$-n 16 channel state))))
+                    (combine16u (nth 15
+                                     (mv-nth 0 (read-byte$-n 16 channel state)))
+                                (nth 14
+                                     (mv-nth 0 (read-byte$-n 16 channel state)))))))
+             (state
+              (mv-nth 1 (read-byte$-n 16 channel state)))))
+          ("subgoal 2.2''"
+           :in-theory (enable
+                       update-bpb_rootclus update-bs_bootsig
+                       update-bs_reserved1 update-bs_drvnum
+                       update-bpb_bkbootsec update-bpb_fsinfo
+                       update-bpb_fsver_major update-bpb_fsver_minor
+                       update-bpb_extflags update-bpb_fatsz32
+                       update-bpb_totsec32 update-bpb_hiddsec
+                       update-bpb_numheads update-bpb_secpertrk))
+          ("Subgoal 2.2'4'"
+           :in-theory (enable
+                       update-bpb_fatsz16 update-bpb_media
+                       update-bpb_totsec16 update-bpb_rootentcnt
+                       update-bpb_numfats update-bpb_rsvdseccnt))))
+
+(defthm
+  slurp-disk-image-guard-lemma-20
   (equal (stringp (mv-nth 0 (read-byte$-n n channel state)))
          nil)
   :hints (("goal" :in-theory (disable read-byte$-n-data)
