@@ -898,6 +898,8 @@
          (bpb_secperclus fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
 
+;; Look, we're going to have to keep re-visiting this as we make sure there are
+;; at least 512 bytes per sector and so on. Let's just pause and do it right.
 (defthm
   slurp-disk-image-guard-lemma-19
   (<= 1
@@ -908,56 +910,36 @@
          fat32-in-memory channel state))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t)
-          ("subgoal 2.8" :in-theory (enable update-bpb_bytspersec))
-          ("subgoal 2.6" :in-theory (enable update-bpb_rsvdseccnt))
-          ("subgoal 2.5'"
-           :in-theory (enable
-                       update-bpb_rootclus update-bs_bootsig))
-          ("subgoal 2.5''"
-           :in-theory (enable
-                       update-bs_reserved1 update-bs_drvnum))
-          ("subgoal 2.5'4'"
-           :in-theory (enable update-bpb_bkbootsec update-bpb_fsinfo))
-          ("subgoal 2.5'6'"
-           :in-theory (enable update-bpb_fsver_major update-bpb_fsver_minor))
-          ("subgoal 2.5'8'"
-           :in-theory (enable update-bpb_extflags update-bpb_fatsz32))
-          ("subgoal 2.5'10'"
-           :in-theory (enable update-bpb_totsec32 update-bpb_hiddsec))
-          ("Subgoal 2.5'12'"
-           :in-theory (enable update-bpb_numheads update-bpb_secpertrk
-                              update-bpb_fatsz16 update-bpb_media
-                              update-bpb_totsec16 update-bpb_rootentcnt
-                              update-bpb_numfats update-bpb_rsvdseccnt))
-          ("Subgoal 2.4" :in-theory (disable READ-BYTE$-N-DATA) :use
-            (:instance
-             read-byte$-n-data
-             (n
-              (+ -16
-                 (* (combine16u (nth 12
-                                     (mv-nth 0 (read-byte$-n 16 channel state)))
-                                (nth 11
-                                     (mv-nth 0 (read-byte$-n 16 channel state))))
-                    (combine16u (nth 15
-                                     (mv-nth 0 (read-byte$-n 16 channel state)))
-                                (nth 14
-                                     (mv-nth 0 (read-byte$-n 16 channel state)))))))
-             (state
-              (mv-nth 1 (read-byte$-n 16 channel state)))))
-          ("subgoal 2.2''"
-           :in-theory (enable
-                       update-bpb_rootclus update-bs_bootsig
+          ("subgoal 6" :in-theory (enable update-bpb_bytspersec))
+          ("Subgoal 3''" :in-theory (enable update-bpb_rootclus update-bs_bootsig
                        update-bs_reserved1 update-bs_drvnum
                        update-bpb_bkbootsec update-bpb_fsinfo
-                       update-bpb_fsver_major update-bpb_fsver_minor
+                       update-bpb_fsver_major update-bpb_fsver_minor))
+          ("Subgoal 3'4'" :in-theory (enable
                        update-bpb_extflags update-bpb_fatsz32
                        update-bpb_totsec32 update-bpb_hiddsec
                        update-bpb_numheads update-bpb_secpertrk))
-          ("Subgoal 2.2'4'"
+          ("Subgoal 3'6'"
            :in-theory (enable
                        update-bpb_fatsz16 update-bpb_media
                        update-bpb_totsec16 update-bpb_rootentcnt
-                       update-bpb_numfats update-bpb_rsvdseccnt))))
+                       update-bpb_numfats update-bpb_rsvdseccnt))
+          ("Subgoal 2''" :in-theory (enable update-bpb_rootclus update-bs_bootsig
+                       update-bs_reserved1 update-bs_drvnum
+                       update-bpb_bkbootsec update-bpb_fsinfo
+                       update-bpb_fsver_major update-bpb_fsver_minor))
+          ("Subgoal 2'4'" :in-theory (enable
+                       update-bpb_extflags update-bpb_fatsz32
+                       update-bpb_totsec32 update-bpb_hiddsec
+                       update-bpb_numheads update-bpb_secpertrk))
+          ("Subgoal 2'6'"
+           :in-theory (enable
+                       update-bpb_fatsz16 update-bpb_media
+                       update-bpb_totsec16 update-bpb_rootentcnt
+                       update-bpb_numfats update-bpb_rsvdseccnt))
+          ("Subgoal 1"
+           :in-theory (enable
+                       update-bpb_rsvdseccnt update-bpb_bytspersec))))
 
 (defthm
   read-reserved-area-correctness-1
