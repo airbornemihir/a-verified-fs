@@ -893,27 +893,31 @@
         (bpb_rsvdseccnt fat32-in-memory)))
       :hints (("goal" :in-theory (enable bpb_rsvdseccnt)))
       :rule-classes
-      (:rewrite
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_bytspersec
-                        *bpb_bytspersec* 'fat32-in-memory)
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_secperclus
-                        *bpb_secperclus* 'fat32-in-memory)
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_rootclus
-                        *bpb_rootclus* 'fat32-in-memory)
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bs_bootsig
-                        *bs_bootsig* 'fat32-in-memory)
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bs_reserved1
-                        *bs_reserved1* 'fat32-in-memory)
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bs_drvnum
-                        *bs_drvnum* 'fat32-in-memory)
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_bkbootsec
-                        *bpb_bkbootsec* 'fat32-in-memory)
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_fsinfo
-                        *bpb_fsinfo* 'fat32-in-memory)
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_fsver_major
-                        *bpb_fsver_major* 'fat32-in-memory)
-       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_fsver_minor
-                        *bpb_fsver_minor* 'fat32-in-memory)))))
+      ,(make-corollaries
+        'bpb_rsvdseccnt
+        (list
+         (cons 'update-bpb_bytspersec *bpb_bytspersec*)
+         (cons 'update-bpb_secperclus *bpb_secperclus*)
+         (cons 'update-bpb_rootclus *bpb_rootclus*)
+         (cons 'update-bs_bootsig *bs_bootsig*)
+         (cons 'update-bs_reserved1 *bs_reserved1*)
+         (cons 'update-bs_drvnum *bs_drvnum*)
+         (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
+         (cons 'update-bpb_fsinfo *bpb_fsinfo*)
+         (cons 'update-bpb_fsver_major *bpb_fsver_major*)
+         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
+         (cons 'update-bpb_extflags *bpb_extflags*)
+         (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
+         (cons 'update-bpb_totsec32 *bpb_totsec32*)
+         (cons 'update-bpb_hiddsec *bpb_hiddsec*)
+         (cons 'update-bpb_numheads *bpb_numheads*)
+         (cons 'update-bpb_secpertrk *bpb_secpertrk*)
+         (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
+         (cons 'update-bpb_media *bpb_media*)
+         (cons 'update-bpb_totsec16 *bpb_totsec16*)
+         (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
+         (cons 'update-bpb_numfats *bpb_numfats*))
+        'fat32-in-memory))))
 
 (defthm
   slurp-disk-image-guard-lemma-10
