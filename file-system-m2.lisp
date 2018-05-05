@@ -818,24 +818,29 @@
     (bpb_fatsz32 fat32-in-memory)))
   :hints (("goal" :in-theory (enable bpb_fatsz32))))
 
-(defthm
-  slurp-disk-image-guard-lemma-8
-  (implies
-   (not (equal key *bpb_secperclus*))
-   (equal (bpb_secperclus (update-nth key val fat32-in-memory))
-          (bpb_secperclus fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_secperclus)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
+(defun make-corollary (accessor1 updater2 constant2 stobj)
+  (list ':rewrite
+        ':corollary
+   (list 'implies
+         (list 'equal 'key constant2)
+    (list 'equal (list accessor1
+            (list updater2 'val stobj))
+           (list accessor1 stobj)))
+   ':hints
+   (list (list '"goal" ':in-theory (list 'enable updater2)))))
+
+(make-event
+ `(defthm
+    slurp-disk-image-guard-lemma-8
     (implies
-     (equal key *bpb_bytspersec*)
-     (equal (bpb_secperclus
-             (update-bpb_bytspersec val fat32-in-memory))
+     (not (equal key *bpb_secperclus*))
+     (equal (bpb_secperclus (update-nth key val fat32-in-memory))
             (bpb_secperclus fat32-in-memory)))
-    :hints
-    (("goal" :in-theory (enable update-bpb_bytspersec))))))
+    :hints (("goal" :in-theory (enable bpb_secperclus)))
+    :rule-classes
+    (:rewrite
+     ,(make-corollary 'bpb_secperclus 'update-bpb_bytspersec
+                           *bpb_bytspersec* 'fat32-in-memory))))
 
 (defthm
   slurp-disk-image-guard-lemma-9
