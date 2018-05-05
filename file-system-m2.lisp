@@ -10,6 +10,8 @@
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
+(local (include-book "rtl/rel9/arithmetic/top"
+                     :dir :system))
 
 ;; Consider moving this to one of the main books
 (defthm unsigned-byte-listp-of-update-nth
@@ -279,188 +281,182 @@
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
 ;; This must be called after the file is opened.
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
-
-  (defun
-      read-reserved-area
-      (fat32-in-memory channel state)
-    (declare
-     (xargs
-      :guard (and (state-p state)
-                  (symbolp channel)
-                  (open-input-channel-p channel
-                                        :byte state)
-                  (fat32-in-memoryp fat32-in-memory))
-      :guard-hints
-      (("goal" :do-not-induct t
-        :in-theory (disable fat32-in-memoryp
-                            state-p unsigned-byte-p nth)
-        :use ((:instance
-               read-byte$-n-data
-               (n *initialbytcnt*))
-              (:instance
-               read-byte$-n-data
-               (n
-                (+ -16
-                   (* (COMBINE16U (NTH 12
-                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))
-                                  (NTH 11
-                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE))))
-                      (COMBINE16U (NTH 15
-                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))
-                                  (NTH 14
-                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))))))
-               (state
-                (MV-NTH 1 (READ-BYTE$-N 16 CHANNEL STATE))))
-              (:instance
-               unsigned-byte-listp-of-take
-               (width 8)
-               (n 3)
-               (x
-                (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))))))
-      :stobjs (state fat32-in-memory)))
-    (b*
-        (;; common stuff for FAT filesystems
-         ((mv initial-bytes state)
-          (read-byte$-n *initialbytcnt* channel state))
-         ((unless (not (equal initial-bytes 'fail)))
-          (mv fat32-in-memory state -1))
-         (fat32-in-memory
-          (update-bs_jmpboot (subseq initial-bytes 0 3) fat32-in-memory))
-         (fat32-in-memory
-          (update-bs_oemname (subseq initial-bytes 3 8) fat32-in-memory))
-         (tmp_bytspersec (combine16u (nth (+ 11 1) initial-bytes)
-                                     (nth (+ 11 0) initial-bytes)))
-         ((unless (>= tmp_bytspersec 512))
-          (mv fat32-in-memory state -1))
-         (fat32-in-memory
-          (update-bpb_bytspersec tmp_bytspersec fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_secperclus (nth 13 initial-bytes)
-                                 fat32-in-memory))
-         (tmp_rsvdseccnt (combine16u (nth (+ 14 1) initial-bytes)
-                                     (nth (+ 14 0) initial-bytes)))
-         ((unless (>= tmp_rsvdseccnt 1))
-          (mv fat32-in-memory state -1))
-         (fat32-in-memory
-          (update-bpb_rsvdseccnt tmp_rsvdseccnt fat32-in-memory))
-         (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec))
-         ((unless (>= tmp_rsvdbytcnt *initialbytcnt*))
-          (mv fat32-in-memory state -1))
-         ((mv remaining_rsvdbyts state)
-          (read-bytes$-n (- tmp_rsvdbytcnt *initialbytcnt*)
-                         channel
-                         :end :little))
-         ((unless (not (equal remaining_rsvdbyts 'fail)))
-          (mv fat32-in-memory state -1))
-         (fat32-in-memory
-          (update-bpb_numfats (nth (- 16 *initialbytcnt*) remaining_rsvdbyts)
-                              fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_rootentcnt
-           (combine16u (nth (+ 17 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 17 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_totsec16
-           (combine16u (nth (+ 19 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 19 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_media (nth (- 21 *initialbytcnt*) remaining_rsvdbyts)
-                            fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_fatsz16
-           (combine16u (nth (+ 22 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 22 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_secpertrk
-           (combine16u (nth (+ 24 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 24 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_numheads
-           (combine16u (nth (+ 26 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 26 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_hiddsec
-           (combine32u (nth (+ 28 3 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 28 2 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 28 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 28 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_totsec32
-           (combine32u (nth (+ 32 3 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 32 2 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 32 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 32 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         ;; FAT32-specific stuff
-         (fat32-in-memory
-          (update-bpb_fatsz32
-           (combine32u (nth (+ 36 3 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 36 2 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 36 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 36 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_extflags
-           (combine16u (nth (+ 40 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 40 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_fsver_minor (nth (- 42 *initialbytcnt*) remaining_rsvdbyts)
-                                  fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_fsver_major (nth (- 43 *initialbytcnt*) remaining_rsvdbyts)
-                                  fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_rootclus
-           (combine32u (nth (+ 44 3 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 44 2 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 44 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 44 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_fsinfo
-           (combine16u (nth (+ 48 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 48 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_bkbootsec
-           (combine16u (nth (+ 50 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 50 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         ;; skipping bpb_reserved for now
-         (fat32-in-memory
-          (update-bs_drvnum (nth (- 64 *initialbytcnt*) remaining_rsvdbyts)
-                            fat32-in-memory))
-         (fat32-in-memory
-          (update-bs_reserved1 (nth (- 65 *initialbytcnt*) remaining_rsvdbyts)
+(defun
+    read-reserved-area
+    (fat32-in-memory channel state)
+  (declare
+   (xargs
+    :guard (and (state-p state)
+                (symbolp channel)
+                (open-input-channel-p channel
+                                      :byte state)
+                (fat32-in-memoryp fat32-in-memory))
+    :guard-hints
+    (("goal" :do-not-induct t
+      :in-theory (disable fat32-in-memoryp
+                          state-p unsigned-byte-p nth)
+      :use ((:instance
+             read-byte$-n-data
+             (n *initialbytcnt*))
+            (:instance
+             read-byte$-n-data
+             (n
+              (+ -16
+                 (* (combine16u (nth 12
+                                     (mv-nth 0 (read-byte$-n 16 channel state)))
+                                (nth 11
+                                     (mv-nth 0 (read-byte$-n 16 channel state))))
+                    (combine16u (nth 15
+                                     (mv-nth 0 (read-byte$-n 16 channel state)))
+                                (nth 14
+                                     (mv-nth 0 (read-byte$-n 16 channel state)))))))
+             (state
+              (mv-nth 1 (read-byte$-n 16 channel state))))
+            (:instance
+             unsigned-byte-listp-of-take
+             (width 8)
+             (n 3)
+             (x
+              (mv-nth 0 (read-byte$-n 16 channel state)))))))
+    :stobjs (state fat32-in-memory)))
+  (b*
+      (;; common stuff for fat filesystems
+       ((mv initial-bytes state)
+        (read-byte$-n *initialbytcnt* channel state))
+       ((unless (not (equal initial-bytes 'fail)))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bs_jmpboot (subseq initial-bytes 0 3) fat32-in-memory))
+       (fat32-in-memory
+        (update-bs_oemname (subseq initial-bytes 3 8) fat32-in-memory))
+       (tmp_bytspersec (combine16u (nth (+ 11 1) initial-bytes)
+                                   (nth (+ 11 0) initial-bytes)))
+       ((unless (>= tmp_bytspersec 512))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bpb_bytspersec tmp_bytspersec fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_secperclus (nth 13 initial-bytes)
                                fat32-in-memory))
-         (fat32-in-memory
-          (update-bs_bootsig (nth (- 66 *initialbytcnt*) remaining_rsvdbyts)
+       (tmp_rsvdseccnt (combine16u (nth (+ 14 1) initial-bytes)
+                                   (nth (+ 14 0) initial-bytes)))
+       ((unless (>= tmp_rsvdseccnt 1))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bpb_rsvdseccnt tmp_rsvdseccnt fat32-in-memory))
+       (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec))
+       ((unless (>= tmp_rsvdbytcnt *initialbytcnt*))
+        (mv fat32-in-memory state -1))
+       ((mv remaining_rsvdbyts state)
+        (read-bytes$-n (- tmp_rsvdbytcnt *initialbytcnt*)
+                       channel
+                       :end :little))
+       ((unless (not (equal remaining_rsvdbyts 'fail)))
+        (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bpb_numfats (nth (- 16 *initialbytcnt*) remaining_rsvdbyts)
+                            fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_rootentcnt
+         (combine16u (nth (+ 17 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 17 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_totsec16
+         (combine16u (nth (+ 19 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 19 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_media (nth (- 21 *initialbytcnt*) remaining_rsvdbyts)
+                          fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_fatsz16
+         (combine16u (nth (+ 22 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 22 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_secpertrk
+         (combine16u (nth (+ 24 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 24 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_numheads
+         (combine16u (nth (+ 26 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 26 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_hiddsec
+         (combine32u (nth (+ 28 3 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 28 2 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 28 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 28 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_totsec32
+         (combine32u (nth (+ 32 3 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 32 2 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 32 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 32 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       ;; fat32-specific stuff
+       (fat32-in-memory
+        (update-bpb_fatsz32
+         (combine32u (nth (+ 36 3 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 36 2 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 36 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 36 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_extflags
+         (combine16u (nth (+ 40 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 40 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_fsver_minor (nth (- 42 *initialbytcnt*) remaining_rsvdbyts)
+                                fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_fsver_major (nth (- 43 *initialbytcnt*) remaining_rsvdbyts)
+                                fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_rootclus
+         (combine32u (nth (+ 44 3 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 44 2 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 44 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 44 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_fsinfo
+         (combine16u (nth (+ 48 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 48 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_bkbootsec
+         (combine16u (nth (+ 50 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 50 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       ;; skipping bpb_reserved for now
+       (fat32-in-memory
+        (update-bs_drvnum (nth (- 64 *initialbytcnt*) remaining_rsvdbyts)
+                          fat32-in-memory))
+       (fat32-in-memory
+        (update-bs_reserved1 (nth (- 65 *initialbytcnt*) remaining_rsvdbyts)
                              fat32-in-memory))
-         (fat32-in-memory
-          (update-bpb_rootclus
-           (combine32u (nth (+ 67 3 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 67 2 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 67 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                       (nth (+ 67 0 (- *initialbytcnt*)) remaining_rsvdbyts))
-           fat32-in-memory))
-         ;; skipping bs_vollab for now
-         (fat32-in-memory
-          (update-bs_filsystype (subseq remaining_rsvdbyts
-                                     (+ 82 (- *initialbytcnt*) 0)
-                                     (+ 82 (- *initialbytcnt*) 8)) fat32-in-memory)))
-      (mv fat32-in-memory state 0))))
+       (fat32-in-memory
+        (update-bs_bootsig (nth (- 66 *initialbytcnt*) remaining_rsvdbyts)
+                           fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_rootclus
+         (combine32u (nth (+ 67 3 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 67 2 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 67 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                     (nth (+ 67 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         fat32-in-memory))
+       ;; skipping bs_vollab for now
+       (fat32-in-memory
+        (update-bs_filsystype (subseq remaining_rsvdbyts
+                                      (+ 82 (- *initialbytcnt*) 0)
+                                      (+ 82 (- *initialbytcnt*) 8)) fat32-in-memory)))
+    (mv fat32-in-memory state 0)))
 
 (update-stobj-array
  update-fat
@@ -675,56 +671,11 @@
 
 (defthm
   slurp-disk-image-guard-lemma-11
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (integerp
-    (bpb_secperclus fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_secperclus))))
-
-(defthm
-  slurp-disk-image-guard-lemma-12
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (integerp
-    (bpb_rsvdseccnt fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_rsvdseccnt))))
-
-(defthm
-  slurp-disk-image-guard-lemma-13
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (integerp
-    (bpb_numfats fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_numfats))))
-
-(defthm
-  slurp-disk-image-guard-lemma-14
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (integerp
-    (bpb_fatsz32 fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_fatsz32))))
-
-(defthm
-  slurp-disk-image-guard-lemma-15
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_bytspersec)))
-  :rule-classes
-  (:rewrite
-   (:type-prescription
-    :corollary
-    (implies (fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_bytspersec fat32-in-memory))))))
-
-(defthm
-  slurp-disk-image-guard-lemma-16
   (implies (and (integerp x) (integerp y))
            (integerp (+ x y))))
 
 (defthm
-  slurp-disk-image-guard-lemma-17
+  slurp-disk-image-guard-lemma-12
   (implies (and (integerp x) (integerp y))
            (integerp (* x y))))
 
@@ -753,10 +704,18 @@
   ':hints (list (list '"goal" ':in-theory (list 'enable accessor)))
   ':rule-classes
   (list ':rewrite
-   (list ':type-prescription
+   (list ':rewrite
     ':corollary
     (list 'implies (list stobj-recogniser stobj)
-             (list 'integerp (list accessor stobj))))))))
+             (list 'integerp (list accessor stobj))))
+   (list ':rewrite
+    ':corollary
+    (list 'implies (list stobj-recogniser stobj)
+             (list 'acl2-numberp (list accessor stobj))))
+   (list ':rewrite
+    ':corollary
+    (list 'implies (list stobj-recogniser stobj)
+             (list 'rationalp (list accessor stobj))))))))
 
 (update-stobj-scalar-correctness 16 update-bpb_rsvdseccnt bpb_rsvdseccnt
                                  fat32-in-memory fat32-in-memoryp
@@ -869,63 +828,66 @@
                                  update-bpb_totsec16-correctness-2)
 
 (defthm
+  slurp-disk-image-guard-lemma-13
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (<= 0 (bpb_bytspersec fat32-in-memory)))
+  :hints (("Goal" :use update-bpb_bytspersec-correctness-2) )
+  :rule-classes :linear)
+
+(defthm
   slurp-disk-image-guard-lemma-18
   (equal (stringp (mv-nth 0 (read-byte$-n n channel state)))
          nil)
   :hints (("goal" :in-theory (disable read-byte$-n-data)
            :use read-byte$-n-data)))
 
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
-
-  (defthm
-    read-reserved-area-correctness-1
-    (implies (and (state-p state)
-                  (symbolp channel)
-                  (open-input-channel-p channel
-                                        :byte state)
-                  (fat32-in-memoryp fat32-in-memory))
-             (fat32-in-memoryp
-              (mv-nth 0
-                      (read-reserved-area fat32-in-memory channel state))))
-    :instructions
-    ((:in-theory (disable fat32-in-memoryp))
-     :bash
-     (:use
-      (:instance
-       read-byte$-n-data
-       (state (mv-nth 1 (read-byte$-n 16 channel state)))
-       (n (+ -16
-             (* (combine16u (nth 12
-                                 (mv-nth 0 (read-byte$-n 16 channel state)))
-                            (nth 11
-                                 (mv-nth 0 (read-byte$-n 16 channel state))))
-                (combine16u (nth 15
-                                 (mv-nth 0 (read-byte$-n 16 channel state)))
-                            (nth 14
-                                 (mv-nth 0
-                                         (read-byte$-n 16 channel state)))))))))
-     :promote (:demote 1)
-     (:dive 1 1)
-     :s :up
-     :s :top
-     :promote :bash)))
+(defthm
+  read-reserved-area-correctness-1
+  (implies (and (state-p state)
+                (symbolp channel)
+                (open-input-channel-p channel
+                                      :byte state)
+                (fat32-in-memoryp fat32-in-memory))
+           (fat32-in-memoryp
+            (mv-nth 0
+                    (read-reserved-area fat32-in-memory channel state))))
+  :instructions
+  ((:in-theory (disable fat32-in-memoryp))
+   :bash
+   (:use
+    (:instance
+     read-byte$-n-data
+     (state (mv-nth 1 (read-byte$-n 16 channel state)))
+     (n (+ -16
+           (* (combine16u (nth 12
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth 11
+                               (mv-nth 0 (read-byte$-n 16 channel state))))
+              (combine16u (nth 15
+                               (mv-nth 0 (read-byte$-n 16 channel state)))
+                          (nth 14
+                               (mv-nth 0
+                                       (read-byte$-n 16 channel state)))))))))
+   :promote (:demote 1)
+   (:dive 1 1)
+   :s :up
+   :s :top
+   :promote :bash))
 
 ;; state-p actually needs to be enabled for this guard proof because all the
 ;; lemmas are in terms of state-p1
 (defun
-  slurp-disk-image
-  (fat32-in-memory image-path state)
+    slurp-disk-image
+    (fat32-in-memory image-path state)
   (declare
    (xargs
     :guard (and (stringp image-path)
                 (fat32-in-memoryp fat32-in-memory))
+    :guard-debug t
     :guard-hints
     (("goal" :do-not-induct t
-      :in-theory (disable fat32-in-memoryp state-p
+      :in-theory (disable fat32-in-memoryp
                           read-reserved-area)))
     :stobjs (state fat32-in-memory)))
   (b* (((mv channel state)
@@ -935,7 +897,7 @@
         (mv fat32-in-memory state -1))
        ((mv fat32-in-memory state error-code)
         (read-reserved-area fat32-in-memory channel state))
-       ((unless (equal error-code 0))
+       ((unless (and (equal error-code 0) (open-input-channel-p channel :byte state)))
         (mv fat32-in-memory state error-code))
        ((mv fat32-in-memory state error-code)
         (read-fat fat32-in-memory channel state))
@@ -945,20 +907,20 @@
        (tmp_secperclus (bpb_secperclus fat32-in-memory))
        (tmp_init (* tmp_secperclus
                     (+ (bpb_rsvdseccnt fat32-in-memory)
-                       (* (BPB_NumFATs fat32-in-memory) (BPB_FATSz32
+                       (* (bpb_numfats fat32-in-memory) (bpb_fatsz32
                                                          fat32-in-memory)))))
        (str
-                (read-file-into-string image-path :start
-                                       tmp_INIT
-                                       :bytes
-                                       (data-region-LENGTH fat32-in-memory)))
+        (read-file-into-string image-path :start
+                               tmp_init
+                               :bytes
+                               (data-region-length fat32-in-memory)))
        ((unless (stringp str))
         (mv fat32-in-memory state -1))
        (fat32-in-memory
-               (UPDATE-DATA-REGION
-                FAT32-IN-MEMORY
-                str
-                0)))
+        (update-data-region
+         fat32-in-memory
+         str
+         0)))
     (mv fat32-in-memory state error-code)))
 
 (in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
