@@ -822,10 +822,20 @@
   slurp-disk-image-guard-lemma-8
   (implies
    (not (equal key *bpb_secperclus*))
-   (equal
-    (bpb_secperclus (update-nth key val fat32-in-memory))
-    (bpb_secperclus fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_secperclus))))
+   (equal (bpb_secperclus (update-nth key val fat32-in-memory))
+          (bpb_secperclus fat32-in-memory)))
+  :hints (("goal" :in-theory (enable bpb_secperclus)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (equal key *bpb_bytspersec*)
+     (equal (bpb_secperclus
+             (update-bpb_bytspersec val fat32-in-memory))
+            (bpb_secperclus fat32-in-memory)))
+    :hints
+    (("goal" :in-theory (enable update-bpb_bytspersec))))))
 
 (defthm
   slurp-disk-image-guard-lemma-9
@@ -910,7 +920,6 @@
          fat32-in-memory channel state))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t)
-          ("subgoal 6" :in-theory (enable update-bpb_bytspersec))
           ("Subgoal 3''" :in-theory (enable update-bpb_rootclus update-bs_bootsig
                        update-bs_reserved1 update-bs_drvnum
                        update-bpb_bkbootsec update-bpb_fsinfo
@@ -939,7 +948,7 @@
                        update-bpb_numfats update-bpb_rsvdseccnt))
           ("Subgoal 1"
            :in-theory (enable
-                       update-bpb_rsvdseccnt update-bpb_bytspersec))))
+                       update-bpb_rsvdseccnt))))
 
 (defthm
   read-reserved-area-correctness-1
