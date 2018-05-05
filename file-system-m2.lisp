@@ -729,15 +729,33 @@
    (list ':rewrite
     ':corollary
     (list 'implies (list stobj-recogniser stobj)
-             (list 'integerp (list accessor stobj))))
+             (list 'integerp (list accessor stobj)))
+    ':hints
+    (list (list '"goal"
+                ':use
+                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
+                      (list 'n bit-width)
+                      (list 'x (list accessor stobj))))))
    (list ':rewrite
     ':corollary
     (list 'implies (list stobj-recogniser stobj)
-             (list 'acl2-numberp (list accessor stobj))))
+             (list 'acl2-numberp (list accessor stobj)))
+    ':hints
+    (list (list '"goal"
+                ':use
+                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
+                      (list 'n bit-width)
+                      (list 'x (list accessor stobj))))))
    (list ':rewrite
     ':corollary
     (list 'implies (list stobj-recogniser stobj)
-             (list 'rationalp (list accessor stobj))))))))
+             (list 'rationalp (list accessor stobj)))
+    ':hints
+    (list (list '"goal"
+                ':use
+                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
+                      (list 'n bit-width)
+                      (list 'x (list accessor stobj))))))))))
 
 (update-stobj-scalar-correctness 16 update-bpb_rsvdseccnt bpb_rsvdseccnt
                                  fat32-in-memory fat32-in-memoryp
