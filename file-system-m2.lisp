@@ -970,6 +970,17 @@
                        update-bpb_numfats))))
 
 (defthm
+  slurp-disk-image-guard-lemma-20
+  (<= 1
+      (bpb_rsvdseccnt
+       (mv-nth
+        0
+        (read-reserved-area
+         fat32-in-memory channel state))))
+  :rule-classes :linear
+  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+
+(defthm
   read-reserved-area-correctness-1
   (implies (and (state-p state)
                 (symbolp channel)
