@@ -857,16 +857,35 @@
        ,(make-corollary 'bpb_secperclus 'update-bpb_bytspersec
                         *bpb_bytspersec* 'fat32-in-memory)
        ,(make-corollary 'bpb_secperclus 'update-bpb_rsvdseccnt
-                        *bpb_rsvdseccnt* 'fat32-in-memory)))))
+                        *bpb_rsvdseccnt* 'fat32-in-memory)
+       ,(make-corollary 'bpb_secperclus 'update-bpb_rootclus
+                        *bpb_rootclus* 'fat32-in-memory)
+       ,(make-corollary 'bpb_secperclus 'update-bs_bootsig
+                        *bs_bootsig* 'fat32-in-memory)
+       ,(make-corollary 'bpb_secperclus 'update-bs_reserved1
+                        *bs_reserved1* 'fat32-in-memory))))
 
-(defthm
-  slurp-disk-image-guard-lemma-9
-  (implies
-   (not (equal key *bpb_rsvdseccnt*))
-   (equal
-    (bpb_rsvdseccnt (update-nth key val fat32-in-memory))
-    (bpb_rsvdseccnt fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_rsvdseccnt))))
+  (make-event
+   `(defthm
+      slurp-disk-image-guard-lemma-9
+      (implies
+       (not (equal key *bpb_rsvdseccnt*))
+       (equal
+        (bpb_rsvdseccnt (update-nth key val fat32-in-memory))
+        (bpb_rsvdseccnt fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_rsvdseccnt)))
+      :rule-classes
+      (:rewrite
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_bytspersec
+                        *bpb_bytspersec* 'fat32-in-memory)
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_secperclus
+                        *bpb_secperclus* 'fat32-in-memory)
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_rootclus
+                        *bpb_rootclus* 'fat32-in-memory)
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bs_bootsig
+                        *bs_bootsig* 'fat32-in-memory)
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bs_reserved1
+                        *bs_reserved1* 'fat32-in-memory)))))
 
 (defthm
   slurp-disk-image-guard-lemma-10
@@ -942,8 +961,7 @@
          fat32-in-memory channel state))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))
-          ("Subgoal 3''" :in-theory (enable update-bpb_rootclus update-bs_bootsig
-                       update-bs_reserved1 update-bs_drvnum
+          ("Subgoal 3''" :in-theory (enable update-bs_drvnum
                        update-bpb_bkbootsec update-bpb_fsinfo
                        update-bpb_fsver_major update-bpb_fsver_minor))
           ("Subgoal 3'4'" :in-theory (enable
@@ -955,8 +973,7 @@
                        update-bpb_fatsz16 update-bpb_media
                        update-bpb_totsec16 update-bpb_rootentcnt
                        update-bpb_numfats))
-          ("Subgoal 2''" :in-theory (enable update-bpb_rootclus update-bs_bootsig
-                       update-bs_reserved1 update-bs_drvnum
+          ("Subgoal 2''" :in-theory (enable update-bs_drvnum
                        update-bpb_bkbootsec update-bpb_fsinfo
                        update-bpb_fsver_major update-bpb_fsver_minor))
           ("Subgoal 2'4'" :in-theory (enable
@@ -971,6 +988,31 @@
 
 (defthm
   slurp-disk-image-guard-lemma-20
+  (equal (bpb_rsvdseccnt (update-bpb_rsvdseccnt v fat32-in-memory))
+         v)
+  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt
+                                     update-bpb_rsvdseccnt))))
+
+(defthm
+  slurp-disk-image-guard-lemma-21
+  (equal (bpb_rsvdseccnt (update-bs_oemname v fat32-in-memory))
+         (bpb_rsvdseccnt fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-22
+  (equal (bpb_rsvdseccnt (update-bs_jmpboot v fat32-in-memory))
+         (bpb_rsvdseccnt fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-23
+  (equal (bpb_rsvdseccnt (update-bs_filsystype v fat32-in-memory))
+         (bpb_rsvdseccnt fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-24
   (<= 1
       (bpb_rsvdseccnt
        (mv-nth
