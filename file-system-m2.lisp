@@ -844,6 +844,21 @@
                        ':in-theory
                        (list 'enable updater2))))))
 
+  (local
+   (defun
+       make-corollaries
+       (accessor1 updaters-constants stobj)
+     (if (atom updaters-constants)
+         (list ':rewrite)
+       (list*
+        (make-corollary
+         accessor1
+         (caar updaters-constants)
+         (cdar updaters-constants)
+         stobj)
+        (make-corollaries
+         accessor1 (cdr updaters-constants) stobj)))))
+
   (make-event
    `(defthm
       slurp-disk-image-guard-lemma-8
@@ -853,17 +868,20 @@
               (bpb_secperclus fat32-in-memory)))
       :hints (("goal" :in-theory (enable bpb_secperclus)))
       :rule-classes
-      (:rewrite
-       ,(make-corollary 'bpb_secperclus 'update-bpb_bytspersec
-                        *bpb_bytspersec* 'fat32-in-memory)
-       ,(make-corollary 'bpb_secperclus 'update-bpb_rsvdseccnt
-                        *bpb_rsvdseccnt* 'fat32-in-memory)
-       ,(make-corollary 'bpb_secperclus 'update-bpb_rootclus
-                        *bpb_rootclus* 'fat32-in-memory)
-       ,(make-corollary 'bpb_secperclus 'update-bs_bootsig
-                        *bs_bootsig* 'fat32-in-memory)
-       ,(make-corollary 'bpb_secperclus 'update-bs_reserved1
-                        *bs_reserved1* 'fat32-in-memory))))
+      ,(make-corollaries
+        'bpb_secperclus
+        (list
+         (cons 'update-bpb_bytspersec *bpb_bytspersec*)
+         (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*)
+         (cons 'update-bpb_rootclus *bpb_rootclus*)
+         (cons 'update-bs_bootsig *bs_bootsig*)
+         (cons 'update-bs_reserved1 *bs_reserved1*)
+         (cons 'update-bs_drvnum *bs_drvnum*)
+         (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
+         (cons 'update-bpb_fsinfo *bpb_fsinfo*)
+         (cons 'update-bpb_fsver_major *bpb_fsver_major*)
+         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*))
+        'fat32-in-memory)))
 
   (make-event
    `(defthm
@@ -885,7 +903,17 @@
        ,(make-corollary 'bpb_rsvdseccnt 'update-bs_bootsig
                         *bs_bootsig* 'fat32-in-memory)
        ,(make-corollary 'bpb_rsvdseccnt 'update-bs_reserved1
-                        *bs_reserved1* 'fat32-in-memory)))))
+                        *bs_reserved1* 'fat32-in-memory)
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bs_drvnum
+                        *bs_drvnum* 'fat32-in-memory)
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_bkbootsec
+                        *bpb_bkbootsec* 'fat32-in-memory)
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_fsinfo
+                        *bpb_fsinfo* 'fat32-in-memory)
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_fsver_major
+                        *bpb_fsver_major* 'fat32-in-memory)
+       ,(make-corollary 'bpb_rsvdseccnt 'update-bpb_fsver_minor
+                        *bpb_fsver_minor* 'fat32-in-memory)))))
 
 (defthm
   slurp-disk-image-guard-lemma-10
@@ -961,26 +989,20 @@
          fat32-in-memory channel state))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))
-          ("Subgoal 3''" :in-theory (enable update-bs_drvnum
-                       update-bpb_bkbootsec update-bpb_fsinfo
-                       update-bpb_fsver_major update-bpb_fsver_minor))
-          ("Subgoal 3'4'" :in-theory (enable
+          ("Subgoal 3''" :in-theory (enable
                        update-bpb_extflags update-bpb_fatsz32
                        update-bpb_totsec32 update-bpb_hiddsec
                        update-bpb_numheads update-bpb_secpertrk))
-          ("Subgoal 3'6'"
+          ("Subgoal 3'4'"
            :in-theory (enable
                        update-bpb_fatsz16 update-bpb_media
                        update-bpb_totsec16 update-bpb_rootentcnt
                        update-bpb_numfats))
-          ("Subgoal 2''" :in-theory (enable update-bs_drvnum
-                       update-bpb_bkbootsec update-bpb_fsinfo
-                       update-bpb_fsver_major update-bpb_fsver_minor))
-          ("Subgoal 2'4'" :in-theory (enable
+          ("Subgoal 2''" :in-theory (enable
                        update-bpb_extflags update-bpb_fatsz32
                        update-bpb_totsec32 update-bpb_hiddsec
                        update-bpb_numheads update-bpb_secpertrk))
-          ("Subgoal 2'6'"
+          ("Subgoal 2'4'"
            :in-theory (enable
                        update-bpb_fatsz16 update-bpb_media
                        update-bpb_totsec16 update-bpb_rootentcnt
