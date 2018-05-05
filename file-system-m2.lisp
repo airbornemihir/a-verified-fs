@@ -818,29 +818,42 @@
     (bpb_fatsz32 fat32-in-memory)))
   :hints (("goal" :in-theory (enable bpb_fatsz32))))
 
-(defun make-corollary (accessor1 updater2 constant2 stobj)
-  (list ':rewrite
-        ':corollary
-   (list 'implies
-         (list 'equal 'key constant2)
-    (list 'equal (list accessor1
-            (list updater2 'val stobj))
-           (list accessor1 stobj)))
-   ':hints
-   (list (list '"goal" ':in-theory (list 'enable updater2)))))
+;; Per accumulated-persistence, the rule (:rewrite
+;; update-bpb_secperclus-correctness-2 . 3) is pretty darned useless. We need
+;; to find a way to do without it and its kind.
+(encapsulate
+  ()
 
-(make-event
- `(defthm
-    slurp-disk-image-guard-lemma-8
-    (implies
-     (not (equal key *bpb_secperclus*))
-     (equal (bpb_secperclus (update-nth key val fat32-in-memory))
-            (bpb_secperclus fat32-in-memory)))
-    :hints (("goal" :in-theory (enable bpb_secperclus)))
-    :rule-classes
-    (:rewrite
-     ,(make-corollary 'bpb_secperclus 'update-bpb_bytspersec
-                           *bpb_bytspersec* 'fat32-in-memory))))
+  (local
+   (defun
+       make-corollary
+       (accessor1 updater2 constant2 stobj)
+     (list ':rewrite
+           ':corollary
+           (list 'implies
+                 (list 'equal 'key constant2)
+                 (list 'equal
+                       (list accessor1 (list updater2 'val stobj))
+                       (list accessor1 stobj)))
+           ':hints
+           (list (list '"goal"
+                       ':in-theory
+                       (list 'enable updater2))))))
+
+  (make-event
+   `(defthm
+      slurp-disk-image-guard-lemma-8
+      (implies
+       (not (equal key *bpb_secperclus*))
+       (equal (bpb_secperclus (update-nth key val fat32-in-memory))
+              (bpb_secperclus fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_secperclus)))
+      :rule-classes
+      (:rewrite
+       ,(make-corollary 'bpb_secperclus 'update-bpb_bytspersec
+                        *bpb_bytspersec* 'fat32-in-memory)
+       ,(make-corollary 'bpb_secperclus 'update-bpb_rsvdseccnt
+                        *bpb_rsvdseccnt* 'fat32-in-memory)))))
 
 (defthm
   slurp-disk-image-guard-lemma-9
@@ -924,7 +937,7 @@
         (read-reserved-area
          fat32-in-memory channel state))))
   :rule-classes :linear
-  :hints (("goal" :do-not-induct t)
+  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))
           ("Subgoal 3''" :in-theory (enable update-bpb_rootclus update-bs_bootsig
                        update-bs_reserved1 update-bs_drvnum
                        update-bpb_bkbootsec update-bpb_fsinfo
@@ -937,7 +950,7 @@
            :in-theory (enable
                        update-bpb_fatsz16 update-bpb_media
                        update-bpb_totsec16 update-bpb_rootentcnt
-                       update-bpb_numfats update-bpb_rsvdseccnt))
+                       update-bpb_numfats))
           ("Subgoal 2''" :in-theory (enable update-bpb_rootclus update-bs_bootsig
                        update-bs_reserved1 update-bs_drvnum
                        update-bpb_bkbootsec update-bpb_fsinfo
@@ -950,10 +963,7 @@
            :in-theory (enable
                        update-bpb_fatsz16 update-bpb_media
                        update-bpb_totsec16 update-bpb_rootentcnt
-                       update-bpb_numfats update-bpb_rsvdseccnt))
-          ("Subgoal 1"
-           :in-theory (enable
-                       update-bpb_rsvdseccnt))))
+                       update-bpb_numfats))))
 
 (defthm
   read-reserved-area-correctness-1
