@@ -1156,59 +1156,7 @@
     :guard-hints
     (("goal" :do-not-induct t
       :in-theory (disable fat32-in-memoryp
-                          read-reserved-area))
-     ("Subgoal 21''"
-      :use
-      ((:instance
-        slurp-disk-image-guard-lemma-18
-        (channel
-         (mv-nth 0
-                 (open-input-channel image-path
-                                     :byte state)))
-        (state
-         (mv-nth 1
-                 (open-input-channel image-path
-                                     :byte state))))
-       (:instance
-        slurp-disk-image-guard-lemma-22
-        (channel
-         (mv-nth 0
-                 (open-input-channel image-path
-                                     :byte state)))
-        (state
-         (mv-nth 1
-                 (open-input-channel image-path
-                                     :byte state))))
-       (:instance
-        slurp-disk-image-guard-lemma-26
-        (channel
-         (mv-nth 0
-                 (open-input-channel image-path
-                                     :byte state)))
-        (state
-         (mv-nth 1
-                 (open-input-channel image-path
-                                     :byte state))))
-       (:instance
-        slurp-disk-image-guard-lemma-30
-        (channel
-         (mv-nth 0
-                 (open-input-channel image-path
-                                     :byte state)))
-        (state
-         (mv-nth 1
-                 (open-input-channel image-path
-                                     :byte state))))
-       (:instance
-        slurp-disk-image-guard-lemma-32
-        (channel
-         (mv-nth 0
-                 (open-input-channel image-path
-                                     :byte state)))
-        (state
-         (mv-nth 1
-                 (open-input-channel image-path
-                                     :byte state)))))))
+                          read-reserved-area)))
     :stobjs (state fat32-in-memory)))
   (b* (((mv channel state)
         (open-input-channel image-path
