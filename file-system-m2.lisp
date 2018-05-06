@@ -735,39 +735,28 @@
     (mv-nth 0 (read-32ule-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
+(defmacro  u8 (x)   `(the (unsigned-byte  8) ,x))
+
 (defun
-  update-data-region
-  (fat32-in-memory str str-init pos)
-  (declare
-   (xargs
-    :measure (nfix (- (data-region-length fat32-in-memory)
-                      pos))
-    :guard (and (natp pos)
-                (stringp str)
-                (natp str-init)
-                (<= (+ str-init (data-region-length fat32-in-memory))
-                    (length str))
-                (fat32-in-memoryp fat32-in-memory))
-    :guard-hints
-    (("goal" :in-theory (disable fat32-in-memoryp nth)))
-    :stobjs (fat32-in-memory)))
-  (if
-   (mbe :logic (or (not (natp pos))
-                   (zp (- (data-region-length fat32-in-memory)
-                          pos)))
-        :exec (>= pos
-                  (data-region-length fat32-in-memory)))
-   fat32-in-memory
-   (let*
-    ((fat32-in-memory
-      (update-data-regioni
-       pos
-       (the (unsigned-byte 8)
-            (char-code (char str (+ str-init pos))))
-       fat32-in-memory))
-     (fat32-in-memory
-      (update-data-region fat32-in-memory str str-init (+ pos 1))))
-    fat32-in-memory)))
+    update-data-region (fat32-in-memory str len pos)
+  (declare (xargs :guard (and (stringp str)
+                              (natp len)
+                              (natp pos)
+                              (<= pos len)
+                              (= len (length str))
+                              (<= len (data-region-length fat32-in-memory)))
+                  :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp)))
+                  :guard-debug t
+                  :measure (nfix (- len pos))
+                  :stobjs fat32-in-memory))
+  (if (mbe :logic (zp (- len pos))
+           :exec  (>= pos len))
+      fat32-in-memory
+    (b* ((ch (char str pos))
+         (ch-byte (u8 (char-code ch)))
+         (pos+1 (1+ pos))
+         (fat32-in-memory (update-data-regioni pos ch-byte fat32-in-memory)))
+      (update-data-region fat32-in-memory str len pos+1))))
 
 (defun
   read-fat (fat32-in-memory channel state)
@@ -1185,10 +1174,13 @@
                      (equal (length str)
                             (data-region-length fat32-in-memory))))
         (mv fat32-in-memory state -1))
+       (data-region-string
+        (subseq str tmp_init (+ tmp_init
+                                (data-region-length fat32-in-memory))))
        (fat32-in-memory
         (update-data-region
          fat32-in-memory
-         str
+         data-region-string
          tmp_init
          0)))
     (mv fat32-in-memory state error-code)))
