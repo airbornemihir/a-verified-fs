@@ -173,6 +173,13 @@
          :hints
          (("goal" :use (:instance unsigned-byte-p-forward-to-nonnegative-integerp
                                   (n ,bit-width)
+                                  (x (,accessor ,stobj))))))
+        (:rewrite
+         :corollary (implies (,stobj-recogniser ,stobj)
+                             (rationalp (,accessor ,stobj)))
+         :hints
+         (("goal" :use (:instance unsigned-byte-p-forward-to-nonnegative-integerp
+                                  (n ,bit-width)
                                   (x (,accessor ,stobj))))))))
      (defthm
        ,lemma-name3
@@ -842,15 +849,6 @@
          (bpb_rsvdseccnt fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
 
-(defthm
-  slurp-disk-image-guard-lemma-7
-  (implies
-   (not (equal key *bpb_fatsz32*))
-   (equal
-    (bpb_fatsz32 (update-nth key val fat32-in-memory))
-    (bpb_fatsz32 fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_fatsz32))))
-
 ;; Per accumulated-persistence, the rule (:rewrite
 ;; update-bpb_secperclus-correctness-2 . 3) is pretty darned useless. We need
 ;; to find a way to do without it and its kind.
@@ -887,6 +885,42 @@
          stobj)
         (make-corollaries
          accessor1 (cdr updaters-constants) stobj)))))
+
+  (make-event
+   `(defthm
+      slurp-disk-image-guard-lemma-7
+      (implies
+       (not (equal key *bpb_fatsz32*))
+       (equal
+        (bpb_fatsz32 (update-nth key val fat32-in-memory))
+        (bpb_fatsz32 fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_fatsz32)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_fatsz32
+        (list
+         (cons 'update-bpb_bytspersec *bpb_bytspersec*)
+         (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*)
+         (cons 'update-bpb_rootclus *bpb_rootclus*)
+         (cons 'update-bs_bootsig *bs_bootsig*)
+         (cons 'update-bs_reserved1 *bs_reserved1*)
+         (cons 'update-bs_drvnum *bs_drvnum*)
+         (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
+         (cons 'update-bpb_fsinfo *bpb_fsinfo*)
+         (cons 'update-bpb_fsver_major *bpb_fsver_major*)
+         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
+         (cons 'update-bpb_extflags *bpb_extflags*)
+         (cons 'update-bpb_secperclus *bpb_secperclus*)
+         (cons 'update-bpb_totsec32 *bpb_totsec32*)
+         (cons 'update-bpb_hiddsec *bpb_hiddsec*)
+         (cons 'update-bpb_numheads *bpb_numheads*)
+         (cons 'update-bpb_secpertrk *bpb_secpertrk*)
+         (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
+         (cons 'update-bpb_media *bpb_media*)
+         (cons 'update-bpb_totsec16 *bpb_totsec16*)
+         (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
+         (cons 'update-bpb_numfats *bpb_numfats*))
+        'fat32-in-memory)))
 
   (make-event
    `(defthm
@@ -957,16 +991,43 @@
          (cons 'update-bpb_totsec16 *bpb_totsec16*)
          (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
          (cons 'update-bpb_numfats *bpb_numfats*))
-        'fat32-in-memory))))
+        'fat32-in-memory)))
 
-(defthm
-  slurp-disk-image-guard-lemma-10
-  (implies
-   (not (equal key *bpb_numfats*))
-   (equal
-    (bpb_numfats (update-nth key val fat32-in-memory))
-    (bpb_numfats fat32-in-memory)))
-  :hints (("goal" :in-theory (enable bpb_numfats))))
+  (make-event
+   `(defthm
+      slurp-disk-image-guard-lemma-10
+      (implies
+       (not (equal key *bpb_numfats*))
+       (equal
+        (bpb_numfats (update-nth key val fat32-in-memory))
+        (bpb_numfats fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_numfats)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_numfats
+        (list
+         (cons 'update-bpb_bytspersec *bpb_bytspersec*)
+         (cons 'update-bpb_secperclus *bpb_secperclus*)
+         (cons 'update-bpb_rootclus *bpb_rootclus*)
+         (cons 'update-bs_bootsig *bs_bootsig*)
+         (cons 'update-bs_reserved1 *bs_reserved1*)
+         (cons 'update-bs_drvnum *bs_drvnum*)
+         (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
+         (cons 'update-bpb_fsinfo *bpb_fsinfo*)
+         (cons 'update-bpb_fsver_major *bpb_fsver_major*)
+         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
+         (cons 'update-bpb_extflags *bpb_extflags*)
+         (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
+         (cons 'update-bpb_totsec32 *bpb_totsec32*)
+         (cons 'update-bpb_hiddsec *bpb_hiddsec*)
+         (cons 'update-bpb_numheads *bpb_numheads*)
+         (cons 'update-bpb_secpertrk *bpb_secpertrk*)
+         (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
+         (cons 'update-bpb_media *bpb_media*)
+         (cons 'update-bpb_totsec16 *bpb_totsec16*)
+         (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
+         (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*))
+        'fat32-in-memory))))
 
 ;; Check out Subgoal 1.3.3'
 
@@ -1058,6 +1119,24 @@
 
 (defthm
   slurp-disk-image-guard-lemma-23
+  (equal (bpb_numfats (update-bs_oemname v fat32-in-memory))
+         (bpb_numfats fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_numfats)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-24
+  (equal (bpb_numfats (update-bs_jmpboot v fat32-in-memory))
+         (bpb_numfats fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_numfats)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-25
+  (equal (bpb_numfats (update-bs_filsystype v fat32-in-memory))
+         (bpb_numfats fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_numfats)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-26
   (<= 1
       (bpb_numfats
        (mv-nth
@@ -1066,6 +1145,17 @@
          fat32-in-memory channel state))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+
+;; (defthm
+;;   slurp-disk-image-guard-lemma-27
+;;   (<= 0
+;;       (bpb_fatsz32
+;;        (mv-nth
+;;         0
+;;         (read-reserved-area
+;;          fat32-in-memory channel state))))
+;;   :rule-classes :linear
+;;   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
   read-reserved-area-correctness-1
@@ -1114,42 +1204,30 @@
     (("goal" :do-not-induct t
       :in-theory (disable fat32-in-memoryp
                           read-reserved-area))
-     ("Subgoal 13.4''"
-      :use ((:instance
-             slurp-disk-image-guard-lemma-24
-             (channel
-              (mv-nth 0
-                      (open-input-channel image-path
-                                          :byte state)))
-             (state
-              (mv-nth 1
-                      (open-input-channel image-path
-                                          :byte state))))
-            (:instance
-             *-weakly-monotonic
-             (y 0)
-             (y+
-              (bpb_fatsz32
-               (mv-nth
-                0
-                (read-reserved-area fat32-in-memory
-                                    (mv-nth 0
-                                            (open-input-channel image-path
-                                                                :byte state))
-                                    (mv-nth 1
-                                            (open-input-channel image-path
-                                                                :byte state))))))
-             (x
-              (bpb_numfats
-               (mv-nth
-                0
-                (read-reserved-area fat32-in-memory
-                                    (mv-nth 0
-                                            (open-input-channel image-path
-                                                                :byte state))
-                                    (mv-nth 1
-                                            (open-input-channel image-path
-                                                                :byte state))))))))))
+     ("Subgoal 25"
+      :use
+      ((:instance
+        slurp-disk-image-guard-lemma-14
+        (fat32-in-memory
+         (mv-nth 0
+                 (read-reserved-area fat32-in-memory
+                                     (mv-nth 0
+                                             (open-input-channel image-path
+                                                                 :byte state))
+                                     (mv-nth 1
+                                             (open-input-channel image-path
+                                                                 :byte
+                                                                 state))))))
+       (:instance
+        slurp-disk-image-guard-lemma-18
+        (channel
+         (mv-nth 0
+                 (open-input-channel image-path
+                                     :byte state)))
+        (state
+         (mv-nth 1
+                 (open-input-channel image-path
+                                     :byte state)))))))
     :stobjs (state fat32-in-memory)))
   (b* (((mv channel state)
         (open-input-channel image-path
