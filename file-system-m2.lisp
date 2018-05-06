@@ -917,6 +917,32 @@
         (make-corollaries
          accessor1 (cdr updaters-constants) stobj)))))
 
+  (local
+   (defconst *the-list*
+     (list
+      (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
+      (cons 'update-bpb_bytspersec *bpb_bytspersec*)
+      (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*)
+      (cons 'update-bpb_rootclus *bpb_rootclus*)
+      (cons 'update-bs_bootsig *bs_bootsig*)
+      (cons 'update-bs_reserved1 *bs_reserved1*)
+      (cons 'update-bs_drvnum *bs_drvnum*)
+      (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
+      (cons 'update-bpb_fsinfo *bpb_fsinfo*)
+      (cons 'update-bpb_fsver_major *bpb_fsver_major*)
+      (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
+      (cons 'update-bpb_extflags *bpb_extflags*)
+      (cons 'update-bpb_secperclus *bpb_secperclus*)
+      (cons 'update-bpb_totsec32 *bpb_totsec32*)
+      (cons 'update-bpb_hiddsec *bpb_hiddsec*)
+      (cons 'update-bpb_numheads *bpb_numheads*)
+      (cons 'update-bpb_secpertrk *bpb_secpertrk*)
+      (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
+      (cons 'update-bpb_media *bpb_media*)
+      (cons 'update-bpb_totsec16 *bpb_totsec16*)
+      (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
+      (cons 'update-bpb_numfats *bpb_numfats*))))
+
   (make-event
    `(defthm
       slurp-disk-image-guard-lemma-7
@@ -929,28 +955,7 @@
       :rule-classes
       ,(make-corollaries
         'bpb_fatsz32
-        (list
-         (cons 'update-bpb_bytspersec *bpb_bytspersec*)
-         (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*)
-         (cons 'update-bpb_rootclus *bpb_rootclus*)
-         (cons 'update-bs_bootsig *bs_bootsig*)
-         (cons 'update-bs_reserved1 *bs_reserved1*)
-         (cons 'update-bs_drvnum *bs_drvnum*)
-         (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
-         (cons 'update-bpb_fsinfo *bpb_fsinfo*)
-         (cons 'update-bpb_fsver_major *bpb_fsver_major*)
-         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
-         (cons 'update-bpb_extflags *bpb_extflags*)
-         (cons 'update-bpb_secperclus *bpb_secperclus*)
-         (cons 'update-bpb_totsec32 *bpb_totsec32*)
-         (cons 'update-bpb_hiddsec *bpb_hiddsec*)
-         (cons 'update-bpb_numheads *bpb_numheads*)
-         (cons 'update-bpb_secpertrk *bpb_secpertrk*)
-         (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
-         (cons 'update-bpb_media *bpb_media*)
-         (cons 'update-bpb_totsec16 *bpb_totsec16*)
-         (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
-         (cons 'update-bpb_numfats *bpb_numfats*))
+        (delete-assoc 'update-bpb_fatsz32 *the-list*)
         'fat32-in-memory)))
 
   (make-event
@@ -964,28 +969,7 @@
       :rule-classes
       ,(make-corollaries
         'bpb_secperclus
-        (list
-         (cons 'update-bpb_bytspersec *bpb_bytspersec*)
-         (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*)
-         (cons 'update-bpb_rootclus *bpb_rootclus*)
-         (cons 'update-bs_bootsig *bs_bootsig*)
-         (cons 'update-bs_reserved1 *bs_reserved1*)
-         (cons 'update-bs_drvnum *bs_drvnum*)
-         (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
-         (cons 'update-bpb_fsinfo *bpb_fsinfo*)
-         (cons 'update-bpb_fsver_major *bpb_fsver_major*)
-         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
-         (cons 'update-bpb_extflags *bpb_extflags*)
-         (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
-         (cons 'update-bpb_totsec32 *bpb_totsec32*)
-         (cons 'update-bpb_hiddsec *bpb_hiddsec*)
-         (cons 'update-bpb_numheads *bpb_numheads*)
-         (cons 'update-bpb_secpertrk *bpb_secpertrk*)
-         (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
-         (cons 'update-bpb_media *bpb_media*)
-         (cons 'update-bpb_totsec16 *bpb_totsec16*)
-         (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
-         (cons 'update-bpb_numfats *bpb_numfats*))
+        (delete-assoc 'update-bpb_secperclus *the-list*)
         'fat32-in-memory)))
 
   (make-event
@@ -1000,28 +984,7 @@
       :rule-classes
       ,(make-corollaries
         'bpb_rsvdseccnt
-        (list
-         (cons 'update-bpb_bytspersec *bpb_bytspersec*)
-         (cons 'update-bpb_secperclus *bpb_secperclus*)
-         (cons 'update-bpb_rootclus *bpb_rootclus*)
-         (cons 'update-bs_bootsig *bs_bootsig*)
-         (cons 'update-bs_reserved1 *bs_reserved1*)
-         (cons 'update-bs_drvnum *bs_drvnum*)
-         (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
-         (cons 'update-bpb_fsinfo *bpb_fsinfo*)
-         (cons 'update-bpb_fsver_major *bpb_fsver_major*)
-         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
-         (cons 'update-bpb_extflags *bpb_extflags*)
-         (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
-         (cons 'update-bpb_totsec32 *bpb_totsec32*)
-         (cons 'update-bpb_hiddsec *bpb_hiddsec*)
-         (cons 'update-bpb_numheads *bpb_numheads*)
-         (cons 'update-bpb_secpertrk *bpb_secpertrk*)
-         (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
-         (cons 'update-bpb_media *bpb_media*)
-         (cons 'update-bpb_totsec16 *bpb_totsec16*)
-         (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
-         (cons 'update-bpb_numfats *bpb_numfats*))
+        (delete-assoc 'update-bpb_rsvdseccnt *the-list*)
         'fat32-in-memory)))
 
   (make-event
@@ -1036,28 +999,22 @@
       :rule-classes
       ,(make-corollaries
         'bpb_numfats
-        (list
-         (cons 'update-bpb_bytspersec *bpb_bytspersec*)
-         (cons 'update-bpb_secperclus *bpb_secperclus*)
-         (cons 'update-bpb_rootclus *bpb_rootclus*)
-         (cons 'update-bs_bootsig *bs_bootsig*)
-         (cons 'update-bs_reserved1 *bs_reserved1*)
-         (cons 'update-bs_drvnum *bs_drvnum*)
-         (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
-         (cons 'update-bpb_fsinfo *bpb_fsinfo*)
-         (cons 'update-bpb_fsver_major *bpb_fsver_major*)
-         (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
-         (cons 'update-bpb_extflags *bpb_extflags*)
-         (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
-         (cons 'update-bpb_totsec32 *bpb_totsec32*)
-         (cons 'update-bpb_hiddsec *bpb_hiddsec*)
-         (cons 'update-bpb_numheads *bpb_numheads*)
-         (cons 'update-bpb_secpertrk *bpb_secpertrk*)
-         (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
-         (cons 'update-bpb_media *bpb_media*)
-         (cons 'update-bpb_totsec16 *bpb_totsec16*)
-         (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
-         (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*))
+        (delete-assoc 'update-bpb_numfats *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      slurp-disk-image-guard-lemma-31
+      (implies
+       (not (equal key *bpb_bytspersec*))
+       (equal
+        (bpb_bytspersec (update-nth key val fat32-in-memory))
+        (bpb_bytspersec fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_bytspersec)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_bytspersec
+        (delete-assoc 'update-bpb_bytspersec *the-list*)
         'fat32-in-memory))))
 
 ;; Check out Subgoal 1.3.3'
@@ -1207,6 +1164,17 @@
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
+  slurp-disk-image-guard-lemma-32
+  (<= 512
+      (bpb_bytspersec
+       (mv-nth
+        0
+        (read-reserved-area
+         fat32-in-memory channel state))))
+  :rule-classes :linear
+  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+
+(defthm
   read-reserved-area-correctness-1
   (implies (and (state-p state)
                 (symbolp channel)
@@ -1256,18 +1224,6 @@
      ("Subgoal 25"
       :use
       ((:instance
-        slurp-disk-image-guard-lemma-14
-        (fat32-in-memory
-         (mv-nth 0
-                 (read-reserved-area fat32-in-memory
-                                     (mv-nth 0
-                                             (open-input-channel image-path
-                                                                 :byte state))
-                                     (mv-nth 1
-                                             (open-input-channel image-path
-                                                                 :byte
-                                                                 state))))))
-       (:instance
         slurp-disk-image-guard-lemma-18
         (channel
          (mv-nth 0
@@ -1289,6 +1245,58 @@
                                      :byte state))))
        (:instance
         slurp-disk-image-guard-lemma-26
+        (channel
+         (mv-nth 0
+                 (open-input-channel image-path
+                                     :byte state)))
+        (state
+         (mv-nth 1
+                 (open-input-channel image-path
+                                     :byte state))))
+       (:instance
+        slurp-disk-image-guard-lemma-30
+        (channel
+         (mv-nth 0
+                 (open-input-channel image-path
+                                     :byte state)))
+        (state
+         (mv-nth 1
+                 (open-input-channel image-path
+                                     :byte state))))))
+     ("Subgoal 21''"
+      :use
+      ((:instance
+        slurp-disk-image-guard-lemma-18
+        (channel
+         (mv-nth 0
+                 (open-input-channel image-path
+                                     :byte state)))
+        (state
+         (mv-nth 1
+                 (open-input-channel image-path
+                                     :byte state))))
+       (:instance
+        slurp-disk-image-guard-lemma-22
+        (channel
+         (mv-nth 0
+                 (open-input-channel image-path
+                                     :byte state)))
+        (state
+         (mv-nth 1
+                 (open-input-channel image-path
+                                     :byte state))))
+       (:instance
+        slurp-disk-image-guard-lemma-26
+        (channel
+         (mv-nth 0
+                 (open-input-channel image-path
+                                     :byte state)))
+        (state
+         (mv-nth 1
+                 (open-input-channel image-path
+                                     :byte state))))
+       (:instance
+        slurp-disk-image-guard-lemma-30
         (channel
          (mv-nth 0
                  (open-input-channel image-path
