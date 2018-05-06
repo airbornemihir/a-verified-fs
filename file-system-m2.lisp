@@ -487,6 +487,28 @@
        (n 8)
        (x (nth 13
                (mv-nth 0 (read-byte$-n 16 channel state))))))
+     ("Subgoal 5'"
+      :use
+      (:instance
+       unsigned-byte-p-forward-to-nonnegative-integerp
+       (n 8)
+       (x
+        (nth
+         0
+         (mv-nth
+          0
+          (read-byte$-n
+           (+ -16
+              (* (combine16u (nth 12
+                                  (mv-nth 0 (read-byte$-n 16 channel state)))
+                             (nth 11
+                                  (mv-nth 0 (read-byte$-n 16 channel state))))
+                 (combine16u (nth 15
+                                  (mv-nth 0 (read-byte$-n 16 channel state)))
+                             (nth 14
+                                  (mv-nth 0 (read-byte$-n 16 channel state))))))
+           channel
+           (mv-nth 1 (read-byte$-n 16 channel state))))))))
      ("subgoal 2'"
       :use
       (:instance
@@ -529,6 +551,11 @@
        ;; also needs to be unconditional
        (fat32-in-memory
         (update-bpb_numfats 1
+                            fat32-in-memory))
+       ;; I feel weird about stipulating this, but the FAT size has to be at
+       ;; least 1 if we're going to have at least 65536 clusters of data.
+       (fat32-in-memory
+        (update-bpb_fatsz32 1
                             fat32-in-memory))
        ;; common stuff for fat filesystems
        ((mv initial-bytes state)
@@ -617,12 +644,16 @@
                      (nth (+ 32 0 (- *initialbytcnt*)) remaining_rsvdbyts))
          fat32-in-memory))
        ;; fat32-specific stuff
+       (tmp_fatsz32
+        (combine32u (nth (+ 36 3 (- *initialbytcnt*)) remaining_rsvdbyts)
+                    (nth (+ 36 2 (- *initialbytcnt*)) remaining_rsvdbyts)
+                    (nth (+ 36 1 (- *initialbytcnt*)) remaining_rsvdbyts)
+                    (nth (+ 36 0 (- *initialbytcnt*)) remaining_rsvdbyts)))
+       ((unless (>= tmp_fatsz32 1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bpb_fatsz32
-         (combine32u (nth (+ 36 3 (- *initialbytcnt*)) remaining_rsvdbyts)
-                     (nth (+ 36 2 (- *initialbytcnt*)) remaining_rsvdbyts)
-                     (nth (+ 36 1 (- *initialbytcnt*)) remaining_rsvdbyts)
-                     (nth (+ 36 0 (- *initialbytcnt*)) remaining_rsvdbyts))
+         tmp_fatsz32
          fat32-in-memory))
        (fat32-in-memory
         (update-bpb_extflags
@@ -698,14 +729,15 @@
 
 (defun
   update-data-region
-  (fat32-in-memory str pos)
+  (fat32-in-memory str str-init pos)
   (declare
    (xargs
     :measure (nfix (- (data-region-length fat32-in-memory)
                       pos))
     :guard (and (natp pos)
                 (stringp str)
-                (<= (data-region-length fat32-in-memory)
+                (natp str-init)
+                (<= (+ str-init (data-region-length fat32-in-memory))
                     (length str))
                 (fat32-in-memoryp fat32-in-memory))
     :guard-hints
@@ -723,10 +755,10 @@
       (update-data-regioni
        pos
        (the (unsigned-byte 8)
-            (char-code (char str pos)))
+            (char-code (char str (+ str-init pos))))
        fat32-in-memory))
      (fat32-in-memory
-      (update-data-region fat32-in-memory str (+ pos 1))))
+      (update-data-region fat32-in-memory str str-init (+ pos 1))))
     fat32-in-memory)))
 
 (defun
@@ -762,7 +794,6 @@
        (fat32-in-memory (update-fat fa-table fat32-in-memory))
        (fat32-in-memory (resize-data-region tmp_databytcnt
                                             fat32-in-memory))
-       ;; (fat32-in-memory (update-data-region data-region fat32-in-memory))
        )
     (mv fat32-in-memory state 0)))
 
@@ -1147,6 +1178,35 @@
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
+  slurp-disk-image-guard-lemma-27
+  (equal (bpb_fatsz32 (update-bs_oemname v fat32-in-memory))
+         (bpb_fatsz32 fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-28
+  (equal (bpb_fatsz32 (update-bs_jmpboot v fat32-in-memory))
+         (bpb_fatsz32 fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-29
+  (equal (bpb_fatsz32 (update-bs_filsystype v fat32-in-memory))
+         (bpb_fatsz32 fat32-in-memory))
+  :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
+
+(defthm
+  slurp-disk-image-guard-lemma-30
+  (<= 1
+      (bpb_fatsz32
+       (mv-nth
+        0
+        (read-reserved-area
+         fat32-in-memory channel state))))
+  :rule-classes :linear
+  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+
+(defthm
   read-reserved-area-correctness-1
   (implies (and (state-p state)
                 (symbolp channel)
@@ -1216,6 +1276,26 @@
         (state
          (mv-nth 1
                  (open-input-channel image-path
+                                     :byte state))))
+       (:instance
+        slurp-disk-image-guard-lemma-22
+        (channel
+         (mv-nth 0
+                 (open-input-channel image-path
+                                     :byte state)))
+        (state
+         (mv-nth 1
+                 (open-input-channel image-path
+                                     :byte state))))
+       (:instance
+        slurp-disk-image-guard-lemma-26
+        (channel
+         (mv-nth 0
+                 (open-input-channel image-path
+                                     :byte state)))
+        (state
+         (mv-nth 1
+                 (open-input-channel image-path
                                      :byte state)))))))
     :stobjs (state fat32-in-memory)))
   (b* (((mv channel state)
@@ -1238,8 +1318,7 @@
                        (* (bpb_numfats fat32-in-memory) (bpb_fatsz32
                                                          fat32-in-memory)))))
        (str
-        (read-file-into-string image-path :start
-                               tmp_init
+        (read-file-into-string image-path
                                :bytes
                                (data-region-length fat32-in-memory)))
        ((unless (stringp str))
@@ -1248,6 +1327,7 @@
         (update-data-region
          fat32-in-memory
          str
+         tmp_init
          0)))
     (mv fat32-in-memory state error-code)))
 
