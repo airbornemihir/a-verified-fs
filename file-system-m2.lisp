@@ -152,57 +152,28 @@
   update-stobj-scalar-correctness
   (bit-width updater accessor
              stobj stobj-recogniser lemma-name1 lemma-name2)
-  (list 'encapsulate 'nil
-        (list 'defthm
-              lemma-name1
-              (list 'implies
-                    (list 'and
-                          (list 'unsigned-byte-p bit-width 'v)
-                          (list stobj-recogniser stobj))
-                    (list stobj-recogniser
-                          (list updater 'v stobj)))
-              ':hints
-              (list (list '"goal"
-                          ':in-theory
-                          (list 'enable updater))))
-        (list 'defthm
-              lemma-name2
-              (list 'implies
-                    (list stobj-recogniser stobj)
-   (list 'unsigned-byte-p bit-width (list accessor stobj)))
-  ':hints (list (list '"goal" ':in-theory (list 'enable accessor)))
-  ':rule-classes
-  (list ':rewrite
-   (list ':rewrite
-    ':corollary
-    (list 'implies (list stobj-recogniser stobj)
-             (list 'integerp (list accessor stobj)))
-    ':hints
-    (list (list '"goal"
-                ':use
-                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
-                      (list 'n bit-width)
-                      (list 'x (list accessor stobj))))))
-   (list ':rewrite
-    ':corollary
-    (list 'implies (list stobj-recogniser stobj)
-             (list 'acl2-numberp (list accessor stobj)))
-    ':hints
-    (list (list '"goal"
-                ':use
-                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
-                      (list 'n bit-width)
-                      (list 'x (list accessor stobj))))))
-   (list ':rewrite
-    ':corollary
-    (list 'implies (list stobj-recogniser stobj)
-             (list 'rationalp (list accessor stobj)))
-    ':hints
-    (list (list '"goal"
-                ':use
-                (list ':instance 'unsigned-byte-p-forward-to-nonnegative-integerp
-                      (list 'n bit-width)
-                      (list 'x (list accessor stobj))))))))))
+  `(encapsulate
+     nil
+     (defthm
+       ,lemma-name1
+       (implies (and (unsigned-byte-p ,bit-width v)
+                     (,stobj-recogniser ,stobj))
+                (,stobj-recogniser (,updater v ,stobj)))
+       :hints (("goal" :in-theory (enable ,updater))))
+     (defthm
+       ,lemma-name2
+       (implies (,stobj-recogniser ,stobj)
+                (unsigned-byte-p ,bit-width (,accessor ,stobj)))
+       :hints (("goal" :in-theory (enable ,accessor)))
+       :rule-classes
+       (:rewrite
+        (:rewrite
+         :corollary (implies (,stobj-recogniser ,stobj)
+                             (integerp (,accessor ,stobj)))
+         :hints
+         (("goal" :use (:instance unsigned-byte-p-forward-to-nonnegative-integerp
+                                  (n ,bit-width)
+                                  (x (,accessor ,stobj))))))))))
 
 (update-stobj-scalar-correctness 16 update-bpb_rsvdseccnt bpb_rsvdseccnt
                                  fat32-in-memory fat32-in-memoryp
@@ -1065,6 +1036,17 @@
   slurp-disk-image-guard-lemma-24
   (<= 1
       (bpb_rsvdseccnt
+       (mv-nth
+        0
+        (read-reserved-area
+         fat32-in-memory channel state))))
+  :rule-classes :linear
+  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+
+(defthm
+  slurp-disk-image-guard-lemma-25
+  (<= 1
+      (bpb_numfats
        (mv-nth
         0
         (read-reserved-area
