@@ -446,13 +446,8 @@
     (mv-nth 0 (read-byte$-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
-(defthm read-reserved-area-guard-lemma-4
-  (implies (and (< (nfix n) (len l))
-                (unsigned-byte-listp width l))
-           (rationalp (nth n l))))
-
 (defthm
-  read-reserved-area-guard-lemma-5
+  read-reserved-area-guard-lemma-4
   (equal (stringp (mv-nth 0 (read-byte$-n n channel state)))
          nil)
   :hints (("goal" :in-theory (disable read-byte$-n-data)
@@ -460,8 +455,8 @@
 
 ;; This must be called after the file is opened.
 (defun
-    read-reserved-area
-    (fat32-in-memory channel state)
+  read-reserved-area
+  (fat32-in-memory channel state)
   (declare
    (xargs
     :guard (and (state-p state)
@@ -471,21 +466,50 @@
                 (fat32-in-memoryp fat32-in-memory))
     :guard-debug t
     :guard-hints
-    (("goal" :do-not-induct t
+    (("goal"
+      :do-not-induct t
       :in-theory (disable fat32-in-memoryp
                           state-p unsigned-byte-p nth)
-      :use ((:instance
-             unsigned-byte-listp-of-take
-             (width 8)
-             (n 3)
-             (x
-              (mv-nth 0 (read-byte$-n 16 channel state))))))
-     ("subgoal 5" :in-theory (disable read-reserved-area-guard-lemma-4)
-      :use (:instance read-reserved-area-guard-lemma-4 (n 13) (l
-                 (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE))) (width 8)))
-     ("subgoal 4" :in-theory (disable read-reserved-area-guard-lemma-4)
-      :use (:instance read-reserved-area-guard-lemma-4 (n 13) (l
-                 (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE))) (width 8))))
+      :use
+      ((:instance
+        unsigned-byte-listp-of-take (width 8)
+        (n 3)
+        (x (mv-nth 0 (read-byte$-n 16 channel state))))))
+     ("subgoal 6'"
+      :use
+      (:instance
+       unsigned-byte-p-forward-to-nonnegative-integerp
+       (n 8)
+       (x (nth 13
+               (mv-nth 0 (read-byte$-n 16 channel state))))))
+     ("subgoal 2'"
+      :use
+      (:instance
+       unsigned-byte-p-forward-to-nonnegative-integerp
+       (n 8)
+       (x
+        (nth
+         0
+         (mv-nth
+          0
+          (read-byte$-n
+           (+
+            -16
+            (*
+             (combine16u
+              (nth 12
+                   (mv-nth 0 (read-byte$-n 16 channel state)))
+              (nth 11
+                   (mv-nth 0 (read-byte$-n 16 channel state))))
+             (combine16u
+              (nth 15
+                   (mv-nth 0 (read-byte$-n 16 channel state)))
+              (nth
+               14
+               (mv-nth 0 (read-byte$-n 16 channel state))))))
+           channel
+           (mv-nth 1
+                   (read-byte$-n 16 channel state)))))))))
     :stobjs (state fat32-in-memory)))
   (b*
       (;; we want to do this unconditionally, in order to prove a strong linear
@@ -497,6 +521,10 @@
        (fat32-in-memory
         (update-bpb_rsvdseccnt 1
                                fat32-in-memory))
+       ;; also needs to be unconditional
+       (fat32-in-memory
+        (update-bpb_numfats 1
+                            fat32-in-memory))
        ;; common stuff for fat filesystems
        ((mv initial-bytes state)
         (read-byte$-n *initialbytcnt* channel state))
@@ -535,8 +563,11 @@
                        :end :little))
        ((unless (not (equal remaining_rsvdbyts 'fail)))
         (mv fat32-in-memory state -1))
+       (tmp_numfats (nth (- 16 *initialbytcnt*) remaining_rsvdbyts))
+       ((unless (>= tmp_numfats 1))
+        (mv fat32-in-memory state -1))
        (fat32-in-memory
-        (update-bpb_numfats (nth (- 16 *initialbytcnt*) remaining_rsvdbyts)
+        (update-bpb_numfats tmp_numfats
                             fat32-in-memory))
        (fat32-in-memory
         (update-bpb_rootentcnt
@@ -1087,7 +1118,43 @@
     :guard-hints
     (("goal" :do-not-induct t
       :in-theory (disable fat32-in-memoryp
-                          read-reserved-area)))
+                          read-reserved-area))
+     ("Subgoal 13.4''"
+      :use ((:instance
+             slurp-disk-image-guard-lemma-24
+             (channel
+              (mv-nth 0
+                      (open-input-channel image-path
+                                          :byte state)))
+             (state
+              (mv-nth 1
+                      (open-input-channel image-path
+                                          :byte state))))
+            (:instance
+             *-weakly-monotonic
+             (y 0)
+             (y+
+              (bpb_fatsz32
+               (mv-nth
+                0
+                (read-reserved-area fat32-in-memory
+                                    (mv-nth 0
+                                            (open-input-channel image-path
+                                                                :byte state))
+                                    (mv-nth 1
+                                            (open-input-channel image-path
+                                                                :byte state))))))
+             (x
+              (bpb_numfats
+               (mv-nth
+                0
+                (read-reserved-area fat32-in-memory
+                                    (mv-nth 0
+                                            (open-input-channel image-path
+                                                                :byte state))
+                                    (mv-nth 1
+                                            (open-input-channel image-path
+                                                                :byte state))))))))))
     :stobjs (state fat32-in-memory)))
   (b* (((mv channel state)
         (open-input-channel image-path
