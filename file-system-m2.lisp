@@ -324,81 +324,91 @@
 (defmacro
   update-stobj-array
   (name array-length bit-width array-updater
-        stobj stobj-recogniser lemma-name)
-  (declare (ignore))
-  (list
-   'encapsulate
-   'nil
-   (list
-    'defun
-    name (list 'v stobj)
-    (list
-     'declare
-     (list 'xargs
-           ':guard
-           (list 'and
-                 (list 'unsigned-byte-listp bit-width 'v)
-                 (list '<=
-                       '(len v)
-                       (list array-length stobj))
-                 (list stobj-recogniser stobj))
-           ':guard-hints
-           (list (list '"goal"
-                       ':in-theory
-                       (list 'disable
-                             stobj-recogniser 'unsigned-byte-p
-                             'nth)))
-           ':stobjs
-           (list stobj)))
-    (list
-     'if
-     '(atom v)
-     stobj
-     (list 'let*
-           (list (list stobj
-                       (list array-updater
-                             (list '-
-                                   (list array-length stobj)
-                                   '(len v))
-                             '(car v)
-                             stobj))
-                 (list stobj (list name '(cdr v) stobj)))
-           stobj)))
-   (list 'defthm
-         lemma-name
-         (list 'implies
-               (list 'and
-                     (list 'unsigned-byte-listp bit-width 'v)
-                     (list '<=
-                           (list 'len 'v)
-                           (list array-length stobj))
-                     (list stobj-recogniser stobj))
-               (list stobj-recogniser (list name 'v stobj)))
-         ':hints
-         (list (list '"goal"
-                     ':in-theory
-                     (list 'disable stobj-recogniser))
-               (list '"subgoal *1/4"
-                     ':in-theory
-                     (list 'enable stobj-recogniser))))))
+        stobj stobj-recogniser lemma-name1 lemma-name2)
+  `(encapsulate
+     nil
+     (defun
+       ,name (v ,stobj)
+       (declare
+        (xargs
+         :guard (and (unsigned-byte-listp ,bit-width v)
+                     (<= (len v)
+                         (,array-length ,stobj))
+                     (,stobj-recogniser ,stobj))
+         :guard-hints
+         (("goal" :in-theory (disable ,stobj-recogniser unsigned-byte-p nth)))
+         :stobjs (,stobj)))
+       (if
+           (atom v)
+           ,stobj
+        (let* ((,stobj
+                (,array-updater (- (,array-length ,stobj)
+                                       (len v))
+                                (car v)
+                                ,stobj))
+               (,stobj (,name (cdr v)
+                              ,stobj)))
+          ,stobj)))
+     (defthm
+       ,lemma-name2
+       t
+       :rule-classes
+       ((:rewrite :corollary
+                   (equal (bpb_secperclus (,name v ,stobj))
+                          (bpb_secperclus fat32-in-memory))
+                   :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
+        (:rewrite :corollary
+                   (equal (bpb_rsvdseccnt (,name v ,stobj))
+                          (bpb_rsvdseccnt fat32-in-memory))
+                  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
+        (:rewrite :corollary
+                   (equal (bpb_numfats (,name v ,stobj))
+                          (bpb_numfats fat32-in-memory))
+                  :hints (("Goal" :in-theory (enable bpb_numfats)) ))
+        (:rewrite :corollary
+                   (equal (bpb_fatsz32 (,name v ,stobj))
+                          (bpb_fatsz32 fat32-in-memory))
+                  :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
+        (:rewrite :corollary
+                   (equal (bpb_bytspersec (,name v ,stobj))
+                          (bpb_bytspersec fat32-in-memory))
+                  :hints (("Goal" :in-theory (enable bpb_bytspersec)) ))))
+     (defthm ,lemma-name1
+       (implies (and (unsigned-byte-listp ,bit-width v)
+                     (<= (len v)
+                         (,array-length ,stobj))
+                     (,stobj-recogniser ,stobj))
+                (,stobj-recogniser (,name v ,stobj)))
+       :hints (("goal" :in-theory (disable ,stobj-recogniser))
+               ("subgoal *1/4" :in-theory (enable ,stobj-recogniser))))))
 
 (update-stobj-array
  update-bs_jmpboot
  bs_jmpboot-length
  8 update-bs_jmpbooti fat32-in-memory fat32-in-memoryp
- update-bs_jmpboot-correctness-1)
+ update-bs_jmpboot-correctness-1
+ update-bs_jmpboot-correctness-2)
 
 (update-stobj-array
  update-bs_oemname
  bs_oemname-length
  8 update-bs_oemnamei fat32-in-memory fat32-in-memoryp
- update-bs_oemname-correctness-1)
+ update-bs_oemname-correctness-1
+ update-bs_oemname-correctness-2)
 
 (update-stobj-array
  update-bs_filsystype
  bs_filsystype-length
  8 update-bs_filsystypei fat32-in-memory fat32-in-memoryp
- update-bs_filsystype-correctness-1)
+ update-bs_filsystype-correctness-1
+ update-bs_filsystype-correctness-2)
+
+(update-stobj-array
+ update-fat
+ fat-length
+ 32 update-fati fat32-in-memory fat32-in-memoryp
+ update-fat-correctness-1
+ update-fat-correctness-2)
 
 (defthm
   read-reserved-area-guard-lemma-1
@@ -557,6 +567,10 @@
        (fat32-in-memory
         (update-bpb_fatsz32 1
                             fat32-in-memory))
+       ;; This needs to be at least 512, per the spec.
+       (fat32-in-memory
+        (update-bpb_bytspersec 512
+                               fat32-in-memory))
        ;; common stuff for fat filesystems
        ((mv initial-bytes state)
         (read-byte$-n *initialbytcnt* channel state))
@@ -706,12 +720,6 @@
                                       (+ 82 (- *initialbytcnt*) 0)
                                       (+ 82 (- *initialbytcnt*) 8)) fat32-in-memory)))
     (mv fat32-in-memory state 0)))
-
-(update-stobj-array
- update-fat
- fat-length
- 32 update-fati fat32-in-memory fat32-in-memoryp
- update-fat-correctness-1)
 
 (defthm
   read-fat-guard-lemma-1
@@ -1045,24 +1053,6 @@
   :hints (("Goal" :use update-bpb_fatsz32-correctness-2) )
   :rule-classes :linear)
 
-(defthm
-  slurp-disk-image-guard-lemma-15
-  (equal (bpb_secperclus (update-bs_oemname v fat32-in-memory))
-         (bpb_secperclus fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
-
-(defthm
-  slurp-disk-image-guard-lemma-16
-  (equal (bpb_secperclus (update-bs_jmpboot v fat32-in-memory))
-         (bpb_secperclus fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
-
-(defthm
-  slurp-disk-image-guard-lemma-17
-  (equal (bpb_secperclus (update-bs_filsystype v fat32-in-memory))
-         (bpb_secperclus fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
-
 ;; Look, we're going to have to keep re-visiting this as we make sure there are
 ;; at least 512 bytes per sector and so on. Let's just pause and do it right.
 (defthm
@@ -1077,24 +1067,6 @@
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
-  slurp-disk-image-guard-lemma-19
-  (equal (bpb_rsvdseccnt (update-bs_oemname v fat32-in-memory))
-         (bpb_rsvdseccnt fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
-
-(defthm
-  slurp-disk-image-guard-lemma-20
-  (equal (bpb_rsvdseccnt (update-bs_jmpboot v fat32-in-memory))
-         (bpb_rsvdseccnt fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
-
-(defthm
-  slurp-disk-image-guard-lemma-21
-  (equal (bpb_rsvdseccnt (update-bs_filsystype v fat32-in-memory))
-         (bpb_rsvdseccnt fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
-
-(defthm
   slurp-disk-image-guard-lemma-22
   (<= 1
       (bpb_rsvdseccnt
@@ -1106,24 +1078,6 @@
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
-  slurp-disk-image-guard-lemma-23
-  (equal (bpb_numfats (update-bs_oemname v fat32-in-memory))
-         (bpb_numfats fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_numfats)) ))
-
-(defthm
-  slurp-disk-image-guard-lemma-24
-  (equal (bpb_numfats (update-bs_jmpboot v fat32-in-memory))
-         (bpb_numfats fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_numfats)) ))
-
-(defthm
-  slurp-disk-image-guard-lemma-25
-  (equal (bpb_numfats (update-bs_filsystype v fat32-in-memory))
-         (bpb_numfats fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_numfats)) ))
-
-(defthm
   slurp-disk-image-guard-lemma-26
   (<= 1
       (bpb_numfats
@@ -1133,24 +1087,6 @@
          fat32-in-memory channel state))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
-
-(defthm
-  slurp-disk-image-guard-lemma-27
-  (equal (bpb_fatsz32 (update-bs_oemname v fat32-in-memory))
-         (bpb_fatsz32 fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
-
-(defthm
-  slurp-disk-image-guard-lemma-28
-  (equal (bpb_fatsz32 (update-bs_jmpboot v fat32-in-memory))
-         (bpb_fatsz32 fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
-
-(defthm
-  slurp-disk-image-guard-lemma-29
-  (equal (bpb_fatsz32 (update-bs_filsystype v fat32-in-memory))
-         (bpb_fatsz32 fat32-in-memory))
-  :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
 
 (defthm
   slurp-disk-image-guard-lemma-30
