@@ -1146,17 +1146,6 @@
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
-;; (defthm
-;;   slurp-disk-image-guard-lemma-27
-;;   (<= 0
-;;       (bpb_fatsz32
-;;        (mv-nth
-;;         0
-;;         (read-reserved-area
-;;          fat32-in-memory channel state))))
-;;   :rule-classes :linear
-;;   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
-
 (defthm
   read-reserved-area-correctness-1
   (implies (and (state-p state)
