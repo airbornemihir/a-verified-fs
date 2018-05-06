@@ -1157,48 +1157,6 @@
     (("goal" :do-not-induct t
       :in-theory (disable fat32-in-memoryp
                           read-reserved-area))
-     ("Subgoal 25"
-      :use
-      ((:instance
-        slurp-disk-image-guard-lemma-18
-        (channel
-         (mv-nth 0
-                 (open-input-channel image-path
-                                     :byte state)))
-        (state
-         (mv-nth 1
-                 (open-input-channel image-path
-                                     :byte state))))
-       (:instance
-        slurp-disk-image-guard-lemma-22
-        (channel
-         (mv-nth 0
-                 (open-input-channel image-path
-                                     :byte state)))
-        (state
-         (mv-nth 1
-                 (open-input-channel image-path
-                                     :byte state))))
-       (:instance
-        slurp-disk-image-guard-lemma-26
-        (channel
-         (mv-nth 0
-                 (open-input-channel image-path
-                                     :byte state)))
-        (state
-         (mv-nth 1
-                 (open-input-channel image-path
-                                     :byte state))))
-       (:instance
-        slurp-disk-image-guard-lemma-30
-        (channel
-         (mv-nth 0
-                 (open-input-channel image-path
-                                     :byte state)))
-        (state
-         (mv-nth 1
-                 (open-input-channel image-path
-                                     :byte state))))))
      ("Subgoal 21''"
       :use
       ((:instance
@@ -1240,6 +1198,16 @@
         (state
          (mv-nth 1
                  (open-input-channel image-path
+                                     :byte state))))
+       (:instance
+        slurp-disk-image-guard-lemma-32
+        (channel
+         (mv-nth 0
+                 (open-input-channel image-path
+                                     :byte state)))
+        (state
+         (mv-nth 1
+                 (open-input-channel image-path
                                      :byte state)))))))
     :stobjs (state fat32-in-memory)))
   (b* (((mv channel state)
@@ -1265,7 +1233,9 @@
         (read-file-into-string image-path
                                :bytes
                                (data-region-length fat32-in-memory)))
-       ((unless (stringp str))
+       ((unless (and (stringp str)
+                     (equal (length str)
+                            (data-region-length fat32-in-memory))))
         (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-data-region
