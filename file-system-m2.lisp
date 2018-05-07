@@ -1153,6 +1153,7 @@
     (("goal" :do-not-induct t
       :in-theory (disable fat32-in-memoryp
                           read-reserved-area)))
+    :verify-guards nil
     :stobjs (state fat32-in-memory)))
   (b* (((mv channel state)
         (open-input-channel image-path
@@ -1176,10 +1177,12 @@
        (str
         (read-file-into-string image-path
                                :bytes
-                               (data-region-length fat32-in-memory)))
+                               (+ tmp_init
+                                  (data-region-length fat32-in-memory))))
        ((unless (and (stringp str)
                      (equal (length str)
-                            (data-region-length fat32-in-memory))))
+                            (+ tmp_init
+                                  (data-region-length fat32-in-memory)))))
         (mv fat32-in-memory state -1))
        (data-region-string
         (subseq str tmp_init (+ tmp_init
