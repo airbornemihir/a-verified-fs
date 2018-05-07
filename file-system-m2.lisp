@@ -1169,8 +1169,8 @@
        ((unless (equal error-code 0))
         (mv fat32-in-memory state error-code))
        (state (close-input-channel channel state))
-       (tmp_secperclus (bpb_secperclus fat32-in-memory))
-       (tmp_init (* tmp_secperclus
+       (tmp_bytspersec (bpb_bytspersec fat32-in-memory))
+       (tmp_init (* tmp_bytspersec
                     (+ (bpb_rsvdseccnt fat32-in-memory)
                        (* (bpb_numfats fat32-in-memory) (bpb_fatsz32
                                                          fat32-in-memory)))))
@@ -1191,7 +1191,7 @@
         (update-data-region
          fat32-in-memory
          data-region-string
-         tmp_init
+         (data-region-length fat32-in-memory)
          0)))
     (mv fat32-in-memory state error-code)))
 
