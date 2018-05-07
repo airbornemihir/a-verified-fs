@@ -772,24 +772,31 @@
       :in-theory (disable state-p unsigned-byte-p nth)))
     :stobjs (state fat32-in-memory)))
   (b*
-      ((tmp_datasz (bpb_fatsz32 fat32-in-memory))
-       (tmp_bytspersec (bpb_bytspersec fat32-in-memory))
-       (tmp_secperclus (bpb_secperclus fat32-in-memory))
-       (tmp_databytcnt (* tmp_datasz tmp_secperclus tmp_bytspersec))
+      ((fat-read-size (/ (* (bpb_fatsz32 fat32-in-memory) (bpb_bytspersec
+                                                           fat32-in-memory)) 4))
+       ((unless (integerp fat-read-size)) (mv fat32-in-memory state -1))
        ((mv fa-table state)
-        (read-32ule-n tmp_datasz
+        (read-32ule-n fat-read-size
                       channel state))
        ((unless (not (equal fa-table 'fail)))
         (mv fat32-in-memory state -1))
+       (data-byte-count
+        (* (- (bpb_totsec32 fat32-in-memory)
+              (+ (bpb_rsvdseccnt fat32-in-memory)
+                 (* (bpb_numfats fat32-in-memory)
+                    (bpb_fatsz32 fat32-in-memory))))
+           (bpb_bytspersec fat32-in-memory)))
+       ((unless (> data-byte-count 0))
+        (mv fat32-in-memory state -1))
        ((mv data-region state)
-        (read-byte$-n tmp_databytcnt
+        (read-byte$-n data-byte-count
                       channel state))
        ((unless (not (equal data-region 'fail)))
         (mv fat32-in-memory state -1))
-       (fat32-in-memory (resize-fat tmp_datasz
+       (fat32-in-memory (resize-fat fat-read-size
                                     fat32-in-memory))
        (fat32-in-memory (update-fat fa-table fat32-in-memory))
-       (fat32-in-memory (resize-data-region tmp_databytcnt
+       (fat32-in-memory (resize-data-region data-byte-count
                                             fat32-in-memory))
        )
     (mv fat32-in-memory state 0)))
