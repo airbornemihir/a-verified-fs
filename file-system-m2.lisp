@@ -1215,30 +1215,45 @@
   (coerce (rev (get-dir-ent-filename-helper fat32-in-memory data-region-index
                                             11)) 'string))
 
-(defun get-dir-ent-filenames (fat32-in-memory data-region-index limit)
+(defun get-dir-ent-filenames (fat32-in-memory data-region-index entry-limit)
   (declare
    (xargs
-    :measure (acl2-count limit)
+    :measure (acl2-count entry-limit)
     :verify-guards nil
     :stobjs (fat32-in-memory)))
-  (if (or (zp limit) (equal (data-regioni data-region-index fat32-in-memory) 0))
+  (if (or (zp entry-limit) (equal (data-regioni data-region-index fat32-in-memory) 0))
       nil
-    (list* (list*
-            (get-dir-ent-filename fat32-in-memory data-region-index)
-            (if (zp (logand (data-regioni (+ data-region-index 11)
-                                          fat32-in-memory)
-                            (ash 1 4)))
-                :is-reg-file
-              :is-dir-file)
-            (combine32u
-             (data-regioni (+ data-region-index 21) fat32-in-memory)
-             (data-regioni (+ data-region-index 20) fat32-in-memory)
-             (data-regioni (+ data-region-index 27) fat32-in-memory)
-             (data-regioni (+ data-region-index 26) fat32-in-memory)))
-           (get-dir-ent-filenames
-            fat32-in-memory
-            (+ data-region-index 32)
-            (- limit 1)))))
+    (let
+        ((first-cluster
+          (combine32u
+           (data-regioni (+ data-region-index 21) fat32-in-memory)
+           (data-regioni (+ data-region-index 20) fat32-in-memory)
+           (data-regioni (+ data-region-index 27) fat32-in-memory)
+           (data-regioni (+ data-region-index 26) fat32-in-memory)))
+         (filename
+          (get-dir-ent-filename fat32-in-memory data-region-index)))
+      (list* (if (or
+                  (zp (logand (data-regioni (+ data-region-index 11)
+                                           fat32-in-memory)
+                              (ash 1 4)))
+                  (equal filename ".          ")
+                  (equal filename "..         "))
+                 (list*
+                  filename
+                  first-cluster)
+               (list
+                filename
+                first-cluster
+                (get-dir-ent-filenames
+                 fat32-in-memory
+                 (* (nfix (- first-cluster 2))
+                    (bpb_secperclus fat32-in-memory)
+                    (bpb_bytspersec fat32-in-memory))
+                 (- entry-limit 1))))
+             (get-dir-ent-filenames
+              fat32-in-memory
+              (+ data-region-index 32)
+              (- entry-limit 1))))))
 
 (in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
