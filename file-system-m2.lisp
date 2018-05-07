@@ -12,6 +12,7 @@
 (include-book "std/io/read-file-characters" :dir :system)
 (local (include-book "rtl/rel9/arithmetic/top"
                      :dir :system))
+(include-book "kestrel/utilities/strings" :dir :system)
 
 ;; This was moved to one of the main books, but still kept
 (defthm unsigned-byte-listp-of-update-nth
@@ -1194,6 +1195,50 @@
          (data-region-length fat32-in-memory)
          0)))
     (mv fat32-in-memory state error-code)))
+
+(defun get-dir-ent-filename-helper (fat32-in-memory data-region-index len)
+  (declare
+   (xargs
+    :verify-guards nil
+    :stobjs (fat32-in-memory)))
+  (if (zp len)
+      nil
+    (list*
+     (code-char (data-regioni (+ data-region-index len -1) fat32-in-memory))
+     (get-dir-ent-filename-helper fat32-in-memory data-region-index (- len 1)))))
+
+(defun get-dir-ent-filename (fat32-in-memory data-region-index)
+  (declare
+   (xargs
+    :verify-guards nil
+    :stobjs (fat32-in-memory)))
+  (coerce (rev (get-dir-ent-filename-helper fat32-in-memory data-region-index
+                                            11)) 'string))
+
+(defun get-dir-ent-filenames (fat32-in-memory data-region-index limit)
+  (declare
+   (xargs
+    :measure (acl2-count limit)
+    :verify-guards nil
+    :stobjs (fat32-in-memory)))
+  (if (or (zp limit) (equal (data-regioni data-region-index fat32-in-memory) 0))
+      nil
+    (list* (list*
+            (get-dir-ent-filename fat32-in-memory data-region-index)
+            (if (zp (logand (data-regioni (+ data-region-index 11)
+                                          fat32-in-memory)
+                            (ash 1 4)))
+                :is-reg-file
+              :is-dir-file)
+            (combine32u
+             (data-regioni (+ data-region-index 21) fat32-in-memory)
+             (data-regioni (+ data-region-index 20) fat32-in-memory)
+             (data-regioni (+ data-region-index 27) fat32-in-memory)
+             (data-regioni (+ data-region-index 26) fat32-in-memory)))
+           (get-dir-ent-filenames
+            fat32-in-memory
+            (+ data-region-index 32)
+            (- limit 1)))))
 
 (in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
