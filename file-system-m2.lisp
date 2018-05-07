@@ -1154,7 +1154,6 @@
     (("goal" :do-not-induct t
       :in-theory (disable fat32-in-memoryp
                           read-reserved-area)))
-    :verify-guards nil
     :stobjs (state fat32-in-memory)))
   (b* (((mv channel state)
         (open-input-channel image-path
