@@ -952,7 +952,8 @@
       (cons 'update-bpb_media *bpb_media*)
       (cons 'update-bpb_totsec16 *bpb_totsec16*)
       (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
-      (cons 'update-bpb_numfats *bpb_numfats*))))
+      (cons 'update-bpb_numfats *bpb_numfats*)
+      (cons 'update-bs_volid *bs_volid*))))
 
   (make-event
    `(defthm

@@ -1,4 +1,4 @@
-(include-book "../file-system-m2.lisp")
+(include-book "../file-system-m2")
 
 (slurp-disk-image
  fat32-in-memory "/tmp/disk1.raw"  state)
