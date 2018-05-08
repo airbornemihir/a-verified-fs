@@ -347,10 +347,11 @@
 
 (defmacro
   update-stobj-array
-  (name array-length bit-width array-updater
-        stobj stobj-recogniser lemma-name1 lemma-name2)
+  (name array-length bit-width array-updater constant
+        stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3)
   `(encapsulate
      nil
+
      (defun
        ,name (v ,stobj)
        (declare
@@ -373,8 +374,9 @@
                (,stobj (,name (cdr v)
                               ,stobj)))
           ,stobj)))
+
      (defthm
-       ,lemma-name2
+       ,lemma-name1
        t
        :rule-classes
        ((:rewrite :corollary
@@ -396,43 +398,78 @@
         (:rewrite :corollary
                    (equal (bpb_bytspersec (,name v ,stobj))
                           (bpb_bytspersec fat32-in-memory))
-                  :hints (("Goal" :in-theory (enable bpb_bytspersec)) ))))
-     (defthm ,lemma-name1
+                   :hints (("Goal" :in-theory (enable bpb_bytspersec)) ))))
+
+     (defthm
+       ,lemma-name2 t
+       :rule-classes
+       ((:rewrite
+         :corollary
+         (implies
+          (and (,stobj-recogniser ,stobj)
+               (integerp i)
+               (<= 0 i)
+               (< i (,array-length ,stobj))
+               (unsigned-byte-p ,bit-width v))
+          (,stobj-recogniser (,array-updater i v ,stobj))))
+        (:rewrite
+         :corollary
+         (implies
+          (and (,stobj-recogniser ,stobj)
+               (integerp i)
+               (<= 0 i)
+               (< i (,array-length ,stobj))
+               (unsigned-byte-p ,bit-width v))
+          (equal (len (nth ,constant
+                           (,array-updater i v ,stobj)))
+                 (len (nth ,constant ,stobj)))))))
+
+     (defthm ,lemma-name3
        (implies (and (unsigned-byte-listp ,bit-width v)
                      (<= (len v)
                          (,array-length ,stobj))
                      (,stobj-recogniser ,stobj))
                 (,stobj-recogniser (,name v ,stobj)))
-       :hints (("goal" :in-theory (disable ,stobj-recogniser))
-               ("subgoal *1/4" :in-theory (enable ,stobj-recogniser))))))
+       :hints (("goal" :in-theory (e/d (unsigned-byte-listp)
+                                       (,stobj-recogniser ,array-updater))
+                :induct
+                (,stobj-recogniser (,name v ,stobj)))))))
 
 (update-stobj-array
  update-bs_jmpboot
  bs_jmpboot-length
- 8 update-bs_jmpbooti fat32-in-memory fat32-in-memoryp
+ 8 update-bs_jmpbooti *bs_jmpbooti*
+ fat32-in-memory fat32-in-memoryp
  update-bs_jmpboot-correctness-1
- update-bs_jmpboot-correctness-2)
+ update-bs_jmpboot-correctness-2
+ update-bs_jmpboot-correctness-3)
 
 (update-stobj-array
  update-bs_oemname
  bs_oemname-length
- 8 update-bs_oemnamei fat32-in-memory fat32-in-memoryp
+ 8 update-bs_oemnamei *bs_oemnamei*
+ fat32-in-memory fat32-in-memoryp
  update-bs_oemname-correctness-1
- update-bs_oemname-correctness-2)
+ update-bs_oemname-correctness-2
+ update-bs_oemname-correctness-3)
 
 (update-stobj-array
  update-bs_filsystype
  bs_filsystype-length
- 8 update-bs_filsystypei fat32-in-memory fat32-in-memoryp
+ 8 update-bs_filsystypei *bs_filsystypei*
+ fat32-in-memory fat32-in-memoryp
  update-bs_filsystype-correctness-1
- update-bs_filsystype-correctness-2)
+ update-bs_filsystype-correctness-2
+ update-bs_filsystype-correctness-3)
 
 (update-stobj-array
  update-fat
  fat-length
- 32 update-fati fat32-in-memory fat32-in-memoryp
+ 32 update-fati *fati*
+ fat32-in-memory fat32-in-memoryp
  update-fat-correctness-1
- update-fat-correctness-2)
+ update-fat-correctness-2
+ update-fat-correctness-3)
 
 (defthm
   read-reserved-area-guard-lemma-1
