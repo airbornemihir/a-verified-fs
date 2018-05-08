@@ -320,6 +320,12 @@
                                  update-bpb_totsec16-correctness-2
                                  update-bpb_totsec16-correctness-3)
 
+(update-stobj-scalar-correctness 32 update-bs_volid bs_volid
+                                 fat32-in-memory fat32-in-memoryp
+                                 update-bs_volid-correctness-1
+                                 update-bs_volid-correctness-2
+                                 update-bs_volid-correctness-3)
+
 (defconst *initialbytcnt* 16)
 
 (defmacro
@@ -709,7 +715,7 @@
         (update-bs_bootsig (nth (- 66 *initialbytcnt*) remaining_rsvdbyts)
                            fat32-in-memory))
        (fat32-in-memory
-        (update-bpb_rootclus
+        (update-bs_volid
          (combine32u (nth (+ 67 3 (- *initialbytcnt*)) remaining_rsvdbyts)
                      (nth (+ 67 2 (- *initialbytcnt*)) remaining_rsvdbyts)
                      (nth (+ 67 1 (- *initialbytcnt*)) remaining_rsvdbyts)
@@ -839,7 +845,7 @@
                     bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
                     bpb_secpertrk bpb_numheads bpb_rootentcnt
                     bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
-                    bpb_rootentcnt bpb_totsec16
+                    bpb_rootentcnt bpb_totsec16 bs_volid
                     update-bpb_secperclus update-bpb_rsvdseccnt
                     update-bpb_bytspersec update-bpb_numfats
                     update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
@@ -849,7 +855,7 @@
                     update-bpb_secpertrk update-bpb_numheads
                     update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
                     update-bpb_fatsz32 update-bpb_rootentcnt
-                    update-bpb_totsec16))
+                    update-bpb_totsec16 update-bs_volid))
 
 (defthm
   slurp-disk-image-guard-lemma-2
@@ -1117,28 +1123,8 @@
            (fat32-in-memoryp
             (mv-nth 0
                     (read-reserved-area fat32-in-memory channel state))))
-  :instructions
-  ((:in-theory (disable fat32-in-memoryp))
-   :bash
-   (:use
-    (:instance
-     read-byte$-n-data
-     (state (mv-nth 1 (read-byte$-n 16 channel state)))
-     (n (+ -16
-           (* (combine16u (nth 12
-                               (mv-nth 0 (read-byte$-n 16 channel state)))
-                          (nth 11
-                               (mv-nth 0 (read-byte$-n 16 channel state))))
-              (combine16u (nth 15
-                               (mv-nth 0 (read-byte$-n 16 channel state)))
-                          (nth 14
-                               (mv-nth 0
-                                       (read-byte$-n 16 channel state)))))))))
-   :promote (:demote 1)
-   (:dive 1 1)
-   :s :up
-   :s :top
-   :promote :bash))
+  :hints
+  (("Goal" :in-theory (disable fat32-in-memoryp))))
 
 ;; state-p actually needs to be enabled for this guard proof because all the
 ;; lemmas are in terms of state-p1
