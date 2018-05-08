@@ -48,16 +48,21 @@
    (princ$ (bpb_numfats fat32-in-memory) channel state)
    (princ$ " 32-bit FATs and " channel state)
    (princ$ (bpb_secperclus fat32-in-memory) channel state)
-   (princ$ " sectors per cluster." channel state)
+   (princ$
+    (if (<= (bpb_secperclus fat32-in-memory) 1)
+        " sector per cluster."
+      " sectors per cluster.")
+    channel
+    state)
    (newline channel state)
    (princ$ "FAT size is " channel state)
    (princ$ (bpb_fatsz32 fat32-in-memory) channel state)
    (princ$ " sectors, and provides " channel state)
-   (princ$ (/ (- (bpb_totsec32 fat32-in-memory)
-                 (+ (bpb_rsvdseccnt fat32-in-memory)
-                    (* (bpb_numfats fat32-in-memory)
-                       (bpb_fatsz32 fat32-in-memory))))
-              (bpb_secperclus fat32-in-memory))
+   (princ$ (floor (- (bpb_totsec32 fat32-in-memory)
+                     (+ (bpb_rsvdseccnt fat32-in-memory)
+                        (* (bpb_numfats fat32-in-memory)
+                           (bpb_fatsz32 fat32-in-memory))))
+                  (bpb_secperclus fat32-in-memory))
            channel
            state)
    (princ$ " clusters." channel state)
