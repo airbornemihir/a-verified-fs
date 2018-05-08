@@ -12,7 +12,6 @@
 (include-book "std/io/read-file-characters" :dir :system)
 (local (include-book "rtl/rel9/arithmetic/top"
                      :dir :system))
-(include-book "kestrel/utilities/strings" :dir :system)
 
 ;; This was moved to one of the main books, but still kept
 (defthm unsigned-byte-listp-of-update-nth
@@ -148,6 +147,24 @@
   :rule-classes :definition)
 
 (in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp))
+
+(in-theory (disable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
+                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
+                    bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
+                    bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
+                    bpb_secpertrk bpb_numheads bpb_rootentcnt
+                    bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
+                    bpb_rootentcnt bpb_totsec16 bs_volid
+                    update-bpb_secperclus update-bpb_rsvdseccnt
+                    update-bpb_bytspersec update-bpb_numfats
+                    update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
+                    update-bs_drvnum update-bs_reserved1 update-bs_bootsig
+                    update-bpb_media update-bpb_fsver_minor
+                    update-bpb_fsver_major update-bpb_fatsz16
+                    update-bpb_secpertrk update-bpb_numheads
+                    update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
+                    update-bpb_fatsz32 update-bpb_rootentcnt
+                    update-bpb_totsec16 update-bs_volid))
 
 (defmacro
   update-stobj-scalar-correctness
@@ -765,6 +782,22 @@
          (fat32-in-memory (update-data-regioni pos ch-byte fat32-in-memory)))
       (update-data-region fat32-in-memory str len pos+1))))
 
+(defthm
+  read-fat-guard-lemma-2
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (<= 0 (bpb_fatsz32 fat32-in-memory)))
+  :hints (("Goal" :use update-bpb_fatsz32-correctness-2) )
+  :rule-classes :linear)
+
+(defthm
+  read-fat-guard-lemma-3
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (<= 0 (bpb_bytspersec fat32-in-memory)))
+  :hints (("Goal" :use update-bpb_bytspersec-correctness-2) )
+  :rule-classes :linear)
+
 (defun
   read-fat (fat32-in-memory channel state)
   (declare
@@ -776,7 +809,7 @@
                 (fat32-in-memoryp fat32-in-memory))
     :guard-hints
     (("goal" :do-not-induct t
-      :in-theory (disable state-p unsigned-byte-p nth)))
+      :in-theory (disable state-p unsigned-byte-p nth fat32-in-memoryp)))
     :stobjs (state fat32-in-memory)))
   (b*
       ((fat-read-size (/ (* (bpb_fatsz32 fat32-in-memory) (bpb_bytspersec
@@ -838,24 +871,6 @@
                                        (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))))))
                (state
                 (MV-NTH 1 (READ-BYTE$-N 16 CHANNEL STATE))))))))
-
-(in-theory (disable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
-                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
-                    bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
-                    bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
-                    bpb_secpertrk bpb_numheads bpb_rootentcnt
-                    bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
-                    bpb_rootentcnt bpb_totsec16 bs_volid
-                    update-bpb_secperclus update-bpb_rsvdseccnt
-                    update-bpb_bytspersec update-bpb_numfats
-                    update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
-                    update-bs_drvnum update-bs_reserved1 update-bs_bootsig
-                    update-bpb_media update-bpb_fsver_minor
-                    update-bpb_fsver_major update-bpb_fatsz16
-                    update-bpb_secpertrk update-bpb_numheads
-                    update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
-                    update-bpb_fatsz32 update-bpb_rootentcnt
-                    update-bpb_totsec16 update-bs_volid))
 
 (defthm
   slurp-disk-image-guard-lemma-2
@@ -1040,22 +1055,6 @@
   slurp-disk-image-guard-lemma-12
   (implies (and (integerp x) (integerp y))
            (integerp (* x y))))
-
-(defthm
-  slurp-disk-image-guard-lemma-13
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (<= 0 (bpb_bytspersec fat32-in-memory)))
-  :hints (("Goal" :use update-bpb_bytspersec-correctness-2) )
-  :rule-classes :linear)
-
-(defthm
-  slurp-disk-image-guard-lemma-14
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (<= 0 (bpb_fatsz32 fat32-in-memory)))
-  :hints (("Goal" :use update-bpb_fatsz32-correctness-2) )
-  :rule-classes :linear)
 
 ;; Look, we're going to have to keep re-visiting this as we make sure there are
 ;; at least 512 bytes per sector and so on. Let's just pause and do it right.
