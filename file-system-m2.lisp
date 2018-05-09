@@ -1314,27 +1314,6 @@
   :hints (("Goal" :in-theory (e/d (get-dir-ent unsigned-byte-listp)
                                   (fat32-in-memoryp)))))
 
-(defun get-dir-ent-filename-helper (fat32-in-memory data-region-index len)
-  (declare
-   (xargs
-    :verify-guards nil
-    :stobjs (fat32-in-memory)))
-  (if (zp len)
-      nil
-    (list*
-     (code-char (data-regioni (+ data-region-index len -1) fat32-in-memory))
-     (get-dir-ent-filename-helper fat32-in-memory data-region-index (- len 1)))))
-
-(defun get-dir-ent-filename (fat32-in-memory data-region-index)
-  (declare
-   (xargs
-    :verify-guards nil
-    :stobjs (fat32-in-memory)))
-  (coerce
-    (rev (get-dir-ent-filename-helper fat32-in-memory data-region-index
-                                      11))
-   'string))
-
 (defun
   get-dir-ent-filenames
   (fat32-in-memory data-region-index entry-limit)
