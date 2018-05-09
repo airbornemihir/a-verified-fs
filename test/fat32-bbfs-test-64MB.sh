@@ -21,7 +21,6 @@ time mkfs.fat -v -F 32 $DISK
 # make a mountpoint
 mkdir -p $MOUNTPOINT
 mkdir -p $FUSEPOINT
-$OD_STEP -t x4 -j16384 -N32 $DISK
 sudo mount -o loop,uid=$UID,gid=$GID -t msdos $DISK $MOUNTPOINT
 $BBFS $MOUNTPOINT $FUSEPOINT
 echo "four" > $FUSEPOINT/vmlinuz
