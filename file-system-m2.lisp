@@ -21,6 +21,19 @@
                   (unsigned-byte-p n val)))
   :hints (("goal" :in-theory (enable unsigned-byte-listp))))
 
+;; This was taken from Alessandro Coglio's book at
+;; books/kestrel/utilities/typed-list-theorems.lisp
+(defthm unsigned-byte-listp-of-rev
+  (equal (unsigned-byte-listp n (rev bytes))
+         (unsigned-byte-listp n (list-fix bytes)))
+  :hints (("goal" :in-theory (enable unsigned-byte-listp rev))))
+
+(defthm nth-of-unsigned-byte-list
+  (implies (and (unsigned-byte-listp bits l)
+                (natp n)
+                (< n (len l)))
+           (unsigned-byte-p bits (nth n l))))
+
 (make-event
  `(defstobj fat32-in-memory
 
@@ -146,7 +159,12 @@
          (unsigned-byte-listp 32 x))
   :rule-classes :definition)
 
-(in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp))
+(defthm data-regionp-alt
+  (equal (data-regionp x)
+         (unsigned-byte-listp 8 x))
+  :rule-classes :definition)
+
+(in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp data-regionp))
 
 (in-theory (disable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
                     bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
@@ -347,8 +365,8 @@
 
 (defmacro
   update-stobj-array
-  (name array-length bit-width array-updater constant
-        stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3)
+  (name array-length bit-width array-updater array-accessor constant
+        stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3 lemma-name4)
   `(encapsulate
      nil
 
@@ -433,43 +451,51 @@
        :hints (("goal" :in-theory (e/d (unsigned-byte-listp)
                                        (,stobj-recogniser ,array-updater))
                 :induct
-                (,stobj-recogniser (,name v ,stobj)))))))
+                (,stobj-recogniser (,name v ,stobj)))))
+
+     (defthm ,lemma-name4
+       (implies (and (,stobj-recogniser ,stobj)
+                     (integerp i)
+                     (<= 0 i)
+                     (< i (,array-length ,stobj)))
+                (unsigned-byte-p ,bit-width (,array-accessor i ,stobj)))
+       :hints (("Goal" :in-theory (disable nth unsigned-byte-p))))))
 
 (update-stobj-array
- update-bs_jmpboot
- bs_jmpboot-length
- 8 update-bs_jmpbooti *bs_jmpbooti*
+ update-bs_jmpboot bs_jmpboot-length 8
+ update-bs_jmpbooti bs_jmpbooti *bs_jmpbooti*
  fat32-in-memory fat32-in-memoryp
  update-bs_jmpboot-correctness-1
  update-bs_jmpboot-correctness-2
- update-bs_jmpboot-correctness-3)
+ update-bs_jmpboot-correctness-3
+ update-bs_jmpboot-correctness-4)
 
 (update-stobj-array
- update-bs_oemname
- bs_oemname-length
- 8 update-bs_oemnamei *bs_oemnamei*
+ update-bs_oemname bs_oemname-length 8
+ update-bs_oemnamei bs_oemnamei *bs_oemnamei*
  fat32-in-memory fat32-in-memoryp
  update-bs_oemname-correctness-1
  update-bs_oemname-correctness-2
- update-bs_oemname-correctness-3)
+ update-bs_oemname-correctness-3
+ update-bs_oemname-correctness-4)
 
 (update-stobj-array
- update-bs_filsystype
- bs_filsystype-length
- 8 update-bs_filsystypei *bs_filsystypei*
+ update-bs_filsystype bs_filsystype-length 8
+ update-bs_filsystypei bs_filsystypei *bs_filsystypei*
  fat32-in-memory fat32-in-memoryp
  update-bs_filsystype-correctness-1
  update-bs_filsystype-correctness-2
- update-bs_filsystype-correctness-3)
+ update-bs_filsystype-correctness-3
+ update-bs_filsystype-correctness-4)
 
 (update-stobj-array
- update-fat
- fat-length
- 32 update-fati *fati*
+ update-fat fat-length 32
+ update-fati fati *fati*
  fat32-in-memory fat32-in-memoryp
  update-fat-correctness-1
  update-fat-correctness-2
- update-fat-correctness-3)
+ update-fat-correctness-3
+ update-fat-correctness-4)
 
 (defthm
   read-reserved-area-guard-lemma-1
@@ -1218,6 +1244,75 @@
          0)))
     (mv fat32-in-memory state error-code)))
 
+(defun get-dir-ent-helper (fat32-in-memory data-region-index len)
+  (declare
+   (xargs
+    :guard (and (fat32-in-memoryp fat32-in-memory)
+                (natp data-region-index)
+                (natp len)
+                (<= (+ data-region-index len)
+                    (data-region-length fat32-in-memory)))
+    :stobjs (fat32-in-memory)))
+  (if (zp len)
+      nil
+    (cons
+     (data-regioni (+ data-region-index len -1) fat32-in-memory)
+     (get-dir-ent-helper fat32-in-memory data-region-index (- len 1)))))
+
+(defthm
+  get-dir-ent-helper-correctness-1-lemma-1
+  (implies (and (fat32-in-memoryp fat32-in-memory)
+                (integerp i)
+                (<= 0 i)
+                (< i (data-region-length fat32-in-memory)))
+           (unsigned-byte-p 8 (data-regioni i fat32-in-memory)))
+  :hints (("goal" :in-theory (disable unsigned-byte-p))))
+
+(defthm
+  get-dir-ent-helper-correctness-1
+  (implies
+   (and (fat32-in-memoryp fat32-in-memory)
+        (natp data-region-index)
+        (<= (+ data-region-index len)
+            (data-region-length fat32-in-memory)))
+   (and
+    (unsigned-byte-listp
+     8
+     (get-dir-ent-helper fat32-in-memory data-region-index len))
+    (equal (len (get-dir-ent-helper
+                 fat32-in-memory data-region-index len))
+           (nfix len))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (unsigned-byte-listp)
+         (fat32-in-memoryp unsigned-byte-p data-regioni)))))
+
+(defund get-dir-ent (fat32-in-memory data-region-index)
+  (declare
+   (xargs
+    :guard (and (fat32-in-memoryp fat32-in-memory)
+                (natp data-region-index)
+                (<= (+ data-region-index *ms-dir-ent-length*)
+                    (data-region-length fat32-in-memory)))
+    :stobjs (fat32-in-memory)))
+  (rev (get-dir-ent-helper fat32-in-memory data-region-index
+                           *ms-dir-ent-length*)))
+
+(defthm
+  get-dir-ent-correctness-1
+  (implies (and (fat32-in-memoryp fat32-in-memory)
+                (natp data-region-index)
+                (<= (+ data-region-index *ms-dir-ent-length*)
+                    (data-region-length fat32-in-memory)))
+           (and (unsigned-byte-listp 8 (get-dir-ent fat32-in-memory
+                                                     data-region-index))
+                (equal (len (get-dir-ent fat32-in-memory
+                                                            data-region-index))
+                       *ms-dir-ent-length*)))
+  :hints (("Goal" :in-theory (e/d (get-dir-ent unsigned-byte-listp)
+                                  (fat32-in-memoryp)))))
+
 (defun get-dir-ent-filename-helper (fat32-in-memory data-region-index len)
   (declare
    (xargs
@@ -1234,8 +1329,10 @@
    (xargs
     :verify-guards nil
     :stobjs (fat32-in-memory)))
-  (coerce (rev (get-dir-ent-filename-helper fat32-in-memory data-region-index
-                                            11)) 'string))
+  (coerce
+    (rev (get-dir-ent-filename-helper fat32-in-memory data-region-index
+                                      11))
+   'string))
 
 (defun get-dir-ent-filenames (fat32-in-memory data-region-index entry-limit)
   (declare

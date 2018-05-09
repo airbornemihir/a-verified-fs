@@ -33,6 +33,8 @@
                                        1
                                        *ms-fat32-min-count-of-clusters*))
 
+(defconst *ms-dir-ent-length* 32)
+
 ;; from include/uapi/asm-generic/errno-base.h
 (defconst *EIO* 5) ;; I/O error
 (defconst *ENOSPC* 28) ;; No space left on device
