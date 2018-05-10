@@ -44,7 +44,7 @@ mount_od_umount
 dd of=$MOUNTPOINT/tmp/ticket1.txt if=/dev/zero bs=4 count=1
 mount_od_umount
 dd of=$MOUNTPOINT/tmp/ticket2.txt if=/dev/zero bs=512 count=9
-ls -lR $MOUNTPOINT
+ls -1R $MOUNTPOINT
 sudo umount $MOUNTPOINT
 $OD_STEP -t x4 -j16384 -N32 $DISK
 rmdir $MOUNTPOINT
