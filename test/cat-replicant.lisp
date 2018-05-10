@@ -23,8 +23,8 @@
     (rev (get-dir-ent-helper fat32-in-memory data-region-index
                              (min file-size cluster-size))))))
 
-(slurp-disk-image
- fat32-in-memory "/tmp/disk1.raw"  state)
+(time$ (slurp-disk-image
+        fat32-in-memory "disk1.raw" state))
 
 (mv-let
   (channel state)
