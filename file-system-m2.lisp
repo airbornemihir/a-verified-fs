@@ -1307,9 +1307,9 @@
                 (<= (+ data-region-index *ms-dir-ent-length*)
                     (data-region-length fat32-in-memory)))
            (and (unsigned-byte-listp 8 (get-dir-ent fat32-in-memory
-                                                     data-region-index))
+                                                    data-region-index))
                 (equal (len (get-dir-ent fat32-in-memory
-                                                            data-region-index))
+                                         data-region-index))
                        *ms-dir-ent-length*)))
   :hints (("Goal" :in-theory (e/d (get-dir-ent unsigned-byte-listp)
                                   (fat32-in-memoryp)))))
@@ -1349,6 +1349,29 @@
      (get-dir-ent-filenames
       fat32-in-memory (+ data-region-index 32)
       (- entry-limit 1))))))
+
+(defun
+  get-dir-ent-first-cluster-contents
+  (fat32-in-memory data-region-index)
+  (declare (xargs :stobjs (fat32-in-memory)
+                  :verify-guards nil))
+  (let*
+   ((dir-ent (get-dir-ent fat32-in-memory data-region-index))
+    (first-cluster (combine32u (nth 21 dir-ent)
+                               (nth 20 dir-ent)
+                               (nth 27 dir-ent)
+                               (nth 26 dir-ent)))
+    (cluster-size (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_secperclus fat32-in-memory)))
+    (file-size (combine32u (nth 31 dir-ent)
+                           (nth 30 dir-ent)
+                           (nth 29 dir-ent)
+                           (nth 28 dir-ent)))
+    (data-region-index (* (nfix (- first-cluster 2))
+                          cluster-size)))
+   (nats=>string
+    (rev (get-dir-ent-helper fat32-in-memory data-region-index
+                             (min file-size cluster-size))))))
 
 (in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
