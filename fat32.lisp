@@ -33,6 +33,13 @@
                                        1
                                        *ms-fat32-min-count-of-clusters*))
 
+(defconst *ms-max-bytes-per-sector* 4096)
+
+;; inferred - there can be as many as 128 sectors in a cluster
+(defconst *ms-max-data-region-size* (* *ms-max-bytes-per-sector*
+                                       128
+                                       (- *ms-bad-cluster* 2)))
+
 (defconst *ms-dir-ent-length* 32)
 
 ;; from include/uapi/asm-generic/errno-base.h

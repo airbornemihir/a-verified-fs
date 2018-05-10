@@ -824,6 +824,7 @@
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
 (defmacro  u8 (x)   `(the (unsigned-byte  8) ,x))
+(defmacro u47 (x)   `(the (unsigned-byte 47) ,x))
 
 (defun
     update-data-region (fat32-in-memory str len pos)
@@ -832,19 +833,24 @@
                               (natp pos)
                               (<= pos len)
                               (= len (length str))
-                              (<= len (data-region-length fat32-in-memory)))
+                              (<= len (data-region-length fat32-in-memory))
+                              (<= (data-region-length fat32-in-memory)
+                                  *ms-max-data-region-size*))
                   :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp)))
                   :guard-debug t
                   :measure (nfix (- len pos))
                   :stobjs fat32-in-memory))
-  (if (mbe :logic (zp (- len pos))
-           :exec  (>= pos len))
-      fat32-in-memory
-    (b* ((ch (char str pos))
-         (ch-byte (u8 (char-code ch)))
-         (pos+1 (1+ pos))
-         (fat32-in-memory (update-data-regioni pos ch-byte fat32-in-memory)))
-      (update-data-region fat32-in-memory str len pos+1))))
+  (b*
+      ((len (u47 len))
+       (pos (u47 pos)))
+    (if (mbe :logic (zp (- len pos))
+             :exec  (>= pos len))
+        fat32-in-memory
+      (b* ((ch (char str pos))
+           (ch-byte (u8 (char-code ch)))
+           (pos+1 (u47 (1+ pos)))
+           (fat32-in-memory (update-data-regioni pos ch-byte fat32-in-memory)))
+        (update-data-region fat32-in-memory str len pos+1)))))
 
 (defthm
   read-fat-guard-lemma-2

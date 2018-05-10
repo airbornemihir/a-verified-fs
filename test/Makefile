@@ -27,12 +27,12 @@ $(MOUNTPOINT): clean-mountpoint
 $(FUSEPOINT): clean-fusepoint
 	mkdir -p $(FUSEPOINT)
 
-test-cat-replicant: ref-output.txt output.txt
-	diff -u -i ref-output.txt output.txt
+test-cat-replicant: cat-ref-output.txt cat-output.txt
+	diff -u -i cat-ref-output.txt cat-output.txt
 
-ref-output.txt output.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cat-ref-output.txt cat-output.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	echo "four" > $(FUSEPOINT)/vmlinuz
-	cat $(FUSEPOINT)/vmlinuz > ref-output.txt
+	cat $(FUSEPOINT)/vmlinuz > cat-ref-output.txt
 	$(ACL2) < cat-replicant.lisp
