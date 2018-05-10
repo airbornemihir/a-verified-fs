@@ -28,7 +28,7 @@
 
 (mv-let
   (channel state)
-  (open-output-channel "output.txt" :character state)
+  (open-output-channel "cat-output.txt" :character state)
   (pprogn
    (princ$
     (get-dir-ent-first-cluster-contents

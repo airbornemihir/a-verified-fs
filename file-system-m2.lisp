@@ -824,7 +824,7 @@
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
 (defmacro  u8 (x)   `(the (unsigned-byte  8) ,x))
-(defmacro u47 (x)   `(the (unsigned-byte 47) ,x))
+(defmacro u48 (x)   `(the (unsigned-byte 48) ,x))
 
 (defun
     update-data-region (fat32-in-memory str len pos)
@@ -841,14 +841,14 @@
                   :measure (nfix (- len pos))
                   :stobjs fat32-in-memory))
   (b*
-      ((len (u47 len))
-       (pos (u47 pos)))
+      ((len (u48 len))
+       (pos (u48 pos)))
     (if (mbe :logic (zp (- len pos))
              :exec  (>= pos len))
         fat32-in-memory
       (b* ((ch (char str pos))
            (ch-byte (u8 (char-code ch)))
-           (pos+1 (u47 (1+ pos)))
+           (pos+1 (u48 (1+ pos)))
            (fat32-in-memory (update-data-regioni pos ch-byte fat32-in-memory)))
         (update-data-region fat32-in-memory str len pos+1)))))
 

@@ -1,5 +1,7 @@
 test: test-cat-replicant
 
+.PHONY: clean-disk clean-mountpoint clean-fusepoint test test-cat-replicant
+
 DISK=disk1.raw
 SIZE=73M
 MOUNTPOINT=mount1
@@ -9,7 +11,7 @@ UID=$(shell id -u)
 GID=$(shell id -g)
 
 clean-disk:
-	rm -rf $(DISK)
+	rm $(DISK)
 
 clean-mountpoint:
 	rm -rf $(MOUNTPOINT)
@@ -17,14 +19,17 @@ clean-mountpoint:
 clean-fusepoint:
 	rm -rf $(FUSEPOINT)
 
-$(DISK): clean-disk
+$(DISK):
+	rm -f $(DISK)
 	qemu-img create -f raw $(DISK) $(SIZE)
 	mkfs.fat -v -F 32 -s 2 $(DISK)
 
-$(MOUNTPOINT): clean-mountpoint
+$(MOUNTPOINT):
+	rm -rf $(MOUNTPOINT)
 	mkdir -p $(MOUNTPOINT)
 
-$(FUSEPOINT): clean-fusepoint
+$(FUSEPOINT):
+	rm -rf $(FUSEPOINT)
 	mkdir -p $(FUSEPOINT)
 
 test-cat-replicant: cat-ref-output.txt cat-output.txt
@@ -35,4 +40,7 @@ cat-ref-output.txt cat-output.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replic
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	echo "four" > $(FUSEPOINT)/vmlinuz
 	cat $(FUSEPOINT)/vmlinuz > cat-ref-output.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
 	$(ACL2) < cat-replicant.lisp
