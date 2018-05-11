@@ -247,3 +247,12 @@
                                         cluster-size)))
             (mv (list* masked-current-cluster tail-index-list)
                 tail-error)))))))
+
+(defthm
+  fat32-build-index-list-correctness-3
+  (b* (((mv & error-code)
+        (fat32-build-index-list fa-table masked-current-cluster
+                                length cluster-size)))
+    (and (integerp error-code)
+         (or (equal error-code 0)
+             (equal error-code (- *eio*))))))
