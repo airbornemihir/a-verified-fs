@@ -304,3 +304,18 @@
     (fat32-build-index-list (update-nth key val fa-table)
                             masked-current-cluster
                             length cluster-size))))
+
+(defthm
+  fat32-build-index-list-correctness-5
+  (implies
+   (and (fat32-masked-entry-p masked-current-cluster)
+        (<= *ms-first-data-cluster*
+            masked-current-cluster))
+   (lower-bounded-integer-listp
+    (mv-nth
+     0
+     (fat32-build-index-list fa-table masked-current-cluster
+                             length cluster-size))
+    *ms-first-data-cluster*))
+  :hints
+  (("goal" :in-theory (enable lower-bounded-integer-listp))))
