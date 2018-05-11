@@ -10,6 +10,7 @@
 (include-book "centaur/fty/top" :dir :system)
 
 (local (include-book "file-system-lemmas"))
+(include-book "bounded-nat-listp")
 
 (defconst *expt-2-28* (expt 2 28))
 
@@ -247,6 +248,27 @@
                                         cluster-size)))
             (mv (list* masked-current-cluster tail-index-list)
                 tail-error)))))))
+
+(defthm fat32-build-index-list-correctness-1
+  (implies (and (equal b (len fa-table))
+                (fat32-masked-entry-p masked-current-cluster)
+                (< masked-current-cluster (len fa-table)))
+           (b* (((mv index-list &)
+                 (fat32-build-index-list fa-table masked-current-cluster
+                                         length cluster-size)))
+             (bounded-nat-listp index-list b))))
+
+(defthm
+  fat32-build-index-list-correctness-2
+  (implies
+   (and
+    (fat32-masked-entry-p masked-current-cluster)
+    (>= masked-current-cluster *ms-first-data-cluster*)
+    (< masked-current-cluster (len fa-table)))
+   (b* (((mv index-list &)
+         (fat32-build-index-list fa-table masked-current-cluster
+                                 length cluster-size)))
+     (fat32-masked-entry-list-p index-list))))
 
 (defthm
   fat32-build-index-list-correctness-3

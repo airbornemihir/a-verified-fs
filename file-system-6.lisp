@@ -202,12 +202,12 @@
 ;; element of the mv. that will be 0 if we successfully got a list of indices,
 ;; and -EIO if we did not for reasons shown in the function
 ;; fs/fat/cache.c:fat_get_cluster
-(defun
+(defund
     l6-build-index-list
     (fa-table masked-current-cluster length)
   (declare
    (xargs
-    :measure (acl2-count length)
+    :measure (nfix length)
     :guard (and (fat32-entry-list-p fa-table)
                 (fat32-masked-entry-p masked-current-cluster)
                 (natp length)
@@ -245,35 +245,14 @@
             (mv (list* masked-current-cluster tail-index-list)
                 tail-error)))))))
 
-(defthm l6-build-index-list-correctness-1
-  (implies (and (equal b (len fa-table))
-                (fat32-masked-entry-p masked-current-cluster)
-                (< masked-current-cluster (len fa-table)))
-           (b* (((mv index-list &)
-                 (l6-build-index-list fa-table
-                                      masked-current-cluster length)))
-             (bounded-nat-listp index-list b))))
-
 (defthm
-  l6-build-index-list-correctness-2
-  (implies
-   (and
-    (fat32-masked-entry-p masked-current-cluster)
-    (>= masked-current-cluster 2)
-    (< masked-current-cluster (len fa-table)))
-   (b* (((mv index-list &)
-         (l6-build-index-list fa-table
-                              masked-current-cluster length)))
-     (fat32-masked-entry-list-p index-list))))
-
-(defthm
-  l6-build-index-list-correctness-3
-  (b* (((mv & error-code)
-        (l6-build-index-list fa-table
-                             masked-current-cluster length)))
-    (and (integerp error-code)
-         (or (equal error-code 0)
-             (equal error-code (- *eio*))))))
+  l6-build-index-list-alt
+  (equal
+   (l6-build-index-list fa-table masked-current-cluster length)
+   (fat32-build-index-list fa-table masked-current-cluster
+                           length *blocksize*))
+  :rule-classes :definition
+  :hints (("goal" :in-theory (enable l6-build-index-list))))
 
 (defund find-n-free-clusters-helper (fa-table n start)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
