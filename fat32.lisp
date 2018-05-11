@@ -278,3 +278,29 @@
     (and (integerp error-code)
          (or (equal error-code 0)
              (equal error-code (- *eio*))))))
+
+(defthm
+  fat32-build-index-list-correctness-4
+  (implies
+   (fat32-masked-entry-p masked-current-cluster)
+   (mv-let
+     (index-list error-code)
+     (fat32-build-index-list fa-table masked-current-cluster
+                             length cluster-size)
+     (implies
+      (and (fat32-masked-entry-p key)
+           (< key (len fa-table))
+           (not (member-equal key index-list))
+           (equal error-code 0))
+      (equal
+       (fat32-build-index-list (update-nth key val fa-table)
+                               masked-current-cluster
+                               length cluster-size)
+       (fat32-build-index-list fa-table masked-current-cluster
+                               length cluster-size)))))
+  :hints
+  (("subgoal *1/3"
+    :expand
+    (fat32-build-index-list (update-nth key val fa-table)
+                            masked-current-cluster
+                            length cluster-size))))

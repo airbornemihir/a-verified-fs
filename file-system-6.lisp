@@ -570,11 +570,12 @@
   :hints
   (("goal" :in-theory (enable l6-file-index-list))
    ("Goal'''"
-    :in-theory (disable l6-build-index-list-correctness-3)
-    :use (:instance l6-build-index-list-correctness-3
+    :in-theory (disable fat32-build-index-list-correctness-3)
+    :use (:instance fat32-build-index-list-correctness-3
                     (masked-current-cluster
                      (l6-regular-file-first-cluster file))
-                    (length (l6-regular-file-length file))))))
+                    (length (l6-regular-file-length file))
+                    (cluster-size *blocksize*)))))
 
 ;; This function finds a text file given its path and reads a segment of
 ;; that text file.
@@ -1119,16 +1120,19 @@
 
 (defthm
   l6-stricter-fs-p-correctness-1-lemma-1
-  (implies (and (fat32-entry-list-p fa-table)
-                (integerp masked-current-cluster)
-                (<= *ms-first-data-cluster* masked-current-cluster)
-                (< masked-current-cluster (len fa-table)))
-           (b* (((mv index-list error-code)
-                 (l6-build-index-list fa-table
-                                      masked-current-cluster length)))
-             (implies (equal error-code 0)
-                      (indices-marked-p index-list
-                                        (fa-table-to-alv fa-table))))))
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (integerp masked-current-cluster)
+        (<= *ms-first-data-cluster*
+            masked-current-cluster)
+        (< masked-current-cluster (len fa-table)))
+   (b*
+       (((mv index-list error-code)
+         (fat32-build-index-list fa-table masked-current-cluster
+                                 length cluster-size)))
+     (implies (equal error-code 0)
+              (indices-marked-p index-list
+                                (fa-table-to-alv fa-table))))))
 
 (defthm
   l6-stricter-fs-p-correctness-1-lemma-2
@@ -1958,18 +1962,21 @@
 (defthmd
   l6-wrchs-correctness-1-lemma-13
   (implies
-   (and (fat32-entry-list-p fa-table)
-        (fat32-masked-entry-p masked-current-cluster)
-        (natp length)
-        (>= masked-current-cluster *ms-first-data-cluster*)
-        (< masked-current-cluster (len fa-table))
-        (member-equal
-         x
-         (mv-nth 0
-                 (l6-build-index-list fa-table
-                                      masked-current-cluster length))))
-   (and (integerp x) (>= x *ms-first-data-cluster*)))
-  :hints (("goal" :in-theory (enable l6-build-index-list))))
+   (and
+    (fat32-entry-list-p fa-table)
+    (fat32-masked-entry-p masked-current-cluster)
+    (natp length)
+    (>= masked-current-cluster
+        *ms-first-data-cluster*)
+    (< masked-current-cluster (len fa-table))
+    (member-equal
+     x
+     (mv-nth
+      0
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))))
+   (and (integerp x)
+        (>= x *ms-first-data-cluster*))))
 
 (defthmd
   l6-wrchs-correctness-1-lemma-14
@@ -1979,14 +1986,16 @@
         (member-equal
          x
          (mv-nth 0 (l6-file-index-list file fa-table))))
-   (and (integerp x) (>= x 2)))
+   (and (integerp x)
+        (>= x *ms-first-data-cluster*)))
   :hints
   (("goal"
     :in-theory (enable l6-file-index-list)
     :use (:instance l6-wrchs-correctness-1-lemma-13
                     (masked-current-cluster
                      (l6-regular-file-first-cluster file))
-                    (length (l6-regular-file-length file))))))
+                    (length (l6-regular-file-length file))
+                    (cluster-size *blocksize*)))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-15
@@ -2016,14 +2025,6 @@
    (l3-regular-file-entry-p
     (cdr (assoc-equal name
                       (l6-to-l4-fs-helper fs fa-table))))))
-
-;; We cannot reason with find-n-free-clusters and find-n-free clusters-helper
-;; here. We're going to have to abstract away its properties and treat it like
-;; a list of integers, all greater than equal to 2, all less than the length of
-;; the disk.
-
-;; This might also be a good time to add a constant in place of 2. I don't like
-;; the idea of considering 2 to be special here.
 
 (defund lower-bounded-integer-listp (l b)
   (declare (xargs :guard (integerp b)))
@@ -2175,12 +2176,11 @@
         (< masked-current-cluster (len fa-table)))
    (lower-bounded-integer-listp
     (mv-nth 0
-            (l6-build-index-list
-             fa-table masked-current-cluster length))
+            (fat32-build-index-list
+             fa-table masked-current-cluster length cluster-size))
     *ms-first-data-cluster*))
   :hints
-  (("goal" :in-theory (enable l6-build-index-list
-                              lower-bounded-integer-listp))))
+  (("goal" :in-theory (enable lower-bounded-integer-listp))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-23
@@ -2330,31 +2330,31 @@
     :hints (("goal" :in-theory (enable lower-bounded-integer-listp)))))
   :hints (("goal" :in-theory (enable find-n-free-clusters))))
 
-(defthm
-  l6-wrchs-correctness-1-lemma-27
-  (implies
-   (fat32-masked-entry-p masked-current-cluster)
-   (mv-let
-     (index-list error-code)
-     (l6-build-index-list fa-table masked-current-cluster length)
-     (implies
-      (and (fat32-masked-entry-p key)
-           (< key (len fa-table))
-           (not (member-equal key index-list))
-           (equal error-code 0))
-      (equal
-       (l6-build-index-list (update-nth key val fa-table)
-                            masked-current-cluster length)
-       (l6-build-index-list fa-table
-                            masked-current-cluster length)))))
-  :hints
-  (("goal" :in-theory (enable l6-build-index-list)
-    :induct (l6-build-index-list
-             fa-table masked-current-cluster length))
-   ("subgoal *1/3.2"
-    :expand
-    (l6-build-index-list (update-nth key val fa-table)
-                         masked-current-cluster length))))
+;; (defthm
+;;   l6-wrchs-correctness-1-lemma-27
+;;   (implies
+;;    (fat32-masked-entry-p masked-current-cluster)
+;;    (mv-let
+;;      (index-list error-code)
+;;      (l6-build-index-list fa-table masked-current-cluster length)
+;;      (implies
+;;       (and (fat32-masked-entry-p key)
+;;            (< key (len fa-table))
+;;            (not (member-equal key index-list))
+;;            (equal error-code 0))
+;;       (equal
+;;        (l6-build-index-list (update-nth key val fa-table)
+;;                             masked-current-cluster length)
+;;        (l6-build-index-list fa-table
+;;                             masked-current-cluster length)))))
+;;   :hints
+;;   (("goal" :in-theory (enable l6-build-index-list)
+;;     :induct (l6-build-index-list
+;;              fa-table masked-current-cluster length))
+;;    ("subgoal *1/3.2"
+;;     :expand
+;;     (l6-build-index-list (update-nth key val fa-table)
+;;                          masked-current-cluster length))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-28
