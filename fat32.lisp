@@ -221,13 +221,7 @@
                 (>= masked-current-cluster 2)
                 (< masked-current-cluster (len fa-table))
                 (integerp cluster-size)
-                (> cluster-size 0))
-    :guard-hints
-    (("goal"
-      :in-theory (disable fat32-entry-mask-correctness-1)
-      :use
-      (:instance fat32-entry-mask-correctness-1
-                 (x (nth masked-current-cluster fa-table)))))))
+                (> cluster-size 0))))
   (if
       (or (zp length) (zp cluster-size))
       ;; This represents a problem case because masked-current-cluster is a
