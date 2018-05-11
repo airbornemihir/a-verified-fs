@@ -2026,25 +2026,6 @@
     (cdr (assoc-equal name
                       (l6-to-l4-fs-helper fs fa-table))))))
 
-(defund lower-bounded-integer-listp (l b)
-  (declare (xargs :guard (integerp b)))
-  (if (atom l)
-      (equal l nil)
-    (and (integerp (car l)) (>= (car l) b) (lower-bounded-integer-listp (cdr l) b))))
-
-(defthm lower-bounded-integer-listp-correctness-2
-  (implies (true-listp x)
-           (equal (lower-bounded-integer-listp (binary-append x y)
-                                     b)
-                  (and (lower-bounded-integer-listp x b)
-                       (lower-bounded-integer-listp y b))))
-  :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
-
-(defthmd lower-bounded-integer-listp-correctness-5
-  (implies (and (<= y x) (lower-bounded-integer-listp l x))
-           (lower-bounded-integer-listp l y))
-  :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
-
 (defthm
   l6-wrchs-correctness-1-lemma-17
   (implies
