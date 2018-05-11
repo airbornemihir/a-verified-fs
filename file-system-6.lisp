@@ -195,18 +195,6 @@
                 (not (l6-regular-file-entry-p (cdr (assoc-equal name fs)))))
            (l6-fs-p (cdr (assoc-equal name fs)))))
 
-;; taken from page 18 of the fat overview - the constant 268435448 is written
-;; out as 0xFFFFFF8 therein
-(defund l6-is-eof (fat-content)
-  (declare (xargs :guard (fat32-masked-entry-p fat-content)
-                  :guard-hints (("Goal'" :in-theory (enable fat32-masked-entry-p)))))
-  (>= fat-content 268435448))
-
-(defthm l6-is-eof-correctness-1
-  (implies (< fat-content *ms-bad-cluster*)
-           (not (l6-is-eof fat-content)))
-  :hints (("Goal" :in-theory (enable l6-is-eof)) ))
-
 ;; we have what we need to define a disk traversal to get the contents of the
 ;; file
 
@@ -247,7 +235,7 @@
           (mv (list masked-current-cluster)
               (- *eio*))
         (if
-            (or (l6-is-eof masked-next-cluster)
+            (or (fat32-is-eof masked-next-cluster)
                 (>= masked-next-cluster (len fa-table)))
             (mv (list masked-current-cluster) 0)
           (b*
