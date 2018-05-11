@@ -7,16 +7,10 @@
                   :verify-guards nil))
   (let*
    ((dir-ent (get-dir-ent fat32-in-memory data-region-index))
-    (first-cluster (combine32u (nth 21 dir-ent)
-                               (nth 20 dir-ent)
-                               (nth 27 dir-ent)
-                               (nth 26 dir-ent)))
+    (first-cluster (dir-ent-first-cluster dir-ent))
     (cluster-size (* (bpb_bytspersec fat32-in-memory)
                      (bpb_secperclus fat32-in-memory)))
-    (file-size (combine32u (nth 31 dir-ent)
-                           (nth 30 dir-ent)
-                           (nth 29 dir-ent)
-                           (nth 28 dir-ent)))
+    (file-size (dir-ent-file-size dir-ent))
     (data-region-index (* (nfix (- first-cluster 2))
                           cluster-size)))
    (nats=>string

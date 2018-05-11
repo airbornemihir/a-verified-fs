@@ -1321,7 +1321,7 @@
                                   (fat32-in-memoryp)))))
 
 (defun
-  get-dir-ent-filenames
+  get-dir-filenames
   (fat32-in-memory data-region-index entry-limit)
   (declare (xargs :measure (acl2-count entry-limit)
                   :verify-guards nil
@@ -1346,15 +1346,33 @@
              (equal filename "..         "))
          (list* filename first-cluster)
          (list filename first-cluster
-               (get-dir-ent-filenames
+               (get-dir-filenames
                 fat32-in-memory
                 (* (nfix (- first-cluster 2))
                    (bpb_secperclus fat32-in-memory)
                    (bpb_bytspersec fat32-in-memory))
                 (- entry-limit 1))))
-     (get-dir-ent-filenames
+     (get-dir-filenames
       fat32-in-memory (+ data-region-index 32)
       (- entry-limit 1))))))
+
+(defun dir-ent-first-cluster (dir-ent)
+  (declare
+   (xargs :guard (and (equal (len dir-ent) *ms-dir-ent-length*)
+                      (unsigned-byte-listp 8 dir-ent))))
+  (combine32u (nth 21 dir-ent)
+              (nth 20 dir-ent)
+              (nth 27 dir-ent)
+              (nth 26 dir-ent)))
+
+(defun dir-ent-file-size (dir-ent)
+  (declare
+   (xargs :guard (and (equal (len dir-ent) *ms-dir-ent-length*)
+                      (unsigned-byte-listp 8 dir-ent))))
+  (combine32u (nth 31 dir-ent)
+              (nth 30 dir-ent)
+              (nth 29 dir-ent)
+              (nth 28 dir-ent)))
 
 (in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
