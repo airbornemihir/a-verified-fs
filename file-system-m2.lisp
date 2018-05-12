@@ -489,14 +489,40 @@
  update-bs_filsystype-correctness-3
  update-bs_filsystype-correctness-4)
 
-(update-stobj-array
- update-fat fat-length 32
- update-fati fati *fati*
- fat32-in-memory fat32-in-memoryp
- update-fat-correctness-1
- update-fat-correctness-2
- update-fat-correctness-3
- update-fat-correctness-4)
+(defmacro  u8 (x)   `(the (unsigned-byte  8) ,x))
+(defmacro u28 (x)   `(the (unsigned-byte 28) ,x))
+(defmacro u30 (x)   `(the (unsigned-byte 30) ,x))
+(defmacro u47 (x)   `(the (unsigned-byte 47) ,x))
+
+(defun
+  update-fat (str pos fat32-in-memory)
+  (declare
+   (xargs
+    :guard (and (natp pos)
+                (stringp str)
+                (equal (len str)
+                       (* 4 (fat-length fat32-in-memory)))
+                (<= pos (fat-length fat32-in-memory))
+                (fat32-in-memoryp fat32-in-memory))
+    :guard-hints
+    (("goal" :in-theory
+      (disable fat32-in-memoryp unsigned-byte-p nth)))
+    :stobjs (fat32-in-memory)))
+  (if
+   (zp pos)
+   fat32-in-memory
+   (let*
+    ((fat32-in-memory
+      (update-fati
+       pos
+       (combine32u (char-code (char str (+ (* 4 pos) 3)))
+                   (char-code (char str (+ (* 4 pos) 2)))
+                   (char-code (char str (+ (* 4 pos) 1)))
+                   (char-code (char str (+ (* 4 pos) 0))))
+       fat32-in-memory))
+     (fat32-in-memory (update-fat str (- pos 1)
+                                  fat32-in-memory)))
+    fat32-in-memory)))
 
 (defthm
   read-reserved-area-guard-lemma-1
@@ -823,9 +849,6 @@
     (mv-nth 0 (read-32ule-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
-(defmacro  u8 (x)   `(the (unsigned-byte  8) ,x))
-(defmacro u48 (x)   `(the (unsigned-byte 48) ,x))
-
 (defun
     update-data-region (fat32-in-memory str len pos)
   (declare (xargs :guard (and (stringp str)
@@ -841,14 +864,14 @@
                   :measure (nfix (- len pos))
                   :stobjs fat32-in-memory))
   (b*
-      ((len (u48 len))
-       (pos (u48 pos)))
+      ((len (u47 len))
+       (pos (u47 pos)))
     (if (mbe :logic (zp (- len pos))
              :exec  (>= pos len))
         fat32-in-memory
       (b* ((ch (char str pos))
            (ch-byte (u8 (char-code ch)))
-           (pos+1 (u48 (1+ pos)))
+           (pos+1 (u47 (1+ pos)))
            (fat32-in-memory (update-data-regioni pos ch-byte fat32-in-memory)))
         (update-data-region fat32-in-memory str len pos+1)))))
 
