@@ -898,11 +898,6 @@
            (bpb_bytspersec fat32-in-memory)))
        ((unless (> data-byte-count 0))
         (mv fat32-in-memory state -1))
-       ((mv data-region state)
-        (read-byte$-n data-byte-count
-                      channel state))
-       ((unless (not (equal data-region 'fail)))
-        (mv fat32-in-memory state -1))
        (fat32-in-memory (resize-fat fat-read-size
                                     fat32-in-memory))
        (fat32-in-memory (update-fat fa-table fat32-in-memory))
