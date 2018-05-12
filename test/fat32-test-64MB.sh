@@ -7,11 +7,14 @@
 DISK=/tmp/disk1.raw
 MOUNTPOINT=/tmp/mount1
 SIZE=73M
+# snippet from https://unix.stackexchange.com/a/438158/286440
+UID=`id -u`
+GID=`id -g`
 OD_STEP="od -v -Ax --endian=little"
 function mount_od_umount {
     sudo umount $MOUNTPOINT
     $OD_STEP -t x4 -j16384 -N32 $DISK
-    sudo mount -o loop -t msdos $DISK $MOUNTPOINT
+    sudo mount -o loop,uid=$UID,gid=$GID -t msdos $DISK $MOUNTPOINT
 }
 rm -f $DISK
 rm -rf $MOUNTPOINT
@@ -33,15 +36,15 @@ $OD_STEP -t x4 -j44 -N4 $DISK
 # make a mountpoint
 mkdir -p $MOUNTPOINT
 $OD_STEP -t x4 -j16384 -N32 $DISK
-sudo mount -o loop -t msdos $DISK $MOUNTPOINT
-sudo dd of=$MOUNTPOINT/vmlinuz if=/dev/zero bs=4 count=1
+sudo mount -o loop,uid=$UID,gid=$GID -t msdos $DISK $MOUNTPOINT
+dd of=$MOUNTPOINT/vmlinuz if=/dev/zero bs=4 count=1
 mount_od_umount
-sudo mkdir -p $MOUNTPOINT/tmp/
+mkdir -p $MOUNTPOINT/tmp/
 mount_od_umount
-sudo dd of=$MOUNTPOINT/tmp/ticket1.txt if=/dev/zero bs=4 count=1
+dd of=$MOUNTPOINT/tmp/ticket1.txt if=/dev/zero bs=4 count=1
 mount_od_umount
-sudo dd of=$MOUNTPOINT/tmp/ticket2.txt if=/dev/zero bs=512 count=9
-ls -lR $MOUNTPOINT
+dd of=$MOUNTPOINT/tmp/ticket2.txt if=/dev/zero bs=512 count=9
+ls -1R $MOUNTPOINT
 sudo umount $MOUNTPOINT
 $OD_STEP -t x4 -j16384 -N32 $DISK
 rmdir $MOUNTPOINT

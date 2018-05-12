@@ -1,0 +1,31 @@
+(include-book "../file-system-m2")
+
+(defun
+  get-dir-ent-first-cluster-contents
+  (fat32-in-memory data-region-index)
+  (declare (xargs :stobjs (fat32-in-memory)
+                  :verify-guards nil))
+  (let*
+   ((dir-ent (get-dir-ent fat32-in-memory data-region-index))
+    (first-cluster (dir-ent-first-cluster dir-ent))
+    (cluster-size (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_secperclus fat32-in-memory)))
+    (file-size (dir-ent-file-size dir-ent))
+    (data-region-index (* (nfix (- first-cluster 2))
+                          cluster-size)))
+   (nats=>string
+    (rev (get-dir-ent-helper fat32-in-memory data-region-index
+                             (min file-size cluster-size))))))
+
+(time$ (slurp-disk-image
+        fat32-in-memory "disk1.raw" state))
+
+(mv-let
+  (channel state)
+  (open-output-channel "cat-output.txt" :character state)
+  (pprogn
+   (princ$
+    (get-dir-ent-first-cluster-contents
+     fat32-in-memory 0)
+    channel state)
+   (close-output-channel channel state)))
