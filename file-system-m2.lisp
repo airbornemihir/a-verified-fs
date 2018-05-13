@@ -472,15 +472,6 @@
  update-bs_jmpboot-correctness-4)
 
 (update-stobj-array
- update-bs_oemname bs_oemname-length 8
- update-bs_oemnamei bs_oemnamei *bs_oemnamei*
- fat32-in-memory fat32-in-memoryp
- update-bs_oemname-correctness-1
- update-bs_oemname-correctness-2
- update-bs_oemname-correctness-3
- update-bs_oemname-correctness-4)
-
-(update-stobj-array
  update-bs_filsystype bs_filsystype-length 8
  update-bs_filsystypei bs_filsystypei *bs_filsystypei*
  fat32-in-memory fat32-in-memoryp
@@ -666,8 +657,6 @@
         (mv fat32-in-memory state -1))
        (fat32-in-memory
         (update-bs_jmpboot (subseq initial-bytes 0 3) fat32-in-memory))
-       (fat32-in-memory
-        (update-bs_oemname (subseq initial-bytes 3 8) fat32-in-memory))
        (tmp_bytspersec (combine16u (nth (+ 11 1) initial-bytes)
                                    (nth (+ 11 0) initial-bytes)))
        ((unless (>= tmp_bytspersec 512))
@@ -823,38 +812,52 @@
     (mv-nth 0 (read-32ule-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
-(defun
-  update-data-region
-  (fat32-in-memory str len pos)
-  (declare
-   (xargs :guard (and (stringp str)
-                      (natp len)
-                      (natp pos)
-                      (<= pos len)
-                      (= len (length str))
-                      (<= len
-                          (data-region-length fat32-in-memory))
-                      (<= (data-region-length fat32-in-memory)
-                          *ms-max-data-region-size*))
-          :guard-hints
-          (("goal" :in-theory (disable fat32-in-memoryp)))
-          :guard-debug t
-          :measure (nfix (- len pos))
-          :stobjs fat32-in-memory))
-  (b*
-      ((len (the (unsigned-byte 47) len))
-       (pos (the (unsigned-byte 47) pos)))
-    (if
-     (mbe :logic (zp (- len pos))
-          :exec (>= pos len))
-     fat32-in-memory
+(defmacro update-stobj-array-from-string
+    (name stobj stobj-recogniser array-length array-updater max-length len-bit-width)
+
+  `(defun
+       ,name
+       (,stobj str len pos)
+     (declare
+      (xargs :guard (and (stringp str)
+                         (natp len)
+                         (natp pos)
+                         (<= pos len)
+                         (= len (length str))
+                         (<= len
+                             (,array-length ,stobj))
+                         (<= (,array-length ,stobj)
+                             ,max-length))
+             :guard-hints
+             (("goal" :in-theory (disable ,stobj-recogniser)))
+             :guard-debug t
+             :measure (nfix (- len pos))
+             :stobjs ,stobj))
      (b*
-         ((ch (char str pos))
-          (ch-byte (the (unsigned-byte 8) (char-code ch)))
-          (pos+1 (the (unsigned-byte 47) (1+ pos)))
-          (fat32-in-memory
-           (update-data-regioni pos ch-byte fat32-in-memory)))
-       (update-data-region fat32-in-memory str len pos+1)))))
+         ((len (the (unsigned-byte ,len-bit-width) len))
+          (pos (the (unsigned-byte ,len-bit-width) pos)))
+       (if
+           (mbe :logic (zp (- len pos))
+                :exec (>= pos len))
+           ,stobj
+         (b*
+             ((ch (char str pos))
+              (ch-byte (the (unsigned-byte 8) (char-code ch)))
+              (pos+1 (the (unsigned-byte ,len-bit-width) (1+ pos)))
+              (,stobj
+               (,array-updater pos ch-byte ,stobj)))
+           (,name ,stobj str len pos+1))))))
+
+(update-stobj-array-from-string
+ update-data-region fat32-in-memory fat32-in-memoryp data-region-length
+ update-data-regioni
+ *ms-max-data-region-size* 47)
+
+(update-stobj-array-from-string
+ update-bs_oemname
+ fat32-in-memory fat32-in-memoryp bs_oemname-length
+ update-bs_oemnamei
+ 8 4)
 
 (defthm
   read-fat-guard-lemma-2
@@ -1239,6 +1242,12 @@
                             (+ tmp_init
                                   (data-region-length fat32-in-memory)))))
         (mv fat32-in-memory state -1))
+       (fat32-in-memory
+        (update-bs_oemname
+         fat32-in-memory
+         (subseq str 3 8)
+         (bs_oemname-length fat32-in-memory)
+         0))
        (data-region-string
         (subseq str tmp_init (+ tmp_init
                                 (data-region-length fat32-in-memory))))
