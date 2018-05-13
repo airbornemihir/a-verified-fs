@@ -35,6 +35,18 @@
                 (< n (len l)))
            (unsigned-byte-p bits (nth n l))))
 
+(defthm len-of-chars=>nats
+  (implies (character-listp chars)
+           (equal (len (chars=>nats chars))
+                  (len chars)))
+  :hints (("goal" :in-theory (enable chars=>nats))))
+
+(defthm len-of-string=>nats
+  (implies (stringp string)
+           (equal (len (string=>nats string))
+                  (length string)))
+  :hints (("goal" :in-theory (enable string=>nats))))
+
 (make-event
  `(defstobj fat32-in-memory
 
@@ -558,84 +570,53 @@
 
 ;; This must be called after the file is opened.
 (defun
-  read-reserved-area
-  (fat32-in-memory channel state)
+  read-reserved-area (fat32-in-memory str)
   (declare
    (xargs
-    :guard (and (state-p state)
-                (symbolp channel)
-                (open-input-channel-p channel
-                                      :byte state)
+    :guard (and (stringp str)
+                (>= (length str) *initialbytcnt*)
                 (fat32-in-memoryp fat32-in-memory))
     :guard-debug t
     :guard-hints
     (("goal"
       :do-not-induct t
-      :in-theory (disable fat32-in-memoryp
-                          state-p unsigned-byte-p nth)
-      :use
-      ((:instance
-        unsigned-byte-listp-of-take (width 8)
-        (n 3)
-        (x (mv-nth 0 (read-byte$-n 16 channel state))))))
-     ("subgoal 6'"
+      :in-theory (disable fat32-in-memoryp unsigned-byte-p nth))
+     ("subgoal 5"
+      :in-theory (disable nth-of-unsigned-byte-list)
       :use
       (:instance
-       unsigned-byte-p-forward-to-nonnegative-integerp
-       (n 8)
-       (x (nth 13
-               (mv-nth 0 (read-byte$-n 16 channel state))))))
-     ("Subgoal 5'"
+       nth-of-unsigned-byte-list (bits 8)
+       (n 13)
+       (l (string=>nats (implode (take 16 (explode str)))))))
+     ("subgoal 4"
+      :in-theory (disable nth-of-unsigned-byte-list)
       :use
       (:instance
-       unsigned-byte-p-forward-to-nonnegative-integerp
-       (n 8)
-       (x
-        (nth
-         0
-         (mv-nth
-          0
-          (read-byte$-n
-           (+ -16
-              (* (combine16u (nth 12
-                                  (mv-nth 0 (read-byte$-n 16 channel state)))
-                             (nth 11
-                                  (mv-nth 0 (read-byte$-n 16 channel state))))
-                 (combine16u (nth 15
-                                  (mv-nth 0 (read-byte$-n 16 channel state)))
-                             (nth 14
-                                  (mv-nth 0 (read-byte$-n 16 channel state))))))
-           channel
-           (mv-nth 1 (read-byte$-n 16 channel state))))))))
-     ("subgoal 2'"
-      :use
-      (:instance
-       unsigned-byte-p-forward-to-nonnegative-integerp
-       (n 8)
-       (x
-        (nth
-         0
-         (mv-nth
-          0
-          (read-byte$-n
+       nth-of-unsigned-byte-list (bits 8)
+       (n 0)
+       (l
+        (string=>nats
+         (implode
+          (take
            (+
             -16
             (*
              (combine16u
-              (nth 12
-                   (mv-nth 0 (read-byte$-n 16 channel state)))
-              (nth 11
-                   (mv-nth 0 (read-byte$-n 16 channel state))))
-             (combine16u
-              (nth 15
-                   (mv-nth 0 (read-byte$-n 16 channel state)))
               (nth
-               14
-               (mv-nth 0 (read-byte$-n 16 channel state))))))
-           channel
-           (mv-nth 1
-                   (read-byte$-n 16 channel state)))))))))
-    :stobjs (state fat32-in-memory)))
+               12
+               (string=>nats (implode (take 16 (explode str)))))
+              (nth 11
+                   (string=>nats
+                    (implode (take 16 (explode str))))))
+             (combine16u
+              (nth
+               15
+               (string=>nats (implode (take 16 (explode str)))))
+              (nth 14
+                   (string=>nats
+                    (implode (take 16 (explode str))))))))
+           (nthcdr 16 (explode str)))))))))
+    :stobjs (fat32-in-memory)))
   (b*
       (;; we want to do this unconditionally, in order to prove a strong linear
        ;; rule
@@ -660,10 +641,8 @@
         (update-bpb_bytspersec 512
                                fat32-in-memory))
        ;; common stuff for fat filesystems
-       ((mv initial-bytes state)
-        (read-byte$-n *initialbytcnt* channel state))
-       ((unless (not (equal initial-bytes 'fail)))
-        (mv fat32-in-memory state -1))
+       (initial-bytes
+        (string=>nats (subseq str 0 *initialbytcnt*)))
        (fat32-in-memory
         (update-bs_jmpboot (subseq initial-bytes 0 3) fat32-in-memory))
        (fat32-in-memory
@@ -671,35 +650,32 @@
        (tmp_bytspersec (combine16u (nth (+ 11 1) initial-bytes)
                                    (nth (+ 11 0) initial-bytes)))
        ((unless (>= tmp_bytspersec 512))
-        (mv fat32-in-memory state -1))
+        (mv fat32-in-memory -1))
        (fat32-in-memory
         (update-bpb_bytspersec tmp_bytspersec fat32-in-memory))
        (tmp_secperclus (nth 13 initial-bytes))
        ;; this is actually a proxy for testing membership in the set {1, 2, 4,
        ;; 8, 16, 32, 64, 128}
        ((unless (>= tmp_secperclus 1))
-        (mv fat32-in-memory state -1))
+        (mv fat32-in-memory -1))
        (fat32-in-memory
         (update-bpb_secperclus tmp_secperclus
                                fat32-in-memory))
        (tmp_rsvdseccnt (combine16u (nth (+ 14 1) initial-bytes)
                                    (nth (+ 14 0) initial-bytes)))
        ((unless (>= tmp_rsvdseccnt 1))
-        (mv fat32-in-memory state -1))
+        (mv fat32-in-memory -1))
        (fat32-in-memory
         (update-bpb_rsvdseccnt tmp_rsvdseccnt fat32-in-memory))
        (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec))
-       ((unless (>= tmp_rsvdbytcnt *initialbytcnt*))
-        (mv fat32-in-memory state -1))
-       ((mv remaining_rsvdbyts state)
-        (read-bytes$-n (- tmp_rsvdbytcnt *initialbytcnt*)
-                       channel
-                       :end :little))
-       ((unless (not (equal remaining_rsvdbyts 'fail)))
-        (mv fat32-in-memory state -1))
+       ((unless (and (>= tmp_rsvdbytcnt *initialbytcnt*)
+                     (>= (length str) tmp_rsvdbytcnt)))
+        (mv fat32-in-memory -1))
+       (remaining_rsvdbyts
+        (string=>nats (subseq str *initialbytcnt* tmp_rsvdbytcnt)))
        (tmp_numfats (nth (- 16 *initialbytcnt*) remaining_rsvdbyts))
        ((unless (>= tmp_numfats 1))
-        (mv fat32-in-memory state -1))
+        (mv fat32-in-memory -1))
        (fat32-in-memory
         (update-bpb_numfats tmp_numfats
                             fat32-in-memory))
@@ -752,7 +728,7 @@
                     (nth (+ 36 1 (- *initialbytcnt*)) remaining_rsvdbyts)
                     (nth (+ 36 0 (- *initialbytcnt*)) remaining_rsvdbyts)))
        ((unless (>= tmp_fatsz32 1))
-        (mv fat32-in-memory state -1))
+        (mv fat32-in-memory -1))
        (fat32-in-memory
         (update-bpb_fatsz32
          tmp_fatsz32
@@ -807,7 +783,7 @@
         (update-bs_filsystype (subseq remaining_rsvdbyts
                                       (+ 82 (- *initialbytcnt*) 0)
                                       (+ 82 (- *initialbytcnt*) 8)) fat32-in-memory)))
-    (mv fat32-in-memory state 0)))
+    (mv fat32-in-memory 0)))
 
 (defthm
   read-fat-guard-lemma-1
