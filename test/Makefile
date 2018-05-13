@@ -43,4 +43,4 @@ cat-ref-output.txt cat-output.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replic
 	sleep 1
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
-	$(ACL2) < cat-replicant.lisp
+	env DISK=$(DISK) CAT_OUTPUT="cat-output.txt" $(ACL2) < cat-replicant.lisp

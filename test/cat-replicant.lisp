@@ -17,15 +17,21 @@
     (rev (get-dir-ent-helper fat32-in-memory data-region-index
                              (min file-size cluster-size))))))
 
-(time$ (slurp-disk-image
-        fat32-in-memory "disk1.raw" state))
-
-(mv-let
-  (channel state)
-  (open-output-channel "cat-output.txt" :character state)
-  (pprogn
-   (princ$
-    (get-dir-ent-first-cluster-contents
-     fat32-in-memory 0)
-    channel state)
-   (close-output-channel channel state)))
+(b*
+    (((mv & val state)
+      (getenv$ "DISK" state))
+     ((mv fat32-in-memory &)
+      (slurp-disk-image
+       fat32-in-memory val state))
+     ((mv & val state)
+      (getenv$ "CAT_OUTPUT" state))
+     ((mv channel state)
+      (open-output-channel val :character state))
+     (state
+      (princ$
+       (get-dir-ent-first-cluster-contents
+        fat32-in-memory 0)
+       channel state))
+     (state
+      (close-output-channel channel state)))
+  (mv fat32-in-memory state))
