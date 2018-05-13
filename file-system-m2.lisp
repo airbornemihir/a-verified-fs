@@ -823,34 +823,38 @@
     (mv-nth 0 (read-32ule-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
-(defmacro  u8 (x)   `(the (unsigned-byte  8) ,x))
-(defmacro u48 (x)   `(the (unsigned-byte 48) ,x))
-
 (defun
-    update-data-region (fat32-in-memory str len pos)
-  (declare (xargs :guard (and (stringp str)
-                              (natp len)
-                              (natp pos)
-                              (<= pos len)
-                              (= len (length str))
-                              (<= len (data-region-length fat32-in-memory))
-                              (<= (data-region-length fat32-in-memory)
-                                  *ms-max-data-region-size*))
-                  :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp)))
-                  :guard-debug t
-                  :measure (nfix (- len pos))
-                  :stobjs fat32-in-memory))
+  update-data-region
+  (fat32-in-memory str len pos)
+  (declare
+   (xargs :guard (and (stringp str)
+                      (natp len)
+                      (natp pos)
+                      (<= pos len)
+                      (= len (length str))
+                      (<= len
+                          (data-region-length fat32-in-memory))
+                      (<= (data-region-length fat32-in-memory)
+                          *ms-max-data-region-size*))
+          :guard-hints
+          (("goal" :in-theory (disable fat32-in-memoryp)))
+          :guard-debug t
+          :measure (nfix (- len pos))
+          :stobjs fat32-in-memory))
   (b*
-      ((len (u48 len))
-       (pos (u48 pos)))
-    (if (mbe :logic (zp (- len pos))
-             :exec  (>= pos len))
-        fat32-in-memory
-      (b* ((ch (char str pos))
-           (ch-byte (u8 (char-code ch)))
-           (pos+1 (u48 (1+ pos)))
-           (fat32-in-memory (update-data-regioni pos ch-byte fat32-in-memory)))
-        (update-data-region fat32-in-memory str len pos+1)))))
+      ((len (the (unsigned-byte 47) len))
+       (pos (the (unsigned-byte 47) pos)))
+    (if
+     (mbe :logic (zp (- len pos))
+          :exec (>= pos len))
+     fat32-in-memory
+     (b*
+         ((ch (char str pos))
+          (ch-byte (the (unsigned-byte 8) (char-code ch)))
+          (pos+1 (the (unsigned-byte 47) (1+ pos)))
+          (fat32-in-memory
+           (update-data-regioni pos ch-byte fat32-in-memory)))
+       (update-data-region fat32-in-memory str len pos+1)))))
 
 (defthm
   read-fat-guard-lemma-2
