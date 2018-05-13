@@ -501,15 +501,6 @@
  update-bs_filsystype-correctness-3
  update-bs_filsystype-correctness-4)
 
-;; (update-stobj-array
-;;  update-fat fat-length 32
-;;  update-fati fati *fati*
-;;  fat32-in-memory fat32-in-memoryp
-;;  update-fat-correctness-1
-;;  update-fat-correctness-2
-;;  update-fat-correctness-3
-;;  update-fat-correctness-4)
-
 (defthm
   read-reserved-area-guard-lemma-1
   (implies (and (member-equal x
@@ -851,12 +842,23 @@
      (zp pos)
      fat32-in-memory
      (b*
-         ((ch (char str
-                    (the (unsigned-byte 30)
-                         (* (- pos 1) 4))))
-          (ch-byte (the (unsigned-byte 32) (char-code ch)))
+         ((ch-word
+           (the
+            (unsigned-byte 32)
+            (combine32u (char-code (char str
+                                         (the (unsigned-byte 30)
+                                              (- (* pos 4) 1))))
+                        (char-code (char str
+                                         (the (unsigned-byte 30)
+                                              (- (* pos 4) 2))))
+                        (char-code (char str
+                                         (the (unsigned-byte 30)
+                                              (- (* pos 4) 3))))
+                        (char-code (char str
+                                         (the (unsigned-byte 30)
+                                              (- (* pos 4) 4)))))))
           (fat32-in-memory (update-fati (- pos 1)
-                                        ch-byte fat32-in-memory)))
+                                        ch-word fat32-in-memory)))
        (update-fat fat32-in-memory str
                    (the (unsigned-byte 28) (- pos 1)))))))
 
@@ -1122,8 +1124,6 @@
   :hints
   (("Goal" :in-theory (disable fat32-in-memoryp))))
 
-;; state-p actually needs to be enabled for this guard proof because all the
-;; lemmas are in terms of state-p1
 (defun
     slurp-disk-image
     (fat32-in-memory image-path state)
@@ -1136,19 +1136,19 @@
     (("goal" :do-not-induct t
       :in-theory (disable fat32-in-memoryp
                           read-reserved-area)))
-    :stobjs (state fat32-in-memory)))
+    :stobjs (fat32-in-memory state)))
   (b* ((str
         (read-file-into-string image-path))
        ((unless (and (stringp str)
                      (>= (length str) *initialbytcnt*)))
-        (mv fat32-in-memory state -1))
+        (mv fat32-in-memory -1))
        ((mv fat32-in-memory error-code)
         (read-reserved-area fat32-in-memory str))
        ((unless (equal error-code 0))
-        (mv fat32-in-memory state error-code))
+        (mv fat32-in-memory error-code))
        (fat-read-size (/ (* (bpb_fatsz32 fat32-in-memory) (bpb_bytspersec
                                                            fat32-in-memory)) 4))
-       ((unless (integerp fat-read-size)) (mv fat32-in-memory state -1))
+       ((unless (integerp fat-read-size)) (mv fat32-in-memory -1))
        (data-byte-count
         (* (- (bpb_totsec32 fat32-in-memory)
               (+ (bpb_rsvdseccnt fat32-in-memory)
@@ -1156,7 +1156,7 @@
                     (bpb_fatsz32 fat32-in-memory))))
            (bpb_bytspersec fat32-in-memory)))
        ((unless (> data-byte-count 0))
-        (mv fat32-in-memory state -1))
+        (mv fat32-in-memory -1))
        (tmp_bytspersec (bpb_bytspersec fat32-in-memory))
        (tmp_init (* tmp_bytspersec
                     (+ (bpb_rsvdseccnt fat32-in-memory)
@@ -1165,7 +1165,7 @@
        ((unless (>= (length str)
                     (+ tmp_init
                        (data-region-length fat32-in-memory))))
-        (mv fat32-in-memory state -1))
+        (mv fat32-in-memory -1))
        (fat32-in-memory (resize-fat fat-read-size
                                     fat32-in-memory))
        (fat32-in-memory (update-fat fat32-in-memory
@@ -1189,7 +1189,7 @@
          data-region-string
          (data-region-length fat32-in-memory)
          0)))
-    (mv fat32-in-memory state error-code)))
+    (mv fat32-in-memory error-code)))
 
 (defun get-dir-ent-helper (fat32-in-memory data-region-index len)
   (declare
