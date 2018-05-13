@@ -886,36 +886,36 @@
        )
     (mv fat32-in-memory state 0)))
 
-(defthm slurp-disk-image-guard-lemma-1
-  (implies
-   (and (state-p state)
-                  (symbolp channel)
-                  (open-input-channel-p channel
-                                        :byte state)
-                  (fat32-in-memoryp fat32-in-memory))
-  (state-p1 (mv-nth 1
-                   (read-reserved-area
-                    fat32-in-memory channel state))))
-  :hints
-    (("goal" :do-not-induct t
-      :in-theory (disable fat32-in-memoryp)
-        :use ((:instance
-               read-byte$-n-state
-               (n *initialbytcnt*))
-              (:instance
-               read-byte$-n-state
-               (n
-                (+ -16
-                   (* (COMBINE16U (NTH 12
-                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))
-                                  (NTH 11
-                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE))))
-                      (COMBINE16U (NTH 15
-                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))
-                                  (NTH 14
-                                       (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))))))
-               (state
-                (MV-NTH 1 (READ-BYTE$-N 16 CHANNEL STATE))))))))
+;; (defthm slurp-disk-image-guard-lemma-1
+;;   (implies
+;;    (and (state-p state)
+;;                   (symbolp channel)
+;;                   (open-input-channel-p channel
+;;                                         :byte state)
+;;                   (fat32-in-memoryp fat32-in-memory))
+;;   (state-p1 (mv-nth 1
+;;                    (read-reserved-area
+;;                     fat32-in-memory channel state))))
+;;   :hints
+;;     (("goal" :do-not-induct t
+;;       :in-theory (disable fat32-in-memoryp)
+;;         :use ((:instance
+;;                read-byte$-n-state
+;;                (n *initialbytcnt*))
+;;               (:instance
+;;                read-byte$-n-state
+;;                (n
+;;                 (+ -16
+;;                    (* (COMBINE16U (NTH 12
+;;                                        (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))
+;;                                   (NTH 11
+;;                                        (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE))))
+;;                       (COMBINE16U (NTH 15
+;;                                        (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))
+;;                                   (NTH 14
+;;                                        (MV-NTH 0 (READ-BYTE$-N 16 CHANNEL STATE)))))))
+;;                (state
+;;                 (MV-NTH 1 (READ-BYTE$-N 16 CHANNEL STATE))))))))
 
 (defthm
   slurp-disk-image-guard-lemma-2
@@ -1104,70 +1104,62 @@
 ;; Look, we're going to have to keep re-visiting this as we make sure there are
 ;; at least 512 bytes per sector and so on. Let's just pause and do it right.
 (defthm
-  slurp-disk-image-guard-lemma-18
+  slurp-disk-image-guard-lemma-13
   (<= 1
       (bpb_secperclus
        (mv-nth
         0
-        (read-reserved-area
-         fat32-in-memory channel state))))
+        (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
-  slurp-disk-image-guard-lemma-22
+  slurp-disk-image-guard-lemma-14
   (<= 1
       (bpb_rsvdseccnt
        (mv-nth
         0
-        (read-reserved-area
-         fat32-in-memory channel state))))
+        (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
-  slurp-disk-image-guard-lemma-26
+  slurp-disk-image-guard-lemma-15
   (<= 1
       (bpb_numfats
        (mv-nth
         0
-        (read-reserved-area
-         fat32-in-memory channel state))))
+        (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
-  slurp-disk-image-guard-lemma-30
+  slurp-disk-image-guard-lemma-16
   (<= 1
       (bpb_fatsz32
        (mv-nth
         0
-        (read-reserved-area
-         fat32-in-memory channel state))))
+        (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
-  slurp-disk-image-guard-lemma-32
+  slurp-disk-image-guard-lemma-17
   (<= 512
       (bpb_bytspersec
        (mv-nth
         0
-        (read-reserved-area
-         fat32-in-memory channel state))))
+        (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
 
 (defthm
   read-reserved-area-correctness-1
-  (implies (and (state-p state)
-                (symbolp channel)
-                (open-input-channel-p channel
-                                      :byte state)
+  (implies (and (stringp str)
                 (fat32-in-memoryp fat32-in-memory))
            (fat32-in-memoryp
             (mv-nth 0
-                    (read-reserved-area fat32-in-memory channel state))))
+                    (read-reserved-area fat32-in-memory str))))
   :hints
   (("Goal" :in-theory (disable fat32-in-memoryp))))
 
@@ -1186,15 +1178,20 @@
       :in-theory (disable fat32-in-memoryp
                           read-reserved-area)))
     :stobjs (state fat32-in-memory)))
-  (b* (((mv channel state)
+  (b* ((str
+        (read-file-into-string image-path))
+       ((unless (and (stringp str)
+                     (>= (length str) *initialbytcnt*)))
+        (mv fat32-in-memory state -1))
+       ((mv fat32-in-memory error-code)
+        (read-reserved-area fat32-in-memory str))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory state error-code))
+       ((mv channel state)
         (open-input-channel image-path
                             :byte state))
-       ((unless channel)
+       ((unless (open-input-channel-p channel :byte state))
         (mv fat32-in-memory state -1))
-       ((mv fat32-in-memory state error-code)
-        (read-reserved-area fat32-in-memory channel state))
-       ((unless (and (equal error-code 0) (open-input-channel-p channel :byte state)))
-        (mv fat32-in-memory state error-code))
        ((mv fat32-in-memory state error-code)
         (read-fat fat32-in-memory channel state))
        ((unless (equal error-code 0))
@@ -1211,7 +1208,7 @@
                                (+ tmp_init
                                   (data-region-length fat32-in-memory))))
        ((unless (and (stringp str)
-                     (equal (length str)
+                     (>= (length str)
                             (+ tmp_init
                                   (data-region-length fat32-in-memory)))))
         (mv fat32-in-memory state -1))
