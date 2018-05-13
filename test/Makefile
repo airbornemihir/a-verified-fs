@@ -1,6 +1,6 @@
-test: test-cat-replicant
+test: test-cat-replicant-1 test-cat-replicant-2
 
-.PHONY: clean-disk clean-mountpoint clean-fusepoint test test-cat-replicant
+.PHONY: clean-disk clean-mountpoint clean-fusepoint test test-cat-replicant-1 test-cat-replicant-2
 
 DISK=disk1.raw
 SIZE=73M
@@ -32,15 +32,28 @@ $(FUSEPOINT):
 	rm -rf $(FUSEPOINT)
 	mkdir -p $(FUSEPOINT)
 
-test-cat-replicant: cat-ref-output.txt cat-output.txt
-	diff -u -i cat-ref-output.txt cat-output.txt
+test-cat-replicant-1: cat-ref-output-1.txt cat-output-1.txt
+	diff -u -i cat-ref-output-1.txt cat-output-1.txt
 
-cat-ref-output.txt cat-output.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+test-cat-replicant-2: cat-ref-output-2.txt cat-output-2.txt
+	diff -u -i cat-ref-output-2.txt cat-output-2.txt
+
+cat-ref-output-1.txt cat-output-1.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	echo "four" > $(FUSEPOINT)/vmlinuz
-	cat $(FUSEPOINT)/vmlinuz > cat-ref-output.txt
+	cat $(FUSEPOINT)/vmlinuz > cat-ref-output-1.txt
 	sleep 1
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) CAT_OUTPUT="cat-output.txt" $(ACL2) < cat-replicant.lisp
+	env DISK=$(DISK) CAT_OUTPUT="cat-output-1.txt" $(ACL2) < cat-replicant.lisp
+
+cat-ref-output-2.txt cat-output-2.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	cp input-1204-bytes.txt $(FUSEPOINT)/vmlinuz
+	cat $(FUSEPOINT)/vmlinuz > cat-ref-output-2.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) CAT_OUTPUT="cat-output-2.txt" $(ACL2) < cat-replicant.lisp
