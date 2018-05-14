@@ -56,4 +56,4 @@ cat-ref-output-2.txt cat-output-2.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-re
 	sleep 1
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) CAT_OUTPUT="cat-output-2.txt" $(ACL2) < cat-replicant.lisp
+	env DISK=$(DISK) CAT_OUTPUT="cat-output-2.txt" CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
