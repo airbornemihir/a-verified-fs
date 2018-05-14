@@ -1,6 +1,6 @@
-test: test-cat-replicant-1 test-cat-replicant-2
+test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3
 
-.PHONY: clean-disk clean-mountpoint clean-fusepoint test test-cat-replicant-1 test-cat-replicant-2
+.PHONY: clean-disk clean-mountpoint clean-fusepoint test test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3
 
 DISK=disk1.raw
 SIZE=73M
@@ -38,6 +38,9 @@ test-cat-replicant-1: cat-ref-output-1.txt cat-output-1.txt
 test-cat-replicant-2: cat-ref-output-2.txt cat-output-2.txt
 	diff -u -i cat-ref-output-2.txt cat-output-2.txt
 
+test-cat-replicant-3: cat-ref-output-3.txt cat-output-3.txt
+	diff -u -i cat-ref-output-3.txt cat-output-3.txt
+
 cat-ref-output-1.txt cat-output-1.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
@@ -46,7 +49,7 @@ cat-ref-output-1.txt cat-output-1.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-re
 	sleep 1
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) CAT_OUTPUT="cat-output-1.txt" $(ACL2) < cat-replicant.lisp
+	env DISK=$(DISK) CAT_OUTPUT="cat-output-1.txt" CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
 
 cat-ref-output-2.txt cat-output-2.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -57,3 +60,14 @@ cat-ref-output-2.txt cat-output-2.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-re
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-2.txt" CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
+
+cat-ref-output-3.txt cat-output-3.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	cp input-1204-bytes.txt $(FUSEPOINT)/vmlinuz
+	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+	cat $(FUSEPOINT)/initrd.img > cat-ref-output-3.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) CAT_OUTPUT="cat-output-3.txt" CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
