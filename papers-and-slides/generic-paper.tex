@@ -428,11 +428,20 @@ As the models grow more complex, with the addition of more auxiliary
 data the "sanity" criteria for filesystem instances become more
 complex. For instance, in \texttt{L4}, the predicate \texttt{l4-fs-p}
 is defined to be the same as \texttt{l3-fs-p}, which recursively
-defines the shape of a valid filesystem. However, a "sane" filesystem
-requires also that each disk index assigned to a regular file be
-marked as \textit{used} in the allocation vector, and that it be
-distinct from other disk indices assigned to files across the
-filesystem. These properties are invariants to be maintained across
+defines the shape of a valid directory tree. However, we choose to
+require two more properties for a "sane" filesystem.
+
+\begin{enumerate}
+\item Each disk index assigned to a regular file should be
+  marked as \textit{used} in the allocation vector - this is essential
+  to prevent filesystem errors.
+\item Each disk index assigned to a regular file should be distinct
+  from all other disk indices assigned to files - this does not hold
+  true, for example, in filesystems with hardlinks, but makes our
+  proofs easier.
+\end{enumerate}
+
+These properties are invariants to be maintained across
 write operations; they simplify the verification of read-after-write
 properties by ensuring that write properties do not create an
 "aliasing" situation in which a regular file's contents can be
@@ -456,12 +465,22 @@ which a listing follows.
                  (indices-marked-p all-indices alv)))))
 \end{verbatim}
 
-This is another instance where a refinement methodology simplifies the
-verification task. Having proved that our block allocation algorithm
-in \texttt{L4}
-yields lists of unused blocks with no duplicates, we find it much
-simpler to show this also holds in \texttt{L6}, and this makes proving
-the absence of aliasing situations easier.
+\subsection{Refinement}
+
+As noted earlier, using a refinement methodology allows us to derive
+our read-over-write properties essentially "for free"; more precisely,
+we are able to prove read-over-write properties simply with
+\texttt{:use} hints after having done the work of proving refinement
+through induction.
+
+At a lower level, we are also able to benefit from a happy coincidence
+where the CP/M filesystem's allocation vector is an abstraction of
+FAT32's file allocation's table. Having proved this refinement
+relationship, it becomes a lot easier to prove that \texttt{L4}, which
+uses an allocation vector, is an abstraction of \texttt{L6}, which
+uses a file allocation table, and this means a lot of effort spent on
+proving the invariants described above for \texttt{L4} need not be
+replicated for \texttt{L6}.
 
 \subsection{Performance hacking}
 

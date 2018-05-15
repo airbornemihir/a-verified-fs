@@ -1381,46 +1381,6 @@
                      (l index-list)
                      (b (len alv)))))))
 
-(encapsulate ()
-  (local (include-book "std/lists/nthcdr" :dir :system))
-
-  (local (defun nthcdr-*blocksize*-induction-2 (text1 text2)
-           (cond ((or (atom text1) (atom text2))
-                  (list text1 text2))
-                 (t (nthcdr-*blocksize*-induction-2 (nthcdr *blocksize* text1)
-                                                    (nthcdr *blocksize* text2))))))
-
-  (defthm
-    make-blocks-correctness-4
-    (implies (equal (len text1) (len text2))
-             (equal (len (make-blocks text1))
-                    (len (make-blocks text2))))
-    :hints (("goal" :in-theory (enable make-blocks)
-             :induct (nthcdr-*blocksize*-induction-2 text1 text2)))))
-
-(defthm
-  len-of-make-unmake
-  (implies (and (block-listp blocks)
-                (natp n)
-                (feasible-file-length-p (len blocks) n))
-           (equal (len (make-blocks (unmake-blocks blocks n)))
-                  (len blocks)))
-  :hints
-  (("goal" :in-theory (enable make-blocks feasible-file-length-p))
-   ("subgoal *1/8.1'"
-    :expand (append (car blocks)
-                    (unmake-blocks (cdr blocks) (+ -8 n))))
-   ("subgoal *1/5.1'"
-    :expand (append (car blocks)
-                    (unmake-blocks (cdr blocks) (+ -8 n))))
-   ("subgoal *1/2'4'" :expand (make-blocks (first-n-ac n (car blocks) nil)))
-   ("subgoal *1/2.1'" :in-theory (disable len-of-first-n-ac)
-    :use (:instance len-of-first-n-ac (i n)
-                    (l (car blocks))
-                    (ac nil)))
-   ("subgoal *1/5.2'" :cases ((atom (cdr blocks))))
-   ("subgoal *1/5.2'''" :expand (len (cdr blocks)))))
-
 (defthm
   l4-wrchs-correctness-1-lemma-19
   (implies
@@ -1640,7 +1600,7 @@
        (equal hns1 hns2)
        (coerce (insert-text (coerce (l4-stat hns1 fs disk) 'list)
                             start2 text2)
-               :string)
+               'string)
        (l4-stat hns1 fs disk)))))
   :hints
   (("goal"

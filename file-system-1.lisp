@@ -326,7 +326,7 @@
                         (l1-stat hns1 fs)
                         (coerce (insert-text (coerce (l1-stat hns1 fs) 'list)
                                              start2 text2)
-                                :string))))
+                                'string))))
     :hints (("goal" :induct (induction-scheme hns1 hns2 fs)))))
 
 (defthm l1-read-after-write-1
