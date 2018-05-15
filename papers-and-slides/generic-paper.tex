@@ -172,8 +172,10 @@ axiomatic, wherein the desired properties of a system are enumerated
 and then verified. This is in contrast with abstraction refinement,
 where a system is proved to refine a simpler system, possibly a state
 machine or a pseudocode program, which is known to show the desired
-properties either by inspection or by proof. The relative merits of
-these approaches have been debated in the literature;
+properties either by inspection or by proof. (Note: the term
+"abstraction" is generally used to denote the inverse relationship to
+refinement, and we use it in that sense in this paper.) The relative
+merits of these approaches have been debated in the literature;
 Lamport~\cite{lamport1993verification} makes the argument that the
 axiomatic style is hopelessly tedious for any but the simplest
 systems.
@@ -288,7 +290,9 @@ figure \ref{refinement-figure}. \texttt{L1} is the simplest of these,
 representing the filesystem as a literal directory tree; later models feature
 file metadata (including ownership and permissions), externalisation
 of file contents, and allocation/file allocation using an allocation
-vector after the fashion of the CP/M file system.
+vector after the fashion of the CP/M file system (this is a remnant of
+an earlier filesystem verification effort for CP/M, which we subsumed
+into the present work).
 
 Broadly, we characterise the filesystem
 operations we offer as either \textit{write} operations, which do
@@ -483,12 +487,14 @@ through induction.
 
 At a lower level, we are also able to benefit from a happy coincidence
 where the CP/M filesystem's allocation vector is an abstraction of
-FAT32's file allocation's table. Having proved this refinement
-relationship, it becomes a lot easier to prove that \texttt{L4}, which
-uses an allocation vector, is an abstraction of \texttt{L6}, which
-uses a file allocation table, and this means a lot of effort spent on
-proving the invariants described above for \texttt{L4} need not be
-replicated for \texttt{L6}.
+FAT32's file allocation's table - more precisely, exactly those
+clusters are marked as "free" in the CP/M filesystem, which are marked
+with 0 in FAT32. Having proved this refinement relationship, it
+becomes a lot easier to prove that \texttt{L4}, which uses an
+allocation vector, is an abstraction of \texttt{L6}, which uses a file
+allocation table, and this means a lot of effort spent on proving the
+invariants described above for \texttt{L4} need not be replicated for
+\texttt{L6}.
 
 \subsection{Performance hacking}
 
@@ -540,6 +546,14 @@ models are built.
   \end{tabular}
 \end{table}
 
+\section{Conclusion}
+
+This work formalises a FAT32-like filesystem and proves
+read-over-write properties through refinement of a series of
+models. Further, it proves the correctness of FAT32's allocation and
+garbage collection mechanisms, and provides artefacts to be used in a
+subsequent realistic model of FAT32.
+
 \section{Future work}
 
 We are pursuing future work in a few different directions. Primarily,
@@ -562,8 +576,9 @@ reasoning about filesystem operations in filesystem-specific utilities
 such as \texttt{fsck}, as well as other application programs. This is
 a large part of the motivation for pursuing binary compatibility.
 
-\subsubsection*{Acknowledgments.} This work has been supported by a
-grant from the NSF.
+\subsubsection*{Acknowledgments.} This material is based upon work
+supported by the National Science Foundation SaTC program under
+contract number CNS-1525472.
 
 \bibliographystyle{splncs}
 \bibliography{references}
