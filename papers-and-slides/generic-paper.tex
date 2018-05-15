@@ -37,7 +37,7 @@
 \mainmatter  % start of an individual contribution
 
 % first the title is needed
-\title{Verifying filesystems in the ACL2 theorem prover:\\ an
+\title{Formalising filesystems in the ACL2 theorem prover:\\ an
   application to a FAT32-like filesystem}
 
 % a short form should be given in case it is too long for the running head
@@ -90,15 +90,16 @@ Thus, the vast majority of application programs
 directly or indirectly rely upon filesystems, making filesystem
 correctness bugs into serious issues, and making filesystem
 verification a critically important issue. Here, we present a
-verification effort in ACL2 for a filesystem with a FAT32-like data
-organisation. By starting with a high-level
-abstract model and refining \cite{abadi1991existence} it with
-successive models which add more of the complexity of the real
-filesystem, we are able to manage the complexity of this proof, which
-has not yet been attempted. Thus, our contributions are a case study
-in refinement for filesystem verification, and progress towards the
-ultimate goal of a binary-compatible model of a FAT32, which is a real
-and widely-used filesystem.
+formalisation effort in ACL2 for a filesystem with a FAT32-like data
+organisation, and a proof of the read-over-write properties for this
+filesystem. By starting with a high-level abstract model and refining
+\cite{abadi1991existence} it with successive models which add more of
+the complexity of the real filesystem, we are able to manage the
+complexity of this proof, which has not yet been attempted. Thus, this
+paper contributes a case study in refinement for filesystem
+verification, and progress towards the ultimate goal of a
+binary-compatible model of a FAT32, which is a real and widely-used
+filesystem.
 
 In the rest of this paper, we describe these
 models and the properties proved with examples; we proceed to a
@@ -217,6 +218,13 @@ by reading just the first cluster index from its directory entry, and
 reconstructing the list of clusters using the table. Unused clusters
 are mapped to 0 in the table; this fact is used for counting and
 allocating free clusters.
+
+A diagram on the next page illustrates the file allocation table and
+data layout for a small directory tree.
+
+\begin{figure}
+  \includegraphics[page=1,width=1.10\textwidth]{fat32-diagram.pdf}
+\end{figure}
 
 \section{The models}
 
