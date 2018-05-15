@@ -81,16 +81,26 @@
 \keywords{interactive theorem proving, filesystems}
 \end{abstract}
 
-\section{Overview}
+\section{Introduction and overview}
 
-Filesystems are ubiquitous in computing, and formally modelling them
-has been a problem of longstanding interest to the formal verification
-community. We have chosen to use the ACL2 theorem prover
-to model FAT32 down to the byte level. By starting with a high-level
+Filesystems are ubiquitous in computing, providing application
+programs a means to store data persistently, address data by a name
+instead of a numeric index, and communicate with other programs.
+Thus, the vast majority of application programs
+directly or indirectly rely upon filesystems, making filesystem
+correctness bugs into serious issues, and making filesystem
+verification a critically important issue. Here, we present a
+verification effort in ACL2 for a filesystem with a FAT32-like data
+organisation. By starting with a high-level
 abstract model and refining \cite{abadi1991existence} it with
 successive models which add more of the complexity of the real
 filesystem, we are able to manage the complexity of this proof, which
-has not yet been attempted. In the rest of this paper, we describe these
+has not yet been attempted. Thus, our contributions are a case study
+in refinement for filesystem verification, and progress towards the
+ultimate goal of a binary-compatible model of a FAT32, which is a real
+and widely-used filesystem.
+
+In the rest of this paper, we describe these
 models and the properties proved with examples; we proceed to a
 high-level explanation of our refinement proofs; and further we offer
 some insights about the low-level issues encountered while working the
@@ -190,14 +200,14 @@ USB thumb drives.
 FAT32, while simple, adds some complexity compared to the filesystems
 which came before. Regular files, in storage, are divided into
 \textit{clusters} (sometimes called \textit{extents}) of a fixed size,
-constrained to be a multiple of the disk sector size, which remains
-constant for a given volume formatted
-with FAT32. Directory files are treated much the same way, with the
+which is decided at the time a FAT32 volume is formatted, and
+constrained to be a multiple of the disk sector size. Directory files
+are treated much the same way, with the
 addition of a file attribute that indicates the file is a
-directory. This clustering is one example of an optimisation for long
-contiguous reads and writes; in the literature optimisations such as
-this have been shown to decrease external fragmentation at the cost of
-increasing internal fragmentation.
+directory. This attribute indicates that the contents of the directory
+are a series of 32-bit wide directory entries, one for each file,
+containing information including file name, file size, first cluster
+index, and access times.
 
 The file allocation table itself contains, very simply, a number of
 linked lists. It maps each cluster index used by a file to either the
@@ -205,8 +215,8 @@ next cluster index for that file or an end-of-file value defined by the
 specification. This allows the contents of a file to be reconstructed
 by reading just the first cluster index from its directory entry, and
 reconstructing the list of clusters using the table. Unused clusters
-are mapped to 0 in the table; this is used for counting and allocating
-free clusters.
+are mapped to 0 in the table; this fact is used for counting and
+allocating free clusters.
 
 \section{The models}
 
@@ -267,7 +277,7 @@ table \ref{model-description-table}). Each new model
 complexity, and thereby approaching closer to a model which is binary
 compatible with FAT32. These refinement relationships are shown in
 figure \ref{refinement-figure}. \texttt{L1} is the simplest of these,
-representing the filesystem as a literal tree; later models feature
+representing the filesystem as a literal directory tree; later models feature
 file metadata (including ownership and permissions), externalisation
 of file contents, and allocation/file allocation using an allocation
 vector after the fashion of the CP/M file system.
