@@ -545,10 +545,13 @@ models are built.
 We are pursuing future work in a few different directions. Primarily,
 our next goal is to dispense with the tree representation and
 implement filesystem traversal by looking up entries in directory
-files. This will yield a model which is entirely contained in a disk
-data structure and which can further be validated by co-simulation
-with a FAT32 implementation, such as the one shipped with the Linux
-kernel.
+files. This will also involve addressing a subtle issue where reads
+affect the state of a filesystem by means of updating the access time,
+which has been analysed earlier in the context of
+microprocessors~\cite{goel2017engineering}. This will yield a model
+which is entirely contained in a disk data structure and which can
+further be validated by co-simulation with a FAT32 implementation,
+such as the one shipped with the Linux kernel.
 
 Next, we hope to re-use some artefacts of verifying FAT32 in order to
 verify a more complex filesystem, such as ext4. Choosing a filesystem
