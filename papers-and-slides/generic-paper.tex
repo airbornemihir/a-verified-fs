@@ -87,19 +87,18 @@ Filesystems are ubiquitous in computing, providing application
 programs a means to store data persistently, address data by a name
 instead of a numeric index, and communicate with other programs.
 Thus, the vast majority of application programs
-directly or indirectly rely upon filesystems, making filesystem
-correctness bugs into serious issues, and making filesystem
-verification a critically important issue. Here, we present a
+directly or indirectly rely upon filesystems, which makes filesystem
+verification critically important. Here, we present a
 formalisation effort in ACL2 for a filesystem with a FAT32-like data
 organisation, and a proof of the read-over-write properties for this
 filesystem. By starting with a high-level abstract model and refining
 \cite{abadi1991existence} it with successive models which add more of
 the complexity of the real filesystem, we are able to manage the
-complexity of this proof, which has not yet been attempted. Thus, this
-paper contributes a case study in refinement for filesystem
-verification, and progress towards the ultimate goal of a
-binary-compatible model of a FAT32, which is a real and widely-used
-filesystem.
+complexity of this proof, which has not, to our knowledge, been
+previously attempted. Thus, this paper contributes a case study in
+refinement for filesystem verification, and substantial progress
+towards the goal of a binary-compatible model of a FAT32, which is a
+real and widely-used filesystem.
 
 In the rest of this paper, we describe these
 models and the properties proved with examples; we proceed to a
@@ -110,15 +109,14 @@ proof effort and the running time of the proofs.
 
 \section{Related work}
 
-In the literature, much of the work on verifying filesytems has
-followed a pattern of synthesising a new filesystem based on a
-specification chosen for its ease in proving properties of interest,
-such as crash consistency of a journalling system. While we are trying
-to work with the specification of an existing filesystem, namely
-FAT32, many of these efforts use theorem proving tools like we
-do. Interactive theorem provers offer manual control the proof
-process, as opposed to non-interactive theorem provers which are more
-automated in their functioning; this is a key differentiator.
+Filesystem verification research has largely followed a pattern of
+synthesising a new filesystem based on a specification chosen for its
+ease in proving properties of interest, rather than similarity to an
+existing filesystem. Our work, in contrast, follows the FAT32
+specification closely. In spirit, our work is closer to previous work
+which uses interactive theorem provers and explores deep functional
+properties than to efforts which use non-interactive theorem provers
+such as Z3 to produce fully automated proofs of simpler properties.
 
 \subsection{Interactive theorem provers}
 An early effort in the filesystem verification domain was by Bevier
@@ -162,14 +160,14 @@ filesystems with the use of Z3. While the authors make substantial
 progress in terms of the number of filesystem calls they support and
 the crash consistency guarantees they provide, they are subject to
 the limits of SMT solving which prevent them from modelling essential
-filesystem features such as extents, which are central to FAT32 among
-others.
+filesystem features such as extents, which are central to many
+filesystems including FAT32.
 
 \section{Refinement}
 
 One traditional approach for verification of complex systems is
 axiomatic, wherein the desired properties of a system are enumerated
-and then verified. This is in contrast with abstraction refinement,
+and then verified. This is in contrast with refinement,
 where a system is proved to refine a simpler system, possibly a state
 machine or a pseudocode program, which is known to show the desired
 properties either by inspection or by proof. (Note: the term
@@ -182,49 +180,50 @@ systems.
 
 In the present verification endeavour, we choose to verify
 refinement properties in a series of successive models. This is also
-the approach chosen by Yggdrasil~\cite{sigurbjarnarson2016push}. We do
-choose read-over-write properties as axioms, which we prove true in all
-models; however, these proofs are obtained more or less "for free"
-once a proof is formulated for the base model. Yet, the value of the
-refinement approach is attested to by the ease of verification of
-several incidental properties, such as the ability of write operations
-to succeed as long as there is sufficient space in a filesystem of
-finite size.
+the approach chosen by Yggdrasil~\cite{sigurbjarnarson2016push}. We
+consider read-over-write properties to be central, and we prove them
+to true in all our models; however, these proofs are obtained more or
+less "for free" once a proof is formulated for the base model. Yet,
+the value of the refinement approach is attested to by the ease of
+verification of several incidental properties, such as the ability of
+write operations to succeed as long as there is sufficient space in a
+filesystem of finite size.
 
 \section{The FAT32 filesystem}
 
-Microsoft, in its specification \cite{microsoft_2000} defines three
-closely related filesystems, named FAT12, FAT16 and FAT32 based on the
-bit-width of entries in their \textit{file allocation table} data
-structure. Of these, the former two have passed almost into disuse,
-while FAT32 continues to be used in media of small capacity, such as
-USB thumb drives.
+FAT32 was initially developed at Microsoft~\cite{microsoft_2000} in
+order to address certain shortcomings of the DOS filesystem previously
+in use in their operating systems. While it is simple by today's
+standards, it does add some complexity compared to the filesystems
+which came before.
 
-FAT32, while simple, adds some complexity compared to the filesystems
-which came before. Regular files, in storage, are divided into
+All files, including regular files and directory files, are divided into
 \textit{clusters} (sometimes called \textit{extents}) of a fixed size,
 which is decided at the time a FAT32 volume is formatted, and
 constrained to be a multiple of the disk sector size. Directory files
-are treated much the same way, with the
-addition of a file attribute that indicates the file is a
-directory. This attribute indicates that the contents of the directory
-are a series of 32-bit wide directory entries, one for each file,
-containing information including file name, file size, first cluster
-index, and access times.
+differ only in a metadata attribute which indicates that their contents
+should be treated as a sequence of directory entries. Each such
+directory entry is 32 bytes wide and contains information including
+name, size, first cluster index, and access times for the
+corresponding file.
 
-The file allocation table itself contains, very simply, a number of
-linked lists. It maps each cluster index used by a file to either the
-next cluster index for that file or an end-of-file value defined by the
-specification. This allows the contents of a file to be reconstructed
-by reading just the first cluster index from its directory entry, and
-reconstructing the list of clusters using the table. Unused clusters
-are mapped to 0 in the table; this fact is used for counting and
-allocating free clusters.
+%% footnote
+The file allocation table itself contains a number of linked lists. It
+maps each cluster index used by a file to either the next cluster
+index for that file or a special end-of-clusterchain value (footnote:
+there is actually a range of end-of-clusterchain values, not just
+one.) This allows the contents of a file to be reconstructed by
+reading just the first cluster index from the corresponding directory
+entry, and building the list of clusters using the table. Unused
+clusters are mapped to 0 in the table; this fact is used for counting
+and allocating free clusters.
 
-A diagram on the next page illustrates the file allocation table and
-data layout for a small directory tree.
+We illustrate the file allocation table and data layout for a small
+directory tree in figure~\ref{fat32-example}.
 
 \begin{figure}
+  \caption{A FAT32 directory tree}
+  \label{fat32-example}
   \includegraphics[page=1,width=1.10\textwidth]{fat32-diagram.pdf}
 \end{figure}
 
