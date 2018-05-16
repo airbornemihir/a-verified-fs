@@ -258,7 +258,7 @@ in a series of steps.
     \texttt{L5} & Additional metadata for file ownership and access
     permissions is stored within each regular file. \\ \hline
     \texttt{L6} & The allocation vector is replaced by a file
-    allocation table, per the official FAT specification. \\ \hline
+    allocation table, matching the official FAT specification. \\ \hline
   \end{tabular}
 \end{table}
 
@@ -272,26 +272,26 @@ in a series of steps.
         top color=white, bottom color=blue!20}]
     \node {L1 - tree}
     child { node {L2 - length}
-      child { node {L3 - disk}}
-      child { node {L4 - garbage collection}
+      child { node {L3 - unbounded disk}}
+      child { node {L4 - bounded disk with garbage collection}
         child { node {L5 - permissions}}
         child { node {L6 - file allocation table}}}};
   \end{tikzpicture}
 \end{figure}
 
 At this point in development, we have six models of the filesystem,
-here referred to as \texttt{L1} through \texttt{L6} (see
-table \ref{model-description-table}). Each new model
-\textit{refines} a previous model, adding some features and
-complexity, and thereby approaching closer to a model which is binary
-compatible with FAT32. These refinement relationships are shown in
-figure \ref{refinement-figure}. \texttt{L1} is the simplest of these,
-representing the filesystem as a literal directory tree; later models feature
-file metadata (including ownership and permissions), externalisation
-of file contents, and allocation/file allocation using an allocation
-vector after the fashion of the CP/M file system (this is a remnant of
-an earlier filesystem verification effort for CP/M, which we subsumed
-into the present work).
+here referred to as \texttt{L1} through \texttt{L6}, described in
+table \ref{model-description-table}. Each model other than \texttt{L1}
+refines a previous model, adding some features and complexity and
+thereby approaching closer to a model which is binary compatible with
+FAT32. These refinement relationships are shown in figure
+\ref{refinement-figure}. \texttt{L1} is the simplest of these,
+representing the filesystem as a literal directory tree; later models
+feature file metadata (including ownership and permissions),
+externalisation of file contents, and allocation/file allocation using
+an allocation vector after the fashion of the CP/M file system (this
+is a remnant of an earlier filesystem verification effort for CP/M,
+which we subsumed into the present work).
 
 Broadly, we characterise the filesystem
 operations we offer as either \textit{write} operations, which do
@@ -337,8 +337,8 @@ of these theorems follow.
 \end{verbatim}
 
 By composing these properties, we can reason about executions
-involving multiple reads and writes, as shown in the following
-throwaway lemma.
+involving multiple reads and writes, as illustrated in the following
+throwaway proof.
 
 \medskip
 
@@ -365,7 +365,7 @@ throwaway lemma.
 
 \section{Proof methodology}
 
-In \textit{l1}, our simplest model, the read-over-write properties
+In \texttt{L1}, our simplest model, the read-over-write properties
 were, of necessity, proven from scratch.
 
 In each subsequent model, the read-over-write properties are proven as
@@ -433,6 +433,9 @@ to obtain the first read-over-write theorem for model \texttt{L2}.
 
 \section{Some proof details}
 
+We have come to rely on certain principles for the proof effort for
+each new model. We summarise some of these below.
+
 \subsection{Invariants}
 
 As the models grow more complex, with the addition of more auxiliary
@@ -453,10 +456,11 @@ require two more properties for a "sane" filesystem.
 \end{enumerate}
 
 These properties are invariants to be maintained across
-write operations; they simplify the verification of read-after-write
-properties by ensuring that write properties do not create an
-"aliasing" situation in which a regular file's contents can be
-modified through a write to a different regular file.
+write operations; while not all of them are strictly necessary for a
+filesystem instance to be valid, they do simplify the verification of
+read-after-write properties by helping us ensure that write operations
+do not create an "aliasing" situation in which a regular file's
+contents can be modified through a write to a different regular file.
 
 These properties, in the form of the predicates
 \texttt{indices-marked-listp} and \texttt{no-duplicatesp}, are
@@ -476,7 +480,7 @@ which a listing follows.
                  (indices-marked-p all-indices alv)))))
 \end{verbatim}
 
-\subsection{Refinement}
+\subsection{Reuse}
 
 As noted earlier, using a refinement methodology allows us to derive
 our read-over-write properties essentially "for free"; more precisely,
@@ -484,14 +488,17 @@ we are able to prove read-over-write properties simply with
 \texttt{:use} hints after having done the work of proving refinement
 through induction.
 
-At a lower level, we are also able to benefit from a happy coincidence
-where the CP/M filesystem's allocation vector is an abstraction of
-FAT32's file allocation's table - more precisely, exactly those
-clusters are marked as "free" in the CP/M filesystem, which are marked
-with 0 in FAT32. Having proved this refinement relationship, it
-becomes a lot easier to prove that \texttt{L4}, which uses an
-allocation vector, is an abstraction of \texttt{L6}, which uses a file
-allocation table, and this means a lot of effort spent on proving the
+At a lower level, we are also able to benefit from refinement
+relationships between components of our different models. For example,
+such a relationship exists between the allocation vector used in
+\texttt{L4} and the file allocation table used in \texttt{L6}. More
+precisely, by taking a file allocation table and mapping each non-zero
+entry to \texttt{true} and each zero entry to \texttt{false}, we
+obtain a corresponding allocation vector with exactly the same amount
+of available space. This is a refinement mapping which makes it a lot
+easier to prove that \texttt{L4}, which uses an allocation vector, is
+an abstraction of \texttt{L6}, which uses a file allocation
+table. This, in turn, means that the effort spent on proving the
 invariants described above for \texttt{L4} need not be replicated for
 \texttt{L6}.
 
@@ -527,21 +534,21 @@ function definitions and 616 theorems and lemmas. Some of this data was
 obtained by David A. Wheeler's sloccount tool.
 
 In table \ref{certification-timing-table} we note the time taken to certify
-the models in ACL2, as well as some infrastructure upon which the
-models are built.
+the books for each model in ACL2 (non-cumulative), as well as some
+infrastructure upon which the models are built. These results 
 
 \begin{table}[]
   \centering
   \caption{Time taken to prove models}
   \label{certification-timing-table}
   \begin{tabular}{ll}
+    Misc. & 4s \\
     \texttt{L1} & 1s \\
     \texttt{L2} & 5s \\
     \texttt{L3} & 6s \\
     \texttt{L4} & 19s \\
     \texttt{L5} & 21s \\
     \texttt{L6} & 60s \\
-    Misc. & 4s \\
   \end{tabular}
 \end{table}
 
@@ -555,16 +562,16 @@ subsequent realistic model of FAT32.
 
 \section{Future work}
 
-We are pursuing future work in a few different directions. Primarily,
-our next goal is to dispense with the tree representation and
+Our primary goal is to dispense with the tree representation and
 implement filesystem traversal by looking up entries in directory
 files. This will also involve addressing a subtle issue where reads
 affect the state of a filesystem by means of updating the access time,
 which has been analysed earlier in the context of
 microprocessors~\cite{goel2017engineering}. This will yield a model
-which is entirely contained in a disk data structure and which can
-further be validated by co-simulation with a FAT32 implementation,
-such as the one shipped with the Linux kernel.
+which is entirely contained in a disk data structure, without
+auxiliary data structures such as the tree, and which can
+further be validated by co-simulation with a FAT32 implementation such
+as that of Linux.
 
 Next, we hope to re-use some artefacts of verifying FAT32 in order to
 verify a more complex filesystem, such as ext4. Choosing a filesystem
@@ -577,7 +584,8 @@ a large part of the motivation for pursuing binary compatibility.
 
 \subsubsection*{Acknowledgments.} This material is based upon work
 supported by the National Science Foundation SaTC program under
-contract number CNS-1525472.
+contract number CNS-1525472. Thanks are also due to Warren A. Hunt
+Jr. and Matthew J. Kaufmann for their guidance.
 
 \bibliographystyle{splncs}
 \bibliography{references}
