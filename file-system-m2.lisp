@@ -168,9 +168,9 @@
   :rule-classes :definition)
 
 (defthm fatp-alt
-  (equal (fatp x)
-         (unsigned-byte-listp 32 x))
-  :rule-classes :definition)
+  (equal (fatp x) (fat32-entry-list-p x))
+  :rule-classes :definition
+  :hints (("goal" :in-theory (enable fat32-entry-p))))
 
 (defthm data-regionp-alt
   (equal (data-regionp x)
