@@ -7,17 +7,16 @@
                   :verify-guards nil))
   (if
       (atom clusterchain)
-      ""
+      nil
     (let*
         ((cluster-size (* (bpb_bytspersec fat32-in-memory)
                           (bpb_secperclus fat32-in-memory)))
          (masked-current-cluster (car clusterchain))
          (data-region-index (* (nfix (- masked-current-cluster 2))
                                cluster-size)))
-      (string-append
-       (nats=>string
-        (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                                 (min file-size cluster-size))))
+      (append
+       (rev (get-dir-ent-helper fat32-in-memory data-region-index
+                                (min file-size cluster-size)))
        (get-clusterchain-contents
         fat32-in-memory (cdr clusterchain)
         (nfix (- file-size cluster-size)))))))
@@ -80,7 +79,7 @@
           (not (equal error-code 0))
           state
         (princ$
-         contents
+         (nats=>string contents)
          channel state)))
      (state
       (close-output-channel channel state)))
