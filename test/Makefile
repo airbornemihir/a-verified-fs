@@ -1,6 +1,6 @@
-test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3
+test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4
 
-.PHONY: clean-disk clean-mountpoint clean-fusepoint test test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3
+.PHONY: clean-disk clean-mountpoint clean-fusepoint test test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4
 
 DISK=disk1.raw
 SIZE=73M
@@ -41,6 +41,9 @@ test-cat-replicant-2: cat-ref-output-2.txt cat-output-2.txt
 test-cat-replicant-3: cat-ref-output-3.txt cat-output-3.txt
 	diff -u -i cat-ref-output-3.txt cat-output-3.txt
 
+test-cat-replicant-4: cat-ref-output-4.txt cat-output-4.txt
+	diff -u -i cat-ref-output-4.txt cat-output-4.txt
+
 cat-ref-output-1.txt cat-output-1.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
@@ -71,3 +74,16 @@ cat-ref-output-3.txt cat-output-3.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-re
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-3.txt" CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+
+cat-ref-output-4.txt cat-output-4.txt: $(DISK) $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	for i1 in $(shell seq 1 32); do \
+		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+	done
+	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+	cat $(FUSEPOINT)/initrd.img > cat-ref-output-4.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) CAT_OUTPUT="cat-output-4.txt" CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
