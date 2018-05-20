@@ -1366,6 +1366,50 @@
   :rule-classes :definition
   :hints (("Goal" :in-theory (enable get-clusterchain))))
 
+(defun
+    get-clusterchain-contents
+    (fat32-in-memory clusterchain file-size)
+  (declare (xargs :stobjs (fat32-in-memory)
+                  :guard (and (fat32-in-memoryp fat32-in-memory)
+                              (fat32-masked-entry-list-p clusterchain)
+                              (natp file-size)
+                              (< 0 (* (bpb_bytspersec fat32-in-memory)
+                                      (bpb_secperclus fat32-in-memory)))
+                              (bounded-nat-listp clusterchain
+                                                 (floor
+                                                  (data-region-length
+                                                   fat32-in-memory)
+                                                  (* (bpb_bytspersec fat32-in-memory)
+                                                     (bpb_secperclus
+                                                      fat32-in-memory))))
+                              (lower-bounded-integer-listp clusterchain *ms-first-data-cluster*))
+                  :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp))
+                                ("Subgoal *4/2.1''" :in-theory (enable lower-bounded-integer-listp))
+                                ("Subgoal *4/1'''" :in-theory (enable lower-bounded-integer-listp))
+                                ("Subgoal *3/2.1''" :in-theory (enable lower-bounded-integer-listp))
+                                ("Subgoal *3/1'''" :in-theory (enable lower-bounded-integer-listp))
+                                ("Subgoal *2/5.1''" :in-theory (enable lower-bounded-integer-listp))
+                                ("Subgoal *2/2.1''" :in-theory (enable lower-bounded-integer-listp))
+                                ("Subgoal *2/1'''" :in-theory (enable lower-bounded-integer-listp))
+                                ("Subgoal *1/5.1''" :in-theory (enable lower-bounded-integer-listp))
+                                ("Subgoal *1/2.1''" :in-theory (enable lower-bounded-integer-listp)))
+                  :guard-debug t))
+  (if
+      (atom clusterchain)
+      nil
+    (let*
+        ((cluster-size (* (bpb_bytspersec fat32-in-memory)
+                          (bpb_secperclus fat32-in-memory)))
+         (masked-current-cluster (car clusterchain))
+         (data-region-index (* (nfix (- masked-current-cluster 2))
+                               cluster-size)))
+      (append
+       (rev (get-dir-ent-helper fat32-in-memory data-region-index
+                                (min file-size cluster-size)))
+       (get-clusterchain-contents
+        fat32-in-memory (cdr clusterchain)
+        (nfix (- file-size cluster-size)))))))
+
 (in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
                    bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig

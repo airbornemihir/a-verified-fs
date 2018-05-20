@@ -1,26 +1,5 @@
 (include-book "../file-system-m2")
 
-(defun
-    get-clusterchain-contents
-    (fat32-in-memory clusterchain file-size)
-  (declare (xargs :stobjs (fat32-in-memory)
-                  :verify-guards nil))
-  (if
-      (atom clusterchain)
-      nil
-    (let*
-        ((cluster-size (* (bpb_bytspersec fat32-in-memory)
-                          (bpb_secperclus fat32-in-memory)))
-         (masked-current-cluster (car clusterchain))
-         (data-region-index (* (nfix (- masked-current-cluster 2))
-                               cluster-size)))
-      (append
-       (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                                (min file-size cluster-size)))
-       (get-clusterchain-contents
-        fat32-in-memory (cdr clusterchain)
-        (nfix (- file-size cluster-size)))))))
-
 (defun get-dir-ent-matching-name
     (fat32-in-memory data-region-index dir-size str)
   (declare (xargs :stobjs (fat32-in-memory)
