@@ -1050,7 +1050,7 @@
         (delete-assoc 'update-bpb_bytspersec *the-list*)
         'fat32-in-memory))))
 
-;; Check out Subgoal 1.3.3'
+;; BOZO: Remove these.
 
 (defthm
   slurp-disk-image-guard-lemma-11
@@ -1062,8 +1062,6 @@
   (implies (and (integerp x) (integerp y))
            (integerp (* x y))))
 
-;; Look, we're going to have to keep re-visiting this as we make sure there are
-;; at least 512 bytes per sector and so on. Let's just pause and do it right.
 (defthm
   slurp-disk-image-guard-lemma-13
   (<= 1
