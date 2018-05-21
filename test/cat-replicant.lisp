@@ -1,24 +1,5 @@
 (include-book "../file-system-m2")
 
-(defun get-dir-ent-matching-name
-    (fat32-in-memory data-region-index dir-size str)
-  (declare (xargs :stobjs (fat32-in-memory)
-                  :verify-guards nil
-                  :measure (acl2-count dir-size)))
-  (if
-      (zp dir-size)
-      nil
-    (let*
-        ((dir-ent (get-dir-ent fat32-in-memory data-region-index)))
-      (if
-          (equal str (nats=>string (subseq dir-ent 0 11)))
-          dir-ent
-        (get-dir-ent-matching-name
-         fat32-in-memory
-         (+ data-region-index *ms-dir-ent-length*)
-         (nfix (- dir-size *ms-dir-ent-length*))
-         str)))))
-
 (defun
   get-dir-ent-contents
   (fat32-in-memory dir-ent)
@@ -34,7 +15,23 @@
        (mv (get-clusterchain-contents
             fat32-in-memory clusterchain file-size)
            0)
-     (mv "" error-code))))
+     (mv nil error-code))))
+
+(defun get-dir-ent-matching-name
+    (dir-contents str)
+  (declare (xargs :verify-guards nil
+                  :measure (len dir-contents)))
+  (if
+      (atom dir-contents)
+      nil
+    (let*
+        ((dir-ent (take *ms-dir-ent-length* dir-contents)))
+      (if
+          (equal str (nats=>string (subseq dir-ent 0 11)))
+          dir-ent
+        (get-dir-ent-matching-name
+         (nthcdr *ms-dir-ent-length* dir-contents)
+         str)))))
 
 (b*
     (((mv & val state)
@@ -48,17 +45,26 @@
       (open-output-channel val :character state))
      ((mv & val state)
       (getenv$ "CAT_INPUT" state))
+     ((mv dir-clusterchain error-code)
+      (get-clusterchain
+       fat32-in-memory 2 2097152))
+     ((unless (equal error-code 0))
+       (mv fat32-in-memory state))
+     (dir-contents
+      (get-clusterchain-contents
+       fat32-in-memory dir-clusterchain 2097152))
      ((mv contents error-code)
       (get-dir-ent-contents
        fat32-in-memory
        (get-dir-ent-matching-name
-        fat32-in-memory 0 1024 val)))
+        dir-contents val)))
      (state
       (if
           (not (equal error-code 0))
           state
         (princ$
-         (nats=>string contents)
+         (nats=>string
+          contents)
          channel state)))
      (state
       (close-output-channel channel state)))
