@@ -1,6 +1,6 @@
 test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4
 
-.PHONY: rebuild-disk clean-mountpoint clean-fusepoint test test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4
+.PHONY: clean-mountpoint clean-fusepoint test test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4
 
 DISK=disk1.raw
 SIZE=73M
@@ -15,10 +15,6 @@ clean-mountpoint:
 
 clean-fusepoint:
 	rm -rf $(FUSEPOINT)
-
-rebuild-disk:
-	rm -f $(DISK)
-	mkfs.fat -C -v -F 32 -s 2 $(DISK) 70000
 
 $(MOUNTPOINT):
 	rm -rf $(MOUNTPOINT)
@@ -40,7 +36,9 @@ test-cat-replicant-3: cat-ref-output-3.txt cat-output-3.txt
 test-cat-replicant-4: cat-ref-output-4.txt cat-output-4.txt
 	diff -u -i cat-ref-output-4.txt cat-output-4.txt
 
-cat-ref-output-1.txt cat-output-1.txt: rebuild-disk $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cat-ref-output-1.txt cat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) 70000
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	echo "four" > $(FUSEPOINT)/vmlinuz
@@ -50,7 +48,9 @@ cat-ref-output-1.txt cat-output-1.txt: rebuild-disk $(MOUNTPOINT) $(FUSEPOINT) c
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-1.txt" CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
 
-cat-ref-output-2.txt cat-output-2.txt: rebuild-disk $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cat-ref-output-2.txt cat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) 70000
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	cp input-1204-bytes.txt $(FUSEPOINT)/vmlinuz
@@ -60,7 +60,9 @@ cat-ref-output-2.txt cat-output-2.txt: rebuild-disk $(MOUNTPOINT) $(FUSEPOINT) c
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-2.txt" CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
 
-cat-ref-output-3.txt cat-output-3.txt: rebuild-disk $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cat-ref-output-3.txt cat-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) 70000
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	cp input-1204-bytes.txt $(FUSEPOINT)/vmlinuz
@@ -71,7 +73,9 @@ cat-ref-output-3.txt cat-output-3.txt: rebuild-disk $(MOUNTPOINT) $(FUSEPOINT) c
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-3.txt" CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
 
-cat-ref-output-4.txt cat-output-4.txt: rebuild-disk $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) 70000
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	for i1 in $(shell seq 1 32); do \
