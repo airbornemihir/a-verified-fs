@@ -1,37 +1,37 @@
 (include-book "../file-system-m2")
 
 (defun
-    all-following-cluster-contents
-    (fat32-in-memory current-cluster file-size)
-  (declare (xargs :stobjs (fat32-in-memory)
-                  :verify-guards nil))
-  (let*
-      ((cluster-size (* (bpb_bytspersec fat32-in-memory)
-                        (bpb_secperclus fat32-in-memory)))
-       (data-region-index (* (nfix (- current-cluster 2))
-                             cluster-size)))
-    (if
-        (or (zp file-size) (zp cluster-size))
-        ""
-      (string-append
-       (nats=>string
-        (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                                 (min file-size cluster-size))))
-       (all-following-cluster-contents
-        fat32-in-memory (fati current-cluster fat32-in-memory)
-        (nfix (- file-size cluster-size)))))))
-
-(defun
   get-dir-ent-contents
-  (fat32-in-memory data-region-index)
+  (fat32-in-memory dir-ent)
   (declare (xargs :stobjs (fat32-in-memory)
                   :verify-guards nil))
-  (let*
-   ((dir-ent (get-dir-ent fat32-in-memory data-region-index))
-    (first-cluster (dir-ent-first-cluster dir-ent))
-    (file-size (dir-ent-file-size dir-ent)))
-   (all-following-cluster-contents
-    fat32-in-memory first-cluster file-size)))
+  (b*
+   ((first-cluster (dir-ent-first-cluster dir-ent))
+    (file-size (dir-ent-file-size dir-ent))
+    ((mv clusterchain error-code)
+     (get-clusterchain
+      fat32-in-memory (fat32-entry-mask first-cluster) file-size)))
+   (if (equal error-code 0)
+       (mv (get-clusterchain-contents
+            fat32-in-memory clusterchain file-size)
+           0)
+     (mv nil error-code))))
+
+(defun get-dir-ent-matching-name
+    (dir-contents str)
+  (declare (xargs :verify-guards nil
+                  :measure (len dir-contents)))
+  (if
+      (atom dir-contents)
+      nil
+    (let*
+        ((dir-ent (take *ms-dir-ent-length* dir-contents)))
+      (if
+          (equal str (nats=>string (subseq dir-ent 0 11)))
+          dir-ent
+        (get-dir-ent-matching-name
+         (nthcdr *ms-dir-ent-length* dir-contents)
+         str)))))
 
 (b*
     (((mv & val state)
@@ -43,11 +43,29 @@
       (getenv$ "CAT_OUTPUT" state))
      ((mv channel state)
       (open-output-channel val :character state))
+     ((mv & val state)
+      (getenv$ "CAT_INPUT" state))
+     ((mv dir-clusterchain error-code)
+      (get-clusterchain
+       fat32-in-memory 2 2097152))
+     ((unless (equal error-code 0))
+       (mv fat32-in-memory state))
+     (dir-contents
+      (get-clusterchain-contents
+       fat32-in-memory dir-clusterchain 2097152))
+     ((mv contents error-code)
+      (get-dir-ent-contents
+       fat32-in-memory
+       (get-dir-ent-matching-name
+        dir-contents val)))
      (state
-      (princ$
-       (get-dir-ent-contents
-        fat32-in-memory 0)
-       channel state))
+      (if
+          (not (equal error-code 0))
+          state
+        (princ$
+         (nats=>string
+          contents)
+         channel state)))
      (state
       (close-output-channel channel state)))
   (mv fat32-in-memory state))
