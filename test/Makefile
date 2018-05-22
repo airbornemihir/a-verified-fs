@@ -1,6 +1,7 @@
 test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4
 
-.PHONY: clean-mountpoint clean-fusepoint test test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4
+.PHONY: clean-mountpoint clean-fusepoint test test-cat-replicant-1 \
+test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4 test-mkfs-replicant-1
 
 DISK=disk1.raw
 SIZE=73M
@@ -35,6 +36,9 @@ test-cat-replicant-3: cat-ref-output-3.txt cat-output-3.txt
 
 test-cat-replicant-4: cat-ref-output-4.txt cat-output-4.txt
 	diff -u -i cat-ref-output-4.txt cat-output-4.txt
+
+test-mkfs-replicant-1: mkfs-ref-output-1.txt mkfs-output-1.txt
+	diff -u -i mkfs-ref-output-1.txt mkfs-output-1.txt
 
 cat-ref-output-1.txt cat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -87,3 +91,9 @@ cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-4.txt" CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+
+mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) mkfs-replicant.lisp
+	rm -f $(DISK)
+	qemu-img create -f raw $(DISK) $(SIZE)
+	(mkfs.fat -v -F 32 -s 1 $(DISK)) > mkfs-ref-output-1.txt
+	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-1.txt" $(ACL2) < mkfs-replicant.lisp
