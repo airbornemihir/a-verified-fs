@@ -135,7 +135,7 @@
                                    (len text))
                     text))
     :hints
-    (("goal" :in-theory (enable make-blocks))
+    (("goal" :in-theory (enable make-blocks already-a-character-list))
      ("subgoal *1/3.3'"
       :in-theory (disable first-n-ac-of-make-character-list
                           take-of-too-many)

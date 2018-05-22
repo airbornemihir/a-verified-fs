@@ -1074,11 +1074,11 @@
   slurp-disk-image-guard-lemma-13
   (<= 1
       (bpb_secperclus
-       (mv-nth
-        0
-        (read-reserved-area fat32-in-memory str))))
+       (mv-nth 0
+               (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
-  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable fat32-in-memoryp nth))))
 
 (defthm
   slurp-disk-image-guard-lemma-14
@@ -1088,7 +1088,8 @@
         0
         (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
-  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable fat32-in-memoryp nth))))
 
 (defthm
   slurp-disk-image-guard-lemma-15
@@ -1098,7 +1099,8 @@
         0
         (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
-  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable fat32-in-memoryp nth))))
 
 (defthm
   slurp-disk-image-guard-lemma-16
@@ -1108,7 +1110,8 @@
         0
         (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
-  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable fat32-in-memoryp nth))))
 
 (defthm
   slurp-disk-image-guard-lemma-17
@@ -1118,7 +1121,8 @@
         0
         (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
-  :hints (("goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable fat32-in-memoryp nth))))
 
 (defthm
   read-reserved-area-correctness-1
