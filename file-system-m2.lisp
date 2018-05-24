@@ -629,68 +629,9 @@
                             fat32-in-memory))
        ;; This needs to be at least 512, per the spec.
        (fat32-in-memory
-        (update-bpb_bytspersec *ms-min-bytes-per-sector*
+        (update-bpb_bytspersec 512
                                fat32-in-memory))
-       ;; Aside from those linear rules, we also need some stuff to fix this to
-       ;; a fat32-in-memory
-       (fat32-in-memory
-        (update-bpb_rootentcnt 0
-                               fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_totsec16 0
-                             fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_media #xf0
-                          fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_fatsz16 0
-                            fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_secpertrk 1
-                              fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_numheads 2
-                             fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_hiddsec 0
-                            fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_totsec32 0
-                             fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_extflags 0
-                             fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_fsver_minor 0
-                                fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_fsver_major 0
-                                fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_rootclus *ms-first-data-cluster*
-                             fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_fsinfo 1
-                           fat32-in-memory))
-       (fat32-in-memory
-        (update-bpb_bkbootsec 6
-                              fat32-in-memory))
-       (fat32-in-memory
-        (update-bs_drvnum 0
-                          fat32-in-memory))
-       (fat32-in-memory
-        (update-bs_reserved1 0
-                             fat32-in-memory))
-       (fat32-in-memory
-        (update-bs_bootsig 0
-                           fat32-in-memory))
-       (fat32-in-memory
-        (update-bs_volid 0
-                         fat32-in-memory))
        ;; common stuff for fat filesystems
-       ((unless
-            (>= (length str) *initialbytcnt*))
-         (mv fat32-in-memory 1))
        (initial-bytes
         (string=>nats (subseq str 0 *initialbytcnt*)))
        (fat32-in-memory
