@@ -162,6 +162,11 @@
          (unsigned-byte-listp 8 x))
   :rule-classes :definition)
 
+(defthm bs_vollabp-alt
+  (equal (bs_vollabp x)
+         (unsigned-byte-listp 8 x))
+  :rule-classes :definition)
+
 (defthm bs_filsystypep-alt
   (equal (bs_filsystypep x)
          (unsigned-byte-listp 8 x))
@@ -493,6 +498,15 @@
  update-bs_oemname-correctness-4)
 
 (update-stobj-array
+ update-bs_vollab bs_vollab-length 8
+ update-bs_vollabi bs_vollabi *bs_vollabi*
+ fat32-in-memory fat32-in-memoryp
+ update-bs_vollab-correctness-1
+ update-bs_vollab-correctness-2
+ update-bs_vollab-correctness-3
+ update-bs_vollab-correctness-4)
+
+(update-stobj-array
  update-bs_filsystype bs_filsystype-length 8
  update-bs_filsystypei bs_filsystypei *bs_filsystypei*
  fat32-in-memory fat32-in-memoryp
@@ -572,6 +586,33 @@
     (("goal"
       :do-not-induct t
       :in-theory (disable fat32-in-memoryp unsigned-byte-p nth))
+     ("Subgoal 8" :in-theory (disable nth-of-unsigned-byte-list)
+      :use (:instance
+            nth-of-unsigned-byte-list
+            (n 13)
+            (l (string=>nats (implode (take 16 (explode str)))))
+            (bits 8)))
+     ("Subgoal 7" :in-theory (disable nth-of-unsigned-byte-list)
+      :use (:instance
+            nth-of-unsigned-byte-list
+            (n 0)
+            (l
+             (STRING=>NATS
+              (IMPLODE
+               (TAKE
+                (+
+                 -16
+                 (*
+                  (COMBINE16U (NTH 12
+                                   (STRING=>NATS (IMPLODE (TAKE 16 (EXPLODE STR)))))
+                              (NTH 11
+                                   (STRING=>NATS (IMPLODE (TAKE 16 (EXPLODE STR))))))
+                  (COMBINE16U (NTH 15
+                                   (STRING=>NATS (IMPLODE (TAKE 16 (EXPLODE STR)))))
+                              (NTH 14
+                                   (STRING=>NATS (IMPLODE (TAKE 16 (EXPLODE STR))))))))
+                (NTHCDR 16 (EXPLODE STR))))))
+            (bits 8)))
      ("subgoal 5"
       :in-theory (disable nth-of-unsigned-byte-list)
       :use
@@ -769,7 +810,10 @@
                      (nth (+ 67 1 (- *initialbytcnt*)) remaining_rsvdbyts)
                      (nth (+ 67 0 (- *initialbytcnt*)) remaining_rsvdbyts))
          fat32-in-memory))
-       ;; skipping bs_vollab for now
+       (fat32-in-memory
+        (update-bs_vollab (subseq remaining_rsvdbyts
+                                      (+ 71 (- *initialbytcnt*) 0)
+                                      (+ 71 (- *initialbytcnt*) 11)) fat32-in-memory))
        (fat32-in-memory
         (update-bs_filsystype (subseq remaining_rsvdbyts
                                       (+ 82 (- *initialbytcnt*) 0)
