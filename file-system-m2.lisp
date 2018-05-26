@@ -1314,41 +1314,41 @@
   :hints (("Goal" :in-theory (e/d (get-dir-ent unsigned-byte-listp)
                                   (fat32-in-memoryp)))))
 
-(defun
-  get-dir-filenames
-  (fat32-in-memory data-region-index entry-limit)
-  (declare (xargs :measure (acl2-count entry-limit)
-                  :verify-guards nil
-                  :stobjs (fat32-in-memory)))
-  (if
-   (or (zp entry-limit)
-       (equal (data-regioni data-region-index fat32-in-memory)
-              0))
-   nil
-   (let*
-    ((dir-ent (get-dir-ent fat32-in-memory data-region-index))
-     (first-cluster (combine32u (nth 21 dir-ent)
-                                (nth 20 dir-ent)
-                                (nth 27 dir-ent)
-                                (nth 26 dir-ent)))
-     (filename (nats=>string (subseq dir-ent 0 11))))
-    (list*
-     (if (or (zp (logand (data-regioni (+ data-region-index 11)
-                                       fat32-in-memory)
-                         (ash 1 4)))
-             (equal filename ".          ")
-             (equal filename "..         "))
-         (list* filename first-cluster)
-         (list filename first-cluster
-               (get-dir-filenames
-                fat32-in-memory
-                (* (nfix (- first-cluster 2))
-                   (bpb_secperclus fat32-in-memory)
-                   (bpb_bytspersec fat32-in-memory))
-                (- entry-limit 1))))
-     (get-dir-filenames
-      fat32-in-memory (+ data-region-index 32)
-      (- entry-limit 1))))))
+;; (defun
+;;   get-dir-filenames
+;;   (fat32-in-memory data-region-index entry-limit)
+;;   (declare (xargs :measure (acl2-count entry-limit)
+;;                   :verify-guards nil
+;;                   :stobjs (fat32-in-memory)))
+;;   (if
+;;    (or (zp entry-limit)
+;;        (equal (data-regioni data-region-index fat32-in-memory)
+;;               0))
+;;    nil
+;;    (let*
+;;     ((dir-ent (get-dir-ent fat32-in-memory data-region-index))
+;;      (first-cluster (combine32u (nth 21 dir-ent)
+;;                                 (nth 20 dir-ent)
+;;                                 (nth 27 dir-ent)
+;;                                 (nth 26 dir-ent)))
+;;      (filename (nats=>string (subseq dir-ent 0 11))))
+;;     (list*
+;;      (if (or (zp (logand (data-regioni (+ data-region-index 11)
+;;                                        fat32-in-memory)
+;;                          (ash 1 4)))
+;;              (equal filename ".          ")
+;;              (equal filename "..         "))
+;;          (list* filename first-cluster)
+;;          (list filename first-cluster
+;;                (get-dir-filenames
+;;                 fat32-in-memory
+;;                 (* (nfix (- first-cluster 2))
+;;                    (bpb_secperclus fat32-in-memory)
+;;                    (bpb_bytspersec fat32-in-memory))
+;;                 (- entry-limit 1))))
+;;      (get-dir-filenames
+;;       fat32-in-memory (+ data-region-index 32)
+;;       (- entry-limit 1))))))
 
 (defun dir-ent-first-cluster (dir-ent)
   (declare
@@ -1459,6 +1459,45 @@
      (get-clusterchain-contents
       fat32-in-memory (cdr clusterchain)
       (nfix (- file-size cluster-size)))))))
+
+(defun
+  get-dir-filenames
+  (fat32-in-memory dir-contents entry-limit)
+  (declare (xargs :measure (acl2-count entry-limit)
+                  :verify-guards nil
+                  :stobjs (fat32-in-memory)))
+  (if
+   (or (zp entry-limit)
+       (equal (nth 0 dir-contents)
+              0))
+   nil
+   (let*
+    ((dir-ent (take 32 dir-contents))
+     (first-cluster (combine32u (nth 21 dir-ent)
+                                (nth 20 dir-ent)
+                                (nth 27 dir-ent)
+                                (nth 26 dir-ent)))
+     (filename (nats=>string (subseq dir-ent 0 11))))
+    (list*
+     (if (or (zp (logand (nth 11 dir-ent)
+                         (ash 1 4)))
+             (equal filename ".          ")
+             (equal filename "..         "))
+         (list filename first-cluster)
+       (b*
+           (((mv clusterchain &) 
+             (get-clusterchain
+              fat32-in-memory
+              (fat32-entry-mask first-cluster)
+              (ash 1 21))) )
+         (list filename first-cluster
+               (get-clusterchain-contents
+                fat32-in-memory
+                clusterchain
+                (ash 1 21)))))
+     (get-dir-filenames
+      fat32-in-memory (nthcdr 32 dir-contents)
+      (- entry-limit 1))))))
 
 (in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
