@@ -12,7 +12,7 @@
      (get-clusterchain
       fat32-in-memory (fat32-entry-mask first-cluster) file-size)))
    (if (equal error-code 0)
-       (mv (get-clusterchain-contents
+       (mv (get-contents-from-clusterchain
             fat32-in-memory clusterchain file-size)
            0)
      (mv nil error-code))))
@@ -51,7 +51,7 @@
      ((unless (equal error-code 0))
        (mv fat32-in-memory state))
      (dir-contents
-      (get-clusterchain-contents
+      (get-contents-from-clusterchain
        fat32-in-memory dir-clusterchain 2097152))
      ((mv contents error-code)
       (get-dir-ent-contents

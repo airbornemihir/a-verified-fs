@@ -1421,7 +1421,7 @@
   :hints (("Goal" :in-theory (enable get-clusterchain))))
 
 (defun
-  get-clusterchain-contents
+  get-contents-from-clusterchain
   (fat32-in-memory clusterchain file-size)
   (declare
    (xargs
@@ -1456,7 +1456,7 @@
     (append
      (rev (get-dir-ent-helper fat32-in-memory data-region-index
                               (min file-size cluster-size)))
-     (get-clusterchain-contents
+     (get-contents-from-clusterchain
       fat32-in-memory (cdr clusterchain)
       (nfix (- file-size cluster-size)))))))
 
@@ -1491,7 +1491,7 @@
               (fat32-entry-mask first-cluster)
               (ash 1 21))) )
          (list filename first-cluster
-               (get-clusterchain-contents
+               (get-contents-from-clusterchain
                 fat32-in-memory
                 clusterchain
                 (ash 1 21)))))
