@@ -1600,7 +1600,26 @@
   :hints
   (("goal" :in-theory (disable min nth fat32-in-memoryp))))
 
-;; currently the function call to test out this function is
+(fty::defprod m1-file
+  ((dir-ent any-p)
+   (contents any-p)))
+
+(defund m1-regular-file-p (file)
+  (declare (xargs :guard t))
+  (and
+   (m1-file-p file)
+   (stringp (m1-file->contents file))))
+
+(fty::deflist m1-file-list
+              :elt-type m1-file)
+
+(defun m1-directory-file-p (file)
+  (declare (xargs :guard t))
+  (and
+   (m1-file-p file)
+   (m1-file-list-p (m1-file->contents file))))
+
+;; Currently the function call to test out this function is
 ;; (b* (((mv contents &)
 ;;       (get-clusterchain-contents
 ;;        fat32-in-memory 2 (ash 1 21))))
