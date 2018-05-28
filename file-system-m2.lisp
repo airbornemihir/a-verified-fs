@@ -1600,6 +1600,15 @@
   :hints
   (("goal" :in-theory (disable min nth fat32-in-memoryp))))
 
+;; This whole thing is subject to two criticisms.
+;; - The choice not to treat the root directory like other directories is
+;; justified on the grounds that it doesn't have a name or a directory
+;; entry. However, presumably we'll want to have a function for updating the
+;; contents of a directory when a new file is added, and we might have to take
+;; the root as a special case.
+;; - The name should be stored separately from the rest of the directory entry
+;; (or perhaps even redundantly) because not being able to use assoc is a
+;; serious issue.
 (fty::defprod m1-file
   ((dir-ent any-p)
    (contents any-p)))
@@ -1618,6 +1627,55 @@
   (and
    (m1-file-p file)
    (m1-file-list-p (m1-file->contents file))))
+
+(defun
+  fat32-in-memory-to-m1-fs
+  (fat32-in-memory dir-contents entry-limit)
+  (declare (xargs :measure (acl2-count entry-limit)
+                  :verify-guards nil
+                  :stobjs (fat32-in-memory)))
+  (if
+   (or (zp entry-limit)
+       (equal (nth 0 dir-contents)
+              0))
+   nil
+   (let*
+    ((dir-ent (take 32 dir-contents))
+     (first-cluster (combine32u (nth 21 dir-ent)
+                                (nth 20 dir-ent)
+                                (nth 27 dir-ent)
+                                (nth 26 dir-ent)))
+     (filename (nats=>string (subseq dir-ent 0 11))))
+    (list*
+     (b*
+         ((not-right-kind-of-directory-p
+           (or (zp (logand (nth 11 dir-ent)
+                         (ash 1 4)))
+             (equal filename ".          ")
+             (equal filename "..         ")))
+          (length (if not-right-kind-of-directory-p
+                      (dir-ent-file-size dir-ent)
+                    (ash 1 21)))
+          ((mv contents &)
+           (get-clusterchain-contents
+            fat32-in-memory
+            (fat32-entry-mask first-cluster)
+            length)) )
+     (if not-right-kind-of-directory-p
+         (make-m1-file
+          :dir-ent dir-ent
+          :contents
+          (nats=>string contents))
+       (make-m1-file
+        :dir-ent dir-ent
+        :contents
+        (fat32-in-memory-to-m1-fs
+         fat32-in-memory
+         contents
+         (- entry-limit 1)))))
+     (fat32-in-memory-to-m1-fs
+      fat32-in-memory (nthcdr 32 dir-contents)
+      (- entry-limit 1))))))
 
 ;; Currently the function call to test out this function is
 ;; (b* (((mv contents &)
