@@ -1600,30 +1600,24 @@
   :hints
   (("goal" :in-theory (disable min nth fat32-in-memoryp))))
 
-(defund
-  m1-regular-file-entry-p
-  (entry)
+(fty::defprod m1-file
+  ((dir-ent any-p)
+   (contents any-p)))
+
+(defund m1-regular-file-p (file)
   (declare (xargs :guard t))
   (and
-   (consp entry)
-   (unsigned-byte-listp 8 (car entry))
-   (equal (len (car entry)) 32)
-   (stringp (cdr entry))))
+   (m1-file-p file)
+   (stringp (m1-file->contents file))))
 
-(defun
-    m1-fs-p (fs)
+(fty::deflist m1-file-list
+              :elt-type m1-file)
+
+(defun m1-directory-file-p (file)
   (declare (xargs :guard t))
-  (if (atom fs)
-      (null fs)
-    (and (let ((directory-or-file-entry (car fs)))
-           (if (atom directory-or-file-entry)
-               nil
-             (let ((name (car directory-or-file-entry))
-                   (entry (cdr directory-or-file-entry)))
-               (and (stringp name)
-                    (or (m1-regular-file-entry-p entry)
-                        (m1-fs-p entry))))))
-         (m1-fs-p (cdr fs)))))
+  (and
+   (m1-file-p file)
+   (m1-file-list-p (m1-file->contents file))))
 
 ;; Currently the function call to test out this function is
 ;; (b* (((mv contents &)
