@@ -1626,56 +1626,60 @@
   (declare (xargs :guard t))
   (and
    (m1-file-p file)
-   (m1-file-list-p (m1-file->contents file))))
+   (alistp (m1-file->contents file))
+   (string-listp (strip-cars (m1-file->contents file)))
+   (m1-file-list-p (strip-cdrs (m1-file->contents file)))))
 
 (defun
-  fat32-in-memory-to-m1-fs
-  (fat32-in-memory dir-contents entry-limit)
+    fat32-in-memory-to-m1-fs
+    (fat32-in-memory dir-contents entry-limit)
   (declare (xargs :measure (acl2-count entry-limit)
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
   (if
-   (or (zp entry-limit)
-       (equal (nth 0 dir-contents)
-              0))
-   nil
-   (let*
-    ((dir-ent (take 32 dir-contents))
-     (first-cluster (combine32u (nth 21 dir-ent)
-                                (nth 20 dir-ent)
-                                (nth 27 dir-ent)
-                                (nth 26 dir-ent)))
-     (filename (nats=>string (subseq dir-ent 0 11))))
-    (list*
-     (b*
-         ((not-right-kind-of-directory-p
-           (or (zp (logand (nth 11 dir-ent)
-                         (ash 1 4)))
-             (equal filename ".          ")
-             (equal filename "..         ")))
-          (length (if not-right-kind-of-directory-p
-                      (dir-ent-file-size dir-ent)
-                    (ash 1 21)))
-          ((mv contents &)
-           (get-clusterchain-contents
-            fat32-in-memory
-            (fat32-entry-mask first-cluster)
-            length)) )
-     (if not-right-kind-of-directory-p
-         (make-m1-file
-          :dir-ent dir-ent
-          :contents
-          (nats=>string contents))
-       (make-m1-file
-        :dir-ent dir-ent
-        :contents
-        (fat32-in-memory-to-m1-fs
-         fat32-in-memory
-         contents
-         (- entry-limit 1)))))
-     (fat32-in-memory-to-m1-fs
-      fat32-in-memory (nthcdr 32 dir-contents)
-      (- entry-limit 1))))))
+      (or (zp entry-limit)
+          (equal (nth 0 dir-contents)
+                 0))
+      nil
+    (let*
+        ((dir-ent (take 32 dir-contents))
+         (first-cluster (combine32u (nth 21 dir-ent)
+                                    (nth 20 dir-ent)
+                                    (nth 27 dir-ent)
+                                    (nth 26 dir-ent)))
+         (filename (nats=>string (subseq dir-ent 0 11))))
+      (list*
+       (b*
+           ((not-right-kind-of-directory-p
+             (or (zp (logand (nth 11 dir-ent)
+                             (ash 1 4)))
+                 (equal filename ".          ")
+                 (equal filename "..         ")))
+            (length (if not-right-kind-of-directory-p
+                        (dir-ent-file-size dir-ent)
+                      (ash 1 21)))
+            ((mv contents &)
+             (get-clusterchain-contents
+              fat32-in-memory
+              (fat32-entry-mask first-cluster)
+              length)) )
+         (cons
+          filename
+          (if not-right-kind-of-directory-p
+              (make-m1-file
+               :dir-ent dir-ent
+               :contents
+               (nats=>string contents))
+            (make-m1-file
+             :dir-ent dir-ent
+             :contents
+             (fat32-in-memory-to-m1-fs
+              fat32-in-memory
+              contents
+              (- entry-limit 1))))))
+       (fat32-in-memory-to-m1-fs
+        fat32-in-memory (nthcdr 32 dir-contents)
+        (- entry-limit 1))))))
 
 ;; Currently the function call to test out this function is
 ;; (b* (((mv contents &)
