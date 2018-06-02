@@ -4,16 +4,13 @@
 
 ; This is a stobj model of the FAT32 filesystem.
 
-(include-book "file-system-lemmas")
-(include-book "fat32")
+(include-book "file-system-m1")
 (include-book "std/io/read-ints" :dir :system)
-(include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
 (local (include-book "rtl/rel9/arithmetic/top"
                      :dir :system))
 (include-book "kestrel/utilities/strings" :dir :system)
-(local (include-book "ihs/logops-lemmas" :dir :system))
 
 ;; This was moved to one of the main books, but still kept
 (defthm unsigned-byte-listp-of-update-nth
@@ -29,12 +26,6 @@
   (equal (unsigned-byte-listp n (rev bytes))
          (unsigned-byte-listp n (list-fix bytes)))
   :hints (("goal" :in-theory (enable unsigned-byte-listp rev))))
-
-(defthm nth-of-unsigned-byte-list
-  (implies (and (unsigned-byte-listp bits l)
-                (natp n)
-                (< n (len l)))
-           (unsigned-byte-p bits (nth n l))))
 
 (defthm len-of-chars=>nats
   (implies (character-listp chars)
@@ -1351,52 +1342,6 @@
 ;;       fat32-in-memory (+ data-region-index 32)
 ;;       (- entry-limit 1))))))
 
-(defun dir-ent-p (x)
-  (declare (xargs :guard t))
-  (and (unsigned-byte-listp 8 x)
-       (equal (len x) *ms-dir-ent-length*)))
-
-(defun dir-ent-fix (x)
-  (declare (xargs :guard t))
-  (if
-      (dir-ent-p x)
-      x
-    (make-list *ms-dir-ent-length* :initial-element 0)))
-
-(fty::deffixtype
- dir-ent
- :pred dir-ent-p
- :fix dir-ent-fix
- :equiv dir-ent-equiv
- :define t
- :forward t)
-
-(defun dir-ent-first-cluster (dir-ent)
-  (declare
-   (xargs :guard (dir-ent-p dir-ent)))
-  (combine32u (nth 21 dir-ent)
-              (nth 20 dir-ent)
-              (nth 27 dir-ent)
-              (nth 26 dir-ent)))
-
-(defun dir-ent-file-size (dir-ent)
-  (declare
-   (xargs :guard (dir-ent-p dir-ent)))
-  (combine32u (nth 31 dir-ent)
-              (nth 30 dir-ent)
-              (nth 29 dir-ent)
-              (nth 28 dir-ent)))
-
-(defund dir-ent-directory-p (dir-ent)
-  (declare
-   (xargs :guard (dir-ent-p dir-ent)
-          :guard-hints (("Goal" :in-theory (disable unsigned-byte-p)
-                         :use (:instance unsigned-byte-p-logand
-                                         (size 8)
-                                         (i #x10)
-                                         (j (nth 11 dir-ent)))) )))
-  (not (zp (logand #x10 (nth 11 dir-ent)))))
-
 (defund
   get-clusterchain
   (fat32-in-memory masked-current-cluster length)
@@ -1629,37 +1574,6 @@
   :hints
   (("goal" :in-theory (disable min nth fat32-in-memoryp))))
 
-;; This whole thing is subject to two criticisms.
-;; - The choice not to treat the root directory like other directories is
-;; justified on the grounds that it doesn't have a name or a directory
-;; entry. However, presumably we'll want to have a function for updating the
-;; contents of a directory when a new file is added, and we might have to take
-;; the root as a special case.
-;; - The name should be stored separately from the rest of the directory entry
-;; (or perhaps even redundantly) because not being able to use assoc is a
-;; serious issue.
-
-(fty::defprod m1-file
-  ((dir-ent dir-ent-p)
-   (contents any-p)))
-
-(defund m1-regular-file-p (file)
-  (declare (xargs :guard t))
-  (and
-   (m1-file-p file)
-   (stringp (m1-file->contents file))))
-
-(fty::defalist m1-file-alist
-      :key-type string
-      :val-type m1-file
-      :true-listp t)
-
-(defun m1-directory-file-p (file)
-  (declare (xargs :guard t))
-  (and
-   (m1-file-p file)
-   (m1-file-alist-p (m1-file->contents file))))
-
 (defun
     fat32-in-memory-to-m1-fs
     (fat32-in-memory dir-contents entry-limit)
@@ -1716,46 +1630,6 @@
   (m1-file-alist-p
    (fat32-in-memory-to-m1-fs fat32-in-memory
                              dir-contents entry-limit)))
-
-(fty::defprod
- struct-stat
- ;; Currently, this is the only thing I can decipher.
- ((st_size natp :default 0)))
-
-(defthm lstat-guard-lemma-1
-  (implies (and (m1-file-alist-p fs)
-                (consp (assoc-equal filename fs)))
-           (m1-file-p (cdr (assoc-equal filename fs)))))
-
-(defthm lstat-guard-lemma-2
-  (implies (m1-file-alist-p fs)
-           (alistp fs)))
-
-(defun
-  lstat (fs pathname)
-  (declare (xargs :guard (and (m1-file-alist-p fs)
-                              (string-listp pathname))
-                  :guard-debug t
-                  :measure (acl2-count pathname)))
-  (let
-      ((fs (m1-file-alist-fix fs)))
-    (if (atom pathname)
-        (mv (make-struct-stat) -1 *enoent*)
-      (let
-          ((alist-elem (assoc-equal (car pathname) fs)) )
-        (if
-            (atom alist-elem)
-            (mv (make-struct-stat) -1 *enoent*)
-          (if (not (m1-directory-file-p (cdr alist-elem)))
-              (if (consp (cdr pathname))
-                  (mv (make-struct-stat) -1 *enotdir*)
-                (mv
-                 (make-struct-stat
-                  :st_size
-                  (dir-ent-file-size
-                   (m1-file->dir-ent (cdr alist-elem))))
-                 0 0))
-            (lstat (m1-file->contents (cdr alist-elem)) (cdr pathname))))))))
 
 ;; Currently the function call to test out this function is
 ;; (b* (((mv contents &)

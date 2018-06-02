@@ -7,10 +7,20 @@
 ; The following is in fat32.acl2, but we include it here as well for
 ; when we are doing interactive development, in order to read gl:: symbols.
 (include-book "centaur/gl/portcullis" :dir :system)
-(include-book "centaur/fty/top" :dir :system)
 
-(local (include-book "file-system-lemmas"))
+(include-book "centaur/fty/top" :dir :system)
+(include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
+(include-book "std/io/combine" :dir :system)
+(local (include-book "ihs/logops-lemmas" :dir :system))
+
+(include-book "file-system-lemmas")
 (include-book "bounded-nat-listp")
+
+(defthm nth-of-unsigned-byte-list
+  (implies (and (unsigned-byte-listp bits l)
+                (natp n)
+                (< n (len l)))
+           (unsigned-byte-p bits (nth n l))))
 
 (defconst *expt-2-28* (expt 2 28))
 
@@ -113,9 +123,11 @@
 
 (fty::deflist fat32-masked-entry-list :elt-type fat32-masked-entry-p :true-listp t)
 
-(defthm nat-listp-if-fat32-masked-entry-list-p
+(defthm
+  nat-listp-if-fat32-masked-entry-list-p
   (implies (fat32-masked-entry-list-p x)
            (nat-listp x))
+  :hints (("goal" :in-theory (enable nat-listp)))
   :rule-classes (:forward-chaining :rewrite))
 
 (in-theory (disable fat32-entry-p fat32-entry-fix fat32-masked-entry-p fat32-masked-entry-fix))
@@ -320,3 +332,58 @@
     *ms-first-data-cluster*))
   :hints
   (("goal" :in-theory (enable lower-bounded-integer-listp))))
+
+
+(defun dir-ent-p (x)
+  (declare (xargs :guard t))
+  (and (unsigned-byte-listp 8 x)
+       (equal (len x) *ms-dir-ent-length*)))
+
+(defun dir-ent-fix (x)
+  (declare (xargs :guard t))
+  (if
+      (dir-ent-p x)
+      x
+    (make-list *ms-dir-ent-length* :initial-element 0)))
+
+(fty::deffixtype
+ dir-ent
+ :pred dir-ent-p
+ :fix dir-ent-fix
+ :equiv dir-ent-equiv
+ :define t
+ :forward t)
+
+(defun dir-ent-first-cluster (dir-ent)
+  (declare
+   (xargs :guard (dir-ent-p dir-ent)))
+  (combine32u (nth 21 dir-ent)
+              (nth 20 dir-ent)
+              (nth 27 dir-ent)
+              (nth 26 dir-ent)))
+
+(defun dir-ent-file-size (dir-ent)
+  (declare
+   (xargs :guard (dir-ent-p dir-ent)))
+  (combine32u (nth 31 dir-ent)
+              (nth 30 dir-ent)
+              (nth 29 dir-ent)
+              (nth 28 dir-ent)))
+
+(defund
+  dir-ent-directory-p (dir-ent)
+  (declare
+   (xargs
+    :guard (dir-ent-p dir-ent)
+    :guard-hints
+    (("goal"
+      :in-theory
+      (disable unsigned-byte-p unsigned-byte-p-logand
+               nth-of-unsigned-byte-list)
+      :use ((:instance unsigned-byte-p-logand (size 8)
+                       (i 16)
+                       (j (nth 11 dir-ent)))
+            (:instance nth-of-unsigned-byte-list (bits 8)
+                       (n 11)
+                       (l dir-ent)))))))
+  (not (zp (logand 16 (nth 11 dir-ent)))))
