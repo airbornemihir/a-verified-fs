@@ -13,6 +13,7 @@
 (local (include-book "rtl/rel9/arithmetic/top"
                      :dir :system))
 (include-book "kestrel/utilities/strings" :dir :system)
+(local (include-book "ihs/logops-lemmas" :dir :system))
 
 ;; This was moved to one of the main books, but still kept
 (defthm unsigned-byte-listp-of-update-nth
@@ -1386,6 +1387,16 @@
               (nth 29 dir-ent)
               (nth 28 dir-ent)))
 
+(defund dir-ent-directory-p (dir-ent)
+  (declare
+   (xargs :guard (dir-ent-p dir-ent)
+          :guard-hints (("Goal" :in-theory (disable unsigned-byte-p)
+                         :use (:instance unsigned-byte-p-logand
+                                         (size 8)
+                                         (i #x10)
+                                         (j (nth 11 dir-ent)))) )))
+  (not (zp (logand #x10 (nth 11 dir-ent)))))
+
 (defund
   get-clusterchain
   (fat32-in-memory masked-current-cluster length)
@@ -1721,19 +1732,30 @@
            (alistp fs)))
 
 (defun
-  lstat (fs filename)
+  lstat (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
-                              (stringp filename))
-                  :guard-debug t))
-  (if
-   (consp (assoc-equal filename fs))
-   (mv
-    (make-struct-stat
-     :st_size
-     (dir-ent-file-size
-      (m1-file->dir-ent (cdr (assoc-equal filename fs)))))
-    0 0)
-   (mv (make-struct-stat) -1 *enoent*)))
+                              (string-listp pathname))
+                  :guard-debug t
+                  :measure (acl2-count pathname)))
+  (let
+      ((fs (m1-file-alist-fix fs)))
+    (if (atom pathname)
+        (mv (make-struct-stat) -1 *enoent*)
+      (let
+          ((alist-elem (assoc-equal (car pathname) fs)) )
+        (if
+            (atom alist-elem)
+            (mv (make-struct-stat) -1 *enoent*)
+          (if (not (m1-directory-file-p (cdr alist-elem)))
+              (if (consp (cdr pathname))
+                  (mv (make-struct-stat) -1 *enotdir*)
+                (mv
+                 (make-struct-stat
+                  :st_size
+                  (dir-ent-file-size
+                   (m1-file->dir-ent (cdr alist-elem))))
+                 0 0))
+            (lstat (m1-file->contents (cdr alist-elem)) (cdr pathname))))))))
 
 ;; Currently the function call to test out this function is
 ;; (b* (((mv contents &)
