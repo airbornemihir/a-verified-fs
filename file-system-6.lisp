@@ -610,8 +610,7 @@
   l6-wrchs-guard-lemma-1
   (implies (and (fat32-masked-entry-p val)
                 (fat32-masked-entry-list-p ac))
-           (fat32-masked-entry-list-p (make-list-ac n val ac)))
-  :hints (("Goal" :in-theory (enable fat32-masked-entry-list-p)) ))
+           (fat32-masked-entry-list-p (make-list-ac n val ac))))
 
 (defthm l6-wrchs-guard-lemma-2
   (implies (true-listp x)

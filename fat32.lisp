@@ -7,14 +7,28 @@
 ; The following is in fat32.acl2, but we include it here as well for
 ; when we are doing interactive development, in order to read gl:: symbols.
 (include-book "centaur/gl/portcullis" :dir :system)
-
 (include-book "centaur/fty/top" :dir :system)
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
-(include-book "std/io/combine" :dir :system)
-(local (include-book "ihs/logops-lemmas" :dir :system))
+(in-theory (e/d (nat-listp) (make-list-ac-removal)))
+(include-book "std/io/read-ints" :dir :system)
 
-(include-book "file-system-lemmas")
+(local (include-book "file-system-lemmas"))
 (include-book "bounded-nat-listp")
+
+;; This was moved to one of the main books, but still kept
+(defthm unsigned-byte-listp-of-update-nth
+  (implies (and (unsigned-byte-listp n l)
+                (< key (len l)))
+           (equal (unsigned-byte-listp n (update-nth key val l))
+                  (unsigned-byte-p n val)))
+  :hints (("goal" :in-theory (enable unsigned-byte-listp))))
+
+;; This was taken from Alessandro Coglio's book at
+;; books/kestrel/utilities/typed-list-theorems.lisp
+(defthm unsigned-byte-listp-of-rev
+  (equal (unsigned-byte-listp n (rev bytes))
+         (unsigned-byte-listp n (list-fix bytes)))
+  :hints (("goal" :in-theory (enable unsigned-byte-listp rev))))
 
 (defthm nth-of-unsigned-byte-list
   (implies (and (unsigned-byte-listp bits l)
@@ -123,11 +137,9 @@
 
 (fty::deflist fat32-masked-entry-list :elt-type fat32-masked-entry-p :true-listp t)
 
-(defthm
-  nat-listp-if-fat32-masked-entry-list-p
+(defthm nat-listp-if-fat32-masked-entry-list-p
   (implies (fat32-masked-entry-list-p x)
            (nat-listp x))
-  :hints (("goal" :in-theory (enable nat-listp)))
   :rule-classes (:forward-chaining :rewrite))
 
 (in-theory (disable fat32-entry-p fat32-entry-fix fat32-masked-entry-p fat32-masked-entry-fix))
@@ -333,7 +345,6 @@
   :hints
   (("goal" :in-theory (enable lower-bounded-integer-listp))))
 
-
 (defun dir-ent-p (x)
   (declare (xargs :guard t))
   (and (unsigned-byte-listp 8 x)
@@ -369,21 +380,3 @@
               (nth 30 dir-ent)
               (nth 29 dir-ent)
               (nth 28 dir-ent)))
-
-(defund
-  dir-ent-directory-p (dir-ent)
-  (declare
-   (xargs
-    :guard (dir-ent-p dir-ent)
-    :guard-hints
-    (("goal"
-      :in-theory
-      (disable unsigned-byte-p unsigned-byte-p-logand
-               nth-of-unsigned-byte-list)
-      :use ((:instance unsigned-byte-p-logand (size 8)
-                       (i 16)
-                       (j (nth 11 dir-ent)))
-            (:instance nth-of-unsigned-byte-list (bits 8)
-                       (n 11)
-                       (l dir-ent)))))))
-  (not (zp (logand 16 (nth 11 dir-ent)))))
