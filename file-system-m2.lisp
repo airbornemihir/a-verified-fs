@@ -1700,6 +1700,41 @@
         fat32-in-memory (nthcdr 32 dir-contents)
         (- entry-limit 1))))))
 
+(defthm
+  fat32-in-memory-to-m1-fs-correctness-1
+  (m1-file-alist-p
+   (fat32-in-memory-to-m1-fs fat32-in-memory
+                             dir-contents entry-limit)))
+
+(fty::defprod
+ struct-stat
+ ;; Currently, this is the only thing I can decipher.
+ ((st_size natp :default 0)))
+
+(defthm lstat-guard-lemma-1
+  (implies (and (m1-file-alist-p fs)
+                (consp (assoc-equal filename fs)))
+           (m1-file-p (cdr (assoc-equal filename fs)))))
+
+(defthm lstat-guard-lemma-2
+  (implies (m1-file-alist-p fs)
+           (alistp fs)))
+
+(defun
+  lstat (fs filename)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (stringp filename))
+                  :guard-debug t))
+  (if
+   (consp (assoc-equal filename fs))
+   (mv
+    (make-struct-stat
+     :st_size
+     (dir-ent-file-size
+      (m1-file->dir-ent (cdr (assoc-equal filename fs)))))
+    0 0)
+   (mv (make-struct-stat) -1 *enoent*)))
+
 ;; Currently the function call to test out this function is
 ;; (b* (((mv contents &)
 ;;       (get-clusterchain-contents
