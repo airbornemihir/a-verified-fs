@@ -1350,10 +1350,29 @@
 ;;       fat32-in-memory (+ data-region-index 32)
 ;;       (- entry-limit 1))))))
 
+(defun dir-ent-p (x)
+  (declare (xargs :guard t))
+  (and (unsigned-byte-listp 8 x)
+       (equal (len x) *ms-dir-ent-length*)))
+
+(defun dir-ent-fix (x)
+  (declare (xargs :guard t))
+  (if
+      (dir-ent-p x)
+      x
+    (make-list *ms-dir-ent-length* :initial-element 0)))
+
+(fty::deffixtype
+ dir-ent
+ :pred dir-ent-p
+ :fix dir-ent-fix
+ :equiv dir-ent-equiv
+ :define t
+ :forward t)
+
 (defun dir-ent-first-cluster (dir-ent)
   (declare
-   (xargs :guard (and (equal (len dir-ent) *ms-dir-ent-length*)
-                      (unsigned-byte-listp 8 dir-ent))))
+   (xargs :guard (dir-ent-p dir-ent)))
   (combine32u (nth 21 dir-ent)
               (nth 20 dir-ent)
               (nth 27 dir-ent)
@@ -1361,8 +1380,7 @@
 
 (defun dir-ent-file-size (dir-ent)
   (declare
-   (xargs :guard (and (equal (len dir-ent) *ms-dir-ent-length*)
-                      (unsigned-byte-listp 8 dir-ent))))
+   (xargs :guard (dir-ent-p dir-ent)))
   (combine32u (nth 31 dir-ent)
               (nth 30 dir-ent)
               (nth 29 dir-ent)
@@ -1609,8 +1627,9 @@
 ;; - The name should be stored separately from the rest of the directory entry
 ;; (or perhaps even redundantly) because not being able to use assoc is a
 ;; serious issue.
+
 (fty::defprod m1-file
-  ((dir-ent any-p)
+  ((dir-ent dir-ent-p)
    (contents any-p)))
 
 (defund m1-regular-file-p (file)
@@ -1619,16 +1638,16 @@
    (m1-file-p file)
    (stringp (m1-file->contents file))))
 
-(fty::deflist m1-file-list
-              :elt-type m1-file)
+(fty::defalist m1-file-alist
+      :key-type string
+      :val-type m1-file
+      :true-listp t)
 
 (defun m1-directory-file-p (file)
   (declare (xargs :guard t))
   (and
    (m1-file-p file)
-   (alistp (m1-file->contents file))
-   (string-listp (strip-cars (m1-file->contents file)))
-   (m1-file-list-p (strip-cdrs (m1-file->contents file)))))
+   (m1-file-alist-p (m1-file->contents file))))
 
 (defun
     fat32-in-memory-to-m1-fs
