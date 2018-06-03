@@ -48,7 +48,7 @@
   (implies (and (character-listp l))
            (character-listp (nthcdr n l))))
 
-(defthm already-a-character-list
+(defthmd already-a-character-list
   (implies (character-listp x) (equal (make-character-list x) x)))
 
 (defthm make-character-list-of-binary-append

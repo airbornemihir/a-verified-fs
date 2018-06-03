@@ -48,6 +48,7 @@
 (defconst *ENOSPC* 28) ;; No space left on device
 (defconst *ENOENT* 2) ;; No such file or directory
 (defconst *EEXIST* 17) ;; File exists
+(defconst *ENOTDIR* 20)	;; Not a directory
 
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))

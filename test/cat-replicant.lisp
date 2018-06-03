@@ -1,21 +1,15 @@
 (include-book "../file-system-m2")
 
 (defun
-  get-dir-ent-contents
-  (fat32-in-memory dir-ent)
+    get-dir-ent-contents
+    (fat32-in-memory dir-ent)
   (declare (xargs :stobjs (fat32-in-memory)
                   :verify-guards nil))
   (b*
-   ((first-cluster (dir-ent-first-cluster dir-ent))
-    (file-size (dir-ent-file-size dir-ent))
-    ((mv clusterchain error-code)
-     (get-clusterchain
-      fat32-in-memory (fat32-entry-mask first-cluster) file-size)))
-   (if (equal error-code 0)
-       (mv (get-clusterchain-contents
-            fat32-in-memory clusterchain file-size)
-           0)
-     (mv nil error-code))))
+      ((first-cluster (dir-ent-first-cluster dir-ent))
+       (file-size (dir-ent-file-size dir-ent)))
+    (get-clusterchain-contents
+     fat32-in-memory (fat32-entry-mask first-cluster) file-size)))
 
 (defun get-dir-ent-matching-name
     (dir-contents str)
@@ -51,7 +45,7 @@
      ((unless (equal error-code 0))
        (mv fat32-in-memory state))
      (dir-contents
-      (get-clusterchain-contents
+      (get-contents-from-clusterchain
        fat32-in-memory dir-clusterchain 2097152))
      ((mv contents error-code)
       (get-dir-ent-contents
