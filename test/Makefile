@@ -1,4 +1,6 @@
-test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4
+test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 \
+test-cat-replicant-4 test-mkfs-replicant-1 test-mkfs-replicant-2 \
+test-mkfs-replicant-3
 
 .PHONY: clean-mountpoint clean-fusepoint test test-cat-replicant-1 \
 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4 \
@@ -101,17 +103,17 @@ cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 
 mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) mkfs-replicant.lisp
 	rm -f $(DISK)
-	(mkfs.fat -v -F 32 -s 1 $(DISK) $(SIZE)) > mkfs-ref-output-1.txt
+	(mkfs.fat -C -v -F 32 -s 1 $(DISK) $(SIZE)) > mkfs-ref-output-1.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-1.txt" $(ACL2) < mkfs-replicant.lisp
 
 mkfs-ref-output-2.txt mkfs-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) mkfs-replicant.lisp
 	rm -f $(DISK)
-	(mkfs.fat -v -F 32 -s 2 $(DISK) $(SIZE)) > mkfs-ref-output-2.txt
+	(mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)) > mkfs-ref-output-2.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-2.txt" $(ACL2) < mkfs-replicant.lisp
 
 # this case does not actually produce a valid FAT32 filesystem, since
 # there are fewer than 65525 clusters.
 mkfs-ref-output-3.txt mkfs-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) mkfs-replicant.lisp
 	rm -f $(DISK)
-	(mkfs.fat -v -F 32 -s 4 $(DISK) $(SIZE)) > mkfs-ref-output-3.txt
+	(mkfs.fat -C -v -F 32 -s 4 $(DISK) $(SIZE)) > mkfs-ref-output-3.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-3.txt" $(ACL2) < mkfs-replicant.lisp
