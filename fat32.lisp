@@ -8,33 +8,9 @@
 ; when we are doing interactive development, in order to read gl:: symbols.
 (include-book "centaur/gl/portcullis" :dir :system)
 (include-book "centaur/fty/top" :dir :system)
-(include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
-(in-theory (e/d (nat-listp) (make-list-ac-removal)))
-(include-book "std/io/read-ints" :dir :system)
 
 (local (include-book "file-system-lemmas"))
 (include-book "bounded-nat-listp")
-
-;; This was moved to one of the main books, but still kept
-(defthm unsigned-byte-listp-of-update-nth
-  (implies (and (unsigned-byte-listp n l)
-                (< key (len l)))
-           (equal (unsigned-byte-listp n (update-nth key val l))
-                  (unsigned-byte-p n val)))
-  :hints (("goal" :in-theory (enable unsigned-byte-listp))))
-
-;; This was taken from Alessandro Coglio's book at
-;; books/kestrel/utilities/typed-list-theorems.lisp
-(defthm unsigned-byte-listp-of-rev
-  (equal (unsigned-byte-listp n (rev bytes))
-         (unsigned-byte-listp n (list-fix bytes)))
-  :hints (("goal" :in-theory (enable unsigned-byte-listp rev))))
-
-(defthm nth-of-unsigned-byte-list
-  (implies (and (unsigned-byte-listp bits l)
-                (natp n)
-                (< n (len l)))
-           (unsigned-byte-p bits (nth n l))))
 
 (defconst *expt-2-28* (expt 2 28))
 
@@ -344,39 +320,3 @@
     *ms-first-data-cluster*))
   :hints
   (("goal" :in-theory (enable lower-bounded-integer-listp))))
-
-(defun dir-ent-p (x)
-  (declare (xargs :guard t))
-  (and (unsigned-byte-listp 8 x)
-       (equal (len x) *ms-dir-ent-length*)))
-
-(defun dir-ent-fix (x)
-  (declare (xargs :guard t))
-  (if
-      (dir-ent-p x)
-      x
-    (make-list *ms-dir-ent-length* :initial-element 0)))
-
-(fty::deffixtype
- dir-ent
- :pred dir-ent-p
- :fix dir-ent-fix
- :equiv dir-ent-equiv
- :define t
- :forward t)
-
-(defun dir-ent-first-cluster (dir-ent)
-  (declare
-   (xargs :guard (dir-ent-p dir-ent)))
-  (combine32u (nth 21 dir-ent)
-              (nth 20 dir-ent)
-              (nth 27 dir-ent)
-              (nth 26 dir-ent)))
-
-(defun dir-ent-file-size (dir-ent)
-  (declare
-   (xargs :guard (dir-ent-p dir-ent)))
-  (combine32u (nth 31 dir-ent)
-              (nth 30 dir-ent)
-              (nth 29 dir-ent)
-              (nth 28 dir-ent)))
