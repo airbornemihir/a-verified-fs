@@ -40,6 +40,9 @@ test-cat-replicant-3: cat-ref-output-3.txt cat-output-3.txt
 test-cat-replicant-4: cat-ref-output-4.txt cat-output-4.txt
 	diff -u -i cat-ref-output-4.txt cat-output-4.txt
 
+test-cat-replicant-5: cat-ref-output-5.txt cat-output-5.txt
+	diff -u -i cat-ref-output-5.txt cat-output-5.txt
+
 test-mkfs-replicant-1: mkfs-ref-output-1.txt mkfs-output-1.txt
 	diff -u -i mkfs-ref-output-1.txt mkfs-output-1.txt
 
@@ -100,6 +103,24 @@ cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-4.txt" CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+
+cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
+	sync $(FUSEPOINT)/initrd.img
+	rm $(FUSEPOINT)/initrd.img
+	for i1 in $(shell seq 1 32); do \
+		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+	done
+	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+	cat $(FUSEPOINT)/initrd.img > cat-ref-output-5.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) CAT_OUTPUT="cat-output-5.txt" CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
 
 mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) mkfs-replicant.lisp
 	rm -f $(DISK)
