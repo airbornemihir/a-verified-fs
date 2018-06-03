@@ -1569,77 +1569,51 @@
 ;; (or perhaps even redundantly) because not being able to use assoc is a
 ;; serious issue.
 
-(fty::defprod m1-file
-  ((dir-ent dir-ent-p)
-   (contents any-p)))
-
-(defund m1-regular-file-p (file)
-  (declare (xargs :guard t))
-  (and
-   (m1-file-p file)
-   (stringp (m1-file->contents file))))
-
-(fty::defalist m1-file-alist
-      :key-type string
-      :val-type m1-file
-      :true-listp t)
-
-(defun m1-directory-file-p (file)
-  (declare (xargs :guard t))
-  (and
-   (m1-file-p file)
-   (m1-file-alist-p (m1-file->contents file))))
-
 (defun
-    fat32-in-memory-to-m1-fs
-    (fat32-in-memory dir-contents entry-limit)
+  fat32-in-memory-to-m1-fs
+  (fat32-in-memory dir-contents entry-limit)
   (declare (xargs :measure (acl2-count entry-limit)
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
-  (if
-      (or (zp entry-limit)
-          (equal (nth 0 dir-contents)
-                 0))
-      nil
-    (let*
-        ((dir-ent (take 32 dir-contents))
-         (first-cluster (combine32u (nth 21 dir-ent)
-                                    (nth 20 dir-ent)
-                                    (nth 27 dir-ent)
-                                    (nth 26 dir-ent)))
-         (filename (nats=>string (subseq dir-ent 0 11))))
-      (list*
-       (b*
-           ((not-right-kind-of-directory-p
-             (or (zp (logand (nth 11 dir-ent)
-                             (ash 1 4)))
-                 (equal filename ".          ")
-                 (equal filename "..         ")))
-            (length (if not-right-kind-of-directory-p
-                        (dir-ent-file-size dir-ent)
-                      (ash 1 21)))
-            ((mv contents &)
-             (get-clusterchain-contents
-              fat32-in-memory
-              (fat32-entry-mask first-cluster)
-              length)) )
-         (cons
-          filename
-          (if not-right-kind-of-directory-p
-              (make-m1-file
-               :dir-ent dir-ent
-               :contents
-               (nats=>string contents))
-            (make-m1-file
-             :dir-ent dir-ent
-             :contents
-             (fat32-in-memory-to-m1-fs
-              fat32-in-memory
-              contents
-              (- entry-limit 1))))))
-       (fat32-in-memory-to-m1-fs
-        fat32-in-memory (nthcdr 32 dir-contents)
-        (- entry-limit 1))))))
+  (b*
+      (((when (or (zp entry-limit)
+                  (equal (nth 0 dir-contents) 0)))
+        nil)
+       (tail (fat32-in-memory-to-m1-fs
+              fat32-in-memory (nthcdr 32 dir-contents)
+              (- entry-limit 1)))
+       ((when (equal (nth 0 dir-contents) #xe5))
+        tail)
+       (dir-ent (take 32 dir-contents))
+       (first-cluster (combine32u (nth 21 dir-ent)
+                                  (nth 20 dir-ent)
+                                  (nth 27 dir-ent)
+                                  (nth 26 dir-ent)))
+       (filename (nats=>string (subseq dir-ent 0 11)))
+       (not-right-kind-of-directory-p
+        (or (zp (logand (nth 11 dir-ent) (ash 1 4)))
+            (equal filename ".          ")
+            (equal filename "..         ")))
+       (length (if not-right-kind-of-directory-p
+                   (dir-ent-file-size dir-ent)
+                   (ash 1 21)))
+       ((mv contents &)
+        (get-clusterchain-contents fat32-in-memory
+                                   (fat32-entry-mask first-cluster)
+                                   length)))
+    (list*
+     (cons
+      filename
+      (if
+       not-right-kind-of-directory-p
+       (make-m1-file :dir-ent dir-ent
+                     :contents (nats=>string contents))
+       (make-m1-file
+        :dir-ent dir-ent
+        :contents
+        (fat32-in-memory-to-m1-fs fat32-in-memory
+                                  contents (- entry-limit 1)))))
+     tail)))
 
 (defthm
   fat32-in-memory-to-m1-fs-correctness-1
