@@ -193,6 +193,10 @@
            ac
            (find-new-fd-helper snipped-list (+ ac 1)))))
 
+(defthm find-new-fd-helper-correctness-1-lemma-1
+  (>= (find-new-fd-helper fd-list ac) ac)
+  :rule-classes :linear)
+
 (encapsulate
   ()
 
@@ -203,6 +207,9 @@
     find-new-fd-helper-correctness-1
     (not (member-equal
           (find-new-fd-helper fd-list ac)
-          fd-list))
-    :hints (("Subgoal *1/1" :in-theory (disable  duplicity-when-member-equal)
-    :use (:instance  duplicity-when-non-member-equal (a ac) (x fd-list))) )))
+          fd-list))))
+
+(defun
+  find-new-fd (fd-list)
+  (declare (xargs :guard (nat-listp fd-list)))
+  (find-new-fd-helper fd-list 0))
