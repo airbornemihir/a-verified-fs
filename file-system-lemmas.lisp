@@ -383,6 +383,19 @@
                              (logand* ash*))
       :induct (induction-scheme bits x)))))
 
-(defthm nat-listp-of-remove-equal
+;; This can probably be replaced by a functional instantiation.
+(defthm nat-listp-of-remove
   (implies (nat-listp l)
            (nat-listp (remove-equal x l))))
+
+;; This should be moved into the community books.
+(defthm subsetp-of-remove
+  (subsetp-equal (remove-equal x l) l))
+
+;; The following is redundant with the eponymous theorem in
+;; books/std/lists/sets.lisp, from where it was taken with thanks.
+(defthm member-of-remove
+  (iff (member a (remove b x))
+       (and (member a x)
+            (not (equal a b))))
+  :hints(("goal" :induct (len x))))
