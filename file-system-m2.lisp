@@ -4,7 +4,6 @@
 
 ; This is a stobj model of the FAT32 filesystem.
 
-(include-book "file-system-lemmas")
 (include-book "file-system-m1")
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
@@ -13,9 +12,8 @@
 (include-book "kestrel/utilities/strings" :dir :system)
 
 (defthm len-of-chars=>nats
-  (implies (character-listp chars)
-           (equal (len (chars=>nats chars))
-                  (len chars)))
+  (equal (len (chars=>nats chars))
+         (len chars))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
 (defthm len-of-string=>nats

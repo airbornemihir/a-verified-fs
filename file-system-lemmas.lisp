@@ -370,3 +370,7 @@
     (("goal" :in-theory (e/d nil (logand ash logcar logcdr)
                              (logand* ash*))
       :induct (induction-scheme bits x)))))
+
+(defthm nat-listp-of-remove-equal
+  (implies (nat-listp l)
+           (nat-listp (remove-equal x l))))

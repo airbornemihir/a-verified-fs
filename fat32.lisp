@@ -9,7 +9,7 @@
 (include-book "centaur/gl/portcullis" :dir :system)
 (include-book "centaur/fty/top" :dir :system)
 
-(local (include-book "file-system-lemmas"))
+(include-book "file-system-lemmas")
 (include-book "bounded-nat-listp")
 
 (defconst *expt-2-28* (expt 2 28))

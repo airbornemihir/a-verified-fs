@@ -76,8 +76,8 @@
   (not (zp (logand #x10 (nth 11 dir-ent)))))
 
 (fty::defprod m1-file
-  ((dir-ent dir-ent-p)
-   (contents any-p)))
+  ((dir-ent dir-ent-p :default (dir-ent-fix nil))
+   (contents any-p :default nil)))
 
 (defund m1-regular-file-p (file)
   (declare (xargs :guard t))
@@ -101,6 +101,11 @@
  ;; Currently, this is the only thing I can decipher.
  ((st_size natp :default 0)))
 
+;; This data structure may change later.
+(fty::defalist fd-table
+               :key-type nat
+               :val-type dir-ent)
+
 (defthm lstat-guard-lemma-1
   (implies (and (m1-file-alist-p fs)
                 (consp (assoc-equal filename fs)))
@@ -110,27 +115,94 @@
   (implies (m1-file-alist-p fs)
            (alistp fs)))
 
-(defun
-  lstat (fs pathname)
+(defun find-file-by-pathname (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (string-listp pathname))
+                  :guard-debug t
                   :measure (acl2-count pathname)))
   (let
       ((fs (m1-file-alist-fix fs)))
     (if (atom pathname)
-        (mv (make-struct-stat) -1 *enoent*)
+        (mv (make-m1-file) *enoent*)
       (let
           ((alist-elem (assoc-equal (car pathname) fs)) )
         (if
             (atom alist-elem)
-            (mv (make-struct-stat) -1 *enoent*)
+            (mv (make-m1-file) *enoent*)
           (if (not (m1-directory-file-p (cdr alist-elem)))
               (if (consp (cdr pathname))
-                  (mv (make-struct-stat) -1 *enotdir*)
-                (mv
-                 (make-struct-stat
-                  :st_size
-                  (dir-ent-file-size
-                   (m1-file->dir-ent (cdr alist-elem))))
-                 0 0))
-            (lstat (m1-file->contents (cdr alist-elem)) (cdr pathname))))))))
+                  (mv (make-m1-file) *enotdir*)
+                (mv (cdr alist-elem) 0))
+            (find-file-by-pathname
+             (m1-file->contents (cdr alist-elem))
+             (cdr pathname))))))))
+
+(local
+ (defun
+   lstat-old (fs pathname)
+   (declare (xargs :guard (and (m1-file-alist-p fs)
+                               (string-listp pathname))
+                   :measure (acl2-count pathname)))
+   (let
+    ((fs (m1-file-alist-fix fs)))
+    (if
+     (atom pathname)
+     (mv (make-struct-stat) -1 *enoent*)
+     (let
+      ((alist-elem (assoc-equal (car pathname) fs)))
+      (if
+       (atom alist-elem)
+       (mv (make-struct-stat) -1 *enoent*)
+       (if
+        (not (m1-directory-file-p (cdr alist-elem)))
+        (if
+         (consp (cdr pathname))
+         (mv (make-struct-stat) -1 *enotdir*)
+         (mv
+          (make-struct-stat
+           :st_size (dir-ent-file-size
+                     (m1-file->dir-ent (cdr alist-elem))))
+          0 0))
+        (lstat-old (m1-file->contents (cdr alist-elem))
+                   (cdr pathname)))))))))
+
+(defun lstat (fs pathname)
+   (declare (xargs :guard (and (m1-file-alist-p fs)
+                               (string-listp pathname))))
+   (mv-let
+     (file errno)
+     (find-file-by-pathname fs pathname)
+     (if (not (equal errno 0))
+         (mv (make-struct-stat) -1 errno)
+       (mv
+          (make-struct-stat
+           :st_size (dir-ent-file-size
+                     (m1-file->dir-ent file)))
+          0 0))))
+
+(local
+ (defthm lstat-equivalence
+   (equal (lstat-old fs pathname) (lstat fs pathname))))
+
+(defun
+  find-new-fd-helper (fd-list ac)
+  (declare (xargs :guard (and (nat-listp fd-list) (natp ac))
+                  :measure (len fd-list)))
+  (let ((snipped-list (remove ac fd-list)))
+       (if (equal (len snipped-list) (len fd-list))
+           ac
+           (find-new-fd-helper snipped-list (+ ac 1)))))
+
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/remove" :dir :system))
+  (local (include-book "std/lists/duplicity" :dir :system))
+
+  (defthm
+    find-new-fd-helper-correctness-1
+    (not (member-equal
+          (find-new-fd-helper fd-list ac)
+          fd-list))
+    :hints (("Subgoal *1/1" :in-theory (disable  duplicity-when-member-equal)
+    :use (:instance  duplicity-when-non-member-equal (a ac) (x fd-list))) )))
