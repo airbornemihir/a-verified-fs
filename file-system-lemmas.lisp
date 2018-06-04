@@ -154,10 +154,22 @@
   (implies (and (subsetp-equal x y) (subsetp-equal y z))
            (subsetp-equal x z)))
 
-(defthm member-of-subset
-  (implies (and (subsetp-equal lst1 lst2)
-                (member-equal x lst1))
-           (member-equal x lst2)))
+;; The following is redundant with the eponymous theorem in
+;; books/std/lists/sets.lisp, from where it was taken with thanks.
+(defthm
+  subsetp-member
+  (implies (and (member a x) (subsetp x y))
+           (member a y))
+  :rule-classes
+  ((:rewrite)
+   (:rewrite :corollary (implies (and (subsetp x y) (member a x))
+                                 (member a y)))
+   (:rewrite
+    :corollary (implies (and (not (member a y)) (subsetp x y))
+                        (not (member a x))))
+   (:rewrite
+    :corollary (implies (and (subsetp x y) (not (member a y)))
+                        (not (member a x))))))
 
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/lists/nth.lisp, from where it was taken with thanks.
