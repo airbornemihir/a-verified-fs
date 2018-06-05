@@ -44,11 +44,13 @@
 (defconst *ms-dir-ent-length* 32)
 
 ;; from include/uapi/asm-generic/errno-base.h
-(defconst *EIO* 5) ;; I/O error
-(defconst *ENOSPC* 28) ;; No space left on device
 (defconst *ENOENT* 2) ;; No such file or directory
+(defconst *EIO* 5) ;; I/O error
+(defconst *EBADF* 9) ;; Bad file number
 (defconst *EEXIST* 17) ;; File exists
 (defconst *ENOTDIR* 20)	;; Not a directory
+(defconst *EISDIR* 21) ;; Is a directory
+(defconst *ENOSPC* 28) ;; No space left on device
 
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))

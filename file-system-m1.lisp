@@ -85,6 +85,12 @@
    (m1-file-p file)
    (stringp (m1-file->contents file))))
 
+(defthm
+  m1-regular-file-p-correctness-1
+  (implies (m1-regular-file-p file)
+           (stringp (m1-file->contents file)))
+  :hints (("goal" :in-theory (enable m1-regular-file-p))))
+
 (fty::defalist m1-file-alist
       :key-type string
       :val-type m1-file
@@ -219,6 +225,11 @@
   (implies (fd-table-p fd-table)
            (alistp fd-table)))
 
+(defthm m1-open-guard-lemma-2
+  (implies (and (fd-table-p fd-table)
+                (CONSP (ASSOC-EQUAL FD FD-TABLE)))
+           (M1-FILE-P (CDR (ASSOC-EQUAL FD FD-TABLE)))))
+
 (defun m1-open (pathname fs fd-table)
    (declare (xargs :guard (and (m1-file-alist-p fs)
                                (string-listp pathname)
@@ -234,3 +245,28 @@
           (find-new-fd (strip-cars fd-table)) file)
          fd-table)
         0 0))))
+
+(defun m1-pread (fd count offset ;; fs 
+                    fd-table)
+  (declare (xargs :guard (and (natp fd)
+                              (natp count)
+                              (natp offset)
+                              ;; (m1-file-alist-p fs)
+                              (fd-table-p fd-table))))
+  (b*
+      ((fd-table-entry (assoc fd fd-table)) )
+    (if
+        (atom fd-table-entry)
+        (mv "" -1 *ebadf*)
+      (if
+          (not (m1-regular-file-p (cdr fd-table-entry)))
+          (mv "" -1 *eisdir*)
+        (mv
+         (subseq
+          (m1-file->contents (cdr fd-table-entry))
+          (min offset (length
+                       (m1-file->contents (cdr fd-table-entry))))
+          (min (+ offset count) (length
+                                 (m1-file->contents (cdr fd-table-entry)))))
+         0
+         0)))))
