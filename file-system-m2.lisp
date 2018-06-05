@@ -1624,47 +1624,14 @@
  ;; Currently, this is the only thing I can decipher.
  ((st_size natp :default 0)))
 
-(defthm lstat-guard-lemma-1
-  (implies (and (m1-file-alist-p fs)
-                (consp (assoc-equal filename fs)))
-           (m1-file-p (cdr (assoc-equal filename fs)))))
-
-(defthm lstat-guard-lemma-2
-  (implies (m1-file-alist-p fs)
-           (alistp fs)))
-
-(defun
-  lstat (fs pathname)
-  (declare (xargs :guard (and (m1-file-alist-p fs)
-                              (string-listp pathname))
-                  :guard-debug t
-                  :measure (acl2-count pathname)))
-  (let
-      ((fs (m1-file-alist-fix fs)))
-    (if (atom pathname)
-        (mv (make-struct-stat) -1 *enoent*)
-      (let
-          ((alist-elem (assoc-equal (car pathname) fs)) )
-        (if
-            (atom alist-elem)
-            (mv (make-struct-stat) -1 *enoent*)
-          (if (not (m1-directory-file-p (cdr alist-elem)))
-              (if (consp (cdr pathname))
-                  (mv (make-struct-stat) -1 *enotdir*)
-                (mv
-                 (make-struct-stat
-                  :st_size
-                  (dir-ent-file-size
-                   (m1-file->dir-ent (cdr alist-elem))))
-                 0 0))
-            (lstat (m1-file->contents (cdr alist-elem)) (cdr pathname))))))))
-
-;; Currently the function call to test out this function is
-;; (b* (((mv contents &)
-;;       (get-clusterchain-contents
-;;        fat32-in-memory 2 (ash 1 21))))
-;;   (get-dir-filenames
-;;    fat32-in-memory contents (ash 1 21)))
+#|
+Currently the function call to test out this function is
+(b* (((mv contents &)
+      (get-clusterchain-contents
+       fat32-in-memory 2 (ash 1 21))))
+  (get-dir-filenames
+   fat32-in-memory contents (ash 1 21)))
+|#
 (defun
   get-dir-filenames
   (fat32-in-memory dir-contents entry-limit)

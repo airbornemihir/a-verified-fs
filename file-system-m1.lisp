@@ -246,27 +246,25 @@
          fd-table)
         0 0))))
 
-(defun m1-pread (fd count offset ;; fs 
-                    fd-table)
+(defun
+  m1-pread (fd count offset fd-table)
   (declare (xargs :guard (and (natp fd)
                               (natp count)
                               (natp offset)
-                              ;; (m1-file-alist-p fs)
                               (fd-table-p fd-table))))
   (b*
-      ((fd-table-entry (assoc fd fd-table)) )
+      ((fd-table-entry (assoc fd fd-table)))
     (if
-        (atom fd-table-entry)
-        (mv "" -1 *ebadf*)
-      (if
-          (not (m1-regular-file-p (cdr fd-table-entry)))
-          (mv "" -1 *eisdir*)
-        (mv
-         (subseq
-          (m1-file->contents (cdr fd-table-entry))
-          (min offset (length
-                       (m1-file->contents (cdr fd-table-entry))))
-          (min (+ offset count) (length
-                                 (m1-file->contents (cdr fd-table-entry)))))
-         0
-         0)))))
+     (atom fd-table-entry)
+     (mv "" -1 *ebadf*)
+     (if
+      (not (m1-regular-file-p (cdr fd-table-entry)))
+      (mv "" -1 *eisdir*)
+      (mv
+       (subseq
+        (m1-file->contents (cdr fd-table-entry))
+        (min offset
+             (length (m1-file->contents (cdr fd-table-entry))))
+        (min (+ offset count)
+             (length (m1-file->contents (cdr fd-table-entry)))))
+       0 0)))))
