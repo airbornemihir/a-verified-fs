@@ -104,7 +104,8 @@
 ;; This data structure may change later.
 (fty::defalist fd-table
                :key-type nat
-               :val-type dir-ent)
+               :val-type m1-file
+               :true-listp t)
 
 (defthm lstat-guard-lemma-1
   (implies (and (m1-file-alist-p fs)
@@ -166,23 +167,23 @@
         (lstat-old (m1-file->contents (cdr alist-elem))
                    (cdr pathname)))))))))
 
-(defun lstat (fs pathname)
-   (declare (xargs :guard (and (m1-file-alist-p fs)
-                               (string-listp pathname))))
-   (mv-let
-     (file errno)
-     (find-file-by-pathname fs pathname)
-     (if (not (equal errno 0))
-         (mv (make-struct-stat) -1 errno)
-       (mv
-          (make-struct-stat
-           :st_size (dir-ent-file-size
-                     (m1-file->dir-ent file)))
-          0 0))))
+(defun m1-lstat (fs pathname)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (string-listp pathname))))
+  (mv-let
+    (file errno)
+    (find-file-by-pathname fs pathname)
+    (if (not (equal errno 0))
+        (mv (make-struct-stat) -1 errno)
+      (mv
+       (make-struct-stat
+        :st_size (dir-ent-file-size
+                  (m1-file->dir-ent file)))
+       0 0))))
 
 (local
  (defthm lstat-equivalence
-   (equal (lstat-old fs pathname) (lstat fs pathname))))
+   (equal (lstat-old fs pathname) (m1-lstat fs pathname))))
 
 (defun
   find-new-fd-helper (fd-list ac)
@@ -213,3 +214,23 @@
   find-new-fd (fd-list)
   (declare (xargs :guard (nat-listp fd-list)))
   (find-new-fd-helper fd-list 0))
+
+(defthm m1-open-guard-lemma-1
+  (implies (fd-table-p fd-table)
+           (alistp fd-table)))
+
+(defun m1-open (pathname fs fd-table)
+   (declare (xargs :guard (and (m1-file-alist-p fs)
+                               (string-listp pathname)
+                               (fd-table-p fd-table))))
+   (mv-let
+     (file errno)
+     (find-file-by-pathname fs pathname)
+     (if (not (equal errno 0))
+         (mv fd-table -1 errno)
+       (mv
+        (cons
+         (cons
+          (find-new-fd (strip-cars fd-table)) file)
+         fd-table)
+        0 0))))
