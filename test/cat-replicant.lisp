@@ -21,7 +21,9 @@
     (let*
         ((dir-ent (take *ms-dir-ent-length* dir-contents)))
       (if
-          (equal str (nats=>string (subseq dir-ent 0 11)))
+          (and
+           (not (equal (nth 0 dir-ent) #xe5))
+           (equal str (nats=>string (subseq dir-ent 0 11))))
           dir-ent
         (get-dir-ent-matching-name
          (nthcdr *ms-dir-ent-length* dir-contents)

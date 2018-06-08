@@ -76,14 +76,20 @@
   (not (zp (logand #x10 (nth 11 dir-ent)))))
 
 (fty::defprod m1-file
-  ((dir-ent dir-ent-p)
-   (contents any-p)))
+  ((dir-ent dir-ent-p :default (dir-ent-fix nil))
+   (contents any-p :default nil)))
 
 (defund m1-regular-file-p (file)
   (declare (xargs :guard t))
   (and
    (m1-file-p file)
    (stringp (m1-file->contents file))))
+
+(defthm
+  m1-regular-file-p-correctness-1
+  (implies (m1-regular-file-p file)
+           (stringp (m1-file->contents file)))
+  :hints (("goal" :in-theory (enable m1-regular-file-p))))
 
 (fty::defalist m1-file-alist
       :key-type string
@@ -101,6 +107,12 @@
  ;; Currently, this is the only thing I can decipher.
  ((st_size natp :default 0)))
 
+;; This data structure may change later.
+(fty::defalist fd-table
+               :key-type nat
+               :val-type m1-file
+               :true-listp t)
+
 (defthm lstat-guard-lemma-1
   (implies (and (m1-file-alist-p fs)
                 (consp (assoc-equal filename fs)))
@@ -110,27 +122,149 @@
   (implies (m1-file-alist-p fs)
            (alistp fs)))
 
-(defun
-  lstat (fs pathname)
+(defun find-file-by-pathname (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (string-listp pathname))
+                  :guard-debug t
                   :measure (acl2-count pathname)))
   (let
       ((fs (m1-file-alist-fix fs)))
     (if (atom pathname)
-        (mv (make-struct-stat) -1 *enoent*)
+        (mv (make-m1-file) *enoent*)
       (let
           ((alist-elem (assoc-equal (car pathname) fs)) )
         (if
             (atom alist-elem)
-            (mv (make-struct-stat) -1 *enoent*)
+            (mv (make-m1-file) *enoent*)
           (if (not (m1-directory-file-p (cdr alist-elem)))
               (if (consp (cdr pathname))
-                  (mv (make-struct-stat) -1 *enotdir*)
-                (mv
-                 (make-struct-stat
-                  :st_size
-                  (dir-ent-file-size
-                   (m1-file->dir-ent (cdr alist-elem))))
-                 0 0))
-            (lstat (m1-file->contents (cdr alist-elem)) (cdr pathname))))))))
+                  (mv (make-m1-file) *enotdir*)
+                (mv (cdr alist-elem) 0))
+            (find-file-by-pathname
+             (m1-file->contents (cdr alist-elem))
+             (cdr pathname))))))))
+
+(local
+ (defun
+   lstat-old (fs pathname)
+   (declare (xargs :guard (and (m1-file-alist-p fs)
+                               (string-listp pathname))
+                   :measure (acl2-count pathname)))
+   (let
+    ((fs (m1-file-alist-fix fs)))
+    (if
+     (atom pathname)
+     (mv (make-struct-stat) -1 *enoent*)
+     (let
+      ((alist-elem (assoc-equal (car pathname) fs)))
+      (if
+       (atom alist-elem)
+       (mv (make-struct-stat) -1 *enoent*)
+       (if
+        (not (m1-directory-file-p (cdr alist-elem)))
+        (if
+         (consp (cdr pathname))
+         (mv (make-struct-stat) -1 *enotdir*)
+         (mv
+          (make-struct-stat
+           :st_size (dir-ent-file-size
+                     (m1-file->dir-ent (cdr alist-elem))))
+          0 0))
+        (lstat-old (m1-file->contents (cdr alist-elem))
+                   (cdr pathname)))))))))
+
+(defun m1-lstat (fs pathname)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (string-listp pathname))))
+  (mv-let
+    (file errno)
+    (find-file-by-pathname fs pathname)
+    (if (not (equal errno 0))
+        (mv (make-struct-stat) -1 errno)
+      (mv
+       (make-struct-stat
+        :st_size (dir-ent-file-size
+                  (m1-file->dir-ent file)))
+       0 0))))
+
+(local
+ (defthm lstat-equivalence
+   (equal (lstat-old fs pathname) (m1-lstat fs pathname))))
+
+(defun
+  find-new-fd-helper (fd-list ac)
+  (declare (xargs :guard (and (nat-listp fd-list) (natp ac))
+                  :measure (len fd-list)))
+  (let ((snipped-list (remove ac fd-list)))
+       (if (equal (len snipped-list) (len fd-list))
+           ac
+           (find-new-fd-helper snipped-list (+ ac 1)))))
+
+(defthm find-new-fd-helper-correctness-1-lemma-1
+  (>= (find-new-fd-helper fd-list ac) ac)
+  :rule-classes :linear)
+
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/remove" :dir :system))
+  (local (include-book "std/lists/duplicity" :dir :system))
+
+  (defthm
+    find-new-fd-helper-correctness-1
+    (not (member-equal
+          (find-new-fd-helper fd-list ac)
+          fd-list))))
+
+(defun
+  find-new-fd (fd-list)
+  (declare (xargs :guard (nat-listp fd-list)))
+  (find-new-fd-helper fd-list 0))
+
+(defthm m1-open-guard-lemma-1
+  (implies (fd-table-p fd-table)
+           (alistp fd-table)))
+
+(defthm m1-open-guard-lemma-2
+  (implies (and (fd-table-p fd-table)
+                (CONSP (ASSOC-EQUAL FD FD-TABLE)))
+           (M1-FILE-P (CDR (ASSOC-EQUAL FD FD-TABLE)))))
+
+(defun m1-open (pathname fs fd-table)
+   (declare (xargs :guard (and (m1-file-alist-p fs)
+                               (string-listp pathname)
+                               (fd-table-p fd-table))))
+   (mv-let
+     (file errno)
+     (find-file-by-pathname fs pathname)
+     (if (not (equal errno 0))
+         (mv fd-table -1 errno)
+       (mv
+        (cons
+         (cons
+          (find-new-fd (strip-cars fd-table)) file)
+         fd-table)
+        0 0))))
+
+(defun
+  m1-pread (fd count offset fd-table)
+  (declare (xargs :guard (and (natp fd)
+                              (natp count)
+                              (natp offset)
+                              (fd-table-p fd-table))))
+  (b*
+      ((fd-table-entry (assoc fd fd-table)))
+    (if
+     (atom fd-table-entry)
+     (mv "" -1 *ebadf*)
+     (if
+      (not (m1-regular-file-p (cdr fd-table-entry)))
+      (mv "" -1 *eisdir*)
+      (mv
+       (subseq
+        (m1-file->contents (cdr fd-table-entry))
+        (min offset
+             (length (m1-file->contents (cdr fd-table-entry))))
+        (min (+ offset count)
+             (length (m1-file->contents (cdr fd-table-entry)))))
+       0 0)))))

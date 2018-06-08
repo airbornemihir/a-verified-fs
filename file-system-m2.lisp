@@ -4,7 +4,6 @@
 
 ; This is a stobj model of the FAT32 filesystem.
 
-(include-book "file-system-lemmas")
 (include-book "file-system-m1")
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
@@ -13,9 +12,8 @@
 (include-book "kestrel/utilities/strings" :dir :system)
 
 (defthm len-of-chars=>nats
-  (implies (character-listp chars)
-           (equal (len (chars=>nats chars))
-                  (len chars)))
+  (equal (len (chars=>nats chars))
+         (len chars))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
 (defthm len-of-string=>nats
@@ -1569,77 +1567,51 @@
 ;; (or perhaps even redundantly) because not being able to use assoc is a
 ;; serious issue.
 
-(fty::defprod m1-file
-  ((dir-ent dir-ent-p)
-   (contents any-p)))
-
-(defund m1-regular-file-p (file)
-  (declare (xargs :guard t))
-  (and
-   (m1-file-p file)
-   (stringp (m1-file->contents file))))
-
-(fty::defalist m1-file-alist
-      :key-type string
-      :val-type m1-file
-      :true-listp t)
-
-(defun m1-directory-file-p (file)
-  (declare (xargs :guard t))
-  (and
-   (m1-file-p file)
-   (m1-file-alist-p (m1-file->contents file))))
-
 (defun
-    fat32-in-memory-to-m1-fs
-    (fat32-in-memory dir-contents entry-limit)
+  fat32-in-memory-to-m1-fs
+  (fat32-in-memory dir-contents entry-limit)
   (declare (xargs :measure (acl2-count entry-limit)
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
-  (if
-      (or (zp entry-limit)
-          (equal (nth 0 dir-contents)
-                 0))
-      nil
-    (let*
-        ((dir-ent (take 32 dir-contents))
-         (first-cluster (combine32u (nth 21 dir-ent)
-                                    (nth 20 dir-ent)
-                                    (nth 27 dir-ent)
-                                    (nth 26 dir-ent)))
-         (filename (nats=>string (subseq dir-ent 0 11))))
-      (list*
-       (b*
-           ((not-right-kind-of-directory-p
-             (or (zp (logand (nth 11 dir-ent)
-                             (ash 1 4)))
-                 (equal filename ".          ")
-                 (equal filename "..         ")))
-            (length (if not-right-kind-of-directory-p
-                        (dir-ent-file-size dir-ent)
-                      (ash 1 21)))
-            ((mv contents &)
-             (get-clusterchain-contents
-              fat32-in-memory
-              (fat32-entry-mask first-cluster)
-              length)) )
-         (cons
-          filename
-          (if not-right-kind-of-directory-p
-              (make-m1-file
-               :dir-ent dir-ent
-               :contents
-               (nats=>string contents))
-            (make-m1-file
-             :dir-ent dir-ent
-             :contents
-             (fat32-in-memory-to-m1-fs
-              fat32-in-memory
-              contents
-              (- entry-limit 1))))))
-       (fat32-in-memory-to-m1-fs
-        fat32-in-memory (nthcdr 32 dir-contents)
-        (- entry-limit 1))))))
+  (b*
+      (((when (or (zp entry-limit)
+                  (equal (nth 0 dir-contents) 0)))
+        nil)
+       (tail (fat32-in-memory-to-m1-fs
+              fat32-in-memory (nthcdr 32 dir-contents)
+              (- entry-limit 1)))
+       ((when (equal (nth 0 dir-contents) #xe5))
+        tail)
+       (dir-ent (take 32 dir-contents))
+       (first-cluster (combine32u (nth 21 dir-ent)
+                                  (nth 20 dir-ent)
+                                  (nth 27 dir-ent)
+                                  (nth 26 dir-ent)))
+       (filename (nats=>string (subseq dir-ent 0 11)))
+       (not-right-kind-of-directory-p
+        (or (zp (logand (nth 11 dir-ent) (ash 1 4)))
+            (equal filename ".          ")
+            (equal filename "..         ")))
+       (length (if not-right-kind-of-directory-p
+                   (dir-ent-file-size dir-ent)
+                   (ash 1 21)))
+       ((mv contents &)
+        (get-clusterchain-contents fat32-in-memory
+                                   (fat32-entry-mask first-cluster)
+                                   length)))
+    (list*
+     (cons
+      filename
+      (if
+       not-right-kind-of-directory-p
+       (make-m1-file :dir-ent dir-ent
+                     :contents (nats=>string contents))
+       (make-m1-file
+        :dir-ent dir-ent
+        :contents
+        (fat32-in-memory-to-m1-fs fat32-in-memory
+                                  contents (- entry-limit 1)))))
+     tail)))
 
 (defthm
   fat32-in-memory-to-m1-fs-correctness-1
@@ -1652,47 +1624,14 @@
  ;; Currently, this is the only thing I can decipher.
  ((st_size natp :default 0)))
 
-(defthm lstat-guard-lemma-1
-  (implies (and (m1-file-alist-p fs)
-                (consp (assoc-equal filename fs)))
-           (m1-file-p (cdr (assoc-equal filename fs)))))
-
-(defthm lstat-guard-lemma-2
-  (implies (m1-file-alist-p fs)
-           (alistp fs)))
-
-(defun
-  lstat (fs pathname)
-  (declare (xargs :guard (and (m1-file-alist-p fs)
-                              (string-listp pathname))
-                  :guard-debug t
-                  :measure (acl2-count pathname)))
-  (let
-      ((fs (m1-file-alist-fix fs)))
-    (if (atom pathname)
-        (mv (make-struct-stat) -1 *enoent*)
-      (let
-          ((alist-elem (assoc-equal (car pathname) fs)) )
-        (if
-            (atom alist-elem)
-            (mv (make-struct-stat) -1 *enoent*)
-          (if (not (m1-directory-file-p (cdr alist-elem)))
-              (if (consp (cdr pathname))
-                  (mv (make-struct-stat) -1 *enotdir*)
-                (mv
-                 (make-struct-stat
-                  :st_size
-                  (dir-ent-file-size
-                   (m1-file->dir-ent (cdr alist-elem))))
-                 0 0))
-            (lstat (m1-file->contents (cdr alist-elem)) (cdr pathname))))))))
-
-;; Currently the function call to test out this function is
-;; (b* (((mv contents &)
-;;       (get-clusterchain-contents
-;;        fat32-in-memory 2 (ash 1 21))))
-;;   (get-dir-filenames
-;;    fat32-in-memory contents (ash 1 21)))
+#|
+Currently the function call to test out this function is
+(b* (((mv contents &)
+      (get-clusterchain-contents
+       fat32-in-memory 2 (ash 1 21))))
+  (get-dir-filenames
+   fat32-in-memory contents (ash 1 21)))
+|#
 (defun
   get-dir-filenames
   (fat32-in-memory dir-contents entry-limit)

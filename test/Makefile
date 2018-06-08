@@ -1,4 +1,6 @@
-test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4
+test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 \
+test-cat-replicant-4 test-mkfs-replicant-1 test-mkfs-replicant-2 \
+test-mkfs-replicant-3
 
 .PHONY: clean-mountpoint clean-fusepoint test test-cat-replicant-1 \
 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4 \
@@ -37,6 +39,9 @@ test-cat-replicant-3: cat-ref-output-3.txt cat-output-3.txt
 
 test-cat-replicant-4: cat-ref-output-4.txt cat-output-4.txt
 	diff -u -i cat-ref-output-4.txt cat-output-4.txt
+
+test-cat-replicant-5: cat-ref-output-5.txt cat-output-5.txt
+	diff -u -i cat-ref-output-5.txt cat-output-5.txt
 
 test-mkfs-replicant-1: mkfs-ref-output-1.txt mkfs-output-1.txt
 	diff -u -i mkfs-ref-output-1.txt mkfs-output-1.txt
@@ -99,19 +104,37 @@ cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-4.txt" CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
 
+cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
+	sync $(FUSEPOINT)/initrd.img
+	rm $(FUSEPOINT)/initrd.img
+	for i1 in $(shell seq 1 32); do \
+		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+	done
+	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+	cat $(FUSEPOINT)/initrd.img > cat-ref-output-5.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) CAT_OUTPUT="cat-output-5.txt" CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+
 mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) mkfs-replicant.lisp
 	rm -f $(DISK)
-	(mkfs.fat -v -F 32 -s 1 $(DISK) $(SIZE)) > mkfs-ref-output-1.txt
+	(mkfs.fat -C -v -F 32 -s 1 $(DISK) $(SIZE)) > mkfs-ref-output-1.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-1.txt" $(ACL2) < mkfs-replicant.lisp
 
 mkfs-ref-output-2.txt mkfs-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) mkfs-replicant.lisp
 	rm -f $(DISK)
-	(mkfs.fat -v -F 32 -s 2 $(DISK) $(SIZE)) > mkfs-ref-output-2.txt
+	(mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)) > mkfs-ref-output-2.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-2.txt" $(ACL2) < mkfs-replicant.lisp
 
 # this case does not actually produce a valid FAT32 filesystem, since
 # there are fewer than 65525 clusters.
 mkfs-ref-output-3.txt mkfs-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) mkfs-replicant.lisp
 	rm -f $(DISK)
-	(mkfs.fat -v -F 32 -s 4 $(DISK) $(SIZE)) > mkfs-ref-output-3.txt
+	(mkfs.fat -C -v -F 32 -s 4 $(DISK) $(SIZE)) > mkfs-ref-output-3.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-3.txt" $(ACL2) < mkfs-replicant.lisp
