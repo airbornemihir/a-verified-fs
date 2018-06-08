@@ -107,16 +107,20 @@
  ;; Currently, this is the only thing I can decipher.
  ((st_size natp :default 0)))
 
+;; Not happy at having to include this, but at least I got it from :doc
+;; fty::deflist.
+(deflist string-list :pred string-listp :elt-type stringp)
+
 ;; This data structure may change later.
 (fty::defalist fd-table
                :key-type nat
-               :val-type m1-file
+               :val-type string-list
                :true-listp t)
 
 (defthm lstat-guard-lemma-1
   (implies (and (m1-file-alist-p fs)
                 (consp (assoc-equal filename fs)))
-           (m1-file-p (cdr (assoc-equal filename fs)))))
+           (string-listp (cdr (assoc-equal filename fs)))))
 
 (defthm lstat-guard-lemma-2
   (implies (m1-file-alist-p fs)
