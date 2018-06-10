@@ -109,44 +109,116 @@
 
 ;; Not happy at having to include this, but at least I got it from :doc
 ;; fty::deflist.
-(deflist string-list :pred string-listp :elt-type stringp)
+;; (deflist string-list :pred string-listp :elt-type stringp)
+
+;; This data structure may change later.
+(fty::defprod
+ file-table-element
+ ((pos natp) ;; index within the file
+  ;; mode ?
+  (fid string-listp) ;; pathname of the file
+  ))
+
+(fty::defalist
+ file-table
+ :key-type nat
+ :val-type file-table-element
+ :true-listp t)
 
 ;; This data structure may change later.
 (fty::defalist fd-table
-               :key-type nat
-               :val-type string-list
+               :key-type nat ;; index into the fd-table
+               :val-type nat ;; index into the file-table
                :true-listp t)
 
 (defthm lstat-guard-lemma-1
   (implies (and (m1-file-alist-p fs)
                 (consp (assoc-equal filename fs)))
-           (string-listp (cdr (assoc-equal filename fs)))))
+           (m1-file-p (cdr (assoc-equal filename fs)))))
 
 (defthm lstat-guard-lemma-2
   (implies (m1-file-alist-p fs)
            (alistp fs)))
 
-(defun find-file-by-pathname (fs pathname)
+(defun
+    find-file-by-pathname (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (string-listp pathname))
-                  :guard-debug t
                   :measure (acl2-count pathname)))
-  (let
-      ((fs (m1-file-alist-fix fs)))
-    (if (atom pathname)
-        (mv (make-m1-file) *enoent*)
-      (let
-          ((alist-elem (assoc-equal (car pathname) fs)) )
-        (if
-            (atom alist-elem)
-            (mv (make-m1-file) *enoent*)
-          (if (not (m1-directory-file-p (cdr alist-elem)))
-              (if (consp (cdr pathname))
-                  (mv (make-m1-file) *enotdir*)
-                (mv (cdr alist-elem) 0))
-            (find-file-by-pathname
+  (b*
+      ((fs (m1-file-alist-fix fs))
+       ((unless (consp pathname))
+        (mv (make-m1-file) *enoent*))
+       (alist-elem (assoc-equal (car pathname) fs))
+       ((unless (consp alist-elem))
+        (mv (make-m1-file) *enoent*))
+       ((when (m1-directory-file-p (cdr alist-elem)))
+        (find-file-by-pathname (m1-file->contents (cdr alist-elem))
+                               (cdr pathname)))
+       ((unless (atom (cdr pathname)))
+        (mv (make-m1-file) *enotdir*)))
+      (mv (cdr alist-elem) 0)))
+
+(defthm find-file-by-pathname-correctness-1
+  (mv-let (file error-code)
+    (find-file-by-pathname fs pathname)
+    (and (m1-file-p file)
+         (integerp error-code)))
+  :hints (("Goal" :induct (find-file-by-pathname fs pathname)) ))
+
+(defun place-file-by-pathname
+  (fs pathname file)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (string-listp pathname)
+                              (m1-file-p file))
+                  :measure (acl2-count pathname)))
+  (b* ((fs (m1-file-alist-fix fs))
+       (file (m1-file-fix file))
+       ((unless (consp pathname))
+        (mv fs *enoent*))
+       (name (str-fix (car pathname)))
+       (alist-elem (assoc-equal name fs))
+       ((when (consp alist-elem))
+        (if (m1-directory-file-p (cdr alist-elem))
+            (place-file-by-pathname
              (m1-file->contents (cdr alist-elem))
-             (cdr pathname))))))))
+             (cdr pathname)
+             file)
+            (mv fs *enoent*)))
+       ((unless (atom (cdr pathname)))
+        (mv fs *enotdir*)))
+    (mv (put-assoc-equal name file fs)
+        0)))
+
+(defthm
+  place-file-by-pathname-correctness-1-lemma-1
+  (implies
+   (m1-file-alist-p alist)
+   (equal (m1-file-alist-p (put-assoc-equal name val alist))
+          (and (stringp name) (m1-file-p val)))))
+
+(defthm
+  place-file-by-pathname-correctness-1
+  (mv-let (fs error-code)
+    (place-file-by-pathname fs pathname file)
+    (and (m1-file-alist-p fs)
+         (integerp error-code)))
+  :hints
+  (("goal" :induct (place-file-by-pathname fs pathname file))))
+
+(encapsulate
+  ()
+
+  (local (include-book "std/basic/inductions" :dir :system))
+
+  (defcong
+    str::string-list-equiv
+    equal
+    (place-file-by-pathname fs pathname file)
+    2
+    :hints (("Goal" :induct (mv (cdr-cdr-induct pathname STR::PATHNAME-EQUIV)
+                                (PLACE-FILE-BY-PATHNAME FS PATHNAME FILE))
+             :in-theory (enable str::string-list-fix)))))
 
 (local
  (defun
@@ -196,16 +268,16 @@
    (equal (lstat-old fs pathname) (m1-lstat fs pathname))))
 
 (defun
-  find-new-fd-helper (fd-list ac)
+  find-new-index-helper (fd-list ac)
   (declare (xargs :guard (and (nat-listp fd-list) (natp ac))
                   :measure (len fd-list)))
   (let ((snipped-list (remove ac fd-list)))
        (if (equal (len snipped-list) (len fd-list))
            ac
-           (find-new-fd-helper snipped-list (+ ac 1)))))
+           (find-new-index-helper snipped-list (+ ac 1)))))
 
-(defthm find-new-fd-helper-correctness-1-lemma-1
-  (>= (find-new-fd-helper fd-list ac) ac)
+(defthm find-new-index-helper-correctness-1-lemma-1
+  (>= (find-new-index-helper fd-list ac) ac)
   :rule-classes :linear)
 
 (encapsulate
@@ -215,60 +287,86 @@
   (local (include-book "std/lists/duplicity" :dir :system))
 
   (defthm
-    find-new-fd-helper-correctness-1
+    find-new-index-helper-correctness-1
     (not (member-equal
-          (find-new-fd-helper fd-list ac)
+          (find-new-index-helper fd-list ac)
           fd-list))))
 
 (defun
-  find-new-fd (fd-list)
+  find-new-index (fd-list)
   (declare (xargs :guard (nat-listp fd-list)))
-  (find-new-fd-helper fd-list 0))
+  (find-new-index-helper fd-list 0))
 
 (defthm m1-open-guard-lemma-1
   (implies (fd-table-p fd-table)
            (alistp fd-table)))
 
-(defthm m1-open-guard-lemma-2
-  (implies (and (fd-table-p fd-table)
-                (CONSP (ASSOC-EQUAL FD FD-TABLE)))
-           (M1-FILE-P (CDR (ASSOC-EQUAL FD FD-TABLE)))))
+;; (defthm m1-open-guard-lemma-2
+;;   (implies (and (fd-table-p fd-table)
+;;                 (consp (assoc-equal fd fd-table)))
+;;            (m1-file-p (cdr (assoc-equal fd fd-table)))))
 
-(defun m1-open (pathname fs fd-table)
-   (declare (xargs :guard (and (m1-file-alist-p fs)
-                               (string-listp pathname)
-                               (fd-table-p fd-table))))
-   (mv-let
-     (file errno)
-     (find-file-by-pathname fs pathname)
-     (if (not (equal errno 0))
-         (mv fd-table -1 errno)
-       (mv
-        (cons
-         (cons
-          (find-new-fd (strip-cars fd-table)) file)
-         fd-table)
-        0 0))))
+(defun m1-open (pathname fs fd-table file-table)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (string-listp pathname)
+                              (fd-table-p fd-table)
+                              (file-table-p file-table))))
+  (b*
+      (((mv & errno)
+        (find-file-by-pathname fs pathname))
+       ((unless (equal errno 0))
+        (mv fd-table file-table -1 errno))
+       (file-table-index
+        (find-new-index (strip-cars file-table)))
+       (fd-table-index
+        (find-new-index (strip-cars fd-table))))
+    (mv
+     (cons
+      (cons file-table-index (make-file-table-element :pos 0 :fid pathname))
+      file-table)
+     (cons
+      (cons fd-table-index file-table-index)
+      fd-table)
+     0 0)))
+
+(defthm
+  m1-pread-guard-lemma-1
+  (implies
+   (and (file-table-p file-table)
+        (consp (assoc-equal x file-table)))
+   (file-table-element-p (cdr (assoc-equal x file-table)))))
 
 (defun
-  m1-pread (fd count offset fd-table)
+    m1-pread (fd count offset fs fd-table file-table)
   (declare (xargs :guard (and (natp fd)
                               (natp count)
                               (natp offset)
-                              (fd-table-p fd-table))))
+                              (fd-table-p fd-table)
+                              (file-table-p file-table)
+                              (m1-file-alist-p fs))
+                  :guard-debug t))
   (b*
-      ((fd-table-entry (assoc fd fd-table)))
-    (if
-     (atom fd-table-entry)
-     (mv "" -1 *ebadf*)
-     (if
-      (not (m1-regular-file-p (cdr fd-table-entry)))
-      (mv "" -1 *eisdir*)
-      (mv
-       (subseq
-        (m1-file->contents (cdr fd-table-entry))
-        (min offset
-             (length (m1-file->contents (cdr fd-table-entry))))
+      ((fs (m1-file-alist-fix fs))
+       (fd-table-entry (assoc-equal fd fd-table))
+       ((unless (consp fd-table-entry)) (mv "" file-table -1 *ebadf*))
+       (file-table-entry (assoc-equal (cdr fd-table-entry) file-table))
+       ((unless (consp file-table-entry)) (mv "" file-table -1 *ebadf*))
+       (pathname (file-table-element->fid (cdr file-table-entry)))
+       ((mv file error-code)
+        (find-file-by-pathname fs pathname))
+       ((unless (and (equal error-code 0) (m1-regular-file-p file)))
+        (mv "" file-table -1 error-code))
+       (new-offset
         (min (+ offset count)
-             (length (m1-file->contents (cdr fd-table-entry)))))
-       0 0)))))
+             (length (m1-file->contents file)))))
+    (mv
+     (subseq
+      (m1-file->contents file)
+      (min offset
+           (length (m1-file->contents file)))
+      new-offset)
+     (put-assoc
+      (car file-table-entry)
+      (make-file-table-element :pos new-offset :fid pathname)
+      file-table)
+     0 0)))
