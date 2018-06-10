@@ -206,19 +206,6 @@
   :hints
   (("goal" :induct (place-file-by-pathname fs pathname file))))
 
-(encapsulate
-  ()
-
-  (local (include-book "std/basic/inductions" :dir :system))
-
-  (defcong
-    str::string-list-equiv
-    equal
-    (place-file-by-pathname fs pathname file)
-    2
-    :hints (("Goal" :induct (mv (cdr-cdr-induct pathname STR::PATHNAME-EQUIV)
-                                (PLACE-FILE-BY-PATHNAME FS PATHNAME FILE))
-             :in-theory (enable str::string-list-fix)))))
 
 (local
  (defun
