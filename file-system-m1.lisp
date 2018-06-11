@@ -323,6 +323,11 @@
   (>= (find-new-index-helper fd-list ac) ac)
   :rule-classes :linear)
 
+(defthm
+  find-new-index-helper-correctness-1-lemma-2
+  (implies (integerp ac)
+           (integerp (find-new-index-helper fd-list ac))))
+
 (encapsulate
   ()
 
@@ -335,10 +340,20 @@
           (find-new-index-helper fd-list ac)
           fd-list))))
 
-(defun
+(defund
   find-new-index (fd-list)
   (declare (xargs :guard (nat-listp fd-list)))
   (find-new-index-helper fd-list 0))
+
+(defthm find-new-index-correctness-1-lemma-1
+  (>= (find-new-index fd-list) 0)
+  :hints (("Goal" :in-theory (enable find-new-index)) )
+  :rule-classes :linear)
+
+(defthm
+  find-new-index-correctness-1-lemma-2
+  (integerp (find-new-index fd-list))
+  :hints (("Goal" :in-theory (enable find-new-index)) ))
 
 (defthm m1-open-guard-lemma-1
   (implies (fd-table-p fd-table)
@@ -350,7 +365,9 @@
                               (fd-table-p fd-table)
                               (file-table-p file-table))))
   (b*
-      (((mv & errno)
+      ((fd-table (fd-table-fix fd-table))
+       (file-table (file-table-fix file-table))
+       ((mv & errno)
         (find-file-by-pathname fs pathname))
        ((unless (equal errno 0))
         (mv fd-table file-table -1 errno))
@@ -366,6 +383,13 @@
       (cons file-table-index (make-file-table-element :pos 0 :fid pathname))
       file-table)
      0 0)))
+
+(defthm m1-open-correctness-1
+  (b*
+      (((mv fd-table file-table & &) (m1-open pathname fs fd-table file-table)))
+    (and
+     (fd-table-p fd-table)
+     (file-table-p file-table))))
 
 (defthm
   m1-pread-guard-lemma-1
