@@ -65,15 +65,38 @@
               (nth 29 dir-ent)
               (nth 28 dir-ent)))
 
-(defund dir-ent-directory-p (dir-ent)
-  (declare
-   (xargs :guard (dir-ent-p dir-ent)
-          :guard-hints (("Goal" :in-theory (disable unsigned-byte-p)
-                         :use (:instance unsigned-byte-p-logand
-                                         (size 8)
-                                         (i #x10)
-                                         (j (nth 11 dir-ent)))) )))
-  (not (zp (logand #x10 (nth 11 dir-ent)))))
+(defthm dir-ent-directory-p-guard-lemma-1
+  (implies (and (natp n)
+                (not (integerp (nth n l)))
+                (unsigned-byte-listp bits l))
+           (<= (len l) n))
+  :rule-classes :linear)
+
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     dir-ent-directory-p-guard-lemma-2
+     (implies (and (not (integerp (nth 11 l)))
+                   (unsigned-byte-listp 8 l))
+              (<= (len l) 11))
+     :hints
+     (("goal"
+       :in-theory (disable dir-ent-directory-p-guard-lemma-1)
+       :use (:instance dir-ent-directory-p-guard-lemma-1 (n 11)
+                       (bits 8))))
+     :rule-classes :linear))
+
+  (defund dir-ent-directory-p (dir-ent)
+    (declare
+     (xargs :guard (dir-ent-p dir-ent)
+            :guard-hints (("Goal" :in-theory (disable unsigned-byte-p)
+                           :use (:instance unsigned-byte-p-logand
+                                           (size 8)
+                                           (i #x10)
+                                           (j (nth 11 dir-ent)))) )))
+    (not (zp (logand #x10 (nth 11 dir-ent))))))
 
 (fty::defprod m1-file
   ((dir-ent dir-ent-p :default (dir-ent-fix nil))
@@ -337,11 +360,11 @@
         (find-new-index (strip-cars fd-table))))
     (mv
      (cons
-      (cons file-table-index (make-file-table-element :pos 0 :fid pathname))
-      file-table)
-     (cons
       (cons fd-table-index file-table-index)
       fd-table)
+     (cons
+      (cons file-table-index (make-file-table-element :pos 0 :fid pathname))
+      file-table)
      0 0)))
 
 (defthm
