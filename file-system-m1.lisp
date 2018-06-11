@@ -107,10 +107,6 @@
  ;; Currently, this is the only thing I can decipher.
  ((st_size natp :default 0)))
 
-;; Not happy at having to include this, but at least I got it from :doc
-;; fty::deflist.
-;; (deflist string-list :pred string-listp :elt-type stringp)
-
 ;; This data structure may change later.
 (fty::defprod
  file-table-element
@@ -277,35 +273,6 @@
     (and (equal error-code 0)
          (equal new-file (m1-file-fix file)))))
 
-(local
- (defun
-   lstat-old (fs pathname)
-   (declare (xargs :guard (and (m1-file-alist-p fs)
-                               (string-listp pathname))
-                   :measure (acl2-count pathname)))
-   (let
-    ((fs (m1-file-alist-fix fs)))
-    (if
-     (atom pathname)
-     (mv (make-struct-stat) -1 *enoent*)
-     (let
-      ((alist-elem (assoc-equal (car pathname) fs)))
-      (if
-       (atom alist-elem)
-       (mv (make-struct-stat) -1 *enoent*)
-       (if
-        (not (m1-directory-file-p (cdr alist-elem)))
-        (if
-         (consp (cdr pathname))
-         (mv (make-struct-stat) -1 *enotdir*)
-         (mv
-          (make-struct-stat
-           :st_size (dir-ent-file-size
-                     (m1-file->dir-ent (cdr alist-elem))))
-          0 0))
-        (lstat-old (m1-file->contents (cdr alist-elem))
-                   (cdr pathname)))))))))
-
 (defun m1-lstat (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (string-listp pathname))))
@@ -319,10 +286,6 @@
         :st_size (dir-ent-file-size
                   (m1-file->dir-ent file)))
        0 0))))
-
-(local
- (defthm lstat-equivalence
-   (equal (lstat-old fs pathname) (m1-lstat fs pathname))))
 
 (defun
   find-new-index-helper (fd-list ac)
@@ -357,11 +320,6 @@
 (defthm m1-open-guard-lemma-1
   (implies (fd-table-p fd-table)
            (alistp fd-table)))
-
-;; (defthm m1-open-guard-lemma-2
-;;   (implies (and (fd-table-p fd-table)
-;;                 (consp (assoc-equal fd fd-table)))
-;;            (m1-file-p (cdr (assoc-equal fd fd-table)))))
 
 (defun m1-open (pathname fs fd-table file-table)
   (declare (xargs :guard (and (m1-file-alist-p fs)
