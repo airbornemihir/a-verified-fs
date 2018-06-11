@@ -140,24 +140,26 @@
   (implies (m1-file-alist-p fs)
            (alistp fs)))
 
-(defun
-    find-file-by-pathname (fs pathname)
+(defun find-file-by-pathname (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (string-listp pathname))
                   :measure (acl2-count pathname)))
-  (b*
-      ((fs (m1-file-alist-fix fs))
+  (b* ((fs (m1-file-alist-fix fs))
        ((unless (consp pathname))
         (mv (make-m1-file) *enoent*))
-       (alist-elem (assoc-equal (car pathname) fs))
+       (name (str-fix (car pathname)))
+       (alist-elem (assoc-equal name fs))
        ((unless (consp alist-elem))
         (mv (make-m1-file) *enoent*))
        ((when (m1-directory-file-p (cdr alist-elem)))
-        (find-file-by-pathname (m1-file->contents (cdr alist-elem))
-                               (cdr pathname)))
+        (if (atom (cdr pathname))
+            (mv (cdr alist-elem) 0)
+            (find-file-by-pathname
+             (m1-file->contents (cdr alist-elem))
+             (cdr pathname))))
        ((unless (atom (cdr pathname)))
         (mv (make-m1-file) *enotdir*)))
-      (mv (cdr alist-elem) 0)))
+    (mv (cdr alist-elem) 0)))
 
 (defthm find-file-by-pathname-correctness-1
   (mv-let (file error-code)
@@ -166,29 +168,41 @@
          (integerp error-code)))
   :hints (("Goal" :induct (find-file-by-pathname fs pathname)) ))
 
-(defun place-file-by-pathname
+(defun
+  place-file-by-pathname
   (fs pathname file)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (string-listp pathname)
                               (m1-file-p file))
                   :measure (acl2-count pathname)))
-  (b* ((fs (m1-file-alist-fix fs))
+  (b*
+      ((fs (m1-file-alist-fix fs))
        (file (m1-file-fix file))
        ((unless (consp pathname))
         (mv fs *enoent*))
        (name (str-fix (car pathname)))
        (alist-elem (assoc-equal name fs))
        ((when (consp alist-elem))
-        (if (m1-directory-file-p (cdr alist-elem))
-            (place-file-by-pathname
-             (m1-file->contents (cdr alist-elem))
-             (cdr pathname)
-             file)
-            (mv fs *enoent*)))
+        (if
+         (m1-directory-file-p (cdr alist-elem))
+         (mv-let
+           (new-contents error-code)
+           (place-file-by-pathname
+            (m1-file->contents (cdr alist-elem))
+            (cdr pathname)
+            file)
+           (mv
+            (put-assoc-equal
+             name
+             (make-m1-file
+              :dir-ent (m1-file->dir-ent (cdr alist-elem))
+              :contents new-contents)
+             fs)
+            error-code))
+         (mv fs *enoent*)))
        ((unless (atom (cdr pathname)))
         (mv fs *enotdir*)))
-    (mv (put-assoc-equal name file fs)
-        0)))
+    (mv (put-assoc-equal name file fs) 0)))
 
 (defthm
   place-file-by-pathname-correctness-1-lemma-1
@@ -206,6 +220,46 @@
   :hints
   (("goal" :induct (place-file-by-pathname fs pathname file))))
 
+(defthm
+  place-file-by-pathname-correctness-2
+  (equal
+   (place-file-by-pathname fs (str::string-list-fix pathname)
+                           file)
+   (place-file-by-pathname fs pathname file)))
+
+(defcong m1-file-alist-equiv equal
+  (place-file-by-pathname fs pathname file) 1)
+
+(defcong str::string-list-equiv equal
+  (place-file-by-pathname fs pathname file) 2
+  :hints
+  (("goal'"
+    :in-theory (disable place-file-by-pathname-correctness-2)
+    :use (place-file-by-pathname-correctness-2
+          (:instance place-file-by-pathname-correctness-2
+                     (pathname str::pathname-equiv))))))
+
+(defcong m1-file-equiv equal
+  (place-file-by-pathname fs pathname file) 3)
+
+(defthm
+  place-file-by-pathname-correctness-3-lemma-1
+  (implies
+   (and (m1-file-alist-p alist)
+        (stringp name))
+   (equal (m1-file-alist-fix (put-assoc-equal name val alist))
+          (put-assoc-equal name (m1-file-fix val)
+                           (m1-file-alist-fix alist))))
+  :hints (("goal" :in-theory (enable m1-file-alist-fix))))
+
+(defthm place-file-by-pathname-correctness-3
+  (b* (((mv fs error-code)
+        (place-file-by-pathname fs pathname file))
+       ((unless (equal error-code 0)) t)
+       ((mv new-file error-code)
+        (find-file-by-pathname fs pathname)))
+    (and (equal error-code 0)
+         (equal new-file (m1-file-fix file)))))
 
 (local
  (defun
