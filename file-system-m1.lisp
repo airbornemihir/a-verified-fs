@@ -161,12 +161,28 @@
         (mv (make-m1-file) *enotdir*)))
     (mv (cdr alist-elem) 0)))
 
-(defthm find-file-by-pathname-correctness-1
+(defthm
+  find-file-by-pathname-correctness-1
   (mv-let (file error-code)
     (find-file-by-pathname fs pathname)
     (and (m1-file-p file)
          (integerp error-code)))
-  :hints (("Goal" :induct (find-file-by-pathname fs pathname)) ))
+  :hints (("goal" :induct (find-file-by-pathname fs pathname))))
+
+(defthm find-file-by-pathname-correctness-2
+  (equal
+    (find-file-by-pathname fs (str::string-list-fix pathname))
+    (find-file-by-pathname fs pathname)))
+
+(defcong m1-file-alist-equiv equal (find-file-by-pathname fs pathname) 1)
+
+(defcong str::string-list-equiv equal (find-file-by-pathname fs pathname) 2
+  :hints
+  (("goal'"
+    :in-theory (disable find-file-by-pathname-correctness-2)
+    :use (find-file-by-pathname-correctness-2
+          (:instance find-file-by-pathname-correctness-2
+                     (pathname str::pathname-equiv))))))
 
 (defun
   place-file-by-pathname
