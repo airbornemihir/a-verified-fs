@@ -398,6 +398,9 @@
         (consp (assoc-equal x file-table)))
    (file-table-element-p (cdr (assoc-equal x file-table)))))
 
+;; Per the man page pread(2), this should not change the offset of the file
+;; descriptor in the file table. Thus, there's no need for the file table to be
+;; an argument.
 (defun
     m1-pread (fd count offset fs fd-table file-table)
   (declare (xargs :guard (and (natp fd)
@@ -410,25 +413,31 @@
   (b*
       ((fs (m1-file-alist-fix fs))
        (fd-table-entry (assoc-equal fd fd-table))
-       ((unless (consp fd-table-entry)) (mv "" file-table -1 *ebadf*))
+       ((unless (consp fd-table-entry)) (mv "" -1 *ebadf*))
        (file-table-entry (assoc-equal (cdr fd-table-entry) file-table))
-       ((unless (consp file-table-entry)) (mv "" file-table -1 *ebadf*))
+       ((unless (consp file-table-entry)) (mv "" -1 *ebadf*))
        (pathname (file-table-element->fid (cdr file-table-entry)))
        ((mv file error-code)
         (find-file-by-pathname fs pathname))
        ((unless (and (equal error-code 0) (m1-regular-file-p file)))
-        (mv "" file-table -1 error-code))
+        (mv "" -1 error-code))
        (new-offset
         (min (+ offset count)
-             (length (m1-file->contents file)))))
-    (mv
-     (subseq
-      (m1-file->contents file)
-      (min offset
-           (length (m1-file->contents file)))
-      new-offset)
-     (put-assoc
-      (car file-table-entry)
-      (make-file-table-element :pos new-offset :fid pathname)
-      file-table)
-     0 0)))
+             (length (m1-file->contents file))))
+       (buf
+        (subseq
+         (m1-file->contents file)
+         (min offset
+              (length (m1-file->contents file)))
+         new-offset)))
+    (mv buf (length buf) 0)))
+
+(defthm
+  m1-pread-correctness-1
+  (mv-let (buf ret error-code)
+    (m1-pread fd count offset fs fd-table file-table)
+    (and (stringp buf)
+         (integerp ret)
+         (integerp error-code)
+         (implies (>= ret 0)
+                  (equal (length buf) ret)))))
