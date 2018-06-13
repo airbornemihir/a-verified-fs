@@ -65,15 +65,16 @@
               (nth 29 dir-ent)
               (nth 28 dir-ent)))
 
-(defthm dir-ent-directory-p-guard-lemma-1
-  (implies (and (natp n)
-                (not (integerp (nth n l)))
-                (unsigned-byte-listp bits l))
-           (<= (len l) n))
-  :rule-classes :linear)
-
 (encapsulate
   ()
+
+  (local
+   (defthmd dir-ent-directory-p-guard-lemma-1
+     (implies (and (natp n)
+                   (not (integerp (nth n l)))
+                   (unsigned-byte-listp bits l))
+              (<= (len l) n))
+     :rule-classes :linear))
 
   (local
    (defthm
@@ -83,7 +84,6 @@
               (<= (len l) 11))
      :hints
      (("goal"
-       :in-theory (disable dir-ent-directory-p-guard-lemma-1)
        :use (:instance dir-ent-directory-p-guard-lemma-1 (n 11)
                        (bits 8))))
      :rule-classes :linear))
