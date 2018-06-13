@@ -1617,7 +1617,8 @@
   fat32-in-memory-to-m1-fs-correctness-1
   (m1-file-alist-p
    (fat32-in-memory-to-m1-fs fat32-in-memory
-                             dir-contents entry-limit)))
+                             dir-contents entry-limit))
+  :hints (("Goal" :in-theory (disable m1-file-p)) ))
 
 (fty::defprod
  struct-stat

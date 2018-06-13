@@ -234,7 +234,9 @@
               :contents new-contents)
              fs)
             error-code))
-         (mv fs *enoent*)))
+         (if (consp (cdr pathname))
+             (mv fs *enotdir*)
+           (mv (put-assoc-equal name file fs) 0))))
        ((unless (atom (cdr pathname)))
         (mv fs *enotdir*)))
     (mv (put-assoc-equal name file fs) 0)))
@@ -355,6 +357,79 @@
   (integerp (find-new-index fd-list))
   :hints (("Goal" :in-theory (enable find-new-index)) ))
 
+;; Some definitions copied from file-system-1 since I don't know if I want to
+;; introduce a dependency.
+(encapsulate
+  ()
+
+  (defund
+    insert-text (oldtext start text)
+    (declare (xargs :guard (and (character-listp oldtext)
+                                (natp start)
+                                (stringp text))))
+    (let*
+     ((end (+ start (length text)))
+      (newtext (append (make-character-list (take start oldtext))
+                       (coerce text 'list)
+                       (nthcdr end oldtext))))
+     newtext))
+
+  (defthm
+    insert-text-correctness-1
+    (implies (and (character-listp oldtext)
+                  (natp start)
+                  (stringp text))
+             (character-listp (insert-text oldtext start text)))
+    :hints (("goal" :in-theory (enable insert-text))))
+
+  (defthm
+    insert-text-correctness-2
+    (implies
+     (and (character-listp oldtext)
+          (natp start)
+          (stringp text))
+     (equal
+      (first-n-ac (+ start (- start)
+                     (len (coerce text 'list)))
+                  (nthcdr start (insert-text oldtext start text))
+                  nil)
+      (coerce text 'list)))
+    :hints (("goal" :in-theory (enable insert-text))))
+
+  (defthm insert-text-correctness-3
+    (implies (and (character-listp oldtext)
+                  (stringp text)
+                  (natp start))
+             (<= (+ start (len (coerce text 'list)))
+                 (len (insert-text oldtext start text))))
+    :hints (("goal" :in-theory (enable insert-text)))
+    :rule-classes :linear)
+
+  (defthmd
+    len-of-insert-text
+    (implies (and (character-listp oldtext)
+                  (stringp text)
+                  (natp start))
+             (equal (len (insert-text oldtext start text))
+                    (max (+ start (len (coerce text 'list)))
+                         (len oldtext))))
+    :hints (("goal" :do-not-induct t
+             :expand (insert-text oldtext start text))))
+
+  (defthm
+    insert-text-correctness-4
+    (implies (and (character-listp oldtext)
+                  (stringp text)
+                  (natp start))
+             (iff (consp (insert-text oldtext start text))
+                  (or (> start 0)
+                      (> (len (coerce text 'list)) 0)
+                      (consp oldtext))))
+    :hints
+    (("goal" :use len-of-insert-text)
+     ("subgoal 4'''" :expand (len (insert-text nil 0 text)))
+     ("subgoal 1'4'" :expand (len oldtext)))))
+
 (defthm m1-open-guard-lemma-1
   (implies (fd-table-p fd-table)
            (alistp fd-table)))
@@ -402,7 +477,8 @@
 ;; descriptor in the file table. Thus, there's no need for the file table to be
 ;; an argument.
 (defun
-    m1-pread (fd count offset fs fd-table file-table)
+  m1-pread
+  (fd count offset fs fd-table file-table)
   (declare (xargs :guard (and (natp fd)
                               (natp count)
                               (natp offset)
@@ -411,25 +487,25 @@
                               (m1-file-alist-p fs))
                   :guard-debug t))
   (b*
-      ((fs (m1-file-alist-fix fs))
-       (fd-table-entry (assoc-equal fd fd-table))
-       ((unless (consp fd-table-entry)) (mv "" -1 *ebadf*))
-       (file-table-entry (assoc-equal (cdr fd-table-entry) file-table))
-       ((unless (consp file-table-entry)) (mv "" -1 *ebadf*))
+      ((fd-table-entry (assoc-equal fd fd-table))
+       ((unless (consp fd-table-entry))
+        (mv "" -1 *ebadf*))
+       (file-table-entry (assoc-equal (cdr fd-table-entry)
+                                      file-table))
+       ((unless (consp file-table-entry))
+        (mv "" -1 *ebadf*))
        (pathname (file-table-element->fid (cdr file-table-entry)))
        ((mv file error-code)
         (find-file-by-pathname fs pathname))
-       ((unless (and (equal error-code 0) (m1-regular-file-p file)))
+       ((unless (and (equal error-code 0)
+                     (m1-regular-file-p file)))
         (mv "" -1 error-code))
-       (new-offset
-        (min (+ offset count)
-             (length (m1-file->contents file))))
-       (buf
-        (subseq
-         (m1-file->contents file)
-         (min offset
-              (length (m1-file->contents file)))
-         new-offset)))
+       (new-offset (min (+ offset count)
+                        (length (m1-file->contents file))))
+       (buf (subseq (m1-file->contents file)
+                    (min offset
+                         (length (m1-file->contents file)))
+                    new-offset)))
     (mv buf (length buf) 0)))
 
 (defthm
@@ -441,3 +517,44 @@
          (integerp error-code)
          (implies (>= ret 0)
                   (equal (length buf) ret)))))
+
+(defcong m1-file-alist-equiv equal (m1-pread fd count offset fs fd-table file-table) 4)
+
+(defun m1-pwrite (fd buf offset fs fd-table file-table)
+  (declare (xargs :guard (and (natp fd)
+                              (stringp buf)
+                              (natp offset)
+                              (fd-table-p fd-table)
+                              (file-table-p file-table)
+                              (m1-file-alist-p fs))))
+  (b*
+      ((fd-table-entry (assoc-equal fd fd-table))
+       (fs (m1-file-alist-fix fs))
+       ((unless (consp fd-table-entry))
+        (mv fs -1 *ebadf*))
+       (file-table-entry (assoc-equal (cdr fd-table-entry)
+                                      file-table))
+       ((unless (consp file-table-entry))
+        (mv fs -1 *ebadf*))
+       (pathname (file-table-element->fid (cdr file-table-entry)))
+       ((mv file error-code)
+        (find-file-by-pathname fs pathname))
+       (oldtext
+        (coerce
+         (if (and (equal error-code 0)
+                  (m1-regular-file-p file))
+             (m1-file->contents file)
+           "")
+         'list))
+       (file
+        (make-m1-file :dir-ent
+                      (dir-ent-fix nil)
+                      :contents
+                      (coerce (insert-text oldtext offset buf) 'string)))
+       ((mv fs error-code)
+        (place-file-by-pathname
+         fs pathname file)))
+    (mv
+     fs
+     (if (equal error-code 0) 0 -1)
+     error-code)))
