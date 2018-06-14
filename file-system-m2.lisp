@@ -157,25 +157,30 @@
          (unsigned-byte-listp 8 x))
   :rule-classes :definition)
 
-(in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp data-regionp))
+(local
+ (in-theory (disable take-of-too-many take-of-len-free)))
 
-(in-theory (disable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
-                    bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
-                    bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
-                    bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
-                    bpb_secpertrk bpb_numheads bpb_rootentcnt
-                    bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
-                    bpb_rootentcnt bpb_totsec16 bs_volid
-                    update-bpb_secperclus update-bpb_rsvdseccnt
-                    update-bpb_bytspersec update-bpb_numfats
-                    update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
-                    update-bs_drvnum update-bs_reserved1 update-bs_bootsig
-                    update-bpb_media update-bpb_fsver_minor
-                    update-bpb_fsver_major update-bpb_fatsz16
-                    update-bpb_secpertrk update-bpb_numheads
-                    update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
-                    update-bpb_fatsz32 update-bpb_rootentcnt
-                    update-bpb_totsec16 update-bs_volid))
+(local
+ (in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp data-regionp)))
+
+(local
+ (in-theory (disable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
+                     bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
+                     bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
+                     bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
+                     bpb_secpertrk bpb_numheads bpb_rootentcnt
+                     bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
+                     bpb_rootentcnt bpb_totsec16 bs_volid
+                     update-bpb_secperclus update-bpb_rsvdseccnt
+                     update-bpb_bytspersec update-bpb_numfats
+                     update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
+                     update-bs_drvnum update-bs_reserved1 update-bs_bootsig
+                     update-bpb_media update-bpb_fsver_minor
+                     update-bpb_fsver_major update-bpb_fatsz16
+                     update-bpb_secpertrk update-bpb_numheads
+                     update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
+                     update-bpb_fatsz32 update-bpb_rootentcnt
+                     update-bpb_totsec16 update-bs_volid)))
 
 (defmacro
   update-stobj-scalar-correctness
@@ -1617,7 +1622,8 @@
   fat32-in-memory-to-m1-fs-correctness-1
   (m1-file-alist-p
    (fat32-in-memory-to-m1-fs fat32-in-memory
-                             dir-contents entry-limit)))
+                             dir-contents entry-limit))
+  :hints (("Goal" :in-theory (disable m1-file-p)) ))
 
 (fty::defprod
  struct-stat
@@ -1631,6 +1637,23 @@ Currently the function call to test out this function is
        fat32-in-memory 2 (ash 1 21))))
   (get-dir-filenames
    fat32-in-memory contents (ash 1 21)))
+More (rather awful) testing forms are
+(b* (((mv dir-contents &)
+      (get-clusterchain-contents
+       fat32-in-memory 2 (ash 1 21))))
+  (fat32-in-memory-to-m1-fs
+  fat32-in-memory dir-contents 40))
+(b* (((mv dir-contents &)
+      (get-clusterchain-contents
+       fat32-in-memory 2 (ash 1 21))) (fs (fat32-in-memory-to-m1-fs
+  fat32-in-memory dir-contents 40) ))
+  (m1-open (list "INITRD  IMG") fs nil nil))
+(b* (((mv dir-contents &)
+      (get-clusterchain-contents
+       fat32-in-memory 2 (ash 1 21))) (fs (fat32-in-memory-to-m1-fs
+  fat32-in-memory dir-contents 40) ) ((mv fd-table file-table & &)
+  (m1-open (list "INITRD  IMG") fs nil nil))) (M1-PREAD
+                0 6 49 FS FD-TABLE FILE-TABLE))
 |#
 (defun
   get-dir-filenames
@@ -1667,21 +1690,3 @@ Currently the function call to test out this function is
      (get-dir-filenames
       fat32-in-memory (nthcdr 32 dir-contents)
       (- entry-limit 1))))))
-
-(in-theory (enable update-fat bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
-                   bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
-                   bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
-                   bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
-                   bpb_secpertrk bpb_numheads bpb_rootentcnt
-                   bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
-                   bpb_rootentcnt bpb_totsec16
-                   update-bpb_secperclus update-bpb_rsvdseccnt
-                   update-bpb_bytspersec update-bpb_numfats
-                   update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
-                   update-bs_drvnum update-bs_reserved1 update-bs_bootsig
-                   update-bpb_media update-bpb_fsver_minor
-                   update-bpb_fsver_major update-bpb_fatsz16
-                   update-bpb_secpertrk update-bpb_numheads
-                   update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
-                   update-bpb_fatsz32 update-bpb_rootentcnt
-                   update-bpb_totsec16))

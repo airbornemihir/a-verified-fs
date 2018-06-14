@@ -399,3 +399,8 @@
        (and (member a x)
             (not (equal a b))))
   :hints(("goal" :induct (len x))))
+
+(defthm
+  assoc-after-put-assoc
+  (equal (assoc-equal name (put-assoc-equal name val alist))
+         (cons name val)))
