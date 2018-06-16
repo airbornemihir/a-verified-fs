@@ -1713,6 +1713,23 @@
                              dir-contents entry-limit))
   :hints (("Goal" :in-theory (disable m1-file-p)) ))
 
+(defund
+  fat32-in-memory-find-n-free-clusters-helper
+  (fa-table n start)
+  (declare (xargs :guard (and (fat32-in-memoryp fat32-in-memory)
+                              (natp n)
+                              (natp start))))
+  (if (or (>= start (fat-length fat32-in-memory)) (zp n))
+      nil
+      (if (not (equal (fat32-entry-mask (fati start fat32-in-memory))
+                      0))
+          (fat32-in-memory-find-n-free-clusters-helper fat32-in-memory
+                                       n (+ start 1))
+          (cons start
+                (fat32-in-memory-find-n-free-clusters-helper fat32-in-memory
+                                             (- n 1)
+                                             (+ start 1))))))
+
 (fty::defprod
  struct-stat
  ;; Currently, this is the only thing I can decipher.
