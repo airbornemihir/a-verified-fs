@@ -1776,6 +1776,26 @@
                  :nx :x
                  :top :bash))
 
+(defund
+  stobj-find-n-free-clusters
+  (fat32-in-memory n)
+  (declare
+   (xargs :guard (and (fat32-in-memoryp fat32-in-memory)
+                      (natp n))
+          :stobjs fat32-in-memory))
+  (stobj-find-n-free-clusters-helper
+   fat32-in-memory n 2))
+
+(defthm
+  stobj-find-n-free-clusters-correctness-1
+  (implies
+   (< 2 (fat-length fat32-in-memory))
+   (equal (stobj-find-n-free-clusters fat32-in-memory n)
+          (find-n-free-clusters (nth *fati* fat32-in-memory)
+                                n)))
+  :hints (("goal" :in-theory (enable stobj-find-n-free-clusters
+                                     find-n-free-clusters))))
+
 (fty::defprod
  struct-stat
  ;; Currently, this is the only thing I can decipher.
