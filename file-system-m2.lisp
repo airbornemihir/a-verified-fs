@@ -1714,21 +1714,67 @@
   :hints (("Goal" :in-theory (disable m1-file-p)) ))
 
 (defund
-  fat32-in-memory-find-n-free-clusters-helper
-  (fa-table n start)
-  (declare (xargs :guard (and (fat32-in-memoryp fat32-in-memory)
-                              (natp n)
-                              (natp start))))
-  (if (or (>= start (fat-length fat32-in-memory)) (zp n))
-      nil
-      (if (not (equal (fat32-entry-mask (fati start fat32-in-memory))
-                      0))
-          (fat32-in-memory-find-n-free-clusters-helper fat32-in-memory
-                                       n (+ start 1))
-          (cons start
-                (fat32-in-memory-find-n-free-clusters-helper fat32-in-memory
-                                             (- n 1)
-                                             (+ start 1))))))
+  stobj-find-n-free-clusters-helper
+  (fat32-in-memory n start)
+  (declare
+   (xargs :guard (and (fat32-in-memoryp fat32-in-memory)
+                      (natp n)
+                      (natp start))
+          :stobjs fat32-in-memory
+          :measure (nfix (- (fat-length fat32-in-memory)
+                            start))))
+  (if
+   (or (zp n)
+       (mbe :logic (zp (- (fat-length fat32-in-memory) start))
+            :exec (>= start (fat-length fat32-in-memory))))
+   nil
+   (if
+    (not (equal (fat32-entry-mask (fati start fat32-in-memory))
+                0))
+    (stobj-find-n-free-clusters-helper
+     fat32-in-memory n (+ start 1))
+    (cons
+     start
+     (stobj-find-n-free-clusters-helper fat32-in-memory (- n 1)
+                                        (+ start 1))))))
+
+(defthm
+  stobj-find-n-free-clusters-helper-correctness-1
+  (implies
+   (and (natp start)
+        (< start
+           (len (nth *fati* fat32-in-memory))))
+   (equal
+    (stobj-find-n-free-clusters-helper fat32-in-memory n start)
+    (find-n-free-clusters-helper (nthcdr start (nth *fati* fat32-in-memory))
+                                 n start)))
+  :instructions ((:in-theory (enable stobj-find-n-free-clusters-helper
+                                     find-n-free-clusters-helper))
+                 :induct (:change-goal (main . 3) t)
+                 :bash
+                 (:in-theory (disable len-of-nthcdr nth-of-nthcdr))
+                 (:use (:instance len-of-nthcdr (n start)
+                                  (l (nth *fati* fat32-in-memory)))
+                       (:instance nth-of-nthcdr (n 0)
+                                  (m start)
+                                  (x (nth *fati* fat32-in-memory)))
+                       (:instance nthcdr-of-cdr (n start)
+                                  (l (nth *fati* fat32-in-memory))))
+                 :pro (:dive 1)
+                 :x :nx :x :top :bash (:dive 1)
+                 :x :nx :x :top :bash
+                 (:use (:instance len-of-nthcdr (n start)
+                                  (l (nth *fati* fat32-in-memory)))
+                       (:instance nth-of-nthcdr (n 0)
+                                  (m start)
+                                  (x (nth *fati* fat32-in-memory)))
+                       (:instance nthcdr-of-cdr (n start)
+                                  (l (nth *fati* fat32-in-memory))))
+                 :pro (:dive 1)
+                 :x :nx :x :top :bash (:dive 1)
+                 :x
+                 :nx :x
+                 :top :bash))
 
 (fty::defprod
  struct-stat

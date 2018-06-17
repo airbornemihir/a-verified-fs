@@ -404,3 +404,7 @@
   assoc-after-put-assoc
   (equal (assoc-equal name (put-assoc-equal name val alist))
          (cons name val)))
+
+(defthmd nthcdr-of-cdr
+  (equal (cdr (nthcdr n l))
+         (nthcdr n (cdr l))))
