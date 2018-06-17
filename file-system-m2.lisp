@@ -1741,17 +1741,14 @@
 (defthm
   stobj-find-n-free-clusters-helper-correctness-1
   (implies
-   (and (natp start)
-        (< start
-           (len (nth *fati* fat32-in-memory))))
+   (natp start)
    (equal
     (stobj-find-n-free-clusters-helper fat32-in-memory n start)
     (find-n-free-clusters-helper (nthcdr start (nth *fati* fat32-in-memory))
                                  n start)))
   :instructions ((:in-theory (enable stobj-find-n-free-clusters-helper
                                      find-n-free-clusters-helper))
-                 :induct (:change-goal (main . 3) t)
-                 :bash
+                 :induct
                  (:in-theory (disable len-of-nthcdr nth-of-nthcdr))
                  (:use (:instance len-of-nthcdr (n start)
                                   (l (nth *fati* fat32-in-memory)))
@@ -1761,7 +1758,6 @@
                        (:instance nthcdr-of-cdr (n start)
                                   (l (nth *fati* fat32-in-memory))))
                  :pro (:dive 1)
-                 :x :nx :x :top :bash (:dive 1)
                  :x :nx :x :top :bash
                  (:use (:instance len-of-nthcdr (n start)
                                   (l (nth *fati* fat32-in-memory)))
@@ -1771,7 +1767,15 @@
                        (:instance nthcdr-of-cdr (n start)
                                   (l (nth *fati* fat32-in-memory))))
                  :pro (:dive 1)
-                 :x :nx :x :top :bash (:dive 1)
+                 :x :nx :x :top :bash
+                 (:use (:instance len-of-nthcdr (n start)
+                                  (l (nth *fati* fat32-in-memory)))
+                       (:instance nth-of-nthcdr (n 0)
+                                  (m start)
+                                  (x (nth *fati* fat32-in-memory)))
+                       (:instance nthcdr-of-cdr (n start)
+                                  (l (nth *fati* fat32-in-memory))))
+                 :pro (:dive 1)
                  :x
                  :nx :x
                  :top :bash))
@@ -1789,7 +1793,7 @@
 (defthm
   stobj-find-n-free-clusters-correctness-1
   (implies
-   (< 2 (fat-length fat32-in-memory))
+   (<= 2 (fat-length fat32-in-memory))
    (equal (stobj-find-n-free-clusters fat32-in-memory n)
           (find-n-free-clusters (nth *fati* fat32-in-memory)
                                 n)))
