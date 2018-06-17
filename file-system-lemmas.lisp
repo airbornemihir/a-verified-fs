@@ -405,6 +405,8 @@
   (equal (assoc-equal name (put-assoc-equal name val alist))
          (cons name val)))
 
-(defthmd nthcdr-of-cdr
-  (equal (cdr (nthcdr n l))
-         (nthcdr n (cdr l))))
+;; The following is redundant with the eponymous theorem in
+;; books/std/lists/nthcdr.lisp, from where it was taken with thanks.
+(defthm nthcdr-of-cdr
+  (equal (nthcdr i (cdr x))
+         (cdr (nthcdr i x))))

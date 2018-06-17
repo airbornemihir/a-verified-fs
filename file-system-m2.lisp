@@ -1744,41 +1744,51 @@
    (natp start)
    (equal
     (stobj-find-n-free-clusters-helper fat32-in-memory n start)
-    (find-n-free-clusters-helper (nthcdr start (nth *fati* fat32-in-memory))
-                                 n start)))
-  :instructions ((:in-theory (enable stobj-find-n-free-clusters-helper
-                                     find-n-free-clusters-helper))
-                 :induct
-                 (:in-theory (disable len-of-nthcdr nth-of-nthcdr))
-                 (:use (:instance len-of-nthcdr (n start)
-                                  (l (nth *fati* fat32-in-memory)))
-                       (:instance nth-of-nthcdr (n 0)
-                                  (m start)
-                                  (x (nth *fati* fat32-in-memory)))
-                       (:instance nthcdr-of-cdr (n start)
-                                  (l (nth *fati* fat32-in-memory))))
-                 :pro (:dive 1)
-                 :x :nx :x :top :bash
-                 (:use (:instance len-of-nthcdr (n start)
-                                  (l (nth *fati* fat32-in-memory)))
-                       (:instance nth-of-nthcdr (n 0)
-                                  (m start)
-                                  (x (nth *fati* fat32-in-memory)))
-                       (:instance nthcdr-of-cdr (n start)
-                                  (l (nth *fati* fat32-in-memory))))
-                 :pro (:dive 1)
-                 :x :nx :x :top :bash
-                 (:use (:instance len-of-nthcdr (n start)
-                                  (l (nth *fati* fat32-in-memory)))
-                       (:instance nth-of-nthcdr (n 0)
-                                  (m start)
-                                  (x (nth *fati* fat32-in-memory)))
-                       (:instance nthcdr-of-cdr (n start)
-                                  (l (nth *fati* fat32-in-memory))))
-                 :pro (:dive 1)
-                 :x
-                 :nx :x
-                 :top :bash))
+    (find-n-free-clusters-helper
+     (nthcdr start (nth *fati* fat32-in-memory))
+     n start)))
+  :hints
+  (("goal"
+    :in-theory (enable stobj-find-n-free-clusters-helper
+                       find-n-free-clusters-helper)
+    :induct
+    (stobj-find-n-free-clusters-helper fat32-in-memory n start))
+   ("subgoal *1/3''"
+    :in-theory (disable len-of-nthcdr nth-of-nthcdr)
+    :use ((:instance len-of-nthcdr (n start)
+                     (l (nth *fati* fat32-in-memory)))
+          (:instance nth-of-nthcdr (n 0)
+                     (m start)
+                     (x (nth *fati* fat32-in-memory)))
+          (:instance nthcdr-of-cdr (i start)
+                     (x (nth *fati* fat32-in-memory))))
+    :expand (find-n-free-clusters-helper
+             (nthcdr start (nth *fati* fat32-in-memory))
+             n start))
+   ("subgoal *1/2'''"
+    :in-theory (disable len-of-nthcdr nth-of-nthcdr)
+    :use ((:instance len-of-nthcdr (n start)
+                     (l (nth *fati* fat32-in-memory)))
+          (:instance nth-of-nthcdr (n 0)
+                     (m start)
+                     (x (nth *fati* fat32-in-memory)))
+          (:instance nthcdr-of-cdr (i start)
+                     (x (nth *fati* fat32-in-memory))))
+    :expand (find-n-free-clusters-helper
+             (nthcdr start (nth *fati* fat32-in-memory))
+             n start))
+   ("subgoal *1/1''"
+    :in-theory (disable len-of-nthcdr nth-of-nthcdr)
+    :use ((:instance len-of-nthcdr (n start)
+                     (l (nth *fati* fat32-in-memory)))
+          (:instance nth-of-nthcdr (n 0)
+                     (m start)
+                     (x (nth *fati* fat32-in-memory)))
+          (:instance nthcdr-of-cdr (i start)
+                     (x (nth *fati* fat32-in-memory))))
+    :expand (find-n-free-clusters-helper
+             (nthcdr start (nth *fati* fat32-in-memory))
+             n start))))
 
 (defund
   stobj-find-n-free-clusters
@@ -1792,13 +1802,12 @@
 
 (defthm
   stobj-find-n-free-clusters-correctness-1
-  (implies
-   (<= 2 (fat-length fat32-in-memory))
-   (equal (stobj-find-n-free-clusters fat32-in-memory n)
-          (find-n-free-clusters (nth *fati* fat32-in-memory)
-                                n)))
+  (equal (stobj-find-n-free-clusters fat32-in-memory n)
+         (find-n-free-clusters (nth *fati* fat32-in-memory)
+                               n))
   :hints (("goal" :in-theory (enable stobj-find-n-free-clusters
-                                     find-n-free-clusters))))
+                                     find-n-free-clusters)))
+  :rule-classes :definition)
 
 (fty::defprod
  struct-stat
