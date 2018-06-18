@@ -1535,8 +1535,8 @@
       :guard-debug t
       :guard-hints (("Goal" :do-not-induct t :in-theory (disable
                                                          fat32-in-memoryp))
-                    ("Subgoal 1.10'" :in-theory (disable
-                                                 SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3)
+                    ("Subgoal 1.10'" :in-theory (e/d (fat32-in-memoryp)
+                                                 (SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3))
                      :use (:instance SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3
                                      (n MASKED-CURRENT-CLUSTER)
                                      (l
@@ -1809,10 +1809,92 @@
                                      find-n-free-clusters)))
   :rule-classes :definition)
 
-(fty::defprod
- struct-stat
- ;; Currently, this is the only thing I can decipher.
- ((st_size natp :default 0)))
+(defthm
+  stobj-set-indices-in-fa-table-guard-lemma-1
+  (implies (fat32-in-memoryp fat32-in-memory)
+           (fat32-entry-list-p (nth *fati* fat32-in-memory))))
+
+(defund
+  stobj-set-indices-in-fa-table
+  (fat32-in-memory index-list value-list)
+  (declare
+   (xargs :measure (acl2-count index-list)
+          :stobjs fat32-in-memory
+          :guard (and (fat32-in-memoryp fat32-in-memory)
+                      (nat-listp index-list)
+                      (fat32-masked-entry-list-p value-list)
+                      (equal (len index-list)
+                             (len value-list)))
+          :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp
+                                                    SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3
+                                                    fat32-update-lower-28-correctness-1)
+                         :use ((:instance SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3
+                                         (l (nth *fati* fat32-in-memory))
+                                         (n (car index-list)))
+                               (:instance 
+                                fat32-update-lower-28-correctness-1
+                                (entry (NTH (CAR INDEX-LIST)
+                                        (NTH *FATI* FAT32-IN-MEMORY))) (masked-entry
+                                                                        (CAR
+                                                                         VALUE-LIST)))))
+                        ("Subgoal 3'" :in-theory (enable fat32-entry-p)))))
+  (b*
+      (((when (atom index-list)) fat32-in-memory)
+       (current-index (car index-list))
+       ((when
+           (or (not (natp current-index))
+               (>= current-index (fat-length fat32-in-memory))))
+         fat32-in-memory)
+       (fat32-in-memory
+        (update-fati current-index
+                     (fat32-update-lower-28 (fati current-index fat32-in-memory)
+                                            (car value-list))
+                     fat32-in-memory)))
+    (stobj-set-indices-in-fa-table
+     fat32-in-memory
+     (cdr index-list)
+     (cdr value-list))))
+
+(defthm
+  stobj-set-indices-in-fa-table-correctness-1-lemma-1
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (equal (update-nth *fati* (nth *fati* fat32-in-memory)
+                      fat32-in-memory)
+          fat32-in-memory)))
+
+(defthm
+  stobj-set-indices-in-fa-table-correctness-1-lemma-2
+  (implies
+   (and (fat32-entry-list-p fa-table) (fat32-in-memoryp fat32-in-memory))
+   (fat32-in-memoryp (update-nth *fati* fa-table
+                      fat32-in-memory))))
+
+(defthm
+  stobj-set-indices-in-fa-table-correctness-1-lemma-3
+  (implies
+   (FAT32-IN-MEMORYP FAT32-IN-MEMORY)
+   (equal
+   (FAT32-IN-MEMORYP
+    (UPDATE-NTH
+        *FATI* val
+        FAT32-IN-MEMORY))
+   (fat32-entry-list-p val))))
+
+(defthm
+  stobj-set-indices-in-fa-table-correctness-1
+  (implies (fat32-in-memoryp fat32-in-memory)
+  (equal
+              (stobj-set-indices-in-fa-table
+               fat32-in-memory index-list value-list)
+         (update-nth *fati*
+         (set-indices-in-fa-table (nth *fati* fat32-in-memory)
+                                  index-list value-list)
+         fat32-in-memory)))
+  :hints
+  (("goal" :in-theory (e/d (stobj-set-indices-in-fa-table
+                            set-indices-in-fa-table)
+                           (fat32-in-memoryp)))))
 
 #|
 Currently the function call to test out this function is

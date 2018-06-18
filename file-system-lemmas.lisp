@@ -410,3 +410,7 @@
 (defthm nthcdr-of-cdr
   (equal (nthcdr i (cdr x))
          (cdr (nthcdr i x))))
+
+(defthm update-nth-of-nth
+  (implies (and (natp n) (< n (len l)))
+           (equal (update-nth n (nth n l) l) l)))
