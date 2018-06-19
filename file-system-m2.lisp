@@ -1866,35 +1866,29 @@
 (defthm
   stobj-set-indices-in-fa-table-correctness-1-lemma-2
   (implies
-   (and (fat32-entry-list-p fa-table) (fat32-in-memoryp fat32-in-memory))
-   (fat32-in-memoryp (update-nth *fati* fa-table
-                      fat32-in-memory))))
-
-(defthm
-  stobj-set-indices-in-fa-table-correctness-1-lemma-3
-  (implies
-   (FAT32-IN-MEMORYP FAT32-IN-MEMORY)
+   (fat32-in-memoryp fat32-in-memory)
    (equal
-   (FAT32-IN-MEMORYP
-    (UPDATE-NTH
-        *FATI* val
-        FAT32-IN-MEMORY))
-   (fat32-entry-list-p val))))
+    (fat32-in-memoryp (update-nth *fati* val fat32-in-memory))
+    (fat32-entry-list-p val))))
 
 (defthm
   stobj-set-indices-in-fa-table-correctness-1
-  (implies (fat32-in-memoryp fat32-in-memory)
-  (equal
-              (stobj-set-indices-in-fa-table
-               fat32-in-memory index-list value-list)
-         (update-nth *fati*
-         (set-indices-in-fa-table (nth *fati* fat32-in-memory)
-                                  index-list value-list)
-         fat32-in-memory)))
+  (implies
+   (and (fat32-masked-entry-list-p value-list)
+        (equal (len index-list)
+               (len value-list))
+        (fat32-in-memoryp fat32-in-memory))
+   (equal (nth *fati*
+               (stobj-set-indices-in-fa-table
+                fat32-in-memory index-list value-list))
+          (set-indices-in-fa-table (nth *fati* fat32-in-memory)
+                                   index-list value-list)))
   :hints
-  (("goal" :in-theory (e/d (stobj-set-indices-in-fa-table
-                            set-indices-in-fa-table)
-                           (fat32-in-memoryp)))))
+  (("goal"
+    :in-theory
+    (e/d (set-indices-in-fa-table stobj-set-indices-in-fa-table)
+         (fat32-in-memoryp))
+    :induct t)))
 
 #|
 Currently the function call to test out this function is

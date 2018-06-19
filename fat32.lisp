@@ -130,9 +130,9 @@
 (defthm set-indices-in-fa-table-guard-lemma-1
   (implies (and (natp key)
                 (< key (len l))
-                (fat32-entry-list-p l)
-                (fat32-entry-p val))
-           (fat32-entry-list-p (update-nth key val l))))
+                (fat32-entry-list-p l))
+           (equal (fat32-entry-list-p (update-nth key val l))
+                  (fat32-entry-p val))))
 
 (defthm set-indices-in-fa-table-guard-lemma-2
   (implies (fat32-entry-p x) (natp x))
