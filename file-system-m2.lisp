@@ -1890,6 +1890,191 @@
          (fat32-in-memoryp))
     :induct t)))
 
+(defun
+  dir-ent-set-first-cluster-file-size
+    (dir-ent first-cluster file-size)
+  (declare (xargs :guard (and (dir-ent-p dir-ent)
+                              (fat32-masked-entry-p first-cluster)
+                              (unsigned-byte-p 32 file-size))))
+  (let
+      ((dir-ent (dir-ent-fix dir-ent))
+       (first-cluster (fat32-masked-entry-fix first-cluster))
+       (file-size (if (not (unsigned-byte-p 32 file-size)) 0 file-size)))
+   (append
+    (subseq dir-ent 0 20)
+    (list* (logtail 16 (loghead 24 first-cluster))
+           (logtail 24 first-cluster)
+           (append (subseq dir-ent 22 26)
+                   (list (loghead 8 first-cluster)
+                         (logtail 8 (loghead 16 first-cluster))
+                         (loghead 8 file-size)
+                         (logtail 8 (loghead 16 file-size))
+                         (logtail 16 (loghead 24 file-size))
+                         (logtail 24 file-size)))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "ihs/logops-lemmas" :dir :system))
+
+  (defthm dir-ent-set-first-cluster-file-size-correctness-1
+    (dir-ent-p (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-size))
+    :hints (("goal" :in-theory (e/d (fat32-masked-entry-fix fat32-masked-entry-p)
+                                    (loghead logtail))))))
+
+(defund make-clusters (text cluster-size)
+  (declare (xargs :guard (and (character-listp text) (natp cluster-size))
+                  :measure (len text)
+                  :guard-debug t))
+  (if (or (atom text) (zp cluster-size))
+      nil
+    (list*
+     (make-character-list (take cluster-size text))
+     (make-clusters (nthcdr cluster-size text) cluster-size))))
+
+(defun stobj-set-cluster (cluster fat32-in-memory end-index)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (fat32-in-memoryp fat32-in-memory)
+                              (integerp end-index)
+                              (>= end-index (len cluster))
+                              (<= end-index (data-region-length
+                                             fat32-in-memory))
+                              (unsigned-byte-listp 8 cluster))
+                  :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp)) )))
+  (b*
+      (((unless (consp cluster))
+        fat32-in-memory)
+       (fat32-in-memory
+        (update-data-regioni (- end-index (len cluster)) (car cluster)
+                             fat32-in-memory)))
+    (stobj-set-cluster (cdr cluster) fat32-in-memory end-index)))
+
+(defun cluster-listp (l fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory))
+  (if
+      (atom l)
+      (equal l nil)
+    (and (unsigned-byte-listp 8 (car l))
+         (equal (len (car l))
+         (* (bpb_bytspersec fat32-in-memory)
+            (bpb_secperclus fat32-in-memory)))
+         (cluster-listp (cdr l) fat32-in-memory))))
+
+(defun stobj-set-clusters (cluster-list index-list fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (fat32-in-memoryp fat32-in-memory)
+                              (nat-listp index-list)
+                              (cluster-listp cluster-list fat32-in-memory)
+                              ;; (integerp end-index)
+                              ;; (>= end-index (len cluster))
+                              ;; (<= end-index (data-region-length
+                              ;;                fat32-in-memory))
+                              ;; (unsigned-byte-listp 8 cluster)
+                              )
+                  :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp)) )))
+  (b*
+      (((unless (consp cluster-list))
+        fat32-in-memory)
+       (fat32-in-memory
+        (stobj-set-cluster
+         (car cluster-list)
+         fat32-in-memory
+         (* (- (car index-list) 1) (bpb_bytspersec fat32-in-memory)
+            (bpb_secperclus fat32-in-memory)))))
+    (stobj-set-clusters (cdr cluster-list) (cdr index-list) fat32-in-memory)))
+
+;; Gotta return a list of directory entries to join up later when constructing
+;; the containing directory.
+(defun m1-fs-to-fat32-in-memory (fat32-in-memory fs)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (fat32-in-memoryp fat32-in-memory)
+                              (m1-file-alistp fat32-in-memory))))
+  (if (atom fs)
+    (mv fat32-in-memory nil)
+    (b*
+        (((mv fat32-in-memory tail-list)
+          (m1-fs-to-fat32-in-memory fat32-in-memory (cdr fs)))
+         (head (car fs))
+         (dir-ent (m1-file->dir-ent (cdr head)))
+         ((mv fat32-in-memory dir-ent)
+          (if (m1-regular-file-p (cdr head))
+              (b*
+                  ((contents (m1-file->contents (cdr head)))
+                   (file-length (length contents))
+                   (indices
+                    (stobj-find-n-free-clusters
+                     fat32-in-memory (ceiling
+                                      (/ file-length
+                                         (* (bpb_bytspersec fat32-in-memory)
+                                            (bpb_secperclus fat32-in-memory))))))
+                   ((mv fat32-in-memory dir-ent)
+                    (if
+                        (consp indices)
+                        (mv (stobj-set-indices-in-fa-table fa-table-after-free
+                                                           indices
+                                                           (binary-append
+                                                            (cdr indices)
+                                                            (list
+                                                             *MS-END-OF-CLUSTERCHAIN*)))
+                            (dir-ent-set-first-cluster-file-size
+                             dir-ent
+                             (car indices)
+                             file-length))
+                      ;; All these expressions have 0 instead of the bit-masked
+                      ;; value... meh.
+                      (mv fat32-in-memory
+                          (dir-ent-set-first-cluster-file-size
+                           dir-ent
+                           0
+                           file-length))))
+                   (blocks contents) ;; obviously not, but we haven't yet written
+                   ;; code to split it apart
+                   (fat32-in-memory
+                    (stobj-set-indices fat32-in-memory indices blocks) ;; nor
+                    ;; have we written code for this
+                   ))
+                (mv fat32-in-memory dir-ent))
+            (b*
+                ((contents (m1-file->contents (cdr head)))
+                 (file-length 0) ;; per the specification
+                 ((mv fat32-in-memory unflattened-contents)
+                  (m1-fs-to-fat32-in-memory fat32-in-memory contents))
+                 (contents (flatten unflattened-contents))
+                 (indices
+                  (stobj-find-n-free-clusters
+                   fat32-in-memory (ceiling
+                                    (/ file-length
+                                       (* (bpb_bytspersec fat32-in-memory)
+                                          (bpb_secperclus fat32-in-memory))))))
+                 ((mv fat32-in-memory dir-ent)
+                  (if
+                      (consp indices)
+                      (mv (stobj-set-indices-in-fa-table fa-table-after-free
+                                                         indices
+                                                         (binary-append
+                                                          (cdr indices)
+                                                          (list
+                                                           *MS-END-OF-CLUSTERCHAIN*)))
+                          (dir-ent-set-first-cluster-file-size
+                           dir-ent
+                           (car indices)
+                           file-length))
+                    ;; All these expressions have 0 instead of the bit-masked
+                    ;; value... meh.
+                    (mv fat32-in-memory
+                        (dir-ent-set-first-cluster-file-size
+                         dir-ent
+                         0
+                         file-length))))
+                 (blocks contents) ;; obviously not, but we haven't yet written
+                 ;; code to split it apart
+                 (fat32-in-memory
+                  (stobj-set-indices fat32-in-memory indices blocks) ;; nor
+                  ;; have we written code for this
+                  ))
+              (mv fat32-in-memory dir-ent)))))
+      (mv fat32-in-memory (list* dir-ent tail-list)))))
+
 #|
 Currently the function call to test out this function is
 (b* (((mv contents &)
