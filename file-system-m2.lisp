@@ -125,6 +125,44 @@
          ;; per spec
          :initially 0)))
 
+(defund cluster-size (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory))
+  (* (bpb_secperclus fat32-in-memory)
+     (bpb_bytspersec fat32-in-memory)))
+
+(defund compliant-fat32-in-memoryp (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory :guard t))
+  (and (fat32-in-memoryp fat32-in-memory)
+       (>= (bpb_bytspersec fat32-in-memory) *ms-min-bytes-per-sector*)
+       (>= (bpb_secperclus fat32-in-memory) 1)))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top"
+                       :dir :system))
+
+  (defthm
+    cluster-size-is-compliant
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (and (integerp (cluster-size fat32-in-memory))
+                  (>= (cluster-size fat32-in-memory)
+                      *ms-min-bytes-per-sector*)))
+    :hints
+    (("goal"
+      :in-theory (e/d (compliant-fat32-in-memoryp cluster-size)
+                      (fat32-in-memoryp))))
+    :rule-classes
+    ((:rewrite
+      :corollary
+      (implies (compliant-fat32-in-memoryp fat32-in-memory)
+               (integerp (cluster-size fat32-in-memory))))
+     (:linear
+      :corollary
+      (implies (compliant-fat32-in-memoryp fat32-in-memory)
+               (>= (cluster-size fat32-in-memory)
+                   *ms-min-bytes-per-sector*))))))
+
 (defthm bs_oemnamep-alt
   (equal (bs_oemnamep x)
          (unsigned-byte-listp 8 x))
