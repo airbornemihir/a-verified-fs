@@ -125,44 +125,6 @@
          ;; per spec
          :initially 0)))
 
-(defund cluster-size (fat32-in-memory)
-  (declare (xargs :stobjs fat32-in-memory))
-  (* (bpb_secperclus fat32-in-memory)
-     (bpb_bytspersec fat32-in-memory)))
-
-(defund compliant-fat32-in-memoryp (fat32-in-memory)
-  (declare (xargs :stobjs fat32-in-memory :guard t))
-  (and (fat32-in-memoryp fat32-in-memory)
-       (>= (bpb_bytspersec fat32-in-memory) *ms-min-bytes-per-sector*)
-       (>= (bpb_secperclus fat32-in-memory) 1)))
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
-
-  (defthm
-    cluster-size-is-compliant
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (and (integerp (cluster-size fat32-in-memory))
-                  (>= (cluster-size fat32-in-memory)
-                      *ms-min-bytes-per-sector*)))
-    :hints
-    (("goal"
-      :in-theory (e/d (compliant-fat32-in-memoryp cluster-size)
-                      (fat32-in-memoryp))))
-    :rule-classes
-    ((:rewrite
-      :corollary
-      (implies (compliant-fat32-in-memoryp fat32-in-memory)
-               (integerp (cluster-size fat32-in-memory))))
-     (:linear
-      :corollary
-      (implies (compliant-fat32-in-memoryp fat32-in-memory)
-               (>= (cluster-size fat32-in-memory)
-                   *ms-min-bytes-per-sector*))))))
-
 (defthm bs_oemnamep-alt
   (equal (bs_oemnamep x)
          (unsigned-byte-listp 8 x))
@@ -217,6 +179,9 @@
                      update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
                      update-bpb_fatsz32 update-bpb_rootentcnt
                      update-bpb_totsec16 update-bs_volid)))
+
+(local
+ (in-theory (disable fati fat-length)))
 
 (defmacro
   update-stobj-scalar-correctness
@@ -394,6 +359,57 @@
                                  update-bs_volid-correctness-1
                                  update-bs_volid-correctness-2
                                  update-bs_volid-correctness-3)
+
+(defund cluster-size (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory :guard (fat32-in-memoryp fat32-in-memory)))
+  (* (bpb_secperclus fat32-in-memory)
+     (bpb_bytspersec fat32-in-memory)))
+
+(defund compliant-fat32-in-memoryp (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory :guard t))
+  (and (fat32-in-memoryp fat32-in-memory)
+       (>= (bpb_bytspersec fat32-in-memory) *ms-min-bytes-per-sector*)
+       (>= (bpb_secperclus fat32-in-memory) 1)))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top"
+                       :dir :system))
+
+  (defthm
+    compliant-fat32-in-memoryp-correctness-1
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (and (integerp (cluster-size fat32-in-memory))
+                  (>= (cluster-size fat32-in-memory)
+                      *ms-min-bytes-per-sector*)))
+    :hints
+    (("goal"
+      :in-theory (e/d (compliant-fat32-in-memoryp cluster-size)
+                      (fat32-in-memoryp))))
+    :rule-classes
+    ((:rewrite
+      :corollary
+      (implies (compliant-fat32-in-memoryp fat32-in-memory)
+               (integerp (cluster-size fat32-in-memory))))
+     (:forward-chaining
+      :corollary
+      (implies (compliant-fat32-in-memoryp fat32-in-memory)
+               (integerp (cluster-size fat32-in-memory))))
+     (:linear
+      :corollary
+      (implies (compliant-fat32-in-memoryp fat32-in-memory)
+               (>= (cluster-size fat32-in-memory)
+                   *ms-min-bytes-per-sector*))))))
+
+(defthm
+  compliant-fat32-in-memoryp-correctness-2
+  (implies (and (natp i)
+                (< i (fat-length fat32-in-memory))
+                (compliant-fat32-in-memoryp fat32-in-memory))
+           (fat32-entry-p (fati i fat32-in-memory)))
+  :hints (("goal" :in-theory (enable compliant-fat32-in-memoryp
+                                     fati fat-length))))
 
 (defconst *initialbytcnt* 16)
 
@@ -971,7 +987,7 @@
                              (* (fat-length fat32-in-memory) 4))
                       (<= pos *ms-bad-cluster*))
           :guard-hints
-          (("goal" :in-theory (disable fat32-in-memoryp)))
+          (("goal" :in-theory (e/d (fat-length) (fat32-in-memoryp))))
           :guard-debug t
           :stobjs fat32-in-memory))
   (b*
@@ -1253,7 +1269,7 @@
 
 (defthm
   slurp-disk-image-guard-lemma-17
-  (<= 512
+  (<= *ms-min-bytes-per-sector*
       (bpb_bytspersec
        (mv-nth
         0
@@ -1454,14 +1470,12 @@
    (xargs
     :stobjs fat32-in-memory
     :measure (nfix length)
-    :guard (and (fat32-in-memoryp fat32-in-memory)
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (fat32-masked-entry-p masked-current-cluster)
                 (natp length)
                 (>= masked-current-cluster 2)
                 (< masked-current-cluster
-                   (fat-length fat32-in-memory))
-                (> (cluster-size fat32-in-memory)
-                   0))))
+                   (fat-length fat32-in-memory)))))
   (let
    ((cluster-size (cluster-size fat32-in-memory)))
    (if
@@ -1487,14 +1501,18 @@
          (mv (list* masked-current-cluster tail-index-list)
              tail-error))))))))
 
-(defthm get-clusterchain-alt
+(defthm
+  get-clusterchain-alt
   (equal (get-clusterchain fat32-in-memory
                            masked-current-cluster length)
-         (fat32-build-index-list (nth *fati* fat32-in-memory)
-                                 masked-current-cluster length
-                                 (cluster-size fat32-in-memory)))
+         (fat32-build-index-list
+          (nth *fati* fat32-in-memory)
+          masked-current-cluster
+          length (cluster-size fat32-in-memory)))
   :rule-classes :definition
-  :hints (("Goal" :in-theory (enable get-clusterchain))))
+  :hints
+  (("goal"
+    :in-theory (enable get-clusterchain fati fat-length))))
 
 (encapsulate
   ()
@@ -1509,11 +1527,9 @@
      (xargs
       :stobjs (fat32-in-memory)
       :guard
-      (and (fat32-in-memoryp fat32-in-memory)
+      (and (compliant-fat32-in-memoryp fat32-in-memory)
            (fat32-masked-entry-list-p clusterchain)
            (natp file-size)
-           (< 0
-              (cluster-size fat32-in-memory))
            (bounded-nat-listp
             clusterchain
             (floor (data-region-length fat32-in-memory)
@@ -1545,12 +1561,10 @@
      (xargs
       :stobjs fat32-in-memory
       :measure (nfix length)
-      :guard (and (fat32-in-memoryp fat32-in-memory)
+      :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                   (fat32-masked-entry-p masked-current-cluster)
                   (natp length)
                   (>= masked-current-cluster *ms-first-data-cluster*)
-                  (> (cluster-size fat32-in-memory)
-                     0)
                   (< masked-current-cluster
                      (floor (data-region-length fat32-in-memory)
                             (cluster-size fat32-in-memory)))
@@ -1559,8 +1573,7 @@
                           (cluster-size fat32-in-memory))
                    (fat-length fat32-in-memory)))
       :guard-debug t
-      :guard-hints (("Goal" :do-not-induct t :in-theory (disable
-                                                         fat32-in-memoryp))
+      :guard-hints (("Goal" :do-not-induct t :in-theory (e/d (cluster-size) (fat32-in-memoryp)))
                     ("Subgoal 1.10'" :in-theory (e/d (fat32-in-memoryp)
                                                  (SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3))
                      :use (:instance SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3
@@ -1632,13 +1645,14 @@
    (equal (mv-nth 1
                   (fat32-build-index-list
                    (nth *fati* fat32-in-memory)
-                   masked-current-cluster length
-                   (cluster-size fat32-in-memory)))
+                   masked-current-cluster
+                   length (cluster-size fat32-in-memory)))
           (mv-nth 1
                   (get-clusterchain-contents
                    fat32-in-memory
                    masked-current-cluster length))))
-  :hints (("goal" :in-theory (disable fat32-in-memoryp))))
+  :hints (("goal" :in-theory (e/d (cluster-size fat-length fati)
+                                  (fat32-in-memoryp)))))
 
 (defthm
   get-clusterchain-contents-correctness-1
@@ -1669,7 +1683,7 @@
              fat32-in-memory
              masked-current-cluster length))))
   :hints
-  (("goal" :in-theory (disable min nth fat32-in-memoryp))))
+  (("goal" :in-theory (e/d (fat-length fati) (min nth fat32-in-memoryp)))))
 
 ;; This whole thing is subject to two criticisms.
 ;; - The choice not to treat the root directory like other directories is
