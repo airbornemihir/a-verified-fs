@@ -1324,12 +1324,9 @@
                                     fat32-in-memory))
        (fat32-in-memory (update-fat fat32-in-memory
                                     (subseq str
-                                            (* (bpb_rsvdseccnt fat32-in-memory)
-                                               (bpb_bytspersec
-                                                fat32-in-memory))
+                                            (cluster-size fat32-in-memory)
                                             (+
-                                             (* (bpb_rsvdseccnt fat32-in-memory)
-                                                (bpb_bytspersec fat32-in-memory))
+                                             (cluster-size fat32-in-memory)
                                              (* fat-read-size 4)))
                                     fat-read-size))
        (fat32-in-memory (resize-data-region data-byte-count
@@ -1463,12 +1460,10 @@
                 (>= masked-current-cluster 2)
                 (< masked-current-cluster
                    (fat-length fat32-in-memory))
-                (> (* (bpb_secperclus fat32-in-memory)
-                      (bpb_bytspersec fat32-in-memory))
+                (> (cluster-size fat32-in-memory)
                    0))))
   (let
-   ((cluster-size (* (bpb_secperclus fat32-in-memory)
-                     (bpb_bytspersec fat32-in-memory))))
+   ((cluster-size (cluster-size fat32-in-memory)))
    (if
     (or (zp length) (zp cluster-size))
     (mv nil (- *eio*))
@@ -1497,8 +1492,7 @@
                            masked-current-cluster length)
          (fat32-build-index-list (nth *fati* fat32-in-memory)
                                  masked-current-cluster length
-                                 (* (bpb_secperclus fat32-in-memory)
-                                    (bpb_bytspersec fat32-in-memory))))
+                                 (cluster-size fat32-in-memory)))
   :rule-classes :definition
   :hints (("Goal" :in-theory (enable get-clusterchain))))
 
@@ -1519,13 +1513,11 @@
            (fat32-masked-entry-list-p clusterchain)
            (natp file-size)
            (< 0
-              (* (bpb_bytspersec fat32-in-memory)
-                 (bpb_secperclus fat32-in-memory)))
+              (cluster-size fat32-in-memory))
            (bounded-nat-listp
             clusterchain
             (floor (data-region-length fat32-in-memory)
-                   (* (bpb_bytspersec fat32-in-memory)
-                      (bpb_secperclus fat32-in-memory))))
+                   (cluster-size fat32-in-memory)))
            (lower-bounded-integer-listp
             clusterchain *ms-first-data-cluster*))
       :guard-hints
@@ -1535,8 +1527,7 @@
         (atom clusterchain)
         nil
       (let*
-          ((cluster-size (* (bpb_bytspersec fat32-in-memory)
-                            (bpb_secperclus fat32-in-memory)))
+          ((cluster-size (cluster-size fat32-in-memory))
            (masked-current-cluster (car clusterchain))
            (data-region-index (* (nfix (- masked-current-cluster 2))
                                  cluster-size)))
@@ -1558,17 +1549,14 @@
                   (fat32-masked-entry-p masked-current-cluster)
                   (natp length)
                   (>= masked-current-cluster *ms-first-data-cluster*)
-                  (> (* (bpb_secperclus fat32-in-memory)
-                        (bpb_bytspersec fat32-in-memory))
+                  (> (cluster-size fat32-in-memory)
                      0)
                   (< masked-current-cluster
                      (floor (data-region-length fat32-in-memory)
-                            (* (bpb_bytspersec fat32-in-memory)
-                               (bpb_secperclus fat32-in-memory))))
+                            (cluster-size fat32-in-memory)))
                   (<=
                    (floor (data-region-length fat32-in-memory)
-                          (* (bpb_bytspersec fat32-in-memory)
-                             (bpb_secperclus fat32-in-memory)))
+                          (cluster-size fat32-in-memory))
                    (fat-length fat32-in-memory)))
       :guard-debug t
       :guard-hints (("Goal" :do-not-induct t :in-theory (disable
@@ -1580,8 +1568,7 @@
                                      (l
                                       (NTH *FATI* FAT32-IN-MEMORY)))))))
     (b*
-        ((cluster-size (* (bpb_secperclus fat32-in-memory)
-                          (bpb_bytspersec fat32-in-memory)))
+        ((cluster-size (cluster-size fat32-in-memory))
          ((unless
               (and (not (zp length)) (not (zp cluster-size))))
           (mv nil (- *eio*)))
@@ -1602,8 +1589,7 @@
               (and (not (fat32-is-eof masked-next-cluster))
                    (< masked-next-cluster
                       (floor (data-region-length fat32-in-memory)
-                             (* (bpb_bytspersec fat32-in-memory)
-                                (bpb_secperclus fat32-in-memory))))))
+                             (cluster-size fat32-in-memory)))))
           (mv current-cluster-contents 0))
          ((mv tail-character-list tail-error)
           (get-clusterchain-contents fat32-in-memory masked-next-cluster
@@ -1641,15 +1627,13 @@
             *ms-first-data-cluster*)
         (fat32-in-memoryp fat32-in-memory)
         (equal (floor (data-region-length fat32-in-memory)
-                      (* (bpb_bytspersec fat32-in-memory)
-                         (bpb_secperclus fat32-in-memory)))
+                      (cluster-size fat32-in-memory))
                (fat-length fat32-in-memory)))
    (equal (mv-nth 1
                   (fat32-build-index-list
                    (nth *fati* fat32-in-memory)
                    masked-current-cluster length
-                   (* (bpb_secperclus fat32-in-memory)
-                      (bpb_bytspersec fat32-in-memory))))
+                   (cluster-size fat32-in-memory)))
           (mv-nth 1
                   (get-clusterchain-contents
                    fat32-in-memory
@@ -1665,8 +1649,7 @@
         *ms-first-data-cluster*)
     (fat32-in-memoryp fat32-in-memory)
     (equal (floor (data-region-length fat32-in-memory)
-                  (* (bpb_bytspersec fat32-in-memory)
-                     (bpb_secperclus fat32-in-memory)))
+                  (cluster-size fat32-in-memory))
            (fat-length fat32-in-memory))
     (equal
      (mv-nth
@@ -1994,8 +1977,7 @@
       (equal l nil)
     (and (unsigned-byte-listp 8 (car l))
          (equal (len (car l))
-         (* (bpb_bytspersec fat32-in-memory)
-            (bpb_secperclus fat32-in-memory)))
+                (cluster-size fat32-in-memory))
          (cluster-listp (cdr l) fat32-in-memory))))
 
 (defun stobj-set-clusters (cluster-list index-list fat32-in-memory)
@@ -2017,8 +1999,7 @@
         (stobj-set-cluster
          (car cluster-list)
          fat32-in-memory
-         (* (- (car index-list) 1) (bpb_bytspersec fat32-in-memory)
-            (bpb_secperclus fat32-in-memory)))))
+         (* (- (car index-list) 1) (cluster-size fat32-in-memory)))))
     (stobj-set-clusters (cdr cluster-list) (cdr index-list) fat32-in-memory)))
 
 ;; Gotta return a list of directory entries to join up later when constructing
@@ -2043,8 +2024,7 @@
                     (stobj-find-n-free-clusters
                      fat32-in-memory (ceiling
                                       (/ file-length
-                                         (* (bpb_bytspersec fat32-in-memory)
-                                            (bpb_secperclus fat32-in-memory))))))
+                                         (cluster-size fat32-in-memory)))))
                    ((mv fat32-in-memory dir-ent)
                     (if
                         (consp indices)
@@ -2082,8 +2062,7 @@
                   (stobj-find-n-free-clusters
                    fat32-in-memory (ceiling
                                     (/ file-length
-                                       (* (bpb_bytspersec fat32-in-memory)
-                                          (bpb_secperclus fat32-in-memory))))))
+                                       (cluster-size fat32-in-memory)))))
                  ((mv fat32-in-memory dir-ent)
                   (if
                       (consp indices)
