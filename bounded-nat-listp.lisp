@@ -4,7 +4,9 @@
   (declare (xargs :guard (natp b)))
   (if (atom l)
       (equal l nil)
-    (and (natp (car l)) (< (car l) b) (bounded-nat-listp (cdr l) b))))
+      (and (natp (car l))
+           (< (car l) b)
+           (bounded-nat-listp (cdr l) b))))
 
 (defthm bounded-nat-listp-correctness-1
   (implies (bounded-nat-listp l b)
@@ -42,7 +44,10 @@
   (declare (xargs :guard (integerp b)))
   (if (atom l)
       (equal l nil)
-    (and (integerp (car l)) (>= (car l) b) (lower-bounded-integer-listp (cdr l) b))))
+      (and (integerp (car l))
+           (>= (car l) b)
+           (lower-bounded-integer-listp (cdr l)
+                                        b))))
 
 (defthm lower-bounded-integer-listp-correctness-2
   (implies (true-listp x)
@@ -56,3 +61,11 @@
   (implies (and (<= y x) (lower-bounded-integer-listp l x))
            (lower-bounded-integer-listp l y))
   :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
+
+(defthmd
+  lower-bounded-integer-listp-correctness-7
+  (implies (and (member-equal x lst)
+                (lower-bounded-integer-listp lst b))
+           (<= b x))
+  :hints
+  (("goal" :in-theory (enable lower-bounded-integer-listp))))
