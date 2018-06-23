@@ -61,11 +61,3 @@
   (implies (and (<= y x) (lower-bounded-integer-listp l x))
            (lower-bounded-integer-listp l y))
   :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
-
-(defthmd
-  lower-bounded-integer-listp-correctness-7
-  (implies (and (member-equal x lst)
-                (lower-bounded-integer-listp lst b))
-           (<= b x))
-  :hints
-  (("goal" :in-theory (enable lower-bounded-integer-listp))))

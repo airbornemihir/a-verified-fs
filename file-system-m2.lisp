@@ -2091,14 +2091,6 @@
    (compliant-fat32-in-memoryp
     (stobj-set-cluster cluster fat32-in-memory end-index))))
 
-;; (defthmd len-when-member-of-cluster-list
-;;   (implies
-;;    (and (member-equal x lst)
-;;         (cluster-listp lst fat32-in-memory))
-;;    (and (unsigned-byte-listp 8 x)
-;;         (equal (len x)
-;;                (cluster-size fat32-in-memory)))))
-
 (defthm
   data-region-length-of-stobj-set-cluster
   (implies
