@@ -154,19 +154,50 @@
            (fat32-entry-p x)))
 
 (defthm
-  fat32-masked-entry-list-p-of-make-list-ac
+  fat32-masked-entry-listp-of-make-list
   (implies (and (fat32-masked-entry-p val)
                 (fat32-masked-entry-list-p ac))
            (fat32-masked-entry-list-p (make-list-ac n val ac))))
 
-(defthm fat32-masked-entry-list-p-of-append
+(defthm fat32-masked-entry-list-p-of-binary-append
   (implies (true-listp x)
            (equal (fat32-masked-entry-list-p (binary-append x y))
                   (and (fat32-masked-entry-list-p x)
                        (fat32-masked-entry-list-p y)))))
 
+(defthm
+  fat32-masked-entry-list-p-of-find-n-free-clusters
+  (implies (and (fat32-entry-list-p fa-table)
+                (natp n)
+                (>= (len fa-table) *ms-first-data-cluster*)
+                (<= (len fa-table) *ms-bad-cluster*))
+           (fat32-masked-entry-list-p (find-n-free-clusters fa-table n)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (fat32-entry-list-p fa-table)
+          (natp n)
+          (>= (len fa-table) *ms-first-data-cluster*)
+          (<= (len fa-table) *ms-bad-cluster*))
+     (let ((l (find-n-free-clusters fa-table n)))
+       (implies (consp l)
+                (and (fat32-masked-entry-list-p (cdr l))
+                     (fat32-masked-entry-p (car l))))))))
+  :hints (("goal" :in-theory (disable find-n-free-clusters-correctness-1)
+           :use ((:instance find-n-free-clusters-correctness-1
+                            (b (len fa-table)))
+                 (:instance l6-wrchs-guard-lemma-3
+                            (x (find-n-free-clusters fa-table n)))
+                 (:instance bounded-nat-listp-correctness-5
+                            (l (find-n-free-clusters fa-table n))
+                            (x (len fa-table))
+                            (y *expt-2-28*))))))
+
 (defthm fat32-entry-list-p-of-update-nth
-  (implies (and (< key (len l))
+  (implies (and (natp key)
+                (< key (len l))
                 (fat32-entry-list-p l))
            (equal (fat32-entry-list-p (update-nth key val l))
                   (fat32-entry-p val))))

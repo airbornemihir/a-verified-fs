@@ -375,6 +375,12 @@
          (mv nil error-code)
          (mv (subseq file-text start (+ start n)) error-code))))))
 
+(defthmd
+  l6-wrchs-guard-lemma-3
+  (equal (fat32-masked-entry-list-p x)
+         (bounded-nat-listp x *expt-2-28*))
+  :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
+
 ;; l6-wrchs and l6-create are in some cases asked to create a zero length file
 ;; or zero the length of an existing file; the following comment from page 17
 ;; of the FAT specification applies.
