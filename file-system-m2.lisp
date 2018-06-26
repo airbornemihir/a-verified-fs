@@ -1968,6 +1968,22 @@
          (fat32-in-memoryp))
     :induct t)))
 
+(defthm
+  compliant-fat32-in-memoryp-of-stobj-set-indices-in-fa-table
+  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (fat32-masked-entry-list-p value-list)
+                (equal (len index-list)
+                       (len value-list)))
+           (compliant-fat32-in-memoryp
+            (stobj-set-indices-in-fa-table
+             fat32-in-memory index-list value-list)))
+  :hints
+  (("goal"
+    :in-theory (enable stobj-set-indices-in-fa-table)
+    :induct
+    (stobj-set-indices-in-fa-table fat32-in-memory
+                                   index-list value-list))))
+
 (defun
   dir-ent-set-first-cluster-file-size
     (dir-ent first-cluster file-size)
