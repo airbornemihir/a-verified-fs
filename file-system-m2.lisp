@@ -2157,11 +2157,13 @@
 (defun m1-fs-to-fat32-in-memory (fat32-in-memory fs)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (and (fat32-in-memoryp fat32-in-memory)
-                              (m1-file-alistp fat32-in-memory))))
+                              (m1-file-alist-p fs))
+                  :hints (("Goal" :in-theory (enable m1-file->contents)) )))
   (if (atom fs)
     (mv fat32-in-memory nil)
     (b*
-        (((mv fat32-in-memory tail-list)
+        ((cluster-size (cluster-size fat32-in-memory))
+         ((mv fat32-in-memory tail-list)
           (m1-fs-to-fat32-in-memory fat32-in-memory (cdr fs)))
          (head (car fs))
          (dir-ent (m1-file->dir-ent (cdr head)))
@@ -2172,22 +2174,26 @@
                    (file-length (length contents))
                    (indices
                     (stobj-find-n-free-clusters
-                     fat32-in-memory (ceiling
-                                      (/ file-length
-                                         (cluster-size fat32-in-memory)))))
+                     fat32-in-memory
+                     (ceiling file-length cluster-size)))
                    ((mv fat32-in-memory dir-ent)
                     (if
                         (consp indices)
-                        (mv (stobj-set-indices-in-fa-table fa-table-after-free
-                                                           indices
-                                                           (binary-append
-                                                            (cdr indices)
-                                                            (list
-                                                             *MS-END-OF-CLUSTERCHAIN*)))
-                            (dir-ent-set-first-cluster-file-size
-                             dir-ent
-                             (car indices)
-                             file-length))
+                        (let
+                            ((fat32-in-memory
+                              (stobj-set-indices-in-fa-table
+                               fat32-in-memory
+                               indices
+                               (binary-append
+                                (cdr indices)
+                                (list
+                                 *MS-END-OF-CLUSTERCHAIN*)))))
+                          (mv
+                           fat32-in-memory
+                           (dir-ent-set-first-cluster-file-size
+                            dir-ent
+                            (car indices)
+                            file-length)))
                       ;; All these expressions have 0 instead of the bit-masked
                       ;; value... meh.
                       (mv fat32-in-memory
@@ -2195,12 +2201,9 @@
                            dir-ent
                            0
                            file-length))))
-                   (blocks contents) ;; obviously not, but we haven't yet written
-                   ;; code to split it apart
+                   (blocks (make-clusters contents cluster-size))
                    (fat32-in-memory
-                    (stobj-set-indices fat32-in-memory indices blocks) ;; nor
-                    ;; have we written code for this
-                   ))
+                    (stobj-set-clusters blocks indices fat32-in-memory)))
                 (mv fat32-in-memory dir-ent))
             (b*
                 ((contents (m1-file->contents (cdr head)))
@@ -2210,22 +2213,26 @@
                  (contents (flatten unflattened-contents))
                  (indices
                   (stobj-find-n-free-clusters
-                   fat32-in-memory (ceiling
-                                    (/ file-length
-                                       (cluster-size fat32-in-memory)))))
+                   fat32-in-memory
+                   (ceiling file-length cluster-size)))
                  ((mv fat32-in-memory dir-ent)
                   (if
                       (consp indices)
-                      (mv (stobj-set-indices-in-fa-table fa-table-after-free
-                                                         indices
-                                                         (binary-append
-                                                          (cdr indices)
-                                                          (list
-                                                           *MS-END-OF-CLUSTERCHAIN*)))
-                          (dir-ent-set-first-cluster-file-size
-                           dir-ent
-                           (car indices)
-                           file-length))
+                      (let
+                          ((fat32-in-memory
+                            (stobj-set-indices-in-fa-table
+                             fat32-in-memory
+                             indices
+                             (binary-append
+                              (cdr indices)
+                              (list
+                               *MS-END-OF-CLUSTERCHAIN*)))))
+                        (mv
+                         fat32-in-memory
+                         (dir-ent-set-first-cluster-file-size
+                          dir-ent
+                          (car indices)
+                          file-length)))
                     ;; All these expressions have 0 instead of the bit-masked
                     ;; value... meh.
                     (mv fat32-in-memory
@@ -2233,12 +2240,9 @@
                          dir-ent
                          0
                          file-length))))
-                 (blocks contents) ;; obviously not, but we haven't yet written
-                 ;; code to split it apart
+                 (blocks (make-clusters contents cluster-size))
                  (fat32-in-memory
-                  (stobj-set-indices fat32-in-memory indices blocks) ;; nor
-                  ;; have we written code for this
-                  ))
+                  (stobj-set-clusters blocks indices fat32-in-memory)))
               (mv fat32-in-memory dir-ent)))))
       (mv fat32-in-memory (list* dir-ent tail-list)))))
 
