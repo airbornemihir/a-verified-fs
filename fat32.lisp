@@ -508,13 +508,13 @@
      (start *ms-first-data-cluster*)))))
 
 (defthmd
-  l6-wrchs-guard-lemma-3
+  fat32-masked-entry-list-p-alt
   (equal (fat32-masked-entry-list-p x)
          (bounded-nat-listp x *expt-2-28*))
   :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
 
 (defthm
-  l6-wrchs-guard-lemma-4
+  fat32-masked-entry-list-p-of-find-n-free-clusters
   (implies (and (fat32-entry-list-p fa-table)
                 (natp n)
                 (>= (len fa-table) *ms-first-data-cluster*)
@@ -536,7 +536,7 @@
   :hints (("goal" :in-theory (disable find-n-free-clusters-correctness-1)
            :use ((:instance find-n-free-clusters-correctness-1
                             (b (len fa-table)))
-                 (:instance l6-wrchs-guard-lemma-3
+                 (:instance fat32-masked-entry-list-p-alt
                             (x (find-n-free-clusters fa-table n)))
                  (:instance bounded-nat-listp-correctness-5
                             (l (find-n-free-clusters fa-table n))
