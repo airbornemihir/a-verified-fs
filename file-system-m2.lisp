@@ -2150,101 +2150,130 @@
                                 (cluster-size fat32-in-memory)))))
       (stobj-set-clusters (cdr cluster-list)
                           (cdr index-list)
-                          fat32-in-memory))))
+                          fat32-in-memory)))
+
+  (defthm
+    compliant-fat32-in-memoryp-of-stobj-set-clusters
+    (implies
+     (and (compliant-fat32-in-memoryp fat32-in-memory)
+          (bounded-nat-listp
+           index-list
+           (floor (data-region-length fat32-in-memory)
+                  (cluster-size fat32-in-memory)))
+          (lower-bounded-integer-listp
+           index-list *ms-first-data-cluster*)
+          (cluster-listp cluster-list fat32-in-memory)
+          (equal (len cluster-list)
+                 (len index-list)))
+     (compliant-fat32-in-memoryp
+      (stobj-set-clusters cluster-list
+                          index-list fat32-in-memory)))
+    :hints
+    (("goal"
+      :induct (stobj-set-clusters
+               cluster-list index-list fat32-in-memory)
+      :in-theory (enable lower-bounded-integer-listp)))))
 
 ;; Gotta return a list of directory entries to join up later when constructing
 ;; the containing directory.
-(defun m1-fs-to-fat32-in-memory (fat32-in-memory fs)
-  (declare (xargs :stobjs fat32-in-memory
-                  :guard (and (fat32-in-memoryp fat32-in-memory)
-                              (m1-file-alist-p fs))
-                  :hints (("Goal" :in-theory (enable m1-file->contents)) )))
-  (if (atom fs)
-    (mv fat32-in-memory nil)
-    (b*
-        ((cluster-size (cluster-size fat32-in-memory))
-         ((mv fat32-in-memory tail-list)
-          (m1-fs-to-fat32-in-memory fat32-in-memory (cdr fs)))
-         (head (car fs))
-         (dir-ent (m1-file->dir-ent (cdr head)))
-         ((mv fat32-in-memory dir-ent)
-          (if (m1-regular-file-p (cdr head))
-              (b*
-                  ((contents (m1-file->contents (cdr head)))
-                   (file-length (length contents))
-                   (indices
-                    (stobj-find-n-free-clusters
-                     fat32-in-memory
-                     (ceiling file-length cluster-size)))
-                   ((mv fat32-in-memory dir-ent)
-                    (if
-                        (consp indices)
-                        (let
-                            ((fat32-in-memory
-                              (stobj-set-indices-in-fa-table
-                               fat32-in-memory
-                               indices
-                               (binary-append
-                                (cdr indices)
-                                (list
-                                 *MS-END-OF-CLUSTERCHAIN*)))))
-                          (mv
-                           fat32-in-memory
-                           (dir-ent-set-first-cluster-file-size
-                            dir-ent
-                            (car indices)
-                            file-length)))
-                      ;; All these expressions have 0 instead of the bit-masked
-                      ;; value... meh.
-                      (mv fat32-in-memory
-                          (dir-ent-set-first-cluster-file-size
-                           dir-ent
-                           0
-                           file-length))))
-                   (blocks (make-clusters contents cluster-size))
-                   (fat32-in-memory
-                    (stobj-set-clusters blocks indices fat32-in-memory)))
-                (mv fat32-in-memory dir-ent))
-            (b*
-                ((contents (m1-file->contents (cdr head)))
-                 (file-length 0) ;; per the specification
-                 ((mv fat32-in-memory unflattened-contents)
-                  (m1-fs-to-fat32-in-memory fat32-in-memory contents))
-                 (contents (flatten unflattened-contents))
-                 (indices
-                  (stobj-find-n-free-clusters
-                   fat32-in-memory
-                   (ceiling file-length cluster-size)))
-                 ((mv fat32-in-memory dir-ent)
-                  (if
-                      (consp indices)
-                      (let
-                          ((fat32-in-memory
-                            (stobj-set-indices-in-fa-table
-                             fat32-in-memory
-                             indices
-                             (binary-append
-                              (cdr indices)
-                              (list
-                               *MS-END-OF-CLUSTERCHAIN*)))))
-                        (mv
+(defun
+  m1-fs-to-fat32-in-memory
+  (fat32-in-memory fs)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (fat32-in-memoryp fat32-in-memory)
+                (m1-file-alist-p fs))
+    :hints (("goal" :in-theory (enable m1-file->contents)))
+    :verify-guards nil))
+  (if
+   (atom fs)
+   (mv fat32-in-memory nil)
+   (b*
+       ((cluster-size (cluster-size fat32-in-memory))
+        ((mv fat32-in-memory tail-list)
+         (m1-fs-to-fat32-in-memory fat32-in-memory (cdr fs)))
+        (head (car fs))
+        (dir-ent (m1-file->dir-ent (cdr head)))
+        ((mv fat32-in-memory dir-ent)
+         (if
+          (m1-regular-file-p (cdr head))
+          (b*
+              ((contents (m1-file->contents (cdr head)))
+               (file-length (length contents))
+               (indices (stobj-find-n-free-clusters
                          fat32-in-memory
-                         (dir-ent-set-first-cluster-file-size
-                          dir-ent
-                          (car indices)
-                          file-length)))
-                    ;; All these expressions have 0 instead of the bit-masked
-                    ;; value... meh.
-                    (mv fat32-in-memory
-                        (dir-ent-set-first-cluster-file-size
-                         dir-ent
-                         0
-                         file-length))))
-                 (blocks (make-clusters contents cluster-size))
-                 (fat32-in-memory
-                  (stobj-set-clusters blocks indices fat32-in-memory)))
-              (mv fat32-in-memory dir-ent)))))
-      (mv fat32-in-memory (list* dir-ent tail-list)))))
+                         (ceiling file-length cluster-size)))
+               ((mv fat32-in-memory dir-ent)
+                (if
+                 (consp indices)
+                 (let
+                  ((fat32-in-memory
+                    (stobj-set-indices-in-fa-table
+                     fat32-in-memory indices
+                     (binary-append
+                      (cdr indices)
+                      (list *ms-end-of-clusterchain*)))))
+                  (mv fat32-in-memory
+                      (dir-ent-set-first-cluster-file-size
+                       dir-ent (car indices)
+                       file-length)))
+                 ;; All these expressions have 0 instead of the bit-masked
+                 ;; value... meh.
+                 (mv fat32-in-memory
+                     (dir-ent-set-first-cluster-file-size
+                      dir-ent 0 file-length))))
+               (blocks (make-clusters contents cluster-size))
+               (fat32-in-memory
+                (stobj-set-clusters blocks indices fat32-in-memory)))
+            (mv fat32-in-memory dir-ent))
+          (b*
+              ((contents (m1-file->contents (cdr head)))
+               (file-length 0) ;; per the specification
+               ((mv fat32-in-memory unflattened-contents)
+                (m1-fs-to-fat32-in-memory fat32-in-memory contents))
+               (contents (flatten unflattened-contents))
+               (indices (stobj-find-n-free-clusters
+                         fat32-in-memory
+                         (ceiling file-length cluster-size)))
+               ((mv fat32-in-memory dir-ent)
+                (if
+                 (consp indices)
+                 (let
+                  ((fat32-in-memory
+                    (stobj-set-indices-in-fa-table
+                     fat32-in-memory indices
+                     (binary-append
+                      (cdr indices)
+                      (list *ms-end-of-clusterchain*)))))
+                  (mv fat32-in-memory
+                      (dir-ent-set-first-cluster-file-size
+                       dir-ent (car indices)
+                       file-length)))
+                 ;; All these expressions have 0 instead of the bit-masked
+                 ;; value... meh.
+                 (mv fat32-in-memory
+                     (dir-ent-set-first-cluster-file-size
+                      dir-ent 0 file-length))))
+               (blocks (make-clusters contents cluster-size))
+               (fat32-in-memory
+                (stobj-set-clusters blocks indices fat32-in-memory)))
+            (mv fat32-in-memory dir-ent)))))
+     (mv fat32-in-memory
+         (list* dir-ent tail-list)))))
+
+(defthm compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory
+  (implies (compliant-fat32-in-memoryp
+            fat32-in-memory)
+           (compliant-fat32-in-memoryp
+            (mv-nth 0
+                    (m1-fs-to-fat32-in-memory
+                     fat32-in-memory fs))))
+  :hints (("Goal" :in-theory (e/d () (m1-fs-to-fat32-in-memory) ((:induction
+                                                                  m1-fs-to-fat32-in-memory))))
+          ("Subgoal *1/2'" :expand (M1-FS-TO-FAT32-IN-MEMORY FAT32-IN-MEMORY FS))))
+
+(verify-guards m1-fs-to-fat32-in-memory)
 
 #|
 Currently the function call to test out this function is
