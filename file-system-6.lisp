@@ -375,18 +375,6 @@
          (mv nil error-code)
          (mv (subseq file-text start (+ start n)) error-code))))))
 
-(defthm
-  l6-wrchs-guard-lemma-1
-  (implies (and (fat32-masked-entry-p val)
-                (fat32-masked-entry-list-p ac))
-           (fat32-masked-entry-list-p (make-list-ac n val ac))))
-
-(defthm l6-wrchs-guard-lemma-2
-  (implies (true-listp x)
-           (equal (fat32-masked-entry-list-p (binary-append x y))
-                  (and (fat32-masked-entry-list-p x)
-                       (fat32-masked-entry-list-p y)))))
-
 (defthmd
   l6-wrchs-guard-lemma-3
   (equal (fat32-masked-entry-list-p x)

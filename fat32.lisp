@@ -127,6 +127,18 @@
                 (fat32-entry-list-p lst))
            (fat32-entry-p x)))
 
+(defthm
+  fat32-masked-entry-list-p-of-make-list-ac
+  (implies (and (fat32-masked-entry-p val)
+                (fat32-masked-entry-list-p ac))
+           (fat32-masked-entry-list-p (make-list-ac n val ac))))
+
+(defthm fat32-masked-entry-list-p-of-append
+  (implies (true-listp x)
+           (equal (fat32-masked-entry-list-p (binary-append x y))
+                  (and (fat32-masked-entry-list-p x)
+                       (fat32-masked-entry-list-p y)))))
+
 (defthm set-indices-in-fa-table-guard-lemma-1
   (implies (and (natp key)
                 (< key (len l))
