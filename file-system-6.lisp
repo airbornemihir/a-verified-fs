@@ -375,42 +375,6 @@
          (mv nil error-code)
          (mv (subseq file-text start (+ start n)) error-code))))))
 
-(defthmd
-  l6-wrchs-guard-lemma-3
-  (equal (fat32-masked-entry-list-p x)
-         (bounded-nat-listp x *expt-2-28*))
-  :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
-
-(defthm
-  l6-wrchs-guard-lemma-4
-  (implies (and (fat32-entry-list-p fa-table)
-                (natp n)
-                (>= (len fa-table) *ms-first-data-cluster*)
-                (<= (len fa-table) *ms-bad-cluster*))
-           (fat32-masked-entry-list-p (find-n-free-clusters fa-table n)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (and (fat32-entry-list-p fa-table)
-          (natp n)
-          (>= (len fa-table) *ms-first-data-cluster*)
-          (<= (len fa-table) *ms-bad-cluster*))
-     (let ((l (find-n-free-clusters fa-table n)))
-       (implies (consp l)
-                (and (fat32-masked-entry-list-p (cdr l))
-                     (fat32-masked-entry-p (car l))))))))
-  :hints (("goal" :in-theory (disable find-n-free-clusters-correctness-1)
-           :use ((:instance find-n-free-clusters-correctness-1
-                            (b (len fa-table)))
-                 (:instance l6-wrchs-guard-lemma-3
-                            (x (find-n-free-clusters fa-table n)))
-                 (:instance bounded-nat-listp-correctness-5
-                            (l (find-n-free-clusters fa-table n))
-                            (x (len fa-table))
-                            (y *expt-2-28*))))))
-
 ;; l6-wrchs and l6-create are in some cases asked to create a zero length file
 ;; or zero the length of an existing file; the following comment from page 17
 ;; of the FAT specification applies.
