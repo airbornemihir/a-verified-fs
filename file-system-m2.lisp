@@ -2000,6 +2000,22 @@
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
+(defthm
+  data-region-length-of-update-fati
+  (equal (data-region-length (update-fati i v fat32-in-memory))
+         (data-region-length fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable data-region-length update-fati))))
+
+(defthm
+  data-region-length-of-stobj-set-indices-in-fa-table
+  (equal
+   (data-region-length (stobj-set-indices-in-fa-table
+                  fat32-in-memory index-list value-list))
+   (data-region-length fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
+
 (defun
   dir-ent-set-first-cluster-file-size
     (dir-ent first-cluster file-size)
@@ -2032,15 +2048,38 @@
     :hints (("goal" :in-theory (e/d (fat32-masked-entry-fix fat32-masked-entry-p)
                                     (loghead logtail))))))
 
-(defund make-clusters (text cluster-size)
-  (declare (xargs :guard (and (character-listp text) (natp cluster-size))
+(defund
+  make-clusters (text cluster-size)
+  (declare (xargs :guard (and (unsigned-byte-listp 8 text)
+                              (natp cluster-size))
                   :measure (len text)
                   :guard-debug t))
-  (if (or (atom text) (zp cluster-size))
-      nil
-    (list*
-     (make-character-list (take cluster-size text))
-     (make-clusters (nthcdr cluster-size text) cluster-size))))
+  (if
+   (or (atom text) (zp cluster-size))
+   nil
+   (list* (append (take (min cluster-size (len text))
+                        text)
+                  (make-list (nfix (- cluster-size (len text)))
+                             :initial-element 0))
+          (make-clusters (nthcdr cluster-size text)
+                         cluster-size))))
+
+(defthm
+  make-clusters-correctness-1
+  (iff (consp (make-clusters text cluster-size))
+       (and (consp text)
+            (not (zp cluster-size))))
+  :hints (("goal" :in-theory (enable make-clusters)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (iff (equal (len (make-clusters text cluster-size))
+                0)
+         (or (atom text) (zp cluster-size)))
+    :hints
+    (("goal"
+      :expand (len (make-clusters text cluster-size)))))))
 
 (defthm
   data-region-length-of-update-data-regioni
@@ -2079,6 +2118,17 @@
          (equal (len (car l))
                 (cluster-size fat32-in-memory))
          (cluster-listp (cdr l) fat32-in-memory))))
+
+(defthm
+  cluster-listp-of-make-clusters
+  (implies
+   (and (unsigned-byte-listp 8 text)
+        (equal cluster-size (cluster-size fat32-in-memory)))
+   (cluster-listp
+    (make-clusters text cluster-size)
+    fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable cluster-listp make-clusters))))
 
 (defthm
   bpb_bytspersec-of-update-data-regioni
@@ -2210,17 +2260,26 @@
   (declare (xargs :stobjs fat32-in-memory
                   :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                               (dir-ent-p dir-ent)
-                              (natp file-length)
-                              (>= (fat-length fat32-in-memory) '2))))
+                              (unsigned-byte-p 32 file-length)
+                              (unsigned-byte-listp 8 contents)
+                              (<= (fat-length fat32-in-memory) *ms-bad-cluster*)
+                              (>= (fat-length fat32-in-memory)
+                                  *ms-first-data-cluster*)
+                              (integerp (* (/ (CLUSTER-SIZE FAT32-IN-MEMORY))
+                                           (DATA-REGION-LENGTH FAT32-IN-MEMORY))))
+                  :guard-debug t
+                  :guard-hints (("Goal" :in-theory (e/d (fat-length) (fat32-in-memoryp))) )))
   (b*
       ((cluster-size (cluster-size fat32-in-memory))
        (clusters (make-clusters contents cluster-size))
        (indices (stobj-find-n-free-clusters
                  fat32-in-memory
                  (len clusters)))
+       ((unless
+            (equal (len indices) (len clusters)))
+        (mv fat32-in-memory dir-ent))
        ((mv fat32-in-memory dir-ent)
-        (if
-            (consp indices)
+        (if (consp indices)
             (let
                 ((fat32-in-memory
                   (stobj-set-indices-in-fa-table
