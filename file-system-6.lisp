@@ -1818,51 +1818,6 @@
                                              fa-table)))))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-25
-  (implies (integerp start)
-           (lower-bounded-integer-listp
-            (find-n-free-clusters-helper fa-table n start)
-            start))
-  :hints
-  (("goal" :in-theory (enable lower-bounded-integer-listp
-                              find-n-free-clusters-helper))
-   ("subgoal *1/5.1'"
-    :use
-    (:instance lower-bounded-integer-listp-correctness-5
-               (l (find-n-free-clusters-helper (cdr fa-table)
-                                               (+ -1 n)
-                                               (+ 1 start)))
-               (x (+ 1 start))
-               (y start)))
-   ("subgoal *1/3''"
-    :use
-    (:instance lower-bounded-integer-listp-correctness-5
-               (l (find-n-free-clusters-helper (cdr fa-table)
-                                               n (+ 1 start)))
-               (x (+ 1 start))
-               (y start)))))
-
-(defthm
-  l6-wrchs-correctness-1-lemma-26
-  (lower-bounded-integer-listp (find-n-free-clusters fa-table n)
-                               *ms-first-data-cluster*)
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (consp (find-n-free-clusters fa-table n))
-     (lower-bounded-integer-listp (cdr (find-n-free-clusters fa-table n))
-                                  *ms-first-data-cluster*))
-    :hints (("goal" :in-theory (enable lower-bounded-integer-listp))))
-   (:linear
-    :corollary (implies (consp (find-n-free-clusters fa-table n))
-                        (<= *ms-first-data-cluster*
-                            (car (find-n-free-clusters fa-table n))))
-    :hints (("goal" :in-theory (enable lower-bounded-integer-listp)))))
-  :hints (("goal" :in-theory (enable find-n-free-clusters))))
-
-(defthm
   l6-wrchs-correctness-1-lemma-28
   (implies
    (and (bounded-nat-listp file-index-list (len fa-table))
