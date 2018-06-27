@@ -2266,7 +2266,49 @@
                 index-list *ms-first-data-cluster*)))
      ("subgoal 5"
       :expand ((cluster-listp cluster-list fat32-in-memory))))
-    :guard-debug t))
+    :guard-debug t)
+
+  (defthm
+    data-region-length-of-stobj-set-clusters
+    (implies
+     (and (lower-bounded-integer-listp
+           index-list *ms-first-data-cluster*)
+          (cluster-listp cluster-list fat32-in-memory)
+          (equal (len index-list)
+                 (len cluster-list)))
+     (equal
+      (data-region-length
+       (mv-nth 0
+               (stobj-set-clusters cluster-list
+                                   index-list fat32-in-memory)))
+      (data-region-length fat32-in-memory)))
+    :hints
+    (("goal"
+      :induct (stobj-set-clusters cluster-list
+                                  index-list fat32-in-memory))
+     ("subgoal *1/2'"
+      :expand (lower-bounded-integer-listp
+               index-list *ms-first-data-cluster*))
+     ("subgoal *1/1'"
+      :expand (lower-bounded-integer-listp
+               index-list *ms-first-data-cluster*)))))
+
+(defthm bounded-nat-listp-of-stobj-set-clusters
+  (implies
+   (and (lower-bounded-integer-listp
+         index-list *ms-first-data-cluster*)
+        (cluster-listp cluster-list fat32-in-memory)
+        (equal (len index-list)
+               (len cluster-list))
+        (integerp (* (/ (cluster-size fat32-in-memory))
+                     (data-region-length fat32-in-memory))))
+   (bounded-nat-listp
+    (mv-nth 1
+            (stobj-set-clusters
+             cluster-list index-list fat32-in-memory))
+    (floor (data-region-length fat32-in-memory)
+           (cluster-size fat32-in-memory))))
+  :hints (("Goal" :in-theory (enable lower-bounded-integer-listp)) ))
 
 (defund place-contents (fat32-in-memory dir-ent contents file-length)
   (declare (xargs :stobjs fat32-in-memory
@@ -2277,8 +2319,8 @@
                               (<= (fat-length fat32-in-memory) *ms-bad-cluster*)
                               (>= (fat-length fat32-in-memory)
                                   *ms-first-data-cluster*)
-                              (integerp (* (/ (CLUSTER-SIZE FAT32-IN-MEMORY))
-                                           (DATA-REGION-LENGTH FAT32-IN-MEMORY))))
+                              (integerp (* (/ (cluster-size fat32-in-memory))
+                                           (data-region-length fat32-in-memory))))
                   :guard-debug t
                   :guard-hints (("Goal" :in-theory (e/d (fat-length) (fat32-in-memoryp))) )))
   (b*
