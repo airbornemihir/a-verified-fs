@@ -453,7 +453,6 @@
 (defthm
   compliant-fat32-in-memoryp-of-update-data-regioni
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
                 (< i (data-region-length fat32-in-memory))
                 (unsigned-byte-p 8 v))
            (compliant-fat32-in-memoryp
