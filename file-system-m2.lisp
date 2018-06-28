@@ -2376,43 +2376,33 @@
       :expand ((cluster-listp cluster-list fat32-in-memory))))
     :guard-debug t))
 
-(defthm bounded-nat-listp-of-stobj-set-clusters
+(defthm
+  bounded-nat-listp-of-stobj-set-clusters
   (implies
    (and (lower-bounded-integer-listp
          index-list *ms-first-data-cluster*)
-        (cluster-listp cluster-list fat32-in-memory)
         (equal (len index-list)
-               (len cluster-list))
-        (equal (data-region-length fat32-in-memory)
-               (* (count-of-clusters fat32-in-memory)
-                  (cluster-size fat32-in-memory))))
+               (len cluster-list)))
    (bounded-nat-listp
     (mv-nth 1
-            (stobj-set-clusters
-             cluster-list index-list fat32-in-memory))
+            (stobj-set-clusters cluster-list
+                                index-list fat32-in-memory))
     (+ *ms-first-data-cluster*
        (count-of-clusters fat32-in-memory))))
-  :hints (("Goal" :in-theory (enable lower-bounded-integer-listp)) ))
+  :hints
+  (("goal" :in-theory (enable lower-bounded-integer-listp))))
 
 (defthm
   fat32-masked-entry-list-p-of-stobj-set-clusters
   (implies
-   (and (>= (count-of-clusters fat32-in-memory) 0)
-        (<= (+ (count-of-clusters fat32-in-memory)
-               *ms-first-data-cluster*)
-            *ms-bad-cluster*)
-        (lower-bounded-integer-listp
+   (and (lower-bounded-integer-listp
          index-list *ms-first-data-cluster*)
-        (cluster-listp cluster-list fat32-in-memory)
         (equal (len index-list)
                (len cluster-list))
-        (bounded-nat-listp
-         index-list
+        (<=
          (+ *ms-first-data-cluster*
-            (count-of-clusters fat32-in-memory)))
-        (equal (data-region-length fat32-in-memory)
-               (* (count-of-clusters fat32-in-memory)
-                  (cluster-size fat32-in-memory))))
+            (count-of-clusters fat32-in-memory))
+         *ms-bad-cluster*))
    (fat32-masked-entry-list-p
     (mv-nth 1
             (stobj-set-clusters cluster-list
@@ -2422,22 +2412,14 @@
    (:rewrite
     :corollary
     (implies
-     (and (>= (count-of-clusters fat32-in-memory) 0)
-          (<= (+ (count-of-clusters fat32-in-memory)
-                 *ms-first-data-cluster*)
-              *ms-bad-cluster*)
-          (lower-bounded-integer-listp
+     (and (lower-bounded-integer-listp
            index-list *ms-first-data-cluster*)
-          (cluster-listp cluster-list fat32-in-memory)
           (equal (len index-list)
                  (len cluster-list))
-          (bounded-nat-listp
-           index-list
+          (<=
            (+ *ms-first-data-cluster*
-              (count-of-clusters fat32-in-memory)))
-          (equal (data-region-length fat32-in-memory)
-                 (* (count-of-clusters fat32-in-memory)
-                    (cluster-size fat32-in-memory))))
+              (count-of-clusters fat32-in-memory))
+           *ms-bad-cluster*))
      (let
       ((l
         (mv-nth
@@ -2475,36 +2457,26 @@
                       (<= (fat-length fat32-in-memory) *ms-bad-cluster*)
                       (>= (fat-length fat32-in-memory)
                           *ms-first-data-cluster*)
-                      (integerp (* (/ (cluster-size fat32-in-memory))
-                                   (data-region-length fat32-in-memory)))
-                      ;; this hypothesis is kinda weird
-                      (>=
-                       (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                      (<=
-                       (count-of-clusters fat32-in-memory)
-                       *ms-bad-cluster*))
+                      (equal (data-region-length fat32-in-memory)
+                             (* (count-of-clusters fat32-in-memory)
+                                (cluster-size fat32-in-memory)))
+                      ;; (integerp (* (/ (cluster-size fat32-in-memory))
+                      ;;              (data-region-length fat32-in-memory)))
+                      ;; ;; this hypothesis is kinda weird
+                      ;; (>=
+                      ;;  (count-of-clusters fat32-in-memory)
+                      ;;  *ms-first-data-cluster*)
+                      ;; (<=
+                      ;;  (count-of-clusters fat32-in-memory)
+                      ;;  *ms-bad-cluster*)
+                      )
           :guard-debug t
           :guard-hints
           (("Goal"
             :do-not-induct t
             :in-theory
             (e/d (fat-length)
-                 (fat32-in-memoryp
-                  bounded-nat-listp-correctness-1))
-            :use
-            (:instance BOUNDED-NAT-LISTP-CORRECTNESS-1
-                       (B (count-of-clusters fat32-in-memory))
-                       (l
-                        (MV-NTH
-                         1
-                         (STOBJ-SET-CLUSTERS
-                          (MAKE-CLUSTERS CONTENTS (CLUSTER-SIZE FAT32-IN-MEMORY))
-                          (FIND-N-FREE-CLUSTERS
-                           (NTH *FATI* FAT32-IN-MEMORY)
-                           (LEN (MAKE-CLUSTERS CONTENTS
-                                               (CLUSTER-SIZE FAT32-IN-MEMORY))))
-                          FAT32-IN-MEMORY))))) )))
+                 (fat32-in-memoryp))) )))
   (b*
       ((cluster-size (cluster-size fat32-in-memory))
        (clusters (make-clusters contents cluster-size))
