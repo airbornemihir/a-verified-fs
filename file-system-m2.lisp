@@ -2288,9 +2288,6 @@
      (and
       (lower-bounded-integer-listp
        index-list *ms-first-data-cluster*)
-      (bounded-nat-listp index-list
-                         (+ *ms-first-data-cluster*
-                            (count-of-clusters fat32-in-memory)))
       (cluster-listp cluster-list fat32-in-memory)
       (equal (len index-list)
              (len cluster-list))
@@ -2320,9 +2317,6 @@
      (and (compliant-fat32-in-memoryp fat32-in-memory)
           (lower-bounded-integer-listp
            index-list *ms-first-data-cluster*)
-          (bounded-nat-listp
-           index-list
-           (+ 2 (count-of-clusters fat32-in-memory)))
           (cluster-listp cluster-list fat32-in-memory)
           (equal (len cluster-list)
                  (len index-list))
@@ -2360,7 +2354,16 @@
     stobj-set-clusters
     :hints
     (("goal" :in-theory (e/d (lower-bounded-integer-listp)
-                             (fat32-in-memoryp))
+                             (fat32-in-memoryp
+                              ;; wisdom from accumulated-persistence
+                              (:DEFINITION ACL2-NUMBER-LISTP)
+                              (:DEFINITION RATIONAL-LISTP)
+                              (:DEFINITION INTEGER-LISTP)
+                              (:REWRITE
+                               RATIONALP-OF-CAR-WHEN-RATIONAL-LISTP)
+                              (:REWRITE
+                               ACL2-NUMBERP-OF-CAR-WHEN-ACL2-NUMBER-LISTP)
+                              (:REWRITE RATIONALP-IMPLIES-ACL2-NUMBERP)))
       :induct (stobj-set-clusters
                cluster-list index-list fat32-in-memory))
      ;; ("subgoal 7"
