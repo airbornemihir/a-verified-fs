@@ -350,16 +350,33 @@
                                  update-bs_volid-correctness-2
                                  update-bs_volid-correctness-3)
 
-(defund cluster-size (fat32-in-memory)
-  (declare (xargs :stobjs fat32-in-memory :guard (fat32-in-memoryp fat32-in-memory)))
+(defund
+  cluster-size (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (fat32-in-memoryp fat32-in-memory)))
   (* (bpb_secperclus fat32-in-memory)
      (bpb_bytspersec fat32-in-memory)))
+
+(defund
+  count-of-clusters (fat32-in-memory)
+  (declare
+   (xargs :stobjs fat32-in-memory
+          :guard (and (fat32-in-memoryp fat32-in-memory)
+                      (>= (bpb_secperclus fat32-in-memory) 1))
+          :guard-debug t))
+  (floor (- (bpb_totsec32 fat32-in-memory)
+            (+ (bpb_rsvdseccnt fat32-in-memory)
+               (* (bpb_numfats fat32-in-memory)
+                  (bpb_fatsz32 fat32-in-memory))))
+         (bpb_secperclus fat32-in-memory)))
 
 (defund compliant-fat32-in-memoryp (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory :guard t))
   (and (fat32-in-memoryp fat32-in-memory)
        (>= (bpb_bytspersec fat32-in-memory) *ms-min-bytes-per-sector*)
-       (>= (bpb_secperclus fat32-in-memory) 1)))
+       (>= (bpb_secperclus fat32-in-memory) 1)
+       ;; per spec, although this should be a named constant
+       (>= (count-of-clusters fat32-in-memory) 65525)))
 
 (encapsulate
   ()
@@ -410,9 +427,13 @@
            (compliant-fat32-in-memoryp
             (update-fati i v fat32-in-memory)))
   :hints
-  (("goal" :in-theory (enable compliant-fat32-in-memoryp
-                              update-fati fat-length
-                              bpb_bytspersec bpb_secperclus))))
+  (("goal"
+    :in-theory (e/d (compliant-fat32-in-memoryp
+                     update-fati fat-length bpb_bytspersec
+                     bpb_secperclus count-of-clusters
+                     bpb_numfats bpb_fatsz32 bpb_rsvdseccnt
+                     bpb_secperclus bpb_totsec32)
+                    (floor)))))
 
 (defthm
   data-regioni-when-compliant-fat32-in-memoryp
@@ -432,9 +453,14 @@
            (compliant-fat32-in-memoryp
             (update-data-regioni i v fat32-in-memory)))
   :hints
-  (("goal" :in-theory (enable compliant-fat32-in-memoryp
-                              update-data-regioni data-region-length
-                              bpb_bytspersec bpb_secperclus))))
+  (("goal"
+    :in-theory (e/d (compliant-fat32-in-memoryp
+                     update-data-regioni
+                     data-region-length bpb_bytspersec
+                     bpb_secperclus count-of-clusters
+                     bpb_numfats bpb_fatsz32 bpb_rsvdseccnt
+                     bpb_secperclus bpb_totsec32)
+                    (floor)))))
 
 (defconst *initialbytcnt* 16)
 
