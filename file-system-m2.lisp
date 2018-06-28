@@ -2449,65 +2449,75 @@
             *ms-first-data-cluster*))
       (y *expt-2-28*))))))
 
-(defund place-contents (fat32-in-memory dir-ent contents file-length)
+(defund
+  place-contents
+  (fat32-in-memory dir-ent contents file-length)
   (declare
-   (xargs :stobjs fat32-in-memory
-          :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                      (dir-ent-p dir-ent)
-                      (unsigned-byte-p 32 file-length)
-                      (unsigned-byte-listp 8 contents)
-                      (<= (fat-length fat32-in-memory) *ms-bad-cluster*)
-                      (>= (fat-length fat32-in-memory)
-                          *ms-first-data-cluster*)
-                      (equal (data-region-length fat32-in-memory)
-                             (* (count-of-clusters fat32-in-memory)
-                                (cluster-size fat32-in-memory)))
-                      ;; (integerp (* (/ (cluster-size fat32-in-memory))
-                      ;;              (data-region-length fat32-in-memory)))
-                      ;; ;; this hypothesis is kinda weird
-                      ;; (>=
-                      ;;  (count-of-clusters fat32-in-memory)
-                      ;;  *ms-first-data-cluster*)
-                      ;; (<=
-                      ;;  (count-of-clusters fat32-in-memory)
-                      ;;  *ms-bad-cluster*)
-                      )
-          :guard-debug t
-          :guard-hints
-          (("Goal"
-            :do-not-induct t
-            :in-theory
-            (e/d (fat-length)
-                 (fat32-in-memoryp))) )))
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (dir-ent-p dir-ent)
+                (unsigned-byte-p 32 file-length)
+                (unsigned-byte-listp 8 contents)
+                (<= (fat-length fat32-in-memory)
+                    *ms-bad-cluster*)
+                (>= (fat-length fat32-in-memory)
+                    *ms-first-data-cluster*)
+                (<= (+ *ms-first-data-cluster*
+                       (count-of-clusters fat32-in-memory))
+                    *ms-bad-cluster*)
+                (equal (data-region-length fat32-in-memory)
+                       (* (count-of-clusters fat32-in-memory)
+                          (cluster-size fat32-in-memory))))
+    :guard-debug t
+    :guard-hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (fat-length)
+           (fat32-in-memoryp
+            true-listp-when-fat32-masked-entry-list-p))
+      :use
+      (:instance
+       true-listp-when-fat32-masked-entry-list-p
+       (x
+        (cdr
+         (mv-nth
+          1
+          (stobj-set-clusters
+           (make-clusters
+            contents (cluster-size fat32-in-memory))
+           (find-n-free-clusters
+            (nth *fati* fat32-in-memory)
+            (len
+             (make-clusters contents
+                            (cluster-size fat32-in-memory))))
+           fat32-in-memory)))))))))
   (b*
       ((cluster-size (cluster-size fat32-in-memory))
        (clusters (make-clusters contents cluster-size))
        (indices (stobj-find-n-free-clusters
-                 fat32-in-memory
-                 (len clusters)))
-       ((unless
-            (equal (len indices) (len clusters)))
+                 fat32-in-memory (len clusters)))
+       ((unless (equal (len indices) (len clusters)))
         (mv fat32-in-memory dir-ent))
        ((mv fat32-in-memory indices)
         (stobj-set-clusters clusters indices fat32-in-memory))
        ((mv fat32-in-memory dir-ent)
-        (if (consp indices)
-            (let
-                ((fat32-in-memory
-                  (stobj-set-indices-in-fa-table
-                   fat32-in-memory indices
-                   (binary-append
-                    (cdr indices)
-                    (list *ms-end-of-clusterchain*)))))
-              (mv fat32-in-memory
-                  (dir-ent-set-first-cluster-file-size
-                   dir-ent (car indices)
-                   file-length)))
-          ;; All these expressions have 0 instead of the bit-masked
-          ;; value... meh.
+        (if
+         (consp indices)
+         (let
+          ((fat32-in-memory
+            (stobj-set-indices-in-fa-table
+             fat32-in-memory indices
+             (binary-append (cdr indices)
+                            (list *ms-end-of-clusterchain*)))))
           (mv fat32-in-memory
               (dir-ent-set-first-cluster-file-size
-               dir-ent 0 file-length)))))
+               dir-ent (car indices)
+               file-length)))
+         (mv fat32-in-memory
+             (dir-ent-set-first-cluster-file-size
+              dir-ent 0 file-length)))))
     (mv fat32-in-memory dir-ent)))
 
 (defthm
