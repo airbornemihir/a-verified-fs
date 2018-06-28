@@ -2203,12 +2203,13 @@
   (implies
    (and (compliant-fat32-in-memoryp fat32-in-memory)
         (unsigned-byte-listp 8 cluster)
-        (integerp end-index)
-        (>= end-index (len cluster))
         (<= end-index
             (data-region-length fat32-in-memory)))
    (compliant-fat32-in-memoryp
-    (stobj-set-cluster cluster fat32-in-memory end-index))))
+    (stobj-set-cluster cluster fat32-in-memory end-index)))
+  :hints
+  (("subgoal *1/3''" :in-theory (enable data-region-length
+                                        update-data-regioni))))
 
 (defthm
   data-region-length-of-stobj-set-cluster
