@@ -2037,7 +2037,7 @@
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
-(defun
+(defund
   dir-ent-set-first-cluster-file-size
     (dir-ent first-cluster file-size)
   (declare (xargs :guard (and (dir-ent-p dir-ent)
@@ -2066,7 +2066,8 @@
 
   (defthm dir-ent-set-first-cluster-file-size-correctness-1
     (dir-ent-p (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-size))
-    :hints (("goal" :in-theory (e/d (fat32-masked-entry-fix fat32-masked-entry-p)
+    :hints (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size
+                                     fat32-masked-entry-fix fat32-masked-entry-p)
                                     (loghead logtail))))))
 
 (defund
@@ -2523,15 +2524,38 @@
 (defthm
   compliant-fat32-in-memoryp-of-place-contents
   (implies
-   (and
-    (COMPLIANT-FAT32-IN-MEMORYP
-     FAT32-IN-MEMORY)
-    (UNSIGNED-BYTE-LISTP '8 CONTENTS))
-   (COMPLIANT-FAT32-IN-MEMORYP
-    (MV-NTH
-     0
-     (place-contents fat32-in-memory dir-ent contents file-length))))
-  :hints (("Goal" :in-theory (enable place-contents)) ))
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (unsigned-byte-listp 8 dir-ent)
+        (unsigned-byte-listp 8 contents)
+        (natp file-length)
+        (equal (data-region-length fat32-in-memory)
+               (* (cluster-size fat32-in-memory)
+                  (count-of-clusters fat32-in-memory)))
+        (<= (+ *ms-first-data-cluster*
+               (count-of-clusters fat32-in-memory))
+            *ms-bad-cluster*))
+   (compliant-fat32-in-memoryp
+    (mv-nth 0
+            (place-contents fat32-in-memory
+                            dir-ent contents file-length))))
+  :hints
+  (("goal"
+    :in-theory (e/d (place-contents)
+                    (true-listp-when-fat32-masked-entry-list-p))
+    :use
+    (:instance
+     true-listp-when-fat32-masked-entry-list-p
+     (x
+      (cdr
+       (mv-nth
+        1
+        (stobj-set-clusters
+         (make-clusters contents (cluster-size fat32-in-memory))
+         (find-n-free-clusters
+          (nth *fati* fat32-in-memory)
+          (len (make-clusters contents
+                              (cluster-size fat32-in-memory))))
+         fat32-in-memory))))))))
 
 ;; Gotta return a list of directory entries to join up later when constructing
 ;; the containing directory.
