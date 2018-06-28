@@ -2175,6 +2175,22 @@
   :hints (("goal" :in-theory (enable cluster-size))))
 
 (defthm
+  count-of-clusters-of-stobj-set-cluster
+  (equal
+   (count-of-clusters
+    (stobj-set-cluster cluster fat32-in-memory end-index))
+   (count-of-clusters fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (count-of-clusters update-data-regioni bpb_bytspersec
+                        bpb_secperclus count-of-clusters
+                        bpb_numfats bpb_fatsz32 bpb_rsvdseccnt
+                        bpb_secperclus bpb_totsec32)
+     (floor)))))
+
+(defthm
   cluster-listp-of-stobj-set-cluster
   (equal
    (cluster-listp
@@ -2217,9 +2233,15 @@
     (and (compliant-fat32-in-memoryp fat32-in-memory)
          (lower-bounded-integer-listp
           index-list *ms-first-data-cluster*)
+         (bounded-nat-listp index-list
+                            (+ *ms-first-data-cluster*
+                               (count-of-clusters fat32-in-memory)))
          (cluster-listp cluster-list fat32-in-memory)
-         (equal (len cluster-list)
-                (len index-list)))
+         (equal (len index-list)
+                (len cluster-list))
+         (equal (data-region-length fat32-in-memory)
+                (* (count-of-clusters fat32-in-memory)
+                   (cluster-size fat32-in-memory))))
     :verify-guards nil))
   (b*
       (((unless (consp cluster-list))
@@ -2243,9 +2265,18 @@
   (equal
    (cluster-size
     (mv-nth 0
-            (stobj-set-clusters cluster-list2
+            (stobj-set-clusters cluster-list
                                 index-list fat32-in-memory)))
    (cluster-size fat32-in-memory)))
+
+(defthm
+  count-of-clusters-of-stobj-set-clusters
+  (equal
+   (count-of-clusters
+    (mv-nth 0
+            (stobj-set-clusters cluster-list
+                                index-list fat32-in-memory)))
+   (count-of-clusters fat32-in-memory)))
 
 (encapsulate
   ()
@@ -2351,8 +2382,12 @@
         (cluster-listp cluster-list fat32-in-memory)
         (equal (len index-list)
                (len cluster-list))
-        (integerp (* (/ (cluster-size fat32-in-memory))
-                     (data-region-length fat32-in-memory))))
+        (bounded-nat-listp
+         index-list
+         (+ 2 (count-of-clusters fat32-in-memory)))
+        (equal (data-region-length fat32-in-memory)
+               (* (count-of-clusters fat32-in-memory)
+                  (cluster-size fat32-in-memory))))
    (bounded-nat-listp
     (mv-nth 1
             (stobj-set-clusters
