@@ -9,17 +9,6 @@
 (include-book "std/io/read-file-characters" :dir :system)
 (include-book "kestrel/utilities/strings" :dir :system)
 
-(defthm len-of-chars=>nats
-  (equal (len (chars=>nats chars))
-         (len chars))
-  :hints (("goal" :in-theory (enable chars=>nats))))
-
-(defthm len-of-string=>nats
-  (implies (stringp string)
-           (equal (len (string=>nats string))
-                  (length string)))
-  :hints (("goal" :in-theory (enable string=>nats))))
-
 (make-event
  `(defstobj fat32-in-memory
 
