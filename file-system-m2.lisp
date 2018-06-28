@@ -2251,7 +2251,8 @@
                             (cdr index-list)
                             fat32-in-memory))
        ((unless (< (car index-list)
-                   (count-of-clusters fat32-in-memory)))
+                   (+ *ms-first-data-cluster*
+                      (count-of-clusters fat32-in-memory))))
         (mv fat32-in-memory tail-list))
        (fat32-in-memory
         (stobj-set-cluster (car cluster-list)
@@ -2382,9 +2383,6 @@
         (cluster-listp cluster-list fat32-in-memory)
         (equal (len index-list)
                (len cluster-list))
-        (bounded-nat-listp
-         index-list
-         (+ 2 (count-of-clusters fat32-in-memory)))
         (equal (data-region-length fat32-in-memory)
                (* (count-of-clusters fat32-in-memory)
                   (cluster-size fat32-in-memory))))
@@ -2392,21 +2390,29 @@
     (mv-nth 1
             (stobj-set-clusters
              cluster-list index-list fat32-in-memory))
-    (count-of-clusters fat32-in-memory)))
+    (+ *ms-first-data-cluster*
+       (count-of-clusters fat32-in-memory))))
   :hints (("Goal" :in-theory (enable lower-bounded-integer-listp)) ))
 
 (defthm
   fat32-masked-entry-list-p-of-stobj-set-clusters
   (implies
-   (and (>= (count-of-clusters fat32-in-memory)
-            *ms-first-data-cluster*)
-        (<= (count-of-clusters fat32-in-memory)
+   (and (>= (count-of-clusters fat32-in-memory) 0)
+        (<= (+ (count-of-clusters fat32-in-memory)
+               *ms-first-data-cluster*)
             *ms-bad-cluster*)
         (lower-bounded-integer-listp
          index-list *ms-first-data-cluster*)
         (cluster-listp cluster-list fat32-in-memory)
         (equal (len index-list)
-               (len cluster-list)))
+               (len cluster-list))
+        (bounded-nat-listp
+         index-list
+         (+ *ms-first-data-cluster*
+            (count-of-clusters fat32-in-memory)))
+        (equal (data-region-length fat32-in-memory)
+               (* (count-of-clusters fat32-in-memory)
+                  (cluster-size fat32-in-memory))))
    (fat32-masked-entry-list-p
     (mv-nth 1
             (stobj-set-clusters cluster-list
@@ -2416,15 +2422,22 @@
    (:rewrite
     :corollary
     (implies
-     (and (>= (count-of-clusters fat32-in-memory)
-              *ms-first-data-cluster*)
-          (<= (count-of-clusters fat32-in-memory)
+     (and (>= (count-of-clusters fat32-in-memory) 0)
+          (<= (+ (count-of-clusters fat32-in-memory)
+                 *ms-first-data-cluster*)
               *ms-bad-cluster*)
           (lower-bounded-integer-listp
            index-list *ms-first-data-cluster*)
           (cluster-listp cluster-list fat32-in-memory)
           (equal (len index-list)
-                 (len cluster-list)))
+                 (len cluster-list))
+          (bounded-nat-listp
+           index-list
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory)))
+          (equal (data-region-length fat32-in-memory)
+                 (* (count-of-clusters fat32-in-memory)
+                    (cluster-size fat32-in-memory))))
      (let
       ((l
         (mv-nth
@@ -2449,7 +2462,7 @@
        (mv-nth 1
                (stobj-set-clusters cluster-list
                                    index-list fat32-in-memory)))
-      (x (count-of-clusters fat32-in-memory))
+      (x (+ (count-of-clusters fat32-in-memory) *ms-first-data-cluster*))
       (y *expt-2-28*))))))
 
 (defund place-contents (fat32-in-memory dir-ent contents file-length)
