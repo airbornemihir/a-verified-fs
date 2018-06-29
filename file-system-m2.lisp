@@ -2495,7 +2495,8 @@
                             (cluster-size fat32-in-memory))))
            fat32-in-memory)))))))))
   (b*
-      ((cluster-size (cluster-size fat32-in-memory))
+      ((dir-ent (dir-ent-fix dir-ent))
+       (cluster-size (cluster-size fat32-in-memory))
        (clusters (make-clusters contents cluster-size))
        (indices (stobj-find-n-free-clusters
                  fat32-in-memory (len clusters)))
@@ -2525,7 +2526,6 @@
   compliant-fat32-in-memoryp-of-place-contents
   (implies
    (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (unsigned-byte-listp 8 dir-ent)
         (unsigned-byte-listp 8 contents)
         (natp file-length)
         (equal (data-region-length fat32-in-memory)
@@ -2565,9 +2565,15 @@
   (declare
    (xargs
     :stobjs fat32-in-memory
-    :guard (and (fat32-in-memoryp fat32-in-memory)
-                (m1-file-alist-p fs))
-    :hints (("goal" :in-theory (enable m1-file->contents)))
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (m1-file-alist-p fs)
+                (equal (data-region-length fat32-in-memory)
+                       (* (cluster-size fat32-in-memory)
+                          (count-of-clusters fat32-in-memory)))
+                (<= (+ *ms-first-data-cluster*
+                       (count-of-clusters fat32-in-memory))
+                    *ms-bad-cluster*))
+    :hints (("goal" :in-theory (e/d (m1-file->contents) (fat32-in-memoryp))))
     :verify-guards nil))
   (if
    (atom fs)
