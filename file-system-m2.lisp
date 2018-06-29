@@ -2557,6 +2557,16 @@
                               (cluster-size fat32-in-memory))))
          fat32-in-memory))))))))
 
+(defthm
+  cluster-size-of-place-contents
+  (equal
+   (cluster-size
+    (mv-nth 0
+            (place-contents fat32-in-memory
+                            dir-ent contents file-length)))
+   (cluster-size fat32-in-memory))
+  :hints (("goal" :in-theory (enable place-contents))))
+
 ;; Gotta return a list of directory entries to join up later when constructing
 ;; the containing directory.
 (defun
@@ -2587,7 +2597,7 @@
          (if
           (m1-regular-file-p (cdr head))
           (b*
-              ((contents (m1-file->contents (cdr head)))
+              ((contents (string=>nats (m1-file->contents (cdr head))))
                (file-length (length contents)))
             (place-contents fat32-in-memory dir-ent contents file-length))
           (b*
@@ -2599,6 +2609,10 @@
             (place-contents fat32-in-memory dir-ent contents file-length)))))
      (mv fat32-in-memory
          (list* dir-ent tail-list)))))
+
+(defthm cluster-size-of-m1-fs-to-fat32-in-memory
+  (equal (cluster-size (mv-nth 0 (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+         (cluster-size fat32-in-memory)))
 
 (defthm compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory
   (implies (compliant-fat32-in-memoryp
