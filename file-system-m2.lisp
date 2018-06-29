@@ -2709,21 +2709,19 @@
              (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
     (data-region-length fat32-in-memory))))
 
-(defthm compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory
-  (implies (compliant-fat32-in-memoryp
-            fat32-in-memory)
-           (compliant-fat32-in-memoryp
-            (mv-nth 0
-                    (m1-fs-to-fat32-in-memory
-                     fat32-in-memory fs))))
-  :hints (("Goal" :in-theory (e/d () (m1-fs-to-fat32-in-memory) ((:induction
-                                                                  m1-fs-to-fat32-in-memory))))
-          ("Subgoal *1/2'" :expand
-           ((m1-fs-to-fat32-in-memory fat32-in-memory
-                                      fs)
-            (compliant-fat32-in-memoryp
-             (mv-nth 0
-                     (m1-fs-to-fat32-in-memory fat32-in-memory (cdr fs))))))))
+(defthm
+  compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (equal (data-region-length fat32-in-memory)
+               (* (cluster-size fat32-in-memory)
+                  (count-of-clusters fat32-in-memory)))
+        (<= (+ *ms-first-data-cluster*
+               (count-of-clusters fat32-in-memory))
+            *ms-bad-cluster*))
+   (compliant-fat32-in-memoryp
+    (mv-nth 0
+            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))))
 
 (verify-guards m1-fs-to-fat32-in-memory)
 
