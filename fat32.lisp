@@ -127,12 +127,24 @@
                 (fat32-entry-list-p lst))
            (fat32-entry-p x)))
 
+(defthm
+  fat32-masked-entry-list-p-of-make-list-ac
+  (implies (and (fat32-masked-entry-p val)
+                (fat32-masked-entry-list-p ac))
+           (fat32-masked-entry-list-p (make-list-ac n val ac))))
+
+(defthm fat32-masked-entry-list-p-of-append
+  (implies (true-listp x)
+           (equal (fat32-masked-entry-list-p (binary-append x y))
+                  (and (fat32-masked-entry-list-p x)
+                       (fat32-masked-entry-list-p y)))))
+
 (defthm set-indices-in-fa-table-guard-lemma-1
   (implies (and (natp key)
                 (< key (len l))
-                (fat32-entry-list-p l)
-                (fat32-entry-p val))
-           (fat32-entry-list-p (update-nth key val l))))
+                (fat32-entry-list-p l))
+           (equal (fat32-entry-list-p (update-nth key val l))
+                  (fat32-entry-p val))))
 
 (defthm set-indices-in-fa-table-guard-lemma-2
   (implies (fat32-entry-p x) (natp x))
@@ -322,3 +334,320 @@
     *ms-first-data-cluster*))
   :hints
   (("goal" :in-theory (enable lower-bounded-integer-listp))))
+
+(defund
+  find-n-free-clusters-helper
+  (fa-table n start)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (natp n)
+                              (natp start))))
+  (if (or (atom fa-table) (zp n))
+      nil
+      (if (not (equal (fat32-entry-mask (car fa-table))
+                      0))
+          (find-n-free-clusters-helper (cdr fa-table)
+                                       n (+ start 1))
+          (cons start
+                (find-n-free-clusters-helper (cdr fa-table)
+                                             (- n 1)
+                                             (+ start 1))))))
+
+(defthmd
+  find-n-free-clusters-helper-correctness-1
+  (implies (and (fat32-entry-list-p fa-table)
+                (natp n)
+                (natp start)
+                (equal b (+ start (len fa-table))))
+           (bounded-nat-listp
+            (find-n-free-clusters-helper fa-table n start)
+            b))
+  :hints
+  (("goal'" :in-theory (enable find-n-free-clusters-helper))))
+
+(defthmd
+  find-n-free-clusters-helper-correctness-2
+  (implies
+   (natp start)
+   (nat-listp (find-n-free-clusters-helper fa-table n start)))
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters-helper))))
+
+(defthmd
+  find-n-free-clusters-helper-correctness-3
+  (implies
+   (and
+    (natp start)
+    (member-equal x (find-n-free-clusters-helper fa-table n start)))
+   (and (integerp x) (<= start x)))
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters-helper))))
+
+(defthm
+  find-n-free-clusters-helper-correctness-4
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (natp n)
+        (natp start)
+        (member-equal
+         x
+         (find-n-free-clusters-helper fa-table n start)))
+   (equal (fat32-entry-mask (nth (- x start) fa-table))
+          0))
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters-helper)
+    :use find-n-free-clusters-helper-correctness-3)
+   ("subgoal *1/2"
+    :use (:instance find-n-free-clusters-helper-correctness-3
+                    (fa-table (cdr fa-table))
+                    (start (+ 1 start))))))
+
+(defthm find-n-free-clusters-guard-lemma-1
+  (implies (fat32-entry-list-p l)
+           (fat32-entry-list-p (nthcdr n l))))
+
+(defund
+    find-n-free-clusters (fa-table n)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (natp n))))
+  ;; the first 2 clusters are excluded
+  (find-n-free-clusters-helper
+   (nthcdr *ms-first-data-cluster* fa-table)
+   n *ms-first-data-cluster*))
+
+(defthm
+  find-n-free-clusters-correctness-1
+  (implies (and (fat32-entry-list-p fa-table)
+                (natp n)
+                (equal b (len fa-table))
+                (>= (len fa-table)
+                    *ms-first-data-cluster*))
+           (bounded-nat-listp (find-n-free-clusters fa-table n)
+                              b))
+  :hints
+  (("goal"
+    :in-theory (enable find-n-free-clusters)
+    :use
+    ((:instance
+      find-n-free-clusters-helper-correctness-1
+      (start *ms-first-data-cluster*)
+      (fa-table (nthcdr *ms-first-data-cluster* fa-table))
+      (b (len fa-table))))))
+  :rule-classes
+  (:rewrite
+   (:linear
+    :corollary
+    (implies (and (fat32-entry-list-p fa-table)
+                  (natp n)
+                  (equal b (len fa-table))
+                  (>= (len fa-table)
+                      *ms-first-data-cluster*)
+                  (consp (find-n-free-clusters fa-table n)))
+             (< (car (find-n-free-clusters fa-table n))
+                b)))))
+
+(defthm
+  find-n-free-clusters-correctness-2
+  (nat-listp (find-n-free-clusters fa-table n))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (consp (find-n-free-clusters fa-table n))
+             (and (nat-listp (cdr (find-n-free-clusters fa-table n)))
+                  (integerp (car (find-n-free-clusters fa-table n))))))
+   (:linear
+    :corollary (implies (consp (find-n-free-clusters fa-table n))
+                        (<= 0
+                            (car (find-n-free-clusters fa-table n))))))
+  :hints
+  (("goal"
+    :in-theory (enable find-n-free-clusters
+                       find-n-free-clusters-helper-correctness-2))))
+
+(defthmd
+  find-n-free-clusters-correctness-3
+  (implies (member-equal x (find-n-free-clusters fa-table n))
+           (and (integerp x) (<= *ms-first-data-cluster* x)))
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters))
+   ("goal'"
+    :use (:instance find-n-free-clusters-helper-correctness-3
+                    (start *ms-first-data-cluster*)
+                    (fa-table (nthcdr *ms-first-data-cluster* fa-table))))))
+
+(defthmd
+  find-n-free-clusters-correctness-4
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (natp n)
+        (natp start)
+        (member-equal x (find-n-free-clusters fa-table n)))
+   (equal (fat32-entry-mask (nth x fa-table))
+          0))
+  :hints
+  (("goal"
+    :in-theory (enable find-n-free-clusters)
+    :use
+    (:instance
+     find-n-free-clusters-helper-correctness-4
+     (start *ms-first-data-cluster*)
+     (fa-table (nthcdr *ms-first-data-cluster* fa-table))))
+   ("goal''"
+    :in-theory (disable member-of-a-nat-list)
+    :use
+    ((:instance
+      member-of-a-nat-list
+      (lst (find-n-free-clusters-helper
+            (nthcdr *ms-first-data-cluster* fa-table)
+            n *ms-first-data-cluster*)))))
+   ("subgoal 2"
+    :use
+    (:instance
+     find-n-free-clusters-helper-correctness-3
+     (fa-table (nthcdr *ms-first-data-cluster* fa-table))
+     (start *ms-first-data-cluster*)))))
+
+(defthmd
+  fat32-masked-entry-list-p-alt
+  (equal (fat32-masked-entry-list-p x)
+         (bounded-nat-listp x *expt-2-28*))
+  :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
+
+(defthm
+  fat32-masked-entry-list-p-of-find-n-free-clusters
+  (implies (and (fat32-entry-list-p fa-table)
+                (natp n)
+                (>= (len fa-table) *ms-first-data-cluster*)
+                (<= (len fa-table) *ms-bad-cluster*))
+           (fat32-masked-entry-list-p (find-n-free-clusters fa-table n)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (fat32-entry-list-p fa-table)
+          (natp n)
+          (>= (len fa-table) *ms-first-data-cluster*)
+          (<= (len fa-table) *ms-bad-cluster*))
+     (let ((l (find-n-free-clusters fa-table n)))
+       (implies (consp l)
+                (and (fat32-masked-entry-list-p (cdr l))
+                     (fat32-masked-entry-p (car l))))))))
+  :hints (("goal" :in-theory (disable find-n-free-clusters-correctness-1)
+           :use ((:instance find-n-free-clusters-correctness-1
+                            (b (len fa-table)))
+                 (:instance fat32-masked-entry-list-p-alt
+                            (x (find-n-free-clusters fa-table n)))
+                 (:instance bounded-nat-listp-correctness-5
+                            (l (find-n-free-clusters fa-table n))
+                            (x (len fa-table))
+                            (y *expt-2-28*))))))
+
+(defthm
+  lower-bounded-integer-listp-of-find-n-free-clusters-helper
+  (implies (integerp start)
+           (lower-bounded-integer-listp
+            (find-n-free-clusters-helper fa-table n start)
+            start))
+  :hints
+  (("goal" :in-theory (enable lower-bounded-integer-listp
+                              find-n-free-clusters-helper))
+   ("subgoal *1/5.1'"
+    :use
+    (:instance lower-bounded-integer-listp-correctness-5
+               (l (find-n-free-clusters-helper (cdr fa-table)
+                                               (+ -1 n)
+                                               (+ 1 start)))
+               (x (+ 1 start))
+               (y start)))
+   ("subgoal *1/3''"
+    :use
+    (:instance lower-bounded-integer-listp-correctness-5
+               (l (find-n-free-clusters-helper (cdr fa-table)
+                                               n (+ 1 start)))
+               (x (+ 1 start))
+               (y start)))))
+
+(defthm
+  lower-bounded-integer-listp-of-find-n-free-clusters
+  (lower-bounded-integer-listp (find-n-free-clusters fa-table n)
+                               *ms-first-data-cluster*)
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (consp (find-n-free-clusters fa-table n))
+     (lower-bounded-integer-listp (cdr (find-n-free-clusters fa-table n))
+                                  *ms-first-data-cluster*))
+    :hints (("goal" :in-theory (enable lower-bounded-integer-listp))))
+   (:linear
+    :corollary (implies (consp (find-n-free-clusters fa-table n))
+                        (<= *ms-first-data-cluster*
+                            (car (find-n-free-clusters fa-table n))))
+    :hints (("goal" :in-theory (enable lower-bounded-integer-listp)))))
+  :hints (("goal" :in-theory (enable find-n-free-clusters))))
+
+(defund
+  set-indices-in-fa-table
+  (fa-table index-list value-list)
+  (declare
+   (xargs :measure (acl2-count index-list)
+          :guard (and (fat32-entry-list-p fa-table)
+                      (nat-listp index-list)
+                      (fat32-masked-entry-list-p value-list)
+                      (equal (len index-list)
+                             (len value-list)))))
+  (if
+   (atom index-list)
+   fa-table
+   (let
+    ((current-index (car index-list)))
+    (if
+     (or (not (natp current-index))
+         (>= current-index (len fa-table)))
+     fa-table
+     (set-indices-in-fa-table
+      (update-nth current-index
+                  (fat32-update-lower-28 (nth current-index fa-table)
+                                         (car value-list))
+                  fa-table)
+      (cdr index-list)
+      (cdr value-list))))))
+
+(defthm
+  set-indices-in-fa-table-correctness-1
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (bounded-nat-listp index-list (len fa-table))
+        (fat32-masked-entry-list-p value-list)
+        (equal (len index-list)
+               (len value-list)))
+   (fat32-entry-list-p
+    (set-indices-in-fa-table fa-table index-list value-list)))
+  :hints (("Goal" :in-theory (enable set-indices-in-fa-table))))
+
+(defthm
+  set-indices-in-fa-table-correctness-2
+  (equal (len (set-indices-in-fa-table fa-table index-list value-list))
+         (len fa-table))
+  :hints (("goal" :in-theory (enable set-indices-in-fa-table))))
+
+;; Well, it might not be a great idea to borrow a numbering scheme from
+;; set-indices.lisp
+(defthm set-indices-in-fa-table-correctness-3
+  (implies (and (natp n)
+                (nat-listp index-list)
+                (not (member-equal n index-list)))
+           (equal (nth n (set-indices-in-fa-table fa-table index-list value-list))
+                  (nth n fa-table)))
+  :hints (("Goal" :in-theory (enable set-indices-in-fa-table))))
+
+(defthm set-indices-in-fa-table-correctness-4
+  (implies (and (natp key)
+                (< key (len l))
+                (nat-listp index-list)
+                (not (member-equal key index-list)))
+           (equal (set-indices-in-fa-table (update-nth key val l) index-list value-list)
+                  (update-nth key val (set-indices-in-fa-table l index-list value-list))))
+  :hints (("Goal" :in-theory (enable set-indices-in-fa-table))))
