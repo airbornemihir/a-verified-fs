@@ -2059,6 +2059,22 @@
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
+(defthm
+  fat-length-of-update-fati
+  (equal (fat-length (update-fati i v fat32-in-memory))
+         (max (fat-length fat32-in-memory)
+              (1+ (nfix i))))
+  :hints (("goal" :in-theory (enable fat-length update-fati))))
+
+(defthm
+  fat-length-of-stobj-set-indices-in-fa-table
+  (equal
+   (fat-length (stobj-set-indices-in-fa-table
+                fat32-in-memory index-list value-list))
+   (fat-length fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
+
 (defund
   dir-ent-set-first-cluster-file-size
     (dir-ent first-cluster file-size)
@@ -2189,6 +2205,22 @@
   :hints (("goal" :in-theory (enable update-data-regioni))))
 
 (defthm
+  bpb_totsec32-of-update-data-regioni
+  (equal
+   (bpb_totsec32 (update-data-regioni i v fat32-in-memory))
+   (bpb_totsec32 fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable update-data-regioni bpb_totsec32))))
+
+(defthm
+  fat-length-of-update-data-regioni
+  (equal
+   (fat-length (update-data-regioni i v fat32-in-memory))
+   (fat-length fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-data-regioni fat-length))))
+
+(defthm
   cluster-size-of-stobj-set-cluster
   (equal
    (cluster-size
@@ -2245,6 +2277,13 @@
     (data-region-length
      (stobj-set-cluster cluster fat32-in-memory end-index))
     (data-region-length fat32-in-memory))))
+
+(defthm
+  fat-length-of-stobj-set-cluster
+  (equal
+   (fat-length
+    (stobj-set-cluster cluster fat32-in-memory end-index))
+   (fat-length fat32-in-memory)))
 
 (defun
     stobj-set-clusters
@@ -2379,6 +2418,7 @@
     (("goal" :in-theory (e/d (lower-bounded-integer-listp)
                              (fat32-in-memoryp
                               ;; wisdom from accumulated-persistence
+                              ;; not enough - this really needs to be sped up
                               (:DEFINITION ACL2-NUMBER-LISTP)
                               (:DEFINITION RATIONAL-LISTP)
                               (:DEFINITION INTEGER-LISTP)
@@ -2388,18 +2428,7 @@
                                ACL2-NUMBERP-OF-CAR-WHEN-ACL2-NUMBER-LISTP)
                               (:REWRITE RATIONALP-IMPLIES-ACL2-NUMBERP)))
       :induct (stobj-set-clusters
-               cluster-list index-list fat32-in-memory))
-     ;; ("subgoal 7"
-     ;;  :expand ((cluster-listp cluster-list fat32-in-memory)
-     ;;           (lower-bounded-integer-listp
-     ;;            index-list *ms-first-data-cluster*)))
-     ;; ("subgoal 6"
-     ;;  :expand ((cluster-listp cluster-list fat32-in-memory)
-     ;;           (lower-bounded-integer-listp
-     ;;            index-list *ms-first-data-cluster*)))
-     ;; ("subgoal 5"
-     ;;  :expand ((cluster-listp cluster-list fat32-in-memory)))
-     )
+               cluster-list index-list fat32-in-memory)))
     :guard-debug t))
 
 (defthm
@@ -2471,6 +2500,15 @@
       (x (+ (count-of-clusters fat32-in-memory)
             *ms-first-data-cluster*))
       (y *expt-2-28*))))))
+
+(defthm
+  fat-length-of-stobj-set-clusters
+  (equal
+   (fat-length
+    (mv-nth 0
+            (stobj-set-clusters cluster-list
+                                index-list fat32-in-memory)))
+   (fat-length fat32-in-memory)))
 
 (defund
   place-contents
@@ -2631,6 +2669,16 @@
              (place-contents fat32-in-memory
                              dir-ent contents file-length))))))
 
+(defthm
+  fat-length-of-place-contents
+  (equal
+   (fat-length
+    (mv-nth 0
+            (place-contents fat32-in-memory
+                            dir-ent contents file-length)))
+   (fat-length fat32-in-memory))
+  :hints (("goal" :in-theory (enable place-contents))))
+
 ;; Gotta return a list of directory entries to join up later when constructing
 ;; the containing directory.
 (defun
@@ -2646,33 +2694,48 @@
                           (count-of-clusters fat32-in-memory)))
                 (<= (+ *ms-first-data-cluster*
                        (count-of-clusters fat32-in-memory))
+                    *ms-bad-cluster*)
+                (>= (fat-length fat32-in-memory)
+                    *ms-first-data-cluster*)
+                (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*))
-    :hints (("goal" :in-theory (e/d (m1-file->contents) (fat32-in-memoryp))))
+    :hints (("goal" :in-theory (e/d (m1-file->contents)
+                                    (fat32-in-memoryp))))
     :verify-guards nil))
-  (if
-   (atom fs)
-   (mv fat32-in-memory nil)
-   (b*
-       (((mv fat32-in-memory tail-list)
-         (m1-fs-to-fat32-in-memory fat32-in-memory (cdr fs)))
-        (head (car fs))
-        (dir-ent (m1-file->dir-ent (cdr head)))
-        ((mv fat32-in-memory dir-ent)
-         (if
-          (m1-regular-file-p (cdr head))
-          (b*
-              ((contents (string=>nats (m1-file->contents (cdr head))))
-               (file-length (length contents)))
-            (place-contents fat32-in-memory dir-ent contents file-length))
-          (b*
-              ((contents (m1-file->contents (cdr head)))
-               (file-length 0) ;; per the specification
-               ((mv fat32-in-memory unflattened-contents)
-                (m1-fs-to-fat32-in-memory fat32-in-memory contents))
-               (contents (flatten unflattened-contents)))
-            (place-contents fat32-in-memory dir-ent contents file-length)))))
-     (mv fat32-in-memory
-         (list* dir-ent tail-list)))))
+  (b*
+      ;; this clause is there simply because we didn't require all files in
+      ;; subdirectories to fall into the regular file and directory file
+      ;; categories.
+      (((unless (consp fs))
+        (mv fat32-in-memory nil))
+       ((mv fat32-in-memory tail-list)
+        (m1-fs-to-fat32-in-memory fat32-in-memory (cdr fs)))
+       (head (car fs))
+       (dir-ent (m1-file->dir-ent (cdr head)))
+       ((unless
+         (or (and (m1-regular-file-p (cdr head))
+                  (unsigned-byte-p
+                   32
+                   (length (m1-file->contents (cdr head)))))
+             (m1-directory-file-p (cdr head))))
+        (mv fat32-in-memory tail-list))
+       ((mv fat32-in-memory dir-ent)
+        (if
+         (m1-regular-file-p (cdr head))
+         (b*
+             ((contents (string=>nats (m1-file->contents (cdr head))))
+              (file-length (length contents)))
+           (place-contents fat32-in-memory
+                           dir-ent contents file-length))
+         (b* ((contents (m1-file->contents (cdr head)))
+              (file-length 0) ;; per the specification
+              ((mv fat32-in-memory unflattened-contents)
+               (m1-fs-to-fat32-in-memory fat32-in-memory contents))
+              (contents (flatten unflattened-contents)))
+           (place-contents fat32-in-memory
+                           dir-ent contents file-length)))))
+    (mv fat32-in-memory
+        (list* dir-ent tail-list))))
 
 (defthm
   cluster-size-of-m1-fs-to-fat32-in-memory
@@ -2690,12 +2753,13 @@
             (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
    (count-of-clusters fat32-in-memory)))
 
-(defthm unsigned-byte-listp-of-m1-fs-to-fat32-in-memory
-  (unsigned-byte-listp 8
-                       (flatten
-                        (mv-nth 1
-                                (m1-fs-to-fat32-in-memory
-                                 fat32-in-memory fs)))))
+(defthm
+  unsigned-byte-listp-of-m1-fs-to-fat32-in-memory
+  (unsigned-byte-listp
+   8
+   (flatten
+    (mv-nth 1
+            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))))
 
 (defthm
   data-region-length-of-m1-fs-to-fat32-in-memory
@@ -2723,7 +2787,15 @@
     (mv-nth 0
             (m1-fs-to-fat32-in-memory fat32-in-memory fs)))))
 
-(verify-guards m1-fs-to-fat32-in-memory)
+(defthm
+  fat-length-of-m1-fs-to-fat32-in-memory
+  (equal
+   (fat-length
+    (mv-nth 0
+            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+   (fat-length fat32-in-memory)))
+
+(verify-guards m1-fs-to-fat32-in-memory :guard-debug t)
 
 #|
 Currently the function call to test out this function is
