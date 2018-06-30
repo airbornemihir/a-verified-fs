@@ -2764,6 +2764,7 @@
 (defthm
   data-region-length-of-m1-fs-to-fat32-in-memory
   (implies
+   ;; Possibly this hypothesis can be removed...
    (equal (data-region-length fat32-in-memory)
           (* (cluster-size fat32-in-memory)
              (count-of-clusters fat32-in-memory)))

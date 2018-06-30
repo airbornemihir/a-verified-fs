@@ -10,7 +10,7 @@ DISK=disk1.raw
 SIZE=70000
 MOUNTPOINT=mount1
 FUSEPOINT=mount2
-BBFS=$(HOME)/src/fuse-tutorial-2018-02-04/src/bbfs
+BBFS=$(HOME)/src/bbfs/fuse-tutorial-2018-02-04/src/bbfs
 UID=$(shell id -u)
 GID=$(shell id -g)
 
