@@ -1364,14 +1364,13 @@
    (xargs
     :guard (and (stringp image-path)
                 (fat32-in-memoryp fat32-in-memory))
-    :guard-debug t
     :guard-hints
-    (("goal" :do-not-induct t
-      :in-theory (disable fat32-in-memoryp
-                          read-reserved-area)))
+    (("goal"
+      :do-not-induct t
+      :in-theory (disable fat32-in-memoryp read-reserved-area)))
     :stobjs (fat32-in-memory state)))
-  (b* ((str
-        (read-file-into-string image-path))
+  (b*
+      ((str (read-file-into-string image-path))
        ((unless (and (stringp str)
                      (>= (length str) *initialbytcnt*)))
         (mv fat32-in-memory -1))
@@ -1379,46 +1378,44 @@
         (read-reserved-area fat32-in-memory str))
        ((unless (equal error-code 0))
         (mv fat32-in-memory error-code))
-       (fat-read-size (/ (* (bpb_fatsz32 fat32-in-memory) (bpb_bytspersec
-                                                           fat32-in-memory)) 4))
-       ((unless (integerp fat-read-size)) (mv fat32-in-memory -1))
-       (data-byte-count
-        (* (- (bpb_totsec32 fat32-in-memory)
-              (+ (bpb_rsvdseccnt fat32-in-memory)
-                 (* (bpb_numfats fat32-in-memory)
-                    (bpb_fatsz32 fat32-in-memory))))
-           (bpb_bytspersec fat32-in-memory)))
+       (fat-read-size (/ (* (bpb_fatsz32 fat32-in-memory)
+                            (bpb_bytspersec fat32-in-memory))
+                         4))
+       ((unless (integerp fat-read-size))
+        (mv fat32-in-memory -1))
+       (data-byte-count (* (count-of-clusters fat32-in-memory)
+                           (cluster-size fat32-in-memory)))
        ((unless (> data-byte-count 0))
         (mv fat32-in-memory -1))
        (tmp_bytspersec (bpb_bytspersec fat32-in-memory))
        (tmp_init (* tmp_bytspersec
                     (+ (bpb_rsvdseccnt fat32-in-memory)
-                       (* (bpb_numfats fat32-in-memory) (bpb_fatsz32
-                                                         fat32-in-memory)))))
+                       (* (bpb_numfats fat32-in-memory)
+                          (bpb_fatsz32 fat32-in-memory)))))
        ((unless (>= (length str)
                     (+ tmp_init
                        (data-region-length fat32-in-memory))))
         (mv fat32-in-memory -1))
-       (fat32-in-memory (resize-fat fat-read-size
-                                    fat32-in-memory))
-       (fat32-in-memory (update-fat fat32-in-memory
-                                    (subseq str
-                                            (cluster-size fat32-in-memory)
-                                            (+
-                                             (cluster-size fat32-in-memory)
-                                             (* fat-read-size 4)))
-                                    fat-read-size))
-       (fat32-in-memory (resize-data-region data-byte-count
-                                            fat32-in-memory))
-       (data-region-string
-        (subseq str tmp_init (+ tmp_init
-                                (data-region-length fat32-in-memory))))
+       (fat32-in-memory (resize-fat fat-read-size fat32-in-memory))
        (fat32-in-memory
-        (update-data-region
-         fat32-in-memory
-         data-region-string
-         (data-region-length fat32-in-memory)
-         0)))
+        (update-fat fat32-in-memory
+                    (subseq str
+                            (* (bpb_rsvdseccnt fat32-in-memory)
+                               (bpb_bytspersec fat32-in-memory))
+                            (+ (* (bpb_rsvdseccnt fat32-in-memory)
+                                  (bpb_bytspersec fat32-in-memory))
+                               (* fat-read-size 4)))
+                    fat-read-size))
+       (fat32-in-memory
+        (resize-data-region data-byte-count fat32-in-memory))
+       (data-region-string
+        (subseq str tmp_init
+                (+ tmp_init
+                   (data-region-length fat32-in-memory))))
+       (fat32-in-memory
+        (update-data-region fat32-in-memory data-region-string
+                            (data-region-length fat32-in-memory)
+                            0)))
     (mv fat32-in-memory error-code)))
 
 (defun get-dir-ent-helper (fat32-in-memory data-region-index len)
