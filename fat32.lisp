@@ -151,10 +151,9 @@
   :hints (("goal" :in-theory (enable fat32-entry-p)))
   :rule-classes :forward-chaining)
 
-(defthm set-indices-in-fa-table-guard-lemma-3
+(defthm fat32-entry-p-of-nth
   (implies (and (fat32-entry-list-p l)
-                (natp n)
-                (< n (len l)))
+                (< (nfix n) (len l)))
            (fat32-entry-p (nth n l))))
 
 (defund

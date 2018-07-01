@@ -415,11 +415,10 @@
                         *ms-fat32-min-count-of-clusters*)
                     (>= (bpb_secperclus fat32-in-memory) 1)))))))
 
-(defthm
+(defthmd
   fati-when-compliant-fat32-in-memoryp
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (fat-length fat32-in-memory)))
+                (< (nfix i) (fat-length fat32-in-memory)))
            (fat32-entry-p (fati i fat32-in-memory)))
   :hints (("goal" :in-theory (enable compliant-fat32-in-memoryp
                                      fati fat-length))))
@@ -1639,8 +1638,8 @@
       :guard-debug t
       :guard-hints (("Goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))
                     ("Subgoal 1.10'" :in-theory (e/d (fat32-in-memoryp)
-                                                 (SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3))
-                     :use (:instance SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3
+                                                 (FAT32-ENTRY-P-OF-NTH))
+                     :use (:instance FAT32-ENTRY-P-OF-NTH
                                      (n MASKED-CURRENT-CLUSTER)
                                      (l
                                       (NTH *FATI* FAT32-IN-MEMORY)))))))
