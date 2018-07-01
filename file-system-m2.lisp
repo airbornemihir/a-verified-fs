@@ -418,7 +418,7 @@
                         *ms-fat32-min-count-of-clusters*)
                     (>= (bpb_secperclus fat32-in-memory) 1)))))))
 
-(defthmd
+(defthm
   fati-when-compliant-fat32-in-memoryp
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (< (nfix i) (fat-length fat32-in-memory)))
@@ -1574,8 +1574,7 @@
                 (natp length)
                 (>= masked-current-cluster 2)
                 (< masked-current-cluster
-                   (fat-length fat32-in-memory)))
-    :guard-hints (("Goal" :in-theory (enable fati-when-compliant-fat32-in-memoryp)))))
+                   (fat-length fat32-in-memory)))))
   (let
    ((cluster-size (cluster-size fat32-in-memory)))
    (if
@@ -1855,7 +1854,6 @@
    (xargs :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                       (natp n)
                       (natp start))
-          :guard-hints (("Goal" :in-theory (enable fati-when-compliant-fat32-in-memoryp)) )
           :stobjs fat32-in-memory
           :measure (nfix (- (fat-length fat32-in-memory)
                             start))))
@@ -1976,7 +1974,7 @@
                       (equal (len index-list)
                              (len value-list)))
           :guard-debug t
-          :guard-hints (("Goal" :in-theory (e/d (fati-when-compliant-fat32-in-memoryp) (unsigned-byte-p))))))
+          :guard-hints (("Goal" :in-theory (disable unsigned-byte-p)))))
   (b*
       (((when (atom index-list)) fat32-in-memory)
        (current-index (car index-list))
@@ -2041,7 +2039,7 @@
              fat32-in-memory index-list value-list)))
   :hints
   (("goal"
-    :in-theory (enable stobj-set-indices-in-fa-table fati-when-compliant-fat32-in-memoryp)
+    :in-theory (enable stobj-set-indices-in-fa-table)
     :induct
     (stobj-set-indices-in-fa-table fat32-in-memory
                                    index-list value-list))))
