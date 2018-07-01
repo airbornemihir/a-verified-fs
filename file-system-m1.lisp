@@ -1,11 +1,17 @@
 (in-package "ACL2")
 
+;  file-system-m1.lisp                                 Mihir Mehta
+
+; An abstract model used, for the time being, for doing file operations such as
+; lstat on the filesystem.
+
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
 (include-book "std/io/read-ints" :dir :system)
 (local (include-book "ihs/logops-lemmas" :dir :system))
 (local (include-book "rtl/rel9/arithmetic/top"
                      :dir :system))
 
+(include-book "insert-text")
 (include-book "fat32")
 
 ;; This was moved to one of the main books, but still kept
@@ -356,79 +362,6 @@
   find-new-index-correctness-1-lemma-2
   (integerp (find-new-index fd-list))
   :hints (("Goal" :in-theory (enable find-new-index)) ))
-
-;; Some definitions copied from file-system-1 since I don't know if I want to
-;; introduce a dependency.
-(encapsulate
-  ()
-
-  (defund
-    insert-text (oldtext start text)
-    (declare (xargs :guard (and (character-listp oldtext)
-                                (natp start)
-                                (stringp text))))
-    (let*
-     ((end (+ start (length text)))
-      (newtext (append (make-character-list (take start oldtext))
-                       (coerce text 'list)
-                       (nthcdr end oldtext))))
-     newtext))
-
-  (defthm
-    insert-text-correctness-1
-    (implies (and (character-listp oldtext)
-                  (natp start)
-                  (stringp text))
-             (character-listp (insert-text oldtext start text)))
-    :hints (("goal" :in-theory (enable insert-text))))
-
-  (defthm
-    insert-text-correctness-2
-    (implies
-     (and (character-listp oldtext)
-          (natp start)
-          (stringp text))
-     (equal
-      (first-n-ac (+ start (- start)
-                     (len (coerce text 'list)))
-                  (nthcdr start (insert-text oldtext start text))
-                  nil)
-      (coerce text 'list)))
-    :hints (("goal" :in-theory (enable insert-text))))
-
-  (defthm insert-text-correctness-3
-    (implies (and (character-listp oldtext)
-                  (stringp text)
-                  (natp start))
-             (<= (+ start (len (coerce text 'list)))
-                 (len (insert-text oldtext start text))))
-    :hints (("goal" :in-theory (enable insert-text)))
-    :rule-classes :linear)
-
-  (defthmd
-    len-of-insert-text
-    (implies (and (character-listp oldtext)
-                  (stringp text)
-                  (natp start))
-             (equal (len (insert-text oldtext start text))
-                    (max (+ start (len (coerce text 'list)))
-                         (len oldtext))))
-    :hints (("goal" :do-not-induct t
-             :expand (insert-text oldtext start text))))
-
-  (defthm
-    insert-text-correctness-4
-    (implies (and (character-listp oldtext)
-                  (stringp text)
-                  (natp start))
-             (iff (consp (insert-text oldtext start text))
-                  (or (> start 0)
-                      (> (len (coerce text 'list)) 0)
-                      (consp oldtext))))
-    :hints
-    (("goal" :use len-of-insert-text)
-     ("subgoal 4'''" :expand (len (insert-text nil 0 text)))
-     ("subgoal 1'4'" :expand (len oldtext)))))
 
 (defthm m1-open-guard-lemma-1
   (implies (fd-table-p fd-table)
