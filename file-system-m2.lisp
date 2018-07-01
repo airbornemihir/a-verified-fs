@@ -2819,9 +2819,9 @@
 
 (verify-guards m1-fs-to-fat32-in-memory-helper :guard-debug t)
 
-(defund
-    m1-fs-to-fat32-in-memory
-    (fat32-in-memory fs)
+(defun
+  m1-fs-to-fat32-in-memory
+  (fat32-in-memory fs)
   (declare
    (xargs
     :stobjs fat32-in-memory
@@ -2838,43 +2838,137 @@
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*))
     :guard-debug t
-    :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp) :do-not-induct t)
-                  ("Subgoal 2.6" :in-theory (enable LOWER-BOUNDED-INTEGER-LISTP)))))
+    :guard-hints
+    (("goal" :in-theory (disable fat32-in-memoryp)
+      :do-not-induct t)
+     ("subgoal 2"
+      :in-theory
+      (e/d (lower-bounded-integer-listp)
+           (true-listp-when-fat32-masked-entry-list-p))
+      :use
+      (:instance
+       true-listp-when-fat32-masked-entry-list-p
+       (x
+        (cdr
+         (mv-nth
+          1
+          (stobj-set-clusters
+           (make-clusters
+            (flatten
+             (mv-nth
+              1
+              (m1-fs-to-fat32-in-memory-helper
+               (stobj-set-indices-in-fa-table
+                fat32-in-memory
+                (remove-equal
+                 (bpb_rootclus fat32-in-memory)
+                 (generate-index-list
+                  2 (+ -2 (fat-length fat32-in-memory))))
+                (make-list-ac
+                 (len
+                  (remove-equal
+                   (bpb_rootclus fat32-in-memory)
+                   (generate-index-list
+                    2 (+ -2 (fat-length fat32-in-memory)))))
+                 0 nil))
+               fs)))
+            (cluster-size fat32-in-memory))
+           (cons
+            (bpb_rootclus fat32-in-memory)
+            (find-n-free-clusters
+             (nth
+              *fati*
+              (mv-nth
+               0
+               (m1-fs-to-fat32-in-memory-helper
+                (stobj-set-indices-in-fa-table
+                 fat32-in-memory
+                 (remove-equal
+                  (bpb_rootclus fat32-in-memory)
+                  (generate-index-list
+                   2 (+ -2 (fat-length fat32-in-memory))))
+                 (make-list-ac
+                  (len
+                   (remove-equal
+                    (bpb_rootclus fat32-in-memory)
+                    (generate-index-list
+                     2 (+ -2 (fat-length fat32-in-memory)))))
+                  0 nil))
+                fs)))
+             (+
+              -1
+              (len
+               (make-clusters
+                (flatten
+                 (mv-nth
+                  1
+                  (m1-fs-to-fat32-in-memory-helper
+                   (stobj-set-indices-in-fa-table
+                    fat32-in-memory
+                    (remove-equal
+                     (bpb_rootclus fat32-in-memory)
+                     (generate-index-list
+                      2 (+ -2 (fat-length fat32-in-memory))))
+                    (make-list-ac
+                     (len
+                      (remove-equal
+                       (bpb_rootclus fat32-in-memory)
+                       (generate-index-list
+                        2
+                        (+ -2 (fat-length fat32-in-memory)))))
+                     0 nil))
+                   fs)))
+                (cluster-size fat32-in-memory))))))
+           (mv-nth
+            0
+            (m1-fs-to-fat32-in-memory-helper
+             (stobj-set-indices-in-fa-table
+              fat32-in-memory
+              (remove-equal
+               (bpb_rootclus fat32-in-memory)
+               (generate-index-list
+                2 (+ -2 (fat-length fat32-in-memory))))
+              (make-list-ac
+               (len
+                (remove-equal
+                 (bpb_rootclus fat32-in-memory)
+                 (generate-index-list
+                  2 (+ -2 (fat-length fat32-in-memory)))))
+               0 nil))
+             fs)))))))))))
   (b*
       ((rootclus (bpb_rootclus fat32-in-memory))
        (cluster-size (cluster-size fat32-in-memory))
-       (index-list-to-clear (remove
-                             rootclus
-                             (generate-index-list
-                              *ms-first-data-cluster*
+       (index-list-to-clear
+        (remove
+         rootclus
+         (generate-index-list *ms-first-data-cluster*
                               (- (fat-length fat32-in-memory)
                                  *ms-first-data-cluster*))))
-       (fat32-in-memory
-        (stobj-set-indices-in-fa-table
-         fat32-in-memory
-         index-list-to-clear
-         (make-list (len index-list-to-clear) :initial-element 0)))
+       (fat32-in-memory (stobj-set-indices-in-fa-table
+                         fat32-in-memory index-list-to-clear
+                         (make-list (len index-list-to-clear)
+                                    :initial-element 0)))
        ((mv fat32-in-memory dir-ent-list)
-        (m1-fs-to-fat32-in-memory-helper
-         fat32-in-memory fs))
+        (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs))
        (contents (flatten dir-ent-list))
        (clusters (make-clusters contents cluster-size))
-       (indices
-        (list* rootclus
-               (stobj-find-n-free-clusters
-                 fat32-in-memory (nfix (- (len clusters) 1)))))
+       (indices (list* rootclus
+                       (stobj-find-n-free-clusters
+                        fat32-in-memory
+                        (nfix (- (len clusters) 1)))))
        ((unless (equal (len indices) (len clusters)))
         fat32-in-memory)
        ((mv fat32-in-memory indices)
         (stobj-set-clusters clusters indices fat32-in-memory))
        (fat32-in-memory
         (if
-            (atom indices)
-            fat32-in-memory
-          (stobj-set-indices-in-fa-table
-           fat32-in-memory indices
-           (binary-append (cdr indices)
-                          (list *ms-end-of-clusterchain*))))))
+         (atom indices)
+         fat32-in-memory
+         (stobj-set-indices-in-fa-table
+          fat32-in-memory indices
+          (binary-append (cdr indices)
+                         (list *ms-end-of-clusterchain*))))))
     fat32-in-memory))
 
 #|
