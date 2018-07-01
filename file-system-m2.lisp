@@ -625,7 +625,7 @@
 (defthm
   compliant-fat32-in-memoryp-of-update-fati
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (< (nfix i) (fat-length fat32-in-memory)))
+                (< i (fat-length fat32-in-memory)))
            (equal
             (compliant-fat32-in-memoryp
              (update-fati i v fat32-in-memory))
@@ -645,21 +645,21 @@
                                    data-regioni data-region-length)
                                   (unsigned-byte-p)))))
 
+;; This can be improved in a similar way to
+;; compliant-fat32-in-memoryp-of-update-fati.
 (defthm
   compliant-fat32-in-memoryp-of-update-data-regioni
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (< i (data-region-length fat32-in-memory))
-                (unsigned-byte-p 8 v))
-           (compliant-fat32-in-memoryp
-            (update-data-regioni i v fat32-in-memory)))
+                (< i (data-region-length fat32-in-memory)))
+           (equal
+            (compliant-fat32-in-memoryp
+             (update-data-regioni i v fat32-in-memory))
+            (unsigned-byte-p 8 v)))
   :hints
-  (("goal"
+  (("goal" :do-not-induct t
     :in-theory (e/d (compliant-fat32-in-memoryp
                      update-data-regioni
-                     data-region-length bpb_bytspersec
-                     bpb_secperclus count-of-clusters
-                     bpb_numfats bpb_fatsz32 bpb_rsvdseccnt
-                     bpb_secperclus bpb_totsec32)
+                     data-region-length count-of-clusters)
                     (floor)))))
 
 (defconst *initialbytcnt* 16)
@@ -3010,6 +3010,15 @@ More (rather awful) testing forms are
      ((mv fat32-in-memory dir-ent-list)
       (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
   (mv fat32-in-memory dir-ent-list))
+(b* (((mv dir-contents &)
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     ((mv fd-table file-table & &)
+      (m1-open (list "INITRD  IMG")
+               fs nil nil))
+     ((mv fs & &)
+      (m1-pwrite 0 "ornery" 49 fs fd-table file-table)))
+  (m1-fs-to-fat32-in-memory fat32-in-memory fs))
 |#
 (defun
   get-dir-filenames
