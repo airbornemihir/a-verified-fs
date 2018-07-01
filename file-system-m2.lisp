@@ -396,7 +396,9 @@
                       *ms-min-bytes-per-sector*)
                   (>= (count-of-clusters fat32-in-memory)
                       *ms-fat32-min-count-of-clusters*)
-                  (>= (bpb_secperclus fat32-in-memory) 1)))
+                  (>= (bpb_secperclus fat32-in-memory) 1)
+                  (>= (bpb_rootclus fat32-in-memory)
+                      *ms-first-data-cluster*)))
     :hints
     (("goal"
       :in-theory (e/d (compliant-fat32-in-memoryp cluster-size)
@@ -417,7 +419,9 @@
                         *ms-min-bytes-per-sector*)
                     (>= (count-of-clusters fat32-in-memory)
                         *ms-fat32-min-count-of-clusters*)
-                    (>= (bpb_secperclus fat32-in-memory) 1)))))))
+                    (>= (bpb_secperclus fat32-in-memory) 1)
+                    (>= (bpb_rootclus fat32-in-memory)
+                        *ms-first-data-cluster*)))))))
 
 (defthm
   fati-when-compliant-fat32-in-memoryp
@@ -2834,7 +2838,8 @@
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*))
     :guard-debug t
-    :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp)) )))
+    :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp) :do-not-induct t)
+                  ("Subgoal 2.6" :in-theory (enable LOWER-BOUNDED-INTEGER-LISTP)))))
   (b*
       ((rootclus (bpb_rootclus fat32-in-memory))
        (cluster-size (cluster-size fat32-in-memory))
