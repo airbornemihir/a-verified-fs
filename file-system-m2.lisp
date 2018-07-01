@@ -423,6 +423,181 @@
   :hints (("goal" :in-theory (enable compliant-fat32-in-memoryp
                                      fati fat-length))))
 
+;; Per accumulated-persistence, the rule (:rewrite
+;; update-bpb_secperclus-correctness-2 . 3) is pretty darned useless. We need
+;; to find a way to do without it and its kind.
+(encapsulate
+  ()
+
+  (local
+   (defun
+       make-corollary
+       (accessor1 updater2 constant2 stobj)
+     (list ':rewrite
+           ':corollary
+           (list 'implies
+                 (list 'equal 'key constant2)
+                 (list 'equal
+                       (list accessor1 (list updater2 'val stobj))
+                       (list accessor1 stobj)))
+           ':hints
+           (list (list '"goal"
+                       ':in-theory
+                       (list 'enable updater2))))))
+
+  (local
+   (defun
+       make-corollaries
+       (accessor1 updaters-constants stobj)
+     (if (atom updaters-constants)
+         (list ':rewrite)
+       (list*
+        (make-corollary
+         accessor1
+         (caar updaters-constants)
+         (cdar updaters-constants)
+         stobj)
+        (make-corollaries
+         accessor1 (cdr updaters-constants) stobj)))))
+
+  (local
+   (defconst *the-list*
+     (list
+      (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
+      (cons 'update-bpb_bytspersec *bpb_bytspersec*)
+      (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*)
+      (cons 'update-bpb_rootclus *bpb_rootclus*)
+      (cons 'update-bs_bootsig *bs_bootsig*)
+      (cons 'update-bs_reserved1 *bs_reserved1*)
+      (cons 'update-bs_drvnum *bs_drvnum*)
+      (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
+      (cons 'update-bpb_fsinfo *bpb_fsinfo*)
+      (cons 'update-bpb_fsver_major *bpb_fsver_major*)
+      (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
+      (cons 'update-bpb_extflags *bpb_extflags*)
+      (cons 'update-bpb_secperclus *bpb_secperclus*)
+      (cons 'update-bpb_totsec32 *bpb_totsec32*)
+      (cons 'update-bpb_hiddsec *bpb_hiddsec*)
+      (cons 'update-bpb_numheads *bpb_numheads*)
+      (cons 'update-bpb_secpertrk *bpb_secpertrk*)
+      (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
+      (cons 'update-bpb_media *bpb_media*)
+      (cons 'update-bpb_totsec16 *bpb_totsec16*)
+      (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
+      (cons 'update-bpb_numfats *bpb_numfats*)
+      (cons 'update-bs_volid *bs_volid*))))
+
+  (make-event
+   `(defthm
+      bpb_fatsz32-of-update-nth
+      (implies
+       (not (equal key *bpb_fatsz32*))
+       (equal
+        (bpb_fatsz32 (update-nth key val fat32-in-memory))
+        (bpb_fatsz32 fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_fatsz32)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_fatsz32
+        (delete-assoc 'update-bpb_fatsz32 *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_secperclus-of-update-nth
+      (implies
+       (not (equal key *bpb_secperclus*))
+       (equal (bpb_secperclus (update-nth key val fat32-in-memory))
+              (bpb_secperclus fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_secperclus)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_secperclus
+        (delete-assoc 'update-bpb_secperclus *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_rsvdseccnt-of-update-nth
+      (implies
+       (not (equal key *bpb_rsvdseccnt*))
+       (equal
+        (bpb_rsvdseccnt (update-nth key val fat32-in-memory))
+        (bpb_rsvdseccnt fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_rsvdseccnt)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_rsvdseccnt
+        (delete-assoc 'update-bpb_rsvdseccnt *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_numfats-of-update-nth
+      (implies
+       (not (equal key *bpb_numfats*))
+       (equal
+        (bpb_numfats (update-nth key val fat32-in-memory))
+        (bpb_numfats fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_numfats)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_numfats
+        (delete-assoc 'update-bpb_numfats *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_bytspersec-of-update-nth
+      (implies
+       (not (equal key *bpb_bytspersec*))
+       (equal
+        (bpb_bytspersec (update-nth key val fat32-in-memory))
+        (bpb_bytspersec fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_bytspersec)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_bytspersec
+        (delete-assoc 'update-bpb_bytspersec *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_totsec32-of-update-nth
+      (implies
+       (not (equal key *bpb_totsec32*))
+       (equal
+        (bpb_totsec32 (update-nth key val fat32-in-memory))
+        (bpb_totsec32 fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_totsec32)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_totsec32
+        (delete-assoc 'update-bpb_totsec32 *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_rootclus-of-update-nth
+      (implies
+       (not (equal key *bpb_rootclus*))
+       (equal
+        (bpb_rootclus (update-nth key val fat32-in-memory))
+        (bpb_rootclus fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_rootclus)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_rootclus
+        (delete-assoc 'update-bpb_rootclus *the-list*)
+        'fat32-in-memory))))
+
+(defthm
+  cluster-size-of-update-fati
+  (equal (cluster-size (update-fati i v fat32-in-memory))
+         (cluster-size fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable cluster-size update-fati))))
+
 (defthm
   compliant-fat32-in-memoryp-of-update-fati
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
@@ -1127,144 +1302,6 @@
               (update-fat fat32-in-memory str pos))
          (bpb_rsvdseccnt fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
-
-;; Per accumulated-persistence, the rule (:rewrite
-;; update-bpb_secperclus-correctness-2 . 3) is pretty darned useless. We need
-;; to find a way to do without it and its kind.
-(encapsulate
-  ()
-
-  (local
-   (defun
-       make-corollary
-       (accessor1 updater2 constant2 stobj)
-     (list ':rewrite
-           ':corollary
-           (list 'implies
-                 (list 'equal 'key constant2)
-                 (list 'equal
-                       (list accessor1 (list updater2 'val stobj))
-                       (list accessor1 stobj)))
-           ':hints
-           (list (list '"goal"
-                       ':in-theory
-                       (list 'enable updater2))))))
-
-  (local
-   (defun
-       make-corollaries
-       (accessor1 updaters-constants stobj)
-     (if (atom updaters-constants)
-         (list ':rewrite)
-       (list*
-        (make-corollary
-         accessor1
-         (caar updaters-constants)
-         (cdar updaters-constants)
-         stobj)
-        (make-corollaries
-         accessor1 (cdr updaters-constants) stobj)))))
-
-  (local
-   (defconst *the-list*
-     (list
-      (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
-      (cons 'update-bpb_bytspersec *bpb_bytspersec*)
-      (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*)
-      (cons 'update-bpb_rootclus *bpb_rootclus*)
-      (cons 'update-bs_bootsig *bs_bootsig*)
-      (cons 'update-bs_reserved1 *bs_reserved1*)
-      (cons 'update-bs_drvnum *bs_drvnum*)
-      (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
-      (cons 'update-bpb_fsinfo *bpb_fsinfo*)
-      (cons 'update-bpb_fsver_major *bpb_fsver_major*)
-      (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
-      (cons 'update-bpb_extflags *bpb_extflags*)
-      (cons 'update-bpb_secperclus *bpb_secperclus*)
-      (cons 'update-bpb_totsec32 *bpb_totsec32*)
-      (cons 'update-bpb_hiddsec *bpb_hiddsec*)
-      (cons 'update-bpb_numheads *bpb_numheads*)
-      (cons 'update-bpb_secpertrk *bpb_secpertrk*)
-      (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
-      (cons 'update-bpb_media *bpb_media*)
-      (cons 'update-bpb_totsec16 *bpb_totsec16*)
-      (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
-      (cons 'update-bpb_numfats *bpb_numfats*)
-      (cons 'update-bs_volid *bs_volid*))))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-7
-      (implies
-       (not (equal key *bpb_fatsz32*))
-       (equal
-        (bpb_fatsz32 (update-nth key val fat32-in-memory))
-        (bpb_fatsz32 fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_fatsz32)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_fatsz32
-        (delete-assoc 'update-bpb_fatsz32 *the-list*)
-        'fat32-in-memory)))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-8
-      (implies
-       (not (equal key *bpb_secperclus*))
-       (equal (bpb_secperclus (update-nth key val fat32-in-memory))
-              (bpb_secperclus fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_secperclus)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_secperclus
-        (delete-assoc 'update-bpb_secperclus *the-list*)
-        'fat32-in-memory)))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-9
-      (implies
-       (not (equal key *bpb_rsvdseccnt*))
-       (equal
-        (bpb_rsvdseccnt (update-nth key val fat32-in-memory))
-        (bpb_rsvdseccnt fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_rsvdseccnt)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_rsvdseccnt
-        (delete-assoc 'update-bpb_rsvdseccnt *the-list*)
-        'fat32-in-memory)))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-10
-      (implies
-       (not (equal key *bpb_numfats*))
-       (equal
-        (bpb_numfats (update-nth key val fat32-in-memory))
-        (bpb_numfats fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_numfats)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_numfats
-        (delete-assoc 'update-bpb_numfats *the-list*)
-        'fat32-in-memory)))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-31
-      (implies
-       (not (equal key *bpb_bytspersec*))
-       (equal
-        (bpb_bytspersec (update-nth key val fat32-in-memory))
-        (bpb_bytspersec fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_bytspersec)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_bytspersec
-        (delete-assoc 'update-bpb_bytspersec *the-list*)
-        'fat32-in-memory))))
 
 ;; BOZO: Remove these.
 
@@ -2004,13 +2041,6 @@
     :induct
     (stobj-set-indices-in-fa-table fat32-in-memory
                                    index-list value-list))))
-
-(defthm
-  cluster-size-of-update-fati
-  (equal (cluster-size (update-fati i v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints
-  (("goal" :in-theory (enable cluster-size update-fati))))
 
 (defthm
   cluster-size-of-stobj-set-indices-in-fa-table
