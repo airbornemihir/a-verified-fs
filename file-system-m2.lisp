@@ -4,6 +4,7 @@
 
 ; This is a stobj model of the FAT32 filesystem.
 
+(include-book "generate-index-list")
 (include-book "file-system-m1")
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
@@ -145,7 +146,7 @@
   :rule-classes :definition)
 
 (local
- (in-theory (disable take-of-too-many take-of-len-free)))
+ (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal)))
 
 (local
  (in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp data-regionp)))
@@ -376,7 +377,10 @@
        (>= (bpb_bytspersec fat32-in-memory) *ms-min-bytes-per-sector*)
        (>= (bpb_secperclus fat32-in-memory) 1)
        ;; per spec, although this should be a named constant
-       (>= (count-of-clusters fat32-in-memory) *ms-fat32-min-count-of-clusters*)))
+       (>= (count-of-clusters fat32-in-memory)
+           *ms-fat32-min-count-of-clusters*)
+       ;; this isn't in the spec, but clearly implied
+       (>= (bpb_rootclus fat32-in-memory) *ms-first-data-cluster*)))
 
 (encapsulate
   ()
@@ -392,7 +396,9 @@
                       *ms-min-bytes-per-sector*)
                   (>= (count-of-clusters fat32-in-memory)
                       *ms-fat32-min-count-of-clusters*)
-                  (>= (bpb_secperclus fat32-in-memory) 1)))
+                  (>= (bpb_secperclus fat32-in-memory) 1)
+                  (>= (bpb_rootclus fat32-in-memory)
+                      *ms-first-data-cluster*)))
     :hints
     (("goal"
       :in-theory (e/d (compliant-fat32-in-memoryp cluster-size)
@@ -413,42 +419,231 @@
                         *ms-min-bytes-per-sector*)
                     (>= (count-of-clusters fat32-in-memory)
                         *ms-fat32-min-count-of-clusters*)
-                    (>= (bpb_secperclus fat32-in-memory) 1)))))))
+                    (>= (bpb_secperclus fat32-in-memory) 1)
+                    (>= (bpb_rootclus fat32-in-memory)
+                        *ms-first-data-cluster*)))))))
 
 (defthm
   fati-when-compliant-fat32-in-memoryp
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (fat-length fat32-in-memory)))
+                (< (nfix i) (fat-length fat32-in-memory)))
            (fat32-entry-p (fati i fat32-in-memory)))
   :hints (("goal" :in-theory (enable compliant-fat32-in-memoryp
                                      fati fat-length))))
 
+;; Per accumulated-persistence, the rule (:rewrite
+;; update-bpb_secperclus-correctness-2 . 3) is pretty darned useless. We need
+;; to find a way to do without it and its kind.
+(encapsulate
+  ()
+
+  (local
+   (defun
+       make-corollary
+       (accessor1 updater2 constant2 stobj)
+     (list ':rewrite
+           ':corollary
+           (list 'implies
+                 (list 'equal 'key constant2)
+                 (list 'equal
+                       (list accessor1 (list updater2 'val stobj))
+                       (list accessor1 stobj)))
+           ':hints
+           (list (list '"goal"
+                       ':in-theory
+                       (list 'enable updater2))))))
+
+  (local
+   (defun
+       make-corollaries
+       (accessor1 updaters-constants stobj)
+     (if (atom updaters-constants)
+         (list ':rewrite)
+       (list*
+        (make-corollary
+         accessor1
+         (caar updaters-constants)
+         (cdar updaters-constants)
+         stobj)
+        (make-corollaries
+         accessor1 (cdr updaters-constants) stobj)))))
+
+  (local
+   (defconst *the-list*
+     (list
+      (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
+      (cons 'update-bpb_bytspersec *bpb_bytspersec*)
+      (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*)
+      (cons 'update-bpb_rootclus *bpb_rootclus*)
+      (cons 'update-bs_bootsig *bs_bootsig*)
+      (cons 'update-bs_reserved1 *bs_reserved1*)
+      (cons 'update-bs_drvnum *bs_drvnum*)
+      (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
+      (cons 'update-bpb_fsinfo *bpb_fsinfo*)
+      (cons 'update-bpb_fsver_major *bpb_fsver_major*)
+      (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
+      (cons 'update-bpb_extflags *bpb_extflags*)
+      (cons 'update-bpb_secperclus *bpb_secperclus*)
+      (cons 'update-bpb_totsec32 *bpb_totsec32*)
+      (cons 'update-bpb_hiddsec *bpb_hiddsec*)
+      (cons 'update-bpb_numheads *bpb_numheads*)
+      (cons 'update-bpb_secpertrk *bpb_secpertrk*)
+      (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
+      (cons 'update-bpb_media *bpb_media*)
+      (cons 'update-bpb_totsec16 *bpb_totsec16*)
+      (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
+      (cons 'update-bpb_numfats *bpb_numfats*)
+      (cons 'update-bs_volid *bs_volid*))))
+
+  (make-event
+   `(defthm
+      bpb_fatsz32-of-update-nth
+      (implies
+       (not (equal key *bpb_fatsz32*))
+       (equal
+        (bpb_fatsz32 (update-nth key val fat32-in-memory))
+        (bpb_fatsz32 fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_fatsz32)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_fatsz32
+        (delete-assoc 'update-bpb_fatsz32 *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_secperclus-of-update-nth
+      (implies
+       (not (equal key *bpb_secperclus*))
+       (equal (bpb_secperclus (update-nth key val fat32-in-memory))
+              (bpb_secperclus fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_secperclus)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_secperclus
+        (delete-assoc 'update-bpb_secperclus *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_rsvdseccnt-of-update-nth
+      (implies
+       (not (equal key *bpb_rsvdseccnt*))
+       (equal
+        (bpb_rsvdseccnt (update-nth key val fat32-in-memory))
+        (bpb_rsvdseccnt fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_rsvdseccnt)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_rsvdseccnt
+        (delete-assoc 'update-bpb_rsvdseccnt *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_numfats-of-update-nth
+      (implies
+       (not (equal key *bpb_numfats*))
+       (equal
+        (bpb_numfats (update-nth key val fat32-in-memory))
+        (bpb_numfats fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_numfats)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_numfats
+        (delete-assoc 'update-bpb_numfats *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_bytspersec-of-update-nth
+      (implies
+       (not (equal key *bpb_bytspersec*))
+       (equal
+        (bpb_bytspersec (update-nth key val fat32-in-memory))
+        (bpb_bytspersec fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_bytspersec)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_bytspersec
+        (delete-assoc 'update-bpb_bytspersec *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_totsec32-of-update-nth
+      (implies
+       (not (equal key *bpb_totsec32*))
+       (equal
+        (bpb_totsec32 (update-nth key val fat32-in-memory))
+        (bpb_totsec32 fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_totsec32)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_totsec32
+        (delete-assoc 'update-bpb_totsec32 *the-list*)
+        'fat32-in-memory)))
+
+  (make-event
+   `(defthm
+      bpb_rootclus-of-update-nth
+      (implies
+       (not (equal key *bpb_rootclus*))
+       (equal
+        (bpb_rootclus (update-nth key val fat32-in-memory))
+        (bpb_rootclus fat32-in-memory)))
+      :hints (("goal" :in-theory (enable bpb_rootclus)))
+      :rule-classes
+      ,(make-corollaries
+        'bpb_rootclus
+        (delete-assoc 'update-bpb_rootclus *the-list*)
+        'fat32-in-memory))))
+
+(defthm
+  cluster-size-of-update-fati
+  (equal (cluster-size (update-fati i v fat32-in-memory))
+         (cluster-size fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable cluster-size update-fati))))
+
+(defthm
+  fat-length-of-update-fati
+  (equal (fat-length (update-fati i v fat32-in-memory))
+         (max (fat-length fat32-in-memory)
+              (1+ (nfix i))))
+  :hints (("goal" :in-theory (enable fat-length update-fati))))
+
+(defthm
+  count-of-clusters-of-update-fati
+  (equal (count-of-clusters (update-fati i v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (e/d (count-of-clusters update-fati bpb_totsec32)
+                    (floor)))))
+
 (defthm
   compliant-fat32-in-memoryp-of-update-fati
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (fat-length fat32-in-memory))
-                (fat32-entry-p v))
-           (compliant-fat32-in-memoryp
-            (update-fati i v fat32-in-memory)))
+                (< (nfix i) (fat-length fat32-in-memory)))
+           (equal
+            (compliant-fat32-in-memoryp
+             (update-fati i v fat32-in-memory))
+            (fat32-entry-p v)))
   :hints
   (("goal"
     :in-theory (e/d (compliant-fat32-in-memoryp
-                     update-fati fat-length bpb_bytspersec
-                     bpb_secperclus count-of-clusters
-                     bpb_numfats bpb_fatsz32 bpb_rsvdseccnt
-                     bpb_secperclus bpb_totsec32)
+                     update-fati fat-length count-of-clusters)
                     (floor)))))
 
 (defthm
   data-regioni-when-compliant-fat32-in-memoryp
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (data-region-length fat32-in-memory)))
+                (< (nfix i) (data-region-length fat32-in-memory)))
            (unsigned-byte-p 8 (data-regioni i fat32-in-memory)))
-  :hints (("goal" :in-theory (enable compliant-fat32-in-memoryp
-                                     data-regioni data-region-length))))
+  :hints (("goal" :in-theory (e/d (compliant-fat32-in-memoryp
+                                   data-regioni data-region-length)
+                                  (unsigned-byte-p)))))
 
 (defthm
   compliant-fat32-in-memoryp-of-update-data-regioni
@@ -1129,144 +1324,6 @@
          (bpb_rsvdseccnt fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
 
-;; Per accumulated-persistence, the rule (:rewrite
-;; update-bpb_secperclus-correctness-2 . 3) is pretty darned useless. We need
-;; to find a way to do without it and its kind.
-(encapsulate
-  ()
-
-  (local
-   (defun
-       make-corollary
-       (accessor1 updater2 constant2 stobj)
-     (list ':rewrite
-           ':corollary
-           (list 'implies
-                 (list 'equal 'key constant2)
-                 (list 'equal
-                       (list accessor1 (list updater2 'val stobj))
-                       (list accessor1 stobj)))
-           ':hints
-           (list (list '"goal"
-                       ':in-theory
-                       (list 'enable updater2))))))
-
-  (local
-   (defun
-       make-corollaries
-       (accessor1 updaters-constants stobj)
-     (if (atom updaters-constants)
-         (list ':rewrite)
-       (list*
-        (make-corollary
-         accessor1
-         (caar updaters-constants)
-         (cdar updaters-constants)
-         stobj)
-        (make-corollaries
-         accessor1 (cdr updaters-constants) stobj)))))
-
-  (local
-   (defconst *the-list*
-     (list
-      (cons 'update-bpb_fatsz32 *bpb_fatsz32*)
-      (cons 'update-bpb_bytspersec *bpb_bytspersec*)
-      (cons 'update-bpb_rsvdseccnt *bpb_rsvdseccnt*)
-      (cons 'update-bpb_rootclus *bpb_rootclus*)
-      (cons 'update-bs_bootsig *bs_bootsig*)
-      (cons 'update-bs_reserved1 *bs_reserved1*)
-      (cons 'update-bs_drvnum *bs_drvnum*)
-      (cons 'update-bpb_bkbootsec *bpb_bkbootsec*)
-      (cons 'update-bpb_fsinfo *bpb_fsinfo*)
-      (cons 'update-bpb_fsver_major *bpb_fsver_major*)
-      (cons 'update-bpb_fsver_minor *bpb_fsver_minor*)
-      (cons 'update-bpb_extflags *bpb_extflags*)
-      (cons 'update-bpb_secperclus *bpb_secperclus*)
-      (cons 'update-bpb_totsec32 *bpb_totsec32*)
-      (cons 'update-bpb_hiddsec *bpb_hiddsec*)
-      (cons 'update-bpb_numheads *bpb_numheads*)
-      (cons 'update-bpb_secpertrk *bpb_secpertrk*)
-      (cons 'update-bpb_fatsz16 *bpb_fatsz16*)
-      (cons 'update-bpb_media *bpb_media*)
-      (cons 'update-bpb_totsec16 *bpb_totsec16*)
-      (cons 'update-bpb_rootentcnt *bpb_rootentcnt*)
-      (cons 'update-bpb_numfats *bpb_numfats*)
-      (cons 'update-bs_volid *bs_volid*))))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-7
-      (implies
-       (not (equal key *bpb_fatsz32*))
-       (equal
-        (bpb_fatsz32 (update-nth key val fat32-in-memory))
-        (bpb_fatsz32 fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_fatsz32)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_fatsz32
-        (delete-assoc 'update-bpb_fatsz32 *the-list*)
-        'fat32-in-memory)))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-8
-      (implies
-       (not (equal key *bpb_secperclus*))
-       (equal (bpb_secperclus (update-nth key val fat32-in-memory))
-              (bpb_secperclus fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_secperclus)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_secperclus
-        (delete-assoc 'update-bpb_secperclus *the-list*)
-        'fat32-in-memory)))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-9
-      (implies
-       (not (equal key *bpb_rsvdseccnt*))
-       (equal
-        (bpb_rsvdseccnt (update-nth key val fat32-in-memory))
-        (bpb_rsvdseccnt fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_rsvdseccnt)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_rsvdseccnt
-        (delete-assoc 'update-bpb_rsvdseccnt *the-list*)
-        'fat32-in-memory)))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-10
-      (implies
-       (not (equal key *bpb_numfats*))
-       (equal
-        (bpb_numfats (update-nth key val fat32-in-memory))
-        (bpb_numfats fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_numfats)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_numfats
-        (delete-assoc 'update-bpb_numfats *the-list*)
-        'fat32-in-memory)))
-
-  (make-event
-   `(defthm
-      slurp-disk-image-guard-lemma-31
-      (implies
-       (not (equal key *bpb_bytspersec*))
-       (equal
-        (bpb_bytspersec (update-nth key val fat32-in-memory))
-        (bpb_bytspersec fat32-in-memory)))
-      :hints (("goal" :in-theory (enable bpb_bytspersec)))
-      :rule-classes
-      ,(make-corollaries
-        'bpb_bytspersec
-        (delete-assoc 'update-bpb_bytspersec *the-list*)
-        'fat32-in-memory))))
-
 ;; BOZO: Remove these.
 
 (defthm
@@ -1434,15 +1491,6 @@
      (get-dir-ent-helper fat32-in-memory data-region-index (- len 1)))))
 
 (defthm
-  get-dir-ent-helper-correctness-1-lemma-1
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (integerp i)
-                (<= 0 i)
-                (< i (data-region-length fat32-in-memory)))
-           (unsigned-byte-p 8 (data-regioni i fat32-in-memory)))
-  :hints (("goal" :in-theory (disable unsigned-byte-p))))
-
-(defthm
   get-dir-ent-helper-correctness-1
   (implies
    (and (compliant-fat32-in-memoryp fat32-in-memory)
@@ -1581,45 +1629,44 @@
                        :dir :system))
 
   (defun
-      get-contents-from-clusterchain
-      (fat32-in-memory clusterchain file-size)
+    get-contents-from-clusterchain
+    (fat32-in-memory clusterchain file-size)
     (declare
      (xargs
       :stobjs (fat32-in-memory)
       :guard
-      (and (compliant-fat32-in-memoryp fat32-in-memory)
-           (equal (data-region-length fat32-in-memory)
-                  (* (count-of-clusters fat32-in-memory)
-                     (cluster-size fat32-in-memory)))
-           (fat32-masked-entry-list-p clusterchain)
-           (natp file-size)
-           (bounded-nat-listp
-            clusterchain
-            (count-of-clusters fat32-in-memory))
-           (lower-bounded-integer-listp
-            clusterchain *ms-first-data-cluster*))
+      (and
+       (compliant-fat32-in-memoryp fat32-in-memory)
+       (equal (data-region-length fat32-in-memory)
+              (* (count-of-clusters fat32-in-memory)
+                 (cluster-size fat32-in-memory)))
+       (fat32-masked-entry-list-p clusterchain)
+       (natp file-size)
+       (bounded-nat-listp clusterchain
+                          (count-of-clusters fat32-in-memory))
+       (lower-bounded-integer-listp
+        clusterchain *ms-first-data-cluster*))
       :guard-hints
       (("goal" :in-theory (e/d (lower-bounded-integer-listp)
-                               (fat32-in-memoryp))))
-      :guard-debug t))
+                               (fat32-in-memoryp))))))
     (if
-        (atom clusterchain)
-        nil
-      (let*
-          ((cluster-size (cluster-size fat32-in-memory))
-           (masked-current-cluster (car clusterchain))
-           (data-region-index (* (nfix (- masked-current-cluster 2))
-                                 cluster-size)))
-        (append
-         (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                                  (min file-size cluster-size)))
-         (get-contents-from-clusterchain
-          fat32-in-memory (cdr clusterchain)
-          (nfix (- file-size cluster-size)))))))
+     (atom clusterchain)
+     nil
+     (let*
+      ((cluster-size (cluster-size fat32-in-memory))
+       (masked-current-cluster (car clusterchain))
+       (data-region-index (* (nfix (- masked-current-cluster 2))
+                             cluster-size)))
+      (append
+       (rev (get-dir-ent-helper fat32-in-memory data-region-index
+                                (min file-size cluster-size)))
+       (get-contents-from-clusterchain
+        fat32-in-memory (cdr clusterchain)
+        (nfix (- file-size cluster-size)))))))
 
   (defun
-      get-clusterchain-contents
-      (fat32-in-memory masked-current-cluster length)
+    get-clusterchain-contents
+    (fat32-in-memory masked-current-cluster length)
     (declare
      (xargs
       :stobjs fat32-in-memory
@@ -1630,24 +1677,27 @@
                             (cluster-size fat32-in-memory)))
                   (fat32-masked-entry-p masked-current-cluster)
                   (natp length)
-                  (>= masked-current-cluster *ms-first-data-cluster*)
+                  (>= masked-current-cluster
+                      *ms-first-data-cluster*)
                   (< masked-current-cluster
                      (count-of-clusters fat32-in-memory))
-                  (<=
-                   (count-of-clusters fat32-in-memory)
-                   (fat-length fat32-in-memory)))
-      :guard-debug t
-      :guard-hints (("Goal" :do-not-induct t :in-theory (disable fat32-in-memoryp))
-                    ("Subgoal 1.10'" :in-theory (e/d (fat32-in-memoryp)
-                                                 (SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3))
-                     :use (:instance SET-INDICES-IN-FA-TABLE-GUARD-LEMMA-3
-                                     (n MASKED-CURRENT-CLUSTER)
-                                     (l
-                                      (NTH *FATI* FAT32-IN-MEMORY)))))))
+                  (<= (count-of-clusters fat32-in-memory)
+                      (fat-length fat32-in-memory)))
+      :guard-hints
+      (("goal"
+        :do-not-induct t
+        :in-theory (e/d (fati-when-compliant-fat32-in-memoryp)
+                        (fat32-in-memoryp)))
+       ("subgoal 1.10'"
+        :in-theory (e/d (fat32-in-memoryp)
+                        (fat32-entry-p-of-nth))
+        :use (:instance fat32-entry-p-of-nth
+                        (n masked-current-cluster)
+                        (l (nth *fati* fat32-in-memory)))))))
     (b*
         ((cluster-size (cluster-size fat32-in-memory))
-         ((unless
-              (and (not (zp length)) (not (zp cluster-size))))
+         ((unless (and (not (zp length))
+                       (not (zp cluster-size))))
           (mv nil (- *eio*)))
          (data-region-index (* (nfix (- masked-current-cluster 2))
                                cluster-size))
@@ -1657,25 +1707,22 @@
          (masked-next-cluster
           (fat32-entry-mask (fati masked-current-cluster
                                   fat32-in-memory)))
-         ((unless
-              (>= masked-next-cluster *ms-first-data-cluster*))
-          (mv
-           current-cluster-contents
-           (- *eio*)))
-         ((unless
-              (and (not (fat32-is-eof masked-next-cluster))
-                   (< masked-next-cluster
-                      (count-of-clusters fat32-in-memory))))
+         ((unless (>= masked-next-cluster
+                      *ms-first-data-cluster*))
+          (mv current-cluster-contents (- *eio*)))
+         ((unless (and (not (fat32-is-eof masked-next-cluster))
+                       (< masked-next-cluster
+                          (count-of-clusters fat32-in-memory))))
           (mv current-cluster-contents 0))
          ((mv tail-character-list tail-error)
-          (get-clusterchain-contents fat32-in-memory masked-next-cluster
-                                     (nfix (- length cluster-size))))
-         ((unless (equal tail-error 0)) (mv nil (- *eio*))))
-      (mv
-       (append
-        current-cluster-contents
-        tail-character-list)
-       0))))
+          (get-clusterchain-contents
+           fat32-in-memory masked-next-cluster
+           (nfix (- length cluster-size))))
+         ((unless (equal tail-error 0))
+          (mv nil (- *eio*))))
+      (mv (append current-cluster-contents
+                  tail-character-list)
+          0))))
 
 (defthm
   get-clusterchain-contents-correctness-2-lemma-1
@@ -2007,13 +2054,6 @@
                                    index-list value-list))))
 
 (defthm
-  cluster-size-of-update-fati
-  (equal (cluster-size (update-fati i v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints
-  (("goal" :in-theory (enable cluster-size update-fati))))
-
-(defthm
   cluster-size-of-stobj-set-indices-in-fa-table
   (equal
    (cluster-size (stobj-set-indices-in-fa-table
@@ -2039,15 +2079,6 @@
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
 (defthm
-  count-of-clusters-of-update-fati
-  (equal (count-of-clusters (update-fati i v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints
-  (("goal"
-    :in-theory (e/d (count-of-clusters update-fati bpb_totsec32)
-                    (floor)))))
-
-(defthm
   count-of-clusters-of-stobj-set-indices-in-fa-table
   (equal
    (count-of-clusters (stobj-set-indices-in-fa-table
@@ -2055,13 +2086,6 @@
    (count-of-clusters fat32-in-memory))
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
-
-(defthm
-  fat-length-of-update-fati
-  (equal (fat-length (update-fati i v fat32-in-memory))
-         (max (fat-length fat32-in-memory)
-              (1+ (nfix i))))
-  :hints (("goal" :in-theory (enable fat-length update-fati))))
 
 (defthm
   fat-length-of-stobj-set-indices-in-fa-table
@@ -2185,7 +2209,7 @@
     (make-clusters text cluster-size)
     fat32-in-memory))
   :hints
-  (("goal" :in-theory (enable cluster-listp make-clusters))))
+  (("goal" :in-theory (enable cluster-listp make-clusters make-list-ac-removal))))
 
 (defthm
   bpb_bytspersec-of-update-data-regioni
@@ -2679,7 +2703,7 @@
 ;; Gotta return a list of directory entries to join up later when constructing
 ;; the containing directory.
 (defun
-  m1-fs-to-fat32-in-memory
+  m1-fs-to-fat32-in-memory-helper
   (fat32-in-memory fs)
   (declare
    (xargs
@@ -2706,7 +2730,7 @@
       (((unless (consp fs))
         (mv fat32-in-memory nil))
        ((mv fat32-in-memory tail-list)
-        (m1-fs-to-fat32-in-memory fat32-in-memory (cdr fs)))
+        (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)))
        (head (car fs))
        (dir-ent (m1-file->dir-ent (cdr head)))
        ((unless
@@ -2727,7 +2751,7 @@
          (b* ((contents (m1-file->contents (cdr head)))
               (file-length 0) ;; per the specification
               ((mv fat32-in-memory unflattened-contents)
-               (m1-fs-to-fat32-in-memory fat32-in-memory contents))
+               (m1-fs-to-fat32-in-memory-helper fat32-in-memory contents))
               (contents (flatten unflattened-contents)))
            (place-contents fat32-in-memory
                            dir-ent contents file-length)))))
@@ -2735,31 +2759,31 @@
         (list* dir-ent tail-list))))
 
 (defthm
-  cluster-size-of-m1-fs-to-fat32-in-memory
+  cluster-size-of-m1-fs-to-fat32-in-memory-helper
   (equal
    (cluster-size
     (mv-nth 0
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
    (cluster-size fat32-in-memory)))
 
 (defthm
-  count-of-clusters-of-m1-fs-to-fat32-in-memory
+  count-of-clusters-of-m1-fs-to-fat32-in-memory-helper
   (equal
    (count-of-clusters
     (mv-nth 0
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
    (count-of-clusters fat32-in-memory)))
 
 (defthm
-  unsigned-byte-listp-of-m1-fs-to-fat32-in-memory
+  unsigned-byte-listp-of-m1-fs-to-fat32-in-memory-helper
   (unsigned-byte-listp
    8
    (flatten
     (mv-nth 1
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))))
 
 (defthm
-  data-region-length-of-m1-fs-to-fat32-in-memory
+  data-region-length-of-m1-fs-to-fat32-in-memory-helper
   (implies
    ;; Possibly this hypothesis can be removed...
    (equal (data-region-length fat32-in-memory)
@@ -2768,11 +2792,11 @@
    (equal
     (data-region-length
      (mv-nth 0
-             (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+             (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
     (data-region-length fat32-in-memory))))
 
 (defthm
-  compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory
+  compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory-helper
   (implies
    (and (compliant-fat32-in-memoryp fat32-in-memory)
         (equal (data-region-length fat32-in-memory)
@@ -2783,42 +2807,209 @@
             *ms-bad-cluster*))
    (compliant-fat32-in-memoryp
     (mv-nth 0
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))))
 
 (defthm
-  fat-length-of-m1-fs-to-fat32-in-memory
+  fat-length-of-m1-fs-to-fat32-in-memory-helper
   (equal
    (fat-length
     (mv-nth 0
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
    (fat-length fat32-in-memory)))
 
-(verify-guards m1-fs-to-fat32-in-memory :guard-debug t)
+(verify-guards m1-fs-to-fat32-in-memory-helper :guard-debug t)
+
+(defun
+  m1-fs-to-fat32-in-memory
+  (fat32-in-memory fs)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (m1-file-alist-p fs)
+                (equal (data-region-length fat32-in-memory)
+                       (* (cluster-size fat32-in-memory)
+                          (count-of-clusters fat32-in-memory)))
+                (<= (+ *ms-first-data-cluster*
+                       (count-of-clusters fat32-in-memory))
+                    *ms-bad-cluster*)
+                (>= (fat-length fat32-in-memory)
+                    *ms-first-data-cluster*)
+                (<= (fat-length fat32-in-memory)
+                    *ms-bad-cluster*))
+    :guard-debug t
+    :guard-hints
+    (("goal" :in-theory (disable fat32-in-memoryp)
+      :do-not-induct t)
+     ("subgoal 2"
+      :in-theory
+      (e/d (lower-bounded-integer-listp)
+           (true-listp-when-fat32-masked-entry-list-p))
+      :use
+      (:instance
+       true-listp-when-fat32-masked-entry-list-p
+       (x
+        (cdr
+         (mv-nth
+          1
+          (stobj-set-clusters
+           (make-clusters
+            (flatten
+             (mv-nth
+              1
+              (m1-fs-to-fat32-in-memory-helper
+               (stobj-set-indices-in-fa-table
+                fat32-in-memory
+                (remove-equal
+                 (bpb_rootclus fat32-in-memory)
+                 (generate-index-list
+                  2 (+ -2 (fat-length fat32-in-memory))))
+                (make-list-ac
+                 (len
+                  (remove-equal
+                   (bpb_rootclus fat32-in-memory)
+                   (generate-index-list
+                    2 (+ -2 (fat-length fat32-in-memory)))))
+                 0 nil))
+               fs)))
+            (cluster-size fat32-in-memory))
+           (cons
+            (bpb_rootclus fat32-in-memory)
+            (find-n-free-clusters
+             (nth
+              *fati*
+              (mv-nth
+               0
+               (m1-fs-to-fat32-in-memory-helper
+                (stobj-set-indices-in-fa-table
+                 fat32-in-memory
+                 (remove-equal
+                  (bpb_rootclus fat32-in-memory)
+                  (generate-index-list
+                   2 (+ -2 (fat-length fat32-in-memory))))
+                 (make-list-ac
+                  (len
+                   (remove-equal
+                    (bpb_rootclus fat32-in-memory)
+                    (generate-index-list
+                     2 (+ -2 (fat-length fat32-in-memory)))))
+                  0 nil))
+                fs)))
+             (+
+              -1
+              (len
+               (make-clusters
+                (flatten
+                 (mv-nth
+                  1
+                  (m1-fs-to-fat32-in-memory-helper
+                   (stobj-set-indices-in-fa-table
+                    fat32-in-memory
+                    (remove-equal
+                     (bpb_rootclus fat32-in-memory)
+                     (generate-index-list
+                      2 (+ -2 (fat-length fat32-in-memory))))
+                    (make-list-ac
+                     (len
+                      (remove-equal
+                       (bpb_rootclus fat32-in-memory)
+                       (generate-index-list
+                        2
+                        (+ -2 (fat-length fat32-in-memory)))))
+                     0 nil))
+                   fs)))
+                (cluster-size fat32-in-memory))))))
+           (mv-nth
+            0
+            (m1-fs-to-fat32-in-memory-helper
+             (stobj-set-indices-in-fa-table
+              fat32-in-memory
+              (remove-equal
+               (bpb_rootclus fat32-in-memory)
+               (generate-index-list
+                2 (+ -2 (fat-length fat32-in-memory))))
+              (make-list-ac
+               (len
+                (remove-equal
+                 (bpb_rootclus fat32-in-memory)
+                 (generate-index-list
+                  2 (+ -2 (fat-length fat32-in-memory)))))
+               0 nil))
+             fs)))))))))))
+  (b*
+      ((rootclus (bpb_rootclus fat32-in-memory))
+       (cluster-size (cluster-size fat32-in-memory))
+       (index-list-to-clear
+        (remove
+         rootclus
+         (generate-index-list *ms-first-data-cluster*
+                              (- (fat-length fat32-in-memory)
+                                 *ms-first-data-cluster*))))
+       (fat32-in-memory (stobj-set-indices-in-fa-table
+                         fat32-in-memory index-list-to-clear
+                         (make-list (len index-list-to-clear)
+                                    :initial-element 0)))
+       ((mv fat32-in-memory dir-ent-list)
+        (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs))
+       (contents (flatten dir-ent-list))
+       (clusters (make-clusters contents cluster-size))
+       (indices (list* rootclus
+                       (stobj-find-n-free-clusters
+                        fat32-in-memory
+                        (nfix (- (len clusters) 1)))))
+       ((unless (equal (len indices) (len clusters)))
+        fat32-in-memory)
+       ((mv fat32-in-memory indices)
+        (stobj-set-clusters clusters indices fat32-in-memory))
+       (fat32-in-memory
+        (if
+         (atom indices)
+         fat32-in-memory
+         (stobj-set-indices-in-fa-table
+          fat32-in-memory indices
+          (binary-append (cdr indices)
+                         (list *ms-end-of-clusterchain*))))))
+    fat32-in-memory))
 
 #|
 Currently the function call to test out this function is
 (b* (((mv contents &)
-      (get-clusterchain-contents
-       fat32-in-memory 2 (ash 1 21))))
-  (get-dir-filenames
-   fat32-in-memory contents (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
+  (get-dir-filenames fat32-in-memory contents (ash 1 21)))
 More (rather awful) testing forms are
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents
-       fat32-in-memory 2 (ash 1 21))))
-  (fat32-in-memory-to-m1-fs
-  fat32-in-memory dir-contents 40))
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
+  (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents
-       fat32-in-memory 2 (ash 1 21))) (fs (fat32-in-memory-to-m1-fs
-  fat32-in-memory dir-contents 40) ))
-  (m1-open (list "INITRD  IMG") fs nil nil))
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40)))
+  (m1-open (list "INITRD  IMG")
+           fs nil nil))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents
-       fat32-in-memory 2 (ash 1 21))) (fs (fat32-in-memory-to-m1-fs
-  fat32-in-memory dir-contents 40) ) ((mv fd-table file-table & &)
-  (m1-open (list "INITRD  IMG") fs nil nil))) (M1-PREAD
-                0 6 49 FS FD-TABLE FILE-TABLE))
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     ((mv fd-table file-table & &)
+      (m1-open (list "INITRD  IMG")
+               fs nil nil)))
+  (m1-pread 0 6 49 fs fd-table file-table))
+(b* (((mv dir-contents &)
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     ((mv fd-table file-table & &)
+      (m1-open (list "INITRD  IMG")
+               fs nil nil)))
+  (m1-pwrite 0 "ornery" 49 fs fd-table file-table))
+(b* (((mv dir-contents &)
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     ((mv fd-table file-table & &)
+      (m1-open (list "INITRD  IMG")
+               fs nil nil))
+     ((mv fs & &)
+      (m1-pwrite 0 "ornery" 49 fs fd-table file-table))
+     ((mv fat32-in-memory dir-ent-list)
+      (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
+  (mv fat32-in-memory dir-ent-list))
 |#
 (defun
   get-dir-filenames

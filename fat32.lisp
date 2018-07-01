@@ -139,9 +139,8 @@
                   (and (fat32-masked-entry-list-p x)
                        (fat32-masked-entry-list-p y)))))
 
-(defthm set-indices-in-fa-table-guard-lemma-1
-  (implies (and (natp key)
-                (< key (len l))
+(defthm fat32-entry-list-p-of-update-nth
+  (implies (and (< (nfix key) (len l))
                 (fat32-entry-list-p l))
            (equal (fat32-entry-list-p (update-nth key val l))
                   (fat32-entry-p val))))
@@ -151,10 +150,9 @@
   :hints (("goal" :in-theory (enable fat32-entry-p)))
   :rule-classes :forward-chaining)
 
-(defthm set-indices-in-fa-table-guard-lemma-3
+(defthm fat32-entry-p-of-nth
   (implies (and (fat32-entry-list-p l)
-                (natp n)
-                (< n (len l)))
+                (< (nfix n) (len l)))
            (fat32-entry-p (nth n l))))
 
 (defund
