@@ -2798,27 +2798,42 @@
 #|
 Currently the function call to test out this function is
 (b* (((mv contents &)
-      (get-clusterchain-contents
-       fat32-in-memory 2 (ash 1 21))))
-  (get-dir-filenames
-   fat32-in-memory contents (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
+  (get-dir-filenames fat32-in-memory contents (ash 1 21)))
 More (rather awful) testing forms are
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents
-       fat32-in-memory 2 (ash 1 21))))
-  (fat32-in-memory-to-m1-fs
-  fat32-in-memory dir-contents 40))
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
+  (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents
-       fat32-in-memory 2 (ash 1 21))) (fs (fat32-in-memory-to-m1-fs
-  fat32-in-memory dir-contents 40) ))
-  (m1-open (list "INITRD  IMG") fs nil nil))
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40)))
+  (m1-open (list "INITRD  IMG")
+           fs nil nil))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents
-       fat32-in-memory 2 (ash 1 21))) (fs (fat32-in-memory-to-m1-fs
-  fat32-in-memory dir-contents 40) ) ((mv fd-table file-table & &)
-  (m1-open (list "INITRD  IMG") fs nil nil))) (M1-PREAD
-                0 6 49 FS FD-TABLE FILE-TABLE))
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     ((mv fd-table file-table & &)
+      (m1-open (list "INITRD  IMG")
+               fs nil nil)))
+  (m1-pread 0 6 49 fs fd-table file-table))
+(b* (((mv dir-contents &)
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     ((mv fd-table file-table & &)
+      (m1-open (list "INITRD  IMG")
+               fs nil nil)))
+  (m1-pwrite 0 "ornery" 49 fs fd-table file-table))
+(b* (((mv dir-contents &)
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     ((mv fd-table file-table & &)
+      (m1-open (list "INITRD  IMG")
+               fs nil nil))
+     ((mv fs & &)
+      (m1-pwrite 0 "ornery" 49 fs fd-table file-table))
+     ((mv fat32-in-memory dir-ent-list)
+      (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+  (mv fat32-in-memory dir-ent-list))
 |#
 (defun
   get-dir-filenames
