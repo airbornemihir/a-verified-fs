@@ -4,6 +4,7 @@
 
 ; This is a stobj model of the FAT32 filesystem.
 
+(include-book "generate-index-list")
 (include-book "file-system-m1")
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
@@ -145,7 +146,7 @@
   :rule-classes :definition)
 
 (local
- (in-theory (disable take-of-too-many take-of-len-free)))
+ (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal)))
 
 (local
  (in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp data-regionp)))
@@ -2204,7 +2205,7 @@
     (make-clusters text cluster-size)
     fat32-in-memory))
   :hints
-  (("goal" :in-theory (enable cluster-listp make-clusters))))
+  (("goal" :in-theory (enable cluster-listp make-clusters make-list-ac-removal))))
 
 (defthm
   bpb_bytspersec-of-update-data-regioni
@@ -2813,6 +2814,63 @@
    (fat-length fat32-in-memory)))
 
 (verify-guards m1-fs-to-fat32-in-memory-helper :guard-debug t)
+
+(defund
+    m1-fs-to-fat32-in-memory
+    (fat32-in-memory fs)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (m1-file-alist-p fs)
+                (equal (data-region-length fat32-in-memory)
+                       (* (cluster-size fat32-in-memory)
+                          (count-of-clusters fat32-in-memory)))
+                (<= (+ *ms-first-data-cluster*
+                       (count-of-clusters fat32-in-memory))
+                    *ms-bad-cluster*)
+                (>= (fat-length fat32-in-memory)
+                    *ms-first-data-cluster*)
+                (<= (fat-length fat32-in-memory)
+                    *ms-bad-cluster*))
+    :guard-debug t
+    :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp)) )))
+  (b*
+      ((rootclus (bpb_rootclus fat32-in-memory))
+       (cluster-size (cluster-size fat32-in-memory))
+       (index-list-to-clear (remove
+                             rootclus
+                             (generate-index-list
+                              *ms-first-data-cluster*
+                              (- (fat-length fat32-in-memory)
+                                 *ms-first-data-cluster*))))
+       (fat32-in-memory
+        (stobj-set-indices-in-fa-table
+         fat32-in-memory
+         index-list-to-clear
+         (make-list (len index-list-to-clear) :initial-element 0)))
+       ((mv fat32-in-memory dir-ent-list)
+        (m1-fs-to-fat32-in-memory-helper
+         fat32-in-memory fs))
+       (contents (flatten dir-ent-list))
+       (clusters (make-clusters contents cluster-size))
+       (indices
+        (list* rootclus
+               (stobj-find-n-free-clusters
+                 fat32-in-memory (nfix (- (len clusters) 1)))))
+       ((unless (equal (len indices) (len clusters)))
+        fat32-in-memory)
+       ((mv fat32-in-memory indices)
+        (stobj-set-clusters clusters indices fat32-in-memory))
+       (fat32-in-memory
+        (if
+            (atom indices)
+            fat32-in-memory
+          (stobj-set-indices-in-fa-table
+           fat32-in-memory indices
+           (binary-append (cdr indices)
+                          (list *ms-end-of-clusterchain*))))))
+    fat32-in-memory))
 
 #|
 Currently the function call to test out this function is
