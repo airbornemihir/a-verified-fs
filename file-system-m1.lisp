@@ -453,7 +453,9 @@
 
 (defcong m1-file-alist-equiv equal (m1-pread fd count offset fs fd-table file-table) 4)
 
-(defun m1-pwrite (fd buf offset fs fd-table file-table)
+(defun
+  m1-pwrite
+  (fd buf offset fs fd-table file-table)
   (declare (xargs :guard (and (natp fd)
                               (stringp buf)
                               (natp offset)
@@ -472,22 +474,18 @@
        (pathname (file-table-element->fid (cdr file-table-entry)))
        ((mv file error-code)
         (find-file-by-pathname fs pathname))
-       (oldtext
-        (coerce
-         (if (and (equal error-code 0)
-                  (m1-regular-file-p file))
-             (m1-file->contents file)
-           "")
-         'list))
+       ((mv oldtext dir-ent)
+        (if (and (equal error-code 0)
+                 (m1-regular-file-p file))
+            (mv (coerce (m1-file->contents file) 'list)
+                (m1-file->dir-ent file))
+            (mv nil (dir-ent-fix nil))))
        (file
-        (make-m1-file :dir-ent
-                      (dir-ent-fix nil)
-                      :contents
-                      (coerce (insert-text oldtext offset buf) 'string)))
+        (make-m1-file
+         :dir-ent dir-ent
+         :contents (coerce (insert-text oldtext offset buf)
+                           'string)))
        ((mv fs error-code)
-        (place-file-by-pathname
-         fs pathname file)))
-    (mv
-     fs
-     (if (equal error-code 0) 0 -1)
-     error-code)))
+        (place-file-by-pathname fs pathname file)))
+    (mv fs (if (equal error-code 0) 0 -1)
+        error-code)))
