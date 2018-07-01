@@ -602,20 +602,33 @@
   (("goal" :in-theory (enable cluster-size update-fati))))
 
 (defthm
+  fat-length-of-update-fati
+  (equal (fat-length (update-fati i v fat32-in-memory))
+         (max (fat-length fat32-in-memory)
+              (1+ (nfix i))))
+  :hints (("goal" :in-theory (enable fat-length update-fati))))
+
+(defthm
+  count-of-clusters-of-update-fati
+  (equal (count-of-clusters (update-fati i v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (e/d (count-of-clusters update-fati bpb_totsec32)
+                    (floor)))))
+
+(defthm
   compliant-fat32-in-memoryp-of-update-fati
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (fat-length fat32-in-memory))
-                (fat32-entry-p v))
-           (compliant-fat32-in-memoryp
-            (update-fati i v fat32-in-memory)))
+                (< (nfix i) (fat-length fat32-in-memory)))
+           (equal
+            (compliant-fat32-in-memoryp
+             (update-fati i v fat32-in-memory))
+            (fat32-entry-p v)))
   :hints
   (("goal"
     :in-theory (e/d (compliant-fat32-in-memoryp
-                     update-fati fat-length bpb_bytspersec
-                     bpb_secperclus count-of-clusters
-                     bpb_numfats bpb_fatsz32 bpb_rsvdseccnt
-                     bpb_secperclus bpb_totsec32)
+                     update-fati fat-length count-of-clusters)
                     (floor)))))
 
 (defthm
@@ -2070,15 +2083,6 @@
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
 (defthm
-  count-of-clusters-of-update-fati
-  (equal (count-of-clusters (update-fati i v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints
-  (("goal"
-    :in-theory (e/d (count-of-clusters update-fati bpb_totsec32)
-                    (floor)))))
-
-(defthm
   count-of-clusters-of-stobj-set-indices-in-fa-table
   (equal
    (count-of-clusters (stobj-set-indices-in-fa-table
@@ -2086,13 +2090,6 @@
    (count-of-clusters fat32-in-memory))
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
-
-(defthm
-  fat-length-of-update-fati
-  (equal (fat-length (update-fati i v fat32-in-memory))
-         (max (fat-length fat32-in-memory)
-              (1+ (nfix i))))
-  :hints (("goal" :in-theory (enable fat-length update-fati))))
 
 (defthm
   fat-length-of-stobj-set-indices-in-fa-table
