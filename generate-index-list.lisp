@@ -11,22 +11,17 @@
                               (natp block-list-length))))
   (if (zp block-list-length)
       nil
-      (cons disk-length
+      (cons (nfix disk-length)
             (generate-index-list (1+ disk-length)
                                  (1- block-list-length)))))
 
 (defthm
   generate-index-list-correctness-1
-  (implies
-   (and (natp disk-length)
-        (natp block-list-length))
-   (nat-listp
-    (generate-index-list disk-length block-list-length))))
+  (nat-listp
+   (generate-index-list disk-length block-list-length)))
 
 (defthm
   generate-index-list-correctness-2
-  (implies
-   (natp block-list-length)
-   (equal
-    (len (generate-index-list disk-length block-list-length))
-    block-list-length)))
+  (equal
+   (len (generate-index-list disk-length block-list-length))
+   (nfix block-list-length)))
