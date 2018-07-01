@@ -634,11 +634,11 @@
 (defthm
   data-regioni-when-compliant-fat32-in-memoryp
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (data-region-length fat32-in-memory)))
+                (< (nfix i) (data-region-length fat32-in-memory)))
            (unsigned-byte-p 8 (data-regioni i fat32-in-memory)))
-  :hints (("goal" :in-theory (enable compliant-fat32-in-memoryp
-                                     data-regioni data-region-length))))
+  :hints (("goal" :in-theory (e/d (compliant-fat32-in-memoryp
+                                   data-regioni data-region-length)
+                                  (unsigned-byte-p)))))
 
 (defthm
   compliant-fat32-in-memoryp-of-update-data-regioni
@@ -1484,15 +1484,6 @@
     (cons
      (data-regioni (+ data-region-index len -1) fat32-in-memory)
      (get-dir-ent-helper fat32-in-memory data-region-index (- len 1)))))
-
-(defthm
-  get-dir-ent-helper-correctness-1-lemma-1
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (integerp i)
-                (<= 0 i)
-                (< i (data-region-length fat32-in-memory)))
-           (unsigned-byte-p 8 (data-regioni i fat32-in-memory)))
-  :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
 (defthm
   get-dir-ent-helper-correctness-1
