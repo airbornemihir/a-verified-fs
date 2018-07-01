@@ -2679,7 +2679,7 @@
 ;; Gotta return a list of directory entries to join up later when constructing
 ;; the containing directory.
 (defun
-  m1-fs-to-fat32-in-memory
+  m1-fs-to-fat32-in-memory-helper
   (fat32-in-memory fs)
   (declare
    (xargs
@@ -2706,7 +2706,7 @@
       (((unless (consp fs))
         (mv fat32-in-memory nil))
        ((mv fat32-in-memory tail-list)
-        (m1-fs-to-fat32-in-memory fat32-in-memory (cdr fs)))
+        (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)))
        (head (car fs))
        (dir-ent (m1-file->dir-ent (cdr head)))
        ((unless
@@ -2727,7 +2727,7 @@
          (b* ((contents (m1-file->contents (cdr head)))
               (file-length 0) ;; per the specification
               ((mv fat32-in-memory unflattened-contents)
-               (m1-fs-to-fat32-in-memory fat32-in-memory contents))
+               (m1-fs-to-fat32-in-memory-helper fat32-in-memory contents))
               (contents (flatten unflattened-contents)))
            (place-contents fat32-in-memory
                            dir-ent contents file-length)))))
@@ -2735,31 +2735,31 @@
         (list* dir-ent tail-list))))
 
 (defthm
-  cluster-size-of-m1-fs-to-fat32-in-memory
+  cluster-size-of-m1-fs-to-fat32-in-memory-helper
   (equal
    (cluster-size
     (mv-nth 0
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
    (cluster-size fat32-in-memory)))
 
 (defthm
-  count-of-clusters-of-m1-fs-to-fat32-in-memory
+  count-of-clusters-of-m1-fs-to-fat32-in-memory-helper
   (equal
    (count-of-clusters
     (mv-nth 0
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
    (count-of-clusters fat32-in-memory)))
 
 (defthm
-  unsigned-byte-listp-of-m1-fs-to-fat32-in-memory
+  unsigned-byte-listp-of-m1-fs-to-fat32-in-memory-helper
   (unsigned-byte-listp
    8
    (flatten
     (mv-nth 1
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))))
 
 (defthm
-  data-region-length-of-m1-fs-to-fat32-in-memory
+  data-region-length-of-m1-fs-to-fat32-in-memory-helper
   (implies
    ;; Possibly this hypothesis can be removed...
    (equal (data-region-length fat32-in-memory)
@@ -2768,11 +2768,11 @@
    (equal
     (data-region-length
      (mv-nth 0
-             (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+             (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
     (data-region-length fat32-in-memory))))
 
 (defthm
-  compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory
+  compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory-helper
   (implies
    (and (compliant-fat32-in-memoryp fat32-in-memory)
         (equal (data-region-length fat32-in-memory)
@@ -2783,17 +2783,17 @@
             *ms-bad-cluster*))
    (compliant-fat32-in-memoryp
     (mv-nth 0
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))))
 
 (defthm
-  fat-length-of-m1-fs-to-fat32-in-memory
+  fat-length-of-m1-fs-to-fat32-in-memory-helper
   (equal
    (fat-length
     (mv-nth 0
-            (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
    (fat-length fat32-in-memory)))
 
-(verify-guards m1-fs-to-fat32-in-memory :guard-debug t)
+(verify-guards m1-fs-to-fat32-in-memory-helper :guard-debug t)
 
 #|
 Currently the function call to test out this function is
@@ -2832,7 +2832,7 @@ More (rather awful) testing forms are
      ((mv fs & &)
       (m1-pwrite 0 "ornery" 49 fs fd-table file-table))
      ((mv fat32-in-memory dir-ent-list)
-      (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+      (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
   (mv fat32-in-memory dir-ent-list))
 |#
 (defun
