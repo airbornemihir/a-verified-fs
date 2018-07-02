@@ -1615,7 +1615,7 @@
                              cluster-size)))
       (append
        (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                                (min file-size cluster-size)))
+                                (min file-size cluster-size) nil))
        (get-contents-from-clusterchain
         fat32-in-memory (cdr clusterchain)
         (nfix (- file-size cluster-size)))))))
@@ -1659,7 +1659,8 @@
                                cluster-size))
          (current-cluster-contents
           (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                                   (min length cluster-size))))
+                                   (min length cluster-size)
+                                   nil)))
          (masked-next-cluster
           (fat32-entry-mask (fati masked-current-cluster
                                   fat32-in-memory)))
@@ -3080,8 +3081,11 @@
         (stobj-fa-table-to-string fat32-in-memory
                                   (fat-length fat32-in-memory)))
        (data-region-string
-        (stobj-data-region-to-string
-         fat32-in-memory (data-region-length fat32-in-memory))))
+        ;; reproducing the definition of rchars-to-string because it doesn't
+        ;; seem to be available to us
+        (reverse (implode
+         (get-dir-ent-helper
+          fat32-in-memory 0 (data-region-length fat32-in-memory) nil)))))
     (concatenate 'string
                  reserved-area-string
                  fat-string data-region-string)))
