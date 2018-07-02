@@ -861,40 +861,42 @@
 (defund get-initial-bytes (str)
   (declare (xargs :guard (and (stringp str)
                               (>= (length str) *initialbytcnt*))))
-  (string=>nats (subseq str 0 *initialbytcnt*)))
+  (subseq str 0 *initialbytcnt*))
 
 (defthm
   get-initial-bytes-correctness-1
   (implies (stringp str)
-           (equal (len (get-initial-bytes str))
+           (equal (length (get-initial-bytes str))
                   *initialbytcnt*))
   :hints (("goal" :in-theory (enable get-initial-bytes))))
 
 (defthm
   get-initial-bytes-correctness-2
-           (unsigned-byte-listp 8 (get-initial-bytes str))
+  (implies (stringp str)
+           (stringp (get-initial-bytes str)))
   :hints (("goal" :in-theory (enable get-initial-bytes))))
 
 (defund
   get-remaining-rsvdbyts (str)
-  (declare (xargs :guard (and (stringp str)
+  (declare (xargs :guard-debug t
+                  :guard (and (stringp str)
                               (>= (length str) *initialbytcnt*)
-                              (<= (* (combine16u (nth 12 (get-initial-bytes str))
-                                                 (nth 11 (get-initial-bytes str)))
-                                     (combine16u (nth 15 (get-initial-bytes str))
-                                                 (nth 14 (get-initial-bytes str))))
-                                  (len (explode str)))
-                              (<= 16
-                                  (* (combine16u (nth 12 (get-initial-bytes str))
-                                                 (nth 11 (get-initial-bytes str)))
-                                     (combine16u (nth 15 (get-initial-bytes str))
-                                                 (nth 14 (get-initial-bytes str))))))))
+                              (<= (* (combine16u (char-code (char 12 (get-initial-bytes str)))
+                                                 (char-code (char 11 (get-initial-bytes str))))
+                                     (combine16u (char-code (char 15 (get-initial-bytes str)))
+                                                 (char-code (char 14 (get-initial-bytes str)))))
+                                  (length str))
+                              (<= *initialbytcnt*
+                                  (* (combine16u (char-code (char 12 (get-initial-bytes str)))
+                                                 (char-code (char 11 (get-initial-bytes str))))
+                                     (combine16u (char-code (char 15 (get-initial-bytes str)))
+                                                 (char-code (char 14 (get-initial-bytes str)))))))))
   (b*
       ((initial-bytes (get-initial-bytes str))
-       (tmp_bytspersec (combine16u (nth (+ 11 1) initial-bytes)
-                                   (nth (+ 11 0) initial-bytes)))
-       (tmp_rsvdseccnt (combine16u (nth (+ 14 1) initial-bytes)
-                                   (nth (+ 14 0) initial-bytes)))
+       (tmp_bytspersec (combine16u (char-code (char (+ 11 1) initial-bytes))
+                                   (char-code (char (+ 11 0) initial-bytes))))
+       (tmp_rsvdseccnt (combine16u (char-code (char (+ 14 1) initial-bytes))
+                                   (char-code (char (+ 14 0) initial-bytes))))
        (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec)))
     (string=>nats (subseq str *initialbytcnt* tmp_rsvdbytcnt))))
 
