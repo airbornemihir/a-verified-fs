@@ -645,8 +645,6 @@
                                    data-regioni data-region-length)
                                   (unsigned-byte-p)))))
 
-;; This can be improved in a similar way to
-;; compliant-fat32-in-memoryp-of-update-fati.
 (defthm
   compliant-fat32-in-memoryp-of-update-data-regioni
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
@@ -2970,6 +2968,62 @@
           (binary-append (cdr indices)
                          (list *ms-end-of-clusterchain*))))))
     fat32-in-memory))
+
+(defun stobj-fa-table-to-string (fat32-in-memory length)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (natp length)
+                (<= length (fat-length fat32-in-memory)))
+    :verify-guards nil))
+  (if (zp length)
+      ""
+    (concatenate 'string
+                 (stobj-fa-table-to-string fat32-in-memory (- length 1))
+                 (let
+                     ((current (fati (- length 1) fat32-in-memory)))
+                   (nats=>string
+                    (list
+                     (loghead 8             current)
+                     (loghead 8 (logtail  8 current))
+                     (loghead 8 (logtail 16 current))
+                                (logtail 24 current)))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "ihs/logops-lemmas" :dir :system))
+
+  (verify-guards stobj-fa-table-to-string
+    :guard-debug t
+    :hints (("goal" :in-theory (e/d
+                                (fat32-entry-p)
+                                (fat32-in-memoryp
+                                 unsigned-byte-p
+                                 loghead logtail
+                                 fati-when-compliant-fat32-in-memoryp))
+             :use (:instance 
+                   fati-when-compliant-fat32-in-memoryp
+                   (i (+ -1 length)))))))
+
+(defund fat32-in-memory-to-string
+  (declare :stobjs fat32-in-memory
+           :guard (compliant-fat32-in-memoryp fat32-in-memory))
+  (b*
+      (()
+       ()
+       (data-region-string
+        (nats=>string
+         (rev (get-dir-ent-helper
+               fat32-in-memory
+               0
+               (data-region-length fat32-in-memory))))))
+    (concatenate
+     'string
+     reserved-area-string
+     fat-string
+     data-region-string)))
 
 #|
 Currently the function call to test out this function is
