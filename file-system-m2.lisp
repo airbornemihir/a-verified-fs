@@ -947,70 +947,7 @@
               nth-of-unsigned-byte-list
               (n 0)
               (l (get-remaining-rsvdbyts str))
-              (bits 8)))
-       ;; ("Subgoal 8" :in-theory (disable nth-of-unsigned-byte-list)
-       ;;  :use (:instance
-       ;;        nth-of-unsigned-byte-list
-       ;;        (n 13)
-       ;;        (l (get-initial-bytes str))
-       ;;        (bits 8)))
-       ;; ("Subgoal 7" :in-theory (disable nth-of-unsigned-byte-list)
-       ;;  :use (:instance
-       ;;        nth-of-unsigned-byte-list
-       ;;        (n 0)
-       ;;        (l
-       ;;         (STRING=>NATS
-       ;;          (IMPLODE
-       ;;           (TAKE
-       ;;            (+
-       ;;             -16
-       ;;             (*
-       ;;              (COMBINE16U (NTH 12
-       ;;                               (GET-INITIAL-BYTES STR))
-       ;;                          (NTH 11
-       ;;                               (GET-INITIAL-BYTES STR)))
-       ;;              (COMBINE16U (NTH 15
-       ;;                               (GET-INITIAL-BYTES STR))
-       ;;                          (NTH 14
-       ;;                               (GET-INITIAL-BYTES STR)))))
-       ;;            (NTHCDR 16 (EXPLODE STR))))))
-       ;;        (bits 8)))
-       ;; ("subgoal 5"
-       ;;  :in-theory (disable nth-of-unsigned-byte-list)
-       ;;  :use
-       ;;  (:instance
-       ;;   nth-of-unsigned-byte-list (bits 8)
-       ;;   (n 13)
-       ;;   (l (get-initial-bytes str))))
-       ;; ("subgoal 4"
-       ;;  :in-theory (disable nth-of-unsigned-byte-list)
-       ;;  :use
-       ;;  (:instance
-       ;;   nth-of-unsigned-byte-list (bits 8)
-       ;;   (n 0)
-       ;;   (l
-       ;;    (string=>nats
-       ;;     (implode
-       ;;      (take
-       ;;       (+
-       ;;        -16
-       ;;        (*
-       ;;         (combine16u
-       ;;          (nth
-       ;;           12
-       ;;           (get-initial-bytes str))
-       ;;          (nth 11
-       ;;               (string=>nats
-       ;;                (implode (take 16 (explode str))))))
-       ;;         (combine16u
-       ;;          (nth
-       ;;           15
-       ;;           (get-initial-bytes str))
-       ;;          (nth 14
-       ;;               (string=>nats
-       ;;                (implode (take 16 (explode str))))))))
-       ;;       (nthcdr 16 (explode str))))))))
-       )
+              (bits 8))))
       :stobjs (fat32-in-memory)))
     (b*
         (;; we want to do this unconditionally, in order to prove a strong linear
@@ -1532,42 +1469,6 @@
                        *ms-dir-ent-length*)))
   :hints (("Goal" :in-theory (e/d (get-dir-ent unsigned-byte-listp)
                                   (fat32-in-memoryp)))))
-
-;; (defun
-;;   get-dir-filenames
-;;   (fat32-in-memory data-region-index entry-limit)
-;;   (declare (xargs :measure (acl2-count entry-limit)
-;;                   :verify-guards nil
-;;                   :stobjs (fat32-in-memory)))
-;;   (if
-;;    (or (zp entry-limit)
-;;        (equal (data-regioni data-region-index fat32-in-memory)
-;;               0))
-;;    nil
-;;    (let*
-;;     ((dir-ent (get-dir-ent fat32-in-memory data-region-index))
-;;      (first-cluster (combine32u (nth 21 dir-ent)
-;;                                 (nth 20 dir-ent)
-;;                                 (nth 27 dir-ent)
-;;                                 (nth 26 dir-ent)))
-;;      (filename (nats=>string (subseq dir-ent 0 11))))
-;;     (list*
-;;      (if (or (zp (logand (data-regioni (+ data-region-index 11)
-;;                                        fat32-in-memory)
-;;                          (ash 1 4)))
-;;              (equal filename ".          ")
-;;              (equal filename "..         "))
-;;          (list* filename first-cluster)
-;;          (list filename first-cluster
-;;                (get-dir-filenames
-;;                 fat32-in-memory
-;;                 (* (nfix (- first-cluster 2))
-;;                    (bpb_secperclus fat32-in-memory)
-;;                    (bpb_bytspersec fat32-in-memory))
-;;                 (- entry-limit 1))))
-;;      (get-dir-filenames
-;;       fat32-in-memory (+ data-region-index 32)
-;;       (- entry-limit 1))))))
 
 (defund
   get-clusterchain
@@ -3006,13 +2907,16 @@
              :use (:instance 
                    fati-when-compliant-fat32-in-memoryp
                    (i (+ -1 length)))))))
-
+#|
 (defund fat32-in-memory-to-string
   (declare :stobjs fat32-in-memory
            :guard (compliant-fat32-in-memoryp fat32-in-memory))
   (b*
       (()
-       ()
+       (fat-string
+        (stobj-fa-table-to-string
+         fat32-in-memory
+         (fat-length fat32-in-memory)))
        (data-region-string
         (nats=>string
          (rev (get-dir-ent-helper
@@ -3024,13 +2928,13 @@
      reserved-area-string
      fat-string
      data-region-string)))
+|#
 
 #|
-Currently the function call to test out this function is
+Some (rather awful) testing forms are
 (b* (((mv contents &)
       (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
   (get-dir-filenames fat32-in-memory contents (ash 1 21)))
-More (rather awful) testing forms are
 (b* (((mv dir-contents &)
       (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
   (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
