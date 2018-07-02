@@ -2874,43 +2874,70 @@
                          (list *ms-end-of-clusterchain*))))))
     fat32-in-memory))
 
-(defun stobj-fa-table-to-string (fat32-in-memory length)
-  (declare
-   (xargs
-    :stobjs fat32-in-memory
-    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp length)
-                (<= length (fat-length fat32-in-memory)))
-    :verify-guards nil))
-  (if (zp length)
-      ""
-    (concatenate 'string
-                 (stobj-fa-table-to-string fat32-in-memory (- length 1))
-                 (let
-                     ((current (fati (- length 1) fat32-in-memory)))
-                   (nats=>string
-                    (list
-                     (loghead 8             current)
-                     (loghead 8 (logtail  8 current))
-                     (loghead 8 (logtail 16 current))
-                                (logtail 24 current)))))))
-
 (encapsulate
   ()
 
   (local (include-book "ihs/logops-lemmas" :dir :system))
 
-  (verify-guards stobj-fa-table-to-string
-    :guard-debug t
-    :hints (("goal" :in-theory (e/d
-                                (fat32-entry-p)
-                                (fat32-in-memoryp
-                                 unsigned-byte-p
-                                 loghead logtail
-                                 fati-when-compliant-fat32-in-memoryp))
-             :use (:instance 
-                   fati-when-compliant-fat32-in-memoryp
-                   (i (+ -1 length)))))))
+  (defun
+    stobj-fa-table-to-string
+    (fat32-in-memory length)
+    (declare
+     (xargs
+      :stobjs fat32-in-memory
+      :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                  (natp length)
+                  (<= length (fat-length fat32-in-memory)))
+      :guard-hints
+      (("goal"
+        :in-theory
+        (e/d
+         (fat32-entry-p)
+         (fat32-in-memoryp unsigned-byte-p loghead logtail
+                           fati-when-compliant-fat32-in-memoryp))
+        :use (:instance fati-when-compliant-fat32-in-memoryp
+                        (i (+ -1 length)))))))
+    (if
+     (zp length)
+     ""
+     (concatenate
+      'string
+      (stobj-fa-table-to-string fat32-in-memory (- length 1))
+      (let ((current (fati (- length 1) fat32-in-memory)))
+        (nats=>string (list
+                       (loghead 8             current )
+                       (loghead 8 (logtail  8 current))
+                       (loghead 8 (logtail 16 current))
+                                  (logtail 24 current) )))))))
+
+(defun
+  stobj-data-region-to-string
+  (fat32-in-memory length)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (natp length)
+                (<= length
+                    (data-region-length fat32-in-memory)))
+    :guard-hints
+    (("goal"
+      :in-theory
+      (e/d (fat32-entry-p)
+           (fat32-in-memoryp
+            unsigned-byte-p loghead logtail
+            data-regioni-when-compliant-fat32-in-memoryp))
+      :use
+      (:instance data-regioni-when-compliant-fat32-in-memoryp
+                 (i (+ -1 length)))))))
+  (if
+   (zp length)
+   ""
+   (concatenate
+    'string
+    (stobj-data-region-to-string fat32-in-memory (- length 1))
+    (nats=>string (list (data-regioni (- length 1)
+                                      fat32-in-memory))))))
 
 (defund reserved-area-string (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory
@@ -3015,7 +3042,9 @@
      :initial-element (code-char 0)))
    'string))
 
-(defund fat32-in-memory-to-string (fat32-in-memory)
+(defund
+  fat32-in-memory-to-string
+  (fat32-in-memory)
   (declare
    (xargs :stobjs fat32-in-memory
           :guard (compliant-fat32-in-memoryp fat32-in-memory)
@@ -3024,20 +3053,14 @@
       ((reserved-area-string
         (reserved-area-string fat32-in-memory))
        (fat-string
-        (stobj-fa-table-to-string
-         fat32-in-memory
-         (fat-length fat32-in-memory)))
+        (stobj-fa-table-to-string fat32-in-memory
+                                  (fat-length fat32-in-memory)))
        (data-region-string
-        (nats=>string
-         (rev (get-dir-ent-helper
-               fat32-in-memory
-               0
-               (data-region-length fat32-in-memory))))))
-    (concatenate
-     'string
-     reserved-area-string
-     fat-string
-     data-region-string)))
+        (stobj-data-region-to-string
+         fat32-in-memory (data-region-length fat32-in-memory))))
+    (concatenate 'string
+                 reserved-area-string
+                 fat-string data-region-string)))
 
 #|
 Some (rather awful) testing forms are
