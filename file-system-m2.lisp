@@ -146,7 +146,8 @@
   :rule-classes :definition)
 
 (local
- (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal)))
+ (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
+                     revappend-removal)))
 
 (local
  (in-theory (disable bs_oemnamep bs_jmpbootp bs_filsystypep fatp data-regionp)))
@@ -1414,65 +1415,117 @@
                             0)))
     (mv fat32-in-memory error-code)))
 
-(defun get-dir-ent-helper (fat32-in-memory data-region-index len)
+(defun
+  get-dir-ent-helper
+  (fat32-in-memory data-region-index len ac)
   (declare
    (xargs
-    :guard (and (fat32-in-memoryp fat32-in-memory)
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (natp data-region-index)
                 (natp len)
                 (<= (+ data-region-index len)
-                    (data-region-length fat32-in-memory)))
+                    (data-region-length fat32-in-memory))
+                (unsigned-byte-listp 8 ac))
+    :guard-hints (("goal" :in-theory (disable unsigned-byte-p)))
     :stobjs (fat32-in-memory)))
-  (if (zp len)
-      nil
-    (cons
-     (data-regioni (+ data-region-index len -1) fat32-in-memory)
-     (get-dir-ent-helper fat32-in-memory data-region-index (- len 1)))))
+  (if
+   (zp len)
+   ac
+   (let
+    ((data-region-index (nfix data-region-index)))
+    (get-dir-ent-helper
+     fat32-in-memory (+ data-region-index 1)
+     (- len 1)
+     (cons (data-regioni data-region-index fat32-in-memory)
+           ac)))))
 
-(defthm
-  get-dir-ent-helper-correctness-1
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (natp data-region-index)
-        (<= (+ data-region-index len)
-            (data-region-length fat32-in-memory)))
-   (and
-    (unsigned-byte-listp
-     8
-     (get-dir-ent-helper fat32-in-memory data-region-index len))
-    (equal (len (get-dir-ent-helper
-                 fat32-in-memory data-region-index len))
-           (nfix len))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (unsigned-byte-listp)
-         (fat32-in-memoryp unsigned-byte-p data-regioni)))))
+(defcong nat-equiv equal
+  (get-dir-ent-helper
+   fat32-in-memory data-region-index len ac)
+  2)
+
+(defthm unsigned-byte-listp-of-revappend
+  (equal (unsigned-byte-listp width (revappend x y))
+         (and (unsigned-byte-listp width (list-fix x))
+              (unsigned-byte-listp width y)))
+  :hints (("goal" :induct (revappend x y))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top"
+                       :dir :system))
+
+  (defthm
+    get-dir-ent-helper-alt
+    (equal
+     (get-dir-ent-helper fat32-in-memory
+                         data-region-index len ac)
+     (let ((data-region-index (nfix data-region-index)))
+       (revappend
+        (subseq-list (nth *data-regioni* fat32-in-memory)
+                     data-region-index
+                     (+ data-region-index len))
+        ac)))
+    :hints
+    (("goal" :in-theory (enable take-redefinition
+                                revappend-removal data-regioni))
+     ("subgoal *1/2.4'''" :expand (repeat (+ -1 len) nil))
+     ("subgoal *1/2.1'''" :expand (repeat (+ -1 len) nil))))
+
+  (defthm
+    get-dir-ent-helper-correctness-1
+    (implies
+     (and (compliant-fat32-in-memoryp fat32-in-memory)
+          (natp data-region-index)
+          (<= (+ data-region-index len)
+              (data-region-length fat32-in-memory))
+          (unsigned-byte-listp 8 ac))
+     (and
+      (unsigned-byte-listp
+       8
+       (get-dir-ent-helper fat32-in-memory
+                           data-region-index len ac))
+      (equal (len (get-dir-ent-helper fat32-in-memory
+                                      data-region-index len ac))
+             (+ (nfix len) (len ac)))))
+    :hints
+    (("goal" :do-not-induct t
+      :in-theory
+      (e/d (unsigned-byte-listp compliant-fat32-in-memoryp
+                                data-region-length)
+           (unsigned-byte-p data-regioni))))))
 
 (defund get-dir-ent (fat32-in-memory data-region-index)
   (declare
    (xargs
-    :guard (and (fat32-in-memoryp fat32-in-memory)
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (natp data-region-index)
                 (<= (+ data-region-index *ms-dir-ent-length*)
                     (data-region-length fat32-in-memory)))
     :stobjs (fat32-in-memory)))
   (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                           *ms-dir-ent-length*)))
+                           *ms-dir-ent-length* nil)))
 
 (defthm
   get-dir-ent-correctness-1
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp data-region-index)
-                (<= (+ data-region-index *ms-dir-ent-length*)
-                    (data-region-length fat32-in-memory)))
-           (and (unsigned-byte-listp 8 (get-dir-ent fat32-in-memory
-                                                    data-region-index))
-                (equal (len (get-dir-ent fat32-in-memory
-                                         data-region-index))
-                       *ms-dir-ent-length*)))
-  :hints (("Goal" :in-theory (e/d (get-dir-ent unsigned-byte-listp)
-                                  (fat32-in-memoryp)))))
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (natp data-region-index)
+        (<= (+ data-region-index *ms-dir-ent-length*)
+            (data-region-length fat32-in-memory)))
+   (and
+    (unsigned-byte-listp
+     8
+     (get-dir-ent fat32-in-memory data-region-index))
+    (equal (len (get-dir-ent fat32-in-memory data-region-index))
+           *ms-dir-ent-length*)))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d (data-region-length get-dir-ent unsigned-byte-listp
+                             compliant-fat32-in-memoryp)))))
 
 (defund
   get-clusterchain
@@ -2909,35 +2962,6 @@
                        (loghead 8 (logtail  8 current))
                        (loghead 8 (logtail 16 current))
                                   (logtail 24 current) )))))))
-
-(defun
-  stobj-data-region-to-string
-  (fat32-in-memory length)
-  (declare
-   (xargs
-    :stobjs fat32-in-memory
-    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp length)
-                (<= length
-                    (data-region-length fat32-in-memory)))
-    :guard-hints
-    (("goal"
-      :in-theory
-      (e/d (fat32-entry-p)
-           (fat32-in-memoryp
-            unsigned-byte-p loghead logtail
-            data-regioni-when-compliant-fat32-in-memoryp))
-      :use
-      (:instance data-regioni-when-compliant-fat32-in-memoryp
-                 (i (+ -1 length)))))))
-  (if
-   (zp length)
-   ""
-   (concatenate
-    'string
-    (stobj-data-region-to-string fat32-in-memory (- length 1))
-    (nats=>string (list (data-regioni (- length 1)
-                                      fat32-in-memory))))))
 
 (defund reserved-area-string (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory
