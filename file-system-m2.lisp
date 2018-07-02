@@ -3015,12 +3015,14 @@
      :initial-element (code-char 0)))
    'string))
 
-#|
-(defund fat32-in-memory-to-string
-  (declare :stobjs fat32-in-memory
-           :guard (compliant-fat32-in-memoryp fat32-in-memory))
+(defund fat32-in-memory-to-string (fat32-in-memory)
+  (declare
+   (xargs :stobjs fat32-in-memory
+          :guard (compliant-fat32-in-memoryp fat32-in-memory)
+          :verify-guards nil))
   (b*
-      (()
+      ((reserved-area-string
+        (reserved-area-string fat32-in-memory))
        (fat-string
         (stobj-fa-table-to-string
          fat32-in-memory
@@ -3036,7 +3038,6 @@
      reserved-area-string
      fat-string
      data-region-string)))
-|#
 
 #|
 Some (rather awful) testing forms are
