@@ -3280,11 +3280,18 @@
        :initial-element (code-char 0)))
      'string)))
 
-(defthm len-of-reserved-area-string
-  (equal
-   (length (reserved-area-string fat32-in-memory))
-   (* (bpb_rsvdseccnt fat32-in-memory) (bpb_bytspersec fat32-in-memory)))
-  :hints (("Goal" :in-theory (enable reserved-area-string)) ))
+(defthm
+  len-of-reserved-area-string
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory))))
+   (equal (length (reserved-area-string fat32-in-memory))
+          (* (bpb_rsvdseccnt fat32-in-memory)
+             (bpb_bytspersec fat32-in-memory))))
+  :hints (("goal" :in-theory (enable reserved-area-string))))
 
 (defund
   fat32-in-memory-to-string
