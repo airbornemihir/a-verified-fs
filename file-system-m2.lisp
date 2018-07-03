@@ -3293,6 +3293,27 @@
              (bpb_bytspersec fat32-in-memory))))
   :hints (("goal" :in-theory (enable reserved-area-string))))
 
+(defun
+  make-fat-string-ac
+  (n fat32-in-memory ac)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (natp n)
+                (stringp ac))))
+  (cond
+   ((zp n) ac)
+   (t
+    (make-fat-string-ac
+     (1- n)
+     fat32-in-memory
+     (concatenate
+      'string
+      (stobj-fa-table-to-string fat32-in-memory
+                                (fat-length fat32-in-memory))
+      ac)))))
+
 (defund
   fat32-in-memory-to-string
   (fat32-in-memory)
@@ -3304,8 +3325,8 @@
       ((reserved-area-string
         (reserved-area-string fat32-in-memory))
        (fat-string
-        (stobj-fa-table-to-string fat32-in-memory
-                                  (fat-length fat32-in-memory)))
+        (make-fat-string-ac
+         (bpb_numfats fat32-in-memory) fat32-in-memory ""))
        (data-region-string
         ;; reproducing the definition of rchars-to-string because it doesn't
         ;; seem to be available to us
@@ -3363,7 +3384,58 @@ Some (rather awful) testing forms are
      ((mv fs & &)
       (m1-pwrite 0 "ornery" 49 fs fd-table file-table)))
   (m1-fs-to-fat32-in-memory fat32-in-memory fs))
+(time$
+ (b*
+     ((str (fat32-in-memory-to-string
+            fat32-in-memory))
+      ((unless (and (stringp str)
+                    (>= (length str) *initialbytcnt*)))
+       (mv fat32-in-memory -1))
+      ((mv fat32-in-memory error-code)
+       (read-reserved-area fat32-in-memory str))
+      ((unless (equal error-code 0))
+       (mv fat32-in-memory "it was read-reserved-area"))
+      (fat-read-size (/ (* (bpb_fatsz32 fat32-in-memory)
+                           (bpb_bytspersec fat32-in-memory))
+                        4))
+      ((unless (integerp fat-read-size))
+       (mv fat32-in-memory "it was fat-read-size"))
+      (data-byte-count (* (count-of-clusters fat32-in-memory)
+                          (cluster-size fat32-in-memory)))
+      ((unless (> data-byte-count 0))
+       (mv fat32-in-memory "it was data-byte-count"))
+      (tmp_bytspersec (bpb_bytspersec fat32-in-memory))
+      (tmp_init (* tmp_bytspersec
+                   (+ (bpb_rsvdseccnt fat32-in-memory)
+                      (* (bpb_numfats fat32-in-memory)
+                         (bpb_fatsz32 fat32-in-memory)))))
+      ((unless (>= (length str)
+                   (+ tmp_init
+                      (data-region-length fat32-in-memory))))
+       (mv fat32-in-memory "it was (length str)"))
+      (fat32-in-memory (resize-fat fat-read-size fat32-in-memory))
+      (fat32-in-memory
+       (update-fat fat32-in-memory
+                   (subseq str
+                           (* (bpb_rsvdseccnt fat32-in-memory)
+                              (bpb_bytspersec fat32-in-memory))
+                           (+ (* (bpb_rsvdseccnt fat32-in-memory)
+                                 (bpb_bytspersec fat32-in-memory))
+                              (* fat-read-size 4)))
+                   fat-read-size))
+      (fat32-in-memory
+       (resize-data-region data-byte-count fat32-in-memory))
+      (data-region-string
+       (subseq str tmp_init
+               (+ tmp_init
+                  (data-region-length fat32-in-memory))))
+      (fat32-in-memory
+       (update-data-region fat32-in-memory data-region-string
+                           (data-region-length fat32-in-memory)
+                           0)))
+   (mv fat32-in-memory error-code)))
 |#
+
 (defun
   get-dir-filenames
   (fat32-in-memory dir-contents entry-limit)
