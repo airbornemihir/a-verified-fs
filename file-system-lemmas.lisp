@@ -414,3 +414,8 @@
 (defthm update-nth-of-nth
   (implies (and (natp n) (< n (len l)))
            (equal (update-nth n (nth n l) l) l)))
+
+(defthm character-listp-of-make-list-ac
+  (equal (character-listp (make-list-ac n val ac))
+         (and (character-listp ac)
+              (or (zp n) (characterp val)))))
