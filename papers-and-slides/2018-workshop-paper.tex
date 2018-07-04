@@ -46,6 +46,62 @@ has the benefit of allowing the verification effort to start from
 simple models which encapsulate features common to many filesystems
 and are thus suitable for re-use.
 
+\section{Related work}
+
+Filesystem verification research has largely followed a pattern of
+synthesising a new filesystem based on a specification chosen for its
+ease in proving properties of interest, rather than similarity to an
+existing filesystem. Our work, in contrast, follows the FAT32
+specification closely. In spirit, our work is closer to previous work
+which uses interactive theorem provers and explores deep functional
+properties than to efforts which use non-interactive theorem provers
+such as Z3 to produce fully automated proofs of simpler properties.
+
+\subsection{Interactive theorem provers}
+An early effort in the filesystem verification domain was by Bevier
+and Cohen~\cite{bevier1996executable}, who specified the Synergy
+filesystem and created an executable model of the same in ACL2
+\cite{kaufmann2000}, down to the level of processes
+and file descriptors. On the proof front, they certified their model
+to preserve well-formedness of their data structures through their
+various file operations; however, they did not attempt to prove, for
+instance, read-over-write properties or crash consistency. Later,
+Klein et al with the SeL4 project~\cite{klein2009sel4} used
+Isabelle/HOL~\cite{nipkow2002isabelle} to verify a microkernel;
+while their design abstracted away file operations in order to keep
+their trusted computing base small, it did serve as a precursor to their
+more recent COGENT project~\cite{amani2016cogent}. Here the authors
+built a "verified compiler" of sorts, generating C-language code from
+specifications in their domain-specific in a manner guaranteed to
+avoid many common filesystem bugs. Elsewhere, the SibylFS
+project~\cite{ridge2015sibylfs}, again using Isabelle/HOL, provided
+an executable specification for filesystems at a level of abstraction
+that could function across multiple operating systems including OSX
+and Unix. The Coq prover \cite{bertot2013interactive} has also been
+used, for instance, for FSCQ
+\cite{DBLP:conf/usenix/ChenZCCKZ16}, a state-of-the art filesystem
+which was built to have high performance and formally verified crash
+consistency properties.
+
+\subsection{Non-interactive theorem provers}
+Non-interactive theorem provers such as Z3 \cite{de2008z3}
+have also been used; Hyperkernel
+\cite{Nelson:2017:HPV:3132747.3132748} is a recent effort which
+focusses on simplifying the xv6 microkernel until the point that Z3
+can verify it with its SMT solving techniques. However, towards this
+end, all system calls in Hyperkernel are replaced with analogs which
+can terminate in constant time; while this approach is theoretically
+sound, it increases the chances of discrepancies between the model and
+the implementation which may diminish the utility of the proofs or
+even render them moot. A stronger effort in the same domain is
+Yggdrasil~\cite{sigurbjarnarson2016push}, which focusses on verifying
+filesystems with the use of Z3. While the authors make substantial
+progress in terms of the number of filesystem calls they support and
+the crash consistency guarantees they provide, they are subject to
+the limits of SMT solving which prevent them from modelling essential
+filesystem features such as extents, which are central to many
+filesystems including FAT32.
+
 \section{Ancillary files}
 
 Authors may upload ancillary files to be linked alongside their paper.
