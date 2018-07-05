@@ -102,6 +102,62 @@ the limits of SMT solving which prevent them from modelling essential
 filesystem features such as extents, which are central to many
 filesystems including FAT32.
 
+\section{Program architecture and performance considerations}
+
+We number our abstract filesystem models \texttt{L1} through
+\texttt{L6}, and our concrete models \texttt{M1} through \texttt{M2}
+(concrete). These models are constructed incrementally to allow for
+reuse of features in general, and a refinement relation where
+possible.
+
+Starting with L1, an abstract model representing the directory
+structure as a tree, we add file
+metadata in \texttt{L2}. We branch off from \texttt{L2} into
+\texttt{L3}, a model with file contents broken up into blocks and
+stored in an external disk-like data structure, and \texttt{L4}, a
+model which also breaks file contents up into disk blocks,
+additionally with garbage collection through reference counting, and a
+fixed disk size bounding the total size of file contents. To implement
+the reference counter in \texttt{L4}, we use an allocation vector as
+in the CP/M filesystem, which happens to be the previous technology
+target of this work prior to FAT32. We are able to refine \texttt{L4}
+into \texttt{L6}, a filesystem with exactly the same properties but
+additionally featuring a FAT32-like file allocation table for
+allocation and garbage collection, since this data structure happens
+to refine the allocation vector.
+
+\texttt{M1} is another tree model, which hews somewhat closely to the
+FAT32 specification; it is also used as the in-memory format for
+\texttt{M2}, a real model which reads and writes FAT32 disk
+images. The operations currently supported are \texttt{pread(2)},
+\texttt{pwrite(2)}, and \texttt{stat(2)}. With these operations, we
+are able to model the file operations used in standard disk utilities
+such as cat(1) and dd(1), with a view to writing formal specifications
+of these programs later.
+
+In order to obtain reasonable execution performance, we implement
+\texttt{M2} as a single-threaded object. Most importantly, this allows
+us to model the file allocation table and data region, which are long
+arrays, as arrays in Common Lisp rather than as lists, which have poor
+performance for update operations on their elements because of the
+number of cons cells which must be created and garbage collected for
+each update. Array operations in single threaded objects are subject
+to certain syntactic restrictions to prevent copies of arrays from
+being created as usually happens with Lisp objects; to simplify the
+task of reading and writing disk images under these restrictions, we
+also create a library of useful macros.
+
+We choose to implement a subset of the POSIX filesystem application
+programming interface. This allows us to easily compare the results of
+running filesystem operations on \texttt{M2} and the Linux kernel's
+implementation of FAT32, which in turn allows us to test our
+implementation's correctness through co-simulation in addition to
+theorem proving. One trade-off for this choice is the necessity of
+emulating certain functionality provided by the Linux kernel to all
+filesystems; thus, we implement process tables and file tables through
+a straightforward approach similar to that used in
+Synergy~\cite{bevier1996executable}.
+
 \section{Ancillary files}
 
 Authors may upload ancillary files to be linked alongside their paper.
