@@ -36,13 +36,33 @@ simple models which encapsulate features common to many filesystems
 and which are thus suitable for re-use.
 \end{abstract}
 
-\section{Introduction}
+\section{Introduction and overview}
 
-Filesystems provide a convenient interface for the named storage of
-data, and as such are ubiquitous in application programs. When
-filesystems have bugs, users are potentially exposed to the risks of
-data breach, corruption, and loss; thus, verifying their correctness
-is essential.
+Filesystems are ubiquitous in computing, providing application
+programs a means to store data persistently, address data by a name
+instead of a numeric index, and communicate with other programs.
+Thus, the vast majority of application programs
+directly or indirectly rely upon filesystems, which makes filesystem
+verification critically important. Here, we present a
+formalisation effort in ACL2 for an implementation of the FAT32
+filesystem, and a proof of the read-over-write properties for this
+filesystem. By starting with a high-level abstract model and adding
+more filesystem features in successive models, we are able to manage the
+complexity of this proof, which has not, to our knowledge, been
+previously attempted. Thus, this paper contributes an implementation
+of FAT32, a widely-used filesystem, formally verified against an
+abstract specification and tested for binary compatibility by means of
+co-simulation.
+
+In the rest of this paper, we describe these filesystem
+models and the properties proved with examples; we proceed to a
+high-level explanation of these proofs; and further we offer
+some insights about the low-level issues encountered while working the
+proofs.
+%% I'm not sure I want to keep the statistics. Certainly ACL2 folks
+%% don't want to see them.
+%% We end with some statistics pertaining to the magnitude of the
+%% proof effort and the running time of the proofs.
 
 \section{Related work}
 
