@@ -22,18 +22,7 @@ Austin, TX, USA}
 \maketitle
 
 \begin{abstract}
-This is a sentence in the abstract.
-This is another sentence in the abstract.
-This is yet another sentence in the abstract.
-This is the final sentence in the abstract.
-\end{abstract}
-
-\section{Introduction}
-
-Filesystems provide a convenient interface for the named storage of
-data, and as such are ubiquitous in application programs. Filesystem
-bugs expose users to the risks of data breach, corruption, loss; thus,
-verifying their correctness is essential. In this work, we present an
+In this work, we present an
 approach towards constructing executable specifications of existing
 filesystems and verifying their functional properties in a theorem
 proving environment. We detail an application of this approach to the
@@ -44,7 +33,16 @@ executable specification through a series of models which
 incrementally add features of the target filesystem. This methodology
 has the benefit of allowing the verification effort to start from
 simple models which encapsulate features common to many filesystems
-and are thus suitable for re-use.
+and which are thus suitable for re-use.
+\end{abstract}
+
+\section{Introduction}
+
+Filesystems provide a convenient interface for the named storage of
+data, and as such are ubiquitous in application programs. When
+filesystems have bugs, users are potentially exposed to the risks of
+data breach, corruption, and loss; thus, verifying their correctness
+is essential.
 
 \section{Related work}
 
