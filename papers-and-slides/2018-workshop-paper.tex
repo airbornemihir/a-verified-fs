@@ -1,6 +1,19 @@
 \documentclass[submission,copyright,creativecommons]{eptcs}
 \providecommand{\event}{ACL2 workshop 2018} % Name of the event you are submitting to
 
+%% Todo list
+%% Gotta substantiate the co-simulations we talked about...
+%% Gotta talk about the number of things we re-used from L6 in M2
+%% Gotta de-emphasise the proofs for L1 through L6 - they're OK but
+%%  not that important. However, the read-over-write proofs for M1
+%%  need to be finished.
+%% Gotta substantiate the point about code re-use in CP/M and FAT32 -
+%%  obviously there isn't enough time to do anything about ext4
+%% Gotta talk about concurrent calls in future work - and update that
+%%  whole section, obviously
+%% Gotta substantiate the claim about non-determinism in M1
+%% Gotta fix the darned diagram!
+
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{tikz}
@@ -56,9 +69,9 @@ co-simulation.
 
 In the rest of this paper, we describe these filesystem
 models and the properties proved with examples; we proceed to a
-high-level explanation of these proofs; and further we offer
-some insights about the low-level issues encountered while working the
-proofs.
+high-level explanation of these proofs and the co-simulation
+infrastructure; and further we offer some insights about the low-level
+issues encountered while working the proofs.
 %% I'm not sure I want to keep the statistics. Certainly ACL2 folks
 %% don't want to see them.
 %% We end with some statistics pertaining to the magnitude of the
@@ -197,9 +210,10 @@ corresponding file.
 %% footnote
 The file allocation table itself contains a number of linked lists. It
 maps each cluster index used by a file to either the next cluster
-index for that file or a special end-of-clusterchain value (footnote:
-there is actually a range of end-of-clusterchain values, not just
-one.) This allows the contents of a file to be reconstructed by
+index for that file or a special end-of-clusterchain value \footnote{
+There is actually a range of end-of-clusterchain values in the
+specification, not just one. We support all values in the range.} This
+allows the contents of a file to be reconstructed by
 reading just the first cluster index from the corresponding directory
 entry, and building the list of clusters using the table. Unused
 clusters are mapped to 0 in the table; this fact is used for counting
@@ -224,8 +238,8 @@ in a series of steps.
 
 \begin{table}[]
   \centering
-  \caption{Models and their features}
-  \label{model-description-table}
+  \caption{Abstract models and their features}
+  \label{abstract-model-description-table}
   \begin{tabular}{|l|p{120mm}|}
     \hline
     \texttt{L1} & The filesystem is represented as a tree, with leaf
@@ -249,6 +263,20 @@ in a series of steps.
   \end{tabular}
 \end{table}
 
+\begin{table}[]
+  \centering
+  \caption{Concrete models}
+  \label{concrete-model-description-table}
+  \begin{tabular}{|l|p{120mm}|}
+    \hline
+    \texttt{M1} & The filesystem is represented as a tree, as in
+    \texttt{L1}. Write operations show non-determinism in order to
+    model disk capacity errors in a real filesystem. \\ \hline
+    \texttt{M2} & A single element of metadata, \textit{length}, is
+    stored within each regular file.  \\ \hline
+  \end{tabular}
+\end{table}
+
 \begin{figure}
   \centering
   \caption{Refinement relationships between models}
@@ -268,7 +296,8 @@ in a series of steps.
 
 At this point in development, we have six models of the filesystem,
 here referred to as \texttt{L1} through \texttt{L6}, described in
-table \ref{model-description-table}. Each model other than \texttt{L1}
+table \ref{abstract-model-description-table}. Each model other than
+\texttt{L1}
 refines a previous model, adding some features and complexity and
 thereby approaching closer to a model which is binary compatible with
 FAT32. These refinement relationships are shown in figure
@@ -488,6 +517,40 @@ an abstraction of \texttt{L6}, which uses a file allocation
 table. This, in turn, means that the effort spent on proving the
 invariants described above for \texttt{L4} need not be replicated for
 \texttt{L6}.
+
+\section{Co-simulation}
+
+Previous work on executable specifications \cite{} has shown the
+importance of testing these on real examples, in order to validate
+that the behaviour shown matches that of the system being
+specified. In our case, this means we must validate our filesystem by
+testing it in execution against a canonical implementation of FAT32;
+in this case, we choose the implementation which ships with Linux
+kernel 3.10.
+
+We use \texttt{mkfs.fat(8)}, a program which produces FAT32 disk
+images, for our tests. When run with the \texttt{-v} flag, this
+program emits an English-language summary of the fields of the newly
+created disk image; we make use of this by writing an ACL2 program
+based on our model which reads the image and reproduces this
+summary. This validates our code for reading the various fields of the
+disk image and gives us a regression test to use while we modify our
+model to support proofs and filesystem calls.
+
+%% This stuff is not yet implemented exactly as described.
+Our first co-simulation test is for \texttt{cat(1)}, a simple program
+which reads its input and copies it to its output. Its functionality
+is reproduced in an ACL2 program which uses our implementations of the
+system calls \texttt{lstat(2)}, \texttt{open(2)}, \texttt{pread(2)},
+\texttt{pwrite(2)}, and \texttt{close(2)}. This allows us to validate
+our code for reading and writing regular files and directories which
+span multiple clusters.
+
+%% This stuff is not yet implemented at all.
+We further test the \texttt{dd(1)} program, which provides similar
+functionality to \texttt{cat} but with more options to customise the
+data transfer, for instance, by allowing the data transfer to be split
+into blocks of a specified size.
 
 \section{Conclusion}
 
