@@ -226,7 +226,12 @@ clusters are mapped to 0 in the table; this fact is used for counting
 and allocating free clusters.
 
 We illustrate the file allocation table and data layout for a small
-directory tree in figure~\ref{fat32-example}.
+example directory tree in figure~\ref{fat32-example}. It should be
+noted that the \texttt{/tmp} directory is part of the root filesystem
+here, unlike in some operating systems where \texttt{/tmp} is the
+mountpoint for a different filesystem; also, for the purposes of
+illustration, all regular files and directories are assumed to span
+one cluster except for \texttt{/vmlinuz} which spans two clusters.
 
 \begin{figure}
   \centering
@@ -247,8 +252,8 @@ directory tree in figure~\ref{fat32-example}.
   \begin{tabular}{|c|c|}
     \hline
     FAT index & FAT entry \\ \hline
-    0 &  \\ \hline
-    1 &  \\ \hline
+    0 (unused) &  \\ \hline
+    1 (unused) &  \\ \hline
     2 & \textit{EOC} \\ \hline
     3 & 4 \\ \hline
     4 & \textit{EOC} \\ \hline
@@ -574,9 +579,9 @@ invariants described above for \texttt{L4} need not be replicated for
 
 \section{Co-simulation}
 
-Previous work on executable specifications \cite{} has shown the
-importance of testing these on real examples, in order to validate
-that the behaviour shown matches that of the system being
+Previous work on executable specifications \cite{goel2014simulation}
+has shown the importance of testing these on real examples, in order
+to validate that the behaviour shown matches that of the system being
 specified. In our case, this means we must validate our filesystem by
 testing it in execution against a canonical implementation of FAT32;
 in this case, we choose the implementation which ships with Linux
@@ -622,9 +627,8 @@ journalling. We hope to re-use some artefacts of formalising FAT32 in
 order to verify a filesystem with journalling, such as ext4.
 
 We also hope to model the behaviour of filesystems in a
-multiprogramming environment, where concurrent filesystem calls can
-occur. This will build upon previous work on concurrency in hardware
-circuits.
+multiprogramming environment, where concurrent filesystem calls must
+be able to occur without corruption or loss of data.
 %% Also, we hope to support "code proofs", by providing a basis for
 %% reasoning about filesystem operations in filesystem-specific utilities
 %% such as \texttt{fsck}, as well as other application programs. This is
