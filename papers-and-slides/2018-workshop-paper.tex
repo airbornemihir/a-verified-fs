@@ -616,25 +616,19 @@ subsequent realistic model of FAT32.
 
 \section{Future work}
 
-Our primary goal is to dispense with the tree representation and
-implement filesystem traversal by looking up entries in directory
-files. This will also involve addressing a subtle issue where reads
-affect the state of a filesystem by means of updating the access time,
-which has been analysed earlier in the context of
-microprocessors~\cite{goel2017engineering}. This will yield a model
-which is entirely contained in a disk data structure, without
-auxiliary data structures such as the tree, and which can
-further be validated by co-simulation with a FAT32 implementation such
-as that of Linux.
+While FAT32 is interesting of and by itself, it lacks features such as
+crash consistency, which most modern filesystems provide by means of
+journalling. We hope to re-use some artefacts of formalising FAT32 in
+order to verify a filesystem with journalling, such as ext4.
 
-Next, we hope to re-use some artefacts of verifying FAT32 in order to
-verify a more complex filesystem, such as ext4. Choosing a filesystem
-with journalling will allow us to model crash consistency.
-
-Finally, we hope to support "code proofs", by providing a basis for
-reasoning about filesystem operations in filesystem-specific utilities
-such as \texttt{fsck}, as well as other application programs. This is
-a large part of the motivation for pursuing binary compatibility.
+We also hope to model the behaviour of filesystems in a
+multiprogramming environment, where concurrent filesystem calls can
+occur. This will build upon previous work on concurrency in hardware
+circuits.
+%% Also, we hope to support "code proofs", by providing a basis for
+%% reasoning about filesystem operations in filesystem-specific utilities
+%% such as \texttt{fsck}, as well as other application programs. This is
+%% a large part of the motivation for pursuing binary compatibility.
 
 \subsubsection*{Acknowledgments.} This material is based upon work
 supported by the National Science Foundation SaTC program under
