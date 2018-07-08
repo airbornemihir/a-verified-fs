@@ -12,7 +12,7 @@
 %% Gotta talk about concurrent calls in future work - and update that
 %%  whole section, obviously
 %% Gotta substantiate the claim about non-determinism in M1
-%% Gotta fix the darned diagram!
+%% Gotta fix the darned diagram! (done)
 
 \usepackage{amssymb}
 \usepackage{graphicx}
@@ -141,7 +141,7 @@ We number our abstract filesystem models \texttt{L1} through
 reuse of features in general, and a refinement relation where
 possible.
 
-Starting with L1, an abstract model representing the directory
+Starting with \texttt{L1}, an abstract model representing the directory
 structure as a tree, we add file
 metadata in \texttt{L2}. We branch off from \texttt{L2} into
 \texttt{L3}, a model with file contents broken up into blocks and
@@ -165,6 +165,11 @@ images. The operations currently supported are \texttt{pread(2)},
 are able to model the file operations used in standard disk utilities
 such as cat(1) and dd(1), with a view to writing formal specifications
 of these programs later.
+
+There is not a refinement relation between the abstract models and the
+concrete models, but we re-use many of our theorems from \texttt{L6}
+in \texttt{M2} since the file allocation data structure in \texttt{L6}
+follows the FAT32 specification.
 
 In order to obtain reasonable execution performance, we implement
 \texttt{M2} as a single-threaded object. Most importantly, this allows
@@ -207,7 +212,6 @@ directory entry is 32 bytes wide and contains information including
 name, size, first cluster index, and access times for the
 corresponding file.
 
-%% footnote
 The file allocation table itself contains a number of linked lists. It
 maps each cluster index used by a file to either the next cluster
 index for that file or a special end-of-clusterchain value \footnote{
@@ -223,10 +227,58 @@ We illustrate the file allocation table and data layout for a small
 directory tree in figure~\ref{fat32-example}.
 
 \begin{figure}
+  \centering
   \caption{A FAT32 directory tree}
   \label{fat32-example}
-  \includegraphics[page=1,width=1.10\textwidth]{fat32-diagram.pdf}
+  \begin{tikzpicture}[sibling distance=5em,
+      every node/.style = {shape=rectangle, rounded corners,
+        draw, align=center,
+        top color=white, bottom color=violet!20}]
+    \node {/}
+    child { node {vmlinuz}}
+    child { node {initrd.img}}
+    child { node {tmp/}
+      child { node {ticket1.txt}}
+      child { node {ticket2.txt}}};
+  \end{tikzpicture}
+
+  \begin{tabular}{|c|c|}
+    \hline
+    FAT index & FAT entry \\ \hline
+    0 &  \\ \hline
+    1 &  \\ \hline
+    2 & \textit{EOC} \\ \hline
+    3 & 4 \\ \hline
+    4 & \textit{EOC} \\ \hline
+    5 & \textit{EOC} \\ \hline
+    6 & \textit{EOC} \\ \hline
+    7 & \textit{EOC} \\ \hline
+    8 & \textit{EOC} \\ \hline
+    9 & 0 \\ \hline
+    \vdots & \vdots
+  \end{tabular}\\
+
+  \begin{tabular}{|c|c|}
+    \hline
+       & Directory entry in / \\ \hline
+    0  & "vmlinuz", 3 \\ \hline
+    32 & "initrd.img", 5 \\ \hline
+    64 & "tmp", 6 \\ \hline
+    \vdots & \vdots
+  \end{tabular}
+
+  \begin{tabular}{|c|c|}
+    \hline
+       & Directory entry in /tmp/ \\ \hline
+    0  & "ticket1", 7 \\ \hline
+    32 & "ticket2", 8 \\ \hline
+    \vdots & \vdots
+  \end{tabular}
 \end{figure}
+
+%% \begin{figure}
+%%   \includegraphics[page=1,width=1.10\textwidth]{fat32-diagram.pdf}
+%% \end{figure}
 
 \section{The models}
 
@@ -281,7 +333,7 @@ in a series of steps.
   \centering
   \caption{Refinement relationships between models}
   \label{refinement-figure}
-  \begin{tikzpicture}[sibling distance=10em,
+  \begin{tikzpicture}[sibling distance=15em,
       every node/.style = {shape=rectangle, rounded corners,
         draw, align=center,
         top color=white, bottom color=blue!20}]
