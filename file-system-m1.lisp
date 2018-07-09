@@ -222,8 +222,9 @@
        ((unless (consp pathname))
         (mv fs *enoent*))
        (name (str-fix (car pathname)))
-       (alist-elem (assoc-equal name fs))
-       ((when (consp alist-elem))
+       (alist-elem (assoc-equal name fs)))
+    (if
+        (consp alist-elem)
         (if
          (m1-directory-file-p (cdr alist-elem))
          (mv-let
@@ -240,12 +241,16 @@
               :contents new-contents)
              fs)
             error-code))
-         (if (consp (cdr pathname))
+         (if (or
+              (consp (cdr pathname))
+              ;; this is the case where a regular file could get replaced by a
+              ;; directory, which is a bad idea
+              (m1-directory-file-p file))
              (mv fs *enotdir*)
-           (mv (put-assoc-equal name file fs) 0))))
-       ((unless (atom (cdr pathname)))
-        (mv fs *enotdir*)))
-    (mv (put-assoc-equal name file fs) 0)))
+           (mv (put-assoc-equal name file fs) 0)))
+      (if (atom (cdr pathname))
+          (mv (put-assoc-equal name file fs) 0)
+        (mv fs *enotdir*)))))
 
 (defthm
   place-file-by-pathname-correctness-1-lemma-1
@@ -286,7 +291,7 @@
   (place-file-by-pathname fs pathname file) 3)
 
 (defthm
-  place-file-by-pathname-correctness-3-lemma-1
+  m1-read-after-write-lemma-1
   (implies
    (and (m1-file-alist-p alist)
         (stringp name))
@@ -295,14 +300,56 @@
                            (m1-file-alist-fix alist))))
   :hints (("goal" :in-theory (enable m1-file-alist-fix))))
 
-(defthm place-file-by-pathname-correctness-3
-  (b* (((mv fs error-code)
-        (place-file-by-pathname fs pathname file))
-       ((unless (equal error-code 0)) t)
-       ((mv new-file error-code)
-        (find-file-by-pathname fs pathname)))
-    (and (equal error-code 0)
-         (equal new-file (m1-file-fix file)))))
+(encapsulate
+  ()
+
+  (local
+   (defun
+       induction-scheme
+       (pathname1 pathname2 fs)
+     (declare (xargs :guard (and (string-listp pathname1)
+                                 (string-listp pathname2)
+                                 (m1-file-alist-p fs))))
+     (if
+         (or (atom pathname1) (atom pathname2))
+         1
+       (if
+           (not (streqv (car pathname2) (car pathname1)))
+           2
+         (let*
+             ((fs (m1-file-alist-fix fs))
+              (alist-elem (assoc-equal (str-fix (car pathname1)) fs)))
+           (if
+               (atom alist-elem)
+               3
+             (if
+                 (m1-directory-file-p (cdr alist-elem))
+                 (induction-scheme (cdr pathname1)
+                                   (cdr pathname2)
+                                   (m1-file->contents (cdr alist-elem)))
+               4)))))))
+
+  (defthm
+    m1-read-after-write
+    (implies
+     (and (m1-regular-file-p file2)
+          (equal (mv-nth 1 (find-file-by-pathname fs pathname1))
+                 0)
+          (m1-regular-file-p
+           (mv-nth 0
+                   (find-file-by-pathname fs pathname1))))
+     (b* (((mv new-fs error-code)
+           (place-file-by-pathname fs pathname2 file2))
+          ((unless (equal error-code 0)) t))
+       (equal (find-file-by-pathname new-fs pathname1)
+              (if (str::string-list-equiv pathname1 pathname2)
+                  (mv (m1-file-fix file2) 0)
+                (find-file-by-pathname fs pathname1)))))
+    :hints
+    (("goal"
+      :induct (induction-scheme pathname1 pathname2 fs)
+      :in-theory (enable streqv
+                         str::string-list-fix m1-regular-file-p)))))
 
 (defun m1-lstat (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)

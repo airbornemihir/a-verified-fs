@@ -402,8 +402,10 @@
 
 (defthm
   assoc-after-put-assoc
-  (equal (assoc-equal name (put-assoc-equal name val alist))
-         (cons name val)))
+  (equal (assoc-equal name1 (put-assoc-equal name2 val alist))
+         (if (equal name1 name2)
+             (cons name1 val)
+           (assoc-equal name1 alist))))
 
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/lists/nthcdr.lisp, from where it was taken with thanks.
