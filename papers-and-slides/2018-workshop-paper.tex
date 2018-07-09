@@ -9,12 +9,13 @@
 %%  need to be finished.
 %% Gotta substantiate the point about code re-use in CP/M and FAT32 -
 %%  obviously there isn't enough time to do anything about ext4
-%% Gotta talk about concurrent calls in future work - and update that
-%%  whole section with FAT32 stuff assumed done, obviously (done)
+%% (done) Gotta talk about concurrent calls in future work - and
+%%  update that whole section with FAT32 stuff assumed done, obviously
 %% Gotta substantiate the claim about non-determinism in M1
-%% Gotta fix the darned diagram! (done)
+%% (done) Gotta fix the darned diagram!
 %% Gotta address the non-exhaustive set of system calls and their choice
 %% Gotta talk about error codes and other things taken from the kernel implementation
+%% Gotta do caching and talk about it
 
 \usepackage{amssymb}
 \usepackage{graphicx}
@@ -587,11 +588,11 @@ testing it in execution against a canonical implementation of FAT32;
 in this case, we choose the implementation which ships with Linux
 kernel 3.10.
 
-We use \texttt{mkfs.fat(8)}, a program which produces FAT32 disk
-images, for our tests. When run with the \texttt{-v} flag, this
-program emits an English-language summary of the fields of the newly
-created disk image; we make use of this by writing an ACL2 program
-based on our model which reads the image and reproduces this
+We use \texttt{mkfs.fat}~\cite{hudsonmkfs}, a program which produces
+FAT32 disk images, for our tests. When run with the \texttt{-v} flag,
+this program emits an English-language summary of the fields of the
+newly created disk image; we make use of this by writing an ACL2
+program based on our model which reads the image and reproduces this
 summary. This validates our code for reading the various fields of the
 disk image and gives us a regression test to use while we modify our
 model to support proofs and filesystem calls.
