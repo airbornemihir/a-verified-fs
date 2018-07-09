@@ -29,11 +29,10 @@
          (unsigned-byte-listp n (list-fix bytes)))
   :hints (("goal" :in-theory (enable unsigned-byte-listp rev))))
 
-(defthm nth-of-unsigned-byte-list
-  (implies (and (unsigned-byte-listp bits l)
-                (natp n)
-                (< n (len l)))
-           (unsigned-byte-p bits (nth n l))))
+(defthm unsigned-byte-p-of-nth
+  (implies (unsigned-byte-listp bits l)
+           (equal (unsigned-byte-p bits (nth n l))
+                  (< (nfix n) (len l)))))
 
 (defun dir-ent-p (x)
   (declare (xargs :guard t))
