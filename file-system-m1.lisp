@@ -300,6 +300,15 @@
                            (m1-file-alist-fix alist))))
   :hints (("goal" :in-theory (enable m1-file-alist-fix))))
 
+(defun string-list-prefixp (x y)
+  (declare (xargs :guard (and (string-listp x)
+                              (string-listp y))))
+  (if (consp x)
+      (and (consp y)
+           (streqv (car x) (car y))
+           (string-list-prefixp (cdr x) (cdr y)))
+    t))
+
 (encapsulate
   ()
 
@@ -332,24 +341,48 @@
   (defthm
     m1-read-after-write
     (implies
-     (and (m1-regular-file-p file2)
-          (equal (mv-nth 1 (find-file-by-pathname fs pathname1))
-                 0)
-          (m1-regular-file-p
-           (mv-nth 0
-                   (find-file-by-pathname fs pathname1))))
-     (b* (((mv new-fs error-code)
+     (m1-regular-file-p file2)
+     (b* (((mv original-file original-error-code)
+           (find-file-by-pathname fs pathname1))
+          ((unless (and (equal original-error-code 0)
+                        (m1-regular-file-p original-file)))
+           t)
+          ((mv new-fs new-error-code)
            (place-file-by-pathname fs pathname2 file2))
-          ((unless (equal error-code 0)) t))
+          ((unless (equal new-error-code 0)) t))
        (equal (find-file-by-pathname new-fs pathname1)
               (if (str::string-list-equiv pathname1 pathname2)
                   (mv (m1-file-fix file2) 0)
                 (find-file-by-pathname fs pathname1)))))
     :hints
-    (("goal"
-      :induct (induction-scheme pathname1 pathname2 fs)
-      :in-theory (enable streqv
-                         str::string-list-fix m1-regular-file-p)))))
+    (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+      :in-theory (enable streqv str::string-list-fix
+                         m1-regular-file-p))))
+
+  (defthm
+    m1-read-after-create
+    (implies
+     (and
+      (m1-regular-file-p file2)
+      ;; This is to avoid an odd situation where a query which would return
+      ;; a "file not found" error earlier now returns "not a directory".
+      (or (not (string-list-prefixp pathname2 pathname1))
+          (equal pathname2 pathname1)))
+     (b* (((mv & original-error-code)
+           (find-file-by-pathname fs pathname1))
+          ((unless (not (equal original-error-code 0)))
+           t)
+          ((mv new-fs new-error-code)
+           (place-file-by-pathname fs pathname2 file2))
+          ((unless (equal new-error-code 0)) t))
+       (equal (find-file-by-pathname new-fs pathname1)
+              (if (str::string-list-equiv pathname1 pathname2)
+                  (mv (m1-file-fix file2) 0)
+                (find-file-by-pathname fs pathname1)))))
+    :hints
+    (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+      :in-theory (enable streqv str::string-list-fix
+                         m1-regular-file-p)))))
 
 (defun m1-lstat (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
