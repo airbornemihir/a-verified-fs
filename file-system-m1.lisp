@@ -29,10 +29,11 @@
          (unsigned-byte-listp n (list-fix bytes)))
   :hints (("goal" :in-theory (enable unsigned-byte-listp rev))))
 
-(defthm unsigned-byte-p-of-nth
-  (implies (unsigned-byte-listp bits l)
-           (equal (unsigned-byte-p bits (nth n l))
-                  (< (nfix n) (len l)))))
+(defthm nth-of-unsigned-byte-list
+  (implies (and (unsigned-byte-listp bits l)
+                (natp n)
+                (< n (len l)))
+           (unsigned-byte-p bits (nth n l))))
 
 (defun dir-ent-p (x)
   (declare (xargs :guard t))
@@ -354,13 +355,13 @@
 
 (defthm find-new-index-correctness-1-lemma-1
   (>= (find-new-index fd-list) 0)
-  :hints (("Goal" :in-theory (enable find-new-index)) )
+  :hints (("Goal" :in-theory (enable find-new-index)))
   :rule-classes :linear)
 
 (defthm
   find-new-index-correctness-1-lemma-2
   (integerp (find-new-index fd-list))
-  :hints (("Goal" :in-theory (enable find-new-index)) ))
+  :hints (("Goal" :in-theory (enable find-new-index))))
 
 (defthm m1-open-guard-lemma-1
   (implies (fd-table-p fd-table)
@@ -449,8 +450,6 @@
          (integerp error-code)
          (implies (>= ret 0)
                   (equal (length buf) ret)))))
-
-(defcong m1-file-alist-equiv equal (m1-pread fd count offset fs fd-table file-table) 4)
 
 (defun
   m1-pwrite
