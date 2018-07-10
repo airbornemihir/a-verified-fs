@@ -3434,6 +3434,17 @@ Some (rather awful) testing forms are
                            (data-region-length fat32-in-memory)
                            0)))
    (mv fat32-in-memory error-code)))
+(time$
+ (b*
+     (((mv channel state)
+       (open-output-channel "test/disk2.raw" :character state))
+      (state
+         (princ$
+          (fat32-in-memory-to-string fat32-in-memory)
+          channel state))
+      (state
+       (close-output-channel channel state)))
+   (mv fat32-in-memory state)))
 |#
 
 (defun
