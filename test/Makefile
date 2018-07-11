@@ -6,6 +6,8 @@ test-mkfs-replicant-3
 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4 \
 test-mkfs-replicant-1 test-mkfs-replicant-2 test-mkfs-replicant-3
 
+.PHONY: debug-create-dir-and-file debug-create-dir debug-do-nothing
+
 DISK=disk1.raw
 SIZE=70000
 MOUNTPOINT=mount1
@@ -138,3 +140,36 @@ mkfs-ref-output-3.txt mkfs-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) mkfs-replica
 	rm -f $(DISK)
 	(mkfs.fat -C -v -F 32 -s 4 $(DISK) $(SIZE)) > mkfs-ref-output-3.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-3.txt" $(ACL2) < mkfs-replicant.lisp
+
+debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	true
+
+debug-create-dir: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	mkdir $(FUSEPOINT)/tmp
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	true
+
+debug-create-dir-and-file: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	mkdir $(FUSEPOINT)/tmp
+	touch $(FUSEPOINT)/tmp/ticket1.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	true
