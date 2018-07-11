@@ -10,6 +10,7 @@
 (local (include-book "ihs/logops-lemmas" :dir :system))
 (local (include-book "rtl/rel9/arithmetic/top"
                      :dir :system))
+(include-book "kestrel/utilities/strings" :dir :system)
 
 (include-book "insert-text")
 (include-book "fat32")
@@ -567,3 +568,87 @@
         (place-file-by-pathname fs pathname file)))
     (mv fs (if (equal error-code 0) 0 -1)
         error-code)))
+
+;; From the common man page basename(3)/dirname(3):
+;; --
+;; If  path  does  not contain a slash, dirname() returns the string "." while
+;; basename() returns a copy of path.  If path is the string  "/",  then  both
+;; dirname()  and basename() return the string "/".  If path is a NULL pointer
+;; or points to an empty string, then both dirname() and basename() return the
+;; string ".".
+;; --
+;; Of course, an empty list means something went wrong with the parsing code,
+;; because even in the case of an empty path string, (list "") should be passed
+;; to these functions. Still, we do the default thing, because neither of these
+;; functions sets errno.
+(defund
+  m1-basename-dirname-helper (path)
+  (declare (xargs :guard (string-listp path)))
+  (if (atom path)
+      (mv "." (list "."))
+    (if (atom (cdr path))
+        (mv (str-fix (car path)) (list "."))
+      (if (and (atom (cddr path))
+               (equal (car path) "")
+               (equal (cadr path) ""))
+          (mv "" (list ""))
+        (mv-let (tail-basename tail-dirname)
+          (m1-basename-dirname-helper (cdr path))
+          (mv tail-basename
+              (list* (str-fix (car path))
+                     tail-dirname)))))))
+
+(defthm
+  m1-basename-dirname-helper-correctness-1
+  (mv-let (basename dirname)
+    (m1-basename-dirname-helper path)
+    (and (stringp basename)
+         (string-listp dirname)))
+  :hints
+  (("goal" :in-theory (enable m1-basename-dirname-helper)))
+  :rule-classes
+  (:rewrite
+   (:type-prescription
+    :corollary
+    (stringp (mv-nth 0 (m1-basename-dirname-helper path))))))
+
+(defun m1-basename (path)
+  (declare (xargs :guard (string-listp path)))
+  (mv-let (basename dirname)
+    (m1-basename-dirname-helper path)
+    (declare (ignore dirname))
+    basename))
+
+(defun m1-dirname (path)
+  (declare (xargs :guard (string-listp path)))
+  (mv-let (basename dirname)
+    (m1-basename-dirname-helper path)
+    (declare (ignore basename))
+    dirname))
+
+(defun m1-mkdir (fs pathname)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (string-listp pathname))))
+  (b*
+      (((mv parent-dir errno)
+        (find-file-by-pathname fs (m1-dirname pathname)))
+       ((unless (and (equal errno 0) (m1-directory-file-p parent-dir)))
+        (mv fs -1 *ENOENT*))
+       ((mv & errno)
+        (find-file-by-pathname fs pathname))
+       ((unless (not (equal errno 0)))
+        (mv fs -1 *EEXIST*))
+       (basename (m1-basename pathname))
+       ((unless (equal (length basename) 11))
+        (mv fs -1 *ENAMETOOLONG*))
+       (dir-ent (update-nth 11 (ash 1 4) (append (string=>nats basename)
+                                                 (nthcdr 11 (dir-ent-fix nil)))))
+       (file
+        (make-m1-file
+         :dir-ent dir-ent
+         :contents nil))
+       ((mv fs error-code)
+        (place-file-by-pathname fs pathname file))
+       ((unless (equal error-code 0))
+        (mv fs -1 error-code)))
+    (mv fs 0 0)))
