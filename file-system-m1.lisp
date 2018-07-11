@@ -581,6 +581,10 @@
 ;; because even in the case of an empty path string, (list "") should be passed
 ;; to these functions. Still, we do the default thing, because neither of these
 ;; functions sets errno.
+
+;; Also, an empty string right in the beginning indicates that the path began
+;; with a "/". While not documented properly in the man page, for a path such
+;; as "/home" or "/tmp", the dirname will be "/".
 (defund
   m1-basename-dirname-helper (path)
   (declare (xargs :guard (string-listp path)))
@@ -588,10 +592,8 @@
       (mv "." (list "."))
     (if (atom (cdr path))
         (mv (str-fix (car path)) (list "."))
-      (if (and (atom (cddr path))
-               (equal (car path) "")
-               (equal (cadr path) ""))
-          (mv "" (list ""))
+      (if (atom (cddr path))
+          (mv (str-fix (cadr path)) (list (str-fix (car path))))
         (mv-let (tail-basename tail-dirname)
           (m1-basename-dirname-helper (cdr path))
           (mv tail-basename

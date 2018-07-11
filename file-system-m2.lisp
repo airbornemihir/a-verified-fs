@@ -3448,7 +3448,7 @@ Some (rather awful) testing forms are
       (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fs & &)
-      (m1-mkdir fs (list "TMP        "))))
+      (m1-mkdir fs (list "" "TMP        "))))
   (m1-fs-to-fat32-in-memory fat32-in-memory fs))
 |#
 
