@@ -8,7 +8,6 @@
 (include-book "file-system-m1")
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
-(include-book "kestrel/utilities/strings" :dir :system)
 
 (make-event
  `(defstobj fat32-in-memory
@@ -3434,6 +3433,23 @@ Some (rather awful) testing forms are
                            (data-region-length fat32-in-memory)
                            0)))
    (mv fat32-in-memory error-code)))
+(time$
+ (b*
+     (((mv channel state)
+       (open-output-channel "test/disk2.raw" :character state))
+      (state
+         (princ$
+          (fat32-in-memory-to-string fat32-in-memory)
+          channel state))
+      (state
+       (close-output-channel channel state)))
+   (mv fat32-in-memory state)))
+(b* (((mv dir-contents &)
+      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     ((mv fs & &)
+      (m1-mkdir fs (list "" "TMP        "))))
+  (m1-fs-to-fat32-in-memory fat32-in-memory fs))
 |#
 
 (defun

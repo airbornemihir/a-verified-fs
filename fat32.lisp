@@ -51,6 +51,7 @@
 (defconst *ENOTDIR* 20)	;; Not a directory
 (defconst *EISDIR* 21) ;; Is a directory
 (defconst *ENOSPC* 28) ;; No space left on device
+(defconst *ENAMETOOLONG* 36) ;; File name too long
 
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))

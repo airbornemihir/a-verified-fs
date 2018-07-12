@@ -421,3 +421,9 @@
   (equal (character-listp (make-list-ac n val ac))
          (and (character-listp ac)
               (or (zp n) (characterp val)))))
+
+(defthm string-listp-of-append
+  (implies (true-listp x)
+           (equal (string-listp (append x y))
+                  (and (string-listp x)
+                       (string-listp y)))))
