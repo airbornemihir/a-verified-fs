@@ -140,8 +140,8 @@ filesystems including FAT32.
 \section{Program architecture and performance considerations}
 
 We number our abstract filesystem models \texttt{L1} through
-\texttt{L6}, and our concrete models \texttt{M1} through \texttt{M2}
-(concrete). These models are constructed incrementally to allow for
+\texttt{L6}, and our concrete models \texttt{M1} through
+\texttt{M2}. These models are constructed incrementally to allow for
 reuse of features in general, and a refinement relation where
 possible.
 
@@ -515,8 +515,8 @@ each new model. We summarise these below.
 
 \subsection{Invariants}
 
-As the models grow more complex, with the addition of more auxiliary
-data the "sanity" criteria for filesystem instances become more
+As the abstract models grow more complex, with the addition of more
+auxiliary data the "sanity" criteria for filesystem instances become more
 complex. For instance, in \texttt{L4}, the predicate \texttt{l4-fs-p}
 is defined to be the same as \texttt{l3-fs-p}, which recursively
 defines the shape of a valid directory tree. However, we choose to
@@ -555,6 +555,27 @@ which a listing follows.
        (let ((all-indices (l4-list-all-indices fs)))
             (and (no-duplicatesp all-indices)
                  (indices-marked-p all-indices alv)))))
+\end{verbatim}
+
+For our concrete proofs, we make use of the FTY discipline in order to
+minimise the number of type hypotheses; nonetheless, we find them
+useful for the stobj \texttt{fat32-in-memory}. Certain invariants
+which we maintain while manipulating the stobj through input/output
+operations and file operations are packaged together in the predicate
+\texttt{compliant-fat32-in-memoryp}, for which a listing follows.
+
+\medskip
+
+\noindent
+\begin{verbatim}
+(defund compliant-fat32-in-memoryp (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory :guard t))
+  (and (fat32-in-memoryp fat32-in-memory)
+       (>= (bpb_bytspersec fat32-in-memory) *ms-min-bytes-per-sector*)
+       (>= (bpb_secperclus fat32-in-memory) 1)
+       (>= (count-of-clusters fat32-in-memory)
+           *ms-fat32-min-count-of-clusters*)
+       (>= (bpb_rootclus fat32-in-memory) *ms-first-data-cluster*)))
 \end{verbatim}
 
 \subsection{Reuse}
