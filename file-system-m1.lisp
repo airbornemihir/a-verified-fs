@@ -30,6 +30,10 @@
          (unsigned-byte-listp n (list-fix bytes)))
   :hints (("goal" :in-theory (enable unsigned-byte-listp rev))))
 
+(defthm true-listp-when-string-list
+  (implies (string-listp x)
+           (true-listp x)))
+
 (defthm nth-of-unsigned-byte-list
   (implies (and (unsigned-byte-listp bits l)
                 (natp n)
@@ -209,7 +213,9 @@
     :use (find-file-by-pathname-correctness-2
           (:instance find-file-by-pathname-correctness-2
                      (pathname str::pathname-equiv))))))
-
+;; This function should continue to take pathnames which refer to top-level
+;; fs... but what happens when "." and ".." appear in a pathname? We'll have to
+;; modify the code to deal with that.
 (defun
   place-file-by-pathname
   (fs pathname file)
@@ -590,15 +596,19 @@
   (declare (xargs :guard (string-listp path)))
   (if (atom path)
       (mv "." (list "."))
-    (if (atom (cdr path))
-        (mv (str-fix (car path)) (list "."))
-      (if (atom (cddr path))
-          (mv (str-fix (cadr path)) (list (str-fix (car path))))
-        (mv-let (tail-basename tail-dirname)
-          (m1-basename-dirname-helper (cdr path))
-          (mv tail-basename
-              (list* (str-fix (car path))
-                     tail-dirname)))))))
+      (if (or (atom (cdr path))
+              (and (not (streqv (car path) ""))
+                   (atom (cddr path))
+                   (streqv (cadr path) "")))
+          (mv (str-fix (car path)) (list "."))
+          (if (atom (cddr path))
+              (mv (str-fix (cadr path))
+                  (list (str-fix (car path))))
+              (mv-let (tail-basename tail-dirname)
+                (m1-basename-dirname-helper (cdr path))
+                (mv tail-basename
+                    (list* (str-fix (car path))
+                           tail-dirname)))))))
 
 (defthm
   m1-basename-dirname-helper-correctness-1
@@ -612,7 +622,10 @@
   (:rewrite
    (:type-prescription
     :corollary
-    (stringp (mv-nth 0 (m1-basename-dirname-helper path))))))
+    (stringp (mv-nth 0 (m1-basename-dirname-helper path))))
+   (:type-prescription
+    :corollary
+    (true-listp (mv-nth 1 (m1-basename-dirname-helper path))))))
 
 (defun m1-basename (path)
   (declare (xargs :guard (string-listp path)))
@@ -628,27 +641,96 @@
     (declare (ignore basename))
     dirname))
 
-(defun m1-mkdir (fs pathname)
-  (declare (xargs :guard (and (m1-file-alist-p fs)
-                              (string-listp pathname))))
-  (b*
-      (((mv parent-dir errno)
-        (find-file-by-pathname fs (m1-dirname pathname)))
-       ((unless (and (equal errno 0) (m1-directory-file-p parent-dir)))
-        (mv fs -1 *ENOENT*))
+(defun
+    m1-mkdir (fs pathname)
+  (declare
+   (xargs
+    :guard (and (m1-file-alist-p fs)
+                (string-listp pathname))
+    :guard-hints
+    (("goal"
+      :in-theory
+      (disable
+       (:rewrite m1-basename-dirname-helper-correctness-1))
+      :use
+      (:instance
+       (:rewrite m1-basename-dirname-helper-correctness-1)
+       (path pathname))))))
+  (b* ((dirname (m1-dirname pathname))
+       ;; It's OK to strip out the leading "" when the pathname begins with /,
+       ;; but what about when it doesn't and the pathname is relative to the
+       ;; current working directory?
+       (dirname (if (and (consp dirname)
+                         (equal (car dirname) ""))
+                    (cdr dirname)
+                  dirname))
+       ((mv parent-dir errno)
+        (find-file-by-pathname fs dirname))
+       ((unless (or (atom dirname)
+                    (and (equal errno 0)
+                         (m1-directory-file-p parent-dir))))
+        (mv fs -1 *enoent*))
        ((mv & errno)
         (find-file-by-pathname fs pathname))
        ((unless (not (equal errno 0)))
-        (mv fs -1 *EEXIST*))
+        (mv fs -1 *eexist*))
        (basename (m1-basename pathname))
        ((unless (equal (length basename) 11))
-        (mv fs -1 *ENAMETOOLONG*))
-       (dir-ent (update-nth 11 (ash 1 4) (append (string=>nats basename)
-                                                 (nthcdr 11 (dir-ent-fix nil)))))
-       (file
-        (make-m1-file
-         :dir-ent dir-ent
-         :contents nil))
+        (mv fs -1 *enametoolong*))
+       (dir-ent
+        (update-nth 11 (ash 1 4)
+                    (append (string=>nats basename)
+                            (nthcdr 11 (dir-ent-fix nil)))))
+       (file (make-m1-file :dir-ent dir-ent
+                           :contents nil))
+       (pathname (append dirname (list basename)))
+       ((mv fs error-code)
+        (place-file-by-pathname fs pathname file))
+       ((unless (equal error-code 0))
+        (mv fs -1 error-code)))
+    (mv fs 0 0)))
+
+(defun
+    m1-mknod (fs pathname)
+  (declare
+   (xargs
+    :guard (and (m1-file-alist-p fs)
+                (string-listp pathname))
+    :guard-hints
+    (("goal"
+      :in-theory
+      (disable
+       (:rewrite m1-basename-dirname-helper-correctness-1))
+      :use
+      (:instance
+       (:rewrite m1-basename-dirname-helper-correctness-1)
+       (path pathname))))))
+  (b* ((dirname (m1-dirname pathname))
+       ;; It's OK to strip out the leading "" when the pathname begins with /,
+       ;; but what about when it doesn't and the pathname is relative to the
+       ;; current working directory?
+       (dirname (if (and (consp dirname)
+                         (equal (car dirname) ""))
+                    (cdr dirname)
+                  dirname))
+       ((mv parent-dir errno)
+        (find-file-by-pathname fs dirname))
+       ((unless (or (atom dirname)
+                    (and (equal errno 0)
+                         (m1-directory-file-p parent-dir))))
+        (mv fs -1 *enoent*))
+       ((mv & errno)
+        (find-file-by-pathname fs pathname))
+       ((unless (not (equal errno 0)))
+        (mv fs -1 *eexist*))
+       (basename (m1-basename pathname))
+       ((unless (equal (length basename) 11))
+        (mv fs -1 *enametoolong*))
+       (dir-ent (append (string=>nats basename)
+                        (nthcdr 11 (dir-ent-fix nil))))
+       (file (make-m1-file :dir-ent dir-ent
+                           :contents nil))
+       (pathname (append dirname (list basename)))
        ((mv fs error-code)
         (place-file-by-pathname fs pathname file))
        ((unless (equal error-code 0))
