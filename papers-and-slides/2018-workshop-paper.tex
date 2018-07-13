@@ -613,12 +613,11 @@ which a listing follows.
                  (indices-marked-p all-indices alv)))))
 \end{verbatim}
 
-For our concrete proofs, we make use of the FTY discipline in order to
-minimise the number of type hypotheses; nonetheless, we find them
-useful for the stobj \texttt{fat32-in-memory}. Certain invariants
-which we maintain while manipulating the stobj through input/output
-operations and file operations are packaged together in the predicate
-\texttt{compliant-fat32-in-memoryp}, for which a listing follows.
+Similarly, we find it useful to package up certain invariants for the
+stobj \texttt{fat32-in-memory}, which we maintain while
+manipulating the stobj through input/output operations and file
+operations, in the predicate \texttt{compliant-fat32-in-memoryp}, for
+which a listing follows.
 
 \medskip
 
@@ -636,11 +635,11 @@ operations and file operations are packaged together in the predicate
 
 \subsection{Reuse}
 
-As noted earlier, using a refinement methodology allows us to derive
-our read-over-write properties essentially "for free"; more precisely,
-we are able to prove read-over-write properties simply with
-\texttt{:use} hints after having done the work of proving refinement
-through induction.
+As noted earlier, in our abstract models, using a refinement
+methodology allows us to derive our read-over-write properties
+essentially "for free"; more precisely, we are able to prove
+read-over-write properties simply with \texttt{:use} hints after
+having done the work of proving refinement through induction.
 
 At a lower level, we are also able to benefit from refinement
 relationships between components of our different models. For example,
