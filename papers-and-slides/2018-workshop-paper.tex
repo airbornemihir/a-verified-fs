@@ -106,9 +106,9 @@ Isabelle/HOL~\cite{nipkow2002isabelle} to verify a microkernel;
 while their design abstracted away file operations in order to keep
 their trusted computing base small, it did serve as a precursor to their
 more recent COGENT project~\cite{amani2016cogent}. Here the authors
-built a "verified compiler" of sorts, generating C-language code from
-specifications in their domain-specific in a manner guaranteed to
-avoid many common filesystem bugs. Elsewhere, the SibylFS
+built a verifying compiler to translate a filesystem specification in
+their domain-specific language to C-language code, accompanied by
+a proof of the correctness of this translation. Elsewhere, the SibylFS
 project~\cite{ridge2015sibylfs}, again using Isabelle/HOL, provided
 an executable specification for filesystems at a level of abstraction
 that could function across multiple operating systems including OSX
@@ -122,20 +122,21 @@ consistency properties.
 Non-interactive theorem provers such as Z3 \cite{de2008z3}
 have also been used; Hyperkernel
 \cite{Nelson:2017:HPV:3132747.3132748} is a recent effort which
-focusses on simplifying the xv6 microkernel until the point that Z3
-can verify it with its SMT solving techniques. However, towards this
-end, all system calls in Hyperkernel are replaced with analogs which
-can terminate in constant time; while this approach is theoretically
-sound, it increases the chances of discrepancies between the model and
+simplifies the xv6~\cite{cox6xv6} microkernel until the
+point where Z3 can verify its properties with its SMT solving
+techniques. However, towards this end, all system calls in Hyperkernel
+are replaced with analogs which can terminate in constant time; while
+this approach is theoretically sound, it increases the chances of
+discrepancies between the model and
 the implementation which may diminish the utility of the proofs or
 even render them moot. A stronger effort in the same domain is
 Yggdrasil~\cite{sigurbjarnarson2016push}, which focusses on verifying
 filesystems with the use of Z3. While the authors make substantial
 progress in terms of the number of filesystem calls they support and
 the crash consistency guarantees they provide, they are subject to
-the limits of SMT solving which prevent them from modelling essential
-filesystem features such as extents, which are central to many
-filesystems including FAT32.
+the limits of SMT solving which prevent them from modelling filesystem
+features such as extents, which are essential to FAT32 and many other
+filesystems.
 
 \section{Program architecture and performance considerations}
 
