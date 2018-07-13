@@ -61,18 +61,18 @@ instead of a numeric index, and communicate with other programs.
 Thus, the vast majority of application programs
 directly or indirectly rely upon filesystems, which makes filesystem
 verification critically important. Here, we present a
-formalisation effort in ACL2 for an implementation of the FAT32
-filesystem, and a proof of the read-over-write properties for this
-filesystem. By starting with a high-level abstract model and adding
-more filesystem features in successive models, we are able to manage the
-complexity of this proof, which has not, to our knowledge, been
-previously attempted. Thus, this paper contributes an implementation
-of FAT32, a widely-used filesystem, formally verified against an
-abstract specification and tested for binary compatibility by means of
-co-simulation.
+formalisation effort in ACL2 for the FAT32 filesystem, and a proof of
+the read-over-write properties for FAT32 system calls. By starting
+with a high-level abstract model and adding more filesystem features
+in successive models, we are able to manage the complexity of this
+proof, which has not, to our knowledge, been previously
+attempted. Thus, this paper contributes an implementation of several
+Unix-like system calls for FAT32, a widely-used filesystem, formally
+verified against an abstract specification and tested for binary
+compatibility by means of co-simulation.
 
 In the rest of this paper, we describe these filesystem
-models and the properties proved with examples; we proceed to a
+models and the properties proved, with examples; we proceed to a
 high-level explanation of these proofs and the co-simulation
 infrastructure; and further we offer some insights about the low-level
 issues encountered while working the proofs.
@@ -139,11 +139,21 @@ filesystems including FAT32.
 
 \section{Program architecture and performance considerations}
 
+We have two concrete models for the FAT32 filesystem - \texttt{M2},
+which is a faithful representation of a FAT32 disk image in the form
+of a stobj~\cite{boyer2002single}, and \texttt{M1}, which represents the
+state of the FAT32 filesystem as a directory tree. This allows us to
+address the practical details of updating a disk image in \texttt{M2},
+which benefits from ACL2's efficient stobj array operations provides
+for stobjs, and abstract them away in \texttt{M1} for easier reasoning
+without the syntactic constraints imposed on stobj arrays.
+
 We number our abstract filesystem models \texttt{L1} through
-\texttt{L6}, and our concrete models \texttt{M1} through
-\texttt{M2}. These models are constructed incrementally to allow for
+\texttt{L6}. These models are constructed incrementally to allow for
 reuse of features in general, and a refinement relation where
-possible.
+possible. Much of the code and proof infrastructure is shared between
+the abstract models and the concrete models by design, although there
+is not a formal refinement relation between the latter and the former.
 
 Starting with \texttt{L1}, an abstract model representing the directory
 structure as a tree, we add file
