@@ -67,9 +67,9 @@ with a high-level abstract model and adding more filesystem features
 in successive models, we are able to manage the complexity of this
 proof, which has not, to our knowledge, been previously
 attempted. Thus, this paper contributes an implementation of several
-Unix-like system calls for FAT32, a widely-used filesystem, formally
-verified against an abstract specification and tested for binary
-compatibility by means of co-simulation.
+Unix-like system calls for FAT32, formally verified against an
+abstract specification and tested for binary compatibility by means of
+co-simulation.
 
 In the rest of this paper, we describe these filesystem
 models and the properties proved, with examples; we proceed to a
@@ -190,7 +190,7 @@ abstract models can be seen in table
 
 \begin{figure}
   \centering
-  \caption{Refinement/reuse relationships between models}
+  \caption{Refinement/reuse relationships between abstract models}
   \label{refinement-figure}
   \begin{tikzpicture}[sibling distance=15em,
       every node/.style = {shape=rectangle, rounded corners,
@@ -260,21 +260,22 @@ Synergy~\cite{bevier1996executable}.
 
 \section{The FAT32 filesystem}
 
-FAT32 was initially developed at Microsoft~\cite{microsoft2000} in
-order to address certain shortcomings of the DOS filesystem previously
-in use in their operating systems. While it is simple by today's
-standards, it does add some complexity compared to the filesystems
-which came before.
+FAT32 was initially developed at Microsoft in order to address the
+capacity constraints of the DOS filesystem. Microsoft's specification
+for FAT32~\cite{microsoft2000} details the data layout and constraints
+for valid FAT32 disk images.
 
-All files, including regular files and directory files, are divided into
-\textit{clusters} (sometimes called \textit{extents}) of a fixed size,
-which is decided at the time a FAT32 volume is formatted, and
-constrained to be a multiple of the disk sector size. Directory files
-differ only in a metadata attribute which indicates that their contents
-should be treated as a sequence of directory entries. Each such
-directory entry is 32 bytes wide and contains information including
-name, size, first cluster index, and access times for the
-corresponding file.
+In FAT32 all files, including regular files and directory files, are
+divided into \textit{clusters} (sometimes called \textit{extents}) of
+a fixed size. The size of a cluster, like many other parameters
+of a FAT32 volume, is stored in the \textit{reserved area} of the
+volume and remains constant after the volume is created. Directory
+files are for the most part treated the same way as regular files by
+the filesystem, but they differ in a metadata attribute, which
+indicates that the contents of directory files should be treated as
+sequences of directory entries. Each such directory entry is
+32 bytes wide and contains metadata including name, size, first
+cluster index, and access times for the corresponding file.
 
 The file allocation table itself contains a number of linked lists. It
 maps each cluster index used by a file to either the next cluster
@@ -288,12 +289,12 @@ clusters are mapped to 0 in the table; this fact is used for counting
 and allocating free clusters.
 
 We illustrate the file allocation table and data layout for a small
-example directory tree in figure~\ref{fat32-example}. It should be
-noted that the \texttt{/tmp} directory is part of the root filesystem
-here, unlike in some operating systems where \texttt{/tmp} is the
-mountpoint for a different filesystem; also, for the purposes of
-illustration, all regular files and directories are assumed to span
-one cluster except for \texttt{/vmlinuz} which spans two clusters.
+example directory tree in figure~\ref{fat32-example}. Here,
+\texttt{/tmp} is a subdirectory of the root directory
+(/texttt{//}). For the purposes of illustration, all regular files and
+directories in this example are assumed to span one cluster except for
+\texttt{/vmlinuz} which spans two clusters ($3$ and $4$), and
+\textit{EOC} refers to an "end of clusterchain" value.
 
 \begin{figure}
   \centering
