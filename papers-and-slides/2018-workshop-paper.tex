@@ -426,91 +426,90 @@ one cluster except for \texttt{/vmlinuz} which spans two clusters.
 %% is a remnant of an earlier filesystem verification effort for CP/M,
 %% which we subsumed into the present work).
 
-%% Broadly, we characterise the filesystem
-%% operations we offer as either \textit{write} operations, which do
-%% modify the filesystem, or \textit{read} operations, which do not. In
-%% each model, we have been able to prove \textit{read-over-write}
-%% properties which show that write operations have
-%% their effects made available immediately for reads at the same
-%% location, but also that they do not affect reads at other locations.
-
-%% The first read-after-write theorem states that immediately following a
-%% write of some text at some location, a read of the same length at the
-%% same location yields the same text. The second read-after-write
-%% theorem states that after a write of some text at some location, a
-%% read at any other location returns exactly what it would have returned
-%% before the write. As an example, listings for the \texttt{L1} versions
-%% of these theorems follow.
-
-%% \medskip
-
-%% \noindent
-%% \begin{verbatim}
-%% (defthm l1-read-after-write-1
-%%   (implies (and (l1-fs-p fs)
-%%                 (stringp text)
-%%                 (symbol-listp hns)
-%%                 (natp start)
-%%                 (equal n (length text))
-%%                 (stringp (l1-stat hns fs)))
-%%            (equal (l1-rdchs hns (l1-wrchs hns fs start text) start n) text)))
-
-%% (defthm l1-read-after-write-2
-%%   (implies (and (l1-fs-p fs)
-%%                 (stringp text2)
-%%                 (symbol-listp hns1)
-%%                 (symbol-listp hns2)
-%%                 (not (equal hns1 hns2))
-%%                 (natp start1)
-%%                 (natp start2)
-%%                 (natp n1)
-%%                 (stringp (l1-stat hns1 fs)))
-%%            (equal (l1-rdchs hns1 (l1-wrchs hns2 fs start2 text2) start1 n1)
-%%                   (l1-rdchs hns1 fs start1 n1))))
-%% \end{verbatim}
-
-%% By composing these properties, we can reason about executions
-%% involving multiple reads and writes, as illustrated in the following
-%% throwaway proof.
-
-%% \medskip
-
-%% \noindent
-%% \begin{verbatim}
-%% (thm
-%%  (implies (and (l1-fs-p fs)
-%%                (stringp text1)
-%%                (stringp text2)
-%%                (symbol-listp hns1)
-%%                (symbol-listp hns2)
-%%                (not (equal hns1 hns2))
-%%                (natp start1)
-%%                (natp start2)
-%%                (stringp (l1-stat hns1 fs))
-%%                (equal n1 (length text1)))
-%%           (equal (l1-rdchs hns1
-%%                            (l1-wrchs hns2 (l1-wrchs hns1 fs start1 text1)
-%%                                      start2 text2)
-%%                            start1 n1)
-%%                  (l1-rdchs hns1 (l1-wrchs hns1 fs start1 text1)
-%%                            start1 n1))))
-%% \end{verbatim}
 
 \section{Proof methodology}
 
+Broadly, we characterise the filesystem
+operations we offer as either \textit{write} operations, which do
+modify the filesystem, or \textit{read} operations, which do not. In
+each model, we have been able to prove \textit{read-over-write}
+properties which show that write operations have
+their effects made available immediately for reads at the same
+location, but also that they do not affect reads at other locations.
+
+The first read-after-write theorem states that immediately following a
+write of some text at some location, a read of the same length at the
+same location yields the same text. The second read-after-write
+theorem states that after a write of some text at some location, a
+read at any other location returns exactly what it would have returned
+before the write. As an example, listings for the \texttt{L1} versions
+of these theorems follow.
+
+\medskip
+
+\noindent
+\begin{verbatim}
+(defthm l1-read-after-write-1
+  (implies (and (l1-fs-p fs)
+                (stringp text)
+                (symbol-listp hns)
+                (natp start)
+                (equal n (length text))
+                (stringp (l1-stat hns fs)))
+           (equal (l1-rdchs hns (l1-wrchs hns fs start text) start n) text)))
+
+(defthm l1-read-after-write-2
+  (implies (and (l1-fs-p fs)
+                (stringp text2)
+                (symbol-listp hns1)
+                (symbol-listp hns2)
+                (not (equal hns1 hns2))
+                (natp start1)
+                (natp start2)
+                (natp n1)
+                (stringp (l1-stat hns1 fs)))
+           (equal (l1-rdchs hns1 (l1-wrchs hns2 fs start2 text2) start1 n1)
+                  (l1-rdchs hns1 fs start1 n1))))
+\end{verbatim}
+
+By composing these properties, we can reason about executions
+involving multiple reads and writes, as illustrated in the following
+throwaway proof.
+
+\medskip
+
+\noindent
+\begin{verbatim}
+(thm
+ (implies (and (l1-fs-p fs)
+               (stringp text1)
+               (stringp text2)
+               (symbol-listp hns1)
+               (symbol-listp hns2)
+               (not (equal hns1 hns2))
+               (natp start1)
+               (natp start2)
+               (stringp (l1-stat hns1 fs))
+               (equal n1 (length text1)))
+          (equal (l1-rdchs hns1
+                           (l1-wrchs hns2 (l1-wrchs hns1 fs start1 text1)
+                                     start2 text2)
+                           start1 n1)
+                 (l1-rdchs hns1 (l1-wrchs hns1 fs start1 text1)
+                           start1 n1))))
+\end{verbatim}
+
 In \texttt{L1}, our simplest model, the read-over-write properties
-were, of necessity, proven from scratch.
-
-In each subsequent model, the read-over-write properties are proven as
-corollaries of equivalence proofs which establish the correctness of
-read and write operations in the respective model with respect to a
-previous model. A representation of such an equivalence proof can be
-seen in figures \ref{l2-wrchs-correctness-1},
-\ref{l2-rdchs-correctness-1} and \ref{l2-read-over-write-1}, which
-respectively show the equivalence proof for \texttt{l2-wrchs}, the
-equivalence proof for \texttt{l2-rdchs} and the composition of these
-to obtain the first read-over-write theorem for model \texttt{L2}.
-
+are proven from scratch. In each subsequent model, the read-over-write
+properties are proven as corollaries of equivalence proofs which
+establish the correctness of read and write operations in the
+respective model with respect to a previous model. A representation of
+such an equivalence proof can be seen in figures
+\ref{l2-wrchs-correctness-1}, \ref{l2-rdchs-correctness-1} and
+\ref{l2-read-over-write-1}, which respectively show the equivalence
+proof for \texttt{l2-wrchs}, the equivalence proof for
+\texttt{l2-rdchs} and the composition of these to obtain the first
+read-over-write theorem for model \texttt{L2}.
 
 \begin{figure}
   \centering
