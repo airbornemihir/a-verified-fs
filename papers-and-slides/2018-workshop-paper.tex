@@ -674,23 +674,33 @@ summary. This validates our code for reading the various fields of the
 disk image and gives us a regression test to use while we modify our
 model to support proofs and filesystem calls.
 
-%% This stuff is not yet implemented exactly as described.
-Our first co-simulation test is for \texttt{cat}~\cite{granlundcat}, a
-simple program which reads its input and copies it to its output. Its
-functionality is reproduced in an ACL2 program which uses our
-implementations of the system calls
-\texttt{lstat}~\cite{kerrisklstat},
-\texttt{open}~\cite{kerriskopen}, \texttt{pread}~\cite{kerriskpread},
-\texttt{pwrite}~\cite{kerriskpwrite}, and
-\texttt{close}~\cite{kerriskclose}. This allows us to validate our
+Further, we co-simulate \texttt{cat}~\cite{granlundcat}, a simple
+program which reads its input and copies it to its output. Its
+functionality is reproduced in an ACL2 program which directly
+interacts with the \texttt{fat32-in-memory} stobj, without using our
+implementations of system calls. This allows us to validate our
 code for reading and writing regular files and directories which span
 multiple clusters.
 
+%% This stuff is not yet implemented exactly as described.
+
+%% Our first co-simulation test is for \texttt{cat}~\cite{granlundcat}, a
+%% simple program which reads its input and copies it to its output. Its
+%% functionality is reproduced in an ACL2 program which uses our
+%% implementations of the system calls
+%% \texttt{lstat}~\cite{kerrisklstat},
+%% \texttt{open}~\cite{kerriskopen}, \texttt{pread}~\cite{kerriskpread},
+%% \texttt{pwrite}~\cite{kerriskpwrite}, and
+%% \texttt{close}~\cite{kerriskclose}. This allows us to validate our
+%% code for reading and writing regular files and directories which span
+%% multiple clusters.
+
 %% This stuff is not yet implemented at all.
-We further test the \texttt{dd}~\cite{rubindd} program, which provides
-similar functionality to \texttt{cat} but with more options to
-customise the data transfer, for instance, by allowing the data
-transfer to be split into blocks of a specified size.
+
+%% We further test the \texttt{dd}~\cite{rubindd} program, which provides
+%% similar functionality to \texttt{cat} but with more options to
+%% customise the data transfer, for instance, by allowing the data
+%% transfer to be split into blocks of a specified size.
 
 \section{Conclusion}
 
