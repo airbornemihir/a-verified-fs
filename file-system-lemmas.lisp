@@ -431,3 +431,19 @@
 (defthm true-listp-when-string-list
   (implies (string-listp x)
            (true-listp x)))
+
+(defthmd consp-of-nthcdr-lemma-1
+  (implies (consp (nthcdr n l))
+           (consp l)))
+
+(defthm
+  consp-of-nthcdr
+  (iff (consp (nthcdr n l))
+       (< (nfix n) (len l)))
+  :hints
+  (("subgoal *1/2'4'"
+    :in-theory (disable nthcdr-of-cdr)
+    :use ((:instance nthcdr-of-cdr (i (- n 1))
+                     (x l))
+          (:instance consp-of-nthcdr-lemma-1 (n (- n 1))
+                     (l nil))))))
