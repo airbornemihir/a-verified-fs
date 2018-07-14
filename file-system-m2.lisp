@@ -804,6 +804,51 @@
  update-bs_jmpboot-correctness-3
  update-bs_jmpboot-correctness-4)
 
+(defun
+  bs_jmpboot-suffix (fat32-in-memory i)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (fat32-in-memoryp fat32-in-memory)
+                (natp i)
+                (<= i
+                    (bs_jmpboot-length fat32-in-memory)))))
+  (if (zp i)
+      nil
+      (cons (bs_jmpbooti (- (bs_jmpboot-length fat32-in-memory)
+                            i)
+                         fat32-in-memory)
+            (bs_jmpboot-suffix fat32-in-memory (- i 1)))))
+
+(defthm
+  nthcdr-past-end
+  (implies (and (integerp n)
+                (true-listp l)
+                (>= n (len l)))
+           (not (nthcdr n l)))
+  :hints
+  (("subgoal *1/5.1'" :in-theory (disable nthcdr-of-cdr)
+    :use (:instance nthcdr-of-cdr (i (- n 1))
+                    (x nil)))))
+
+(defthm
+  bs_jmpboot-suffix-correctness-1
+  (implies (and (fat32-in-memoryp fat32-in-memory)
+                (natp i)
+                (<= i (bs_jmpboot-length fat32-in-memory)))
+           (equal (bs_jmpboot-suffix fat32-in-memory i)
+                  (nthcdr (- (bs_jmpboot-length fat32-in-memory)
+                             i)
+                          (nth *bs_jmpbooti* fat32-in-memory))))
+  :hints
+  (("subgoal *1/2.1"
+    :in-theory (disable nth-of-nthcdr nthcdr-of-cdr)
+    :use ((:instance nth-of-nthcdr (n 0)
+                     (m (- 3 i))
+                     (x (nth *bs_jmpbooti* fat32-in-memory)))
+          (:instance nthcdr-of-cdr (i (+ 3 (- i)))
+                     (x (car fat32-in-memory)))))))
+
 (update-stobj-array
  update-bs_oemname bs_oemname-length 8
  update-bs_oemnamei bs_oemnamei *bs_oemnamei*
