@@ -619,6 +619,12 @@
   :hints (("goal" :in-theory (enable fat-length update-fati))))
 
 (defthm
+  fat-length-of-resize-fat
+  (equal (fat-length (resize-fat i fat32-in-memory))
+         (nfix i))
+  :hints (("goal" :in-theory (enable fat-length resize-fat))))
+
+(defthm
   count-of-clusters-of-update-fati
   (equal (count-of-clusters (update-fati i v fat32-in-memory))
          (count-of-clusters fat32-in-memory))
@@ -664,6 +670,25 @@
                      update-data-regioni
                      data-region-length count-of-clusters)
                     (floor)))))
+
+(defthm
+  data-region-length-of-update-data-regioni
+  (implies
+   (and (natp i)
+        (< i (data-region-length fat32-in-memory)))
+   (equal (data-region-length
+           (update-data-regioni i v fat32-in-memory))
+          (data-region-length fat32-in-memory)))
+  :hints (("goal" :in-theory (enable data-region-length
+                                     update-data-regioni))))
+
+(defthm
+  data-region-length-of-resize-data-region
+  (equal (data-region-length
+          (resize-data-region i data-region32-in-memory))
+         (nfix i))
+  :hints (("goal" :in-theory (enable data-region-length
+                                     resize-data-region))))
 
 (defconst *initialbytcnt* 16)
 
@@ -1372,6 +1397,16 @@
   :rule-classes :linear
   :hints (("goal" :do-not-induct t
            :in-theory (disable fat32-in-memoryp nth subseq))))
+
+(defthm bpb_rsvdseccnt-of-resize-fat
+  (equal (bpb_rsvdseccnt (resize-fat i fat32-in-memory))
+         (bpb_rsvdseccnt fat32-in-memory))
+  :hints (("goal" :in-theory (enable resize-fat))))
+
+(defthm bpb_bytspersec-of-resize-fat
+  (equal (bpb_bytspersec (resize-fat i fat32-in-memory))
+         (bpb_bytspersec fat32-in-memory))
+  :hints (("goal" :in-theory (enable resize-fat))))
 
 (encapsulate
   ()
@@ -2153,17 +2188,6 @@
     :hints
     (("goal"
       :expand (len (make-clusters text cluster-size)))))))
-
-(defthm
-  data-region-length-of-update-data-regioni
-  (implies
-   (and (natp i)
-        (< i (data-region-length fat32-in-memory)))
-   (equal (data-region-length
-           (update-data-regioni i v fat32-in-memory))
-          (data-region-length fat32-in-memory)))
-  :hints (("goal" :in-theory (enable data-region-length
-                                     update-data-regioni))))
 
 (defun stobj-set-cluster (cluster fat32-in-memory end-index)
   (declare (xargs :stobjs fat32-in-memory
