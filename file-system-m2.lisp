@@ -1305,14 +1305,29 @@
 ;;            (bpb_rsvdseccnt fat32-in-memory))))
 
 (defthm
-  slurp-disk-image-guard-lemma-13
-  (<= 1
+  bpb_secperclus-of-read-reserved-area t
+  :rule-classes
+  ((:linear
+    :corollary
+    (<= 1
+        (bpb_secperclus
+         (mv-nth 0
+                 (read-reserved-area fat32-in-memory str))))
+    :hints
+    (("goal" :do-not-induct t
+      :in-theory (disable fat32-in-memoryp nth subseq))))
+   (:rewrite
+    :corollary
+    (implies
+     (stringp str)
+     (integerp
       (bpb_secperclus
        (mv-nth 0
-               (read-reserved-area fat32-in-memory str))))
-  :rule-classes :linear
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable fat32-in-memoryp nth subseq))))
+               (read-reserved-area fat32-in-memory str)))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory (disable fat32-in-memoryp nth subseq))))))
 
 (defthm
   slurp-disk-image-guard-lemma-14
