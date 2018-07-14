@@ -30,15 +30,23 @@
          (unsigned-byte-listp n (list-fix bytes)))
   :hints (("goal" :in-theory (enable unsigned-byte-listp rev))))
 
-(defthm true-listp-when-string-list
-  (implies (string-listp x)
-           (true-listp x)))
-
 (defthm nth-of-unsigned-byte-list
   (implies (and (unsigned-byte-listp bits l)
                 (natp n)
                 (< n (len l)))
            (unsigned-byte-p bits (nth n l))))
+
+(defthm nth-of-chars=>nats
+  (equal (integerp (nth n (chars=>nats chars)))
+         (< (nfix n) (len chars)))
+  :hints (("goal" :in-theory (enable chars=>nats)
+           :induct (nth n chars))))
+
+(defthm nth-of-string=>nats
+  (implies (stringp string)
+           (equal (integerp (nth n (string=>nats string)))
+                  (< (nfix n) (length string))))
+  :hints (("goal" :in-theory (enable string=>nats))))
 
 (defun dir-ent-p (x)
   (declare (xargs :guard t))

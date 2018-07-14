@@ -427,3 +427,7 @@
            (equal (string-listp (append x y))
                   (and (string-listp x)
                        (string-listp y)))))
+
+(defthm true-listp-when-string-list
+  (implies (string-listp x)
+           (true-listp x)))

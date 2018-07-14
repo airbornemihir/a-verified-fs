@@ -889,6 +889,13 @@
            (unsigned-byte-listp 8 (get-initial-bytes str))
   :hints (("goal" :in-theory (enable get-initial-bytes))))
 
+(defthm
+  nth-of-get-initial-bytes
+  (implies (stringp str)
+           (equal (integerp (nth n (get-initial-bytes str)))
+                  (< (nfix n) *initialbytcnt*)))
+  :hints (("goal" :in-theory (enable get-initial-bytes))))
+
 (defund
   get-remaining-rsvdbyts (str)
   (declare
