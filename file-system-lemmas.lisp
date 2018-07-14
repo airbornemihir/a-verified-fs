@@ -414,7 +414,7 @@
          (cdr (nthcdr i x))))
 
 (defthm update-nth-of-nth
-  (implies (and (natp n) (< n (len l)))
+  (implies (< (nfix n) (len l))
            (equal (update-nth n (nth n l) l) l)))
 
 (defthm character-listp-of-make-list-ac
