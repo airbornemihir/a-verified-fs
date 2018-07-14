@@ -432,18 +432,24 @@
   (implies (string-listp x)
            (true-listp x)))
 
-(defthmd consp-of-nthcdr-lemma-1
-  (implies (consp (nthcdr n l))
-           (consp l)))
+;; The following definitions are taken from
+;; books/std/lists/nthcdr.lisp with thanks to Jared
+;; Davis.
+(encapsulate
+  ()
 
-(defthm
-  consp-of-nthcdr
-  (iff (consp (nthcdr n l))
-       (< (nfix n) (len l)))
-  :hints
-  (("subgoal *1/2'4'"
-    :in-theory (disable nthcdr-of-cdr)
-    :use ((:instance nthcdr-of-cdr (i (- n 1))
-                     (x l))
-          (:instance consp-of-nthcdr-lemma-1 (n (- n 1))
-                     (l nil))))))
+  (local (defthmd l0
+           (implies (< (nfix n) (len x))
+                    (consp (nthcdr n x)))
+           :hints(("Goal" :induct (nthcdr n x)))))
+
+  (local (defthmd l1
+           (implies (not (< (nfix n) (len x)))
+                    (not (consp (nthcdr n x))))
+           :hints(("goal" :induct (nthcdr n x)))))
+
+  (defthm consp-of-nthcdr
+    (equal (consp (nthcdr n x))
+           (< (nfix n) (len x)))
+    :hints(("Goal" :use ((:instance l0)
+                         (:instance l1))))))
