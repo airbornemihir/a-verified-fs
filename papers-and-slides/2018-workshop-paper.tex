@@ -2,7 +2,7 @@
 \providecommand{\event}{ACL2 workshop 2018} % Name of the event you are submitting to
 
 %% Todo list
-%% Gotta substantiate the co-simulations we talked about...
+%% (done) Gotta substantiate the co-simulations we talked about...
 %% Gotta talk about the number of things we re-used from L6 in M2
 %% Gotta de-emphasise the proofs for L1 through L6 - they're OK but
 %%  not that important.
@@ -624,11 +624,16 @@ which a listing follows.
                  (indices-marked-p all-indices alv)))))
 \end{verbatim}
 
-Similarly, we find it useful to package up certain invariants for the
-stobj \texttt{fat32-in-memory}, which we maintain while
-manipulating the stobj through input/output operations and file
-operations, in the predicate \texttt{compliant-fat32-in-memoryp}, for
-which a listing follows.
+Similarly, for proof purposes we find it useful to package together
+certain invariants for the stobj \texttt{fat32-in-memory}, which we
+maintain while manipulating the stobj through input/output operations
+and file operations, in the predicate
+\texttt{compliant-fat32-in-memoryp} for which a listing follows. The
+constant \texttt{*ms-first-data-cluster*}, for instance, is $2$, and
+the last clause of the conjunction helps us maintain the invariant
+about all cluster indices including the root cluster being greater
+than or equal to $2$, which is needed while reasoning about operations
+in the file allocation table.
 
 \medskip
 
@@ -685,13 +690,11 @@ summary. This validates our code for reading the various fields of the
 disk image and gives us a regression test to use while we modify our
 model to support proofs and filesystem calls.
 
-Further, we co-simulate \texttt{cat}~\cite{granlundcat}, a simple
-program which reads its input and copies it to its output. Its
-functionality is reproduced in an ACL2 program which directly
-interacts with the \texttt{fat32-in-memory} stobj, without using our
-implementations of system calls. This allows us to validate our
-code for reading and writing regular files and directories which span
-multiple clusters.
+Further, we co-simulate \texttt{cp}~\cite{granlundcp}, a simple
+program for copying files, by
+reproducing its functionality in an ACL2 program. This allows us to
+validate our code for reading and writing regular files and
+directories which span multiple clusters.
 
 %% This stuff is not yet implemented exactly as described.
 
