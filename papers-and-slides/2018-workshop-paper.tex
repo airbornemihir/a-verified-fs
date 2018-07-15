@@ -6,15 +6,17 @@
 %% Gotta talk about the number of things we re-used from L6 in M2
 %% Gotta de-emphasise the proofs for L1 through L6 - they're OK but
 %%  not that important.
-%% Gotta talk about FTY.
+%% (done) Gotta talk about FTY.
 %% Gotta substantiate the point about code re-use in CP/M and FAT32 -
 %%  obviously there isn't enough time to do anything about ext4
 %% (done) Gotta talk about concurrent calls in future work - and
 %%  update that whole section with FAT32 stuff assumed done, obviously
 %% Gotta substantiate the claim about non-determinism in M1
 %% (done) Gotta fix the darned diagram!
-%% Gotta address the non-exhaustive set of system calls and their choice
-%% Gotta talk about error codes and other things taken from the kernel implementation
+%% (done) Gotta address the non-exhaustive set of system calls and
+%% their choice
+%% (done )Gotta talk about error codes and other things taken from the
+%% kernel implementation
 %% Gotta talk about caching (in terms of the M1 tree)
 %% Gotta consider renaming L1...L6 to N1...N6
 
@@ -138,7 +140,7 @@ the limits of SMT solving which prevent them from modelling filesystem
 features such as extents, which are essential to FAT32 and many other
 filesystems.
 
-\section{Program architecture and performance considerations}
+\section{Program architecture}
 
 We have two concrete models for the FAT32 filesystem - \texttt{M2},
 which is a faithful representation of a FAT32 disk image in the form
@@ -152,7 +154,7 @@ without the syntactic constraints imposed on stobj arrays.
 These concrete filesystem models are based upon abstract models
 \texttt{L1} through \texttt{L6}. These models are constructed
 incrementally to allow for reuse of features in general, and
-specifically to allow read-after-write proofs for simpler models to be
+specifically to allow read-over-write proofs for simpler models to be
 reused in more complex models. In the case of models \texttt{L4} and
 \texttt{L6}, we are able to show a refinement relationship
 without stuttering \cite{abadi1991existence}; however, for the other
@@ -255,8 +257,8 @@ model? Choosing, for instance, to make our filesystem operations
 conform to the \texttt{file\_operations} interface provided by the
 Linux kernel for its filesystem modules would make our work less
 general, but avert us from having to recreate some of the filesystem
-infrastructure provided by the kernel. We choose to implement a subset
-of the POSIX filesystem application
+infrastructure provided by the kernel. We, however, choose to
+implement a subset of the POSIX filesystem application
 programming interface, in order to enable us to easily compare the
 results of running filesystem operations on \texttt{M2} and the Linux
 kernel's implementation of FAT32, which in turn allows us to test our
@@ -265,6 +267,15 @@ theorem proving. As a trade-off for this choice, we are required to
 implement process tables and file tables, which we do through a
 straightforward approach similar to that used in
 Synergy~\cite{bevier1996executable}.
+
+At the present moment, we have implemented the POSIX system calls
+\texttt{lstat}~\cite{kerrisklstat}, \texttt{open}~\cite{kerriskopen},
+\texttt{pread}~\cite{kerriskpread},
+\texttt{pwrite}~\cite{kerriskpwrite},
+\texttt{close}~\cite{kerriskclose},
+\texttt{mkdir}~\cite{kerriskmkdir} and
+\texttt{mknod}~\cite{kerriskmknod}. Wherever \texttt{errno} is to be
+set by a system call, we abide by the Linux convention.
 
 \section{The FAT32 filesystem}
 
@@ -302,7 +313,7 @@ and allocating free clusters.
 We illustrate the file allocation table and data layout for a small
 example directory tree in figure~\ref{fat32-example}. Here,
 \texttt{/tmp} is a subdirectory of the root directory
-(/texttt{//}). For the purposes of illustration, all regular files and
+(\texttt{/}). For the purposes of illustration, all regular files and
 directories in this example are assumed to span one cluster except for
 \texttt{/vmlinuz} which spans two clusters ($3$ and $4$), and
 \textit{EOC} refers to an "end of clusterchain" value.
@@ -449,9 +460,9 @@ properties which show that write operations have
 their effects made available immediately for reads at the same
 location, but also that they do not affect reads at other locations.
 
-The first read-after-write theorem states that immediately following a
+The first read-over-write theorem states that immediately following a
 write of some text at some location, a read of the same length at the
-same location yields the same text. The second read-after-write
+same location yields the same text. The second read-over-write
 theorem states that after a write of some text at some location, a
 read at any other location returns exactly what it would have returned
 before the write. As an example, listings for the \texttt{L1} versions
@@ -461,7 +472,7 @@ of these theorems follow.
 
 \noindent
 \begin{verbatim}
-(defthm l1-read-after-write-1
+(defthm l1-read-over-write-1
   (implies (and (l1-fs-p fs)
                 (stringp text)
                 (symbol-listp hns)
@@ -470,7 +481,7 @@ of these theorems follow.
                 (stringp (l1-stat hns fs)))
            (equal (l1-rdchs hns (l1-wrchs hns fs start text) start n) text)))
 
-(defthm l1-read-after-write-2
+(defthm l1-read-over-write-2
   (implies (and (l1-fs-p fs)
                 (stringp text2)
                 (symbol-listp hns1)
@@ -602,7 +613,7 @@ require two more properties for a "sane" filesystem.
 These properties are invariants to be maintained across
 write operations; while not all of them are strictly necessary for a
 filesystem instance to be valid, they do simplify the verification of
-read-after-write properties by helping us ensure that write operations
+read-over-write properties by helping us ensure that write operations
 do not create an "aliasing" situation in which a regular file's
 contents can be modified through a write to a different regular file.
 
@@ -671,6 +682,17 @@ table. This, in turn, means that the effort spent on proving the
 invariants described above for \texttt{L4} need not be replicated for
 \texttt{L6}.
 
+\subsection{The FTY discipline}
+
+In the model \texttt{M1} in particular, we use the FTY discpline and
+its associated library \cite{15-swords-fty} to simplify our
+definitions for regular files,
+directory files, and other data types. This allows us to simplify as
+well as speed up our reasoning by eliminating many type hypotheses,
+and in particular allows us to prove read-over-write properties for
+\texttt{M1} with a significantly smaller number of helper lemmas
+compared to our abstract models in which FTY is not used.
+
 \section{Co-simulation}
 
 Previous work on executable specifications \cite{goel2014simulation}
@@ -729,7 +751,9 @@ subsequent realistic model of FAT32.
 The FAT32 model is still a work in progress; the set of system calls
 is not yet complete and the translation functions between disk images,
 \texttt{M2} instances and \texttt{M1} instances are not yet
-verified. Once we have these, we intend to use them as a basis for
+verified. However, many of the techniques for these proofs have
+already been demonstrated in our abstract models. Once we have these,
+we intend to use them as a basis for
 reasoning about sequences of filesystem operations in a program, in a
 manner akin to proving properties of code on microprocessor
 models. This is a motivation for the pursuit of binary compatibility
