@@ -707,9 +707,9 @@
   reason-about-stobj-array
     (name1 name2
            array-length bit-width array-updater array-accessor
-           stobj-position-constant
+           stobj-position-constant array-length-constant
            stobj stobj-recogniser
-           lemma-name1 lemma-name2 lemma-name3 lemma-name4)
+           lemma-name1 lemma-name2 lemma-name3 lemma-name4 lemma-name5)
   `(encapsulate
      nil
 
@@ -821,52 +821,83 @@
                      (<= 0 i)
                      (< i (,array-length ,stobj)))
                 (unsigned-byte-p ,bit-width (,array-accessor i ,stobj)))
-       :hints (("Goal" :in-theory (disable nth unsigned-byte-p))))))
+       :hints (("Goal" :in-theory (disable nth unsigned-byte-p))))
 
-(reason-about-stobj-array update-bs_jmpboot bs_jmpboot-suffix
-                    bs_jmpboot-length 8 update-bs_jmpbooti
-                    bs_jmpbooti *bs_jmpbooti*
-                    fat32-in-memory fat32-in-memoryp
-                    update-bs_jmpboot-correctness-1
-                    update-bs_jmpboot-correctness-2
-                    update-bs_jmpboot-correctness-3
-                    update-bs_jmpboot-correctness-4)
+     (defthm ,lemma-name5
+       (implies (and (,stobj-recogniser ,stobj)
+                     (integerp i)
+                     (<= 0 i)
+                     (<= i (,array-length ,stobj)))
+                (equal (,name2 ,stobj i)
+                       (nthcdr (- (,array-length ,stobj)
+                                  i)
+                               (nth ,stobj-position-constant ,stobj))))
+       :hints
+       (("Subgoal *1/2"
+         :in-theory (disable nth-of-nthcdr nthcdr-of-cdr)
+         :use ((:instance nth-of-nthcdr (n 0)
+                          (m (- ,array-length-constant i))
+                          (x (nth ,stobj-position-constant ,stobj)))
+               (:instance nthcdr-of-cdr (i (+ ,array-length-constant (- i)))
+                          (x (nth ,stobj-position-constant ,stobj)))))))))
 
 (reason-about-stobj-array
- update-bs_oemname bs_oemname-suffix bs_oemname-length 8
- update-bs_oemnamei bs_oemnamei *bs_oemnamei*
- fat32-in-memory fat32-in-memoryp
+ update-bs_jmpboot bs_jmpboot-suffix
+ bs_jmpboot-length 8 update-bs_jmpbooti
+ bs_jmpbooti *bs_jmpbooti*
+ 3 fat32-in-memory fat32-in-memoryp
+ update-bs_jmpboot-correctness-1
+ update-bs_jmpboot-correctness-2
+ update-bs_jmpboot-correctness-3
+ update-bs_jmpboot-correctness-4
+ bs_jmpboot-suffix-correctness-1)
+
+(reason-about-stobj-array
+ update-bs_oemname bs_oemname-suffix
+ bs_oemname-length 8 update-bs_oemnamei
+ bs_oemnamei *bs_oemnamei*
+ 8 fat32-in-memory fat32-in-memoryp
  update-bs_oemname-correctness-1
  update-bs_oemname-correctness-2
  update-bs_oemname-correctness-3
- update-bs_oemname-correctness-4)
+ update-bs_oemname-correctness-4
+ bs_oemname-suffix-correctness-1)
 
 (reason-about-stobj-array
- update-bs_vollab bs_vollab-suffix bs_vollab-length 8
- update-bs_vollabi bs_vollabi *bs_vollabi*
- fat32-in-memory fat32-in-memoryp
+ update-bs_vollab bs_vollab-suffix
+ bs_vollab-length 8 update-bs_vollabi
+ bs_vollabi *bs_vollabi*
+ 11 fat32-in-memory fat32-in-memoryp
  update-bs_vollab-correctness-1
  update-bs_vollab-correctness-2
  update-bs_vollab-correctness-3
- update-bs_vollab-correctness-4)
+ update-bs_vollab-correctness-4
+ bs_vollab-suffix-correctness-1)
 
 (reason-about-stobj-array
- update-bs_filsystype bs_filsystype-suffix bs_filsystype-length 8
- update-bs_filsystypei bs_filsystypei *bs_filsystypei*
- fat32-in-memory fat32-in-memoryp
+ update-bs_filsystype
+ bs_filsystype-suffix
+ bs_filsystype-length
+ 8 update-bs_filsystypei
+ bs_filsystypei *bs_filsystypei*
+ 8 fat32-in-memory fat32-in-memoryp
  update-bs_filsystype-correctness-1
  update-bs_filsystype-correctness-2
  update-bs_filsystype-correctness-3
- update-bs_filsystype-correctness-4)
+ update-bs_filsystype-correctness-4
+ bs_filsystype-suffix-correctness-1)
 
 (reason-about-stobj-array
- update-bpb_reserved bpb_reserved-suffix bpb_reserved-length 8
- update-bpb_reservedi bpb_reservedi *bpb_reservedi*
- fat32-in-memory fat32-in-memoryp
+ update-bpb_reserved
+ bpb_reserved-suffix bpb_reserved-length
+ 8 update-bpb_reservedi
+ bpb_reservedi *bpb_reservedi*
+ 12 fat32-in-memory fat32-in-memoryp
  update-bpb_reserved-correctness-1
  update-bpb_reserved-correctness-2
  update-bpb_reserved-correctness-3
- update-bpb_reserved-correctness-4)
+ update-bpb_reserved-correctness-4
+ bpb_reserved-suffix-correctness-1)
 
 (defthm
   read-reserved-area-guard-lemma-1
