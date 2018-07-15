@@ -67,14 +67,17 @@
   (equal (revappend x (binary-append y z))
          (binary-append (revappend x y) z)))
 
-(defthm binary-append-take-nthcdr
-  (implies (and (natp i) (<= i (len l)))
-           (equal (binary-append (first-n-ac i l ac) (nthcdr i l))
+(defthm
+  binary-append-first-n-ac-nthcdr
+  (implies (<= i (len l))
+           (equal (binary-append (first-n-ac i l ac)
+                                 (nthcdr i l))
                   (revappend ac l)))
-  :hints (("Goal" :induct (first-n-ac i l ac))
-          ("Subgoal *1/1'''"
-           :use (:instance revappend-is-append-of-rev
-                           (x ac) (y nil) (z l)))))
+  :hints (("goal" :induct (first-n-ac i l ac))
+          ("subgoal *1/1''"
+           :use (:instance revappend-is-append-of-rev (x ac)
+                           (y nil)
+                           (z l)))))
 
 ;; The following is redundant with the definition in std/lists/nth.lisp, from
 ;; where it was taken with thanks.
@@ -279,9 +282,9 @@
                   (first-n-ac m l ac)))
   :hints
   (("goal" :do-not-induct t
-    :in-theory (disable binary-append-take-nthcdr
+    :in-theory (disable binary-append-first-n-ac-nthcdr
                         first-n-ac-of-binary-append-1)
-    :use ((:instance binary-append-take-nthcdr (ac nil)
+    :use ((:instance binary-append-first-n-ac-nthcdr (ac nil)
                      (i n))
           (:instance first-n-ac-of-binary-append-1 (i m)
                      (x (first-n-ac n l nil))
@@ -457,3 +460,10 @@
            (< (nfix n) (len x)))
     :hints(("Goal" :use ((:instance l0)
                          (:instance l1))))))
+
+(defthm
+  binary-append-take-nthcdr
+  (implies (<= i (len l))
+           (equal (binary-append (take i l)
+                                 (nthcdr i l))
+                  l)))
