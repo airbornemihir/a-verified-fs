@@ -347,10 +347,14 @@
   (let ((sd (assoc-equal x alist)))
     (implies (consp sd) (equal (car sd) x))))
 
-(defthm update-nth-of-update-nth
+(defthm update-nth-of-update-nth-1
   (implies (not (equal (nfix key1) (nfix key2)))
            (equal (update-nth key1 val1 (update-nth key2 val2 l))
                   (update-nth key2 val2 (update-nth key1 val1 l)))))
+
+(defthm update-nth-of-update-nth-2
+  (equal (update-nth key val2 (update-nth key val1 l))
+         (update-nth key val2 l)))
 
 (encapsulate
   ()
