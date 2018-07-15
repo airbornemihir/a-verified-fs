@@ -9,6 +9,17 @@
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
 
+(encapsulate
+  ()
+  (local
+   (include-book "std/lists/update-nth" :dir :system))
+  
+  (defthm take-of-update-nth
+    (equal (take n1 (update-nth n2 val x))
+           (if (<= (nfix n1) (nfix n2))
+               (take n1 x)
+             (update-nth n2 val (take n1 x))))))
+
 (make-event
  `(defstobj fat32-in-memory
 
@@ -872,8 +883,32 @@
           (and (unsigned-byte-listp 8 v)
                (equal (len v) 8)))))
 
+(local
+ (defthm update-bs_oemname-correctness-6
+   (implies (fat32-in-memoryp fat32-in-memory)
+            (and
+             (unsigned-byte-listp
+              8 (nth *bs_oemnamei* fat32-in-memory))
+             (true-listp (nth *bs_oemnamei* fat32-in-memory))
+             (equal (len (nth *bs_oemnamei* fat32-in-memory))
+                    8)))))
+
+(local
+ (defthm update-bs_oemname-correctness-7
+   (implies (and (fat32-in-memoryp fat32-in-memory)
+                 (<= (+ 1 (len (cdr v))) 8))
+            (< (binary-+ '7 (unary-- (len (cdr v))))
+               (len (nth '1 fat32-in-memory))))
+   :rule-classes :linear))
+
+(local
+ (defthm update-bs_oemname-correctness-8
+   (implies (fat32-in-memoryp fat32-in-memory)
+            (< *bs_oemnamei* (len fat32-in-memory)))
+   :rule-classes :linear))
+
 (defthmd
-  update-bs_oemname-correctness-6
+  update-bs_oemname-correctness-9
   (implies (and (fat32-in-memoryp fat32-in-memory)
                 (unsigned-byte-listp 8 v)
                 (<= (len v)
@@ -884,21 +919,18 @@
                                (take
                                 (- (bs_oemname-length fat32-in-memory) (len v))
                                 (nth *bs_oemnamei* fat32-in-memory))
-                               (nthcdr
-                                (- (bs_oemname-length fat32-in-memory) (len v))
-                                (nth *bs_oemnamei* fat32-in-memory)))
+                               v)
                               fat32-in-memory)))
   :hints (("Goal" :in-theory (disable fat32-in-memoryp) :induct
            (update-bs_oemname v fat32-in-memory))
-          ("Subgoal *1/2.8" :in-theory (disable
-                                        update-bs_oemname-correctness-5)
-           :use (:instance update-bs_oemname-correctness-5
-                           (v
-                            (UPDATE-NTH *BS_OEMNAMEI*
-                                        (UPDATE-NTH (+ 7 (- (LEN (CDR V))))
-                                                    (CAR V)
-                                                    (NTH *BS_OEMNAMEI* FAT32-IN-MEMORY))
-                                        FAT32-IN-MEMORY))))))
+          ("Subgoal *1/2.3" :in-theory (disable binary-append-take-nthcdr)
+           :use (:instance binary-append-take-nthcdr
+                           (i (+ 7 (- (LEN (CDR V)))))
+                           (l
+                            (TAKE (+ 8 (- (LEN (CDR V))))
+                                  (UPDATE-NTH (+ 7 (- (LEN (CDR V))))
+                                              (CAR V)
+                                              (NTH *BS_OEMNAMEI* FAT32-IN-MEMORY))))))))
 
 (reason-about-stobj-array
  update-bs_vollab bs_vollab-suffix

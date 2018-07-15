@@ -26,14 +26,19 @@
            (equal (first-n-ac i (binary-append x y) ac)
                   (first-n-ac i x ac))))
 
-(defthm by-slice-you-mean-the-whole-cake
+(defthm by-slice-you-mean-the-whole-cake-1
   (implies (true-listp l)
            (equal (first-n-ac (len l) l ac)
                   (revappend ac l)))
   :hints (("Goal" :induct (revappend l ac)) )
   :rule-classes ((:rewrite :corollary
                            (implies (and (equal i (len l)) (true-listp l))
-                                    (equal (first-n-ac i l ac) (revappend ac l)))) ))
+                                    (equal (first-n-ac i l ac) (revappend ac
+                                                                          l))))))
+
+(defthm by-slice-you-mean-the-whole-cake-2
+  (implies (and (equal i (len l)) (true-listp l))
+           (equal (take i l) l)))
 
 (defthm assoc-after-delete-assoc
   (implies (not (equal name1 name2))
@@ -420,9 +425,11 @@
   (equal (nthcdr i (cdr x))
          (cdr (nthcdr i x))))
 
+;; The following is redundant with the eponymous theorem in
+;; books/std/lists/update-nth.lisp, from where it was taken with thanks.
 (defthm update-nth-of-nth
-  (implies (< (nfix n) (len l))
-           (equal (update-nth n (nth n l) l) l)))
+  (implies (< (nfix n) (len x))
+           (equal (update-nth n (nth n x) x) x)))
 
 (defthm character-listp-of-make-list-ac
   (equal (character-listp (make-list-ac n val ac))
