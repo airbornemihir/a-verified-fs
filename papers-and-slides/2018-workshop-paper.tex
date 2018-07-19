@@ -4,7 +4,7 @@
 %% Todo list
 %% (done) Gotta substantiate the co-simulations we talked about...
 %% Gotta talk about the number of things we re-used from L6 in M2
-%% Gotta de-emphasise the proofs for L1 through L6 - they're OK but
+%% (done) Gotta de-emphasise the proofs for L1 through L6 - they're OK but
 %%  not that important.
 %% (done) Gotta talk about FTY.
 %% Gotta substantiate the point about code re-use in CP/M and FAT32 -
@@ -641,7 +641,7 @@ maintain while manipulating the stobj through input/output operations
 and file operations, in the predicate
 \texttt{compliant-fat32-in-memoryp} for which a listing follows. The
 constant \texttt{*ms-first-data-cluster*}, for instance, is $2$, and
-the last clause of the conjunction helps us maintain the invariant
+the last clause of the conjunction helps us maintain an invariant
 about all cluster indices including the root cluster being greater
 than or equal to $2$, which is needed while reasoning about operations
 in the file allocation table.
@@ -692,6 +692,24 @@ well as speed up our reasoning by eliminating many type hypotheses,
 and in particular allows us to prove read-over-write properties for
 \texttt{M1} with a significantly smaller number of helper lemmas
 compared to our abstract models in which FTY is not used.
+
+\subsection{Allocation and garbage collection}
+
+In the development of our abstract models, \texttt{L4} is the first to
+be bounded in terms of disk size; accordingly, data structures are
+needed for allocating free blocks on disk, including those which were
+previously occupied by other files. For simplicity, we choose to model
+the allocation vector used by the CP/M filesystem, which is a boolean
+array equal in size to the disk recording whether disk blocks are free
+or in use. Using this, we are able to prove that write operations
+succeed if and only if there is a sufficient number of free blocks
+available on the disk, and when we later model FAT32's file allocation
+table in \texttt{L6}, we are able to extend this result by proving a
+refinement relationship between these two allocation data structures
+as described earlier. While it is not straightforward to reuse this
+result for the file allocation table in \texttt{M2}, we are still able
+to benefit from reusing the allocation algorithms developed in
+\texttt{L6} as well as the properties proved about them.
 
 \section{Co-simulation}
 
