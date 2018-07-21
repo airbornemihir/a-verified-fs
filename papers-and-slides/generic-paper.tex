@@ -37,11 +37,10 @@
 \mainmatter  % start of an individual contribution
 
 % first the title is needed
-\title{Formalising filesystems in the ACL2 theorem prover:\\ an
-  application to a FAT32-like filesystem}
+\title{Verifying fileutils in ACL2: a case study}
 
 % a short form should be given in case it is too long for the running head
-\titlerunning{ACL2 filesystem verification}
+\titlerunning{fileutils verification}
 
 % the name(s) of the author(s) follow(s) next
 %
@@ -51,7 +50,7 @@
 %
 \author{Mihir Parang Mehta}
 %
-\authorrunning{Lecture Notes in Computer Science: Authors' Instructions}
+\authorrunning{M. P. Mehta}
 % (feature abused for this document to repeat the title also on left hand pages)
 
 % the affiliations are given next; don't give your e-mail address
@@ -71,516 +70,44 @@
 \maketitle
 
 \begin{abstract}
-  We describe an effort to formally verify the FAT32 filesystem, based
-  on a specification put together from Microsoft's published
-  specification and the Linux kernel source code. We detail our
-  approach of proving properties through refinement of filesystem
-  models. We describe how this work is applicable to more filesystems
-  than solely FAT32, and enumerate possible future applications of
-  these techniques.
+  We describe an effort to verify the \texttt{fileutils} subset of the
+  GNU \texttt{coreutils} against specifications built upon a verified
+  model of the FAT32 filesystem.
 \keywords{interactive theorem proving, filesystems}
 \end{abstract}
 
 \section{Introduction and overview}
 
-Filesystems are ubiquitous in computing, providing application
-programs a means to store data persistently, address data by a name
-instead of a numeric index, and communicate with other programs.
-Thus, the vast majority of application programs
-directly or indirectly rely upon filesystems, which makes filesystem
-verification critically important. Here, we present a
-formalisation effort in ACL2 for a filesystem with a FAT32-like data
-organisation, and a proof of the read-over-write properties for this
-filesystem. By starting with a high-level abstract model and refining
-\cite{abadi1991existence} it with successive models which add more of
-the complexity of the real filesystem, we are able to manage the
-complexity of this proof, which has not, to our knowledge, been
-previously attempted. Thus, this paper contributes a case study in
-refinement for filesystem verification, and substantial progress
-towards the goal of a binary-compatible model of a FAT32, which is a
-real and widely-used filesystem.
-
-In the rest of this paper, we describe these
-models and the properties proved with examples; we proceed to a
-high-level explanation of our refinement proofs; and further we offer
-some insights about the low-level issues encountered while working the
-proofs. We end with some statistics pertaining to the magnitude of the
-proof effort and the running time of the proofs.
+The \texttt{fileutils} are neat. They would be neater if formally verified.
 
 \section{Related work}
 
 Filesystem verification research has largely followed a pattern of
 synthesising a new filesystem based on a specification chosen for its
 ease in proving properties of interest, rather than similarity to an
-existing filesystem. Our work, in contrast, follows the FAT32
-specification closely. In spirit, our work is closer to previous work
-which uses interactive theorem provers and explores deep functional
-properties than to efforts which use non-interactive theorem provers
-such as Z3 to produce fully automated proofs of simpler properties.
-
-\subsection{Interactive theorem provers}
-An early effort in the filesystem verification domain was by Bevier
-and Cohen~\cite{bevier1996executable}, who specified the Synergy
-filesystem and created an executable model of the same in ACL2
-\cite{kaufmann_manolios_moore_2000}, down to the level of processes
-and file descriptors. On the proof front, they certified their model
-to preserve well-formedness of their data structures through their
-various file operations; however, they did not attempt to prove, for
-instance, read-over-write properties or crash consistency. Later,
-Klein et al with the SeL4 project~\cite{klein2009sel4} used
-Isabelle/HOL~\cite{nipkow2002isabelle} to verify a microkernel;
-while their design abstracted away file operations in order to keep
-their trusted computing base small, it did serve as a precursor to their
-more recent COGENT project~\cite{amani2016cogent}. Here the authors
-built a "verified compiler" of sorts, generating C-language code from
-specifications in their domain-specific in a manner guaranteed to
-avoid many common filesystem bugs. Elsewhere, the SibylFS
-project~\cite{ridge2015sibylfs}, again using Isabelle/HOL, provided
-an executable specification for filesystems at a level of abstraction
-that could function across multiple operating systems including OSX
-and Unix. The Coq prover \cite{bertot2013interactive} has also been
-used, for instance, for FSCQ
-\cite{DBLP:conf/usenix/ChenZCCKZ16}, a state-of-the art filesystem
-which was built to have high performance and formally verified crash
-consistency properties.
-
-\subsection{Non-interactive theorem provers}
-Non-interactive theorem provers such as Z3 \cite{de2008z3}
-have also been used; Hyperkernel
-\cite{Nelson:2017:HPV:3132747.3132748} is a recent effort which
-focusses on simplifying the xv6 microkernel until the point that Z3
-can verify it with its SMT solving techniques. However, towards this
-end, all system calls in Hyperkernel are replaced with analogs which
-can terminate in constant time; while this approach is theoretically
-sound, it increases the chances of discrepancies between the model and
-the implementation which may diminish the utility of the proofs or
-even render them moot. A stronger effort in the same domain is
-Yggdrasil~\cite{sigurbjarnarson2016push}, which focusses on verifying
-filesystems with the use of Z3. While the authors make substantial
-progress in terms of the number of filesystem calls they support and
-the crash consistency guarantees they provide, they are subject to
-the limits of SMT solving which prevent them from modelling essential
-filesystem features such as extents, which are central to many
-filesystems including FAT32.
-
-\section{Refinement}
-
-One traditional approach for verification of complex systems is
-axiomatic, wherein the desired properties of a system are enumerated
-and then verified. This is in contrast with refinement,
-where a system is proved to refine a simpler system, possibly a state
-machine or a pseudocode program, which is known to show the desired
-properties either by inspection or by proof. (Note: the term
-"abstraction" is generally used to denote the inverse relationship to
-refinement, and we use it in that sense in this paper.) The relative
-merits of these approaches have been debated in the literature;
-Lamport~\cite{lamport1993verification} makes the argument that the
-axiomatic style is hopelessly tedious for any but the simplest
-systems.
-
-In the present verification endeavour, we choose to verify
-refinement properties in a series of successive models. This is also
-the approach chosen by Yggdrasil~\cite{sigurbjarnarson2016push}. We
-consider read-over-write properties to be central, and we prove them
-to true in all our models; however, these proofs are obtained more or
-less "for free" once a proof is formulated for the base model. Yet,
-the value of the refinement approach is attested to by the ease of
-verification of several incidental properties, such as the ability of
-write operations to succeed as long as there is sufficient space in a
-filesystem of finite size.
-
-\section{The FAT32 filesystem}
-
-FAT32 was initially developed at Microsoft~\cite{microsoft_2000} in
-order to address certain shortcomings of the DOS filesystem previously
-in use in their operating systems. While it is simple by today's
-standards, it does add some complexity compared to the filesystems
-which came before.
-
-All files, including regular files and directory files, are divided into
-\textit{clusters} (sometimes called \textit{extents}) of a fixed size,
-which is decided at the time a FAT32 volume is formatted, and
-constrained to be a multiple of the disk sector size. Directory files
-differ only in a metadata attribute which indicates that their contents
-should be treated as a sequence of directory entries. Each such
-directory entry is 32 bytes wide and contains information including
-name, size, first cluster index, and access times for the
-corresponding file.
-
-%% footnote
-The file allocation table itself contains a number of linked lists. It
-maps each cluster index used by a file to either the next cluster
-index for that file or a special end-of-clusterchain value (footnote:
-there is actually a range of end-of-clusterchain values, not just
-one.) This allows the contents of a file to be reconstructed by
-reading just the first cluster index from the corresponding directory
-entry, and building the list of clusters using the table. Unused
-clusters are mapped to 0 in the table; this fact is used for counting
-and allocating free clusters.
-
-We illustrate the file allocation table and data layout for a small
-directory tree in figure~\ref{fat32-example}.
-
-\begin{figure}
-  \caption{A FAT32 directory tree}
-  \label{fat32-example}
-  \includegraphics[page=1,width=1.10\textwidth]{fat32-diagram.pdf}
-\end{figure}
-
-\section{The models}
-
-For every read or write operation, FAT32 requires one or more lookups
-into the file allocation table, followed by the corresponding lookups
-into the data region. This makes proof efforts about these operations
-complex, which serves as the motivation for modelling the filesystem
-in a series of steps.
-
-\begin{table}[]
-  \centering
-  \caption{Models and their features}
-  \label{model-description-table}
-  \begin{tabular}{|l|p{120mm}|}
-    \hline
-    \texttt{L1} & The filesystem is represented as a tree, with leaf
-    nodes for regular files and non-leaf nodes for
-    directories. The contents of regular files are represented as
-    strings stored in the nodes of the tree; the storage available for
-    these is unbounded. \\ \hline
-    \texttt{L2} & A single element of metadata, \textit{length}, is
-    stored within each regular file.  \\ \hline
-    \texttt{L3} & The contents of regular files are divided into
-    blocks of fixed size. These blocks are stored in an external
-    "disk" data structure; the storage for these blocks remains
-    unbounded. \\ \hline
-    \texttt{L4} & The storage available for blocks is now bounded. An
-    allocation vector data structure is introduced to help allocate
-    and garbage collect blocks. \\ \hline
-    \texttt{L5} & Additional metadata for file ownership and access
-    permissions is stored within each regular file. \\ \hline
-    \texttt{L6} & The allocation vector is replaced by a file
-    allocation table, matching the official FAT specification. \\ \hline
-  \end{tabular}
-\end{table}
-
-\begin{figure}
-  \centering
-  \caption{Refinement relationships between models}
-  \label{refinement-figure}
-  \begin{tikzpicture}[sibling distance=10em,
-      every node/.style = {shape=rectangle, rounded corners,
-        draw, align=center,
-        top color=white, bottom color=blue!20}]
-    \node {L1 - tree}
-    child { node {L2 - length}
-      child { node {L3 - unbounded disk}}
-      child { node {L4 - bounded disk with garbage collection}
-        child { node {L5 - permissions}}
-        child { node {L6 - file allocation table}}}};
-  \end{tikzpicture}
-\end{figure}
-
-At this point in development, we have six models of the filesystem,
-here referred to as \texttt{L1} through \texttt{L6}, described in
-table \ref{model-description-table}. Each model other than \texttt{L1}
-refines a previous model, adding some features and complexity and
-thereby approaching closer to a model which is binary compatible with
-FAT32. These refinement relationships are shown in figure
-\ref{refinement-figure}. \texttt{L1} is the simplest of these,
-representing the filesystem as a literal directory tree; later models
-feature file metadata (including ownership and permissions),
-externalisation of file contents, and allocation/file allocation using
-an allocation vector after the fashion of the CP/M file system (this
-is a remnant of an earlier filesystem verification effort for CP/M,
-which we subsumed into the present work).
-
-Broadly, we characterise the filesystem
-operations we offer as either \textit{write} operations, which do
-modify the filesystem, or \textit{read} operations, which do not. In
-each model, we have been able to prove \textit{read-over-write}
-properties which show that write operations have
-their effects made available immediately for reads at the same
-location, but also that they do not affect reads at other locations.
-
-The first read-after-write theorem states that immediately following a
-write of some text at some location, a read of the same length at the
-same location yields the same text. The second read-after-write
-theorem states that after a write of some text at some location, a
-read at any other location returns exactly what it would have returned
-before the write. As an example, listings for the \texttt{L1} versions
-of these theorems follow.
-
-\medskip
-
-\noindent
-\begin{verbatim}
-(defthm l1-read-after-write-1
-  (implies (and (l1-fs-p fs)
-                (stringp text)
-                (symbol-listp hns)
-                (natp start)
-                (equal n (length text))
-                (stringp (l1-stat hns fs)))
-           (equal (l1-rdchs hns (l1-wrchs hns fs start text) start n) text)))
-
-(defthm l1-read-after-write-2
-  (implies (and (l1-fs-p fs)
-                (stringp text2)
-                (symbol-listp hns1)
-                (symbol-listp hns2)
-                (not (equal hns1 hns2))
-                (natp start1)
-                (natp start2)
-                (natp n1)
-                (stringp (l1-stat hns1 fs)))
-           (equal (l1-rdchs hns1 (l1-wrchs hns2 fs start2 text2) start1 n1)
-                  (l1-rdchs hns1 fs start1 n1))))
-\end{verbatim}
-
-By composing these properties, we can reason about executions
-involving multiple reads and writes, as illustrated in the following
-throwaway proof.
-
-\medskip
-
-\noindent
-\begin{verbatim}
-(thm
- (implies (and (l1-fs-p fs)
-               (stringp text1)
-               (stringp text2)
-               (symbol-listp hns1)
-               (symbol-listp hns2)
-               (not (equal hns1 hns2))
-               (natp start1)
-               (natp start2)
-               (stringp (l1-stat hns1 fs))
-               (equal n1 (length text1)))
-          (equal (l1-rdchs hns1
-                           (l1-wrchs hns2 (l1-wrchs hns1 fs start1 text1)
-                                     start2 text2)
-                           start1 n1)
-                 (l1-rdchs hns1 (l1-wrchs hns1 fs start1 text1)
-                           start1 n1))))
-\end{verbatim}
-
-\section{Proof methodology}
-
-In \texttt{L1}, our simplest model, the read-over-write properties
-were, of necessity, proven from scratch.
-
-In each subsequent model, the read-over-write properties are proven as
-corollaries of equivalence proofs which establish the correctness of
-read and write operations in the respective model with respect to a
-previous model. A representation of such an equivalence proof can be
-seen in figures \ref{l2-wrchs-correctness-1},
-\ref{l2-rdchs-correctness-1} and \ref{l2-read-over-write-1}, which
-respectively show the equivalence proof for \texttt{l2-wrchs}, the
-equivalence proof for \texttt{l2-rdchs} and the composition of these
-to obtain the first read-over-write theorem for model \texttt{L2}.
-
-
-\begin{figure}
-  \centering
-  \caption{l2-wrchs-correctness-1}
-  \label{l2-wrchs-correctness-1}
-  \begin{tikzpicture}
-    \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
-            {
-              l2 & l2 \\
-              l1 & l1 \\};
-            \path[-stealth]
-            (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
-            edge node [below] {write} (m-1-2)
-            (m-2-1.east|-m-2-2) edge node [below] {write} (m-2-2)
-            (m-1-2) edge node [left] {l2-to-l1-fs} (m-2-2);
-  \end{tikzpicture}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \caption{l2-rdchs-correctness-1}
-  \label{l2-rdchs-correctness-1}
-  \begin{tikzpicture}
-    \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
-            {
-              l2 & text \\
-              l1 \\};
-            \path[-stealth]
-            (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
-            edge node [below] {read} (m-1-2)
-            (m-2-1.east|-m-2-2) edge node [below] {read} (m-1-2);
-  \end{tikzpicture}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \caption{l2-read-over-write-1}
-  \label{l2-read-over-write-1}
-  \begin{tikzpicture}
-    \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
-            {
-              l2 & l2 & text \\
-              l1 & l1 \\};
-            \path[-stealth]
-            (m-1-1) edge node [left] {l2-to-l1-fs} (m-2-1)
-            edge node [below] {write} (m-1-2)
-            (m-2-1.east|-m-2-2) edge node [below] {write} (m-2-2)
-            (m-1-2) edge node [left] {l2-to-l1-fs} (m-2-2)
-            edge node [below] {read} (m-1-3)
-            (m-2-2.east) edge node [below] {read} (m-1-3);
-  \end{tikzpicture}
-\end{figure}
-
-\section{Some proof details}
-
-We have come to rely on certain principles for the proof effort for
-each new model. We summarise some of these below.
-
-\subsection{Invariants}
-
-As the models grow more complex, with the addition of more auxiliary
-data the "sanity" criteria for filesystem instances become more
-complex. For instance, in \texttt{L4}, the predicate \texttt{l4-fs-p}
-is defined to be the same as \texttt{l3-fs-p}, which recursively
-defines the shape of a valid directory tree. However, we choose to
-require two more properties for a "sane" filesystem.
-
-\begin{enumerate}
-\item Each disk index assigned to a regular file should be
-  marked as \textit{used} in the allocation vector - this is essential
-  to prevent filesystem errors.
-\item Each disk index assigned to a regular file should be distinct
-  from all other disk indices assigned to files - this does not hold
-  true, for example, in filesystems with hardlinks, but makes our
-  proofs easier.
-\end{enumerate}
-
-These properties are invariants to be maintained across
-write operations; while not all of them are strictly necessary for a
-filesystem instance to be valid, they do simplify the verification of
-read-after-write properties by helping us ensure that write operations
-do not create an "aliasing" situation in which a regular file's
-contents can be modified through a write to a different regular file.
-
-These properties, in the form of the predicates
-\texttt{indices-marked-listp} and \texttt{no-duplicatesp}, are
-packaged together into the \texttt{l4-stricter-fs-p} predicate, for
-which a listing follows.
-
-\medskip
-
-\noindent
-\begin{verbatim}
-(defun l4-stricter-fs-p (fs alv)
-  (declare (xargs :guard t))
-  (and (l4-fs-p fs)
-       (boolean-listp alv)
-       (let ((all-indices (l4-list-all-indices fs)))
-            (and (no-duplicatesp all-indices)
-                 (indices-marked-p all-indices alv)))))
-\end{verbatim}
-
-\subsection{Reuse}
-
-As noted earlier, using a refinement methodology allows us to derive
-our read-over-write properties essentially "for free"; more precisely,
-we are able to prove read-over-write properties simply with
-\texttt{:use} hints after having done the work of proving refinement
-through induction.
-
-At a lower level, we are also able to benefit from refinement
-relationships between components of our different models. For example,
-such a relationship exists between the allocation vector used in
-\texttt{L4} and the file allocation table used in \texttt{L6}. More
-precisely, by taking a file allocation table and mapping each non-zero
-entry to \texttt{true} and each zero entry to \texttt{false}, we
-obtain a corresponding allocation vector with exactly the same amount
-of available space. This is a refinement mapping which makes it a lot
-easier to prove that \texttt{L4}, which uses an allocation vector, is
-an abstraction of \texttt{L6}, which uses a file allocation
-table. This, in turn, means that the effort spent on proving the
-invariants described above for \texttt{L4} need not be replicated for
-\texttt{L6}.
-
-\subsection{Performance hacking}
-
-As in all ACL2 verification efforts, our work accumulated a number of
-helper functions and lemmata in the service of the big-picture proofs,
-and these were prone to slow down our proofs somewhat. Thus, using
-ACL2's \texttt{accumulated-persistence} tool, we made an effort to
-trim the number of enabled rules by focussing on the rules which the
-tool suggested to be \textit{useless}. This was important in helping us reduce
-the certification time for \texttt{L6} from 229 seconds to 84 seconds,
-but from this point onwards results were mixed. As an illustrative
-example, disabling the function \texttt{l6-wrchs} brought down the
-certification time for \textt{l6} from 84 seconds to 60 seconds, yet
-disabling another function, \texttt{l4-collect-all-index-lists}, had a
-negligible effect on other books and actually served to increase the
-certification time from 60 seconds to 69 seconds. Needless to say, the
-latter change was rolled back; a pertinent explanation can be found in
-the ACL2 documentation topic \texttt{accumulated-persistence-subtleties}.
-
-%%  It is interesting to note that disabling
-%%  l4-collect-all-index-lists brings down the certification time for l4
-%%  from 19 seconds to 18 seconds, the certification time for l5 from
-%%  21 seconds to 22 seconds and the
-%% that for l6 from 60 seconds to 69 seconds.
-%% It is interesting to note that disabling l6-wrchs brings down the
-%% certification time for \texttt{L6} from 84 seconds to 60 seconds.
+existing filesystem. FSCQ \cite{DBLP:conf/usenix/ChenZCCKZ16} is an
+example.
 
 \section{Evaluation}
-At present, the codebase spans 11710 lines of ACL2 code, including 152
-function definitions and 616 theorems and lemmas. Some of this data was
-obtained by David A. Wheeler's sloccount tool.
 
-In table \ref{certification-timing-table} we note the time taken to certify
-the books for each model in ACL2 (non-cumulative), as well as some
-infrastructure upon which the models are built. These results 
-
-\begin{table}[]
-  \centering
-  \caption{Time taken to prove models}
-  \label{certification-timing-table}
-  \begin{tabular}{ll}
-    Misc. & 4s \\
-    \texttt{L1} & 1s \\
-    \texttt{L2} & 5s \\
-    \texttt{L3} & 6s \\
-    \texttt{L4} & 19s \\
-    \texttt{L5} & 21s \\
-    \texttt{L6} & 60s \\
-  \end{tabular}
-\end{table}
+We specify and verify all the utilities in the \texttt{fileutils}
+subset of \texttt{coreutils}.
 
 \section{Conclusion}
 
-This work formalises a FAT32-like filesystem and proves
-read-over-write properties through refinement of a series of
-models. Further, it proves the correctness of FAT32's allocation and
-garbage collection mechanisms, and provides artefacts to be used in a
-subsequent realistic model of FAT32.
+This work shows that a formal model of a single filesystem can be used
+to verify application programs with non-trivial interactions with the
+filesystem. Additionally, this work provides library support for
+working with additional filesystems and possibly identifying
+differences between different filesystems when used with the same
+program.
 
 \section{Future work}
 
-Our primary goal is to dispense with the tree representation and
-implement filesystem traversal by looking up entries in directory
-files. This will also involve addressing a subtle issue where reads
-affect the state of a filesystem by means of updating the access time,
-which has been analysed earlier in the context of
-microprocessors~\cite{goel2017engineering}. This will yield a model
-which is entirely contained in a disk data structure, without
-auxiliary data structures such as the tree, and which can
-further be validated by co-simulation with a FAT32 implementation such
-as that of Linux.
-
-Next, we hope to re-use some artefacts of verifying FAT32 in order to
-verify a more complex filesystem, such as ext4. Choosing a filesystem
-with journalling will allow us to model crash consistency.
-
-Finally, we hope to support "code proofs", by providing a basis for
-reasoning about filesystem operations in filesystem-specific utilities
-such as \texttt{fsck}, as well as other application programs. This is
-a large part of the motivation for pursuing binary compatibility.
+We hope to expand on this work by specifying and verifying the
+operation of application programs in multiprogramming environments
+where concurrent accesses to the filesystem may be made by different
+processes.
 
 \subsubsection*{Acknowledgments.} This material is based upon work
 supported by the National Science Foundation SaTC program under
