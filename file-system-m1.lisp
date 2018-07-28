@@ -15,6 +15,18 @@
 (include-book "insert-text")
 (include-book "fat32")
 
+(defthm nth-of-chars=>nats
+  (equal (integerp (nth n (chars=>nats chars)))
+         (< (nfix n) (len chars)))
+  :hints (("goal" :in-theory (enable chars=>nats)
+           :induct (nth n chars))))
+
+(defthm nth-of-string=>nats
+  (implies (stringp string)
+           (equal (integerp (nth n (string=>nats string)))
+                  (< (nfix n) (length string))))
+  :hints (("goal" :in-theory (enable string=>nats))))
+
 (defun dir-ent-p (x)
   (declare (xargs :guard t))
   (and (unsigned-byte-listp 8 x)

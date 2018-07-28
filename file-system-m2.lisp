@@ -9,16 +9,9 @@
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
 
-(encapsulate
-  ()
-  (local
-   (include-book "std/lists/update-nth" :dir :system))
-  
-  (defthm take-of-update-nth
-    (equal (take n1 (update-nth n2 val x))
-           (if (<= (nfix n1) (nfix n2))
-               (take n1 x)
-             (update-nth n2 val (take n1 x))))))
+;; This is to get the theorem about the nth element of a list of unsigned
+;; bytes.
+(local (include-book "std/typed-lists/integer-listp" :dir :system))
 
 (make-event
  `(defstobj fat32-in-memory
@@ -703,29 +696,15 @@
 
 (defconst *initialbytcnt* 16)
 
-(defthm
-  nthcdr-past-end
-  (implies (and (integerp n)
-                (true-listp l)
-                (>= n (len l)))
-           (not (nthcdr n l)))
-  :hints
-  (("subgoal *1/5.1'" :in-theory (disable nthcdr-of-cdr)
-    :use (:instance nthcdr-of-cdr (i (- n 1))
-                    (x nil)))))
-
 (defmacro
-  reason-about-stobj-array
-    (name1 name2
-           array-length bit-width array-updater array-accessor
-           stobj-position-constant array-length-constant
-           stobj stobj-recogniser
-           lemma-name1 lemma-name2 lemma-name3 lemma-name4 lemma-name5)
+  update-stobj-array
+  (name array-length bit-width array-updater array-accessor constant
+        stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3 lemma-name4)
   `(encapsulate
      nil
 
      (defun
-       ,name1 (v ,stobj)
+       ,name (v ,stobj)
        (declare
         (xargs
          :guard (and (unsigned-byte-listp ,bit-width v)
@@ -743,51 +722,36 @@
                                        (len v))
                                 (car v)
                                 ,stobj))
-               (,stobj (,name1 (cdr v)
+               (,stobj (,name (cdr v)
                               ,stobj)))
           ,stobj)))
-
-     (defun
-       ,name2 (,stobj i)
-       (declare
-        (xargs :stobjs ,stobj
-               :guard (and (,stobj-recogniser ,stobj)
-                           (natp i)
-                           (<= i
-                               (,array-length ,stobj)))))
-       (if (zp i)
-           nil
-         (cons (,array-accessor (- (,array-length ,stobj)
-                                   i)
-                                ,stobj)
-                 (,name2 ,stobj (- i 1)))))
 
      (defthm
        ,lemma-name1
        t
        :rule-classes
        ((:rewrite :corollary
-                   (equal (bpb_secperclus (,name1 v ,stobj))
+                   (equal (bpb_secperclus (,name v ,stobj))
                           (bpb_secperclus fat32-in-memory))
                    :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
         (:rewrite :corollary
-                   (equal (bpb_rsvdseccnt (,name1 v ,stobj))
+                   (equal (bpb_rsvdseccnt (,name v ,stobj))
                           (bpb_rsvdseccnt fat32-in-memory))
                   :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
         (:rewrite :corollary
-                   (equal (bpb_numfats (,name1 v ,stobj))
+                   (equal (bpb_numfats (,name v ,stobj))
                           (bpb_numfats fat32-in-memory))
                   :hints (("Goal" :in-theory (enable bpb_numfats)) ))
         (:rewrite :corollary
-                   (equal (bpb_fatsz32 (,name1 v ,stobj))
+                   (equal (bpb_fatsz32 (,name v ,stobj))
                           (bpb_fatsz32 fat32-in-memory))
                   :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
         (:rewrite :corollary
-                   (equal (bpb_bytspersec (,name1 v ,stobj))
+                   (equal (bpb_bytspersec (,name v ,stobj))
                           (bpb_bytspersec fat32-in-memory))
                    :hints (("Goal" :in-theory (enable bpb_bytspersec)) ))
         (:rewrite :corollary
-                   (equal (bpb_totsec32 (,name1 v ,stobj))
+                   (equal (bpb_totsec32 (,name v ,stobj))
                           (bpb_totsec32 fat32-in-memory))
                    :hints (("Goal" :in-theory (enable bpb_totsec32)) ))))
 
@@ -811,20 +775,20 @@
                (<= 0 i)
                (< i (,array-length ,stobj))
                (unsigned-byte-p ,bit-width v))
-          (equal (len (nth ,stobj-position-constant
+          (equal (len (nth ,constant
                            (,array-updater i v ,stobj)))
-                 (len (nth ,stobj-position-constant ,stobj)))))))
+                 (len (nth ,constant ,stobj)))))))
 
      (defthm ,lemma-name3
        (implies (and (unsigned-byte-listp ,bit-width v)
                      (<= (len v)
                          (,array-length ,stobj))
                      (,stobj-recogniser ,stobj))
-                (,stobj-recogniser (,name1 v ,stobj)))
+                (,stobj-recogniser (,name v ,stobj)))
        :hints (("goal" :in-theory (e/d (unsigned-byte-listp)
                                        (,stobj-recogniser ,array-updater))
                 :induct
-                (,stobj-recogniser (,name1 v ,stobj)))))
+                (,stobj-recogniser (,name v ,stobj)))))
 
      (defthm ,lemma-name4
        (implies (and (,stobj-recogniser ,stobj)
@@ -832,218 +796,52 @@
                      (<= 0 i)
                      (< i (,array-length ,stobj)))
                 (unsigned-byte-p ,bit-width (,array-accessor i ,stobj)))
-       :hints (("Goal" :in-theory (disable nth unsigned-byte-p))))
+       :hints (("Goal" :in-theory (disable nth unsigned-byte-p))))))
 
-     (defthm ,lemma-name5
-       (implies (and (,stobj-recogniser ,stobj)
-                     (integerp i)
-                     (<= 0 i)
-                     (<= i (,array-length ,stobj)))
-                (equal (,name2 ,stobj i)
-                       (nthcdr (- (,array-length ,stobj)
-                                  i)
-                               (nth ,stobj-position-constant ,stobj))))
-       :hints
-       (("Subgoal *1/2"
-         :in-theory (disable nth-of-nthcdr nthcdr-of-cdr)
-         :use ((:instance nth-of-nthcdr (n 0)
-                          (m (- ,array-length-constant i))
-                          (x (nth ,stobj-position-constant ,stobj)))
-               (:instance nthcdr-of-cdr (i (+ ,array-length-constant (- i)))
-                          (x (nth ,stobj-position-constant ,stobj)))))))))
-
-(reason-about-stobj-array
- update-bs_jmpboot bs_jmpboot-suffix
- bs_jmpboot-length 8 update-bs_jmpbooti
- bs_jmpbooti *bs_jmpbooti*
- 3 fat32-in-memory fat32-in-memoryp
+(update-stobj-array
+ update-bs_jmpboot bs_jmpboot-length 8
+ update-bs_jmpbooti bs_jmpbooti *bs_jmpbooti*
+ fat32-in-memory fat32-in-memoryp
  update-bs_jmpboot-correctness-1
  update-bs_jmpboot-correctness-2
  update-bs_jmpboot-correctness-3
- update-bs_jmpboot-correctness-4
- bs_jmpboot-suffix-correctness-1)
+ update-bs_jmpboot-correctness-4)
 
-(reason-about-stobj-array
- update-bs_oemname bs_oemname-suffix
- bs_oemname-length 8 update-bs_oemnamei
- bs_oemnamei *bs_oemnamei*
- 8 fat32-in-memory fat32-in-memoryp
+(update-stobj-array
+ update-bs_oemname bs_oemname-length 8
+ update-bs_oemnamei bs_oemnamei *bs_oemnamei*
+ fat32-in-memory fat32-in-memoryp
  update-bs_oemname-correctness-1
  update-bs_oemname-correctness-2
  update-bs_oemname-correctness-3
- update-bs_oemname-correctness-4
- bs_oemname-suffix-correctness-1)
+ update-bs_oemname-correctness-4)
 
-(defthm
-  update-bs_oemname-correctness-5
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (equal (fat32-in-memoryp
-           (update-nth *bs_oemnamei* v fat32-in-memory))
-          (and (unsigned-byte-listp 8 v)
-               (equal (len v) 8)))))
-
-(local
- (defthm update-bs_oemname-correctness-6
-   (implies (fat32-in-memoryp fat32-in-memory)
-            (and
-             (unsigned-byte-listp
-              8 (nth *bs_oemnamei* fat32-in-memory))
-             (true-listp (nth *bs_oemnamei* fat32-in-memory))
-             (equal (len (nth *bs_oemnamei* fat32-in-memory))
-                    8)))))
-
-(local
- (defthm update-bs_oemname-correctness-7
-   (implies (and (fat32-in-memoryp fat32-in-memory)
-                 (<= (+ 1 (len (cdr v))) 8))
-            (< (binary-+ '7 (unary-- (len (cdr v))))
-               (len (nth '1 fat32-in-memory))))
-   :rule-classes :linear))
-
-(local
- (defthm update-bs_oemname-correctness-8
-   (implies (fat32-in-memoryp fat32-in-memory)
-            (< *bs_oemnamei* (len fat32-in-memory)))
-   :rule-classes :linear))
-
-(verify (implies
-         (and
-          (consp v)
-          (<= 0 (+ 7 (- (len (cdr v)))))
-          (<= 0 (+ 8 (- (len (cdr v)))))
-          (< (+ 7 (- (len (cdr v))))
-             (+ 8 (- (len (cdr v)))))
-          (equal
-           (update-bs_oemname
-            (cdr v)
-            (update-nth *bs_oemnamei*
-                        (update-nth (+ 7 (- (len (cdr v))))
-                                    (car v)
-                                    (nth *bs_oemnamei* fat32-in-memory))
-                        fat32-in-memory))
-           (update-nth
-            *bs_oemnamei*
-            (append (update-nth (+ 7 (- (len (cdr v))))
-                                (car v)
-                                (take (+ 8 (- (len (cdr v))))
-                                      (nth *bs_oemnamei* fat32-in-memory)))
-                    (cdr v))
-            fat32-in-memory))
-          (fat32-in-memoryp fat32-in-memory)
-          (unsigned-byte-listp 8 v)
-          (<= (+ 1 (len (cdr v))) 8))
-         (equal (update-bs_oemname
-                 (cdr v)
-                 (update-nth *bs_oemnamei*
-                             (update-nth (+ 7 (- (len (cdr v))))
-                                         (car v)
-                                         (nth *bs_oemnamei* fat32-in-memory))
-                             fat32-in-memory))
-                (update-nth *bs_oemnamei*
-                            (append (take (+ 7 (- (len (cdr v))))
-                                          (nth *bs_oemnamei* fat32-in-memory))
-                                    v)
-                            fat32-in-memory)))
-        :instructions
-        (:promote
-         (:dive 2 2)
-         (:= (append (append (take (+ 7 (- (len (cdr v))))
-                                   (nth *bs_oemnamei* fat32-in-memory))
-                             (list (car v)))
-                     (cdr v)))
-         :top (:dv 1)
-         :top (:demote 5)
-         (:claim
-          (equal
-           (update-nth (+ 7 (- (len (cdr v))))
-                       (car v)
-                       (take (+ 8 (- (len (cdr v))))
-                             (nth *bs_oemnamei* fat32-in-memory)))
-           (let* ((i (+ 7 (- (len (cdr v)))))
-                  (l (update-nth (+ 7 (- (len (cdr v))))
-                                 (car v)
-                                 (take (+ 8 (- (len (cdr v))))
-                                       (nth *bs_oemnamei* fat32-in-memory)))))
-                 (binary-append (take i l)
-                                (nthcdr i l))))
-          :hints :none)
-         (:change-goal (main . 2) t)
-         (:dive 2)
-         :expand
-         :expand (:rewrite binary-append-take-nthcdr)
-         :top :bash
-         :bash (:dive 1 2 2 1)
-         := (:drop 8)
-         :expand :expand))
-
-(defthmd
-  update-bs_oemname-correctness-9
-  (implies (and (fat32-in-memoryp fat32-in-memory)
-                (unsigned-byte-listp 8 v)
-                (<= (len v)
-                    (bs_oemname-length fat32-in-memory)))
-           (equal (update-bs_oemname v fat32-in-memory)
-                  (update-nth *bs_oemnamei*
-                              (append
-                               (take
-                                (- (bs_oemname-length fat32-in-memory) (len v))
-                                (nth *bs_oemnamei* fat32-in-memory))
-                               v)
-                              fat32-in-memory)))
-  :hints (("Goal" :in-theory (disable fat32-in-memoryp) :induct
-           (update-bs_oemname v fat32-in-memory))
-          ("Subgoal *1/2.3" :in-theory (disable binary-append-take-nthcdr)
-           :use (:instance binary-append-take-nthcdr
-                           (i (+ 7 (- (LEN (CDR V)))))
-                           (l
-                            (TAKE (+ 8 (- (LEN (CDR V))))
-                                  (UPDATE-NTH (+ 7 (- (LEN (CDR V))))
-                                              (CAR V)
-                                              (NTH *BS_OEMNAMEI*
-                                                   FAT32-IN-MEMORY))))))
-          ("subgoal *1/2.4" :in-theory (disable BINARY-APPEND-IS-ASSOCIATIVE)
-           :use ((:instance BINARY-APPEND-IS-ASSOCIATIVE
-                            (a (TAKE (+ 7 (- (LEN (CDR V))))
-                                     (NTH *BS_OEMNAMEI* FAT32-IN-MEMORY)))
-                            (b (list (car v)))
-                            (c (cdr v)))))))
-
-(reason-about-stobj-array
- update-bs_vollab bs_vollab-suffix
- bs_vollab-length 8 update-bs_vollabi
- bs_vollabi *bs_vollabi*
- 11 fat32-in-memory fat32-in-memoryp
+(update-stobj-array
+ update-bs_vollab bs_vollab-length 8
+ update-bs_vollabi bs_vollabi *bs_vollabi*
+ fat32-in-memory fat32-in-memoryp
  update-bs_vollab-correctness-1
  update-bs_vollab-correctness-2
  update-bs_vollab-correctness-3
- update-bs_vollab-correctness-4
- bs_vollab-suffix-correctness-1)
+ update-bs_vollab-correctness-4)
 
-(reason-about-stobj-array
- update-bs_filsystype
- bs_filsystype-suffix
- bs_filsystype-length
- 8 update-bs_filsystypei
- bs_filsystypei *bs_filsystypei*
- 8 fat32-in-memory fat32-in-memoryp
+(update-stobj-array
+ update-bs_filsystype bs_filsystype-length 8
+ update-bs_filsystypei bs_filsystypei *bs_filsystypei*
+ fat32-in-memory fat32-in-memoryp
  update-bs_filsystype-correctness-1
  update-bs_filsystype-correctness-2
  update-bs_filsystype-correctness-3
- update-bs_filsystype-correctness-4
- bs_filsystype-suffix-correctness-1)
+ update-bs_filsystype-correctness-4)
 
-(reason-about-stobj-array
- update-bpb_reserved
- bpb_reserved-suffix bpb_reserved-length
- 8 update-bpb_reservedi
- bpb_reservedi *bpb_reservedi*
- 12 fat32-in-memory fat32-in-memoryp
+(update-stobj-array
+ update-bpb_reserved bpb_reserved-length 8
+ update-bpb_reservedi bpb_reservedi *bpb_reservedi*
+ fat32-in-memory fat32-in-memoryp
  update-bpb_reserved-correctness-1
  update-bpb_reserved-correctness-2
  update-bpb_reserved-correctness-3
- update-bpb_reserved-correctness-4
- bpb_reserved-suffix-correctness-1)
+ update-bpb_reserved-correctness-4)
 
 (defthm
   read-reserved-area-guard-lemma-1
@@ -1191,19 +989,27 @@
       :guard-hints
       (("goal"
         :do-not-induct t
-        :in-theory (disable fat32-in-memoryp unsigned-byte-p nth))
-       ("Subgoal 7" :in-theory (disable nth-of-unsigned-byte-list)
-        :use (:instance
-              nth-of-unsigned-byte-list
-              (n 13)
-              (l (get-initial-bytes str))
-              (bits 8)))
-       ("Subgoal 6" :in-theory (disable nth-of-unsigned-byte-list)
-        :use (:instance
-              nth-of-unsigned-byte-list
-              (n 0)
-              (l (get-remaining-rsvdbyts str))
-              (bits 8))))
+        :in-theory (disable fat32-in-memoryp unsigned-byte-p nth
+                            integerp-of-nth-when-integer-listp)
+        :use ((:instance integerp-of-nth-when-integer-listp
+                         (n 13)
+                         (x (get-initial-bytes str)))
+              (:instance integerp-of-nth-when-integer-listp
+                         (n 0)
+                         (x (get-remaining-rsvdbyts str)))))
+       ;; ("Subgoal 7" :in-theory (disable nth-of-unsigned-byte-list)
+       ;;  :use (:instance
+       ;;        nth-of-unsigned-byte-list
+       ;;        (n 13)
+       ;;        (l (get-initial-bytes str))
+       ;;        (bits 8)))
+       ;; ("Subgoal 6" :in-theory (disable nth-of-unsigned-byte-list)
+       ;;  :use (:instance
+       ;;        nth-of-unsigned-byte-list
+       ;;        (n 0)
+       ;;        (l (get-remaining-rsvdbyts str))
+       ;;        (bits 8)))
+       )
       :stobjs (fat32-in-memory)))
     (b*
         (;; we want to do this unconditionally, in order to prove a strong linear
