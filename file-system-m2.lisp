@@ -907,6 +907,76 @@
             (< *bs_oemnamei* (len fat32-in-memory)))
    :rule-classes :linear))
 
+(verify (implies
+         (and
+          (consp v)
+          (<= 0 (+ 7 (- (len (cdr v)))))
+          (<= 0 (+ 8 (- (len (cdr v)))))
+          (< (+ 7 (- (len (cdr v))))
+             (+ 8 (- (len (cdr v)))))
+          (equal
+           (update-bs_oemname
+            (cdr v)
+            (update-nth *bs_oemnamei*
+                        (update-nth (+ 7 (- (len (cdr v))))
+                                    (car v)
+                                    (nth *bs_oemnamei* fat32-in-memory))
+                        fat32-in-memory))
+           (update-nth
+            *bs_oemnamei*
+            (append (update-nth (+ 7 (- (len (cdr v))))
+                                (car v)
+                                (take (+ 8 (- (len (cdr v))))
+                                      (nth *bs_oemnamei* fat32-in-memory)))
+                    (cdr v))
+            fat32-in-memory))
+          (fat32-in-memoryp fat32-in-memory)
+          (unsigned-byte-listp 8 v)
+          (<= (+ 1 (len (cdr v))) 8))
+         (equal (update-bs_oemname
+                 (cdr v)
+                 (update-nth *bs_oemnamei*
+                             (update-nth (+ 7 (- (len (cdr v))))
+                                         (car v)
+                                         (nth *bs_oemnamei* fat32-in-memory))
+                             fat32-in-memory))
+                (update-nth *bs_oemnamei*
+                            (append (take (+ 7 (- (len (cdr v))))
+                                          (nth *bs_oemnamei* fat32-in-memory))
+                                    v)
+                            fat32-in-memory)))
+        :instructions
+        (:promote
+         (:dive 2 2)
+         (:= (append (append (take (+ 7 (- (len (cdr v))))
+                                   (nth *bs_oemnamei* fat32-in-memory))
+                             (list (car v)))
+                     (cdr v)))
+         :top (:dv 1)
+         :top (:demote 5)
+         (:claim
+          (equal
+           (update-nth (+ 7 (- (len (cdr v))))
+                       (car v)
+                       (take (+ 8 (- (len (cdr v))))
+                             (nth *bs_oemnamei* fat32-in-memory)))
+           (let* ((i (+ 7 (- (len (cdr v)))))
+                  (l (update-nth (+ 7 (- (len (cdr v))))
+                                 (car v)
+                                 (take (+ 8 (- (len (cdr v))))
+                                       (nth *bs_oemnamei* fat32-in-memory)))))
+                 (binary-append (take i l)
+                                (nthcdr i l))))
+          :hints :none)
+         (:change-goal (main . 2) t)
+         (:dive 2)
+         :expand
+         :expand (:rewrite binary-append-take-nthcdr)
+         :top :bash
+         :bash (:dive 1 2 2 1)
+         := (:drop 8)
+         :expand :expand))
+
 (defthmd
   update-bs_oemname-correctness-9
   (implies (and (fat32-in-memoryp fat32-in-memory)
@@ -930,7 +1000,14 @@
                             (TAKE (+ 8 (- (LEN (CDR V))))
                                   (UPDATE-NTH (+ 7 (- (LEN (CDR V))))
                                               (CAR V)
-                                              (NTH *BS_OEMNAMEI* FAT32-IN-MEMORY))))))))
+                                              (NTH *BS_OEMNAMEI*
+                                                   FAT32-IN-MEMORY))))))
+          ("subgoal *1/2.4" :in-theory (disable BINARY-APPEND-IS-ASSOCIATIVE)
+           :use ((:instance BINARY-APPEND-IS-ASSOCIATIVE
+                            (a (TAKE (+ 7 (- (LEN (CDR V))))
+                                     (NTH *BS_OEMNAMEI* FAT32-IN-MEMORY)))
+                            (b (list (car v)))
+                            (c (cdr v)))))))
 
 (reason-about-stobj-array
  update-bs_vollab bs_vollab-suffix
