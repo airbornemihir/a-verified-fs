@@ -997,18 +997,18 @@
       (("goal"
         :do-not-induct t
         :in-theory (disable fat32-in-memoryp unsigned-byte-p nth))
-       ("Subgoal 7" :in-theory (disable nth-of-unsigned-byte-list)
+       ("Subgoal 7" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
         :use ((:instance
-               nth-of-unsigned-byte-list
+               unsigned-byte-p-of-nth-when-unsigned-byte-p
                (n 13)
                (l (get-initial-bytes str))
                (bits 8))
               (:instance UNSIGNED-BYTE-P-FORWARD-TO-NONNEGATIVE-INTEGERP
                          (n bits)
                          (x (nth 13 (get-initial-bytes str))))))
-       ("Subgoal 6" :in-theory (disable nth-of-unsigned-byte-list)
+       ("Subgoal 6" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
         :use (:instance
-              nth-of-unsigned-byte-list
+              unsigned-byte-p-of-nth-when-unsigned-byte-p
               (n 0)
               (l (get-remaining-rsvdbyts str))
               (bits 8))))
