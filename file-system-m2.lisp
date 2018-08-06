@@ -977,6 +977,13 @@
   (local (include-book "rtl/rel9/arithmetic/top"
                        :dir :system))
 
+  (local
+   (defthm read-reserved-area-guard-lemma-5
+     (implies (and (unsigned-byte-listp 8 l)
+                   (natp n)
+                   (< n (len l)))
+              (rationalp (nth n l)))))
+
   ;; This must be called after the file is opened.
   (defun
       read-reserved-area (fat32-in-memory str)
@@ -989,27 +996,22 @@
       :guard-hints
       (("goal"
         :do-not-induct t
-        :in-theory (disable fat32-in-memoryp unsigned-byte-p nth
-                            integerp-of-nth-when-integer-listp)
-        :use ((:instance integerp-of-nth-when-integer-listp
-                         (n 13)
-                         (x (get-initial-bytes str)))
-              (:instance integerp-of-nth-when-integer-listp
-                         (n 0)
-                         (x (get-remaining-rsvdbyts str)))))
-       ;; ("Subgoal 7" :in-theory (disable nth-of-unsigned-byte-list)
-       ;;  :use (:instance
-       ;;        nth-of-unsigned-byte-list
-       ;;        (n 13)
-       ;;        (l (get-initial-bytes str))
-       ;;        (bits 8)))
-       ;; ("Subgoal 6" :in-theory (disable nth-of-unsigned-byte-list)
-       ;;  :use (:instance
-       ;;        nth-of-unsigned-byte-list
-       ;;        (n 0)
-       ;;        (l (get-remaining-rsvdbyts str))
-       ;;        (bits 8)))
-       )
+        :in-theory (disable fat32-in-memoryp unsigned-byte-p nth))
+       ("Subgoal 7" :in-theory (disable nth-of-unsigned-byte-list)
+        :use ((:instance
+               nth-of-unsigned-byte-list
+               (n 13)
+               (l (get-initial-bytes str))
+               (bits 8))
+              (:instance UNSIGNED-BYTE-P-FORWARD-TO-NONNEGATIVE-INTEGERP
+                         (n bits)
+                         (x (nth 13 (get-initial-bytes str))))))
+       ("Subgoal 6" :in-theory (disable nth-of-unsigned-byte-list)
+        :use (:instance
+              nth-of-unsigned-byte-list
+              (n 0)
+              (l (get-remaining-rsvdbyts str))
+              (bits 8))))
       :stobjs (fat32-in-memory)))
     (b*
         (;; we want to do this unconditionally, in order to prove a strong linear
