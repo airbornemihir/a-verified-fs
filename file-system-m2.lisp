@@ -992,7 +992,6 @@
       :guard (and (stringp str)
                   (>= (length str) *initialbytcnt*)
                   (fat32-in-memoryp fat32-in-memory))
-      :guard-debug t
       :guard-hints
       (("goal"
         :do-not-induct t
