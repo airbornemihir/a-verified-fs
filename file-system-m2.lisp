@@ -9,6 +9,10 @@
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
 
+;; This is to get the theorem about the nth element of a list of unsigned
+;; bytes.
+(local (include-book "std/typed-lists/integer-listp" :dir :system))
+
 (make-event
  `(defstobj fat32-in-memory
 
@@ -675,8 +679,7 @@
 (defthm
   data-region-length-of-update-data-regioni
   (implies
-   (and (natp i)
-        (< i (data-region-length fat32-in-memory)))
+   (< (nfix i) (data-region-length fat32-in-memory))
    (equal (data-region-length
            (update-data-regioni i v fat32-in-memory))
           (data-region-length fat32-in-memory)))
@@ -974,6 +977,13 @@
   (local (include-book "rtl/rel9/arithmetic/top"
                        :dir :system))
 
+  (local
+   (defthm read-reserved-area-guard-lemma-5
+     (implies (and (unsigned-byte-listp 8 l)
+                   (natp n)
+                   (< n (len l)))
+              (rationalp (nth n l)))))
+
   ;; This must be called after the file is opened.
   (defun
       read-reserved-area (fat32-in-memory str)
@@ -982,20 +992,22 @@
       :guard (and (stringp str)
                   (>= (length str) *initialbytcnt*)
                   (fat32-in-memoryp fat32-in-memory))
-      :guard-debug t
       :guard-hints
       (("goal"
         :do-not-induct t
         :in-theory (disable fat32-in-memoryp unsigned-byte-p nth))
-       ("Subgoal 7" :in-theory (disable nth-of-unsigned-byte-list)
+       ("Subgoal 7" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
+        :use ((:instance
+               unsigned-byte-p-of-nth-when-unsigned-byte-p
+               (n 13)
+               (l (get-initial-bytes str))
+               (bits 8))
+              (:instance UNSIGNED-BYTE-P-FORWARD-TO-NONNEGATIVE-INTEGERP
+                         (n bits)
+                         (x (nth 13 (get-initial-bytes str))))))
+       ("Subgoal 6" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
         :use (:instance
-              nth-of-unsigned-byte-list
-              (n 13)
-              (l (get-initial-bytes str))
-              (bits 8)))
-       ("Subgoal 6" :in-theory (disable nth-of-unsigned-byte-list)
-        :use (:instance
-              nth-of-unsigned-byte-list
+              unsigned-byte-p-of-nth-when-unsigned-byte-p
               (n 0)
               (l (get-remaining-rsvdbyts str))
               (bits 8))))
@@ -1029,7 +1041,7 @@
          (fat32-in-memory
           (update-bs_jmpboot (subseq initial-bytes 0 3) fat32-in-memory))
          (fat32-in-memory
-          (update-bs_oemname (subseq initial-bytes 3 8) fat32-in-memory))
+          (update-bs_oemname (subseq initial-bytes 3 11) fat32-in-memory))
          (tmp_bytspersec (combine16u (nth (+ 11 1) initial-bytes)
                                      (nth (+ 11 0) initial-bytes)))
          ((unless (>= tmp_bytspersec 512))
@@ -3410,6 +3422,18 @@
     (concatenate 'string
                  reserved-area-string
                  fat-string data-region-string)))
+
+(defthm
+  fat32-in-memory-to-string-inversion
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (equal
+    (mv-nth 0
+            (string-to-fat32-in-memory
+             fat32-in-memory
+             (fat32-in-memory-to-string
+              fat32-in-memory)))
+    fat32-in-memory)))
 
 #|
 Some (rather awful) testing forms are
