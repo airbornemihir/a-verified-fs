@@ -1214,7 +1214,6 @@
           (("goal"
             :in-theory (e/d (data-region-length update-data-regioni)
                             (fat32-in-memoryp))))
-          :guard-debug t
           :measure (nfix (- len pos))
           :stobjs fat32-in-memory))
   (b*
@@ -1244,7 +1243,6 @@
           :guard-hints
           (("goal" :in-theory (e/d (fat-length update-fati)
                                    (fat32-in-memoryp))))
-          :guard-debug t
           :stobjs fat32-in-memory))
   (b*
       ((pos (the (unsigned-byte 28) pos)))
