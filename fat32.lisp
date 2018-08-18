@@ -4,6 +4,7 @@
 
 ; Utilities for FAT32.
 
+(include-book "ihs/logops-lemmas" :dir :system)
 ; The following is in fat32.acl2, but we include it here as well for
 ; when we are doing interactive development, in order to read gl:: symbols.
 (include-book "centaur/gl/portcullis" :dir :system)
@@ -86,7 +87,7 @@
 ;; Use a mask to take the low 28 bits.
 (defund fat32-entry-mask (x)
   (declare (xargs :guard (fat32-entry-p x)))
-  (logand x (- (ash 1 28) 1)))
+  (loghead 28 x))
 
 (defthm
   fat32-entry-mask-correctness-1
@@ -166,26 +167,17 @@
       :in-theory (enable fat32-entry-p fat32-masked-entry-p)))
     :guard (and (fat32-entry-p entry)
                 (fat32-masked-entry-p masked-entry))))
-  (logior (logand entry (- (ash 1 32) (ash 1 28)))
-          masked-entry))
+  (logapp 28 masked-entry (logtail 28 entry)))
 
-(encapsulate
-  ()
-
-  (local (include-book "ihs/logops-lemmas" :dir :system))
-
-  (defthm
-    fat32-update-lower-28-correctness-1
-    (implies
-     (and (fat32-entry-p entry)
-          (fat32-masked-entry-p masked-entry))
-     (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
-    :hints
-    (("goal"
-      :in-theory (e/d nil (unsigned-byte-p logand logior)
-                      (fat32-entry-p fat32-masked-entry-p
-                                     fat32-update-lower-28)))
-     ("goal''" :in-theory (enable unsigned-byte-p)))))
+(defthm
+  fat32-update-lower-28-correctness-1
+  (implies
+   (and (fat32-entry-p entry)
+        (fat32-masked-entry-p masked-entry))
+   (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
+  :hints
+  (("goal"
+    :in-theory (e/d (fat32-update-lower-28 fat32-entry-p) (unsigned-byte-p logapp logtail)))))
 
 ; :Redef helps here for overcoming lemmas that are incompatible here (and
 ; finding all such lemmas in the process).
