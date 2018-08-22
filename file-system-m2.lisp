@@ -1231,6 +1231,160 @@
            (update-data-regioni pos ch-byte fat32-in-memory)))
        (update-data-region fat32-in-memory str len pos+1)))))
 
+(encapsulate
+  ()
+
+  (local
+   (defthm update-data-region-correctness-1-lemma-1
+     (implies (natp key)
+              (equal (update-nth key (char-code x) l)
+                     (append (take key l)
+                             (list (char-code x))
+                             (nthcdr (+ 1 key) l))))))
+
+  (local
+   (defthm update-data-region-correctness-1-lemma-2
+     (equal (car (nthcdr n l))
+            (nth n l))))
+
+  (local
+   (defthm update-data-region-correctness-1-lemma-3
+     (equal (take n (cdr l))
+            (cdr (take (+ 1 n) l)))))
+
+  (local
+   (defthmd update-data-region-correctness-1-lemma-4
+     (implies (not (zp n))
+              (equal (cons (car l) (append (cdr (take n l)) y))
+                     (append (take n l) y)))))
+
+  (local
+   (defthm
+     update-data-region-correctness-1-lemma-5
+     (implies
+      (and (natp pos)
+           (integerp len)
+           (< pos len))
+      (equal
+       (nthcdr len
+               (nth *data-regioni*
+                    (update-data-regioni pos v fat32-in-memory)))
+       (nthcdr len
+               (nth *data-regioni* fat32-in-memory))))
+     :hints
+     (("subgoal *1/3''"
+       :expand (update-data-regioni (+ -1 len)
+                                    v fat32-in-memory))
+      ("subgoal *1/3'''"
+       :in-theory (disable nthcdr-of-cdr)
+       :use (:instance nthcdr-of-cdr
+                       (x (nth *data-regioni* fat32-in-memory))
+                       (i (+ -1 len)))))))
+
+  (local
+   (defthm update-data-region-correctness-1-lemma-6
+     (implies (not (zp n))
+              (equal (cons (car l) (cdr (take n l)))
+                     (take n l)))))
+
+  (local
+   (defthm
+     update-data-region-correctness-1-lemma-7
+     (implies
+      (and (natp pos) (stringp str))
+      (equal
+       (take
+        (+ 1 pos)
+        (nth
+         *data-regioni*
+         (update-data-regioni pos (char-code (nth pos (explode str)))
+                              fat32-in-memory)))
+       (append (take pos
+                     (nth *data-regioni* fat32-in-memory))
+               (list (char-code (nth pos (explode str)))))))
+     :hints (("goal" :in-theory (enable update-data-regioni)))))
+
+  ;; (local
+  ;;  (defthm
+  ;;    update-data-region-correctness-1-lemma-8
+  ;;    (implies
+  ;;     (not (zp len))
+  ;;     (equal
+  ;;      (cons
+  ;;       (char-code (car (explode str)))
+  ;;       (append (string=>nats (implode (cdr (take len (explode str)))))
+  ;;               y))
+  ;;      (append (string=>nats (implode (take len (explode str))))
+  ;;              y)))
+  ;;    :hints (("goal" :in-theory (enable string=>nats)))))
+
+  (local (defthm update-data-region-correctness-1-lemma-8
+           (equal (chars=>nats (make-character-list (cdr x)))
+                  (cdr (chars=>nats (make-character-list x))))
+           :hints (("goal" :in-theory (enable chars=>nats)))))
+
+  (local
+   (defthm
+     update-data-region-correctness-1-lemma-9
+     (implies (and (stringp str) (INTEGERP LEN) (natp POS) (< pos len))
+     (equal
+      (CONS
+     (CHAR-CODE (NTH POS (EXPLODE STR)))
+     (APPEND
+          (CHARS=>NATS
+               (MAKE-CHARACTER-LIST (CDR (TAKE (+ LEN (- POS))
+                                               (NTHCDR POS (EXPLODE STR))))))
+          y))
+     (APPEND
+          (CHARS=>NATS
+               (MAKE-CHARACTER-LIST (TAKE (+ LEN (- POS))
+                                               (NTHCDR POS (EXPLODE STR)))))
+          y)))
+   :hints (("GOal" :in-theory (enable chars=>nats)) )))
+
+  (defthmd
+    update-data-region-correctness-1
+    (implies
+     (and (natp pos)
+          (natp len)
+          (< pos len)
+          (<= len
+              (data-region-length fat32-in-memory))
+          (compliant-fat32-in-memoryp fat32-in-memory)
+          (stringp str))
+     (equal (update-data-region fat32-in-memory str len pos)
+            (update-nth
+             *data-regioni*
+             (append (take pos
+                           (nth *data-regioni* fat32-in-memory))
+                     (string=>nats (subseq str pos len))
+                     (nthcdr len
+                             (nth *data-regioni* fat32-in-memory)))
+             fat32-in-memory)))
+    :hints
+    (("goal" :in-theory (disable fat32-in-memoryp))
+     ("subgoal *1/7''"
+      :in-theory (e/d (update-data-region-correctness-1-lemma-4 string=>nats)
+                      (append-of-cons))
+      :expand (:free (v fat32-in-memory)
+                     (update-data-regioni 0 v fat32-in-memory)))
+     ("subgoal *1/7.3"
+      :in-theory (enable chars=>nats))
+     ("subgoal *1/5''"
+      :expand
+      (update-data-region
+       (update-data-regioni pos (char-code (nth pos (explode str)))
+                            fat32-in-memory)
+       str len (+ 1 pos)))
+     ("subgoal *1/4'''"
+      :expand
+      ((string=>nats (implode (list (nth (+ -1 len) (explode str)))))
+       (update-data-regioni (+ -1 len)
+                            (char-code (nth (+ -1 len) (explode str)))
+                            fat32-in-memory)))
+     ("subgoal *1/1'''"
+      :in-theory (enable data-region-length fat32-in-memoryp)))))
+
 (defun
   update-fat (fat32-in-memory str pos)
   (declare
