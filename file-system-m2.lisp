@@ -1318,29 +1318,15 @@
   ;;              y)))
   ;;    :hints (("goal" :in-theory (enable string=>nats)))))
 
-  (local (defthm update-data-region-correctness-1-lemma-8
-           (equal (chars=>nats (make-character-list (cdr x)))
-                  (cdr (chars=>nats (make-character-list x))))
-           :hints (("goal" :in-theory (enable chars=>nats)))))
+  ;; (local (defthm update-data-region-correctness-1-lemma-8
+  ;;          (equal (chars=>nats (make-character-list (cdr x)))
+  ;;                 (cdr (chars=>nats (make-character-list x))))
+  ;;          :hints (("goal" :in-theory (enable chars=>nats)))))
 
-  (local
-   (defthm
-     update-data-region-correctness-1-lemma-9
-     (implies (and (stringp str) (INTEGERP LEN) (natp POS) (< pos len))
-     (equal
-      (CONS
-     (CHAR-CODE (NTH POS (EXPLODE STR)))
-     (APPEND
-          (CHARS=>NATS
-               (MAKE-CHARACTER-LIST (CDR (TAKE (+ LEN (- POS))
-                                               (NTHCDR POS (EXPLODE STR))))))
-          y))
-     (APPEND
-          (CHARS=>NATS
-               (MAKE-CHARACTER-LIST (TAKE (+ LEN (- POS))
-                                               (NTHCDR POS (EXPLODE STR)))))
-          y)))
-   :hints (("GOal" :in-theory (enable chars=>nats)) )))
+  (local (defthm update-data-region-correctness-1-lemma-9
+           (equal (chars=>nats (make-character-list x))
+                  (chars=>nats x))
+           :hints (("goal" :in-theory (enable chars=>nats)))))
 
   (defthmd
     update-data-region-correctness-1
@@ -1351,7 +1337,8 @@
           (<= len
               (data-region-length fat32-in-memory))
           (compliant-fat32-in-memoryp fat32-in-memory)
-          (stringp str))
+          (stringp str)
+          (< len (length str)))
      (equal (update-data-region fat32-in-memory str len pos)
             (update-nth
              *data-regioni*
@@ -1364,12 +1351,13 @@
     :hints
     (("goal" :in-theory (disable fat32-in-memoryp))
      ("subgoal *1/7''"
-      :in-theory (e/d (update-data-region-correctness-1-lemma-4 string=>nats)
+      :in-theory (e/d (update-data-region-correctness-1-lemma-4 string=>nats chars=>nats)
                       (append-of-cons))
-      :expand (:free (v fat32-in-memory)
-                     (update-data-regioni 0 v fat32-in-memory)))
-     ("subgoal *1/7.3"
-      :in-theory (enable chars=>nats))
+      :expand ((:free (v fat32-in-memory)
+                      (update-data-regioni 0 v fat32-in-memory))))
+     ("Subgoal *1/7.2" :expand
+      (UPDATE-DATA-REGIONI POS (CHAR-CODE (NTH POS (EXPLODE STR)))
+                           FAT32-IN-MEMORY))
      ("subgoal *1/5''"
       :expand
       (update-data-region

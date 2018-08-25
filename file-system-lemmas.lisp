@@ -49,6 +49,10 @@
   (implies (and (character-listp l) (character-listp acc) (<= n (len l)))
            (character-listp (first-n-ac n l acc))))
 
+(defthm character-listp-of-take
+  (implies (and (character-listp l) (<= n (len l)))
+           (character-listp (take n l))))
+
 (defthm character-listp-of-nthcdr
   (implies (and (character-listp l))
            (character-listp (nthcdr n l))))
