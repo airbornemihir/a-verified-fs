@@ -13,6 +13,23 @@
 ;; bytes.
 (local (include-book "std/typed-lists/integer-listp" :dir :system))
 
+(encapsulate
+  ()
+
+  (local (include-book "std/basic/inductions"
+                       :dir :system))
+  (defcong
+    str::charlisteqv equal (chars=>nats x)
+    1
+    :hints
+    (("goal" :in-theory (enable chars=>nats)
+      :induct (cdr-cdr-induct x str::x-equiv)))))
+
+(defthm chars=>nats-of-make-character-list
+  (equal (chars=>nats (make-character-list x))
+         (chars=>nats x))
+  :hints (("goal" :in-theory (enable chars=>nats))))
+
 (make-event
  `(defstobj fat32-in-memory
 
@@ -1303,30 +1320,6 @@
                      (nth *data-regioni* fat32-in-memory))
                (list (char-code (nth pos (explode str)))))))
      :hints (("goal" :in-theory (enable update-data-regioni)))))
-
-  ;; (local
-  ;;  (defthm
-  ;;    update-data-region-correctness-1-lemma-8
-  ;;    (implies
-  ;;     (not (zp len))
-  ;;     (equal
-  ;;      (cons
-  ;;       (char-code (car (explode str)))
-  ;;       (append (string=>nats (implode (cdr (take len (explode str)))))
-  ;;               y))
-  ;;      (append (string=>nats (implode (take len (explode str))))
-  ;;              y)))
-  ;;    :hints (("goal" :in-theory (enable string=>nats)))))
-
-  ;; (local (defthm update-data-region-correctness-1-lemma-8
-  ;;          (equal (chars=>nats (make-character-list (cdr x)))
-  ;;                 (cdr (chars=>nats (make-character-list x))))
-  ;;          :hints (("goal" :in-theory (enable chars=>nats)))))
-
-  (local (defthm update-data-region-correctness-1-lemma-9
-           (equal (chars=>nats (make-character-list x))
-                  (chars=>nats x))
-           :hints (("goal" :in-theory (enable chars=>nats)))))
 
   (defthmd
     update-data-region-correctness-1
