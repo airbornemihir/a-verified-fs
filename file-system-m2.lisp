@@ -1331,38 +1331,44 @@
               (data-region-length fat32-in-memory))
           (compliant-fat32-in-memoryp fat32-in-memory)
           (stringp str)
-          (< len (length str)))
-     (equal (update-data-region fat32-in-memory str len pos)
-            (update-nth
-             *data-regioni*
-             (append (take pos
-                           (nth *data-regioni* fat32-in-memory))
-                     (string=>nats (subseq str pos len))
-                     (nthcdr len
-                             (nth *data-regioni* fat32-in-memory)))
-             fat32-in-memory)))
+          (<= len (length str)))
+     (equal
+      (update-data-region fat32-in-memory str len pos)
+      (update-nth
+       *data-regioni*
+       (append (take pos
+                     (nth *data-regioni* fat32-in-memory))
+               (string=>nats (subseq str pos len))
+               (nthcdr len
+                       (nth *data-regioni* fat32-in-memory)))
+       fat32-in-memory)))
     :hints
     (("goal" :in-theory (disable fat32-in-memoryp))
      ("subgoal *1/7''"
-      :in-theory (e/d (update-data-region-correctness-1-lemma-4 string=>nats chars=>nats)
+      :in-theory (e/d (update-data-region-correctness-1-lemma-4
+                       string=>nats chars=>nats)
                       (append-of-cons))
-      :expand ((:free (v fat32-in-memory)
-                      (update-data-regioni 0 v fat32-in-memory))))
-     ("Subgoal *1/7.2" :expand
-      (UPDATE-DATA-REGIONI POS (CHAR-CODE (NTH POS (EXPLODE STR)))
-                           FAT32-IN-MEMORY))
-     ("subgoal *1/5''"
       :expand
-      (update-data-region
-       (update-data-regioni pos (char-code (nth pos (explode str)))
-                            fat32-in-memory)
-       str len (+ 1 pos)))
+      ((:free (v fat32-in-memory)
+              (update-data-regioni 0 v fat32-in-memory))))
+     ("subgoal *1/7.2"
+      :expand (update-data-regioni
+               pos (char-code (nth pos (explode str)))
+               fat32-in-memory))
+     ("subgoal *1/5''"
+      :expand (update-data-region
+               (update-data-regioni
+                pos (char-code (nth pos (explode str)))
+                fat32-in-memory)
+               str len (+ 1 pos)))
      ("subgoal *1/4'''"
       :expand
-      ((string=>nats (implode (list (nth (+ -1 len) (explode str)))))
-       (update-data-regioni (+ -1 len)
-                            (char-code (nth (+ -1 len) (explode str)))
-                            fat32-in-memory)))
+      ((string=>nats
+        (implode (list (nth (+ -1 len) (explode str)))))
+       (update-data-regioni
+        (+ -1 len)
+        (char-code (nth (+ -1 len) (explode str)))
+        fat32-in-memory)))
      ("subgoal *1/1'''"
       :in-theory (enable data-region-length fat32-in-memoryp)))))
 
