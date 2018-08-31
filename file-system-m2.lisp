@@ -1276,50 +1276,151 @@
                      (append (take n l) y)))))
 
   (local
-   (defthm
-     update-data-region-correctness-1-lemma-5
-     (implies
-      (and (natp pos)
-           (integerp len)
-           (< pos len))
-      (equal
-       (nthcdr len
-               (nth *data-regioni*
-                    (update-data-regioni pos v fat32-in-memory)))
-       (nthcdr len
-               (nth *data-regioni* fat32-in-memory))))
-     :hints
-     (("subgoal *1/3''"
-       :expand (update-data-regioni (+ -1 len)
-                                    v fat32-in-memory))
-      ("subgoal *1/3'''"
-       :in-theory (disable nthcdr-of-cdr)
-       :use (:instance nthcdr-of-cdr
-                       (x (nth *data-regioni* fat32-in-memory))
-                       (i (+ -1 len)))))))
-
-  (local
    (defthm update-data-region-correctness-1-lemma-6
      (implies (not (zp n))
               (equal (cons (car l) (cdr (take n l)))
                      (take n l)))))
 
-  (local
-   (defthm
-     update-data-region-correctness-1-lemma-7
-     (implies
-      (and (natp pos) (stringp str))
+  (encapsulate
+    (((update-single-element-fn * * fat32-in-memory) => fat32-in-memory)
+     ((stobj-array-index) => *)
+     ((stobj-array-length fat32-in-memory) => *))
+
+    (local (defund update-single-element-fn
+             (i v fat32-in-memory)
+             (declare (xargs :stobjs fat32-in-memory
+                             :guard (and (fat32-in-memoryp fat32-in-memory)
+                                         (integerp i)
+                                         (<= 0 i)
+                                         (< i (data-region-length fat32-in-memory))
+                                         (unsigned-byte-p 8 v))))
+             (update-data-regioni
+              i v fat32-in-memory)))
+
+    (local (defund stobj-array-index () *data-regioni*))
+
+    (local (defund stobj-array-length
+             (fat32-in-memory)
+             (declare (xargs :guard (fat32-in-memoryp fat32-in-memory)
+                             :stobjs fat32-in-memory))
+             (data-region-length fat32-in-memory)))
+
+    (local
+     (defthm
+       update-data-region-correctness-1-lemma-5
+       (implies
+        (and (natp pos)
+             (integerp len)
+             (< pos len))
+        (equal
+         (nthcdr len
+                 (nth (stobj-array-index)
+                      (update-single-element-fn pos v fat32-in-memory)))
+         (nthcdr len
+                 (nth (stobj-array-index) fat32-in-memory))))
+       :hints
+       (("goal" :in-theory (enable update-single-element-fn))
+        ("subgoal *1/3"
+         :expand (update-data-regioni (+ -1 len)
+                                      v fat32-in-memory)
+         :in-theory (disable nthcdr-of-cdr)
+         :use (:instance nthcdr-of-cdr
+                         (x (nth *data-regioni* fat32-in-memory))
+                         (i (+ -1 len)))))))
+
+    (local
+     (defthm
+       update-data-region-correctness-1-lemma-7
+       (implies
+        (and (natp pos) (stringp str))
+        (equal
+         (take
+          (+ 1 pos)
+          (nth (stobj-array-index)
+               (update-single-element-fn pos (char-code (nth pos (explode str)))
+                                         fat32-in-memory)))
+         (append (take pos
+                       (nth (stobj-array-index) fat32-in-memory))
+                 (list (char-code (nth pos (explode str)))))))
+       :hints (("goal" :in-theory (enable update-data-regioni update-single-element-fn)))))
+
+    (defthm
+      update-data-region-correctness-1-lemma-8
+      (implies
+       (< (nfix i)
+          (stobj-array-length
+           fat32-in-memory))
+       (equal
+        (stobj-array-length
+         (update-single-element-fn
+          i v fat32-in-memory))
+        (stobj-array-length
+         fat32-in-memory)))
+      :hints (("goal" :in-theory (enable update-single-element-fn stobj-array-length))))
+
+    (defthm
+      update-data-region-correctness-1-lemma-9
+      (integerp
+       (stobj-array-length
+        fat32-in-memory))
+      :hints (("goal" :in-theory (enable stobj-array-length))))
+
+    (defthm
+      update-data-region-correctness-1-lemma-10
+      (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
+                    (< i
+                       (stobj-array-length
+                        fat32-in-memory)))
+               (equal
+                (compliant-fat32-in-memoryp
+                 (update-single-element-fn
+                  i v fat32-in-memory))
+                (unsigned-byte-p 8 v)))
+      :hints (("goal" :in-theory (enable update-single-element-fn
+                                         stobj-array-length))))
+
+    (defthmd
+      update-data-region-correctness-1-lemma-11
       (equal
-       (take
-        (+ 1 pos)
-        (nth
-         *data-regioni*
-         (update-data-regioni pos (char-code (nth pos (explode str)))
-                              fat32-in-memory)))
-       (append (take pos
-                     (nth *data-regioni* fat32-in-memory))
-               (list (char-code (nth pos (explode str)))))))
-     :hints (("goal" :in-theory (enable update-data-regioni)))))
+       (update-single-element-fn
+        i v fat32-in-memory)
+       (update-nth-array (stobj-array-index) i v fat32-in-memory))
+      :hints (("Goal" :in-theory (enable update-single-element-fn update-data-regioni)) )))
+
+  (defun
+    update-multiple-elements-fn
+    (fat32-in-memory str len pos)
+    (declare
+     (xargs
+      :guard (and (stringp str)
+                  (natp len)
+                  (natp pos)
+                  (<= pos len)
+                  (= len (length str))
+                  (<= len
+                      (stobj-array-length
+                       fat32-in-memory))
+                  (<= (stobj-array-length
+                       fat32-in-memory)
+                      *ms-max-data-region-size*))
+      :guard-hints
+      (("goal"
+        :in-theory (e/d (data-region-length update-data-regioni)
+                        (fat32-in-memoryp))))
+      :stobjs fat32-in-memory
+      :measure (nfix (- len pos))))
+    (if
+        (zp (- len pos))
+     fat32-in-memory
+     (b*
+         ((ch (char str pos))
+          (ch-byte (char-code ch))
+          (pos+1 (1+ pos))
+          (fat32-in-memory
+           (update-single-element-fn pos ch-byte fat32-in-memory)))
+       (update-multiple-elements-fn fat32-in-memory str len pos+1))))
+
+  (local (include-book "std/lists/nthcdr" :dir :system))
 
   (defthmd
     update-data-region-correctness-1
@@ -1328,22 +1429,24 @@
           (natp len)
           (< pos len)
           (<= len
-              (data-region-length fat32-in-memory))
+              (stobj-array-length
+               fat32-in-memory))
           (compliant-fat32-in-memoryp fat32-in-memory)
           (stringp str)
           (<= len (length str)))
      (equal
-      (update-data-region fat32-in-memory str len pos)
+      (update-multiple-elements-fn fat32-in-memory str len pos)
       (update-nth
-       *data-regioni*
+       (stobj-array-index)
        (append (take pos
-                     (nth *data-regioni* fat32-in-memory))
+                     (nth (stobj-array-index) fat32-in-memory))
                (string=>nats (subseq str pos len))
                (nthcdr len
-                       (nth *data-regioni* fat32-in-memory)))
+                       (nth (stobj-array-index) fat32-in-memory)))
        fat32-in-memory)))
     :hints
-    (("goal" :in-theory (disable fat32-in-memoryp))
+    (("goal" :in-theory (disable fat32-in-memoryp) :induct
+      (update-multiple-elements-fn fat32-in-memory str len pos))
      ("subgoal *1/7''"
       :in-theory (e/d (update-data-region-correctness-1-lemma-4
                        string=>nats chars=>nats)
@@ -1369,6 +1472,32 @@
         (+ -1 len)
         (char-code (nth (+ -1 len) (explode str)))
         fat32-in-memory)))
+     ("Subgoal *1/2"
+      :in-theory (enable string=>nats))
+     ("subgoal *1/2.3'''"
+      :in-theory (e/d (update-data-region-correctness-1-lemma-11) (update-data-region-correctness-1-lemma-1))
+      :use (:instance update-data-region-correctness-1-lemma-1
+                      (key (+ -1 len))
+                      (x (nth (+ -1 len) (explode str)))
+                      (l
+                       (nth (stobj-array-index)
+                            fat32-in-memory))))
+     ("subgoal *1/2.2" :in-theory (e/d
+                                   (update-data-region-correctness-1-lemma-11
+                                    chars=>nats)
+                                   (nthcdr-of-cdr))
+      :use (:instance nthcdr-of-cdr (i (+ -1 LEN)) (x
+                                                    (NTH (STOBJ-ARRAY-INDEX)
+                                                         FAT32-IN-MEMORY)))
+      :expand
+      ((append (chars=>nats (take (+ len (- pos))
+                                  (nthcdr pos (explode str))))
+               (nthcdr len
+                       (nth (stobj-array-index)
+                            fat32-in-memory)))
+       (NTHCDR LEN
+               (NTH (STOBJ-ARRAY-INDEX)
+                    FAT32-IN-MEMORY))))
      ("subgoal *1/1'''"
       :in-theory (enable data-region-length fat32-in-memoryp)))))
 
