@@ -1507,6 +1507,41 @@
      ("subgoal *1/1'''"
       :in-theory (enable data-region-length fat32-in-memoryp)))))
 
+(defthmd
+  update-data-region-correctness-1
+  (implies
+   (and (natp pos)
+        (natp len)
+        (< pos len)
+        (<= len
+            (data-region-length fat32-in-memory))
+        (compliant-fat32-in-memoryp fat32-in-memory)
+        (stringp str)
+        (<= len (length str)))
+   (equal
+    (update-data-region fat32-in-memory str len pos)
+    (update-nth
+     *data-regioni*
+     (append (take pos
+                   (nth *data-regioni* fat32-in-memory))
+             (string=>nats (subseq str pos len))
+             (nthcdr len
+                     (nth *data-regioni* fat32-in-memory)))
+     fat32-in-memory)))
+  :hints
+  (("Goal"
+    :use
+    ((:functional-instance
+      update-multiple-elements-fn-correctness-1
+      ;; Instantiate the generic functions:
+      (update-single-element-fn update-data-regioni)
+      (stobj-array-index  (lambda () *data-regioni*))
+      (stobj-array-length data-region-length)
+      ;; Instantiate the other relevant functions:
+      (update-multiple-elements-fn update-data-region))))
+   ("Subgoal 4"
+    :in-theory (enable update-data-regioni))))
+
 (defun
   update-fat (fat32-in-memory str pos)
   (declare
