@@ -1286,7 +1286,15 @@
       => fat32-in-memory)
      ((stobj-array-index) => *)
      ((stobj-array-length fat32-in-memory)
-      => *))
+      => *)
+     ((max-stobj-array-length) => *))
+
+    (local
+     (defund
+       stobj-array-length (fat32-in-memory)
+       (declare (xargs :guard (fat32-in-memoryp fat32-in-memory)
+                       :stobjs fat32-in-memory))
+       (data-region-length fat32-in-memory)))
 
     (local
      (defund
@@ -1298,18 +1306,15 @@
          :guard (and (fat32-in-memoryp fat32-in-memory)
                      (integerp i)
                      (<= 0 i)
-                     (< i (data-region-length fat32-in-memory))
-                     (unsigned-byte-p 8 v))))
+                     (< i (stobj-array-length fat32-in-memory))
+                     (unsigned-byte-p 8 v))
+         :guard-hints (("Goal" :in-theory (enable
+                                           stobj-array-length)))))
        (update-data-regioni i v fat32-in-memory)))
 
-    (local (defund stobj-array-index nil *data-regioni*))
+    (local (defund stobj-array-index () *data-regioni*))
 
-    (local
-     (defund
-       stobj-array-length (fat32-in-memory)
-       (declare (xargs :guard (fat32-in-memoryp fat32-in-memory)
-                       :stobjs fat32-in-memory))
-       (data-region-length fat32-in-memory)))
+    (local (defund max-stobj-array-length () *ms-max-data-region-size*))
 
     (local
      (defthm
@@ -1388,7 +1393,12 @@
              (update-nth-array (stobj-array-index)
                                i v fat32-in-memory))
       :hints (("goal" :in-theory (enable update-single-element-fn
-                                         update-data-regioni)))))
+                                         update-data-regioni))))
+
+    (defthm
+      update-multiple-elements-fn-correctness-1-lemma-12
+      (integerp (max-stobj-array-length))
+      :hints (("goal" :in-theory (enable stobj-array-length)))))
 
   (defun
     update-multiple-elements-fn
@@ -1403,7 +1413,7 @@
                   (<= len
                       (stobj-array-length fat32-in-memory))
                   (<= (stobj-array-length fat32-in-memory)
-                      *ms-max-data-region-size*))
+                      (max-stobj-array-length)))
       :guard-hints
       (("goal"
         :in-theory (e/d (data-region-length update-data-regioni)
@@ -1535,8 +1545,9 @@
       update-multiple-elements-fn-correctness-1
       ;; Instantiate the generic functions:
       (update-single-element-fn update-data-regioni)
-      (stobj-array-index  (lambda () *data-regioni*))
+      (stobj-array-index (lambda () *data-regioni*))
       (stobj-array-length data-region-length)
+      (max-stobj-array-length (lambda () *ms-max-data-region-size*))
       ;; Instantiate the other relevant functions:
       (update-multiple-elements-fn update-data-region))))
    ("Subgoal 4"
