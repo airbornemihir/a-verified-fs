@@ -1198,12 +1198,6 @@
       :expand (update-data-regioni
                pos (char-code (nth pos (explode str)))
                fat32-in-memory))
-     ("subgoal *1/5''"
-      :expand (update-data-region
-               (update-data-regioni
-                pos (char-code (nth pos (explode str)))
-                fat32-in-memory)
-               str len (+ 1 pos)))
      ("subgoal *1/4'''"
       :expand
       ((string=>nats
