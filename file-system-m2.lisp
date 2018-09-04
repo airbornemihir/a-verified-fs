@@ -209,9 +209,9 @@
      nil
      (defthm
        ,lemma-name1
-       (implies (and (unsigned-byte-p ,bit-width v)
-                     (,stobj-recogniser ,stobj))
-                (,stobj-recogniser (,updater v ,stobj)))
+       (implies (,stobj-recogniser ,stobj)
+                (equal (,stobj-recogniser (,updater v ,stobj))
+                       (unsigned-byte-p ,bit-width v)))
        :hints (("goal" :in-theory (enable ,updater))))
      (defthm
        ,lemma-name2
