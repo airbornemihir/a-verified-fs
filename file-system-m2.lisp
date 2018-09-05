@@ -832,6 +832,13 @@
 ;;  update-bs_oemname-correctness-2
 ;;  update-bs_oemname-correctness-3
 ;;  update-bs_oemname-correctness-4)
+(defthm update-bs_oemname-correctness-4
+  (implies (and (fat32-in-memoryp fat32-in-memory)
+                (integerp i)
+                (<= 0 i)
+                (< i (bs_oemname-length fat32-in-memory)))
+           (unsigned-byte-p 8 (bs_oemnamei i fat32-in-memory)))
+  :hints (("goal" :in-theory (disable nth unsigned-byte-p))))
 
 (update-stobj-array
  update-bs_vollab bs_vollab-length 8
@@ -1051,6 +1058,26 @@
        (not (equal (stobj-array-index) *bpb_fatsz32*))
        (not (equal (stobj-array-index) *bpb_bytspersec*))
        (not (equal (stobj-array-index) *bpb_totsec32*)))
+      :hints (("goal" :in-theory (enable stobj-array-length))))
+
+    (defthm
+      update-multiple-elements-fn-correctness-1-lemma-15
+      (implies (and (fat32-in-memoryp fat32-in-memory)
+                    (< i (stobj-array-length fat32-in-memory)))
+               (equal
+                (fat32-in-memoryp
+                 (update-single-element-fn i v fat32-in-memory))
+                (unsigned-byte-p 8 v)))
+      :hints
+      (("goal" :do-not-induct t
+        :in-theory (e/d (stobj-array-length
+                         update-multiple-elements-fn-correctness-1-lemma-11
+                         data-region-length) (unsigned-byte-p)))))
+
+    (defthm
+      update-multiple-elements-fn-correctness-1-lemma-16
+      (<= 0 (stobj-array-length fat32-in-memory))
+      :rule-classes :linear
       :hints (("goal" :in-theory (enable stobj-array-length)))))
 
   (defun
@@ -1262,7 +1289,20 @@
      (equal (bpb_totsec32
              (update-multiple-elements-fn
               fat32-in-memory str len pos))
-            (bpb_totsec32 fat32-in-memory)))))
+            (bpb_totsec32 fat32-in-memory))))
+
+  (defthm
+    update-multiple-elements-fn-correctness-3
+    (implies
+     (and (fat32-in-memoryp fat32-in-memory)
+          (natp pos)
+          (integerp len)
+          (<= pos len)
+          (<= len
+              (stobj-array-length fat32-in-memory)))
+     (fat32-in-memoryp
+      (update-multiple-elements-fn fat32-in-memory str len pos)))
+    :hints (("goal" :in-theory (disable fat32-in-memoryp)))))
 
 (defthm
   compliant-fat32-in-memoryp-of-update-bs_oemnamei
@@ -1279,42 +1319,79 @@
                      bs_oemname-length count-of-clusters)
                     (floor)))))
 
-(defthmd
-  update-bs_oemname-correctness-1
-  (implies
-   (and (natp pos)
-        (natp len)
-        (< pos len)
-        (<= len
-            (bs_oemname-length fat32-in-memory))
-        (compliant-fat32-in-memoryp fat32-in-memory)
-        (stringp str)
-        (<= len (length str)))
-   (equal
-    (update-bs_oemname fat32-in-memory str len pos)
-    (update-nth
-     *bs_oemnamei*
-     (append (take pos
-                   (nth *bs_oemnamei* fat32-in-memory))
-             (string=>nats (subseq str pos len))
-             (nthcdr len
-                     (nth *bs_oemnamei* fat32-in-memory)))
-     fat32-in-memory)))
-  :hints
-  (("Goal"
-    :use
-    ((:functional-instance
-      update-multiple-elements-fn-correctness-1
-      ;; Instantiate the generic functions:
-      (update-single-element-fn update-bs_oemnamei)
-      (stobj-array-index (lambda () *bs_oemnamei*))
-      (stobj-array-length bs_oemname-length)
-      (max-stobj-array-length (lambda () 8))
-      ;; Instantiate the other relevant functions:
-      (update-multiple-elements-fn update-bs_oemname)))
-    :in-theory (disable update-bs_oemnamei))
-   ("Subgoal 3'"
-    :in-theory (enable update-bs_oemnamei))))
+(encapsulate
+  ()
+
+  (local
+   (defthm fat32-in-memory-of-update-bs_oemname
+     (implies (and (fat32-in-memoryp fat32-in-memory)
+                   (< i (bs_oemname-length fat32-in-memory)))
+              (equal (fat32-in-memoryp (update-bs_oemnamei i v
+                                                           fat32-in-memory))
+                     (unsigned-byte-p 8 v)))))
+
+  (defthm
+    update-bs_oemname-correctness-3
+    (implies
+     (and (fat32-in-memoryp fat32-in-memory)
+          (natp pos)
+          (integerp len)
+          (<= pos len)
+          (<= len
+              (bs_oemname-length fat32-in-memory)))
+     (fat32-in-memoryp
+      (update-bs_oemname fat32-in-memory str len pos)))
+    :hints (("Goal"
+             :use
+             ((:functional-instance
+               update-multiple-elements-fn-correctness-3
+               ;; Instantiate the generic functions:
+               (update-single-element-fn update-bs_oemnamei)
+               (stobj-array-index (lambda () *bs_oemnamei*))
+               (stobj-array-length bs_oemname-length)
+               (max-stobj-array-length (lambda () 8))
+               ;; Instantiate the other relevant functions:
+               (update-multiple-elements-fn update-bs_oemname)))
+             :in-theory (disable update-bs_oemnamei fat32-in-memoryp))
+            ("Subgoal 3'"
+             :in-theory (enable update-bs_oemnamei))))
+
+  (defthmd
+    update-bs_oemname-correctness-1
+    (implies
+     (and (natp pos)
+          (natp len)
+          (< pos len)
+          (<= len
+              (bs_oemname-length fat32-in-memory))
+          (compliant-fat32-in-memoryp fat32-in-memory)
+          (stringp str)
+          (<= len (length str)))
+     (equal
+      (update-bs_oemname fat32-in-memory str len pos)
+      (update-nth
+       *bs_oemnamei*
+       (append (take pos
+                     (nth *bs_oemnamei* fat32-in-memory))
+               (string=>nats (subseq str pos len))
+               (nthcdr len
+                       (nth *bs_oemnamei* fat32-in-memory)))
+       fat32-in-memory)))
+    :hints
+    (("Goal"
+      :use
+      ((:functional-instance
+        update-multiple-elements-fn-correctness-1
+        ;; Instantiate the generic functions:
+        (update-single-element-fn update-bs_oemnamei)
+        (stobj-array-index (lambda () *bs_oemnamei*))
+        (stobj-array-length bs_oemname-length)
+        (max-stobj-array-length (lambda () 8))
+        ;; Instantiate the other relevant functions:
+        (update-multiple-elements-fn update-bs_oemname)))
+      :in-theory (disable update-bs_oemnamei fat32-in-memoryp))
+     ("Subgoal 3'"
+      :in-theory (enable update-bs_oemnamei)))))
 
 (defthm
   update-bs_oemname-correctness-2
@@ -1794,41 +1871,54 @@
   (("goal"
     :in-theory (enable update-data-regioni bpb_fatsz32))))
 
-(defthmd
-  update-data-region-correctness-1
-  (implies
-   (and (natp pos)
-        (natp len)
-        (< pos len)
-        (<= len
-            (data-region-length fat32-in-memory))
-        (compliant-fat32-in-memoryp fat32-in-memory)
-        (stringp str)
-        (<= len (length str)))
-   (equal
-    (update-data-region fat32-in-memory str len pos)
-    (update-nth
-     *data-regioni*
-     (append (take pos
-                   (nth *data-regioni* fat32-in-memory))
-             (string=>nats (subseq str pos len))
-             (nthcdr len
-                     (nth *data-regioni* fat32-in-memory)))
-     fat32-in-memory)))
-  :hints
-  (("Goal"
-    :use
-    ((:functional-instance
-      update-multiple-elements-fn-correctness-1
-      ;; Instantiate the generic functions:
-      (update-single-element-fn update-data-regioni)
-      (stobj-array-index (lambda () *data-regioni*))
-      (stobj-array-length data-region-length)
-      (max-stobj-array-length (lambda () *ms-max-data-region-size*))
-      ;; Instantiate the other relevant functions:
-      (update-multiple-elements-fn update-data-region))))
-   ("Subgoal 4"
-    :in-theory (enable update-data-regioni))))
+(encapsulate
+  ()
+
+  (local
+   (defthm fat32-in-memory-of-update-data-region
+     (implies (and (fat32-in-memoryp fat32-in-memory)
+                   (< i (data-region-length fat32-in-memory)))
+              (equal (fat32-in-memoryp (update-data-regioni i v
+                                                           fat32-in-memory))
+                     (unsigned-byte-p 8 v)))
+     :hints (("Goal" :in-theory (enable update-data-regioni data-region-length)))))
+
+  (defthmd
+    update-data-region-correctness-1
+    (implies
+     (and (natp pos)
+          (natp len)
+          (< pos len)
+          (<= len
+              (data-region-length fat32-in-memory))
+          (compliant-fat32-in-memoryp fat32-in-memory)
+          (stringp str)
+          (<= len (length str)))
+     (equal
+      (update-data-region fat32-in-memory str len pos)
+      (update-nth
+       *data-regioni*
+       (append (take pos
+                     (nth *data-regioni* fat32-in-memory))
+               (string=>nats (subseq str pos len))
+               (nthcdr len
+                       (nth *data-regioni* fat32-in-memory)))
+       fat32-in-memory)))
+    :hints
+    (("Goal"
+      :use
+      ((:functional-instance
+        update-multiple-elements-fn-correctness-1
+        ;; Instantiate the generic functions:
+        (update-single-element-fn update-data-regioni)
+        (stobj-array-index (lambda () *data-regioni*))
+        (stobj-array-length data-region-length)
+        (max-stobj-array-length (lambda () *ms-max-data-region-size*))
+        ;; Instantiate the other relevant functions:
+        (update-multiple-elements-fn update-data-region)))
+      :in-theory (disable fat32-in-memoryp))
+     ("Subgoal 4"
+      :in-theory (enable update-data-regioni)))))
 
 (defun
   update-fat (fat32-in-memory str pos)
@@ -3975,39 +4065,50 @@
       ac)))))
 
 (defund
-  fat32-in-memory-to-string
-  (fat32-in-memory)
-  (declare
-   (xargs :stobjs fat32-in-memory
-          :guard (compliant-fat32-in-memoryp fat32-in-memory)
-          :verify-guards nil))
-  (b*
-      ((reserved-area-string
-        (reserved-area-string fat32-in-memory))
-       (fat-string
-        (make-fat-string-ac
-         (bpb_numfats fat32-in-memory) fat32-in-memory ""))
-       (data-region-string
-        ;; reproducing the definition of rchars-to-string because it doesn't
-        ;; seem to be available to us
-        (reverse (nats=>string
-         (get-dir-ent-helper
-          fat32-in-memory 0 (data-region-length fat32-in-memory) nil)))))
-    (concatenate 'string
-                 reserved-area-string
-                 fat-string data-region-string)))
+    fat32-in-memory-to-string
+    (fat32-in-memory)
+    (declare
+     (xargs :stobjs fat32-in-memory
+            :guard (compliant-fat32-in-memoryp fat32-in-memory)
+            :verify-guards nil))
+    (b*
+        ((reserved-area-string
+          (reserved-area-string fat32-in-memory))
+         (fat-string
+          (make-fat-string-ac
+           (bpb_numfats fat32-in-memory) fat32-in-memory ""))
+         (data-region-string
+          ;; reproducing the definition of rchars-to-string because it doesn't
+          ;; seem to be available to us
+          (reverse (nats=>string
+                    (get-dir-ent-helper
+                     fat32-in-memory 0 (data-region-length fat32-in-memory) nil)))))
+      (concatenate 'string
+                   reserved-area-string
+                   fat-string data-region-string)))
 
-(defthm
-  fat32-in-memory-to-string-inversion
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (equal
-    (mv-nth 0
-            (string-to-fat32-in-memory
-             fat32-in-memory
-             (fat32-in-memory-to-string
-              fat32-in-memory)))
-    fat32-in-memory)))
+(encapsulate
+  ()
+
+  (local (defthm nthcdr-of-nil (not (nthcdr n nil))))
+
+  (local (defthm nthcdr-when->=-n-len-l (implies (and (true-listp l)
+                                                      (integerp n)
+                                                      (>= n (len l)))
+                                                 (equal (nthcdr n l) nil))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (mv-nth 0
+              (string-to-fat32-in-memory
+               fat32-in-memory
+               (fat32-in-memory-to-string
+                fat32-in-memory)))
+      fat32-in-memory))
+    :hints (("Goal" :in-theory (enable update-bs_oemname-correctness-1)))))
 
 #|
 Some (rather awful) testing forms are
