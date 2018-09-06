@@ -309,7 +309,8 @@ There is a range of end-of-clusterchain values in the
 specification, not just one. We support all values in the range.} This
 allows the contents of a file to be reconstructed by
 reading just the first cluster index from the corresponding directory
-entry, and building the list of clusters using the table. Unused
+entry, reconstructing the clusterchain using the table, and then
+looking up the contents of these clusters in the data region. Unused
 clusters are mapped to 0 in the table; this fact is used for counting
 and allocating free clusters.
 
@@ -319,7 +320,10 @@ example directory tree in figure~\ref{fat32-example}. Here,
 (\texttt{/}). For the purposes of illustration, all regular files and
 directories in this example are assumed to span one cluster except for
 \texttt{/vmlinuz} which spans two clusters ($3$ and $4$), and
-\textit{EOC} refers to an ``end of clusterchain'' value.
+\textit{EOC} refers to an ``end of clusterchain'' value. Also, as
+shown in the figure, the specification requires the first two entries
+in the file allocation table ($0$ and $1$) to be considered reserved,
+and thus unavailable for clusterchains.
 
 \begin{figure}
   \centering
@@ -340,8 +344,8 @@ directories in this example are assumed to span one cluster except for
   \begin{tabular}{|c|c|}
     \hline
     FAT index & FAT entry \\ \hline
-    0 (unused) &  \\ \hline
-    1 (unused) &  \\ \hline
+    0 (reserved) &  \\ \hline
+    1 (reserved) &  \\ \hline
     2 & \textit{EOC} \\ \hline
     3 & 4 \\ \hline
     4 & \textit{EOC} \\ \hline
@@ -461,7 +465,7 @@ modify the filesystem, or \textit{read} operations, which do not. In
 each model, we have been able to prove \textit{read-over-write}
 properties which show that write operations have
 their effects made available immediately for reads at the same
-location, but also that they do not affect reads at other locations.
+location, and also that they do not affect reads at other locations.
 
 The first read-over-write theorem states that immediately following a
 write of some text at some location, a read of the same length at the
@@ -646,8 +650,9 @@ and file operations, in the predicate
 constant \texttt{*ms-first-data-cluster*}, for instance, is $2$, and
 the last clause of the conjunction helps us maintain an invariant
 about all cluster indices including the root cluster being greater
-than or equal to $2$, which is needed while reasoning about operations
-in the file allocation table.
+than or equal to $2$, which is stipulated in the FAT32 specification
+as previously noted and therefore necessary while reasoning about
+operations in the file allocation table.
 
 \medskip
 
@@ -679,9 +684,8 @@ precisely, by taking a file allocation table and mapping each non-zero
 entry to \texttt{true} and each zero entry to \texttt{false}, we
 obtain a corresponding allocation vector with exactly the same amount
 of available space. This is a refinement mapping which makes it a lot
-easier to prove that \texttt{L4}, which uses an allocation vector, is
-an abstraction of \texttt{L6}, which uses a file allocation
-table. This, in turn, means that the effort spent on proving the
+easier to prove that \texttt{L4} itself is an abstraction of
+\texttt{L6}. This, in turn, means that the effort spent on proving the
 invariants described above for \texttt{L4} need not be replicated for
 \texttt{L6}.
 
@@ -702,7 +706,8 @@ In the development of our abstract models, \texttt{L4} is the first to
 be bounded in terms of disk size; accordingly, data structures are
 needed for allocating free blocks on disk, including those which were
 previously occupied by other files. For simplicity, we choose to model
-the allocation vector used by the CP/M filesystem, which is a boolean
+the allocation vector used by the CP/M filesystem~\cite{moriacpm},
+which is a boolean
 array equal in size to the disk recording whether disk blocks are free
 or in use. Using this, we are able to prove that write operations
 succeed if and only if there is a sufficient number of free blocks
@@ -724,14 +729,20 @@ testing it in execution against a canonical implementation of FAT32;
 in this case, we choose the implementation which ships with Linux
 kernel 3.10.
 
-We use \texttt{mkfs.fat}~\cite{hudsonmkfs}, a program which produces
-FAT32 disk images, for our tests. When run with the \texttt{-v} flag,
-this program emits an English-language summary of the fields of the
-newly created disk image; we make use of this by writing an ACL2
-program based on our model which reads the image and reproduces this
-summary. This validates our code for reading the various fields of the
-disk image and gives us a regression test to use while we modify our
-model to support proofs and filesystem calls.
+For each of our tests, we need to produce FAT32 disk images, which we
+do with the aid of the program
+\texttt{mkfs.fat}~\cite{hudsonmkfs}. Further, we make use of this
+program's verbose mode (enabled through the \texttt{-v} command-line
+switch) for a simple yet fundamental co-simulation test. In the verbose
+mode, \texttt{mkfs.fat} emits an English-language summary of the
+fields of the
+newly created disk image; we use \texttt{diff}~\cite{eggertdiff} to
+compare this summary against the output of an ACL2 program, based on
+our model, which reads the image and pretty-prints the FAT32 fields in the
+same format. This validates our code for constructing an in-memory
+representation of the disk image and also serves as a regression test
+during the process of modifying the model to support proofs and
+filesystem calls.
 
 Further, we co-simulate \texttt{cp}~\cite{granlundcp}, a simple
 program for copying files, by
@@ -793,7 +804,7 @@ be able to occur without corruption or loss of data.
 %% such as \texttt{fsck}, as well as other application programs. This is
 %% a large part of the motivation for pursuing binary compatibility.
 
-\subsubsection*{Acknowledgments.} This material is based upon work
+\subsubsection*{Acknowledgments} This material is based upon work
 supported by the National Science Foundation SaTC program under
 contract number CNS-1525472. Thanks are also due to Warren A. Hunt
 Jr. and Matthew J. Kaufmann for their guidance.
