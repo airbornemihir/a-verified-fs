@@ -10,7 +10,7 @@
                CO, USA, June 22-24, 2016.},
   year      = {2016},
   crossref  = {DBLP:conf/usenix/2016},
-  url       = {https://www.usenix.org/conference/atc16/technical-sessions/presentation/chen_haogang},
+  doi = {10.1145/2815400.2815402},
   timestamp = {Fri, 08 Jul 2016 13:33:39 +0200},
   biburl    = {http://dblp.uni-trier.de/rec/bib/conf/usenix/ChenZCCKZ16},
   bibsource = {dblp computer science bibliography, http://dblp.org}
@@ -37,10 +37,11 @@
   number={5},
   pages={29--43},
   year={2003},
-  organization={ACM}
+  organization={ACM},
+  doi={10.1145/1165389.945450}
 }
 
-@misc{johnson_1996,
+@misc{johnson1996,
 title={A tour of the Linux VFS},
 url={http://www.tldp.org/LDP/khg/HyperNews/get/fs/vfstour.html},
 journal={The Linux Documentation Project},
@@ -137,7 +138,7 @@ year={1996}}
   organization={ACM}
 }
 
-@misc{microsoft_2000, title={Microsoft Extensible Firmware Initiative FAT32 File System Specification}, url={www.microsoft.com/hwdev/download/hardware/fatgen103.pdf}, author={Microsoft}, year={2000}, month={Dec}}
+@misc{microsoft2000, title={Microsoft Extensible Firmware Initiative FAT32 File System Specification}, url={www.microsoft.com/hwdev/download/hardware/fatgen103.pdf}, author={Microsoft}, year={2000}, month={Dec}}
 
 @inproceedings{kaufmann1996acl2,
   title={ACL2: An industrial strength version of Nqthm},
@@ -159,7 +160,7 @@ year={1996}}
   publisher={Elsevier}
 }
 
-@book{kaufmann_manolios_moore_2000, place={Boston}, title={Computer-aided reasoning: an approach}, publisher={Kluwer Academic Publishers}, author={Kaufmann, Matt and Manolios, Panagiotis and Moore, J. Strother}, year={2000}}
+@book{kaufmann2000, place={Boston}, title={Computer-aided reasoning: an approach}, publisher={Kluwer Academic Publishers}, author={Kaufmann, Matt and Manolios, Panagiotis and Moore, J. Strother}, year={2000}}
 
 @book{nipkow2002isabelle,
   title={Isabelle/HOL: a proof assistant for higher-order logic},
@@ -183,4 +184,128 @@ year={1996}}
   pages={337--340},
   year={2008},
   organization={Springer}
+}
+
+@inproceedings{sigurbjarnarson2016push,
+  title={Push-Button Verification of File Systems via Crash Refinement.},
+  author={Sigurbjarnarson, Helgi and Bornholt, James and Torlak, Emina and Wang, Xi},
+  booktitle={OSDI},
+  volume={16},
+  pages={1--16},
+  year={2016}
+}
+
+@inproceedings{lamport1993verification,
+  title={Verification and specification of concurrent programs},
+  author={Lamport, Leslie},
+  booktitle={Workshop/School/Symposium of the REX Project (Research and Education in Concurrent Systems)},
+  pages={347--374},
+  year={1993},
+  organization={Springer}
+}
+
+@inproceedings{gardner2014local,
+  title={Local reasoning for the POSIX file system},
+  author={Gardner, Philippa and Ntzik, Gian and Wright, Adam},
+  booktitle={European Symposium on Programming Languages and Systems},
+  pages={169--188},
+  year={2014},
+  organization={Springer}
+}
+
+@incollection{goel2017engineering,
+  title={Engineering a formal, executable x86 ISA simulator for software verification},
+  author={Goel, Shilpi and Hunt, Warren A and Kaufmann, Matt},
+  booktitle={Provably Correct Systems},
+  pages={173--209},
+  year={2017},
+  publisher={Springer}
+}
+
+@misc{rath2018reference,
+  title={The Reference Implementation of the Linux FUSE Interface (libfuse)},
+  author={Rath, N and Szeredi, M},
+  year={2018}
+}
+
+@inproceedings{goel2014simulation,
+  title={Simulation and formal verification of x86 machine-code programs that make system calls},
+  author={Goel, Shilpi and Hunt, Warren A and Kaufmann, Matt and Ghosh, Soumava},
+  booktitle={Formal Methods in Computer-Aided Design (FMCAD), 2014},
+  pages={91--98},
+  year={2014},
+  organization={IEEE}
+}
+
+@misc{hudsonmkfs,
+  title={mkfs.fat (8)-Linux manual page, accessed: 09 Jul 2018},
+  author={Hudson, Dave and Anvin, Peter and Hodek, Roman}
+}
+
+@misc{granlundcp,
+  title={cp (1)-Linux manual page, accessed: 09 Jul 2018},
+  author={Granlund, Torbjorn and MacKenzie, David and Meyering, Jim}
+}
+
+@misc{kerrisklstat,
+  title={lstat (2)-Linux manual page, accessed: 09 Jul 2018},
+  author={Kerrisk, Michael}
+}
+
+@misc{kerriskopen,
+  title={open (2)-Linux manual page, accessed: 09 Jul 2018},
+  author={Kerrisk, Michael}
+}
+
+@misc{kerriskpread,
+  title={pread (2)-Linux manual page, accessed: 09 Jul 2018},
+  author={Kerrisk, Michael}
+}
+
+@misc{kerriskpwrite,
+  title={pwrite (2)-Linux manual page, accessed: 09 Jul 2018},
+  author={Kerrisk, Michael}
+}
+
+@misc{kerriskclose,
+  title={close (2)-Linux manual page, accessed: 09 Jul 2018},
+  author={Kerrisk, Michael}
+}
+
+@misc{kerriskmkdir,
+  title={mkdir (2)-Linux manual page, accessed: 09 Jul 2018},
+  author={Kerrisk, Michael}
+}
+
+@misc{kerriskmknod,
+  title={mknod (2)-Linux manual page, accessed: 09 Jul 2018},
+  author={Kerrisk, Michael}
+}
+
+@misc{rubindd,
+  title={dd (1)-Linux manual page, accessed: 09 Jul 2018},
+  author={Rubin, Paul and MacKenzie, David and Kemp, Stuart}
+}
+
+@inproceedings{boyer2002single,
+  title={Single-threaded objects in ACL2},
+  author={Boyer, Robert S and Moore, J Strother},
+  booktitle={International Symposium on Practical Aspects of Declarative Languages},
+  pages={9--27},
+  year={2002},
+  organization={Springer}
+}
+
+@article{cox6xv6,
+  title={Xv6, a simple Unix-like teaching operating system, 2016},
+  author={Cox, Russ and Kaashoek, M Frans and Morris, Robert T},
+  journal={URL http://pdos. csail. mit. edu/6.828/2014/xv6. html}
+}
+
+@inproceedings{15-swords-fty,
+  author="Sol Swords and Jared Davis",
+  title="Fix Your Types",
+  booktitle="Proceedings of the Thirteenth International Workshop on the {ACL2} Theorem Prover and its Applications ({ACL2} '15)",
+  year=2015,
+  month="October"
 }
