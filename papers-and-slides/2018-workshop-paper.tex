@@ -473,7 +473,11 @@ same location yields the same text. The second read-over-write
 theorem states that after a write of some text at some location, a
 read at any other location returns exactly what it would have returned
 before the write. As an example, listings for the \texttt{L1} versions
-of these theorems follow.
+of these theorems follow. Note, the hypothesis \texttt{(stringp
+  (l1-stat hns fs))} stipulates that a regular file should exist at
+the path \texttt{hns}, where \texttt{l1-stat} is a function for
+traversing a directory tree to look up a regular file or a directory
+at a given path.
 
 \medskip
 
@@ -627,7 +631,8 @@ contents can be modified through a write to a different regular file.
 These properties, in the form of the predicates
 \texttt{indices-marked-listp} and \texttt{no-duplicatesp}, are
 packaged together into the \texttt{l4-stricter-fs-p} predicate, for
-which a listing follows.
+which a listing follows. Here, \texttt{(boolean-listp alv)} is a type
+hypothesis for \texttt{alv}, the allocation vector.
 
 \medskip
 
