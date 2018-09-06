@@ -58,8 +58,8 @@ and which are thus suitable for re-use.
 \section{Introduction and overview}
 
 Filesystems are ubiquitous in computing, providing application
-programs a means to store data persistently, address data by a name
-instead of a numeric index, and communicate with other programs.
+programs a means to store data persistently, address data by names
+instead of numeric indices, and communicate with other programs.
 Thus, the vast majority of application programs
 directly or indirectly rely upon filesystems, which makes filesystem
 verification critically important. Here, we present a
@@ -77,7 +77,7 @@ In the rest of this paper, we describe these filesystem
 models and the properties proved, with examples; we proceed to a
 high-level explanation of these proofs and the co-simulation
 infrastructure; and further we offer some insights about the low-level
-issues encountered while working the proofs.
+issues encountered while working out the proofs.
 %% I'm not sure I want to keep the statistics. Certainly ACL2 folks
 %% don't want to see them.
 %% We end with some statistics pertaining to the magnitude of the
@@ -87,7 +87,7 @@ issues encountered while working the proofs.
 
 Filesystem verification research has largely followed a pattern of
 synthesising a new filesystem based on a specification chosen for its
-ease in proving properties of interest, rather than similarity to an
+ease in proving properties of interest, rather than faithfulness to an
 existing filesystem. Our work, in contrast, follows the FAT32
 specification closely. In spirit, our work is closer to previous work
 which uses interactive theorem provers and explores deep functional
@@ -103,9 +103,9 @@ and file descriptors. On the proof front, they certified their model
 to preserve well-formedness of their data structures through their
 various file operations; however, they did not attempt to prove, for
 instance, read-over-write properties or crash consistency. Later,
-Klein et al with the SeL4 project~\cite{klein2009sel4} used
+Klein et al. with the SeL4 project~\cite{klein2009sel4} used
 Isabelle/HOL~\cite{nipkow2002isabelle} to verify a microkernel;
-while their design abstracted away file operations in order to keep
+while their microkernel design excluded file operations in order to keep
 their trusted computing base small, it did serve as a precursor to their
 more recent COGENT project~\cite{amani2016cogent}. Here the authors
 built a verifying compiler to translate a filesystem specification in
@@ -147,7 +147,7 @@ which is a faithful representation of a FAT32 disk image in the form
 of a stobj~\cite{boyer2002single}, and \texttt{M1}, which represents the
 state of the FAT32 filesystem as a directory tree. This allows us to
 address the practical details of updating a disk image in \texttt{M2},
-which benefits from ACL2's efficient stobj array operations provides
+which benefits from the efficient array operations ACL2 provides
 for stobjs, and abstract them away in \texttt{M1} for easier reasoning
 without the syntactic constraints imposed on stobj arrays.
 
@@ -180,11 +180,11 @@ models can be seen in table \ref{abstract-model-description-table}.
     stored within each regular file.  \\ \hline
     \texttt{L3} & The contents of regular files are divided into
     blocks of fixed size. These blocks are stored in an external
-    "disk" data structure; the storage for these blocks remains
+    ``disk'' data structure; the storage for these blocks remains
     unbounded. \\ \hline
     \texttt{L4} & The storage available for blocks is now bounded. An
     allocation vector data structure is introduced to help allocate
-    and garbage collect blocks. \\ \hline
+    and garbage-collect blocks. \\ \hline
     \texttt{L5} & Additional metadata for file ownership and access
     permissions is stored within each regular file. \\ \hline
     \texttt{L6} & The allocation vector is replaced by a file
@@ -254,7 +254,8 @@ models can be seen in table \ref{abstract-model-description-table}.
 A design choice that arises in this work pertains to the level of
 abstraction: how operating-system specific do we want to be in our
 model? Choosing, for instance, to make our filesystem operations
-conform to the \texttt{file\_operations} interface provided by the
+conform to the \texttt{file\_operations} interface~\cite{lkmpgchap4}
+provided by the
 Linux kernel for its filesystem modules would make our work less
 general, but avert us from having to recreate some of the filesystem
 infrastructure provided by the kernel. We, however, choose to
@@ -274,7 +275,8 @@ At the present moment, we have implemented the POSIX system calls
 \texttt{pwrite}~\cite{kerriskpwrite},
 \texttt{close}~\cite{kerriskclose},
 \texttt{mkdir}~\cite{kerriskmkdir} and
-\texttt{mknod}~\cite{kerriskmknod}. Wherever \texttt{errno} is to be
+\texttt{mknod}~\cite{kerriskmknod}. Wherever
+\texttt{errno}~\cite{kerriskerrno} is to be
 set by a system call, we abide by the Linux convention.
 
 \section{The FAT32 filesystem}
@@ -299,10 +301,11 @@ sequences of directory entries. Each such directory entry is
 32 bytes wide and contains metadata including name, size, first
 cluster index, and access times for the corresponding file.
 
-The file allocation table itself contains a number of linked lists. It
+The file allocation table itself contains a number of linked lists
+(\textit{clusterchains}). It
 maps each cluster index used by a file to either the next cluster
-index for that file or a special end-of-clusterchain value \footnote{
-There is actually a range of end-of-clusterchain values in the
+index for that file or a special end-of-clusterchain value. \footnote{
+There is a range of end-of-clusterchain values in the
 specification, not just one. We support all values in the range.} This
 allows the contents of a file to be reconstructed by
 reading just the first cluster index from the corresponding directory
@@ -316,7 +319,7 @@ example directory tree in figure~\ref{fat32-example}. Here,
 (\texttt{/}). For the purposes of illustration, all regular files and
 directories in this example are assumed to span one cluster except for
 \texttt{/vmlinuz} which spans two clusters ($3$ and $4$), and
-\textit{EOC} refers to an "end of clusterchain" value.
+\textit{EOC} refers to an ``end of clusterchain'' value.
 
 \begin{figure}
   \centering
@@ -353,17 +356,17 @@ directories in this example are assumed to span one cluster except for
   \begin{tabular}{|c|c|}
     \hline
        & Directory entry in / \\ \hline
-    0  & "vmlinuz", 3 \\ \hline
-    32 & "initrd.img", 5 \\ \hline
-    64 & "tmp", 6 \\ \hline
+    0  & ``vmlinuz'', 3 \\ \hline
+    32 & ``initrd.img'', 5 \\ \hline
+    64 & ``tmp'', 6 \\ \hline
     \vdots & \vdots
   \end{tabular}
 
   \begin{tabular}{|c|c|}
     \hline
        & Directory entry in /tmp/ \\ \hline
-    0  & "ticket1", 7 \\ \hline
-    32 & "ticket2", 8 \\ \hline
+    0  & ``ticket1'', 7 \\ \hline
+    32 & ``ticket2'', 8 \\ \hline
     \vdots & \vdots
   \end{tabular}
 \end{figure}
@@ -594,11 +597,11 @@ each new model. We summarise these below.
 \subsection{Invariants}
 
 As the abstract models grow more complex, with the addition of more
-auxiliary data the "sanity" criteria for filesystem instances become more
+auxiliary data the ``sanity'' criteria for filesystem instances become more
 complex. For instance, in \texttt{L4}, the predicate \texttt{l4-fs-p}
 is defined to be the same as \texttt{l3-fs-p}, which recursively
 defines the shape of a valid directory tree. However, we choose to
-require two more properties for a "sane" filesystem.
+require two more properties for a ``sane'' filesystem.
 
 \begin{enumerate}
 \item Each disk index assigned to a regular file should be
@@ -614,7 +617,7 @@ These properties are invariants to be maintained across
 write operations; while not all of them are strictly necessary for a
 filesystem instance to be valid, they do simplify the verification of
 read-over-write properties by helping us ensure that write operations
-do not create an "aliasing" situation in which a regular file's
+do not create an aliasing situation in which a regular file's
 contents can be modified through a write to a different regular file.
 
 These properties, in the form of the predicates
@@ -664,7 +667,7 @@ in the file allocation table.
 
 As noted earlier, in our abstract models, using a refinement
 methodology allows us to derive our read-over-write properties
-essentially "for free"; more precisely, we are able to prove
+with little additional effort; more precisely, we are able to prove
 read-over-write properties simply with \texttt{:use} hints after
 having done the work of proving refinement through induction.
 
