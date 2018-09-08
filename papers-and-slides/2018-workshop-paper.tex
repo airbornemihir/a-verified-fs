@@ -280,6 +280,7 @@ At the present moment, we have implemented the POSIX system calls
 set by a system call, we abide by the Linux convention.
 
 \section{The FAT32 filesystem}
+\label{sec:fat32fs}
 
 FAT32 was initially developed at Microsoft in order to address the
 capacity constraints of the DOS filesystem. Microsoft's specification
@@ -310,9 +311,9 @@ specification, not just one. We support all values in the range.} This
 allows the contents of a file to be reconstructed by
 reading just the first cluster index from the corresponding directory
 entry, reconstructing the clusterchain using the table, and then
-looking up the contents of these clusters in the data region. Unused
-clusters are mapped to 0 in the table; this fact is used for counting
-and allocating free clusters.
+looking up the contents of these clusters in the \textit{data
+  region}. Unused clusters are mapped to 0 in the table; this fact is
+used for counting and allocating free clusters.
 
 We illustrate the file allocation table and data layout for a small
 example directory tree in figure~\ref{fat32-example}. Here,
@@ -530,8 +531,7 @@ throwaway proof.
                            (l1-wrchs path2 (l1-wrchs path1 fs start1 text1)
                                      start2 text2)
                            start1 n1)
-                 (l1-rdchs path1 (l1-wrchs path1 fs start1 text1)
-                           start1 n1))))
+                 text1)))
 \end{verbatim}
 
 In \texttt{L1}, our simplest model, the read-over-write properties
@@ -598,12 +598,13 @@ read-over-write theorem for model \texttt{L2}.
   \end{tikzpicture}
 \end{figure}
 
-\section{Some proof details}
+\section{Proof and implementation details}
 
-We have come to rely on certain principles for the proof effort for
-each new model. We summarise these below.
+We have come to rely on certain principles for the development of each
+new model and its corresponding proofs. We summarise these below.
 
 \subsection{Invariants}
+\label{subsec:invariants}
 
 As the abstract models grow more complex, with the addition of more
 auxiliary data the ``sanity'' criteria for filesystem instances become more
@@ -618,8 +619,8 @@ require two more properties for a ``sane'' filesystem.
   to prevent filesystem errors.
 \item Each disk index assigned to a regular file should be distinct
   from all other disk indices assigned to files - this does not hold
-  true, for example, in filesystems with hardlinks, but makes our
-  proofs easier.
+  true, for example, in filesystems with hardlinks. FAT32 is not such
+  a filesystem, and we can use this fact to make our proofs easier.
 \end{enumerate}
 
 These properties are invariants to be maintained across
@@ -674,6 +675,13 @@ operations in the file allocation table.
        (>= (bpb_rootclus fat32-in-memory) *ms-first-data-cluster*)))
 \end{verbatim}
 
+\texttt{M2}, however, differs from previous models in that the
+predicate \texttt{compliant-fat32-in-memoryp} cannot be assumed to
+hold before the filesystem is initialised by reading a disk
+image. This also means that it is not straightforward to use an
+abstract stobj~\cite{goel2013abstract} for this purpose, using
+\texttt{compliant-fat32-in-memoryp} as an invariant.
+
 \subsection{Reuse}
 
 As noted earlier, in our abstract models, using a refinement
@@ -703,8 +711,15 @@ definitions for regular files,
 directory files, and other data types. This allows us to simplify as
 well as speed up our reasoning by eliminating many type hypotheses,
 and in particular allows us to prove read-over-write properties for
-\texttt{M1} with a significantly smaller number of helper lemmas
-compared to our abstract models in which FTY is not used.
+\texttt{M1} with a very small number of helper lemmas.
+
+In comparison, the abstract models \texttt{L1}-\texttt{L6} rely on
+type hypotheses in their formulation of the read-over-write theorems,
+thus causing a large  number of helper lemmas to be needed in order to
+discharge these hypotheses. Largely for this reason, we are no longer
+developing the abstract models, choosing to consider them as a
+reference for refinement proofs in our further work while using
+fixtypes wherever possible.
 
 \subsection{Allocation and garbage collection}
 
@@ -725,7 +740,7 @@ result for the file allocation table in \texttt{M2}, we are still able
 to benefit from reusing the allocation algorithms developed in
 \texttt{L6} as well as the properties proved about them.
 
-\section{Co-simulation}
+\section{Stobjs and co-simulation}
 
 Previous work on executable specifications \cite{goel2014simulation}
 has shown the importance of testing these on real examples, in order
@@ -755,6 +770,18 @@ program for copying files, by
 reproducing its functionality in an ACL2 program. This allows us to
 validate our code for reading and writing regular files and
 directories which span multiple clusters.
+
+The quick execution of these co-simulation tests relies upon the use
+of stobjs. Since the file allocation table and data region
+(section~\ref{sec:fat32fs}) are large arrays which must be initialised
+whenever a new disk image is read, ACL2's efficient array operations
+turn out to be very helpful; this is also the case when we write back
+a disk image after performing a sequence of file operations. We have
+also developed a number of special-purpose macros for facilitating the
+generation of lemmas needed for reasoning about reads and writes to
+the fields of a stobj in the filesystem context; we expect these to
+continue to be useful as we work with abstract and concrete stobjs for
+modelling new filesystems.
 
 %% This stuff is not yet implemented exactly as described.
 
@@ -805,7 +832,10 @@ ext4~\cite{mathur2007new}.
 
 We also hope to model the behaviour of filesystems in a
 multiprogramming environment, where concurrent filesystem calls must
-be able to occur without corruption or loss of data.
+be able to occur without corruption or loss of data. Although we have
+not yet used abstract stobjs for the reasons described
+above in subsection~\ref{subsec:invariants}, we plan to explore their
+use in facilitating our stobj reasoning.
 %% Also, we hope to support "code proofs", by providing a basis for
 %% reasoning about filesystem operations in filesystem-specific utilities
 %% such as \texttt{fsck}, as well as other application programs. This is
