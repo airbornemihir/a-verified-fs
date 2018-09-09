@@ -248,8 +248,7 @@
   (defthm
     logand-ash-lemma-1
     (implies (and (natp c))
-             (unsigned-byte-p c (logand i (- (ash 1 c) 1)))))
-  )
+             (unsigned-byte-p c (logand i (- (ash 1 c) 1))))))
 
 (defthm make-character-list-of-revappend
   (equal (make-character-list (revappend x y))
@@ -290,34 +289,32 @@
            (equal (first-n-ac m (take n l) ac)
                   (first-n-ac m l ac)))
   :hints
-  (("goal" :do-not-induct t
+  (("goal"
+    :do-not-induct t
     :in-theory (disable binary-append-first-n-ac-nthcdr
-                        first-n-ac-of-binary-append-1)
+                        first-n-ac-of-binary-append-1 take-more)
     :use ((:instance binary-append-first-n-ac-nthcdr (ac nil)
                      (i n))
           (:instance first-n-ac-of-binary-append-1 (i m)
                      (x (first-n-ac n l nil))
-                     (y (nthcdr n l)))))
-   ("goal'4'" :in-theory (disable take-more)
-    :use (:instance take-more (i n)
-                    (ac1 nil)
-                    (ac2 nil)))
-   ("goal'6'"
-    :in-theory (disable first-n-ac-of-binary-append-1)
-    :use (:instance first-n-ac-of-binary-append-1 (i m)
-                    (x l)
-                    (y (make-list-ac (+ n (- (len l)))
-                                     nil nil))))))
+                     (y (nthcdr n l)))
+          (:instance take-more (i n)
+                     (ac1 nil)
+                     (ac2 nil))
+          (:instance first-n-ac-of-binary-append-1 (i m)
+                     (x l)
+                     (y (make-list-ac (+ n (- (len l)))
+                                      nil nil)))))))
 
 (defthm boolean-listp-of-revappend
-  (implies (boolean-listp x)
-           (equal (boolean-listp (revappend x y))
-                  (boolean-listp y))))
+  (equal (boolean-listp (revappend x y))
+         (and (boolean-listp (fix-true-list x))
+              (boolean-listp y))))
 
 (defthm boolean-listp-of-first-n-ac
-  (implies (and (boolean-listp l)
-                (boolean-listp ac))
-           (boolean-listp (first-n-ac i l ac))))
+  (implies (boolean-listp l)
+           (equal (boolean-listp (first-n-ac i l ac))
+                  (boolean-listp (fix-true-list ac)))))
 
 (defthm consp-of-first-n-ac
   (iff (consp (first-n-ac i l ac))
