@@ -3,11 +3,11 @@
 
 %% Todo list
 %% (done) Gotta substantiate the co-simulations we talked about...
-%% Gotta talk about the number of things we re-used from L6 in M2
+%% Gotta talk about the number of things we reused from L6 in M2
 %% (done) Gotta de-emphasise the proofs for L1 through L6 - they're OK but
 %%  not that important.
 %% (done) Gotta talk about FTY.
-%% Gotta substantiate the point about code re-use in CP/M and FAT32 -
+%% Gotta substantiate the point about code reuse in CP/M and FAT32 -
 %%  obviously there isn't enough time to do anything about ext4
 %% (done) Gotta talk about concurrent calls in future work - and
 %%  update that whole section with FAT32 stuff assumed done, obviously
@@ -28,8 +28,8 @@
 \usepackage{breakurl}             % Not needed if you use pdflatex only.
 \usepackage{underscore}           % Only needed if you use pdflatex.
 
-\title{Formalising filesystems in the ACL2 theorem prover:\\ an
-  application to FAT32}
+\title{Formalising Filesystems in the ACL2 Theorem Prover:\\ an
+  Application to FAT32}
 \author{Mihir Parang Mehta
 \institute{Department of Computer Science\\
 University of Texas at Austin\\
@@ -52,7 +52,7 @@ executable specification through a series of models which
 incrementally add features of the target filesystem. This methodology
 has the benefit of allowing the verification effort to start from
 simple models which encapsulate features common to many filesystems
-and which are thus suitable for re-use.
+and which are thus suitable for reuse.
 \end{abstract}
 
 \section{Introduction and overview}
@@ -235,7 +235,7 @@ models can be seen in table \ref{abstract-model-description-table}.
 %% of these programs later.
 
 %% There is not a refinement relation between the abstract models and the
-%% concrete models, but we re-use many of our theorems from \texttt{L6}
+%% concrete models, but we reuse many of our theorems from \texttt{L6}
 %% in \texttt{M2} since the file allocation data structure in \texttt{L6}
 %% follows the FAT32 specification.
 
@@ -826,7 +826,7 @@ in our work.
 
 While FAT32 is interesting of and by itself, it lacks features such as
 crash consistency, which most modern filesystems provide by means of
-journalling. We hope to re-use some artefacts of formalising FAT32 in
+journalling. We hope to reuse some artefacts of formalising FAT32 in
 order to verify a filesystem with journalling, such as
 ext4~\cite{mathur2007new}.
 
