@@ -123,9 +123,8 @@
            (boolean-listp (update-nth key val l))))
 
 (defthm nat-listp-of-binary-append
-  (implies (true-listp x)
-           (equal (nat-listp (binary-append x y))
-                  (and (nat-listp x) (nat-listp y)))))
+  (equal (nat-listp (binary-append x y))
+         (and (nat-listp (fix-true-list x)) (nat-listp y))))
 
 (defthm eqlable-listp-if-nat-listp (implies (nat-listp l) (eqlable-listp l)))
 
@@ -448,10 +447,9 @@
               (or (zp n) (characterp val)))))
 
 (defthm string-listp-of-append
-  (implies (true-listp x)
-           (equal (string-listp (append x y))
-                  (and (string-listp x)
-                       (string-listp y)))))
+  (equal (string-listp (append x y))
+         (and (string-listp (fix-true-list x))
+              (string-listp y))))
 
 (defthm true-listp-when-string-list
   (implies (string-listp x)
@@ -500,3 +498,16 @@
 
 (defthm len-of-fix-true-list
   (equal (len (fix-true-list x)) (len x)))
+
+(defthm string-listp-of-fix-true-list
+  (implies (string-listp x)
+           (string-listp (fix-true-list x))))
+
+(defthm nat-listp-of-fix-true-list
+  (implies (true-listp x)
+           (equal (nat-listp (fix-true-list x))
+                  (nat-listp x)))
+  :rule-classes (:rewrite
+                 (:rewrite :corollary
+                           (implies (nat-listp x)
+                                    (nat-listp (fix-true-list x))))))
