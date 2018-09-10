@@ -26,19 +26,21 @@
            (equal (first-n-ac i (binary-append x y) ac)
                   (first-n-ac i x ac))))
 
-(defthm by-slice-you-mean-the-whole-cake-1
-  (implies (true-listp l)
-           (equal (first-n-ac (len l) l ac)
-                  (revappend ac l)))
-  :hints (("Goal" :induct (revappend l ac)) )
-  :rule-classes ((:rewrite :corollary
-                           (implies (and (equal i (len l)) (true-listp l))
-                                    (equal (first-n-ac i l ac) (revappend ac
-                                                                          l))))))
+(defthm
+  by-slice-you-mean-the-whole-cake-1
+  (equal (first-n-ac (len l) l ac)
+         (revappend ac (fix-true-list l)))
+  :hints (("goal" :induct (revappend l ac)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies (equal i (len l))
+             (equal (first-n-ac i l ac)
+                    (revappend ac (fix-true-list l)))))))
 
 (defthm by-slice-you-mean-the-whole-cake-2
-  (implies (and (equal i (len l)) (true-listp l))
-           (equal (take i l) l)))
+  (implies (equal i (len l))
+           (equal (take i l) (fix-true-list l))))
 
 (defthm assoc-after-delete-assoc
   (implies (not (equal name1 name2))
@@ -121,9 +123,8 @@
            (boolean-listp (update-nth key val l))))
 
 (defthm nat-listp-of-binary-append
-  (implies (true-listp x)
-           (equal (nat-listp (binary-append x y))
-                  (and (nat-listp x) (nat-listp y)))))
+  (equal (nat-listp (binary-append x y))
+         (and (nat-listp (fix-true-list x)) (nat-listp y))))
 
 (defthm eqlable-listp-if-nat-listp (implies (nat-listp l) (eqlable-listp l)))
 
@@ -248,8 +249,7 @@
   (defthm
     logand-ash-lemma-1
     (implies (and (natp c))
-             (unsigned-byte-p c (logand i (- (ash 1 c) 1)))))
-  )
+             (unsigned-byte-p c (logand i (- (ash 1 c) 1))))))
 
 (defthm make-character-list-of-revappend
   (equal (make-character-list (revappend x y))
@@ -263,61 +263,67 @@
                               (make-character-list ac))
                   (make-character-list (first-n-ac i l ac)))))
 
+(defthm revappend-of-fix-true-list
+  (equal (revappend x (fix-true-list y))
+         (fix-true-list (revappend x y))))
+
+(defthm append-of-fix-true-list
+  (equal (append (fix-true-list x) y)
+         (append x y)))
+
 (defthm
   take-more
   (implies
-   (and (true-listp l)
-        (natp i)
-        (>= i (len l)))
-   (equal (binary-append (first-n-ac i l ac1) ac2)
-          (revappend ac1
-                     (binary-append l
-                                    (make-list-ac (- i (len l)) nil ac2)))))
+   (and (integerp i) (>= i (len l)))
+   (equal
+    (binary-append (first-n-ac i l ac1) ac2)
+    (revappend
+     ac1
+     (binary-append l
+                    (make-list-ac (- i (len l)) nil ac2)))))
   :hints
-  (("goal'" :induct (first-n-ac i l ac1))
-   ("subgoal *1/6'''" :expand (make-list-ac i nil ac2))
-   ("subgoal *1/1''" :use (:instance revappend-is-append-of-rev (x ac1)
-                                     (y l)
-                                     (z ac2)))))
+  (("goal" :induct (first-n-ac i l ac1))
+   ("subgoal *1/2" :expand (make-list-ac i nil ac2))
+   ("subgoal *1/1"
+    :use (:instance revappend-is-append-of-rev (x ac1)
+                    (y l)
+                    (z ac2)))))
 
 (defthm
   take-of-take
-  (implies (and (true-listp l)
-                (natp m)
+  (implies (and (natp m)
                 (integerp n)
                 (<= m n)
                 (<= m (len l)))
            (equal (first-n-ac m (take n l) ac)
                   (first-n-ac m l ac)))
   :hints
-  (("goal" :do-not-induct t
+  (("goal"
+    :do-not-induct t
     :in-theory (disable binary-append-first-n-ac-nthcdr
-                        first-n-ac-of-binary-append-1)
+                        first-n-ac-of-binary-append-1 take-more)
     :use ((:instance binary-append-first-n-ac-nthcdr (ac nil)
                      (i n))
           (:instance first-n-ac-of-binary-append-1 (i m)
                      (x (first-n-ac n l nil))
-                     (y (nthcdr n l)))))
-   ("goal'4'" :in-theory (disable take-more)
-    :use (:instance take-more (i n)
-                    (ac1 nil)
-                    (ac2 nil)))
-   ("goal'6'"
-    :in-theory (disable first-n-ac-of-binary-append-1)
-    :use (:instance first-n-ac-of-binary-append-1 (i m)
-                    (x l)
-                    (y (make-list-ac (+ n (- (len l)))
-                                     nil nil))))))
+                     (y (nthcdr n l)))
+          (:instance take-more (i n)
+                     (ac1 nil)
+                     (ac2 nil))
+          (:instance first-n-ac-of-binary-append-1 (i m)
+                     (x l)
+                     (y (make-list-ac (+ n (- (len l)))
+                                      nil nil)))))))
 
 (defthm boolean-listp-of-revappend
-  (implies (boolean-listp x)
-           (equal (boolean-listp (revappend x y))
-                  (boolean-listp y))))
+  (equal (boolean-listp (revappend x y))
+         (and (boolean-listp (fix-true-list x))
+              (boolean-listp y))))
 
 (defthm boolean-listp-of-first-n-ac
-  (implies (and (boolean-listp l)
-                (boolean-listp ac))
-           (boolean-listp (first-n-ac i l ac))))
+  (implies (boolean-listp l)
+           (equal (boolean-listp (first-n-ac i l ac))
+                  (boolean-listp (fix-true-list ac)))))
 
 (defthm consp-of-first-n-ac
   (iff (consp (first-n-ac i l ac))
@@ -441,10 +447,9 @@
               (or (zp n) (characterp val)))))
 
 (defthm string-listp-of-append
-  (implies (true-listp x)
-           (equal (string-listp (append x y))
-                  (and (string-listp x)
-                       (string-listp y)))))
+  (equal (string-listp (append x y))
+         (and (string-listp (fix-true-list x))
+              (string-listp y))))
 
 (defthm true-listp-when-string-list
   (implies (string-listp x)
@@ -478,3 +483,31 @@
            (equal (binary-append (take i l)
                                  (nthcdr i l))
                   l)))
+
+(encapsulate
+  ()
+
+  (local
+   (defthm fix-true-list-when-true-listp
+     (implies (true-listp x)
+              (equal (fix-true-list x) x))))
+
+  (defthm fix-true-list-of-coerce
+    (equal (fix-true-list (coerce text 'list))
+           (coerce text 'list))))
+
+(defthm len-of-fix-true-list
+  (equal (len (fix-true-list x)) (len x)))
+
+(defthm string-listp-of-fix-true-list
+  (implies (string-listp x)
+           (string-listp (fix-true-list x))))
+
+(defthm nat-listp-of-fix-true-list
+  (implies (true-listp x)
+           (equal (nat-listp (fix-true-list x))
+                  (nat-listp x)))
+  :rule-classes (:rewrite
+                 (:rewrite :corollary
+                           (implies (nat-listp x)
+                                    (nat-listp (fix-true-list x))))))
