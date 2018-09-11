@@ -4087,6 +4087,123 @@
                    reserved-area-string
                    fat-string data-region-string)))
 
+(defthm
+  compliant-fat32-in-memoryp-of-update-bs_jmpbooti
+  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (< i (bs_jmpboot-length fat32-in-memory)))
+           (equal (compliant-fat32-in-memoryp
+                   (update-bs_jmpbooti i v fat32-in-memory))
+                  (unsigned-byte-p 8 v)))
+  :hints
+  (("goal"
+    :in-theory (e/d (compliant-fat32-in-memoryp
+                     update-bs_jmpbooti
+                     bs_jmpboot-length count-of-clusters)
+                    (floor)))))
+
+(defthm
+  compliant-fat32-in-memoryp-of-update-bs_jmpboot
+  (implies (and (unsigned-byte-listp 8 v)
+                (compliant-fat32-in-memoryp fat32-in-memory))
+           (compliant-fat32-in-memoryp
+            (update-bs_jmpboot v fat32-in-memory)))
+  :hints
+  (("goal"
+    :in-theory (disable unsigned-byte-p update-bs_jmpbooti))))
+
+(defthm
+  count-of-clusters-of-update-bpb_bytspersec
+  (equal
+   (count-of-clusters (update-bpb_bytspersec v fat32-in-memory))
+   (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  compliant-fat32-in-memoryp-of-update-bpb_bytspersec
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal (compliant-fat32-in-memoryp
+           (update-bpb_bytspersec v fat32-in-memory))
+          (and (unsigned-byte-p 16 v)
+               (>= v *ms-min-bytes-per-sector*))))
+  :hints
+  (("goal" :in-theory (enable compliant-fat32-in-memoryp))))
+
+(defthm
+  compliant-fat32-in-memoryp-of-update-bpb_fatsz32
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal
+    (compliant-fat32-in-memoryp
+     (update-bpb_fatsz32 v fat32-in-memory))
+    (and (unsigned-byte-p 32 v)
+         (>= (floor (- (bpb_totsec32 fat32-in-memory)
+                       (+ (bpb_rsvdseccnt fat32-in-memory)
+                          (* (bpb_numfats fat32-in-memory) v)))
+                    (bpb_secperclus fat32-in-memory))
+             *ms-fat32-min-count-of-clusters*))))
+  :hints
+  (("goal" :in-theory
+    (e/d (compliant-fat32-in-memoryp count-of-clusters)
+         (floor)))))
+
+(defthm
+  compliant-fat32-in-memoryp-of-update-bpb_numfats
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal
+    (compliant-fat32-in-memoryp
+     (update-bpb_numfats v fat32-in-memory))
+    (and (unsigned-byte-p 8 v)
+         (>= (floor (- (bpb_totsec32 fat32-in-memory)
+                       (+ (bpb_rsvdseccnt fat32-in-memory)
+                          (* v (bpb_fatsz32 fat32-in-memory))))
+                    (bpb_secperclus fat32-in-memory))
+             *ms-fat32-min-count-of-clusters*))))
+  :hints
+  (("goal" :in-theory
+    (e/d (compliant-fat32-in-memoryp count-of-clusters)
+         (floor)))))
+
+(defthm
+  compliant-fat32-in-memoryp-of-update-bpb_rsvdseccnt
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal
+    (compliant-fat32-in-memoryp
+     (update-bpb_rsvdseccnt v fat32-in-memory))
+    (and (unsigned-byte-p 16 v)
+         (>= (floor (- (bpb_totsec32 fat32-in-memory)
+                       (+ v
+                          (* (bpb_numfats fat32-in-memory)
+                             (bpb_fatsz32 fat32-in-memory))))
+                    (bpb_secperclus fat32-in-memory))
+             *ms-fat32-min-count-of-clusters*))))
+  :hints
+  (("goal" :in-theory
+    (e/d (compliant-fat32-in-memoryp count-of-clusters)
+         (floor)))))
+
+(defthm
+  compliant-fat32-in-memoryp-of-update-bpb_secperclus
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal
+    (compliant-fat32-in-memoryp
+     (update-bpb_secperclus v fat32-in-memory))
+    (and (unsigned-byte-p 8 v)
+         (>= v 1)
+         (>= (floor (- (bpb_totsec32 fat32-in-memory)
+                       (+ (bpb_rsvdseccnt fat32-in-memory)
+                          (* (bpb_numfats fat32-in-memory)
+                             (bpb_fatsz32 fat32-in-memory))))
+                    v)
+             *ms-fat32-min-count-of-clusters*))))
+  :hints
+  (("goal" :in-theory
+    (e/d (compliant-fat32-in-memoryp count-of-clusters)
+         (floor)))))
+
 (encapsulate
   ()
 
@@ -4108,7 +4225,7 @@
                (fat32-in-memory-to-string
                 fat32-in-memory)))
       fat32-in-memory))
-    :hints (("Goal" :in-theory (enable update-bs_oemname-correctness-1)))))
+    :hints (("Goal" :in-theory (e/d (update-bs_oemname-correctness-1) (floor))))))
 
 #|
 Some (rather awful) testing forms are
