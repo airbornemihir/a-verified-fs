@@ -16,15 +16,17 @@
 (include-book "fat32")
 
 (defthm nth-of-chars=>nats
-  (equal (integerp (nth n (chars=>nats chars)))
-         (< (nfix n) (len chars)))
-  :hints (("goal" :in-theory (enable chars=>nats)
-           :induct (nth n chars))))
+  (equal (nth n (chars=>nats chars))
+         (if (< (nfix n) (len chars))
+             (char-code (nth n chars))
+             nil))
+  :hints (("goal" :in-theory (enable chars=>nats))))
 
 (defthm nth-of-string=>nats
-  (implies (stringp string)
-           (equal (integerp (nth n (string=>nats string)))
-                  (< (nfix n) (length string))))
+  (equal (nth n (string=>nats string))
+         (if (< (nfix n) (len (explode string)))
+             (char-code (char string n))
+             nil))
   :hints (("goal" :in-theory (enable string=>nats))))
 
 (defun dir-ent-p (x)
