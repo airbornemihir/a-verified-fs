@@ -4031,18 +4031,23 @@
      'string)))
 
 (defthm
-  len-of-reserved-area-string
+  length-of-reserved-area-string
   (implies
    (and (integerp (* (bpb_bytspersec fat32-in-memory)
                      (bpb_rsvdseccnt fat32-in-memory)))
         (<= 90
             (* (bpb_bytspersec fat32-in-memory)
                (bpb_rsvdseccnt fat32-in-memory))))
-   (equal (length (reserved-area-string fat32-in-memory))
+   (equal (len (explode (reserved-area-string fat32-in-memory)))
           (* (bpb_rsvdseccnt fat32-in-memory)
              (bpb_bytspersec fat32-in-memory))))
   :hints (("goal" :in-theory (enable reserved-area-string))))
 
+;; A bit of explanation is in order here - this function recurs on n, which is
+;; instantiated with (bpb_numfats fat32-in-memory) in
+;; fat32-in-memory-to-string. stobj-fa-table-to-string, in contrast, generates
+;; one copy of the FAT string from the fat32-in-memory instance, and does all
+;; the part-select heavy lifting.
 (defun
   make-fat-string-ac
   (n fat32-in-memory ac)
@@ -4063,6 +4068,34 @@
       (stobj-fa-table-to-string fat32-in-memory
                                 (fat-length fat32-in-memory))
       ac)))))
+
+(defthm length-of-nats=>string
+  (equal (len (explode (nats=>string nats)))
+         (len nats))
+  :hints (("goal" :in-theory (enable nats=>string))))
+
+(defthm
+  length-of-stobj-fa-table-to-string
+  (equal
+   (len
+    (explode (stobj-fa-table-to-string fat32-in-memory length)))
+   (* (nfix length) 4))
+  :hints (("goal" :in-theory (disable loghead logtail))))
+
+(defthm
+  length-of-make-fat-string-ac
+  (equal
+   (len (explode (make-fat-string-ac n fat32-in-memory ac)))
+   (+ (* (nfix n)
+         (fat-length fat32-in-memory)
+         4)
+      (len (explode ac)))))
+
+(defthm
+  len-of-get-dir-ent-helper
+  (equal (len (get-dir-ent-helper fat32-in-memory
+                                  data-region-index len ac))
+         (+ (nfix len) (len ac))))
 
 (defund
     fat32-in-memory-to-string
@@ -4086,6 +4119,32 @@
       (concatenate 'string
                    reserved-area-string
                    fat-string data-region-string)))
+
+(defthm
+  length-of-fat32-in-memory-to-string
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory))))
+   (equal
+    (len (explode (fat32-in-memory-to-string fat32-in-memory)))
+    (+ (* (bpb_rsvdseccnt fat32-in-memory)
+          (bpb_bytspersec fat32-in-memory))
+       (* (nfix (bpb_numfats fat32-in-memory))
+          (fat-length fat32-in-memory)
+          4)
+       (data-region-length fat32-in-memory))))
+  :hints
+  (("goal" :in-theory (enable fat32-in-memory-to-string))))
+
+(thm
+ (equal
+       (NTH 12
+            (GET-INITIAL-BYTES (FAT32-IN-MEMORY-TO-STRING FAT32-IN-MEMORY)))
+       (char-code (logtail 8 (bpb_bytspersec fat32-in-memory))))
+ :hints (("Goal" :in-theory (e/d (GET-INITIAL-BYTES) (logtail)))))
 
 (encapsulate
   ()

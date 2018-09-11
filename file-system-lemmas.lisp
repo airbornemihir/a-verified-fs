@@ -511,3 +511,9 @@
                  (:rewrite :corollary
                            (implies (nat-listp x)
                                     (nat-listp (fix-true-list x))))))
+
+(defthm nth-of-make-character-list
+  (equal (nth n (make-character-list x))
+         (cond ((>= (nfix n) (len x)) nil)
+               ((characterp (nth n x)) (nth n x))
+               (t (code-char 0)))))
