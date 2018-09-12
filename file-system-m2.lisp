@@ -4139,12 +4139,31 @@
   :hints
   (("goal" :in-theory (enable fat32-in-memory-to-string))))
 
-(thm
- (equal
-       (NTH 12
-            (GET-INITIAL-BYTES (FAT32-IN-MEMORY-TO-STRING FAT32-IN-MEMORY)))
-       (char-code (logtail 8 (bpb_bytspersec fat32-in-memory))))
- :hints (("Goal" :in-theory (e/d (GET-INITIAL-BYTES) (logtail)))))
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-1
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory)))
+   (equal
+    (NTH 12
+         (GET-INITIAL-BYTES (FAT32-IN-MEMORY-TO-STRING FAT32-IN-MEMORY)))
+    (logtail 8 (bpb_bytspersec fat32-in-memory))))
+  :hints (("Goal" :in-theory (e/d (GET-INITIAL-BYTES) (logtail)))
+          ("Goal''" :in-theory (e/d (fat32-in-memory-to-string) (logtail)))
+          ("Goal'''" :in-theory (e/d (reserved-area-string) (logtail))))
+  ;; :rule-classes ((:rewrite :corollary
+  ;;                          (implies
+  ;;                           (compliant-fat32-in-memoryp fat32-in-memory)
+  ;;                           (equal
+  ;;                            (NTH 12
+  ;;                                 (GET-INITIAL-BYTES (FAT32-IN-MEMORY-TO-STRING FAT32-IN-MEMORY)))
+  ;;                            (logtail 8 (bpb_bytspersec fat32-in-memory))))
+  ;;                          :hints (("Goal" :in-theory (e/d (compliant-fat32-in-memoryp) (logtail))))))
+  )
 
 (encapsulate
   ()

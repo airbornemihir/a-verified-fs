@@ -517,3 +517,16 @@
          (cond ((>= (nfix n) (len x)) nil)
                ((characterp (nth n x)) (nth n x))
                (t (code-char 0)))))
+
+(defthm nth-of-first-n-ac
+  (equal (nth n (first-n-ac i l ac))
+         (cond ((>= (nfix n) (+ (len ac) (nfix i)))
+                nil)
+               ((< (nfix n) (len ac))
+                (nth (- (len ac) (+ (nfix n) 1)) ac))
+               (t (nth (- (nfix n) (len ac)) l)))))
+
+(defthm nth-of-take
+  (equal (nth n (take i l))
+         (if (>= (nfix n) (nfix i))
+                nil (nth (nfix n) l))))
