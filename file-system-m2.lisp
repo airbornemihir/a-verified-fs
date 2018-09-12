@@ -4264,6 +4264,78 @@
                   i))
   :hints (("Goal" :in-theory (e/d (combine16u) (loghead logtail logior ash)))))
 
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-5
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 8 (bpb_secperclus fat32-in-memory)))
+   (equal
+    (nth 13
+         (get-initial-bytes
+          (fat32-in-memory-to-string fat32-in-memory)))
+    (bpb_secperclus fat32-in-memory)))
+  :hints
+  (("goal" :in-theory (e/d (get-initial-bytes)
+                           (fat32-in-memoryp floor)))
+   ("goal''"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-6
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory)))
+   (equal
+    (nth 15
+         (get-initial-bytes
+          (fat32-in-memory-to-string fat32-in-memory)))
+    (logtail 8 (bpb_rsvdseccnt fat32-in-memory))))
+  :hints
+  (("goal" :in-theory (e/d (get-initial-bytes)
+                           (logtail fat32-in-memoryp floor)))
+   ("goal''"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (logtail fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-7
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory)))
+   (equal
+    (nth 14
+         (get-initial-bytes
+          (fat32-in-memory-to-string fat32-in-memory)))
+    (loghead 8 (bpb_rsvdseccnt fat32-in-memory))))
+  :hints
+  (("goal" :in-theory (e/d (get-initial-bytes)
+                           (loghead fat32-in-memoryp floor)))
+   ("goal''"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (loghead fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))))
+
 (encapsulate
   ()
 
@@ -4285,7 +4357,8 @@
       ;; this is terrible and needs to go
       (integerp (* (bpb_bytspersec fat32-in-memory)
                    (bpb_rsvdseccnt fat32-in-memory)))
-      (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory)))
+      (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory))
+      (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory)))
      (equal
       (mv-nth 0
               (string-to-fat32-in-memory
@@ -4293,7 +4366,9 @@
                (fat32-in-memory-to-string
                 fat32-in-memory)))
       fat32-in-memory))
-    :hints (("Goal" :in-theory (e/d (update-bs_oemname-correctness-1) (loghead logtail))))))
+    :hints (("Goal" :in-theory (e/d (update-bs_oemname-correctness-1
+                                     compliant-fat32-in-memoryp)
+                                    (fat32-in-memoryp loghead logtail))))))
 
 #|
 Some (rather awful) testing forms are
