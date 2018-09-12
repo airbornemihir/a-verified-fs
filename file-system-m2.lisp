@@ -4208,6 +4208,65 @@
 (encapsulate
   ()
 
+  (local
+   (defun induction-scheme (size i)
+     (if (zp size)
+         i
+       (induction-scheme (- size 1) (logcdr i)))))
+
+  (defthm fat32-in-memory-to-string-inversion-lemma-3
+    (implies (and (integerp i) (natp size))
+             (equal (logior (ash (logtail size i) size)
+                            (loghead size i))
+                    i))
+    :instructions ((:induct (induction-scheme size i))
+                   (:dive 2 1 2)
+                   (:rewrite loghead*)
+                   (:= (logcons (logcar i)
+                                (loghead (+ -1 size) (logcdr i))))
+                   :top (:dive 2 1 1 1)
+                   (:rewrite logtail*)
+                   (:= (logtail (+ -1 size) (logcdr i)))
+                   :up (:rewrite ash*)
+                   (:= (logcons 0
+                                (ash (logtail (+ -1 size) (logcdr i))
+                                     (+ -1 size))))
+                   :top (:dive 2 1)
+                   (:rewrite logior*)
+                   :top (:dive 2 1 1 1)
+                   (:rewrite logcar-logcons)
+                   :nx (:rewrite logcar-logcons)
+                   :top (:dive 2 1 2 1)
+                   (:rewrite logcdr-logcons)
+                   :nx (:rewrite logcdr-logcons)
+                   :up :top :promote (:demote 2)
+                   (:dive 1 1)
+                   :s :up :s-prop :top :promote (:dive 1 2)
+                   := (:drop 4)
+                   :top (:dive 1 1)
+                   (:rewrite simplify-bit-functions)
+                   (:rewrite bfix-bitp)
+                   :up (:rewrite logcar-logcdr-elim)
+                   :top :bash :promote (:dive 1 2)
+                   (:rewrite loghead*)
+                   (:= 0)
+                   :top (:dive 1 1 1)
+                   (:rewrite logtail*)
+                   (:= i)
+                   :up (:rewrite ash*)
+                   (:= i)
+                   :up :s
+                   :top :bash)))
+
+(defthm fat32-in-memory-to-string-inversion-lemma-4
+  (implies (natp i)
+           (equal (combine16u (logtail 8 i) (loghead 8 i))
+                  i))
+  :hints (("Goal" :in-theory (e/d (combine16u) (loghead logtail logior ash)))))
+
+(encapsulate
+  ()
+
   (local (defthm nthcdr-of-nil (not (nthcdr n nil))))
 
   (local (defthm nthcdr-when->=-n-len-l (implies (and (true-listp l)
