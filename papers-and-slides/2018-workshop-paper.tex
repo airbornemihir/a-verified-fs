@@ -289,20 +289,28 @@ details the layout of data and metadata in a valid FAT32 disk image.
 
 In FAT32 all files, including regular files and directory files, are
 divided into \textit{clusters} (sometimes called \textit{extents}) of
-a fixed size. The size of a cluster, like many other parameters
-of a FAT32 volume, is stored in a \textit{reserved area} at the
-beginning of the volume and remains constant after the volume is
-created. The cluster size must be an integer multiple of the sector
+a fixed size. The size of a cluster, along with other volume-level
+metadata, is stored in a \textit{reserved area} at the beginning of
+the volume, and the clusters themselves are stored in a \textit{data
+  region} at the end of the volume. Between these two on-disk data
+structures, the volume has one or more redundant copies of the
+\textit{file allocation table}.
+
+The cluster size must be an integer multiple of the sector
 size, which in turn must be at least 512 bytes; these and other
-constraints are detailed in the specification. Directory
+constraints on the fields of the reserved area are detailed in the
+FAT32 specification.
+
+Directory
 files are for the most part treated the same way as regular files by
 the filesystem, but they differ in a metadata attribute, which
 indicates that the contents of directory files should be treated as
 sequences of directory entries. Each such directory entry is
-32 bytes wide and contains metadata including name, size, first
+32 bytes and contains metadata including name, size, first
 cluster index, and access times for the corresponding file.
 
-The file allocation table itself contains a number of linked lists
+The file allocation table is a table with one entry for each cluster
+in the data region; it contains a number of linked lists
 (\textit{clusterchains}). It
 maps each cluster index used by a file to either the next cluster
 index for that file or a special end-of-clusterchain value. \footnote{
@@ -311,8 +319,8 @@ specification, not just one. We support all values in the range.} This
 allows the contents of a file to be reconstructed by
 reading just the first cluster index from the corresponding directory
 entry, reconstructing the clusterchain using the table, and then
-looking up the contents of these clusters in the \textit{data
-  region}. Unused clusters are mapped to 0 in the table; this fact is
+looking up the contents of these clusters in the data
+region. Unused clusters are mapped to 0 in the table; this fact is
 used for counting and allocating free clusters.
 
 We illustrate the file allocation table and data layout for a small
@@ -342,6 +350,8 @@ and thus unavailable for clusterchains.
       child { node {ticket2.txt}}};
   \end{tikzpicture}
 
+  \bigskip
+
   \begin{tabular}{|c|c|}
     \hline
     FAT index & FAT entry \\ \hline
@@ -358,6 +368,8 @@ and thus unavailable for clusterchains.
     \vdots & \vdots
   \end{tabular}\\
 
+  \bigskip
+
   \begin{tabular}{|c|c|}
     \hline
        & Directory entry in / \\ \hline
@@ -366,6 +378,8 @@ and thus unavailable for clusterchains.
     64 & ``tmp'', 6 \\ \hline
     \vdots & \vdots
   \end{tabular}
+
+  \bigskip
 
   \begin{tabular}{|c|c|}
     \hline
