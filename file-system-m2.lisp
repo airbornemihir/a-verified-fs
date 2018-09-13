@@ -4466,8 +4466,7 @@
     (e/d (fat32-in-memory-to-string reserved-area-string)
          (loghead logtail fat32-in-memoryp
                   floor stobj-fa-table-to-string
-                  make-fat-string-ac)))
-   ))
+                  make-fat-string-ac)))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-13
@@ -4493,8 +4492,7 @@
     (e/d (fat32-in-memory-to-string reserved-area-string)
          (loghead logtail fat32-in-memoryp
                   floor stobj-fa-table-to-string
-                  make-fat-string-ac)))
-   ))
+                  make-fat-string-ac)))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-14
@@ -4520,8 +4518,7 @@
     (e/d (fat32-in-memory-to-string reserved-area-string)
          (loghead logtail fat32-in-memoryp
                   floor stobj-fa-table-to-string
-                  make-fat-string-ac)))
-   ))
+                  make-fat-string-ac)))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-15
@@ -4547,8 +4544,7 @@
     (e/d (fat32-in-memory-to-string reserved-area-string)
          (loghead logtail fat32-in-memoryp
                   floor stobj-fa-table-to-string
-                  make-fat-string-ac)))
-   ))
+                  make-fat-string-ac)))))
 
 (encapsulate
   ()
@@ -4743,6 +4739,225 @@
          (cluster-size fat32-in-memory))
   :hints (("goal" :in-theory (enable cluster-size))))
 
+(defthm
+  cluster-size-of-update-bpb_secperclus
+  (equal (cluster-size (update-bpb_secperclus v fat32-in-memory))
+         (* v (bpb_bytspersec fat32-in-memory)))
+  :hints (("goal" :in-theory (enable cluster-size))))
+
+(defthm
+  count-of-clusters-of-update-bs_filsystype
+  (equal (count-of-clusters (update-bs_filsystype v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bs_vollab
+  (equal (count-of-clusters (update-bs_vollab v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bs_volid
+  (equal (count-of-clusters (update-bs_volid v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bs_bootsig
+  (equal (count-of-clusters (update-bs_bootsig v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bs_reserved1
+  (equal (count-of-clusters (update-bs_reserved1 v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bs_drvnum
+  (equal (count-of-clusters (update-bs_drvnum v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bpb_bkbootsec
+  (equal (count-of-clusters (update-bpb_bkbootsec v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bpb_fsinfo
+  (equal (count-of-clusters (update-bpb_fsinfo v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bpb_rootclus
+  (equal (count-of-clusters (update-bpb_rootclus v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bpb_fsver_major
+  (equal (count-of-clusters (update-bpb_fsver_major v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bpb_fsver_minor
+  (equal (count-of-clusters (update-bpb_fsver_minor v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bpb_extflags
+  (equal (count-of-clusters (update-bpb_extflags v fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bpb_totsec32
+  (equal (count-of-clusters (update-bpb_totsec32 v fat32-in-memory))
+         (floor (+ v
+                   (- (+ (bpb_rsvdseccnt fat32-in-memory)
+                         (* (bpb_numfats fat32-in-memory)
+                            (bpb_fatsz32 fat32-in-memory)))))
+                (bpb_secperclus fat32-in-memory)))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-bpb_fatsz32
+  (equal (count-of-clusters (update-bpb_fatsz32 v fat32-in-memory))
+         (floor (+ (bpb_totsec32 fat32-in-memory)
+                   (- (+ (bpb_rsvdseccnt fat32-in-memory)
+                         (* (bpb_numfats fat32-in-memory)
+                            v))))
+                (bpb_secperclus fat32-in-memory)))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-18
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory))
+        (unsigned-byte-p 32 (bpb_totsec32 fat32-in-memory)))
+   (equal
+    (nth
+     19
+     (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+    (logtail 24 (bpb_totsec32 fat32-in-memory))))
+  :hints
+  (("goal" :in-theory (e/d (get-remaining-rsvdbyts)
+                           (loghead fat32-in-memoryp floor loghead logtail)))
+   ("Subgoal 2"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (loghead logtail fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-19
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory))
+        (unsigned-byte-p 32 (bpb_totsec32 fat32-in-memory)))
+   (equal
+    (nth
+     18
+     (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+    (loghead 8 (logtail 16 (bpb_totsec32 fat32-in-memory)))))
+  :hints
+  (("goal" :in-theory (e/d (get-remaining-rsvdbyts)
+                           (loghead fat32-in-memoryp floor loghead logtail)))
+   ("Subgoal 2"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (loghead logtail fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-20
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory))
+        (unsigned-byte-p 32 (bpb_totsec32 fat32-in-memory)))
+   (equal
+    (nth
+     17
+     (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+    (loghead 8 (logtail  8 (bpb_totsec32 fat32-in-memory)))))
+  :hints
+  (("goal" :in-theory (e/d (get-remaining-rsvdbyts)
+                           (loghead fat32-in-memoryp floor loghead logtail)))
+   ("Subgoal 2"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (loghead logtail fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-21
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory))
+        (unsigned-byte-p 32 (bpb_totsec32 fat32-in-memory)))
+   (equal
+    (nth
+     16
+     (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+    (loghead 8 (bpb_totsec32 fat32-in-memory))))
+  :hints
+  (("goal" :in-theory (e/d (get-remaining-rsvdbyts)
+                           (loghead fat32-in-memoryp floor loghead logtail)))
+   ("Subgoal 2"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (loghead logtail fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-22
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (equal
+    (combine32u
+     (logtail 24 (bpb_totsec32 fat32-in-memory))
+     (loghead 8
+              (logtail 16 (bpb_totsec32 fat32-in-memory)))
+     (loghead 8
+              (logtail 8 (bpb_totsec32 fat32-in-memory)))
+     (loghead 8 (bpb_totsec32 fat32-in-memory)))
+    (bpb_totsec32 fat32-in-memory)))
+  :hints
+  (("goal" :in-theory (e/d (bpb_totsec32)
+                           (loghead logtail ash logior)))))
+
 (encapsulate
   ()
 
@@ -4777,7 +4992,7 @@
       fat32-in-memory))
     :hints (("Goal" :in-theory (e/d (update-bs_oemname-correctness-1
                                      compliant-fat32-in-memoryp)
-                                    (fat32-in-memoryp loghead logtail nth))))))
+                                    (fat32-in-memoryp loghead logtail nth floor))))))
 
 #|
 Some (rather awful) testing forms are
