@@ -500,7 +500,7 @@ directory tree to look up a regular file or a directory at a given
 path (represented as a list of symbols, one for each subdirectory/file
 name).
 
-\medskip
+\bigskip
 
 \noindent
 \begin{verbatim}
@@ -730,15 +730,8 @@ definitions for regular files,
 directory files, and other data types. This allows us to simplify as
 well as speed up our reasoning by eliminating many type hypotheses,
 and in particular allows us to prove read-over-write properties for
-\texttt{M1} with a very small number of helper lemmas.
-
-In comparison, the abstract models \texttt{L1}-\texttt{L6} rely on
-type hypotheses in their formulation of the read-over-write theorems,
-thus causing a large  number of helper lemmas to be needed in order to
-discharge these hypotheses. Largely for this reason, we are no longer
-developing the abstract models, choosing to consider them as a
-reference for refinement proofs in our further work while using
-fixtypes wherever possible.
+\texttt{M1} with a significantly smaller number of helper lemmas
+compared to our abstract models in which FTY is not used.
 
 \subsection{Allocation and garbage collection}
 
