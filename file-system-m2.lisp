@@ -1649,7 +1649,10 @@
           (update-bpb_numfats 1
                               fat32-in-memory))
          ;; I feel weird about stipulating this, but the FAT size has to be at
-         ;; least 1 if we're going to have at least 65536 clusters of data.
+         ;; least 1 sector if we're going to have at least 65536 clusters of
+         ;; data, as required by the FAT specification at the place where it
+         ;; specifies how to distinguish between volumes formatted with FAT12,
+         ;; FAT16 and FAT32.
          (fat32-in-memory
           (update-bpb_fatsz32 1
                               fat32-in-memory))
@@ -4957,6 +4960,55 @@
   :hints
   (("goal" :in-theory (e/d (bpb_totsec32)
                            (loghead logtail ash logior)))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top"
+                       :dir :system))
+
+  (local
+   (defthm fat32-in-memory-to-string-inversion-lemma-23
+     (implies (and (not (zp j)) (integerp i) (> i j))
+              (> (floor i j) 0))
+     :rule-classes :linear))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-24
+    (implies (and (fat32-in-memoryp fat32-in-memory)
+                  (<= 512 (bpb_bytspersec fat32-in-memory))
+                  (<= 1 (bpb_secperclus fat32-in-memory))
+                  (> (+ (- (bpb_rsvdseccnt fat32-in-memory))
+                        (bpb_totsec32 fat32-in-memory)
+                        (- (* (bpb_fatsz32 fat32-in-memory)
+                              (bpb_numfats fat32-in-memory))))
+                     (bpb_secperclus fat32-in-memory)))
+             (> (* (bpb_bytspersec fat32-in-memory)
+                   (bpb_secperclus fat32-in-memory)
+                   (floor (+ (- (bpb_rsvdseccnt fat32-in-memory))
+                             (bpb_totsec32 fat32-in-memory)
+                             (- (* (bpb_fatsz32 fat32-in-memory)
+                                   (bpb_numfats fat32-in-memory))))
+                          (bpb_secperclus fat32-in-memory)))
+                0))
+    :rule-classes :linear
+    :instructions
+    (:promote (:rewrite product-greater-than-zero-2)
+              (:change-goal nil t)
+              :bash :s-prop
+              (:rewrite product-greater-than-zero-2)
+              (:change-goal nil t)
+              :bash :s-prop
+              (:use (:instance fat32-in-memory-to-string-inversion-lemma-23
+                               (i (+ (- (bpb_rsvdseccnt fat32-in-memory))
+                                     (bpb_totsec32 fat32-in-memory)
+                                     (- (* (bpb_fatsz32 fat32-in-memory)
+                                           (bpb_numfats fat32-in-memory)))))
+                               (j (bpb_secperclus fat32-in-memory))))
+              :promote (:demote 1)
+              (:dive 1 1)
+              (:= t)
+              :top :bash)))
 
 (encapsulate
   ()
