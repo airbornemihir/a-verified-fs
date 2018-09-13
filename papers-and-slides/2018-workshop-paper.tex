@@ -99,10 +99,10 @@ An early effort in the filesystem verification domain was by Bevier
 and Cohen~\cite{bevier1996executable}, who specified the Synergy
 filesystem and created an executable model of the same in ACL2
 \cite{kaufmann2000}, down to the level of processes
-and file descriptors. On the proof front, they certified their model
+and file descriptors. They certified their model
 to preserve well-formedness of their data structures through their
-various file operations; however, they did not attempt to prove, for
-instance, read-over-write properties or crash consistency. Later,
+various file operations; however, they did not attempt to prove
+read-over-write properties or crash consistency. Later,
 Klein et al. with the SeL4 project~\cite{klein2009sel4} used
 Isabelle/HOL~\cite{nipkow2002isabelle} to verify a microkernel;
 while their microkernel design excluded file operations in order to keep
@@ -114,18 +114,17 @@ a proof of the correctness of this translation. Elsewhere, the SibylFS
 project~\cite{ridge2015sibylfs}, again using Isabelle/HOL, provided
 an executable specification for filesystems at a level of abstraction
 that could function across multiple operating systems including OSX
-and Unix. The Coq prover \cite{bertot2013interactive} has also been
-used, for instance, for FSCQ
-\cite{DBLP:conf/usenix/ChenZCCKZ16}, a state-of-the art filesystem
-which was built to have high performance and formally verified crash
-consistency properties.
+and Unix. The Coq prover \cite{bertot2013interactive} has been used to
+aid the development of FSCQ \cite{DBLP:conf/usenix/ChenZCCKZ16}, a
+state-of-the art filesystem built to have high performance and
+formally verified crash consistency properties.
 
 \subsection{Non-interactive theorem provers}
 Non-interactive theorem provers such as Z3 \cite{de2008z3}
-have also been used; Hyperkernel
+have also been used to analyse filesystem models. Hyperkernel
 \cite{Nelson:2017:HPV:3132747.3132748} is a recent effort which
-simplifies the xv6~\cite{cox6xv6} microkernel until the
-point where Z3 can verify its properties with its SMT solving
+simplifies the xv6~\cite{cox6xv6} microkernel until the point where Z3
+can verify its various properties with its SMT solving
 techniques. However, towards this end, all system calls in Hyperkernel
 are replaced with analogs which can terminate in constant time; while
 this approach is theoretically sound, it increases the chances of
@@ -133,7 +132,7 @@ discrepancies between the model and
 the implementation which may diminish the utility of the proofs or
 even render them moot. A stronger effort in the same domain is
 Yggdrasil~\cite{sigurbjarnarson2016push}, which focusses on verifying
-filesystems with the use of Z3. While the authors make substantial
+filesystems with the use of Z3. While the authors have made substantial
 progress in terms of the number of filesystem calls they support and
 the crash consistency guarantees they provide, they are subject to
 the limits of SMT solving which prevent them from modelling filesystem
@@ -141,6 +140,13 @@ features such as extents, which are essential to FAT32 and many other
 filesystems.
 
 \section{Program architecture}
+
+Modern filesystems, in response to the evolution of end users' needs
+over time, have developed a substantial amount of complexity in order
+to serve file operations in a fast and reliable manner. In order to
+address this complexity in a principled way, we choose to build our
+filesystem models incrementally, adding filesystem features in each
+new model and proving equivalence with earlier, simpler models.
 
 We have two concrete models for the FAT32 filesystem - \texttt{M2},
 which is a faithful representation of a FAT32 disk image in the form
@@ -152,14 +158,13 @@ for stobjs, and abstract them away in \texttt{M1} for easier reasoning
 without the syntactic constraints imposed on stobj arrays.
 
 These concrete filesystem models are based upon abstract models
-\texttt{L1} through \texttt{L6}. These models are constructed
-incrementally to allow for reuse of features in general, and
-specifically to allow read-over-write proofs for simpler models to be
-reused in more complex models. In the case of models \texttt{L4} and
+\texttt{L1} through \texttt{L6}. Incremental construction allows us to
+reuse read-over-write proofs for simpler models in more complex
+models. In the case of models \texttt{L4} and
 \texttt{L6}, we are able to show a refinement relationship
 without stuttering \cite{abadi1991existence}; however, for the other
 models we are able to reuse proofs without proving a formal refinement
-relation; these reuse relationships are summarised in figure
+relation. These reuse relationships are summarised in figure
 \ref{refinement-figure}. Much of the code and proof infrastructure is
 also shared between the abstract models and the concrete models by
 design. Details of the filesystem features introduced in the abstract
