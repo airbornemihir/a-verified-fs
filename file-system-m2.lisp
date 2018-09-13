@@ -430,12 +430,13 @@
                   (bpb_fatsz32 fat32-in-memory))))
          (bpb_secperclus fat32-in-memory)))
 
+;; This should be changed to include a constraint on bpb_rsvdseccnt - the spec
+;; says this field must not be 0 (page 9).
 (defund compliant-fat32-in-memoryp (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory :guard t))
   (and (fat32-in-memoryp fat32-in-memory)
        (>= (bpb_bytspersec fat32-in-memory) *ms-min-bytes-per-sector*)
        (>= (bpb_secperclus fat32-in-memory) 1)
-       ;; per spec, although this should be a named constant
        (>= (count-of-clusters fat32-in-memory)
            *ms-fat32-min-count-of-clusters*)
        ;; this isn't in the spec, but clearly implied
