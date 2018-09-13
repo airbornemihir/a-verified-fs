@@ -30,6 +30,38 @@
          (chars=>nats x))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
+(encapsulate
+  ()
+
+  (local (include-book "std/basic/inductions"
+                       :dir :system))
+
+  (defthm
+    logior-of-ash
+    (implies (and (integerp i1)
+                  (integerp i2)
+                  (natp c))
+             (equal (logior (ash i1 c) (ash i2 c))
+                    (ash (logior i1 i2) c)))
+    :instructions ((:in-theory (disable logior ash logcons logcar logcdr))
+                   (:induct (dec-induct c))
+                   :promote (:demote 2)
+                   (:dive 1)
+                   :s :top :promote (:dive 1 1)
+                   (:rewrite ash*)
+                   :s :nx (:rewrite ash*)
+                   :s :up (:rewrite logior*)
+                   :s :nx (:rewrite ash*)
+                   :s :top :bash :promote (:= c 0)
+                   (:drop 1 4)
+                   (:dive 1 1)
+                   (:rewrite ash*)
+                   :s :nx (:rewrite ash*)
+                   :s :top (:dive 2)
+                   (:rewrite ash*)
+                   :s
+                   :top :bash)))
+
 (make-event
  `(defstobj fat32-in-memory
 
@@ -4409,6 +4441,114 @@
                     (bpb_rsvdseccnt fat32-in-memory))))
     :hints (("goal" :in-theory (enable bpb_numfats)) )
     :rule-classes :linear))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-12
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory))
+        (unsigned-byte-p 32 (bpb_fatsz32 fat32-in-memory)))
+   (equal
+    (nth
+     23
+     (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+    (logtail 24 (bpb_fatsz32 fat32-in-memory))))
+  :hints
+  (("goal" :in-theory (e/d (get-remaining-rsvdbyts)
+                           (loghead fat32-in-memoryp floor loghead logtail)))
+   ("Subgoal 2"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (loghead logtail fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))
+   ))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-13
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory))
+        (unsigned-byte-p 32 (bpb_fatsz32 fat32-in-memory)))
+   (equal
+    (nth
+     22
+     (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+    (loghead 8 (logtail 16 (bpb_fatsz32 fat32-in-memory)))))
+  :hints
+  (("goal" :in-theory (e/d (get-remaining-rsvdbyts)
+                           (loghead fat32-in-memoryp floor loghead logtail)))
+   ("Subgoal 2"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (loghead logtail fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))
+   ))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-14
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory))
+        (unsigned-byte-p 32 (bpb_fatsz32 fat32-in-memory)))
+   (equal
+    (nth
+     21
+     (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+    (loghead 8 (logtail  8 (bpb_fatsz32 fat32-in-memory)))))
+  :hints
+  (("goal" :in-theory (e/d (get-remaining-rsvdbyts)
+                           (loghead fat32-in-memoryp floor loghead logtail)))
+   ("Subgoal 2"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (loghead logtail fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))
+   ))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-15
+  (implies
+   (and (integerp (* (bpb_bytspersec fat32-in-memory)
+                     (bpb_rsvdseccnt fat32-in-memory)))
+        (<= 90
+            (* (bpb_bytspersec fat32-in-memory)
+               (bpb_rsvdseccnt fat32-in-memory)))
+        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory))
+        (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory))
+        (unsigned-byte-p 32 (bpb_fatsz32 fat32-in-memory)))
+   (equal
+    (nth
+     20
+     (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+    (loghead 8 (bpb_fatsz32 fat32-in-memory))))
+  :hints
+  (("goal" :in-theory (e/d (get-remaining-rsvdbyts)
+                           (loghead fat32-in-memoryp floor loghead logtail)))
+   ("Subgoal 2"
+    :in-theory
+    (e/d (fat32-in-memory-to-string reserved-area-string)
+         (loghead logtail fat32-in-memoryp
+                  floor stobj-fa-table-to-string
+                  make-fat-string-ac)))
+   ))
 
 (encapsulate
   ()
