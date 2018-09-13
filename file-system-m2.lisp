@@ -4553,6 +4553,61 @@
 (encapsulate
   ()
 
+  (local (include-book "centaur/bitops/ihsext-basics" :dir :system))
+
+  (defthm fat32-in-memory-to-string-inversion-lemma-16
+    (implies (natp i)
+             (equal (combine32u (logtail 24 i)
+                                (loghead 8 (logtail 16 i))
+                                (loghead 8 (logtail 8 i))
+                                (loghead 8 i))
+                    i))
+    :instructions
+    (:promote (:dive 1)
+              :expand (:dive 2 2)
+              (:dive 2)
+              (:= (loghead 8 (loghead 16 i)))
+              :up (:dive 1 1)
+              (:= (logtail 8 (loghead 16 i)))
+              :up :up
+              (:rewrite fat32-in-memory-to-string-inversion-lemma-3)
+              :top (:dive 1)
+              (:= (logior (logior (ash (nfix (logtail 24 i)) 24)
+                                  (ash (nfix (loghead 8 (logtail 16 i)))
+                                       16))
+                          (loghead 16 i)))
+              (:dive 1 1)
+              (:= (ash (ash (logtail 24 i) 8) 16))
+              :up (:rewrite logior-of-ash)
+              (:dive 1 2)
+              :s :up (:dive 1 1)
+              (:= (logtail 8 (logtail 16 i)))
+              :up :up
+              (:rewrite fat32-in-memory-to-string-inversion-lemma-3)
+              :up
+              :up (:rewrite fat32-in-memory-to-string-inversion-lemma-3)
+              :top :bash)))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-17
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (equal
+    (combine32u
+     (logtail 24 (bpb_fatsz32 fat32-in-memory))
+     (loghead 8
+              (logtail 16 (bpb_fatsz32 fat32-in-memory)))
+     (loghead 8
+              (logtail 8 (bpb_fatsz32 fat32-in-memory)))
+     (loghead 8 (bpb_fatsz32 fat32-in-memory)))
+    (bpb_fatsz32 fat32-in-memory)))
+  :hints
+  (("goal" :in-theory (e/d (bpb_fatsz32)
+                           (loghead logtail ash logior)))))
+
+(encapsulate
+  ()
+
   (local (defthm nthcdr-of-nil (not (nthcdr n nil))))
 
   (local (defthm nthcdr-when->=-n-len-l (implies (and (true-listp l)
