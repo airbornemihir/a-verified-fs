@@ -151,7 +151,7 @@ new model and proving equivalence with earlier, simpler models.
 We have two concrete models for the FAT32 filesystem - \texttt{M2},
 which is a faithful representation of a FAT32 disk image in the form
 of a stobj~\cite{boyer2002single}, and \texttt{M1}, which represents the
-state of the FAT32 filesystem as a directory tree. This allows us to
+state of the filesystem as a directory tree. This allows us to
 address the practical details of updating a disk image in \texttt{M2},
 which benefits from the efficient array operations ACL2 provides
 for stobjs, and abstract them away in \texttt{M1} for easier reasoning
@@ -638,8 +638,8 @@ require two more properties for a ``sane'' filesystem.
   to prevent filesystem errors.
 \item Each disk index assigned to a regular file should be distinct
   from all other disk indices assigned to files - this does not hold
-  true, for example, in filesystems with hardlinks. FAT32 is not such
-  a filesystem, and we can use this fact to make our proofs easier.
+  true, for example, in filesystems with hardlinks. FAT32 lacks
+  hardlinks, and we can use this fact to make our proofs easier.
 \end{enumerate}
 
 These properties are invariants to be maintained across
@@ -677,8 +677,8 @@ constant \texttt{*ms-first-data-cluster*}, for instance, is $2$, and
 the last clause of the conjunction helps us maintain an invariant
 about all cluster indices including the root cluster being greater
 than or equal to $2$, which is stipulated in the FAT32 specification
-as previously noted and therefore necessary while reasoning about
-operations in the file allocation table.
+(section \ref{sec:fat32fs}) and therefore necessary while reasoning
+about operations in the file allocation table.
 
 \medskip
 
@@ -747,10 +747,14 @@ succeed if and only if there is a sufficient number of free blocks
 available on the disk, and when we later model FAT32's file allocation
 table in \texttt{L6}, we are able to extend this result by proving a
 refinement relationship between these two allocation data structures
-as described earlier. While it is not straightforward to reuse this
-result for the file allocation table in \texttt{M2}, we are still able
-to benefit from reusing the allocation algorithms developed in
-\texttt{L6} as well as the properties proved about them.
+as described earlier.
+
+While it is not straightforward to reuse this result for the file
+allocation table in \texttt{M2}, we are still able to benefit from
+reusing the \texttt{L6} algorithms for disk block allocation and
+reconstruction of file contents for a given file. As a result, our
+\texttt{L6} proofs for the correctness of these algorithms are also
+available for reuse in \texttt{M2}.
 
 \section{Stobjs and co-simulation}
 
@@ -821,7 +825,7 @@ This work formalises a FAT32-like filesystem and proves
 read-over-write properties through refinement of a series of
 models. Further, it proves the correctness of FAT32's allocation and
 garbage collection mechanisms, and provides artefacts to be used in a
-subsequent realistic model of FAT32.
+subsequent filesystem models.
 
 \section{Future work}
 
