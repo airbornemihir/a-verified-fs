@@ -809,7 +809,7 @@
   update-stobj-array
   (name array-length bit-width array-updater array-accessor constant
         stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3 lemma-name4
-        lemma-name5 lemma-name6)
+        lemma-name5 lemma-name6 lemma-name7)
   `(encapsulate
      nil
 
@@ -920,7 +920,12 @@
         (resize-data-region i
                     (,name v ,stobj))
         (,name v (resize-data-region i ,stobj)))
-       :hints (("goal" :in-theory (enable resize-data-region))))))
+       :hints (("goal" :in-theory (enable resize-data-region))))
+
+     (defthm ,lemma-name7
+       (equal (fat-length (,name v ,stobj))
+              (fat-length ,stobj))
+       :hints (("goal" :in-theory (enable fat-length))))))
 
 (update-stobj-array
  update-bs_jmpboot bs_jmpboot-length 8
@@ -931,7 +936,8 @@
  update-bs_jmpboot-correctness-3
  update-bs_jmpboot-correctness-4
  update-bs_jmpboot-correctness-5
- update-bs_jmpboot-correctness-6)
+ update-bs_jmpboot-correctness-6
+ update-bs_jmpboot-correctness-7)
 
 ;; (update-stobj-array
 ;;  update-bs_oemname bs_oemname-length 8
@@ -999,7 +1005,8 @@
  update-bs_vollab-correctness-3
  update-bs_vollab-correctness-4
  update-bs_vollab-correctness-5
- update-bs_vollab-correctness-6)
+ update-bs_vollab-correctness-6
+ update-bs_vollab-correctness-7)
 
 (update-stobj-array
  update-bs_filsystype bs_filsystype-length 8
@@ -1010,7 +1017,8 @@
  update-bs_filsystype-correctness-3
  update-bs_filsystype-correctness-4
  update-bs_filsystype-correctness-5
- update-bs_filsystype-correctness-6)
+ update-bs_filsystype-correctness-6
+ update-bs_filsystype-correctness-7)
 
 (update-stobj-array
  update-bpb_reserved bpb_reserved-length 8
@@ -1021,7 +1029,8 @@
  update-bpb_reserved-correctness-3
  update-bpb_reserved-correctness-4
  update-bpb_reserved-correctness-5
- update-bpb_reserved-correctness-6)
+ update-bpb_reserved-correctness-6
+ update-bpb_reserved-correctness-7)
 
 (encapsulate
   ()
