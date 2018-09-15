@@ -5342,6 +5342,18 @@
        (* (bpb_fatsz32 fat32-in-memory)
           1/4 (bpb_bytspersec fat32-in-memory))
        (fat-length fat32-in-memory))
+      (equal
+       (*
+        (bpb_bytspersec fat32-in-memory)
+        (bpb_secperclus fat32-in-memory)
+        (floor
+         (+
+          (- (bpb_rsvdseccnt fat32-in-memory))
+          (bpb_totsec32 fat32-in-memory)
+          (- (* (bpb_fatsz32 fat32-in-memory)
+                (bpb_numfats fat32-in-memory))))
+         (bpb_secperclus fat32-in-memory)))
+       (data-region-length fat32-in-memory))
       ;; this is terrible and needs to go
       (integerp (* (bpb_bytspersec fat32-in-memory)
                    (bpb_rsvdseccnt fat32-in-memory))))
