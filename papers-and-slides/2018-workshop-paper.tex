@@ -504,7 +504,7 @@ name).
 
 \noindent
 \begin{verbatim}
-(defthm l1-read-over-write-1
+(defthm l1-read-after-write-1
   (implies (and (l1-fs-p fs)
                 (stringp text)
                 (symbol-listp path)
@@ -513,7 +513,7 @@ name).
                 (stringp (l1-stat path fs)))
            (equal (l1-rdchs path (l1-wrchs path fs start text) start n) text)))
 
-(defthm l1-read-over-write-2
+(defthm l1-read-after-write-2
   (implies (and (l1-fs-p fs)
                 (stringp text2)
                 (symbol-listp path1)
@@ -560,7 +560,7 @@ establish the correctness of read and write operations in the
 respective model with respect to a previous model. A representation of
 such an equivalence proof can be seen in figures
 \ref{l2-wrchs-correctness-1}, \ref{l2-rdchs-correctness-1} and
-\ref{l2-read-over-write-1}, which respectively show the equivalence
+\ref{l2-read-after-write-1}, which respectively show the equivalence
 proof for \texttt{l2-wrchs}, the equivalence proof for
 \texttt{l2-rdchs} and the composition of these to obtain the first
 read-over-write theorem for model \texttt{L2}.
@@ -600,8 +600,8 @@ read-over-write theorem for model \texttt{L2}.
 
 \begin{figure}
   \centering
-  \caption{l2-read-over-write-1}
-  \label{l2-read-over-write-1}
+  \caption{l2-read-after-write-1}
+  \label{l2-read-after-write-1}
   \begin{tikzpicture}
     \matrix (m) [matrix of math nodes,row sep=3em,column sep=4em,minimum width=2em]
             {
