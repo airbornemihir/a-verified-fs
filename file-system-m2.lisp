@@ -5243,6 +5243,22 @@
          (fat-length fat32-in-memory))
   :hints (("goal" :in-theory (enable fat-length update-bpb_bytspersec))))
 
+(defthm
+  update-fati-of-update-bs_filsystype
+  (equal
+   (update-fati i v1
+                (update-bs_filsystype v2 fat32-in-memory))
+   (update-bs_filsystype v2 (update-fati i v1 fat32-in-memory)))
+  :hints (("goal" :in-theory (enable update-fati))))
+
+(defthm
+  update-fat-of-update-bs_filsystype
+  (equal
+   (update-fat (update-bs_filsystype v fat32-in-memory)
+               str pos)
+   (update-bs_filsystype v
+                         (update-fat fat32-in-memory str pos))))
+
 (encapsulate
   ()
 
