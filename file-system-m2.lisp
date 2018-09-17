@@ -4712,143 +4712,83 @@
   (("goal" :in-theory (e/d (bpb_fatsz32)
                            (loghead logtail ash logior)))))
 
-(defthm
-  cluster-size-of-update-bs_filsystype
-  (equal (cluster-size (update-bs_filsystype v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(defmacro
+    cluster-size-macro
+    (name stobj cluster-size-of-name)
+  `(defthm
+     ,cluster-size-of-name
+     (equal (cluster-size (,name v ,stobj))
+            (cluster-size ,stobj))
+     :hints (("goal" :in-theory (enable cluster-size)))))
 
-(defthm
-  cluster-size-of-update-bs_vollab
-  (equal (cluster-size (update-bs_vollab v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bs_filsystype fat32-in-memory
+                    cluster-size-of-update-bs_filsystype)
 
-(defthm
-  cluster-size-of-update-bs_volid
-  (equal (cluster-size (update-bs_volid v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bs_vollab fat32-in-memory
+                    cluster-size-of-update-bs_vollab)
 
-(defthm
-  cluster-size-of-update-bs_bootsig
-  (equal (cluster-size (update-bs_bootsig v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bs_volid fat32-in-memory
+                    cluster-size-of-update-bs_volid)
 
-(defthm
-  cluster-size-of-update-bs_reserved1
-  (equal (cluster-size (update-bs_reserved1 v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bs_bootsig fat32-in-memory
+                    cluster-size-of-update-bs_bootsig)
 
-(defthm
-  cluster-size-of-update-bs_drvnum
-  (equal (cluster-size (update-bs_drvnum v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bs_reserved1 fat32-in-memory
+                    cluster-size-of-update-bs_reserved1)
 
-(defthm
-  cluster-size-of-update-bpb_bkbootsec
-  (equal (cluster-size (update-bpb_bkbootsec v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bs_drvnum fat32-in-memory
+                    cluster-size-of-update-bs_drvnum)
 
-(defthm
-  cluster-size-of-update-bpb_fsinfo
-  (equal (cluster-size (update-bpb_fsinfo v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_bkbootsec fat32-in-memory
+                    cluster-size-of-update-bpb_bkbootsec)
 
-(defthm
-  cluster-size-of-update-bpb_rootclus
-  (equal (cluster-size (update-bpb_rootclus v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_fsinfo fat32-in-memory
+                    cluster-size-of-update-bpb_fsinfo)
 
-(defthm
-  cluster-size-of-update-bpb_fsver_major
-  (equal (cluster-size (update-bpb_fsver_major v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_rootclus fat32-in-memory
+                    cluster-size-of-update-bpb_rootclus)
 
-(defthm
-  cluster-size-of-update-bpb_fsver_minor
-  (equal (cluster-size (update-bpb_fsver_minor v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_fsver_major fat32-in-memory
+                    cluster-size-of-update-bpb_fsver_major)
 
-(defthm
-  cluster-size-of-update-bpb_extflags
-  (equal (cluster-size (update-bpb_extflags v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_fsver_minor fat32-in-memory
+                    cluster-size-of-update-bpb_fsver_minor)
 
-(defthm
-  cluster-size-of-update-bpb_fatsz32
-  (equal (cluster-size (update-bpb_fatsz32 v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_extflags fat32-in-memory
+                    cluster-size-of-update-bpb_extflags)
 
-(defthm
-  cluster-size-of-update-bpb_totsec32
-  (equal (cluster-size (update-bpb_totsec32 v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_fatsz32 fat32-in-memory
+                    cluster-size-of-update-bpb_fatsz32)
 
-(defthm
-  cluster-size-of-update-bpb_hiddsec
-  (equal (cluster-size (update-bpb_hiddsec v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_totsec32 fat32-in-memory
+                    cluster-size-of-update-bpb_totsec32)
 
-(defthm
-  cluster-size-of-update-bpb_numheads
-  (equal (cluster-size (update-bpb_numheads v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_hiddsec fat32-in-memory
+                    cluster-size-of-update-bpb_hiddsec)
 
-(defthm
-  cluster-size-of-update-bpb_secpertrk
-  (equal (cluster-size (update-bpb_secpertrk v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_numheads fat32-in-memory
+                    cluster-size-of-update-bpb_numheads)
 
-(defthm
-  cluster-size-of-update-bpb_fatsz16
-  (equal (cluster-size (update-bpb_fatsz16 v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_secpertrk fat32-in-memory
+                    cluster-size-of-update-bpb_secpertrk)
 
-(defthm
-  cluster-size-of-update-bpb_media
-  (equal (cluster-size (update-bpb_media v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_fatsz16 fat32-in-memory
+                    cluster-size-of-update-bpb_fatsz16)
 
-(defthm
-  cluster-size-of-update-bpb_totsec16
-  (equal (cluster-size (update-bpb_totsec16 v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_media fat32-in-memory
+                    cluster-size-of-update-bpb_media)
 
-(defthm
-  cluster-size-of-update-bpb_rootentcnt
-  (equal (cluster-size (update-bpb_rootentcnt v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_totsec16 fat32-in-memory
+                    cluster-size-of-update-bpb_totsec16)
 
-(defthm
-  cluster-size-of-update-bpb_numfats
-  (equal (cluster-size (update-bpb_numfats v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_rootentcnt fat32-in-memory
+                    cluster-size-of-update-bpb_rootentcnt)
 
-(defthm
-  cluster-size-of-update-bpb_rsvdseccnt
-  (equal (cluster-size (update-bpb_rsvdseccnt v fat32-in-memory))
-         (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+(cluster-size-macro update-bpb_numfats fat32-in-memory
+                    cluster-size-of-update-bpb_numfats)
+
+(cluster-size-macro update-bpb_rsvdseccnt fat32-in-memory
+                    cluster-size-of-update-bpb_rsvdseccnt)
 
 (defthm
   cluster-size-of-update-bpb_secperclus
