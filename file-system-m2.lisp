@@ -5243,21 +5243,150 @@
          (fat-length fat32-in-memory))
   :hints (("goal" :in-theory (enable fat-length update-bpb_bytspersec))))
 
+(defmacro
+    update-fat-macro
+    (name stobj update-fati-of-name update-fat-of-name)
+  `(encapsulate
+     nil
+
+     (defthm
+       ,update-fati-of-name
+       (equal
+        (update-fati i v1
+                     (,name v2 ,stobj))
+        (,name v2 (update-fati i v1 ,stobj)))
+       :hints (("goal" :in-theory (enable update-fati ,name))))
+
+     (defthm
+       ,update-fat-of-name
+       (equal
+        (update-fat (,name v ,stobj)
+                    str pos)
+        (,name v
+               (update-fat ,stobj str pos))))))
+
+(update-fat-macro update-bs_filsystype fat32-in-memory
+                  update-fati-of-update-bs_filsystype
+                  update-fat-of-update-bs_filsystype)
+
+(update-fat-macro update-bs_vollab fat32-in-memory
+                  update-fati-of-update-bs_vollab
+                  update-fat-of-update-bs_vollab)
+
+(update-fat-macro update-bs_volid fat32-in-memory
+                  update-fati-of-update-bs_volid
+                  update-fat-of-update-bs_volid)
+
+(update-fat-macro update-bs_bootsig fat32-in-memory
+                  update-fati-of-update-bs_bootsig
+                  update-fat-of-update-bs_bootsig)
+
+(update-fat-macro update-bs_reserved1 fat32-in-memory
+                  update-fati-of-update-bs_reserved1
+                  update-fat-of-update-bs_reserved1)
+
+(update-fat-macro update-bs_drvnum fat32-in-memory
+                  update-fati-of-update-bs_drvnum
+                  update-fat-of-update-bs_drvnum)
+
+(update-fat-macro update-bpb_bkbootsec fat32-in-memory
+                  update-fati-of-update-bpb_bkbootsec
+                  update-fat-of-update-bpb_bkbootsec)
+
+(update-fat-macro update-bpb_fsinfo fat32-in-memory
+                  update-fati-of-update-bpb_fsinfo
+                  update-fat-of-update-bpb_fsinfo)
+
+(update-fat-macro update-bpb_rootclus fat32-in-memory
+                  update-fati-of-update-bpb_rootclus
+                  update-fat-of-update-bpb_rootclus)
+
+(update-fat-macro update-bpb_fsver_major fat32-in-memory
+                  update-fati-of-update-bpb_fsver_major
+                  update-fat-of-update-bpb_fsver_major)
+
+(update-fat-macro update-bpb_fsver_minor fat32-in-memory
+                  update-fati-of-update-bpb_fsver_minor
+                  update-fat-of-update-bpb_fsver_minor)
+
+(update-fat-macro update-bpb_extflags fat32-in-memory
+                  update-fati-of-update-bpb_extflags
+                  update-fat-of-update-bpb_extflags)
+
+(update-fat-macro update-bpb_fatsz32 fat32-in-memory
+                  update-fati-of-update-bpb_fatsz32
+                  update-fat-of-update-bpb_fatsz32)
+
+(update-fat-macro update-bpb_totsec32 fat32-in-memory
+                  update-fati-of-update-bpb_totsec32
+                  update-fat-of-update-bpb_totsec32)
+
+(update-fat-macro update-bpb_hiddsec fat32-in-memory
+                  update-fati-of-update-bpb_hiddsec
+                  update-fat-of-update-bpb_hiddsec)
+
+(update-fat-macro update-bpb_numheads fat32-in-memory
+                  update-fati-of-update-bpb_numheads
+                  update-fat-of-update-bpb_numheads)
+
+(update-fat-macro update-bpb_secpertrk fat32-in-memory
+                  update-fati-of-update-bpb_secpertrk
+                  update-fat-of-update-bpb_secpertrk)
+
+(update-fat-macro update-bpb_fatsz16 fat32-in-memory
+                  update-fati-of-update-bpb_fatsz16
+                  update-fat-of-update-bpb_fatsz16)
+
+(update-fat-macro update-bpb_media fat32-in-memory
+                  update-fati-of-update-bpb_media
+                  update-fat-of-update-bpb_media)
+
+(update-fat-macro update-bpb_totsec16 fat32-in-memory
+                  update-fati-of-update-bpb_totsec16
+                  update-fat-of-update-bpb_totsec16)
+
+(update-fat-macro update-bpb_rootentcnt fat32-in-memory
+                  update-fati-of-update-bpb_rootentcnt
+                  update-fat-of-update-bpb_rootentcnt)
+
+(update-fat-macro update-bpb_numfats fat32-in-memory
+                  update-fati-of-update-bpb_numfats
+                  update-fat-of-update-bpb_numfats)
+
+(update-fat-macro update-bpb_rsvdseccnt fat32-in-memory
+                  update-fati-of-update-bpb_rsvdseccnt
+                  update-fat-of-update-bpb_rsvdseccnt)
+
+(update-fat-macro update-bpb_secperclus fat32-in-memory
+                  update-fati-of-update-bpb_secperclus
+                  update-fat-of-update-bpb_secperclus)
+
+(update-fat-macro update-bpb_bytspersec fat32-in-memory
+                  update-fati-of-update-bpb_bytspersec
+                  update-fat-of-update-bpb_bytspersec)
+
 (defthm
-  update-fati-of-update-bs_filsystype
+  update-fati-of-update-bs_oemname
   (equal
-   (update-fati i v1
-                (update-bs_filsystype v2 fat32-in-memory))
-   (update-bs_filsystype v2 (update-fati i v1 fat32-in-memory)))
+   (update-fati i v
+                (update-bs_oemname fat32-in-memory str len pos))
+   (update-bs_oemname (update-fati i v fat32-in-memory)
+                      str len pos))
   :hints (("goal" :in-theory (enable update-fati))))
 
 (defthm
-  update-fat-of-update-bs_filsystype
+  update-fat-of-update-bs_oemname
   (equal
-   (update-fat (update-bs_filsystype v fat32-in-memory)
-               str pos)
-   (update-bs_filsystype v
-                         (update-fat fat32-in-memory str pos))))
+   (update-fat (update-bs_oemname fat32-in-memory str1 len pos1)
+               str2 pos2)
+   (update-bs_oemname (update-fat fat32-in-memory str2 pos2)
+                      str1 len pos1))
+  :hints
+  (("goal" :induct (update-fat fat32-in-memory str2 pos2))))
+
+(update-fat-macro update-bs_jmpboot fat32-in-memory
+                  update-fati-of-update-bs_jmpboot
+                  update-fat-of-update-bs_jmpboot)
 
 (encapsulate
   ()
