@@ -15,12 +15,6 @@
 (include-book "insert-text")
 (include-book "fat32")
 
-(defthm nth-of-chars=>nats
-  (equal (nth n (chars=>nats chars))
-         (if (< (nfix n) (len chars))
-             (char-code (nth n chars))
-             nil))
-  :hints (("goal" :in-theory (enable chars=>nats))))
 
 (defthm nth-of-string=>nats
   (equal (nth n (string=>nats string))
