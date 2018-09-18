@@ -16,8 +16,7 @@
 (encapsulate
   ()
 
-  (local (include-book "std/basic/inductions"
-                       :dir :system))
+  (local (include-book "std/basic/inductions" :dir :system))
   (defcong
     str::charlisteqv equal (chars=>nats x)
     1
@@ -33,8 +32,7 @@
 (encapsulate
   ()
 
-  (local (include-book "std/basic/inductions"
-                       :dir :system))
+  (local (include-book "std/basic/inductions" :dir :system))
 
   (defthm
     logior-of-ash
@@ -1323,8 +1321,7 @@
           update-multiple-elements-fn-correctness-1-lemma-11
           bpb_totsec32)))))))
 
-  (local (include-book "std/lists/nthcdr"
-                       :dir :system))
+  (local (include-book "std/lists/nthcdr" :dir :system))
 
   (defthmd
     update-multiple-elements-fn-correctness-1
@@ -4531,8 +4528,7 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-11
@@ -5006,8 +5002,7 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (local
    (defthm fat32-in-memory-to-string-inversion-lemma-23
