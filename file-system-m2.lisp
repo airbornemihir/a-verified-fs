@@ -4276,14 +4276,13 @@
                    reserved-area-string
                    fat-string data-region-string)))
 
+;; There's an nfix here because the proof fails in a weird way without it. I'm
+;; not sure whether it'll be useful to prove (natp (bpb_numfats
+;; fat32-in-memory)).
 (defthm
   length-of-fat32-in-memory-to-string
   (implies
-   (and (integerp (* (bpb_bytspersec fat32-in-memory)
-                     (bpb_rsvdseccnt fat32-in-memory)))
-        (<= 90
-            (* (bpb_bytspersec fat32-in-memory)
-               (bpb_rsvdseccnt fat32-in-memory))))
+   (compliant-fat32-in-memoryp fat32-in-memory)
    (equal
     (len (explode (fat32-in-memory-to-string fat32-in-memory)))
     (+ (* (bpb_rsvdseccnt fat32-in-memory)
@@ -4293,23 +4292,7 @@
           4)
        (data-region-length fat32-in-memory))))
   :hints
-  (("goal" :in-theory (enable fat32-in-memory-to-string)))
-  ;; :rule-classes
-  ;; ((:rewrite :corollary
-  ;;            (implies
-  ;;             (compliant-fat32-in-memoryp fat32-in-memory)
-  ;;             (equal
-  ;;              (len (explode (fat32-in-memory-to-string fat32-in-memory)))
-  ;;              (+ (* (bpb_rsvdseccnt fat32-in-memory)
-  ;;                    (bpb_bytspersec fat32-in-memory))
-  ;;                 (* (bpb_numfats fat32-in-memory)
-  ;;                    (fat-length fat32-in-memory)
-  ;;                    4)
-  ;;                 (data-region-length fat32-in-memory))))
-  ;;            :hints (("Goal" :in-theory (e/d (compliant-fat32-in-memoryp) (fat32-in-memoryp))
-  ;;                     :cases
-  ;;                     ((<= 512 (* (BPB_BYTSPERSEC FAT32-IN-MEMORY) (bpb_secperclus FAT32-IN-MEMORY))))))))
-  )
+  (("goal" :in-theory (enable fat32-in-memory-to-string))))
 
 ;; These hints aren't great, but they were obtained with the help of
 ;; accumulated-persistence which can't seem to help trim them any further...
