@@ -4294,31 +4294,51 @@
   :hints
   (("goal" :in-theory (enable fat32-in-memory-to-string))))
 
-;; These hints aren't great, but they were obtained with the help of
-;; accumulated-persistence which can't seem to help trim them any further...
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-1
-  (implies
-   (and (integerp (* (bpb_bytspersec fat32-in-memory)
-                     (bpb_rsvdseccnt fat32-in-memory)))
-        (<= 90
-            (* (bpb_bytspersec fat32-in-memory)
-               (bpb_rsvdseccnt fat32-in-memory)))
-        (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory)))
-   (equal
-    (nth 12
-         (get-initial-bytes
-          (fat32-in-memory-to-string fat32-in-memory)))
-    (logtail 8 (bpb_bytspersec fat32-in-memory))))
-  :hints
-  (("goal" :in-theory (e/d (get-initial-bytes)
-                           (logtail fat32-in-memoryp floor)))
-   ("goal''"
-    :in-theory
-    (e/d (fat32-in-memory-to-string reserved-area-string)
-         (logtail fat32-in-memoryp
-                  floor stobj-fa-table-to-string
-                  make-fat-string-ac)))))
+(encapsulate
+  ()
+
+  (local
+   (in-theory (e/d (fat32-in-memory-to-string get-initial-bytes)
+                   (logtail fat32-in-memoryp
+                            floor stobj-fa-table-to-string
+                            make-fat-string-ac))))
+
+  (local
+   (defthm
+     whatever-lemma-1
+     (implies
+      (compliant-fat32-in-memoryp fat32-in-memory)
+      (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory)))
+     :rule-classes
+     ((:linear
+       :corollary
+       (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                (< (bpb_bytspersec fat32-in-memory)
+                   65536)))
+      (:linear
+       :corollary
+       (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                (<= 0 (bpb_bytspersec fat32-in-memory))))
+      (:rewrite
+       :corollary
+       (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                (integerp (bpb_bytspersec fat32-in-memory)))))
+     :hints
+     (("goal"
+       :in-theory (enable compliant-fat32-in-memoryp
+                          fat32-in-memoryp bpb_bytspersec)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-1
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth 12
+           (get-initial-bytes
+            (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 8 (bpb_bytspersec fat32-in-memory))))
+    :hints
+    (("subgoal 56''" :in-theory (enable reserved-area-string)))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-2
