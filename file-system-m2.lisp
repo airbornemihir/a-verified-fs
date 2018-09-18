@@ -504,8 +504,7 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
     compliant-fat32-in-memoryp-correctness-1
@@ -1704,8 +1703,7 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (local
    (defthm read-reserved-area-guard-lemma-5
@@ -2254,8 +2252,7 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
     read-reserved-area-correctness-1
@@ -2394,8 +2391,7 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
     get-dir-ent-helper-alt
@@ -2522,8 +2518,7 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defun
     get-contents-from-clusterchain
@@ -3226,8 +3221,7 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
     data-region-length-of-stobj-set-clusters

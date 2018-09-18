@@ -384,8 +384,7 @@
    (include-book "ihs/logops-lemmas" :dir :system))
 
   (local
-   (include-book "arithmetic/top-with-meta"
-                 :dir :system))
+   (include-book "arithmetic/top-with-meta" :dir :system))
 
   (local
    (defun induction-scheme (bits x)
