@@ -4006,6 +4006,32 @@
 (encapsulate
   ()
 
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    reserved-area-string-guard-lemma-7
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (natp (- (* (bpb_bytspersec fat32-in-memory)
+                         (bpb_rsvdseccnt fat32-in-memory))
+                      90)))
+    :rule-classes
+    ((:linear
+      :corollary
+      (implies (compliant-fat32-in-memoryp fat32-in-memory)
+               (<= 90
+                   (* (bpb_bytspersec fat32-in-memory)
+                      (bpb_rsvdseccnt fat32-in-memory)))))
+     (:rewrite
+      :corollary
+      (implies (compliant-fat32-in-memoryp fat32-in-memory)
+               (integerp (* (bpb_bytspersec fat32-in-memory)
+                            (bpb_rsvdseccnt fat32-in-memory))))))
+    :hints (("goal" :in-theory (e/d (compliant-fat32-in-memoryp)
+                                    (fat32-in-memoryp))))))
+
+(encapsulate
+  ()
+
   (local (include-book "ihs/logops-lemmas" :dir :system))
 
   (local
@@ -4053,10 +4079,7 @@
 
   (defund reserved-area-string (fat32-in-memory)
     (declare (xargs :stobjs fat32-in-memory
-                    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                                (<= 90
-                                    (* (BPB_BYTSPERSEC FAT32-IN-MEMORY)
-                                       (BPB_RSVDSECCNT FAT32-IN-MEMORY))))
+                    :guard (compliant-fat32-in-memoryp fat32-in-memory)
                     :guard-debug t
                     :guard-hints (("Goal"
                                    :do-not-induct t
@@ -4065,7 +4088,9 @@
                                                        bs_jmpbooti
                                                        bs_oemnamei
                                                        bs_filsystypei
-                                                       bpb_reservedi)))))
+                                                       bpb_reservedi)
+                                   :use
+                                   reserved-area-string-guard-lemma-7))))
     (coerce
      (append
       ;; initial bytes
@@ -4168,11 +4193,7 @@
 (defthm
   length-of-reserved-area-string
   (implies
-   (and (integerp (* (bpb_bytspersec fat32-in-memory)
-                     (bpb_rsvdseccnt fat32-in-memory)))
-        (<= 90
-            (* (bpb_bytspersec fat32-in-memory)
-               (bpb_rsvdseccnt fat32-in-memory))))
+   (compliant-fat32-in-memoryp fat32-in-memory)
    (equal (len (explode (reserved-area-string fat32-in-memory)))
           (* (bpb_rsvdseccnt fat32-in-memory)
              (bpb_bytspersec fat32-in-memory))))
