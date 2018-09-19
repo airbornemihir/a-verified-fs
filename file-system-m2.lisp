@@ -925,7 +925,7 @@
   update-stobj-array
   (name array-length bit-width array-updater array-accessor constant
         stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3 lemma-name4
-        lemma-name5 lemma-name6 lemma-name7)
+        lemma-name5 lemma-name6 lemma-name7 lemma-name8)
   `(encapsulate
      nil
 
@@ -1041,7 +1041,12 @@
      (defthm ,lemma-name7
        (equal (fat-length (,name v ,stobj))
               (fat-length ,stobj))
-       :hints (("goal" :in-theory (enable fat-length))))))
+       :hints (("goal" :in-theory (enable fat-length))))
+
+     (defthm ,lemma-name8
+       (equal (data-region-length (,name v ,stobj))
+              (data-region-length ,stobj))
+       :hints (("goal" :in-theory (enable data-region-length))))))
 
 (update-stobj-array
  update-bs_jmpboot bs_jmpboot-length 8
@@ -1053,7 +1058,8 @@
  update-bs_jmpboot-correctness-4
  update-bs_jmpboot-correctness-5
  update-bs_jmpboot-correctness-6
- update-bs_jmpboot-correctness-7)
+ update-bs_jmpboot-correctness-7
+ update-bs_jmpboot-correctness-8)
 
 ;; (update-stobj-array
 ;;  update-bs_oemname bs_oemname-length 8
@@ -1116,6 +1122,11 @@
   (equal (fat-length (update-bs_oemname fat32-in-memory str len pos))
          (fat-length fat32-in-memory))
   :hints (("goal" :in-theory (enable fat-length))))
+(defthm
+  update-bs_oemname-correctness-8
+  (equal (data-region-length (update-bs_oemname fat32-in-memory str len pos))
+         (data-region-length fat32-in-memory))
+  :hints (("goal" :in-theory (enable data-region-length))))
 
 (update-stobj-array
  update-bs_vollab bs_vollab-length 8
@@ -1127,7 +1138,8 @@
  update-bs_vollab-correctness-4
  update-bs_vollab-correctness-5
  update-bs_vollab-correctness-6
- update-bs_vollab-correctness-7)
+ update-bs_vollab-correctness-7
+ update-bs_vollab-correctness-8)
 
 (update-stobj-array
  update-bs_filsystype bs_filsystype-length 8
@@ -1139,7 +1151,8 @@
  update-bs_filsystype-correctness-4
  update-bs_filsystype-correctness-5
  update-bs_filsystype-correctness-6
- update-bs_filsystype-correctness-7)
+ update-bs_filsystype-correctness-7
+ update-bs_filsystype-correctness-8)
 
 (update-stobj-array
  update-bpb_reserved bpb_reserved-length 8
@@ -1151,7 +1164,8 @@
  update-bpb_reserved-correctness-4
  update-bpb_reserved-correctness-5
  update-bpb_reserved-correctness-6
- update-bpb_reserved-correctness-7)
+ update-bpb_reserved-correctness-7
+ update-bpb_reserved-correctness-8)
 
 (encapsulate
   ()
