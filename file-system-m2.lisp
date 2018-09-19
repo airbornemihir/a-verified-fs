@@ -607,6 +607,8 @@
        (>= (count-of-clusters fat32-in-memory)
            *ms-fat32-min-count-of-clusters*)
        (>= (bpb_rsvdseccnt fat32-in-memory) 1)
+       (>= (bpb_numfats fat32-in-memory) 1)
+       (>= (bpb_fatsz32 fat32-in-memory) 1)
        ;; this isn't in the spec, but clearly implied
        (>= (bpb_rootclus fat32-in-memory) *ms-first-data-cluster*)))
 
@@ -625,6 +627,8 @@
                       *ms-fat32-min-count-of-clusters*)
                   (>= (bpb_secperclus fat32-in-memory) 1)
                   (>= (bpb_rsvdseccnt fat32-in-memory) 1)
+                  (>= (bpb_numfats fat32-in-memory) 1)
+                  (>= (bpb_fatsz32 fat32-in-memory) 1)
                   (>= (bpb_rootclus fat32-in-memory)
                       *ms-first-data-cluster*)))
     :hints
@@ -649,6 +653,8 @@
                         *ms-fat32-min-count-of-clusters*)
                     (>= (bpb_secperclus fat32-in-memory) 1)
                     (>= (bpb_rsvdseccnt fat32-in-memory) 1)
+                    (>= (bpb_numfats fat32-in-memory) 1)
+                    (>= (bpb_fatsz32 fat32-in-memory) 1)
                     (>= (bpb_rootclus fat32-in-memory)
                         *ms-first-data-cluster*)))))))
 
