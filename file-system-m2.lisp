@@ -5454,8 +5454,9 @@
   :hints
   (("goal" :in-theory (e/d (bpb_fatsz32)
                            (loghead logtail ash logior)))))
+
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-22
+  fat32-in-memory-to-string-inversion-lemma-19
   (implies
    (fat32-in-memoryp fat32-in-memory)
    (equal
@@ -5470,6 +5471,33 @@
   :hints
   (("goal" :in-theory (e/d (bpb_totsec32)
                            (loghead logtail ash logior)))))
+
+(encapsulate
+  ()
+
+  (local (defthm fat32-in-memory-to-string-inversion-lemma-20
+           (equal (revappend x y)
+                  (append (rev x) y))
+           :hints (("goal" :in-theory (enable rev)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-21
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (equal
+              (nthcdr
+               (* (bpb_bytspersec fat32-in-memory)
+                  (bpb_rsvdseccnt fat32-in-memory))
+               (explode (fat32-in-memory-to-string
+                         fat32-in-memory)))
+              (append
+               (explode (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                                            fat32-in-memory ""))
+               (reverse
+                (explode
+                 (nats=>string (revappend (take (data-region-length fat32-in-memory)
+                                                (nth *data-regioni* fat32-in-memory))
+                                          nil)))))))
+    :hints (("goal" :in-theory (enable fat32-in-memory-to-string)))))
 
 (encapsulate
   ()
@@ -5517,7 +5545,14 @@
               :promote (:demote 1)
               (:dive 1 1)
               (:= t)
-              :top :bash)))
+              :top :bash))
+
+  (defthm fat32-in-memory-to-string-inversion-lemma-22
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<=
+              (* 4 (fat-length fat32-in-memory))
+              (* (bpb_numfats fat32-in-memory)
+                 4 (fat-length fat32-in-memory))))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-25
