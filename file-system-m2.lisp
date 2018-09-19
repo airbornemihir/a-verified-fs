@@ -5239,6 +5239,35 @@
    (data-region-length (update-fat fat32-in-memory str pos))
    (data-region-length fat32-in-memory)))
 
+(defmacro
+    update-bs_jmpboot-macro
+    (name stobj update-bs_jmpboot-of-name)
+  `(defthm
+     ,update-bs_jmpboot-of-name
+     (equal
+      (update-bs_jmpboot
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bs_jmpboot v1 ,stobj)))
+     :hints (("goal" :in-theory (enable ,name)))))
+
+(update-bs_jmpboot-macro update-bpb_bytspersec fat32-in-memory
+                         update-bs_oemname-of-update-bpb_bytspersec)
+
+(update-bs_jmpboot-macro update-bpb_fatsz32 fat32-in-memory
+                         update-bs_oemname-of-update-bpb_fatsz32)
+
+(update-bs_jmpboot-macro update-bpb_numfats fat32-in-memory
+                         update-bs_oemname-of-update-bpb_numfats)
+
+(update-bs_jmpboot-macro update-bpb_rsvdseccnt fat32-in-memory
+                         update-bs_oemname-of-update-bpb_rsvdseccnt)
+
+(update-bs_jmpboot-macro update-bpb_secperclus fat32-in-memory
+                         update-bs_oemname-of-update-bpb_secperclus)
+
 (defthm
   fat32-in-memory-to-string-inversion-lemma-8
   (implies
