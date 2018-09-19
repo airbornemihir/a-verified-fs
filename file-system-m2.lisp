@@ -4906,143 +4906,83 @@
    ("subgoal *1/4''" :in-theory (e/d (update-fati)
                                      (fat32-in-memoryp)))))
 
-(defthm
-  fat-length-of-update-bs_volid
-  (equal (fat-length (update-bs_volid v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bs_volid))))
+(defmacro
+    fat-length-macro
+    (name stobj fat-length-of-name)
+  `(defthm
+     ,fat-length-of-name
+     (equal (fat-length (,name v ,stobj))
+            (fat-length ,stobj))
+     :hints (("goal" :in-theory (enable fat-length ,name)))))
 
-(defthm
-  fat-length-of-update-bs_bootsig
-  (equal (fat-length (update-bs_bootsig v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bs_bootsig))))
+(fat-length-macro update-bs_volid fat32-in-memory
+                         fat-length-of-update-bs_volid)
 
-(defthm
-  fat-length-of-update-bs_reserved1
-  (equal (fat-length (update-bs_reserved1 v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bs_reserved1))))
+(fat-length-macro update-bs_bootsig fat32-in-memory
+                         fat-length-of-update-bs_bootsig)
 
-(defthm
-  fat-length-of-update-bs_drvnum
-  (equal (fat-length (update-bs_drvnum v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bs_drvnum))))
+(fat-length-macro update-bs_reserved1 fat32-in-memory
+                         fat-length-of-update-bs_reserved1)
 
-(defthm
-  fat-length-of-update-bpb_bkbootsec
-  (equal (fat-length (update-bpb_bkbootsec v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_bkbootsec))))
+(fat-length-macro update-bs_drvnum fat32-in-memory
+                         fat-length-of-update-bs_drvnum)
 
-(defthm
-  fat-length-of-update-bpb_fsinfo
-  (equal (fat-length (update-bpb_fsinfo v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_fsinfo))))
+(fat-length-macro update-bpb_bkbootsec fat32-in-memory
+                         fat-length-of-update-bpb_bkbootsec)
 
-(defthm
-  fat-length-of-update-bpb_rootclus
-  (equal (fat-length (update-bpb_rootclus v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_rootclus))))
+(fat-length-macro update-bpb_fsinfo fat32-in-memory
+                         fat-length-of-update-bpb_fsinfo)
 
-(defthm
-  fat-length-of-update-bpb_fsver_major
-  (equal (fat-length (update-bpb_fsver_major v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_fsver_major))))
+(fat-length-macro update-bpb_rootclus fat32-in-memory
+                         fat-length-of-update-bpb_rootclus)
 
-(defthm
-  fat-length-of-update-bpb_fsver_minor
-  (equal (fat-length (update-bpb_fsver_minor v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_fsver_minor))))
+(fat-length-macro update-bpb_fsver_major fat32-in-memory
+                         fat-length-of-update-bpb_fsver_major)
 
-(defthm
-  fat-length-of-update-bpb_extflags
-  (equal (fat-length (update-bpb_extflags v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_extflags))))
+(fat-length-macro update-bpb_fsver_minor fat32-in-memory
+                         fat-length-of-update-bpb_fsver_minor)
 
-(defthm
-  fat-length-of-update-bpb_fatsz32
-  (equal (fat-length (update-bpb_fatsz32 v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_fatsz32))))
+(fat-length-macro update-bpb_extflags fat32-in-memory
+                         fat-length-of-update-bpb_extflags)
 
-(defthm
-  fat-length-of-update-bpb_totsec32
-  (equal (fat-length (update-bpb_totsec32 v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_totsec32))))
+(fat-length-macro update-bpb_fatsz32 fat32-in-memory
+                         fat-length-of-update-bpb_fatsz32)
 
-(defthm
-  fat-length-of-update-bpb_hiddsec
-  (equal (fat-length (update-bpb_hiddsec v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_hiddsec))))
+(fat-length-macro update-bpb_totsec32 fat32-in-memory
+                         fat-length-of-update-bpb_totsec32)
 
-(defthm
-  fat-length-of-update-bpb_numheads
-  (equal (fat-length (update-bpb_numheads v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_numheads))))
+(fat-length-macro update-bpb_hiddsec fat32-in-memory
+                         fat-length-of-update-bpb_hiddsec)
 
-(defthm
-  fat-length-of-update-bpb_secpertrk
-  (equal (fat-length (update-bpb_secpertrk v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_secpertrk))))
+(fat-length-macro update-bpb_numheads fat32-in-memory
+                         fat-length-of-update-bpb_numheads)
 
-(defthm
-  fat-length-of-update-bpb_fatsz16
-  (equal (fat-length (update-bpb_fatsz16 v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_fatsz16))))
+(fat-length-macro update-bpb_secpertrk fat32-in-memory
+                         fat-length-of-update-bpb_secpertrk)
 
-(defthm
-  fat-length-of-update-bpb_media
-  (equal (fat-length (update-bpb_media v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_media))))
+(fat-length-macro update-bpb_fatsz16 fat32-in-memory
+                         fat-length-of-update-bpb_fatsz16)
 
-(defthm
-  fat-length-of-update-bpb_totsec16
-  (equal (fat-length (update-bpb_totsec16 v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_totsec16))))
+(fat-length-macro update-bpb_media fat32-in-memory
+                         fat-length-of-update-bpb_media)
 
-(defthm
-  fat-length-of-update-bpb_rootentcnt
-  (equal (fat-length (update-bpb_rootentcnt v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_rootentcnt ))))
+(fat-length-macro update-bpb_totsec16 fat32-in-memory
+                         fat-length-of-update-bpb_totsec16)
 
-(defthm
-  fat-length-of-update-bpb_numfats
-  (equal (fat-length (update-bpb_numfats v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_numfats))))
+(fat-length-macro update-bpb_rootentcnt fat32-in-memory
+                         fat-length-of-update-bpb_rootentcnt)
 
-(defthm
-  fat-length-of-update-bpb_rsvdseccnt
-  (equal (fat-length (update-bpb_rsvdseccnt v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_rsvdseccnt))))
+(fat-length-macro update-bpb_numfats fat32-in-memory
+                         fat-length-of-update-bpb_numfats)
 
-(defthm
-  fat-length-of-update-bpb_secperclus
-  (equal (fat-length (update-bpb_secperclus v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_secperclus))))
+(fat-length-macro update-bpb_rsvdseccnt fat32-in-memory
+                         fat-length-of-update-bpb_rsvdseccnt)
 
-(defthm
-  fat-length-of-update-bpb_bytspersec
-  (equal (fat-length (update-bpb_bytspersec v fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable fat-length update-bpb_bytspersec))))
+(fat-length-macro update-bpb_secperclus fat32-in-memory
+                         fat-length-of-update-bpb_secperclus)
+
+(fat-length-macro update-bpb_bytspersec fat32-in-memory
+                         fat-length-of-update-bpb_bytspersec)
 
 (defmacro
     update-fat-macro
