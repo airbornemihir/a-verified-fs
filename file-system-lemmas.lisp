@@ -15,11 +15,12 @@
 (defthm len-of-first-n-ac
   (implies (natp i) (equal (len (first-n-ac i l ac)) (+ i (len ac)))))
 
-(defthm nthcdr-of-binary-append-1
-  (implies (and (integerp n) (>= n (len x)))
-           (equal (nthcdr n (binary-append x y))
-                  (nthcdr (- n (len x)) y)))
-  :hints (("Goal" :induct (nthcdr n x)) ))
+(defthm nthcdr-of-binary-append
+  (equal (nthcdr n (binary-append x y))
+         (if (>= (nfix n) (len x))
+             (nthcdr (- n (len x)) y)
+             (binary-append (nthcdr n x) y)))
+  :hints (("goal" :induct (nthcdr n x))))
 
 (defthm first-n-ac-of-binary-append-1
   (implies (and (natp i) (<= i (len x)))

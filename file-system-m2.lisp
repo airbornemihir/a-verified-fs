@@ -4010,6 +4010,63 @@
                                   (logtail 24 current) )))))))
 
 (defthm
+  unsigned-byte-p-of-bs_oemnamei
+  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (natp i)
+                (< i (bs_oemname-length fat32-in-memory)))
+           (and (integerp (bs_oemnamei i fat32-in-memory))
+                (<= 0 (bs_oemnamei i fat32-in-memory))
+                (< (bs_oemnamei i fat32-in-memory) 256)))
+  :rule-classes
+  ((:rewrite
+    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
+                             (natp i)
+                             (< i (bs_oemname-length fat32-in-memory)))
+                        (integerp (bs_oemnamei i fat32-in-memory))))
+   (:linear
+    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
+                             (natp i)
+                             (< i (bs_oemname-length fat32-in-memory)))
+                        (and (<= 0 (bs_oemnamei i fat32-in-memory))
+                             (< (bs_oemnamei i fat32-in-memory)
+                                256)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (compliant-fat32-in-memoryp)
+         (update-bs_oemname-correctness-4 bs_oemnamei fat32-in-memoryp))
+    :use update-bs_oemname-correctness-4)))
+
+(defun
+  bs_oemname-to-chars
+  (fat32-in-memory length)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (natp length)
+                (<= length
+                    (bs_oemname-length fat32-in-memory)))
+    :guard-hints (("Goal" :in-theory (disable fat32-in-memoryp bs_oemnamei)))))
+  (if
+   (zp length)
+      nil
+    (cons (code-char (bs_oemnamei (- (bs_oemname-length fat32-in-memory) length)
+                                  fat32-in-memory))
+          (bs_oemname-to-chars fat32-in-memory (- length 1)))))
+
+(defthm character-listp-of-bs_oemname-to-chars
+  (character-listp
+   (bs_oemname-to-chars fat32-in-memory length)))
+
+(defthm
+  length-of-bs_oemname-to-chars
+  (equal (len
+          (bs_oemname-to-chars
+           fat32-in-memory length))
+         (nfix length)))
+
+(defthm
   reserved-area-string-guard-lemma-1
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (natp i)
@@ -4064,34 +4121,6 @@
     (e/d (compliant-fat32-in-memoryp)
          (update-bs_jmpboot-correctness-4 bs_jmpbooti fat32-in-memoryp))
     :use update-bs_jmpboot-correctness-4)))
-
-(defthm
-  reserved-area-string-guard-lemma-3
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bs_oemname-length fat32-in-memory)))
-           (and (integerp (bs_oemnamei i fat32-in-memory))
-                (<= 0 (bs_oemnamei i fat32-in-memory))
-                (< (bs_oemnamei i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_oemname-length fat32-in-memory)))
-                        (integerp (bs_oemnamei i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_oemname-length fat32-in-memory)))
-                        (and (<= 0 (bs_oemnamei i fat32-in-memory))
-                             (< (bs_oemnamei i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bs_oemname-correctness-4 bs_oemnamei fat32-in-memoryp))
-    :use update-bs_oemname-correctness-4)))
 
 (defthm
   reserved-area-string-guard-lemma-4
@@ -4416,14 +4445,8 @@
      (list (code-char (bs_jmpbooti 0 fat32-in-memory))
            (code-char (bs_jmpbooti 1 fat32-in-memory))
            (code-char (bs_jmpbooti 2 fat32-in-memory)))
-     (list (code-char (bs_oemnamei 0 fat32-in-memory))
-           (code-char (bs_oemnamei 1 fat32-in-memory))
-           (code-char (bs_oemnamei 2 fat32-in-memory))
-           (code-char (bs_oemnamei 3 fat32-in-memory))
-           (code-char (bs_oemnamei 4 fat32-in-memory))
-           (code-char (bs_oemnamei 5 fat32-in-memory))
-           (code-char (bs_oemnamei 6 fat32-in-memory))
-           (code-char (bs_oemnamei 7 fat32-in-memory)))
+     (bs_oemname-to-chars
+      fat32-in-memory (bs_oemname-length fat32-in-memory))
      (list (code-char (loghead 8 (bpb_bytspersec fat32-in-memory)))
            (code-char (logtail 8 (bpb_bytspersec fat32-in-memory)))
            (code-char (bpb_secperclus fat32-in-memory))
@@ -4550,14 +4573,8 @@
      (list (code-char (bs_jmpbooti 0 fat32-in-memory))
            (code-char (bs_jmpbooti 1 fat32-in-memory))
            (code-char (bs_jmpbooti 2 fat32-in-memory)))
-     (list (code-char (bs_oemnamei 0 fat32-in-memory))
-           (code-char (bs_oemnamei 1 fat32-in-memory))
-           (code-char (bs_oemnamei 2 fat32-in-memory))
-           (code-char (bs_oemnamei 3 fat32-in-memory))
-           (code-char (bs_oemnamei 4 fat32-in-memory))
-           (code-char (bs_oemnamei 5 fat32-in-memory))
-           (code-char (bs_oemnamei 6 fat32-in-memory))
-           (code-char (bs_oemnamei 7 fat32-in-memory)))
+     (bs_oemname-to-chars
+      fat32-in-memory (bs_oemname-length fat32-in-memory))
      (list (code-char (loghead 8 (bpb_bytspersec fat32-in-memory)))
            (code-char (logtail 8 (bpb_bytspersec fat32-in-memory)))
            (code-char (bpb_secperclus fat32-in-memory))
@@ -4658,6 +4675,14 @@
                  :s (:rewrite already-a-character-list)
                  :x :top
                  :bash :bash))
+
+(defthm
+  nthcdr-of-explode-of-reserved-area-string
+  (equal
+   (nthcdr n
+           (explode (reserved-area-string fat32-in-memory)))
+   (nthcdr n (reserved-area-chars fat32-in-memory)))
+  :hints (("Goal" :in-theory (enable reserved-area-string))))
 
 ;; A bit of explanation is in order here - this function recurs on n, which is
 ;; instantiated with (bpb_numfats fat32-in-memory) in
@@ -5792,6 +5817,44 @@
      pos)
     :in-theory (e/d (compliant-fat32-in-memoryp)
                     (loghead logtail fat32-in-memoryp)))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-37
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal
+    (take 8
+          (nthcdr 3
+                  (explode (fat32-in-memory-to-string fat32-in-memory))))
+    (bs_oemname-to-chars fat32-in-memory
+                         (bs_oemname-length fat32-in-memory))))
+  :instructions
+  (:promote :bash (:dive 1 2 2 1)
+            :x
+            :up (:rewrite str::explode-of-implode)
+            :s
+            :up (:rewrite nthcdr-of-binary-append)
+            (:dive 1)
+            (:= nil)
+            :up
+            :s-prop :up (:rewrite take-of-append)
+            (:dive 1)
+            (:= t)
+            :up :s-prop :top
+            (:bash ("goal" :in-theory (enable reserved-area-string)))
+            (:dive 1 2 2)
+            :expand
+            :up (:rewrite nthcdr-of-binary-append)
+            (:dive 1)
+            (:= t)
+            :up :s-prop (:rewrite nthcdr)
+            (:dive 1)
+            (:= t)
+            :up
+            :s-prop :up (:rewrite take-of-append)
+            (:dive 1)
+            (:= nil)
+            :top :bash))
 
 (encapsulate
   ()
