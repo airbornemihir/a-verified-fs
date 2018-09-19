@@ -5531,11 +5531,6 @@
     (implies
      (and
       (compliant-fat32-in-memoryp fat32-in-memory)
-      (<= 90
-            (* (bpb_bytspersec fat32-in-memory)
-               (bpb_rsvdseccnt fat32-in-memory)))
-      (>= (bpb_rsvdseccnt fat32-in-memory) 1)
-      (>= (bpb_numfats fat32-in-memory) 1)
       (integerp (* (bpb_fatsz32 fat32-in-memory)
                    1/4 (bpb_bytspersec fat32-in-memory)))
       (> (+ (- (bpb_rsvdseccnt fat32-in-memory))
@@ -5566,10 +5561,7 @@
           (- (* (bpb_fatsz32 fat32-in-memory)
                 (bpb_numfats fat32-in-memory))))
          (bpb_secperclus fat32-in-memory)))
-       (data-region-length fat32-in-memory))
-      ;; this is terrible and needs to go
-      (integerp (* (bpb_bytspersec fat32-in-memory)
-                   (bpb_rsvdseccnt fat32-in-memory))))
+       (data-region-length fat32-in-memory)))
      (equal
       (mv-nth 0
               (string-to-fat32-in-memory
