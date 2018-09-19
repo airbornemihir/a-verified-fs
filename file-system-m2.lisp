@@ -4810,77 +4810,50 @@
          (* v (bpb_bytspersec fat32-in-memory)))
   :hints (("goal" :in-theory (enable cluster-size))))
 
-(defthm
-  count-of-clusters-of-update-bs_filsystype
-  (equal (count-of-clusters (update-bs_filsystype v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(defmacro
+    count-of-clusters-macro
+    (name stobj count-of-clusters-of-name)
+  `(defthm
+     ,count-of-clusters-of-name
+     (equal (count-of-clusters (,name v ,stobj))
+            (count-of-clusters ,stobj))
+     :hints (("goal" :in-theory (enable count-of-clusters)))))
 
-(defthm
-  count-of-clusters-of-update-bs_vollab
-  (equal (count-of-clusters (update-bs_vollab v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bs_filsystype fat32-in-memory
+                         count-of-clusters-of-update-bs_filsystype)
 
-(defthm
-  count-of-clusters-of-update-bs_volid
-  (equal (count-of-clusters (update-bs_volid v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bs_vollab fat32-in-memory
+                         count-of-clusters-of-update-bs_vollab)
 
-(defthm
-  count-of-clusters-of-update-bs_bootsig
-  (equal (count-of-clusters (update-bs_bootsig v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bs_volid fat32-in-memory
+                         count-of-clusters-of-update-bs_volid)
 
-(defthm
-  count-of-clusters-of-update-bs_reserved1
-  (equal (count-of-clusters (update-bs_reserved1 v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bs_bootsig fat32-in-memory
+                         count-of-clusters-of-update-bs_bootsig)
 
-(defthm
-  count-of-clusters-of-update-bs_drvnum
-  (equal (count-of-clusters (update-bs_drvnum v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bs_reserved1 fat32-in-memory
+                         count-of-clusters-of-update-bs_reserved1)
 
-(defthm
-  count-of-clusters-of-update-bpb_bkbootsec
-  (equal (count-of-clusters (update-bpb_bkbootsec v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bs_drvnum fat32-in-memory
+                         count-of-clusters-of-update-bs_drvnum)
 
-(defthm
-  count-of-clusters-of-update-bpb_fsinfo
-  (equal (count-of-clusters (update-bpb_fsinfo v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bpb_bkbootsec fat32-in-memory
+                         count-of-clusters-of-update-bpb_bkbootsec)
 
-(defthm
-  count-of-clusters-of-update-bpb_rootclus
-  (equal (count-of-clusters (update-bpb_rootclus v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bpb_fsinfo fat32-in-memory
+                         count-of-clusters-of-update-bpb_fsinfo)
 
-(defthm
-  count-of-clusters-of-update-bpb_fsver_major
-  (equal (count-of-clusters (update-bpb_fsver_major v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bpb_rootclus fat32-in-memory
+                         count-of-clusters-of-update-bpb_rootclus)
 
-(defthm
-  count-of-clusters-of-update-bpb_fsver_minor
-  (equal (count-of-clusters (update-bpb_fsver_minor v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bpb_fsver_major fat32-in-memory
+                         count-of-clusters-of-update-bpb_fsver_major)
 
-(defthm
-  count-of-clusters-of-update-bpb_extflags
-  (equal (count-of-clusters (update-bpb_extflags v fat32-in-memory))
-         (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+(count-of-clusters-macro update-bpb_fsver_minor fat32-in-memory
+                         count-of-clusters-of-update-bpb_fsver_minor)
+
+(count-of-clusters-macro update-bpb_extflags fat32-in-memory
+                         count-of-clusters-of-update-bpb_extflags)
 
 (defthm
   count-of-clusters-of-update-bpb_totsec32
