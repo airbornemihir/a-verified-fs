@@ -357,6 +357,11 @@
                      data-regioni data-region-length update-data-regioni
                      resize-data-region)))
 
+(local
+ (in-theory (disable bs_oemnamei update-bs_oemnamei bs_jmpbooti
+ update-bs_jmpbooti bs_vollabi update-bs_vollabi bs_filsystypei
+ update-bs_filsystypei bpb_reservedi update-bpb_reservedi)))
+
 (defmacro
   update-stobj-scalar-correctness
   (bit-width updater accessor
@@ -973,27 +978,27 @@
        ((:rewrite :corollary
                    (equal (bpb_secperclus (,name v ,stobj))
                           (bpb_secperclus fat32-in-memory))
-                   :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
+                   :hints (("Goal" :in-theory (enable ,array-updater bpb_secperclus)) ))
         (:rewrite :corollary
                    (equal (bpb_rsvdseccnt (,name v ,stobj))
                           (bpb_rsvdseccnt fat32-in-memory))
-                  :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
+                  :hints (("Goal" :in-theory (enable ,array-updater bpb_rsvdseccnt)) ))
         (:rewrite :corollary
                    (equal (bpb_numfats (,name v ,stobj))
                           (bpb_numfats fat32-in-memory))
-                  :hints (("Goal" :in-theory (enable bpb_numfats)) ))
+                  :hints (("Goal" :in-theory (enable ,array-updater bpb_numfats)) ))
         (:rewrite :corollary
                    (equal (bpb_fatsz32 (,name v ,stobj))
                           (bpb_fatsz32 fat32-in-memory))
-                  :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
+                  :hints (("Goal" :in-theory (enable ,array-updater bpb_fatsz32)) ))
         (:rewrite :corollary
                    (equal (bpb_bytspersec (,name v ,stobj))
                           (bpb_bytspersec fat32-in-memory))
-                   :hints (("Goal" :in-theory (enable bpb_bytspersec)) ))
+                   :hints (("Goal" :in-theory (enable ,array-updater bpb_bytspersec)) ))
         (:rewrite :corollary
                    (equal (bpb_totsec32 (,name v ,stobj))
                           (bpb_totsec32 fat32-in-memory))
-                   :hints (("Goal" :in-theory (enable bpb_totsec32)) ))))
+                   :hints (("Goal" :in-theory (enable ,array-updater bpb_totsec32)) ))))
 
      (defthm
        ,lemma-name2 t
@@ -1002,22 +1007,20 @@
          :corollary
          (implies
           (and (,stobj-recogniser ,stobj)
-               (integerp i)
-               (<= 0 i)
-               (< i (,array-length ,stobj))
-               (unsigned-byte-p ,bit-width v))
-          (,stobj-recogniser (,array-updater i v ,stobj))))
+               (< (nfix i) (,array-length ,stobj)))
+          (equal
+           (,stobj-recogniser (,array-updater i v ,stobj))
+           (unsigned-byte-p ,bit-width v)))
+         :hints (("Goal" :in-theory (enable ,array-updater))))
         (:rewrite
          :corollary
          (implies
           (and (,stobj-recogniser ,stobj)
-               (integerp i)
-               (<= 0 i)
-               (< i (,array-length ,stobj))
-               (unsigned-byte-p ,bit-width v))
+               (< (nfix i) (,array-length ,stobj)))
           (equal (len (nth ,constant
                            (,array-updater i v ,stobj)))
-                 (len (nth ,constant ,stobj)))))))
+                 (len (nth ,constant ,stobj))))
+         :hints (("Goal" :in-theory (e/d (,array-updater) (unsigned-byte-p nth)))))))
 
      (defthm ,lemma-name3
        (implies (and (unsigned-byte-listp ,bit-width v)
@@ -1036,31 +1039,31 @@
                      (<= 0 i)
                      (< i (,array-length ,stobj)))
                 (unsigned-byte-p ,bit-width (,array-accessor i ,stobj)))
-       :hints (("Goal" :in-theory (disable nth unsigned-byte-p))))
+       :hints (("Goal" :in-theory (e/d (,array-accessor) (nth unsigned-byte-p)))))
 
      (defthm ,lemma-name5
        (equal
         (resize-fat i
                     (,name v ,stobj))
         (,name v (resize-fat i ,stobj)))
-       :hints (("goal" :in-theory (enable resize-fat))))
+       :hints (("goal" :in-theory (enable resize-fat ,array-updater))))
 
      (defthm ,lemma-name6
        (equal
         (resize-data-region i
                     (,name v ,stobj))
         (,name v (resize-data-region i ,stobj)))
-       :hints (("goal" :in-theory (enable resize-data-region))))
+       :hints (("goal" :in-theory (enable resize-data-region ,array-updater))))
 
      (defthm ,lemma-name7
        (equal (fat-length (,name v ,stobj))
               (fat-length ,stobj))
-       :hints (("goal" :in-theory (enable fat-length))))
+       :hints (("goal" :in-theory (enable fat-length ,array-updater))))
 
      (defthm ,lemma-name8
        (equal (data-region-length (,name v ,stobj))
               (data-region-length ,stobj))
-       :hints (("goal" :in-theory (enable data-region-length))))))
+       :hints (("goal" :in-theory (enable data-region-length ,array-updater))))))
 
 (update-stobj-array
  update-bs_jmpboot bs_jmpboot-length 8
