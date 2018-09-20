@@ -5304,25 +5304,6 @@
 (update-bpb_rsvdseccnt-macro update-bpb_numfats fat32-in-memory
                              update-bpb_rsvdseccnt-of-update-bpb_numfats)
 
-;; TODO: Move this to a macro!
-(defthm
-  update-bpb_rsvdseccnt-of-update-bpb_rsvdseccnt
-  (equal (update-bpb_rsvdseccnt
-          v1
-          (update-bpb_rsvdseccnt v2 fat32-in-memory))
-         (update-bpb_rsvdseccnt v1 fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-bpb_rsvdseccnt))))
-
-;; TODO: Move this to a macro!
-(defthm
-  update-bpb_rsvdseccnt-of-bpb_rsvdseccnt
-  (implies (fat32-in-memoryp fat32-in-memory)
-  (equal (update-bpb_rsvdseccnt
-          (bpb_rsvdseccnt fat32-in-memory)
-          fat32-in-memory)
-         fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-bpb_rsvdseccnt bpb_rsvdseccnt))))
-
 (defmacro
     update-bpb_numfats-macro
     (name stobj update-bpb_numfats-of-name)
@@ -5342,25 +5323,6 @@
 
 (update-bpb_numfats-macro update-bpb_fatsz32 fat32-in-memory
                           update-bpb_numfats-of-update-bpb_fatsz32)
-
-;; TODO: Move this to a macro!
-(defthm
-  update-bpb_numfats-of-update-bpb_numfats
-  (equal (update-bpb_numfats
-          v1
-          (update-bpb_numfats v2 fat32-in-memory))
-         (update-bpb_numfats v1 fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-bpb_numfats))))
-
-;; TODO: Move this to a macro!
-(defthm
-  update-bpb_numfats-of-bpb_numfats
-  (implies (fat32-in-memoryp fat32-in-memory)
-  (equal (update-bpb_numfats
-          (bpb_numfats fat32-in-memory)
-          fat32-in-memory)
-         fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-bpb_numfats bpb_numfats))))
 
 (defmacro
     update-bpb_fatsz32-macro
@@ -5402,44 +5364,6 @@
 
 (update-bpb_fatsz32-macro update-bpb_bytspersec fat32-in-memory
                           update-bpb_fatsz32-of-update-bpb_bytspersec)
-
-;; TODO: Move this to a macro!
-(defthm
-  update-bpb_fatsz32-of-update-bpb_fatsz32
-  (equal (update-bpb_fatsz32
-          v1
-          (update-bpb_fatsz32 v2 fat32-in-memory))
-         (update-bpb_fatsz32 v1 fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-bpb_fatsz32))))
-
-;; TODO: Move this to a macro!
-(defthm
-  update-bpb_fatsz32-of-bpb_fatsz32
-  (implies (fat32-in-memoryp fat32-in-memory)
-  (equal (update-bpb_fatsz32
-          (bpb_fatsz32 fat32-in-memory)
-          fat32-in-memory)
-         fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-bpb_fatsz32 bpb_fatsz32))))
-
-;; TODO: Move this to a macro!
-(defthm
-  update-bpb_bytspersec-of-update-bpb_bytspersec
-  (equal (update-bpb_bytspersec
-          v1
-          (update-bpb_bytspersec v2 fat32-in-memory))
-         (update-bpb_bytspersec v1 fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-bpb_bytspersec))))
-
-;; TODO: Move this to a macro!
-(defthm
-  update-bpb_bytspersec-of-bpb_bytspersec
-  (implies (fat32-in-memoryp fat32-in-memory)
-  (equal (update-bpb_bytspersec
-          (bpb_bytspersec fat32-in-memory)
-          fat32-in-memory)
-         fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-bpb_bytspersec bpb_bytspersec))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-8
