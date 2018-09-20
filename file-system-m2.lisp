@@ -58,6 +58,24 @@
              nil))
   :hints (("goal" :in-theory (enable nats=>string))))
 
+(defthm chars=>nats-of-make-list-ac
+  (equal (chars=>nats (make-list-ac n val ac))
+         (make-list-ac n (char-code val)
+                       (chars=>nats ac)))
+  :hints (("goal" :in-theory (enable chars=>nats))))
+
+(defthm string=>nats-of-implode
+  (implies (character-listp chars)
+           (equal (string=>nats (implode chars))
+                  (chars=>nats chars)))
+  :hints (("goal" :in-theory (enable string=>nats))))
+
+(defthm chars=>nats-of-take
+  (implies (<= (nfix n) (len chars))
+           (equal (chars=>nats (take n chars))
+                  (take n (chars=>nats chars))))
+  :hints (("goal" :in-theory (enable chars=>nats))))
+
 (encapsulate
   ()
 
@@ -5822,6 +5840,128 @@
     :in-theory (e/d (compliant-fat32-in-memoryp)
                     (loghead logtail fat32-in-memoryp)))))
 
+(local (in-theory (disable bs_jmpbooti
+                           bs_oemnamei bpb_reservedi bs_vollabi
+                           bs_filsystypei loghead logtail)))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-38
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+  (equal
+   (chars=>nats (explode (reserved-area-string fat32-in-memory)))
+   (append
+    ;; initial bytes
+    (list (bs_jmpbooti 0 fat32-in-memory)
+          (bs_jmpbooti 1 fat32-in-memory)
+          (bs_jmpbooti 2 fat32-in-memory))
+    (list (bs_oemnamei 0 fat32-in-memory)
+          (bs_oemnamei 1 fat32-in-memory)
+          (bs_oemnamei 2 fat32-in-memory)
+          (bs_oemnamei 3 fat32-in-memory)
+          (bs_oemnamei 4 fat32-in-memory)
+          (bs_oemnamei 5 fat32-in-memory)
+          (bs_oemnamei 6 fat32-in-memory)
+          (bs_oemnamei 7 fat32-in-memory))
+    (list (loghead 8 (bpb_bytspersec fat32-in-memory))
+          (logtail 8 (bpb_bytspersec fat32-in-memory))
+          (bpb_secperclus fat32-in-memory)
+          (loghead 8 (bpb_rsvdseccnt fat32-in-memory))
+          (logtail 8 (bpb_rsvdseccnt fat32-in-memory)))
+    ;; remaining reserved bytes
+    (list (bpb_numfats fat32-in-memory)
+          (loghead 8 (bpb_rootentcnt fat32-in-memory))
+          (logtail 8 (bpb_rootentcnt fat32-in-memory))
+          (loghead 8 (bpb_totsec16 fat32-in-memory))
+          (logtail 8 (bpb_totsec16 fat32-in-memory))
+          (bpb_media fat32-in-memory)
+          (loghead 8 (bpb_fatsz16 fat32-in-memory))
+          (logtail 8 (bpb_fatsz16 fat32-in-memory))
+          (loghead 8 (bpb_secpertrk fat32-in-memory))
+          (logtail 8 (bpb_secpertrk fat32-in-memory))
+          (loghead 8 (bpb_numheads fat32-in-memory))
+          (logtail 8 (bpb_numheads fat32-in-memory))
+          (loghead 8             (bpb_hiddsec fat32-in-memory) )
+          (loghead 8 (logtail  8 (bpb_hiddsec fat32-in-memory)))
+          (loghead 8 (logtail 16 (bpb_hiddsec fat32-in-memory)))
+          (logtail 24 (bpb_hiddsec fat32-in-memory) )
+          (loghead 8             (bpb_totsec32 fat32-in-memory) )
+          (loghead 8 (logtail  8 (bpb_totsec32 fat32-in-memory)))
+          (loghead 8 (logtail 16 (bpb_totsec32 fat32-in-memory)))
+          (logtail 24 (bpb_totsec32 fat32-in-memory) )
+          (loghead 8             (bpb_fatsz32 fat32-in-memory) )
+          (loghead 8 (logtail  8 (bpb_fatsz32 fat32-in-memory)))
+          (loghead 8 (logtail 16 (bpb_fatsz32 fat32-in-memory)))
+          (logtail 24 (bpb_fatsz32 fat32-in-memory) )
+          (loghead 8 (bpb_extflags fat32-in-memory))
+          (logtail 8 (bpb_extflags fat32-in-memory))
+          (bpb_fsver_minor fat32-in-memory)
+          (bpb_fsver_major fat32-in-memory)
+          (loghead 8             (bpb_rootclus fat32-in-memory) )
+          (loghead 8 (logtail  8 (bpb_rootclus fat32-in-memory)))
+          (loghead 8 (logtail 16 (bpb_rootclus fat32-in-memory)))
+          (logtail 24 (bpb_rootclus fat32-in-memory) )
+          (loghead 8 (bpb_fsinfo fat32-in-memory))
+          (logtail 8 (bpb_fsinfo fat32-in-memory))
+          (loghead 8 (bpb_bkbootsec fat32-in-memory))
+          (logtail 8 (bpb_bkbootsec fat32-in-memory)))
+    (list (bpb_reservedi  0 fat32-in-memory)
+          (bpb_reservedi  1 fat32-in-memory)
+          (bpb_reservedi  2 fat32-in-memory)
+          (bpb_reservedi  3 fat32-in-memory)
+          (bpb_reservedi  4 fat32-in-memory)
+          (bpb_reservedi  5 fat32-in-memory)
+          (bpb_reservedi  6 fat32-in-memory)
+          (bpb_reservedi  7 fat32-in-memory)
+          (bpb_reservedi  8 fat32-in-memory)
+          (bpb_reservedi  9 fat32-in-memory)
+          (bpb_reservedi 10 fat32-in-memory)
+          (bpb_reservedi 11 fat32-in-memory))
+    (list (bs_drvnum fat32-in-memory)
+          (bs_reserved1 fat32-in-memory)
+          (bs_bootsig fat32-in-memory)
+          (loghead 8             (bs_volid fat32-in-memory) )
+          (loghead 8 (logtail  8 (bs_volid fat32-in-memory)))
+          (loghead 8 (logtail 16 (bs_volid fat32-in-memory)))
+          (logtail 24 (bs_volid fat32-in-memory) ))
+    (list (bs_vollabi  0 fat32-in-memory)
+          (bs_vollabi  1 fat32-in-memory)
+          (bs_vollabi  2 fat32-in-memory)
+          (bs_vollabi  3 fat32-in-memory)
+          (bs_vollabi  4 fat32-in-memory)
+          (bs_vollabi  5 fat32-in-memory)
+          (bs_vollabi  6 fat32-in-memory)
+          (bs_vollabi  7 fat32-in-memory)
+          (bs_vollabi  8 fat32-in-memory)
+          (bs_vollabi  9 fat32-in-memory)
+          (bs_vollabi 10 fat32-in-memory))
+    (list (bs_filsystypei 0 fat32-in-memory)
+          (bs_filsystypei 1 fat32-in-memory)
+          (bs_filsystypei 2 fat32-in-memory)
+          (bs_filsystypei 3 fat32-in-memory)
+          (bs_filsystypei 4 fat32-in-memory)
+          (bs_filsystypei 5 fat32-in-memory)
+          (bs_filsystypei 6 fat32-in-memory)
+          (bs_filsystypei 7 fat32-in-memory))
+    (make-list
+     (- (* (bpb_rsvdseccnt fat32-in-memory) (bpb_bytspersec fat32-in-memory)) 90)
+     :initial-element 0)))) :hints (("Goal" :in-theory (e/d (chars=>nats
+                                                                reserved-area-string
+                                                                reserved-area-chars)
+                                                                  (loghead
+                                                                   logtail
+                                                                   unsigned-byte-p)))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-37
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal
+    (update-bs_jmpboot
+     (take 3
+           (get-initial-bytes (fat32-in-memory-to-string fat32-in-memory)))
+     fat32-in-memory)
+    fat32-in-memory)) :hints (("Goal" :in-theory (enable get-initial-bytes fat32-in-memory-to-string))))
 (defthm
   fat32-in-memory-to-string-inversion-lemma-37
   (implies
@@ -5891,7 +6031,6 @@
    :nx
    :expand :s-prop
    :top (:bash ("goal" :in-theory (enable update-bs_jmpbooti)))))
-
 
 (encapsulate
   ()
