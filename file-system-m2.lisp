@@ -90,6 +90,10 @@
          (nthcdr n (chars=>nats chars)))
   :hints (("goal" :in-theory (enable chars=>nats nthcdr-of-nil))))
 
+(defthmd fix-true-list-when-true-listp
+  (implies (true-listp x)
+           (equal (fix-true-list x) x)))
+
 (encapsulate
   ()
 
@@ -7011,10 +7015,28 @@
                                                          compliant-fat32-in-memoryp)
                                                         (fat32-in-memoryp))))))
 
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-78
+  (implies
+   (and (natp n2)
+        (zp (+ n2
+               (- (* 4 (fat-length fat32-in-memory)))))
+        (not (zp n1)))
+   (equal
+    (take n2
+          (explode (make-fat-string-ac n1 fat32-in-memory ac)))
+    (take n2
+          (explode (stobj-fa-table-to-string
+                    fat32-in-memory
+                    (fat-length fat32-in-memory))))))
+  :hints
+  (("goal" :in-theory (enable fix-true-list-when-true-listp))))
+
 (encapsulate
   ()
 
-  (local (in-theory (enable nthcdr-when->=-n-len-l nthcdr-of-nil)))
+  (local (in-theory (enable nthcdr-when->=-n-len-l nthcdr-of-nil fix-true-list-when-true-listp)))
 
   (defthm
     fat32-in-memory-to-string-inversion
