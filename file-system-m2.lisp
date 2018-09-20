@@ -76,6 +76,20 @@
                   (take n (chars=>nats chars))))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
+(defthmd nthcdr-of-nil (not (nthcdr n nil)))
+
+(defthmd nthcdr-when->=-n-len-l
+  (implies (and (true-listp l)
+                (integerp n)
+                (>= n (len l)))
+           (equal (nthcdr n l) nil))
+  :hints (("goal" :in-theory (enable nthcdr-of-nil))))
+
+(defthmd chars=>nats-of-nthcdr
+  (equal (chars=>nats (nthcdr n chars))
+         (nthcdr n (chars=>nats chars)))
+  :hints (("goal" :in-theory (enable chars=>nats nthcdr-of-nil))))
+
 (encapsulate
   ()
 
@@ -6922,17 +6936,85 @@
       fat32-in-memory)) :hints (("Goal" :in-theory (e/d (get-initial-bytes
                                                          fat32-in-memory-to-string
                                                          compliant-fat32-in-memoryp)
+                                                        (fat32-in-memoryp)))))
+
+  (local (in-theory (enable chars=>nats-of-nthcdr)))
+
+  (local
+   (defthm
+     fat32-in-memory-to-string-inversion-lemma-75
+     (implies
+      (compliant-fat32-in-memoryp fat32-in-memory)
+      (not
+       (<
+        (if
+            (<
+             (binary-+
+              '-16
+              (binary-+
+               (data-region-length fat32-in-memory)
+               (binary-+
+                (binary-* (bpb_bytspersec fat32-in-memory)
+                          (bpb_rsvdseccnt fat32-in-memory))
+                (binary-* (bpb_numfats fat32-in-memory)
+                          (binary-* '4
+                                    (fat-length fat32-in-memory))))))
+             '0)
+            '0
+          (binary-+
+           '-16
+           (binary-+
+            (data-region-length fat32-in-memory)
+            (binary-+
+             (binary-* (bpb_bytspersec fat32-in-memory)
+                       (bpb_rsvdseccnt fat32-in-memory))
+             (binary-* (bpb_numfats fat32-in-memory)
+                       (binary-* '4
+                                 (fat-length fat32-in-memory)))))))
+        (binary-+ '-16
+                  (binary-* (bpb_bytspersec fat32-in-memory)
+                            (bpb_rsvdseccnt fat32-in-memory))))))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-76
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (update-bs_vollab
+       (take 11
+             (nthcdr 55
+                     (get-remaining-rsvdbyts
+                      (fat32-in-memory-to-string
+                       fat32-in-memory))))
+       fat32-in-memory)
+      fat32-in-memory)) :hints (("Goal" :in-theory (e/d (get-initial-bytes
+                                                         get-remaining-rsvdbyts
+                                                         fat32-in-memory-to-string
+                                                         compliant-fat32-in-memoryp)
+                                                        (fat32-in-memoryp)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-77
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (update-bs_filsystype
+       (take 8
+             (nthcdr 66
+                     (get-remaining-rsvdbyts
+                      (fat32-in-memory-to-string
+                       fat32-in-memory))))
+       fat32-in-memory)
+      fat32-in-memory)) :hints (("Goal" :in-theory (e/d (get-initial-bytes
+                                                         get-remaining-rsvdbyts
+                                                         fat32-in-memory-to-string
+                                                         compliant-fat32-in-memoryp)
                                                         (fat32-in-memoryp))))))
 
 (encapsulate
   ()
 
-  (local (defthm nthcdr-of-nil (not (nthcdr n nil))))
-
-  (local (defthm nthcdr-when->=-n-len-l (implies (and (true-listp l)
-                                                      (integerp n)
-                                                      (>= n (len l)))
-                                                 (equal (nthcdr n l) nil))))
+  (local (in-theory (enable nthcdr-when->=-n-len-l nthcdr-of-nil)))
 
   (defthm
     fat32-in-memory-to-string-inversion
@@ -6979,6 +7061,12 @@
       fat32-in-memory))
     :hints (("Goal" :in-theory (e/d (update-bs_oemname-correctness-1
                                      compliant-fat32-in-memoryp)
+                                    (fat32-in-memoryp loghead logtail nth
+                                                      floor)))
+            ("Subgoal 2.2.3" :in-theory (e/d (cluster-size count-of-clusters)
+                                    (fat32-in-memoryp loghead logtail nth
+                                                      floor)))
+            ("Subgoal 2.2.2" :in-theory (e/d (cluster-size count-of-clusters)
                                     (fat32-in-memoryp loghead logtail nth
                                                       floor))))))
 
