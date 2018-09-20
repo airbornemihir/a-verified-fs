@@ -5840,120 +5840,278 @@
     :in-theory (e/d (compliant-fat32-in-memoryp)
                     (loghead logtail fat32-in-memoryp)))))
 
-(local (in-theory (disable bs_jmpbooti
-                           bs_oemnamei bpb_reservedi bs_vollabi
-                           bs_filsystypei loghead logtail)))
+(encapsulate
+  ()
 
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-38
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-  (equal
-   (chars=>nats (explode (reserved-area-string fat32-in-memory)))
-   (append
-    ;; initial bytes
-    (list (bs_jmpbooti 0 fat32-in-memory)
-          (bs_jmpbooti 1 fat32-in-memory)
-          (bs_jmpbooti 2 fat32-in-memory))
-    (list (bs_oemnamei 0 fat32-in-memory)
-          (bs_oemnamei 1 fat32-in-memory)
-          (bs_oemnamei 2 fat32-in-memory)
-          (bs_oemnamei 3 fat32-in-memory)
-          (bs_oemnamei 4 fat32-in-memory)
-          (bs_oemnamei 5 fat32-in-memory)
-          (bs_oemnamei 6 fat32-in-memory)
-          (bs_oemnamei 7 fat32-in-memory))
-    (list (loghead 8 (bpb_bytspersec fat32-in-memory))
-          (logtail 8 (bpb_bytspersec fat32-in-memory))
-          (bpb_secperclus fat32-in-memory)
-          (loghead 8 (bpb_rsvdseccnt fat32-in-memory))
-          (logtail 8 (bpb_rsvdseccnt fat32-in-memory)))
-    ;; remaining reserved bytes
-    (list (bpb_numfats fat32-in-memory)
-          (loghead 8 (bpb_rootentcnt fat32-in-memory))
-          (logtail 8 (bpb_rootentcnt fat32-in-memory))
-          (loghead 8 (bpb_totsec16 fat32-in-memory))
-          (logtail 8 (bpb_totsec16 fat32-in-memory))
-          (bpb_media fat32-in-memory)
-          (loghead 8 (bpb_fatsz16 fat32-in-memory))
-          (logtail 8 (bpb_fatsz16 fat32-in-memory))
-          (loghead 8 (bpb_secpertrk fat32-in-memory))
-          (logtail 8 (bpb_secpertrk fat32-in-memory))
-          (loghead 8 (bpb_numheads fat32-in-memory))
-          (logtail 8 (bpb_numheads fat32-in-memory))
-          (loghead 8             (bpb_hiddsec fat32-in-memory) )
-          (loghead 8 (logtail  8 (bpb_hiddsec fat32-in-memory)))
-          (loghead 8 (logtail 16 (bpb_hiddsec fat32-in-memory)))
-          (logtail 24 (bpb_hiddsec fat32-in-memory) )
-          (loghead 8             (bpb_totsec32 fat32-in-memory) )
-          (loghead 8 (logtail  8 (bpb_totsec32 fat32-in-memory)))
-          (loghead 8 (logtail 16 (bpb_totsec32 fat32-in-memory)))
-          (logtail 24 (bpb_totsec32 fat32-in-memory) )
-          (loghead 8             (bpb_fatsz32 fat32-in-memory) )
-          (loghead 8 (logtail  8 (bpb_fatsz32 fat32-in-memory)))
-          (loghead 8 (logtail 16 (bpb_fatsz32 fat32-in-memory)))
-          (logtail 24 (bpb_fatsz32 fat32-in-memory) )
-          (loghead 8 (bpb_extflags fat32-in-memory))
-          (logtail 8 (bpb_extflags fat32-in-memory))
-          (bpb_fsver_minor fat32-in-memory)
-          (bpb_fsver_major fat32-in-memory)
-          (loghead 8             (bpb_rootclus fat32-in-memory) )
-          (loghead 8 (logtail  8 (bpb_rootclus fat32-in-memory)))
-          (loghead 8 (logtail 16 (bpb_rootclus fat32-in-memory)))
-          (logtail 24 (bpb_rootclus fat32-in-memory) )
-          (loghead 8 (bpb_fsinfo fat32-in-memory))
-          (logtail 8 (bpb_fsinfo fat32-in-memory))
-          (loghead 8 (bpb_bkbootsec fat32-in-memory))
-          (logtail 8 (bpb_bkbootsec fat32-in-memory)))
-    (list (bpb_reservedi  0 fat32-in-memory)
-          (bpb_reservedi  1 fat32-in-memory)
-          (bpb_reservedi  2 fat32-in-memory)
-          (bpb_reservedi  3 fat32-in-memory)
-          (bpb_reservedi  4 fat32-in-memory)
-          (bpb_reservedi  5 fat32-in-memory)
-          (bpb_reservedi  6 fat32-in-memory)
-          (bpb_reservedi  7 fat32-in-memory)
-          (bpb_reservedi  8 fat32-in-memory)
-          (bpb_reservedi  9 fat32-in-memory)
-          (bpb_reservedi 10 fat32-in-memory)
-          (bpb_reservedi 11 fat32-in-memory))
-    (list (bs_drvnum fat32-in-memory)
-          (bs_reserved1 fat32-in-memory)
-          (bs_bootsig fat32-in-memory)
-          (loghead 8             (bs_volid fat32-in-memory) )
-          (loghead 8 (logtail  8 (bs_volid fat32-in-memory)))
-          (loghead 8 (logtail 16 (bs_volid fat32-in-memory)))
-          (logtail 24 (bs_volid fat32-in-memory) ))
-    (list (bs_vollabi  0 fat32-in-memory)
-          (bs_vollabi  1 fat32-in-memory)
-          (bs_vollabi  2 fat32-in-memory)
-          (bs_vollabi  3 fat32-in-memory)
-          (bs_vollabi  4 fat32-in-memory)
-          (bs_vollabi  5 fat32-in-memory)
-          (bs_vollabi  6 fat32-in-memory)
-          (bs_vollabi  7 fat32-in-memory)
-          (bs_vollabi  8 fat32-in-memory)
-          (bs_vollabi  9 fat32-in-memory)
-          (bs_vollabi 10 fat32-in-memory))
-    (list (bs_filsystypei 0 fat32-in-memory)
-          (bs_filsystypei 1 fat32-in-memory)
-          (bs_filsystypei 2 fat32-in-memory)
-          (bs_filsystypei 3 fat32-in-memory)
-          (bs_filsystypei 4 fat32-in-memory)
-          (bs_filsystypei 5 fat32-in-memory)
-          (bs_filsystypei 6 fat32-in-memory)
-          (bs_filsystypei 7 fat32-in-memory))
-    (make-list
-     (- (* (bpb_rsvdseccnt fat32-in-memory) (bpb_bytspersec fat32-in-memory)) 90)
-     :initial-element 0)))) :hints (("Goal" :in-theory (e/d (chars=>nats
+  (local
+   (in-theory (enable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
+                      bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
+                      bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
+                      bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
+                      bpb_secpertrk bpb_numheads bpb_rootentcnt
+                      bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
+                      bpb_rootentcnt bpb_totsec16 bs_volid
+                      update-bpb_secperclus update-bpb_rsvdseccnt
+                      update-bpb_bytspersec update-bpb_numfats
+                      update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
+                      update-bs_drvnum update-bs_reserved1 update-bs_bootsig
+                      update-bpb_media update-bpb_fsver_minor
+                      update-bpb_fsver_major update-bpb_fatsz16
+                      update-bpb_secpertrk update-bpb_numheads
+                      update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
+                      update-bpb_fatsz32 update-bpb_rootentcnt
+                      update-bpb_totsec16 update-bs_volid)))
+
+  (local
+   (defthm
+     fat32-in-memory-to-string-inversion-lemma-37
+     (and(implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bs_volid fat32-in-memory)
+                     4294967296))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bs_volid fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bs_volid fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bs_bootsig fat32-in-memory) 256))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bs_bootsig fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bs_bootsig fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bs_reserved1 fat32-in-memory) 256))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bs_reserved1 fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bs_reserved1 fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bs_drvnum fat32-in-memory) 256))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bs_drvnum fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bs_drvnum fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_bkbootsec fat32-in-memory)
+                     65536))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_bkbootsec fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_bkbootsec fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_fsinfo fat32-in-memory) 65536))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_fsinfo fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_fsinfo fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_rootclus fat32-in-memory)
+                     4294967296))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_rootclus fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_fsver_major fat32-in-memory)
+                     256))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_fsver_major fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_fsver_major fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (nth *bpb_fsver_minor* fat32-in-memory)
+                     256))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0
+                      (nth *bpb_fsver_minor* fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (nth *bpb_fsver_minor* fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_extflags fat32-in-memory)
+                     65536))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_extflags fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_extflags fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_hiddsec fat32-in-memory)
+                     4294967296))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_hiddsec fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_hiddsec fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_numheads fat32-in-memory)
+                     65536))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_numheads fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_numheads fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_secpertrk fat32-in-memory)
+                     65536))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_secpertrk fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_secpertrk fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_fatsz16 fat32-in-memory) 65536))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_fatsz16 fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_fatsz16 fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_media fat32-in-memory) 256))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_media fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_media fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_totsec16 fat32-in-memory)
+                     65536))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_totsec16 fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_totsec16 fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (bpb_rootentcnt fat32-in-memory)
+                     65536))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (integerp (bpb_rootentcnt fat32-in-memory)))
+         (implies (compliant-fat32-in-memoryp fat32-in-memory)
+                  (<= 0 (bpb_rootentcnt fat32-in-memory))))
+     :hints (("Goal" :in-theory (enable compliant-fat32-in-memoryp)))))
+
+  (local
+   (in-theory (disable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
+                      bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
+                      bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
+                      bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
+                      bpb_secpertrk bpb_numheads bpb_rootentcnt
+                      bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
+                      bpb_rootentcnt bpb_totsec16 bs_volid
+                      update-bpb_secperclus update-bpb_rsvdseccnt
+                      update-bpb_bytspersec update-bpb_numfats
+                      update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
+                      update-bs_drvnum update-bs_reserved1 update-bs_bootsig
+                      update-bpb_media update-bpb_fsver_minor
+                      update-bpb_fsver_major update-bpb_fatsz16
+                      update-bpb_secpertrk update-bpb_numheads
+                      update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
+                      update-bpb_fatsz32 update-bpb_rootentcnt
+                      update-bpb_totsec16 update-bs_volid)))
+
+  (local (in-theory (disable bs_jmpbooti
+                             bs_oemnamei bpb_reservedi bs_vollabi
+                             bs_filsystypei loghead logtail)))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-38
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (chars=>nats (explode (reserved-area-string fat32-in-memory)))
+      (append
+       ;; initial bytes
+       (list (bs_jmpbooti 0 fat32-in-memory)
+             (bs_jmpbooti 1 fat32-in-memory)
+             (bs_jmpbooti 2 fat32-in-memory))
+       (list (bs_oemnamei 0 fat32-in-memory)
+             (bs_oemnamei 1 fat32-in-memory)
+             (bs_oemnamei 2 fat32-in-memory)
+             (bs_oemnamei 3 fat32-in-memory)
+             (bs_oemnamei 4 fat32-in-memory)
+             (bs_oemnamei 5 fat32-in-memory)
+             (bs_oemnamei 6 fat32-in-memory)
+             (bs_oemnamei 7 fat32-in-memory))
+       (list (loghead 8 (bpb_bytspersec fat32-in-memory))
+             (logtail 8 (bpb_bytspersec fat32-in-memory))
+             (bpb_secperclus fat32-in-memory)
+             (loghead 8 (bpb_rsvdseccnt fat32-in-memory))
+             (logtail 8 (bpb_rsvdseccnt fat32-in-memory)))
+       ;; remaining reserved bytes
+       (list (bpb_numfats fat32-in-memory)
+             (loghead 8 (bpb_rootentcnt fat32-in-memory))
+             (logtail 8 (bpb_rootentcnt fat32-in-memory))
+             (loghead 8 (bpb_totsec16 fat32-in-memory))
+             (logtail 8 (bpb_totsec16 fat32-in-memory))
+             (bpb_media fat32-in-memory)
+             (loghead 8 (bpb_fatsz16 fat32-in-memory))
+             (logtail 8 (bpb_fatsz16 fat32-in-memory))
+             (loghead 8 (bpb_secpertrk fat32-in-memory))
+             (logtail 8 (bpb_secpertrk fat32-in-memory))
+             (loghead 8 (bpb_numheads fat32-in-memory))
+             (logtail 8 (bpb_numheads fat32-in-memory))
+             (loghead 8             (bpb_hiddsec fat32-in-memory) )
+             (loghead 8 (logtail  8 (bpb_hiddsec fat32-in-memory)))
+             (loghead 8 (logtail 16 (bpb_hiddsec fat32-in-memory)))
+             (logtail 24 (bpb_hiddsec fat32-in-memory) )
+             (loghead 8             (bpb_totsec32 fat32-in-memory) )
+             (loghead 8 (logtail  8 (bpb_totsec32 fat32-in-memory)))
+             (loghead 8 (logtail 16 (bpb_totsec32 fat32-in-memory)))
+             (logtail 24 (bpb_totsec32 fat32-in-memory) )
+             (loghead 8             (bpb_fatsz32 fat32-in-memory) )
+             (loghead 8 (logtail  8 (bpb_fatsz32 fat32-in-memory)))
+             (loghead 8 (logtail 16 (bpb_fatsz32 fat32-in-memory)))
+             (logtail 24 (bpb_fatsz32 fat32-in-memory) )
+             (loghead 8 (bpb_extflags fat32-in-memory))
+             (logtail 8 (bpb_extflags fat32-in-memory))
+             (bpb_fsver_minor fat32-in-memory)
+             (bpb_fsver_major fat32-in-memory)
+             (loghead 8             (bpb_rootclus fat32-in-memory) )
+             (loghead 8 (logtail  8 (bpb_rootclus fat32-in-memory)))
+             (loghead 8 (logtail 16 (bpb_rootclus fat32-in-memory)))
+             (logtail 24 (bpb_rootclus fat32-in-memory) )
+             (loghead 8 (bpb_fsinfo fat32-in-memory))
+             (logtail 8 (bpb_fsinfo fat32-in-memory))
+             (loghead 8 (bpb_bkbootsec fat32-in-memory))
+             (logtail 8 (bpb_bkbootsec fat32-in-memory)))
+       (list (bpb_reservedi  0 fat32-in-memory)
+             (bpb_reservedi  1 fat32-in-memory)
+             (bpb_reservedi  2 fat32-in-memory)
+             (bpb_reservedi  3 fat32-in-memory)
+             (bpb_reservedi  4 fat32-in-memory)
+             (bpb_reservedi  5 fat32-in-memory)
+             (bpb_reservedi  6 fat32-in-memory)
+             (bpb_reservedi  7 fat32-in-memory)
+             (bpb_reservedi  8 fat32-in-memory)
+             (bpb_reservedi  9 fat32-in-memory)
+             (bpb_reservedi 10 fat32-in-memory)
+             (bpb_reservedi 11 fat32-in-memory))
+       (list (bs_drvnum fat32-in-memory)
+             (bs_reserved1 fat32-in-memory)
+             (bs_bootsig fat32-in-memory)
+             (loghead 8             (bs_volid fat32-in-memory) )
+             (loghead 8 (logtail  8 (bs_volid fat32-in-memory)))
+             (loghead 8 (logtail 16 (bs_volid fat32-in-memory)))
+             (logtail 24 (bs_volid fat32-in-memory) ))
+       (list (bs_vollabi  0 fat32-in-memory)
+             (bs_vollabi  1 fat32-in-memory)
+             (bs_vollabi  2 fat32-in-memory)
+             (bs_vollabi  3 fat32-in-memory)
+             (bs_vollabi  4 fat32-in-memory)
+             (bs_vollabi  5 fat32-in-memory)
+             (bs_vollabi  6 fat32-in-memory)
+             (bs_vollabi  7 fat32-in-memory)
+             (bs_vollabi  8 fat32-in-memory)
+             (bs_vollabi  9 fat32-in-memory)
+             (bs_vollabi 10 fat32-in-memory))
+       (list (bs_filsystypei 0 fat32-in-memory)
+             (bs_filsystypei 1 fat32-in-memory)
+             (bs_filsystypei 2 fat32-in-memory)
+             (bs_filsystypei 3 fat32-in-memory)
+             (bs_filsystypei 4 fat32-in-memory)
+             (bs_filsystypei 5 fat32-in-memory)
+             (bs_filsystypei 6 fat32-in-memory)
+             (bs_filsystypei 7 fat32-in-memory))
+       (make-list
+        (- (* (bpb_rsvdseccnt fat32-in-memory) (bpb_bytspersec fat32-in-memory)) 90)
+        :initial-element 0)))) :hints (("Goal" :in-theory (e/d (chars=>nats
                                                                 reserved-area-string
                                                                 reserved-area-chars)
-                                                                  (loghead
-                                                                   logtail
-                                                                   unsigned-byte-p)))))
+                                                               (loghead
+                                                                logtail
+                                                                unsigned-byte-p))))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-37
+  fat32-in-memory-to-string-inversion-lemma-39
   (implies
    (compliant-fat32-in-memoryp fat32-in-memory)
    (equal
@@ -5963,7 +6121,7 @@
      fat32-in-memory)
     fat32-in-memory)) :hints (("Goal" :in-theory (enable get-initial-bytes fat32-in-memory-to-string))))
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-37
+  fat32-in-memory-to-string-inversion-lemma-39
   (implies
    (compliant-fat32-in-memoryp fat32-in-memory)
    (equal
