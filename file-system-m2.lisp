@@ -5117,6 +5117,161 @@
 (update-bs_jmpboot-macro update-bpb_secperclus fat32-in-memory
                          update-bs_jmpboot-of-update-bpb_secperclus)
 
+(defmacro
+    update-bs_oemname-macro
+    (name stobj update-bs_oemname-of-name)
+  `(defthm
+     ,update-bs_oemname-of-name
+     (equal
+      (update-bs_oemname
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bs_oemname v1 ,stobj)))
+     :hints (("goal" :in-theory (enable ,name)))))
+
+(update-bs_oemname-macro update-bpb_bytspersec fat32-in-memory
+                         update-bs_oemname-of-update-bpb_bytspersec)
+
+(update-bs_oemname-macro update-bpb_fatsz32 fat32-in-memory
+                         update-bs_oemname-of-update-bpb_fatsz32)
+
+(update-bs_oemname-macro update-bpb_numfats fat32-in-memory
+                         update-bs_oemname-of-update-bpb_numfats)
+
+(update-bs_oemname-macro update-bpb_rsvdseccnt fat32-in-memory
+                         update-bs_oemname-of-update-bpb_rsvdseccnt)
+
+(update-bs_oemname-macro update-bpb_secperclus fat32-in-memory
+                         update-bs_oemname-of-update-bpb_secperclus)
+
+(defmacro
+    update-bpb_secperclus-macro
+    (name stobj update-bpb_secperclus-of-name)
+  `(defthm
+     ,update-bpb_secperclus-of-name
+     (equal
+      (update-bpb_secperclus
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_secperclus v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_secperclus ,name)))))
+
+(update-bpb_secperclus-macro update-bpb_bytspersec fat32-in-memory
+                             update-bpb_secperclus-of-update-bpb_bytspersec)
+
+(update-bpb_secperclus-macro update-bpb_fatsz32 fat32-in-memory
+                             update-bpb_secperclus-of-update-bpb_fatsz32)
+
+(update-bpb_secperclus-macro update-bpb_numfats fat32-in-memory
+                             update-bpb_secperclus-of-update-bpb_numfats)
+
+(update-bpb_secperclus-macro update-bpb_rsvdseccnt fat32-in-memory
+                             update-bpb_secperclus-of-update-bpb_rsvdseccnt)
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_secperclus-of-update-bpb_secperclus
+  (equal (update-bpb_secperclus
+          v1
+          (update-bpb_secperclus v2 fat32-in-memory))
+         (update-bpb_secperclus v1 fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_secperclus))))
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_secperclus-of-bpb_secperclus
+  (implies (fat32-in-memoryp fat32-in-memory)
+  (equal (update-bpb_secperclus
+          (bpb_secperclus fat32-in-memory)
+          fat32-in-memory)
+         fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_secperclus bpb_secperclus))))
+
+(defmacro
+    update-bpb_rsvdseccnt-macro
+    (name stobj update-bpb_rsvdseccnt-of-name)
+  `(defthm
+     ,update-bpb_rsvdseccnt-of-name
+     (equal
+      (update-bpb_rsvdseccnt
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_rsvdseccnt v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_rsvdseccnt ,name)))))
+
+(update-bpb_rsvdseccnt-macro update-bpb_bytspersec fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bpb_bytspersec)
+
+(update-bpb_rsvdseccnt-macro update-bpb_fatsz32 fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bpb_fatsz32)
+
+(update-bpb_rsvdseccnt-macro update-bpb_numfats fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bpb_numfats)
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_rsvdseccnt-of-update-bpb_rsvdseccnt
+  (equal (update-bpb_rsvdseccnt
+          v1
+          (update-bpb_rsvdseccnt v2 fat32-in-memory))
+         (update-bpb_rsvdseccnt v1 fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_rsvdseccnt))))
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_rsvdseccnt-of-bpb_rsvdseccnt
+  (implies (fat32-in-memoryp fat32-in-memory)
+  (equal (update-bpb_rsvdseccnt
+          (bpb_rsvdseccnt fat32-in-memory)
+          fat32-in-memory)
+         fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_rsvdseccnt bpb_rsvdseccnt))))
+
+(defmacro
+    update-bpb_numfats-macro
+    (name stobj update-bpb_numfats-of-name)
+  `(defthm
+     ,update-bpb_numfats-of-name
+     (equal
+      (update-bpb_numfats
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_numfats v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_numfats ,name)))))
+
+(update-bpb_numfats-macro update-bpb_bytspersec fat32-in-memory
+                          update-bpb_numfats-of-update-bpb_bytspersec)
+
+(update-bpb_numfats-macro update-bpb_fatsz32 fat32-in-memory
+                          update-bpb_numfats-of-update-bpb_fatsz32)
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_numfats-of-update-bpb_numfats
+  (equal (update-bpb_numfats
+          v1
+          (update-bpb_numfats v2 fat32-in-memory))
+         (update-bpb_numfats v1 fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_numfats))))
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_numfats-of-bpb_numfats
+  (implies (fat32-in-memoryp fat32-in-memory)
+  (equal (update-bpb_numfats
+          (bpb_numfats fat32-in-memory)
+          fat32-in-memory)
+         fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_numfats bpb_numfats))))
+
 (defthm
   fat32-in-memory-to-string-inversion-lemma-8
   (implies
@@ -5929,6 +6084,23 @@
       (update-bs_jmpboot
        (take 3
              (get-initial-bytes (fat32-in-memory-to-string fat32-in-memory)))
+       fat32-in-memory)
+      fat32-in-memory)) :hints (("Goal" :in-theory (e/d (get-initial-bytes
+                                                         fat32-in-memory-to-string
+                                                         compliant-fat32-in-memoryp)
+                                                        (fat32-in-memoryp)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-40
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (update-bs_oemname
+       (take 8
+             (nthcdr 3
+                     (get-initial-bytes
+                      (fat32-in-memory-to-string
+                       fat32-in-memory))))
        fat32-in-memory)
       fat32-in-memory)) :hints (("Goal" :in-theory (e/d (get-initial-bytes
                                                          fat32-in-memory-to-string
