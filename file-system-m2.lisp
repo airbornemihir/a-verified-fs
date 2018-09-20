@@ -4297,6 +4297,30 @@
     :in-theory (enable compliant-fat32-in-memoryp
                        fat32-in-memoryp bpb_rootentcnt))))
 
+(defthm
+  reserved-area-string-guard-lemma-16
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 16 (bpb_totsec16 fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_totsec16 fat32-in-memory)
+                65536)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_totsec16 fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_totsec16 fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_totsec16))))
+
 (encapsulate
   ()
 
@@ -5657,7 +5681,27 @@
       (nth
        2
        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
-      (logtail 8 (bpb_rootentcnt fat32-in-memory))))))
+      (logtail 8 (bpb_rootentcnt fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-43
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       3
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bpb_totsec16 fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-44
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       4
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 8 (bpb_totsec16 fat32-in-memory))))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-17
