@@ -355,7 +355,7 @@
  (in-theory (disable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
                      bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
                      bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
-                     bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
+                     bpb_media bpb_fsver_minor bpb_fsver_major bpb_fatsz16
                      bpb_secpertrk bpb_numheads bpb_rootentcnt
                      bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
                      bpb_rootentcnt bpb_totsec16 bs_volid
@@ -4321,6 +4321,390 @@
     :in-theory (enable compliant-fat32-in-memoryp
                        fat32-in-memoryp bpb_totsec16))))
 
+(defthm
+  reserved-area-string-guard-lemma-17
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 8 (bpb_media fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_media fat32-in-memory)
+                256)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_media fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_media fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_media))))
+
+(defthm
+  reserved-area-string-guard-lemma-18
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 16 (bpb_fatsz16 fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_fatsz16 fat32-in-memory)
+                65536)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_fatsz16 fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_fatsz16 fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_fatsz16))))
+
+(defthm
+  reserved-area-string-guard-lemma-19
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 16 (bpb_secpertrk fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_secpertrk fat32-in-memory)
+                65536)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_secpertrk fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_secpertrk fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_secpertrk))))
+
+(defthm
+  reserved-area-string-guard-lemma-20
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 16 (bpb_numheads fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_numheads fat32-in-memory)
+                65536)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_numheads fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_numheads fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_numheads))))
+
+(defthm
+  reserved-area-string-guard-lemma-21
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 32 (bpb_hiddsec fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_hiddsec fat32-in-memory)
+                4294967296)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_hiddsec fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_hiddsec fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_hiddsec))))
+
+(defthm
+  reserved-area-string-guard-lemma-22
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 16 (bpb_extflags fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_extflags fat32-in-memory)
+                65536)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_extflags fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_extflags fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_extflags))))
+
+(defthm
+  reserved-area-string-guard-lemma-23
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 8 (bpb_fsver_minor fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_fsver_minor fat32-in-memory)
+                256)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_fsver_minor fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_fsver_minor fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_fsver_minor))))
+
+(defthm
+  reserved-area-string-guard-lemma-24
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 8 (bpb_fsver_major fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_fsver_major fat32-in-memory)
+                256)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_fsver_major fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_fsver_major fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_fsver_major))))
+
+(defthm
+  reserved-area-string-guard-lemma-25
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 32 (bpb_rootclus fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_rootclus fat32-in-memory)
+                4294967296)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_rootclus fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_rootclus fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_rootclus))))
+
+(defthm
+  reserved-area-string-guard-lemma-26
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 16 (bpb_fsinfo fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_fsinfo fat32-in-memory)
+                65536)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_fsinfo fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_fsinfo fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_fsinfo))))
+
+(defthm
+  reserved-area-string-guard-lemma-27
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 16 (bpb_bkbootsec fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bpb_bkbootsec fat32-in-memory)
+                65536)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bpb_bkbootsec fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bpb_bkbootsec fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bpb_bkbootsec))))
+
+(defthm
+  reserved-area-string-guard-lemma-28
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 8 (bs_drvnum fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bs_drvnum fat32-in-memory)
+                256)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bs_drvnum fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bs_drvnum fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bs_drvnum))))
+
+(defthm
+  reserved-area-string-guard-lemma-29
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 8 (bs_reserved1 fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bs_reserved1 fat32-in-memory)
+                256)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bs_reserved1 fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bs_reserved1 fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bs_reserved1))))
+
+(defthm
+  reserved-area-string-guard-lemma-30
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 8 (bs_bootsig fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bs_bootsig fat32-in-memory)
+                256)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bs_bootsig fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bs_bootsig fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bs_bootsig))))
+
+(defthm
+  reserved-area-string-guard-lemma-31
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 32 (bs_volid fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bs_volid fat32-in-memory)
+                4294967296)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bs_volid fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bs_volid fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bs_volid))))
+
+(defthm
+  reserved-area-string-guard-lemma-32
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-p 8 (bs_bootsig fat32-in-memory)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (< (bs_bootsig fat32-in-memory)
+                256)))
+   (:linear
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (<= 0 (bs_bootsig fat32-in-memory))))
+   (:rewrite
+    :corollary
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (integerp (bs_bootsig fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (enable compliant-fat32-in-memoryp
+                       fat32-in-memoryp bs_bootsig))))
+
 (encapsulate
   ()
 
@@ -5625,7 +6009,307 @@
       (nth
        4
        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
-      (logtail 8 (bpb_totsec16 fat32-in-memory))))))
+      (logtail 8 (bpb_totsec16 fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-45
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       5
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (bpb_media fat32-in-memory))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-46
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       6
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bpb_fatsz16 fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-47
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       7
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 8 (bpb_fatsz16 fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-48
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       8
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bpb_secpertrk fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-49
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       9
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 8 (bpb_secpertrk fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-50
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       10
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bpb_numheads fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-51
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       11
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 8 (bpb_numheads fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-52
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       15
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 24 (bpb_hiddsec fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-53
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       14
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (logtail 16 (bpb_hiddsec fat32-in-memory))))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-54
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       13
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (logtail  8 (bpb_hiddsec fat32-in-memory))))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-55
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       12
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bpb_hiddsec fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-56
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       24
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bpb_extflags fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-57
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       25
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 8 (bpb_extflags fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-58
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       26
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (bpb_fsver_minor fat32-in-memory))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-59
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       27
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (bpb_fsver_major fat32-in-memory))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-60
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       28
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bpb_rootclus fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-61
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       29
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (logtail  8 (bpb_rootclus fat32-in-memory))))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-62
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       30
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (logtail 16 (bpb_rootclus fat32-in-memory))))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-63
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       31
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 24 (bpb_rootclus fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-64
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       32
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bpb_fsinfo fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-65
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       33
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 8 (bpb_fsinfo fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-66
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       34
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bpb_bkbootsec fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-67
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       35
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 8 (bpb_bkbootsec fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-68
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       48
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (bs_drvnum fat32-in-memory))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-69
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       49
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (bs_reserved1 fat32-in-memory))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-70
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       50
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (bs_bootsig fat32-in-memory))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-71
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       51
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (bs_volid fat32-in-memory)))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-72
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       52
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (logtail  8 (bs_volid fat32-in-memory))))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-73
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       53
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (loghead 8 (logtail 16 (bs_volid fat32-in-memory))))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-74
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (nth
+       54
+       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+      (logtail 24 (bs_volid fat32-in-memory))))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-17
