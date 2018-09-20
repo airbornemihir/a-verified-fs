@@ -70,7 +70,7 @@
                   (chars=>nats chars)))
   :hints (("goal" :in-theory (enable string=>nats))))
 
-(defthm chars=>nats-of-take
+(defthmd chars=>nats-of-take
   (implies (<= (nfix n) (len chars))
            (equal (chars=>nats (take n chars))
                   (take n (chars=>nats chars))))
@@ -957,7 +957,7 @@
   update-stobj-array
   (name array-length bit-width array-updater array-accessor constant
         stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3 lemma-name4
-        lemma-name5 lemma-name6 lemma-name7 lemma-name8)
+        lemma-name5 lemma-name6 lemma-name7 lemma-name8 lemma-name9)
   `(encapsulate
      nil
 
@@ -1078,7 +1078,16 @@
      (defthm ,lemma-name8
        (equal (data-region-length (,name v ,stobj))
               (data-region-length ,stobj))
-       :hints (("goal" :in-theory (enable data-region-length))))))
+       :hints (("goal" :in-theory (enable data-region-length))))
+
+     ;; Why didn't this work with nfix?
+     (defthm ,lemma-name9
+       (implies
+        (and (,stobj-recogniser ,stobj)
+             (natp i)
+             (< i (,array-length ,stobj)))
+        (equal (,array-updater i (,array-accessor i ,stobj) ,stobj)
+               ,stobj)))))
 
 (update-stobj-array
  update-bs_jmpboot bs_jmpboot-length 8
@@ -1091,7 +1100,8 @@
  update-bs_jmpboot-correctness-5
  update-bs_jmpboot-correctness-6
  update-bs_jmpboot-correctness-7
- update-bs_jmpboot-correctness-8)
+ update-bs_jmpboot-correctness-8
+ update-bs_jmpboot-correctness-9)
 
 ;; (update-stobj-array
 ;;  update-bs_oemname bs_oemname-length 8
@@ -1171,7 +1181,8 @@
  update-bs_vollab-correctness-5
  update-bs_vollab-correctness-6
  update-bs_vollab-correctness-7
- update-bs_vollab-correctness-8)
+ update-bs_vollab-correctness-8
+ update-bs_vollab-correctness-9)
 
 (update-stobj-array
  update-bs_filsystype bs_filsystype-length 8
@@ -1184,7 +1195,8 @@
  update-bs_filsystype-correctness-5
  update-bs_filsystype-correctness-6
  update-bs_filsystype-correctness-7
- update-bs_filsystype-correctness-8)
+ update-bs_filsystype-correctness-8
+ update-bs_filsystype-correctness-9)
 
 (update-stobj-array
  update-bpb_reserved bpb_reserved-length 8
@@ -1197,7 +1209,8 @@
  update-bpb_reserved-correctness-5
  update-bpb_reserved-correctness-6
  update-bpb_reserved-correctness-7
- update-bpb_reserved-correctness-8)
+ update-bpb_reserved-correctness-8
+ update-bpb_reserved-correctness-9)
 
 (encapsulate
   ()
@@ -5840,17 +5853,6 @@
     :in-theory (e/d (compliant-fat32-in-memoryp)
                     (loghead logtail fat32-in-memoryp)))))
 
-;; Why didn't this work with nfix?
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-39
-  (implies
-   (and (fat32-in-memoryp fat32-in-memory)
-        (natp i)
-        (< i (bs_jmpboot-length fat32-in-memory)))
-   (equal (update-bs_jmpbooti i (bs_jmpbooti i fat32-in-memory)
-                              fat32-in-memory)
-          fat32-in-memory)))
-
 (encapsulate
   ()
 
@@ -6099,8 +6101,10 @@
                                                                 logtail
                                                                 unsigned-byte-p)))))
 
+  (local (in-theory (enable chars=>nats-of-take)))
+
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-40
+    fat32-in-memory-to-string-inversion-lemma-39
     (implies
      (compliant-fat32-in-memoryp fat32-in-memory)
      (equal
