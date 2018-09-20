@@ -5014,73 +5014,73 @@
      :hints (("goal" :in-theory (enable data-region-length ,name)))))
 
 (data-region-length-macro update-bs_volid fat32-in-memory
-                         data-region-length-of-update-bs_volid)
+                          data-region-length-of-update-bs_volid)
 
 (data-region-length-macro update-bs_bootsig fat32-in-memory
-                         data-region-length-of-update-bs_bootsig)
+                          data-region-length-of-update-bs_bootsig)
 
 (data-region-length-macro update-bs_reserved1 fat32-in-memory
-                         data-region-length-of-update-bs_reserved1)
+                          data-region-length-of-update-bs_reserved1)
 
 (data-region-length-macro update-bs_drvnum fat32-in-memory
-                         data-region-length-of-update-bs_drvnum)
+                          data-region-length-of-update-bs_drvnum)
 
 (data-region-length-macro update-bpb_bkbootsec fat32-in-memory
-                         data-region-length-of-update-bpb_bkbootsec)
+                          data-region-length-of-update-bpb_bkbootsec)
 
 (data-region-length-macro update-bpb_fsinfo fat32-in-memory
-                         data-region-length-of-update-bpb_fsinfo)
+                          data-region-length-of-update-bpb_fsinfo)
 
 (data-region-length-macro update-bpb_rootclus fat32-in-memory
-                         data-region-length-of-update-bpb_rootclus)
+                          data-region-length-of-update-bpb_rootclus)
 
 (data-region-length-macro update-bpb_fsver_major fat32-in-memory
-                         data-region-length-of-update-bpb_fsver_major)
+                          data-region-length-of-update-bpb_fsver_major)
 
 (data-region-length-macro update-bpb_fsver_minor fat32-in-memory
-                         data-region-length-of-update-bpb_fsver_minor)
+                          data-region-length-of-update-bpb_fsver_minor)
 
 (data-region-length-macro update-bpb_extflags fat32-in-memory
-                         data-region-length-of-update-bpb_extflags)
+                          data-region-length-of-update-bpb_extflags)
 
 (data-region-length-macro update-bpb_fatsz32 fat32-in-memory
-                         data-region-length-of-update-bpb_fatsz32)
+                          data-region-length-of-update-bpb_fatsz32)
 
 (data-region-length-macro update-bpb_totsec32 fat32-in-memory
-                         data-region-length-of-update-bpb_totsec32)
+                          data-region-length-of-update-bpb_totsec32)
 
 (data-region-length-macro update-bpb_hiddsec fat32-in-memory
-                         data-region-length-of-update-bpb_hiddsec)
+                          data-region-length-of-update-bpb_hiddsec)
 
 (data-region-length-macro update-bpb_numheads fat32-in-memory
-                         data-region-length-of-update-bpb_numheads)
+                          data-region-length-of-update-bpb_numheads)
 
 (data-region-length-macro update-bpb_secpertrk fat32-in-memory
-                         data-region-length-of-update-bpb_secpertrk)
+                          data-region-length-of-update-bpb_secpertrk)
 
 (data-region-length-macro update-bpb_fatsz16 fat32-in-memory
-                         data-region-length-of-update-bpb_fatsz16)
+                          data-region-length-of-update-bpb_fatsz16)
 
 (data-region-length-macro update-bpb_media fat32-in-memory
-                         data-region-length-of-update-bpb_media)
+                          data-region-length-of-update-bpb_media)
 
 (data-region-length-macro update-bpb_totsec16 fat32-in-memory
-                         data-region-length-of-update-bpb_totsec16)
+                          data-region-length-of-update-bpb_totsec16)
 
 (data-region-length-macro update-bpb_rootentcnt fat32-in-memory
-                         data-region-length-of-update-bpb_rootentcnt)
+                          data-region-length-of-update-bpb_rootentcnt)
 
 (data-region-length-macro update-bpb_numfats fat32-in-memory
-                         data-region-length-of-update-bpb_numfats)
+                          data-region-length-of-update-bpb_numfats)
 
 (data-region-length-macro update-bpb_rsvdseccnt fat32-in-memory
-                         data-region-length-of-update-bpb_rsvdseccnt)
+                          data-region-length-of-update-bpb_rsvdseccnt)
 
 (data-region-length-macro update-bpb_secperclus fat32-in-memory
-                         data-region-length-of-update-bpb_secperclus)
+                          data-region-length-of-update-bpb_secperclus)
 
 (data-region-length-macro update-bpb_bytspersec fat32-in-memory
-                         data-region-length-of-update-bpb_bytspersec)
+                          data-region-length-of-update-bpb_bytspersec)
 
 (defthm
   data-region-length-of-update-fat
@@ -5271,6 +5271,85 @@
           fat32-in-memory)
          fat32-in-memory))
   :hints (("goal" :in-theory (enable update-bpb_numfats bpb_numfats))))
+
+(defmacro
+    update-bpb_fatsz32-macro
+    (name stobj update-bpb_fatsz32-of-name)
+  `(defthm
+     ,update-bpb_fatsz32-of-name
+     (equal
+      (update-bpb_fatsz32
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_fatsz32 v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_fatsz32 ,name)))))
+
+(update-bpb_fatsz32-macro update-bpb_totsec32 fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_totsec32)
+
+(update-bpb_fatsz32-macro update-bpb_hiddsec fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_hiddsec)
+
+(update-bpb_fatsz32-macro update-bpb_numheads fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_numheads)
+
+(update-bpb_fatsz32-macro update-bpb_secpertrk fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_secpertrk)
+
+(update-bpb_fatsz32-macro update-bpb_fatsz16 fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_fatsz16)
+
+(update-bpb_fatsz32-macro update-bpb_media fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_media)
+
+(update-bpb_fatsz32-macro update-bpb_totsec16 fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_totsec16)
+
+(update-bpb_fatsz32-macro update-bpb_rootentcnt fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_rootentcnt)
+
+(update-bpb_fatsz32-macro update-bpb_bytspersec fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_bytspersec)
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_fatsz32-of-update-bpb_fatsz32
+  (equal (update-bpb_fatsz32
+          v1
+          (update-bpb_fatsz32 v2 fat32-in-memory))
+         (update-bpb_fatsz32 v1 fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_fatsz32))))
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_fatsz32-of-bpb_fatsz32
+  (implies (fat32-in-memoryp fat32-in-memory)
+  (equal (update-bpb_fatsz32
+          (bpb_fatsz32 fat32-in-memory)
+          fat32-in-memory)
+         fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_fatsz32 bpb_fatsz32))))
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_bytspersec-of-update-bpb_bytspersec
+  (equal (update-bpb_bytspersec
+          v1
+          (update-bpb_bytspersec v2 fat32-in-memory))
+         (update-bpb_bytspersec v1 fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_bytspersec))))
+
+;; TODO: Move this to a macro!
+(defthm
+  update-bpb_bytspersec-of-bpb_bytspersec
+  (implies (fat32-in-memoryp fat32-in-memory)
+  (equal (update-bpb_bytspersec
+          (bpb_bytspersec fat32-in-memory)
+          fat32-in-memory)
+         fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-bpb_bytspersec bpb_bytspersec))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-8
