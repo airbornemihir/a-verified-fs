@@ -5840,27 +5840,19 @@
     :in-theory (e/d (compliant-fat32-in-memoryp)
                     (loghead logtail fat32-in-memoryp)))))
 
+;; Why didn't this work with nfix?
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-39
+  (implies
+   (and (fat32-in-memoryp fat32-in-memory)
+        (natp i)
+        (< i (bs_jmpboot-length fat32-in-memory)))
+   (equal (update-bs_jmpbooti i (bs_jmpbooti i fat32-in-memory)
+                              fat32-in-memory)
+          fat32-in-memory)))
+
 (encapsulate
   ()
-
-  (local
-   (in-theory (enable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
-                      bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
-                      bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
-                      bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
-                      bpb_secpertrk bpb_numheads bpb_rootentcnt
-                      bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
-                      bpb_rootentcnt bpb_totsec16 bs_volid
-                      update-bpb_secperclus update-bpb_rsvdseccnt
-                      update-bpb_bytspersec update-bpb_numfats
-                      update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
-                      update-bs_drvnum update-bs_reserved1 update-bs_bootsig
-                      update-bpb_media update-bpb_fsver_minor
-                      update-bpb_fsver_major update-bpb_fatsz16
-                      update-bpb_secpertrk update-bpb_numheads
-                      update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
-                      update-bpb_fatsz32 update-bpb_rootentcnt
-                      update-bpb_totsec16 update-bs_volid)))
 
   (local
    (defthm
@@ -5977,28 +5969,25 @@
                   (integerp (bpb_rootentcnt fat32-in-memory)))
          (implies (compliant-fat32-in-memoryp fat32-in-memory)
                   (<= 0 (bpb_rootentcnt fat32-in-memory))))
-     :hints (("Goal" :in-theory (enable compliant-fat32-in-memoryp)))))
+     :hints (("Goal" :in-theory (enable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
+                                        bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
+                                        bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
+                                        bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
+                                        bpb_secpertrk bpb_numheads bpb_rootentcnt
+                                        bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
+                                        bpb_rootentcnt bpb_totsec16 bs_volid
+                                        update-bpb_secperclus update-bpb_rsvdseccnt
+                                        update-bpb_bytspersec update-bpb_numfats
+                                        update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
+                                        update-bs_drvnum update-bs_reserved1 update-bs_bootsig
+                                        update-bpb_media update-bpb_fsver_minor
+                                        update-bpb_fsver_major update-bpb_fatsz16
+                                        update-bpb_secpertrk update-bpb_numheads
+                                        update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
+                                        update-bpb_fatsz32 update-bpb_rootentcnt
+                                        update-bpb_totsec16 update-bs_volid compliant-fat32-in-memoryp)))))
 
-  (local
-   (in-theory (disable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
-                      bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
-                      bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
-                      bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
-                      bpb_secpertrk bpb_numheads bpb_rootentcnt
-                      bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
-                      bpb_rootentcnt bpb_totsec16 bs_volid
-                      update-bpb_secperclus update-bpb_rsvdseccnt
-                      update-bpb_bytspersec update-bpb_numfats
-                      update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
-                      update-bs_drvnum update-bs_reserved1 update-bs_bootsig
-                      update-bpb_media update-bpb_fsver_minor
-                      update-bpb_fsver_major update-bpb_fatsz16
-                      update-bpb_secpertrk update-bpb_numheads
-                      update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
-                      update-bpb_fatsz32 update-bpb_rootentcnt
-                      update-bpb_totsec16 update-bs_volid)))
-
-  (local (in-theory (disable bs_jmpbooti
+  (local (in-theory (disable bs_jmpbooti update-bs_jmpbooti
                              bs_oemnamei bpb_reservedi bs_vollabi
                              bs_filsystypei loghead logtail)))
 
@@ -6108,87 +6097,21 @@
                                                                 reserved-area-chars)
                                                                (loghead
                                                                 logtail
-                                                                unsigned-byte-p))))))
+                                                                unsigned-byte-p)))))
 
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-39
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (equal
-    (update-bs_jmpboot
-     (take 3
-           (get-initial-bytes (fat32-in-memory-to-string fat32-in-memory)))
-     fat32-in-memory)
-    fat32-in-memory)) :hints (("Goal" :in-theory (enable get-initial-bytes fat32-in-memory-to-string))))
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-39
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (equal
-    (update-bs_jmpboot
-     (take 3
-           (get-initial-bytes (fat32-in-memory-to-string fat32-in-memory)))
-     fat32-in-memory)
-    fat32-in-memory))
-  :instructions
-  ((:in-theory (e/d nil
-                    (logtail loghead
-                             bs_jmpbooti update-bs_jmpbooti nth)))
-   :promote (:dive 1 1 2 1)
-   :x :up
-   (:claim (< 16
-              (* (bpb_bytspersec fat32-in-memory)
-                 (bpb_rsvdseccnt fat32-in-memory))))
-   :x (:dive 1 1 2)
-   (:claim (character-listp (explode (reserved-area-string fat32-in-memory))))
-   (:rewrite already-a-character-list)
-   (:dive 1)
-   :expand
-   :up (:rewrite str::explode-of-implode)
-   :s
-   (:claim (character-listp (reserved-area-chars fat32-in-memory)))
-   (:rewrite already-a-character-list)
-   :expand
-   :up :s :up :up :expand :expand (:dive 1)
-   (:rewrite str::explode-of-implode)
-   :s :up :expand :s-prop (:dive 1 1)
-   :s :up
-   (:claim (and (integerp (bs_jmpbooti 0 fat32-in-memory))
-                (<= 0 (bs_jmpbooti 0 fat32-in-memory))
-                (< (bs_jmpbooti 0 fat32-in-memory)
-                   256)))
-   (:rewrite char-code-code-char-is-identity)
-   :nx (:dive 1)
-   :s :up :expand :s-prop (:dive 1 1)
-   :s :up
-   (:claim (and (integerp (bs_jmpbooti 1 fat32-in-memory))
-                (<= 0 (bs_jmpbooti 1 fat32-in-memory))
-                (< (bs_jmpbooti 1 fat32-in-memory)
-                   256)))
-   (:rewrite char-code-code-char-is-identity)
-   :nx (:dive 1)
-   :s :up :expand :s-prop (:dive 1 1)
-   :s :up
-   (:claim (and (integerp (bs_jmpbooti 2 fat32-in-memory))
-                (<= 0 (bs_jmpbooti 2 fat32-in-memory))
-                (< (bs_jmpbooti 2 fat32-in-memory)
-                   256)))
-   (:rewrite char-code-code-char-is-identity)
-   :top (:dive 1 1)
-   :expand :s-prop (:dive 1)
-   (:rewrite car-cons)
-   :top (:dive 1 1 2 2)
-   (:rewrite cdr-cons)
-   :up :expand :s-prop (:dive 1)
-   (:rewrite car-cons)
-   :top (:dive 1 1 2 2 2)
-   (:rewrite cdr-cons)
-   :top (:dive 1 1 2 2)
-   :expand :s-prop (:dive 1)
-   (:rewrite car-cons)
-   :nx
-   :expand :s-prop
-   :top (:bash ("goal" :in-theory (enable update-bs_jmpbooti)))))
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-40
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (update-bs_jmpboot
+       (take 3
+             (get-initial-bytes (fat32-in-memory-to-string fat32-in-memory)))
+       fat32-in-memory)
+      fat32-in-memory)) :hints (("Goal" :in-theory (e/d (get-initial-bytes
+                                                         fat32-in-memory-to-string
+                                                         compliant-fat32-in-memoryp)
+                                                        (fat32-in-memoryp))))))
 
 (encapsulate
   ()
