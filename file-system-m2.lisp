@@ -765,7 +765,9 @@
                   (>= (bpb_numfats fat32-in-memory) 1)
                   (>= (bpb_fatsz32 fat32-in-memory) 1)
                   (>= (bpb_rootclus fat32-in-memory)
-                      *ms-first-data-cluster*)))
+                      *ms-first-data-cluster*)
+                  (>= (bpb_bytspersec fat32-in-memory)
+                      *ms-min-bytes-per-sector*)))
     :hints
     (("goal"
       :in-theory (e/d (compliant-fat32-in-memoryp cluster-size)
@@ -791,7 +793,9 @@
                     (>= (bpb_numfats fat32-in-memory) 1)
                     (>= (bpb_fatsz32 fat32-in-memory) 1)
                     (>= (bpb_rootclus fat32-in-memory)
-                        *ms-first-data-cluster*)))))))
+                        *ms-first-data-cluster*)
+                    (>= (bpb_bytspersec fat32-in-memory)
+                        *ms-min-bytes-per-sector*)))))))
 
 (defthm
   fati-when-compliant-fat32-in-memoryp
@@ -7210,16 +7214,23 @@
 (encapsulate
   ()
 
+  ;; Get around enabling compliant-fat32-in-memoryp in a kludgy way.
+  (local
+   (defthm
+     fat32-in-memory-to-string-inversion-lemma-87
+     (implies (compliant-fat32-in-memoryp fat32-in-memory)
+              (fat32-in-memoryp fat32-in-memory))
+     :hints (("Goal" :in-theory (enable compliant-fat32-in-memoryp)))))
+
   (local (in-theory (e/d (nthcdr-when->=-n-len-l nthcdr-of-nil
                                                  fix-true-list-when-true-listp
                                                  chars=>nats-of-revappend
                                                  nats=>chars-of-revappend
                                                  update-data-region-correctness-1
                                                  data-region-length
-                                                 ;; all three of the following
+                                                 ;; both of the following
                                                  ;; rules, i would like to disable
-                                                 cluster-size count-of-clusters
-                                                 compliant-fat32-in-memoryp)
+                                                 cluster-size count-of-clusters)
                          (fat32-in-memoryp loghead logtail nth
                                            floor))))
 
@@ -7408,7 +7419,7 @@ Some (rather awful) testing forms are
              (equal filename "..         "))
          (list filename first-cluster)
        (b*
-           (((mv contents &) 
+           (((mv contents &)
              (get-clusterchain
               fat32-in-memory
               (fat32-entry-mask first-cluster)
