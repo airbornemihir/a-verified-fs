@@ -6503,9 +6503,19 @@
   fat32-in-memory-to-string-inversion-lemma-26
   (implies (fat32-in-memoryp fat32-in-memory)
            (equal (resize-data-region (data-region-length fat32-in-memory)
-                              fat32-in-memory)
+                                      fat32-in-memory)
                   fat32-in-memory))
-  :hints (("goal" :in-theory (enable resize-data-region data-region-length))))
+  :hints (("goal" :in-theory (enable resize-data-region data-region-length)))
+  :rule-classes (:rewrite
+                 (:rewrite :corollary
+                           (implies
+                            (fat32-in-memoryp fat32-in-memory)
+                            (equal (resize-data-region
+                                    (len
+                                     (nth *data-regioni* fat32-in-memory))
+                                    fat32-in-memory)
+                                   fat32-in-memory))
+                           :hints (("Goal" :in-theory (enable resize-data-region))))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-27
@@ -7196,17 +7206,6 @@
                       (nth *data-regioni* fat32-in-memory)
                       fat32-in-memory)
           fat32-in-memory)))
-
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-87
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (equal (resize-data-region
-           (len
-            (nth *data-regioni* fat32-in-memory))
-           fat32-in-memory)
-          fat32-in-memory))
-  :hints (("Goal" :in-theory (enable resize-data-region))))
 
 (encapsulate
   ()
