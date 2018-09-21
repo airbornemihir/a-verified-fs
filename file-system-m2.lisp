@@ -7211,10 +7211,14 @@
 (encapsulate
   ()
 
-  (local (in-theory (enable nthcdr-when->=-n-len-l nthcdr-of-nil
-                            fix-true-list-when-true-listp
-                            chars=>nats-of-revappend
-                            nats=>chars-of-revappend)))
+  (local (in-theory (e/d (nthcdr-when->=-n-len-l nthcdr-of-nil
+                                                 fix-true-list-when-true-listp
+                                                 chars=>nats-of-revappend
+                                                 nats=>chars-of-revappend
+                                                 update-data-region-correctness-1
+                                                 data-region-length)
+                         (fat32-in-memoryp loghead logtail nth
+                                           floor))))
 
   (defthm
     fat32-in-memory-to-string-inversion
@@ -7260,40 +7264,21 @@
                 fat32-in-memory)))
       fat32-in-memory))
     :hints (("Goal" :in-theory (e/d (update-bs_oemname-correctness-1
-                                     compliant-fat32-in-memoryp)
-                                    (fat32-in-memoryp loghead logtail nth
-                                                      floor)))
-            ("Subgoal 2.2.3" :in-theory (e/d (cluster-size count-of-clusters)
-                                    (fat32-in-memoryp loghead logtail nth
-                                                      floor)))
+                                     compliant-fat32-in-memoryp)))
+            ("Subgoal 2.2.3" :in-theory (e/d (cluster-size count-of-clusters)))
             ("Subgoal 2.2.2" :in-theory (e/d (cluster-size count-of-clusters
-                                                           compliant-fat32-in-memoryp)
-                                    (fat32-in-memoryp loghead logtail nth
-                                                      floor)))
+                                                           compliant-fat32-in-memoryp)))
             ("Subgoal 2.2.2'" :in-theory (e/d (cluster-size count-of-clusters
-                                                            compliant-fat32-in-memoryp
-                                                            update-data-region-correctness-1
-                                                            data-region-length)
-                                              (fat32-in-memoryp loghead logtail nth
-                                                                floor)))
+                                                            compliant-fat32-in-memoryp)))
             ("Subgoal 2.2.1" :in-theory (e/d (cluster-size count-of-clusters
-                                                           compliant-fat32-in-memoryp)
-                                    (fat32-in-memoryp loghead logtail nth
-                                                      floor)))
+                                                           compliant-fat32-in-memoryp)))
             ("Subgoal 2.1.3" :in-theory (e/d (cluster-size count-of-clusters
-                                                           compliant-fat32-in-memoryp)
-                                    (fat32-in-memoryp loghead logtail nth
-                                                      floor)))
-            ("Subgoal 2.1.2" :in-theory (e/d (data-region-length cluster-size
-                                                                 count-of-clusters
-                                                                 update-data-region-correctness-1
-                                                                 compliant-fat32-in-memoryp)
-                                             (fat32-in-memoryp loghead logtail nth
-                                                               floor)))
+                                                           compliant-fat32-in-memoryp)))
+            ("Subgoal 2.1.2" :in-theory (e/d (cluster-size
+                                              count-of-clusters
+                                              compliant-fat32-in-memoryp)))
             ("Subgoal 2.1.1" :in-theory (e/d (cluster-size count-of-clusters
-                                                           compliant-fat32-in-memoryp)
-                                             (fat32-in-memoryp loghead logtail nth
-                                                               floor))))))
+                                                           compliant-fat32-in-memoryp))))))
 
 #|
 Some (rather awful) testing forms are
