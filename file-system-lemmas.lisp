@@ -47,13 +47,41 @@
            (equal (assoc-equal name1 (delete-assoc name2 alist))
                   (assoc-equal name1 alist))))
 
-(defthm character-listp-of-first-n-ac
-  (implies (and (character-listp l) (character-listp acc) (<= n (len l)))
-           (character-listp (first-n-ac n l acc))))
+(defthm character-listp-of-revappend
+  (equal (character-listp (revappend x y))
+         (and (character-listp (fix-true-list x))
+              (character-listp y))))
+
+(defthm
+  character-listp-of-fix-true-list
+  (implies (true-listp x)
+           (equal (character-listp (fix-true-list x))
+                  (character-listp x)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary (implies (character-listp x)
+                        (character-listp (fix-true-list x))))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthm character-listp-of-first-n-ac-lemma-1
+     (implies (not (character-listp (fix-true-list ac)))
+              (not (character-listp (first-n-ac i l ac))))))
+
+  (defthm
+    character-listp-of-first-n-ac
+    (implies (character-listp l)
+             (equal (character-listp (first-n-ac n l acc))
+                    (and (character-listp (fix-true-list acc))
+                         (<= (nfix n) (len l)))))))
 
 (defthm character-listp-of-take
-  (implies (and (character-listp l) (<= n (len l)))
-           (character-listp (take n l))))
+  (implies (character-listp l)
+           (equal (character-listp (take n l))
+                  (<= (nfix n) (len l)))))
 
 (defthm character-listp-of-nthcdr
   (implies (and (character-listp l))
