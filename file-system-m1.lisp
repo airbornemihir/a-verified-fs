@@ -14,7 +14,6 @@
 (include-book "insert-text")
 (include-book "fat32")
 
-
 (defthm nth-of-string=>nats
   (equal (nth n (string=>nats string))
          (if (< (nfix n) (len (explode string)))

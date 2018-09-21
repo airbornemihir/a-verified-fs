@@ -1823,6 +1823,13 @@
                    (< n (len l)))
               (rationalp (nth n l)))))
 
+  (local
+   (defthm read-reserved-area-guard-lemma-5
+     (implies (and (unsigned-byte-listp 8 l)
+                   (natp n)
+                   (< n (len l)))
+              (rationalp (nth n l)))))
+
   ;; This must be called after the file is opened.
   (defun
       read-reserved-area (fat32-in-memory str)
@@ -1835,16 +1842,16 @@
       (("goal"
         :do-not-induct t
         :in-theory (disable fat32-in-memoryp unsigned-byte-p nth))
-       ("Subgoal 7" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
+       ("subgoal 7" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
         :use ((:instance
                unsigned-byte-p-of-nth-when-unsigned-byte-p
                (n 13)
                (l (get-initial-bytes str))
                (bits 8))
-              (:instance UNSIGNED-BYTE-P-FORWARD-TO-NONNEGATIVE-INTEGERP
+              (:instance unsigned-byte-p-forward-to-nonnegative-integerp
                          (n bits)
                          (x (nth 13 (get-initial-bytes str))))))
-       ("Subgoal 6" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
+       ("subgoal 6" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
         :use (:instance
               unsigned-byte-p-of-nth-when-unsigned-byte-p
               (n 0)
