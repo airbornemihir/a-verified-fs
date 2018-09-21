@@ -104,6 +104,11 @@
          (nats=>chars nats))
   :hints (("goal" :in-theory (enable nats=>string))))
 
+(defthmd nats=>chars-of-revappend
+  (equal (nats=>chars (revappend x y))
+         (revappend (nats=>chars x) (nats=>chars y)))
+  :hints (("goal" :in-theory (enable nats=>chars))))
+
 ;; I could have made a more accurate and yet more painful version of this
 ;; theorem using fix-true-list, but...
 (defthm
@@ -7122,11 +7127,11 @@
      (equal (* (bpb_fatsz32 fat32-in-memory)
                1/4 (bpb_bytspersec fat32-in-memory))
             (fat-length fat32-in-memory))
-     (equal (* (bpb_numfats fat32-in-memory)
-               4 (fat-length fat32-in-memory))
-            (* (bpb_bytspersec fat32-in-memory)
+     (equal (* (bpb_bytspersec fat32-in-memory)
                (bpb_fatsz32 fat32-in-memory)
-               (bpb_numfats fat32-in-memory))))))
+               (bpb_numfats fat32-in-memory))
+            (* (bpb_numfats fat32-in-memory)
+               4 (fat-length fat32-in-memory))))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-82
@@ -7149,7 +7154,7 @@
 
   (local (include-book "std/lists/rev" :dir :system))
 
-  (defthmd
+  (defthm
     fat32-in-memory-to-string-inversion-lemma-84
     (equal (revappend (revappend x nil) nil)
            (list-fix x))
@@ -7162,14 +7167,47 @@
                   (y nil))
        (:instance fat32-in-memory-to-string-inversion-lemma-83
                   (x (rev x))
+                  (y nil))))))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-86
+    (equal (rev (revappend x nil))
+           (list-fix x))
+    :hints
+    (("goal"
+      :in-theory (disable rev-of-rev)
+      :use
+      (rev-of-rev
+       (:instance fat32-in-memory-to-string-inversion-lemma-83
                   (y nil)))))))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-85
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (equal (update-nth *data-regioni*
+                      (nth *data-regioni* fat32-in-memory)
+                      fat32-in-memory)
+          fat32-in-memory)))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-87
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (equal (resize-data-region
+           (len
+            (nth *data-regioni* fat32-in-memory))
+           fat32-in-memory)
+          fat32-in-memory))
+  :hints (("Goal" :in-theory (enable resize-data-region))))
 
 (encapsulate
   ()
 
   (local (in-theory (enable nthcdr-when->=-n-len-l nthcdr-of-nil
                             fix-true-list-when-true-listp
-                            chars=>nats-of-revappend)))
+                            chars=>nats-of-revappend
+                            nats=>chars-of-revappend)))
 
   (defthm
     fat32-in-memory-to-string-inversion
@@ -7230,7 +7268,25 @@
                                                             update-data-region-correctness-1
                                                             data-region-length)
                                               (fat32-in-memoryp loghead logtail nth
-                                                                floor))))))
+                                                                floor)))
+            ("Subgoal 2.2.1" :in-theory (e/d (cluster-size count-of-clusters
+                                                           compliant-fat32-in-memoryp)
+                                    (fat32-in-memoryp loghead logtail nth
+                                                      floor)))
+            ("Subgoal 2.1.3" :in-theory (e/d (cluster-size count-of-clusters
+                                                           compliant-fat32-in-memoryp)
+                                    (fat32-in-memoryp loghead logtail nth
+                                                      floor)))
+            ("Subgoal 2.1.2" :in-theory (e/d (data-region-length cluster-size
+                                                                 count-of-clusters
+                                                                 update-data-region-correctness-1
+                                                                 compliant-fat32-in-memoryp)
+                                             (fat32-in-memoryp loghead logtail nth
+                                                               floor)))
+            ("Subgoal 2.1.1" :in-theory (e/d (cluster-size count-of-clusters
+                                                           compliant-fat32-in-memoryp)
+                                             (fat32-in-memoryp loghead logtail nth
+                                                               floor))))))
 
 #|
 Some (rather awful) testing forms are
