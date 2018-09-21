@@ -7216,7 +7216,11 @@
                                                  chars=>nats-of-revappend
                                                  nats=>chars-of-revappend
                                                  update-data-region-correctness-1
-                                                 data-region-length)
+                                                 data-region-length
+                                                 ;; all three of the following
+                                                 ;; rules, i would like to disable
+                                                 cluster-size count-of-clusters
+                                                 compliant-fat32-in-memoryp)
                          (fat32-in-memoryp loghead logtail nth
                                            floor))))
 
@@ -7262,23 +7266,7 @@
                fat32-in-memory
                (fat32-in-memory-to-string
                 fat32-in-memory)))
-      fat32-in-memory))
-    :hints (("Goal" :in-theory (e/d (update-bs_oemname-correctness-1
-                                     compliant-fat32-in-memoryp)))
-            ("Subgoal 2.2.3" :in-theory (e/d (cluster-size count-of-clusters)))
-            ("Subgoal 2.2.2" :in-theory (e/d (cluster-size count-of-clusters
-                                                           compliant-fat32-in-memoryp)))
-            ("Subgoal 2.2.2'" :in-theory (e/d (cluster-size count-of-clusters
-                                                            compliant-fat32-in-memoryp)))
-            ("Subgoal 2.2.1" :in-theory (e/d (cluster-size count-of-clusters
-                                                           compliant-fat32-in-memoryp)))
-            ("Subgoal 2.1.3" :in-theory (e/d (cluster-size count-of-clusters
-                                                           compliant-fat32-in-memoryp)))
-            ("Subgoal 2.1.2" :in-theory (e/d (cluster-size
-                                              count-of-clusters
-                                              compliant-fat32-in-memoryp)))
-            ("Subgoal 2.1.1" :in-theory (e/d (cluster-size count-of-clusters
-                                                           compliant-fat32-in-memoryp))))))
+      fat32-in-memory))))
 
 #|
 Some (rather awful) testing forms are
