@@ -131,27 +131,27 @@ cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
 
 mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) \
-mkfs.fat-3.0.20-replicant.lisp
+mkfs.fat-3.0.28-replicant.lisp
 	rm -f $(DISK)
 	(mkfs.fat -C -v -F 32 -s 1 $(DISK) $(SIZE)) > mkfs-ref-output-1.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-1.txt" $(ACL2) < \
-	mkfs.fat-3.0.20-replicant.lisp
+	mkfs.fat-3.0.28-replicant.lisp
 
 mkfs-ref-output-2.txt mkfs-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) \
-mkfs.fat-3.0.20-replicant.lisp
+mkfs.fat-3.0.28-replicant.lisp
 	rm -f $(DISK)
 	(mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)) > mkfs-ref-output-2.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-2.txt" $(ACL2) < \
-	mkfs.fat-3.0.20-replicant.lisp
+	mkfs.fat-3.0.28-replicant.lisp
 
 # this case does not actually produce a valid FAT32 filesystem, since
 # there are fewer than 65525 clusters.
 mkfs-ref-output-3.txt mkfs-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) \
-mkfs.fat-3.0.20-replicant.lisp
+mkfs.fat-3.0.28-replicant.lisp
 	rm -f $(DISK)
 	(mkfs.fat -C -v -F 32 -s 4 $(DISK) $(SIZE)) > mkfs-ref-output-3.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-3.txt" $(ACL2) < \
-	mkfs.fat-3.0.20-replicant.lisp
+	mkfs.fat-3.0.28-replicant.lisp
 
 debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
