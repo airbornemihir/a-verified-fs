@@ -44,20 +44,6 @@
        (consp (explode string)))
   :hints (("goal" :in-theory (enable string=>nats))))
 
-(defthm local-nth-of-nats=>chars
-  (equal (nth i (nats=>chars nats))
-         (if (< (nfix i) (len nats))
-             (code-char (nth i nats))
-             nil))
-  :hints (("goal" :in-theory (enable nats=>chars))))
-
-(defthm nth-of-nats=>string
-  (equal (nth i (explode (nats=>string nats)))
-         (if (< (nfix i) (len nats))
-             (code-char (nth i nats))
-             nil))
-  :hints (("goal" :in-theory (enable nats=>string))))
-
 (defthm chars=>nats-of-make-list-ac
   (equal (chars=>nats (make-list-ac n val ac))
          (make-list-ac n (char-code val)
@@ -95,15 +81,6 @@
   (equal (nats=>chars (revappend x y))
          (revappend (nats=>chars x) (nats=>chars y)))
   :hints (("goal" :in-theory (enable nats=>chars))))
-
-;; I could have made a more accurate and yet more painful version of this
-;; theorem using fix-true-list, but...
-(defthm
-  chars=>nats-of-nats=>chars
-  (implies (unsigned-byte-listp 8 nats)
-           (equal (chars=>nats (nats=>chars nats))
-                  nats))
-  :hints (("goal" :in-theory (enable chars=>nats nats=>chars))))
 
 (encapsulate
   ()
