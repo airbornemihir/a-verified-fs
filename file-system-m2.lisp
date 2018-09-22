@@ -24,16 +24,6 @@
     (("goal" :in-theory (enable chars=>nats)
       :induct (cdr-cdr-induct x str::x-equiv)))))
 
-(defthm chars=>nats-of-make-character-list
-  (equal (chars=>nats (make-character-list x))
-         (chars=>nats x))
-  :hints (("goal" :in-theory (enable chars=>nats))))
-
-(defthm length-of-nats=>string
-  (equal (len (explode (nats=>string nats)))
-         (len nats))
-  :hints (("goal" :in-theory (enable nats=>string))))
-
 (defthm consp-of-chars=>nats
   (iff (consp (chars=>nats chars))
        (consp chars))
