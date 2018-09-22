@@ -267,18 +267,6 @@
            (member-equal (nth n l) l))
   :hints (("Goal" :in-theory (enable nth))))
 
-(encapsulate
-  ()
-
-  (local (include-book "ihs/logops-lemmas" :dir :system))
-
-  (local (include-book "arithmetic-5/top" :dir :system))
-
-  (defthm
-    logand-ash-lemma-1
-    (implies (and (natp c))
-             (unsigned-byte-p c (logand i (- (ash 1 c) 1))))))
-
 (defthm make-character-list-of-revappend
   (equal (make-character-list (revappend x y))
          (revappend (make-character-list x)

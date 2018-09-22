@@ -51,6 +51,16 @@
 (defconst *ENOSPC* 28) ;; No space left on device
 (defconst *ENAMETOOLONG* 36) ;; File name too long
 
+(encapsulate
+  ()
+
+  (local (include-book "arithmetic-5/top" :dir :system))
+
+  (defthm
+    logand-ash-lemma-1
+    (implies (and (natp c))
+             (unsigned-byte-p c (logand i (- (ash 1 c) 1))))))
+
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))
   (unsigned-byte-p 32 x))
