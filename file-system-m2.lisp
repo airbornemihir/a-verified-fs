@@ -755,7 +755,8 @@
   (defthm
     compliant-fat32-in-memoryp-correctness-1
     (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (and (integerp (cluster-size fat32-in-memory))
+             (and (fat32-in-memoryp fat32-in-memory)
+                  (integerp (cluster-size fat32-in-memory))
                   (>= (cluster-size fat32-in-memory)
                       *ms-min-bytes-per-sector*)
                   (>= (count-of-clusters fat32-in-memory)
@@ -776,7 +777,8 @@
     ((:rewrite
       :corollary
       (implies (compliant-fat32-in-memoryp fat32-in-memory)
-               (integerp (cluster-size fat32-in-memory))))
+               (and (fat32-in-memoryp fat32-in-memory)
+                    (integerp (cluster-size fat32-in-memory)))))
      (:forward-chaining
       :corollary
       (implies (compliant-fat32-in-memoryp fat32-in-memory)
@@ -4792,25 +4794,6 @@
      (("goal" :in-theory (disable logtail-unsigned-byte-p)
        :use (:instance logtail-unsigned-byte-p (size1 8))))))
 
-  (local
-   (in-theory (enable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
-                      bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
-                      bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
-                      bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
-                      bpb_secpertrk bpb_numheads bpb_rootentcnt
-                      bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
-                      bpb_rootentcnt bpb_totsec16 bs_volid
-                      update-bpb_secperclus update-bpb_rsvdseccnt
-                      update-bpb_bytspersec update-bpb_numfats
-                      update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
-                      update-bs_drvnum update-bs_reserved1 update-bs_bootsig
-                      update-bpb_media update-bpb_fsver_minor
-                      update-bpb_fsver_major update-bpb_fatsz16
-                      update-bpb_secpertrk update-bpb_numheads
-                      update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
-                      update-bpb_fatsz32 update-bpb_rootentcnt
-                      update-bpb_totsec16 update-bs_volid)))
-
   (defund reserved-area-chars (fat32-in-memory)
     (declare (xargs :stobjs fat32-in-memory
                     :guard (compliant-fat32-in-memoryp fat32-in-memory)
@@ -7213,14 +7196,6 @@
 
 (encapsulate
   ()
-
-  ;; Get around enabling compliant-fat32-in-memoryp in a kludgy way.
-  (local
-   (defthm
-     fat32-in-memory-to-string-inversion-lemma-87
-     (implies (compliant-fat32-in-memoryp fat32-in-memory)
-              (fat32-in-memoryp fat32-in-memory))
-     :hints (("Goal" :in-theory (enable compliant-fat32-in-memoryp)))))
 
   (local (in-theory (e/d (nthcdr-when->=-n-len-l nthcdr-of-nil
                                                  fix-true-list-when-true-listp
