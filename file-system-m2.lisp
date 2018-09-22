@@ -6230,78 +6230,39 @@
         (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
        (logtail 24 (bs_volid fat32-in-memory)))))))
 
-;; (defthm
-;;   fat32-in-memory-to-string-inversion-lemma-17
-;;   (implies
-;;    (fat32-in-memoryp fat32-in-memory)
-;;    (equal
-;;     (combine32u
-;;      (logtail 24 (bpb_fatsz32 fat32-in-memory))
-;;      (loghead 8
-;;               (logtail 16 (bpb_fatsz32 fat32-in-memory)))
-;;      (loghead 8
-;;               (logtail 8 (bpb_fatsz32 fat32-in-memory)))
-;;      (loghead 8 (bpb_fatsz32 fat32-in-memory)))
-;;     (bpb_fatsz32 fat32-in-memory)))
-;;   :hints
-;;   (("goal" :in-theory (e/d (bpb_fatsz32)
-;;                            (loghead logtail ash logior)))))
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-27
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-listp 8 (nth *data-regioni* fat32-in-memory)))
+  :rule-classes
+  (:rewrite
+   (:rewrite :corollary
+             (implies
+              (fat32-in-memoryp fat32-in-memory)
+              (true-listp (nth *data-regioni* fat32-in-memory))))))
 
-;; (defthm
-;;   fat32-in-memory-to-string-inversion-lemma-19
-;;   (implies
-;;    (fat32-in-memoryp fat32-in-memory)
-;;    (equal
-;;     (combine32u
-;;      (logtail 24 (bpb_totsec32 fat32-in-memory))
-;;      (loghead 8
-;;               (logtail 16 (bpb_totsec32 fat32-in-memory)))
-;;      (loghead 8
-;;               (logtail 8 (bpb_totsec32 fat32-in-memory)))
-;;      (loghead 8 (bpb_totsec32 fat32-in-memory)))
-;;     (bpb_totsec32 fat32-in-memory)))
-;;   :hints
-;;   (("goal" :in-theory (e/d (bpb_totsec32)
-;;                            (loghead logtail ash logior)))))
-
-(encapsulate
-  ()
-
-  (local (defthm fat32-in-memory-to-string-inversion-lemma-27
-           (equal (revappend x y)
-                  (append (rev x) y))
-           :hints (("goal" :in-theory (enable rev)))))
-
-  (defthm
-    fat32-in-memory-to-string-inversion-lemma-28
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (equal
-              (nthcdr
-               (* (bpb_bytspersec fat32-in-memory)
-                  (bpb_rsvdseccnt fat32-in-memory))
-               (explode (fat32-in-memory-to-string
-                         fat32-in-memory)))
-              (append
-               (explode (make-fat-string-ac (bpb_numfats fat32-in-memory)
-                                            fat32-in-memory ""))
-               (reverse
-                (explode
-                 (nats=>string (revappend (take (data-region-length fat32-in-memory)
-                                                (nth *data-regioni* fat32-in-memory))
-                                          nil)))))))
-    :hints (("goal" :in-theory (enable fat32-in-memory-to-string))))
-
-  (local (include-book "std/lists/rev" :dir :system))
-
-  (defthm
-    fat32-in-memory-to-string-inversion-lemma-49
-    (equal (revappend (revappend x nil) nil)
-           (list-fix x)))
-
-  (defthm
-    fat32-in-memory-to-string-inversion-lemma-50
-    (equal (rev (revappend x nil))
-           (list-fix x))))
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-28
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal
+    (nthcdr
+     (* (bpb_bytspersec fat32-in-memory)
+        (bpb_rsvdseccnt fat32-in-memory))
+     (explode (fat32-in-memory-to-string fat32-in-memory)))
+    (append
+     (explode (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                                  fat32-in-memory ""))
+     (nats=>chars (nth *data-regioni* fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (fat32-in-memory-to-string nats=>chars-of-revappend
+                                data-region-length
+                                fix-true-list-when-true-listp)
+     (reverse-removal)))))
 
 (encapsulate
   ()
@@ -6971,15 +6932,12 @@
               (bpb_rsvdseccnt fat32-in-memory)))
         (- (* (bpb_numfats fat32-in-memory)
               4 (fat-length fat32-in-memory))))
-     (revappend
-      (explode
-       (nats=>string
-        (revappend (take (data-region-length fat32-in-memory)
-                         (nth *data-regioni* fat32-in-memory))
-                   nil)))
-      nil))))
+     (nats=>chars (nth *data-regioni* fat32-in-memory)))))
   :hints
-  (("goal" :in-theory (enable fat32-in-memory-to-string))))
+  (("goal" :in-theory (enable fat32-in-memory-to-string
+                              nats=>chars-of-revappend
+                              data-region-length
+                              fix-true-list-when-true-listp))))
 
 (encapsulate
   ()
@@ -7000,18 +6958,6 @@
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-55
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-listp 8 (nth *data-regioni* fat32-in-memory)))
-  :rule-classes
-  (:rewrite
-   (:rewrite :corollary
-             (implies
-              (fat32-in-memoryp fat32-in-memory)
-              (true-listp (nth *data-regioni* fat32-in-memory))))))
-
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-56
   (implies
    (fat32-in-memoryp fat32-in-memory)
    (equal (update-nth *data-regioni*

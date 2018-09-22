@@ -556,3 +556,7 @@
 (defthmd fix-true-list-when-true-listp
   (implies (true-listp x)
            (equal (fix-true-list x) x)))
+
+(defthm revappend-of-revappend
+  (equal (revappend (revappend x y1) y2)
+         (revappend y1 (append x y2))))
