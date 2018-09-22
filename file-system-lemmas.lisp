@@ -544,4 +544,15 @@
 (defthm nth-of-take
   (equal (nth n (take i l))
          (if (>= (nfix n) (nfix i))
-                nil (nth (nfix n) l))))
+             nil (nth (nfix n) l))))
+
+(defthm nthcdr-of-nil (equal (nthcdr n nil) nil))
+
+(defthmd nthcdr-when->=-n-len-l
+  (implies (and (true-listp l)
+                (>= (nfix n) (len l)))
+           (equal (nthcdr n l) nil)))
+
+(defthmd fix-true-list-when-true-listp
+  (implies (true-listp x)
+           (equal (fix-true-list x) x)))

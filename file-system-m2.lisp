@@ -76,23 +76,10 @@
                   (take n (chars=>nats chars))))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
-(defthmd nthcdr-of-nil (not (nthcdr n nil)))
-
-(defthmd nthcdr-when->=-n-len-l
-  (implies (and (true-listp l)
-                (integerp n)
-                (>= n (len l)))
-           (equal (nthcdr n l) nil))
-  :hints (("goal" :in-theory (enable nthcdr-of-nil))))
-
 (defthmd chars=>nats-of-nthcdr
   (equal (chars=>nats (nthcdr n chars))
          (nthcdr n (chars=>nats chars)))
   :hints (("goal" :in-theory (enable chars=>nats nthcdr-of-nil))))
-
-(defthmd fix-true-list-when-true-listp
-  (implies (true-listp x)
-           (equal (fix-true-list x) x)))
 
 (defthmd chars=>nats-of-revappend
   (equal (chars=>nats (revappend x y))
@@ -7035,8 +7022,7 @@
 (encapsulate
   ()
 
-  (local (in-theory (e/d (nthcdr-when->=-n-len-l nthcdr-of-nil
-                                                 fix-true-list-when-true-listp
+  (local (in-theory (e/d (nthcdr-when->=-n-len-l fix-true-list-when-true-listp
                                                  chars=>nats-of-revappend
                                                  nats=>chars-of-revappend
                                                  update-data-region-correctness-1
