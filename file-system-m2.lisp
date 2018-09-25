@@ -998,13 +998,10 @@
 
 (defthm
   data-region-length-of-update-data-regioni
-  (implies
-   (< (nfix i) (data-region-length fat32-in-memory))
-   (equal (data-region-length
-           (update-data-regioni i v fat32-in-memory))
-          (data-region-length fat32-in-memory)))
-  :hints (("goal" :in-theory (enable data-region-length
-                                     update-data-regioni))))
+  (equal (data-region-length (update-data-regioni i v fat32-in-memory))
+         (max (data-region-length fat32-in-memory)
+              (1+ (nfix i))))
+  :hints (("goal" :in-theory (enable data-region-length update-data-regioni))))
 
 (defthm
   data-region-length-of-resize-data-region
@@ -5093,34 +5090,28 @@
                                      bpb_numfats))))
 
 (defthm
+  length-of-fat32-in-memory-to-string-lemma-2
+  (implies (compliant-fat32-in-memoryp fat32-in-memory)
+           (equal (nfix (data-region-length fat32-in-memory))
+                  (data-region-length fat32-in-memory)))
+  :hints (("goal" :in-theory (enable compliant-fat32-in-memoryp
+                                     bpb_numfats))))
+
+(defthm
   length-of-fat32-in-memory-to-string
   (implies
    (compliant-fat32-in-memoryp fat32-in-memory)
    (equal
-    (len (explode (fat32-in-memory-to-string fat32-in-memory)))
+    (len
+     (explode (fat32-in-memory-to-string fat32-in-memory)))
     (+ (* (bpb_rsvdseccnt fat32-in-memory)
           (bpb_bytspersec fat32-in-memory))
-       (* (nfix (bpb_numfats fat32-in-memory))
+       (* (bpb_numfats fat32-in-memory)
           (fat-length fat32-in-memory)
           4)
        (data-region-length fat32-in-memory))))
   :hints
-  (("goal" :in-theory (enable fat32-in-memory-to-string)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (compliant-fat32-in-memoryp fat32-in-memory)
-     (equal
-      (len
-       (explode (fat32-in-memory-to-string fat32-in-memory)))
-      (+ (* (bpb_rsvdseccnt fat32-in-memory)
-            (bpb_bytspersec fat32-in-memory))
-         (* (bpb_numfats fat32-in-memory)
-            (fat-length fat32-in-memory)
-            4)
-         (data-region-length fat32-in-memory))))
-    :hints (("goal" :in-theory (disable nfix))))))
+  (("goal" :in-theory (e/d (fat32-in-memory-to-string) (nfix)))))
 
 (defmacro
     cluster-size-macro
