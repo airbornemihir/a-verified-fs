@@ -1022,8 +1022,11 @@
 (defmacro
   update-stobj-array
   (name array-length bit-width array-updater array-accessor constant
-        stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3 lemma-name4
-        lemma-name5 lemma-name6 lemma-name7 lemma-name8 lemma-name9)
+        stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3
+        unsigned-byte-p-of-array-accessor lemma-name5 lemma-name6 lemma-name7
+        lemma-name8 lemma-name9)
+  (let
+      ((upper-bound (ash 1 bit-width)))
   `(encapsulate
      nil
 
@@ -1114,13 +1117,30 @@
                 :induct
                 (,stobj-recogniser (,name v ,stobj)))))
 
-     (defthm ,lemma-name4
-       (implies (and (,stobj-recogniser ,stobj)
-                     (integerp i)
-                     (<= 0 i)
-                     (< i (,array-length ,stobj)))
-                (unsigned-byte-p ,bit-width (,array-accessor i ,stobj)))
-       :hints (("Goal" :in-theory (disable nth unsigned-byte-p))))
+     (defthm ,unsigned-byte-p-of-array-accessor
+       (implies (,stobj-recogniser ,stobj)
+                (equal
+                 (unsigned-byte-p ,bit-width (,array-accessor i ,stobj))
+                 (< (nfix i) (,array-length ,stobj))))
+       :hints (("Goal" :in-theory (disable nth unsigned-byte-p)))
+       :rule-classes
+       (:rewrite
+        (:rewrite
+         :corollary
+         (implies (and
+                   (,stobj-recogniser ,stobj)
+                   (< (nfix i) (,array-length ,stobj)))
+                  (integerp (,array-accessor i ,stobj)))
+         :hints (("Goal" :in-theory (disable nth fat32-in-memoryp))))
+        (:linear
+         :corollary
+         (implies (and
+                   (,stobj-recogniser ,stobj)
+                   (< (nfix i) (,array-length ,stobj)))
+                  (and
+                   (<= 0 (,array-accessor i ,stobj))
+                   (< (,array-accessor i ,stobj) ,upper-bound)))
+         :hints (("Goal" :in-theory (disable nth fat32-in-memoryp))))))
 
      (defthm ,lemma-name5
        (equal
@@ -1153,7 +1173,7 @@
              (natp i)
              (< i (,array-length ,stobj)))
         (equal (,array-updater i (,array-accessor i ,stobj) ,stobj)
-               ,stobj)))))
+               ,stobj))))))
 
 (update-stobj-array
  update-bs_jmpboot bs_jmpboot-length 8
@@ -1162,7 +1182,7 @@
  update-bs_jmpboot-correctness-1
  update-bs_jmpboot-correctness-2
  update-bs_jmpboot-correctness-3
- update-bs_jmpboot-correctness-4
+ unsigned-byte-p-of-update-bs_jmpbooti
  update-bs_jmpboot-correctness-5
  update-bs_jmpboot-correctness-6
  update-bs_jmpboot-correctness-7
@@ -1176,7 +1196,7 @@
  update-bs_oemname-correctness-1
  update-bs_oemname-correctness-2
  update-bs_oemname-correctness-3
- update-bs_oemname-correctness-4
+ unsigned-byte-p-of-update-bs_oemnamei
  update-bs_oemname-correctness-5
  update-bs_oemname-correctness-6
  update-bs_oemname-correctness-7
@@ -1190,7 +1210,7 @@
  update-bs_vollab-correctness-1
  update-bs_vollab-correctness-2
  update-bs_vollab-correctness-3
- update-bs_vollab-correctness-4
+ unsigned-byte-p-of-update-bs_vollabi
  update-bs_vollab-correctness-5
  update-bs_vollab-correctness-6
  update-bs_vollab-correctness-7
@@ -1204,7 +1224,7 @@
  update-bs_filsystype-correctness-1
  update-bs_filsystype-correctness-2
  update-bs_filsystype-correctness-3
- update-bs_filsystype-correctness-4
+ unsigned-byte-p-of-update-bs_filsystypei
  update-bs_filsystype-correctness-5
  update-bs_filsystype-correctness-6
  update-bs_filsystype-correctness-7
@@ -1218,7 +1238,7 @@
  update-bpb_reserved-correctness-1
  update-bpb_reserved-correctness-2
  update-bpb_reserved-correctness-3
- update-bpb_reserved-correctness-4
+ unsigned-byte-p-of-update-bpb_reservedi
  update-bpb_reserved-correctness-5
  update-bpb_reserved-correctness-6
  update-bpb_reserved-correctness-7
@@ -3946,153 +3966,13 @@
                        (loghead 8 (logtail 16 current))
                                   (logtail 24 current) )))))))
 
-(defthm
-  reserved-area-string-guard-lemma-1
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bs_vollab-length fat32-in-memory)))
-           (and (integerp (bs_vollabi i fat32-in-memory))
-                (<= 0 (bs_vollabi i fat32-in-memory))
-                (< (bs_vollabi i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_vollab-length fat32-in-memory)))
-                        (integerp (bs_vollabi i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_vollab-length fat32-in-memory)))
-                        (and (<= 0 (bs_vollabi i fat32-in-memory))
-                             (< (bs_vollabi i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bs_vollab-correctness-4 bs_vollabi fat32-in-memoryp))
-    :use update-bs_vollab-correctness-4)))
-
-(defthm
-  reserved-area-string-guard-lemma-2
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bs_jmpboot-length fat32-in-memory)))
-           (and (integerp (bs_jmpbooti i fat32-in-memory))
-                (<= 0 (bs_jmpbooti i fat32-in-memory))
-                (< (bs_jmpbooti i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_jmpboot-length fat32-in-memory)))
-                        (integerp (bs_jmpbooti i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_jmpboot-length fat32-in-memory)))
-                        (and (<= 0 (bs_jmpbooti i fat32-in-memory))
-                             (< (bs_jmpbooti i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bs_jmpboot-correctness-4 bs_jmpbooti fat32-in-memoryp))
-    :use update-bs_jmpboot-correctness-4)))
-
-(defthm
-  reserved-area-string-guard-lemma-3
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bs_oemname-length fat32-in-memory)))
-           (and (integerp (bs_oemnamei i fat32-in-memory))
-                (<= 0 (bs_oemnamei i fat32-in-memory))
-                (< (bs_oemnamei i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_oemname-length fat32-in-memory)))
-                        (integerp (bs_oemnamei i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_oemname-length fat32-in-memory)))
-                        (and (<= 0 (bs_oemnamei i fat32-in-memory))
-                             (< (bs_oemnamei i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bs_oemname-correctness-4 bs_oemnamei fat32-in-memoryp))
-    :use update-bs_oemname-correctness-4)))
-
-(defthm
-  reserved-area-string-guard-lemma-4
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bs_filsystype-length fat32-in-memory)))
-           (and (integerp (bs_filsystypei i fat32-in-memory))
-                (<= 0 (bs_filsystypei i fat32-in-memory))
-                (< (bs_filsystypei i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_filsystype-length fat32-in-memory)))
-                        (integerp (bs_filsystypei i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_filsystype-length fat32-in-memory)))
-                        (and (<= 0 (bs_filsystypei i fat32-in-memory))
-                             (< (bs_filsystypei i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bs_filsystype-correctness-4 bs_filsystypei fat32-in-memoryp))
-    :use update-bs_filsystype-correctness-4)))
-
-(defthm
-  reserved-area-string-guard-lemma-5
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bpb_reserved-length fat32-in-memory)))
-           (and (integerp (bpb_reservedi i fat32-in-memory))
-                (<= 0 (bpb_reservedi i fat32-in-memory))
-                (< (bpb_reservedi i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bpb_reserved-length fat32-in-memory)))
-                        (integerp (bpb_reservedi i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bpb_reserved-length fat32-in-memory)))
-                        (and (<= 0 (bpb_reservedi i fat32-in-memory))
-                             (< (bpb_reservedi i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bpb_reserved-correctness-4 bpb_reservedi fat32-in-memoryp))
-    :use update-bpb_reserved-correctness-4)))
-
 (encapsulate
   ()
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    reserved-area-string-guard-lemma-6
+    reserved-area-string-guard-lemma-1
     (implies (compliant-fat32-in-memoryp fat32-in-memory)
              (natp (- (* (bpb_bytspersec fat32-in-memory)
                          (bpb_rsvdseccnt fat32-in-memory))
@@ -4118,7 +3998,7 @@
                                     (fat32-in-memoryp))))))
 
 (defthm
-  reserved-area-string-guard-lemma-7
+  reserved-area-string-guard-lemma-2
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (natp i)
                 (< i (fat-length fat32-in-memory)))
@@ -4153,7 +4033,7 @@
 
   (local
    (defthm
-     reserved-area-string-guard-lemma-8
+     reserved-area-string-guard-lemma-3
      (implies (and (logtail-guard size i)
                    (unsigned-byte-p (+ size 8) i))
               (and (integerp (logtail size i))
@@ -4187,9 +4067,9 @@
                                                        bs_oemnamei
                                                        bs_filsystypei
                                                        bpb_reservedi
-                                                       reserved-area-string-guard-lemma-7)
+                                                       reserved-area-string-guard-lemma-2)
                                    :use
-                                   reserved-area-string-guard-lemma-7))))
+                                   reserved-area-string-guard-lemma-2))))
     (append
      ;; initial bytes
      (list (code-char (bs_jmpbooti 0 fat32-in-memory))
