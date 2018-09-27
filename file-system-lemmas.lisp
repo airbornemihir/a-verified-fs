@@ -267,18 +267,6 @@
            (member-equal (nth n l) l))
   :hints (("Goal" :in-theory (enable nth))))
 
-(encapsulate
-  ()
-
-  (local (include-book "ihs/logops-lemmas" :dir :system))
-
-  (local (include-book "arithmetic-5/top" :dir :system))
-
-  (defthm
-    logand-ash-lemma-1
-    (implies (and (natp c))
-             (unsigned-byte-p c (logand i (- (ash 1 c) 1))))))
-
 (defthm make-character-list-of-revappend
   (equal (make-character-list (revappend x y))
          (revappend (make-character-list x)
@@ -556,4 +544,19 @@
 (defthm nth-of-take
   (equal (nth n (take i l))
          (if (>= (nfix n) (nfix i))
-                nil (nth (nfix n) l))))
+             nil (nth (nfix n) l))))
+
+(defthm nthcdr-of-nil (equal (nthcdr n nil) nil))
+
+(defthmd nthcdr-when->=-n-len-l
+  (implies (and (true-listp l)
+                (>= (nfix n) (len l)))
+           (equal (nthcdr n l) nil)))
+
+(defthmd fix-true-list-when-true-listp
+  (implies (true-listp x)
+           (equal (fix-true-list x) x)))
+
+(defthm revappend-of-revappend
+  (equal (revappend (revappend x y1) y2)
+         (revappend y1 (append x y2))))

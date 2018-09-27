@@ -24,16 +24,6 @@
     (("goal" :in-theory (enable chars=>nats)
       :induct (cdr-cdr-induct x str::x-equiv)))))
 
-(defthm chars=>nats-of-make-character-list
-  (equal (chars=>nats (make-character-list x))
-         (chars=>nats x))
-  :hints (("goal" :in-theory (enable chars=>nats))))
-
-(defthm length-of-nats=>string
-  (equal (len (explode (nats=>string nats)))
-         (len nats))
-  :hints (("goal" :in-theory (enable nats=>string))))
-
 (defthm consp-of-chars=>nats
   (iff (consp (chars=>nats chars))
        (consp chars))
@@ -43,20 +33,6 @@
   (iff (consp (string=>nats string))
        (consp (explode string)))
   :hints (("goal" :in-theory (enable string=>nats))))
-
-(defthm local-nth-of-nats=>chars
-  (equal (nth i (nats=>chars nats))
-         (if (< (nfix i) (len nats))
-             (code-char (nth i nats))
-             nil))
-  :hints (("goal" :in-theory (enable nats=>chars))))
-
-(defthm nth-of-nats=>string
-  (equal (nth i (explode (nats=>string nats)))
-         (if (< (nfix i) (len nats))
-             (code-char (nth i nats))
-             nil))
-  :hints (("goal" :in-theory (enable nats=>string))))
 
 (defthm chars=>nats-of-make-list-ac
   (equal (chars=>nats (make-list-ac n val ac))
@@ -76,23 +52,10 @@
                   (take n (chars=>nats chars))))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
-(defthmd nthcdr-of-nil (not (nthcdr n nil)))
-
-(defthmd nthcdr-when->=-n-len-l
-  (implies (and (true-listp l)
-                (integerp n)
-                (>= n (len l)))
-           (equal (nthcdr n l) nil))
-  :hints (("goal" :in-theory (enable nthcdr-of-nil))))
-
 (defthmd chars=>nats-of-nthcdr
   (equal (chars=>nats (nthcdr n chars))
          (nthcdr n (chars=>nats chars)))
   :hints (("goal" :in-theory (enable chars=>nats nthcdr-of-nil))))
-
-(defthmd fix-true-list-when-true-listp
-  (implies (true-listp x)
-           (equal (fix-true-list x) x)))
 
 (defthmd chars=>nats-of-revappend
   (equal (chars=>nats (revappend x y))
@@ -108,143 +71,6 @@
   (equal (nats=>chars (revappend x y))
          (revappend (nats=>chars x) (nats=>chars y)))
   :hints (("goal" :in-theory (enable nats=>chars))))
-
-;; I could have made a more accurate and yet more painful version of this
-;; theorem using fix-true-list, but...
-(defthm
-  chars=>nats-of-nats=>chars
-  (implies (unsigned-byte-listp 8 nats)
-           (equal (chars=>nats (nats=>chars nats))
-                  nats))
-  :hints (("goal" :in-theory (enable chars=>nats nats=>chars))))
-
-(encapsulate
-  ()
-
-  (local
-   (defun induction-scheme (size i)
-     (if (zp size)
-         i
-       (induction-scheme (- size 1) (logcdr i)))))
-
-  (defthm logior-ash-loghead-logtail
-    (implies (and (integerp i) (natp size))
-             (equal (logior (ash (logtail size i) size)
-                            (loghead size i))
-                    i))
-    :instructions ((:induct (induction-scheme size i))
-                   (:dive 2 1 2)
-                   (:rewrite loghead*)
-                   (:= (logcons (logcar i)
-                                (loghead (+ -1 size) (logcdr i))))
-                   :top (:dive 2 1 1 1)
-                   (:rewrite logtail*)
-                   (:= (logtail (+ -1 size) (logcdr i)))
-                   :up (:rewrite ash*)
-                   (:= (logcons 0
-                                (ash (logtail (+ -1 size) (logcdr i))
-                                     (+ -1 size))))
-                   :top (:dive 2 1)
-                   (:rewrite logior*)
-                   :top (:dive 2 1 1 1)
-                   (:rewrite logcar-logcons)
-                   :nx (:rewrite logcar-logcons)
-                   :top (:dive 2 1 2 1)
-                   (:rewrite logcdr-logcons)
-                   :nx (:rewrite logcdr-logcons)
-                   :up :top :promote (:demote 2)
-                   (:dive 1 1)
-                   :s :up :s-prop :top :promote (:dive 1 2)
-                   := (:drop 4)
-                   :top (:dive 1 1)
-                   (:rewrite simplify-bit-functions)
-                   (:rewrite bfix-bitp)
-                   :up (:rewrite logcar-logcdr-elim)
-                   :top :bash :promote (:dive 1 2)
-                   (:rewrite loghead*)
-                   (:= 0)
-                   :top (:dive 1 1 1)
-                   (:rewrite logtail*)
-                   (:= i)
-                   :up (:rewrite ash*)
-                   (:= i)
-                   :up :s
-                   :top :bash)))
-
-(defthm combine16u-loghead-logtail
-  (implies (natp i)
-           (equal (combine16u (logtail 8 i) (loghead 8 i))
-                  i))
-  :hints (("Goal" :in-theory (e/d (combine16u) (loghead logtail logior ash)))))
-
-(encapsulate
-  ()
-
-  (local (include-book "std/basic/inductions" :dir :system))
-
-  (defthm
-    logior-of-ash
-    (implies (and (integerp i1)
-                  (integerp i2)
-                  (natp c))
-             (equal (logior (ash i1 c) (ash i2 c))
-                    (ash (logior i1 i2) c)))
-    :instructions ((:in-theory (disable logior ash logcons logcar logcdr))
-                   (:induct (dec-induct c))
-                   :promote (:demote 2)
-                   (:dive 1)
-                   :s :top :promote (:dive 1 1)
-                   (:rewrite ash*)
-                   :s :nx (:rewrite ash*)
-                   :s :up (:rewrite logior*)
-                   :s :nx (:rewrite ash*)
-                   :s :top :bash :promote (:= c 0)
-                   (:drop 1 4)
-                   (:dive 1 1)
-                   (:rewrite ash*)
-                   :s :nx (:rewrite ash*)
-                   :s :top (:dive 2)
-                   (:rewrite ash*)
-                   :s
-                   :top :bash)))
-
-(encapsulate
-  ()
-
-  (local (include-book "centaur/bitops/ihsext-basics" :dir :system))
-
-  (defthm combine32u-loghead-logtail
-    (implies (natp i)
-             (equal (combine32u (logtail 24 i)
-                                (loghead 8 (logtail 16 i))
-                                (loghead 8 (logtail 8 i))
-                                (loghead 8 i))
-                    i))
-    :instructions
-    (:promote (:dive 1)
-              :expand (:dive 2 2)
-              (:dive 2)
-              (:= (loghead 8 (loghead 16 i)))
-              :up (:dive 1 1)
-              (:= (logtail 8 (loghead 16 i)))
-              :up :up
-              (:rewrite logior-ash-loghead-logtail)
-              :top (:dive 1)
-              (:= (logior (logior (ash (nfix (logtail 24 i)) 24)
-                                  (ash (nfix (loghead 8 (logtail 16 i)))
-                                       16))
-                          (loghead 16 i)))
-              (:dive 1 1)
-              (:= (ash (ash (logtail 24 i) 8) 16))
-              :up (:rewrite logior-of-ash)
-              (:dive 1 2)
-              :s :up (:dive 1 1)
-              (:= (logtail 8 (logtail 16 i)))
-              :up :up
-              (:rewrite logior-ash-loghead-logtail)
-              :up
-              :up (:rewrite logior-ash-loghead-logtail)
-              :top :bash)))
 
 (make-event
  `(defstobj fat32-in-memory
@@ -422,6 +248,8 @@
   (bit-width updater accessor
              stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3
              lemma-name4 lemma-name5 updater-of-updater updater-of-accessor)
+  (let
+      ((upper-bound (ash 1 bit-width)))
   `(encapsulate
      nil
      (defthm
@@ -450,7 +278,11 @@
          :hints
          (("goal" :use (:instance unsigned-byte-p-forward-to-nonnegative-integerp
                                   (n ,bit-width)
-                                  (x (,accessor ,stobj))))))))
+                                  (x (,accessor ,stobj))))))
+        (:linear
+         :corollary (implies (,stobj-recogniser ,stobj)
+                             (and (<= 0 (,accessor ,stobj))
+                                  (< (,accessor ,stobj) ,upper-bound))))))
      (defthm
        ,lemma-name3
        (equal (,accessor (,updater v ,stobj))
@@ -482,7 +314,7 @@
                         (,accessor ,stobj)
                         ,stobj)
                        ,stobj))
-       :hints (("goal" :in-theory (enable ,updater ,accessor))))))
+       :hints (("goal" :in-theory (enable ,updater ,accessor)))))))
 
 (update-stobj-scalar-correctness 16 update-bpb_rsvdseccnt bpb_rsvdseccnt
                                  fat32-in-memory fat32-in-memoryp
@@ -1044,13 +876,10 @@
 
 (defthm
   data-region-length-of-update-data-regioni
-  (implies
-   (< (nfix i) (data-region-length fat32-in-memory))
-   (equal (data-region-length
-           (update-data-regioni i v fat32-in-memory))
-          (data-region-length fat32-in-memory)))
-  :hints (("goal" :in-theory (enable data-region-length
-                                     update-data-regioni))))
+  (equal (data-region-length (update-data-regioni i v fat32-in-memory))
+         (max (data-region-length fat32-in-memory)
+              (1+ (nfix i))))
+  :hints (("goal" :in-theory (enable data-region-length update-data-regioni))))
 
 (defthm
   data-region-length-of-resize-data-region
@@ -1065,8 +894,11 @@
 (defmacro
   update-stobj-array
   (name array-length bit-width array-updater array-accessor constant
-        stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3 lemma-name4
-        lemma-name5 lemma-name6 lemma-name7 lemma-name8 lemma-name9)
+        stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3
+        unsigned-byte-p-of-array-accessor lemma-name5 lemma-name6 lemma-name7
+        lemma-name8 lemma-name9)
+  (let
+      ((upper-bound (ash 1 bit-width)))
   `(encapsulate
      nil
 
@@ -1157,13 +989,30 @@
                 :induct
                 (,stobj-recogniser (,name v ,stobj)))))
 
-     (defthm ,lemma-name4
-       (implies (and (,stobj-recogniser ,stobj)
-                     (integerp i)
-                     (<= 0 i)
-                     (< i (,array-length ,stobj)))
-                (unsigned-byte-p ,bit-width (,array-accessor i ,stobj)))
-       :hints (("Goal" :in-theory (disable nth unsigned-byte-p))))
+     (defthm ,unsigned-byte-p-of-array-accessor
+       (implies (,stobj-recogniser ,stobj)
+                (equal
+                 (unsigned-byte-p ,bit-width (,array-accessor i ,stobj))
+                 (< (nfix i) (,array-length ,stobj))))
+       :hints (("Goal" :in-theory (disable nth unsigned-byte-p)))
+       :rule-classes
+       (:rewrite
+        (:rewrite
+         :corollary
+         (implies (and
+                   (,stobj-recogniser ,stobj)
+                   (< (nfix i) (,array-length ,stobj)))
+                  (integerp (,array-accessor i ,stobj)))
+         :hints (("Goal" :in-theory (disable nth fat32-in-memoryp))))
+        (:linear
+         :corollary
+         (implies (and
+                   (,stobj-recogniser ,stobj)
+                   (< (nfix i) (,array-length ,stobj)))
+                  (and
+                   (<= 0 (,array-accessor i ,stobj))
+                   (< (,array-accessor i ,stobj) ,upper-bound)))
+         :hints (("Goal" :in-theory (disable nth fat32-in-memoryp))))))
 
      (defthm ,lemma-name5
        (equal
@@ -1196,7 +1045,7 @@
              (natp i)
              (< i (,array-length ,stobj)))
         (equal (,array-updater i (,array-accessor i ,stobj) ,stobj)
-               ,stobj)))))
+               ,stobj))))))
 
 (update-stobj-array
  update-bs_jmpboot bs_jmpboot-length 8
@@ -1205,7 +1054,7 @@
  update-bs_jmpboot-correctness-1
  update-bs_jmpboot-correctness-2
  update-bs_jmpboot-correctness-3
- update-bs_jmpboot-correctness-4
+ unsigned-byte-p-of-update-bs_jmpbooti
  update-bs_jmpboot-correctness-5
  update-bs_jmpboot-correctness-6
  update-bs_jmpboot-correctness-7
@@ -1219,7 +1068,7 @@
  update-bs_oemname-correctness-1
  update-bs_oemname-correctness-2
  update-bs_oemname-correctness-3
- update-bs_oemname-correctness-4
+ unsigned-byte-p-of-update-bs_oemnamei
  update-bs_oemname-correctness-5
  update-bs_oemname-correctness-6
  update-bs_oemname-correctness-7
@@ -1233,7 +1082,7 @@
  update-bs_vollab-correctness-1
  update-bs_vollab-correctness-2
  update-bs_vollab-correctness-3
- update-bs_vollab-correctness-4
+ unsigned-byte-p-of-update-bs_vollabi
  update-bs_vollab-correctness-5
  update-bs_vollab-correctness-6
  update-bs_vollab-correctness-7
@@ -1247,7 +1096,7 @@
  update-bs_filsystype-correctness-1
  update-bs_filsystype-correctness-2
  update-bs_filsystype-correctness-3
- update-bs_filsystype-correctness-4
+ unsigned-byte-p-of-update-bs_filsystypei
  update-bs_filsystype-correctness-5
  update-bs_filsystype-correctness-6
  update-bs_filsystype-correctness-7
@@ -1261,7 +1110,7 @@
  update-bpb_reserved-correctness-1
  update-bpb_reserved-correctness-2
  update-bpb_reserved-correctness-3
- update-bpb_reserved-correctness-4
+ unsigned-byte-p-of-update-bpb_reservedi
  update-bpb_reserved-correctness-5
  update-bpb_reserved-correctness-6
  update-bpb_reserved-correctness-7
@@ -1829,13 +1678,6 @@
                    (< n (len l)))
               (rationalp (nth n l)))))
 
-  (local
-   (defthm read-reserved-area-guard-lemma-5
-     (implies (and (unsigned-byte-listp 8 l)
-                   (natp n)
-                   (< n (len l)))
-              (rationalp (nth n l)))))
-
   ;; This must be called after the file is opened.
   (defun
       read-reserved-area (fat32-in-memory str)
@@ -2223,22 +2065,6 @@
                                         ch-word fat32-in-memory)))
        (update-fat fat32-in-memory str
                    (the (unsigned-byte 28) (- pos 1)))))))
-
-(defthm
-  read-fat-guard-lemma-2
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (<= 0 (bpb_fatsz32 fat32-in-memory)))
-  :hints (("Goal" :use update-bpb_fatsz32-correctness-2) )
-  :rule-classes :linear)
-
-(defthm
-  read-fat-guard-lemma-3
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (<= 0 (bpb_bytspersec fat32-in-memory)))
-  :hints (("Goal" :use update-bpb_bytspersec-correctness-2) )
-  :rule-classes :linear)
 
 (defthm
   slurp-disk-image-guard-lemma-2
@@ -3989,153 +3815,13 @@
                        (loghead 8 (logtail 16 current))
                                   (logtail 24 current) )))))))
 
-(defthm
-  reserved-area-string-guard-lemma-1
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bs_vollab-length fat32-in-memory)))
-           (and (integerp (bs_vollabi i fat32-in-memory))
-                (<= 0 (bs_vollabi i fat32-in-memory))
-                (< (bs_vollabi i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_vollab-length fat32-in-memory)))
-                        (integerp (bs_vollabi i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_vollab-length fat32-in-memory)))
-                        (and (<= 0 (bs_vollabi i fat32-in-memory))
-                             (< (bs_vollabi i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bs_vollab-correctness-4 bs_vollabi fat32-in-memoryp))
-    :use update-bs_vollab-correctness-4)))
-
-(defthm
-  reserved-area-string-guard-lemma-2
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bs_jmpboot-length fat32-in-memory)))
-           (and (integerp (bs_jmpbooti i fat32-in-memory))
-                (<= 0 (bs_jmpbooti i fat32-in-memory))
-                (< (bs_jmpbooti i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_jmpboot-length fat32-in-memory)))
-                        (integerp (bs_jmpbooti i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_jmpboot-length fat32-in-memory)))
-                        (and (<= 0 (bs_jmpbooti i fat32-in-memory))
-                             (< (bs_jmpbooti i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bs_jmpboot-correctness-4 bs_jmpbooti fat32-in-memoryp))
-    :use update-bs_jmpboot-correctness-4)))
-
-(defthm
-  reserved-area-string-guard-lemma-3
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bs_oemname-length fat32-in-memory)))
-           (and (integerp (bs_oemnamei i fat32-in-memory))
-                (<= 0 (bs_oemnamei i fat32-in-memory))
-                (< (bs_oemnamei i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_oemname-length fat32-in-memory)))
-                        (integerp (bs_oemnamei i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_oemname-length fat32-in-memory)))
-                        (and (<= 0 (bs_oemnamei i fat32-in-memory))
-                             (< (bs_oemnamei i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bs_oemname-correctness-4 bs_oemnamei fat32-in-memoryp))
-    :use update-bs_oemname-correctness-4)))
-
-(defthm
-  reserved-area-string-guard-lemma-4
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bs_filsystype-length fat32-in-memory)))
-           (and (integerp (bs_filsystypei i fat32-in-memory))
-                (<= 0 (bs_filsystypei i fat32-in-memory))
-                (< (bs_filsystypei i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_filsystype-length fat32-in-memory)))
-                        (integerp (bs_filsystypei i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bs_filsystype-length fat32-in-memory)))
-                        (and (<= 0 (bs_filsystypei i fat32-in-memory))
-                             (< (bs_filsystypei i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bs_filsystype-correctness-4 bs_filsystypei fat32-in-memoryp))
-    :use update-bs_filsystype-correctness-4)))
-
-(defthm
-  reserved-area-string-guard-lemma-5
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp i)
-                (< i (bpb_reserved-length fat32-in-memory)))
-           (and (integerp (bpb_reservedi i fat32-in-memory))
-                (<= 0 (bpb_reservedi i fat32-in-memory))
-                (< (bpb_reservedi i fat32-in-memory) 256)))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bpb_reserved-length fat32-in-memory)))
-                        (integerp (bpb_reservedi i fat32-in-memory))))
-   (:linear
-    :corollary (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                             (natp i)
-                             (< i (bpb_reserved-length fat32-in-memory)))
-                        (and (<= 0 (bpb_reservedi i fat32-in-memory))
-                             (< (bpb_reservedi i fat32-in-memory)
-                                256)))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (compliant-fat32-in-memoryp)
-         (update-bpb_reserved-correctness-4 bpb_reservedi fat32-in-memoryp))
-    :use update-bpb_reserved-correctness-4)))
-
 (encapsulate
   ()
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    reserved-area-string-guard-lemma-7
+    reserved-area-string-guard-lemma-1
     (implies (compliant-fat32-in-memoryp fat32-in-memory)
              (natp (- (* (bpb_bytspersec fat32-in-memory)
                          (bpb_rsvdseccnt fat32-in-memory))
@@ -4161,151 +3847,7 @@
                                     (fat32-in-memoryp))))))
 
 (defthm
-  reserved-area-string-guard-lemma-8
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_bytspersec fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_bytspersec fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_bytspersec fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_bytspersec fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_bytspersec))))
-
-(defthm
-  reserved-area-string-guard-lemma-9
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 8 (bpb_secperclus fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_secperclus fat32-in-memory)
-                256)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_secperclus fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_secperclus fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_secperclus))))
-
-(defthm
-  reserved-area-string-guard-lemma-10
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_rsvdseccnt fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_rsvdseccnt fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_rsvdseccnt fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_rsvdseccnt fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_rsvdseccnt))))
-
-(defthm
-  reserved-area-string-guard-lemma-11
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 8 (bpb_numfats fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_numfats fat32-in-memory)
-                256)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_numfats fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_numfats fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_numfats))))
-
-(defthm
-  reserved-area-string-guard-lemma-12
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 32 (bpb_fatsz32 fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_fatsz32 fat32-in-memory)
-                4294967296)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_fatsz32 fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_fatsz32 fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_fatsz32))))
-
-(defthm
-  reserved-area-string-guard-lemma-13
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 32 (bpb_totsec32 fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_totsec32 fat32-in-memory)
-                4294967296)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_totsec32 fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_totsec32 fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_totsec32))))
-
-(defthm
-  reserved-area-string-guard-lemma-14
+  reserved-area-string-guard-lemma-2
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (natp i)
                 (< i (fat-length fat32-in-memory)))
@@ -4333,438 +3875,6 @@
                fati-when-compliant-fat32-in-memoryp))
     :use fati-when-compliant-fat32-in-memoryp)))
 
-(defthm
-  reserved-area-string-guard-lemma-15
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_rootentcnt fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_rootentcnt fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_rootentcnt fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_rootentcnt fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_rootentcnt))))
-
-(defthm
-  reserved-area-string-guard-lemma-16
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_totsec16 fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_totsec16 fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_totsec16 fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_totsec16 fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_totsec16))))
-
-(defthm
-  reserved-area-string-guard-lemma-17
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 8 (bpb_media fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_media fat32-in-memory)
-                256)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_media fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_media fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_media))))
-
-(defthm
-  reserved-area-string-guard-lemma-18
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_fatsz16 fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_fatsz16 fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_fatsz16 fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_fatsz16 fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_fatsz16))))
-
-(defthm
-  reserved-area-string-guard-lemma-19
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_secpertrk fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_secpertrk fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_secpertrk fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_secpertrk fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_secpertrk))))
-
-(defthm
-  reserved-area-string-guard-lemma-20
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_numheads fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_numheads fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_numheads fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_numheads fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_numheads))))
-
-(defthm
-  reserved-area-string-guard-lemma-21
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 32 (bpb_hiddsec fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_hiddsec fat32-in-memory)
-                4294967296)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_hiddsec fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_hiddsec fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_hiddsec))))
-
-(defthm
-  reserved-area-string-guard-lemma-22
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_extflags fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_extflags fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_extflags fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_extflags fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_extflags))))
-
-(defthm
-  reserved-area-string-guard-lemma-23
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 8 (bpb_fsver_minor fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_fsver_minor fat32-in-memory)
-                256)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_fsver_minor fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_fsver_minor fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_fsver_minor))))
-
-(defthm
-  reserved-area-string-guard-lemma-24
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 8 (bpb_fsver_major fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_fsver_major fat32-in-memory)
-                256)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_fsver_major fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_fsver_major fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_fsver_major))))
-
-(defthm
-  reserved-area-string-guard-lemma-25
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 32 (bpb_rootclus fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_rootclus fat32-in-memory)
-                4294967296)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_rootclus fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_rootclus fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_rootclus))))
-
-(defthm
-  reserved-area-string-guard-lemma-26
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_fsinfo fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_fsinfo fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_fsinfo fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_fsinfo fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_fsinfo))))
-
-(defthm
-  reserved-area-string-guard-lemma-27
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 16 (bpb_bkbootsec fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bpb_bkbootsec fat32-in-memory)
-                65536)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bpb_bkbootsec fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bpb_bkbootsec fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bpb_bkbootsec))))
-
-(defthm
-  reserved-area-string-guard-lemma-28
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 8 (bs_drvnum fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bs_drvnum fat32-in-memory)
-                256)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bs_drvnum fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bs_drvnum fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bs_drvnum))))
-
-(defthm
-  reserved-area-string-guard-lemma-29
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 8 (bs_reserved1 fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bs_reserved1 fat32-in-memory)
-                256)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bs_reserved1 fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bs_reserved1 fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bs_reserved1))))
-
-(defthm
-  reserved-area-string-guard-lemma-30
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 8 (bs_bootsig fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bs_bootsig fat32-in-memory)
-                256)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bs_bootsig fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bs_bootsig fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bs_bootsig))))
-
-(defthm
-  reserved-area-string-guard-lemma-31
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 32 (bs_volid fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bs_volid fat32-in-memory)
-                4294967296)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bs_volid fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bs_volid fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bs_volid))))
-
-(defthm
-  reserved-area-string-guard-lemma-32
-  (implies
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-p 8 (bs_bootsig fat32-in-memory)))
-  :rule-classes
-  ((:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (< (bs_bootsig fat32-in-memory)
-                256)))
-   (:linear
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (<= 0 (bs_bootsig fat32-in-memory))))
-   (:rewrite
-    :corollary
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (integerp (bs_bootsig fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable compliant-fat32-in-memoryp
-                       fat32-in-memoryp bs_bootsig))))
-
 (encapsulate
   ()
 
@@ -4772,7 +3882,7 @@
 
   (local
    (defthm
-     reserved-area-string-guard-lemma-6
+     reserved-area-string-guard-lemma-3
      (implies (and (logtail-guard size i)
                    (unsigned-byte-p (+ size 8) i))
               (and (integerp (logtail size i))
@@ -4806,9 +3916,9 @@
                                                        bs_oemnamei
                                                        bs_filsystypei
                                                        bpb_reservedi
-                                                       reserved-area-string-guard-lemma-7)
+                                                       reserved-area-string-guard-lemma-2)
                                    :use
-                                   reserved-area-string-guard-lemma-7))))
+                                   reserved-area-string-guard-lemma-2))))
     (append
      ;; initial bytes
      (list (code-char (bs_jmpbooti 0 fat32-in-memory))
@@ -5139,547 +4249,28 @@
                                      bpb_numfats))))
 
 (defthm
+  length-of-fat32-in-memory-to-string-lemma-2
+  (implies (compliant-fat32-in-memoryp fat32-in-memory)
+           (equal (nfix (data-region-length fat32-in-memory))
+                  (data-region-length fat32-in-memory)))
+  :hints (("goal" :in-theory (enable compliant-fat32-in-memoryp
+                                     bpb_numfats))))
+
+(defthm
   length-of-fat32-in-memory-to-string
   (implies
    (compliant-fat32-in-memoryp fat32-in-memory)
    (equal
-    (len (explode (fat32-in-memory-to-string fat32-in-memory)))
+    (len
+     (explode (fat32-in-memory-to-string fat32-in-memory)))
     (+ (* (bpb_rsvdseccnt fat32-in-memory)
           (bpb_bytspersec fat32-in-memory))
-       (* (nfix (bpb_numfats fat32-in-memory))
+       (* (bpb_numfats fat32-in-memory)
           (fat-length fat32-in-memory)
           4)
        (data-region-length fat32-in-memory))))
   :hints
-  (("goal" :in-theory (enable fat32-in-memory-to-string)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (compliant-fat32-in-memoryp fat32-in-memory)
-     (equal
-      (len
-       (explode (fat32-in-memory-to-string fat32-in-memory)))
-      (+ (* (bpb_rsvdseccnt fat32-in-memory)
-            (bpb_bytspersec fat32-in-memory))
-         (* (bpb_numfats fat32-in-memory)
-            (fat-length fat32-in-memory)
-            4)
-         (data-region-length fat32-in-memory))))
-    :hints (("goal" :in-theory (disable nfix))))))
-
-(defmacro
-    cluster-size-macro
-    (name stobj cluster-size-of-name)
-  `(defthm
-     ,cluster-size-of-name
-     (equal (cluster-size (,name v ,stobj))
-            (cluster-size ,stobj))
-     :hints (("goal" :in-theory (enable cluster-size)))))
-
-(cluster-size-macro update-bs_filsystype fat32-in-memory
-                    cluster-size-of-update-bs_filsystype)
-
-(cluster-size-macro update-bs_vollab fat32-in-memory
-                    cluster-size-of-update-bs_vollab)
-
-(cluster-size-macro update-bs_volid fat32-in-memory
-                    cluster-size-of-update-bs_volid)
-
-(cluster-size-macro update-bs_bootsig fat32-in-memory
-                    cluster-size-of-update-bs_bootsig)
-
-(cluster-size-macro update-bs_reserved1 fat32-in-memory
-                    cluster-size-of-update-bs_reserved1)
-
-(cluster-size-macro update-bs_drvnum fat32-in-memory
-                    cluster-size-of-update-bs_drvnum)
-
-(cluster-size-macro update-bpb_bkbootsec fat32-in-memory
-                    cluster-size-of-update-bpb_bkbootsec)
-
-(cluster-size-macro update-bpb_fsinfo fat32-in-memory
-                    cluster-size-of-update-bpb_fsinfo)
-
-(cluster-size-macro update-bpb_rootclus fat32-in-memory
-                    cluster-size-of-update-bpb_rootclus)
-
-(cluster-size-macro update-bpb_fsver_major fat32-in-memory
-                    cluster-size-of-update-bpb_fsver_major)
-
-(cluster-size-macro update-bpb_fsver_minor fat32-in-memory
-                    cluster-size-of-update-bpb_fsver_minor)
-
-(cluster-size-macro update-bpb_extflags fat32-in-memory
-                    cluster-size-of-update-bpb_extflags)
-
-(cluster-size-macro update-bpb_fatsz32 fat32-in-memory
-                    cluster-size-of-update-bpb_fatsz32)
-
-(cluster-size-macro update-bpb_totsec32 fat32-in-memory
-                    cluster-size-of-update-bpb_totsec32)
-
-(cluster-size-macro update-bpb_hiddsec fat32-in-memory
-                    cluster-size-of-update-bpb_hiddsec)
-
-(cluster-size-macro update-bpb_numheads fat32-in-memory
-                    cluster-size-of-update-bpb_numheads)
-
-(cluster-size-macro update-bpb_secpertrk fat32-in-memory
-                    cluster-size-of-update-bpb_secpertrk)
-
-(cluster-size-macro update-bpb_fatsz16 fat32-in-memory
-                    cluster-size-of-update-bpb_fatsz16)
-
-(cluster-size-macro update-bpb_media fat32-in-memory
-                    cluster-size-of-update-bpb_media)
-
-(cluster-size-macro update-bpb_totsec16 fat32-in-memory
-                    cluster-size-of-update-bpb_totsec16)
-
-(cluster-size-macro update-bpb_rootentcnt fat32-in-memory
-                    cluster-size-of-update-bpb_rootentcnt)
-
-(cluster-size-macro update-bpb_numfats fat32-in-memory
-                    cluster-size-of-update-bpb_numfats)
-
-(cluster-size-macro update-bpb_rsvdseccnt fat32-in-memory
-                    cluster-size-of-update-bpb_rsvdseccnt)
-
-(defthm
-  cluster-size-of-update-bpb_secperclus
-  (equal (cluster-size (update-bpb_secperclus v fat32-in-memory))
-         (* v (bpb_bytspersec fat32-in-memory)))
-  :hints (("goal" :in-theory (enable cluster-size))))
-
-(defmacro
-    count-of-clusters-macro
-    (name stobj count-of-clusters-of-name)
-  `(defthm
-     ,count-of-clusters-of-name
-     (equal (count-of-clusters (,name v ,stobj))
-            (count-of-clusters ,stobj))
-     :hints (("goal" :in-theory (enable count-of-clusters)))))
-
-(count-of-clusters-macro update-bs_filsystype fat32-in-memory
-                         count-of-clusters-of-update-bs_filsystype)
-
-(count-of-clusters-macro update-bs_vollab fat32-in-memory
-                         count-of-clusters-of-update-bs_vollab)
-
-(count-of-clusters-macro update-bs_volid fat32-in-memory
-                         count-of-clusters-of-update-bs_volid)
-
-(count-of-clusters-macro update-bs_bootsig fat32-in-memory
-                         count-of-clusters-of-update-bs_bootsig)
-
-(count-of-clusters-macro update-bs_reserved1 fat32-in-memory
-                         count-of-clusters-of-update-bs_reserved1)
-
-(count-of-clusters-macro update-bs_drvnum fat32-in-memory
-                         count-of-clusters-of-update-bs_drvnum)
-
-(count-of-clusters-macro update-bpb_bkbootsec fat32-in-memory
-                         count-of-clusters-of-update-bpb_bkbootsec)
-
-(count-of-clusters-macro update-bpb_fsinfo fat32-in-memory
-                         count-of-clusters-of-update-bpb_fsinfo)
-
-(count-of-clusters-macro update-bpb_rootclus fat32-in-memory
-                         count-of-clusters-of-update-bpb_rootclus)
-
-(count-of-clusters-macro update-bpb_fsver_major fat32-in-memory
-                         count-of-clusters-of-update-bpb_fsver_major)
-
-(count-of-clusters-macro update-bpb_fsver_minor fat32-in-memory
-                         count-of-clusters-of-update-bpb_fsver_minor)
-
-(count-of-clusters-macro update-bpb_extflags fat32-in-memory
-                         count-of-clusters-of-update-bpb_extflags)
-
-(defthm
-  count-of-clusters-of-update-bpb_totsec32
-  (equal (count-of-clusters (update-bpb_totsec32 v fat32-in-memory))
-         (floor (+ v
-                   (- (+ (bpb_rsvdseccnt fat32-in-memory)
-                         (* (bpb_numfats fat32-in-memory)
-                            (bpb_fatsz32 fat32-in-memory)))))
-                (bpb_secperclus fat32-in-memory)))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
-
-(defthm
-  count-of-clusters-of-update-bpb_fatsz32
-  (equal (count-of-clusters (update-bpb_fatsz32 v fat32-in-memory))
-         (floor (+ (bpb_totsec32 fat32-in-memory)
-                   (- (+ (bpb_rsvdseccnt fat32-in-memory)
-                         (* (bpb_numfats fat32-in-memory)
-                            v))))
-                (bpb_secperclus fat32-in-memory)))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
-
-(defthm
-  fat32-in-memoryp-of-update-fati
-  (implies (and (fat32-in-memoryp fat32-in-memory)
-                (< i (fat-length fat32-in-memory)))
-           (equal
-            (fat32-in-memoryp
-             (update-fati i v fat32-in-memory))
-            (fat32-entry-p v)))
-  :hints
-  (("goal"
-    :in-theory (e/d (fat32-in-memoryp
-                     update-fati fat-length count-of-clusters)
-                    (floor)))))
-
-(defmacro
-    fat-length-macro
-    (name stobj fat-length-of-name)
-  `(defthm
-     ,fat-length-of-name
-     (equal (fat-length (,name v ,stobj))
-            (fat-length ,stobj))
-     :hints (("goal" :in-theory (enable fat-length ,name)))))
-
-(fat-length-macro update-bs_volid fat32-in-memory
-                         fat-length-of-update-bs_volid)
-
-(fat-length-macro update-bs_bootsig fat32-in-memory
-                         fat-length-of-update-bs_bootsig)
-
-(fat-length-macro update-bs_reserved1 fat32-in-memory
-                         fat-length-of-update-bs_reserved1)
-
-(fat-length-macro update-bs_drvnum fat32-in-memory
-                         fat-length-of-update-bs_drvnum)
-
-(fat-length-macro update-bpb_bkbootsec fat32-in-memory
-                         fat-length-of-update-bpb_bkbootsec)
-
-(fat-length-macro update-bpb_fsinfo fat32-in-memory
-                         fat-length-of-update-bpb_fsinfo)
-
-(fat-length-macro update-bpb_rootclus fat32-in-memory
-                         fat-length-of-update-bpb_rootclus)
-
-(fat-length-macro update-bpb_fsver_major fat32-in-memory
-                         fat-length-of-update-bpb_fsver_major)
-
-(fat-length-macro update-bpb_fsver_minor fat32-in-memory
-                         fat-length-of-update-bpb_fsver_minor)
-
-(fat-length-macro update-bpb_extflags fat32-in-memory
-                         fat-length-of-update-bpb_extflags)
-
-(fat-length-macro update-bpb_fatsz32 fat32-in-memory
-                         fat-length-of-update-bpb_fatsz32)
-
-(fat-length-macro update-bpb_totsec32 fat32-in-memory
-                         fat-length-of-update-bpb_totsec32)
-
-(fat-length-macro update-bpb_hiddsec fat32-in-memory
-                         fat-length-of-update-bpb_hiddsec)
-
-(fat-length-macro update-bpb_numheads fat32-in-memory
-                         fat-length-of-update-bpb_numheads)
-
-(fat-length-macro update-bpb_secpertrk fat32-in-memory
-                         fat-length-of-update-bpb_secpertrk)
-
-(fat-length-macro update-bpb_fatsz16 fat32-in-memory
-                         fat-length-of-update-bpb_fatsz16)
-
-(fat-length-macro update-bpb_media fat32-in-memory
-                         fat-length-of-update-bpb_media)
-
-(fat-length-macro update-bpb_totsec16 fat32-in-memory
-                         fat-length-of-update-bpb_totsec16)
-
-(fat-length-macro update-bpb_rootentcnt fat32-in-memory
-                         fat-length-of-update-bpb_rootentcnt)
-
-(fat-length-macro update-bpb_numfats fat32-in-memory
-                         fat-length-of-update-bpb_numfats)
-
-(fat-length-macro update-bpb_rsvdseccnt fat32-in-memory
-                         fat-length-of-update-bpb_rsvdseccnt)
-
-(fat-length-macro update-bpb_secperclus fat32-in-memory
-                         fat-length-of-update-bpb_secperclus)
-
-(fat-length-macro update-bpb_bytspersec fat32-in-memory
-                         fat-length-of-update-bpb_bytspersec)
-
-(defmacro
-    update-fat-macro
-    (name stobj update-fati-of-name update-fat-of-name)
-  `(encapsulate
-     nil
-
-     (defthm
-       ,update-fati-of-name
-       (equal
-        (update-fati i v1
-                     (,name v2 ,stobj))
-        (,name v2 (update-fati i v1 ,stobj)))
-       :hints (("goal" :in-theory (enable update-fati ,name))))
-
-     (defthm
-       ,update-fat-of-name
-       (equal
-        (update-fat (,name v ,stobj)
-                    str pos)
-        (,name v
-               (update-fat ,stobj str pos))))))
-
-(update-fat-macro update-bs_filsystype fat32-in-memory
-                  update-fati-of-update-bs_filsystype
-                  update-fat-of-update-bs_filsystype)
-
-(update-fat-macro update-bs_vollab fat32-in-memory
-                  update-fati-of-update-bs_vollab
-                  update-fat-of-update-bs_vollab)
-
-(update-fat-macro update-bs_volid fat32-in-memory
-                  update-fati-of-update-bs_volid
-                  update-fat-of-update-bs_volid)
-
-(update-fat-macro update-bs_bootsig fat32-in-memory
-                  update-fati-of-update-bs_bootsig
-                  update-fat-of-update-bs_bootsig)
-
-(update-fat-macro update-bs_reserved1 fat32-in-memory
-                  update-fati-of-update-bs_reserved1
-                  update-fat-of-update-bs_reserved1)
-
-(update-fat-macro update-bs_drvnum fat32-in-memory
-                  update-fati-of-update-bs_drvnum
-                  update-fat-of-update-bs_drvnum)
-
-(update-fat-macro update-bpb_bkbootsec fat32-in-memory
-                  update-fati-of-update-bpb_bkbootsec
-                  update-fat-of-update-bpb_bkbootsec)
-
-(update-fat-macro update-bpb_fsinfo fat32-in-memory
-                  update-fati-of-update-bpb_fsinfo
-                  update-fat-of-update-bpb_fsinfo)
-
-(update-fat-macro update-bpb_rootclus fat32-in-memory
-                  update-fati-of-update-bpb_rootclus
-                  update-fat-of-update-bpb_rootclus)
-
-(update-fat-macro update-bpb_fsver_major fat32-in-memory
-                  update-fati-of-update-bpb_fsver_major
-                  update-fat-of-update-bpb_fsver_major)
-
-(update-fat-macro update-bpb_fsver_minor fat32-in-memory
-                  update-fati-of-update-bpb_fsver_minor
-                  update-fat-of-update-bpb_fsver_minor)
-
-(update-fat-macro update-bpb_extflags fat32-in-memory
-                  update-fati-of-update-bpb_extflags
-                  update-fat-of-update-bpb_extflags)
-
-(update-fat-macro update-bpb_fatsz32 fat32-in-memory
-                  update-fati-of-update-bpb_fatsz32
-                  update-fat-of-update-bpb_fatsz32)
-
-(update-fat-macro update-bpb_totsec32 fat32-in-memory
-                  update-fati-of-update-bpb_totsec32
-                  update-fat-of-update-bpb_totsec32)
-
-(update-fat-macro update-bpb_hiddsec fat32-in-memory
-                  update-fati-of-update-bpb_hiddsec
-                  update-fat-of-update-bpb_hiddsec)
-
-(update-fat-macro update-bpb_numheads fat32-in-memory
-                  update-fati-of-update-bpb_numheads
-                  update-fat-of-update-bpb_numheads)
-
-(update-fat-macro update-bpb_secpertrk fat32-in-memory
-                  update-fati-of-update-bpb_secpertrk
-                  update-fat-of-update-bpb_secpertrk)
-
-(update-fat-macro update-bpb_fatsz16 fat32-in-memory
-                  update-fati-of-update-bpb_fatsz16
-                  update-fat-of-update-bpb_fatsz16)
-
-(update-fat-macro update-bpb_media fat32-in-memory
-                  update-fati-of-update-bpb_media
-                  update-fat-of-update-bpb_media)
-
-(update-fat-macro update-bpb_totsec16 fat32-in-memory
-                  update-fati-of-update-bpb_totsec16
-                  update-fat-of-update-bpb_totsec16)
-
-(update-fat-macro update-bpb_rootentcnt fat32-in-memory
-                  update-fati-of-update-bpb_rootentcnt
-                  update-fat-of-update-bpb_rootentcnt)
-
-(update-fat-macro update-bpb_numfats fat32-in-memory
-                  update-fati-of-update-bpb_numfats
-                  update-fat-of-update-bpb_numfats)
-
-(update-fat-macro update-bpb_rsvdseccnt fat32-in-memory
-                  update-fati-of-update-bpb_rsvdseccnt
-                  update-fat-of-update-bpb_rsvdseccnt)
-
-(update-fat-macro update-bpb_secperclus fat32-in-memory
-                  update-fati-of-update-bpb_secperclus
-                  update-fat-of-update-bpb_secperclus)
-
-(update-fat-macro update-bpb_bytspersec fat32-in-memory
-                  update-fati-of-update-bpb_bytspersec
-                  update-fat-of-update-bpb_bytspersec)
-
-(update-fat-macro update-bs_oemname fat32-in-memory
-                  update-fati-of-update-bs_oemname
-                  update-fat-of-update-bs_oemname)
-
-(update-fat-macro update-bs_jmpboot fat32-in-memory
-                  update-fati-of-update-bs_jmpboot
-                  update-fat-of-update-bs_jmpboot)
-
-(defmacro
-    data-region-length-macro
-    (name stobj data-region-length-of-name)
-  `(defthm
-     ,data-region-length-of-name
-     (equal (data-region-length (,name v ,stobj))
-            (data-region-length ,stobj))
-     :hints (("goal" :in-theory (enable data-region-length ,name)))))
-
-(data-region-length-macro update-bs_volid fat32-in-memory
-                          data-region-length-of-update-bs_volid)
-
-(data-region-length-macro update-bs_bootsig fat32-in-memory
-                          data-region-length-of-update-bs_bootsig)
-
-(data-region-length-macro update-bs_reserved1 fat32-in-memory
-                          data-region-length-of-update-bs_reserved1)
-
-(data-region-length-macro update-bs_drvnum fat32-in-memory
-                          data-region-length-of-update-bs_drvnum)
-
-(data-region-length-macro update-bpb_bkbootsec fat32-in-memory
-                          data-region-length-of-update-bpb_bkbootsec)
-
-(data-region-length-macro update-bpb_fsinfo fat32-in-memory
-                          data-region-length-of-update-bpb_fsinfo)
-
-(data-region-length-macro update-bpb_rootclus fat32-in-memory
-                          data-region-length-of-update-bpb_rootclus)
-
-(data-region-length-macro update-bpb_fsver_major fat32-in-memory
-                          data-region-length-of-update-bpb_fsver_major)
-
-(data-region-length-macro update-bpb_fsver_minor fat32-in-memory
-                          data-region-length-of-update-bpb_fsver_minor)
-
-(data-region-length-macro update-bpb_extflags fat32-in-memory
-                          data-region-length-of-update-bpb_extflags)
-
-(data-region-length-macro update-bpb_fatsz32 fat32-in-memory
-                          data-region-length-of-update-bpb_fatsz32)
-
-(data-region-length-macro update-bpb_totsec32 fat32-in-memory
-                          data-region-length-of-update-bpb_totsec32)
-
-(data-region-length-macro update-bpb_hiddsec fat32-in-memory
-                          data-region-length-of-update-bpb_hiddsec)
-
-(data-region-length-macro update-bpb_numheads fat32-in-memory
-                          data-region-length-of-update-bpb_numheads)
-
-(data-region-length-macro update-bpb_secpertrk fat32-in-memory
-                          data-region-length-of-update-bpb_secpertrk)
-
-(data-region-length-macro update-bpb_fatsz16 fat32-in-memory
-                          data-region-length-of-update-bpb_fatsz16)
-
-(data-region-length-macro update-bpb_media fat32-in-memory
-                          data-region-length-of-update-bpb_media)
-
-(data-region-length-macro update-bpb_totsec16 fat32-in-memory
-                          data-region-length-of-update-bpb_totsec16)
-
-(data-region-length-macro update-bpb_rootentcnt fat32-in-memory
-                          data-region-length-of-update-bpb_rootentcnt)
-
-(data-region-length-macro update-bpb_numfats fat32-in-memory
-                          data-region-length-of-update-bpb_numfats)
-
-(data-region-length-macro update-bpb_rsvdseccnt fat32-in-memory
-                          data-region-length-of-update-bpb_rsvdseccnt)
-
-(data-region-length-macro update-bpb_secperclus fat32-in-memory
-                          data-region-length-of-update-bpb_secperclus)
-
-(data-region-length-macro update-bpb_bytspersec fat32-in-memory
-                          data-region-length-of-update-bpb_bytspersec)
-
-(defthm
-  data-region-length-of-update-fat
-  (equal
-   (data-region-length (update-fat fat32-in-memory str pos))
-   (data-region-length fat32-in-memory)))
-
-(defmacro
-    update-bs_jmpboot-macro
-    (name stobj update-bs_jmpboot-of-name)
-  `(defthm
-     ,update-bs_jmpboot-of-name
-     (equal
-      (update-bs_jmpboot
-       v1
-       (,name v2 ,stobj))
-      (,name
-       v2
-       (update-bs_jmpboot v1 ,stobj)))
-     :hints (("goal" :in-theory (enable ,name)))))
-
-(update-bs_jmpboot-macro update-bpb_bytspersec fat32-in-memory
-                         update-bs_jmpboot-of-update-bpb_bytspersec)
-
-(update-bs_jmpboot-macro update-bpb_fatsz32 fat32-in-memory
-                         update-bs_jmpboot-of-update-bpb_fatsz32)
-
-(update-bs_jmpboot-macro update-bpb_numfats fat32-in-memory
-                         update-bs_jmpboot-of-update-bpb_numfats)
-
-(update-bs_jmpboot-macro update-bpb_rsvdseccnt fat32-in-memory
-                         update-bs_jmpboot-of-update-bpb_rsvdseccnt)
-
-(update-bs_jmpboot-macro update-bpb_secperclus fat32-in-memory
-                         update-bs_jmpboot-of-update-bpb_secperclus)
-
-(defmacro
-    update-bs_oemname-macro
-    (name stobj update-bs_oemname-of-name)
-  `(defthm
-     ,update-bs_oemname-of-name
-     (equal
-      (update-bs_oemname
-       v1
-       (,name v2 ,stobj))
-      (,name
-       v2
-       (update-bs_oemname v1 ,stobj)))
-     :hints (("goal" :in-theory (enable ,name)))))
-
-(update-bs_oemname-macro update-bpb_bytspersec fat32-in-memory
-                         update-bs_oemname-of-update-bpb_bytspersec)
-
-(update-bs_oemname-macro update-bpb_fatsz32 fat32-in-memory
-                         update-bs_oemname-of-update-bpb_fatsz32)
-
-(update-bs_oemname-macro update-bpb_numfats fat32-in-memory
-                         update-bs_oemname-of-update-bpb_numfats)
-
-(update-bs_oemname-macro update-bpb_rsvdseccnt fat32-in-memory
-                         update-bs_oemname-of-update-bpb_rsvdseccnt)
-
-(update-bs_oemname-macro update-bpb_secperclus fat32-in-memory
-                         update-bs_oemname-of-update-bpb_secperclus)
+  (("goal" :in-theory (e/d (fat32-in-memory-to-string) (nfix)))))
 
 (defmacro
     update-bpb_secperclus-macro
@@ -5694,6 +4285,12 @@
        v2
        (update-bpb_secperclus v1 ,stobj)))
      :hints (("goal" :in-theory (enable update-bpb_secperclus ,name)))))
+
+(update-bpb_secperclus-macro update-bs_oemname fat32-in-memory
+                             update-bpb_secperclus-of-update-bs_oemname)
+
+(update-bpb_secperclus-macro update-bs_jmpboot fat32-in-memory
+                             update-bpb_secperclus-of-update-bs_jmpboot)
 
 (update-bpb_secperclus-macro update-bpb_bytspersec fat32-in-memory
                              update-bpb_secperclus-of-update-bpb_bytspersec)
@@ -5721,6 +4318,12 @@
        (update-bpb_rsvdseccnt v1 ,stobj)))
      :hints (("goal" :in-theory (enable update-bpb_rsvdseccnt ,name)))))
 
+(update-bpb_rsvdseccnt-macro update-bs_oemname fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bs_oemname)
+
+(update-bpb_rsvdseccnt-macro update-bs_jmpboot fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bs_jmpboot)
+
 (update-bpb_rsvdseccnt-macro update-bpb_bytspersec fat32-in-memory
                              update-bpb_rsvdseccnt-of-update-bpb_bytspersec)
 
@@ -5744,6 +4347,12 @@
        (update-bpb_numfats v1 ,stobj)))
      :hints (("goal" :in-theory (enable update-bpb_numfats ,name)))))
 
+(update-bpb_numfats-macro update-bs_oemname fat32-in-memory
+                          update-bpb_numfats-of-update-bs_oemname)
+
+(update-bpb_numfats-macro update-bs_jmpboot fat32-in-memory
+                          update-bpb_numfats-of-update-bs_jmpboot)
+
 (update-bpb_numfats-macro update-bpb_bytspersec fat32-in-memory
                           update-bpb_numfats-of-update-bpb_bytspersec)
 
@@ -5763,6 +4372,12 @@
        v2
        (update-bpb_fatsz32 v1 ,stobj)))
      :hints (("goal" :in-theory (enable update-bpb_fatsz32 ,name)))))
+
+(update-bpb_fatsz32-macro update-bs_oemname fat32-in-memory
+                          update-bpb_fatsz32-of-update-bs_oemname)
+
+(update-bpb_fatsz32-macro update-bs_jmpboot fat32-in-memory
+                          update-bpb_fatsz32-of-update-bs_jmpboot)
 
 (update-bpb_fatsz32-macro update-bpb_totsec32 fat32-in-memory
                           update-bpb_fatsz32-of-update-bpb_totsec32)
@@ -5791,17 +4406,25 @@
 (update-bpb_fatsz32-macro update-bpb_bytspersec fat32-in-memory
                           update-bpb_fatsz32-of-update-bpb_bytspersec)
 
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-1
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (equal
-    (combine16u (logtail 8 (bpb_rsvdseccnt fat32-in-memory))
-                (loghead 8 (bpb_rsvdseccnt fat32-in-memory)))
-    (bpb_rsvdseccnt fat32-in-memory)))
-  :hints
-  (("goal" :in-theory (e/d (bpb_rsvdseccnt)
-                           (loghead logtail ash logior)))))
+(defmacro
+    update-bpb_bytspersec-macro
+    (name stobj update-bpb_bytspersec-of-name)
+  `(defthm
+     ,update-bpb_bytspersec-of-name
+     (equal
+      (update-bpb_bytspersec
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_bytspersec v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_bytspersec ,name)))))
+
+(update-bpb_bytspersec-macro update-bs_oemname fat32-in-memory
+                             update-bpb_bytspersec-of-update-bs_oemname)
+
+(update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
+                             update-bpb_bytspersec-of-update-bs_jmpboot)
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-2
@@ -6243,78 +4866,39 @@
         (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
        (logtail 24 (bs_volid fat32-in-memory)))))))
 
-;; (defthm
-;;   fat32-in-memory-to-string-inversion-lemma-17
-;;   (implies
-;;    (fat32-in-memoryp fat32-in-memory)
-;;    (equal
-;;     (combine32u
-;;      (logtail 24 (bpb_fatsz32 fat32-in-memory))
-;;      (loghead 8
-;;               (logtail 16 (bpb_fatsz32 fat32-in-memory)))
-;;      (loghead 8
-;;               (logtail 8 (bpb_fatsz32 fat32-in-memory)))
-;;      (loghead 8 (bpb_fatsz32 fat32-in-memory)))
-;;     (bpb_fatsz32 fat32-in-memory)))
-;;   :hints
-;;   (("goal" :in-theory (e/d (bpb_fatsz32)
-;;                            (loghead logtail ash logior)))))
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-27
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (unsigned-byte-listp 8 (nth *data-regioni* fat32-in-memory)))
+  :rule-classes
+  (:rewrite
+   (:rewrite :corollary
+             (implies
+              (fat32-in-memoryp fat32-in-memory)
+              (true-listp (nth *data-regioni* fat32-in-memory))))))
 
-;; (defthm
-;;   fat32-in-memory-to-string-inversion-lemma-19
-;;   (implies
-;;    (fat32-in-memoryp fat32-in-memory)
-;;    (equal
-;;     (combine32u
-;;      (logtail 24 (bpb_totsec32 fat32-in-memory))
-;;      (loghead 8
-;;               (logtail 16 (bpb_totsec32 fat32-in-memory)))
-;;      (loghead 8
-;;               (logtail 8 (bpb_totsec32 fat32-in-memory)))
-;;      (loghead 8 (bpb_totsec32 fat32-in-memory)))
-;;     (bpb_totsec32 fat32-in-memory)))
-;;   :hints
-;;   (("goal" :in-theory (e/d (bpb_totsec32)
-;;                            (loghead logtail ash logior)))))
-
-(encapsulate
-  ()
-
-  (local (defthm fat32-in-memory-to-string-inversion-lemma-27
-           (equal (revappend x y)
-                  (append (rev x) y))
-           :hints (("goal" :in-theory (enable rev)))))
-
-  (defthm
-    fat32-in-memory-to-string-inversion-lemma-28
-    (implies (compliant-fat32-in-memoryp fat32-in-memory)
-             (equal
-              (nthcdr
-               (* (bpb_bytspersec fat32-in-memory)
-                  (bpb_rsvdseccnt fat32-in-memory))
-               (explode (fat32-in-memory-to-string
-                         fat32-in-memory)))
-              (append
-               (explode (make-fat-string-ac (bpb_numfats fat32-in-memory)
-                                            fat32-in-memory ""))
-               (reverse
-                (explode
-                 (nats=>string (revappend (take (data-region-length fat32-in-memory)
-                                                (nth *data-regioni* fat32-in-memory))
-                                          nil)))))))
-    :hints (("goal" :in-theory (enable fat32-in-memory-to-string))))
-
-  (local (include-book "std/lists/rev" :dir :system))
-
-  (defthm
-    fat32-in-memory-to-string-inversion-lemma-49
-    (equal (revappend (revappend x nil) nil)
-           (list-fix x)))
-
-  (defthm
-    fat32-in-memory-to-string-inversion-lemma-50
-    (equal (rev (revappend x nil))
-           (list-fix x))))
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-28
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal
+    (nthcdr
+     (* (bpb_bytspersec fat32-in-memory)
+        (bpb_rsvdseccnt fat32-in-memory))
+     (explode (fat32-in-memory-to-string fat32-in-memory)))
+    (append
+     (explode (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                                  fat32-in-memory ""))
+     (nats=>chars (nth *data-regioni* fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (fat32-in-memory-to-string nats=>chars-of-revappend
+                                data-region-length
+                                fix-true-list-when-true-listp)
+     (reverse-removal)))))
 
 (encapsulate
   ()
@@ -6406,23 +4990,6 @@
                                     fat32-in-memory)
                                    fat32-in-memory))
                            :hints (("Goal" :in-theory (enable resize-data-region))))))
-
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-35
-  (implies
-   (and (fat32-in-memoryp fat32-in-memory)
-        (<= pos (fat-length fat32-in-memory)))
-   (equal
-    (resize-data-region i (update-fat fat32-in-memory str pos))
-    (update-fat (resize-data-region i fat32-in-memory)
-                str pos)))
-  :hints
-  (("goal" :in-theory (e/d (resize-data-region)
-                           (fat32-in-memoryp)))
-   ("subgoal *1/2''" :in-theory (e/d (fat32-entry-p)
-                                     (fat32-in-memoryp)))
-   ("subgoal *1/4''" :in-theory (e/d (update-fati)
-                                     (fat32-in-memoryp)))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-36
@@ -6571,139 +5138,6 @@
 
 (encapsulate
   ()
-
-  (local
-   (defthm
-     fat32-in-memory-to-string-inversion-lemma-42
-     (and(implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bs_volid fat32-in-memory)
-                     4294967296))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bs_volid fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bs_volid fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bs_bootsig fat32-in-memory) 256))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bs_bootsig fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bs_bootsig fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bs_reserved1 fat32-in-memory) 256))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bs_reserved1 fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bs_reserved1 fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bs_drvnum fat32-in-memory) 256))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bs_drvnum fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bs_drvnum fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_bkbootsec fat32-in-memory)
-                     65536))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_bkbootsec fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_bkbootsec fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_fsinfo fat32-in-memory) 65536))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_fsinfo fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_fsinfo fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_rootclus fat32-in-memory)
-                     4294967296))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_rootclus fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_fsver_major fat32-in-memory)
-                     256))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_fsver_major fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_fsver_major fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (nth *bpb_fsver_minor* fat32-in-memory)
-                     256))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0
-                      (nth *bpb_fsver_minor* fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (nth *bpb_fsver_minor* fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_extflags fat32-in-memory)
-                     65536))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_extflags fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_extflags fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_hiddsec fat32-in-memory)
-                     4294967296))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_hiddsec fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_hiddsec fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_numheads fat32-in-memory)
-                     65536))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_numheads fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_numheads fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_secpertrk fat32-in-memory)
-                     65536))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_secpertrk fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_secpertrk fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_fatsz16 fat32-in-memory) 65536))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_fatsz16 fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_fatsz16 fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_media fat32-in-memory) 256))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_media fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_media fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_totsec16 fat32-in-memory)
-                     65536))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_totsec16 fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_totsec16 fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (< (bpb_rootentcnt fat32-in-memory)
-                     65536))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (integerp (bpb_rootentcnt fat32-in-memory)))
-         (implies (compliant-fat32-in-memoryp fat32-in-memory)
-                  (<= 0 (bpb_rootentcnt fat32-in-memory))))
-     :hints (("Goal" :in-theory (enable bpb_secperclus bpb_fatsz32 bpb_rsvdseccnt
-                                        bpb_numfats bpb_bytspersec bpb_rootclus bpb_fsinfo
-                                        bpb_bkbootsec bs_drvnum bs_reserved1 bs_bootsig
-                                        bpb_media bpb_fsver_major bpb_fsver_major bpb_fatsz16
-                                        bpb_secpertrk bpb_numheads bpb_rootentcnt
-                                        bpb_extflags bpb_hiddsec bpb_totsec32 bpb_fatsz32
-                                        bpb_rootentcnt bpb_totsec16 bs_volid
-                                        update-bpb_secperclus update-bpb_rsvdseccnt
-                                        update-bpb_bytspersec update-bpb_numfats
-                                        update-bpb_rootclus update-bpb_fsinfo update-bpb_bkbootsec
-                                        update-bs_drvnum update-bs_reserved1 update-bs_bootsig
-                                        update-bpb_media update-bpb_fsver_minor
-                                        update-bpb_fsver_major update-bpb_fatsz16
-                                        update-bpb_secpertrk update-bpb_numheads
-                                        update-bpb_extflags update-bpb_hiddsec update-bpb_totsec32
-                                        update-bpb_fatsz32 update-bpb_rootentcnt
-                                        update-bpb_totsec16 update-bs_volid compliant-fat32-in-memoryp)))))
 
   (local (in-theory (disable bs_jmpbooti update-bs_jmpbooti
                              bs_oemnamei bpb_reservedi bs_vollabi
@@ -6984,15 +5418,12 @@
               (bpb_rsvdseccnt fat32-in-memory)))
         (- (* (bpb_numfats fat32-in-memory)
               4 (fat-length fat32-in-memory))))
-     (revappend
-      (explode
-       (nats=>string
-        (revappend (take (data-region-length fat32-in-memory)
-                         (nth *data-regioni* fat32-in-memory))
-                   nil)))
-      nil))))
+     (nats=>chars (nth *data-regioni* fat32-in-memory)))))
   :hints
-  (("goal" :in-theory (enable fat32-in-memory-to-string))))
+  (("goal" :in-theory (enable fat32-in-memory-to-string
+                              nats=>chars-of-revappend
+                              data-region-length
+                              fix-true-list-when-true-listp))))
 
 (encapsulate
   ()
@@ -7015,18 +5446,6 @@
   fat32-in-memory-to-string-inversion-lemma-55
   (implies
    (fat32-in-memoryp fat32-in-memory)
-   (unsigned-byte-listp 8 (nth *data-regioni* fat32-in-memory)))
-  :rule-classes
-  (:rewrite
-   (:rewrite :corollary
-             (implies
-              (fat32-in-memoryp fat32-in-memory)
-              (true-listp (nth *data-regioni* fat32-in-memory))))))
-
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-56
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
    (equal (update-nth *data-regioni*
                       (nth *data-regioni* fat32-in-memory)
                       fat32-in-memory)
@@ -7035,8 +5454,7 @@
 (encapsulate
   ()
 
-  (local (in-theory (e/d (nthcdr-when->=-n-len-l nthcdr-of-nil
-                                                 fix-true-list-when-true-listp
+  (local (in-theory (e/d (nthcdr-when->=-n-len-l fix-true-list-when-true-listp
                                                  chars=>nats-of-revappend
                                                  nats=>chars-of-revappend
                                                  update-data-region-correctness-1
