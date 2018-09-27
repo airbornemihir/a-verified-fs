@@ -36,7 +36,7 @@ University of Texas at Austin\\
 Austin, TX, USA}
 \email{mihir@cs.utexas.edu}}
 \def\titlerunning{FAT32 formalisation}
-\def\authorrunning{M.P. Mehta}
+\def\authorrunning{M P Mehta}
 \begin{document}
 \maketitle
 
@@ -652,8 +652,8 @@ contents can be modified through a write to a different regular file.
 These properties, in the form of the predicates
 \texttt{indices-marked-listp} and \texttt{no-duplicatesp}, are
 packaged together into the \texttt{l4-stricter-fs-p} predicate, for
-which a listing follows. Here, \texttt{(boolean-listp alv)} is a type
-hypothesis for \texttt{alv}, the allocation vector.
+which a listing follows. Here, the allocation vector \texttt{alv}
+satisfies the type hypothesis \texttt{(boolean-listp alv)}.
 
 \medskip
 
@@ -698,8 +698,10 @@ about operations in the file allocation table.
 predicate \texttt{compliant-fat32-in-memoryp} cannot be assumed to
 hold before the filesystem is initialised by reading a disk
 image. This also means that it is not straightforward to use an
-abstract stobj~\cite{goel2013abstract} for this purpose, using
-\texttt{compliant-fat32-in-memoryp} as an invariant.
+abstract stobj~\cite{goel2013abstract} for modelling the filesystem
+state, since the putative invariant
+\texttt{(compliant-fat32-in-memoryp fat32-in-memory)} is not always
+satisfied.
 
 \subsection{Reuse}
 
@@ -859,8 +861,8 @@ use in facilitating our stobj reasoning.
 
 \subsubsection*{Acknowledgments} This material is based upon work
 supported by the National Science Foundation SaTC program under
-contract number CNS-1525472. Thanks are also owed to Warren A. Hunt
-Jr. and Matthew J. Kaufmann for their guidance, and to the anonymous
+contract number CNS-1525472. Thanks are also owed to Warren A Hunt
+Jr and Matt Kaufmann for their guidance, and to the anonymous
 reviewers for their suggestions.
 
 \bibliographystyle{eptcs}
