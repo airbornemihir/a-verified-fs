@@ -1806,13 +1806,6 @@
                    (< n (len l)))
               (rationalp (nth n l)))))
 
-  (local
-   (defthm read-reserved-area-guard-lemma-5
-     (implies (and (unsigned-byte-listp 8 l)
-                   (natp n)
-                   (< n (len l)))
-              (rationalp (nth n l)))))
-
   ;; This must be called after the file is opened.
   (defun
       read-reserved-area (fat32-in-memory str)
@@ -2200,22 +2193,6 @@
                                         ch-word fat32-in-memory)))
        (update-fat fat32-in-memory str
                    (the (unsigned-byte 28) (- pos 1)))))))
-
-(defthm
-  read-fat-guard-lemma-2
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (<= 0 (bpb_fatsz32 fat32-in-memory)))
-  :hints (("Goal" :use update-bpb_fatsz32-correctness-2) )
-  :rule-classes :linear)
-
-(defthm
-  read-fat-guard-lemma-3
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (<= 0 (bpb_bytspersec fat32-in-memory)))
-  :hints (("Goal" :use update-bpb_bytspersec-correctness-2) )
-  :rule-classes :linear)
 
 (defthm
   slurp-disk-image-guard-lemma-2
