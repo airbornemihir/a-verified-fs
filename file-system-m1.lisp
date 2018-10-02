@@ -717,3 +717,65 @@
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
+
+(defun
+    name=>fat32-name-helper
+    (character-list n)
+  (if (zp n)
+      nil
+    (if (atom character-list)
+        (make-list n :initial-element #\space)
+      (cons (str::upcase-char (car character-list))
+            (name=>fat32-name-helper (cdr character-list)
+                                       (- n 1))))))
+
+(defthm
+  len-of-name=>fat32-name-helper
+  (equal (len (name=>fat32-name-helper character-list n))
+         (nfix n)))
+
+(defthm name=>fat32-name-helper-correctness-1
+  (implies (member x (name=>fat32-name-helper
+                      character-list n))
+           (or (equal x #\space) (str::up-alpha-p x))))
+
+(defun
+    name=>fat32-name (character-list)
+  (b*
+      ((dot-and-later-characters (member #\. character-list))
+       (characters-before-dot
+        (take (- (len character-list) (len dot-and-later-characters))
+              character-list))
+       (normalised-characters-before-dot
+        (name=>fat32-name-helper characters-before-dot 8))
+       ((when (atom dot-and-later-characters))
+        (append normalised-characters-before-dot
+                (make-list 3 :initial-element #\space)))
+       (characters-after-dot (cdr dot-and-later-characters))
+       (second-dot-and-later-characters (member #\. characters-after-dot))
+       (extension (take (- (len characters-after-dot)
+                           (len second-dot-and-later-characters))
+                        characters-after-dot))
+       (normalised-extension
+        (name=>fat32-name-helper extension 3)))
+    (append normalised-characters-before-dot normalised-extension)))
+
+(assert$
+ (and
+  (equal (name=>fat32-name (coerce "6chars" 'list))
+         (coerce "6CHARS     " 'list))
+  (equal (name=>fat32-name (coerce "6chars.h" 'list))
+         (coerce "6CHARS  H  " 'list))
+  (equal (name=>fat32-name (coerce "6chars.txt" 'list))
+         (coerce "6CHARS  TXT" 'list))
+  (equal (name=>fat32-name (coerce "6chars.6chars" 'list))
+         (coerce "6CHARS  6CH" 'list))
+  (equal (name=>fat32-name (coerce "6chars.6ch" 'list))
+         (coerce "6CHARS  6CH" 'list))
+  (equal (name=>fat32-name (coerce "11characters.6chars" 'list))
+         (coerce "11CHARAC6CH" 'list))
+  (equal (name=>fat32-name (coerce "11characters.1.1.1" 'list))
+         (coerce "11CHARAC1  " 'list))
+  (equal (name=>fat32-name (coerce "11characters.1.1" 'list))
+         (coerce "11CHARAC1  " 'list)))
+ t)
