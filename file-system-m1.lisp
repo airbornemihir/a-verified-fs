@@ -10,6 +10,7 @@
 (local (include-book "ihs/logops-lemmas" :dir :system))
 (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 (include-book "kestrel/utilities/strings" :dir :system)
+(include-book "std/strings/case-conversion" :dir :system)
 
 (include-book "insert-text")
 (include-book "fat32")
@@ -20,6 +21,22 @@
              (char-code (char string n))
              nil))
   :hints (("goal" :in-theory (enable string=>nats))))
+
+(defthm
+  down-alpha-p-of-upcase-char
+  (not (str::down-alpha-p (str::upcase-char x)))
+  :hints
+  (("goal"
+    :in-theory (enable str::upcase-char str::down-alpha-p))))
+
+(defthm
+  charlist-has-some-down-alpha-p-of-upcase-charlist
+  (not (str::charlist-has-some-down-alpha-p
+        (str::upcase-charlist x)))
+  :hints
+  (("goal"
+    :in-theory (enable str::charlist-has-some-down-alpha-p
+                       str::upcase-charlist))))
 
 (defun dir-ent-p (x)
   (declare (xargs :guard t))
@@ -721,26 +738,30 @@
 (defun
     name=>fat32-name-helper
     (character-list n)
+  (declare
+   (xargs :guard (and (natp n)
+                      (character-listp character-list))))
   (if (zp n)
       nil
     (if (atom character-list)
         (make-list n :initial-element #\space)
       (cons (str::upcase-char (car character-list))
             (name=>fat32-name-helper (cdr character-list)
-                                       (- n 1))))))
+                                     (- n 1))))))
 
 (defthm
   len-of-name=>fat32-name-helper
   (equal (len (name=>fat32-name-helper character-list n))
          (nfix n)))
 
-(defthm name=>fat32-name-helper-correctness-1
-  (implies (member x (name=>fat32-name-helper
-                      character-list n))
-           (or (equal x #\space) (str::up-alpha-p x))))
+;; (defthm name=>fat32-name-helper-correctness-1
+;;   (implies (member x (name=>fat32-name-helper
+;;                       character-list n))
+;;            (or (equal x #\space) (str::up-alpha-p x))))
 
 (defun
     name=>fat32-name (character-list)
+  (declare (xargs :guard (character-listp character-list)))
   (b*
       ((dot-and-later-characters (member #\. character-list))
        (characters-before-dot
