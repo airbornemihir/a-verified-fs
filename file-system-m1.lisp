@@ -759,6 +759,11 @@
 ;;                       character-list n))
 ;;            (or (equal x #\space) (str::up-alpha-p x))))
 
+(defthm
+  character-listp-of-name=>fat32-name-helper
+  (character-listp (name=>fat32-name-helper character-list n))
+  :hints (("goal" :in-theory (disable make-list-ac-removal))))
+
 (defun
     name=>fat32-name (character-list)
   (declare (xargs :guard (character-listp character-list)))
@@ -814,6 +819,12 @@
           (fat32-name=>name-helper character-list (- n 1))
           (str::downcase-charlist (take n character-list)))))
 
+(defthm
+  character-listp-of-fat32-name=>name-helper
+  (character-listp
+   (fat32-name=>name-helper
+    character-list n)))
+
 (defun fat32-name=>name (character-list)
   (declare (xargs :guard (and (character-listp character-list)
                               (equal (len character-list) 11))))
@@ -841,3 +852,31 @@
   (equal (fat32-name=>name (coerce "11CHARAC1  " 'list))
          (coerce "11charac.1" 'list)))
  t)
+
+(defun pathname=>fat32-pathname (character-list)
+  (declare (xargs :guard (character-listp character-list)))
+  (b*
+      ((slash-and-later-characters
+        (member #\/ character-list))
+       (characters-before-slash (take (- (len character-list)
+                                         (len slash-and-later-characters))
+                                      character-list))
+       ((when (atom slash-and-later-characters))
+        (list
+         (coerce (name=>fat32-name characters-before-slash) 'string))))
+    (cons
+     (coerce (name=>fat32-name characters-before-slash) 'string)
+     (pathname=>fat32-pathname (cdr slash-and-later-characters)))))
+
+(defun fat32-pathname=>name (string-list)
+  ;; (declare (xargs :guard (string-listp string-list)))
+  (if (atom string-list)
+      nil
+    (append (fat32-name=>name (coerce (car string-list) 'list))
+            (if (atom (cdr string-list))
+                nil
+              (list* #\/
+                     (fat32-pathname=>name (cdr string-list)))))))
+
+(defthm character-listp-of-fat32-pathname=>name
+  (character-listp (fat32-pathname=>name string-list)))

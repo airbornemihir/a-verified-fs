@@ -562,3 +562,7 @@
 (defthm revappend-of-revappend
   (equal (revappend (revappend x y1) y2)
          (revappend y1 (append x y2))))
+
+(defthm character-listp-of-member-equal
+  (implies (character-listp lst)
+           (character-listp (member-equal x lst))))
