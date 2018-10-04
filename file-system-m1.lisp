@@ -800,3 +800,44 @@
   (equal (name=>fat32-name (coerce "11characters.1.1" 'list))
          (coerce "11CHARAC1  " 'list)))
  t)
+
+(defun
+  fat32-name=>name-helper
+  (character-list n)
+  (declare (xargs :guard (and (natp n)
+                              (character-listp character-list)
+                              (<= n (len character-list)))))
+  (if (zp n)
+      nil
+      (if (equal (nth (- n 1) character-list)
+                 #\space)
+          (fat32-name=>name-helper character-list (- n 1))
+          (str::downcase-charlist (take n character-list)))))
+
+(defun fat32-name=>name (character-list)
+  (declare (xargs :guard (and (character-listp character-list)
+                              (equal (len character-list) 11))))
+  (b*
+      ((characters-before-dot
+        (fat32-name=>name-helper (take 8 character-list) 8))
+       (characters-after-dot
+        (fat32-name=>name-helper (subseq character-list 8 11) 3)))
+    (if (atom characters-after-dot)
+        characters-before-dot
+      (append characters-before-dot (list #\.) characters-after-dot))))
+
+(assert$
+ (and
+  (equal (fat32-name=>name (coerce "6CHARS     " 'list))
+         (coerce "6chars" 'list))
+  (equal (fat32-name=>name (coerce "6CHARS  H  " 'list))
+         (coerce "6chars.h" 'list))
+  (equal (fat32-name=>name (coerce "6CHARS  TXT" 'list))
+         (coerce "6chars.txt" 'list))
+  (equal (fat32-name=>name (coerce "6CHARS  6CH" 'list))
+         (coerce "6chars.6ch" 'list))
+  (equal (fat32-name=>name (coerce "11CHARAC6CH" 'list))
+         (coerce "11charac.6ch" 'list))
+  (equal (fat32-name=>name (coerce "11CHARAC1  " 'list))
+         (coerce "11charac.1" 'list)))
+ t)
