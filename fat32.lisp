@@ -41,6 +41,10 @@
 
 (defconst *ms-dir-ent-length* 32)
 
+;; observed
+(defconst *current-dir-fat32-name* ".          ")
+(defconst *parent-dir-fat32-name* "..         ")
+
 ;; from include/uapi/asm-generic/errno-base.h
 (defconst *ENOENT* 2) ;; No such file or directory
 (defconst *EIO* 5) ;; I/O error

@@ -2669,8 +2669,8 @@
        (filename (nats=>string (subseq dir-ent 0 11)))
        (not-right-kind-of-directory-p
         (or (zp (logand (nth 11 dir-ent) (ash 1 4)))
-            (equal filename ".          ")
-            (equal filename "..         ")))
+            (equal filename *current-dir-fat32-name*)
+            (equal filename *parent-dir-fat32-name*)))
        (length (if not-right-kind-of-directory-p
                    (dir-ent-file-size dir-ent)
                    (ash 1 21)))
@@ -5646,8 +5646,8 @@ Some (rather awful) testing forms are
     (list*
      (if (or (zp (logand (nth 11 dir-ent)
                          (ash 1 4)))
-             (equal filename ".          ")
-             (equal filename "..         "))
+             (equal filename *current-dir-fat32-name*)
+             (equal filename *parent-dir-fat32-name*))
          (list filename first-cluster)
        (b*
            (((mv contents &)

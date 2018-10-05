@@ -786,7 +786,7 @@
         (name-to-fat32-name-helper extension 3)))
     (append normalised-characters-before-dot normalised-extension)))
 
-(assert$
+(assert-event
  (and
   (equal (name-to-fat32-name (coerce "6chars" 'list))
          (coerce "6CHARS     " 'list))
@@ -803,8 +803,7 @@
   (equal (name-to-fat32-name (coerce "11characters.1.1.1" 'list))
          (coerce "11CHARAC1  " 'list))
   (equal (name-to-fat32-name (coerce "11characters.1.1" 'list))
-         (coerce "11CHARAC1  " 'list)))
- t)
+         (coerce "11CHARAC1  " 'list))))
 
 (defun
   fat32-name-to-name-helper
@@ -837,7 +836,7 @@
         characters-before-dot
       (append characters-before-dot (list #\.) characters-after-dot))))
 
-(assert$
+(assert-event
  (and
   (equal (fat32-name-to-name (coerce "6CHARS     " 'list))
          (coerce "6chars" 'list))
@@ -850,8 +849,7 @@
   (equal (fat32-name-to-name (coerce "11CHARAC6CH" 'list))
          (coerce "11charac.6ch" 'list))
   (equal (fat32-name-to-name (coerce "11CHARAC1  " 'list))
-         (coerce "11charac.1" 'list)))
- t)
+         (coerce "11charac.1" 'list))))
 
 (defun pathname-to-fat32-pathname (character-list)
   (declare (xargs :guard (character-listp character-list)))
@@ -868,6 +866,13 @@
      (coerce (name-to-fat32-name characters-before-slash) 'string)
      (pathname-to-fat32-pathname (cdr slash-and-later-characters)))))
 
+(assert-event
+ (and
+  (equal (pathname-to-fat32-pathname (coerce "/bin/mkdir" 'list))
+         (list "           " "BIN        " "MKDIR      "))
+  (equal (pathname-to-fat32-pathname (coerce "books/build/cert.pl" 'list))
+   (list "BOOKS      " "BUILD      " "CERT    PL "))))
+
 (defun fat32-pathname-to-name (string-list)
   ;; (declare (xargs :guard (string-listp string-list)))
   (if (atom string-list)
@@ -877,6 +882,15 @@
                 nil
               (list* #\/
                      (fat32-pathname-to-name (cdr string-list)))))))
+
+(assert-event
+ (and
+  (equal (coerce (fat32-pathname-to-name (list "BOOKS      " "BUILD      "
+                                               "CERT    PL ")) 'string)
+         "books/build/cert.pl")
+  (equal (coerce (fat32-pathname-to-name (list "           " "BIN        "
+                                               "MKDIR      ")) 'string)
+         "/bin/mkdir")))
 
 (defthm character-listp-of-fat32-pathname-to-name
   (character-listp (fat32-pathname-to-name string-list)))
