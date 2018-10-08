@@ -708,7 +708,7 @@
        ;; but what about when it doesn't and the pathname is relative to the
        ;; current working directory?
        (dirname (if (and (consp dirname)
-                         (equal (car dirname) ""))
+                         (equal (car dirname) *empty-fat32-name*))
                     (cdr dirname)
                   dirname))
        ((mv parent-dir errno)
@@ -768,7 +768,11 @@
     name-to-fat32-name (character-list)
   (declare (xargs :guard (character-listp character-list)))
   (b*
-      ((dot-and-later-characters (member #\. character-list))
+      (((when (equal (coerce character-list 'string) *current-dir-name*))
+        (coerce *current-dir-fat32-name* 'list))
+       ((when (equal (coerce character-list 'string) *parent-dir-name*))
+        (coerce *parent-dir-fat32-name* 'list))
+       (dot-and-later-characters (member #\. character-list))
        (characters-before-dot
         (take (- (len character-list) (len dot-and-later-characters))
               character-list))
@@ -828,13 +832,17 @@
   (declare (xargs :guard (and (character-listp character-list)
                               (equal (len character-list) 11))))
   (b*
-      ((characters-before-dot
+      (((when (equal (coerce character-list 'string) *current-dir-fat32-name*))
+        (coerce *current-dir-name* 'list))
+       ((when (equal (coerce character-list 'string) *parent-dir-fat32-name*))
+        (coerce *parent-dir-name* 'list))
+       (characters-before-dot
         (fat32-name-to-name-helper (take 8 character-list) 8))
        (characters-after-dot
-        (fat32-name-to-name-helper (subseq character-list 8 11) 3)))
-    (if (atom characters-after-dot)
-        characters-before-dot
-      (append characters-before-dot (list #\.) characters-after-dot))))
+        (fat32-name-to-name-helper (subseq character-list 8 11) 3))
+       ((when (atom characters-after-dot))
+        characters-before-dot))
+    (append characters-before-dot (list #\.) characters-after-dot)))
 
 (assert-event
  (and

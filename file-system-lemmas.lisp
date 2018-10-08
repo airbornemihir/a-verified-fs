@@ -563,6 +563,30 @@
   (equal (revappend (revappend x y1) y2)
          (revappend y1 (append x y2))))
 
-(defthm character-listp-of-member-equal
+(defthm
+  character-listp-of-member-equal
   (implies (character-listp lst)
-           (character-listp (member-equal x lst))))
+           (character-listp (member-equal x lst)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (character-listp lst)
+                  (consp (member-equal x lst)))
+             (character-listp (cdr (member-equal x lst)))))))
+
+(defthm true-listp-of-member-equal
+  (implies (true-listp lst)
+           (true-listp (member-equal x lst)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (true-listp lst)
+                  (consp (member-equal x lst)))
+             (true-listp (cdr (member-equal x lst)))))))
+
+(defthm len-of-member-equal
+  (<= (len (member-equal x lst))
+      (len lst))
+  :rule-classes :linear)
