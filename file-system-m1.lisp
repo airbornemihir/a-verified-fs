@@ -475,7 +475,7 @@
      (cons
       (cons file-table-index (make-file-table-element :pos 0 :fid pathname))
       file-table)
-     0 0)))
+     fd-table-index 0)))
 
 (defthm m1-open-correctness-1
   (b*
