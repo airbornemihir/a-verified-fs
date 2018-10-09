@@ -54,7 +54,7 @@
      ((mv dir-contents &)
       (get-clusterchain-contents fat32-in-memory
                                  (bpb_rootclus fat32-in-memory)
-                                 (ash 1 21)))
+                                 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv val error-code &)
       (m1-lstat fs fat32-pathname))

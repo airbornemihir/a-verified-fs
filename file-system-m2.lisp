@@ -2647,8 +2647,8 @@
 ;; serious issue.
 
 (defun
-  fat32-in-memory-to-m1-fs
-  (fat32-in-memory dir-contents entry-limit)
+    fat32-in-memory-to-m1-fs
+    (fat32-in-memory dir-contents entry-limit)
   (declare (xargs :measure (acl2-count entry-limit)
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
@@ -2673,7 +2673,7 @@
             (equal filename *parent-dir-fat32-name*)))
        (length (if not-right-kind-of-directory-p
                    (dir-ent-file-size dir-ent)
-                   (ash 1 21)))
+                 *ms-max-dir-size*))
        ((mv contents &)
         (get-clusterchain-contents fat32-in-memory
                                    (fat32-entry-mask first-cluster)
@@ -2682,14 +2682,14 @@
      (cons
       filename
       (if
-       not-right-kind-of-directory-p
-       (make-m1-file :dir-ent dir-ent
-                     :contents (nats=>string contents))
-       (make-m1-file
-        :dir-ent dir-ent
-        :contents
-        (fat32-in-memory-to-m1-fs fat32-in-memory
-                                  contents (- entry-limit 1)))))
+          not-right-kind-of-directory-p
+          (make-m1-file :dir-ent dir-ent
+                        :contents (nats=>string contents))
+        (make-m1-file
+         :dir-ent dir-ent
+         :contents
+         (fat32-in-memory-to-m1-fs fat32-in-memory
+                                   contents (- entry-limit 1)))))
      tail)))
 
 (defthm
@@ -5512,32 +5512,32 @@
 #|
 Some (rather awful) testing forms are
 (b* (((mv contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
-  (get-dir-filenames fat32-in-memory contents (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*)))
+  (get-dir-filenames fat32-in-memory contents *ms-max-dir-size*))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*)))
   (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40)))
   (m1-open (list "INITRD  IMG")
            fs nil nil))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
                fs nil nil)))
   (m1-pread 0 6 49 fs fd-table file-table))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
                fs nil nil)))
   (m1-pwrite 0 "ornery" 49 fs fd-table file-table))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
@@ -5548,7 +5548,7 @@ Some (rather awful) testing forms are
       (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
   (mv fat32-in-memory dir-ent-list))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
@@ -5618,7 +5618,7 @@ Some (rather awful) testing forms are
        (close-output-channel channel state)))
    (mv fat32-in-memory state)))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fs & &)
       (m1-mkdir fs (list "" "TMP        "))))
@@ -5654,7 +5654,7 @@ Some (rather awful) testing forms are
              (get-clusterchain
               fat32-in-memory
               (fat32-entry-mask first-cluster)
-              (ash 1 21))) )
+              *ms-max-dir-size*)) )
          (list filename first-cluster
                contents)))
      (get-dir-filenames

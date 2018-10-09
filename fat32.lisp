@@ -58,7 +58,10 @@
 (defconst *current-dir-name* ".")
 (defconst *parent-dir-name* "..")
 
-;; from include/uapi/asm-generic/errno-base.h
+;; from page 36 of the FAT specification
+(defconst *ms-max-dir-size* (ash 1 21))
+
+;; from include/uapi/asm-generic/errno-base.h in the linux kernel sources
 (defconst *ENOENT* 2) ;; No such file or directory
 (defconst *EIO* 5) ;; I/O error
 (defconst *EBADF* 9) ;; Bad file number
