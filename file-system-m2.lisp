@@ -2636,16 +2636,6 @@
   :hints
   (("goal" :in-theory (e/d (fat-length fati) (min nth fat32-in-memoryp)))))
 
-;; This whole thing is subject to two criticisms.
-;; - The choice not to treat the root directory like other directories is
-;; justified on the grounds that it doesn't have a name or a directory
-;; entry. However, presumably we'll want to have a function for updating the
-;; contents of a directory when a new file is added, and we might have to take
-;; the root as a special case.
-;; - The name should be stored separately from the rest of the directory entry
-;; (or perhaps even redundantly) because not being able to use assoc is a
-;; serious issue.
-
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
 ;; / and /tmp/ were to point to the same cluster as their initial cluster.)
