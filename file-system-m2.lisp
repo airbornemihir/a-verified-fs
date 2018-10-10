@@ -2646,6 +2646,26 @@
 ;; (or perhaps even redundantly) because not being able to use assoc is a
 ;; serious issue.
 
+;; Here's the idea behind this recursion: A loop could occur on a badly formed
+;; FAT32 volume which has a cycle in its directory structure (for instance, if
+;; / and /tmp/ were to point to the same cluster as their initial cluster.)
+;; This loop could be stopped most cleanly by maintaining a list of all
+;; clusters which could be visited, and checking them off as we visit more
+;; entries. Then, we would detect a second visit to the same cluster, and
+;; terminate with an error condition . Only otherwise would we make a recursive
+;; call, and our measure - the length of the list of unvisited clusters - would
+;; decrease.
+
+;; This would probably impose performance penalties, and so there's a better
+;; way which does not (good!), and also does not cleanly detect cycles in the
+;; directory structure (bad.) Still, it returns exactly the same result for
+;; good FAT32 volumes, so it's acceptable. In this helper function, we set our
+;; measure to be entry-limit, an upper bound on the number of entries we can
+;; visit, and decrement every time we visit a new entry. In the main function,
+;; we count the total number of visitable directory entries, by dividing the
+;; entire length of the data region by *ms-dir-ent-length*, and set that as the
+;; upper limit. This makes sure that we aren't disallowing any legitimate FAT32
+;; volumes which just happen to be full of directories.
 (defun
   fat32-in-memory-to-m1-fs-helper
   (fat32-in-memory dir-contents entry-limit)
