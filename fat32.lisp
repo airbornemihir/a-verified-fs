@@ -41,7 +41,27 @@
 
 (defconst *ms-dir-ent-length* 32)
 
-;; from include/uapi/asm-generic/errno-base.h
+;; observed
+(defconst *current-dir-fat32-name* ".          ")
+(defconst *parent-dir-fat32-name* "..         ")
+
+;; This has not really been observed to be any FAT32 entry's name. In fact, it
+;; cannot be, since the FAT specification says that the filesystem's root
+;; directory does not have "." and ".." entries, and those entries would have
+;; different names even if they existed. Still, this is what our
+;; name-to-fat32-name function computes when passed the empty string - and that
+;; in turn happens with the empty string preceding the first slash in "/home"
+;; or "/vmlinuz".
+(defconst *empty-fat32-name* "           ")
+
+;; known
+(defconst *current-dir-name* ".")
+(defconst *parent-dir-name* "..")
+
+;; from page 36 of the FAT specification
+(defconst *ms-max-dir-size* (ash 1 21))
+
+;; from include/uapi/asm-generic/errno-base.h in the linux kernel sources
 (defconst *ENOENT* 2) ;; No such file or directory
 (defconst *EIO* 5) ;; I/O error
 (defconst *EBADF* 9) ;; Bad file number

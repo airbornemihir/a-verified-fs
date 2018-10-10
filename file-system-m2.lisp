@@ -2647,8 +2647,8 @@
 ;; serious issue.
 
 (defun
-  fat32-in-memory-to-m1-fs
-  (fat32-in-memory dir-contents entry-limit)
+    fat32-in-memory-to-m1-fs
+    (fat32-in-memory dir-contents entry-limit)
   (declare (xargs :measure (acl2-count entry-limit)
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
@@ -2669,11 +2669,11 @@
        (filename (nats=>string (subseq dir-ent 0 11)))
        (not-right-kind-of-directory-p
         (or (zp (logand (nth 11 dir-ent) (ash 1 4)))
-            (equal filename ".          ")
-            (equal filename "..         ")))
+            (equal filename *current-dir-fat32-name*)
+            (equal filename *parent-dir-fat32-name*)))
        (length (if not-right-kind-of-directory-p
                    (dir-ent-file-size dir-ent)
-                   (ash 1 21)))
+                 *ms-max-dir-size*))
        ((mv contents &)
         (get-clusterchain-contents fat32-in-memory
                                    (fat32-entry-mask first-cluster)
@@ -2682,14 +2682,14 @@
      (cons
       filename
       (if
-       not-right-kind-of-directory-p
-       (make-m1-file :dir-ent dir-ent
-                     :contents (nats=>string contents))
-       (make-m1-file
-        :dir-ent dir-ent
-        :contents
-        (fat32-in-memory-to-m1-fs fat32-in-memory
-                                  contents (- entry-limit 1)))))
+          not-right-kind-of-directory-p
+          (make-m1-file :dir-ent dir-ent
+                        :contents (nats=>string contents))
+        (make-m1-file
+         :dir-ent dir-ent
+         :contents
+         (fat32-in-memory-to-m1-fs fat32-in-memory
+                                   contents (- entry-limit 1)))))
      tail)))
 
 (defthm
@@ -4897,7 +4897,7 @@
     (e/d
      (fat32-in-memory-to-string nats=>chars-of-revappend
                                 data-region-length
-                                fix-true-list-when-true-listp)
+                                true-list-fix-when-true-listp)
      (reverse-removal)))))
 
 (encapsulate
@@ -5372,7 +5372,7 @@
                     fat32-in-memory
                     (fat-length fat32-in-memory))))))
   :hints
-  (("goal" :in-theory (enable fix-true-list-when-true-listp make-fat-string-ac))))
+  (("goal" :in-theory (enable true-list-fix-when-true-listp make-fat-string-ac))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-52
@@ -5423,7 +5423,7 @@
   (("goal" :in-theory (enable fat32-in-memory-to-string
                               nats=>chars-of-revappend
                               data-region-length
-                              fix-true-list-when-true-listp))))
+                              true-list-fix-when-true-listp))))
 
 (encapsulate
   ()
@@ -5454,7 +5454,7 @@
 (encapsulate
   ()
 
-  (local (in-theory (e/d (nthcdr-when->=-n-len-l fix-true-list-when-true-listp
+  (local (in-theory (e/d (nthcdr-when->=-n-len-l true-list-fix-when-true-listp
                                                  chars=>nats-of-revappend
                                                  nats=>chars-of-revappend
                                                  update-data-region-correctness-1
@@ -5512,32 +5512,32 @@
 #|
 Some (rather awful) testing forms are
 (b* (((mv contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
-  (get-dir-filenames fat32-in-memory contents (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*)))
+  (get-dir-filenames fat32-in-memory contents *ms-max-dir-size*))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21))))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*)))
   (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40)))
   (m1-open (list "INITRD  IMG")
            fs nil nil))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
                fs nil nil)))
   (m1-pread 0 6 49 fs fd-table file-table))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
                fs nil nil)))
   (m1-pwrite 0 "ornery" 49 fs fd-table file-table))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
@@ -5548,7 +5548,7 @@ Some (rather awful) testing forms are
       (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
   (mv fat32-in-memory dir-ent-list))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
@@ -5618,7 +5618,7 @@ Some (rather awful) testing forms are
        (close-output-channel channel state)))
    (mv fat32-in-memory state)))
 (b* (((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory 2 (ash 1 21)))
+      (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
      (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
      ((mv fs & &)
       (m1-mkdir fs (list "" "TMP        "))))
@@ -5646,15 +5646,15 @@ Some (rather awful) testing forms are
     (list*
      (if (or (zp (logand (nth 11 dir-ent)
                          (ash 1 4)))
-             (equal filename ".          ")
-             (equal filename "..         "))
+             (equal filename *current-dir-fat32-name*)
+             (equal filename *parent-dir-fat32-name*))
          (list filename first-cluster)
        (b*
            (((mv contents &)
              (get-clusterchain
               fat32-in-memory
               (fat32-entry-mask first-cluster)
-              (ash 1 21))) )
+              *ms-max-dir-size*)) )
          (list filename first-cluster
                contents)))
      (get-dir-filenames

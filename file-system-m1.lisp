@@ -10,6 +10,7 @@
 (local (include-book "ihs/logops-lemmas" :dir :system))
 (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 (include-book "kestrel/utilities/strings" :dir :system)
+(include-book "std/strings/case-conversion" :dir :system)
 
 (include-book "insert-text")
 (include-book "fat32")
@@ -20,6 +21,22 @@
              (char-code (char string n))
              nil))
   :hints (("goal" :in-theory (enable string=>nats))))
+
+(defthm
+  down-alpha-p-of-upcase-char
+  (not (str::down-alpha-p (str::upcase-char x)))
+  :hints
+  (("goal"
+    :in-theory (enable str::upcase-char str::down-alpha-p))))
+
+(defthm
+  charlist-has-some-down-alpha-p-of-upcase-charlist
+  (not (str::charlist-has-some-down-alpha-p
+        (str::upcase-charlist x)))
+  :hints
+  (("goal"
+    :in-theory (enable str::charlist-has-some-down-alpha-p
+                       str::upcase-charlist))))
 
 (defun dir-ent-p (x)
   (declare (xargs :guard t))
@@ -458,7 +475,7 @@
      (cons
       (cons file-table-index (make-file-table-element :pos 0 :fid pathname))
       file-table)
-     0 0)))
+     fd-table-index 0)))
 
 (defthm m1-open-correctness-1
   (b*
@@ -691,7 +708,7 @@
        ;; but what about when it doesn't and the pathname is relative to the
        ;; current working directory?
        (dirname (if (and (consp dirname)
-                         (equal (car dirname) ""))
+                         (equal (car dirname) *empty-fat32-name*))
                     (cdr dirname)
                   dirname))
        ((mv parent-dir errno)
@@ -717,3 +734,171 @@
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
+
+(defun
+    name-to-fat32-name-helper
+    (character-list n)
+  (declare
+   (xargs :guard (and (natp n)
+                      (character-listp character-list))))
+  (if (zp n)
+      nil
+    (if (atom character-list)
+        (make-list n :initial-element #\space)
+      (cons (str::upcase-char (car character-list))
+            (name-to-fat32-name-helper (cdr character-list)
+                                     (- n 1))))))
+
+(defthm
+  len-of-name-to-fat32-name-helper
+  (equal (len (name-to-fat32-name-helper character-list n))
+         (nfix n)))
+
+;; (defthm name-to-fat32-name-helper-correctness-1
+;;   (implies (member x (name-to-fat32-name-helper
+;;                       character-list n))
+;;            (or (equal x #\space) (str::up-alpha-p x))))
+
+(defthm
+  character-listp-of-name-to-fat32-name-helper
+  (character-listp (name-to-fat32-name-helper character-list n))
+  :hints (("goal" :in-theory (disable make-list-ac-removal))))
+
+(defun
+    name-to-fat32-name (character-list)
+  (declare (xargs :guard (character-listp character-list)))
+  (b*
+      (((when (equal (coerce character-list 'string) *current-dir-name*))
+        (coerce *current-dir-fat32-name* 'list))
+       ((when (equal (coerce character-list 'string) *parent-dir-name*))
+        (coerce *parent-dir-fat32-name* 'list))
+       (dot-and-later-characters (member #\. character-list))
+       (characters-before-dot
+        (take (- (len character-list) (len dot-and-later-characters))
+              character-list))
+       (normalised-characters-before-dot
+        (name-to-fat32-name-helper characters-before-dot 8))
+       ((when (atom dot-and-later-characters))
+        (append normalised-characters-before-dot
+                (make-list 3 :initial-element #\space)))
+       (characters-after-dot (cdr dot-and-later-characters))
+       (second-dot-and-later-characters (member #\. characters-after-dot))
+       (extension (take (- (len characters-after-dot)
+                           (len second-dot-and-later-characters))
+                        characters-after-dot))
+       (normalised-extension
+        (name-to-fat32-name-helper extension 3)))
+    (append normalised-characters-before-dot normalised-extension)))
+
+(assert-event
+ (and
+  (equal (name-to-fat32-name (coerce "6chars" 'list))
+         (coerce "6CHARS     " 'list))
+  (equal (name-to-fat32-name (coerce "6chars.h" 'list))
+         (coerce "6CHARS  H  " 'list))
+  (equal (name-to-fat32-name (coerce "6chars.txt" 'list))
+         (coerce "6CHARS  TXT" 'list))
+  (equal (name-to-fat32-name (coerce "6chars.6chars" 'list))
+         (coerce "6CHARS  6CH" 'list))
+  (equal (name-to-fat32-name (coerce "6chars.6ch" 'list))
+         (coerce "6CHARS  6CH" 'list))
+  (equal (name-to-fat32-name (coerce "11characters.6chars" 'list))
+         (coerce "11CHARAC6CH" 'list))
+  (equal (name-to-fat32-name (coerce "11characters.1.1.1" 'list))
+         (coerce "11CHARAC1  " 'list))
+  (equal (name-to-fat32-name (coerce "11characters.1.1" 'list))
+         (coerce "11CHARAC1  " 'list))))
+
+(defun
+  fat32-name-to-name-helper
+  (character-list n)
+  (declare (xargs :guard (and (natp n)
+                              (character-listp character-list)
+                              (<= n (len character-list)))))
+  (if (zp n)
+      nil
+      (if (equal (nth (- n 1) character-list)
+                 #\space)
+          (fat32-name-to-name-helper character-list (- n 1))
+          (str::downcase-charlist (take n character-list)))))
+
+(defthm
+  character-listp-of-fat32-name-to-name-helper
+  (character-listp
+   (fat32-name-to-name-helper
+    character-list n)))
+
+(defun fat32-name-to-name (character-list)
+  (declare (xargs :guard (and (character-listp character-list)
+                              (equal (len character-list) 11))))
+  (b*
+      (((when (equal (coerce character-list 'string) *current-dir-fat32-name*))
+        (coerce *current-dir-name* 'list))
+       ((when (equal (coerce character-list 'string) *parent-dir-fat32-name*))
+        (coerce *parent-dir-name* 'list))
+       (characters-before-dot
+        (fat32-name-to-name-helper (take 8 character-list) 8))
+       (characters-after-dot
+        (fat32-name-to-name-helper (subseq character-list 8 11) 3))
+       ((when (atom characters-after-dot))
+        characters-before-dot))
+    (append characters-before-dot (list #\.) characters-after-dot)))
+
+(assert-event
+ (and
+  (equal (fat32-name-to-name (coerce "6CHARS     " 'list))
+         (coerce "6chars" 'list))
+  (equal (fat32-name-to-name (coerce "6CHARS  H  " 'list))
+         (coerce "6chars.h" 'list))
+  (equal (fat32-name-to-name (coerce "6CHARS  TXT" 'list))
+         (coerce "6chars.txt" 'list))
+  (equal (fat32-name-to-name (coerce "6CHARS  6CH" 'list))
+         (coerce "6chars.6ch" 'list))
+  (equal (fat32-name-to-name (coerce "11CHARAC6CH" 'list))
+         (coerce "11charac.6ch" 'list))
+  (equal (fat32-name-to-name (coerce "11CHARAC1  " 'list))
+         (coerce "11charac.1" 'list))))
+
+(defun pathname-to-fat32-pathname (character-list)
+  (declare (xargs :guard (character-listp character-list)))
+  (b*
+      ((slash-and-later-characters
+        (member #\/ character-list))
+       (characters-before-slash (take (- (len character-list)
+                                         (len slash-and-later-characters))
+                                      character-list))
+       ((when (atom slash-and-later-characters))
+        (list
+         (coerce (name-to-fat32-name characters-before-slash) 'string))))
+    (cons
+     (coerce (name-to-fat32-name characters-before-slash) 'string)
+     (pathname-to-fat32-pathname (cdr slash-and-later-characters)))))
+
+(assert-event
+ (and
+  (equal (pathname-to-fat32-pathname (coerce "/bin/mkdir" 'list))
+         (list "           " "BIN        " "MKDIR      "))
+  (equal (pathname-to-fat32-pathname (coerce "books/build/cert.pl" 'list))
+   (list "BOOKS      " "BUILD      " "CERT    PL "))))
+
+(defun fat32-pathname-to-name (string-list)
+  ;; (declare (xargs :guard (string-listp string-list)))
+  (if (atom string-list)
+      nil
+    (append (fat32-name-to-name (coerce (car string-list) 'list))
+            (if (atom (cdr string-list))
+                nil
+              (list* #\/
+                     (fat32-pathname-to-name (cdr string-list)))))))
+
+(assert-event
+ (and
+  (equal (coerce (fat32-pathname-to-name (list "BOOKS      " "BUILD      "
+                                               "CERT    PL ")) 'string)
+         "books/build/cert.pl")
+  (equal (coerce (fat32-pathname-to-name (list "           " "BIN        "
+                                               "MKDIR      ")) 'string)
+         "/bin/mkdir")))
+
+(defthm character-listp-of-fat32-pathname-to-name
+  (character-listp (fat32-pathname-to-name string-list)))
