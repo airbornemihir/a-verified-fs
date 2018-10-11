@@ -66,8 +66,14 @@
       (open-output-channel val :character state))
      ((mv & pathname state)
       (getenv$ "STAT_INPUT" state))
-     (total_blocks (- (fat-length fat32-in-memory) 2))
-     (available_blocks (len (stobj-find-n-free-clusters fat32-in-memory total_blocks)))
+     (total_blocks (count-of-clusters fat32-in-memory))
+     (available_blocks
+      (- (+ 2
+            (len (stobj-find-n-free-clusters
+                  fat32-in-memory
+                  (fat-length fat32-in-memory)))
+            (count-of-clusters fat32-in-memory))
+         (fat-length fat32-in-memory)))
      (state
       (pprogn
        (princ$ "  File: \"" channel state)
@@ -91,7 +97,7 @@
        (princ$ " Free: " channel state)
        (princ$ (fixed-width-print available_blocks 10) channel state)
        (princ$ " Available: " channel state)
-       (princ$ (fixed-width-print available_blocks 10) channel state)
+       (princ$ available_blocks channel state)
        (newline channel state)
        (princ$ "Inodes: Total: " channel state)
        (princ$ (fixed-width-print 0 10) channel state)
