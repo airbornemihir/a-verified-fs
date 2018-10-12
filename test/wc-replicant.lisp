@@ -51,11 +51,7 @@
      ((mv & val state)
       (getenv$ "WC_INPUT" state))
      (fat32-pathname (pathname-to-fat32-pathname (coerce val 'list)))
-     ((mv dir-contents &)
-      (get-clusterchain-contents fat32-in-memory
-                                 (bpb_rootclus fat32-in-memory)
-                                 *ms-max-dir-size*))
-     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory))
      ((mv val error-code &)
       (m1-lstat fs fat32-pathname))
      ((unless (equal error-code 0))

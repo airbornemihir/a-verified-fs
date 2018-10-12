@@ -2636,32 +2636,43 @@
   :hints
   (("goal" :in-theory (e/d (fat-length fati) (min nth fat32-in-memoryp)))))
 
-;; This whole thing is subject to two criticisms.
-;; - The choice not to treat the root directory like other directories is
-;; justified on the grounds that it doesn't have a name or a directory
-;; entry. However, presumably we'll want to have a function for updating the
-;; contents of a directory when a new file is added, and we might have to take
-;; the root as a special case.
-;; - The name should be stored separately from the rest of the directory entry
-;; (or perhaps even redundantly) because not being able to use assoc is a
-;; serious issue.
+;; Here's the idea behind this recursion: A loop could occur on a badly formed
+;; FAT32 volume which has a cycle in its directory structure (for instance, if
+;; / and /tmp/ were to point to the same cluster as their initial cluster.)
+;; This loop could be stopped most cleanly by maintaining a list of all
+;; clusters which could be visited, and checking them off as we visit more
+;; entries. Then, we would detect a second visit to the same cluster, and
+;; terminate with an error condition . Only otherwise would we make a recursive
+;; call, and our measure - the length of the list of unvisited clusters - would
+;; decrease.
 
+;; This would probably impose performance penalties, and so there's a better
+;; way which does not (good!), and also does not cleanly detect cycles in the
+;; directory structure (bad.) Still, it returns exactly the same result for
+;; good FAT32 volumes, so it's acceptable. In this helper function, we set our
+;; measure to be entry-limit, an upper bound on the number of entries we can
+;; visit, and decrement every time we visit a new entry. In the main function,
+;; we count the total number of visitable directory entries, by dividing the
+;; entire length of the data region by *ms-dir-ent-length*, and set that as the
+;; upper limit. This makes sure that we aren't disallowing any legitimate FAT32
+;; volumes which just happen to be full of directories.
 (defun
-    fat32-in-memory-to-m1-fs
-    (fat32-in-memory dir-contents entry-limit)
-  (declare (xargs :measure (acl2-count entry-limit)
+  fat32-in-memory-to-m1-fs-helper
+  (fat32-in-memory dir-contents entry-limit)
+  (declare (xargs :measure (nfix entry-limit)
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
   (b*
       (((when (or (zp entry-limit)
                   (equal (nth 0 dir-contents) 0)))
-        nil)
-       (tail (fat32-in-memory-to-m1-fs
-              fat32-in-memory (nthcdr 32 dir-contents)
-              (- entry-limit 1)))
+        (mv nil 0))
+       ;; the byte #xe5 marks deleted files, according to the spec
        ((when (equal (nth 0 dir-contents) #xe5))
-        tail)
-       (dir-ent (take 32 dir-contents))
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         (nthcdr *ms-dir-ent-length* dir-contents)
+         (- entry-limit 1)))
+       (dir-ent (take *ms-dir-ent-length* dir-contents))
        (first-cluster (combine32u (nth 21 dir-ent)
                                   (nth 20 dir-ent)
                                   (nth 27 dir-ent)
@@ -2673,31 +2684,127 @@
             (equal filename *parent-dir-fat32-name*)))
        (length (if not-right-kind-of-directory-p
                    (dir-ent-file-size dir-ent)
-                 *ms-max-dir-size*))
+                   *ms-max-dir-size*))
        ((mv contents &)
         (get-clusterchain-contents fat32-in-memory
                                    (fat32-entry-mask first-cluster)
-                                   length)))
-    (list*
-     (cons
-      filename
-      (if
-          not-right-kind-of-directory-p
-          (make-m1-file :dir-ent dir-ent
-                        :contents (nats=>string contents))
-        (make-m1-file
-         :dir-ent dir-ent
-         :contents
-         (fat32-in-memory-to-m1-fs fat32-in-memory
-                                   contents (- entry-limit 1)))))
-     tail)))
+                                   length))
+       ((mv head head-entry-count)
+        (if not-right-kind-of-directory-p
+            (mv (nats=>string contents) 1)
+            (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory
+             contents (- entry-limit 1))))
+       ;; we want entry-limit to serve both as a measure and an upper
+       ;; bound on how many entries are found.
+       (tail-entry-limit (nfix (- entry-limit
+                                  (+ 1 (nfix head-entry-count)))))
+       ((mv tail tail-entry-count)
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         (nthcdr *ms-dir-ent-length* dir-contents)
+         tail-entry-limit)))
+    (mv (list* (cons filename
+                     (make-m1-file :dir-ent dir-ent
+                                   :contents head))
+               tail)
+        (+ head-entry-count tail-entry-count))))
+
+(defthm
+  fat32-in-memory-to-m1-fs-helper-correctness-1
+  (b* (((mv & entry-count)
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         dir-contents entry-limit)))
+    (and (natp entry-count)
+         (<= entry-count (nfix entry-limit))))
+  :rule-classes
+  ((:type-prescription
+    :corollary (b* (((mv & entry-count)
+                     (fat32-in-memory-to-m1-fs-helper
+                      fat32-in-memory
+                      dir-contents entry-limit)))
+                 (natp entry-count)))
+   (:linear
+    :corollary (b* (((mv & entry-count)
+                     (fat32-in-memory-to-m1-fs-helper
+                      fat32-in-memory
+                      dir-contents entry-limit)))
+                 (and (<= 0 entry-count)
+                      (<= entry-count (nfix entry-limit)))))
+   (:rewrite :corollary (b* (((mv & entry-count)
+                              (fat32-in-memory-to-m1-fs-helper
+                               fat32-in-memory
+                               dir-contents entry-limit)))
+                          (integerp entry-count))))
+  :hints (("goal" :induct (fat32-in-memory-to-m1-fs-helper
+                           fat32-in-memory
+                           dir-contents entry-limit))))
+
+(defthm
+  fat32-in-memory-to-m1-fs-helper-correctness-2
+  (b* (((mv m1-file-alist &)
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         dir-contents entry-limit)))
+    (m1-file-alist-p m1-file-alist))
+  :rule-classes
+  (:rewrite
+   (:type-prescription
+    :corollary (b* (((mv m1-file-alist &)
+                     (fat32-in-memory-to-m1-fs-helper
+                      fat32-in-memory
+                      dir-contents entry-limit)))
+                 (true-listp m1-file-alist)))))
+
+;; for later
+;; (defthm
+;;   fat32-in-memory-to-m1-fs-helper-correctness-3
+;;   (b* (((mv & entry-count-a)
+;;         (fat32-in-memory-to-m1-fs-helper
+;;          fat32-in-memory
+;;          dir-contents entry-limit-a)))
+;;     (implies
+;;      (and
+;;       (< entry-count-a (nfix entry-limit-a))
+;;       (< (nfix entry-limit-a) (nfix entry-limit-b)))
+;;      (equal
+;;       (fat32-in-memory-to-m1-fs-helper
+;;        fat32-in-memory
+;;        dir-contents entry-limit-b)
+;;       (fat32-in-memory-to-m1-fs-helper
+;;        fat32-in-memory
+;;        dir-contents entry-limit-a))))
+;;   :rule-classes nil)
+
+(defund
+  fat32-in-memory-to-m1-fs
+  (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory
+                  :verify-guards nil))
+  (b*
+      (((mv root-dir-contents &)
+        (get-clusterchain-contents fat32-in-memory
+                                   (bpb_rootclus fat32-in-memory)
+                                   *ms-max-dir-size*))
+       (entry-limit (floor (data-region-length fat32-in-memory)
+                           *ms-dir-ent-length*))
+       ((mv m1-file-alist &)
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         root-dir-contents entry-limit)))
+    m1-file-alist))
 
 (defthm
   fat32-in-memory-to-m1-fs-correctness-1
-  (m1-file-alist-p
-   (fat32-in-memory-to-m1-fs fat32-in-memory
-                             dir-contents entry-limit))
-  :hints (("Goal" :in-theory (disable m1-file-p)) ))
+  (m1-file-alist-p (fat32-in-memory-to-m1-fs fat32-in-memory))
+  :hints (("goal" :in-theory (e/d (fat32-in-memory-to-m1-fs)
+                                  (m1-file-p))))
+  :rule-classes
+  (:rewrite
+   (:type-prescription
+    :corollary
+    (true-listp (fat32-in-memory-to-m1-fs fat32-in-memory)))))
 
 (defund
   stobj-find-n-free-clusters-helper
@@ -5516,29 +5623,29 @@ Some (rather awful) testing forms are
   (get-dir-filenames fat32-in-memory contents *ms-max-dir-size*))
 (b* (((mv dir-contents &)
       (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*)))
-  (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+  (fat32-in-memory-to-m1-fs fat32-in-memory))
 (b* (((mv dir-contents &)
       (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
-     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40)))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory)))
   (m1-open (list "INITRD  IMG")
            fs nil nil))
 (b* (((mv dir-contents &)
       (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
-     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
                fs nil nil)))
   (m1-pread 0 6 49 fs fd-table file-table))
 (b* (((mv dir-contents &)
       (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
-     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
                fs nil nil)))
   (m1-pwrite 0 "ornery" 49 fs fd-table file-table))
 (b* (((mv dir-contents &)
       (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
-     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
                fs nil nil))
@@ -5549,7 +5656,7 @@ Some (rather awful) testing forms are
   (mv fat32-in-memory dir-ent-list))
 (b* (((mv dir-contents &)
       (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
-     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory))
      ((mv fd-table file-table & &)
       (m1-open (list "INITRD  IMG")
                fs nil nil))
@@ -5619,11 +5726,34 @@ Some (rather awful) testing forms are
    (mv fat32-in-memory state)))
 (b* (((mv dir-contents &)
       (get-clusterchain-contents fat32-in-memory 2 *ms-max-dir-size*))
-     (fs (fat32-in-memory-to-m1-fs fat32-in-memory dir-contents 40))
+     (fs (fat32-in-memory-to-m1-fs fat32-in-memory))
      ((mv fs & &)
       (m1-mkdir fs (list "" "TMP        "))))
   (m1-fs-to-fat32-in-memory fat32-in-memory fs))
 |#
+
+(defun m2-statfs (fat32-in-memory)
+  (declare (xargs :stobjs (fat32-in-memory)
+                  :verify-guards nil))
+  (b*
+      ((total_blocks (count-of-clusters fat32-in-memory))
+       (available_blocks
+        (- (+ total_blocks
+              2
+              (len (stobj-find-n-free-clusters
+                    fat32-in-memory
+                    (fat-length fat32-in-memory))))
+           (fat-length fat32-in-memory))))
+    (make-struct-statfs
+     :f_type *S_MAGIC_FUSEBLK*
+     :f_bsize (cluster-size fat32-in-memory)
+     :f_blocks total_blocks
+     :f_bfree available_blocks
+     :f_bavail available_blocks
+     :f_files 0
+     :f_ffree 0
+     :f_fsid 0
+     :f_namelen 72)))
 
 (defun
   get-dir-filenames
