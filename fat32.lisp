@@ -71,6 +71,9 @@
 (defconst *ENOSPC* 28) ;; No space left on device
 (defconst *ENAMETOOLONG* 36) ;; File name too long
 
+;; from the stat code in the coreutils sources
+(defconst *S_MAGIC_FUSEBLK* #x65735546)
+
 (encapsulate
   ()
 

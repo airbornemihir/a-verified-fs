@@ -139,6 +139,18 @@
  ;; Currently, this is the only thing I can decipher.
  ((st_size natp :default 0)))
 
+(fty::defprod
+ struct-statfs
+ ((f_type natp :default 0)
+  (f_bsize natp :default 0)
+  (f_blocks natp :default 0)
+  (f_bfree natp :default 0)
+  (f_bavail natp :default 0)
+  (f_files natp :default 0)
+  (f_ffree natp :default 0)
+  (f_fsid natp :default 0)
+  (f_namelen natp :default 72)))
+
 ;; This data structure may change later.
 (fty::defprod
  file-table-element

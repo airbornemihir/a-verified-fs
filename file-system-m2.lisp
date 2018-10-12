@@ -5732,6 +5732,29 @@ Some (rather awful) testing forms are
   (m1-fs-to-fat32-in-memory fat32-in-memory fs))
 |#
 
+(defun m2-statfs (fat32-in-memory)
+  (declare (xargs :stobjs (fat32-in-memory)
+                  :verify-guards nil))
+  (b*
+      ((total_blocks (count-of-clusters fat32-in-memory))
+       (available_blocks
+        (- (+ total_blocks
+              2
+              (len (stobj-find-n-free-clusters
+                    fat32-in-memory
+                    (fat-length fat32-in-memory))))
+           (fat-length fat32-in-memory))))
+    (make-struct-statfs
+     :f_type *S_MAGIC_FUSEBLK*
+     :f_bsize (cluster-size fat32-in-memory)
+     :f_blocks total_blocks
+     :f_bfree available_blocks
+     :f_bavail available_blocks
+     :f_files 0
+     :f_ffree 0
+     :f_fsid 0
+     :f_namelen 72)))
+
 (defun
   get-dir-filenames
   (fat32-in-memory dir-contents entry-limit)

@@ -66,14 +66,7 @@
       (open-output-channel val :character state))
      ((mv & pathname state)
       (getenv$ "STAT_INPUT" state))
-     (total_blocks (count-of-clusters fat32-in-memory))
-     (available_blocks
-      (- (+ 2
-            (len (stobj-find-n-free-clusters
-                  fat32-in-memory
-                  (fat-length fat32-in-memory)))
-            (count-of-clusters fat32-in-memory))
-         (fat-length fat32-in-memory)))
+     (statfsbuf (m2-statfs fat32-in-memory))
      (state
       (pprogn
        (princ$ "  File: \"" channel state)
@@ -81,28 +74,44 @@
        (princ$"\"" channel state)
        (newline channel state)
        (princ$ "    ID: " channel state)
+       ;; Choosing to print 0 as a constant here - rather than take it from the
+       ;; stat - becasue the coreutils version has some complicated rules for
+       ;; printing the value in the f_fsid field
        (princ$ (fixed-width-print 0 8) channel state)
        (princ$ " Namelen: " channel state)
-       (princ$ (fixed-width-print 72 7) channel state)
-       (princ$ " Type: fuseblk" channel state)
+       (princ$ (fixed-width-print
+                (struct-statfs->f_namelen statfsbuf)
+                7)
+               channel state)
+       (princ$ " Type: " channel state)
+       (if (equal (struct-statfs->f_type statfsbuf) *S_MAGIC_FUSEBLK*)
+           (princ$ "fuseblk" channel state)
+         (princ$ "UNKNOWN ()" channel state))
        (newline channel state)
        (princ$ "Block size: " channel state)
-       (princ$ (fixed-width-print (cluster-size fat32-in-memory) 10) channel
-               state)
+       (princ$ (fixed-width-print
+                (struct-statfs->f_bsize statfsbuf) 10)
+               channel state)
        (princ$ " Fundamental block size: " channel state)
-       (princ$ (cluster-size fat32-in-memory) channel state)
+       (princ$ (struct-statfs->f_bsize statfsbuf) channel state)
        (newline channel state)
        (princ$ "Blocks: Total: " channel state)
-       (princ$ (fixed-width-print total_blocks 10) channel state)
+       (princ$ (fixed-width-print
+                (struct-statfs->f_blocks statfsbuf)
+                10) channel state)
        (princ$ " Free: " channel state)
-       (princ$ (fixed-width-print available_blocks 10) channel state)
+       (princ$ (fixed-width-print
+                (struct-statfs->f_bavail statfsbuf)
+                10) channel state)
        (princ$ " Available: " channel state)
-       (princ$ available_blocks channel state)
+       (princ$ (struct-statfs->f_bavail statfsbuf) channel state)
        (newline channel state)
        (princ$ "Inodes: Total: " channel state)
-       (princ$ (fixed-width-print 0 10) channel state)
+       (princ$ (fixed-width-print
+                (struct-statfs->f_files statfsbuf)
+                10) channel state)
        (princ$ " Free: " channel state)
-       (princ$ 0 channel state)
+       (princ$ (struct-statfs->f_ffree statfsbuf) channel state)
        (newline channel state)
        (close-output-channel channel state))))
   (mv fat32-in-memory state))
