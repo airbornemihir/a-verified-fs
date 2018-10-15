@@ -590,3 +590,35 @@
   (<= (len (member-equal x lst))
       (len lst))
   :rule-classes :linear)
+
+(defthm len-of-delete-assoc-equal
+  (implies (consp (assoc-equal key alist))
+           (equal (len (delete-assoc-equal key alist))
+                  (- (len alist) 1))))
+
+(defthm len-of-remove1-equal
+  (equal (len (remove1-equal x l))
+         (if (member-equal x l)
+             (- (len l) 1)
+             (len l))))
+
+(defthm
+  assoc-equal-of-delete-assoc-equal
+  (implies
+   (and (not (equal key1 nil))
+        (not (consp (assoc-equal key1 alist))))
+   (not (consp (assoc-equal key1
+                            (delete-assoc-equal key2 alist))))))
+
+(defthm
+  assoc-equal-of-remove1-equal
+  (implies
+   (and (not (equal key1 nil))
+        (not (consp (assoc-equal key1 alist))))
+   (not (consp (assoc-equal key1 (remove1-equal x alist))))))
+
+(defthm assoc-equal-when-member-equal
+  (implies (and (member-equal x lst)
+                (consp x)
+                (not (equal (car x) nil)))
+           (consp (assoc-equal (car x) lst))))
