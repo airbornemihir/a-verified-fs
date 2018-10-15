@@ -1,3 +1,5 @@
+(in-package "ACL2")
+
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
 (include-book "centaur/fty/top" :dir :system)
 
@@ -32,11 +34,16 @@
       :val-type m1-file
       :true-listp t)
 
-(defun m1-directory-file-p (file)
+(defund m1-directory-file-p (file)
   (declare (xargs :guard t))
   (and
    (m1-file-p file)
    (m1-file-alist-p (m1-file->contents file))))
+
+(defthm m1-directory-file-p-correctness-1
+  (implies (m1-directory-file-p file)
+           (m1-file-alist-p (m1-file->contents file)))
+  :hints (("Goal" :in-theory (enable m1-directory-file-p))))
 
 (defthm lstat-guard-lemma-1
   (implies (and (m1-file-alist-p fs)
@@ -111,17 +118,69 @@
                 (consp (assoc-equal file x)))
            (consp (assoc-equal file y))))
 
-(skip-proofs
- (defthm m1-dir-subsetp-transitive ; not sure all hypotheses are needed
-   (implies (and (m1-file-alist-p x)
-                 (m1-file-no-dups-p x)
-                 (m1-file-alist-p y)
-                 (m1-file-no-dups-p y)
-                 (m1-file-alist-p z)
-                 (m1-file-no-dups-p z)
-                 (m1-dir-subsetp x y)
-                 (m1-dir-subsetp y z))
-            (m1-dir-subsetp x z))))
+(defthm
+  m1-dir-subsetp-transitive-lemma-1
+  (implies
+   (and (m1-file-alist-p y)
+        (consp (assoc-equal key y))
+        (m1-dir-subsetp y z))
+   (iff (m1-directory-file-p (cdr (assoc-equal key z)))
+        (m1-directory-file-p (cdr (assoc-equal key y)))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (m1-file-alist-p y)
+          (consp (assoc-equal key y))
+          (m1-dir-subsetp y z)
+          (m1-directory-file-p (cdr (assoc-equal key y))))
+     (m1-directory-file-p (cdr (assoc-equal key z)))))))
+
+(defthm
+  m1-dir-subsetp-transitive-lemma-2
+  (implies (and (m1-file-alist-p z)
+                (m1-file-no-dups-p z)
+                (consp (assoc-equal key z))
+                (m1-directory-file-p (cdr (assoc-equal key z))))
+           (m1-file-no-dups-p
+            (m1-file->contents (cdr (assoc-equal key z))))))
+
+(defthm
+  m1-dir-subsetp-transitive-lemma-3
+  (implies (and (m1-file-alist-p y)
+                (consp (assoc-equal key y))
+                (m1-directory-file-p (cdr (assoc-equal key y)))
+                (m1-dir-subsetp y z))
+           (m1-dir-subsetp
+            (m1-file->contents (cdr (assoc-equal key y)))
+            (m1-file->contents (cdr (assoc-equal key z))))))
+
+(defthm
+  m1-dir-subsetp-transitive-lemma-4
+  (implies
+   (and (m1-file-alist-p y)
+        (consp (assoc-equal key y))
+        (not (m1-directory-file-p (cdr (assoc-equal key y))))
+        (m1-dir-subsetp y z))
+   (equal (m1-file->contents (cdr (assoc-equal key y)))
+          (m1-file->contents (cdr (assoc-equal key z))))))
+
+(defthm
+  m1-dir-subsetp-transitive
+  (implies (and (m1-file-alist-p x)
+                (m1-file-no-dups-p x)
+                (m1-file-alist-p y)
+                (m1-file-no-dups-p y)
+                (m1-file-alist-p z)
+                (m1-file-no-dups-p z)
+                (m1-dir-subsetp x y)
+                (m1-dir-subsetp y z))
+           (m1-dir-subsetp x z))
+  :hints
+  (("subgoal *1/6'''"
+    :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
+    :use (:instance m1-dir-subsetp-transitive-lemma-1
+                    (key (car (car x)))))))
 
 (defequiv
   m1-dir-equiv)
