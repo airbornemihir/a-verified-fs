@@ -223,12 +223,13 @@
     :use (find-file-by-pathname-correctness-2
           (:instance find-file-by-pathname-correctness-2
                      (pathname str::pathname-equiv))))))
+
 ;; This function should continue to take pathnames which refer to top-level
 ;; fs... but what happens when "." and ".." appear in a pathname? We'll have to
 ;; modify the code to deal with that.
 (defun
-  place-file-by-pathname
-  (fs pathname file)
+    place-file-by-pathname
+    (fs pathname file)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (string-listp pathname)
                               (m1-file-p file))
@@ -243,28 +244,28 @@
     (if
         (consp alist-elem)
         (if
-         (m1-directory-file-p (cdr alist-elem))
-         (mv-let
-           (new-contents error-code)
-           (place-file-by-pathname
-            (m1-file->contents (cdr alist-elem))
-            (cdr pathname)
-            file)
-           (mv
-            (put-assoc-equal
-             name
-             (make-m1-file
-              :dir-ent (m1-file->dir-ent (cdr alist-elem))
-              :contents new-contents)
-             fs)
-            error-code))
-         (if (or
-              (consp (cdr pathname))
-              ;; this is the case where a regular file could get replaced by a
-              ;; directory, which is a bad idea
-              (m1-directory-file-p file))
-             (mv fs *enotdir*)
-           (mv (put-assoc-equal name file fs) 0)))
+            (m1-directory-file-p (cdr alist-elem))
+            (mv-let
+              (new-contents error-code)
+              (place-file-by-pathname
+               (m1-file->contents (cdr alist-elem))
+               (cdr pathname)
+               file)
+              (mv
+               (put-assoc-equal
+                name
+                (make-m1-file
+                 :dir-ent (m1-file->dir-ent (cdr alist-elem))
+                 :contents new-contents)
+                fs)
+               error-code))
+          (if (or
+               (consp (cdr pathname))
+               ;; this is the case where a regular file could get replaced by a
+               ;; directory, which is a bad idea
+               (m1-directory-file-p file))
+              (mv fs *enotdir*)
+            (mv (put-assoc-equal name file fs) 0)))
       (if (atom (cdr pathname))
           (mv (put-assoc-equal name file fs) 0)
         (mv fs *enotdir*)))))
@@ -306,6 +307,44 @@
 
 (defcong m1-file-equiv equal
   (place-file-by-pathname fs pathname file) 3)
+
+;; This function should continue to take pathnames which refer to top-level
+;; fs... but what happens when "." and ".." appear in a pathname? We'll have to
+;; modify the code to deal with that.
+(defun
+    remove-file-by-pathname
+    (fs pathname)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (string-listp pathname))
+                  :measure (acl2-count pathname)))
+  (b*
+      ((fs (m1-file-alist-fix fs))
+       ((unless (consp pathname))
+        (mv fs *enoent*))
+       (name (str-fix (car pathname)))
+       (alist-elem (assoc-equal name fs)))
+    (if
+        (consp alist-elem)
+        (if
+            (m1-directory-file-p (cdr alist-elem))
+            (mv-let
+              (new-contents error-code)
+              (remove-file-by-pathname
+               (m1-file->contents (cdr alist-elem))
+               (cdr pathname))
+              (mv
+               (put-assoc-equal
+                name
+                (make-m1-file
+                 :dir-ent (m1-file->dir-ent (cdr alist-elem))
+                 :contents new-contents)
+                fs)
+               error-code))
+          (if (consp (cdr pathname))
+              (mv fs *enotdir*)
+            (mv (delete-assoc-equal name fs) 0)))
+      ;; if it's not there, it can't be removed
+      (mv fs *enoent*))))
 
 (defthm
   m1-read-after-write-lemma-1
@@ -743,6 +782,47 @@
        (pathname (append dirname (list basename)))
        ((mv fs error-code)
         (place-file-by-pathname fs pathname file))
+       ((unless (equal error-code 0))
+        (mv fs -1 error-code)))
+    (mv fs 0 0)))
+
+(defun
+    m1-unlink (fs pathname)
+  (declare
+   (xargs
+    :guard (and (m1-file-alist-p fs)
+                (string-listp pathname))
+    :guard-hints
+    (("goal"
+      :in-theory
+      (disable
+       (:rewrite m1-basename-dirname-helper-correctness-1))
+      :use
+      (:instance
+       (:rewrite m1-basename-dirname-helper-correctness-1)
+       (path pathname))))))
+  (b* ((dirname (m1-dirname pathname))
+       ;; It's OK to strip out the leading "" when the pathname begins with /,
+       ;; but what about when it doesn't and the pathname is relative to the
+       ;; current working directory?
+       (dirname (if (and (consp dirname)
+                         (equal (car dirname) *empty-fat32-name*))
+                    (cdr dirname)
+                  dirname))
+       ((mv parent-dir errno)
+        (find-file-by-pathname fs dirname))
+       ((unless (or (atom dirname)
+                    (and (equal errno 0)
+                         (m1-directory-file-p parent-dir))))
+        (mv fs -1 *enoent*))
+       ((mv & errno)
+        (find-file-by-pathname fs pathname))
+       ((unless (equal errno 0))
+        (mv fs -1 *enoent*))
+       (basename (m1-basename pathname))
+       (pathname (append dirname (list basename)))
+       ((mv fs error-code)
+        (remove-file-by-pathname fs pathname))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
