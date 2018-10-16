@@ -284,3 +284,17 @@ debug-create-dir-copy-file: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
+
+debug-create-dir-and-file-rm: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	mkdir $(FUSEPOINT)/tmp
+	touch $(FUSEPOINT)/tmp/ticket1.txt
+	sync $(FUSEPOINT)/tmp/ticket1.txt
+	rm $(FUSEPOINT)/tmp/ticket1.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	true
