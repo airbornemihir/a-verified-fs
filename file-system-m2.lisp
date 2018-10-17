@@ -3047,39 +3047,6 @@
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
 (defund
-  dir-ent-set-first-cluster-file-size
-    (dir-ent first-cluster file-size)
-  (declare (xargs :guard (and (dir-ent-p dir-ent)
-                              (fat32-masked-entry-p first-cluster)
-                              (unsigned-byte-p 32 file-size))))
-  (let
-      ((dir-ent (dir-ent-fix dir-ent))
-       (first-cluster (fat32-masked-entry-fix first-cluster))
-       (file-size (if (not (unsigned-byte-p 32 file-size)) 0 file-size)))
-   (append
-    (subseq dir-ent 0 20)
-    (list* (logtail 16 (loghead 24 first-cluster))
-           (logtail 24 first-cluster)
-           (append (subseq dir-ent 22 26)
-                   (list (loghead 8 first-cluster)
-                         (logtail 8 (loghead 16 first-cluster))
-                         (loghead 8 file-size)
-                         (logtail 8 (loghead 16 file-size))
-                         (logtail 16 (loghead 24 file-size))
-                         (logtail 24 file-size)))))))
-
-(encapsulate
-  ()
-
-  (local (include-book "ihs/logops-lemmas" :dir :system))
-
-  (defthm dir-ent-set-first-cluster-file-size-correctness-1
-    (dir-ent-p (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-size))
-    :hints (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size
-                                     fat32-masked-entry-fix fat32-masked-entry-p)
-                                    (loghead logtail))))))
-
-(defund
   make-clusters (text cluster-size)
   (declare (xargs :guard (and (unsigned-byte-listp 8 text)
                               (natp cluster-size))
@@ -3598,7 +3565,7 @@
            (place-contents fat32-in-memory
                            dir-ent contents file-length)))
   :hints
-  (("goal" :in-theory (e/d (place-contents) (dir-ent-p))))
+  (("goal" :in-theory (enable place-contents)))
   :rule-classes
   ((:rewrite
     :corollary
@@ -3606,7 +3573,8 @@
      8
      (mv-nth 1
              (place-contents fat32-in-memory
-                             dir-ent contents file-length))))))
+                             dir-ent contents file-length)))
+    :hints (("Goal" :in-theory (enable dir-ent-p))))))
 
 (defthm
   fat-length-of-place-contents
