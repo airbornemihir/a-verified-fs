@@ -239,6 +239,23 @@ stat-ref-output-2.txt stat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) stat-replica
 	env DISK=$(DISK) STAT_OUTPUT="stat-output-2.txt" \
 	STAT_INPUT="initrd.img" $(ACL2) -- -f < stat-replicant.lisp
 
+rm-output-1.raw rm-ref-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	cp disk1.raw rm-ref-output-1.raw
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos rm-ref-output-1.raw $(MOUNTPOINT)
+	rm $(MOUNTPOINT)/initrd.img
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) RM_OUTPUT="rm-output-1.raw" \
+	RM_INPUT="initrd.img" $(ACL2) -- < rm-replicant.lisp
+
 debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
