@@ -1,13 +1,14 @@
 test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 \
 test-cat-replicant-4 test-mkfs-replicant-1 test-mkfs-replicant-2 \
 test-mkfs-replicant-3 test-wc-replicant-1 test-wc-replicant-2 \
-test-wc-replicant-3 test-stat-replicant-1 test-stat-replicant-2
+test-wc-replicant-3 test-stat-replicant-1 test-stat-replicant-2 \
+test-rm-replicant-1
 
 .PHONY: clean-mountpoint clean-fusepoint test test-cat-replicant-1 \
 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4 \
 test-mkfs-replicant-1 test-mkfs-replicant-2 test-mkfs-replicant-3 \
 test-wc-replicant-1 test-wc-replicant-2 test-wc-replicant-3 \
-test-stat-replicant-1 test-stat-replicant-2
+test-stat-replicant-1 test-stat-replicant-2 test-rm-replicant-1
 
 .PHONY: debug-create-dir-and-file debug-create-dir debug-do-nothing \
 debug-create-dir-copy-file
@@ -72,6 +73,10 @@ test-stat-replicant-1: stat-ref-output-1.txt stat-output-1.txt
 
 test-stat-replicant-2: stat-ref-output-2.txt stat-output-2.txt
 	diff -u -i stat-ref-output-2.txt stat-output-2.txt
+
+test-rm-replicant-1: rm-output-1.raw rm-ref-output-1.raw
+	env DISK=$(DISK) REF_INPUT="rm-ref-output-1.raw" \
+	INPUT="rm-output-1.raw" $(ACL2) -- < compare-disks.lisp
 
 cat-ref-output-1.txt cat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
