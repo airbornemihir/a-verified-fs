@@ -38,10 +38,25 @@
     :in-theory (enable str::charlist-has-some-down-alpha-p
                        str::upcase-charlist))))
 
-(defun dir-ent-p (x)
+(defund dir-ent-p (x)
   (declare (xargs :guard t))
   (and (unsigned-byte-listp 8 x)
        (equal (len x) *ms-dir-ent-length*)))
+
+(defthm dir-ent-p-of-update-nth
+  (implies (dir-ent-p l)
+           (equal (dir-ent-p (update-nth key val l))
+                  (and (< (nfix key) *ms-dir-ent-length*)
+                       (unsigned-byte-p 8 val))))
+  :hints (("goal" :in-theory (enable dir-ent-p))))
+
+(defthm dir-ent-p-of-append
+  (equal (dir-ent-p (binary-append x y))
+         (and (equal (+ (len x) (len y))
+                     *ms-dir-ent-length*)
+              (unsigned-byte-listp 8 y)
+              (unsigned-byte-listp 8 (true-list-fix x))))
+  :hints (("goal" :in-theory (enable dir-ent-p))))
 
 (defun dir-ent-fix (x)
   (declare (xargs :guard t))
@@ -60,7 +75,8 @@
 
 (defun dir-ent-first-cluster (dir-ent)
   (declare
-   (xargs :guard (dir-ent-p dir-ent)))
+   (xargs :guard (dir-ent-p dir-ent)
+          :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
   (combine32u (nth 21 dir-ent)
               (nth 20 dir-ent)
               (nth 27 dir-ent)
@@ -68,11 +84,47 @@
 
 (defun dir-ent-file-size (dir-ent)
   (declare
-   (xargs :guard (dir-ent-p dir-ent)))
+   (xargs :guard (dir-ent-p dir-ent)
+          :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
   (combine32u (nth 31 dir-ent)
               (nth 30 dir-ent)
               (nth 29 dir-ent)
               (nth 28 dir-ent)))
+
+(defund
+  dir-ent-set-first-cluster-file-size
+    (dir-ent first-cluster file-size)
+  (declare (xargs :guard (and (dir-ent-p dir-ent)
+                              (fat32-masked-entry-p first-cluster)
+                              (unsigned-byte-p 32 file-size))
+                  :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
+  (let
+      ((dir-ent (dir-ent-fix dir-ent))
+       (first-cluster (fat32-masked-entry-fix first-cluster))
+       (file-size (if (not (unsigned-byte-p 32 file-size)) 0 file-size)))
+   (append
+    (subseq dir-ent 0 20)
+    (list* (logtail 16 (loghead 24 first-cluster))
+           (logtail 24 first-cluster)
+           (append (subseq dir-ent 22 26)
+                   (list (loghead 8 first-cluster)
+                         (logtail 8 (loghead 16 first-cluster))
+                         (loghead 8 file-size)
+                         (logtail 8 (loghead 16 file-size))
+                         (logtail 16 (loghead 24 file-size))
+                         (logtail 24 file-size)))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "ihs/logops-lemmas" :dir :system))
+
+  (defthm dir-ent-set-first-cluster-file-size-correctness-1
+    (dir-ent-p (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-size))
+    :hints (("goal" :in-theory (e/d (dir-ent-p
+                                     dir-ent-set-first-cluster-file-size
+                                     fat32-masked-entry-fix fat32-masked-entry-p)
+                                    (loghead logtail))))))
 
 (encapsulate
   ()
@@ -100,7 +152,7 @@
   (defund dir-ent-directory-p (dir-ent)
     (declare
      (xargs :guard (dir-ent-p dir-ent)
-            :guard-hints (("Goal" :in-theory (disable unsigned-byte-p)
+            :guard-hints (("Goal" :in-theory (e/d (dir-ent-p) (unsigned-byte-p))
                            :use (:instance unsigned-byte-p-logand
                                            (size 8)
                                            (i #x10)
@@ -127,6 +179,11 @@
       :key-type string
       :val-type m1-file
       :true-listp t)
+
+(defthm
+  m1-file-alist-p-of-delete-assoc-equal
+  (implies (m1-file-alist-p fs)
+           (m1-file-alist-p (delete-assoc-equal key fs))))
 
 (defun m1-directory-file-p (file)
   (declare (xargs :guard t))
@@ -223,12 +280,13 @@
     :use (find-file-by-pathname-correctness-2
           (:instance find-file-by-pathname-correctness-2
                      (pathname str::pathname-equiv))))))
+
 ;; This function should continue to take pathnames which refer to top-level
 ;; fs... but what happens when "." and ".." appear in a pathname? We'll have to
 ;; modify the code to deal with that.
 (defun
-  place-file-by-pathname
-  (fs pathname file)
+    place-file-by-pathname
+    (fs pathname file)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (string-listp pathname)
                               (m1-file-p file))
@@ -243,28 +301,28 @@
     (if
         (consp alist-elem)
         (if
-         (m1-directory-file-p (cdr alist-elem))
-         (mv-let
-           (new-contents error-code)
-           (place-file-by-pathname
-            (m1-file->contents (cdr alist-elem))
-            (cdr pathname)
-            file)
-           (mv
-            (put-assoc-equal
-             name
-             (make-m1-file
-              :dir-ent (m1-file->dir-ent (cdr alist-elem))
-              :contents new-contents)
-             fs)
-            error-code))
-         (if (or
-              (consp (cdr pathname))
-              ;; this is the case where a regular file could get replaced by a
-              ;; directory, which is a bad idea
-              (m1-directory-file-p file))
-             (mv fs *enotdir*)
-           (mv (put-assoc-equal name file fs) 0)))
+            (m1-directory-file-p (cdr alist-elem))
+            (mv-let
+              (new-contents error-code)
+              (place-file-by-pathname
+               (m1-file->contents (cdr alist-elem))
+               (cdr pathname)
+               file)
+              (mv
+               (put-assoc-equal
+                name
+                (make-m1-file
+                 :dir-ent (m1-file->dir-ent (cdr alist-elem))
+                 :contents new-contents)
+                fs)
+               error-code))
+          (if (or
+               (consp (cdr pathname))
+               ;; this is the case where a regular file could get replaced by a
+               ;; directory, which is a bad idea
+               (m1-directory-file-p file))
+              (mv fs *enotdir*)
+            (mv (put-assoc-equal name file fs) 0)))
       (if (atom (cdr pathname))
           (mv (put-assoc-equal name file fs) 0)
         (mv fs *enotdir*)))))
@@ -306,6 +364,53 @@
 
 (defcong m1-file-equiv equal
   (place-file-by-pathname fs pathname file) 3)
+
+;; This function should continue to take pathnames which refer to top-level
+;; fs... but what happens when "." and ".." appear in a pathname? We'll have to
+;; modify the code to deal with that.
+(defun
+    remove-file-by-pathname
+    (fs pathname)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (string-listp pathname))
+                  :measure (acl2-count pathname)))
+  (b*
+      ((fs (m1-file-alist-fix fs))
+       ((unless (consp pathname))
+        (mv fs *enoent*))
+       (name (str-fix (car pathname)))
+       (alist-elem (assoc-equal name fs)))
+    (if
+        (consp alist-elem)
+        (if
+            (m1-directory-file-p (cdr alist-elem))
+            (mv-let
+              (new-contents error-code)
+              (remove-file-by-pathname
+               (m1-file->contents (cdr alist-elem))
+               (cdr pathname))
+              (mv
+               (put-assoc-equal
+                name
+                (make-m1-file
+                 :dir-ent (m1-file->dir-ent (cdr alist-elem))
+                 :contents new-contents)
+                fs)
+               error-code))
+          (if (consp (cdr pathname))
+              (mv fs *enotdir*)
+            (mv (delete-assoc-equal name fs) 0)))
+      ;; if it's not there, it can't be removed
+      (mv fs *enoent*))))
+
+(defthm
+  remove-file-by-pathname-correctness-1
+  (mv-let (fs error-code)
+    (remove-file-by-pathname fs pathname)
+    (and (m1-file-alist-p fs)
+         (integerp error-code)))
+  :hints
+  (("goal" :induct (remove-file-by-pathname fs pathname))))
 
 (defthm
   m1-read-after-write-lemma-1
@@ -603,31 +708,55 @@
 ;; as "/home" or "/tmp", the dirname will be "/".
 (defund
   m1-basename-dirname-helper (path)
-  (declare (xargs :guard (string-listp path)))
-  (if (atom path)
-      (mv "." (list "."))
-      (if (or (atom (cdr path))
-              (and (not (streqv (car path) ""))
-                   (atom (cddr path))
-                   (streqv (cadr path) "")))
-          (mv (str-fix (car path)) (list "."))
-          (if (atom (cddr path))
-              (mv (str-fix (cadr path))
-                  (list (str-fix (car path))))
-              (mv-let (tail-basename tail-dirname)
-                (m1-basename-dirname-helper (cdr path))
-                (mv tail-basename
-                    (list* (str-fix (car path))
-                           tail-dirname)))))))
+  (declare (xargs :guard (string-listp path)
+                  :guard-hints (("Goal" :in-theory (disable
+                                                    make-list-ac-removal)))
+                  :guard-debug t))
+  (b*
+      (((when (atom path))
+        (mv *current-dir-fat32-name* (list *current-dir-fat32-name*)))
+       (coerced-basename
+        (if
+            (or (atom (cdr path))
+                (and (not (streqv (car path) ""))
+                     (atom (cddr path))
+                     (streqv (cadr path) "")))
+            (coerce (str-fix (car path)) 'list)
+          (coerce (str-fix (cadr path)) 'list)))
+       (basename
+        (coerce
+         (append
+          (take (min 11 (len coerced-basename)) coerced-basename)
+          (make-list
+           (nfix (- 11 (len coerced-basename)))
+           :initial-element (code-char 0)))
+         'string))
+       ((when (or (atom (cdr path))
+                  (and (not (streqv (car path) ""))
+                       (atom (cddr path))
+                       (streqv (cadr path) ""))))
+        (mv
+         basename
+         (list *current-dir-fat32-name*)))
+       ((when (atom (cddr path)))
+        (mv basename
+            (list (str-fix (car path))))))
+    (mv-let (tail-basename tail-dirname)
+      (m1-basename-dirname-helper (cdr path))
+      (mv tail-basename
+          (list* (str-fix (car path))
+                 tail-dirname)))))
 
 (defthm
   m1-basename-dirname-helper-correctness-1
   (mv-let (basename dirname)
     (m1-basename-dirname-helper path)
     (and (stringp basename)
+         (equal (len (explode basename)) 11)
          (string-listp dirname)))
   :hints
-  (("goal" :in-theory (enable m1-basename-dirname-helper)))
+  (("goal" :induct (m1-basename-dirname-helper path)
+    :in-theory (enable m1-basename-dirname-helper)))
   :rule-classes
   (:rewrite
    (:type-prescription
@@ -743,6 +872,113 @@
        (pathname (append dirname (list basename)))
        ((mv fs error-code)
         (place-file-by-pathname fs pathname file))
+       ((unless (equal error-code 0))
+        (mv fs -1 error-code)))
+    (mv fs 0 0)))
+
+(defthm
+  m1-unlink-guard-lemma-1
+  (implies (m1-file-p file)
+           (and
+            (true-listp (m1-file->dir-ent file))
+            (equal (len (m1-file->dir-ent file)) *ms-dir-ent-length*)
+            (unsigned-byte-listp 8 (m1-file->dir-ent file))))
+  :hints
+  (("goal" :in-theory (e/d (dir-ent-p)
+                           (dir-ent-p-of-m1-file->dir-ent))
+    :use (:instance dir-ent-p-of-m1-file->dir-ent
+                    (x file)))))
+
+;; The fat driver in Linux actually keeps the directory entries of files it is
+;; deleting, while removing links to their contents. Thus, in the special case
+;; where the last file is deleted from the root directory, the root directory
+;; will still occupy one cluster, which in turn contains one entry which
+;; points to the deleted file, with the filename's first character changed to
+;; #xe5, which signifies a deleted file, its the file length changed to 0, and
+;; the first cluster changed to 0. This may even hold for other directories
+;; than root.
+(defun
+    m1-unlink (fs pathname)
+  (declare
+   (xargs
+    :guard (and (m1-file-alist-p fs)
+                (string-listp pathname))
+    :guard-debug t
+    :guard-hints
+    (("goal"
+      :in-theory
+      (disable
+       (:rewrite m1-basename-dirname-helper-correctness-1)
+       return-type-of-string=>nats update-nth)
+      :use
+      ((:instance
+        (:rewrite m1-basename-dirname-helper-correctness-1)
+        (path pathname))
+       (:instance return-type-of-string=>nats
+                  (string
+                   (mv-nth 0
+                           (m1-basename-dirname-helper pathname)))))))))
+  (b* ((dirname (m1-dirname pathname))
+       ;; It's OK to strip out the leading "" when the pathname begins with /,
+       ;; but what about when it doesn't and the pathname is relative to the
+       ;; current working directory?
+       (dirname (if (and (consp dirname)
+                         (or
+                          (equal (car dirname) *empty-fat32-name*)
+                          (equal (car dirname) *current-dir-fat32-name*)))
+                    (cdr dirname)
+                  dirname))
+       ;; ((mv parent-dir errno)
+       ;;  (find-file-by-pathname fs dirname))
+       ;; ((unless (or (atom dirname)
+       ;;              (and (equal errno 0)
+       ;;                   (m1-directory-file-p parent-dir))))
+       ;;  (mv fs -1 *enoent*))
+       ((mv file errno)
+        (find-file-by-pathname fs pathname))
+       ((unless (equal errno 0))
+        (mv fs -1 *enoent*))
+       (basename (m1-basename pathname))
+       (pathname (append dirname (list basename)))
+       ((mv fs error-code)
+        (remove-file-by-pathname fs pathname))
+       ((unless (equal error-code 0))
+        (mv fs -1 error-code))
+       ;; the byte #xe5 marks deleted files, according to the spec
+       (coerced-basename-after-deletion (update-nth 0 #xe5
+                                                    (string=>nats basename)))
+       (dir-ent-after-deletion
+        (append coerced-basename-after-deletion
+                (nthcdr 11 (m1-file->dir-ent file))))
+       ;; zeroing out the first cluster
+       (dir-ent-after-deletion
+        (update-nth
+         26 0
+         (update-nth
+          27 0
+          (update-nth
+           20 0
+           (update-nth
+            21 0
+            dir-ent-after-deletion)))))
+       ;; zeroing out the length
+       (dir-ent-after-deletion
+        (update-nth
+         31 0
+         (update-nth
+          30 0
+          (update-nth
+           29 0
+           (update-nth
+            28 0
+            dir-ent-after-deletion)))))
+       (file-after-deletion
+        (make-m1-file :dir-ent dir-ent-after-deletion
+                      :contents nil))
+       (pathname (append dirname (list (nats=>string
+                                        coerced-basename-after-deletion))))
+       ((mv fs error-code)
+        (place-file-by-pathname fs pathname file-after-deletion))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
