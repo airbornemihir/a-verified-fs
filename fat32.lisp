@@ -4,9 +4,7 @@
 
 ; Utilities for FAT32.
 
-; The following is in fat32.acl2, but we include it here as well for
-; when we are doing interactive development, in order to read gl:: symbols.
-(include-book "centaur/gl/portcullis" :dir :system)
+(include-book "ihs/logops-lemmas" :dir :system)
 (include-book "centaur/fty/top" :dir :system)
 
 (include-book "file-system-lemmas")
@@ -43,7 +41,27 @@
 
 (defconst *ms-dir-ent-length* 32)
 
-;; from include/uapi/asm-generic/errno-base.h
+;; observed
+(defconst *current-dir-fat32-name* ".          ")
+(defconst *parent-dir-fat32-name* "..         ")
+
+;; This has not really been observed to be any FAT32 entry's name. In fact, it
+;; cannot be, since the FAT specification says that the filesystem's root
+;; directory does not have "." and ".." entries, and those entries would have
+;; different names even if they existed. Still, this is what our
+;; name-to-fat32-name function computes when passed the empty string - and that
+;; in turn happens with the empty string preceding the first slash in "/home"
+;; or "/vmlinuz".
+(defconst *empty-fat32-name* "           ")
+
+;; known
+(defconst *current-dir-name* ".")
+(defconst *parent-dir-name* "..")
+
+;; from page 36 of the FAT specification
+(defconst *ms-max-dir-size* (ash 1 21))
+
+;; from include/uapi/asm-generic/errno-base.h in the linux kernel sources
 (defconst *ENOENT* 2) ;; No such file or directory
 (defconst *EIO* 5) ;; I/O error
 (defconst *EBADF* 9) ;; Bad file number
@@ -52,6 +70,19 @@
 (defconst *EISDIR* 21) ;; Is a directory
 (defconst *ENOSPC* 28) ;; No space left on device
 (defconst *ENAMETOOLONG* 36) ;; File name too long
+
+;; from the stat code in the coreutils sources
+(defconst *S_MAGIC_FUSEBLK* #x65735546)
+
+(encapsulate
+  ()
+
+  (local (include-book "arithmetic-5/top" :dir :system))
+
+  (defthm
+    logand-ash-lemma-1
+    (implies (and (natp c))
+             (unsigned-byte-p c (logand i (- (ash 1 c) 1))))))
 
 (defund fat32-entry-p (x)
   (declare (xargs :guard t))
@@ -86,7 +117,7 @@
 ;; Use a mask to take the low 28 bits.
 (defund fat32-entry-mask (x)
   (declare (xargs :guard (fat32-entry-p x)))
-  (logand x (- (ash 1 28) 1)))
+  (loghead 28 x))
 
 (defthm
   fat32-entry-mask-correctness-1
@@ -166,51 +197,31 @@
       :in-theory (enable fat32-entry-p fat32-masked-entry-p)))
     :guard (and (fat32-entry-p entry)
                 (fat32-masked-entry-p masked-entry))))
-  (logior (logand entry (- (ash 1 32) (ash 1 28)))
+  (logapp 28 masked-entry (logtail 28 entry)))
+
+(defthm
+  fat32-update-lower-28-correctness-1
+  (implies
+   (and (fat32-entry-p entry)
+        (fat32-masked-entry-p masked-entry))
+   (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
+  :hints
+  (("goal"
+    :in-theory (e/d (fat32-update-lower-28 fat32-entry-p) (unsigned-byte-p logapp logtail)))))
+
+(defthm
+  fat32-update-lower-28-correctness-2
+  (implies
+   (and (fat32-entry-p entry)
+        (fat32-masked-entry-p masked-entry))
+   (equal (fat32-entry-mask
+           (fat32-update-lower-28 entry masked-entry))
           masked-entry))
-
-(encapsulate
-  ()
-
-  (local (include-book "ihs/logops-lemmas" :dir :system))
-
-  (defthm
-    fat32-update-lower-28-correctness-1
-    (implies
-     (and (fat32-entry-p entry)
-          (fat32-masked-entry-p masked-entry))
-     (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
-    :hints
-    (("goal"
-      :in-theory (e/d nil (unsigned-byte-p logand logior)
-                      (fat32-entry-p fat32-masked-entry-p
-                                     fat32-update-lower-28)))
-     ("goal''" :in-theory (enable unsigned-byte-p)))))
-
-; :Redef helps here for overcoming lemmas that are incompatible here (and
-; finding all such lemmas in the process).
-(encapsulate
-  ()
-
-  (local
-   (include-book "centaur/gl/gl" :dir :system))
-
-  (local
-   (def-gl-thm fat32-update-lower-28-correctness-2
-     :hyp (and (fat32-entry-p entry)
-               (fat32-masked-entry-p masked-entry))
-     :concl (equal (fat32-entry-mask (fat32-update-lower-28 entry
-                                                            masked-entry))
-                   masked-entry)
-     :g-bindings (gl::auto-bindings (:nat entry 33) (:nat masked-entry 29))))
-
-  (defthm
-    fat32-update-lower-28-correctness-2
-    (implies
-     (and (fat32-entry-p entry)
-          (fat32-masked-entry-p masked-entry))
-     (equal
-      (fat32-entry-mask (fat32-update-lower-28 entry masked-entry)) masked-entry))))
+  :hints
+  (("goal"
+    :in-theory (e/d (fat32-update-lower-28
+                     fat32-entry-mask fat32-masked-entry-p)
+                    (unsigned-byte-p loghead logapp)))))
 
 ;; taken from page 18 of the fat overview - the constant 268435448 is written
 ;; out as 0xFFFFFF8 therein
