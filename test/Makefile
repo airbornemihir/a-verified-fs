@@ -258,8 +258,9 @@ rm-output-1.raw rm-ref-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lis
 	rm $(MOUNTPOINT)/initrd.img
 	sleep 1
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) RM_OUTPUT="rm-output-1.raw" \
-	RM_INPUT="initrd.img" $(ACL2) -- < rm-replicant.lisp
+	env RM_OUTPUT="rm-output-1.raw" RM_INPUT="initrd.img" $(ACL2) \
+	-- < rm-replicant.lisp
+
 
 debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
