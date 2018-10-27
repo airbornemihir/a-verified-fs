@@ -43,6 +43,12 @@
   (and (unsigned-byte-listp 8 x)
        (equal (len x) *ms-dir-ent-length*)))
 
+(defthm dir-ent-p-correctness-1
+  (implies (dir-ent-p x)
+           (not (stringp x)))
+  :hints (("goal" :in-theory (enable dir-ent-p)))
+  :rule-classes :forward-chaining)
+
 (defthm dir-ent-p-of-update-nth
   (implies (dir-ent-p l)
            (equal (dir-ent-p (update-nth key val l))
@@ -113,6 +119,32 @@
                          (logtail 8 (loghead 16 file-size))
                          (logtail 16 (loghead 24 file-size))
                          (logtail 24 file-size)))))))
+
+(defthm
+  dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size
+  (implies (and (dir-ent-p dir-ent)
+                (fat32-masked-entry-p first-cluster)
+                (natp file-size))
+           (equal (dir-ent-first-cluster
+                   (dir-ent-set-first-cluster-file-size
+                    dir-ent first-cluster file-size))
+                  first-cluster))
+  :hints
+  (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size)
+                           (loghead logtail)))))
+
+(defthm
+  dir-ent-file-size-of-dir-ent-set-first-cluster-file-size
+  (implies (and (dir-ent-p dir-ent)
+                (unsigned-byte-p 32 file-size)
+                (natp first-cluster))
+           (equal (dir-ent-file-size
+                   (dir-ent-set-first-cluster-file-size
+                    dir-ent first-cluster file-size))
+                  file-size))
+  :hints
+  (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size)
+                           (loghead logtail)))))
 
 (encapsulate
   ()

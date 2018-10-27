@@ -3863,9 +3863,9 @@
 
   (local (include-book "ihs/logops-lemmas" :dir :system))
 
-  (defund
-    stobj-fa-table-to-string
-    (fat32-in-memory length)
+  (defun
+    stobj-fa-table-to-string-helper
+    (fat32-in-memory length ac)
     (declare
      (xargs
       :stobjs fat32-in-memory
@@ -3883,16 +3883,45 @@
                         (i (+ -1 length)))))))
     (if
      (zp length)
-     ""
-     (concatenate
-      'string
-      (stobj-fa-table-to-string fat32-in-memory (- length 1))
-      (let ((current (fati (- length 1) fat32-in-memory)))
-        (nats=>string (list
-                       (loghead 8             current )
-                       (loghead 8 (logtail  8 current))
-                       (loghead 8 (logtail 16 current))
-                                  (logtail 24 current) )))))))
+        ac
+       (let ((current (fati (- length 1) fat32-in-memory)))
+      (stobj-fa-table-to-string-helper
+       fat32-in-memory (- length 1)
+       (list*
+        (code-char (loghead 8             current ))
+        (code-char (loghead 8 (logtail  8 current)))
+        (code-char (loghead 8 (logtail 16 current)))
+        (code-char            (logtail 24 current))
+        ac))))))
+
+(defthm
+  character-listp-of-stobj-fa-table-to-string-helper
+  (equal
+   (character-listp
+    (stobj-fa-table-to-string-helper fat32-in-memory length ac))
+   (character-listp ac))
+  :hints (("Goal" :in-theory (disable loghead logtail))))
+
+(defthm
+  len-of-stobj-fa-table-to-string-helper
+  (equal
+   (len
+    (stobj-fa-table-to-string-helper
+     fat32-in-memory length ac))
+   (+ (len ac) (* 4 (nfix length))))
+  :hints (("Goal" :in-theory (disable loghead logtail))))
+
+(defund
+    stobj-fa-table-to-string
+    (fat32-in-memory)
+    (declare
+     (xargs
+      :stobjs fat32-in-memory
+      :guard (compliant-fat32-in-memoryp fat32-in-memory)))
+    (coerce
+     (stobj-fa-table-to-string-helper
+      fat32-in-memory (fat-length fat32-in-memory) nil)
+     'string))
 
 (encapsulate
   ()
@@ -4266,18 +4295,19 @@
     (make-fat-string-ac
      (1- n)
      fat32-in-memory
-     (concatenate
-      'string
-      (stobj-fa-table-to-string fat32-in-memory
-                                (fat-length fat32-in-memory))
-      ac)))))
+     (time$
+      (concatenate
+       'string
+       (time$
+        (stobj-fa-table-to-string fat32-in-memory))
+       ac))))))
 
 (defthm
   length-of-stobj-fa-table-to-string
   (equal
    (len
-    (explode (stobj-fa-table-to-string fat32-in-memory length)))
-   (* (nfix length) 4))
+    (explode (stobj-fa-table-to-string fat32-in-memory)))
+   (* (fat-length fat32-in-memory) 4))
   :hints (("goal" :in-theory (e/d (stobj-fa-table-to-string) (loghead logtail)))))
 
 (defthm
@@ -4296,6 +4326,120 @@
                                   data-region-index len ac))
          (+ (nfix len) (len ac))))
 
+(defun
+  data-region-string-helper
+  (fat32-in-memory len ac)
+  (declare
+   (xargs
+    :stobjs (fat32-in-memory)
+    :guard (and (natp len)
+                (compliant-fat32-in-memoryp fat32-in-memory)
+                (<= len
+                    (data-region-length fat32-in-memory)))
+    :guard-hints
+    (("goal"
+      :in-theory
+      (disable fat32-in-memoryp
+               data-regioni-when-compliant-fat32-in-memoryp)
+      :use
+      (:instance data-regioni-when-compliant-fat32-in-memoryp
+                 (i (- len 1)))))))
+  (if (zp len)
+      ac
+      (data-region-string-helper
+       fat32-in-memory (- len 1)
+       (cons (code-char (data-regioni (- len 1)
+                                      fat32-in-memory))
+             ac))))
+
+(defthm
+  data-region-string-helper-correctness-lemma-1
+  (implies
+   (<= len
+       (data-region-length fat32-in-memory))
+   (equal (data-region-string-helper fat32-in-memory len ac)
+          (append (take len
+                        (nats=>chars (nth *data-regioni* fat32-in-memory)))
+                  ac)))
+  :instructions
+  (:induct
+   (:change-goal nil t)
+   :bash :promote (:demote 2)
+   (:dive 1 1)
+   (:= t)
+   :up :s-prop :top :promote (:dive 1)
+   :x := (:drop 3)
+   :top
+   (:claim
+    (equal
+     (take len
+           (nats=>chars (nth *data-regioni* fat32-in-memory)))
+     (binary-append
+      (first-n-ac (- len 1)
+                  (take len
+                        (nats=>chars (nth *data-regioni* fat32-in-memory)))
+                  nil)
+      (nthcdr (- len 1)
+              (take len
+                    (nats=>chars (nth *data-regioni* fat32-in-memory))))))
+    :hints :none)
+   (:change-goal nil t)
+   :bash
+   (:=
+    (take len
+          (nats=>chars (nth *data-regioni* fat32-in-memory)))
+    (append
+     (first-n-ac (+ -1 len)
+                 (take len
+                       (nats=>chars (nth *data-regioni* fat32-in-memory)))
+                 nil)
+     (nthcdr (+ -1 len)
+             (take len
+                   (nats=>chars (nth *data-regioni* fat32-in-memory))))))
+   (:drop 3)
+   (:dive 2)
+   (:rewrite binary-append-is-associative)
+   (:dive 1)
+   (:rewrite take-of-take)
+   (:change-goal nil t)
+   :bash (:dive 1 1)
+   (:rewrite len-of-nats=>chars)
+   :top
+   (:bash ("goal" :expand (data-region-length fat32-in-memory)))
+   :top (:dive 1 1)
+   :top
+   (:bash ("goal" :in-theory (enable take)))
+   (:dive 2)
+   (:claim (< (+ -1 len) len))
+   :x :top
+   (:claim
+    (equal
+     (cdr
+      (nthcdr (+ -1 len)
+              (first-n-ac len
+                          (nats=>chars (nth *data-regioni* fat32-in-memory))
+                          nil)))
+     (nthcdr len
+             (first-n-ac len
+                         (nats=>chars (nth *data-regioni* fat32-in-memory))
+                         nil)))
+    :hints :none)
+   (:change-goal nil t)
+   (:dive 2)
+   :x :top :bash
+   (:=
+    (cdr
+     (nthcdr (+ -1 len)
+             (first-n-ac len
+                         (nats=>chars (nth *data-regioni* fat32-in-memory))
+                         nil)))
+    (nthcdr len
+            (first-n-ac len
+                        (nats=>chars (nth *data-regioni* fat32-in-memory))
+                        nil)))
+   (:drop 4)
+   (:bash ("goal" :in-theory (enable data-region-length data-regioni)))))
+
 (defund
     fat32-in-memory-to-string
     (fat32-in-memory)
@@ -4305,19 +4449,22 @@
             :verify-guards nil))
     (b*
         ((reserved-area-string
-          (reserved-area-string fat32-in-memory))
+          (time$ (reserved-area-string fat32-in-memory)))
          (fat-string
-          (make-fat-string-ac
-           (bpb_numfats fat32-in-memory) fat32-in-memory ""))
+          (time$
+           (make-fat-string-ac
+            (bpb_numfats fat32-in-memory) fat32-in-memory "")))
          (data-region-string
-          ;; reproducing the definition of rchars-to-string because it doesn't
-          ;; seem to be available to us
-          (reverse (nats=>string
-                    (get-dir-ent-helper
-                     fat32-in-memory 0 (data-region-length fat32-in-memory) nil)))))
-      (concatenate 'string
-                   reserved-area-string
-                   fat-string data-region-string)))
+          (time$
+           (coerce
+            (time$
+             (data-region-string-helper
+              fat32-in-memory (data-region-length fat32-in-memory) nil))
+            'string))))
+      (time$
+       (concatenate 'string
+                    reserved-area-string
+                    fat-string data-region-string))))
 
 (defthm
   length-of-fat32-in-memory-to-string-lemma-1
@@ -4600,32 +4747,7 @@
             (fat32-in-memory-to-string fat32-in-memory)))
       (bpb_numfats fat32-in-memory)))
     :hints
-    (("goal" :in-theory (enable string=>nats))
-     ("subgoal 10''"
-      :in-theory (disable nth-of-chars=>nats)
-      :use
-      (:instance
-       nth-of-chars=>nats (i 0)
-       (chars
-        (take
-         (+ -16
-            (* (bpb_bytspersec fat32-in-memory)
-               (bpb_rsvdseccnt fat32-in-memory)))
-         (nthcdr
-          16
-          (append
-           (explode (reserved-area-string fat32-in-memory))
-           (explode
-            (make-fat-string-ac (bpb_numfats fat32-in-memory)
-                                fat32-in-memory ""))
-           (revappend
-            (explode
-             (nats=>string
-              (revappend
-               (take (data-region-length fat32-in-memory)
-                     (nth *data-regioni* fat32-in-memory))
-               nil)))
-            nil)))))))))
+    (("goal" :in-theory (e/d (string=>nats) (nth)))))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-8
@@ -5071,7 +5193,7 @@
                            :hints (("Goal" :in-theory (enable resize-data-region))))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-36
+  fat32-in-memory-to-string-inversion-lemma-35
   (implies
    (and (natp n2)
         (< n2 (* 4 (fat-length fat32-in-memory)))
@@ -5081,12 +5203,11 @@
          (explode (make-fat-string-ac n1 fat32-in-memory ac)))
     (nth n2
          (explode (stobj-fa-table-to-string
-                   fat32-in-memory
-                   (fat-length fat32-in-memory))))))
+                   fat32-in-memory)))))
   :hints (("Goal" :in-theory (enable make-fat-string-ac))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-37
+  fat32-in-memory-to-string-inversion-lemma-36
   (implies
    (and (fat32-entry-p current)
         (< (nfix n) 4))
@@ -5129,7 +5250,7 @@
                           (logtail 24 current))))))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-38
+  fat32-in-memory-to-string-inversion-lemma-37
   (implies (and (integerp pos)
                 (integerp length)
                 (<= pos length))
@@ -5142,26 +5263,74 @@
                 (iff (< (+ -4 (* 4 pos)) (+ -4 (* 4 length)))
                      (not (equal pos length))))))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-38
+    (implies
+     (and (compliant-fat32-in-memoryp fat32-in-memory)
+          (not (zp pos))
+          (natp length))
+     (and
+      (equal (nth (+ -1 (* 4 pos))
+                  (stobj-fa-table-to-string-helper fat32-in-memory
+                                                   length
+                                                   ac))
+             (if (zp (- pos length))
+                 (code-char (logtail 24 (fati (+ -1 pos) fat32-in-memory)))
+               (nth (+ -1 (* 4 (- pos length))) ac)))
+      (equal (nth (+ -2 (* 4 pos))
+                  (stobj-fa-table-to-string-helper fat32-in-memory
+                                                   length
+                                                   ac))
+             (if (zp (- pos length))
+                 (code-char (loghead 8
+                                     (logtail 16
+                                              (fati (+ -1 pos) fat32-in-memory))))
+               (nth (+ -2 (* 4 (- pos length))) ac)))
+      (equal (nth (+ -3 (* 4 pos))
+                  (stobj-fa-table-to-string-helper fat32-in-memory
+                                                   length
+                                                   ac))
+             (if (zp (- pos length))
+                 (code-char (loghead 8
+                                     (logtail 8 (fati (+ -1 pos) fat32-in-memory))))
+               (nth (+ -3 (* 4 (- pos length))) ac)))
+      (equal (nth (+ -4 (* 4 pos))
+                  (stobj-fa-table-to-string-helper fat32-in-memory
+                                                   length
+                                                   ac))
+             (if (zp (- pos length))
+                 (code-char (loghead 8 (fati (+ -1 pos) fat32-in-memory)))
+               (nth (+ -4 (* 4 (- pos length))) ac)))))
+    :hints (("goal" :in-theory (disable loghead logtail)
+             :induct
+             (stobj-fa-table-to-string-helper fat32-in-memory
+                                              length
+                                              ac))
+            ("subgoal *1/2" :expand (:free (n x y) (nth n (cons x y)))))))
+
 (defthm
   fat32-in-memory-to-string-inversion-lemma-39
   (implies
    (and (compliant-fat32-in-memoryp fat32-in-memory)
         (not (zp pos))
-        (integerp length)
-        (<= pos length)
-        (<= length (fat-length fat32-in-memory)))
+        (<= pos (fat-length fat32-in-memory)))
    (and
     (equal
      (nth
       (+ -1 (* 4 pos))
       (explode
-       (stobj-fa-table-to-string fat32-in-memory length)))
+       (stobj-fa-table-to-string fat32-in-memory)))
      (code-char (logtail 24 (fati (- pos 1) fat32-in-memory))))
     (equal
      (nth
       (+ -2 (* 4 pos))
       (explode
-       (stobj-fa-table-to-string fat32-in-memory length)))
+       (stobj-fa-table-to-string fat32-in-memory)))
      (code-char
       (loghead 8
                (logtail 16 (fati (- pos 1) fat32-in-memory)))))
@@ -5169,7 +5338,7 @@
      (nth
       (+ -3 (* 4 pos))
       (explode
-       (stobj-fa-table-to-string fat32-in-memory length)))
+       (stobj-fa-table-to-string fat32-in-memory)))
      (code-char
       (loghead 8
                (logtail 8 (fati (- pos 1) fat32-in-memory)))))
@@ -5177,7 +5346,7 @@
      (nth
       (+ -4 (* 4 pos))
       (explode
-       (stobj-fa-table-to-string fat32-in-memory length)))
+       (stobj-fa-table-to-string fat32-in-memory)))
      (code-char (loghead 8 (fati (- pos 1) fat32-in-memory))))))
   :hints (("goal" :in-theory (e/d (stobj-fa-table-to-string) (logtail loghead)))))
 
@@ -5448,8 +5617,7 @@
           (explode (make-fat-string-ac n1 fat32-in-memory ac)))
     (take n2
           (explode (stobj-fa-table-to-string
-                    fat32-in-memory
-                    (fat-length fat32-in-memory))))))
+                    fat32-in-memory)))))
   :hints
   (("goal" :in-theory (enable true-list-fix-when-true-listp make-fat-string-ac))))
 
@@ -5461,8 +5629,7 @@
         (<= pos (fat-length fat32-in-memory)))
    (equal (update-fat
            fat32-in-memory
-           (stobj-fa-table-to-string fat32-in-memory
-                                     (fat-length fat32-in-memory))
+           (stobj-fa-table-to-string fat32-in-memory)
            pos)
           fat32-in-memory))
   :hints
@@ -5470,8 +5637,7 @@
     :induct
     (update-fat
      fat32-in-memory
-     (stobj-fa-table-to-string fat32-in-memory
-                               (fat-length fat32-in-memory))
+     (stobj-fa-table-to-string fat32-in-memory)
      pos)
     :in-theory (e/d (compliant-fat32-in-memoryp)
                     (loghead logtail fat32-in-memoryp)))))
