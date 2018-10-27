@@ -2,14 +2,16 @@ test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 \
 test-cat-replicant-4 test-mkfs-replicant-1 test-mkfs-replicant-2 \
 test-mkfs-replicant-3 test-wc-replicant-1 test-wc-replicant-2 \
 test-wc-replicant-3 test-stat-replicant-1 test-stat-replicant-2 \
-test-rm-replicant-1 test-rm-replicant-2 mtools-test-cat-replicant-2
+test-rm-replicant-1 test-rm-replicant-2 mtools-test-cat-replicant-2 \
+mtools-test-rm-replicant-1
 
 .PHONY: clean-mountpoint clean-fusepoint test test-cat-replicant-1 \
 test-cat-replicant-2 test-cat-replicant-3 test-cat-replicant-4 \
 test-mkfs-replicant-1 test-mkfs-replicant-2 test-mkfs-replicant-3 \
 test-wc-replicant-1 test-wc-replicant-2 test-wc-replicant-3 \
 test-stat-replicant-1 test-stat-replicant-2 test-rm-replicant-1 \
-test-rm-replicant-2 mtools-test-cat-replicant-2
+test-rm-replicant-2 mtools-test-cat-replicant-2 \
+mtools-test-rm-replicant-1
 
 .PHONY: debug-create-dir-and-file debug-create-dir debug-do-nothing \
 debug-create-dir-copy-file
@@ -21,7 +23,7 @@ FUSEPOINT=mount2
 BBFS=$(HOME)/src/bbfs/fuse-tutorial-2018-02-04/src/bbfs
 UID=$(shell id -u)
 GID=$(shell id -g)
-MTOOLSRC=$(pwd)/.mtoolsrc
+MTOOLSRC=$(shell pwd)/.mtoolsrc
 
 clean-mountpoint:
 	rm -rf $(MOUNTPOINT)
@@ -87,6 +89,10 @@ test-rm-replicant-2: rm-output-2.raw rm-ref-output-2.raw
 	env DISK=$(DISK) REF_INPUT="rm-ref-output-2.raw" \
 	INPUT="rm-output-2.raw" $(ACL2) -- < compare-disks.lisp
 
+mtools-test-rm-replicant-1: mtools-rm-ref-output-1.raw mtools-rm-output-1.raw
+	env DISK=$(DISK) REF_INPUT="mtools-rm-ref-output-1.raw" \
+	INPUT="mtools-rm-output-1.raw" $(ACL2) -- < compare-disks.lisp
+
 cat-ref-output-1.txt cat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
@@ -143,16 +149,6 @@ cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-4.txt" \
 	CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
 
-mtools-cat-ref-output-2.txt mtools-cat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
-	rm -f $(DISK) mtools-cat-ref-output-2.txt
-	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
-	env MTOOLSRC=$(PWD)/.mtoolsrc mformat -T 140000 -h 64 -s 32 -S \
-	2 -F -c 2 c:
-	env MTOOLSRC=$(PWD)/.mtoolsrc mcopy input-1204-bytes.txt c:/vmlinuz
-	env MTOOLSRC=$(PWD)/.mtoolsrc mcopy c:/vmlinuz mtools-cat-ref-output-2.txt
-	env DISK=$(DISK) CAT_OUTPUT="mtools-cat-output-2.txt" \
-	CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
-
 cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
@@ -171,6 +167,16 @@ cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-5.txt" \
 	CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+
+mtools-cat-ref-output-2.txt mtools-cat-output-2.txt: cat-replicant.lisp
+	rm -f $(DISK) mtools-cat-ref-output-2.txt
+	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 140000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env MTOOLSRC=$(MTOOLSRC) mcopy c:/vmlinuz mtools-cat-ref-output-2.txt
+	env DISK=$(DISK) CAT_OUTPUT="mtools-cat-output-2.txt" \
+	CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
 
 mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) \
 mkfs.fat-3.0.28-replicant.lisp
@@ -299,6 +305,18 @@ rm-ref-output-2.raw rm-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.li
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) RM_OUTPUT="rm-output-2.raw" \
 	RM_INPUT="initrd.img" $(ACL2) -- < rm-replicant.lisp
+
+mtools-rm-ref-output-1.raw mtools-rm-output-1.raw: cat-replicant.lisp
+	rm -f $(DISK) mtools-cat-ref-output-2.txt
+	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 140000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	cp $(DISK) mtools-rm-output-1.raw
+	env MTOOLSRC=$(MTOOLSRC) mdel c:/vmlinuz
+	cp $(DISK) mtools-rm-ref-output-1.raw
+	env DISK="mtools-rm-output-1.raw" RM_OUTPUT="mtools-rm-output-1.raw" \
+	RM_INPUT="vmlinuz" $(ACL2) -- < rm-replicant.lisp
 
 debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
