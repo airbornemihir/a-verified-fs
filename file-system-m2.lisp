@@ -5193,7 +5193,7 @@
                            :hints (("Goal" :in-theory (enable resize-data-region))))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-36
+  fat32-in-memory-to-string-inversion-lemma-35
   (implies
    (and (natp n2)
         (< n2 (* 4 (fat-length fat32-in-memory)))
@@ -5207,7 +5207,7 @@
   :hints (("Goal" :in-theory (enable make-fat-string-ac))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-37
+  fat32-in-memory-to-string-inversion-lemma-36
   (implies
    (and (fat32-entry-p current)
         (< (nfix n) 4))
@@ -5250,7 +5250,7 @@
                           (logtail 24 current))))))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-38
+  fat32-in-memory-to-string-inversion-lemma-37
   (implies (and (integerp pos)
                 (integerp length)
                 (<= pos length))
@@ -5269,7 +5269,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-35
+    fat32-in-memory-to-string-inversion-lemma-38
     (implies
      (and (compliant-fat32-in-memoryp fat32-in-memory)
           (not (zp pos))
