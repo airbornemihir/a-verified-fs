@@ -622,3 +622,9 @@
                 (consp x)
                 (not (equal (car x) nil)))
            (consp (assoc-equal (car x) lst))))
+
+;; The following is redundant with the eponymous theorem in
+;; books/std/lists/nthcdr.lisp, from where it was taken with thanks.
+(defthm car-of-nthcdr
+    (equal (car (nthcdr i x))
+           (nth i x)))
