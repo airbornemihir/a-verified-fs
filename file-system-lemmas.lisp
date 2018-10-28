@@ -628,3 +628,14 @@
 (defthm car-of-nthcdr
     (equal (car (nthcdr i x))
            (nth i x)))
+
+(defthm stringp-of-nth
+  (implies (string-listp l)
+           (iff (stringp (nth n l))
+                (< (nfix n) (len l)))))
+
+(defthm string-listp-of-update-nth
+  (implies (string-listp l)
+           (equal (string-listp (update-nth key val l))
+                  (and (<= (nfix key) (len l))
+                       (stringp val)))))

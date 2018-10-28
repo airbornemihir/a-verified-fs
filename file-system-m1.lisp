@@ -982,28 +982,10 @@
        (dir-ent-after-deletion
         (append coerced-basename-after-deletion
                 (nthcdr 11 (m1-file->dir-ent file))))
-       ;; zeroing out the first cluster
+       ;; zeroing out the first cluster and file size
        (dir-ent-after-deletion
-        (update-nth
-         26 0
-         (update-nth
-          27 0
-          (update-nth
-           20 0
-           (update-nth
-            21 0
-            dir-ent-after-deletion)))))
-       ;; zeroing out the length
-       (dir-ent-after-deletion
-        (update-nth
-         31 0
-         (update-nth
-          30 0
-          (update-nth
-           29 0
-           (update-nth
-            28 0
-            dir-ent-after-deletion)))))
+        (dir-ent-set-first-cluster-file-size
+         dir-ent-after-deletion 0 0))
        (file-after-deletion
         (make-m1-file :dir-ent dir-ent-after-deletion
                       :contents nil))
