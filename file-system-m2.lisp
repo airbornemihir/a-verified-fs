@@ -1998,39 +1998,39 @@
     (mv-nth 0 (read-32ule-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
-(defun
-  update-data-region
-  (fat32-in-memory str len pos)
-  (declare
-   (xargs :guard (and (stringp str)
-                      (natp len)
-                      (natp pos)
-                      (<= pos len)
-                      (= len (length str))
-                      (<= len
-                          (data-region-length fat32-in-memory))
-                      (<= (data-region-length fat32-in-memory)
-                          *ms-max-data-region-size*))
-          :guard-hints
-          (("goal"
-            :in-theory (e/d (data-region-length update-data-regioni)
-                            (fat32-in-memoryp))))
-          :measure (nfix (- len pos))
-          :stobjs fat32-in-memory))
-  (b*
-      ((len (the (unsigned-byte 47) len))
-       (pos (the (unsigned-byte 47) pos)))
-    (if
-     (mbe :logic (zp (- len pos))
-          :exec (>= pos len))
-     fat32-in-memory
-     (b*
-         ((ch (char str pos))
-          (ch-byte (the (unsigned-byte 8) (char-code ch)))
-          (pos+1 (the (unsigned-byte 47) (1+ pos)))
-          (fat32-in-memory
-           (update-data-regioni pos ch-byte fat32-in-memory)))
-       (update-data-region fat32-in-memory str len pos+1)))))
+;; (defun
+;;   update-data-region
+;;   (fat32-in-memory str len pos)
+;;   (declare
+;;    (xargs :guard (and (stringp str)
+;;                       (natp len)
+;;                       (natp pos)
+;;                       (<= pos len)
+;;                       (= len (length str))
+;;                       (<= len
+;;                           (data-region-length fat32-in-memory))
+;;                       (<= (data-region-length fat32-in-memory)
+;;                           *ms-max-data-region-size*))
+;;           :guard-hints
+;;           (("goal"
+;;             :in-theory (e/d (data-region-length update-data-regioni)
+;;                             (fat32-in-memoryp))))
+;;           :measure (nfix (- len pos))
+;;           :stobjs fat32-in-memory))
+;;   (b*
+;;       ((len (the (unsigned-byte 47) len))
+;;        (pos (the (unsigned-byte 47) pos)))
+;;     (if
+;;      (mbe :logic (zp (- len pos))
+;;           :exec (>= pos len))
+;;      fat32-in-memory
+;;      (b*
+;;          ((ch (char str pos))
+;;           (ch-byte (the (unsigned-byte 8) (char-code ch)))
+;;           (pos+1 (the (unsigned-byte 47) (1+ pos)))
+;;           (fat32-in-memory
+;;            (update-data-regioni pos ch-byte fat32-in-memory)))
+;;        (update-data-region fat32-in-memory str len pos+1)))))
 
 (defthm
   bpb_bytspersec-of-update-data-regioni
@@ -2082,54 +2082,54 @@
   (("goal"
     :in-theory (enable update-data-regioni bpb_fatsz32))))
 
-(encapsulate
-  ()
+;; (encapsulate
+;;   ()
 
-  (local
-   (defthm fat32-in-memory-of-update-data-region
-     (implies (and (fat32-in-memoryp fat32-in-memory)
-                   (< i (data-region-length fat32-in-memory)))
-              (equal (fat32-in-memoryp (update-data-regioni i v
-                                                           fat32-in-memory))
-                     (unsigned-byte-p 8 v)))
-     :hints (("Goal" :in-theory (enable update-data-regioni data-region-length)))))
+;;   (local
+;;    (defthm fat32-in-memory-of-update-data-regioni
+;;      (implies (and (fat32-in-memoryp fat32-in-memory)
+;;                    (< i (data-region-length fat32-in-memory)))
+;;               (equal (fat32-in-memoryp (update-data-regioni i v
+;;                                                             fat32-in-memory))
+;;                      (stringp v)))
+;;      :hints (("Goal" :in-theory (enable update-data-regioni data-region-length)))))
 
-  (defthmd
-    update-data-region-correctness-1
-    (implies
-     (and (natp pos)
-          (natp len)
-          (< pos len)
-          (<= len
-              (data-region-length fat32-in-memory))
-          (compliant-fat32-in-memoryp fat32-in-memory)
-          (stringp str)
-          (<= len (length str)))
-     (equal
-      (update-data-region fat32-in-memory str len pos)
-      (update-nth
-       *data-regioni*
-       (append (take pos
-                     (nth *data-regioni* fat32-in-memory))
-               (string=>nats (subseq str pos len))
-               (nthcdr len
-                       (nth *data-regioni* fat32-in-memory)))
-       fat32-in-memory)))
-    :hints
-    (("Goal"
-      :use
-      ((:functional-instance
-        update-multiple-elements-fn-correctness-1
-        ;; Instantiate the generic functions:
-        (update-single-element-fn update-data-regioni)
-        (stobj-array-index (lambda () *data-regioni*))
-        (stobj-array-length data-region-length)
-        (max-stobj-array-length (lambda () *ms-max-data-region-size*))
-        ;; Instantiate the other relevant functions:
-        (update-multiple-elements-fn update-data-region)))
-      :in-theory (disable fat32-in-memoryp))
-     ("Subgoal 4"
-      :in-theory (enable update-data-regioni)))))
+;;   (defthmd
+;;     update-data-region-correctness-1
+;;     (implies
+;;      (and (natp pos)
+;;           (natp len)
+;;           (< pos len)
+;;           (<= len
+;;               (data-region-length fat32-in-memory))
+;;           (compliant-fat32-in-memoryp fat32-in-memory)
+;;           (stringp str)
+;;           (<= len (length str)))
+;;      (equal
+;;       (update-data-region fat32-in-memory str len pos)
+;;       (update-nth
+;;        *data-regioni*
+;;        (append (take pos
+;;                      (nth *data-regioni* fat32-in-memory))
+;;                (string=>nats (subseq str pos len))
+;;                (nthcdr len
+;;                        (nth *data-regioni* fat32-in-memory)))
+;;        fat32-in-memory)))
+;;     :hints
+;;     (("Goal"
+;;       :use
+;;       ((:functional-instance
+;;         update-multiple-elements-fn-correctness-1
+;;         ;; Instantiate the generic functions:
+;;         (update-single-element-fn update-data-regioni)
+;;         (stobj-array-index (lambda () *data-regioni*))
+;;         (stobj-array-length data-region-length)
+;;         (max-stobj-array-length (lambda () *ms-max-data-region-size*))
+;;         ;; Instantiate the other relevant functions:
+;;         (update-multiple-elements-fn update-data-region)))
+;;       :in-theory (disable fat32-in-memoryp))
+;;      ("Subgoal 4"
+;;       :in-theory (enable update-data-regioni)))))
 
 (defun
   update-fat (fat32-in-memory str pos)
