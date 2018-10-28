@@ -1631,15 +1631,15 @@
   compliant-fat32-in-memoryp-of-update-bs_oemnamei
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (< i (bs_oemname-length fat32-in-memory)))
-           (equal
-            (compliant-fat32-in-memoryp
-             (update-bs_oemnamei i v fat32-in-memory))
-            (unsigned-byte-p 8 v)))
+           (equal (compliant-fat32-in-memoryp
+                   (update-bs_oemnamei i v fat32-in-memory))
+                  (unsigned-byte-p 8 v)))
   :hints
-  (("goal" :do-not-induct t
+  (("goal"
+    :do-not-induct t
     :in-theory (e/d (compliant-fat32-in-memoryp
-                     update-bs_oemnamei
-                     bs_oemname-length count-of-clusters)
+                     update-bs_oemnamei bs_oemname-length
+                     count-of-clusters cluster-size)
                     (floor)))))
 
 (defthm
