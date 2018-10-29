@@ -15,6 +15,18 @@
 (include-book "insert-text")
 (include-book "fat32")
 
+;; This was taken from rtl/rel9/arithmetic/top with thanks.
+(defthm product-less-than-zero
+  (implies (case-split (or (not (complex-rationalp x))
+                           (not (complex-rationalp y))))
+           (equal (< (* x y) 0)
+                  (if (< x 0)
+                      (< 0 y)
+                      (if (equal 0 x)
+                          nil
+                          (if (not (acl2-numberp x))
+                              nil (< y 0)))))))
+
 (defthm nth-of-string=>nats
   (equal (nth n (string=>nats string))
          (if (< (nfix n) (len (explode string)))

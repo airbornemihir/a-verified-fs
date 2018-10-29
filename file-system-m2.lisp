@@ -13,6 +13,23 @@
 ;; bytes.
 (local (include-book "std/typed-lists/integer-listp" :dir :system))
 
+(local
+ (defthm
+   painful-debugging-lemma-1
+   (implies (and (integerp x) (integerp y))
+            (integerp (+ x y)))))
+
+(local
+ (defthm
+   painful-debugging-lemma-2
+   (implies (and (integerp x) (integerp y))
+            (integerp (* x y)))))
+
+(local
+ (defthm painful-debugging-lemma-3
+   (implies (integerp x)
+            (integerp (unary-- x)))))
+
 (encapsulate
   ()
 
@@ -552,6 +569,23 @@
                   :guard (fat32-in-memoryp fat32-in-memory)))
   (* (bpb_secperclus fat32-in-memory)
      (bpb_bytspersec fat32-in-memory)))
+
+(defthm natp-of-cluster-size
+  (implies (fat32-in-memoryp fat32-in-memory)
+           (natp (cluster-size fat32-in-memory)))
+  :hints (("goal" :in-theory (e/d (cluster-size bpb_bytspersec bpb_secperclus) ())))
+  :rule-classes ((:rewrite
+                  :corollary
+                  (implies (fat32-in-memoryp fat32-in-memory)
+                           (integerp (cluster-size fat32-in-memory))))
+                 (:rewrite
+                  :corollary
+                  (implies (fat32-in-memoryp fat32-in-memory)
+                           (rationalp (cluster-size fat32-in-memory))))
+                 (:linear
+                  :corollary
+                  (implies (fat32-in-memoryp fat32-in-memory)
+                           (<= 0 (cluster-size fat32-in-memory))))))
 
 (defund
   count-of-clusters (fat32-in-memory)
@@ -1998,6 +2032,46 @@
     (mv-nth 0 (read-32ule-n n channel state))))
   :hints (("goal" :in-theory (disable unsigned-byte-p))))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defun
+    update-data-region
+    (fat32-in-memory str len)
+    (declare
+     (xargs
+      :guard (and (stringp str)
+                  (natp len)
+                  (<= len
+                      (data-region-length fat32-in-memory))
+                  (equal (length str)
+                         (* (data-region-length fat32-in-memory)
+                            (cluster-size fat32-in-memory)))
+                  (<= len
+                      (- *ms-bad-cluster*
+                         *ms-first-data-cluster*)))
+      :guard-hints
+      (("goal" :in-theory (e/d nil (fat32-in-memoryp))))
+      :stobjs fat32-in-memory))
+    (b*
+        ((len (the (unsigned-byte 28) len)))
+      (if
+       (zp len)
+       fat32-in-memory
+       (b*
+           ((cluster-size (cluster-size fat32-in-memory))
+            (index (- (data-region-length fat32-in-memory)
+                      len))
+            (current-cluster (subseq str (* index cluster-size)
+                                     (* (+ index 1) cluster-size)))
+            (fat32-in-memory
+             (update-data-regioni
+              index current-cluster fat32-in-memory)))
+         (update-data-region
+          fat32-in-memory str
+          (the (unsigned-byte 28) (- len 1))))))))
 ;; (defun
 ;;   update-data-region
 ;;   (fat32-in-memory str len pos)
@@ -2203,26 +2277,6 @@
               (update-fat fat32-in-memory str pos))
          (bpb_rsvdseccnt fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
-
-;; BOZO: Remove these.
-
-(defthm
-  slurp-disk-image-guard-lemma-11
-  (implies (and (integerp x) (integerp y))
-           (integerp (+ x y))))
-
-(defthm
-  slurp-disk-image-guard-lemma-12
-  (implies (and (integerp x) (integerp y))
-           (integerp (* x y))))
-
-;; (defun m2-stricter-fs-p (fat32-in-memory)
-;;   (declare (xargs :guard t))
-;;   (and (fat32-in-memoryp fat32-in-memory)
-;;        (<= 1
-;;            (bpb_secperclus fat32-in-memory))
-;;        (<= 1
-;;            (bpb_rsvdseccnt fat32-in-memory))))
 
 (defthm
   bpb_secperclus-of-read-reserved-area t
