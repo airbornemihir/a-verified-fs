@@ -17,11 +17,14 @@
 (defthm len-of-first-n-ac
   (implies (natp i) (equal (len (first-n-ac i l ac)) (+ i (len ac)))))
 
-(defthm nthcdr-of-binary-append-1
-  (implies (and (integerp n) (>= n (len x)))
-           (equal (nthcdr n (binary-append x y))
-                  (nthcdr (- n (len x)) y)))
-  :hints (("Goal" :induct (nthcdr n x)) ))
+;; The following is redundant with the definition in
+;; books/coi/lists/basic.lisp, from where it was taken with thanks.
+(defthm nthcdr-of-append
+  (equal (nthcdr n (append a b))
+         (if (<= (nfix n) (len a))
+             (append (nthcdr n a) b)
+           (nthcdr (- n (len a)) b)))
+  :hints(("Goal" :in-theory (enable nthcdr))))
 
 (defthm first-n-ac-of-binary-append-1
   (implies (and (natp i) (<= i (len x)))
