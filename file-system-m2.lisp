@@ -30,6 +30,12 @@
    (implies (integerp x)
             (integerp (unary-- x)))))
 
+(defthm unsigned-byte-listp-of-revappend
+  (equal (unsigned-byte-listp width (revappend x y))
+         (and (unsigned-byte-listp width (list-fix x))
+              (unsigned-byte-listp width y)))
+  :hints (("goal" :induct (revappend x y))))
+
 (encapsulate
   ()
 
@@ -1011,11 +1017,23 @@
 (defthm
   data-regioni-when-compliant-fat32-in-memoryp
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (< (nfix i) (data-region-length fat32-in-memory)))
-           (cluster-p (data-regioni i fat32-in-memory) (cluster-size fat32-in-memory)))
-  :hints (("goal" :in-theory (e/d (compliant-fat32-in-memoryp
-                                   data-regioni data-region-length)
-                                  (unsigned-byte-p)))))
+                (< (nfix i)
+                   (data-region-length fat32-in-memory)))
+           (cluster-p (data-regioni i fat32-in-memory)
+                      (cluster-size fat32-in-memory)))
+  :hints
+  (("goal" :in-theory (e/d (compliant-fat32-in-memoryp
+                            data-regioni data-region-length)
+                           (unsigned-byte-p))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
+                  (< (nfix i)
+                     (data-region-length fat32-in-memory)))
+             (stringp (data-regioni i fat32-in-memory)))
+    :hints (("goal" :in-theory (enable cluster-p))))))
 
 (defthm
   cluster-size-of-update-data-regioni
@@ -2517,117 +2535,6 @@
         (mv fat32-in-memory -1)))
     (string-to-fat32-in-memory fat32-in-memory str)))
 
-(defun
-  get-dir-ent-helper
-  (fat32-in-memory data-region-index len ac)
-  (declare
-   (xargs
-    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp data-region-index)
-                (natp len)
-                (<= (+ data-region-index len)
-                    (data-region-length fat32-in-memory))
-                (unsigned-byte-listp 8 ac))
-    :guard-hints (("goal" :in-theory (disable unsigned-byte-p)))
-    :stobjs (fat32-in-memory)))
-  (if
-   (zp len)
-   ac
-   (let
-    ((data-region-index (nfix data-region-index)))
-    (get-dir-ent-helper
-     fat32-in-memory (+ data-region-index 1)
-     (- len 1)
-     (cons (data-regioni data-region-index fat32-in-memory)
-           ac)))))
-
-(defcong nat-equiv equal
-  (get-dir-ent-helper
-   fat32-in-memory data-region-index len ac)
-  2)
-
-(defthm unsigned-byte-listp-of-revappend
-  (equal (unsigned-byte-listp width (revappend x y))
-         (and (unsigned-byte-listp width (list-fix x))
-              (unsigned-byte-listp width y)))
-  :hints (("goal" :induct (revappend x y))))
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthm
-    get-dir-ent-helper-alt
-    (equal
-     (get-dir-ent-helper fat32-in-memory
-                         data-region-index len ac)
-     (let ((data-region-index (nfix data-region-index)))
-       (revappend
-        (subseq-list (nth *data-regioni* fat32-in-memory)
-                     data-region-index
-                     (+ data-region-index len))
-        ac)))
-    :hints
-    (("goal" :in-theory (enable take-redefinition
-                                revappend-removal data-regioni))
-     ("subgoal *1/2.4'''" :expand (repeat (+ -1 len) nil))
-     ("subgoal *1/2.1'''" :expand (repeat (+ -1 len) nil))))
-
-  (defthm
-    get-dir-ent-helper-correctness-1
-    (implies
-     (and (compliant-fat32-in-memoryp fat32-in-memory)
-          (natp data-region-index)
-          (<= (+ data-region-index len)
-              (data-region-length fat32-in-memory))
-          (unsigned-byte-listp 8 ac))
-     (and
-      (unsigned-byte-listp
-       8
-       (get-dir-ent-helper fat32-in-memory
-                           data-region-index len ac))
-      (equal (len (get-dir-ent-helper fat32-in-memory
-                                      data-region-index len ac))
-             (+ (nfix len) (len ac)))))
-    :hints
-    (("goal" :do-not-induct t
-      :in-theory
-      (e/d (unsigned-byte-listp compliant-fat32-in-memoryp
-                                data-region-length)
-           (unsigned-byte-p data-regioni))))))
-
-(defund get-dir-ent (fat32-in-memory data-region-index)
-  (declare
-   (xargs
-    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (natp data-region-index)
-                (<= (+ data-region-index *ms-dir-ent-length*)
-                    (data-region-length fat32-in-memory)))
-    :stobjs (fat32-in-memory)))
-  (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                           *ms-dir-ent-length* nil)))
-
-(defthm
-  get-dir-ent-correctness-1
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (natp data-region-index)
-        (<= (+ data-region-index *ms-dir-ent-length*)
-            (data-region-length fat32-in-memory)))
-   (and
-    (unsigned-byte-listp
-     8
-     (get-dir-ent fat32-in-memory data-region-index))
-    (equal (len (get-dir-ent fat32-in-memory data-region-index))
-           *ms-dir-ent-length*)))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (e/d (data-region-length get-dir-ent unsigned-byte-listp
-                             compliant-fat32-in-memoryp)))))
-
 (defund
   get-clusterchain
   (fat32-in-memory masked-current-cluster length)
@@ -2685,8 +2592,8 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defun
-    get-contents-from-clusterchain
-    (fat32-in-memory clusterchain file-size)
+      get-contents-from-clusterchain
+      (fat32-in-memory clusterchain file-size)
     (declare
      (xargs
       :stobjs (fat32-in-memory)
@@ -2694,31 +2601,39 @@
       (and
        (compliant-fat32-in-memoryp fat32-in-memory)
        (equal (data-region-length fat32-in-memory)
-              (* (count-of-clusters fat32-in-memory)
-                 (cluster-size fat32-in-memory)))
+              (count-of-clusters fat32-in-memory))
        (fat32-masked-entry-list-p clusterchain)
        (natp file-size)
        (bounded-nat-listp clusterchain
                           (count-of-clusters fat32-in-memory))
        (lower-bounded-integer-listp
         clusterchain *ms-first-data-cluster*))
-      :guard-hints
-      (("goal" :in-theory (e/d (lower-bounded-integer-listp)
-                               (fat32-in-memoryp))))))
+      :verify-guards nil))
     (if
-     (atom clusterchain)
-     nil
-     (let*
-      ((cluster-size (cluster-size fat32-in-memory))
-       (masked-current-cluster (car clusterchain))
-       (data-region-index (* (nfix (- masked-current-cluster 2))
-                             cluster-size)))
-      (append
-       (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                                (min file-size cluster-size) nil))
+        (atom clusterchain)
+        ""
+      (let*
+          ((cluster-size (cluster-size fat32-in-memory))
+           (masked-current-cluster (car clusterchain)))
+        (concatenate
+         'string
+         (data-regioni
+          (nfix (- masked-current-cluster *ms-first-data-cluster*))
+          fat32-in-memory)
+         (get-contents-from-clusterchain
+          fat32-in-memory (cdr clusterchain)
+          (nfix (- file-size cluster-size)))))))
+
+  (defthm
+    stringp-of-get-contents-from-clusterchain
+      (stringp
        (get-contents-from-clusterchain
-        fat32-in-memory (cdr clusterchain)
-        (nfix (- file-size cluster-size)))))))
+        fat32-in-memory clusterchain file-size)))
+
+  (verify-guards get-contents-from-clusterchain
+      :hints
+      (("goal" :in-theory (e/d (lower-bounded-integer-listp)
+                               (fat32-in-memoryp)))))
 
   (defun
     get-clusterchain-contents
@@ -2729,8 +2644,7 @@
       :measure (nfix length)
       :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                   (equal (data-region-length fat32-in-memory)
-                         (* (count-of-clusters fat32-in-memory)
-                            (cluster-size fat32-in-memory)))
+                         (count-of-clusters fat32-in-memory))
                   (fat32-masked-entry-p masked-current-cluster)
                   (natp length)
                   (>= masked-current-cluster
@@ -2739,28 +2653,15 @@
                      (count-of-clusters fat32-in-memory))
                   (<= (count-of-clusters fat32-in-memory)
                       (fat-length fat32-in-memory)))
-      :guard-hints
-      (("goal"
-        :do-not-induct t
-        :in-theory (e/d (fati-when-compliant-fat32-in-memoryp)
-                        (fat32-in-memoryp)))
-       ("subgoal 1.10'"
-        :in-theory (e/d (fat32-in-memoryp)
-                        (fat32-entry-p-of-nth))
-        :use (:instance fat32-entry-p-of-nth
-                        (n masked-current-cluster)
-                        (l (nth *fati* fat32-in-memory)))))))
+      :verify-guards nil))
     (b*
         ((cluster-size (cluster-size fat32-in-memory))
          ((unless (and (not (zp length))
                        (not (zp cluster-size))))
-          (mv nil (- *eio*)))
-         (data-region-index (* (nfix (- masked-current-cluster 2))
-                               cluster-size))
+          (mv "" (- *eio*)))
          (current-cluster-contents
-          (rev (get-dir-ent-helper fat32-in-memory data-region-index
-                                   (min length cluster-size)
-                                   nil)))
+          (str-fix
+           (data-regioni (nfix (- masked-current-cluster 2)) fat32-in-memory)))
          (masked-next-cluster
           (fat32-entry-mask (fati masked-current-cluster
                                   fat32-in-memory)))
@@ -2771,15 +2672,39 @@
                        (< masked-next-cluster
                           (count-of-clusters fat32-in-memory))))
           (mv current-cluster-contents 0))
-         ((mv tail-character-list tail-error)
+         ((mv tail-string tail-error)
           (get-clusterchain-contents
            fat32-in-memory masked-next-cluster
            (nfix (- length cluster-size))))
          ((unless (equal tail-error 0))
-          (mv nil (- *eio*))))
-      (mv (append current-cluster-contents
-                  tail-character-list)
-          0))))
+          (mv "" (- *eio*))))
+      (mv (concatenate 'string
+                       current-cluster-contents
+                       tail-string)
+          0)))
+
+  (defthm
+    get-clusterchain-contents-guard-lemma-1
+    (implies
+     (and (compliant-fat32-in-memoryp fat32-in-memory)
+          (integerp masked-current-cluster)
+          (>= masked-current-cluster
+              *ms-first-data-cluster*)
+          (< (- masked-current-cluster
+                *ms-first-data-cluster*)
+             (data-region-length fat32-in-memory)))
+     (stringp (mv-nth 0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       masked-current-cluster length)))))
+
+  (verify-guards
+    get-clusterchain-contents
+    :hints
+      (("goal"
+        :do-not-induct t
+        :in-theory (e/d (fati-when-compliant-fat32-in-memoryp)
+                        (fat32-in-memoryp))))))
 
 (defthm
   get-clusterchain-contents-correctness-2-lemma-1
@@ -2905,7 +2830,7 @@
                                    length))
        ((mv head head-entry-count)
         (if not-right-kind-of-directory-p
-            (mv (nats=>string contents) 1)
+            (mv contents 1)
             (fat32-in-memory-to-m1-fs-helper
              fat32-in-memory
              contents (- entry-limit 1))))
