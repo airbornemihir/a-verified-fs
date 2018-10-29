@@ -264,7 +264,8 @@
   update-stobj-scalar-correctness
   (bit-width updater accessor
              stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3
-             lemma-name4 lemma-name5 updater-of-updater updater-of-accessor)
+             lemma-name4 lemma-name5 updater-of-updater updater-of-accessor
+             accessor-of-resize-fat)
   (let
       ((upper-bound (ash 1 bit-width)))
   `(encapsulate
@@ -331,7 +332,11 @@
                         (,accessor ,stobj)
                         ,stobj)
                        ,stobj))
-       :hints (("goal" :in-theory (enable ,updater ,accessor)))))))
+       :hints (("goal" :in-theory (enable ,updater ,accessor))))
+     (defthm ,accessor-of-resize-fat
+       (equal (,accessor (resize-fat i fat32-in-memory))
+              (,accessor ,stobj))
+       :hints (("goal" :in-theory (enable resize-fat ,accessor)))))))
 
 (update-stobj-scalar-correctness 16 update-bpb_rsvdseccnt bpb_rsvdseccnt
                                  fat32-in-memory fat32-in-memoryp
@@ -341,7 +346,8 @@
                                  update-bpb_rsvdseccnt-correctness-4
                                  update-bpb_rsvdseccnt-correctness-5
                                  update-bpb_rsvdseccnt-of-update-bpb_rsvdseccnt
-                                 update-bpb_rsvdseccnt-of-bpb_rsvdseccnt)
+                                 update-bpb_rsvdseccnt-of-bpb_rsvdseccnt
+                                 bpb_rsvdseccnt-of-resize-fat)
 
 (update-stobj-scalar-correctness 8 update-bpb_secperclus bpb_secperclus
                                  fat32-in-memory fat32-in-memoryp
@@ -351,7 +357,8 @@
                                  update-bpb_secperclus-correctness-4
                                  update-bpb_secperclus-correctness-5
                                  update-bpb_secperclus-of-update-bpb_secperclus
-                                 update-bpb_secperclus-of-bpb_secperclus)
+                                 update-bpb_secperclus-of-bpb_secperclus
+                                 bpb_secperclus-of-resize-fat)
 
 (update-stobj-scalar-correctness 16 update-bpb_bytspersec bpb_bytspersec
                                  fat32-in-memory fat32-in-memoryp
@@ -361,7 +368,8 @@
                                  update-bpb_bytspersec-correctness-4
                                  update-bpb_bytspersec-correctness-5
                                  update-bpb_bytspersec-of-update-bpb_bytspersec
-                                 update-bpb_bytspersec-of-bpb_bytspersec)
+                                 update-bpb_bytspersec-of-bpb_bytspersec
+                                 bpb_bytspersec-of-resize-fat)
 
 (update-stobj-scalar-correctness 8 update-bpb_numfats bpb_numfats
                                  fat32-in-memory fat32-in-memoryp
@@ -371,7 +379,8 @@
                                  update-bpb_numfats-correctness-4
                                  update-bpb_numfats-correctness-5
                                  update-bpb_numfats-of-update-bpb_numfats
-                                 update-bpb_numfats-of-bpb_numfats)
+                                 update-bpb_numfats-of-bpb_numfats
+                                 bpb_numfats-of-resize-fat)
 
 (update-stobj-scalar-correctness 32 update-bpb_rootclus bpb_rootclus
                                  fat32-in-memory fat32-in-memoryp
@@ -381,7 +390,8 @@
                                  update-bpb_rootclus-correctness-4
                                  update-bpb_rootclus-correctness-5
                                  update-bpb_rootclus-of-update-bpb_rootclus
-                                 update-bpb_rootclus-of-bpb_rootclus)
+                                 update-bpb_rootclus-of-bpb_rootclus
+                                 bpb_rootclus-of-resize-fat)
 
 (update-stobj-scalar-correctness 16 update-bpb_fsinfo bpb_fsinfo
                                  fat32-in-memory fat32-in-memoryp
@@ -391,7 +401,8 @@
                                  update-bpb_fsinfo-correctness-4
                                  update-bpb_fsinfo-correctness-5
                                  update-bpb_fsinfo-of-update-bpb_fsinfo
-                                 update-bpb_fsinfo-of-bpb_fsinfo)
+                                 update-bpb_fsinfo-of-bpb_fsinfo
+                                 bpb_fsinfo-of-resize-fat)
 
 (update-stobj-scalar-correctness 16 update-bpb_bkbootsec bpb_bkbootsec
                                  fat32-in-memory fat32-in-memoryp
@@ -401,7 +412,8 @@
                                  update-bpb_bkbootsec-correctness-4
                                  update-bpb_bkbootsec-correctness-5
                                  update-bpb_bkbootsec-of-update-bpb_bkbootsec
-                                 update-bpb_bkbootsec-of-bpb_bkbootsec)
+                                 update-bpb_bkbootsec-of-bpb_bkbootsec
+                                 bpb_bkbootsec-of-resize-fat)
 
 (update-stobj-scalar-correctness 8 update-bs_drvnum bs_drvnum
                                  fat32-in-memory fat32-in-memoryp
@@ -411,7 +423,8 @@
                                  update-bs_drvnum-correctness-4
                                  update-bs_drvnum-correctness-5
                                  update-bs_drvnum-of-update-bs_drvnum
-                                 update-bs_drvnum-of-bs_drvnum)
+                                 update-bs_drvnum-of-bs_drvnum
+                                 bs_drvnum-of-resize-fat)
 
 (update-stobj-scalar-correctness 8 update-bs_reserved1 bs_reserved1
                                  fat32-in-memory fat32-in-memoryp
@@ -421,7 +434,8 @@
                                  update-bs_reserved1-correctness-4
                                  update-bs_reserved1-correctness-5
                                  update-bs_reserved1-of-update-bs_reserved1
-                                 update-bs_reserved1-of-bs_reserved1)
+                                 update-bs_reserved1-of-bs_reserved1
+                                 bs_reserved1-of-resize-fat)
 
 (update-stobj-scalar-correctness 8 update-bs_bootsig bs_bootsig
                                  fat32-in-memory fat32-in-memoryp
@@ -431,7 +445,8 @@
                                  update-bs_bootsig-correctness-4
                                  update-bs_bootsig-correctness-5
                                  update-bs_bootsig-of-update-bs_bootsig
-                                 update-bs_bootsig-of-bs_bootsig)
+                                 update-bs_bootsig-of-bs_bootsig
+                                 bs_bootsig-of-resize-fat)
 
 (update-stobj-scalar-correctness 8 update-bpb_media bpb_media
                                  fat32-in-memory fat32-in-memoryp
@@ -441,7 +456,8 @@
                                  update-bpb_media-correctness-4
                                  update-bpb_media-correctness-5
                                  update-bpb_media-of-update-bpb_media
-                                 update-bpb_media-of-bpb_media)
+                                 update-bpb_media-of-bpb_media
+                                 bpb_media-of-resize-fat)
 
 (update-stobj-scalar-correctness 8 update-bpb_fsver_minor bpb_fsver_minor
                                  fat32-in-memory fat32-in-memoryp
@@ -451,7 +467,8 @@
                                  update-bpb_fsver_minor-correctness-4
                                  update-bpb_fsver_minor-correctness-5
                                  update-bpb_fsver_minor-of-update-bpb_fsver_minor
-                                 update-bpb_fsver_minor-of-bpb_fsver_minor)
+                                 update-bpb_fsver_minor-of-bpb_fsver_minor
+                                 bpb_fsver_minor-of-resize-fat)
 
 (update-stobj-scalar-correctness 8 update-bpb_fsver_major bpb_fsver_major
                                  fat32-in-memory fat32-in-memoryp
@@ -461,7 +478,8 @@
                                  update-bpb_fsver_major-correctness-4
                                  update-bpb_fsver_major-correctness-5
                                  update-bpb_fsver_major-of-update-bpb_fsver_major
-                                 update-bpb_fsver_major-of-bpb_fsver_major)
+                                 update-bpb_fsver_major-of-bpb_fsver_major
+                                 bpb_fsver_major-of-resize-fat)
 
 (update-stobj-scalar-correctness 16 update-bpb_fatsz16 bpb_fatsz16
                                  fat32-in-memory fat32-in-memoryp
@@ -471,7 +489,8 @@
                                  update-bpb_fatsz16-correctness-4
                                  update-bpb_fatsz16-correctness-5
                                  update-bpb_fatsz16-of-update-bpb_fatsz16
-                                 update-bpb_fatsz16-of-bpb_fatsz16)
+                                 update-bpb_fatsz16-of-bpb_fatsz16
+                                 bpb_fatsz16-of-resize-fat)
 
 (update-stobj-scalar-correctness 16 update-bpb_secpertrk bpb_secpertrk
                                  fat32-in-memory fat32-in-memoryp
@@ -481,7 +500,8 @@
                                  update-bpb_secpertrk-correctness-4
                                  update-bpb_secpertrk-correctness-5
                                  update-bpb_secpertrk-of-update-bpb_secpertrk
-                                 update-bpb_secpertrk-of-bpb_secpertrk)
+                                 update-bpb_secpertrk-of-bpb_secpertrk
+                                 bpb_secpertrk-of-resize-fat)
 
 (update-stobj-scalar-correctness 16 update-bpb_numheads bpb_numheads
                                  fat32-in-memory fat32-in-memoryp
@@ -491,7 +511,8 @@
                                  update-bpb_numheads-correctness-4
                                  update-bpb_numheads-correctness-5
                                  update-bpb_numheads-of-update-bpb_numheads
-                                 update-bpb_numheads-of-bpb_numheads)
+                                 update-bpb_numheads-of-bpb_numheads
+                                 bpb_numheads-of-resize-fat)
 
 (update-stobj-scalar-correctness 16 update-bpb_extflags bpb_extflags
                                  fat32-in-memory fat32-in-memoryp
@@ -501,7 +522,8 @@
                                  update-bpb_extflags-correctness-4
                                  update-bpb_extflags-correctness-5
                                  update-bpb_extflags-of-update-bpb_extflags
-                                 update-bpb_extflags-of-bpb_extflags)
+                                 update-bpb_extflags-of-bpb_extflags
+                                 bpb_extflags-of-resize-fat)
 
 (update-stobj-scalar-correctness 32 update-bpb_hiddsec bpb_hiddsec
                                  fat32-in-memory fat32-in-memoryp
@@ -511,7 +533,8 @@
                                  update-bpb_hiddsec-correctness-4
                                  update-bpb_hiddsec-correctness-5
                                  update-bpb_hiddsec-of-update-bpb_hiddsec
-                                 update-bpb_hiddsec-of-bpb_hiddsec)
+                                 update-bpb_hiddsec-of-bpb_hiddsec
+                                 bpb_hiddsec-of-resize-fat)
 
 (update-stobj-scalar-correctness 32 update-bpb_totsec32 bpb_totsec32
                                  fat32-in-memory fat32-in-memoryp
@@ -521,7 +544,8 @@
                                  update-bpb_totsec32-correctness-4
                                  update-bpb_totsec32-correctness-5
                                  update-bpb_totsec32-of-update-bpb_totsec32
-                                 update-bpb_totsec32-of-bpb_totsec32)
+                                 update-bpb_totsec32-of-bpb_totsec32
+                                 bpb_totsec32-of-resize-fat)
 
 (update-stobj-scalar-correctness 32 update-bpb_fatsz32 bpb_fatsz32
                                  fat32-in-memory fat32-in-memoryp
@@ -531,7 +555,8 @@
                                  update-bpb_fatsz32-correctness-4
                                  update-bpb_fatsz32-correctness-5
                                  update-bpb_fatsz32-of-update-bpb_fatsz32
-                                 update-bpb_fatsz32-of-bpb_fatsz32)
+                                 update-bpb_fatsz32-of-bpb_fatsz32
+                                 bpb_fatsz32-of-resize-fat)
 
 (update-stobj-scalar-correctness 16 update-bpb_rootentcnt bpb_rootentcnt
                                  fat32-in-memory fat32-in-memoryp
@@ -541,7 +566,8 @@
                                  update-bpb_rootentcnt-correctness-4
                                  update-bpb_rootentcnt-correctness-5
                                  update-bpb_rootentcnt-of-update-bpb_rootentcnt
-                                 update-bpb_rootentcnt-of-bpb_rootentcnt)
+                                 update-bpb_rootentcnt-of-bpb_rootentcnt
+                                 bpb_rootentcnt-of-resize-fat)
 
 (update-stobj-scalar-correctness 16 update-bpb_totsec16 bpb_totsec16
                                  fat32-in-memory fat32-in-memoryp
@@ -551,7 +577,8 @@
                                  update-bpb_totsec16-correctness-4
                                  update-bpb_totsec16-correctness-5
                                  update-bpb_totsec16-of-update-bpb_totsec16
-                                 update-bpb_totsec16-of-bpb_totsec16)
+                                 update-bpb_totsec16-of-bpb_totsec16
+                                 bpb_totsec16-of-resize-fat)
 
 (update-stobj-scalar-correctness 32 update-bs_volid bs_volid
                                  fat32-in-memory fat32-in-memoryp
@@ -561,7 +588,8 @@
                                  update-bs_volid-correctness-4
                                  update-bs_volid-correctness-5
                                  update-bs_volid-of-update-bs_volid
-                                 update-bs_volid-of-bs_volid)
+                                 update-bs_volid-of-bs_volid
+                                 bs_volid-of-resize-fat)
 
 (defund
   cluster-size (fat32-in-memory)
@@ -2346,16 +2374,6 @@
   :rule-classes :linear
   :hints (("goal" :do-not-induct t
            :in-theory (disable fat32-in-memoryp nth subseq))))
-
-(defthm bpb_rsvdseccnt-of-resize-fat
-  (equal (bpb_rsvdseccnt (resize-fat i fat32-in-memory))
-         (bpb_rsvdseccnt fat32-in-memory))
-  :hints (("goal" :in-theory (enable resize-fat))))
-
-(defthm bpb_bytspersec-of-resize-fat
-  (equal (bpb_bytspersec (resize-fat i fat32-in-memory))
-         (bpb_bytspersec fat32-in-memory))
-  :hints (("goal" :in-theory (enable resize-fat))))
 
 (encapsulate
   ()
