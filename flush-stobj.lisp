@@ -1,3 +1,5 @@
+(include-book "std/util/bstar" :dir :system)
+
 (defconst *cluster-size* 1024)
 
 (defconst *count-of-clusters* 70000)
@@ -52,3 +54,71 @@
        text-store (- len 1)
        (cons (code-char (byte-arrayi (- len 1) text-store))
              ac))))
+
+(thm (equal (character-listp (byte-array-to-character-list-helper
+                              text-store len ac))
+            (character-listp ac)))
+
+(b*
+    ((character-list
+      (time$
+       (byte-array-to-character-list-helper
+        text-store (byte-array-length text-store) nil)))
+     (string
+      (time$ (coerce character-list 'string)))
+     ((mv channel state)
+      (open-output-channel "test.txt" :character state))
+     (state
+      (time$ (princ$ string channel state)))
+     (state
+      (close-output-channel channel state)))
+  state)
+
+(defthm
+  character-array-to-character-list-helper-guard-lemma-1
+  (implies (character-arrayp l)
+           (iff (characterp (nth n l))
+                (< (nfix n) (len l))))
+  :rule-classes
+  ((:rewrite :corollary (implies (character-arrayp l)
+                                 (equal (characterp (nth n l))
+                                        (< (nfix n) (len l))))
+             :hints (("goal" :do-not-induct t)))))
+
+(defun
+  character-array-to-character-list-helper
+  (text-store len ac)
+  (declare
+   (xargs
+    :stobjs text-store
+    :guard (and (text-storep text-store)
+                (natp len)
+                (<= len
+                    (character-array-length text-store)))))
+  (if (zp len)
+      ac
+      (character-array-to-character-list-helper
+       text-store (- len 1)
+       (cons (character-arrayi (- len 1) text-store)
+             ac))))
+
+(thm (implies
+      (and (text-storep text-store) (<= len (character-array-length text-store)))
+      (equal (character-listp (character-array-to-character-list-helper
+                               text-store len ac))
+             (character-listp ac))))
+
+(b*
+    ((character-list
+      (time$
+       (character-array-to-character-list-helper
+        text-store (byte-array-length text-store) nil)))
+     (string
+      (time$ (coerce character-list 'string)))
+     ((mv channel state)
+      (open-output-channel "test.txt" :character state))
+     (state
+      (time$ (princ$ string channel state)))
+     (state
+      (close-output-channel channel state)))
+  state)
