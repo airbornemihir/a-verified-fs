@@ -112,13 +112,95 @@
     ((character-list
       (time$
        (character-array-to-character-list-helper
-        text-store (byte-array-length text-store) nil)))
+        text-store (character-array-length text-store) nil)))
      (string
       (time$ (coerce character-list 'string)))
      ((mv channel state)
       (open-output-channel "test.txt" :character state))
      (state
       (time$ (princ$ string channel state)))
+     (state
+      (close-output-channel channel state)))
+  state)
+
+(defthm
+  string-array-to-character-list-helper-guard-lemma-1
+  (implies (string-arrayp l)
+           (iff (stringp (nth n l))
+                (< (nfix n) (len l))))
+  :rule-classes
+  ((:rewrite :corollary (implies (string-arrayp l)
+                                 (equal (stringp (nth n l))
+                                        (< (nfix n) (len l))))
+             :hints (("goal" :do-not-induct t)))))
+
+(defun
+  string-array-to-character-list-helper
+  (text-store len ac)
+  (declare
+   (xargs
+    :stobjs text-store
+    :guard (and (text-storep text-store)
+                (natp len)
+                (<= len (string-array-length text-store)))))
+  (if (zp len)
+      ac
+      (string-array-to-character-list-helper
+       text-store (- len 1)
+       (append (coerce (string-arrayi (- len 1) text-store)
+                       'list)
+               ac))))
+
+(thm (implies
+      (and (text-storep text-store) (<= len (string-array-length text-store)))
+      (equal (character-listp (string-array-to-character-list-helper
+                               text-store len ac))
+             (character-listp ac))))
+
+(b*
+    ((character-list
+      (time$
+       (string-array-to-character-list-helper
+        text-store (string-array-length text-store) nil)))
+     (string
+      (time$ (coerce character-list 'string)))
+     ((mv channel state)
+      (open-output-channel "test.txt" :character state))
+     (state
+      (time$ (princ$ string channel state)))
+     (state
+      (close-output-channel channel state)))
+  state)
+
+(defun
+  string-array-to-output-channel-helper
+  (text-store len channel state)
+  (declare
+   (xargs
+    :stobjs (text-store state)
+    :guard (and (text-storep text-store)
+                (natp len)
+                (<= len (string-array-length text-store))
+                (symbolp channel)
+                (open-output-channel-p channel
+                                       :character state))))
+  (b*
+      (((when (zp len)) state)
+       (state
+        (princ$
+         (string-arrayi (- (string-array-length text-store) len)
+                        text-store)
+         channel state)))
+    (string-array-to-output-channel-helper text-store (- len 1)
+                                           channel state)))
+
+(b*
+    (((mv channel state)
+      (open-output-channel "test.txt" :character state))
+     (state
+      (time$
+       (string-array-to-output-channel-helper
+        text-store (string-array-length text-store) channel state)))
      (state
       (close-output-channel channel state)))
   state)
