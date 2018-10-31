@@ -4447,6 +4447,89 @@
       (* (nfix len)
          (nfix (cluster-size fat32-in-memory))))))
 
+(defun
+    princ$-data-region-string-helper
+    (fat32-in-memory len channel state)
+  (declare
+   (xargs
+    :stobjs (fat32-in-memory state)
+    :guard (and (natp len)
+                (compliant-fat32-in-memoryp fat32-in-memory)
+                (<= len
+                    (data-region-length fat32-in-memory))
+                (symbolp channel)
+                (open-output-channel-p channel
+                                       :character state))
+    :verify-guards nil))
+  (b*
+      (((when (zp len)) state)
+       (state
+        (princ$-data-region-string-helper
+         fat32-in-memory (- len 1)
+         channel
+         state)))
+    (princ$ (data-regioni (- len 1) fat32-in-memory) channel state)))
+
+(defthm
+  princ$-data-region-string-helper-guard-lemma-1
+  (implies
+   (and (open-output-channel-p1 channel
+                                :character state)
+        (symbolp channel)
+        (<= len
+            (data-region-length fat32-in-memory))
+        (compliant-fat32-in-memoryp fat32-in-memory)
+        (natp len)
+        (state-p1 state))
+   (and (open-output-channel-p1
+         channel
+         :character (princ$-data-region-string-helper
+                     fat32-in-memory len channel state))
+        (state-p1 (princ$-data-region-string-helper
+                   fat32-in-memory len channel state))))
+  :hints
+  (("goal" :induct (princ$-data-region-string-helper
+                    fat32-in-memory len channel state))))
+
+(verify-guards
+  princ$-data-region-string-helper
+  :hints
+  (("goal" :in-theory (disable fat32-in-memoryp))))
+
+(defthm
+  data-region-string-helper-of-binary-append
+  (implies
+   (and (natp len)
+        (compliant-fat32-in-memoryp fat32-in-memory)
+        (<= len
+            (data-region-length fat32-in-memory))
+        (character-listp ac1)
+        (character-listp ac2))
+   (equal
+    (data-region-string-helper fat32-in-memory
+                               len (binary-append ac1 ac2))
+    (binary-append
+     (data-region-string-helper fat32-in-memory len ac1)
+     ac2))))
+
+(defthm
+  princ$-data-region-string-helper-correctness-1
+  (implies
+   (and (natp len)
+        (compliant-fat32-in-memoryp fat32-in-memory)
+        (<= len
+            (data-region-length fat32-in-memory))
+        (character-listp ac))
+   (equal
+    (princ$
+     (coerce (data-region-string-helper fat32-in-memory len ac)
+             'string)
+     channel state)
+    (princ$ (coerce ac 'string)
+            channel
+            (princ$-data-region-string-helper
+             fat32-in-memory len channel state)))))
+
 ;; (defthm
 ;;   data-region-string-helper-correctness-lemma-1
 ;;   (implies
