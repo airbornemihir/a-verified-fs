@@ -15,6 +15,18 @@
 (include-book "insert-text")
 (include-book "fat32")
 
+;; This was taken from rtl/rel9/arithmetic/top with thanks.
+(defthm product-less-than-zero
+  (implies (case-split (or (not (complex-rationalp x))
+                           (not (complex-rationalp y))))
+           (equal (< (* x y) 0)
+                  (if (< x 0)
+                      (< 0 y)
+                      (if (equal 0 x)
+                          nil
+                          (if (not (acl2-numberp x))
+                              nil (< y 0)))))))
+
 (defthm nth-of-string=>nats
   (equal (nth n (string=>nats string))
          (if (< (nfix n) (len (explode string)))
@@ -982,28 +994,10 @@
        (dir-ent-after-deletion
         (append coerced-basename-after-deletion
                 (nthcdr 11 (m1-file->dir-ent file))))
-       ;; zeroing out the first cluster
+       ;; zeroing out the first cluster and file size
        (dir-ent-after-deletion
-        (update-nth
-         26 0
-         (update-nth
-          27 0
-          (update-nth
-           20 0
-           (update-nth
-            21 0
-            dir-ent-after-deletion)))))
-       ;; zeroing out the length
-       (dir-ent-after-deletion
-        (update-nth
-         31 0
-         (update-nth
-          30 0
-          (update-nth
-           29 0
-           (update-nth
-            28 0
-            dir-ent-after-deletion)))))
+        (dir-ent-set-first-cluster-file-size
+         dir-ent-after-deletion 0 0))
        (file-after-deletion
         (make-m1-file :dir-ent dir-ent-after-deletion
                       :contents nil))
