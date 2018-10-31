@@ -4561,8 +4561,69 @@
                 (stringp image-path)
                 (compliant-fat32-in-memoryp fat32-in-memory))
     :guard-hints
-    (("goal" :do-not-induct t
-      :in-theory (enable fat32-in-memory-to-string)))))
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (fat32-in-memory-to-string)
+           (princ$-of-princ$
+            princ$-data-region-string-helper-correctness-1
+            fat32-in-memoryp))
+      :use
+      ((:instance
+        princ$-of-princ$
+        (state
+         (mv-nth '1
+                 (open-output-channel image-path ':character
+                                      state)))
+        (x (reserved-area-string fat32-in-memory))
+        (channel
+         (mv-nth '0
+                 (open-output-channel image-path ':character
+                                      state)))
+        (y (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                               fat32-in-memory '"")))
+       (:instance
+        princ$-of-princ$
+        (state
+         (mv-nth '1
+                 (open-output-channel image-path ':character
+                                      state)))
+        (x
+         (string-append
+          (reserved-area-string fat32-in-memory)
+          (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                              fat32-in-memory "")))
+        (channel
+         (mv-nth '0
+                 (open-output-channel image-path ':character
+                                      state)))
+        (y (implode$inline
+            (data-region-string-helper
+             fat32-in-memory
+             (data-region-length fat32-in-memory)
+             'nil))))
+       (:instance
+        princ$-data-region-string-helper-correctness-1
+        (ac nil)
+        (len (data-region-length fat32-in-memory))
+        (state
+         (princ$
+          (implode
+           (append
+            (explode (reserved-area-string fat32-in-memory))
+            (explode
+             (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                                 fat32-in-memory ""))))
+          (mv-nth 0
+                  (open-output-channel image-path
+                                       :character state))
+          (mv-nth 1
+                  (open-output-channel image-path
+                                       :character state))))
+        (channel
+         (mv-nth 0
+                 (open-output-channel image-path
+                                      :character state)))))))))
   (b*
       (((mv channel state)
         (open-output-channel image-path
@@ -4581,15 +4642,11 @@
                 (make-fat-string-ac (bpb_numfats fat32-in-memory)
                                     fat32-in-memory "")
                 channel state))
-              (state
-               (princ$
-                (coerce (data-region-string-helper
-                         fat32-in-memory
-                         (data-region-length fat32-in-memory)
-                         nil)
-                        'string)
-                channel state)))
-           state)))
+              (state (princ$-data-region-string-helper
+                      fat32-in-memory
+                      (data-region-length fat32-in-memory)
+                      channel state)))
+           (princ$ "" channel state))))
        (state (close-output-channel channel state)))
     state))
 
