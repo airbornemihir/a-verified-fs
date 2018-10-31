@@ -15,7 +15,7 @@
     (((mv & val state)
       (getenv$ "DISK" state))
      ((mv fat32-in-memory &)
-      (slurp-disk-image
+      (disk-image-to-fat32-in-memory
        fat32-in-memory val state))
      ((mv & val state)
       (getenv$ "RM_OUTPUT" state))

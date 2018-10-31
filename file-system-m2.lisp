@@ -2530,7 +2530,7 @@
       (mv fat32-in-memory error-code))))
 
 (defun
-  slurp-disk-image
+  disk-image-to-fat32-in-memory
   (fat32-in-memory image-path state)
   (declare
    (xargs
