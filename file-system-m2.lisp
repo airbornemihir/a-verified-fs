@@ -4498,8 +4498,7 @@
     (fat32-in-memory)
     (declare
      (xargs :stobjs fat32-in-memory
-            :guard (compliant-fat32-in-memoryp fat32-in-memory)
-            :verify-guards nil))
+            :guard (compliant-fat32-in-memoryp fat32-in-memory)))
     (b*
         ((reserved-area-string
           (time$ (reserved-area-string fat32-in-memory)))
@@ -4551,6 +4550,26 @@
           (data-region-length fat32-in-memory)))))
   :hints
   (("goal" :in-theory (e/d (fat32-in-memory-to-string) (nfix)))))
+
+(defun fat32-in-memory-to-disk-image
+  (fat32-in-memory image-path state)
+  (declare (xargs :stobjs (fat32-in-memory state)
+                  :guard (and
+                          (state-p state)
+                          (stringp image-path)
+                          (compliant-fat32-in-memoryp fat32-in-memory))
+                  :guard-hints (("Goal" :do-not-induct t))))
+  (b*
+     (((mv channel state)
+       (open-output-channel image-path :character state))
+      ((when (null channel)) state)
+      (state
+         (princ$
+          (fat32-in-memory-to-string fat32-in-memory)
+          channel state))
+      (state
+       (close-output-channel channel state)))
+    state))
 
 (defmacro
     update-bpb_secperclus-macro
