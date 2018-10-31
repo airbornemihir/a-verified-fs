@@ -2301,55 +2301,51 @@
                    (the (unsigned-byte 28) (- pos 1)))))))
 
 (defthm
-  slurp-disk-image-guard-lemma-2
-  (implies (member n
-                   (list *bpb_secperclus*
-                         *bpb_fatsz32* *bpb_numfats*
-                         *bpb_rsvdseccnt* *bpb_totsec32* *bpb_bytspersec*
-                         *data-regioni*))
+  nth-of-update-fat
+  (implies (not (equal (nfix n) *fati*))
            (equal (nth n (update-fat fat32-in-memory str pos))
                   (nth n fat32-in-memory)))
   :hints (("goal" :in-theory (enable update-fat update-fati))))
 
-(defthm slurp-disk-image-guard-lemma-3
+(defthm bpb_secperclus-of-update-fat
   (equal (bpb_secperclus
-              (update-fat fat32-in-memory str pos))
+          (update-fat fat32-in-memory str pos))
          (bpb_secperclus fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_secperclus)) ))
 
-(defthm slurp-disk-image-guard-lemma-4
+(defthm bpb_fatsz32-of-update-fat
   (equal (bpb_fatsz32
-              (update-fat fat32-in-memory str pos))
+          (update-fat fat32-in-memory str pos))
          (bpb_fatsz32 fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_fatsz32)) ))
 
-(defthm slurp-disk-image-guard-lemma-5
+(defthm bpb_numfats-of-update-fat
   (equal (bpb_numfats
-              (update-fat fat32-in-memory str pos))
+          (update-fat fat32-in-memory str pos))
          (bpb_numfats fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_numfats)) ))
 
-(defthm slurp-disk-image-guard-lemma-6
+(defthm bpb_rsvdseccnt-of-update-fat
   (equal (bpb_rsvdseccnt
-              (update-fat fat32-in-memory str pos))
+          (update-fat fat32-in-memory str pos))
          (bpb_rsvdseccnt fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_rsvdseccnt)) ))
 
 (defthm bpb_totsec32-of-update-fat
   (equal (bpb_totsec32
-              (update-fat fat32-in-memory str pos))
+          (update-fat fat32-in-memory str pos))
          (bpb_totsec32 fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_totsec32)) ))
 
 (defthm bpb_bytspersec-of-update-fat
   (equal (bpb_bytspersec
-              (update-fat fat32-in-memory str pos))
+          (update-fat fat32-in-memory str pos))
          (bpb_bytspersec fat32-in-memory))
   :hints (("Goal" :in-theory (enable bpb_bytspersec)) ))
 
 (defthm count-of-clusters-of-update-fat
   (equal (count-of-clusters
-              (update-fat fat32-in-memory str pos))
+          (update-fat fat32-in-memory str pos))
          (count-of-clusters fat32-in-memory))
   :hints (("Goal" :in-theory (enable count-of-clusters)) ))
 
@@ -2391,7 +2387,7 @@
       :in-theory (disable fat32-in-memoryp nth subseq))))))
 
 (defthm
-  slurp-disk-image-guard-lemma-14
+  bpb_rsvdseccnt-of-read-reserved-area
   (<= 1
       (bpb_rsvdseccnt
        (mv-nth
@@ -2402,7 +2398,7 @@
            :in-theory (disable fat32-in-memoryp nth subseq))))
 
 (defthm
-  slurp-disk-image-guard-lemma-15
+  bpb_numfats-of-read-reserved-area
   (<= 1
       (bpb_numfats
        (mv-nth
@@ -2413,7 +2409,7 @@
            :in-theory (disable fat32-in-memoryp nth subseq))))
 
 (defthm
-  slurp-disk-image-guard-lemma-16
+  bpb_fatsz32-of-read-reserved-area
   (<= 1
       (bpb_fatsz32
        (mv-nth
@@ -2424,7 +2420,7 @@
            :in-theory (disable fat32-in-memoryp nth subseq))))
 
 (defthm
-  slurp-disk-image-guard-lemma-17
+  bpb_bytspersec-of-read-reserved-area
   (<= *ms-min-bytes-per-sector*
       (bpb_bytspersec
        (mv-nth
