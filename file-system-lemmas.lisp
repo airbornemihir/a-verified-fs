@@ -646,3 +646,16 @@
            (equal (string-listp (update-nth key val l))
                   (and (<= (nfix key) (len l))
                        (stringp val)))))
+
+(defthm revappend-of-binary-append-2
+  (equal (revappend (binary-append x y1) y2)
+         (revappend y1 (revappend x y2))))
+
+(defthm add-pair-of-add-pair-1
+  (equal (add-pair key value2 (add-pair key value1 l))
+         (add-pair key value2 l)))
+
+(defthm princ$-of-princ$
+  (implies (and (stringp x) (stringp y))
+           (equal (princ$ y channel (princ$ x channel state))
+                  (princ$ (string-append x y) channel state))))
