@@ -2142,39 +2142,6 @@
          (update-data-region
           fat32-in-memory str
           (the (unsigned-byte 28) (- len 1))))))))
-;; (defun
-;;   update-data-region
-;;   (fat32-in-memory str len pos)
-;;   (declare
-;;    (xargs :guard (and (stringp str)
-;;                       (natp len)
-;;                       (natp pos)
-;;                       (<= pos len)
-;;                       (= len (length str))
-;;                       (<= len
-;;                           (data-region-length fat32-in-memory))
-;;                       (<= (data-region-length fat32-in-memory)
-;;                           *ms-max-data-region-size*))
-;;           :guard-hints
-;;           (("goal"
-;;             :in-theory (e/d (data-region-length update-data-regioni)
-;;                             (fat32-in-memoryp))))
-;;           :measure (nfix (- len pos))
-;;           :stobjs fat32-in-memory))
-;;   (b*
-;;       ((len (the (unsigned-byte 47) len))
-;;        (pos (the (unsigned-byte 47) pos)))
-;;     (if
-;;      (mbe :logic (zp (- len pos))
-;;           :exec (>= pos len))
-;;      fat32-in-memory
-;;      (b*
-;;          ((ch (char str pos))
-;;           (ch-byte (the (unsigned-byte 8) (char-code ch)))
-;;           (pos+1 (the (unsigned-byte 47) (1+ pos)))
-;;           (fat32-in-memory
-;;            (update-data-regioni pos ch-byte fat32-in-memory)))
-;;        (update-data-region fat32-in-memory str len pos+1)))))
 
 (defthm
   bpb_bytspersec-of-update-data-regioni
@@ -4530,94 +4497,6 @@
             (princ$-data-region-string-helper
              fat32-in-memory len channel state)))))
 
-;; (defthm
-;;   data-region-string-helper-correctness-lemma-1
-;;   (implies
-;;    (<= len
-;;        (data-region-length fat32-in-memory))
-;;    (equal (data-region-string-helper fat32-in-memory len ac)
-;;           (append (take len
-;;                         (nats=>chars (nth *data-regioni* fat32-in-memory)))
-;;                   ac)))
-;;   :instructions
-;;   (:induct
-;;    (:change-goal nil t)
-;;    :bash :promote (:demote 2)
-;;    (:dive 1 1)
-;;    (:= t)
-;;    :up :s-prop :top :promote (:dive 1)
-;;    :x := (:drop 3)
-;;    :top
-;;    (:claim
-;;     (equal
-;;      (take len
-;;            (nats=>chars (nth *data-regioni* fat32-in-memory)))
-;;      (binary-append
-;;       (first-n-ac (- len 1)
-;;                   (take len
-;;                         (nats=>chars (nth *data-regioni* fat32-in-memory)))
-;;                   nil)
-;;       (nthcdr (- len 1)
-;;               (take len
-;;                     (nats=>chars (nth *data-regioni* fat32-in-memory))))))
-;;     :hints :none)
-;;    (:change-goal nil t)
-;;    :bash
-;;    (:=
-;;     (take len
-;;           (nats=>chars (nth *data-regioni* fat32-in-memory)))
-;;     (append
-;;      (first-n-ac (+ -1 len)
-;;                  (take len
-;;                        (nats=>chars (nth *data-regioni* fat32-in-memory)))
-;;                  nil)
-;;      (nthcdr (+ -1 len)
-;;              (take len
-;;                    (nats=>chars (nth *data-regioni* fat32-in-memory))))))
-;;    (:drop 3)
-;;    (:dive 2)
-;;    (:rewrite binary-append-is-associative)
-;;    (:dive 1)
-;;    (:rewrite take-of-take)
-;;    (:change-goal nil t)
-;;    :bash (:dive 1 1)
-;;    (:rewrite len-of-nats=>chars)
-;;    :top
-;;    (:bash ("goal" :expand (data-region-length fat32-in-memory)))
-;;    :top (:dive 1 1)
-;;    :top
-;;    (:bash ("goal" :in-theory (enable take)))
-;;    (:dive 2)
-;;    (:claim (< (+ -1 len) len))
-;;    :x :top
-;;    (:claim
-;;     (equal
-;;      (cdr
-;;       (nthcdr (+ -1 len)
-;;               (first-n-ac len
-;;                           (nats=>chars (nth *data-regioni* fat32-in-memory))
-;;                           nil)))
-;;      (nthcdr len
-;;              (first-n-ac len
-;;                          (nats=>chars (nth *data-regioni* fat32-in-memory))
-;;                          nil)))
-;;     :hints :none)
-;;    (:change-goal nil t)
-;;    (:dive 2)
-;;    :x :top :bash
-;;    (:=
-;;     (cdr
-;;      (nthcdr (+ -1 len)
-;;              (first-n-ac len
-;;                          (nats=>chars (nth *data-regioni* fat32-in-memory))
-;;                          nil)))
-;;     (nthcdr len
-;;             (first-n-ac len
-;;                         (nats=>chars (nth *data-regioni* fat32-in-memory))
-;;                         nil)))
-;;    (:drop 4)
-;;    (:bash ("goal" :in-theory (enable data-region-length data-regioni)))))
-
 (defund
     fat32-in-memory-to-string
     (fat32-in-memory)
@@ -5303,40 +5182,6 @@
                (len (count-of-clusters fat32-in-memory))
                (ac nil)))))
 
-;; (defthm
-;;   fat32-in-memory-to-string-inversion-lemma-27
-;;   (implies
-;;    (fat32-in-memoryp fat32-in-memory)
-;;    (unsigned-byte-listp 8 (nth *data-regioni* fat32-in-memory)))
-;;   :rule-classes
-;;   (:rewrite
-;;    (:rewrite :corollary
-;;              (implies
-;;               (fat32-in-memoryp fat32-in-memory)
-;;               (true-listp (nth *data-regioni* fat32-in-memory))))))
-
-;; (defthm
-;;   fat32-in-memory-to-string-inversion-lemma-28
-;;   (implies
-;;    (compliant-fat32-in-memoryp fat32-in-memory)
-;;    (equal
-;;     (nthcdr
-;;      (* (bpb_bytspersec fat32-in-memory)
-;;         (bpb_rsvdseccnt fat32-in-memory))
-;;      (explode (fat32-in-memory-to-string fat32-in-memory)))
-;;     (append
-;;      (explode (make-fat-string-ac (bpb_numfats fat32-in-memory)
-;;                                   fat32-in-memory ""))
-;;      (nats=>chars (nth *data-regioni* fat32-in-memory)))))
-;;   :hints
-;;   (("goal"
-;;     :in-theory
-;;     (e/d
-;;      (fat32-in-memory-to-string nats=>chars-of-revappend
-;;                                 data-region-length
-;;                                 true-list-fix-when-true-listp)
-;;      (reverse-removal)))))
-
 (encapsulate
   ()
 
@@ -5879,34 +5724,6 @@
      pos)
     :in-theory (e/d (compliant-fat32-in-memoryp)
                     (loghead logtail fat32-in-memoryp)))))
-
-;; (defthm
-;;   fat32-in-memory-to-string-inversion-lemma-53
-;;   (implies
-;;    (and (compliant-fat32-in-memoryp fat32-in-memory)
-;;         (integerp n)
-;;         (<= (+ (* (bpb_rsvdseccnt fat32-in-memory)
-;;                   (bpb_bytspersec fat32-in-memory))
-;;                (* (nfix (bpb_numfats fat32-in-memory))
-;;                   (fat-length fat32-in-memory)
-;;                   4))
-;;             n))
-;;    (equal
-;;     (nthcdr
-;;      n
-;;      (explode (fat32-in-memory-to-string fat32-in-memory)))
-;;     (nthcdr
-;;      (+ n
-;;         (- (* (bpb_bytspersec fat32-in-memory)
-;;               (bpb_rsvdseccnt fat32-in-memory)))
-;;         (- (* (bpb_numfats fat32-in-memory)
-;;               4 (fat-length fat32-in-memory))))
-;;      (nats=>chars (nth *data-regioni* fat32-in-memory)))))
-;;   :hints
-;;   (("goal" :in-theory (enable fat32-in-memory-to-string
-;;                               nats=>chars-of-revappend
-;;                               data-region-length
-;;                               true-list-fix-when-true-listp))))
 
 (encapsulate
   ()
