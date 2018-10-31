@@ -107,7 +107,7 @@
          (nfix (- (len l) (nfix n))))
   :hints (("Goal" :induct (nthcdr n l))))
 
-(defthmd revappend-is-append-of-rev
+(defthm revappend-of-binary-append-1
   (equal (revappend x (binary-append y z))
          (binary-append (revappend x y) z)))
 
@@ -119,7 +119,8 @@
                   (revappend ac l)))
   :hints (("goal" :induct (first-n-ac i l ac))
           ("subgoal *1/1''"
-           :use (:instance revappend-is-append-of-rev (x ac)
+           :in-theory (disable revappend-of-binary-append-1)
+           :use (:instance revappend-of-binary-append-1 (x ac)
                            (y nil)
                            (z l)))))
 
@@ -303,10 +304,11 @@
      (binary-append l
                     (make-list-ac (- i (len l)) nil ac2)))))
   :hints
-  (("goal" :induct (first-n-ac i l ac1))
+  (("goal" :induct (first-n-ac i l ac1)
+    :in-theory (disable revappend-of-binary-append-1))
    ("subgoal *1/2" :expand (make-list-ac i nil ac2))
    ("subgoal *1/1"
-    :use (:instance revappend-is-append-of-rev (x ac1)
+    :use (:instance revappend-of-binary-append-1 (x ac1)
                     (y l)
                     (z ac2)))))
 
@@ -564,7 +566,9 @@
 
 (defthm revappend-of-revappend
   (equal (revappend (revappend x y1) y2)
-         (revappend y1 (append x y2))))
+         (revappend y1 (append x y2)))
+  :hints
+  (("goal" :in-theory (disable revappend-of-binary-append-1))))
 
 (defthm
   character-listp-of-member-equal
