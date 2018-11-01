@@ -4327,18 +4327,13 @@
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (natp n)
                 (stringp ac))))
-  (cond
-   ((zp n) ac)
-   (t
-    (make-fat-string-ac
-     (1- n)
-     fat32-in-memory
-     (time$
-      (concatenate
-       'string
-       (time$
-        (stobj-fa-table-to-string fat32-in-memory))
-       ac))))))
+  (b* (((when (zp n)) ac)
+       (fa-table-string
+        (stobj-fa-table-to-string fat32-in-memory)))
+    (make-fat-string-ac (1- n)
+                        fat32-in-memory
+                        (concatenate 'string
+                                     fa-table-string ac))))
 
 (defthm
   length-of-stobj-fa-table-to-string
