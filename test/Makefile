@@ -16,6 +16,9 @@ mtools-test-rm-replicant-1
 .PHONY: debug-create-dir-and-file debug-create-dir debug-do-nothing \
 debug-create-dir-copy-file
 
+.PHONY: mtools-read-write-test-70MB mtools-read-write-test-140MB \
+mtools-read-write-test-210MB
+
 DISK=disk1.raw
 SIZE=70000
 MOUNTPOINT=mount1
@@ -391,3 +394,33 @@ debug-create-dir-and-file-mv: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
+
+# The following test creates a 70 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-70MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 140000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
+
+# The following test creates a 140 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-140MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=35840
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 280000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
+
+# The following test creates a 210 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-210MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=53760
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 420000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
