@@ -4489,26 +4489,25 @@
              fat32-in-memory len channel state)))))
 
 (defund
-    fat32-in-memory-to-string
-    (fat32-in-memory)
-    (declare
-     (xargs :stobjs fat32-in-memory
-            :guard (compliant-fat32-in-memoryp fat32-in-memory)))
-    (b*
-        ((reserved-area-string
-          (reserved-area-string fat32-in-memory))
-         (fat-string
-          (make-fat-string-ac
-           (bpb_numfats fat32-in-memory) fat32-in-memory ""))
-         (data-region-string
-          (coerce
-           (data-region-string-helper
-            fat32-in-memory (data-region-length fat32-in-memory) nil)
-           'string)))
-      (time$
-       (concatenate 'string
-                    reserved-area-string
-                    fat-string data-region-string))))
+  fat32-in-memory-to-string
+  (fat32-in-memory)
+  (declare
+   (xargs :stobjs fat32-in-memory
+          :guard (compliant-fat32-in-memoryp fat32-in-memory)))
+  (b* ((reserved-area-string
+        (reserved-area-string fat32-in-memory))
+       (fat-string
+        (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                            fat32-in-memory ""))
+       (data-region-string
+        (coerce (data-region-string-helper
+                 fat32-in-memory
+                 (data-region-length fat32-in-memory)
+                 nil)
+                'string)))
+    (concatenate 'string
+                 reserved-area-string
+                 fat-string data-region-string)))
 
 (defthm
   length-of-fat32-in-memory-to-string-lemma-1
@@ -4618,9 +4617,8 @@
                                       :character state)))))))))
   (b*
       (((mv channel state)
-        (time$
-         (open-output-channel image-path
-                              :character state)))
+        (open-output-channel image-path
+                             :character state))
        ((when (null channel)) state)
        (state
         (mbe
@@ -4628,22 +4626,19 @@
                         channel state)
          :exec
          (b*
-             ((state (time$ (princ$ (reserved-area-string fat32-in-memory)
-                                    channel state)))
+             ((state (princ$ (reserved-area-string fat32-in-memory)
+                             channel state))
               (state
-               (time$
-                (princ$
-                 (make-fat-string-ac (bpb_numfats fat32-in-memory)
-                                     fat32-in-memory "")
-                 channel state)))
-              (state
-               (time$ (princ$-data-region-string-helper
-                       fat32-in-memory
-                       (data-region-length fat32-in-memory)
-                       channel state))))
+               (princ$
+                (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                                    fat32-in-memory "")
+                channel state))
+              (state (princ$-data-region-string-helper
+                      fat32-in-memory
+                      (data-region-length fat32-in-memory)
+                      channel state)))
            (princ$ "" channel state))))
-       (state (time$
-               (close-output-channel channel state))))
+       (state (close-output-channel channel state)))
     state))
 
 (defmacro
