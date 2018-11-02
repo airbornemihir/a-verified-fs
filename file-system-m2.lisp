@@ -6050,39 +6050,3 @@ Some (rather awful) testing forms are
      :f_ffree 0
      :f_fsid 0
      :f_namelen 72)))
-
-(defun
-  get-dir-filenames
-  (fat32-in-memory dir-contents entry-limit)
-  (declare (xargs :measure (acl2-count entry-limit)
-                  :verify-guards nil
-                  :stobjs (fat32-in-memory)))
-  (if
-   (or (zp entry-limit)
-       (equal (nth 0 dir-contents)
-              0))
-   nil
-   (let*
-    ((dir-ent (take 32 dir-contents))
-     (first-cluster (combine32u (nth 21 dir-ent)
-                                (nth 20 dir-ent)
-                                (nth 27 dir-ent)
-                                (nth 26 dir-ent)))
-     (filename (nats=>string (subseq dir-ent 0 11))))
-    (list*
-     (if (or (zp (logand (nth 11 dir-ent)
-                         (ash 1 4)))
-             (equal filename *current-dir-fat32-name*)
-             (equal filename *parent-dir-fat32-name*))
-         (list filename first-cluster)
-       (b*
-           (((mv contents &)
-             (get-clusterchain
-              fat32-in-memory
-              (fat32-entry-mask first-cluster)
-              *ms-max-dir-size*)) )
-         (list filename first-cluster
-               contents)))
-     (get-dir-filenames
-      fat32-in-memory (nthcdr 32 dir-contents)
-      (- entry-limit 1))))))
