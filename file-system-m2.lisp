@@ -2814,7 +2814,8 @@
         (or (equal filename *current-dir-fat32-name*)
             (equal filename *parent-dir-fat32-name*)))
        (directory-p
-        (zp (logand (nth 11 dir-ent) (ash 1 4))))
+        (not
+         (zp (logand (nth 11 dir-ent) (ash 1 4)))))
        (length (if directory-p
                    *ms-max-dir-size*
                  (dir-ent-file-size dir-ent)))
