@@ -4837,8 +4837,7 @@
 
   (local
    (in-theory (e/d (fat32-in-memory-to-string get-initial-bytes get-remaining-rsvdbyts)
-                   (logtail loghead fat32-in-memoryp floor
-                            stobj-fa-table-to-string make-fat-string-ac))))
+                   (logtail loghead fat32-in-memoryp floor))))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-4
