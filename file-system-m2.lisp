@@ -13,37 +13,6 @@
 ;; bytes.
 (local (include-book "std/typed-lists/integer-listp" :dir :system))
 
-(local
- (defthm
-   painful-debugging-lemma-1
-   (implies (and (integerp x) (integerp y))
-            (integerp (+ x y)))))
-
-(local
- (defthm
-   painful-debugging-lemma-2
-   (implies (and (integerp x) (integerp y))
-            (integerp (* x y)))))
-
-(local
- (defthm painful-debugging-lemma-3
-   (implies (integerp x)
-            (integerp (unary-- x)))))
-
-(local
- (defthm painful-debugging-lemma-4 (equal (<= x (+ x y)) (>= y 0))
-   :rule-classes ((:rewrite :corollary (equal (< (+ x y) x) (< y 0))))))
-
-(local
- (defthm painful-debugging-lemma-5
-   (implies (and (>= x 0) (>= y 0))
-            (not (< (+ x y) 0)))))
-
-(local
- (defthm painful-debugging-lemma-6 (equal (< x (+ x y)) (> y 0))
-   :hints (("Goal" :in-theory (disable painful-debugging-lemma-4)
-            :use (:instance painful-debugging-lemma-4 (x (+ x y)) (y (- y)))))))
-
 (defthm unsigned-byte-listp-of-revappend
   (equal (unsigned-byte-listp width (revappend x y))
          (and (unsigned-byte-listp width (list-fix x))
@@ -5817,8 +5786,12 @@
              fat32-in-memory
              (fat32-in-memory-to-string fat32-in-memory)))
     fat32-in-memory))
-  :hints (("goal" :in-theory (e/d (string-to-fat32-in-memory)
-                                  (floor loghead logtail)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (string-to-fat32-in-memory painful-debugging-lemma-4
+                                    painful-debugging-lemma-5)
+         (floor loghead logtail)))))
 
 #|
 Some (rather awful) testing forms are
