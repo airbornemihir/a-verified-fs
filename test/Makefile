@@ -16,6 +16,9 @@ mtools-test-rm-replicant-1
 .PHONY: debug-create-dir-and-file debug-create-dir debug-do-nothing \
 debug-create-dir-copy-file
 
+.PHONY: mtools-read-write-test-70MB mtools-read-write-test-140MB \
+mtools-read-write-test-210MB
+
 DISK=disk1.raw
 SIZE=70000
 MOUNTPOINT=mount1
@@ -104,7 +107,7 @@ cat-ref-output-1.txt cat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-1.txt" \
-	CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="vmlinuz" $(ACL2) < cat-replicant.lisp
 
 cat-ref-output-2.txt cat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -117,7 +120,7 @@ cat-ref-output-2.txt cat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-2.txt" \
-	CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="vmlinuz" $(ACL2) < cat-replicant.lisp
 
 cat-ref-output-3.txt cat-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -131,7 +134,7 @@ cat-ref-output-3.txt cat-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-3.txt" \
-	CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="initrd.img" $(ACL2) < cat-replicant.lisp
 
 cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -147,7 +150,7 @@ cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-4.txt" \
-	CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="initrd.img" $(ACL2) < cat-replicant.lisp
 
 cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -166,7 +169,7 @@ cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-5.txt" \
-	CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="initrd.img" $(ACL2) < cat-replicant.lisp
 
 mtools-cat-ref-output-2.txt mtools-cat-output-2.txt: cat-replicant.lisp
 	rm -f $(DISK) mtools-cat-ref-output-2.txt
@@ -176,7 +179,7 @@ mtools-cat-ref-output-2.txt mtools-cat-output-2.txt: cat-replicant.lisp
 	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
 	env MTOOLSRC=$(MTOOLSRC) mcopy c:/vmlinuz mtools-cat-ref-output-2.txt
 	env DISK=$(DISK) CAT_OUTPUT="mtools-cat-output-2.txt" \
-	CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="vmlinuz" $(ACL2) < cat-replicant.lisp
 
 mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) \
 mkfs.fat-3.0.28-replicant.lisp
@@ -391,3 +394,33 @@ debug-create-dir-and-file-mv: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
+
+# The following test creates a 70 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-70MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 140000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
+
+# The following test creates a 140 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-140MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=35840
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 280000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
+
+# The following test creates a 210 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-210MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=53760
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 420000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp

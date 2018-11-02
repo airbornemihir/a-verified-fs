@@ -659,3 +659,34 @@
   (implies (and (stringp x) (stringp y))
            (equal (princ$ y channel (princ$ x channel state))
                   (princ$ (string-append x y) channel state))))
+
+(defthmd
+  painful-debugging-lemma-1
+  (implies (and (integerp x) (integerp y))
+           (integerp (+ x y))))
+
+(defthmd
+  painful-debugging-lemma-2
+  (implies (and (integerp x) (integerp y))
+           (integerp (* x y))))
+
+(defthmd painful-debugging-lemma-3
+  (implies (integerp x)
+           (integerp (unary-- x))))
+
+(defthmd painful-debugging-lemma-4
+  (equal (<= x (+ x y)) (>= y 0))
+  :rule-classes
+  ((:rewrite :corollary (equal (< (+ x y) x) (< y 0)))))
+
+(defthmd painful-debugging-lemma-5
+  (implies (and (>= x 0) (>= y 0))
+           (not (< (+ x y) 0))))
+
+(defthmd
+  painful-debugging-lemma-6
+  (equal (< x (+ x y)) (> y 0))
+  :hints
+  (("goal"
+    :use (:instance painful-debugging-lemma-4 (x (+ x y))
+                    (y (- y))))))
