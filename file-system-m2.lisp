@@ -715,6 +715,12 @@
     (true-list-fix (nth *data-regioni* fat32-in-memory)))
    ("subgoal *1/1.1" :in-theory (enable nthcdr-when->=-n-len-l))))
 
+(defthm
+  compliant-fat32-in-memoryp-guard-lemma-1
+  (implies (fat32-in-memoryp fat32-in-memory)
+           (fat32-entry-p (bpb_rootclus fat32-in-memory)))
+  :hints (("goal" :in-theory (enable fat32-entry-p))))
+
 (defund compliant-fat32-in-memoryp (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory :guard t))
   (and (fat32-in-memoryp fat32-in-memory)
@@ -726,7 +732,10 @@
        (>= (bpb_numfats fat32-in-memory) 1)
        (>= (bpb_fatsz32 fat32-in-memory) 1)
        ;; this isn't in the spec, but clearly implied
-       (>= (bpb_rootclus fat32-in-memory) *ms-first-data-cluster*)
+       (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+           *ms-first-data-cluster*)
+       (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+          (count-of-clusters fat32-in-memory))
        (stobj-cluster-listp-helper
         fat32-in-memory
         (data-region-length fat32-in-memory))))
@@ -749,8 +758,10 @@
                   (>= (bpb_rsvdseccnt fat32-in-memory) 1)
                   (>= (bpb_numfats fat32-in-memory) 1)
                   (>= (bpb_fatsz32 fat32-in-memory) 1)
-                  (>= (bpb_rootclus fat32-in-memory)
+                  (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                       *ms-first-data-cluster*)
+                  (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                     (count-of-clusters fat32-in-memory))
                   (>= (bpb_bytspersec fat32-in-memory)
                       *ms-min-bytes-per-sector*)))
     :hints
@@ -778,10 +789,16 @@
                     (>= (bpb_rsvdseccnt fat32-in-memory) 1)
                     (>= (bpb_numfats fat32-in-memory) 1)
                     (>= (bpb_fatsz32 fat32-in-memory) 1)
-                    (>= (bpb_rootclus fat32-in-memory)
+                    (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                         *ms-first-data-cluster*)
+                    (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                       (count-of-clusters fat32-in-memory))
                     (>= (bpb_bytspersec fat32-in-memory)
-                        *ms-min-bytes-per-sector*)))))))
+                        *ms-min-bytes-per-sector*)
+                    (>= (* (cluster-size fat32-in-memory)
+                           (count-of-clusters fat32-in-memory))
+                       (* *ms-min-bytes-per-sector*
+                          *ms-fat32-min-count-of-clusters*))))))))
 
 (defthm
   fati-when-compliant-fat32-in-memoryp
@@ -1809,6 +1826,11 @@
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
+  (defthm fat32-in-memory-to-string-inversion-lemma-29
+    (implies (and (not (zp j)) (integerp i) (> i j))
+             (> (floor i j) 0))
+    :rule-classes :linear)
+
   (local
    (defthm read-reserved-area-guard-lemma-5
      (implies (and (unsigned-byte-listp 8 l)
@@ -2593,6 +2615,13 @@
                       *ms-first-data-cluster*)
                   (< masked-current-cluster
                      (count-of-clusters fat32-in-memory))
+                  ;; this clause stipulates that while there may be a few
+                  ;; cluster indices in the file allocation table which do not
+                  ;; actually exist in the data region (because the file
+                  ;; allocation table needs to take up an integer number of
+                  ;; sectors) there should never be the reverse scenario, where
+                  ;; clusters available in the data region are not allocatable
+                  ;; because the file allocation table is too short.
                   (<= (count-of-clusters fat32-in-memory)
                       (fat-length fat32-in-memory)))
       :verify-guards nil))
@@ -2737,14 +2766,32 @@
 ;; entire length of the data region by *ms-dir-ent-length*, and set that as the
 ;; upper limit. This makes sure that we aren't disallowing any legitimate FAT32
 ;; volumes which just happen to be full of directories.
+
 (defun
   fat32-in-memory-to-m1-fs-helper
   (fat32-in-memory dir-contents entry-limit)
   (declare (xargs :measure (nfix entry-limit)
+                  :guard (and (natp entry-limit)
+                              (unsigned-byte-listp 8 dir-contents)
+                              (compliant-fat32-in-memoryp fat32-in-memory)
+                              (equal (data-region-length fat32-in-memory)
+                                     (count-of-clusters fat32-in-memory))
+                              ;; this clause stipulates that while there may be
+                              ;; a few cluster indices in the file allocation
+                              ;; table which do not actually exist in the data
+                              ;; region (because the file allocation table
+                              ;; needs to take up an integer number of sectors)
+                              ;; there should never be the reverse scenario,
+                              ;; where clusters available in the data region
+                              ;; are not allocatable because the file
+                              ;; allocation table is too short.
+                              (<= (count-of-clusters fat32-in-memory)
+                                  (fat-length fat32-in-memory)))
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
   (b*
       (((when (or (zp entry-limit)
+                  (< (len dir-contents) *ms-dir-ent-length*)
                   (equal (nth 0 dir-contents) 0)))
         (mv nil 0))
        ;; the byte #xe5 marks deleted files, according to the spec
@@ -2753,29 +2800,46 @@
          fat32-in-memory
          (nthcdr *ms-dir-ent-length* dir-contents)
          (- entry-limit 1)))
-       (dir-ent (take *ms-dir-ent-length* dir-contents))
+       (dir-ent
+         (mbe
+          :exec (take *ms-dir-ent-length* dir-contents)
+          :logic
+          (dir-ent-fix (take *ms-dir-ent-length* dir-contents))))
        (first-cluster (combine32u (nth 21 dir-ent)
                                   (nth 20 dir-ent)
                                   (nth 27 dir-ent)
                                   (nth 26 dir-ent)))
        (filename (nats=>string (subseq dir-ent 0 11)))
-       (not-right-kind-of-directory-p
-        (or (zp (logand (nth 11 dir-ent) (ash 1 4)))
-            (equal filename *current-dir-fat32-name*)
+       (dot-or-dotdot-p
+        (or (equal filename *current-dir-fat32-name*)
             (equal filename *parent-dir-fat32-name*)))
-       (length (if not-right-kind-of-directory-p
-                   (dir-ent-file-size dir-ent)
-                   *ms-max-dir-size*))
+       (directory-p
+        (zp (logand (nth 11 dir-ent) (ash 1 4))))
+       (length (if directory-p
+                   *ms-max-dir-size*
+                 (dir-ent-file-size dir-ent)))
        ((mv contents &)
-        (get-clusterchain-contents fat32-in-memory
-                                   (fat32-entry-mask first-cluster)
-                                   length))
+        (if
+            ;; this clause is intended to make sure we don't try to find out
+            ;; the "contents" of a "." or ".." entry - that would lead to a
+            ;; cycle. we also don't want to explore the contents of an empty
+            ;; file; that would cause a guard violation.
+            (or dot-or-dotdot-p
+                (< (fat32-entry-mask first-cluster)
+                   *ms-first-data-cluster*)
+                (>= (fat32-entry-mask first-cluster)
+                    (count-of-clusters fat32-in-memory)))
+            (mv "" 0)
+            (get-clusterchain-contents fat32-in-memory
+                                       (fat32-entry-mask first-cluster)
+                                       length)))
        ((mv head head-entry-count)
-        (if not-right-kind-of-directory-p
-            (mv contents 1)
+        (if directory-p
             (fat32-in-memory-to-m1-fs-helper
              fat32-in-memory
-             contents (- entry-limit 1))))
+             (string=>nats contents)
+             (- entry-limit 1))
+          (mv contents 1)))
        ;; we want entry-limit to serve both as a measure and an upper
        ;; bound on how many entries are found.
        (tail-entry-limit (nfix (- entry-limit
@@ -2838,6 +2902,57 @@
                       dir-contents entry-limit)))
                  (true-listp m1-file-alist)))))
 
+(defthm
+  fat32-in-memory-to-m1-fs-helper-guard-lemma-1
+  (implies (and (unsigned-byte-listp 8 dir-contents)
+                (>= (len dir-contents) *ms-dir-ent-length*))
+           (dir-ent-p (take 32 dir-contents)))
+  :hints (("Goal" :in-theory (enable dir-ent-p))))
+
+(defthm fat32-in-memory-to-m1-fs-helper-guard-lemma-2
+  (implies (unsigned-byte-listp 8 dir-contents)
+           (iff (unsigned-byte-p 8 (nth n dir-contents))
+                (< (nfix n) (len dir-contents))))
+  :rule-classes ((:rewrite :corollary
+                           (implies (and (unsigned-byte-listp 8 dir-contents)
+                                         (< (nfix n) (len dir-contents)))
+                                    (integerp (nth n dir-contents))))
+                 (:rewrite :corollary
+                           (implies (and (unsigned-byte-listp 8 dir-contents)
+                                         (< (nfix n) (len dir-contents))
+                                         (unsigned-byte-p 8 i))
+                                    (unsigned-byte-p 8 (logand i (nth
+                                                                  n
+                                                                  dir-contents))))
+                           :hints (("Goal" :in-theory (disable unsigned-byte-p)
+                                    :do-not-induct t)))))
+
+(defthm fat32-in-memory-to-m1-fs-helper-guard-lemma-3
+  (implies (and (unsigned-byte-p 8 a3)
+                (unsigned-byte-p 8 a2)
+                (unsigned-byte-p 8 a1)
+                (unsigned-byte-p 8 a0))
+           (fat32-entry-p (combine32u a3 a2 a1 a0)))
+  :hints (("goal" :in-theory (e/d (fat32-entry-p)
+                                  (unsigned-byte-p)))))
+
+(verify-guards
+  fat32-in-memory-to-m1-fs-helper
+  :guard-debug t
+  :hints
+  (("goal"
+    :in-theory
+    (disable
+     fat32-in-memoryp
+     (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
+               . 2))
+    :use
+    (:instance
+     (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
+               . 2)
+     (i 16)
+     (n 11)))))
+
 ;; for later
 ;; (defthm
 ;;   fat32-in-memory-to-m1-fs-helper-correctness-3
@@ -2862,12 +2977,30 @@
   fat32-in-memory-to-m1-fs
   (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory
-                  :verify-guards nil))
+                  :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                              (equal (data-region-length fat32-in-memory)
+                                     (count-of-clusters fat32-in-memory))
+                              ;; this clause stipulates that while there may be
+                              ;; a few cluster indices in the file allocation
+                              ;; table which do not actually exist in the data
+                              ;; region (because the file allocation table
+                              ;; needs to take up an integer number of sectors)
+                              ;; there should never be the reverse scenario,
+                              ;; where clusters available in the data region
+                              ;; are not allocatable because the file
+                              ;; allocation table is too short.
+                              (<= (count-of-clusters fat32-in-memory)
+                                  (fat-length fat32-in-memory)))
+                  :guard-hints
+                  (("goal"
+                    :in-theory
+                    (disable fat32-in-memoryp floor)))))
   (b*
       (((mv root-dir-contents &)
-        (get-clusterchain-contents fat32-in-memory
-                                   (bpb_rootclus fat32-in-memory)
-                                   *ms-max-dir-size*))
+        (get-clusterchain-contents
+         fat32-in-memory
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+         *ms-max-dir-size*))
        (entry-limit (floor (* (data-region-length fat32-in-memory)
                               (cluster-size fat32-in-memory))
                            *ms-dir-ent-length*))
@@ -3691,8 +3824,8 @@
                     *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*)
-                (< (bpb_rootclus fat32-in-memory)
-                   (fat-length fat32-in-memory)))
+                (<= (count-of-clusters fat32-in-memory)
+                    (fat-length fat32-in-memory)))
     :guard-debug t
     :guard-hints
     (("goal" :in-theory
@@ -3715,18 +3848,18 @@
                      (stobj-set-indices-in-fa-table
                       fat32-in-memory
                       (remove-equal
-                       (bpb_rootclus fat32-in-memory)
+                       (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                        (generate-index-list 2 (+ -2 (fat-length fat32-in-memory))))
                       (make-list-ac
                        (len
                         (remove-equal
-                         (bpb_rootclus fat32-in-memory)
+                         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                          (generate-index-list 2 (+ -2 (fat-length fat32-in-memory)))))
                        0 nil))
                      fs))))
                  (cluster-size fat32-in-memory))
                 (cons
-                 (bpb_rootclus fat32-in-memory)
+                 (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                  (find-n-free-clusters
                   (nth
                    *fati*
@@ -3736,12 +3869,12 @@
                      (stobj-set-indices-in-fa-table
                       fat32-in-memory
                       (remove-equal
-                       (bpb_rootclus fat32-in-memory)
+                       (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                        (generate-index-list 2 (+ -2 (fat-length fat32-in-memory))))
                       (make-list-ac
                        (len
                         (remove-equal
-                         (bpb_rootclus fat32-in-memory)
+                         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                          (generate-index-list 2 (+ -2 (fat-length fat32-in-memory)))))
                        0 nil))
                      fs)))
@@ -3757,13 +3890,13 @@
                          (stobj-set-indices-in-fa-table
                           fat32-in-memory
                           (remove-equal
-                           (bpb_rootclus fat32-in-memory)
+                           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                            (generate-index-list 2 (+ -2 (fat-length fat32-in-memory))))
                           (make-list-ac
-                           (len
-                            (remove-equal (bpb_rootclus fat32-in-memory)
-                                          (generate-index-list
-                                           2 (+ -2 (fat-length fat32-in-memory)))))
+                           (len (remove-equal
+                                 (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                                 (generate-index-list
+                                  2 (+ -2 (fat-length fat32-in-memory)))))
                            0 nil))
                          fs))))
                      (cluster-size fat32-in-memory))))))
@@ -3773,12 +3906,12 @@
                   (stobj-set-indices-in-fa-table
                    fat32-in-memory
                    (remove-equal
-                    (bpb_rootclus fat32-in-memory)
+                    (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                     (generate-index-list 2 (+ -2 (fat-length fat32-in-memory))))
                    (make-list-ac
                     (len
                      (remove-equal
-                      (bpb_rootclus fat32-in-memory)
+                      (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                       (generate-index-list 2 (+ -2 (fat-length fat32-in-memory)))))
                     0 nil))
                   fs)))))))))))
@@ -3789,7 +3922,7 @@
        ;; other than the root directory going into it
        (index-list-to-clear
         (remove
-         rootclus
+         (fat32-entry-mask rootclus)
          (generate-index-list *ms-first-data-cluster*
                               (- (fat-length fat32-in-memory)
                                  *ms-first-data-cluster*))))
@@ -3807,9 +3940,9 @@
        ;; empty root directory with no files in it, which came up in a
        ;; regression test.
        ((when (atom clusters))
-        (update-fati rootclus 0
+        (update-fati (fat32-entry-mask rootclus) 0
                      fat32-in-memory))
-       (indices (list* rootclus
+       (indices (list* (fat32-entry-mask rootclus)
                        (stobj-find-n-free-clusters
                         fat32-in-memory
                         (- (len clusters) 1))))
@@ -5221,12 +5354,6 @@
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
-  (local
-   (defthm fat32-in-memory-to-string-inversion-lemma-29
-     (implies (and (not (zp j)) (integerp i) (> i j))
-              (> (floor i j) 0))
-     :rule-classes :linear))
-
   (defthm
     fat32-in-memory-to-string-inversion-lemma-30
     (implies (and (fat32-in-memoryp fat32-in-memory)
@@ -5271,15 +5398,6 @@
               (* (bpb_numfats fat32-in-memory)
                  4 (fat-length fat32-in-memory))))
     :rule-classes :linear))
-
-(defthm fat32-in-memory-to-string-inversion-lemma-32
-  (implies (and (unsigned-byte-p 8 a3)
-                (unsigned-byte-p 8 a2)
-                (unsigned-byte-p 8 a1)
-                (unsigned-byte-p 8 a0))
-           (fat32-entry-p (combine32u a3 a2 a1 a0)))
-  :hints (("goal" :in-theory (e/d (fat32-entry-p)
-                                  (unsigned-byte-p)))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-33
