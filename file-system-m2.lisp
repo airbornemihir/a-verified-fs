@@ -2461,7 +2461,7 @@
     :hints
     (("Goal" :in-theory (disable fat32-in-memoryp))))
 
-  (defun
+  (defund
     string-to-fat32-in-memory
     (fat32-in-memory str)
     (declare
@@ -5852,13 +5852,80 @@
                4 (fat-length fat32-in-memory))))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-55
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (equal (update-nth *data-regioni*
-                      (nth *data-regioni* fat32-in-memory)
-                      fat32-in-memory)
-          fat32-in-memory)))
+  fat32-in-memory-to-string-inversion-lemma-42
+  (equal
+   (nthcdr
+    n
+    (explode (fat32-in-memory-to-string fat32-in-memory)))
+   (if
+    (<= (nfix n)
+        (len (explode (reserved-area-string fat32-in-memory))))
+    (append
+     (nthcdr n
+             (explode (reserved-area-string fat32-in-memory)))
+     (explode (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                                  fat32-in-memory ""))
+     (data-region-string-helper
+      fat32-in-memory
+      (data-region-length fat32-in-memory)
+      nil))
+    (nthcdr
+     (- n
+        (len (explode (reserved-area-string fat32-in-memory))))
+     (append
+      (explode (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                                   fat32-in-memory ""))
+      (data-region-string-helper
+       fat32-in-memory
+       (data-region-length fat32-in-memory)
+       nil)))))
+  :hints
+  (("goal" :in-theory
+    (e/d (fat32-in-memory-to-string)
+         (fat32-in-memoryp
+          length-of-reserved-area-string
+          nth-of-explode-of-reserved-area-string))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (<= (nfix n)
+         (len (explode (reserved-area-string fat32-in-memory))))
+     (equal
+      (nthcdr
+       n
+       (explode (fat32-in-memory-to-string fat32-in-memory)))
+      (append
+       (nthcdr n
+               (explode (reserved-area-string fat32-in-memory)))
+       (explode
+        (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                            fat32-in-memory ""))
+       (data-region-string-helper
+        fat32-in-memory
+        (data-region-length fat32-in-memory)
+        nil)))))
+   (:rewrite
+    :corollary
+    (implies
+     (> (nfix n)
+        (len (explode (reserved-area-string fat32-in-memory))))
+     (equal
+      (nthcdr
+       n
+       (explode (fat32-in-memory-to-string fat32-in-memory)))
+      (nthcdr
+       (-
+        n
+        (len (explode (reserved-area-string fat32-in-memory))))
+       (append
+        (explode
+         (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                             fat32-in-memory ""))
+        (data-region-string-helper
+         fat32-in-memory
+         (data-region-length fat32-in-memory)
+         nil))))))))
 
 (defthm
   fat32-in-memory-to-string-inversion
@@ -5875,19 +5942,7 @@
              fat32-in-memory
              (fat32-in-memory-to-string fat32-in-memory)))
     fat32-in-memory))
-  :hints
-  (("goal" :in-theory (disable floor loghead logtail))
-   ("subgoal 5''"
-    :in-theory (disable floor loghead
-                        logtail painful-debugging-lemma-5)
-    :use (:instance painful-debugging-lemma-5
-                    (x (* (cluster-size fat32-in-memory)
-                          (data-region-length fat32-in-memory)))
-                    (y (* (bpb_numfats fat32-in-memory)
-                          4 (fat-length fat32-in-memory)))))
-   ("subgoal 3.3" :in-theory (e/d (fat32-in-memory-to-string)
-                                  (floor loghead logtail)))
-   ("subgoal 3.2" :in-theory (e/d (fat32-in-memory-to-string)
+  :hints (("goal" :in-theory (e/d (string-to-fat32-in-memory)
                                   (floor loghead logtail)))))
 
 #|
