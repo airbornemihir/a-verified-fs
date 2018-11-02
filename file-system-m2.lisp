@@ -1746,64 +1746,6 @@
                      count-of-clusters cluster-size)
                     (floor)))))
 
-(defthm
-  read-reserved-area-guard-lemma-1
-  (implies (and (member-equal x
-                              (mv-nth 0 (read-byte$-n n channel state)))
-                (state-p1 state)
-                (symbolp channel)
-                (open-input-channel-p1 channel
-                                       :byte state)
-                (not (equal (mv-nth 0 (read-byte$-n n channel state))
-                            'fail)))
-           (unsigned-byte-p 8 x))
-  :rule-classes :forward-chaining)
-
-(defthm
-  read-reserved-area-guard-lemma-2
-  (implies
-   (and (natp n)
-        (< (nfix m) n)
-        (state-p1 state)
-        (symbolp channel)
-        (open-input-channel-p1 channel
-                               :byte state)
-        (not (equal (mv-nth 0 (read-byte$-n n channel state))
-                    'fail)))
-   (unsigned-byte-p
-    8
-    (nth m
-         (mv-nth 0 (read-byte$-n n channel state)))))
-  :hints
-  (("goal"
-    :in-theory (disable unsigned-byte-p nth)
-    :use
-    (:instance
-     read-reserved-area-guard-lemma-1
-     (x (nth m
-             (mv-nth 0 (read-byte$-n n channel state))))))))
-
-(defthm
-  read-reserved-area-guard-lemma-3
-  (implies
-   (and (state-p1 state)
-        (symbolp channel)
-        (open-input-channel-p1 channel
-                               :byte state)
-        (not (equal (mv-nth 0 (read-byte$-n n channel state))
-                    'fail)))
-   (unsigned-byte-listp
-    8
-    (mv-nth 0 (read-byte$-n n channel state))))
-  :hints (("goal" :in-theory (disable unsigned-byte-p))))
-
-(defthm
-  read-reserved-area-guard-lemma-4
-  (equal (stringp (mv-nth 0 (read-byte$-n n channel state)))
-         nil)
-  :hints (("goal" :in-theory (disable read-byte$-n-data)
-           :use read-byte$-n-data)))
-
 (defund get-initial-bytes (str)
   (declare (xargs :guard (and (stringp str)
                               (>= (length str) *initialbytcnt*))))
