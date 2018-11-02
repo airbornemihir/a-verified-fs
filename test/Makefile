@@ -107,7 +107,7 @@ cat-ref-output-1.txt cat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-1.txt" \
-	CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="vmlinuz" $(ACL2) < cat-replicant.lisp
 
 cat-ref-output-2.txt cat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -120,7 +120,7 @@ cat-ref-output-2.txt cat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-2.txt" \
-	CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="vmlinuz" $(ACL2) < cat-replicant.lisp
 
 cat-ref-output-3.txt cat-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -134,7 +134,7 @@ cat-ref-output-3.txt cat-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-3.txt" \
-	CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="initrd.img" $(ACL2) < cat-replicant.lisp
 
 cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -150,7 +150,7 @@ cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-4.txt" \
-	CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="initrd.img" $(ACL2) < cat-replicant.lisp
 
 cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -169,7 +169,7 @@ cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CAT_OUTPUT="cat-output-5.txt" \
-	CAT_INPUT="INITRD  IMG" $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="initrd.img" $(ACL2) < cat-replicant.lisp
 
 mtools-cat-ref-output-2.txt mtools-cat-output-2.txt: cat-replicant.lisp
 	rm -f $(DISK) mtools-cat-ref-output-2.txt
@@ -179,7 +179,7 @@ mtools-cat-ref-output-2.txt mtools-cat-output-2.txt: cat-replicant.lisp
 	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
 	env MTOOLSRC=$(MTOOLSRC) mcopy c:/vmlinuz mtools-cat-ref-output-2.txt
 	env DISK=$(DISK) CAT_OUTPUT="mtools-cat-output-2.txt" \
-	CAT_INPUT="VMLINUZ    " $(ACL2) < cat-replicant.lisp
+	CAT_INPUT="vmlinuz" $(ACL2) < cat-replicant.lisp
 
 mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) \
 mkfs.fat-3.0.28-replicant.lisp
