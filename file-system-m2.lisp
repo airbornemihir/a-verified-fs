@@ -2938,12 +2938,14 @@
         (get-clusterchain-contents fat32-in-memory
                                    (bpb_rootclus fat32-in-memory)
                                    *ms-max-dir-size*))
-       (entry-limit (floor (data-region-length fat32-in-memory)
+       (entry-limit (floor (* (data-region-length fat32-in-memory)
+                              (cluster-size fat32-in-memory))
                            *ms-dir-ent-length*))
        ((mv m1-file-alist &)
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
-         root-dir-contents entry-limit)))
+         (string=>nats root-dir-contents)
+         entry-limit)))
     m1-file-alist))
 
 (defthm
@@ -3211,7 +3213,7 @@
            (subseq text 0 (min cluster-size (length text)))
            (coerce
             (make-list (nfix (- cluster-size (length text)))
-                       :initial-element #\0)
+                       :initial-element (code-char 0))
             'string))
           (make-clusters (subseq text (min cluster-size (length text)) nil)
                          cluster-size))))
