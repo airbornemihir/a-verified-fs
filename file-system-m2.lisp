@@ -3203,8 +3203,7 @@
   make-clusters (text cluster-size)
   (declare (xargs :guard (and (stringp text)
                               (natp cluster-size))
-                  :measure (length text)
-                  :guard-debug t))
+                  :measure (length text)))
   (if
    (or (zp (length text)) (zp cluster-size))
    nil
@@ -4798,6 +4797,27 @@
                              update-bpb_bytspersec-of-update-bs_jmpboot)
 
 (defthm
+  fat32-in-memory-to-string-inversion-lemma-1
+  (implies
+   (and (< (nfix n)
+           (* (bpb_rsvdseccnt fat32-in-memory)
+              (bpb_bytspersec fat32-in-memory)))
+        (compliant-fat32-in-memoryp fat32-in-memory))
+   (equal
+    (nth
+     n
+     (append
+      (explode (reserved-area-string fat32-in-memory))
+      (explode (make-fat-string-ac (bpb_numfats fat32-in-memory)
+                                   fat32-in-memory ""))
+      (data-region-string-helper
+       fat32-in-memory
+       (data-region-length fat32-in-memory)
+       nil)))
+    (nth n
+         (explode (reserved-area-string fat32-in-memory))))))
+
+(defthm
   fat32-in-memory-to-string-inversion-lemma-2
   (implies
    (stringp str)
@@ -4837,7 +4857,10 @@
 
   (local
    (in-theory (e/d (fat32-in-memory-to-string get-initial-bytes get-remaining-rsvdbyts)
-                   (logtail loghead fat32-in-memoryp floor))))
+                   (logtail loghead fat32-in-memoryp floor
+                            ;; the splitter-note suggests these could usefully
+                            ;; be disabled
+                            nth-of-append nthcdr-of-append take-of-append))))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-4
