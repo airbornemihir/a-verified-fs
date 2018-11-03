@@ -27,13 +27,6 @@
                           (if (not (acl2-numberp x))
                               nil (< y 0)))))))
 
-(defthm nth-of-string=>nats
-  (equal (nth n (string=>nats string))
-         (if (< (nfix n) (len (explode string)))
-             (char-code (char string n))
-             nil))
-  :hints (("goal" :in-theory (enable string=>nats))))
-
 (defthm
   down-alpha-p-of-upcase-char
   (not (str::down-alpha-p (str::upcase-char x)))
