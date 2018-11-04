@@ -3673,8 +3673,7 @@
    (mv-nth 1
            (place-contents fat32-in-memory
                            dir-ent contents file-length)))
-  :hints
-  (("goal" :in-theory (enable place-contents)))
+  :hints (("goal" :in-theory (enable place-contents)))
   :rule-classes
   ((:rewrite
     :corollary
@@ -3683,7 +3682,16 @@
      (mv-nth 1
              (place-contents fat32-in-memory
                              dir-ent contents file-length)))
-    :hints (("Goal" :in-theory (enable dir-ent-p))))))
+    :hints (("goal" :in-theory (enable dir-ent-p))))
+   (:rewrite
+    :corollary
+    (equal
+     (len
+      (mv-nth 1
+              (place-contents fat32-in-memory
+                              dir-ent contents file-length)))
+     *ms-dir-ent-length*)
+    :hints (("goal" :in-theory (enable dir-ent-p))))))
 
 (defthm
   fat-length-of-place-contents
@@ -3718,15 +3726,15 @@
                                     (fat32-in-memoryp))))
     :verify-guards nil))
   (b*
-      ;; this clause is there simply because we didn't require all files in
-      ;; subdirectories to fall into the regular file and directory file
-      ;; categories.
       (((unless (consp fs))
         (mv fat32-in-memory nil))
        ((mv fat32-in-memory tail-list)
         (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)))
        (head (car fs))
        (dir-ent (m1-file->dir-ent (cdr head)))
+       ;; this clause is there simply because we didn't require all files in
+       ;; subdirectories to fall into the regular file and directory file
+       ;; categories.
        ((unless
          (or (and (m1-regular-file-p (cdr head))
                   (unsigned-byte-p
@@ -3769,14 +3777,6 @@
    (count-of-clusters fat32-in-memory)))
 
 (defthm
-  unsigned-byte-listp-of-m1-fs-to-fat32-in-memory-helper
-  (unsigned-byte-listp
-   8
-   (flatten
-    (mv-nth 1
-            (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))))
-
-(defthm
   data-region-length-of-m1-fs-to-fat32-in-memory-helper
   (implies
    ;; Possibly this hypothesis can be removed...
@@ -3809,6 +3809,29 @@
     (mv-nth 0
             (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
    (fat-length fat32-in-memory)))
+
+(defthm
+  m1-fs-to-fat32-in-memory-helper-correctness-1
+  (unsigned-byte-listp
+   8
+   (flatten
+    (mv-nth
+     1
+     (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-helper-correctness-2
+  (equal
+   (len
+    (flatten
+     (mv-nth
+      1
+      (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs))))
+   (* *ms-dir-ent-length*
+      (len
+       (mv-nth
+        1
+        (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs))))))
 
 (verify-guards m1-fs-to-fat32-in-memory-helper :guard-debug t)
 
@@ -4863,6 +4886,67 @@
 
 (update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
                              update-bpb_bytspersec-of-update-bs_jmpboot)
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-1
+  (implies
+   (and
+    (bounded-nat-listp index-list
+                       (+ *ms-first-data-cluster*
+                          (count-of-clusters fat32-in-memory)))
+    (compliant-fat32-in-memoryp fat32-in-memory))
+   (equal
+    (len
+     (mv-nth 1
+             (stobj-set-clusters cluster-list
+                                 index-list fat32-in-memory)))
+    (len cluster-list)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (bounded-nat-listp
+           index-list
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory)))
+          (compliant-fat32-in-memoryp fat32-in-memory))
+     (iff
+      (consp
+       (mv-nth 1
+               (stobj-set-clusters cluster-list
+                                   index-list fat32-in-memory)))
+      (consp cluster-list))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    m1-fs-to-fat32-in-memory-inversion-lemma-2
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (>= (* (bpb_fatsz32 fat32-in-memory)
+                    1/4 (bpb_bytspersec fat32-in-memory))
+                 128))
+    :rule-classes :linear
+    :hints
+    (("goal" :in-theory (enable compliant-fat32-in-memoryp)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion
+  (implies (and
+            (compliant-fat32-in-memoryp fat32-in-memory)
+            (equal (* (bpb_fatsz32 fat32-in-memory)
+                      1/4 (bpb_bytspersec fat32-in-memory))
+                   (fat-length fat32-in-memory))
+            (<= (count-of-clusters fat32-in-memory)
+                (fat-length fat32-in-memory)))
+           (m1-dir-equiv
+            (FAT32-IN-MEMORY-TO-M1-FS
+             (m1-fs-to-fat32-in-memory
+              fat32-in-memory fs))
+            fs)))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-1
