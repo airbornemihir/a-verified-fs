@@ -296,6 +296,12 @@
            (stringp (m1-file->contents file)))
   :hints (("goal" :in-theory (enable m1-regular-file-p))))
 
+(defthm m1-file-p-when-m1-regular-file-p
+  (implies
+   (m1-regular-file-p file)
+   (m1-file-p file))
+  :hints (("Goal" :in-theory (enable m1-regular-file-p))))
+
 (defthm
   length-of-m1-file->contents
   (implies

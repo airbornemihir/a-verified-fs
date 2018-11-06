@@ -2826,8 +2826,7 @@
         (or (equal filename *current-dir-fat32-name*)
             (equal filename *parent-dir-fat32-name*)))
        (directory-p
-        (not
-         (zp (logand (nth 11 dir-ent) (ash 1 4)))))
+        (dir-ent-directory-p dir-ent))
        (length (if directory-p
                    *ms-max-dir-size*
                  (dir-ent-file-size dir-ent)))
@@ -2861,7 +2860,16 @@
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
          (nthcdr *ms-dir-ent-length* dir-contents)
-         tail-entry-limit)))
+         tail-entry-limit))
+       ;; this clause states that we simply can't store any files with length
+       ;; (ash 1 32) or more - of course, this arises from the bit-width (32)
+       ;; of the segment of the directory entry which is going to store the
+       ;; length of the file
+       ((when (and (not directory-p) (not (unsigned-byte-p 32 (length contents)))))
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         (nthcdr *ms-dir-ent-length* dir-contents)
+         (- entry-limit 1))))
     (mv (list* (cons filename
                      (make-m1-file :dir-ent dir-ent
                                    :contents head))
@@ -2988,7 +2996,9 @@
     (disable
      fat32-in-memoryp
      (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
-               . 2))
+               . 2)
+     (:e dir-ent-directory-p)
+     (:t dir-ent-directory-p))
     :use
     (:instance
      (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
@@ -3792,8 +3802,12 @@
                     *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*))
-    :hints (("goal" :in-theory (e/d (m1-file->contents)
-                                    (fat32-in-memoryp))))
+    :hints (("goal" :in-theory (e/d ()
+                                    (fat32-in-memoryp)))
+            ("subgoal 1" :in-theory (disable acl2-count-of-m1-file->contents)
+             :use (:instance
+                   acl2-count-of-m1-file->contents
+                   (file (cdr (car fs))))))
     :verify-guards nil))
   (b*
       (((unless (consp fs))
