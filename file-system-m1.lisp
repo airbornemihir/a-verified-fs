@@ -318,11 +318,17 @@
   m1-directory-file-p-correctness-1
   (implies (m1-directory-file-p file)
            (and (m1-file-p file)
-                (m1-file-alist-p (m1-file->contents file))
                 (not (stringp (m1-file->contents file)))))
   :hints (("goal"
            :in-theory (enable m1-directory-file-p m1-file-alist-p
                               m1-regular-file-p))))
+
+(defthm
+  m1-directory-file-p-correctness-2
+  (equal
+   (m1-file-alist-p (m1-file->contents file))
+   (m1-directory-file-p (m1-file-fix file)))
+  :hints (("Goal" :in-theory (enable m1-file->contents m1-directory-file-p))))
 
 (defthm
   m1-directory-file-p-of-m1-file
