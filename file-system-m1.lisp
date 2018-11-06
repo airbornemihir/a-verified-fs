@@ -324,7 +324,7 @@
                               m1-regular-file-p))))
 
 (defthm
-  m1-directory-file-p-correctness-2
+  m1-file-alist-p-of-m1-file->contents
   (equal
    (m1-file-alist-p (m1-file->contents file))
    (m1-directory-file-p (m1-file-fix file)))
