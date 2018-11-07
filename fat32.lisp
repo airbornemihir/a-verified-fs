@@ -171,10 +171,14 @@
            (fat32-masked-entry-list-p (make-list-ac n val ac))))
 
 (defthm fat32-masked-entry-list-p-of-append
-  (implies (true-listp x)
-           (equal (fat32-masked-entry-list-p (binary-append x y))
-                  (and (fat32-masked-entry-list-p x)
-                       (fat32-masked-entry-list-p y)))))
+  (equal (fat32-masked-entry-list-p (binary-append x y))
+         (and (fat32-masked-entry-list-p (true-list-fix x))
+              (fat32-masked-entry-list-p y))))
+
+(defthm fat32-masked-entry-list-p-of-true-list-fix
+  (implies
+   (fat32-masked-entry-list-p x)
+   (fat32-masked-entry-list-p (true-list-fix x))))
 
 (defthm fat32-entry-list-p-of-update-nth
   (implies (and (< key (len l))

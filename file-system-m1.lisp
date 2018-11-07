@@ -104,7 +104,7 @@
 
 (defund
   dir-ent-set-first-cluster-file-size
-    (dir-ent first-cluster file-size)
+  (dir-ent first-cluster file-size)
   (declare (xargs :guard (and (dir-ent-p dir-ent)
                               (fat32-masked-entry-p first-cluster)
                               (unsigned-byte-p 32 file-size))
@@ -113,17 +113,17 @@
       ((dir-ent (dir-ent-fix dir-ent))
        (first-cluster (fat32-masked-entry-fix first-cluster))
        (file-size (if (not (unsigned-byte-p 32 file-size)) 0 file-size)))
-   (append
-    (subseq dir-ent 0 20)
-    (list* (logtail 16 (loghead 24 first-cluster))
-           (logtail 24 first-cluster)
-           (append (subseq dir-ent 22 26)
-                   (list (loghead 8 first-cluster)
-                         (logtail 8 (loghead 16 first-cluster))
-                         (loghead 8 file-size)
-                         (logtail 8 (loghead 16 file-size))
-                         (logtail 16 (loghead 24 file-size))
-                         (logtail 24 file-size)))))))
+    (append
+     (subseq dir-ent 0 20)
+     (list* (logtail 16 (loghead 24 first-cluster))
+            (logtail 24 first-cluster)
+            (append (subseq dir-ent 22 26)
+                    (list (loghead 8 first-cluster)
+                          (logtail 8 (loghead 16 first-cluster))
+                          (loghead 8 file-size)
+                          (logtail 8 (loghead 16 file-size))
+                          (logtail 16 (loghead 24 file-size))
+                          (logtail 24 file-size)))))))
 
 (defthm
   dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size
@@ -150,6 +150,30 @@
   :hints
   (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size)
                            (loghead logtail)))))
+
+(defund dir-ent-filename (dir-ent)
+  (declare
+   (xargs :guard (dir-ent-p dir-ent)
+          :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
+  (nats=>string (subseq dir-ent 0 11)))
+
+(defund dir-ent-set-filename (dir-ent filename)
+  (declare
+   (xargs :guard (and (dir-ent-p dir-ent)
+                      (stringp filename)
+                      (equal (length filename) 11))
+          :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
+  (append (string=>nats filename) (subseq dir-ent 11 *ms-dir-ent-length*)))
+
+(defthm
+  dir-ent-p-of-dir-ent-set-filename
+  (implies (and (dir-ent-p dir-ent)
+                (stringp filename))
+           (unsigned-byte-listp
+            8
+            (dir-ent-set-filename dir-ent filename)))
+  :hints
+  (("goal" :in-theory (enable dir-ent-set-filename dir-ent-p))))
 
 (encapsulate
   ()
