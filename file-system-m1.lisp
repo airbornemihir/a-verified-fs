@@ -1459,3 +1459,14 @@
 
 (defequiv m1-dir-equiv
   :hints (("Goal" :in-theory (enable m1-dir-equiv))))
+
+(defthm
+  m1-dir-subsetp-when-atom
+  (implies (atom m1-file-alist2)
+           (equal (m1-dir-subsetp m1-file-alist1 m1-file-alist2)
+                  (atom m1-file-alist1))))
+
+(defthm m1-dir-equiv-of-nil
+  (equal (m1-dir-equiv m1-file-alist1 nil)
+         (null m1-file-alist1))
+  :hints (("Goal" :in-theory (enable m1-dir-equiv))))
