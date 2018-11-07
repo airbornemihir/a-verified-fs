@@ -1032,6 +1032,14 @@
     :use cluster-size-of-update-fati)))
 
 (defthm
+  data-regioni-of-update-fati
+  (equal (data-regioni i1 (update-fati i2 v fat32-in-memory))
+         (data-regioni i1 fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable data-regioni update-fati))))
+
+(defthm
   data-regioni-when-compliant-fat32-in-memoryp
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (< (nfix i)
@@ -3347,6 +3355,23 @@
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
+(defthm
+  bpb_rootclus-of-stobj-set-indices-in-fa-table
+  (equal
+   (bpb_rootclus (stobj-set-indices-in-fa-table
+                  fat32-in-memory index-list value-list))
+   (bpb_rootclus fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
+
+(defthm
+  data-regioni-of-stobj-set-indices-in-fa-table
+  (equal (data-regioni i (stobj-set-indices-in-fa-table
+                          fat32-in-memory index-list value-list))
+         (data-regioni i fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
+
 (defund
   make-clusters (text cluster-size)
   (declare (xargs :guard (and (stringp text)
@@ -3816,29 +3841,20 @@
         (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)))
        (head (car fs))
        (dir-ent (m1-file->dir-ent (cdr head)))
-       ;; this clause is there simply because we didn't require all files in
-       ;; subdirectories to fall into the regular file and directory file
-       ;; categories.
-       ((unless
-         (or (and (m1-regular-file-p (cdr head))
-                  (unsigned-byte-p
-                   32
-                   (length (m1-file->contents (cdr head)))))
-             (m1-directory-file-p (cdr head))))
-        (mv fat32-in-memory tail-list))
        ((mv fat32-in-memory dir-ent)
         (if
          (m1-regular-file-p (cdr head))
-         (b*
-             ((contents (m1-file->contents (cdr head)))
+         (b* ((contents (m1-file->contents (cdr head)))
               (file-length (length contents)))
            (place-contents fat32-in-memory
                            dir-ent contents file-length))
          (b* ((contents (m1-file->contents (cdr head)))
-              (file-length 0) ;; per the specification
+              (file-length 0)
               ((mv fat32-in-memory unflattened-contents)
-               (m1-fs-to-fat32-in-memory-helper fat32-in-memory contents))
-              (contents (nats=>string (flatten unflattened-contents))))
+               (m1-fs-to-fat32-in-memory-helper
+                fat32-in-memory contents))
+              (contents
+               (nats=>string (flatten unflattened-contents))))
            (place-contents fat32-in-memory
                            dir-ent contents file-length)))))
     (mv fat32-in-memory
@@ -3919,14 +3935,31 @@
 
 (defthm
   m1-fs-to-fat32-in-memory-helper-correctness-3
-  (<=
+  (equal
    (len
     (mv-nth
      1
      (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs)))
    (len fs)))
 
-(verify-guards m1-fs-to-fat32-in-memory-helper :guard-debug t)
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     m1-fs-to-fat32-in-memory-helper-guard-lemma-1
+     (implies (not (m1-regular-file-p file))
+              (equal (m1-directory-file-p file)
+                     (m1-file-p file)))
+     :hints
+     (("goal"
+       :in-theory (enable m1-directory-file-p m1-file-p
+                          m1-regular-file-p m1-file-contents-p
+                          m1-file->contents)))))
+  (verify-guards
+    m1-fs-to-fat32-in-memory-helper
+    :guard-debug t
+    :hints (("goal" :in-theory (disable fat32-in-memoryp)))))
 
 (defun
   m1-fs-to-fat32-in-memory
