@@ -27,13 +27,6 @@
                           (if (not (acl2-numberp x))
                               nil (< y 0)))))))
 
-(defthm nth-of-string=>nats
-  (equal (nth n (string=>nats string))
-         (if (< (nfix n) (len (explode string)))
-             (char-code (char string n))
-             nil))
-  :hints (("goal" :in-theory (enable string=>nats))))
-
 (defthm
   down-alpha-p-of-upcase-char
   (not (str::down-alpha-p (str::upcase-char x)))
@@ -1226,7 +1219,7 @@
          (m1-file-no-dups-p (m1-file->contents (cdar m1-file-alist))))
         (t t)))
 
-(defun m1-dir-equiv (m1-file-alist1 m1-file-alist2)
+(defund m1-dir-equiv (m1-file-alist1 m1-file-alist2)
   (declare (xargs :guard t))
   (or (equal m1-file-alist1 m1-file-alist2)
       (let ((good1 (and (m1-file-alist-p m1-file-alist1)
@@ -1313,5 +1306,5 @@
     :use (:instance m1-dir-subsetp-transitive-lemma-1
                     (key (car (car x)))))))
 
-(defequiv
-  m1-dir-equiv)
+(defequiv m1-dir-equiv
+  :hints (("Goal" :in-theory (enable m1-dir-equiv))))
