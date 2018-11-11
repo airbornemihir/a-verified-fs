@@ -151,6 +151,35 @@
   (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size)
                            (loghead logtail)))))
 
+(defthm
+  dir-ent-p-of-dir-ent-set-first-cluster-file-size
+  (implies
+   (and (dir-ent-p dir-ent)
+        (fat32-masked-entry-p first-cluster)
+        (unsigned-byte-p 32 file-size))
+   (and
+    (unsigned-byte-listp 8
+                         (dir-ent-set-first-cluster-file-size
+                          dir-ent first-cluster file-size))
+    (equal (len (dir-ent-set-first-cluster-file-size
+                 dir-ent first-cluster file-size))
+           *ms-dir-ent-length*)))
+  :hints
+  (("goal"
+    :in-theory (enable dir-ent-p
+                       dir-ent-set-first-cluster-file-size
+                       fat32-masked-entry-p)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (dir-ent-p dir-ent)
+                  (fat32-masked-entry-p first-cluster)
+                  (unsigned-byte-p 32 file-size))
+             (dir-ent-p (dir-ent-set-first-cluster-file-size
+                         dir-ent first-cluster file-size)))
+    :hints (("goal" :in-theory (enable dir-ent-p))))))
+
 (defund dir-ent-filename (dir-ent)
   (declare
    (xargs :guard (dir-ent-p dir-ent)

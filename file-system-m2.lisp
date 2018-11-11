@@ -3921,15 +3921,16 @@
       (mv-nth 0
               (m1-fs-to-fat32-in-memory-helper
                fat32-in-memory fs first-cluster))))
-    :hints (("Goal" :in-theory (enable lower-bounded-integer-listp)))))
+    :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
 
-(defthm
-  m1-fs-to-fat32-in-memory-helper-correctness-1
-  (unsigned-byte-listp
-   8
-   (flatten (mv-nth 1
-                    (m1-fs-to-fat32-in-memory-helper
-                     fat32-in-memory fs first-cluster)))))
+  (defthm
+    m1-fs-to-fat32-in-memory-helper-correctness-1
+    (unsigned-byte-listp
+     8
+     (flatten (mv-nth 1
+                      (m1-fs-to-fat32-in-memory-helper
+                       fat32-in-memory fs first-cluster))))
+    :hints (("Goal" :in-theory (enable lower-bounded-integer-listp)))))
 
 (defthm
   m1-fs-to-fat32-in-memory-helper-correctness-2
