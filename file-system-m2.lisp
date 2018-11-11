@@ -733,6 +733,9 @@
        (>= (bpb_secperclus fat32-in-memory) 1)
        (>= (count-of-clusters fat32-in-memory)
            *ms-fat32-min-count-of-clusters*)
+       (<= (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory))
+           *ms-bad-cluster*)
        (>= (bpb_rsvdseccnt fat32-in-memory) 1)
        (>= (bpb_numfats fat32-in-memory) 1)
        (>= (bpb_fatsz32 fat32-in-memory) 1)
@@ -759,6 +762,9 @@
                       *ms-min-bytes-per-sector*)
                   (>= (count-of-clusters fat32-in-memory)
                       *ms-fat32-min-count-of-clusters*)
+                  (<= (+ *ms-first-data-cluster*
+                         (count-of-clusters fat32-in-memory))
+                      *ms-bad-cluster*)
                   (>= (bpb_secperclus fat32-in-memory) 1)
                   (>= (bpb_rsvdseccnt fat32-in-memory) 1)
                   (>= (bpb_numfats fat32-in-memory) 1)
@@ -790,6 +796,9 @@
                         *ms-min-bytes-per-sector*)
                     (>= (count-of-clusters fat32-in-memory)
                         *ms-fat32-min-count-of-clusters*)
+                    (<= (+ *ms-first-data-cluster*
+                           (count-of-clusters fat32-in-memory))
+                        *ms-bad-cluster*)
                     (>= (bpb_secperclus fat32-in-memory) 1)
                     (>= (bpb_rsvdseccnt fat32-in-memory) 1)
                     (>= (bpb_numfats fat32-in-memory) 1)
@@ -3634,9 +3643,6 @@
                     *ms-bad-cluster*)
                 (>= (fat-length fat32-in-memory)
                     *ms-first-data-cluster*)
-                (<= (+ *ms-first-data-cluster*
-                       (count-of-clusters fat32-in-memory))
-                    *ms-bad-cluster*)
                 (equal (data-region-length fat32-in-memory)
                        (count-of-clusters fat32-in-memory))
                 (integerp first-cluster)
@@ -3793,9 +3799,6 @@
                 (m1-file-alist-p fs)
                 (equal (data-region-length fat32-in-memory)
                        (count-of-clusters fat32-in-memory))
-                (<= (+ *ms-first-data-cluster*
-                       (count-of-clusters fat32-in-memory))
-                    *ms-bad-cluster*)
                 (>= (fat-length fat32-in-memory)
                     *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
@@ -4065,9 +4068,6 @@
                 (m1-file-alist-p fs)
                 (equal (data-region-length fat32-in-memory)
                        (count-of-clusters fat32-in-memory))
-                (<= (+ *ms-first-data-cluster*
-                       (count-of-clusters fat32-in-memory))
-                    *ms-bad-cluster*)
                 (>= (fat-length fat32-in-memory)
                     *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
