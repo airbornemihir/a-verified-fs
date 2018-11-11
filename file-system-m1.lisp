@@ -173,7 +173,15 @@
             8
             (dir-ent-set-filename dir-ent filename)))
   :hints
-  (("goal" :in-theory (enable dir-ent-set-filename dir-ent-p))))
+  (("goal" :in-theory (enable dir-ent-set-filename dir-ent-p)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (dir-ent-p dir-ent)
+          (stringp filename))
+     (true-listp (dir-ent-set-filename dir-ent filename))))))
 
 (encapsulate
   ()
