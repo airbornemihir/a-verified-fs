@@ -9,6 +9,12 @@
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/io/read-file-characters" :dir :system)
 
+(defthm take-of-update-nth
+  (equal (take n (update-nth key val l))
+         (if (< (nfix key) (nfix n))
+             (update-nth key val (take n l))
+             (take n l))))
+
 ;; This is to get the theorem about the nth element of a list of unsigned
 ;; bytes.
 (local (include-book "std/typed-lists/integer-listp" :dir :system))
@@ -3223,6 +3229,29 @@
   :hints (("goal" :in-theory (enable fati effective-fat))))
 
 (defthm
+  stobj-set-indices-in-fa-table-correctness-1-lemma-3
+  (implies
+   (not (member key
+                (list *bpb_totsec32*
+                      *bpb_rsvdseccnt* *bpb_numfats*
+                      *bpb_fatsz32* *bpb_secperclus*)))
+   (equal
+    (count-of-clusters (update-nth key val fat32-in-memory))
+    (count-of-clusters fat32-in-memory)))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  effective-fat-of-update-nth
+  (equal (effective-fat (update-fati i v fat32-in-memory))
+         (if (< (nfix i)
+                (+ (count-of-clusters fat32-in-memory)
+                   *ms-first-data-cluster*))
+             (update-nth i v (effective-fat fat32-in-memory))
+             (effective-fat fat32-in-memory)))
+  :hints (("goal" :in-theory (enable effective-fat update-fati)
+           :do-not-induct t)))
+
+(defthm
   stobj-find-n-free-clusters-helper-correctness-1
   (implies
    (and (natp start)
@@ -3297,15 +3326,23 @@
                       (nat-listp index-list)
                       (fat32-masked-entry-list-p value-list)
                       (equal (len index-list)
-                             (len value-list)))
+                             (len value-list))
+                      (<= (+ (count-of-clusters fat32-in-memory)
+                             *ms-first-data-cluster*)
+                          (fat-length fat32-in-memory)))
           :guard-debug t
-          :guard-hints (("Goal" :in-theory (disable unsigned-byte-p)))))
+          :guard-hints (("Goal" :in-theory (disable unsigned-byte-p fat32-in-memoryp)))))
   (b*
       (((when (atom index-list)) fat32-in-memory)
        (current-index (car index-list))
        ((when
             (or (not (natp current-index))
-                (>= current-index (fat-length fat32-in-memory))))
+                (>= current-index
+                    (+ (count-of-clusters fat32-in-memory)
+                       *ms-first-data-cluster*))
+                (mbe :logic
+                     (>= current-index (fat-length fat32-in-memory))
+                     :exec nil)))
         fat32-in-memory)
        (fat32-in-memory
         (update-fati current-index
@@ -3334,22 +3371,33 @@
     (fat32-entry-list-p val))))
 
 (defthm
+  count-of-clusters-of-stobj-set-indices-in-fa-table
+  (equal
+   (count-of-clusters (stobj-set-indices-in-fa-table
+                  fat32-in-memory index-list value-list))
+   (count-of-clusters fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
+
+(defthm
   stobj-set-indices-in-fa-table-correctness-1
   (implies
    (and (fat32-masked-entry-list-p value-list)
         (equal (len index-list)
                (len value-list))
-        (fat32-in-memoryp fat32-in-memory))
-   (equal (nth *fati*
+        (compliant-fat32-in-memoryp fat32-in-memory)
+        (<= (+ (count-of-clusters fat32-in-memory)
+               *ms-first-data-cluster*)
+            (fat-length fat32-in-memory)))
+   (equal (effective-fat
                (stobj-set-indices-in-fa-table
                 fat32-in-memory index-list value-list))
-          (set-indices-in-fa-table (nth *fati* fat32-in-memory)
+          (set-indices-in-fa-table (effective-fat fat32-in-memory)
                                    index-list value-list)))
   :hints
   (("goal"
     :in-theory
-    (e/d (set-indices-in-fa-table stobj-set-indices-in-fa-table
-                                  fati fat-length update-fati)
+    (e/d (set-indices-in-fa-table stobj-set-indices-in-fa-table)
          (fat32-in-memoryp))
     :induct t)))
 
@@ -3358,7 +3406,10 @@
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (fat32-masked-entry-list-p value-list)
                 (equal (len index-list)
-                       (len value-list)))
+                       (len value-list))
+                (<= (+ (count-of-clusters fat32-in-memory)
+                       *ms-first-data-cluster*)
+                    (fat-length fat32-in-memory)))
            (compliant-fat32-in-memoryp
             (stobj-set-indices-in-fa-table
              fat32-in-memory index-list value-list)))
@@ -3391,15 +3442,6 @@
    (data-region-length (stobj-set-indices-in-fa-table
                   fat32-in-memory index-list value-list))
    (data-region-length fat32-in-memory))
-  :hints
-  (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
-
-(defthm
-  count-of-clusters-of-stobj-set-indices-in-fa-table
-  (equal
-   (count-of-clusters (stobj-set-indices-in-fa-table
-                  fat32-in-memory index-list value-list))
-   (count-of-clusters fat32-in-memory))
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
