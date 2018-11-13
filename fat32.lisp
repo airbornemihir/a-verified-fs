@@ -186,6 +186,32 @@
            (equal (fat32-entry-list-p (update-nth key val l))
                   (fat32-entry-p val))))
 
+(defthm fat32-entry-list-p-of-revappend
+  (equal (fat32-entry-list-p (revappend x y))
+         (and (fat32-entry-list-p y)
+              (fat32-entry-list-p (list-fix x)))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthm fat32-entry-list-p-of-first-n-ac-lemma-1
+     (implies (not (fat32-entry-list-p (true-list-fix ac)))
+              (not (fat32-entry-list-p (first-n-ac i l ac))))))
+
+  (defthm
+    fat32-entry-list-p-of-first-n-ac
+    (implies (fat32-entry-list-p l)
+             (equal (fat32-entry-list-p (first-n-ac n l ac))
+                    (and (fat32-entry-list-p (true-list-fix ac))
+                         (<= (nfix n) (len l)))))))
+
+(defthm
+  fat32-entry-list-p-of-take
+  (implies (fat32-entry-list-p l)
+           (equal (fat32-entry-list-p (take n l))
+                  (<= (nfix n) (len l)))))
+
 (defthm set-indices-in-fa-table-guard-lemma-2
   (implies (fat32-entry-p x) (natp x))
   :hints (("goal" :in-theory (enable fat32-entry-p)))

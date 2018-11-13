@@ -79,8 +79,8 @@
   (defthm
     character-listp-of-first-n-ac
     (implies (character-listp l)
-             (equal (character-listp (first-n-ac n l acc))
-                    (and (character-listp (true-list-fix acc))
+             (equal (character-listp (first-n-ac n l ac))
+                    (and (character-listp (true-list-fix ac))
                          (<= (nfix n) (len l)))))))
 
 (defthm character-listp-of-take
