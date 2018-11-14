@@ -4011,7 +4011,10 @@
                     *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*)
-                (fat32-masked-entry-p current-dir-first-cluster))
+                (fat32-masked-entry-p current-dir-first-cluster)
+                (<= (+ (count-of-clusters fat32-in-memory)
+                       *ms-first-data-cluster*)
+                    (fat-length fat32-in-memory)))
     :hints (("goal" :in-theory (enable m1-file->contents
                                        m1-file-contents-fix)))
     :verify-guards nil))
@@ -4387,53 +4390,73 @@
     :hints
     (("goal"
       :in-theory
-      (e/d (fat-length)
-           (fat32-in-memoryp
-            fat-length-of-m1-fs-to-fat32-in-memory-helper
-            fat-length-of-update-fati))
+      (e/d
+       nil
+       (fat32-in-memoryp
+        (:linear find-n-free-clusters-correctness-1)
+        (:rewrite
+         fat32-masked-entry-list-p-of-find-n-free-clusters
+         . 2)
+        (:rewrite
+         compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory-helper)))
       :use
-      ((:instance fat-length-of-m1-fs-to-fat32-in-memory-helper
-                  (fs (cdr fs))
-                  (first-cluster current-dir-first-cluster))
+      ((:instance
+        (:linear find-n-free-clusters-correctness-1)
+        (n 1)
+        (fa-table (effective-fat
+                   (mv-nth 0
+                           (m1-fs-to-fat32-in-memory-helper
+                            fat32-in-memory (cdr fs)
+                            current-dir-first-cluster))))
+        (b (len (effective-fat
+                 (mv-nth 0
+                         (m1-fs-to-fat32-in-memory-helper
+                          fat32-in-memory (cdr fs)
+                          current-dir-first-cluster))))))
        (:instance
-        fat-length-of-m1-fs-to-fat32-in-memory-helper
+        (:rewrite
+         fat32-masked-entry-list-p-of-find-n-free-clusters
+         . 2)
+        (n 1)
+        (fa-table
+         (effective-fat
+          (mv-nth 0
+                  (m1-fs-to-fat32-in-memory-helper
+                   fat32-in-memory (cdr fs)
+                   current-dir-first-cluster)))))
+       (:instance
+        (:rewrite
+         compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory-helper)
+        (first-cluster
+         (car (find-n-free-clusters
+               (effective-fat
+                (mv-nth 0
+                        (m1-fs-to-fat32-in-memory-helper
+                         fat32-in-memory (cdr fs)
+                         current-dir-first-cluster)))
+               1)))
+        (fs (m1-file->contents (cdr (car fs))))
         (fat32-in-memory
          (update-fati
-          (car (find-n-free-clusters
-                (nth *fati*
-                     (mv-nth 0
-                             (m1-fs-to-fat32-in-memory-helper
-                              fat32-in-memory (cdr fs)
-                              current-dir-first-cluster)))
-                1))
+          (car
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (m1-fs-to-fat32-in-memory-helper
+                      fat32-in-memory (cdr fs)
+                      current-dir-first-cluster)))
+            1))
           268435455
           (mv-nth 0
                   (m1-fs-to-fat32-in-memory-helper
                    fat32-in-memory (cdr fs)
-                   current-dir-first-cluster))))
-        (fs (m1-file->contents (cdr (car fs))))
-        (first-cluster
-         (car (find-n-free-clusters
-               (nth *fati*
-                    (mv-nth 0
-                            (m1-fs-to-fat32-in-memory-helper
-                             fat32-in-memory (cdr fs)
-                             current-dir-first-cluster)))
-               1))))
+                   current-dir-first-cluster)))))
        (:instance
-        fat-length-of-update-fati
-        (i (car (find-n-free-clusters
-                 (nth *fati*
-                      (mv-nth 0
-                              (m1-fs-to-fat32-in-memory-helper
-                               fat32-in-memory (cdr fs)
-                               current-dir-first-cluster)))
-                 1)))
-        (v *ms-end-of-clusterchain*)
-        (fat32-in-memory (mv-nth 0
-                                 (m1-fs-to-fat32-in-memory-helper
-                                  fat32-in-memory (cdr fs)
-                                  current-dir-first-cluster)))))))))
+        (:rewrite
+         compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory-helper)
+        (first-cluster current-dir-first-cluster)
+        (fs (cdr fs))
+        (fat32-in-memory fat32-in-memory)))))))
 
 (defun
   m1-fs-to-fat32-in-memory
