@@ -649,6 +649,11 @@
   (and (stringp cluster)
        (equal (length cluster) cluster-size)))
 
+(defthm cluster-p-of-implode
+  (iff (cluster-p (implode x) cluster-size)
+       (equal (len x) cluster-size))
+  :hints (("goal" :in-theory (enable cluster-p))))
+
 (defthm
   cluster-p-correctness-1
   (implies (not (stringp v))
@@ -2557,9 +2562,13 @@
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (fat32-masked-entry-p masked-current-cluster)
                 (natp length)
-                (>= masked-current-cluster 2)
+                (>= masked-current-cluster *ms-first-data-cluster*)
                 (< masked-current-cluster
-                   (fat-length fat32-in-memory)))))
+                   (+ (count-of-clusters fat32-in-memory)
+                      *ms-first-data-cluster*))
+                (<= (+ (count-of-clusters fat32-in-memory)
+                       *ms-first-data-cluster*)
+                    (fat-length fat32-in-memory)))))
   (let
    ((cluster-size (cluster-size fat32-in-memory)))
    (if
@@ -2567,8 +2576,15 @@
     (mv nil (- *eio*))
     (let
      ((masked-next-cluster
-       (fat32-entry-mask (fati masked-current-cluster
-                               fat32-in-memory))))
+       (fat32-entry-mask
+        (if
+            (mbt (< (nfix masked-current-cluster)
+                    (nfix
+                     (+ (count-of-clusters fat32-in-memory)
+                        *ms-first-data-cluster*))))
+            (fati masked-current-cluster
+                  fat32-in-memory)
+          nil))))
      (if
       (< masked-next-cluster *ms-first-data-cluster*)
       (mv (list masked-current-cluster)
@@ -2576,7 +2592,12 @@
       (if
        (or (fat32-is-eof masked-next-cluster)
            (>= masked-next-cluster
-               (fat-length fat32-in-memory)))
+               (mbe :exec
+                    (+ (count-of-clusters fat32-in-memory)
+                       *ms-first-data-cluster*)
+                    :logic
+                    (nfix (+ (count-of-clusters fat32-in-memory)
+                             *ms-first-data-cluster*)))))
        (mv (list masked-current-cluster) 0)
        (b*
            (((mv tail-index-list tail-error)
@@ -2585,18 +2606,34 @@
          (mv (list* masked-current-cluster tail-index-list)
              tail-error))))))))
 
+(defund-nx effective-fat (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                              (<= (+ (count-of-clusters fat32-in-memory)
+                                     *ms-first-data-cluster*)
+                                  (fat-length fat32-in-memory)))))
+  (take (+ (count-of-clusters fat32-in-memory)
+           *ms-first-data-cluster*)
+        (nth *fati* fat32-in-memory)))
+
+(defthm len-of-effective-fat
+  (equal (len (effective-fat fat32-in-memory))
+         (nfix (+ (count-of-clusters fat32-in-memory)
+                  *ms-first-data-cluster*)))
+  :hints (("goal" :in-theory (enable effective-fat))))
+
 (defthm
   get-clusterchain-alt
   (equal (get-clusterchain fat32-in-memory
                            masked-current-cluster length)
          (fat32-build-index-list
-          (nth *fati* fat32-in-memory)
+          (effective-fat fat32-in-memory)
           masked-current-cluster
           length (cluster-size fat32-in-memory)))
   :rule-classes :definition
   :hints
-  (("goal"
-    :in-theory (enable get-clusterchain fati fat-length))))
+  (("goal" :in-theory (enable get-clusterchain
+                              fati fat-length effective-fat))))
 
 (encapsulate
   ()
@@ -2629,9 +2666,12 @@
            (masked-current-cluster (car clusterchain)))
         (concatenate
          'string
-         (data-regioni
-          (nfix (- masked-current-cluster *ms-first-data-cluster*))
-          fat32-in-memory)
+         (subseq
+          (data-regioni
+           (nfix (- masked-current-cluster *ms-first-data-cluster*))
+           fat32-in-memory)
+          0
+          (min file-size cluster-size))
          (get-contents-from-clusterchain
           fat32-in-memory (cdr clusterchain)
           (nfix (- file-size cluster-size)))))))
@@ -2692,7 +2732,7 @@
          ((unless (and (not (fat32-is-eof masked-next-cluster))
                        (< masked-next-cluster
                           (count-of-clusters fat32-in-memory))))
-          (mv current-cluster-contents 0))
+          (mv (subseq current-cluster-contents 0 (min length cluster-size)) 0))
          ((mv tail-string tail-error)
           (get-clusterchain-contents
            fat32-in-memory masked-next-cluster
@@ -2773,7 +2813,9 @@
     (fat32-masked-entry-p masked-current-cluster)
     (>= masked-current-cluster
         *ms-first-data-cluster*)
-    (fat32-in-memoryp fat32-in-memory)
+    (< (- masked-current-cluster *ms-first-data-cluster*)
+       (data-region-length fat32-in-memory))
+    (compliant-fat32-in-memoryp fat32-in-memory)
     (equal (count-of-clusters fat32-in-memory)
            (fat-length fat32-in-memory))
     (equal
@@ -2794,7 +2836,8 @@
              fat32-in-memory
              masked-current-cluster length))))
   :hints
-  (("goal" :in-theory (e/d (fat-length fati) (min nth fat32-in-memoryp)))))
+  (("goal" :in-theory (e/d (fat-length fati) (min nth fat32-in-memoryp)))
+   ("subgoal *1/3.2'" :expand (min length (cluster-size fat32-in-memory)))))
 
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
@@ -3194,16 +3237,6 @@
     :corollary (integer-listp (stobj-find-n-free-clusters-helper
                                fat32-in-memory n start)))))
 
-(defund-nx effective-fat (fat32-in-memory)
-  (declare (xargs :stobjs fat32-in-memory
-                  :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                              (<= (+ (count-of-clusters fat32-in-memory)
-                                     *ms-first-data-cluster*)
-                                  (fat-length fat32-in-memory)))))
-  (take (+ (count-of-clusters fat32-in-memory)
-           *ms-first-data-cluster*)
-        (nth *fati* fat32-in-memory)))
-
 (defthm
   fat32-entry-list-p-of-effective-fat
   (implies (and (fat32-in-memoryp fat32-in-memory)
@@ -3213,19 +3246,6 @@
            (fat32-entry-list-p (effective-fat fat32-in-memory)))
   :hints
   (("goal" :in-theory (enable effective-fat fat-length))))
-
-(defthm
-  len-of-effective-fat
-  (implies (and
-            (<= (+ (count-of-clusters fat32-in-memory)
-                   *ms-first-data-cluster*)
-                (fat-length fat32-in-memory))
-            (compliant-fat32-in-memoryp fat32-in-memory))
-           (equal (len (effective-fat fat32-in-memory))
-                  (+ (count-of-clusters fat32-in-memory)
-                     *ms-first-data-cluster*)))
-  :hints
-  (("goal" :in-theory (enable effective-fat))))
 
 (defthm
   nth-of-effective-fat
@@ -3240,6 +3260,11 @@
                       (fati n fat32-in-memory)
                       nil)))
   :hints (("goal" :in-theory (enable fati effective-fat))))
+
+(defthm effective-fat-of-update-data-regioni
+  (equal (effective-fat (UPDATE-DATA-REGIONI I V FAT32-IN-MEMORY))
+         (effective-fat FAT32-IN-MEMORY))
+  :hints (("Goal" :in-theory (enable effective-fat update-data-regioni)) ))
 
 (defthm
   stobj-set-indices-in-fa-table-correctness-1-lemma-3
@@ -3535,16 +3560,27 @@
 
 (defthm
   cluster-listp-of-make-clusters
-  (implies
-   (stringp text)
-   (cluster-listp
-    (make-clusters text cluster-size)
-    cluster-size))
+  (implies (stringp text)
+           (cluster-listp (make-clusters text cluster-size)
+                          cluster-size))
   :hints
-  (("goal" :in-theory (enable cluster-listp make-clusters
-                              make-list-ac-removal))
-   ("subgoal *1/3.4''" :in-theory (enable cluster-p))
-   ("subgoal *1/3.1''" :in-theory (enable cluster-p))))
+  (("goal"
+    :in-theory (enable cluster-listp
+                       make-clusters make-list-ac-removal))
+   ("subgoal *1/3"
+    :in-theory (enable cluster-p cluster-listp
+                       make-clusters make-list-ac-removal)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (stringp text)
+     (let ((l (make-clusters text cluster-size)))
+          (implies (consp l)
+                   (and (cluster-p (car l) cluster-size)
+                        (cluster-listp (cdr l)
+                                       cluster-size))))))))
 
 (defthm
   fat-length-of-update-data-regioni
@@ -5543,6 +5579,228 @@
                                 masked-current-cluster length))
     "")))
 
+(thm
+ (implies
+  (and (< (nfix n) (len index-list)) (no-duplicatesp-equal index-list))
+ (equal
+  (FATI (nth n index-list)
+        (STOBJ-SET-INDICES-IN-FA-TABLE
+         fat32-in-memory
+         INDEX-LIST value-list))
+  (nth n value-list)))
+ :hints (("Goal" :in-theory (enable STOBJ-SET-INDICES-IN-FA-TABLE))))
+
+(thm
+ (implies
+  (and
+   (consp index-list)
+   (equal (len index-list)
+          (len
+           (MAKE-CLUSTERS
+            text
+            (CLUSTER-SIZE FAT32-IN-MEMORY))))
+   (LOWER-BOUNDED-INTEGER-LISTP INDEX-LIST *ms-first-data-cluster*)
+   (<= (+ (COUNT-OF-CLUSTERS FAT32-IN-MEMORY)
+          *MS-FIRST-DATA-CLUSTER*)
+       (FAT-LENGTH FAT32-IN-MEMORY))
+   (COMPLIANT-FAT32-IN-MEMORYP FAT32-IN-MEMORY)
+   (EQUAL (DATA-REGION-LENGTH FAT32-IN-MEMORY)
+          (COUNT-OF-CLUSTERS FAT32-IN-MEMORY))
+   (stringp text))
+  (equal
+   (MV-NTH
+    0
+    (GET-CLUSTERCHAIN-CONTENTS
+     (STOBJ-SET-INDICES-IN-FA-TABLE
+      (STOBJ-SET-CLUSTERS
+       (MAKE-CLUSTERS
+        text
+        (CLUSTER-SIZE FAT32-IN-MEMORY))
+       index-list
+       fat32-in-memory)
+      index-list
+      (APPEND
+       (cdr index-list)
+       (list *ms-end-of-clusterchain*)))
+     (car index-list)
+     (length text)))
+   text))
+ :hints (("Goal" :in-theory (enable STOBJ-SET-INDICES-IN-FA-TABLE))
+         ("Subgoal *1/2.5'" :expand
+          ((:free (FAT32-IN-MEMORY VALUE-LIST)
+                  (STOBJ-SET-INDICES-IN-FA-TABLE FAT32-IN-MEMORY INDEX-LIST
+                                                 VALUE-LIST))
+           (:free (FAT32-IN-MEMORY VALUE-LIST)
+                  (STOBJ-SET-INDICES-IN-FA-TABLE FAT32-IN-MEMORY nil VALUE-LIST))
+           (GET-CLUSTERCHAIN-CONTENTS
+            (STOBJ-SET-INDICES-IN-FA-TABLE
+             (STOBJ-SET-CLUSTERS (MAKE-CLUSTERS TEXT (CLUSTER-SIZE FAT32-IN-MEMORY))
+                                 INDEX-LIST FAT32-IN-MEMORY)
+             INDEX-LIST '(268435455))
+            (CAR INDEX-LIST)
+            2097152)
+           (STOBJ-SET-CLUSTERS (MAKE-CLUSTERS TEXT (CLUSTER-SIZE FAT32-IN-MEMORY))
+                               INDEX-LIST FAT32-IN-MEMORY)
+           (SET-INDICES-IN-FA-TABLE
+            (EFFECTIVE-FAT
+             (STOBJ-SET-CLUSTERS
+              (CDR (MAKE-CLUSTERS TEXT (CLUSTER-SIZE FAT32-IN-MEMORY)))
+              NIL FAT32-IN-MEMORY))
+            INDEX-LIST '(268435455))
+           (MAKE-CLUSTERS TEXT (CLUSTER-SIZE FAT32-IN-MEMORY))
+           (GET-CLUSTERCHAIN-CONTENTS
+            (UPDATE-FATI
+             (CAR INDEX-LIST)
+             (FAT32-UPDATE-LOWER-28
+              (FATI
+               (CAR INDEX-LIST)
+               (UPDATE-DATA-REGIONI
+                (+ -2 (CAR INDEX-LIST))
+                (IMPLODE (APPEND (EXPLODE TEXT)
+                                 (MAKE-LIST-AC (+ (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                                  (- (LEN (EXPLODE TEXT))))
+                                               #\  NIL)))
+                FAT32-IN-MEMORY))
+              268435455)
+             (UPDATE-DATA-REGIONI
+              (+ -2 (CAR INDEX-LIST))
+              (IMPLODE (APPEND (EXPLODE TEXT)
+                               (MAKE-LIST-AC (+ (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                                (- (LEN (EXPLODE TEXT))))
+                                             #\  NIL)))
+              FAT32-IN-MEMORY))
+            (CAR INDEX-LIST)
+            2097152)
+           (LEN (MAKE-CLUSTERS (IMPLODE (NTHCDR (LEN (EXPLODE TEXT))
+                                                (EXPLODE TEXT)))
+                               (CLUSTER-SIZE FAT32-IN-MEMORY)))
+           (LEN (MAKE-CLUSTERS (IMPLODE (NTHCDR (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                                (EXPLODE TEXT)))
+                               (CLUSTER-SIZE FAT32-IN-MEMORY))))
+          :in-theory (e/d (lower-bounded-integer-listp)
+                          (NTH-OF-EFFECTIVE-FAT
+                           COMPLIANT-FAT32-IN-MEMORYP-OF-STOBJ-SET-INDICES-IN-FA-TABLE
+                           COMPLIANT-FAT32-IN-MEMORYP-OF-UPDATE-FATI
+                           COMPLIANT-FAT32-IN-MEMORYP-OF-UPDATE-DATA-REGIONI
+                           (:REWRITE FAT32-UPDATE-LOWER-28-CORRECTNESS-2)
+                           (:REWRITE FATI-WHEN-COMPLIANT-FAT32-IN-MEMORYP)))
+          :use
+          ((:instance NTH-OF-EFFECTIVE-FAT
+                      (n (CAR INDEX-LIST))
+                      (fat32-in-memory
+                       (STOBJ-SET-INDICES-IN-FA-TABLE
+                        (STOBJ-SET-CLUSTERS
+                         (MAKE-CLUSTERS TEXT (CLUSTER-SIZE FAT32-IN-MEMORY))
+                         INDEX-LIST FAT32-IN-MEMORY)
+                        INDEX-LIST '(268435455))))
+           (:instance
+            COMPLIANT-FAT32-IN-MEMORYP-OF-STOBJ-SET-INDICES-IN-FA-TABLE
+            (VALUE-LIST NIL)
+            (INDEX-LIST NIL)
+            (FAT32-IN-MEMORY
+             (UPDATE-FATI
+              (CAR INDEX-LIST)
+              (FAT32-UPDATE-LOWER-28
+               (FATI
+                (CAR INDEX-LIST)
+                (UPDATE-DATA-REGIONI
+                 (+ -2 (CAR INDEX-LIST))
+                 (IMPLODE (TAKE (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                (EXPLODE TEXT)))
+                 (STOBJ-SET-CLUSTERS
+                  (MAKE-CLUSTERS
+                   (IMPLODE (NTHCDR (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                    (EXPLODE TEXT)))
+                   (CLUSTER-SIZE FAT32-IN-MEMORY))
+                  NIL FAT32-IN-MEMORY)))
+               268435455)
+              (UPDATE-DATA-REGIONI
+               (+ -2 (CAR INDEX-LIST))
+               (IMPLODE (TAKE (CLUSTER-SIZE FAT32-IN-MEMORY)
+                              (EXPLODE TEXT)))
+               (STOBJ-SET-CLUSTERS
+                (MAKE-CLUSTERS
+                 (IMPLODE (NTHCDR (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                  (EXPLODE TEXT)))
+                 (CLUSTER-SIZE FAT32-IN-MEMORY))
+                NIL FAT32-IN-MEMORY)))))
+           (:instance COMPLIANT-FAT32-IN-MEMORYP-OF-UPDATE-FATI
+                      (FAT32-IN-MEMORY
+                       (UPDATE-DATA-REGIONI
+                        (+ -2 (CAR INDEX-LIST))
+                        (IMPLODE (TAKE (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                       (EXPLODE TEXT)))
+                        (STOBJ-SET-CLUSTERS
+                         (MAKE-CLUSTERS
+                          (IMPLODE (NTHCDR (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                           (EXPLODE TEXT)))
+                          (CLUSTER-SIZE FAT32-IN-MEMORY))
+                         NIL FAT32-IN-MEMORY)))
+                      (V
+                       (FAT32-UPDATE-LOWER-28
+                        (FATI
+                         (CAR INDEX-LIST)
+                         (UPDATE-DATA-REGIONI
+                          (+ -2 (CAR INDEX-LIST))
+                          (IMPLODE (TAKE (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                         (EXPLODE TEXT)))
+                          (STOBJ-SET-CLUSTERS
+                           (MAKE-CLUSTERS
+                            (IMPLODE (NTHCDR (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                             (EXPLODE TEXT)))
+                            (CLUSTER-SIZE FAT32-IN-MEMORY))
+                           NIL FAT32-IN-MEMORY)))
+                        268435455))
+                      (I (CAR INDEX-LIST)))
+           (:instance COMPLIANT-FAT32-IN-MEMORYP-OF-UPDATE-DATA-REGIONI
+                      (FAT32-IN-MEMORY
+                       (STOBJ-SET-CLUSTERS
+                        (MAKE-CLUSTERS
+                         (IMPLODE (NTHCDR (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                          (EXPLODE TEXT)))
+                         (CLUSTER-SIZE FAT32-IN-MEMORY))
+                        NIL FAT32-IN-MEMORY))
+                      (V (IMPLODE (TAKE (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                        (EXPLODE TEXT))))
+                      (I (+ -2 (CAR INDEX-LIST))))
+           (:instance (:REWRITE FAT32-UPDATE-LOWER-28-CORRECTNESS-2)
+                      (MASKED-ENTRY 268435455)
+                      (ENTRY
+                       (FATI
+                        (CAR INDEX-LIST)
+                        (UPDATE-DATA-REGIONI
+                         (+ -2 (CAR INDEX-LIST))
+                         (IMPLODE
+                          (APPEND (EXPLODE TEXT)
+                                  (MAKE-LIST-AC (+ (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                                   (- (LEN (EXPLODE TEXT))))
+                                                #\  NIL)))
+                         FAT32-IN-MEMORY))))
+           (:instance (:REWRITE FATI-WHEN-COMPLIANT-FAT32-IN-MEMORYP)
+                      (FAT32-IN-MEMORY
+                       (UPDATE-DATA-REGIONI
+                        (+ -2 (CAR INDEX-LIST))
+                        (IMPLODE
+                         (APPEND (EXPLODE TEXT)
+                                 (MAKE-LIST-AC (+ (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                                  (- (LEN (EXPLODE TEXT))))
+                                               #\  NIL)))
+                        FAT32-IN-MEMORY))
+                      (I (CAR INDEX-LIST)))
+           (:instance COMPLIANT-FAT32-IN-MEMORYP-OF-UPDATE-DATA-REGIONI
+                      (FAT32-IN-MEMORY FAT32-IN-MEMORY)
+                      (V TEXT)
+                      (I (+ -2 (CAR INDEX-LIST))))
+           (:instance COMPLIANT-FAT32-IN-MEMORYP-OF-UPDATE-DATA-REGIONI
+                      (FAT32-IN-MEMORY FAT32-IN-MEMORY)
+                      (V
+                       (IMPLODE
+                        (APPEND (EXPLODE TEXT)
+                                (MAKE-LIST-AC (+ (CLUSTER-SIZE FAT32-IN-MEMORY)
+                                                 (- (LEN (EXPLODE TEXT))))
+                                              #\  NIL))))
+                      (I (+ -2 (CAR INDEX-LIST))))))))
+
 (encapsulate
   ()
 
@@ -5601,100 +5859,11 @@
                                         0 NIL))))
                        (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY))
                        2097152)))
-            ("Subgoal 3.1"
+            ("Subgoal 2.1'"
              :expand ((:free (fat32-in-memory)
                              (fat32-in-memory-to-m1-fs
                               fat32-in-memory)))
-             :in-theory (e/d (lower-bounded-integer-listp) (stobj-set-clusters-correctness-1))
-             :use (:instance stobj-set-clusters-correctness-1
-                             (cluster-list
-                              (MAKE-CLUSTERS
-                               (NATS=>STRING
-                                (FLATTEN
-                                 (MV-NTH
-                                  1
-                                  (M1-FS-TO-FAT32-IN-MEMORY-HELPER
-                                   (STOBJ-SET-INDICES-IN-FA-TABLE
-                                    FAT32-IN-MEMORY
-                                    (REMOVE-EQUAL
-                                     (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY))
-                                     (GENERATE-INDEX-LIST 2 (+ -2 (FAT-LENGTH FAT32-IN-MEMORY))))
-                                    (MAKE-LIST-AC (+ -3 (FAT-LENGTH FAT32-IN-MEMORY))
-                                                  0 NIL))
-                                   FS
-                                   (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY))))))
-                               (CLUSTER-SIZE FAT32-IN-MEMORY)))
-                             (index-list
-                              (CONS
-                               (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY))
-                               (FIND-N-FREE-CLUSTERS
-                                (NTH
-                                 *FATI*
-                                 (MV-NTH
-                                  0
-                                  (M1-FS-TO-FAT32-IN-MEMORY-HELPER
-                                   (STOBJ-SET-INDICES-IN-FA-TABLE
-                                    FAT32-IN-MEMORY
-                                    (REMOVE-EQUAL
-                                     (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY))
-                                     (GENERATE-INDEX-LIST 2 (+ -2 (FAT-LENGTH FAT32-IN-MEMORY))))
-                                    (MAKE-LIST-AC (+ -3 (FAT-LENGTH FAT32-IN-MEMORY))
-                                                  0 NIL))
-                                   FS
-                                   (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY)))))
-                                (+
-                                 -1
-                                 (LEN
-                                  (MAKE-CLUSTERS
-                                   (NATS=>STRING
-                                    (FLATTEN
-                                     (MV-NTH
-                                      1
-                                      (M1-FS-TO-FAT32-IN-MEMORY-HELPER
-                                       (STOBJ-SET-INDICES-IN-FA-TABLE
-                                        FAT32-IN-MEMORY
-                                        (REMOVE-EQUAL
-                                         (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY))
-                                         (GENERATE-INDEX-LIST
-                                          2 (+ -2 (FAT-LENGTH FAT32-IN-MEMORY))))
-                                        (MAKE-LIST-AC (+ -3 (FAT-LENGTH FAT32-IN-MEMORY))
-                                                      0 NIL))
-                                       FS
-                                       (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY))))))
-                                   (CLUSTER-SIZE FAT32-IN-MEMORY)))))))
-                             (fat32-in-memory
-                              (MV-NTH
-                               0
-                               (M1-FS-TO-FAT32-IN-MEMORY-HELPER
-                                (STOBJ-SET-INDICES-IN-FA-TABLE
-                                 FAT32-IN-MEMORY
-                                 (REMOVE-EQUAL
-                                  (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY))
-                                  (GENERATE-INDEX-LIST 2 (+ -2 (FAT-LENGTH FAT32-IN-MEMORY))))
-                                 (MAKE-LIST-AC (+ -3 (FAT-LENGTH FAT32-IN-MEMORY))
-                                               0 NIL))
-                                FS
-                                (FAT32-ENTRY-MASK (BPB_ROOTCLUS
-                                                   FAT32-IN-MEMORY)))))))
-            ("Subgoal 3.1.3" :use
-             (:instance bounded-nat-listp-correctness-5
-                        (x (len
-                            (NTH
-                             *FATI*
-                             (MV-NTH
-                              0
-                              (M1-FS-TO-FAT32-IN-MEMORY-HELPER
-                               (STOBJ-SET-INDICES-IN-FA-TABLE
-                                FAT32-IN-MEMORY
-                                (REMOVE-EQUAL
-                                 (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY))
-                                 (GENERATE-INDEX-LIST 2 (+ -2 (FAT-LENGTH FAT32-IN-MEMORY))))
-                                (MAKE-LIST-AC (+ -3 (FAT-LENGTH FAT32-IN-MEMORY))
-                                              0 NIL))
-                               FS
-                               (FAT32-ENTRY-MASK (BPB_ROOTCLUS FAT32-IN-MEMORY)))))))
-                        (y
-                         (+ 2 (COUNT-OF-CLUSTERS FAT32-IN-MEMORY))))))))
+             :in-theory (e/d (lower-bounded-integer-listp)) ))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-1
