@@ -2623,6 +2623,30 @@
   :hints (("goal" :in-theory (enable effective-fat))))
 
 (defthm
+  fat32-entry-list-p-of-effective-fat
+  (implies (and (fat32-in-memoryp fat32-in-memory)
+                (<= (+ (count-of-clusters fat32-in-memory)
+                       *ms-first-data-cluster*)
+                    (fat-length fat32-in-memory)))
+           (fat32-entry-list-p (effective-fat fat32-in-memory)))
+  :hints
+  (("goal" :in-theory (enable effective-fat fat-length))))
+
+(defthm
+  nth-of-effective-fat
+  (implies (and (<= (+ (count-of-clusters fat32-in-memory)
+                       *ms-first-data-cluster*)
+                    (fat-length fat32-in-memory))
+                (compliant-fat32-in-memoryp fat32-in-memory))
+           (equal (nth n (effective-fat fat32-in-memory))
+                  (if (< (nfix n)
+                         (+ (count-of-clusters fat32-in-memory)
+                            *ms-first-data-cluster*))
+                      (fati n fat32-in-memory)
+                      nil)))
+  :hints (("goal" :in-theory (enable fati effective-fat))))
+
+(defthm
   get-clusterchain-alt
   (equal (get-clusterchain fat32-in-memory
                            masked-current-cluster length)
@@ -2886,7 +2910,8 @@
                               ;; where clusters available in the data region
                               ;; are not allocatable because the file
                               ;; allocation table is too short.
-                              (<= (count-of-clusters fat32-in-memory)
+                              (<= (+ (count-of-clusters fat32-in-memory)
+                                     *ms-first-data-cluster*)
                                   (fat-length fat32-in-memory)))
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
@@ -3131,7 +3156,8 @@
                               ;; where clusters available in the data region
                               ;; are not allocatable because the file
                               ;; allocation table is too short.
-                              (<= (count-of-clusters fat32-in-memory)
+                              (<= (+ (count-of-clusters fat32-in-memory)
+                                     *ms-first-data-cluster*)
                                   (fat-length fat32-in-memory)))
                   :guard-hints
                   (("goal"
@@ -3246,33 +3272,20 @@
                                fat32-in-memory n start)))))
 
 (defthm
-  fat32-entry-list-p-of-effective-fat
-  (implies (and (fat32-in-memoryp fat32-in-memory)
-                (<= (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    (fat-length fat32-in-memory)))
-           (fat32-entry-list-p (effective-fat fat32-in-memory)))
-  :hints
-  (("goal" :in-theory (enable effective-fat fat-length))))
+  nth-of-update-data-regioni
+  (implies
+   (not (equal (nfix n) *data-regioni*))
+   (equal (nth n
+               (update-data-regioni i v fat32-in-memory))
+          (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable update-data-regioni))))
 
 (defthm
-  nth-of-effective-fat
-  (implies (and (<= (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    (fat-length fat32-in-memory))
-                (compliant-fat32-in-memoryp fat32-in-memory))
-           (equal (nth n (effective-fat fat32-in-memory))
-                  (if (< (nfix n)
-                         (+ (count-of-clusters fat32-in-memory)
-                            *ms-first-data-cluster*))
-                      (fati n fat32-in-memory)
-                      nil)))
-  :hints (("goal" :in-theory (enable fati effective-fat))))
-
-(defthm effective-fat-of-update-data-regioni
-  (equal (effective-fat (UPDATE-DATA-REGIONI I V FAT32-IN-MEMORY))
-         (effective-fat FAT32-IN-MEMORY))
-  :hints (("Goal" :in-theory (enable effective-fat update-data-regioni)) ))
+  effective-fat-of-update-data-regioni
+  (equal
+   (effective-fat (update-data-regioni i v fat32-in-memory))
+   (effective-fat fat32-in-memory))
+  :hints (("goal" :in-theory (enable effective-fat))))
 
 (defthm
   stobj-set-indices-in-fa-table-correctness-1-lemma-3
@@ -3311,10 +3324,15 @@
      (nthcdr start (effective-fat fat32-in-memory))
      n start)))
   :hints
-  (("goal" :in-theory (enable stobj-find-n-free-clusters-helper
-                              find-n-free-clusters-helper)
-    :induct (stobj-find-n-free-clusters-helper
-             fat32-in-memory n start))))
+  (("goal"
+    :in-theory (enable stobj-find-n-free-clusters-helper
+                       find-n-free-clusters-helper)
+    :induct
+    (stobj-find-n-free-clusters-helper fat32-in-memory n start))
+   ("subgoal *1/2"
+    :expand (find-n-free-clusters-helper
+             (nthcdr start (effective-fat fat32-in-memory))
+             n start))))
 
 (defund
   stobj-find-n-free-clusters
@@ -4428,6 +4446,11 @@
      (implies (unsigned-byte-listp 8 x)
               (true-listp x))))
 
+  (local
+   (defthmd m1-fs-to-fat32-in-memory-helper-guard-lemma-3
+     (implies (and (integerp x) (integerp y))
+              (iff (< y (+ 1 x)) (<= y x)))))
+
   (verify-guards
     m1-fs-to-fat32-in-memory-helper
     :guard-debug t
@@ -4500,7 +4523,18 @@
          compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory-helper)
         (first-cluster current-dir-first-cluster)
         (fs (cdr fs))
-        (fat32-in-memory fat32-in-memory)))))))
+        (fat32-in-memory fat32-in-memory))
+       (:instance
+        m1-fs-to-fat32-in-memory-helper-guard-lemma-3
+        (x
+         (car
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
+                                                     current-dir-first-cluster)))
+           1)))
+        (y *ms-bad-cluster*)))))))
 
 (defun
   m1-fs-to-fat32-in-memory
