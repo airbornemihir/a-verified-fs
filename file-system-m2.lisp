@@ -2562,7 +2562,8 @@
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (fat32-masked-entry-p masked-current-cluster)
                 (natp length)
-                (>= masked-current-cluster *ms-first-data-cluster*)
+                (>= masked-current-cluster
+                    *ms-first-data-cluster*)
                 (< masked-current-cluster
                    (+ (count-of-clusters fat32-in-memory)
                       *ms-first-data-cluster*))
@@ -2577,27 +2578,26 @@
     (let
      ((masked-next-cluster
        (fat32-entry-mask
-        (if
-            (mbt (< (nfix masked-current-cluster)
-                    (nfix
-                     (+ (count-of-clusters fat32-in-memory)
-                        *ms-first-data-cluster*))))
-            (fati masked-current-cluster
-                  fat32-in-memory)
-          nil))))
+        (if (mbt (< (nfix masked-current-cluster)
+                    (nfix (+ (count-of-clusters fat32-in-memory)
+                             *ms-first-data-cluster*))))
+            (fati masked-current-cluster fat32-in-memory)
+            nil))))
      (if
-      (< masked-next-cluster *ms-first-data-cluster*)
+      (< masked-next-cluster
+         *ms-first-data-cluster*)
       (mv (list masked-current-cluster)
           (- *eio*))
       (if
-       (or (fat32-is-eof masked-next-cluster)
-           (>= masked-next-cluster
-               (mbe :exec
-                    (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    :logic
-                    (nfix (+ (count-of-clusters fat32-in-memory)
-                             *ms-first-data-cluster*)))))
+       (or
+        (fat32-is-eof masked-next-cluster)
+        (>=
+         masked-next-cluster
+         (mbe
+          :exec (+ (count-of-clusters fat32-in-memory)
+                   *ms-first-data-cluster*)
+          :logic (nfix (+ (count-of-clusters fat32-in-memory)
+                          *ms-first-data-cluster*)))))
        (mv (list masked-current-cluster) 0)
        (b*
            (((mv tail-index-list tail-error)
@@ -2702,7 +2702,8 @@
                   (>= masked-current-cluster
                       *ms-first-data-cluster*)
                   (< masked-current-cluster
-                     (count-of-clusters fat32-in-memory))
+                     (+ (count-of-clusters fat32-in-memory)
+                        *ms-first-data-cluster*))
                   ;; this clause stipulates that while there may be a few
                   ;; cluster indices in the file allocation table which do not
                   ;; actually exist in the data region (because the file
@@ -2710,7 +2711,8 @@
                   ;; sectors) there should never be the reverse scenario, where
                   ;; clusters available in the data region are not allocatable
                   ;; because the file allocation table is too short.
-                  (<= (count-of-clusters fat32-in-memory)
+                  (<= (+ (count-of-clusters fat32-in-memory)
+                         *ms-first-data-cluster*)
                       (fat-length fat32-in-memory)))
       :verify-guards nil))
     (b*
@@ -2724,14 +2726,19 @@
           (str-fix
            (data-regioni (- masked-current-cluster 2) fat32-in-memory)))
          (masked-next-cluster
-          (fat32-entry-mask (fati masked-current-cluster
-                                  fat32-in-memory)))
+          (fat32-entry-mask
+           (if (mbt (< (nfix masked-current-cluster)
+                       (nfix (+ (count-of-clusters fat32-in-memory)
+                                *ms-first-data-cluster*))))
+               (fati masked-current-cluster fat32-in-memory)
+             nil)))
          ((unless (>= masked-next-cluster
                       *ms-first-data-cluster*))
           (mv current-cluster-contents (- *eio*)))
          ((unless (and (not (fat32-is-eof masked-next-cluster))
                        (< masked-next-cluster
-                          (count-of-clusters fat32-in-memory))))
+                          (+ (count-of-clusters fat32-in-memory)
+                             *ms-first-data-cluster*))))
           (mv (subseq current-cluster-contents 0 (min length cluster-size)) 0))
          ((mv tail-string tail-error)
           (get-clusterchain-contents
@@ -2791,19 +2798,17 @@
    (and (fat32-masked-entry-p masked-current-cluster)
         (>= masked-current-cluster
             *ms-first-data-cluster*)
-        (fat32-in-memoryp fat32-in-memory)
-        (equal (count-of-clusters fat32-in-memory)
-               (fat-length fat32-in-memory)))
+        (fat32-in-memoryp fat32-in-memory))
    (equal (mv-nth 1
                   (fat32-build-index-list
-                   (nth *fati* fat32-in-memory)
+                   (effective-fat fat32-in-memory)
                    masked-current-cluster
                    length (cluster-size fat32-in-memory)))
           (mv-nth 1
                   (get-clusterchain-contents
                    fat32-in-memory
                    masked-current-cluster length))))
-  :hints (("goal" :in-theory (e/d (cluster-size fat-length fati)
+  :hints (("goal" :in-theory (e/d (fat-length fati effective-fat)
                                   (fat32-in-memoryp)))))
 
 (defthm
@@ -2813,11 +2818,15 @@
     (fat32-masked-entry-p masked-current-cluster)
     (>= masked-current-cluster
         *ms-first-data-cluster*)
-    (< (- masked-current-cluster *ms-first-data-cluster*)
-       (data-region-length fat32-in-memory))
+    (< masked-current-cluster
+       (+ (count-of-clusters fat32-in-memory)
+          *ms-first-data-cluster*))
     (compliant-fat32-in-memoryp fat32-in-memory)
-    (equal (count-of-clusters fat32-in-memory)
-           (fat-length fat32-in-memory))
+    (<= (+ (count-of-clusters fat32-in-memory)
+           *ms-first-data-cluster*)
+        (fat-length fat32-in-memory))
+    (equal (data-region-length fat32-in-memory)
+           (count-of-clusters fat32-in-memory))
     (equal
      (mv-nth
       1
@@ -2836,8 +2845,7 @@
              fat32-in-memory
              masked-current-cluster length))))
   :hints
-  (("goal" :in-theory (e/d (fat-length fati) (min nth fat32-in-memoryp)))
-   ("subgoal *1/3.2'" :expand (min length (cluster-size fat32-in-memory)))))
+  (("goal" :in-theory (e/d (fat-length fati effective-fat) (fat32-in-memoryp)))))
 
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
