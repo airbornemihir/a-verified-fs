@@ -587,16 +587,18 @@
                                  bs_volid-of-resize-fat)
 
 (defthm fati-of-update-fati
-  (equal (fati i (update-fati i v fat32-in-memory))
-         v)
+  (equal (fati i1 (update-fati i2 v fat32-in-memory))
+         (if (equal (nfix i1) (nfix i2))
+             v (fati i1 fat32-in-memory)))
   :hints (("goal" :in-theory (enable fati update-fati))))
 
 (defthm
   data-regioni-of-update-data-regioni
   (equal
-   (data-regioni i
-                 (update-data-regioni i v fat32-in-memory))
-   v)
+   (data-regioni i1
+                 (update-data-regioni i2 v fat32-in-memory))
+   (if (equal (nfix i1) (nfix i2))
+       v (data-regioni i1 fat32-in-memory)))
   :hints
   (("goal"
     :in-theory (enable data-regioni update-data-regioni))))
