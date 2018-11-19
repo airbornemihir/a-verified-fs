@@ -696,3 +696,11 @@
            (equal (set-indices-in-fa-table (update-nth key val l) index-list value-list)
                   (update-nth key val (set-indices-in-fa-table l index-list value-list))))
   :hints (("Goal" :in-theory (enable set-indices-in-fa-table))))
+
+(defthm
+  fat32-masked-entry-list-p-when-bounded-nat-listp
+  (implies
+   (and (bounded-nat-listp file-index-list (len fa-table))
+        (<= (len fa-table) *ms-bad-cluster*))
+   (fat32-masked-entry-list-p file-index-list))
+  :hints (("goal" :in-theory (enable fat32-masked-entry-p))))

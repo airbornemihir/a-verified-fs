@@ -1821,14 +1821,6 @@
                                              fa-table)))))))
 
 (defthm
-  l6-wrchs-correctness-1-lemma-28
-  (implies
-   (and (bounded-nat-listp file-index-list (len fa-table))
-        (<= (len fa-table) *ms-bad-cluster*))
-   (fat32-masked-entry-list-p file-index-list))
-  :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
-
-(defthm
   find-n-free-clusters-correctness-6
   (implies
    (and (fat32-entry-list-p fa-table)
@@ -1901,7 +1893,7 @@
                              '(268435455))))
       :in-theory (disable set-indices-in-fa-table-correctness-4
                           set-indices-in-fa-table-correctness-3
-                          l6-wrchs-correctness-1-lemma-28
+                          fat32-masked-entry-list-p-when-bounded-nat-listp
                           fat32-update-lower-28-correctness-2)
       :use
       ((:instance set-indices-in-fa-table-correctness-4
@@ -1925,7 +1917,7 @@
         (index-list (cdr file-index-list))
         (value-list (append (cddr file-index-list)
                             '(268435455))))
-       l6-wrchs-correctness-1-lemma-28
+       fat32-masked-entry-list-p-when-bounded-nat-listp
        (:instance fat32-update-lower-28-correctness-2
                   (entry (nth (car file-index-list) fa-table))
                   (masked-entry (cadr file-index-list)))))
