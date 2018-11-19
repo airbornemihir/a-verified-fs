@@ -704,3 +704,64 @@
         (<= (len fa-table) *ms-bad-cluster*))
    (fat32-masked-entry-list-p file-index-list))
   :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun
+     induction-scheme
+     (file-index-list file-length cluster-size)
+     (if (or (zp file-length) (zp cluster-size))
+         file-index-list
+         (induction-scheme (cdr file-index-list)
+                           (nfix (- file-length cluster-size))
+                           cluster-size))))
+
+  (defthm
+    fat32-build-index-list-of-set-indices-in-fa-table
+    (implies
+     (and (natp file-length)
+          (no-duplicatesp-equal file-index-list)
+          (< (* cluster-size (+ -1 (len file-index-list)))
+             file-length)
+          (lower-bounded-integer-listp
+           file-index-list *ms-first-data-cluster*)
+          (bounded-nat-listp file-index-list (len fa-table))
+          (consp file-index-list)
+          (fat32-entry-list-p fa-table)
+          (<= (len fa-table) *ms-bad-cluster*)
+          (<= *ms-first-data-cluster* (len fa-table))
+          (not (zp cluster-size)))
+     (equal (fat32-build-index-list
+             (set-indices-in-fa-table
+              fa-table file-index-list
+              (append (cdr file-index-list)
+                      (list *ms-end-of-clusterchain*)))
+             (car file-index-list)
+             file-length cluster-size)
+            (mv file-index-list 0)))
+    :hints
+    (("goal" :in-theory (enable set-indices-in-fa-table
+                                lower-bounded-integer-listp)
+      :induct (induction-scheme file-index-list
+                                file-length cluster-size))
+     ("subgoal *1/2"
+      :expand
+      ((:free (fa-table value-list)
+              (set-indices-in-fa-table
+               fa-table file-index-list value-list))
+       (fat32-build-index-list
+        (update-nth
+         (car file-index-list)
+         (fat32-update-lower-28
+          (nth (car file-index-list) fa-table)
+          (cadr file-index-list))
+         (set-indices-in-fa-table fa-table (cdr file-index-list)
+                                  (append (cddr file-index-list)
+                                          '(268435455))))
+        (car file-index-list)
+        file-length cluster-size))
+      :in-theory (e/d (set-indices-in-fa-table lower-bounded-integer-listp)
+                      (fat32-masked-entry-list-p-when-bounded-nat-listp))
+      :use fat32-masked-entry-list-p-when-bounded-nat-listp))))
