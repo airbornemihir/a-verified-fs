@@ -5995,56 +5995,133 @@
     (get-clusterchain-contents fat32-in-memory
                                masked-current-cluster length))))
 
-(defun induction-scheme
-  (index-list text cluster-size)
-  (if (or (zp (length text))
-          (zp cluster-size))
-      index-list
-      (induction-scheme
-       (cdr index-list)
-       (subseq text (min cluster-size (length text))
-               nil)
-       cluster-size)))
+(encapsulate
+  ()
+
+  (local
+   (defun induction-scheme
+     (index-list text cluster-size)
+     (if (or (zp (length text))
+             (zp cluster-size))
+         index-list
+         (induction-scheme
+          (cdr index-list)
+          (subseq text (min cluster-size (length text))
+                  nil)
+          cluster-size))))
+
+  (defthm
+    get-contents-from-clusterchain-of-stobj-set-clusters
+    (implies
+     (and
+      (stringp text)
+      (not (zp (cluster-size fat32-in-memory)))
+      (equal
+       (len (make-clusters text (cluster-size fat32-in-memory)))
+       (len index-list))
+      (lower-bounded-integer-listp
+       index-list *ms-first-data-cluster*)
+      (bounded-nat-listp
+       index-list
+       (+ 2 (data-region-length fat32-in-memory)))
+      (compliant-fat32-in-memoryp fat32-in-memory)
+      (no-duplicatesp-equal index-list)
+      (equal (data-region-length fat32-in-memory)
+             (count-of-clusters fat32-in-memory)))
+     (equal
+      (get-contents-from-clusterchain
+       (stobj-set-clusters
+        (make-clusters text (cluster-size fat32-in-memory))
+        index-list fat32-in-memory)
+       index-list (len (explode text)))
+      text))
+    :hints
+    (("goal"
+      :induct
+      (induction-scheme index-list
+                        text (cluster-size fat32-in-memory))
+      :in-theory (enable make-clusters
+                         lower-bounded-integer-listp
+                         nthcdr-when->=-n-len-l)
+      :expand
+      ((:free (fat32-in-memory file-size)
+              (get-contents-from-clusterchain
+               fat32-in-memory index-list file-size))
+       (make-clusters text (cluster-size fat32-in-memory))))
+     ("subgoal *1/1" :expand (len (explode text))))))
 
 (defthm
-  get-contents-from-clusterchain-of-stobj-set-clusters
+  get-contents-from-clusterchain-of-stobj-set-indices-in-fa-table
+  (equal
+   (get-contents-from-clusterchain
+    (stobj-set-indices-in-fa-table
+     fat32-in-memory index-list value-list)
+    clusterchain file-size)
+   (get-contents-from-clusterchain fat32-in-memory
+                                   clusterchain file-size)))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-9
   (implies
    (and
     (stringp text)
-    (not (zp (cluster-size fat32-in-memory)))
-    (equal
-     (len (make-clusters text (cluster-size fat32-in-memory)))
-     (len index-list))
+    (consp index-list)
+    (fat32-masked-entry-list-p index-list)
     (lower-bounded-integer-listp
      index-list *ms-first-data-cluster*)
-    (bounded-nat-listp
-     index-list
-     (+ 2 (data-region-length fat32-in-memory)))
+    (bounded-nat-listp index-list
+                       (+ (count-of-clusters fat32-in-memory)
+                          *ms-first-data-cluster*))
+    (equal
+     (len index-list)
+     (len (make-clusters text (cluster-size fat32-in-memory))))
     (compliant-fat32-in-memoryp fat32-in-memory)
-    (no-duplicatesp-equal index-list)
+    (<= (+ (count-of-clusters fat32-in-memory)
+           *ms-first-data-cluster*)
+        (fat-length fat32-in-memory))
     (equal (data-region-length fat32-in-memory)
-           (count-of-clusters fat32-in-memory)))
+           (count-of-clusters fat32-in-memory))
+    (no-duplicatesp-equal index-list)
+    (< (* (cluster-size fat32-in-memory)
+          (- (len index-list) 1))
+       (len (explode text))))
    (equal
+    (mv-nth
+     0
+     (get-clusterchain-contents
+      (stobj-set-indices-in-fa-table
+       (stobj-set-clusters
+        (make-clusters text (cluster-size fat32-in-memory))
+        index-list fat32-in-memory)
+       index-list
+       (append (cdr index-list)
+               (list 268435455)))
+      (car index-list)
+      (len (explode text))))
     (get-contents-from-clusterchain
      (stobj-set-clusters
       (make-clusters text (cluster-size fat32-in-memory))
       index-list fat32-in-memory)
-     index-list (len (explode text)))
-    text))
+     index-list (len (explode text)))))
   :hints
   (("goal"
-    :induct
-    (induction-scheme index-list
-                      text (cluster-size fat32-in-memory))
-    :in-theory (enable make-clusters
-                       lower-bounded-integer-listp
-                       nthcdr-when->=-n-len-l)
-    :expand
-    ((:free (fat32-in-memory file-size)
-            (get-contents-from-clusterchain
-             fat32-in-memory index-list file-size))
-     (make-clusters text (cluster-size fat32-in-memory))))
-   ("subgoal *1/1" :expand (len (explode text)))))
+    :do-not-induct t
+    :in-theory
+    (e/d (lower-bounded-integer-listp)
+         ((:rewrite get-clusterchain-contents-correctness-1)))
+    :use
+    (:instance
+     (:rewrite get-clusterchain-contents-correctness-1)
+     (length (len (explode text)))
+     (masked-current-cluster (car index-list))
+     (fat32-in-memory
+      (stobj-set-indices-in-fa-table
+       (stobj-set-clusters
+        (make-clusters text (cluster-size fat32-in-memory))
+        index-list fat32-in-memory)
+       index-list
+       (append (cdr index-list)
+               (list 268435455))))))))
 
 (verify
  (equal
