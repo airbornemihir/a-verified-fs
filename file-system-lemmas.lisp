@@ -1,6 +1,10 @@
 (in-package "ACL2")
 
-(local (in-theory (enable true-list-fix)))
+;; Some lemmas below are taken from other books with credit; in most cases they
+;; replaced a theorem developed for this project which either had the same name
+;; as a theorem from a community book (causing a name conflict), or which
+;; rewrote the same target (causing :use hints to become :useless even if the
+;; project-specific lemma was disabled for the goal in question.)
 
 (defthm make-character-list-makes-character-list
   (character-listp (make-character-list x)))
@@ -124,17 +128,19 @@
                            (y nil)
                            (z l)))))
 
-;; The following is redundant with the definition in std/lists/nth.lisp, from
-;; where it was taken with thanks.
+;; The following is redundant with the definition in books/std/lists/nth.lisp,
+;; from where it was taken with thanks.
 (defthm nth-of-append
   (equal (nth n (append x y))
          (if (< (nfix n) (len x))
              (nth n x)
            (nth (- n (len x)) y))))
 
-(defthm binary-append-is-associative
-  (equal (binary-append (binary-append a b) c)
-         (binary-append a (binary-append b c))))
+;; The following is redundant with the definition in
+;; books/std/lists/append.lisp, from where it was taken with thanks.
+(defthm associativity-of-append
+  (equal (append (append a b) c)
+         (append a (append b c))))
 
 (defthm member-of-a-nat-list
   (implies (and (nat-listp lst)
@@ -690,3 +696,7 @@
   (("goal"
     :use (:instance painful-debugging-lemma-4 (x (+ x y))
                     (y (- y))))))
+
+(defthm
+  painful-debugging-lemma-7
+  (equal (- (- x)) (fix x)))
