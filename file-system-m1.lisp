@@ -431,6 +431,51 @@
   (implies (m1-file-alist-p fs)
            (m1-file-alist-p (delete-assoc-equal key fs))))
 
+(defun
+  m1-bounded-file-alist-p-helper (x ac)
+  (declare (xargs :guard (and (m1-file-alist-p x) (natp ac))
+                  :measure (acl2-count x)))
+  (and
+   (not (zp ac))
+   (or
+    (atom x)
+    (let
+     ((head (car x)))
+     (and
+      (consp head)
+      (let
+       ((file (cdr head)))
+       (if
+        (m1-directory-file-p file)
+        (and (m1-bounded-file-alist-p-helper (m1-file->contents file)
+                                      *ms-max-dir-ent-count*)
+             (m1-bounded-file-alist-p-helper (cdr x)
+                                      (- ac 1)))
+        (m1-bounded-file-alist-p-helper (cdr x)
+                                 (- ac 1)))))))))
+
+(defthmd len-when-m1-bounded-file-alist-p-helper
+  (implies (m1-bounded-file-alist-p-helper x ac)
+           (< (len x) (nfix ac)))
+  :rule-classes :linear)
+
+(defund
+  m1-bounded-file-alist-p (x)
+  (declare (xargs :guard (m1-file-alist-p x)))
+  (m1-bounded-file-alist-p-helper x *ms-max-dir-ent-count*))
+
+(defthmd
+  len-when-m1-bounded-file-alist-p
+  (implies
+   (m1-bounded-file-alist-p-helper x *ms-max-dir-ent-count*)
+   (< (len x) *ms-max-dir-ent-count*))
+  :rule-classes :linear
+  :hints
+  (("goal"
+    :in-theory (enable m1-bounded-file-alist-p)
+    :use (:instance len-when-m1-bounded-file-alist-p-helper
+                    (ac *ms-max-dir-ent-count*)))))
+
 (fty::defprod
  struct-stat
  ;; Currently, this is the only thing I can decipher.

@@ -59,7 +59,8 @@
 (defconst *parent-dir-name* "..")
 
 ;; from page 36 of the FAT specification
-(defconst *ms-max-dir-size* (ash 1 21))
+(defconst *ms-max-dir-ent-count* (ash 1 16))
+(defconst *ms-max-dir-size* (* *ms-dir-ent-length* *ms-max-dir-ent-count*))
 
 ;; from include/uapi/asm-generic/errno-base.h in the linux kernel sources
 (defconst *ENOENT* 2) ;; No such file or directory
