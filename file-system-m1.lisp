@@ -464,12 +464,17 @@
   (declare (xargs :guard (m1-file-alist-p x)))
   (m1-bounded-file-alist-p-helper x *ms-max-dir-ent-count*))
 
-(defthmd
+(defthm
   len-when-m1-bounded-file-alist-p
-  (implies
-   (m1-bounded-file-alist-p-helper x *ms-max-dir-ent-count*)
-   (< (len x) *ms-max-dir-ent-count*))
-  :rule-classes :linear
+  (implies (m1-bounded-file-alist-p x)
+           (< (len x) *ms-max-dir-ent-count*))
+  :rule-classes
+  (:linear
+   (:linear
+    :corollary (implies (m1-bounded-file-alist-p x)
+                        (< (* *ms-dir-ent-length* (len x))
+                           (* *ms-dir-ent-length*
+                              *ms-max-dir-ent-count*)))))
   :hints
   (("goal"
     :in-theory (enable m1-bounded-file-alist-p)
