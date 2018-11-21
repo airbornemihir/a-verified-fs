@@ -435,14 +435,15 @@
 (defthm
   find-n-free-clusters-helper-correctness-4
   (implies
-   (and (fat32-entry-list-p fa-table)
-        (natp n)
-        (natp start)
-        (member-equal
+   (and
+    (fat32-entry-list-p fa-table)
+    (natp n)
+    (natp start)
+    (not (equal (fat32-entry-mask (nth (- x start) fa-table))
+                0)))
+   (not (member-equal
          x
-         (find-n-free-clusters-helper fa-table n start)))
-   (equal (fat32-entry-mask (nth (- x start) fa-table))
-          0))
+         (find-n-free-clusters-helper fa-table n start))))
   :hints
   (("goal" :in-theory (enable find-n-free-clusters-helper)
     :use find-n-free-clusters-helper-correctness-3)
@@ -539,37 +540,28 @@
                     (start *ms-first-data-cluster*)
                     (fa-table (nthcdr *ms-first-data-cluster* fa-table))))))
 
-(defthmd
+(defthm
   find-n-free-clusters-correctness-4
   (implies
    (and (fat32-entry-list-p fa-table)
         (natp n)
-        (natp start)
-        (member-equal x (find-n-free-clusters fa-table n)))
-   (equal (fat32-entry-mask (nth x fa-table))
-          0))
+        (not (equal (fat32-entry-mask (nth x fa-table))
+                    0)))
+   (not (member-equal x (find-n-free-clusters fa-table n))))
   :hints
   (("goal"
-    :in-theory (enable find-n-free-clusters)
-    :use
-    (:instance
-     find-n-free-clusters-helper-correctness-4
-     (start *ms-first-data-cluster*)
-     (fa-table (nthcdr *ms-first-data-cluster* fa-table))))
-   ("goal''"
-    :in-theory (disable member-of-a-nat-list)
+    :in-theory (e/d (find-n-free-clusters)
+                    (member-of-a-nat-list))
     :use
     ((:instance
       member-of-a-nat-list
       (lst (find-n-free-clusters-helper
             (nthcdr *ms-first-data-cluster* fa-table)
-            n *ms-first-data-cluster*)))))
-   ("subgoal 2"
-    :use
-    (:instance
-     find-n-free-clusters-helper-correctness-3
-     (fa-table (nthcdr *ms-first-data-cluster* fa-table))
-     (start *ms-first-data-cluster*)))))
+            n *ms-first-data-cluster*)))
+     (:instance
+      find-n-free-clusters-helper-correctness-3
+      (fa-table (nthcdr *ms-first-data-cluster* fa-table))
+      (start *ms-first-data-cluster*))))))
 
 (defthm
   find-n-free-clusters-correctness-6
