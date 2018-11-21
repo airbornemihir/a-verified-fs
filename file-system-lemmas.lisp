@@ -251,6 +251,10 @@
   (equal (len (make-list-ac n val acc))
          (+ (nfix n) (len acc))))
 
+(defthm consp-of-make-list-ac
+  (iff (consp (make-list-ac n val ac))
+       (or (not (zp n)) (consp ac))))
+
 (defthm boolean-listp-of-make-list-ac
   (implies (booleanp val)
            (equal (boolean-listp (make-list-ac n val ac))

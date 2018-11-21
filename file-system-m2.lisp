@@ -15,6 +15,17 @@
              (update-nth key val (take n l))
              (take n l))))
 
+(encapsulate
+  ()
+
+  (local (include-book "std/basic/inductions"
+                       :dir :system))
+  (defthm take-of-make-list-ac
+    (implies (<= (nfix n1) (nfix n2))
+             (equal (take n1 (make-list-ac n2 val ac))
+                    (make-list-ac n1 val nil)))
+    :hints (("goal'" :induct (dec-dec-induct n1 n2)))))
+
 ;; This is to get the theorem about the nth element of a list of unsigned
 ;; bytes.
 (local (include-book "std/typed-lists/integer-listp" :dir :system))
