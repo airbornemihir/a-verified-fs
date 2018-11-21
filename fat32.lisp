@@ -192,6 +192,10 @@
          (and (fat32-entry-list-p y)
               (fat32-entry-list-p (list-fix x)))))
 
+(defthm fat32-entry-list-of-nthcdr
+  (implies (fat32-entry-list-p l)
+           (fat32-entry-list-p (nthcdr n l))))
+
 (encapsulate
   ()
 
@@ -213,7 +217,7 @@
            (equal (fat32-entry-list-p (take n l))
                   (<= (nfix n) (len l)))))
 
-(defthm set-indices-in-fa-table-guard-lemma-2
+(defthm natp-when-fat32-entry-p
   (implies (fat32-entry-p x) (natp x))
   :hints (("goal" :in-theory (enable fat32-entry-p)))
   :rule-classes :forward-chaining)
@@ -447,9 +451,23 @@
                     (fa-table (cdr fa-table))
                     (start (+ 1 start))))))
 
-(defthm find-n-free-clusters-guard-lemma-1
-  (implies (fat32-entry-list-p l)
-           (fat32-entry-list-p (nthcdr n l))))
+(defthm
+  find-n-free-clusters-helper-correctness-6
+  (implies (and (fat32-entry-list-p fa-table)
+                (natp n)
+                (natp start))
+           (no-duplicatesp-equal
+            (find-n-free-clusters-helper fa-table n start)))
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters-helper))
+   ("goal'"
+    :induct (find-n-free-clusters-helper fa-table n start))
+   ("subgoal *1/11"
+    :use (:instance find-n-free-clusters-helper-correctness-3
+                    (x start)
+                    (fa-table (cdr fa-table))
+                    (n (- n 1))
+                    (start (+ 1 start))))))
 
 (defund
     find-n-free-clusters (fa-table n)
@@ -552,6 +570,16 @@
      find-n-free-clusters-helper-correctness-3
      (fa-table (nthcdr *ms-first-data-cluster* fa-table))
      (start *ms-first-data-cluster*)))))
+
+(defthm
+  find-n-free-clusters-correctness-6
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (>= (len fa-table) *ms-first-data-cluster*)
+        (natp n))
+   (no-duplicatesp-equal (find-n-free-clusters fa-table n)))
+  :hints (("goal"
+           :in-theory (enable find-n-free-clusters)) ))
 
 (defthmd
   fat32-masked-entry-list-p-alt

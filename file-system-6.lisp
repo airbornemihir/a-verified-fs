@@ -1821,19 +1821,6 @@
                                              fa-table)))))))
 
 (defthm
-  find-n-free-clusters-correctness-6
-  (implies
-   (and (fat32-entry-list-p fa-table)
-        (>= (len fa-table) *ms-first-data-cluster*)
-        (natp n))
-   (no-duplicatesp-equal (find-n-free-clusters fa-table n)))
-  :hints
-  (("goal" :in-theory (disable find-n-free-blocks-correctness-6)
-    :use (:instance find-n-free-blocks-correctness-6
-                    (alv (fa-table-to-alv fa-table))))))
-
-
-(defthm
   l6-wrchs-correctness-1-lemma-29
   (implies
    (and (natp file-length)
