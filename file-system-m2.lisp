@@ -773,11 +773,19 @@
        (>= (bpb_rsvdseccnt fat32-in-memory) 1)
        (>= (bpb_numfats fat32-in-memory) 1)
        (>= (bpb_fatsz32 fat32-in-memory) 1)
-       ;; this isn't in the spec, but clearly implied
+       ;; These constraints on bpb_rootclus aren't in the spec, but they are
+       ;; clearly implied
        (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
            *ms-first-data-cluster*)
        (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
           (count-of-clusters fat32-in-memory))
+       ;; This is a stop-gap until we figure out the proper constraints to
+       ;; impose on the cluster size. The spec (page 9) imposes both hard and
+       ;; soft limits on the legal values of the cluster size, but this is less
+       ;; stringent than either of those.
+       (equal (mod (cluster-size fat32-in-memory) *ms-dir-ent-length*) 0)
+       ;; I'm iffy about this clause - this is the only array property amidst
+       ;; these scalar properties
        (stobj-cluster-listp-helper
         fat32-in-memory
         (data-region-length fat32-in-memory))))
@@ -796,6 +804,7 @@
                       *ms-min-bytes-per-sector*)
                   (>= (count-of-clusters fat32-in-memory)
                       *ms-fat32-min-count-of-clusters*)
+                  (equal (mod (cluster-size fat32-in-memory) *ms-dir-ent-length*) 0)
                   (<= (+ *ms-first-data-cluster*
                          (count-of-clusters fat32-in-memory))
                       *ms-bad-cluster*)
@@ -818,7 +827,8 @@
       :corollary
       (implies (compliant-fat32-in-memoryp fat32-in-memory)
                (and (fat32-in-memoryp fat32-in-memory)
-                    (integerp (cluster-size fat32-in-memory)))))
+                    (integerp (cluster-size fat32-in-memory))
+                    (equal (mod (cluster-size fat32-in-memory) *ms-dir-ent-length*) 0))))
      (:forward-chaining
       :corollary
       (implies (compliant-fat32-in-memoryp fat32-in-memory)
