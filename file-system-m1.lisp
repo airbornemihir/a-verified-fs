@@ -474,7 +474,14 @@
     :corollary (implies (m1-bounded-file-alist-p x)
                         (< (* *ms-dir-ent-length* (len x))
                            (* *ms-dir-ent-length*
-                              *ms-max-dir-ent-count*)))))
+                              *ms-max-dir-ent-count*))))
+   (:linear
+    :corollary (implies (and (m1-bounded-file-alist-p x) (consp x))
+                        (< (* *ms-dir-ent-length* (len (cdr x)))
+                           (-
+                            (* *ms-dir-ent-length*
+                               *ms-max-dir-ent-count*)
+                            *ms-dir-ent-length*)))))
   :hints
   (("goal"
     :in-theory (enable m1-bounded-file-alist-p)
