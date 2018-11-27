@@ -6147,9 +6147,181 @@
         index-list
         (append (cdr index-list)
                 (list 268435455)))))
-     (:instance
-      (:linear make-clusters-correctness-2)
-      (cluster-size (cluster-size fat32-in-memory)))))))
+     (:instance (:linear make-clusters-correctness-2)
+                (cluster-size (cluster-size fat32-in-memory)))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top"
+                       :dir :system))
+
+  (defthm m1-fs-to-fat32-in-memory-inversion-lemma-13
+    (implies (and (integerp x)
+                  (integerp y)
+                  (not (zp j))
+                  (equal (mod x j) 0))
+             (equal (mod (+ x y) j) (mod y j)))
+    :hints (("goal" :in-theory (disable floor))))
+
+  (defthm m1-fs-to-fat32-in-memory-inversion-lemma-14
+    (implies (and (not (zp y))
+                  (integerp x)
+                  (equal (mod x y) 0))
+             (equal (mod (- x) y) 0))
+    :hints (("goal" :expand (mod x y))))
+
+  (defthmd m1-fs-to-fat32-in-memory-inversion-lemma-16
+    (implies
+     (and (< (len dir-contents) *ms-dir-ent-length*)
+          (equal (mod (len dir-contents) *ms-dir-ent-length*) 0))
+     (equal (len dir-contents) 0))
+    :hints (("Goal" :in-theory (disable mod len)) )))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-15
+ (implies
+  (and
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal (DATA-REGION-LENGTH FAT32-IN-MEMORY)
+          (count-of-clusters fat32-in-memory))
+   (fat32-masked-entry-p masked-current-cluster)
+   (<= *ms-first-data-cluster* MASKED-CURRENT-CLUSTER)
+   (< (- MASKED-CURRENT-CLUSTER *ms-first-data-cluster*)
+      (DATA-REGION-LENGTH FAT32-IN-MEMORY))
+   (EQUAL (MOD LENGTH 32) 0))
+  (equal
+   (MOD
+    (LEN
+     (EXPLODE
+      (MV-NTH 0
+              (get-clusterchain-contents
+               fat32-in-memory masked-current-cluster length))))
+    32)
+   0))
+ :hints (("Goal" :in-theory (disable mod)) ))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-17
+  (implies
+   (and (not (zp n))
+        (equal (mod (len dir-contents)
+                    *ms-dir-ent-length*)
+               0)
+        (compliant-fat32-in-memoryp fat32-in-memory)
+        (equal (data-region-length fat32-in-memory)
+               (count-of-clusters fat32-in-memory)))
+   (equal
+    (fat32-in-memory-to-m1-fs-helper
+     fat32-in-memory
+     (append dir-contents (make-list-ac n 0 nil))
+     entry-limit)
+    (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                     dir-contents entry-limit)))
+  :hints
+  (("goal"
+    :induct
+    (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                     dir-contents entry-limit)
+    :in-theory (disable fat32-in-memoryp
+                        get-clusterchain-contents
+                        mod (:definition take-redefinition)))
+   ("subgoal *1/4"
+    :expand (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory
+             (append dir-contents (make-list-ac n 0 nil))
+             entry-limit))
+   ("subgoal *1/3"
+    :expand (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory
+             (append dir-contents (make-list-ac n 0 nil))
+             entry-limit))
+   ("subgoal *1/1"
+    :expand (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory
+             (append dir-contents (make-list-ac n 0 nil))
+             entry-limit)
+    :in-theory
+    (e/d
+     (m1-fs-to-fat32-in-memory-inversion-lemma-16)
+     (fat32-in-memoryp get-clusterchain-contents
+                       mod (:definition take-redefinition))))))
+
+(thm
+ (b*
+     ((rootclus (bpb_rootclus fat32-in-memory))
+      (cluster-size (cluster-size fat32-in-memory))
+      ((mv fat32-in-memory dir-ent-list)
+       (m1-fs-to-fat32-in-memory-helper fat32-in-memory
+                                        fs current-dir-first-cluster))
+      (effective-fat (effective-fat fat32-in-memory)))
+   (implies
+    (m1-file-alist-p fs)
+    (m1-dir-equiv
+     (mv-nth
+      0
+      (fat32-in-memory-to-m1-fs-helper
+       (stobj-set-indices-in-fa-table
+        (stobj-set-clusters
+         (make-clusters
+          (nats=>string
+           (flatten dir-ent-list))
+          cluster-size)
+         (cons
+          (fat32-entry-mask rootclus)
+          (find-n-free-clusters
+           (update-nth
+            (fat32-entry-mask rootclus)
+            268435455
+            effective-fat)
+           (+
+            -1
+            (len
+             (make-clusters
+              (nats=>string
+               (flatten dir-ent-list))
+              cluster-size)))))
+         (update-fati
+          (fat32-entry-mask rootclus)
+          *ms-end-of-clusterchain* fat32-in-memory))
+        (cons
+         (fat32-entry-mask rootclus)
+         (find-n-free-clusters
+          (update-nth
+           (fat32-entry-mask rootclus)
+           268435455
+           effective-fat)
+          (+
+           -1
+           (len
+            (make-clusters
+             (nats=>string
+              (flatten dir-ent-list))
+             cluster-size)))))
+        (append
+         (find-n-free-clusters
+          (update-nth
+           (fat32-entry-mask rootclus)
+           268435455
+           effective-fat)
+          (+
+           -1
+           (len
+            (make-clusters
+             (nats=>string
+              (flatten dir-ent-list))
+             cluster-size))))
+         '(268435455)))
+       (append
+        (flatten dir-ent-list)
+        (make-list-ac (+ 2097152 (- (* 32 (len fs))))
+                      0 nil))
+       entry-limit))
+     fs)))
+ :hints (("Goal" :induct
+          (m1-fs-to-fat32-in-memory-helper fat32-in-memory
+                                           fs current-dir-first-cluster)
+          :in-theory (disable floor)) ))
 
 (encapsulate
   ()
