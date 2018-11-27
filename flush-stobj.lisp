@@ -194,6 +194,57 @@
     (string-array-to-output-channel-helper text-store (- len 1)
                                            channel state)))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defun
+    fill-string-array
+    (text-store str len)
+    (declare
+     (xargs
+      :guard (and (stringp str)
+                  (natp len)
+                  (<= len
+                      (string-array-length text-store))
+                  (<
+                   (string-array-length text-store)
+                   (ash 1 28))
+                  (equal (length str)
+                         (* (string-array-length text-store) 1024)))
+      :guard-hints
+      (("goal"))
+      :stobjs text-store))
+    (b*
+        ((len (the (unsigned-byte 28) len)))
+      (if
+          (zp len)
+          text-store
+       (b*
+           ((cluster-size 1024)
+            (index (- (string-array-length text-store)
+                      len))
+            (current-cluster (subseq str (* index cluster-size)
+                                     (* (+ index 1) cluster-size)))
+            (text-store
+             (update-string-arrayi
+              index current-cluster text-store)))
+         (fill-string-array
+          text-store str
+          (the (unsigned-byte 28) (- len 1))))))))
+
+(b*
+    ((str (read-file-into-string "big.file"))
+     (text-store
+      (resize-string-array
+        (floor (length str) 1024)
+        text-store))
+     (text-store
+      (fill-string-array
+       text-store str (floor (length str) 1024))))
+  text-store)
+
 (b*
     (((mv channel state)
       (open-output-channel "test.txt" :character state))
