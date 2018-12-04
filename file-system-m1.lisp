@@ -488,6 +488,39 @@
     :use (:instance len-when-m1-bounded-file-alist-p-helper
                     (ac *ms-max-dir-ent-count*)))))
 
+(defthmd m1-bounded-file-alist-p-of-cdr-lemma-1
+  (implies (and (m1-bounded-file-alist-p-helper x ac1)
+                (< ac1 ac2)
+                (not (zp ac2)))
+           (m1-bounded-file-alist-p-helper x ac2)))
+
+(defthm
+  m1-bounded-file-alist-p-of-cdr-lemma-2
+  (implies (and (m1-bounded-file-alist-p-helper x ac)
+                (consp x))
+           (m1-bounded-file-alist-p-helper (cdr x)
+                                           ac))
+  :hints
+  (("goal" :induct (m1-bounded-file-alist-p-helper x ac))
+   ("subgoal *1/3"
+    :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
+                    (x (cdr x))
+                    (ac1 (- ac 1))
+                    (ac2 ac)))
+   ("subgoal *1/1"
+    :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
+                    (x (cdr x))
+                    (ac1 (- ac 1))
+                    (ac2 ac)))))
+
+(defthm
+  m1-bounded-file-alist-p-of-cdr
+  (implies (and (m1-bounded-file-alist-p x) (consp x))
+           (m1-bounded-file-alist-p (cdr x)) )
+  :hints
+  (("goal"
+    :in-theory (enable m1-bounded-file-alist-p))))
+
 (fty::defprod
  struct-stat
  ;; Currently, this is the only thing I can decipher.
