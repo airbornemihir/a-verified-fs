@@ -6281,18 +6281,18 @@
           (count-of-clusters fat32-in-memory))
    (<= (+ (count-of-clusters fat32-in-memory)
           2)
-       (fat-length fat32-in-memory)))
+       (fat-length fat32-in-memory))
+   (m1-file-alist-p fs)
+   (m1-bounded-file-alist-p fs))
   (b*
       ((rootclus (bpb_rootclus fat32-in-memory))
        (cluster-size (cluster-size fat32-in-memory))
-       ((mv fat32-in-memory dir-ent-list)
+       ((mv fat32-in-memory dir-ent-list error-code)
         (m1-fs-to-fat32-in-memory-helper fat32-in-memory
                                          fs current-dir-first-cluster))
        (effective-fat (effective-fat fat32-in-memory)))
     (implies
-     (and
-      (m1-file-alist-p fs)
-      (m1-bounded-file-alist-p fs))
+     (zp error-code)
      (m1-dir-equiv
       (mv-nth
        0
@@ -6357,7 +6357,9 @@
  :hints (("Goal" :induct
           (m1-fs-to-fat32-in-memory-helper fat32-in-memory
                                            fs current-dir-first-cluster)
-          :in-theory (disable floor mod)) ))
+          :in-theory (disable floor mod
+                              (:REWRITE BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)
+                              (:DEFINITION GET-CLUSTERCHAIN-CONTENTS))) ))
 
 (encapsulate
   ()
