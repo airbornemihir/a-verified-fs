@@ -13,7 +13,7 @@
   (equal (take n (update-nth key val l))
          (if (< (nfix key) (nfix n))
              (update-nth key val (take n l))
-             (take n l))))
+           (take n l))))
 
 (encapsulate
   ()

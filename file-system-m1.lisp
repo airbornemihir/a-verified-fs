@@ -521,6 +521,27 @@
   (("goal"
     :in-theory (enable m1-bounded-file-alist-p))))
 
+(defthm
+  m1-bounded-file-alist-p-of-cdar-lemma-1
+  (implies (and (m1-file-p x)
+                (not (m1-regular-file-p x)))
+           (m1-directory-file-p x))
+  :hints
+  (("goal"
+    :in-theory (enable m1-regular-file-p
+                       m1-directory-file-p m1-file-p
+                       m1-file-contents-p m1-file->contents))))
+
+(defthm
+  m1-bounded-file-alist-p-of-cdar
+  (implies
+   (and (m1-bounded-file-alist-p x)
+        (consp x)
+        (consp (car x))
+        (m1-directory-file-p (cdar x)))
+   (m1-bounded-file-alist-p (m1-file->contents (cdar x))))
+  :hints (("goal" :in-theory (enable m1-bounded-file-alist-p))))
+
 (fty::defprod
  struct-stat
  ;; Currently, this is the only thing I can decipher.
