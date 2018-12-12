@@ -2964,6 +2964,43 @@
 ;;      (equal error-code 0)
 ;;      (equal (length contents) length))))
 
+(defthm useless-dir-ent-p-guard-lemma-1
+  (implies (and (unsigned-byte-p 8 a3)
+                (unsigned-byte-p 8 a2)
+                (unsigned-byte-p 8 a1)
+                (unsigned-byte-p 8 a0))
+           (fat32-entry-p (combine32u a3 a2 a1 a0)))
+  :hints (("goal" :in-theory (e/d (fat32-entry-p)
+                                  (unsigned-byte-p)))))
+
+;; Here's the idea: while transforming from M2 to M1,
+;; - we are not going to to take directory entries which are deleted
+;; - we are not going to take dot or dotdot entries
+;; - we are not going to take directory entries which point to clusters outside
+;;   the data region (either smaller than 2, or greater than equal to the count
+;;   of clusters.)
+(defund
+  useless-dir-ent-p
+  (dir-ent count-of-clusters)
+  (declare
+   (xargs
+    :guard (and (dir-ent-p dir-ent)
+                (natp count-of-clusters))
+    :guard-hints
+    (("goal" :in-theory (e/d (dir-ent-p) (unsigned-byte-p))))))
+  (or (equal (nth 0 dir-ent) 229)
+      (b* ((first-cluster (combine32u (nth 21 dir-ent)
+                                      (nth 20 dir-ent)
+                                      (nth 27 dir-ent)
+                                      (nth 26 dir-ent)))
+           (filename (nats=>string (subseq dir-ent 0 11))))
+        (or (< (fat32-entry-mask first-cluster)
+               *ms-first-data-cluster*)
+            (>= (fat32-entry-mask first-cluster)
+                count-of-clusters)
+            (equal filename *current-dir-fat32-name*)
+            (equal filename *parent-dir-fat32-name*)))))
+
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
 ;; / and /tmp/ were to point to the same cluster as their initial cluster.)
@@ -3184,15 +3221,6 @@
                                                                   dir-contents))))
                            :hints (("Goal" :in-theory (disable unsigned-byte-p)
                                     :do-not-induct t)))))
-
-(defthm fat32-in-memory-to-m1-fs-helper-guard-lemma-3
-  (implies (and (unsigned-byte-p 8 a3)
-                (unsigned-byte-p 8 a2)
-                (unsigned-byte-p 8 a1)
-                (unsigned-byte-p 8 a0))
-           (fat32-entry-p (combine32u a3 a2 a1 a0)))
-  :hints (("goal" :in-theory (e/d (fat32-entry-p)
-                                  (unsigned-byte-p)))))
 
 (verify-guards
   fat32-in-memory-to-m1-fs-helper
@@ -5686,6 +5714,44 @@
 (update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
                              update-bpb_bytspersec-of-update-bs_jmpboot)
 
+;; We're not counting this very directory, because the root does not have a
+;; directory entry for itself.
+(defun m1-entry-count (fs)
+  (declare (xargs :guard (m1-file-alist-p fs)))
+  (if
+      (atom fs)
+      0
+    (if (m1-directory-file-p (cdar fs))
+        (if (OR (EQUAL (caar fs) ".          ")
+                (EQUAL (caar fs) "..         "))
+            ;; dot and dotdot entries are not counted
+            (m1-entry-count (cdr fs))
+            (+ 1
+               (m1-entry-count (m1-file->contents (cdar fs)))
+               (m1-entry-count (cdr fs))))
+      (+ 1
+         (m1-entry-count (cdr fs))))))
+
+(defthm
+  fat32-in-memory-to-m1-fs-helper-correctness-3)
+
+(thm-cp
+ (implies
+  (unsigned-byte-listp 8 dir-contents)
+  (b* (((mv m1-file-alist entry-count)
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         dir-contents entry-limit)))
+    (equal
+     (m1-entry-count m1-file-alist)
+     entry-count)))
+  :hints
+  (("goal"
+    :in-theory (disable fat32-in-memoryp)
+    :induct (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory
+             dir-contents entry-limit))))
+
 ;; (defthm
 ;;   m1-fs-to-fat32-in-memory-inversion-lemma-1
 ;;   (implies
@@ -6285,8 +6351,7 @@
    (m1-file-alist-p fs)
    (m1-bounded-file-alist-p fs))
   (b*
-      ((rootclus (bpb_rootclus fat32-in-memory))
-       (cluster-size (cluster-size fat32-in-memory))
+      ((cluster-size (cluster-size fat32-in-memory))
        ((mv fat32-in-memory dir-ent-list error-code)
         (m1-fs-to-fat32-in-memory-helper fat32-in-memory
                                          fs current-dir-first-cluster))
@@ -6304,10 +6369,10 @@
             (flatten dir-ent-list))
            cluster-size)
           (cons
-           (fat32-entry-mask rootclus)
+           current-dir-first-cluster
            (find-n-free-clusters
             (update-nth
-             (fat32-entry-mask rootclus)
+             current-dir-first-cluster
              268435455
              effective-fat)
             (+
@@ -6318,13 +6383,13 @@
                 (flatten dir-ent-list))
                cluster-size)))))
           (update-fati
-           (fat32-entry-mask rootclus)
+           current-dir-first-cluster
            *ms-end-of-clusterchain* fat32-in-memory))
          (cons
-          (fat32-entry-mask rootclus)
+          current-dir-first-cluster
           (find-n-free-clusters
            (update-nth
-            (fat32-entry-mask rootclus)
+            current-dir-first-cluster
             268435455
             effective-fat)
            (+
@@ -6337,7 +6402,7 @@
          (append
           (find-n-free-clusters
            (update-nth
-            (fat32-entry-mask rootclus)
+            current-dir-first-cluster
             268435455
             effective-fat)
            (+

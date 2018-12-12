@@ -537,7 +537,6 @@
   (implies
    (and (m1-bounded-file-alist-p x)
         (consp x)
-        (consp (car x))
         (m1-directory-file-p (cdar x)))
    (m1-bounded-file-alist-p (m1-file->contents (cdar x))))
   :hints (("goal" :in-theory (enable m1-bounded-file-alist-p))))
