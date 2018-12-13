@@ -506,17 +506,13 @@
                                  (nthcdr i l))
                   l)))
 
-(encapsulate
-  ()
+(defthm true-list-fix-when-true-listp
+  (implies (true-listp x)
+           (equal (true-list-fix x) x)))
 
-  (local
-   (defthm true-list-fix-when-true-listp
-     (implies (true-listp x)
-              (equal (true-list-fix x) x))))
-
-  (defthm true-list-fix-of-coerce
-    (equal (true-list-fix (coerce text 'list))
-           (coerce text 'list))))
+(defthm true-list-fix-of-coerce
+  (equal (true-list-fix (coerce text 'list))
+         (coerce text 'list)))
 
 (defthm len-of-true-list-fix
   (equal (len (true-list-fix x)) (len x)))
@@ -559,10 +555,6 @@
   (implies (and (true-listp l)
                 (>= (nfix n) (len l)))
            (equal (nthcdr n l) nil)))
-
-(defthmd true-list-fix-when-true-listp
-  (implies (true-listp x)
-           (equal (true-list-fix x) x)))
 
 (defthm revappend-of-revappend
   (equal (revappend (revappend x y1) y2)
