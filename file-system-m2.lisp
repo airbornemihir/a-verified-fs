@@ -2988,7 +2988,9 @@
                 (natp count-of-clusters))
     :guard-hints
     (("goal" :in-theory (e/d (dir-ent-p) (unsigned-byte-p))))))
-  (or (equal (nth 0 dir-ent) 229)
+  (or
+   ;; the byte #xe5 marks deleted files, according to the spec
+   (equal (nth 0 dir-ent) #xe5)
       (b* ((first-cluster (combine32u (nth 21 dir-ent)
                                       (nth 20 dir-ent)
                                       (nth 27 dir-ent)
@@ -2997,7 +2999,7 @@
         (or (< (fat32-entry-mask first-cluster)
                *ms-first-data-cluster*)
             (>= (fat32-entry-mask first-cluster)
-                count-of-clusters)
+                (+ *ms-first-data-cluster* count-of-clusters))
             (equal filename *current-dir-fat32-name*)
             (equal filename *parent-dir-fat32-name*)))))
 
@@ -3050,52 +3052,41 @@
                   (< (len dir-contents) *ms-dir-ent-length*)
                   (equal (nth 0 dir-contents) 0)))
         (mv nil 0))
-       ;; the byte #xe5 marks deleted files, according to the spec
-       ((when (equal (nth 0 dir-contents) #xe5))
-        (fat32-in-memory-to-m1-fs-helper
-         fat32-in-memory
-         (nthcdr *ms-dir-ent-length* dir-contents)
-         (- entry-limit 1)))
        (dir-ent
          (mbe
           :exec (take *ms-dir-ent-length* dir-contents)
           :logic
           (dir-ent-fix (take *ms-dir-ent-length* dir-contents))))
+       ((when
+            (useless-dir-ent-p
+             dir-ent ( count-of-clusters fat32-in-memory)))
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         (nthcdr *ms-dir-ent-length* dir-contents)
+         (- entry-limit 1)))
        (first-cluster (combine32u (nth 21 dir-ent)
                                   (nth 20 dir-ent)
                                   (nth 27 dir-ent)
                                   (nth 26 dir-ent)))
        (filename (nats=>string (subseq dir-ent 0 11)))
-       (dot-or-dotdot-p
-        (or (equal filename *current-dir-fat32-name*)
-            (equal filename *parent-dir-fat32-name*)))
        (directory-p
         (dir-ent-directory-p dir-ent))
        (length (if directory-p
                    *ms-max-dir-size*
                  (dir-ent-file-size dir-ent)))
        ((mv contents &)
-        (if
-            ;; This clause is intended to make sure we don't try to find out
-            ;; the "contents" of a "." or ".." entry - that would lead to a
-            ;; cycle. we also don't want to explore the contents of an empty
-            ;; file; that would cause a guard violation.
-            (or dot-or-dotdot-p
-                (< (fat32-entry-mask first-cluster)
-                   *ms-first-data-cluster*)
-                (>= (fat32-entry-mask first-cluster)
-                    (count-of-clusters fat32-in-memory)))
-            (mv "" 0)
-            (get-clusterchain-contents fat32-in-memory
-                                       (fat32-entry-mask first-cluster)
-                                       length)))
+        (get-clusterchain-contents fat32-in-memory
+                                   (fat32-entry-mask first-cluster)
+                                   length))
+       ;; head-entry-count, here, does not include the entry for the head
+       ;; itself. that will be added at the end.
        ((mv head head-entry-count)
         (if directory-p
             (fat32-in-memory-to-m1-fs-helper
              fat32-in-memory
              (string=>nats contents)
              (- entry-limit 1))
-          (mv contents 1)))
+          (mv contents 0)))
        ;; we want entry-limit to serve both as a measure and an upper
        ;; bound on how many entries are found.
        (tail-entry-limit (nfix (- entry-limit
@@ -3118,7 +3109,7 @@
                      (make-m1-file :dir-ent dir-ent
                                    :contents head))
                tail)
-        (+ head-entry-count tail-entry-count))))
+        (+ 1 head-entry-count tail-entry-count))))
 
 (defthm
   fat32-in-memory-to-m1-fs-helper-correctness-1
@@ -3222,6 +3213,25 @@
                            :hints (("Goal" :in-theory (disable unsigned-byte-p)
                                     :do-not-induct t)))))
 
+(defthm
+  fat32-in-memory-to-m1-fs-helper-guard-lemma-3
+  (implies (not (useless-dir-ent-p dir-ent count-of-clusters))
+           (and
+           (>= (fat32-entry-mask (combine32u (nth 21 dir-ent)
+                                             (nth 20 dir-ent)
+                                             (nth 27 dir-ent)
+                                             (nth 26 dir-ent)))
+               *ms-first-data-cluster*)
+           (< (fat32-entry-mask (combine32u (nth 21 dir-ent)
+                                             (nth 20 dir-ent)
+                                             (nth 27 dir-ent)
+                                             (nth 26 dir-ent)))
+              (+
+               *ms-first-data-cluster*
+               count-of-clusters))))
+  :hints (("goal" :in-theory (enable useless-dir-ent-p)))
+  :rule-classes :linear)
+
 (verify-guards
   fat32-in-memory-to-m1-fs-helper
   :guard-debug t
@@ -3233,13 +3243,18 @@
      (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
                . 2)
      (:e dir-ent-directory-p)
-     (:t dir-ent-directory-p))
+     (:t dir-ent-directory-p)
+     fat32-in-memory-to-m1-fs-helper-guard-lemma-3)
     :use
-    (:instance
-     (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
-               . 2)
-     (i 16)
-     (n 11)))))
+    ((:instance
+      (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
+                . 2)
+      (i 16)
+      (n 11))
+     (:instance fat32-in-memory-to-m1-fs-helper-guard-lemma-3
+                (dir-ent (take 32 dir-contents))
+                (count-of-clusters
+                 (count-of-clusters fat32-in-memory)))))))
 
 ;; for later
 ;; (defthm
@@ -5722,35 +5737,39 @@
       (atom fs)
       0
     (if (m1-directory-file-p (cdar fs))
-        (if (OR (EQUAL (caar fs) ".          ")
-                (EQUAL (caar fs) "..         "))
-            ;; dot and dotdot entries are not counted
-            (m1-entry-count (cdr fs))
             (+ 1
                (m1-entry-count (m1-file->contents (cdar fs)))
-               (m1-entry-count (cdr fs))))
+               (m1-entry-count (cdr fs)))
       (+ 1
          (m1-entry-count (cdr fs))))))
 
 (defthm
-  fat32-in-memory-to-m1-fs-helper-correctness-3)
+  useless-dir-ent-p-correctness-1
+  (implies (equal (nats=>string (take 11 dir-ent))
+                  *current-dir-fat32-name*)
+           (useless-dir-ent-p dir-ent count-of-clusters))
+  :hints (("goal" :in-theory (enable useless-dir-ent-p))))
 
-(thm-cp
- (implies
-  (unsigned-byte-listp 8 dir-contents)
-  (b* (((mv m1-file-alist entry-count)
-        (fat32-in-memory-to-m1-fs-helper
-         fat32-in-memory
-         dir-contents entry-limit)))
-    (equal
-     (m1-entry-count m1-file-alist)
-     entry-count)))
-  :hints
-  (("goal"
-    :in-theory (disable fat32-in-memoryp)
-    :induct (fat32-in-memory-to-m1-fs-helper
-             fat32-in-memory
-             dir-contents entry-limit))))
+(defthm
+  useless-dir-ent-p-correctness-2
+  (implies (equal (nats=>string (take 11 dir-ent))
+                  *parent-dir-fat32-name*)
+           (useless-dir-ent-p dir-ent count-of-clusters))
+  :hints (("goal" :in-theory (enable useless-dir-ent-p))))
+
+(defthm
+  fat32-in-memory-to-m1-fs-helper-correctness-3
+  (implies (unsigned-byte-listp 8 dir-contents)
+           (b* (((mv m1-file-alist entry-count)
+                 (fat32-in-memory-to-m1-fs-helper
+                  fat32-in-memory
+                  dir-contents entry-limit)))
+             (equal (m1-entry-count m1-file-alist)
+                    entry-count)))
+  :hints (("goal" :in-theory (disable fat32-in-memoryp)
+           :induct (fat32-in-memory-to-m1-fs-helper
+                    fat32-in-memory
+                    dir-contents entry-limit))))
 
 ;; (defthm
 ;;   m1-fs-to-fat32-in-memory-inversion-lemma-1
