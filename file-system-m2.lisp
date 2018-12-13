@@ -7513,7 +7513,7 @@
           (explode (stobj-fa-table-to-string
                     fat32-in-memory)))))
   :hints
-  (("goal" :in-theory (enable true-list-fix-when-true-listp make-fat-string-ac))))
+  (("goal" :in-theory (enable make-fat-string-ac))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-48
