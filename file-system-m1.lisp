@@ -84,7 +84,7 @@
  :define t
  :forward t)
 
-(defun dir-ent-first-cluster (dir-ent)
+(defund dir-ent-first-cluster (dir-ent)
   (declare
    (xargs :guard (dir-ent-p dir-ent)
           :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
@@ -135,8 +135,11 @@
                     dir-ent first-cluster file-size))
                   first-cluster))
   :hints
-  (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size)
-                           (loghead logtail)))))
+  (("goal"
+    :in-theory
+    (e/d
+     (dir-ent-set-first-cluster-file-size dir-ent-first-cluster)
+     (loghead logtail)))))
 
 (defthm
   dir-ent-file-size-of-dir-ent-set-first-cluster-file-size
