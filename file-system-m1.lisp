@@ -93,6 +93,21 @@
               (nth 27 dir-ent)
               (nth 26 dir-ent)))
 
+(defthm fat32-entry-p-of-dir-ent-first-cluster-lemma-1
+  (implies (and (unsigned-byte-p 8 a3)
+                (unsigned-byte-p 8 a2)
+                (unsigned-byte-p 8 a1)
+                (unsigned-byte-p 8 a0))
+           (fat32-entry-p (combine32u a3 a2 a1 a0)))
+  :hints (("goal" :in-theory (e/d (fat32-entry-p)
+                                  (unsigned-byte-p)))))
+
+(defthm fat32-entry-p-of-dir-ent-first-cluster
+  (implies
+   (dir-ent-p dir-ent)
+   (fat32-entry-p (dir-ent-first-cluster dir-ent)))
+  :hints (("goal" :in-theory (e/d (dir-ent-first-cluster dir-ent-p)))))
+
 (defun dir-ent-file-size (dir-ent)
   (declare
    (xargs :guard (dir-ent-p dir-ent)
