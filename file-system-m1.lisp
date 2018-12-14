@@ -189,6 +189,20 @@
           :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
   (nats=>string (subseq dir-ent 0 11)))
 
+(defthm
+  dir-ent-filename-of-dir-ent-set-first-cluster-file-size
+  (implies
+   (dir-ent-p dir-ent)
+   (equal
+    (dir-ent-filename (dir-ent-set-first-cluster-file-size
+                       dir-ent first-cluster file-size))
+    (dir-ent-filename dir-ent)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (dir-ent-set-first-cluster-file-size dir-ent-filename)
+         (loghead logtail (:rewrite logtail-loghead))))))
+
 (defund dir-ent-set-filename (dir-ent filename)
   (declare
    (xargs :guard (and (dir-ent-p dir-ent)
