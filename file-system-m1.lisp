@@ -662,7 +662,7 @@
  file-table-element
  ((pos natp) ;; index within the file
   ;; mode ?
-  (fid string-listp) ;; pathname of the file
+  (fid fat32-filename-list-p) ;; pathname of the file
   ))
 
 (fty::defalist
@@ -962,7 +962,7 @@
 
 (defun m1-lstat (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
-                              (string-listp pathname))))
+                              (fat32-filename-list-p pathname))))
   (mv-let
     (file errno)
     (find-file-by-pathname fs pathname)
@@ -1025,7 +1025,7 @@
 
 (defun m1-open (pathname fs fd-table file-table)
   (declare (xargs :guard (and (m1-file-alist-p fs)
-                              (string-listp pathname)
+                              (fat32-filename-list-p pathname)
                               (fd-table-p fd-table)
                               (file-table-p file-table))))
   (b*
@@ -1244,12 +1244,14 @@
     (declare (ignore basename))
     dirname))
 
+;; I'm leaving this guard unverified because that's not what I want to put my
+;; time and energy into right now...
 (defun
     m1-mkdir (fs pathname)
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
-                (string-listp pathname))
+                (fat32-filename-list-p pathname))
     :guard-hints
     (("goal"
       :in-theory
@@ -1258,7 +1260,8 @@
       :use
       (:instance
        (:rewrite m1-basename-dirname-helper-correctness-1)
-       (path pathname))))))
+       (path pathname))))
+    :verify-guards nil))
   (b* ((dirname (m1-dirname pathname))
        ;; It's OK to strip out the leading "" when the pathname begins with /,
        ;; but what about when it doesn't and the pathname is relative to the
@@ -1293,6 +1296,8 @@
         (mv fs -1 error-code)))
     (mv fs 0 0)))
 
+;; I'm leaving this guard unverified because that's not what I want to put my
+;; time and energy into right now...
 (defun
     m1-mknod (fs pathname)
   (declare
@@ -1307,7 +1312,8 @@
       :use
       (:instance
        (:rewrite m1-basename-dirname-helper-correctness-1)
-       (path pathname))))))
+       (path pathname))))
+    :verify-guards nil))
   (b* ((dirname (m1-dirname pathname))
        ;; It's OK to strip out the leading "" when the pathname begins with /,
        ;; but what about when it doesn't and the pathname is relative to the
@@ -1353,6 +1359,9 @@
     :use (:instance dir-ent-p-of-m1-file->dir-ent
                     (x file)))))
 
+;; I'm leaving this guard unverified because that's not what I want to put my
+;; time and energy into right now...
+
 ;; The fat driver in Linux actually keeps the directory entries of files it is
 ;; deleting, while removing links to their contents. Thus, in the special case
 ;; where the last file is deleted from the root directory, the root directory
@@ -1381,7 +1390,8 @@
        (:instance return-type-of-string=>nats
                   (string
                    (mv-nth 0
-                           (m1-basename-dirname-helper pathname)))))))))
+                           (m1-basename-dirname-helper pathname)))))))
+    :verify-guards nil))
   (b* ((dirname (m1-dirname pathname))
        ;; It's OK to strip out the leading "" when the pathname begins with /,
        ;; but what about when it doesn't and the pathname is relative to the

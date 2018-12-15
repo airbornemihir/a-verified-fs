@@ -3097,6 +3097,11 @@
                tail)
         (+ 1 head-entry-count tail-entry-count))))
 
+(defthm fat32-in-memory-to-m1-fs-helper-correctness-1-lemma-1
+  (equal (explode (dir-ent-filename dir-ent))
+         (nats=>chars (subseq dir-ent 0 11)))
+  :hints (("goal" :in-theory (enable dir-ent-filename))))
+
 (defthm
   fat32-in-memory-to-m1-fs-helper-correctness-1
   (b* (((mv m1-file-alist entry-count)
@@ -3116,7 +3121,17 @@
                         floor)
     :induct
     (fat32-in-memory-to-m1-fs-helper fat32-in-memory
-                                     dir-contents entry-limit)))
+                                     dir-contents entry-limit))
+   ("subgoal *1/4"
+    :in-theory
+    (e/d
+     (fat32-filename-p useless-dir-ent-p)
+     (nth-of-string=>nats
+      fat32-in-memoryp natp-of-cluster-size
+      get-clusterchain-contents
+      take-redefinition
+      by-slice-you-mean-the-whole-cake-2
+      floor))))
   :rule-classes
   ((:type-prescription
     :corollary (b* (((mv & entry-count)
