@@ -304,8 +304,8 @@
   (declare (xargs :guard t))
   (and (stringp x)
        (equal (length x) 11)
-       (not (equal (char x 0) #x00))
-       (not (equal (char x 0) #xe5))
+       (not (equal (char x 0) (code-char #x00)))
+       (not (equal (char x 0) (code-char #xe5)))
        (not (equal x *current-dir-fat32-name*))
        (not (equal x *parent-dir-fat32-name*))))
 
@@ -334,15 +334,16 @@
  :define t
  :forward t)
 
-(defthm
-  fat32-filename-p-correctness-1
-  (implies (fat32-filename-p x)
-           (and (stringp x)
-                (equal (length x) 11)
-                (not (equal (char x 0) 0))
-                (not (equal (char x 0) 229))
-                (not (equal x *current-dir-fat32-name*))
-                (not (equal x *parent-dir-fat32-name*)))))
+(make-event
+ `(defthm
+    fat32-filename-p-correctness-1
+    (implies (fat32-filename-p x)
+             (and (stringp x)
+                  (equal (len (explode x)) 11)
+                  (not (equal (nth 0 (explode x)) ,(code-char #x00)))
+                  (not (equal (nth 0 (explode x)) ,(code-char #xe5)))
+                  (not (equal x *current-dir-fat32-name*))
+                  (not (equal x *parent-dir-fat32-name*))))))
 
 (fty::deflist fat32-filename-list
       :elt-type fat32-filename      ;; required, must have a known fixing function
