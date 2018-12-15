@@ -2964,15 +2964,6 @@
 ;;      (equal error-code 0)
 ;;      (equal (length contents) length))))
 
-(defthm useless-dir-ent-p-guard-lemma-1
-  (implies (and (unsigned-byte-p 8 a3)
-                (unsigned-byte-p 8 a2)
-                (unsigned-byte-p 8 a1)
-                (unsigned-byte-p 8 a0))
-           (fat32-entry-p (combine32u a3 a2 a1 a0)))
-  :hints (("goal" :in-theory (e/d (fat32-entry-p)
-                                  (unsigned-byte-p)))))
-
 ;; Here's the idea: while transforming from M2 to M1,
 ;; - we are not going to to take directory entries which are deleted
 ;; - we are not going to take dot or dotdot entries
@@ -3052,11 +3043,8 @@
          fat32-in-memory
          (nthcdr *ms-dir-ent-length* dir-contents)
          (- entry-limit 1)))
-       (first-cluster (combine32u (nth 21 dir-ent)
-                                  (nth 20 dir-ent)
-                                  (nth 27 dir-ent)
-                                  (nth 26 dir-ent)))
-       (filename (nats=>string (subseq dir-ent 0 11)))
+       (first-cluster (dir-ent-first-cluster dir-ent))
+       (filename (dir-ent-filename dir-ent))
        (directory-p
         (dir-ent-directory-p dir-ent))
        (length (if directory-p
@@ -6419,6 +6407,56 @@
   (("goal" :use ((:instance m1-stricter-file-alist-p-necc
                             (pathname (list (caar fs))))))))
 
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-20
+  (implies
+   (and (natp file-length)
+        (not (zp (cluster-size fat32-in-memory)))
+        (fat32-masked-entry-p first-cluster)
+        (dir-ent-p dir-ent))
+   (equal
+    (dir-ent-first-cluster
+     (mv-nth
+      1
+      (place-contents fat32-in-memory dir-ent
+                      contents file-length first-cluster)))
+    (if
+     (equal (length contents) 0)
+     0
+     (if
+      (equal
+       (+
+        1
+        (len
+         (stobj-find-n-free-clusters
+          fat32-in-memory
+          (+
+           -1
+           (len
+            (make-clusters contents
+                           (cluster-size fat32-in-memory)))))))
+       (len (make-clusters contents
+                           (cluster-size fat32-in-memory))))
+      first-cluster
+      (dir-ent-first-cluster dir-ent)))))
+  :hints (("goal" :in-theory (enable place-contents))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-21
+  (implies
+   (and (natp file-length)
+        (not (zp (cluster-size fat32-in-memory)))
+        (fat32-masked-entry-p first-cluster)
+        (dir-ent-p dir-ent))
+   (equal
+    (dir-ent-filename
+     (mv-nth
+      1
+      (place-contents fat32-in-memory dir-ent
+                      contents file-length first-cluster)))
+    (dir-ent-filename dir-ent)))
+  :hints (("goal" :in-theory (enable place-contents))))
+
 (thm-cp
  (implies
   (and
@@ -6505,7 +6543,9 @@
                                            fs current-dir-first-cluster)
           :in-theory (disable floor mod
                               (:REWRITE BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)
-                              (:DEFINITION GET-CLUSTERCHAIN-CONTENTS)))
+                              (:DEFINITION GET-CLUSTERCHAIN-CONTENTS)
+                              (:REWRITE NTH-OF-NATS=>CHARS)
+                              (:REWRITE DIR-ENT-P-OF-APPEND)))
          ("Subgoal *1/4.11'''" :expand
           (fat32-in-memory-to-m1-fs-helper
            (stobj-set-indices-in-fa-table

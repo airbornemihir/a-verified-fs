@@ -54,6 +54,12 @@
   :hints (("goal" :in-theory (enable dir-ent-p)))
   :rule-classes :forward-chaining)
 
+(defthm len-when-dir-ent-p
+  (implies (dir-ent-p dir-ent)
+           (equal (len dir-ent)
+                  *ms-dir-ent-length*))
+  :hints (("goal" :in-theory (enable dir-ent-p))))
+
 (defthm dir-ent-p-of-update-nth
   (implies (dir-ent-p l)
            (equal (dir-ent-p (update-nth key val l))
@@ -229,10 +235,20 @@
 (defthm
   dir-ent-p-of-dir-ent-set-filename
   (implies (and (dir-ent-p dir-ent)
-                (stringp filename))
-           (unsigned-byte-listp
-            8
+                (stringp filename)
+                (equal (length filename) 11))
+           (dir-ent-p
             (dir-ent-set-filename dir-ent filename)))
+  :hints
+  (("goal" :in-theory (enable dir-ent-set-filename dir-ent-p))))
+
+(defthm
+  unsigned-byte-listp-of-dir-ent-set-filename
+    (implies (and (dir-ent-p dir-ent)
+                  (stringp filename))
+             (unsigned-byte-listp
+              8
+              (dir-ent-set-filename dir-ent filename)))
   :hints
   (("goal" :in-theory (enable dir-ent-set-filename dir-ent-p)))
   :rule-classes
