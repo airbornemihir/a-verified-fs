@@ -224,41 +224,36 @@
     (e/d (dir-ent-set-first-cluster-file-size dir-ent-filename)
          (loghead logtail (:rewrite logtail-loghead))))))
 
-(defund dir-ent-set-filename (dir-ent filename)
+(defund
+  dir-ent-set-filename (dir-ent filename)
   (declare
-   (xargs :guard (and (dir-ent-p dir-ent)
-                      (stringp filename)
-                      (equal (length filename) 11))
-          :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
-  (append (string=>nats filename) (subseq dir-ent 11 *ms-dir-ent-length*)))
+   (xargs
+    :guard (and (dir-ent-p dir-ent)
+                (stringp filename)
+                (equal (length filename) 11))
+    :guard-hints (("goal" :in-theory (enable dir-ent-p)))))
+  (mbe :exec (append (string=>nats filename)
+                     (subseq dir-ent 11 *ms-dir-ent-length*))
+       :logic
+       (dir-ent-fix
+        (append (string=>nats filename)
+                (subseq dir-ent 11 *ms-dir-ent-length*)))))
 
 (defthm
   dir-ent-p-of-dir-ent-set-filename
-  (implies (and (dir-ent-p dir-ent)
-                (stringp filename)
-                (equal (length filename) 11))
-           (dir-ent-p
-            (dir-ent-set-filename dir-ent filename)))
-  :hints
-  (("goal" :in-theory (enable dir-ent-set-filename dir-ent-p))))
-
-(defthm
-  unsigned-byte-listp-of-dir-ent-set-filename
-    (implies (and (dir-ent-p dir-ent)
-                  (stringp filename))
-             (unsigned-byte-listp
-              8
-              (dir-ent-set-filename dir-ent filename)))
-  :hints
-  (("goal" :in-theory (enable dir-ent-set-filename dir-ent-p)))
+  (dir-ent-p (dir-ent-set-filename dir-ent filename))
+  :hints (("goal" :in-theory (enable dir-ent-set-filename)))
   :rule-classes
   (:rewrite
    (:rewrite
+    :corollary (unsigned-byte-listp
+                8
+                (dir-ent-set-filename dir-ent filename))
+    :hints (("goal" :in-theory (enable dir-ent-p))))
+   (:rewrite
     :corollary
-    (implies
-     (and (dir-ent-p dir-ent)
-          (stringp filename))
-     (true-listp (dir-ent-set-filename dir-ent filename))))))
+    (true-listp (dir-ent-set-filename dir-ent filename))
+    :hints (("goal" :in-theory (enable dir-ent-p))))))
 
 (encapsulate
   ()
