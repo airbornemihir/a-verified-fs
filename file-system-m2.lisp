@@ -5809,17 +5809,28 @@
   (forall
    pathname
    (not
-    (useless-dir-ent-p
-     (m1-file->dir-ent
-      (mv-nth 0
-              (find-file-by-pathname fs pathname)))))))
+    (or
+     (useless-dir-ent-p
+      (m1-file->dir-ent
+       (mv-nth 0
+               (find-file-by-pathname fs pathname))))
+     (equal (nth 0 (m1-file->dir-ent
+                    (mv-nth 0
+                            (find-file-by-pathname fs pathname))))
+            0)))))
 
 (in-theory (disable m1-stricter-file-alist-p
                     m1-stricter-file-alist-p-necc))
 
 (defthm
-  m1-directory-file-p-of-cdar
-  (implies (and (m1-stricter-file-alist-p fs)
+  m1-directory-file-p-of-cdar-when-m1-stricter-file-alist-p-lemma-1
+  (consp (m1-file->dir-ent x))
+  :hints (("goal" :in-theory (enable m1-file->dir-ent
+                                     dir-ent-fix dir-ent-p))))
+
+(defthm
+  m1-directory-file-p-of-cdar-when-m1-stricter-file-alist-p
+  (implies (and (m1-file-alist-p fs) (m1-stricter-file-alist-p fs)
                 (consp fs)
                 (m1-directory-file-p (cdr (car fs))))
            (m1-stricter-file-alist-p
@@ -5834,7 +5845,8 @@
       (pathname
        (list* (caar fs)
               (m1-stricter-file-alist-p-witness
-               (m1-file->contents (cdr (car fs)))))))))))
+               (m1-file->contents (cdr (car fs)))))))))
+   ("subgoal 3'" :expand (M1-STRICTER-FILE-ALIST-P (M1-FILE->CONTENTS (CDR (CAR FS)))))))
 
 (encapsulate
   ()
@@ -6444,12 +6456,6 @@
   (implies (not (zp x))
            (iff (< (binary-* x (len y)) x)
                 (atom y))))
-
-(defthm
-  m1-fs-to-fat32-in-memory-inversion-lemma-21
-  (consp (m1-file->dir-ent x))
-  :hints (("goal" :in-theory (enable m1-file->dir-ent
-                                     dir-ent-fix dir-ent-p))))
 
 (thm-cp
  (implies
