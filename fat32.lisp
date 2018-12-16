@@ -115,10 +115,23 @@
            (natp x))
   :rule-classes :forward-chaining)
 
-(defthm fat32-masked-entry-p-correctness-2
+(defthm fat32-entry-fix-when-fat32-entry-p
+  (implies (fat32-entry-p x)
+           (equal (fat32-entry-fix x) x))
+  :hints (("Goal" :in-theory (enable fat32-entry-fix))))
+
+(defthm fat32-masked-entry-fix-when-fat32-masked-entry-p
   (implies (fat32-masked-entry-p x)
            (equal (fat32-masked-entry-fix x) x))
   :hints (("Goal" :in-theory (enable fat32-masked-entry-fix))))
+
+(defthm
+  fat32-entry-fix-correctness-1
+  (and (<= 0 (fat32-entry-fix x))
+       (< (fat32-entry-fix x) (ash 1 32)))
+  :rule-classes :linear
+  :hints
+  (("goal" :in-theory (enable fat32-entry-fix fat32-entry-p))))
 
 ;; Use a mask to take the low 28 bits.
 (defund fat32-entry-mask (x)
@@ -195,6 +208,17 @@
 (defthm fat32-entry-list-of-nthcdr
   (implies (fat32-entry-list-p l)
            (fat32-entry-list-p (nthcdr n l))))
+
+(defthm
+  fat32-masked-entry-p-of-nth-when-fat32-masked-entry-list-p
+  (implies (fat32-masked-entry-list-p l)
+           (iff (fat32-masked-entry-p (nth n l))
+                (< (nfix n) (len l))))
+  :rule-classes
+  ((:rewrite
+    :corollary (implies (fat32-masked-entry-list-p l)
+                        (equal (fat32-masked-entry-p (nth n l))
+                               (< (nfix n) (len l)))))))
 
 (encapsulate
   ()
@@ -470,6 +494,26 @@
                     (n (- n 1))
                     (start (+ 1 start))))))
 
+(defthm
+  find-n-free-clusters-helper-correctness-7
+  (implies
+   (and
+    (natp start)
+    (< (nfix m)
+       (len (find-n-free-clusters-helper fa-table n start))))
+   (<= start
+       (nth m
+            (find-n-free-clusters-helper fa-table n start))))
+  :rule-classes :linear
+  :hints
+  (("goal"
+    :use
+    (:instance
+     find-n-free-clusters-helper-correctness-3
+     (x
+      (nth m
+           (find-n-free-clusters-helper fa-table n start)))))))
+
 (defund
     find-n-free-clusters (fa-table n)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
@@ -567,11 +611,23 @@
   find-n-free-clusters-correctness-6
   (implies
    (and (fat32-entry-list-p fa-table)
-        (>= (len fa-table) *ms-first-data-cluster*)
+        (>= (len fa-table)
+            *ms-first-data-cluster*)
         (natp n))
    (no-duplicatesp-equal (find-n-free-clusters fa-table n)))
-  :hints (("goal"
-           :in-theory (enable find-n-free-clusters)) ))
+  :hints (("goal" :in-theory (enable find-n-free-clusters))))
+
+(defthm
+  find-n-free-clusters-correctness-7
+  (implies
+   (< (nfix m)
+      (len (find-n-free-clusters fa-table n)))
+   (<= *ms-first-data-cluster*
+       (nth m
+            (find-n-free-clusters fa-table n))))
+  :rule-classes :linear
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters))))
 
 (defthmd
   fat32-masked-entry-list-p-alt

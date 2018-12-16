@@ -1934,18 +1934,18 @@
       (("goal"
         :do-not-induct t
         :in-theory (disable fat32-in-memoryp unsigned-byte-p nth))
-       ("subgoal 7" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
+       ("subgoal 7" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-listp)
         :use ((:instance
-               unsigned-byte-p-of-nth-when-unsigned-byte-p
+               unsigned-byte-p-of-nth-when-unsigned-byte-listp
                (n 13)
                (l (get-initial-bytes str))
                (bits 8))
               (:instance unsigned-byte-p-forward-to-nonnegative-integerp
                          (n bits)
                          (x (nth 13 (get-initial-bytes str))))))
-       ("subgoal 6" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-p)
+       ("subgoal 6" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-listp)
         :use (:instance
-              unsigned-byte-p-of-nth-when-unsigned-byte-p
+              unsigned-byte-p-of-nth-when-unsigned-byte-listp
               (n 0)
               (l (get-remaining-rsvdbyts str))
               (bits 8))))
@@ -3064,13 +3064,13 @@
             ;; contents of an empty file; that would cause a guard
             ;; violation. Unlike deleted file entries and dot or dotdot
             ;; entries, though, these will be present in the m1 instance.
-            (or (< (fat32-entry-mask first-cluster)
+            (or (< first-cluster
                    *ms-first-data-cluster*)
-                (>= (fat32-entry-mask first-cluster)
+                (>= first-cluster
                     (count-of-clusters fat32-in-memory)))
             (mv "" 0)
             (get-clusterchain-contents fat32-in-memory
-                                       (fat32-entry-mask first-cluster)
+                                       first-cluster
                                        length)))
        ;; head-entry-count, here, does not include the entry for the head
        ;; itself. that will be added at the end.
@@ -3144,12 +3144,12 @@
       take-redefinition
       by-slice-you-mean-the-whole-cake-2
       floor
-      UNSIGNED-BYTE-P-OF-NTH-WHEN-UNSIGNED-BYTE-P))
+      unsigned-byte-p-of-nth-when-unsigned-byte-listp))
     :use
     (:instance
-     UNSIGNED-BYTE-P-OF-NTH-WHEN-UNSIGNED-BYTE-P
+     unsigned-byte-p-of-nth-when-unsigned-byte-listp
      (n 0)
-     (l (TAKE 32 DIR-CONTENTS))
+     (l (take 32 dir-contents))
      (bits 8))))
   :rule-classes
   ((:type-prescription
@@ -6356,6 +6356,11 @@
     :in-theory (disable fat32-in-memoryp
                         get-clusterchain-contents
                         mod (:definition take-redefinition)))
+   ("subgoal *1/5"
+    :expand (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory
+             (append dir-contents (make-list-ac n 0 nil))
+             entry-limit))
    ("subgoal *1/4"
     :expand (fat32-in-memory-to-m1-fs-helper
              fat32-in-memory
@@ -6444,14 +6449,61 @@
   (implies (dir-ent-p x) (consp x))
   :hints (("goal" :in-theory (enable dir-ent-p))))
 
-(thm (implies (and (fat32-filename-p filename) (dir-ent-p dir-ent)) (not (equal
-                                                                          (nth
-                                                                           0
-                                                                           (DIR-ENT-SET-FILENAME
-                                                                            DIR-ENT
-                                                                            FILENAME))
-                                                                          0)))
-     :hints (("Goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p) (nth))) ) )
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-22
+  (implies
+   (and (fat32-filename-p filename)
+        (dir-ent-p dir-ent))
+   (and
+    (not (equal (nth 0
+                     (dir-ent-set-filename dir-ent filename))
+                0))
+    (not (equal (nth 0
+                     (dir-ent-set-filename dir-ent filename))
+                229))))
+  :hints
+  (("goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p)
+                           (nth)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-23
+  (implies (and (fat32-filename-p filename)
+                (dir-ent-p dir-ent))
+           (not (useless-dir-ent-p
+                 (dir-ent-set-filename dir-ent filename))))
+  :hints (("goal" :in-theory (e/d (useless-dir-ent-p) (nth)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-24
+  (implies
+   (and (natp file-length)
+        (not (zp (cluster-size fat32-in-memory)))
+        (fat32-masked-entry-p first-cluster)
+        (dir-ent-p dir-ent))
+   (equal
+    (mv-nth 2
+            (place-contents fat32-in-memory dir-ent
+                            contents file-length first-cluster))
+    (if
+        (equal (length contents) 0)
+        0
+     (if
+      (equal
+       (+
+        1
+        (len
+         (stobj-find-n-free-clusters
+          fat32-in-memory
+          (+
+           -1
+           (len
+            (make-clusters contents
+                           (cluster-size fat32-in-memory)))))))
+       (len (make-clusters contents
+                           (cluster-size fat32-in-memory))))
+         0
+      *enospc*))))
+  :hints (("goal" :in-theory (enable place-contents))))
 
 (thm-cp
  (implies
@@ -6540,7 +6592,8 @@
                               (:REWRITE BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)
                               (:DEFINITION GET-CLUSTERCHAIN-CONTENTS)
                               (:REWRITE NTH-OF-NATS=>CHARS)
-                              (:REWRITE DIR-ENT-P-OF-APPEND)))
+                              (:REWRITE DIR-ENT-P-OF-APPEND)
+                              nth))
          ("Subgoal *1/4.8" :expand
           (fat32-in-memory-to-m1-fs-helper
            (stobj-set-indices-in-fa-table
