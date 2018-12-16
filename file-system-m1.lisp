@@ -330,6 +330,29 @@
                                            (j (nth 11 dir-ent)))) )))
     (not (zp (logand #x10 (nth 11 dir-ent))))))
 
+(defthm
+  dir-ent-directory-p-of-dir-ent-set-filename
+  (implies (and (dir-ent-p dir-ent)
+                (fat32-filename-p filename))
+           (equal (dir-ent-directory-p
+                   (dir-ent-set-filename dir-ent filename))
+                  (dir-ent-directory-p dir-ent)))
+  :hints (("goal" :in-theory (enable dir-ent-directory-p
+                                     dir-ent-set-filename))))
+
+(defthm
+  dir-ent-directory-p-of-dir-ent-set-first-cluster-file-size
+  (implies
+   (dir-ent-p dir-ent)
+   (equal
+    (dir-ent-directory-p (dir-ent-set-first-cluster-file-size
+                          dir-ent first-cluster file-size))
+    (dir-ent-directory-p dir-ent)))
+  :hints
+  (("goal"
+    :in-theory (enable dir-ent-directory-p
+                       dir-ent-set-first-cluster-file-size))))
+
 (defun fat32-filename-p (x)
   (declare (xargs :guard t))
   (and (stringp x)

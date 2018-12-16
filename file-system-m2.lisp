@@ -156,7 +156,8 @@
                    (dir-ent-set-filename dir-ent filename))
                   (dir-ent-first-cluster dir-ent)))
   :hints (("goal" :in-theory (enable dir-ent-first-cluster
-                                     dir-ent-set-filename))))
+                                     dir-ent-set-filename
+                                     dir-ent-p))))
 
 (make-event
  `(defstobj fat32-in-memory
