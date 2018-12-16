@@ -196,6 +196,17 @@
   (implies (fat32-entry-list-p l)
            (fat32-entry-list-p (nthcdr n l))))
 
+(defthm
+  fat32-masked-entry-p-of-nth-when-fat32-masked-entry-list-p
+  (implies (fat32-masked-entry-list-p l)
+           (iff (fat32-masked-entry-p (nth n l))
+                (< (nfix n) (len l))))
+  :rule-classes
+  ((:rewrite
+    :corollary (implies (fat32-masked-entry-list-p l)
+                        (equal (fat32-masked-entry-p (nth n l))
+                               (< (nfix n) (len l)))))))
+
 (encapsulate
   ()
 
