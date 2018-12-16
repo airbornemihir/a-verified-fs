@@ -697,12 +697,11 @@
   painful-debugging-lemma-7
   (equal (- (- x)) (fix x)))
 
+;; The following is redundant with the eponymous theorem in
+;; books/std/typed-lists/integer-listp.lisp, from where it was taken with
+;; thanks.
 (defthm
   integerp-of-nth-when-integer-listp
-  (implies (integer-listp l)
-           (iff (integerp (nth n l))
-                (< (nfix n) (len l))))
-  :rule-classes
-  ((:rewrite :corollary (implies (integer-listp l)
-                                 (equal (integerp (nth n l))
-                                      (< (nfix n) (len l)))))))
+  (implies (integer-listp x)
+           (iff (integerp (nth n x))
+                (< (nfix n) (len x)))))
