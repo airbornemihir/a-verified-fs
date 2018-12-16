@@ -115,10 +115,23 @@
            (natp x))
   :rule-classes :forward-chaining)
 
-(defthm fat32-masked-entry-p-correctness-2
+(defthm fat32-entry-fix-when-fat32-entry-p
+  (implies (fat32-entry-p x)
+           (equal (fat32-entry-fix x) x))
+  :hints (("Goal" :in-theory (enable fat32-entry-fix))))
+
+(defthm fat32-masked-entry-fix-when-fat32-masked-entry-p
   (implies (fat32-masked-entry-p x)
            (equal (fat32-masked-entry-fix x) x))
   :hints (("Goal" :in-theory (enable fat32-masked-entry-fix))))
+
+(defthm
+  fat32-entry-fix-correctness-1
+  (and (<= 0 (fat32-entry-fix x))
+       (< (fat32-entry-fix x) (ash 1 32)))
+  :rule-classes :linear
+  :hints
+  (("goal" :in-theory (enable fat32-entry-fix fat32-entry-p))))
 
 ;; Use a mask to take the low 28 bits.
 (defund fat32-entry-mask (x)
