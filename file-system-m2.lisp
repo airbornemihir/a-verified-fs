@@ -133,17 +133,20 @@
     (dir-ent-filename (dir-ent-set-filename dir-ent filename))
     filename))
   :hints (("goal" :in-theory (enable dir-ent-filename
-                                     dir-ent-set-filename))))
+                                     dir-ent-set-filename
+                                     dir-ent-p))))
 
 (defthm
-  dir-ent-first-cluster-of-dir-ent-set-filename
-  (implies (and (fat32-filename-p filename)
-                (dir-ent-p dir-ent))
-           (equal (dir-ent-first-cluster
-                   (dir-ent-set-filename dir-ent filename))
-                  (dir-ent-first-cluster dir-ent)))
-  :hints (("goal" :in-theory (enable dir-ent-set-filename
-                                     dir-ent-first-cluster))))
+  dir-ent-filename-of-dir-ent-set-filename
+  (implies
+   (and (dir-ent-p dir-ent)
+        (fat32-filename-p filename))
+   (equal
+    (dir-ent-filename (dir-ent-set-filename dir-ent filename))
+    filename))
+  :hints
+  (("goal" :in-theory (enable dir-ent-filename
+                              dir-ent-set-filename dir-ent-p))))
 
 (make-event
  `(defstobj fat32-in-memory
@@ -3114,13 +3117,13 @@
             ;; contents of an empty file; that would cause a guard
             ;; violation. Unlike deleted file entries and dot or dotdot
             ;; entries, though, these will be present in the m1 instance.
-            (or (< (fat32-entry-mask first-cluster)
+            (or (< first-cluster
                    *ms-first-data-cluster*)
-                (>= (fat32-entry-mask first-cluster)
+                (>= first-cluster
                     (count-of-clusters fat32-in-memory)))
             (mv "" 0)
             (get-clusterchain-contents fat32-in-memory
-                                       (fat32-entry-mask first-cluster)
+                                       first-cluster
                                        length)))
        ;; head-entry-count, here, does not include the entry for the head
        ;; itself. that will be added at the end.
@@ -3308,12 +3311,13 @@
   :hints
   (("goal"
     :in-theory
-    (disable
-     fat32-in-memoryp
-     (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
-               . 2)
-     (:e dir-ent-directory-p)
-     (:t dir-ent-directory-p))
+    (e/d
+     (dir-ent-p)
+     (fat32-in-memoryp
+      (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
+                . 2)
+      (:e dir-ent-directory-p)
+      (:t dir-ent-directory-p)))
     :use
     ((:instance
       (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
