@@ -11,6 +11,7 @@
 (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 (include-book "kestrel/utilities/strings" :dir :system)
 (include-book "std/strings/case-conversion" :dir :system)
+;; Consider replacing, per Matt's suggestion in email on 16 December 2018.
 (include-book "centaur/bitops/extra-defs" :dir :system)
 
 (include-book "insert-text")
@@ -300,10 +301,25 @@
                                      fat32-masked-entry-fix fat32-masked-entry-p)
                                     (loghead logtail))))))
 
-
+;; per table on page 24 of the spec.
 (defund dir-ent-directory-p (dir-ent)
   (declare (xargs :guard (dir-ent-p dir-ent)))
   (logbitp 4 (nth 11 dir-ent)))
+
+(defund dir-ent-install-directory-bit (dir-ent val)
+  (declare (xargs :guard (and (dir-ent-p dir-ent) (booleanp val))))
+  (update-nth 11 (install-bit 4 (if val 1 0) (nth 11 dir-ent)) dir-ent))
+
+(defthm
+  dir-ent-directory-p-of-dir-ent-install-directory-bit
+  (equal (dir-ent-directory-p
+          (dir-ent-install-directory-bit dir-ent val))
+         (if val t nil))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (dir-ent-install-directory-bit dir-ent-directory-p)
+         (logbitp)))))
 
 (defun fat32-filename-p (x)
   (declare (xargs :guard t))
