@@ -11,6 +11,7 @@
 (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 (include-book "kestrel/utilities/strings" :dir :system)
 (include-book "std/strings/case-conversion" :dir :system)
+(include-book "centaur/bitops/extra-defs" :dir :system)
 
 (include-book "insert-text")
 (include-book "fat32")
@@ -50,7 +51,9 @@
 
 (defthm dir-ent-p-correctness-1
   (implies (dir-ent-p x)
-           (not (stringp x)))
+           (and
+            (not (stringp x))
+            (integer-listp x)))
   :hints (("goal" :in-theory (enable dir-ent-p)))
   :rule-classes :forward-chaining)
 
@@ -297,61 +300,10 @@
                                      fat32-masked-entry-fix fat32-masked-entry-p)
                                     (loghead logtail))))))
 
-(encapsulate
-  ()
 
-  (local
-   (defthmd dir-ent-directory-p-guard-lemma-1
-     (implies (and (natp n)
-                   (not (integerp (nth n l)))
-                   (unsigned-byte-listp bits l))
-              (<= (len l) n))
-     :rule-classes :linear))
-
-  (local
-   (defthm
-     dir-ent-directory-p-guard-lemma-2
-     (implies (and (not (integerp (nth 11 l)))
-                   (unsigned-byte-listp 8 l))
-              (<= (len l) 11))
-     :hints
-     (("goal"
-       :use (:instance dir-ent-directory-p-guard-lemma-1 (n 11)
-                       (bits 8))))
-     :rule-classes :linear))
-
-  (defund dir-ent-directory-p (dir-ent)
-    (declare
-     (xargs :guard (dir-ent-p dir-ent)
-            :guard-hints (("Goal" :in-theory (e/d (dir-ent-p) (unsigned-byte-p))
-                           :use (:instance unsigned-byte-p-logand
-                                           (size 8)
-                                           (i #x10)
-                                           (j (nth 11 dir-ent)))) )))
-    (not (zp (logand #x10 (nth 11 dir-ent))))))
-
-(defthm
-  dir-ent-directory-p-of-dir-ent-set-filename
-  (implies (and (dir-ent-p dir-ent)
-                (fat32-filename-p filename))
-           (equal (dir-ent-directory-p
-                   (dir-ent-set-filename dir-ent filename))
-                  (dir-ent-directory-p dir-ent)))
-  :hints (("goal" :in-theory (enable dir-ent-directory-p
-                                     dir-ent-set-filename))))
-
-(defthm
-  dir-ent-directory-p-of-dir-ent-set-first-cluster-file-size
-  (implies
-   (dir-ent-p dir-ent)
-   (equal
-    (dir-ent-directory-p (dir-ent-set-first-cluster-file-size
-                          dir-ent first-cluster file-size))
-    (dir-ent-directory-p dir-ent)))
-  :hints
-  (("goal"
-    :in-theory (enable dir-ent-directory-p
-                       dir-ent-set-first-cluster-file-size))))
+(defund dir-ent-directory-p (dir-ent)
+  (declare (xargs :guard (dir-ent-p dir-ent)))
+  (logbitp 4 (nth 11 dir-ent)))
 
 (defun fat32-filename-p (x)
   (declare (xargs :guard t))
@@ -397,6 +349,33 @@
                   (not (equal (nth 0 (explode x)) ,(code-char #xe5)))
                   (not (equal x *current-dir-fat32-name*))
                   (not (equal x *parent-dir-fat32-name*))))))
+
+(defthm
+  dir-ent-directory-p-of-dir-ent-set-filename
+  (implies (and (dir-ent-p dir-ent)
+                (fat32-filename-p filename))
+           (equal (dir-ent-directory-p
+                   (dir-ent-set-filename dir-ent filename))
+                  (dir-ent-directory-p dir-ent)))
+  :hints (("goal" :in-theory (e/d (dir-ent-directory-p
+                                   dir-ent-set-filename
+                                   dir-ent-p)
+                                  (logbitp)))))
+
+(defthm
+  dir-ent-directory-p-of-dir-ent-set-first-cluster-file-size
+  (implies
+   (dir-ent-p dir-ent)
+   (equal
+    (dir-ent-directory-p (dir-ent-set-first-cluster-file-size
+                          dir-ent first-cluster file-size))
+    (dir-ent-directory-p dir-ent)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (dir-ent-directory-p dir-ent-set-first-cluster-file-size)
+     (logbitp)))))
 
 (fty::deflist fat32-filename-list
       :elt-type fat32-filename      ;; required, must have a known fixing function
