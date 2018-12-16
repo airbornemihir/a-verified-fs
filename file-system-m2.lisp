@@ -148,6 +148,16 @@
   (("goal" :in-theory (enable dir-ent-filename
                               dir-ent-set-filename dir-ent-p))))
 
+(defthm
+  dir-ent-first-cluster-of-dir-ent-set-filename
+  (implies (and (fat32-filename-p filename)
+                (dir-ent-p dir-ent))
+           (equal (dir-ent-first-cluster
+                   (dir-ent-set-filename dir-ent filename))
+                  (dir-ent-first-cluster dir-ent)))
+  :hints (("goal" :in-theory (enable dir-ent-first-cluster
+                                     dir-ent-set-filename))))
+
 (make-event
  `(defstobj fat32-in-memory
 

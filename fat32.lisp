@@ -494,6 +494,26 @@
                     (n (- n 1))
                     (start (+ 1 start))))))
 
+(defthm
+  find-n-free-clusters-helper-correctness-7
+  (implies
+   (and
+    (natp start)
+    (< (nfix m)
+       (len (find-n-free-clusters-helper fa-table n start))))
+   (<= start
+       (nth m
+            (find-n-free-clusters-helper fa-table n start))))
+  :rule-classes :linear
+  :hints
+  (("goal"
+    :use
+    (:instance
+     find-n-free-clusters-helper-correctness-3
+     (x
+      (nth m
+           (find-n-free-clusters-helper fa-table n start)))))))
+
 (defund
     find-n-free-clusters (fa-table n)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
@@ -591,11 +611,23 @@
   find-n-free-clusters-correctness-6
   (implies
    (and (fat32-entry-list-p fa-table)
-        (>= (len fa-table) *ms-first-data-cluster*)
+        (>= (len fa-table)
+            *ms-first-data-cluster*)
         (natp n))
    (no-duplicatesp-equal (find-n-free-clusters fa-table n)))
-  :hints (("goal"
-           :in-theory (enable find-n-free-clusters)) ))
+  :hints (("goal" :in-theory (enable find-n-free-clusters))))
+
+(defthm
+  find-n-free-clusters-correctness-7
+  (implies
+   (< (nfix m)
+      (len (find-n-free-clusters fa-table n)))
+   (<= *ms-first-data-cluster*
+       (nth m
+            (find-n-free-clusters fa-table n))))
+  :rule-classes :linear
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters))))
 
 (defthmd
   fat32-masked-entry-list-p-alt
