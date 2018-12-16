@@ -388,6 +388,29 @@
                                   (logbitp)))))
 
 (defthm
+  dir-ent-first-cluster-of-dir-ent-set-filename
+  (implies (and (fat32-filename-p filename)
+                (dir-ent-p dir-ent))
+           (equal (dir-ent-first-cluster
+                   (dir-ent-set-filename dir-ent filename))
+                  (dir-ent-first-cluster dir-ent)))
+  :hints (("goal" :in-theory (enable dir-ent-first-cluster
+                                     dir-ent-set-filename
+                                     dir-ent-p))))
+
+(defthm
+  dir-ent-filename-of-dir-ent-set-filename
+  (implies
+   (and (dir-ent-p dir-ent)
+        (fat32-filename-p filename))
+   (equal
+    (dir-ent-filename (dir-ent-set-filename dir-ent filename))
+    filename))
+  :hints
+  (("goal" :in-theory (enable dir-ent-filename
+                              dir-ent-set-filename dir-ent-p))))
+
+(defthm
   dir-ent-directory-p-of-dir-ent-set-first-cluster-file-size
   (implies
    (dir-ent-p dir-ent)
