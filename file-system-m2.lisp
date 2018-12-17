@@ -5829,8 +5829,9 @@
                  (fat32-in-memory-to-m1-fs-helper
                   fat32-in-memory
                   dir-contents entry-limit)))
-             (equal (m1-entry-count m1-file-alist)
-                    entry-count)))
+             (equal
+              entry-count
+              (m1-entry-count m1-file-alist))))
   :hints (("goal" :in-theory (disable fat32-in-memoryp)
            :induct (fat32-in-memory-to-m1-fs-helper
                     fat32-in-memory
@@ -6783,6 +6784,109 @@
     :use (:instance m1-fs-to-fat32-in-memory-inversion-lemma-38
                     (fs (cons head tail))))))
 
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-40
+  (implies (and (m1-file-alist-p contents1)
+                (m1-file-no-dups-p contents1)
+                (not (m1-file-no-dups-p (m1-file-contents-fix contents2))))
+           (not (m1-dir-equiv contents1 contents2)))
+  :hints (("goal" :expand (m1-dir-equiv contents1 contents2))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-41
+  (implies (and (m1-file-alist-p y)
+                (m1-file-no-dups-p y))
+           (m1-dir-subsetp y y))
+  :hints
+  (("goal"
+    :in-theory
+    (disable m1-fs-to-fat32-in-memory-inversion-lemma-36)
+    :use (:instance m1-fs-to-fat32-in-memory-inversion-lemma-36
+                    (x nil)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-42
+  (implies (and (m1-file-alist-p contents1)
+                (m1-file-no-dups-p contents1)
+                (not (M1-DIR-SUBSETP CONTENTS1
+                         (M1-FILE-CONTENTS-FIX CONTENTS2))))
+           (not (m1-dir-equiv contents1 contents2)))
+  :hints (("goal" :expand (m1-dir-equiv contents1 contents2))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-43
+  (implies
+   (and (m1-file-alist-p contents1)
+        (m1-file-no-dups-p contents1)
+        (not (m1-dir-subsetp (m1-file-contents-fix contents2)
+                             contents1)))
+   (not (m1-dir-equiv contents1 contents2)))
+  :hints (("goal" :expand (m1-dir-equiv contents1 contents2))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-44
+  (implies (and (m1-file-alist-p contents1)
+                (m1-file-no-dups-p contents1)
+                (not (m1-file-alist-p contents2)))
+           (not (m1-dir-equiv contents1 contents2)))
+  :hints (("goal" :expand (m1-dir-equiv contents1 contents2))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-45
+  (implies
+   (and (fat32-filename-p (car head))
+        (m1-directory-file-p (cdr head))
+        (m1-file-alist-p tail)
+        (m1-file-no-dups-p (m1-file->contents (cdr head)))
+        (m1-dir-equiv (m1-file->contents (cdr head))
+                      contents))
+   (m1-dir-equiv (cons (cons (car head)
+                             (m1-file dir-ent contents))
+                       tail)
+                 (cons head tail)))
+  :hints
+  (("goal"
+    :expand
+    (m1-dir-equiv (cons (cons (car head)
+                              (m1-file dir-ent contents))
+                        tail)
+                  (cons head tail))
+    :in-theory
+    (disable m1-fs-to-fat32-in-memory-inversion-lemma-36
+             m1-directory-file-p-of-m1-file)
+    :use
+    ((:instance m1-fs-to-fat32-in-memory-inversion-lemma-36
+                (x (list head))
+                (y tail))
+     (:instance m1-fs-to-fat32-in-memory-inversion-lemma-36
+                (x (list (cons (car head)
+                               (m1-file dir-ent contents))))
+                (y tail))
+     (:instance m1-directory-file-p-of-m1-file
+                (contents contents)
+                (dir-ent dir-ent))))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-46
+  (implies
+   (dir-ent-p dir-ent)
+   (and
+    (equal
+     (take *ms-dir-ent-length*
+           (append (dir-ent-install-directory-bit dir-ent val)
+                   y))
+     (dir-ent-install-directory-bit dir-ent val))
+    (equal
+     (nthcdr *ms-dir-ent-length*
+             (append (dir-ent-install-directory-bit dir-ent val)
+                     y))
+     y))))
+
+(defthm m1-fs-to-fat32-in-memory-inversion-lemma-47
+  (implies (and (m1-file-p fs)
+                (not (m1-regular-file-p fs)))
+           (m1-directory-file-p fs)))
+
 (thm-cp
  (implies
   (and
@@ -6794,6 +6898,7 @@
        (fat-length fat32-in-memory))
    (m1-file-alist-p fs)
    (m1-bounded-file-alist-p fs)
+   (m1-file-no-dups-p fs)
    (fat32-masked-entry-p current-dir-first-cluster)
    (<= *ms-first-data-cluster* current-dir-first-cluster)
    (< current-dir-first-cluster
@@ -6882,507 +6987,12 @@
                               nth
                               (:REWRITE
                                M1-FS-TO-FAT32-IN-MEMORY-INVERSION-LEMMA-21)
-                              (:DEFINITION FAT32-IN-MEMORYP)))
-         ("Subgoal *1/4.13" :expand
-          (fat32-in-memory-to-m1-fs-helper
-           (stobj-set-indices-in-fa-table
-            (stobj-set-clusters
-             (make-clusters
-              (nats=>string
-               (append
-                (dir-ent-install-directory-bit
-                 (dir-ent-set-filename
-                  (dir-ent-set-first-cluster-file-size
-                   (m1-file->dir-ent (cdr (car fs)))
-                   (nth
-                    0
-                    (find-n-free-clusters
-                     (effective-fat
-                      (mv-nth
-                       0
-                       (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                        current-dir-first-cluster)))
-                     1))
-                   0)
-                  (car (car fs)))
-                 t)
-                (flatten
-                 (mv-nth
-                  1
-                  (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                   current-dir-first-cluster)))))
-              (cluster-size fat32-in-memory))
-             (cons
-              current-dir-first-cluster
-              (find-n-free-clusters
-               (update-nth
-                current-dir-first-cluster 268435455
-                (effective-fat
-                 (mv-nth
-                  0
-                  (place-contents
-                   (mv-nth
-                    0
-                    (m1-fs-to-fat32-in-memory-helper
-                     (update-fati
-                      (nth
-                       0
-                       (find-n-free-clusters
-                        (effective-fat (mv-nth 0
-                                               (m1-fs-to-fat32-in-memory-helper
-                                                fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster)))
-                        1))
-                      268435455
-                      (mv-nth
-                       0
-                       (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                        current-dir-first-cluster)))
-                     (m1-file->contents (cdr (car fs)))
-                     (nth
-                      0
-                      (find-n-free-clusters
-                       (effective-fat (mv-nth 0
-                                              (m1-fs-to-fat32-in-memory-helper
-                                               fat32-in-memory (cdr fs)
-                                               current-dir-first-cluster)))
-                       1))))
-                   (m1-file->dir-ent (cdr (car fs)))
-                   (nats=>string
-                    (append
-                     (dir-ent-set-filename
-                      (dir-ent-set-first-cluster-file-size
-                       (m1-file->dir-ent (cdr (car fs)))
-                       (nth
-                        0
-                        (find-n-free-clusters
-                         (effective-fat (mv-nth 0
-                                                (m1-fs-to-fat32-in-memory-helper
-                                                 fat32-in-memory (cdr fs)
-                                                 current-dir-first-cluster)))
-                         1))
-                       0)
-                      ".          ")
-                     (dir-ent-set-filename (dir-ent-set-first-cluster-file-size
-                                            (m1-file->dir-ent (cdr (car fs)))
-                                            current-dir-first-cluster 0)
-                                           "..         ")
-                     (flatten
-                      (mv-nth
-                       1
-                       (m1-fs-to-fat32-in-memory-helper
-                        (update-fati
-                         (nth
-                          0
-                          (find-n-free-clusters
-                           (effective-fat (mv-nth 0
-                                                  (m1-fs-to-fat32-in-memory-helper
-                                                   fat32-in-memory (cdr fs)
-                                                   current-dir-first-cluster)))
-                           1))
-                         268435455
-                         (mv-nth 0
-                                 (m1-fs-to-fat32-in-memory-helper
-                                  fat32-in-memory (cdr fs)
-                                  current-dir-first-cluster)))
-                        (m1-file->contents (cdr (car fs)))
-                        (nth
-                         0
-                         (find-n-free-clusters
-                          (effective-fat (mv-nth 0
-                                                 (m1-fs-to-fat32-in-memory-helper
-                                                  fat32-in-memory (cdr fs)
-                                                  current-dir-first-cluster)))
-                          1)))))))
-                   0
-                   (nth
-                    0
-                    (find-n-free-clusters
-                     (effective-fat
-                      (mv-nth
-                       0
-                       (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                        current-dir-first-cluster)))
-                     1))))))
-               (+
-                -1
-                (len
-                 (make-clusters
-                  (nats=>string
-                   (append
-                    (dir-ent-install-directory-bit
-                     (dir-ent-set-filename
-                      (dir-ent-set-first-cluster-file-size
-                       (m1-file->dir-ent (cdr (car fs)))
-                       (nth
-                        0
-                        (find-n-free-clusters
-                         (effective-fat (mv-nth 0
-                                                (m1-fs-to-fat32-in-memory-helper
-                                                 fat32-in-memory (cdr fs)
-                                                 current-dir-first-cluster)))
-                         1))
-                       0)
-                      (car (car fs)))
-                     t)
-                    (flatten (mv-nth 1
-                                     (m1-fs-to-fat32-in-memory-helper
-                                      fat32-in-memory (cdr fs)
-                                      current-dir-first-cluster)))))
-                  (cluster-size fat32-in-memory))))))
-             (update-fati
-              current-dir-first-cluster 268435455
-              (mv-nth
-               0
-               (place-contents
-                (mv-nth
-                 0
-                 (m1-fs-to-fat32-in-memory-helper
-                  (update-fati
-                   (nth
-                    0
-                    (find-n-free-clusters
-                     (effective-fat
-                      (mv-nth
-                       0
-                       (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                        current-dir-first-cluster)))
-                     1))
-                   268435455
-                   (mv-nth
-                    0
-                    (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                     current-dir-first-cluster)))
-                  (m1-file->contents (cdr (car fs)))
-                  (nth
-                   0
-                   (find-n-free-clusters
-                    (effective-fat
-                     (mv-nth
-                      0
-                      (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                       current-dir-first-cluster)))
-                    1))))
-                (m1-file->dir-ent (cdr (car fs)))
-                (nats=>string
-                 (append
-                  (dir-ent-set-filename
-                   (dir-ent-set-first-cluster-file-size
-                    (m1-file->dir-ent (cdr (car fs)))
-                    (nth
-                     0
-                     (find-n-free-clusters
-                      (effective-fat (mv-nth 0
-                                             (m1-fs-to-fat32-in-memory-helper
-                                              fat32-in-memory (cdr fs)
-                                              current-dir-first-cluster)))
-                      1))
-                    0)
-                   ".          ")
-                  (dir-ent-set-filename (dir-ent-set-first-cluster-file-size
-                                         (m1-file->dir-ent (cdr (car fs)))
-                                         current-dir-first-cluster 0)
-                                        "..         ")
-                  (flatten
-                   (mv-nth
-                    1
-                    (m1-fs-to-fat32-in-memory-helper
-                     (update-fati
-                      (nth
-                       0
-                       (find-n-free-clusters
-                        (effective-fat (mv-nth 0
-                                               (m1-fs-to-fat32-in-memory-helper
-                                                fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster)))
-                        1))
-                      268435455
-                      (mv-nth
-                       0
-                       (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                        current-dir-first-cluster)))
-                     (m1-file->contents (cdr (car fs)))
-                     (nth
-                      0
-                      (find-n-free-clusters
-                       (effective-fat (mv-nth 0
-                                              (m1-fs-to-fat32-in-memory-helper
-                                               fat32-in-memory (cdr fs)
-                                               current-dir-first-cluster)))
-                       1)))))))
-                0
-                (nth
-                 0
-                 (find-n-free-clusters
-                  (effective-fat
-                   (mv-nth
-                    0
-                    (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                     current-dir-first-cluster)))
-                  1))))))
-            (cons
-             current-dir-first-cluster
-             (find-n-free-clusters
-              (update-nth
-               current-dir-first-cluster 268435455
-               (effective-fat
-                (mv-nth
-                 0
-                 (place-contents
-                  (mv-nth
-                   0
-                   (m1-fs-to-fat32-in-memory-helper
-                    (update-fati
-                     (nth
-                      0
-                      (find-n-free-clusters
-                       (effective-fat (mv-nth 0
-                                              (m1-fs-to-fat32-in-memory-helper
-                                               fat32-in-memory (cdr fs)
-                                               current-dir-first-cluster)))
-                       1))
-                     268435455
-                     (mv-nth
-                      0
-                      (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                       current-dir-first-cluster)))
-                    (m1-file->contents (cdr (car fs)))
-                    (nth
-                     0
-                     (find-n-free-clusters
-                      (effective-fat (mv-nth 0
-                                             (m1-fs-to-fat32-in-memory-helper
-                                              fat32-in-memory (cdr fs)
-                                              current-dir-first-cluster)))
-                      1))))
-                  (m1-file->dir-ent (cdr (car fs)))
-                  (nats=>string
-                   (append
-                    (dir-ent-set-filename
-                     (dir-ent-set-first-cluster-file-size
-                      (m1-file->dir-ent (cdr (car fs)))
-                      (nth
-                       0
-                       (find-n-free-clusters
-                        (effective-fat (mv-nth 0
-                                               (m1-fs-to-fat32-in-memory-helper
-                                                fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster)))
-                        1))
-                      0)
-                     ".          ")
-                    (dir-ent-set-filename (dir-ent-set-first-cluster-file-size
-                                           (m1-file->dir-ent (cdr (car fs)))
-                                           current-dir-first-cluster 0)
-                                          "..         ")
-                    (flatten
-                     (mv-nth
-                      1
-                      (m1-fs-to-fat32-in-memory-helper
-                       (update-fati
-                        (nth
-                         0
-                         (find-n-free-clusters
-                          (effective-fat (mv-nth 0
-                                                 (m1-fs-to-fat32-in-memory-helper
-                                                  fat32-in-memory (cdr fs)
-                                                  current-dir-first-cluster)))
-                          1))
-                        268435455
-                        (mv-nth 0
-                                (m1-fs-to-fat32-in-memory-helper
-                                 fat32-in-memory (cdr fs)
-                                 current-dir-first-cluster)))
-                       (m1-file->contents (cdr (car fs)))
-                       (nth
-                        0
-                        (find-n-free-clusters
-                         (effective-fat (mv-nth 0
-                                                (m1-fs-to-fat32-in-memory-helper
-                                                 fat32-in-memory (cdr fs)
-                                                 current-dir-first-cluster)))
-                         1)))))))
-                  0
-                  (nth
-                   0
-                   (find-n-free-clusters
-                    (effective-fat
-                     (mv-nth
-                      0
-                      (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                       current-dir-first-cluster)))
-                    1))))))
-              (+
-               -1
-               (len
-                (make-clusters
-                 (nats=>string
-                  (append
-                   (dir-ent-install-directory-bit
-                    (dir-ent-set-filename
-                     (dir-ent-set-first-cluster-file-size
-                      (m1-file->dir-ent (cdr (car fs)))
-                      (nth
-                       0
-                       (find-n-free-clusters
-                        (effective-fat (mv-nth 0
-                                               (m1-fs-to-fat32-in-memory-helper
-                                                fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster)))
-                        1))
-                      0)
-                     (car (car fs)))
-                    t)
-                   (flatten
-                    (mv-nth
-                     1
-                     (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                      current-dir-first-cluster)))))
-                 (cluster-size fat32-in-memory))))))
-            (append
-             (find-n-free-clusters
-              (update-nth
-               current-dir-first-cluster 268435455
-               (effective-fat
-                (mv-nth
-                 0
-                 (place-contents
-                  (mv-nth
-                   0
-                   (m1-fs-to-fat32-in-memory-helper
-                    (update-fati
-                     (nth
-                      0
-                      (find-n-free-clusters
-                       (effective-fat (mv-nth 0
-                                              (m1-fs-to-fat32-in-memory-helper
-                                               fat32-in-memory (cdr fs)
-                                               current-dir-first-cluster)))
-                       1))
-                     268435455
-                     (mv-nth
-                      0
-                      (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                       current-dir-first-cluster)))
-                    (m1-file->contents (cdr (car fs)))
-                    (nth
-                     0
-                     (find-n-free-clusters
-                      (effective-fat (mv-nth 0
-                                             (m1-fs-to-fat32-in-memory-helper
-                                              fat32-in-memory (cdr fs)
-                                              current-dir-first-cluster)))
-                      1))))
-                  (m1-file->dir-ent (cdr (car fs)))
-                  (nats=>string
-                   (append
-                    (dir-ent-set-filename
-                     (dir-ent-set-first-cluster-file-size
-                      (m1-file->dir-ent (cdr (car fs)))
-                      (nth
-                       0
-                       (find-n-free-clusters
-                        (effective-fat (mv-nth 0
-                                               (m1-fs-to-fat32-in-memory-helper
-                                                fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster)))
-                        1))
-                      0)
-                     ".          ")
-                    (dir-ent-set-filename (dir-ent-set-first-cluster-file-size
-                                           (m1-file->dir-ent (cdr (car fs)))
-                                           current-dir-first-cluster 0)
-                                          "..         ")
-                    (flatten
-                     (mv-nth
-                      1
-                      (m1-fs-to-fat32-in-memory-helper
-                       (update-fati
-                        (nth
-                         0
-                         (find-n-free-clusters
-                          (effective-fat (mv-nth 0
-                                                 (m1-fs-to-fat32-in-memory-helper
-                                                  fat32-in-memory (cdr fs)
-                                                  current-dir-first-cluster)))
-                          1))
-                        268435455
-                        (mv-nth 0
-                                (m1-fs-to-fat32-in-memory-helper
-                                 fat32-in-memory (cdr fs)
-                                 current-dir-first-cluster)))
-                       (m1-file->contents (cdr (car fs)))
-                       (nth
-                        0
-                        (find-n-free-clusters
-                         (effective-fat (mv-nth 0
-                                                (m1-fs-to-fat32-in-memory-helper
-                                                 fat32-in-memory (cdr fs)
-                                                 current-dir-first-cluster)))
-                         1)))))))
-                  0
-                  (nth
-                   0
-                   (find-n-free-clusters
-                    (effective-fat
-                     (mv-nth
-                      0
-                      (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                       current-dir-first-cluster)))
-                    1))))))
-              (+
-               -1
-               (len
-                (make-clusters
-                 (nats=>string
-                  (append
-                   (dir-ent-install-directory-bit
-                    (dir-ent-set-filename
-                     (dir-ent-set-first-cluster-file-size
-                      (m1-file->dir-ent (cdr (car fs)))
-                      (nth
-                       0
-                       (find-n-free-clusters
-                        (effective-fat (mv-nth 0
-                                               (m1-fs-to-fat32-in-memory-helper
-                                                fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster)))
-                        1))
-                      0)
-                     (car (car fs)))
-                    t)
-                   (flatten
-                    (mv-nth
-                     1
-                     (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                      current-dir-first-cluster)))))
-                 (cluster-size fat32-in-memory)))))
-             '(268435455)))
-           (append
-            (dir-ent-install-directory-bit
-             (dir-ent-set-filename
-              (dir-ent-set-first-cluster-file-size
-               (m1-file->dir-ent (cdr (car fs)))
-               (nth
-                0
-                (find-n-free-clusters
-                 (effective-fat
-                  (mv-nth
-                   0
-                   (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                    current-dir-first-cluster)))
-                 1))
-               0)
-              (car (car fs)))
-             t)
-            (flatten
-             (mv-nth 1
-                     (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
-                                                      current-dir-first-cluster)))
-            (make-list-ac (+ 2097120 (- (* 32 (len (cdr fs)))))
-                          0 nil))
-           (+ 1 (m1-entry-count (cdr fs))
-              (m1-entry-count (m1-file->contents (cdr (car fs)))))))))
+                              (:DEFINITION FAT32-IN-MEMORYP)
+                              (:DEFINITION BINARY-APPEND)
+                              (:REWRITE CONSP-OF-NTHCDR)
+                              (:REWRITE M1-DIRECTORY-FILE-P-CORRECTNESS-1)
+                              (:REWRITE NTHCDR-OF-APPEND)
+                              (:REWRITE TAKE-OF-APPEND)))))
 
 (encapsulate
   ()
