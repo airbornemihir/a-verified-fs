@@ -505,13 +505,38 @@
     (< (nfix m)
        (len (find-n-free-clusters-helper fa-table n start))))
    (and
+    (integerp
+     (nth m
+          (find-n-free-clusters-helper fa-table n start)))
     (<= start
         (nth m
              (find-n-free-clusters-helper fa-table n start)))
     (< (nth m
              (find-n-free-clusters-helper fa-table n start))
         (+ start (len fa-table)))))
-  :rule-classes :linear
+  :rule-classes
+  ((:linear :corollary
+            (implies
+             (and
+              (natp start)
+              (< (nfix m)
+                 (len (find-n-free-clusters-helper fa-table n start))))
+             (and
+              (<= start
+                  (nth m
+                       (find-n-free-clusters-helper fa-table n start)))
+              (< (nth m
+                      (find-n-free-clusters-helper fa-table n start))
+                 (+ start (len fa-table))))))
+   (:rewrite :corollary
+            (implies
+             (and
+              (natp start)
+              (< (nfix m)
+                 (len (find-n-free-clusters-helper fa-table n start))))
+             (integerp
+              (nth m
+                   (find-n-free-clusters-helper fa-table n start))))))
   :hints
   (("goal"
     :use
@@ -637,13 +662,40 @@
     (>= (len fa-table)
         *ms-first-data-cluster*))
    (and
+    (integerp
+     (nth m
+          (find-n-free-clusters fa-table n)))
     (<= *ms-first-data-cluster*
         (nth m
              (find-n-free-clusters fa-table n)))
     (< (nth m
              (find-n-free-clusters fa-table n))
         (len fa-table))))
-  :rule-classes :linear
+  :rule-classes
+  ((:linear :corollary
+            (implies
+             (and
+              (< (nfix m)
+                 (len (find-n-free-clusters fa-table n)))
+              (>= (len fa-table)
+                  *ms-first-data-cluster*))
+             (and
+              (<= *ms-first-data-cluster*
+                  (nth m
+                       (find-n-free-clusters fa-table n)))
+              (< (nth m
+                      (find-n-free-clusters fa-table n))
+                 (len fa-table)))))
+   (:rewrite :corollary
+             (implies
+              (and
+               (< (nfix m)
+                  (len (find-n-free-clusters fa-table n)))
+               (>= (len fa-table)
+                   *ms-first-data-cluster*))
+              (integerp
+               (nth m
+                    (find-n-free-clusters fa-table n))))))
   :hints
   (("goal" :in-theory (e/d (find-n-free-clusters) (nth)))))
 
