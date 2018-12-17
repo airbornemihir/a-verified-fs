@@ -100,6 +100,8 @@
          (nats=>chars (subseq dir-ent 0 11)))
   :hints (("goal" :in-theory (enable dir-ent-filename))))
 
+;; This relies on take-of-update-nth - it can't be moved to file-system-m1.lisp
+;; until that theorem is moved to file-system-lemmas.lisp.
 (defthm
   dir-ent-filename-of-dir-ent-install-directory-bit
   (implies
@@ -4692,6 +4694,18 @@
            (atom (assoc-equal *parent-dir-fat32-name* fs)))
       (equal (len dir-ent-list) (len fs))))))
 
+(defthm
+  m1-fs-to-fat32-in-memory-helper-correctness-4
+  (implies
+   (and (m1-file-alist-p fs)
+        (zp (mv-nth 2
+                    (m1-fs-to-fat32-in-memory-helper
+                     fat32-in-memory fs first-cluster))))
+   (equal (len (mv-nth 1
+                       (m1-fs-to-fat32-in-memory-helper
+                        fat32-in-memory fs first-cluster)))
+          (len fs))))
+
 (encapsulate
   ()
 
@@ -6570,6 +6584,98 @@
   (("goal"
     :in-theory (enable find-n-free-clusters))))
 
+;; This really should be in an encapsulation and not out there in the world.
+;; This is currently not in use.
+(local
+ (defthm m1-fs-to-fat32-in-memory-inversion-lemma-30
+   (implies (and (integerp x) (integerp y) (integerp z) (< x y) (<= y z))
+            (iff (< (binary-+ '1 x) z)
+                 (or
+                  (not (equal x (- y 1)))
+                  (not (equal y z)))))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-31
+  (implies
+   (and (fat32-masked-entry-p current-dir-first-cluster)
+        (<= *ms-first-data-cluster*
+            current-dir-first-cluster)
+        (< current-dir-first-cluster
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory)))
+        (<= (+ *ms-first-data-cluster*
+               (count-of-clusters fat32-in-memory))
+            (fat-length fat32-in-memory)))
+   (not (< (if (< (binary-+ '1 current-dir-first-cluster)
+                  (fat-length fat32-in-memory))
+               (fat-length fat32-in-memory)
+               (binary-+ '1 current-dir-first-cluster))
+           (binary-+ '2
+                     (count-of-clusters fat32-in-memory))))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-32
+  (implies
+   (and (fat32-masked-entry-p current-dir-first-cluster)
+        (<= *ms-first-data-cluster*
+            current-dir-first-cluster)
+        (< current-dir-first-cluster
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory)))
+        (<= (+ *ms-first-data-cluster*
+               (count-of-clusters fat32-in-memory))
+            (fat-length fat32-in-memory)))
+   (not
+    (<
+     (max
+      (if
+       (equal
+        (nth '0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth '0
+                       (m1-fs-to-fat32-in-memory-helper
+                        fat32-in-memory (cdr fs)
+                        current-dir-first-cluster)))
+              '1))
+        (binary-+ '-1
+                  (fat-length fat32-in-memory)))
+       (binary-+
+        '1
+        (nth '0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth '0
+                       (m1-fs-to-fat32-in-memory-helper
+                        fat32-in-memory (cdr fs)
+                        current-dir-first-cluster)))
+              '1)))
+       (fat-length fat32-in-memory))
+      (binary-+ '1 current-dir-first-cluster))
+     (binary-+ '2
+               (count-of-clusters fat32-in-memory)))))
+  :rule-classes (:rewrite :linear))
+
+(defthm
+  dir-ent-file-size-of-dir-ent-install-directory-bit
+  (equal (dir-ent-file-size
+          (dir-ent-install-directory-bit dir-ent val))
+         (dir-ent-file-size dir-ent))
+  :hints
+  (("goal" :in-theory (enable dir-ent-file-size
+                              dir-ent-install-directory-bit))))
+
+(defthm
+  dir-ent-file-size-of-dir-ent-set-filename
+  (implies
+   (and (dir-ent-p dir-ent)
+        (fat32-filename-p filename))
+   (equal
+    (dir-ent-file-size (dir-ent-set-filename dir-ent filename))
+    (dir-ent-file-size dir-ent)))
+  :hints (("goal" :in-theory (enable dir-ent-file-size
+                                     dir-ent-set-filename))))
+
 (thm-cp
  (implies
   (and
@@ -6582,10 +6688,13 @@
    (m1-file-alist-p fs)
    (m1-bounded-file-alist-p fs)
    (fat32-masked-entry-p current-dir-first-cluster)
-   (>= current-dir-first-cluster *ms-first-data-cluster*)
+   (<= *ms-first-data-cluster* current-dir-first-cluster)
    (< current-dir-first-cluster
       (+ *ms-first-data-cluster*
-         (count-of-clusters fat32-in-memory))))
+         (count-of-clusters fat32-in-memory)))
+   (<= (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory))
+       (fat-length fat32-in-memory)))
   (b*
       ((cluster-size (cluster-size fat32-in-memory))
        ((mv fat32-in-memory dir-ent-list error-code)
