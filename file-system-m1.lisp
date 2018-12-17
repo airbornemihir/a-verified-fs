@@ -245,7 +245,7 @@
    (fat32-masked-entry-p (dir-ent-first-cluster dir-ent)))
   :hints (("goal" :in-theory (e/d (dir-ent-first-cluster dir-ent-p)))))
 
-(defun dir-ent-file-size (dir-ent)
+(defund dir-ent-file-size (dir-ent)
   (declare
    (xargs :guard (dir-ent-p dir-ent)
           :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
@@ -325,7 +325,7 @@
                     dir-ent first-cluster file-size))
                   file-size))
   :hints
-  (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size)
+  (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size dir-ent-file-size)
                            (loghead logtail)))))
 
 (defthm
