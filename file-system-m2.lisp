@@ -100,6 +100,17 @@
          (nats=>chars (subseq dir-ent 0 11)))
   :hints (("goal" :in-theory (enable dir-ent-filename))))
 
+(defthm
+  dir-ent-filename-of-dir-ent-install-directory-bit
+  (implies
+   (dir-ent-p dir-ent)
+   (equal (dir-ent-filename
+           (dir-ent-install-directory-bit dir-ent val))
+          (dir-ent-filename dir-ent)))
+  :hints
+  (("goal" :in-theory (enable dir-ent-filename
+                              dir-ent-install-directory-bit))))
+
 (make-event
  `(defstobj fat32-in-memory
 
