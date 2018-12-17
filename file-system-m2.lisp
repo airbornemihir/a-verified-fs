@@ -6543,6 +6543,33 @@
     :in-theory (enable dir-ent-install-directory-bit
                        useless-dir-ent-p dir-ent-filename))))
 
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     m1-fs-to-fat32-in-memory-inversion-lemma-27
+     (implies (stringp (m1-file->contents file))
+              (not (m1-file-alist-p (m1-file->contents file))))))
+
+  (defthm
+    m1-fs-to-fat32-in-memory-inversion-lemma-28
+    (implies (m1-regular-file-p x)
+             (not (m1-directory-file-p x)))
+    :hints
+    (("goal"
+      :in-theory (e/d (m1-regular-file-p m1-directory-file-p)
+                      (m1-file-alist-p-of-m1-file->contents
+                       m1-file-alist-p))))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-29
+  (implies (and (natp n) (< (nfix m) (len (FIND-N-FREE-CLUSTERS FA-TABLE N))))
+           (integerp (nth m (FIND-N-FREE-CLUSTERS FA-TABLE N))))
+  :hints
+  (("goal"
+    :in-theory (enable find-n-free-clusters))))
+
 (thm-cp
  (implies
   (and
@@ -6553,7 +6580,12 @@
           2)
        (fat-length fat32-in-memory))
    (m1-file-alist-p fs)
-   (m1-bounded-file-alist-p fs))
+   (m1-bounded-file-alist-p fs)
+   (fat32-masked-entry-p current-dir-first-cluster)
+   (>= current-dir-first-cluster *ms-first-data-cluster*)
+   (< current-dir-first-cluster
+      (+ *ms-first-data-cluster*
+         (count-of-clusters fat32-in-memory))))
   (b*
       ((cluster-size (cluster-size fat32-in-memory))
        ((mv fat32-in-memory dir-ent-list error-code)
@@ -6631,7 +6663,10 @@
                               (:DEFINITION GET-CLUSTERCHAIN-CONTENTS)
                               (:REWRITE NTH-OF-NATS=>CHARS)
                               (:REWRITE DIR-ENT-P-OF-APPEND)
-                              nth))
+                              nth
+                              (:REWRITE
+                               M1-FS-TO-FAT32-IN-MEMORY-INVERSION-LEMMA-21)
+                              (:DEFINITION FAT32-IN-MEMORYP)))
          ("Subgoal *1/4.10" :expand
           (fat32-in-memory-to-m1-fs-helper
            (stobj-set-indices-in-fa-table
