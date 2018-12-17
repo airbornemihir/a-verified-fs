@@ -185,6 +185,11 @@
     (enable dir-ent-p
             integer-listp-when-unsigned-byte-listp))))
 
+(defthm unsigned-byte-listp-when-dir-ent-p
+  (implies (dir-ent-p dir-ent)
+           (unsigned-byte-listp 8 dir-ent))
+  :hints (("goal" :in-theory (enable dir-ent-p))))
+
 (defthm dir-ent-p-of-update-nth
   (implies (dir-ent-p l)
            (equal (dir-ent-p (update-nth key val l))
@@ -446,6 +451,17 @@
               (install-bit 4 (if val 1 0)
                            (nth 11 dir-ent))
               dir-ent))
+
+(defthm
+  dir-ent-p-of-dir-ent-install-directory-bit
+  (implies
+   (dir-ent-p dir-ent)
+   (dir-ent-p
+    (dir-ent-install-directory-bit dir-ent val)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (dir-ent-install-directory-bit dir-ent-p)))))
 
 (defthm
   dir-ent-directory-p-of-dir-ent-install-directory-bit
