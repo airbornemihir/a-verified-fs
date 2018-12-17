@@ -474,6 +474,15 @@
     (e/d (dir-ent-install-directory-bit dir-ent-directory-p)
          (logbitp)))))
 
+(defthm
+  dir-ent-first-cluster-of-dir-ent-install-directory-bit
+  (equal (dir-ent-first-cluster
+          (dir-ent-install-directory-bit dir-ent val))
+         (dir-ent-first-cluster dir-ent))
+  :hints
+  (("goal" :in-theory (enable dir-ent-first-cluster
+                              dir-ent-install-directory-bit))))
+
 (defun fat32-filename-p (x)
   (declare (xargs :guard t))
   (and (stringp x)

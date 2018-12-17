@@ -449,10 +449,13 @@
 (defthmd
   find-n-free-clusters-helper-correctness-3
   (implies
-   (and
-    (natp start)
-    (member-equal x (find-n-free-clusters-helper fa-table n start)))
-   (and (integerp x) (<= start x)))
+   (and (natp start)
+        (member-equal
+         x
+         (find-n-free-clusters-helper fa-table n start)))
+   (and (integerp x)
+        (<= start x)
+        (< x (+ start (len fa-table)))))
   :hints
   (("goal" :in-theory (enable find-n-free-clusters-helper))))
 
@@ -501,9 +504,13 @@
     (natp start)
     (< (nfix m)
        (len (find-n-free-clusters-helper fa-table n start))))
-   (<= start
-       (nth m
-            (find-n-free-clusters-helper fa-table n start))))
+   (and
+    (<= start
+        (nth m
+             (find-n-free-clusters-helper fa-table n start)))
+    (< (nth m
+             (find-n-free-clusters-helper fa-table n start))
+        (+ start (len fa-table)))))
   :rule-classes :linear
   :hints
   (("goal"
@@ -576,13 +583,17 @@
 (defthmd
   find-n-free-clusters-correctness-3
   (implies (member-equal x (find-n-free-clusters fa-table n))
-           (and (integerp x) (<= *ms-first-data-cluster* x)))
+           (and (integerp x)
+                (<= *ms-first-data-cluster* x)
+                (< x (len fa-table))))
   :hints
   (("goal" :in-theory (enable find-n-free-clusters))
    ("goal'"
-    :use (:instance find-n-free-clusters-helper-correctness-3
-                    (start *ms-first-data-cluster*)
-                    (fa-table (nthcdr *ms-first-data-cluster* fa-table))))))
+    :use
+    (:instance
+     find-n-free-clusters-helper-correctness-3
+     (start *ms-first-data-cluster*)
+     (fa-table (nthcdr *ms-first-data-cluster* fa-table))))))
 
 (defthm
   find-n-free-clusters-correctness-4
@@ -620,14 +631,21 @@
 (defthm
   find-n-free-clusters-correctness-7
   (implies
-   (< (nfix m)
-      (len (find-n-free-clusters fa-table n)))
-   (<= *ms-first-data-cluster*
-       (nth m
-            (find-n-free-clusters fa-table n))))
+   (and
+    (< (nfix m)
+       (len (find-n-free-clusters fa-table n)))
+    (>= (len fa-table)
+        *ms-first-data-cluster*))
+   (and
+    (<= *ms-first-data-cluster*
+        (nth m
+             (find-n-free-clusters fa-table n)))
+    (< (nth m
+             (find-n-free-clusters fa-table n))
+        (len fa-table))))
   :rule-classes :linear
   :hints
-  (("goal" :in-theory (enable find-n-free-clusters))))
+  (("goal" :in-theory (e/d (find-n-free-clusters) (nth)))))
 
 (defthmd
   fat32-masked-entry-list-p-alt
