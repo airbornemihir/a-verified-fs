@@ -6676,6 +6676,113 @@
   :hints (("goal" :in-theory (enable dir-ent-file-size
                                      dir-ent-set-filename))))
 
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-33
+  (implies (and (m1-file-alist-p x)
+                (m1-file-alist-p y)
+                (m1-file-no-dups-p (append x y)))
+           (equal (assoc-equal (car (car y)) (append x y))
+                  (car y))))
+
+(defthm m1-fs-to-fat32-in-memory-inversion-lemma-34
+  (implies (not (m1-file-no-dups-p y))
+           (not (m1-file-no-dups-p (append x y)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-35
+  (implies
+   (and (consp y)
+        (m1-file-alist-p y)
+        (m1-file-no-dups-p y)
+        (m1-directory-file-p (cdr (car y))))
+   (m1-file-no-dups-p (m1-file->contents (cdr (car y))))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun
+     induction-scheme (x y)
+     (declare
+      (xargs
+       :hints
+       (("goal" :in-theory (enable m1-file->contents
+                                   m1-file-contents-fix)))))
+     (if
+      (atom y)
+      x
+      (append
+       (induction-scheme nil (m1-file->contents (cdr (car y))))
+       (induction-scheme (append x (list (car y)))
+                         (cdr y))))))
+
+  (defthm m1-fs-to-fat32-in-memory-inversion-lemma-36
+    (implies (and (m1-file-alist-p x)
+                  (m1-file-alist-p y)
+                  (m1-file-no-dups-p (append x y)))
+             (m1-dir-subsetp y (append x y)))
+    :hints (("goal" :induct (induction-scheme x y)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-37
+  (implies
+   (m1-file-p file)
+   (equal (m1-directory-file-p
+           (m1-file dir-ent (m1-file->contents file)))
+          (m1-directory-file-p file)))
+  :hints (("goal" :in-theory (enable m1-directory-file-p))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-38
+  (implies
+   (and (m1-file-alist-p fs)
+        (m1-regular-file-p (cdar fs)))
+   (m1-dir-equiv
+    (cons (cons (caar fs)
+                (m1-file dir-ent (m1-file->contents (cdar fs))))
+          (cdr fs))
+    fs))
+  :hints
+  (("goal"
+    :expand
+    (m1-dir-equiv
+     (cons
+      (cons (caar fs)
+            (m1-file dir-ent (m1-file->contents (cdar fs))))
+      (cdr fs))
+     fs)
+    :in-theory
+    (disable m1-fs-to-fat32-in-memory-inversion-lemma-36)
+    :use
+    ((:instance
+      m1-fs-to-fat32-in-memory-inversion-lemma-36
+      (x
+       (list
+        (cons (car (car fs))
+              (m1-file dir-ent
+                       (m1-file->contents (cdr (car fs)))))))
+      (y (cdr fs)))
+     (:instance m1-fs-to-fat32-in-memory-inversion-lemma-36
+                (x (list (car fs)))
+                (y (cdr fs)))))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-39
+  (implies (and (fat32-filename-p (car head))
+                (m1-regular-file-p (cdr head))
+                (equal contents (m1-file->contents (cdr head)))
+                (m1-file-alist-p tail))
+           (m1-dir-equiv (cons (cons (car head)
+                                     (m1-file dir-ent contents))
+                               tail)
+                         (cons head tail)))
+  :hints
+  (("goal"
+    :in-theory
+    (disable m1-fs-to-fat32-in-memory-inversion-lemma-38)
+    :use (:instance m1-fs-to-fat32-in-memory-inversion-lemma-38
+                    (fs (cons head tail))))))
+
 (thm-cp
  (implies
   (and
@@ -6776,7 +6883,7 @@
                               (:REWRITE
                                M1-FS-TO-FAT32-IN-MEMORY-INVERSION-LEMMA-21)
                               (:DEFINITION FAT32-IN-MEMORYP)))
-         ("Subgoal *1/4.10" :expand
+         ("Subgoal *1/4.13" :expand
           (fat32-in-memory-to-m1-fs-helper
            (stobj-set-indices-in-fa-table
             (stobj-set-clusters
