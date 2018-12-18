@@ -18,8 +18,7 @@
 (encapsulate
   ()
 
-  (local (include-book "std/basic/inductions"
-                       :dir :system))
+  (local (include-book "std/basic/inductions" :dir :system))
   (defthm take-of-make-list-ac
     (implies (<= (nfix n1) (nfix n2))
              (equal (take n1 (make-list-ac n2 val ac))
@@ -6816,8 +6815,7 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm m1-fs-to-fat32-in-memory-inversion-lemma-13
     (implies (and (integerp x)
