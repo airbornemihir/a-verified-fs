@@ -7438,7 +7438,7 @@
              (m1-dir-subsetp (cons head tail1)
                              (cons head tail2))))))
 
-(thm-cp
+(thm
  (implies
   (and
    (compliant-fat32-in-memoryp fat32-in-memory)
