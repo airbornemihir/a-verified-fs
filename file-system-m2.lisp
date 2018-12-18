@@ -6889,6 +6889,50 @@
                 (not (m1-regular-file-p fs)))
            (m1-directory-file-p fs)))
 
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-48
+  (implies (and (stringp (m1-file->contents file))
+                (equal (len (explode (m1-file->contents file)))
+                       0))
+           (equal (m1-file->contents file) ""))
+  :hints
+  (("goal" :expand (len (explode (m1-file->contents file))))))
+
+(defthm m1-fs-to-fat32-in-memory-inversion-lemma-49
+  (implies (and (m1-file-alist-p tail1)
+                (not (assoc-equal (car head) tail1))
+                (m1-file-no-dups-p tail1)
+                (m1-dir-subsetp tail2 tail1)
+                (consp head)
+                (fat32-filename-p (car head)))
+           (not (assoc-equal (car head) tail2))))
+
+(defthm m1-fs-to-fat32-in-memory-inversion-lemma-50
+  (implies (and (m1-file-alist-p tail1)
+                (m1-file-no-dups-p (cons head tail1))
+                (m1-file-no-dups-p tail1)
+                (m1-dir-subsetp tail2 tail1)
+                (consp head)
+                (fat32-filename-p (car head)))
+           (m1-dir-subsetp tail2 (cons head tail1))))
+
+(defthm
+  m1-dir-equiv-of-cons
+  (implies (and (m1-file-alist-p tail1)
+                (m1-file-no-dups-p (cons head tail1))
+                (m1-dir-equiv tail1 tail2))
+           (m1-dir-equiv (cons head tail1)
+                         (cons head tail2)))
+  :hints
+  (("goal" :in-theory (enable m1-dir-equiv)
+    :do-not-induct t
+    :expand ((m1-file-no-dups-p (cons head tail2))
+             (m1-file-no-dups-p (cons head tail1))
+             (m1-dir-subsetp (cons head tail2)
+                             (cons head tail1))
+             (m1-dir-subsetp (cons head tail1)
+                             (cons head tail2))))))
+
 (thm-cp
  (implies
   (and
