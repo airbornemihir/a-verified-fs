@@ -220,6 +220,11 @@
  :define t
  :forward t)
 
+(fty::deflist dir-ent-list
+      :elt-type dir-ent
+      :true-listp t
+    )
+
 (defthm dir-ent-first-cluster-guard-lemma-1
   (implies (and (unsigned-byte-p 8 a3)
                 (unsigned-byte-p 8 a2)
