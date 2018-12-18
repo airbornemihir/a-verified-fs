@@ -3084,8 +3084,10 @@
             ;; entries, though, these will be present in the m1 instance.
             (or (< first-cluster
                    *ms-first-data-cluster*)
-                (>= first-cluster
-                    (count-of-clusters fat32-in-memory)))
+                (>=
+                 first-cluster
+                 (+ (count-of-clusters fat32-in-memory)
+                    *ms-first-data-cluster*)))
             (mv "" 0)
             (get-clusterchain-contents fat32-in-memory
                                        first-cluster
