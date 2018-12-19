@@ -4129,12 +4129,13 @@
         (mv fat32-in-memory
             (dir-ent-set-first-cluster-file-size
              dir-ent 0 file-length)
-            0))
+            0
+            nil))
        (indices (list* first-cluster
                        (stobj-find-n-free-clusters
                         fat32-in-memory (- (len clusters) 1))))
        ((unless (equal (len indices) (len clusters)))
-        (mv fat32-in-memory dir-ent *enospc*))
+        (mv fat32-in-memory dir-ent *enospc* nil))
        (fat32-in-memory
         (stobj-set-clusters clusters indices fat32-in-memory))
        (fat32-in-memory
@@ -4146,7 +4147,8 @@
      fat32-in-memory
      (dir-ent-set-first-cluster-file-size dir-ent (car indices)
                                           file-length)
-     0)))
+     0
+     indices)))
 
 (defthm
   compliant-fat32-in-memoryp-of-place-contents
@@ -4325,6 +4327,45 @@
       (place-contents fat32-in-memory dir-ent
                       contents file-length first-cluster))))))
 
+(defthm
+  true-listp-of-place-contents
+  (true-listp
+   (mv-nth 3
+           (place-contents fat32-in-memory dir-ent
+                           contents file-length first-cluster)))
+  :hints (("goal" :in-theory (enable place-contents))))
+
+(defthm
+  fat32-masked-entry-list-p-of-place-contents
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (<= (+ (count-of-clusters fat32-in-memory)
+               *ms-first-data-cluster*)
+            (fat-length fat32-in-memory))
+        (fat32-masked-entry-p first-cluster))
+   (fat32-masked-entry-list-p
+    (mv-nth
+     3
+     (place-contents fat32-in-memory dir-ent
+                     contents file-length first-cluster))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (place-contents)
+         ((:rewrite
+           fat32-masked-entry-list-p-of-find-n-free-clusters
+           . 1)))
+    :use
+    (:instance
+     (:rewrite fat32-masked-entry-list-p-of-find-n-free-clusters
+               . 1)
+     (n
+      (binary-+
+       '-1
+       (len (make-clusters contents
+                           (cluster-size fat32-in-memory)))))
+     (fa-table (effective-fat fat32-in-memory))))))
+
 ;; OK, this function needs to return a list of directory entries, so that when
 ;; it is called recursively to take care of all the entries in a subdirectory,
 ;; the caller gets the list of these entries and becomes able to concatenate
@@ -4340,6 +4381,9 @@
 ;; call, and a ".." entry using its own first cluster. However, it cannot know
 ;; its own first cluster without having it passed from its parent, so this must
 ;; be an extra argument to the recursive call.
+;; Purely for proof purposes, we're also going to have to return an extra
+;; argument, namely, the list of indices we used. That will be (mv-nth 3 ...)
+;; of the thing.
 (defun
   m1-fs-to-fat32-in-memory-helper
   (fat32-in-memory fs current-dir-first-cluster)
@@ -4365,20 +4409,20 @@
       (;; This is the base case; no directory entries are left. Return an error
        ;; code of 0 (that is, the (mv-nth 2 ...) of the return value).
        ((unless (consp fs))
-        (mv fat32-in-memory nil 0))
+        (mv fat32-in-memory nil 0 nil))
        ;; The induction case begins here. First, recursively take care of all
        ;; the directory entries after this one in the same directory.
-       ((mv fat32-in-memory tail-list errno)
+       ((mv fat32-in-memory tail-list errno tail-index-list)
         (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
                                          current-dir-first-cluster))
        ;; If there was an error in the recursive call, terminate.
-       ((unless (zp errno)) (mv fat32-in-memory tail-list errno))
+       ((unless (zp errno)) (mv fat32-in-memory tail-list errno tail-index-list))
        (head (car fs))
        ;; "." and ".." entries are not even allowed to be part of an
        ;; m1-file-alist, so perhaps we can use mbt to wipe out this clause...
        ((when (or (equal (car head) *current-dir-fat32-name*)
                   (equal (car head) *parent-dir-fat32-name*)))
-        (mv fat32-in-memory tail-list errno))
+        (mv fat32-in-memory tail-list errno tail-index-list))
        ;; Get the directory entry for the first file in this directory.
        (dir-ent (m1-file->dir-ent (cdr head)))
        ;; Search for one cluster - unless empty, the file will need at least
@@ -4389,13 +4433,13 @@
        ;; This means we couldn't find even one free cluster, so we return a "no
        ;; space left" error.
        ((when (< (len indices) 1))
-        (mv fat32-in-memory tail-list *enospc*))
+        (mv fat32-in-memory tail-list *enospc* tail-index-list))
        (first-cluster
         (nth 0 indices))
        ;; The mbt below says this branch will never be taken; but having this
        ;; allows us to prove a strong rule about fat-length.
        ((unless (mbt (< first-cluster (fat-length fat32-in-memory))))
-        (mv fat32-in-memory tail-list *enospc*))
+        (mv fat32-in-memory tail-list *enospc* tail-index-list))
        ;; Mark this cluster as used, without possibly interfering with any
        ;; existing clusterchains.
        (fat32-in-memory (update-fati first-cluster
@@ -4405,7 +4449,7 @@
         (m1-regular-file-p (cdr head))
         (b* ((contents (m1-file->contents (cdr head)))
              (file-length (length contents))
-             ((mv fat32-in-memory dir-ent errno)
+             ((mv fat32-in-memory dir-ent errno head-index-list)
               (place-contents fat32-in-memory
                               dir-ent contents file-length first-cluster))
              (dir-ent (dir-ent-set-filename dir-ent (car head)))
@@ -4414,13 +4458,14 @@
                dir-ent nil)))
         (mv fat32-in-memory
             (list* dir-ent tail-list)
-            errno))
+            errno
+            (append head-index-list tail-index-list)))
       (b* ((contents (m1-file->contents (cdr head)))
            (file-length 0)
-           ((mv fat32-in-memory unflattened-contents errno)
+           ((mv fat32-in-memory unflattened-contents errno head-index-list1)
             (m1-fs-to-fat32-in-memory-helper
              fat32-in-memory contents first-cluster))
-           ((unless (zp errno)) (mv fat32-in-memory tail-list errno))
+           ((unless (zp errno)) (mv fat32-in-memory tail-list errno tail-index-list))
            (contents
             (nats=>string
              (append
@@ -4437,7 +4482,7 @@
                 0)
                *parent-dir-fat32-name*)
               (flatten unflattened-contents))))
-           ((mv fat32-in-memory dir-ent errno)
+           ((mv fat32-in-memory dir-ent errno head-index-list2)
             (place-contents fat32-in-memory
                             dir-ent contents file-length
                             first-cluster))
@@ -4447,7 +4492,8 @@
              dir-ent t)))
         (mv fat32-in-memory
             (list* dir-ent tail-list)
-            errno)))))
+            errno
+            (append head-index-list1 head-index-list2 tail-index-list))))))
 
 (defthm
   cluster-size-of-m1-fs-to-fat32-in-memory-helper
@@ -4735,6 +4781,13 @@
                         fat32-in-memory fs first-cluster)))
           (len fs))))
 
+(defthm
+  true-listp-of-m1-fs-to-fat32-in-memory-helper
+  (true-listp (mv-nth 3
+                      (m1-fs-to-fat32-in-memory-helper
+                       fat32-in-memory
+                       fs current-dir-first-cluster))))
+
 (encapsulate
   ()
 
@@ -4896,7 +4949,7 @@
                          fat32-in-memory index-list-to-clear
                          (make-list (len index-list-to-clear)
                                     :initial-element 0)))
-       ((mv fat32-in-memory root-dir-ent-list errno)
+       ((mv fat32-in-memory root-dir-ent-list errno &)
         (m1-fs-to-fat32-in-memory-helper
          fat32-in-memory
          fs (fat32-entry-mask rootclus)))
