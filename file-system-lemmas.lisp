@@ -705,3 +705,7 @@
   (implies (integer-listp x)
            (iff (integerp (nth n x))
                 (< (nfix n) (len x)))))
+
+(defthm true-list-listp-of-append
+  (equal (true-list-listp (append x y))
+         (and (true-list-listp (true-list-fix x)) (true-list-listp y))))

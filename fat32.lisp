@@ -409,6 +409,14 @@
   :hints
   (("goal" :in-theory (enable lower-bounded-integer-listp))))
 
+(defthm
+  true-listp-of-fat32-build-index-list
+  (true-listp
+    (mv-nth
+     0
+     (fat32-build-index-list fa-table masked-current-cluster
+                             length cluster-size))))
+
 (defund
   find-n-free-clusters-helper
   (fa-table n start)
