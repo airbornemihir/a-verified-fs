@@ -7084,69 +7084,124 @@
     :in-theory (e/d (intersectp-equal)
                     (intersectp-is-commutative)))))
 
-(thm
- (implies
-  (and (fat32-masked-entry-p masked-current-cluster)
-       (<= 2 masked-current-cluster)
-       (< masked-current-cluster
-          (+ (count-of-clusters fat32-in-memory)
-             2))
-       (compliant-fat32-in-memoryp fat32-in-memory)
-       (<= (+ (count-of-clusters fat32-in-memory)
-              2)
-           (fat-length fat32-in-memory))
-       (equal (data-region-length fat32-in-memory)
-              (count-of-clusters fat32-in-memory))
-       (equal (mv-nth 1
-                      (fat32-build-index-list
-                       (effective-fat fat32-in-memory)
-                       masked-current-cluster
-                       length (cluster-size fat32-in-memory)))
-              0)
-       (FAT32-MASKED-ENTRY-LIST-P VALUE-LIST)
-       (EQUAL (LEN INDEX-LIST)
-              (LEN VALUE-LIST)))
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-53
   (equal
-      (GET-CLUSTERCHAIN-CONTENTS
-        (STOBJ-SET-INDICES-IN-FA-TABLE FAT32-IN-MEMORY INDEX-LIST VALUE-LIST)
-        MASKED-CURRENT-CLUSTER LENGTH)
-      (GET-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY
-                                 MASKED-CURRENT-CLUSTER LENGTH)))
- :hints (("GOal" :in-theory (disable
-                             (:REWRITE
-                              GET-CLUSTERCHAIN-CONTENTS-CORRECTNESS-1)
-                             get-clusterchain-contents-correctness-2
-                             FAT32-IN-MEMORYP
-                             compliant-FAT32-IN-MEMORYP
-                             compliant-fat32-in-memoryp-correctness-1
-                             COMPLIANT-FAT32-IN-MEMORYP-OF-STOBJ-SET-INDICES-IN-FA-TABLE)
-          :use
-          ((:REWRITE GET-CLUSTERCHAIN-CONTENTS-CORRECTNESS-1)
-          (:instance
-           (:REWRITE GET-CLUSTERCHAIN-CONTENTS-CORRECTNESS-1)
-           (fat32-in-memory
-            (STOBJ-SET-INDICES-IN-FA-TABLE FAT32-IN-MEMORY INDEX-LIST VALUE-LIST)))
-          get-clusterchain-contents-correctness-2
-          (:instance
-           get-clusterchain-contents-correctness-2
-           (fat32-in-memory
-            (STOBJ-SET-INDICES-IN-FA-TABLE FAT32-IN-MEMORY INDEX-LIST
-                                           VALUE-LIST)))
-          (:instance compliant-fat32-in-memoryp-correctness-1
-                     (fat32-in-memory
-                      (stobj-set-indices-in-fa-table
-                       fat32-in-memory index-list value-list)))
-          COMPLIANT-FAT32-IN-MEMORYP-OF-STOBJ-SET-INDICES-IN-FA-TABLE)) ))
+   (mv
+    (mv-nth
+     0
+     (get-clusterchain-contents fat32-in-memory
+                                masked-current-cluster length))
+    (mv-nth
+     1
+     (get-clusterchain-contents fat32-in-memory
+                                masked-current-cluster length)))
+   (get-clusterchain-contents fat32-in-memory
+                              masked-current-cluster length)))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-54
+  (implies
+   (and
+    (fat32-masked-entry-p masked-current-cluster)
+    (<= 2 masked-current-cluster)
+    (< masked-current-cluster
+       (+ (count-of-clusters fat32-in-memory)
+          2))
+    (compliant-fat32-in-memoryp fat32-in-memory)
+    (<= (+ (count-of-clusters fat32-in-memory)
+           2)
+        (fat-length fat32-in-memory))
+    (equal (data-region-length fat32-in-memory)
+           (count-of-clusters fat32-in-memory))
+    (equal (mv-nth 1
+                   (fat32-build-index-list
+                    (effective-fat fat32-in-memory)
+                    masked-current-cluster
+                    length (cluster-size fat32-in-memory)))
+           0)
+    (fat32-masked-entry-list-p value-list)
+    (equal (len index-list)
+           (len value-list))
+    (nat-listp index-list)
+    (not (intersectp-equal
+          index-list
+          (mv-nth 0
+                  (fat32-build-index-list
+                   (effective-fat fat32-in-memory)
+                   masked-current-cluster length
+                   (cluster-size fat32-in-memory))))))
+   (equal
+    (get-clusterchain-contents
+     (stobj-set-indices-in-fa-table
+      fat32-in-memory index-list value-list)
+     masked-current-cluster length)
+    (get-clusterchain-contents fat32-in-memory
+                               masked-current-cluster length)))
+  :hints
+  (("goal"
+    :in-theory
+    (disable (:rewrite get-clusterchain-contents-correctness-1)
+             m1-fs-to-fat32-in-memory-inversion-lemma-52
+             get-clusterchain-contents-correctness-2
+             get-clusterchain-contents-correctness-2
+             m1-fs-to-fat32-in-memory-inversion-lemma-53)
+    :use
+    ((:rewrite get-clusterchain-contents-correctness-1)
+     (:instance
+      (:rewrite get-clusterchain-contents-correctness-1)
+      (fat32-in-memory
+       (stobj-set-indices-in-fa-table
+        fat32-in-memory index-list value-list)))
+     (:instance m1-fs-to-fat32-in-memory-inversion-lemma-52
+                (cluster-size (cluster-size fat32-in-memory))
+                (length length)
+                (masked-current-cluster masked-current-cluster)
+                (value-list value-list)
+                (index-list index-list)
+                (fa-table (effective-fat fat32-in-memory)))
+     get-clusterchain-contents-correctness-2
+     (:instance
+      get-clusterchain-contents-correctness-2
+      (fat32-in-memory
+       (stobj-set-indices-in-fa-table
+        fat32-in-memory index-list value-list)))
+     get-clusterchain-contents-correctness-2
+     (:instance
+      get-clusterchain-contents-correctness-2
+      (fat32-in-memory
+       (stobj-set-indices-in-fa-table
+        fat32-in-memory index-list value-list)))
+     m1-fs-to-fat32-in-memory-inversion-lemma-53
+     (:instance
+      m1-fs-to-fat32-in-memory-inversion-lemma-53
+      (fat32-in-memory (stobj-set-indices-in-fa-table
+                        fat32-in-memory
+                        index-list value-list)))))))
+
+(defthm dir-ent-p-of-dir-ent-fix
+  (dir-ent-p (dir-ent-fix x)))
 
 (thm
  (implies
-  (not-intersectp-list
-   index-list
-   (MV-NTH
-    2
-    (FAT32-IN-MEMORY-TO-M1-FS-HELPER
-     FAT32-IN-MEMORY
-     DIR-CONTENTS ENTRY-LIMIT)))
+  (and
+   (COMPLIANT-FAT32-IN-MEMORYP FAT32-IN-MEMORY)
+   (<= (+ (COUNT-OF-CLUSTERS FAT32-IN-MEMORY)
+          2)
+       (FAT-LENGTH FAT32-IN-MEMORY))
+   (EQUAL (DATA-REGION-LENGTH FAT32-IN-MEMORY)
+          (COUNT-OF-CLUSTERS FAT32-IN-MEMORY))
+   (FAT32-MASKED-ENTRY-LIST-P VALUE-LIST)
+   (EQUAL (LEN INDEX-LIST)
+          (LEN VALUE-LIST))
+   (NAT-LISTP INDEX-LIST)
+   (not-intersectp-list
+    index-list
+    (MV-NTH
+     2
+     (FAT32-IN-MEMORY-TO-M1-FS-HELPER
+      FAT32-IN-MEMORY
+      DIR-CONTENTS ENTRY-LIMIT))))
   (equal
    (FAT32-IN-MEMORY-TO-M1-FS-HELPER
     (STOBJ-SET-INDICES-IN-FA-TABLE FAT32-IN-MEMORY INDEX-LIST VALUE-LIST)
@@ -7154,8 +7209,10 @@
    (FAT32-IN-MEMORY-TO-M1-FS-HELPER
     FAT32-IN-MEMORY
     DIR-CONTENTS ENTRY-LIMIT)))
- :hints (("Goal" :in-theory (disable (:DEFINITION FAT32-IN-MEMORYP)))
-         ("Subgoal *1/16" :expand
+ :hints (("Goal" :in-theory (disable (:DEFINITION FAT32-IN-MEMORYP) dir-ent-fix)
+          :induct (FAT32-IN-MEMORY-TO-M1-FS-HELPER FAT32-IN-MEMORY
+                                                   DIR-CONTENTS ENTRY-LIMIT))
+         ("Subgoal *1/5" :expand
           (FAT32-IN-MEMORY-TO-M1-FS-HELPER
            (STOBJ-SET-INDICES-IN-FA-TABLE FAT32-IN-MEMORY INDEX-LIST VALUE-LIST)
            DIR-CONTENTS ENTRY-LIMIT))))
