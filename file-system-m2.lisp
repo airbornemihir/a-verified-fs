@@ -4325,483 +4325,6 @@
       (place-contents fat32-in-memory dir-ent
                       contents file-length first-cluster))))))
 
-(defund
-  place-contents-regular-file
-  (fat32-in-memory dir-ent
-                   contents file-length first-cluster
-                   filename tail-list)
-  (declare
-   (xargs
-    :stobjs fat32-in-memory
-    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (dir-ent-p dir-ent)
-                (unsigned-byte-p 32 file-length)
-                (stringp contents)
-                (<= (fat-length fat32-in-memory)
-                    *ms-bad-cluster*)
-                (>= (fat-length fat32-in-memory)
-                    *ms-first-data-cluster*)
-                (equal (data-region-length fat32-in-memory)
-                       (count-of-clusters fat32-in-memory))
-                (fat32-masked-entry-p first-cluster)
-                (>= first-cluster *ms-first-data-cluster*)
-                (<= (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    (fat-length fat32-in-memory))
-                (fat32-filename-p filename)
-                (dir-ent-list-p tail-list))
-    :guard-debug t
-    :guard-hints
-    (("goal"
-      :do-not-induct t
-      :in-theory
-      (e/d
-       (lower-bounded-integer-listp)
-       (fat32-in-memoryp
-        (:rewrite
-         fat32-masked-entry-list-p-of-find-n-free-clusters
-         . 1)))
-      :use
-      (:instance
-       (:rewrite
-        fat32-masked-entry-list-p-of-find-n-free-clusters
-        . 1)
-       (n
-        (binary-+
-         '-1
-         (len (make-clusters contents
-                             (cluster-size fat32-in-memory)))))
-       (fa-table (effective-fat fat32-in-memory)))))))
-  (b* (((mv fat32-in-memory dir-ent errno)
-        (place-contents fat32-in-memory
-                        dir-ent contents file-length first-cluster))
-       (dir-ent (dir-ent-set-filename dir-ent filename))
-       (dir-ent
-        (dir-ent-install-directory-bit
-         dir-ent nil)))
-    (mv fat32-in-memory
-        (list* dir-ent tail-list)
-        errno)))
-
-(defthm
-  cluster-size-of-place-contents-regular-file
-  (equal
-   (cluster-size
-    (mv-nth 0
-            (place-contents-regular-file
-             fat32-in-memory dir-ent
-             contents file-length first-cluster
-             filename tail-list)))
-   (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-regular-file))))
-
-(defthm
-  count-of-clusters-of-place-contents-regular-file
-  (equal
-   (count-of-clusters
-    (mv-nth 0
-            (place-contents-regular-file
-             fat32-in-memory dir-ent
-             contents file-length first-cluster
-             filename tail-list)))
-   (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-regular-file))))
-
-(defthm
-  natp-of-place-contents-regular-file
-  (natp
-   (mv-nth 2
-           (place-contents-regular-file
-            fat32-in-memory dir-ent
-            contents file-length first-cluster
-            filename tail-list)))
-  :hints (("goal" :in-theory (enable place-contents-regular-file)))
-  :rule-classes
-  (:type-prescription
-   (:rewrite
-    :corollary
-    (integerp
-     (mv-nth
-      2
-      (place-contents-regular-file
-       fat32-in-memory dir-ent
-       contents file-length first-cluster
-       filename tail-list))))
-   (:linear
-    :corollary
-    (<=
-     0
-     (mv-nth
-      2
-      (place-contents-regular-file
-       fat32-in-memory dir-ent
-       contents file-length first-cluster
-       filename tail-list))))))
-
-(defthm
-  data-region-length-of-place-contents-regular-file
-  (equal
-   (data-region-length
-    (mv-nth 0
-            (place-contents-regular-file
-             fat32-in-memory dir-ent
-             contents file-length first-cluster
-             filename tail-list)))
-   (data-region-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-regular-file))))
-
-(defthm
-  bpb_rootclus-of-place-contents-regular-file
-  (equal
-   (bpb_rootclus
-    (mv-nth 0
-            (place-contents-regular-file
-             fat32-in-memory dir-ent
-             contents file-length first-cluster
-             filename tail-list)))
-   (bpb_rootclus fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-regular-file))))
-
-(defthm
-  fat-length-of-place-contents-regular-file
-  (equal
-   (fat-length
-    (mv-nth 0
-            (place-contents-regular-file
-             fat32-in-memory dir-ent
-             contents file-length first-cluster
-             filename tail-list)))
-   (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-regular-file))))
-
-(defthm
-  compliant-fat32-in-memoryp-of-place-contents-regular-file
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (stringp contents)
-        (natp file-length)
-        (equal (data-region-length fat32-in-memory)
-               (count-of-clusters fat32-in-memory))
-        (<= (+ (count-of-clusters fat32-in-memory)
-               *ms-first-data-cluster*)
-            (fat-length fat32-in-memory))
-        (integerp first-cluster)
-        (>= first-cluster *ms-first-data-cluster*)
-        (fat32-filename-p filename)
-        (dir-ent-list-p tail-list))
-   (compliant-fat32-in-memoryp
-    (mv-nth 0
-            (place-contents-regular-file
-             fat32-in-memory
-             dir-ent contents file-length
-             first-cluster filename tail-list))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d
-     (place-contents-regular-file
-      lower-bounded-integer-listp
-      (:rewrite
-       fat32-masked-entry-list-p-of-find-n-free-clusters
-       . 1)))
-    :use
-    (:instance
-     (:rewrite fat32-masked-entry-list-p-of-find-n-free-clusters
-               . 1)
-     (n
-      (binary-+
-       '-1
-       (len (make-clusters contents
-                           (cluster-size fat32-in-memory)))))
-     (fa-table (effective-fat fat32-in-memory))))))
-
-(defthm
-  unsigned-byte-listp-of-place-contents-regular-file
-  (implies
-   (unsigned-byte-listp 8 (flatten tail-list))
-   (unsigned-byte-listp
-    8
-    (flatten (mv-nth 1
-                     (place-contents-regular-file
-                      fat32-in-memory
-                      dir-ent contents file-length
-                      first-cluster filename tail-list)))))
-  :hints
-  (("goal" :in-theory (enable place-contents-regular-file))))
-
-(defthm
-  len-of-place-contents-regular-file
-  (equal (len (mv-nth 1
-                      (place-contents-regular-file
-                       fat32-in-memory
-                       dir-ent contents file-length
-                       first-cluster filename tail-list)))
-         (+ (len tail-list) 1))
-  :hints
-  (("goal" :in-theory (enable place-contents-regular-file))))
-
-(defthm
-  len-of-flatten-of-place-contents-regular-file
-  (equal
-   (len
-    (flatten (mv-nth 1
-                     (place-contents-regular-file
-                      fat32-in-memory
-                      dir-ent contents file-length
-                      first-cluster filename tail-list))))
-   (+ (len (flatten tail-list)) *ms-dir-ent-length*))
-  :hints
-  (("goal" :in-theory (enable place-contents-regular-file))))
-
-(defthm
-  dir-ent-list-p-of-place-contents-regular-file
-  (implies
-   (dir-ent-list-p tail-list)
-   (dir-ent-list-p
-    (mv-nth 1
-            (place-contents-regular-file
-             fat32-in-memory
-             dir-ent contents file-length
-             first-cluster filename tail-list))))
-  :hints
-  (("goal" :in-theory (enable place-contents-regular-file))))
-
-(defund
-  place-contents-directory-file
-  (fat32-in-memory dir-ent
-                   contents first-cluster
-                   filename tail-list)
-  (declare
-   (xargs
-    :stobjs fat32-in-memory
-    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (dir-ent-p dir-ent)
-                (stringp contents)
-                (<= (fat-length fat32-in-memory)
-                    *ms-bad-cluster*)
-                (>= (fat-length fat32-in-memory)
-                    *ms-first-data-cluster*)
-                (equal (data-region-length fat32-in-memory)
-                       (count-of-clusters fat32-in-memory))
-                (fat32-masked-entry-p first-cluster)
-                (>= first-cluster *ms-first-data-cluster*)
-                (<= (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    (fat-length fat32-in-memory))
-                (fat32-filename-p filename)
-                (dir-ent-list-p tail-list))
-    :guard-debug t
-    :guard-hints
-    (("goal"
-      :do-not-induct t
-      :in-theory
-      (e/d
-       (lower-bounded-integer-listp)
-       (fat32-in-memoryp
-        (:rewrite
-         fat32-masked-entry-list-p-of-find-n-free-clusters
-         . 1)))
-      :use
-      (:instance
-       (:rewrite
-        fat32-masked-entry-list-p-of-find-n-free-clusters
-        . 1)
-       (n
-        (binary-+
-         '-1
-         (len (make-clusters contents
-                             (cluster-size fat32-in-memory)))))
-       (fa-table (effective-fat fat32-in-memory)))))))
-  (b* (;; the spec says the file length must be set to 0.
-       (file-length 0)
-       ((mv fat32-in-memory dir-ent errno)
-        (place-contents fat32-in-memory
-                        dir-ent contents file-length first-cluster))
-       (dir-ent (dir-ent-set-filename dir-ent filename))
-       (dir-ent
-        (dir-ent-install-directory-bit
-         dir-ent t)))
-    (mv fat32-in-memory
-        (list* dir-ent tail-list)
-        errno)))
-
-(defthm
-  cluster-size-of-place-contents-directory-file
-  (equal
-   (cluster-size
-    (mv-nth 0
-            (place-contents-directory-file
-             fat32-in-memory dir-ent
-             contents first-cluster
-             filename tail-list)))
-   (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-directory-file))))
-
-(defthm
-  count-of-clusters-of-place-contents-directory-file
-  (equal
-   (count-of-clusters
-    (mv-nth 0
-            (place-contents-directory-file
-             fat32-in-memory dir-ent
-             contents first-cluster
-             filename tail-list)))
-   (count-of-clusters fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-directory-file))))
-
-(defthm
-  natp-of-place-contents-directory-file
-  (natp
-   (mv-nth 2
-           (place-contents-directory-file
-            fat32-in-memory dir-ent
-            contents first-cluster
-            filename tail-list)))
-  :hints (("goal" :in-theory (enable place-contents-directory-file)))
-  :rule-classes
-  (:type-prescription
-   (:rewrite
-    :corollary
-    (integerp
-     (mv-nth
-      2
-      (place-contents-directory-file
-       fat32-in-memory dir-ent
-       contents first-cluster
-       filename tail-list))))
-   (:linear
-    :corollary
-    (<=
-     0
-     (mv-nth
-      2
-      (place-contents-directory-file
-       fat32-in-memory dir-ent
-       contents first-cluster
-       filename tail-list))))))
-
-(defthm
-  data-region-length-of-place-contents-directory-file
-  (equal
-   (data-region-length
-    (mv-nth 0
-            (place-contents-directory-file
-             fat32-in-memory dir-ent
-             contents first-cluster
-             filename tail-list)))
-   (data-region-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-directory-file))))
-
-(defthm
-  bpb_rootclus-of-place-contents-directory-file
-  (equal
-   (bpb_rootclus
-    (mv-nth 0
-            (place-contents-directory-file
-             fat32-in-memory dir-ent
-             contents first-cluster
-             filename tail-list)))
-   (bpb_rootclus fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-directory-file))))
-
-(defthm
-  fat-length-of-place-contents-directory-file
-  (equal
-   (fat-length
-    (mv-nth 0
-            (place-contents-directory-file
-             fat32-in-memory dir-ent
-             contents first-cluster
-             filename tail-list)))
-   (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable place-contents-directory-file))))
-
-(defthm
-  compliant-fat32-in-memoryp-of-place-contents-directory-file
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (stringp contents)
-        (equal (data-region-length fat32-in-memory)
-               (count-of-clusters fat32-in-memory))
-        (<= (+ (count-of-clusters fat32-in-memory)
-               *ms-first-data-cluster*)
-            (fat-length fat32-in-memory))
-        (integerp first-cluster)
-        (>= first-cluster *ms-first-data-cluster*)
-        (fat32-filename-p filename)
-        (dir-ent-list-p tail-list))
-   (compliant-fat32-in-memoryp
-    (mv-nth 0
-            (place-contents-directory-file
-             fat32-in-memory dir-ent contents
-             first-cluster filename tail-list))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d
-     (place-contents-directory-file
-      lower-bounded-integer-listp
-      (:rewrite
-       fat32-masked-entry-list-p-of-find-n-free-clusters
-       . 1)))
-    :use
-    (:instance
-     (:rewrite fat32-masked-entry-list-p-of-find-n-free-clusters
-               . 1)
-     (n
-      (binary-+
-       '-1
-       (len (make-clusters contents
-                           (cluster-size fat32-in-memory)))))
-     (fa-table (effective-fat fat32-in-memory))))))
-
-(defthm
-  unsigned-byte-listp-of-flatten-of-place-contents-directory-file
-  (implies
-   (unsigned-byte-listp 8 (flatten tail-list))
-   (unsigned-byte-listp
-    8
-    (flatten (mv-nth 1
-                     (place-contents-directory-file
-                      fat32-in-memory dir-ent contents
-                      first-cluster filename tail-list)))))
-  :hints
-  (("goal" :in-theory (enable place-contents-directory-file))))
-
-(defthm
-  len-of-flatten-of-place-contents-directory-file
-  (equal
-   (len
-    (flatten (mv-nth 1
-                     (place-contents-directory-file
-                      fat32-in-memory dir-ent contents
-                      first-cluster filename tail-list))))
-   (+ (len (flatten tail-list)) *ms-dir-ent-length*))
-  :hints
-  (("goal" :in-theory (enable place-contents-directory-file))))
-
-(defthm
-  len-of-place-contents-directory-file
-  (equal (len (mv-nth 1
-                     (place-contents-directory-file
-                      fat32-in-memory dir-ent contents
-                      first-cluster filename tail-list)))
-         (+ (len tail-list) 1))
-  :hints
-  (("goal" :in-theory (enable place-contents-directory-file))))
-
-(defthm
-  dir-ent-list-p-of-place-contents-directory-file
-  (implies
-   (dir-ent-list-p tail-list)
-   (dir-ent-list-p
-    (mv-nth 1
-            (place-contents-directory-file
-             fat32-in-memory dir-ent contents
-             first-cluster filename tail-list))))
-  :hints
-  (("goal" :in-theory (enable place-contents-directory-file))))
-
 ;; OK, this function needs to return a list of directory entries, so that when
 ;; it is called recursively to take care of all the entries in a subdirectory,
 ;; the caller gets the list of these entries and becomes able to concatenate
@@ -4818,8 +4341,8 @@
 ;; its own first cluster without having it passed from its parent, so this must
 ;; be an extra argument to the recursive call.
 (defun
-    m1-fs-to-fat32-in-memory-helper
-    (fat32-in-memory fs current-dir-first-cluster)
+  m1-fs-to-fat32-in-memory-helper
+  (fat32-in-memory fs current-dir-first-cluster)
   (declare
    (xargs
     :stobjs fat32-in-memory
@@ -4877,48 +4400,54 @@
        ;; existing clusterchains.
        (fat32-in-memory (update-fati first-cluster
                                      *ms-end-of-clusterchain*
-                                     fat32-in-memory))
-       ;; If the first file in this directory is a regular file, call a
-       ;; function to process it (the rest of the files in this directory have
-       ;; already been handled by the recursive call above.)
-       ((when
-            (m1-regular-file-p (cdr head)))
-        (place-contents-regular-file fat32-in-memory dir-ent
-                                     (m1-file->contents (cdr head))
-                                     (length (m1-file->contents (cdr head)))
-                                     first-cluster
-                                     (car head)
-                                     tail-list))
-       ;; Now we're just thinking about directory files. Start by taking care
-       ;; of the contents of this particular directory.
-       ((mv fat32-in-memory unflattened-contents errno)
-        (m1-fs-to-fat32-in-memory-helper
-         fat32-in-memory (m1-file->contents (cdr head)) first-cluster))
-       ;; If the recursive call returns a non-zero errno, then return the same
-       ;; errno.
-       ((unless (zp errno)) (mv fat32-in-memory tail-list errno))
-       ;; Add entries for "." and "..", for each directory.
-       (contents
-        (nats=>string
-         (append
-          (dir-ent-set-filename
-           (dir-ent-set-first-cluster-file-size
-            dir-ent
-            first-cluster
-            0)
-           *current-dir-fat32-name*)
-          (dir-ent-set-filename
-           (dir-ent-set-first-cluster-file-size
-            dir-ent
-            current-dir-first-cluster
-            0)
-           *parent-dir-fat32-name*)
-          (flatten unflattened-contents)))))
-    ;; Finish the job for this subdirectory.
-    (place-contents-directory-file
-     fat32-in-memory dir-ent
-     contents first-cluster
-     (car head) tail-list)))
+                                     fat32-in-memory)))
+    (if
+        (m1-regular-file-p (cdr head))
+        (b* ((contents (m1-file->contents (cdr head)))
+             (file-length (length contents))
+             ((mv fat32-in-memory dir-ent errno)
+              (place-contents fat32-in-memory
+                              dir-ent contents file-length first-cluster))
+             (dir-ent (dir-ent-set-filename dir-ent (car head)))
+             (dir-ent
+              (dir-ent-install-directory-bit
+               dir-ent nil)))
+        (mv fat32-in-memory
+            (list* dir-ent tail-list)
+            errno))
+      (b* ((contents (m1-file->contents (cdr head)))
+           (file-length 0)
+           ((mv fat32-in-memory unflattened-contents errno)
+            (m1-fs-to-fat32-in-memory-helper
+             fat32-in-memory contents first-cluster))
+           ((unless (zp errno)) (mv fat32-in-memory tail-list errno))
+           (contents
+            (nats=>string
+             (append
+              (dir-ent-set-filename
+               (dir-ent-set-first-cluster-file-size
+                dir-ent
+                first-cluster
+                0)
+               *current-dir-fat32-name*)
+              (dir-ent-set-filename
+               (dir-ent-set-first-cluster-file-size
+                dir-ent
+                current-dir-first-cluster
+                0)
+               *parent-dir-fat32-name*)
+              (flatten unflattened-contents))))
+           ((mv fat32-in-memory dir-ent errno)
+            (place-contents fat32-in-memory
+                            dir-ent contents file-length
+                            first-cluster))
+           (dir-ent (dir-ent-set-filename dir-ent (car head)))
+           (dir-ent
+            (dir-ent-install-directory-bit
+             dir-ent t)))
+        (mv fat32-in-memory
+            (list* dir-ent tail-list)
+            errno)))))
 
 (defthm
   cluster-size-of-m1-fs-to-fat32-in-memory-helper
@@ -5032,8 +4561,8 @@
   (("goal" :in-theory (enable lower-bounded-integer-listp))
    ("subgoal *1/4"
     :in-theory
-    (e/d (place-contents-directory-file place-contents-regular-file)
-         ((:rewrite compliant-fat32-in-memoryp-of-place-contents)))
+    (disable
+     (:rewrite compliant-fat32-in-memoryp-of-place-contents))
     :use
     (:instance
      (:rewrite compliant-fat32-in-memoryp-of-place-contents)
@@ -5121,8 +4650,8 @@
           '1)))))))
    ("subgoal *1/3"
     :in-theory
-    (e/d (place-contents-directory-file place-contents-regular-file)
-         ((:rewrite compliant-fat32-in-memoryp-of-place-contents)))
+    (disable
+     (:rewrite compliant-fat32-in-memoryp-of-place-contents))
     :use
     (:instance
      (:rewrite compliant-fat32-in-memoryp-of-place-contents)
@@ -5205,12 +4734,6 @@
                        (m1-fs-to-fat32-in-memory-helper
                         fat32-in-memory fs first-cluster)))
           (len fs))))
-
-(defthm dir-ent-list-p-of-m1-fs-to-fat32-in-memory-helper
-  (dir-ent-list-p
-   (mv-nth 1
-           (m1-fs-to-fat32-in-memory-helper fat32-in-memory
-                                            fs current-dir-first-cluster))))
 
 (encapsulate
   ()
