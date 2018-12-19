@@ -7064,27 +7064,23 @@
     (nat-listp index-list)
     (not
      (intersectp-equal
-      (mv-nth 0
-              (fat32-build-index-list
-               (effective-fat fat32-in-memory)
-               masked-current-cluster
-               length (cluster-size fat32-in-memory)))
+      (mv-nth
+       0
+       (fat32-build-index-list fa-table masked-current-cluster
+                               length cluster-size))
       index-list)))
    (equal
     (fat32-build-index-list
-     (set-indices-in-fa-table (effective-fat fat32-in-memory)
-                              index-list value-list)
+     (set-indices-in-fa-table fa-table index-list value-list)
      masked-current-cluster
-     length (cluster-size fat32-in-memory))
-    (fat32-build-index-list
-     (effective-fat fat32-in-memory)
-     masked-current-cluster
-     length (cluster-size fat32-in-memory))))
+     length cluster-size)
+    (fat32-build-index-list fa-table masked-current-cluster
+                            length cluster-size)))
   :hints
-  (("goal" :induct (fat32-build-index-list
-                    (effective-fat fat32-in-memory)
-                    masked-current-cluster
-                    length (cluster-size fat32-in-memory))
+  (("goal"
+    :induct
+    (fat32-build-index-list fa-table masked-current-cluster
+                            length cluster-size)
     :in-theory (e/d (intersectp-equal)
                     (intersectp-is-commutative)))))
 
