@@ -159,8 +159,9 @@
   :rule-classes (:rewrite :linear))
 
 (defthm update-nth-of-boolean-list
-  (implies (and (boolean-listp l) (booleanp val))
-           (boolean-listp (update-nth key val l))))
+  (implies (boolean-listp l)
+           (equal (boolean-listp (update-nth key val l))
+                  (booleanp val))))
 
 (defthm nat-listp-of-binary-append
   (equal (nat-listp (binary-append x y))

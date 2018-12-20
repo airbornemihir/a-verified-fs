@@ -5929,9 +5929,9 @@
       (atom fs)
       0
     (if (m1-directory-file-p (cdar fs))
-            (+ 1
-               (m1-entry-count (m1-file->contents (cdar fs)))
-               (m1-entry-count (cdr fs)))
+        (+ 1
+           (m1-entry-count (m1-file->contents (cdar fs)))
+           (m1-entry-count (cdr fs)))
       (+ 1
          (m1-entry-count (cdr fs))))))
 
