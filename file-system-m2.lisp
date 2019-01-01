@@ -3173,7 +3173,8 @@
 
 (defthm
   fat32-in-memory-to-m1-fs-helper-correctness-1
-  (b* (((mv m1-file-alist entry-count clusterchain-list error-code)
+  (b* (((mv m1-file-alist entry-count
+            clusterchain-list error-code)
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
          dir-contents entry-limit)))
@@ -3184,30 +3185,32 @@
          (natp error-code)))
   :hints
   (("goal"
-    :in-theory (e/d (fat32-filename-p useless-dir-ent-p)
-                    (nth-of-string=>nats fat32-in-memoryp natp-of-cluster-size
-                                         get-clusterchain-contents take-redefinition
-                                         by-slice-you-mean-the-whole-cake-2 nth
-                                         floor))
+    :in-theory
+    (e/d
+     (fat32-filename-p useless-dir-ent-p)
+     (nth-of-string=>nats fat32-in-memoryp natp-of-cluster-size
+                          get-clusterchain-contents
+                          take-redefinition
+                          by-slice-you-mean-the-whole-cake-2
+                          nth floor))
     :induct
     (fat32-in-memory-to-m1-fs-helper fat32-in-memory
                                      dir-contents entry-limit))
-   ("subgoal *1/5" :in-theory
-    (e/d
-     (fat32-filename-p useless-dir-ent-p)
-     (nth-of-string=>nats
-      fat32-in-memoryp natp-of-cluster-size
-      get-clusterchain-contents
-      take-redefinition
-      by-slice-you-mean-the-whole-cake-2
-      floor
-      unsigned-byte-p-of-nth-when-unsigned-byte-listp))
+   ("subgoal *1/6"
+    :in-theory
+    (e/d (fat32-filename-p useless-dir-ent-p)
+         (nth-of-string=>nats
+          fat32-in-memoryp natp-of-cluster-size
+          get-clusterchain-contents
+          take-redefinition
+          by-slice-you-mean-the-whole-cake-2
+          nth floor
+          unsigned-byte-p-of-nth-when-unsigned-byte-listp))
     :use
-    (:instance
-     unsigned-byte-p-of-nth-when-unsigned-byte-listp
-     (n 0)
-     (l (take 32 dir-contents))
-     (bits 8))))
+    (:instance unsigned-byte-p-of-nth-when-unsigned-byte-listp
+               (n 0)
+               (l (take 32 dir-contents))
+               (bits 8))))
   :rule-classes
   ((:type-prescription
     :corollary (b* (((mv & entry-count & &)
@@ -3229,20 +3232,19 @@
                  (and (<= 0 entry-count)
                       (<= entry-count (nfix entry-limit))
                       (<= 0 error-code))))
-   (:rewrite :corollary (b* (((mv & entry-count &)
+   (:rewrite :corollary (b* (((mv & entry-count & error-code)
                               (fat32-in-memory-to-m1-fs-helper
                                fat32-in-memory
                                dir-contents entry-limit)))
-                          (and
-                           (integerp entry-count)
-                           (integerp error-code))))
-   (:rewrite :corollary (b* (((mv m1-file-alist & clusterchain-list)
-                              (fat32-in-memory-to-m1-fs-helper
-                               fat32-in-memory
-                               dir-contents entry-limit)))
-                          (and
-                           (m1-file-alist-p m1-file-alist)
-                           (true-list-listp clusterchain-list))))
+                          (and (integerp entry-count)
+                               (integerp error-code))))
+   (:rewrite
+    :corollary (b* (((mv m1-file-alist & clusterchain-list)
+                     (fat32-in-memory-to-m1-fs-helper
+                      fat32-in-memory
+                      dir-contents entry-limit)))
+                 (and (m1-file-alist-p m1-file-alist)
+                      (true-list-listp clusterchain-list))))
    (:type-prescription
     :corollary (b* (((mv m1-file-alist &)
                      (fat32-in-memory-to-m1-fs-helper
