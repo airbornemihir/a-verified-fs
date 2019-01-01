@@ -3142,8 +3142,6 @@
              (string=>nats contents)
              (- entry-limit 1))
           (mv contents 0 (list clusterchain) 0)))
-       ((unless (zp head-error-code))
-        (mv nil 0 nil head-error-code))
        ;; we want entry-limit to serve both as a measure and an upper
        ;; bound on how many entries are found.
        (tail-entry-limit (nfix (- entry-limit
@@ -3161,7 +3159,8 @@
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
          (nthcdr *ms-dir-ent-length* dir-contents)
-         (- entry-limit 1))))
+         (- entry-limit 1)))
+       (error-code (if (zp head-error-code) tail-error-code head-error-code)))
     ;; We add the file to this m1 instance.
     (mv (list* (cons filename
                      (make-m1-file :dir-ent dir-ent
@@ -3169,7 +3168,7 @@
                tail)
         (+ 1 head-entry-count tail-entry-count)
         (append head-clusterchain-list tail-clusterchain-list)
-        tail-error-code)))
+        error-code)))
 
 (defthm
   fat32-in-memory-to-m1-fs-helper-correctness-1
@@ -3399,7 +3398,7 @@
        (entry-limit (floor (* (data-region-length fat32-in-memory)
                               (cluster-size fat32-in-memory))
                            *ms-dir-ent-length*))
-       ((mv m1-file-alist & &)
+       ((mv m1-file-alist & & &)
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
          (string=>nats root-dir-contents)
