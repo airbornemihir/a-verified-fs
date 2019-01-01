@@ -6496,13 +6496,34 @@
         (compliant-fat32-in-memoryp fat32-in-memory)
         (equal (data-region-length fat32-in-memory)
                (count-of-clusters fat32-in-memory)))
-   (equal
-    (fat32-in-memory-to-m1-fs-helper
-     fat32-in-memory
-     (append dir-contents (make-list-ac n 0 nil))
-     entry-limit)
-    (fat32-in-memory-to-m1-fs-helper fat32-in-memory
-                                     dir-contents entry-limit)))
+   (and
+    (equal
+     (mv-nth 0
+             (fat32-in-memory-to-m1-fs-helper
+              fat32-in-memory
+              (append dir-contents (make-list-ac n 0 nil))
+              entry-limit))
+     (mv-nth 0
+             (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                              dir-contents entry-limit)))
+    (equal
+     (mv-nth 1
+             (fat32-in-memory-to-m1-fs-helper
+              fat32-in-memory
+              (append dir-contents (make-list-ac n 0 nil))
+              entry-limit))
+     (mv-nth 1
+             (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                              dir-contents entry-limit)))
+    (equal
+     (mv-nth 2
+             (fat32-in-memory-to-m1-fs-helper
+              fat32-in-memory
+              (append dir-contents (make-list-ac n 0 nil))
+              entry-limit))
+     (mv-nth 2
+             (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                              dir-contents entry-limit)))))
   :hints
   (("goal"
     :induct
@@ -6510,32 +6531,12 @@
                                      dir-contents entry-limit)
     :in-theory (disable fat32-in-memoryp
                         get-clusterchain-contents
-                        mod (:definition take-redefinition)))
-   ("subgoal *1/5"
-    :expand (fat32-in-memory-to-m1-fs-helper
-             fat32-in-memory
-             (append dir-contents (make-list-ac n 0 nil))
-             entry-limit))
-   ("subgoal *1/4"
-    :expand (fat32-in-memory-to-m1-fs-helper
-             fat32-in-memory
-             (append dir-contents (make-list-ac n 0 nil))
-             entry-limit))
-   ("subgoal *1/3"
-    :expand (fat32-in-memory-to-m1-fs-helper
-             fat32-in-memory
-             (append dir-contents (make-list-ac n 0 nil))
-             entry-limit))
-   ("subgoal *1/2"
+                        mod (:definition take-redefinition))
     :expand (fat32-in-memory-to-m1-fs-helper
              fat32-in-memory
              (append dir-contents (make-list-ac n 0 nil))
              entry-limit))
    ("subgoal *1/1"
-    :expand (fat32-in-memory-to-m1-fs-helper
-             fat32-in-memory
-             (append dir-contents (make-list-ac n 0 nil))
-             entry-limit)
     :in-theory
     (e/d
      (m1-fs-to-fat32-in-memory-inversion-lemma-16)
