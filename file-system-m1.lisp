@@ -205,6 +205,31 @@
               (unsigned-byte-listp 8 (true-list-fix x))))
   :hints (("goal" :in-theory (enable dir-ent-p))))
 
+(defthm
+  nth-when-dir-ent-p
+  (implies (dir-ent-p dir-ent)
+           (equal (unsigned-byte-p 8 (nth n dir-ent))
+                  (< (nfix n) *ms-dir-ent-length*)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (dir-ent-p dir-ent)
+             (equal (integerp (nth n dir-ent))
+                    (< (nfix n) *ms-dir-ent-length*)))
+    :hints
+    (("goal" :in-theory (enable integer-listp-when-dir-ent-p))))
+   (:linear
+    :corollary (implies (and (dir-ent-p dir-ent)
+                             (< (nfix n) *ms-dir-ent-length*))
+                        (and (<= 0 (nth n dir-ent))
+                             (< (nth n dir-ent) (ash 1 8))))
+    :hints
+    (("goal"
+      :in-theory
+      (disable unsigned-byte-p-of-nth-when-unsigned-byte-listp
+               nth))))))
+
 (defun dir-ent-fix (x)
   (declare (xargs :guard t))
   (if
