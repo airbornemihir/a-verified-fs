@@ -6529,9 +6529,14 @@
     :induct
     (fat32-in-memory-to-m1-fs-helper fat32-in-memory
                                      dir-contents entry-limit)
-    :in-theory (disable fat32-in-memoryp
-                        get-clusterchain-contents
-                        mod (:definition take-redefinition))
+    :in-theory
+    (e/d
+     ()
+     (fat32-in-memoryp get-clusterchain-contents
+                       mod (:definition take-redefinition)
+                       (:REWRITE LEN-WHEN-DIR-ENT-P)
+                       (:REWRITE UNSIGNED-BYTE-LISTP-WHEN-DIR-ENT-P)
+                       (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1)))
     :expand (fat32-in-memory-to-m1-fs-helper
              fat32-in-memory
              (append dir-contents (make-list-ac n 0 nil))
@@ -6541,7 +6546,14 @@
     (e/d
      (m1-fs-to-fat32-in-memory-inversion-lemma-16)
      (fat32-in-memoryp get-clusterchain-contents
-                       mod (:definition take-redefinition))))))
+                       mod (:definition take-redefinition)
+                       (:REWRITE LEN-WHEN-DIR-ENT-P)
+                       (:REWRITE UNSIGNED-BYTE-LISTP-WHEN-DIR-ENT-P)
+                       (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1)))
+    :expand (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory
+             (append dir-contents (make-list-ac n 0 nil))
+             entry-limit))))
 
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-18
@@ -7199,6 +7211,31 @@
 (defthm dir-ent-p-of-dir-ent-fix
   (dir-ent-p (dir-ent-fix x)))
 
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-55
+  (implies
+   (and (natp entry-limit)
+        (zp (mv-nth 3
+                    (fat32-in-memory-to-m1-fs-helper
+                     fat32-in-memory
+                     dir-contents entry-limit))))
+   (<= (m1-entry-count (mv-nth 0
+                               (fat32-in-memory-to-m1-fs-helper
+                                fat32-in-memory
+                                dir-contents entry-limit)))
+       entry-limit))
+  :rule-classes :linear
+  :hints
+  (("goal" :in-theory
+    (disable (:definition fat32-in-memoryp)
+             (:rewrite natp-of-cluster-size . 1)
+             (:definition fat32-build-index-list)
+             (:definition get-clusterchain-contents)
+             (:rewrite by-slice-you-mean-the-whole-cake-2)
+             (:rewrite len-when-dir-ent-p)
+             (:rewrite
+              fat32-in-memory-to-m1-fs-helper-guard-lemma-1)))))
+
 (thm
  (implies
   (and
@@ -7218,6 +7255,12 @@
      2
      (FAT32-IN-MEMORY-TO-M1-FS-HELPER
       FAT32-IN-MEMORY
+      DIR-CONTENTS ENTRY-LIMIT)))
+   (zp
+    (MV-NTH
+     3
+     (FAT32-IN-MEMORY-TO-M1-FS-HELPER
+      FAT32-IN-MEMORY
       DIR-CONTENTS ENTRY-LIMIT))))
   (equal
    (FAT32-IN-MEMORY-TO-M1-FS-HELPER
@@ -7229,7 +7272,7 @@
  :hints (("Goal" :in-theory (disable (:DEFINITION FAT32-IN-MEMORYP) dir-ent-fix)
           :induct (FAT32-IN-MEMORY-TO-M1-FS-HELPER FAT32-IN-MEMORY
                                                    DIR-CONTENTS ENTRY-LIMIT))
-         ("Subgoal *1/5" :expand
+         ("Subgoal *1/6" :expand
           (FAT32-IN-MEMORY-TO-M1-FS-HELPER
            (STOBJ-SET-INDICES-IN-FA-TABLE FAT32-IN-MEMORY INDEX-LIST VALUE-LIST)
            DIR-CONTENTS ENTRY-LIMIT))))
