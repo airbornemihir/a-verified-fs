@@ -554,6 +554,14 @@
       (nth m
            (find-n-free-clusters-helper fa-table n start)))))))
 
+(defthm
+  len-of-find-n-free-clusters-helper
+  (<= (len (find-n-free-clusters-helper fa-table n start))
+      (nfix n))
+  :rule-classes :linear
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters-helper))))
+
 (defund
     find-n-free-clusters (fa-table n)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
@@ -706,6 +714,13 @@
                     (find-n-free-clusters fa-table n))))))
   :hints
   (("goal" :in-theory (e/d (find-n-free-clusters) (nth)))))
+
+(defthm
+  len-of-find-n-free-clusters
+  (<= (len (find-n-free-clusters fa-table n))
+      (nfix n))
+  :rule-classes :linear
+  :hints (("goal" :in-theory (enable find-n-free-clusters))))
 
 (defthmd
   fat32-masked-entry-list-p-alt
