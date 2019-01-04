@@ -7560,62 +7560,62 @@
               cluster-list index-list fat32-in-memory)
              dir-contents entry-limit))))
 
-(thm-cp
- (implies
-  (and
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (equal (data-region-length fat32-in-memory)
-          (count-of-clusters fat32-in-memory))
-   (INTEGERP FIRST-CLUSTER)
-   (<= *ms-first-data-cluster* FIRST-CLUSTER)
-   (<= (+ (COUNT-OF-CLUSTERS FAT32-IN-MEMORY)
-          *ms-first-data-cluster*)
-       (FAT-LENGTH FAT32-IN-MEMORY))
-   (STRINGP CONTENTS))
-  (m1-dir-equiv
-   (mv-nth 0
-           (fat32-in-memory-to-m1-fs-helper
-            (mv-nth
-             0
-             (place-contents fat32-in-memory dir-ent
-                             contents file-length first-cluster))
-            dir-contents entry-limit))
-   (mv-nth 0
-           (fat32-in-memory-to-m1-fs-helper
-            fat32-in-memory
-            dir-contents entry-limit))))
- :hints (("Goal" :in-theory (enable place-contents lower-bounded-integer-listp)
-          :do-not-induct t)
-         ("Subgoal 2.2" :in-theory (e/d (place-contents
-                                         lower-bounded-integer-listp)
-                                        ((:REWRITE NOT-INTERSECTP-LIST-OF-APPEND-2)))
-          :use (:instance
-                (:REWRITE
-                 NOT-INTERSECTP-LIST-OF-APPEND-2)
-                (L
-                 (MV-NTH
-                  2
-                  (FAT32-IN-MEMORY-TO-M1-FS-HELPER
-                   (STOBJ-SET-CLUSTERS
-                    (MAKE-CLUSTERS CONTENTS (CLUSTER-SIZE FAT32-IN-MEMORY))
-                    (CONS
-                     FIRST-CLUSTER
-                     (FIND-N-FREE-CLUSTERS
-                      (EFFECTIVE-FAT FAT32-IN-MEMORY)
-                      (+
-                       -1
-                       (LEN
-                        (MAKE-CLUSTERS CONTENTS
-                                       (CLUSTER-SIZE FAT32-IN-MEMORY))))))
-                    FAT32-IN-MEMORY)
-                   DIR-CONTENTS ENTRY-LIMIT)))
-                (Y
-                 (FIND-N-FREE-CLUSTERS
-                  (EFFECTIVE-FAT FAT32-IN-MEMORY)
-                  (+ -1
-                     (LEN (MAKE-CLUSTERS CONTENTS
-                                         (CLUSTER-SIZE FAT32-IN-MEMORY))))))
-                (X (LIST FIRST-CLUSTER))))))
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-61
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (equal (data-region-length fat32-in-memory)
+               (count-of-clusters fat32-in-memory))
+        (integerp first-cluster)
+        (<= *ms-first-data-cluster* first-cluster)
+        (<= (+ (count-of-clusters fat32-in-memory)
+               *ms-first-data-cluster*)
+            (fat-length fat32-in-memory))
+        (stringp contents)
+        (equal (mv-nth 3
+                       (fat32-in-memory-to-m1-fs-helper
+                        fat32-in-memory
+                        dir-contents entry-limit))
+               0)
+        (not-intersectp-list
+         (list first-cluster)
+         (mv-nth 2
+                 (fat32-in-memory-to-m1-fs-helper
+                  fat32-in-memory
+                  dir-contents entry-limit))))
+   (m1-dir-equiv
+    (mv-nth
+     0
+     (fat32-in-memory-to-m1-fs-helper
+      (mv-nth
+       0
+       (place-contents fat32-in-memory dir-ent
+                       contents file-length first-cluster))
+      dir-contents entry-limit))
+    (mv-nth 0
+            (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory
+             dir-contents entry-limit))))
+  :hints
+  (("goal"
+    :in-theory (e/d (place-contents lower-bounded-integer-listp)
+                    (not-intersectp-list-of-append-2))
+    :use
+    (:instance
+     not-intersectp-list-of-append-2
+     (l (mv-nth 2
+                (fat32-in-memory-to-m1-fs-helper
+                 fat32-in-memory
+                 dir-contents entry-limit)))
+     (y
+      (find-n-free-clusters
+       (effective-fat fat32-in-memory)
+       (+
+        -1
+        (len (make-clusters contents
+                            (cluster-size fat32-in-memory))))))
+     (x (list first-cluster)))
+    :do-not-induct t)))
 
 (thm
  (implies
