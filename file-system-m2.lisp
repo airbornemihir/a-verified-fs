@@ -7476,63 +7476,89 @@
     (equal (len cluster-list)
            (len index-list)))
    (equal
-    (mv-nth 0
-            (get-clusterchain-contents
-             (stobj-set-clusters
-              cluster-list index-list fat32-in-memory)
-             masked-current-cluster length))
-    (mv-nth 0
-            (get-clusterchain-contents
-             fat32-in-memory
-             masked-current-cluster length))))
+    (get-clusterchain-contents
+     (stobj-set-clusters
+      cluster-list index-list fat32-in-memory)
+     masked-current-cluster length)
+    (get-clusterchain-contents fat32-in-memory
+                               masked-current-cluster length)))
   :hints
   (("goal"
     :in-theory
-    (disable (:rewrite get-clusterchain-contents-correctness-1))
+    (disable (:rewrite get-clusterchain-contents-correctness-1)
+             get-clusterchain-contents-correctness-2
+             m1-fs-to-fat32-in-memory-inversion-lemma-53)
     :use
     ((:rewrite get-clusterchain-contents-correctness-1)
      (:instance
       (:rewrite get-clusterchain-contents-correctness-1)
       (fat32-in-memory
        (stobj-set-clusters cluster-list
+                           index-list fat32-in-memory)))
+     get-clusterchain-contents-correctness-2
+     (:instance
+      get-clusterchain-contents-correctness-2
+      (fat32-in-memory
+       (stobj-set-clusters cluster-list
+                           index-list fat32-in-memory)))
+     m1-fs-to-fat32-in-memory-inversion-lemma-53
+     (:instance
+      m1-fs-to-fat32-in-memory-inversion-lemma-53
+      (fat32-in-memory
+       (stobj-set-clusters cluster-list
                            index-list fat32-in-memory)))))))
 
-(thm
- (implies
-  (and
-   (compliant-fat32-in-memoryp fat32-in-memoryp)
-   (not-intersectp-list
-    index-list
-    (mv-nth
-     2
-     (FAT32-IN-MEMORY-TO-M1-FS-HELPER
-      FAT32-IN-MEMORY
-      DIR-CONTENTS ENTRY-LIMIT))))
-  (equal
-   (FAT32-IN-MEMORY-TO-M1-FS-HELPER
-    (STOBJ-SET-CLUSTERS CLUSTER-LIST INDEX-LIST FAT32-IN-MEMORY)
-    DIR-CONTENTS ENTRY-LIMIT)
-   (FAT32-IN-MEMORY-TO-M1-FS-HELPER
-    FAT32-IN-MEMORY
-    DIR-CONTENTS ENTRY-LIMIT)))
- :hints
- (("Goal"
-   :in-theory (e/d (intersectp-equal)
-                   ((:DEFINITION FAT32-IN-MEMORYP)
-                    (:DEFINITION FAT32-BUILD-INDEX-LIST)
-                    (:DEFINITION GET-CLUSTERCHAIN-CONTENTS)
-                    (:REWRITE
-                     GET-CLUSTERCHAIN-CONTENTS-CORRECTNESS-2)
-                    (:REWRITE BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)
-                    (:LINEAR NTH-WHEN-DIR-ENT-P)))
-   :induct
-   (fat32-in-memory-to-m1-fs-helper
-    fat32-in-memory
-    dir-contents entry-limit)
-   :expand
-   (fat32-in-memory-to-m1-fs-helper
-    (stobj-set-clusters cluster-list index-list fat32-in-memory)
-    dir-contents entry-limit))))
+(defthm
+  fat32-in-memory-to-m1-fs-helper-of-stobj-set-clusters
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (not-intersectp-list
+         index-list
+         (mv-nth 2
+                 (fat32-in-memory-to-m1-fs-helper
+                  fat32-in-memory
+                  dir-contents entry-limit)))
+        (<= (+ *ms-first-data-cluster*
+               (count-of-clusters fat32-in-memory))
+            (fat-length fat32-in-memory))
+        (equal (data-region-length fat32-in-memory)
+               (count-of-clusters fat32-in-memory))
+        (lower-bounded-integer-listp
+         index-list *ms-first-data-cluster*)
+        (cluster-listp cluster-list
+                       (cluster-size fat32-in-memory))
+        (equal (len cluster-list)
+               (len index-list))
+        (equal (mv-nth 3
+                       (fat32-in-memory-to-m1-fs-helper
+                        fat32-in-memory
+                        dir-contents entry-limit))
+               0))
+   (equal
+    (fat32-in-memory-to-m1-fs-helper
+     (stobj-set-clusters
+      cluster-list index-list fat32-in-memory)
+     dir-contents entry-limit)
+    (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                     dir-contents entry-limit)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (intersectp-equal)
+         ((:definition fat32-in-memoryp)
+          (:definition fat32-build-index-list)
+          (:definition get-clusterchain-contents)
+          (:rewrite get-clusterchain-contents-correctness-2)
+          (:rewrite by-slice-you-mean-the-whole-cake-2)
+          (:linear nth-when-dir-ent-p)
+          (:definition m1-entry-count)))
+    :induct
+    (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                     dir-contents entry-limit)
+    :expand (fat32-in-memory-to-m1-fs-helper
+             (stobj-set-clusters
+              cluster-list index-list fat32-in-memory)
+             dir-contents entry-limit))))
 
 (thm-cp
  (implies
