@@ -147,11 +147,6 @@
                                                              (nat-listp lst))
                                                         (integerp x)))))
 
-(defthm non-nil-nth
-  (implies (and (natp n) (nth n l))
-           (< n (len l)))
-  :rule-classes (:rewrite :linear))
-
 (defthm update-nth-of-boolean-list
   (implies (and (boolean-listp l) (booleanp val))
            (boolean-listp (update-nth key val l))))
