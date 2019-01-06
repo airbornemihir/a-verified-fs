@@ -2972,6 +2972,21 @@
   (("goal" :in-theory (e/d (fat-length fati effective-fat)
                            (fat32-in-memoryp)))))
 
+(defthm
+  get-clusterchain-contents-correctness-3
+  (equal
+   (mv
+    (mv-nth
+     0
+     (get-clusterchain-contents fat32-in-memory
+                                masked-current-cluster length))
+    (mv-nth
+     1
+     (get-clusterchain-contents fat32-in-memory
+                                masked-current-cluster length)))
+   (get-clusterchain-contents fat32-in-memory
+                              masked-current-cluster length)))
+
 ;; The following is not a theorem, because we took our error codes, more or
 ;; less, from fs/fat/cache.c, and there the length is not taken into account
 ;; while returning error codes (or not). Thus, it's possible to return an error
@@ -6102,8 +6117,6 @@
            (count-of-clusters fat32-in-memory))
     (no-duplicatesp-equal index-list))
    (equal
-    (mv-nth
-     0
      (get-clusterchain-contents
       (stobj-set-indices-in-fa-table
        (stobj-set-clusters
@@ -6113,15 +6126,19 @@
        (append (cdr index-list)
                (list 268435455)))
       (car index-list)
-      (len (explode text))))
-    text))
+      (len (explode text)))
+    (mv
+     text
+     0)))
   :hints
   (("goal"
     :do-not-induct t
     :in-theory
     (e/d (lower-bounded-integer-listp)
          ((:rewrite get-clusterchain-contents-correctness-1)
-          m1-fs-to-fat32-in-memory-inversion-lemma-9))
+          m1-fs-to-fat32-in-memory-inversion-lemma-9
+          (:rewrite get-clusterchain-contents-correctness-3)
+          (:rewrite get-clusterchain-contents-correctness-2)))
     :use
     ((:instance
       (:rewrite get-clusterchain-contents-correctness-1)
@@ -6137,7 +6154,31 @@
                 (list 268435455)))))
      (:instance
       m1-fs-to-fat32-in-memory-inversion-lemma-9
-      (cluster-size (cluster-size fat32-in-memory)))))))
+      (cluster-size (cluster-size fat32-in-memory)))
+     (:instance
+      (:rewrite get-clusterchain-contents-correctness-3)
+      (length (len (explode text)))
+      (masked-current-cluster (car index-list))
+      (fat32-in-memory
+       (stobj-set-indices-in-fa-table
+        (stobj-set-clusters
+         (make-clusters text (cluster-size fat32-in-memory))
+         index-list fat32-in-memory)
+        index-list
+        (append (cdr index-list)
+                '(268435455)))))
+     (:instance
+      (:rewrite get-clusterchain-contents-correctness-2)
+      (length (len (explode text)))
+      (masked-current-cluster (car index-list))
+      (fat32-in-memory
+       (stobj-set-indices-in-fa-table
+        (stobj-set-clusters
+         (make-clusters text (cluster-size fat32-in-memory))
+         index-list fat32-in-memory)
+        index-list
+        (append (cdr index-list)
+                '(268435455)))))))))
 
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-11
@@ -6926,21 +6967,6 @@
                     (intersectp-is-commutative)))))
 
 (defthm
-  m1-fs-to-fat32-in-memory-inversion-lemma-53
-  (equal
-   (mv
-    (mv-nth
-     0
-     (get-clusterchain-contents fat32-in-memory
-                                masked-current-cluster length))
-    (mv-nth
-     1
-     (get-clusterchain-contents fat32-in-memory
-                                masked-current-cluster length)))
-   (get-clusterchain-contents fat32-in-memory
-                              masked-current-cluster length)))
-
-(defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-54
   (implies
    (and
@@ -6980,7 +7006,7 @@
                         m1-fs-to-fat32-in-memory-inversion-lemma-52
                         get-clusterchain-contents-correctness-2
                         get-clusterchain-contents-correctness-2
-                        m1-fs-to-fat32-in-memory-inversion-lemma-53)
+                        get-clusterchain-contents-correctness-3)
     :use
     ((:rewrite get-clusterchain-contents-correctness-1)
      (:instance
@@ -7004,9 +7030,9 @@
       get-clusterchain-contents-correctness-2
       (fat32-in-memory
        (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)))
-     m1-fs-to-fat32-in-memory-inversion-lemma-53
+     get-clusterchain-contents-correctness-3
      (:instance
-      m1-fs-to-fat32-in-memory-inversion-lemma-53
+      get-clusterchain-contents-correctness-3
       (fat32-in-memory
        (stobj-set-indices-in-fa-table fat32-in-memory
                                       index-list value-list)))))))
@@ -7290,7 +7316,7 @@
     :in-theory
     (disable (:rewrite get-clusterchain-contents-correctness-1)
              get-clusterchain-contents-correctness-2
-             m1-fs-to-fat32-in-memory-inversion-lemma-53)
+             get-clusterchain-contents-correctness-3)
     :use
     ((:rewrite get-clusterchain-contents-correctness-1)
      (:instance
@@ -7304,9 +7330,9 @@
       (fat32-in-memory
        (stobj-set-clusters cluster-list
                            index-list fat32-in-memory)))
-     m1-fs-to-fat32-in-memory-inversion-lemma-53
+     get-clusterchain-contents-correctness-3
      (:instance
-      m1-fs-to-fat32-in-memory-inversion-lemma-53
+      get-clusterchain-contents-correctness-3
       (fat32-in-memory
        (stobj-set-clusters cluster-list
                            index-list fat32-in-memory)))))))
@@ -7805,12 +7831,34 @@
   (implies
    (equal (len (find-n-free-clusters fa-table n))
           1)
-   (equal (list (nth 0 (find-n-free-clusters fa-table n)))
-          (find-n-free-clusters fa-table n)))
+   (and (equal (list (nth 0 (find-n-free-clusters fa-table n)))
+               (find-n-free-clusters fa-table n))
+        (equal (cdr (find-n-free-clusters fa-table n))
+               nil)))
   :hints
   (("goal"
     :expand ((len (find-n-free-clusters fa-table n))
-             (len (cdr (find-n-free-clusters fa-table n)))))))
+             (len (cdr (find-n-free-clusters fa-table n))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (equal (len (find-n-free-clusters fa-table n))
+            1)
+     (equal (cons (nth 0 (find-n-free-clusters fa-table n))
+                  y)
+            (append (find-n-free-clusters fa-table n)
+                    y))))
+   (:rewrite
+    :corollary
+    (implies
+     (equal (len (find-n-free-clusters fa-table n))
+            1)
+     (equal (cons (car (find-n-free-clusters fa-table n))
+                  y)
+            (append (find-n-free-clusters fa-table n)
+                    y))))))
 
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-63
@@ -8082,93 +8130,7 @@
                                                 BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)
                                                (:DEFINITION
                                                 GET-CLUSTERCHAIN-CONTENTS)
-                                               (:DEFINITION STOBJ-SET-CLUSTERS)
-                                               (:rewrite not-intersectp-list-of-append-2)))
-            :use
-            (:instance
-             (:rewrite not-intersectp-list-of-append-2)
-             (l
-              (mv-nth
-               2
-               (fat32-in-memory-to-m1-fs-helper
-                (stobj-set-clusters
-                 (make-clusters (m1-file->contents (cdr (car fs)))
-                                (cluster-size fat32-in-memory))
-                 (cons
-                  (nth
-                   0
-                   (find-n-free-clusters
-                    (effective-fat
-                     (mv-nth 0
-                             (m1-fs-to-fat32-in-memory-helper
-                              fat32-in-memory (cdr fs)
-                              current-dir-first-cluster)))
-                    1))
-                  (find-n-free-clusters
-                   (set-indices-in-fa-table
-                    (effective-fat
-                     (mv-nth 0
-                             (m1-fs-to-fat32-in-memory-helper
-                              fat32-in-memory (cdr fs)
-                              current-dir-first-cluster)))
-                    (find-n-free-clusters
-                     (effective-fat
-                      (mv-nth 0
-                              (m1-fs-to-fat32-in-memory-helper
-                               fat32-in-memory (cdr fs)
-                               current-dir-first-cluster)))
-                     1)
-                    '(268435455))
-                   (+
-                    -1
-                    (len
-                     (make-clusters (m1-file->contents (cdr (car fs)))
-                                    (cluster-size fat32-in-memory))))))
-                 (stobj-set-indices-in-fa-table
-                  (mv-nth 0
-                          (m1-fs-to-fat32-in-memory-helper
-                           fat32-in-memory (cdr fs)
-                           current-dir-first-cluster))
-                  (find-n-free-clusters
-                   (effective-fat
-                    (mv-nth 0
-                            (m1-fs-to-fat32-in-memory-helper
-                             fat32-in-memory (cdr fs)
-                             current-dir-first-cluster)))
-                   1)
-                  '(268435455)))
-                (flatten (mv-nth 1
-                                 (m1-fs-to-fat32-in-memory-helper
-                                  fat32-in-memory (cdr fs)
-                                  current-dir-first-cluster)))
-                (m1-entry-count (cdr fs)))))
-             (y
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat (mv-nth 0
-                                       (m1-fs-to-fat32-in-memory-helper
-                                        fat32-in-memory (cdr fs)
-                                        current-dir-first-cluster)))
-                (find-n-free-clusters
-                 (effective-fat (mv-nth 0
-                                        (m1-fs-to-fat32-in-memory-helper
-                                         fat32-in-memory (cdr fs)
-                                         current-dir-first-cluster)))
-                 1)
-                '(268435455))
-               (+ -1
-                  (len (make-clusters (m1-file->contents (cdr (car fs)))
-                                      (cluster-size fat32-in-memory))))))
-             (x
-              (list
-               (nth
-                0
-                (find-n-free-clusters
-                 (effective-fat (mv-nth 0
-                                        (m1-fs-to-fat32-in-memory-helper
-                                         fat32-in-memory (cdr fs)
-                                         current-dir-first-cluster)))
-                 1)))))) )))
+                                               (:DEFINITION STOBJ-SET-CLUSTERS)))) )))
 
 (thm-cp
  (implies
