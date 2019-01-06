@@ -7892,39 +7892,85 @@
                  (nth masked-current-cluster fa-table))
                 (+ (- cluster-size) length)
                 cluster-size))))
-     (x index-list)))))
-
-(thm-cp
+     (x index-list))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
   (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (<= (+ (count-of-clusters fat32-in-memory)
-               *ms-first-data-cluster*)
-            (fat-length fat32-in-memory))
-        (natp n)
-        (equal (mv-nth 3
-                       (fat32-in-memory-to-m1-fs-helper
-                        fat32-in-memory
-                        dir-contents entry-limit))
-               0)
-   (not-intersectp-list
-    INDEX-LIST
-    (mv-nth 2
-            (fat32-in-memory-to-m1-fs-helper
-             fat32-in-memory
-             dir-contents entry-limit))))
+   (and
+    (fat32-entry-list-p fa-table)
+    (natp n)
+    (bounded-nat-listp index-list (len fa-table))
+    (fat32-masked-entry-list-p value-list)
+    (equal (len index-list)
+           (len value-list))
+    (natp masked-current-cluster)
+    (equal
+     (mv-nth
+      1
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     0)
+    (not
+     (intersectp-equal
+      index-list
+      (mv-nth
+       0
+       (fat32-build-index-list fa-table masked-current-cluster
+                               length cluster-size)))))
+   (not
+    (intersectp-equal
+     (find-n-free-clusters
+      (set-indices-in-fa-table fa-table index-list value-list)
+      n)
+     (mv-nth
+      0
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))))))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-64
+  (implies
+   (and
+    (compliant-fat32-in-memoryp fat32-in-memory)
+    (<= (+ (count-of-clusters fat32-in-memory)
+           *ms-first-data-cluster*)
+        (fat-length fat32-in-memory))
+    (natp n)
+    (equal (mv-nth 3
+                   (fat32-in-memory-to-m1-fs-helper
+                    fat32-in-memory
+                    dir-contents entry-limit))
+           0)
+    (bounded-nat-listp index-list
+                       (+ *ms-first-data-cluster*
+                          (count-of-clusters fat32-in-memory)))
+    (fat32-masked-entry-list-p value-list)
+    (equal (len index-list)
+           (len value-list))
+    (not-intersectp-list
+     index-list
+     (mv-nth 2
+             (fat32-in-memory-to-m1-fs-helper
+              fat32-in-memory
+              dir-contents entry-limit))))
    (not-intersectp-list
     (find-n-free-clusters
-     (SET-INDICES-IN-FA-TABLE
-      (effective-fat
-       fat32-in-memory)
-      INDEX-LIST
-      VALUE-LIST)
+     (set-indices-in-fa-table (effective-fat fat32-in-memory)
+                              index-list value-list)
      n)
     (mv-nth 2
             (fat32-in-memory-to-m1-fs-helper
              fat32-in-memory
              dir-contents entry-limit))))
-  :hints (("goal" :in-theory (e/d (intersectp-equal) (fat32-in-memoryp)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (intersectp-equal)
+     (fat32-in-memoryp (:definition get-clusterchain-contents)
+                       (:definition fat32-build-index-list))))))
 
 (skip-proofs
  (defthmd lemma-1-3
@@ -8027,7 +8073,102 @@
    :hints (("goal" :do-not-induct t
             :in-theory (e/d (place-contents lower-bounded-integer-listp) ( nth
                                                (:rewrite dir-ent-p-of-append)
-                                               (:rewrite make-clusters-correctness-1 . 1)))) )))
+                                               (:rewrite
+                                                make-clusters-correctness-1
+                                                . 1)
+                                               (:REWRITE
+                                                M1-DIRECTORY-FILE-P-CORRECTNESS-1)
+                                               (:REWRITE
+                                                BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)
+                                               (:DEFINITION
+                                                GET-CLUSTERCHAIN-CONTENTS)
+                                               (:DEFINITION STOBJ-SET-CLUSTERS)
+                                               (:rewrite not-intersectp-list-of-append-2)))
+            :use
+            (:instance
+             (:rewrite not-intersectp-list-of-append-2)
+             (l
+              (mv-nth
+               2
+               (fat32-in-memory-to-m1-fs-helper
+                (stobj-set-clusters
+                 (make-clusters (m1-file->contents (cdr (car fs)))
+                                (cluster-size fat32-in-memory))
+                 (cons
+                  (nth
+                   0
+                   (find-n-free-clusters
+                    (effective-fat
+                     (mv-nth 0
+                             (m1-fs-to-fat32-in-memory-helper
+                              fat32-in-memory (cdr fs)
+                              current-dir-first-cluster)))
+                    1))
+                  (find-n-free-clusters
+                   (set-indices-in-fa-table
+                    (effective-fat
+                     (mv-nth 0
+                             (m1-fs-to-fat32-in-memory-helper
+                              fat32-in-memory (cdr fs)
+                              current-dir-first-cluster)))
+                    (find-n-free-clusters
+                     (effective-fat
+                      (mv-nth 0
+                              (m1-fs-to-fat32-in-memory-helper
+                               fat32-in-memory (cdr fs)
+                               current-dir-first-cluster)))
+                     1)
+                    '(268435455))
+                   (+
+                    -1
+                    (len
+                     (make-clusters (m1-file->contents (cdr (car fs)))
+                                    (cluster-size fat32-in-memory))))))
+                 (stobj-set-indices-in-fa-table
+                  (mv-nth 0
+                          (m1-fs-to-fat32-in-memory-helper
+                           fat32-in-memory (cdr fs)
+                           current-dir-first-cluster))
+                  (find-n-free-clusters
+                   (effective-fat
+                    (mv-nth 0
+                            (m1-fs-to-fat32-in-memory-helper
+                             fat32-in-memory (cdr fs)
+                             current-dir-first-cluster)))
+                   1)
+                  '(268435455)))
+                (flatten (mv-nth 1
+                                 (m1-fs-to-fat32-in-memory-helper
+                                  fat32-in-memory (cdr fs)
+                                  current-dir-first-cluster)))
+                (m1-entry-count (cdr fs)))))
+             (y
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat (mv-nth 0
+                                       (m1-fs-to-fat32-in-memory-helper
+                                        fat32-in-memory (cdr fs)
+                                        current-dir-first-cluster)))
+                (find-n-free-clusters
+                 (effective-fat (mv-nth 0
+                                        (m1-fs-to-fat32-in-memory-helper
+                                         fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+                 1)
+                '(268435455))
+               (+ -1
+                  (len (make-clusters (m1-file->contents (cdr (car fs)))
+                                      (cluster-size fat32-in-memory))))))
+             (x
+              (list
+               (nth
+                0
+                (find-n-free-clusters
+                 (effective-fat (mv-nth 0
+                                        (m1-fs-to-fat32-in-memory-helper
+                                         fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+                 1)))))) )))
 
 (thm-cp
  (implies
