@@ -20,7 +20,9 @@
 #!bitops
 (encapsulate
   ()
+
   (local (include-book "centaur/bitops/extra-defs" :dir :system))
+
 ; Redundant; copied from the book above.
   (define install-bit ((n natp) (val bitp) (x integerp))
     :parents (bitops)
@@ -513,6 +515,15 @@
   (("goal" :in-theory (enable dir-ent-first-cluster
                               dir-ent-install-directory-bit))))
 
+(defthm
+  dir-ent-file-size-of-dir-ent-install-directory-bit
+  (equal (dir-ent-file-size
+          (dir-ent-install-directory-bit dir-ent val))
+         (dir-ent-file-size dir-ent))
+  :hints
+  (("goal" :in-theory (enable dir-ent-file-size
+                              dir-ent-install-directory-bit))))
+
 (defun fat32-filename-p (x)
   (declare (xargs :guard t))
   (and (stringp x)
@@ -592,6 +603,17 @@
   :hints
   (("goal" :in-theory (enable dir-ent-filename
                               dir-ent-set-filename dir-ent-p))))
+
+(defthm
+  dir-ent-file-size-of-dir-ent-set-filename
+  (implies
+   (and (dir-ent-p dir-ent)
+        (fat32-filename-p filename))
+   (equal
+    (dir-ent-file-size (dir-ent-set-filename dir-ent filename))
+    (dir-ent-file-size dir-ent)))
+  :hints (("goal" :in-theory (enable dir-ent-file-size
+                                     dir-ent-set-filename))))
 
 (defthm
   dir-ent-directory-p-of-dir-ent-set-first-cluster-file-size
@@ -707,11 +729,31 @@
   (and (m1-file-p file)
        (m1-file-alist-p (m1-file->contents file))))
 
-(defthm
-  stringp-of-m1-file->contents
-  (implies (m1-regular-file-p file)
-           (stringp (m1-file->contents file)))
-  :hints (("goal" :in-theory (enable m1-regular-file-p))))
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     m1-regular-file-p-correctness-1-lemma-1
+     (implies (stringp (m1-file->contents file))
+              (not (m1-file-alist-p (m1-file->contents file))))
+     :hints (("goal" :in-theory (enable m1-file-alist-p)))))
+
+  (defthm
+    m1-regular-file-p-correctness-1
+    (implies (m1-regular-file-p file)
+             (and (stringp (m1-file->contents file))
+                  (not (m1-directory-file-p file))))
+    :hints
+    (("goal"
+      :in-theory (enable m1-regular-file-p m1-directory-file-p)))
+    :rule-classes
+    ((:rewrite
+      :corollary (implies (m1-regular-file-p file)
+                          (stringp (m1-file->contents file))))
+     (:rewrite
+      :corollary (implies (m1-regular-file-p file)
+                          (not (m1-directory-file-p file)))))))
 
 (defthm m1-file-p-when-m1-regular-file-p
   (implies
