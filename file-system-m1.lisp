@@ -239,6 +239,9 @@
       x
     (make-list *ms-dir-ent-length* :initial-element 0)))
 
+(defthm dir-ent-p-of-dir-ent-fix
+  (dir-ent-p (dir-ent-fix x)))
+
 (fty::deffixtype
  dir-ent
  :pred dir-ent-p

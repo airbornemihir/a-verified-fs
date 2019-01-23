@@ -693,6 +693,12 @@
   painful-debugging-lemma-7
   (equal (- (- x)) (fix x)))
 
+(defthm
+  painful-debugging-lemma-8
+  (implies (not (zp x))
+           (iff (< (binary-* x (len y)) x)
+                (atom y))))
+
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/typed-lists/integer-listp.lisp, from where it was taken with
 ;; thanks.

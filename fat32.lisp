@@ -58,9 +58,16 @@
 (defconst *current-dir-name* ".")
 (defconst *parent-dir-name* "..")
 
-;; from page 36 of the FAT specification
-(defconst *ms-max-dir-ent-count* (ash 1 16))
-(defconst *ms-max-dir-size* (* *ms-dir-ent-length* *ms-max-dir-ent-count*))
+;; Page 36 of the FAT specification states that a directory shouldn't have more
+;; than 65536 entries. However, *ms-max-dir-ent-count* below is used for the
+;; definition of m1-bounded-file-alist-p, and since that's applicable to our
+;; internal representation of the filesystem, we need to leave room for two
+;; entries (dot and dotdot) to be added when we store a directory in the stobj
+;; representation. However, *ms-max-dir-size* is applicable to extracting
+;; directory contents from the disk, and therefore it needs to be 2097152 as
+;; stipulated.
+(defconst *ms-max-dir-ent-count* (- (ash 1 16) 2))
+(defconst *ms-max-dir-size* (ash 1 21))
 
 ;; from include/uapi/asm-generic/errno-base.h in the linux kernel sources
 (defconst *ENOENT* 2) ;; No such file or directory
@@ -959,3 +966,23 @@
       :in-theory (e/d (set-indices-in-fa-table lower-bounded-integer-listp)
                       (fat32-masked-entry-list-p-when-bounded-nat-listp))
       :use fat32-masked-entry-list-p-when-bounded-nat-listp))))
+
+(defthm
+  member-of-fat32-build-index-list
+  (implies
+   (and
+    (equal
+     (mv-nth
+      1
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     0)
+    (equal (fat32-entry-mask (nth x fa-table))
+           0))
+   (not
+    (member-equal
+     x
+     (mv-nth
+      0
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))))))
