@@ -289,6 +289,21 @@
               (nth 29 dir-ent)
               (nth 28 dir-ent)))
 
+(defthm
+  dir-ent-file-size-correctness-1
+  (implies (dir-ent-p dir-ent)
+           (and (<= 0 (dir-ent-file-size dir-ent))
+                (< (dir-ent-file-size dir-ent)
+                   (ash 1 32))))
+  :rule-classes :linear
+  :hints (("goal" :in-theory (e/d (dir-ent-file-size)
+                                  (combine32u-unsigned-byte))
+           :use (:instance combine32u-unsigned-byte
+                           (a3 (nth 31 dir-ent))
+                           (a2 (nth 30 dir-ent))
+                           (a1 (nth 29 dir-ent))
+                           (a0 (nth 28 dir-ent))))))
+
 (defund
   dir-ent-set-first-cluster-file-size
   (dir-ent first-cluster file-size)
@@ -497,6 +512,12 @@
   (("goal"
     :in-theory
     (e/d (dir-ent-install-directory-bit dir-ent-p)))))
+
+(defthm
+  true-listp-of-dir-ent-install-directory-bit
+  (implies
+   (dir-ent-p dir-ent)
+   (true-listp (dir-ent-install-directory-bit dir-ent val))))
 
 (defthm
   dir-ent-directory-p-of-dir-ent-install-directory-bit

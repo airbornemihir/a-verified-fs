@@ -986,3 +986,46 @@
       0
       (fat32-build-index-list fa-table masked-current-cluster
                               length cluster-size))))))
+
+(defthm
+  fat32-build-index-list-correctness-7
+  (implies
+   (and
+    (fat32-entry-list-p fa-table)
+    (natp n)
+    (equal
+     (mv-nth
+      1
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     0))
+   (not
+    (intersectp-equal
+     (mv-nth
+      0
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     (find-n-free-clusters fa-table n))))
+  :hints (("goal" :in-theory (e/d (intersectp-equal)
+                                  (intersectp-is-commutative))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and
+      (fat32-entry-list-p fa-table)
+      (natp n)
+      (equal
+       (mv-nth
+        1
+        (fat32-build-index-list fa-table masked-current-cluster
+                                length cluster-size))
+       0))
+     (not
+      (intersectp-equal
+       (find-n-free-clusters fa-table n)
+       (mv-nth
+        0
+        (fat32-build-index-list fa-table masked-current-cluster
+                                length cluster-size))))))))
