@@ -699,6 +699,12 @@
            (iff (< (binary-* x (len y)) x)
                 (atom y))))
 
+(defthmd
+  painful-debugging-lemma-9
+  (implies (and (integerp x) (integerp y) (< x y))
+           (equal (< (+ 1 x) y)
+                  (not (equal (+ 1 x) y)))))
+
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/typed-lists/integer-listp.lisp, from where it was taken with
 ;; thanks.

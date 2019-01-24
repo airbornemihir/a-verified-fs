@@ -520,6 +520,14 @@
    (true-listp (dir-ent-install-directory-bit dir-ent val))))
 
 (defthm
+  dir-ent-install-directory-bit-correctness-1
+  (equal (nth 0
+              (dir-ent-install-directory-bit dir-ent val))
+         (nth 0 dir-ent))
+  :hints
+  (("goal" :in-theory (enable dir-ent-install-directory-bit))))
+
+(defthm
   dir-ent-directory-p-of-dir-ent-install-directory-bit
   (equal (dir-ent-directory-p
           (dir-ent-install-directory-bit dir-ent val))
@@ -592,6 +600,21 @@
                   (not (equal (nth 0 (explode x)) ,(code-char #xe5)))
                   (not (equal x *current-dir-fat32-name*))
                   (not (equal x *parent-dir-fat32-name*))))))
+
+(defthm dir-ent-set-filename-correctness-1
+  (implies
+   (and (fat32-filename-p filename)
+        (dir-ent-p dir-ent))
+   (and
+    (not (equal (nth 0
+                     (dir-ent-set-filename dir-ent filename))
+                0))
+    (not (equal (nth 0
+                     (dir-ent-set-filename dir-ent filename))
+                229))))
+  :hints
+  (("goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p)
+                           (nth)))))
 
 (defthm
   dir-ent-directory-p-of-dir-ent-set-filename

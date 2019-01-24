@@ -378,15 +378,16 @@
 (defthm
   fat32-build-index-list-correctness-4
   (implies
-   (fat32-masked-entry-p masked-current-cluster)
+   (and (<= *ms-first-data-cluster*
+            masked-current-cluster)
+        (fat32-masked-entry-p masked-current-cluster))
    (mv-let
      (index-list error-code)
      (fat32-build-index-list fa-table masked-current-cluster
                              length cluster-size)
      (implies
-      (and (fat32-masked-entry-p key)
-           (< key (len fa-table))
-           (not (member-equal key index-list))
+      (and (not (member-equal key index-list))
+           (< (nfix key) (len fa-table))
            (equal error-code 0))
       (equal
        (fat32-build-index-list (update-nth key val fa-table)
@@ -395,7 +396,11 @@
        (fat32-build-index-list fa-table masked-current-cluster
                                length cluster-size)))))
   :hints
-  (("subgoal *1/3"
+  (("goal"
+    :induct
+    (fat32-build-index-list fa-table masked-current-cluster
+                            length cluster-size)
+    :in-theory (disable nth update-nth)
     :expand
     (fat32-build-index-list (update-nth key val fa-table)
                             masked-current-cluster
