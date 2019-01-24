@@ -4168,6 +4168,15 @@
 
 ;; This function needs to return an mv containing the fat32-in-memory stobj,
 ;; the new directory entry, and an errno value (either 0 or ENOSPC).
+
+;; One idea we tried was setting first-cluster to *ms-end-of-clusterchain*
+;; (basically, marking it used) inside the body of this function. This would
+;; have made some proofs more modular... but it doesn't work, because when
+;; we're placing the contents of a directory (inside
+;; m1-fs-to-fat32-in-memory-helper), we need to make a recursive call to get
+;; the contents of that directory in the first place... and first-cluster must
+;; be marked used before that call is made to ensure that cluster doesn't get
+;; used.
 (defund
   place-contents
   (fat32-in-memory dir-ent
@@ -4183,14 +4192,8 @@
                     *ms-bad-cluster*)
                 (>= (fat-length fat32-in-memory)
                     *ms-first-data-cluster*)
-                (equal (data-region-length fat32-in-memory)
-                       (count-of-clusters fat32-in-memory))
                 (fat32-masked-entry-p first-cluster)
-                (>= first-cluster *ms-first-data-cluster*)
-                (<= (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    (fat-length fat32-in-memory)))
-    :guard-debug t
+                (>= first-cluster *ms-first-data-cluster*))
     :guard-hints
     (("goal"
       :do-not-induct t
@@ -4486,16 +4489,11 @@
     :stobjs fat32-in-memory
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (m1-file-alist-p fs)
-                (equal (data-region-length fat32-in-memory)
-                       (count-of-clusters fat32-in-memory))
                 (>= (fat-length fat32-in-memory)
                     *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*)
-                (fat32-masked-entry-p current-dir-first-cluster)
-                (<= (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    (fat-length fat32-in-memory)))
+                (fat32-masked-entry-p current-dir-first-cluster))
     :hints (("goal" :in-theory (enable m1-file->contents
                                        m1-file-contents-fix)))
     :verify-guards nil))
@@ -4784,9 +4782,19 @@
               (true-listp x))))
 
   (local
-   (defthmd m1-fs-to-fat32-in-memory-helper-guard-lemma-3
-     (implies (and (integerp x) (integerp y))
-              (iff (< y (+ 1 x)) (<= y x)))))
+   (defthm
+     m1-fs-to-fat32-in-memory-helper-guard-lemma-3
+     (implies
+      (compliant-fat32-in-memoryp fat32-in-memory)
+      (and
+       (not
+        (< (binary-+ '2
+                     (count-of-clusters fat32-in-memory))
+           '0))
+       (not
+        (< (binary-+ '2
+                     (count-of-clusters fat32-in-memory))
+           '2))))))
 
   (verify-guards
     m1-fs-to-fat32-in-memory-helper
@@ -4794,7 +4802,7 @@
     (("goal"
       :in-theory
       (e/d nil
-           (fat32-in-memoryp stobj-set-indices-in-fa-table))))))
+           (fat32-in-memoryp nth stobj-set-indices-in-fa-table))))))
 
 (defthm
   m1-fs-to-fat32-in-memory-guard-lemma-1
