@@ -5,7 +5,7 @@
 ; This is a stobj model of the FAT32 filesystem.
 
 (include-book "generate-index-list")
-(include-book "file-system-m1")
+(include-book "m1-dir-equiv")
 (include-book "flatten-lemmas")
 
 (include-book "std/lists/resize-list" :dir :system)
