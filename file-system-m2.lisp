@@ -4183,13 +4183,12 @@
                     *ms-bad-cluster*)
                 (>= (fat-length fat32-in-memory)
                     *ms-first-data-cluster*)
-                (equal (data-region-length fat32-in-memory)
-                       (count-of-clusters fat32-in-memory))
                 (fat32-masked-entry-p first-cluster)
                 (>= first-cluster *ms-first-data-cluster*)
-                (<= (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    (fat-length fat32-in-memory)))
+                (< first-cluster
+                   (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
+                (equal (fat32-entry-mask (fati first-cluster fat32-in-memory))
+                       0))
     :guard-debug t
     :guard-hints
     (("goal"
@@ -4198,22 +4197,24 @@
       (e/d
        (lower-bounded-integer-listp)
        (fat32-in-memoryp
-        (:rewrite
-         fat32-masked-entry-list-p-of-find-n-free-clusters
-         . 1)))
+        (:definition stobj-find-n-free-clusters-correctness-1)
+        unsigned-byte-p))
       :use
       (:instance
-       (:rewrite
-        fat32-masked-entry-list-p-of-find-n-free-clusters
-        . 1)
-       (n
-        (binary-+
-         '-1
-         (len (make-clusters contents
-                             (cluster-size fat32-in-memory)))))
-       (fa-table (effective-fat fat32-in-memory)))))))
+       (:definition stobj-find-n-free-clusters-correctness-1)
+       (n (+ -1
+             (len (make-clusters contents
+                                 (cluster-size fat32-in-memory)))))
+       (fat32-in-memory
+        (update-fati first-cluster
+                     (fat32-update-lower-28
+                      (fati first-cluster fat32-in-memory)
+                      268435455)
+                     fat32-in-memory)))))))
   (b*
       ((dir-ent (dir-ent-fix dir-ent))
+       ((unless (mbt (< (nfix first-cluster) (fat-length fat32-in-memory))))
+        (mv fat32-in-memory dir-ent *enospc* nil))
        (cluster-size (cluster-size fat32-in-memory))
        (clusters (make-clusters contents cluster-size))
        ;; Quote: "Note that a zero-length file [...] has a first cluster
@@ -4225,6 +4226,14 @@
              dir-ent 0 file-length)
             0
             nil))
+       ;; Mark this cluster as used, without possibly interfering with any
+       ;; existing clusterchains.
+       (fat32-in-memory (update-fati
+                         first-cluster
+                         (fat32-update-lower-28
+                          (fati first-cluster fat32-in-memory)
+                          *ms-end-of-clusterchain*)
+                         fat32-in-memory))
        (indices (list* first-cluster
                        (stobj-find-n-free-clusters
                         fat32-in-memory (- (len clusters) 1))))
@@ -4256,7 +4265,9 @@
                *ms-first-data-cluster*)
             (fat-length fat32-in-memory))
         (integerp first-cluster)
-        (>= first-cluster *ms-first-data-cluster*))
+        (>= first-cluster *ms-first-data-cluster*)
+        (< first-cluster
+           (fat-length fat32-in-memory)))
    (compliant-fat32-in-memoryp
     (mv-nth
      0
@@ -4268,19 +4279,101 @@
     (e/d
      (place-contents
       lower-bounded-integer-listp
+      (:definition stobj-find-n-free-clusters-correctness-1))
+     ((:rewrite
+       compliant-fat32-in-memoryp-of-stobj-set-indices-in-fa-table)
       (:rewrite
-       fat32-masked-entry-list-p-of-find-n-free-clusters
-       . 1)))
+       compliant-fat32-in-memoryp-of-stobj-set-clusters)))
     :use
-    (:instance
-     (:rewrite fat32-masked-entry-list-p-of-find-n-free-clusters
-               . 1)
-     (n
-      (binary-+
-       '-1
-       (len (make-clusters contents
-                           (cluster-size fat32-in-memory)))))
-     (fa-table (effective-fat fat32-in-memory))))))
+    ((:instance
+      (:rewrite
+       compliant-fat32-in-memoryp-of-stobj-set-indices-in-fa-table)
+      (value-list
+       (append
+        (stobj-find-n-free-clusters
+         (update-fati first-cluster
+                      (fat32-update-lower-28
+                       (fati first-cluster fat32-in-memory)
+                       268435455)
+                      fat32-in-memory)
+         (+
+          -1
+          (len (make-clusters contents
+                              (cluster-size fat32-in-memory)))))
+        '(268435455)))
+      (index-list
+       (cons
+        first-cluster
+        (stobj-find-n-free-clusters
+         (update-fati first-cluster
+                      (fat32-update-lower-28
+                       (fati first-cluster fat32-in-memory)
+                       268435455)
+                      fat32-in-memory)
+         (+
+          -1
+          (len
+           (make-clusters contents
+                          (cluster-size fat32-in-memory)))))))
+      (fat32-in-memory
+       (stobj-set-clusters
+        (make-clusters contents (cluster-size fat32-in-memory))
+        (cons
+         first-cluster
+         (stobj-find-n-free-clusters
+          (update-fati first-cluster
+                       (fat32-update-lower-28
+                        (fati first-cluster fat32-in-memory)
+                        268435455)
+                       fat32-in-memory)
+          (+
+           -1
+           (len
+            (make-clusters contents
+                           (cluster-size fat32-in-memory))))))
+        (update-fati first-cluster
+                     (fat32-update-lower-28
+                      (fati first-cluster fat32-in-memory)
+                      268435455)
+                     fat32-in-memory))))
+     (:instance
+      (:rewrite
+       compliant-fat32-in-memoryp-of-stobj-set-clusters)
+      (fat32-in-memory
+       (update-fati first-cluster
+                    (fat32-update-lower-28
+                     (fati first-cluster fat32-in-memory)
+                     268435455)
+                    fat32-in-memory))
+      (index-list
+       (cons
+        first-cluster
+        (stobj-find-n-free-clusters
+         (update-fati first-cluster
+                      (fat32-update-lower-28
+                       (fati first-cluster fat32-in-memory)
+                       268435455)
+                      fat32-in-memory)
+         (+
+          -1
+          (len
+           (make-clusters contents
+                          (cluster-size fat32-in-memory)))))))
+      (cluster-list
+       (make-clusters contents
+                      (cluster-size fat32-in-memory))))
+     (:instance
+      (:definition stobj-find-n-free-clusters-correctness-1)
+      (n
+       (+ -1
+          (len (make-clusters contents
+                              (cluster-size fat32-in-memory)))))
+      (fat32-in-memory
+       (update-fati first-cluster
+                    (fat32-update-lower-28
+                     (fati first-cluster fat32-in-memory)
+                     268435455)
+                    fat32-in-memory)))))))
 
 (defthm
   cluster-size-of-place-contents
@@ -4445,20 +4538,22 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (place-contents)
-         ((:rewrite
-           fat32-masked-entry-list-p-of-find-n-free-clusters
-           . 1)))
+    (e/d
+     (place-contents)
+     ((:definition stobj-find-n-free-clusters-correctness-1)))
     :use
     (:instance
-     (:rewrite fat32-masked-entry-list-p-of-find-n-free-clusters
-               . 1)
+     (:definition stobj-find-n-free-clusters-correctness-1)
      (n
-      (binary-+
-       '-1
-       (len (make-clusters contents
-                           (cluster-size fat32-in-memory)))))
-     (fa-table (effective-fat fat32-in-memory))))))
+      (+ -1
+         (len (make-clusters contents
+                             (cluster-size fat32-in-memory)))))
+     (fat32-in-memory
+      (update-fati first-cluster
+                   (fat32-update-lower-28
+                    (fati first-cluster fat32-in-memory)
+                    268435455)
+                   fat32-in-memory))))))
 
 ;; OK, this function needs to return a list of directory entries, so that when
 ;; it is called recursively to take care of all the entries in a subdirectory,
@@ -4486,16 +4581,11 @@
     :stobjs fat32-in-memory
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (m1-file-alist-p fs)
-                (equal (data-region-length fat32-in-memory)
-                       (count-of-clusters fat32-in-memory))
                 (>= (fat-length fat32-in-memory)
                     *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*)
-                (fat32-masked-entry-p current-dir-first-cluster)
-                (<= (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    (fat-length fat32-in-memory)))
+                (fat32-masked-entry-p current-dir-first-cluster))
     :hints (("goal" :in-theory (enable m1-file->contents
                                        m1-file-contents-fix)))
     :verify-guards nil))
@@ -4533,14 +4623,7 @@
        ;; The mbt below says this branch will never be taken; but having this
        ;; allows us to prove a strong rule about fat-length.
        ((unless (mbt (< first-cluster (fat-length fat32-in-memory))))
-        (mv fat32-in-memory tail-list *enospc* tail-index-list))
-       ;; Mark this cluster as used, without possibly interfering with any
-       ;; existing clusterchains.
-       (fat32-in-memory
-        (stobj-set-indices-in-fa-table
-         fat32-in-memory
-         indices
-         (list *ms-end-of-clusterchain*))))
+        (mv fat32-in-memory tail-list *enospc* tail-index-list)))
     (if
         (m1-regular-file-p (cdr head))
         (b* ((contents (m1-file->contents (cdr head)))
@@ -4784,17 +4867,45 @@
               (true-listp x))))
 
   (local
-   (defthmd m1-fs-to-fat32-in-memory-helper-guard-lemma-3
-     (implies (and (integerp x) (integerp y))
-              (iff (< y (+ 1 x)) (<= y x)))))
+   (defthm
+     m1-fs-to-fat32-in-memory-helper-guard-lemma-3
+     (implies (compliant-fat32-in-memoryp fat32-in-memory)
+              (and
+               (not (< (binary-+ '2
+                                 (count-of-clusters fat32-in-memory))
+                       '0))
+               (not (< (binary-+ '2
+                                 (count-of-clusters fat32-in-memory))
+                       2))))))
 
   (verify-guards
     m1-fs-to-fat32-in-memory-helper
+    :guard-debug t
     :hints
     (("goal"
       :in-theory
       (e/d nil
-           (fat32-in-memoryp stobj-set-indices-in-fa-table))))))
+           (fat32-in-memoryp
+            nth
+            stobj-set-indices-in-fa-table
+            (:rewrite find-n-free-clusters-correctness-4)))
+      :use
+      (:instance
+       (:rewrite find-n-free-clusters-correctness-4)(n 1)
+       (fa-table
+        (effective-fat (mv-nth 0
+                               (m1-fs-to-fat32-in-memory-helper
+                                fat32-in-memory (cdr fs)
+                                current-dir-first-cluster))))
+       (x
+        (nth
+         0
+         (find-n-free-clusters
+          (effective-fat (mv-nth 0
+                                 (m1-fs-to-fat32-in-memory-helper
+                                  fat32-in-memory (cdr fs)
+                                  current-dir-first-cluster)))
+          1))))))))
 
 (defthm
   m1-fs-to-fat32-in-memory-guard-lemma-1
