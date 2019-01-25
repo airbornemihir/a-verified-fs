@@ -149,8 +149,11 @@
                   (atom m1-file-alist1))))
 
 (defthm m1-dir-equiv-of-nil
-  (equal (m1-dir-equiv m1-file-alist1 nil)
-         (null m1-file-alist1))
+  (and
+   (equal (m1-dir-equiv m1-file-alist nil)
+          (null m1-file-alist))
+   (equal (m1-dir-equiv nil m1-file-alist)
+          (null m1-file-alist)))
   :hints (("Goal" :in-theory (enable m1-dir-equiv))))
 
 (defthm
