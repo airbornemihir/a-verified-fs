@@ -878,7 +878,13 @@
   (equal
    (m1-file-alist-p (m1-file->contents file))
    (m1-directory-file-p (m1-file-fix file)))
-  :hints (("Goal" :in-theory (enable m1-file->contents m1-directory-file-p))))
+  :hints (("Goal" :in-theory (enable m1-file->contents m1-directory-file-p)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (m1-directory-file-p file)
+     (m1-file-alist-p (m1-file->contents file))))))
 
 (defthm
   m1-directory-file-p-of-m1-file
