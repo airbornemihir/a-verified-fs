@@ -682,6 +682,10 @@
   :hints (("goal" :in-theory (enable find-n-free-clusters))))
 
 (defthm
+  find-n-free-clusters-correctness-8
+  (integer-listp (find-n-free-clusters fa-table n)))
+
+(defthm
   find-n-free-clusters-correctness-7
   (implies
    (and
@@ -690,40 +694,13 @@
     (>= (len fa-table)
         *ms-first-data-cluster*))
    (and
-    (integerp
-     (nth m
-          (find-n-free-clusters fa-table n)))
     (<= *ms-first-data-cluster*
         (nth m
              (find-n-free-clusters fa-table n)))
     (< (nth m
              (find-n-free-clusters fa-table n))
         (len fa-table))))
-  :rule-classes
-  ((:linear :corollary
-            (implies
-             (and
-              (< (nfix m)
-                 (len (find-n-free-clusters fa-table n)))
-              (>= (len fa-table)
-                  *ms-first-data-cluster*))
-             (and
-              (<= *ms-first-data-cluster*
-                  (nth m
-                       (find-n-free-clusters fa-table n)))
-              (< (nth m
-                      (find-n-free-clusters fa-table n))
-                 (len fa-table)))))
-   (:rewrite :corollary
-             (implies
-              (and
-               (< (nfix m)
-                  (len (find-n-free-clusters fa-table n)))
-               (>= (len fa-table)
-                   *ms-first-data-cluster*))
-              (integerp
-               (nth m
-                    (find-n-free-clusters fa-table n))))))
+  :rule-classes :linear
   :hints
   (("goal" :in-theory (e/d (find-n-free-clusters) (nth)))))
 
