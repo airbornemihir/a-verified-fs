@@ -2640,10 +2640,7 @@
                     *ms-first-data-cluster*)
                 (< masked-current-cluster
                    (+ (count-of-clusters fat32-in-memory)
-                      *ms-first-data-cluster*))
-                (<= (+ (count-of-clusters fat32-in-memory)
-                       *ms-first-data-cluster*)
-                    (fat-length fat32-in-memory)))))
+                      *ms-first-data-cluster*)))))
   (let
    ((cluster-size (cluster-size fat32-in-memory)))
    (if
@@ -2798,17 +2795,7 @@
                       *ms-first-data-cluster*)
                   (< masked-current-cluster
                      (+ (count-of-clusters fat32-in-memory)
-                        *ms-first-data-cluster*))
-                  ;; This clause stipulates that while there may be a few
-                  ;; cluster indices in the file allocation table which do not
-                  ;; actually exist in the data region (because the file
-                  ;; allocation table needs to take up an integer number of
-                  ;; sectors) there should never be the reverse scenario, where
-                  ;; clusters available in the data region are not allocatable
-                  ;; because the file allocation table is too short.
-                  (<= (+ (count-of-clusters fat32-in-memory)
-                         *ms-first-data-cluster*)
-                      (fat-length fat32-in-memory)))
+                        *ms-first-data-cluster*)))
       :verify-guards nil))
     (b*
         ((cluster-size (cluster-size fat32-in-memory))
@@ -3061,21 +3048,7 @@
   (declare (xargs :measure (nfix entry-limit)
                   :guard (and (natp entry-limit)
                               (unsigned-byte-listp 8 dir-contents)
-                              (compliant-fat32-in-memoryp fat32-in-memory)
-                              (equal (data-region-length fat32-in-memory)
-                                     (count-of-clusters fat32-in-memory))
-                              ;; This clause stipulates that while there may be
-                              ;; a few cluster indices in the file allocation
-                              ;; table which do not actually exist in the data
-                              ;; region (because the file allocation table
-                              ;; needs to take up an integer number of sectors)
-                              ;; there should never be the reverse scenario,
-                              ;; where clusters available in the data region
-                              ;; are not allocatable because the file
-                              ;; allocation table is too short.
-                              (<= (+ (count-of-clusters fat32-in-memory)
-                                     *ms-first-data-cluster*)
-                                  (fat-length fat32-in-memory)))
+                              (compliant-fat32-in-memoryp fat32-in-memory))
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
   (b*
@@ -3205,6 +3178,10 @@
         (append (list clusterchain) head-clusterchain-list
                 tail-clusterchain-list)
         error-code)))
+
+(defthm fat32-in-memory-to-m1-fs-helper-correctness-1-lemma-1
+  (equal (rationalp (nth n (dir-ent-fix x)))
+         (< (nfix n) *ms-dir-ent-length*)))
 
 (defthm
   fat32-in-memory-to-m1-fs-helper-correctness-1
@@ -3404,21 +3381,7 @@
   fat32-in-memory-to-m1-fs
   (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory
-                  :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                              (equal (data-region-length fat32-in-memory)
-                                     (count-of-clusters fat32-in-memory))
-                              ;; This clause stipulates that while there may be
-                              ;; a few cluster indices in the file allocation
-                              ;; table which do not actually exist in the data
-                              ;; region (because the file allocation table
-                              ;; needs to take up an integer number of sectors)
-                              ;; there should never be the reverse scenario,
-                              ;; where clusters available in the data region
-                              ;; are not allocatable because the file
-                              ;; allocation table is too short.
-                              (<= (+ (count-of-clusters fat32-in-memory)
-                                     *ms-first-data-cluster*)
-                                  (fat-length fat32-in-memory)))
+                  :guard (compliant-fat32-in-memoryp fat32-in-memory)
                   :guard-hints
                   (("goal"
                     :in-theory
@@ -3576,10 +3539,7 @@
   stobj-find-n-free-clusters-helper-correctness-1
   (implies
    (and (natp start)
-        (compliant-fat32-in-memoryp fat32-in-memory)
-        (<= (+ (count-of-clusters fat32-in-memory)
-               *ms-first-data-cluster*)
-            (fat-length fat32-in-memory)))
+        (compliant-fat32-in-memoryp fat32-in-memory))
    (equal
     (stobj-find-n-free-clusters-helper fat32-in-memory n start)
     (find-n-free-clusters-helper
@@ -3601,10 +3561,7 @@
   (fat32-in-memory n)
   (declare
    (xargs :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                      (natp n)
-                      (<= (+ (count-of-clusters fat32-in-memory)
-                             *ms-first-data-cluster*)
-                          (fat-length fat32-in-memory)))
+                      (natp n))
           :stobjs fat32-in-memory))
   (stobj-find-n-free-clusters-helper
    fat32-in-memory n *ms-first-data-cluster*))
@@ -3623,10 +3580,7 @@
 (defthm
   stobj-find-n-free-clusters-correctness-1
   (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (<= (+ (count-of-clusters fat32-in-memory)
-               *ms-first-data-cluster*)
-            (fat-length fat32-in-memory)))
+   (compliant-fat32-in-memoryp fat32-in-memory)
    (equal (stobj-find-n-free-clusters fat32-in-memory n)
           (find-n-free-clusters (effective-fat fat32-in-memory)
                                 n)))
@@ -3760,9 +3714,6 @@
           (equal (len index-list)
                  (len value-list))
           (compliant-fat32-in-memoryp fat32-in-memory)
-          (<= (+ (count-of-clusters fat32-in-memory)
-                 *ms-first-data-cluster*)
-              (fat-length fat32-in-memory))
           (natp n)
           (nat-listp index-list)
           (not (member-equal n index-list))
@@ -6595,7 +6546,6 @@
                         m1-fs-to-fat32-in-memory-inversion-lemma-4
                         m1-fs-to-fat32-in-memory-inversion-lemma-7)
                        (mod floor nth
-                            (:rewrite dir-ent-p-of-append)
                             (:rewrite make-clusters-correctness-1 . 1)
                             (:rewrite by-slice-you-mean-the-whole-cake-2)))
            :expand
@@ -6741,8 +6691,7 @@
   :hints
   (("goal"
     :in-theory (e/d (fati-of-m1-fs-to-fat32-in-memory-helper-disjoint-lemma-1)
-                    (nth (:rewrite dir-ent-p-of-append)
-                         (:rewrite make-clusters-correctness-1 . 1))))))
+                    (nth (:rewrite make-clusters-correctness-1 . 1))))))
 
 (defthm
   fati-of-m1-fs-to-fat32-in-memory-helper-disjoint
@@ -6771,8 +6720,7 @@
     :in-theory
     (e/d (fati-of-m1-fs-to-fat32-in-memory-helper-disjoint-lemma-1
           fati-of-m1-fs-to-fat32-in-memory-helper-disjoint-lemma-2)
-         (nth (:rewrite dir-ent-p-of-append)
-              (:rewrite make-clusters-correctness-1 . 1))))))
+         (nth (:rewrite make-clusters-correctness-1 . 1))))))
 
 (defthmd m1-fs-to-fat32-in-memory-inversion-lemma-8
   (implies
@@ -9392,7 +9340,6 @@
                       (floor
                        mod
                        nth
-                       (:rewrite dir-ent-p-of-append)
                        (:rewrite make-clusters-correctness-1 . 1)
                        (:rewrite nth-of-nats=>chars)
                        (:rewrite by-slice-you-mean-the-whole-cake-2)))
@@ -9451,7 +9398,6 @@
            (floor
             mod
             nth
-            (:rewrite dir-ent-p-of-append)
             (:rewrite make-clusters-correctness-1 . 1)
             (:rewrite nth-of-nats=>chars)
             (:rewrite by-slice-you-mean-the-whole-cake-2)
@@ -10704,7 +10650,6 @@
                                  get-clusterchain-contents
                                  fat32-build-index-list
                                  m1-file-alist-p-of-m1-file->contents
-                                 (:REWRITE DIR-ENT-P-OF-APPEND)
                                  (:REWRITE MAKE-CLUSTERS-CORRECTNESS-1 . 1)
                                  (:REWRITE BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)
                                  (:REWRITE
@@ -10795,7 +10740,6 @@
                       floor
                       mod
                       nth
-                      (:rewrite dir-ent-p-of-append)
                       (:rewrite make-clusters-correctness-1 . 1)
                       (:rewrite nth-of-nats=>chars)
                       (:rewrite by-slice-you-mean-the-whole-cake-2)))
@@ -12021,8 +11965,7 @@
   :hints
   (("goal" :do-not-induct t
     :in-theory (e/d (place-contents lower-bounded-integer-listp)
-                    (nth (:rewrite dir-ent-p-of-append)
-                         (:rewrite make-clusters-correctness-1 . 1)
+                    (nth (:rewrite make-clusters-correctness-1 . 1)
                          (:rewrite m1-directory-file-p-correctness-1)
                          (:rewrite by-slice-you-mean-the-whole-cake-2)
                          (:definition get-clusterchain-contents)
@@ -12639,7 +12582,6 @@
                       floor
                       mod
                       nth
-                      (:rewrite dir-ent-p-of-append)
                       (:rewrite make-clusters-correctness-1 . 1)
                       (:rewrite nth-of-nats=>chars)
                       (:rewrite by-slice-you-mean-the-whole-cake-2)))
@@ -13072,7 +13014,6 @@
                               (:REWRITE BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)
                               (:DEFINITION GET-CLUSTERCHAIN-CONTENTS)
                               (:REWRITE NTH-OF-NATS=>CHARS)
-                              (:REWRITE DIR-ENT-P-OF-APPEND)
                               nth
                               (:DEFINITION FAT32-IN-MEMORYP)
                               (:DEFINITION BINARY-APPEND)
@@ -13086,7 +13027,6 @@
                                                (:REWRITE BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)
                                                (:DEFINITION GET-CLUSTERCHAIN-CONTENTS)
                                                (:REWRITE NTH-OF-NATS=>CHARS)
-                                               (:REWRITE DIR-ENT-P-OF-APPEND)
                                                nth
                                                (:DEFINITION FAT32-IN-MEMORYP)
                                                (:DEFINITION BINARY-APPEND)

@@ -717,3 +717,8 @@
 (defthm true-list-listp-of-append
   (equal (true-list-listp (append x y))
          (and (true-list-listp (true-list-fix x)) (true-list-listp y))))
+
+(defthm rationalp-of-nth-when-rational-listp
+  (implies (rational-listp x)
+           (iff (rationalp (nth n x))
+                (< (nfix n) (len x)))))

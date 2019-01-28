@@ -161,6 +161,10 @@
   (implies (not (integer-listp x))
            (not (unsigned-byte-listp n x))))
 
+(defthmd rational-listp-when-unsigned-byte-listp
+  (implies (not (rational-listp x))
+           (not (unsigned-byte-listp n x))))
+
 (defund dir-ent-p (x)
   (declare (xargs :guard t))
   (and (unsigned-byte-listp 8 x)
@@ -187,6 +191,15 @@
     (enable dir-ent-p
             integer-listp-when-unsigned-byte-listp))))
 
+(defthmd
+  rational-listp-when-dir-ent-p
+  (implies (dir-ent-p x)
+           (rational-listp x))
+  :hints
+  (("goal" :in-theory
+    (enable dir-ent-p
+            rational-listp-when-unsigned-byte-listp))))
+
 (defthm unsigned-byte-listp-when-dir-ent-p
   (implies (dir-ent-p dir-ent)
            (unsigned-byte-listp 8 dir-ent))
@@ -199,7 +212,7 @@
                        (unsigned-byte-p 8 val))))
   :hints (("goal" :in-theory (enable dir-ent-p))))
 
-(defthm dir-ent-p-of-append
+(defthmd dir-ent-p-of-append
   (equal (dir-ent-p (binary-append x y))
          (and (equal (+ (len x) (len y))
                      *ms-dir-ent-length*)
@@ -221,6 +234,13 @@
                     (< (nfix n) *ms-dir-ent-length*)))
     :hints
     (("goal" :in-theory (enable integer-listp-when-dir-ent-p))))
+   (:rewrite
+    :corollary
+    (implies (dir-ent-p dir-ent)
+             (equal (rationalp (nth n dir-ent))
+                    (< (nfix n) *ms-dir-ent-length*)))
+    :hints
+    (("goal" :in-theory (enable rational-listp-when-dir-ent-p))))
    (:linear
     :corollary (implies (and (dir-ent-p dir-ent)
                              (< (nfix n) *ms-dir-ent-length*))
@@ -232,7 +252,7 @@
       (disable unsigned-byte-p-of-nth-when-unsigned-byte-listp
                nth))))))
 
-(defun dir-ent-fix (x)
+(defund dir-ent-fix (x)
   (declare (xargs :guard t))
   (if
       (dir-ent-p x)
@@ -240,7 +260,18 @@
     (make-list *ms-dir-ent-length* :initial-element 0)))
 
 (defthm dir-ent-p-of-dir-ent-fix
-  (dir-ent-p (dir-ent-fix x)))
+  (dir-ent-p (dir-ent-fix x))
+  :hints (("Goal" :in-theory (enable dir-ent-fix))))
+
+(defthm dir-ent-fix-of-dir-ent-fix
+  (equal (dir-ent-fix (dir-ent-fix x))
+         (dir-ent-fix x))
+  :hints (("Goal" :in-theory (enable dir-ent-fix))))
+
+(defthm dir-ent-fix-when-dir-ent-p
+  (implies (dir-ent-p x)
+           (equal (dir-ent-fix x) x))
+  :hints (("Goal" :in-theory (enable dir-ent-fix))))
 
 (fty::deffixtype
  dir-ent
@@ -441,7 +472,7 @@
     :guard (and (dir-ent-p dir-ent)
                 (stringp filename)
                 (equal (length filename) 11))
-    :guard-hints (("goal" :in-theory (enable dir-ent-p)))))
+    :guard-hints (("goal" :in-theory (enable dir-ent-p-of-append)))))
   (mbe :exec (append (string=>nats filename)
                      (subseq dir-ent 11 *ms-dir-ent-length*))
        :logic
@@ -672,7 +703,8 @@
     (dir-ent-file-size (dir-ent-set-filename dir-ent filename))
     (dir-ent-file-size dir-ent)))
   :hints (("goal" :in-theory (enable dir-ent-file-size
-                                     dir-ent-set-filename))))
+                                     dir-ent-set-filename
+                                     dir-ent-p-of-append))))
 
 (defthm
   dir-ent-directory-p-of-dir-ent-set-first-cluster-file-size
