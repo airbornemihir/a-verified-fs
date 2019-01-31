@@ -412,8 +412,7 @@
 (defthm
   dir-ent-p-of-dir-ent-set-first-cluster-file-size
   (implies
-   (and (dir-ent-p dir-ent)
-        (fat32-masked-entry-p first-cluster)
+   (and (fat32-masked-entry-p first-cluster)
         (unsigned-byte-p 32 file-size))
    (and
     (unsigned-byte-listp 8
@@ -438,8 +437,7 @@
   (:rewrite
    (:rewrite
     :corollary
-    (implies (and (dir-ent-p dir-ent)
-                  (fat32-masked-entry-p first-cluster)
+    (implies (and (fat32-masked-entry-p first-cluster)
                   (unsigned-byte-p 32 file-size))
              (dir-ent-p (dir-ent-set-first-cluster-file-size
                          dir-ent first-cluster file-size)))
@@ -542,7 +540,25 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (dir-ent-install-directory-bit dir-ent-p)))))
+    (e/d (dir-ent-install-directory-bit dir-ent-p))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (dir-ent-p dir-ent)
+     (and
+      (unsigned-byte-listp
+       8
+       (dir-ent-install-directory-bit dir-ent val))
+      (equal
+       (len
+        (dir-ent-install-directory-bit dir-ent val))
+      *ms-dir-ent-length*)))
+    :hints
+    (("goal"
+      :in-theory
+      (e/d (dir-ent-p)))))))
 
 (defthm
   true-listp-of-dir-ent-install-directory-bit
