@@ -9944,7 +9944,17 @@
       (+ *ms-first-data-cluster*
          (count-of-clusters fat32-in-memory))))
   (b*
-      (((mv fat32-in-memory dir-ent-list error-code)
+      ((x-hypotheses
+        (and
+         (integerp x)
+         (<= 2 x)
+         (< x (+ 2 (count-of-clusters fat32-in-memory)))
+         (not
+          (equal
+           (fat32-entry-mask
+            (fati x fat32-in-memory))
+           0))))
+       ((mv fat32-in-memory dir-ent-list error-code)
         (m1-fs-to-fat32-in-memory-helper fat32-in-memory
                                          fs current-dir-first-cluster)))
     (implies
@@ -9959,15 +9969,7 @@
          (m1-entry-count fs)))
        0)
       (implies
-       (and
-        (integerp x)
-        (<= 2 x)
-        (< x (+ 2 (count-of-clusters fat32-in-memory)))
-       (not
-        (equal
-         (fat32-entry-mask
-          (fati x fat32-in-memory))
-         0)))
+       x-hypotheses
        (not-intersectp-list
         (list x)
         (mv-nth
@@ -9996,8 +9998,10 @@
                                            fs current-dir-first-cluster))
          ("Subgoal *1/3"
           :expand
-          (m1-fs-to-fat32-in-memory-helper fat32-in-memory
-                                           fs current-dir-first-cluster))))
+          ((m1-fs-to-fat32-in-memory-helper fat32-in-memory
+                                            fs current-dir-first-cluster)
+           (:free (y) (intersectp-equal nil y))
+           (:free (x1 x2 y) (intersectp-equal (list x1) (cons x2 y)))))))
 
 (thm
  (implies
