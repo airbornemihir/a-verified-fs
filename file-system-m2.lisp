@@ -3024,6 +3024,33 @@
                  (dir-ent-set-filename dir-ent filename))))
   :hints (("goal" :in-theory (e/d (useless-dir-ent-p) (nth)))))
 
+(defund
+  make-dir-ent-list (dir-contents)
+  (declare
+   (xargs
+    :guard (unsigned-byte-listp 8 dir-contents)
+    :measure (len dir-contents)
+    :guard-hints (("goal" :in-theory (e/d (dir-ent-p) (nth))))))
+  (b* (((when (< (len dir-contents)
+                 *ms-dir-ent-length*))
+        nil)
+       (dir-ent
+        (mbe
+         :exec (take *ms-dir-ent-length* dir-contents)
+         :logic (dir-ent-fix (take *ms-dir-ent-length* dir-contents))))
+       ((when (equal (nth 0 dir-ent) 0)) nil)
+       ((when (useless-dir-ent-p dir-ent))
+        (make-dir-ent-list
+         (nthcdr *ms-dir-ent-length* dir-contents))))
+    (list* dir-ent
+           (make-dir-ent-list
+            (nthcdr *ms-dir-ent-length* dir-contents)))))
+
+(defthm
+  dir-ent-list-p-of-make-dir-ent-list
+  (dir-ent-list-p (make-dir-ent-list dir-contents))
+  :hints (("goal" :in-theory (e/d (make-dir-ent-list) (nth)))))
+
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
 ;; / and /tmp/ were to point to the same cluster as their initial cluster.)
