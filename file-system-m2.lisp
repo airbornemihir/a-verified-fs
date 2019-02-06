@@ -3038,6 +3038,13 @@
         (mbe
          :exec (take *ms-dir-ent-length* dir-contents)
          :logic (dir-ent-fix (take *ms-dir-ent-length* dir-contents))))
+       ;; From page 24 of the specification: "If DIR_Name[0] == 0x00, then the
+       ;; directory entry is free (same as for 0xE5), and there are no
+       ;; allocated directory entries after this one (all of the DIR_Name[0]
+       ;; bytes in all of the entries after this one are also set to 0). The
+       ;; special 0 value, rather than the 0xE5 value, indicates to FAT file
+       ;; system driver code that the rest of the entries in this directory do
+       ;; not need to be examined because they are all free."
        ((when (equal (nth 0 dir-ent) 0)) nil)
        ((when (useless-dir-ent-p dir-ent))
         (make-dir-ent-list
@@ -3076,12 +3083,12 @@
 ;; for proof purposes. We're also adding a return value, to signal an error
 ;; when we run out of entries.
 
-(defun
+(defund
   fat32-in-memory-to-m1-fs-helper
-  (fat32-in-memory dir-contents entry-limit)
+  (fat32-in-memory dir-ent-list entry-limit)
   (declare (xargs :measure (nfix entry-limit)
                   :guard (and (natp entry-limit)
-                              (unsigned-byte-listp 8 dir-contents)
+                              (dir-ent-list-p dir-ent-list)
                               (compliant-fat32-in-memoryp fat32-in-memory))
                   :verify-guards nil
                   :stobjs (fat32-in-memory)))
@@ -3097,31 +3104,12 @@
        ;; these in the filesystem instance. The measure must strictly decrease.
        ;; If there isn't a full directory entry in dir-contents, we're done.
        ((when
-            (< (len dir-contents) *ms-dir-ent-length*))
+            (atom dir-ent-list))
         (mv nil 0 nil 0))
        ((when (zp entry-limit))
         (mv nil 0 nil *EIO*))
        (dir-ent
-         (mbe
-          :exec (take *ms-dir-ent-length* dir-contents)
-          :logic
-          (dir-ent-fix (take *ms-dir-ent-length* dir-contents))))
-       ;; From page 24 of the specification: "If DIR_Name[0] == 0x00, then the
-       ;; directory entry is free (same as for 0xE5), and there are no
-       ;; allocated directory entries after this one (all of the DIR_Name[0]
-       ;; bytes in all of the entries after this one are also set to 0). The
-       ;; special 0 value, rather than the 0xE5 value, indicates to FAT file
-       ;; system driver code that the rest of the entries in this directory do
-       ;; not need to be examined because they are all free."
-       ((when (equal (nth 0 dir-ent) #x00))
-        (mv nil 0 nil 0))
-       ;; As mentioned above, we skip useless entries and move on.
-       ((when
-            (useless-dir-ent-p dir-ent))
-        (fat32-in-memory-to-m1-fs-helper
-         fat32-in-memory
-         (nthcdr *ms-dir-ent-length* dir-contents)
-         (- entry-limit 1)))
+        (car dir-ent-list))
        ;; Learn about the file we're looking at.
        (first-cluster (dir-ent-first-cluster dir-ent))
        (filename (dir-ent-filename dir-ent))
@@ -3175,7 +3163,7 @@
         (if directory-p
             (fat32-in-memory-to-m1-fs-helper
              fat32-in-memory
-             (string=>nats contents)
+             (make-dir-ent-list (string=>nats contents))
              (- entry-limit 1))
           (mv contents 0 nil 0)))
        ;; get-clusterchain-contents returns either 0 or a negative error code,
@@ -3191,7 +3179,7 @@
        ((mv tail tail-entry-count tail-clusterchain-list tail-error-code)
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
-         (nthcdr *ms-dir-ent-length* dir-contents)
+         (cdr dir-ent-list)
          tail-entry-limit))
        ;; This clause states that we simply can't store any files with length
        ;; (ash 1 32) or more - of course, this arises from the bit-width (32)
@@ -3200,7 +3188,7 @@
        ((when (and (not directory-p) (not (unsigned-byte-p 32 (length contents)))))
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
-         (nthcdr *ms-dir-ent-length* dir-contents)
+         (cdr dir-ent-list)
          (- entry-limit 1)))
        (error-code (if (zp error-code) tail-error-code error-code)))
     ;; We add the file to this m1 instance.
@@ -3223,17 +3211,19 @@
             clusterchain-list error-code)
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
-         dir-contents entry-limit)))
+         dir-ent-list entry-limit)))
     (and (natp entry-count)
          (<= entry-count (nfix entry-limit))
-         (m1-file-alist-p m1-file-alist)
+         ;; The following is no longer unconditionally true.
+         ;; (m1-file-alist-p m1-file-alist)
+         (alistp m1-file-alist)
          (true-list-listp clusterchain-list)
          (natp error-code)))
   :hints
   (("goal"
     :in-theory
     (e/d
-     (fat32-filename-p useless-dir-ent-p)
+     (fat32-filename-p fat32-in-memory-to-m1-fs-helper)
      (nth-of-string=>nats natp-of-cluster-size
                           get-clusterchain-contents
                           take-redefinition
@@ -3241,87 +3231,63 @@
                           nth floor))
     :induct
     (fat32-in-memory-to-m1-fs-helper fat32-in-memory
-                                     dir-contents entry-limit))
-   ("subgoal *1/6"
-    :in-theory
-    (e/d (fat32-filename-p useless-dir-ent-p)
-         (nth-of-string=>nats natp-of-cluster-size
-          get-clusterchain-contents
-          take-redefinition
-          by-slice-you-mean-the-whole-cake-2
-          nth floor
-          unsigned-byte-p-of-nth-when-unsigned-byte-listp))
-    :use
-    (:instance unsigned-byte-p-of-nth-when-unsigned-byte-listp
-               (n 0)
-               (l (take 32 dir-contents))
-               (bits 8))))
+                                     dir-ent-list entry-limit)))
   :rule-classes
   ((:type-prescription
     :corollary (b* (((mv & entry-count & &)
                      (fat32-in-memory-to-m1-fs-helper
                       fat32-in-memory
-                      dir-contents entry-limit)))
+                      dir-ent-list entry-limit)))
                  (natp entry-count)))
    (:type-prescription
     :corollary (b* (((mv & & & error-code)
                      (fat32-in-memory-to-m1-fs-helper
                       fat32-in-memory
-                      dir-contents entry-limit)))
+                      dir-ent-list entry-limit)))
                  (natp error-code)))
    (:linear
     :corollary (b* (((mv & entry-count & error-code)
                      (fat32-in-memory-to-m1-fs-helper
                       fat32-in-memory
-                      dir-contents entry-limit)))
+                      dir-ent-list entry-limit)))
                  (and (<= 0 entry-count)
                       (<= entry-count (nfix entry-limit))
                       (<= 0 error-code))))
-   (:rewrite :corollary (b* (((mv & entry-count & error-code)
+   (:rewrite :corollary (b* (((mv & entry-count clusterchain-list error-code)
                               (fat32-in-memory-to-m1-fs-helper
                                fat32-in-memory
-                               dir-contents entry-limit)))
+                               dir-ent-list entry-limit)))
                           (and (integerp entry-count)
-                               (integerp error-code))))
-   (:rewrite
-    :corollary (b* (((mv m1-file-alist & clusterchain-list)
-                     (fat32-in-memory-to-m1-fs-helper
-                      fat32-in-memory
-                      dir-contents entry-limit)))
-                 (and (m1-file-alist-p m1-file-alist)
-                      (true-list-listp clusterchain-list))))
+                               (integerp error-code)
+                               (true-list-listp clusterchain-list))))
    (:type-prescription
     :corollary (b* (((mv m1-file-alist &)
                      (fat32-in-memory-to-m1-fs-helper
                       fat32-in-memory
-                      dir-contents entry-limit)))
+                      dir-ent-list entry-limit)))
                  (true-listp m1-file-alist)))))
 
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthm
-    fat32-in-memory-to-m1-fs-helper-correctness-2
-    (b* (((mv m1-file-alist &)
-          (fat32-in-memory-to-m1-fs-helper
-           fat32-in-memory
-           dir-contents entry-limit)))
-      (<= (len m1-file-alist)
-          (floor (len dir-contents)
-                 *ms-dir-ent-length*)))
-    :hints
-    (("goal"
-      :in-theory (disable nth-of-string=>nats
-                          natp-of-cluster-size
+(defthm
+  fat32-in-memory-to-m1-fs-helper-correctness-2
+  (b* (((mv m1-file-alist &)
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         dir-ent-list entry-limit)))
+    (<= (len m1-file-alist)
+        (len dir-ent-list)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (fat32-in-memory-to-m1-fs-helper)
+     (nth-of-string=>nats natp-of-cluster-size
                           get-clusterchain-contents
                           take-redefinition
-                          by-slice-you-mean-the-whole-cake-2)
-      :induct (fat32-in-memory-to-m1-fs-helper
-               fat32-in-memory
-               dir-contents entry-limit)))
-    :rule-classes :linear))
+                          by-slice-you-mean-the-whole-cake-2))
+    :induct
+    (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                     dir-ent-list entry-limit)))
+  :rule-classes :linear)
 
 (defthm
   fat32-in-memory-to-m1-fs-helper-guard-lemma-1
