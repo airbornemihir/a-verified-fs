@@ -4604,27 +4604,34 @@
      (stobj-set-indices-in-fa-table nth)))))
 
 (defthm
-  m1-fs-to-fat32-in-memory-helper-correctness-1
-  (unsigned-byte-listp
-   8
-   (flatten (mv-nth 1
-                    (m1-fs-to-fat32-in-memory-helper
-                     fat32-in-memory fs first-cluster))))
-  :hints (("Goal" :in-theory (enable lower-bounded-integer-listp))))
+  dir-ent-list-p-of-m1-fs-to-fat32-in-memory-helper
+  (dir-ent-list-p
+   (mv-nth 1
+           (m1-fs-to-fat32-in-memory-helper
+            fat32-in-memory fs first-cluster)))
+  :hints (("goal" :in-theory (e/d (lower-bounded-integer-listp)
+                                  (nth floor mod)))))
 
 (defthm
-  m1-fs-to-fat32-in-memory-helper-correctness-2
-  (equal
-   (len
-    (flatten
-     (mv-nth
-      1
-      (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs first-cluster))))
-   (* *ms-dir-ent-length*
-      (len
-       (mv-nth
-        1
-        (m1-fs-to-fat32-in-memory-helper fat32-in-memory fs first-cluster))))))
+  useful-dir-ent-list-p-of-m1-fs-to-fat32-in-memory-helper
+  (implies (m1-file-alist-p fs)
+           (useful-dir-ent-list-p
+            (mv-nth 1
+                    (m1-fs-to-fat32-in-memory-helper
+                     fat32-in-memory fs first-cluster))))
+  :hints (("Goal" :in-theory (e/d (lower-bounded-integer-listp) (nth
+                                                                 floor mod)))))
+
+(defthm
+  useful-dir-ent-list-p-of-m1-fs-to-fat32-in-memory-helper
+  (implies
+   (m1-file-alist-p fs)
+   (useful-dir-ent-list-p
+    (mv-nth 1
+            (m1-fs-to-fat32-in-memory-helper
+             fat32-in-memory fs first-cluster))))
+  :hints (("goal" :in-theory (e/d (lower-bounded-integer-listp)
+                                  (nth floor mod)))))
 
 (defthm
   m1-fs-to-fat32-in-memory-helper-correctness-3
