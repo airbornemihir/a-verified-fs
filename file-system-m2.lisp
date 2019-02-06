@@ -4093,32 +4093,6 @@
                         index-list fat32-in-memory))
    (bpb_rootclus fat32-in-memory)))
 
-;; (defthm
-;;   stobj-set-clusters-correctness-1
-;;   (implies
-;;    (and
-;;     (lower-bounded-integer-listp
-;;      index-list *ms-first-data-cluster*)
-;;     (bounded-nat-listp index-list
-;;                        (+ *ms-first-data-cluster*
-;;                           (data-region-length fat32-in-memory)))
-;;     (equal (len index-list)
-;;            (len cluster-list)))
-;;    (equal
-;;     (mv-nth 1
-;;             (stobj-set-clusters cluster-list
-;;                                 index-list fat32-in-memory))
-;;     index-list))
-;;   :hints
-;;   (("goal" :in-theory (enable lower-bounded-integer-listp))))
-
-(defthm
-  place-contents-guard-lemma-1
-  (implies
-   (and (consp x)
-        (fat32-masked-entry-list-p x))
-   (true-listp (cdr x))))
-
 ;; This function needs to return an mv containing the fat32-in-memory stobj,
 ;; the new directory entry, and an errno value (either 0 or ENOSPC).
 
@@ -4146,17 +4120,20 @@
                 (>= (fat-length fat32-in-memory)
                     *ms-first-data-cluster*)
                 (fat32-masked-entry-p first-cluster)
-                (>= first-cluster *ms-first-data-cluster*))
+                (>= first-cluster *ms-first-data-cluster*)
+                (< first-cluster
+                   (+ *ms-first-data-cluster*
+                      (count-of-clusters fat32-in-memory))))
     :guard-hints
     (("goal"
       :do-not-induct t
       :in-theory
       (e/d
        (lower-bounded-integer-listp)
-       (fat32-in-memoryp
-        (:rewrite
+       ((:rewrite
          fat32-masked-entry-list-p-of-find-n-free-clusters
-         . 1)))
+         . 1)
+        unsigned-byte-p))
       :use
       (:instance
        (:rewrite
@@ -4171,34 +4148,48 @@
   (b*
       ((dir-ent (dir-ent-fix dir-ent))
        (cluster-size (cluster-size fat32-in-memory))
-       (clusters (make-clusters contents cluster-size))
-       ;; Quote: "Note that a zero-length file [...] has a first cluster
-       ;; number of 0 placed in its directory entry." from page 17 of the FAT
-       ;; specification.
-       ((unless (<= 1 (len clusters)))
-        (mv fat32-in-memory
-            (dir-ent-set-first-cluster-file-size
-             dir-ent 0 file-length)
-            0
-            nil))
-       (indices (list* first-cluster
-                       (stobj-find-n-free-clusters
-                        fat32-in-memory (- (len clusters) 1))))
-       ((unless (equal (len indices) (len clusters)))
-        (mv fat32-in-memory dir-ent *enospc* nil))
-       (fat32-in-memory
-        (stobj-set-clusters clusters indices fat32-in-memory))
-       (fat32-in-memory
-        (stobj-set-indices-in-fa-table
-         fat32-in-memory indices
-         (binary-append (cdr indices)
-                        (list *ms-end-of-clusterchain*)))))
-    (mv
-     fat32-in-memory
-     (dir-ent-set-first-cluster-file-size dir-ent (car indices)
-                                          file-length)
-     0
-     indices)))
+       (clusters (make-clusters contents cluster-size)))
+    (if
+        (and
+         (< (len clusters) 1)
+         (mbt
+          (and
+           (fat32-masked-entry-p first-cluster)
+           (< first-cluster
+              (fat-length fat32-in-memory)))))
+        (b*
+            (;; There shouldn't be a memory leak - mark this as free.
+             (fat32-in-memory
+              (update-fati first-cluster
+                           (fat32-update-lower-28
+                            (fati first-cluster fat32-in-memory)
+                            0)
+                           fat32-in-memory))
+             ;; From page 17 of the FAT specification: "Note that a zero-length
+             ;; file [...] has a first cluster number of 0 placed in its
+             ;; directory entry."
+             (dir-ent (dir-ent-set-first-cluster-file-size
+                       dir-ent 0 file-length)))
+          (mv fat32-in-memory dir-ent 0 nil))
+      (b*
+          ((indices
+            (list* first-cluster
+                   (stobj-find-n-free-clusters
+                    fat32-in-memory (- (len clusters) 1))))
+           ((unless (equal (len indices) (len clusters)))
+            (mv fat32-in-memory dir-ent *enospc* nil))
+           (fat32-in-memory
+            (stobj-set-clusters clusters indices fat32-in-memory))
+           (fat32-in-memory
+            (stobj-set-indices-in-fa-table
+             fat32-in-memory indices
+             (binary-append (cdr indices)
+                            (list *ms-end-of-clusterchain*)))))
+        (mv
+         fat32-in-memory
+         (dir-ent-set-first-cluster-file-size dir-ent (car indices)
+                                              file-length)
+         0 indices)))))
 
 (defthm
   compliant-fat32-in-memoryp-of-place-contents
@@ -4207,7 +4198,10 @@
         (stringp contents)
         (natp file-length)
         (integerp first-cluster)
-        (>= first-cluster *ms-first-data-cluster*))
+        (>= first-cluster *ms-first-data-cluster*)
+        (< first-cluster
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory))))
    (compliant-fat32-in-memoryp
     (mv-nth
      0
