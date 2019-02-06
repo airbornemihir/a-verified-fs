@@ -9929,6 +9929,51 @@
                             (equal (true-list-fix dir-ent)
                                    dir-ent))))))
 
+(encapsulate
+  ()
+
+  (local (include-book "arithmetic-5/top" :dir :system))
+
+  (defthm m1-fs-to-fat32-in-memory-inversion-lemma-40
+    (implies (and (<= 32 (len dir-contents))
+                  (equal (mod (len dir-contents) 32) 0)
+                  (< (+ -32 (len dir-contents)) 32))
+             (equal (len dir-contents) 32))))
+
+(thm
+ (implies
+  (and
+   (not (zp n))
+   (not (zp entry-limit))
+   (unsigned-byte-listp 8 dir-contents)
+   (equal (mod (len dir-contents)
+               *ms-dir-ent-length*)
+          0)
+   (equal (mv-nth 3 (fat32-in-memory-to-m1-fs-helper
+                     fat32-in-memory
+                     dir-contents entry-limit)) 0))
+  (equal
+   (fat32-in-memory-to-m1-fs-helper
+    fat32-in-memory
+    (append dir-contents (make-list-ac n 0 nil))
+    entry-limit)
+   (fat32-in-memory-to-m1-fs-helper
+    fat32-in-memory
+    dir-contents
+    entry-limit)))
+ :hints
+ (("goal"
+   :induct
+   (fat32-in-memory-to-m1-fs-helper
+    fat32-in-memory
+    dir-contents entry-limit)
+   :in-theory
+   (e/d (dir-ent-p dir-ent-fix) (nth floor mod)) :expand
+   (fat32-in-memory-to-m1-fs-helper
+    fat32-in-memory
+    (append dir-contents (make-list-ac n 0 nil))
+    entry-limit)) ))
+
 (thm-cp
  (implies
   (and
