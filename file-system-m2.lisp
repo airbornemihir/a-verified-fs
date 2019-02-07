@@ -6798,6 +6798,18 @@
              1))))))))
      (cluster-size (cluster-size fat32-in-memory))))))
 
+;; Rename and move next to acl2-count-of-m1-file->contents.
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-2
+  (<= (acl2-count (m1-file->contents file))
+      (acl2-count file))
+  :rule-classes :linear
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (m1-file-p m1-file->contents m1-file-contents-fix)
+         (acl2-count-of-m1-file->contents)))))
+
 (thm-cp
  (implies
   (and
