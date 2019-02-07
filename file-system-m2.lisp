@@ -6823,7 +6823,10 @@
    (<= *ms-first-data-cluster* current-dir-first-cluster)
    (< current-dir-first-cluster
       (+ *ms-first-data-cluster*
-         (count-of-clusters fat32-in-memory))))
+         (count-of-clusters fat32-in-memory)))
+   (integerp entry-limit)
+   (>= entry-limit
+       (m1-entry-count fs)))
   (b*
       ((x-hypotheses
         (and
@@ -6847,7 +6850,7 @@
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
          dir-ent-list
-         (m1-entry-count fs)))
+         entry-limit))
        0)
       (implies
        x-hypotheses
@@ -6858,7 +6861,7 @@
          (fat32-in-memory-to-m1-fs-helper
           fat32-in-memory
           dir-ent-list
-          (m1-entry-count fs)))))))))
+          entry-limit))))))))
  :hints (("Goal" :induct
           (m1-fs-to-fat32-in-memory-helper fat32-in-memory
                                            fs current-dir-first-cluster)
