@@ -4634,6 +4634,20 @@
                                   (nth floor mod)))))
 
 (defthm
+  unsigned-byte-listp-of-flatten-when-dir-ent-list-p
+  (implies (dir-ent-list-p dir-ent-list)
+           (unsigned-byte-listp 8 (flatten dir-ent-list)))
+  :hints (("goal" :in-theory (e/d (flatten) (floor mod nth)))))
+
+(defthm
+  len-of-flatten-when-dir-ent-list-p
+  (implies (dir-ent-list-p dir-ent-list)
+           (equal
+            (len (flatten dir-ent-list))
+            (* *ms-dir-ent-length* (len dir-ent-list))))
+  :hints (("goal" :in-theory (e/d (flatten) (floor mod nth)))))
+
+(defthm
   m1-fs-to-fat32-in-memory-helper-correctness-3
   (implies
    (and (compliant-fat32-in-memoryp fat32-in-memory)
@@ -5707,20 +5721,6 @@
       (+ 1
          (m1-entry-count (cdr fs))))))
 
-;; (defthm
-;;   fat32-in-memory-to-m1-fs-helper-correctness-3
-;;   (implies (unsigned-byte-listp 8 dir-contents)
-;;            (b* (((mv m1-file-alist entry-count)
-;;                  (fat32-in-memory-to-m1-fs-helper
-;;                   fat32-in-memory
-;;                   dir-contents entry-limit)))
-;;              (equal
-;;               entry-count
-;;               (m1-entry-count m1-file-alist))))
-;;   :hints (("goal" :induct (fat32-in-memory-to-m1-fs-helper
-;;                            fat32-in-memory
-;;                            dir-contents entry-limit))))
-
 (defthm
   data-regioni-of-stobj-set-clusters
   (implies
@@ -6501,32 +6501,374 @@
                           (cluster-size fat32-in-memory)))))))
       (fa-table (effective-fat fat32-in-memory)))))))
 
-(defthmd
-  m1-fs-to-fat32-in-memory-inversion-lemma-2
+(defthm place-contents-expansion-1
   (implies
-   (and (not (zp (cluster-size fat32-in-memory)))
-        (dir-ent-p dir-ent))
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (not (zp (cluster-size fat32-in-memory)))
+        (dir-ent-p dir-ent)
+        (fat32-masked-entry-p first-cluster)
+        (< first-cluster
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory))))
    (equal
     (mv-nth 1
             (place-contents fat32-in-memory dir-ent
                             contents file-length first-cluster))
     (if
-     (equal (length contents) 0)
-     (dir-ent-set-first-cluster-file-size dir-ent 0 file-length)
-     (if
-      (equal
-       (+
-        1
-        (len (stobj-find-n-free-clusters
-              fat32-in-memory
-              (+ -1
-                 (len (make-clusters contents
-                                     (cluster-size fat32-in-memory)))))))
-       (len (make-clusters contents
-                           (cluster-size fat32-in-memory))))
-      (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-length)
-      dir-ent))))
+        (equal (length contents) 0)
+        (dir-ent-set-first-cluster-file-size dir-ent 0 file-length)
+      (if
+          (equal
+           (+
+            1
+            (len (stobj-find-n-free-clusters
+                  fat32-in-memory
+                  (+ -1
+                     (len (make-clusters contents
+                                         (cluster-size fat32-in-memory)))))))
+           (len (make-clusters contents
+                               (cluster-size fat32-in-memory))))
+          (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-length)
+        dir-ent))))
   :hints (("goal" :in-theory (enable place-contents))))
+
+;; Move this to file-system-m1.lisp
+(defthm true-list-fix-when-dir-ent-p
+  (implies (dir-ent-p dir-ent)
+           (equal (true-list-fix dir-ent)
+                  dir-ent)))
+
+(defthm
+  make-dir-ent-list-of-append-1
+  (implies
+   (dir-ent-p dir-ent)
+   (equal (make-dir-ent-list (append dir-ent dir-contents))
+          (if (equal (nth 0 dir-ent) 0)
+              nil
+              (if (useless-dir-ent-p dir-ent)
+                  (make-dir-ent-list dir-contents)
+                  (cons dir-ent
+                        (make-dir-ent-list dir-contents))))))
+  :hints (("goal" :in-theory (e/d (make-dir-ent-list)
+                                  (nth floor mod)))))
+
+;; Move this to file-system-m1.lisp
+(defthm
+  dir-ent-set-filename-of-constant-1
+  (implies
+   (and (dir-ent-p dir-ent)
+        (or (equal filename *current-dir-fat32-name*)
+            (equal filename *parent-dir-fat32-name*)))
+   (not (equal (nth 0
+                    (dir-ent-set-filename dir-ent filename))
+               0)))
+  :hints
+  (("goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p)
+                           (nth)))))
+
+(defthm
+  make-dir-ent-list-of-append-2
+  (implies
+   (and (dir-ent-list-p dir-ent-list)
+        (unsigned-byte-listp 8 y)
+        (or (< (len y) *ms-dir-ent-length*)
+            (equal (nth 0 y) 0)))
+   (equal (make-dir-ent-list (append (flatten dir-ent-list) y))
+          (make-dir-ent-list (flatten dir-ent-list))))
+  :hints
+  (("goal" :in-theory (e/d (make-dir-ent-list flatten) (nth))
+    :induct (flatten dir-ent-list))))
+
+(defthm
+  make-dir-ent-list-of-flatten-when-useful-dir-ent-listp
+  (implies (useful-dir-ent-list-p dir-ent-list)
+           (equal (make-dir-ent-list (flatten dir-ent-list))
+                  dir-ent-list))
+  :hints (("goal" :in-theory (e/d (make-dir-ent-list flatten)
+                                  (nth floor mod)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-1
+  (implies
+   (and
+    (equal
+     (mv-nth
+      2
+      (m1-fs-to-fat32-in-memory-helper
+       (update-fati
+        (nth 0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (m1-fs-to-fat32-in-memory-helper
+                        fat32-in-memory (cdr fs)
+                        current-dir-first-cluster)))
+              1))
+        (fat32-update-lower-28
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (m1-fs-to-fat32-in-memory-helper
+                      fat32-in-memory (cdr fs)
+                      current-dir-first-cluster)))
+            1))
+          (mv-nth 0
+                  (m1-fs-to-fat32-in-memory-helper
+                   fat32-in-memory (cdr fs)
+                   current-dir-first-cluster)))
+         268435455)
+        (mv-nth 0
+                (m1-fs-to-fat32-in-memory-helper
+                 fat32-in-memory (cdr fs)
+                 current-dir-first-cluster)))
+       (m1-file->contents (cdr (car fs)))
+       (nth 0
+            (find-n-free-clusters
+             (effective-fat
+              (mv-nth 0
+                      (m1-fs-to-fat32-in-memory-helper
+                       fat32-in-memory (cdr fs)
+                       current-dir-first-cluster)))
+             1))))
+     0)
+    (consp fs)
+    (not (m1-regular-file-p (cdr (car fs))))
+    (equal (mod 2097152 (cluster-size fat32-in-memory))
+           0)
+    (m1-file-alist-p fs)
+    (m1-bounded-file-alist-p fs))
+   (not
+    (<
+     2097152
+     (*
+      (cluster-size fat32-in-memory)
+      (len
+       (make-clusters
+        (nats=>string
+         (append
+          (dir-ent-install-directory-bit
+           (dir-ent-set-filename
+            (dir-ent-set-first-cluster-file-size
+             (m1-file->dir-ent (cdr (car fs)))
+             (nth
+              0
+              (find-n-free-clusters
+               (effective-fat
+                (mv-nth 0
+                        (m1-fs-to-fat32-in-memory-helper
+                         fat32-in-memory (cdr fs)
+                         current-dir-first-cluster)))
+               1))
+             0)
+            ".          ")
+           t)
+          (dir-ent-install-directory-bit
+           (dir-ent-set-filename
+            (dir-ent-set-first-cluster-file-size
+             (m1-file->dir-ent (cdr (car fs)))
+             current-dir-first-cluster 0)
+            "..         ")
+           t)
+          (flatten
+           (mv-nth
+            1
+            (m1-fs-to-fat32-in-memory-helper
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (m1-fs-to-fat32-in-memory-helper
+                          fat32-in-memory (cdr fs)
+                          current-dir-first-cluster)))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (m1-fs-to-fat32-in-memory-helper
+                            fat32-in-memory (cdr fs)
+                            current-dir-first-cluster)))
+                  1))
+                (mv-nth 0
+                        (m1-fs-to-fat32-in-memory-helper
+                         fat32-in-memory (cdr fs)
+                         current-dir-first-cluster)))
+               268435455)
+              (mv-nth 0
+                      (m1-fs-to-fat32-in-memory-helper
+                       fat32-in-memory (cdr fs)
+                       current-dir-first-cluster)))
+             (m1-file->contents (cdr (car fs)))
+             (nth
+              0
+              (find-n-free-clusters
+               (effective-fat
+                (mv-nth 0
+                        (m1-fs-to-fat32-in-memory-helper
+                         fat32-in-memory (cdr fs)
+                         current-dir-first-cluster)))
+               1)))))))
+        (cluster-size fat32-in-memory)))))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable nth floor mod
+                        (:linear make-clusters-correctness-3))
+    :use
+    (:instance
+     (:linear make-clusters-correctness-3)
+     (max-length *ms-max-dir-size*)
+     (text
+      (nats=>string
+       (append
+        (dir-ent-install-directory-bit
+         (dir-ent-set-filename
+          (dir-ent-set-first-cluster-file-size
+           (m1-file->dir-ent (cdr (car fs)))
+           (nth
+            0
+            (find-n-free-clusters
+             (effective-fat
+              (mv-nth 0
+                      (m1-fs-to-fat32-in-memory-helper
+                       fat32-in-memory (cdr fs)
+                       current-dir-first-cluster)))
+             1))
+           0)
+          ".          ")
+         t)
+        (dir-ent-install-directory-bit
+         (dir-ent-set-filename
+          (dir-ent-set-first-cluster-file-size
+           (m1-file->dir-ent (cdr (car fs)))
+           current-dir-first-cluster 0)
+          "..         ")
+         t)
+        (flatten
+         (mv-nth
+          1
+          (m1-fs-to-fat32-in-memory-helper
+           (update-fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (m1-fs-to-fat32-in-memory-helper
+                        fat32-in-memory (cdr fs)
+                        current-dir-first-cluster)))
+              1))
+            (fat32-update-lower-28
+             (fati
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (m1-fs-to-fat32-in-memory-helper
+                          fat32-in-memory (cdr fs)
+                          current-dir-first-cluster)))
+                1))
+              (mv-nth 0
+                      (m1-fs-to-fat32-in-memory-helper
+                       fat32-in-memory (cdr fs)
+                       current-dir-first-cluster)))
+             268435455)
+            (mv-nth 0
+                    (m1-fs-to-fat32-in-memory-helper
+                     fat32-in-memory (cdr fs)
+                     current-dir-first-cluster)))
+           (m1-file->contents (cdr (car fs)))
+           (nth
+            0
+            (find-n-free-clusters
+             (effective-fat
+              (mv-nth 0
+                      (m1-fs-to-fat32-in-memory-helper
+                       fat32-in-memory (cdr fs)
+                       current-dir-first-cluster)))
+             1))))))))
+     (cluster-size (cluster-size fat32-in-memory))))))
+
+(thm-cp
+ (implies
+  (and
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (equal (mod *ms-max-dir-size* (cluster-size fat32-in-memory))
+          0)
+   (m1-file-alist-p fs)
+   (m1-bounded-file-alist-p fs)
+   (m1-file-no-dups-p fs)
+   (fat32-masked-entry-p current-dir-first-cluster)
+   (<= *ms-first-data-cluster* current-dir-first-cluster)
+   (< current-dir-first-cluster
+      (+ *ms-first-data-cluster*
+         (count-of-clusters fat32-in-memory))))
+  (b*
+      ((x-hypotheses
+        (and
+         (integerp x)
+         (<= 2 x)
+         (< x (+ 2 (count-of-clusters fat32-in-memory)))
+         (not
+          (equal
+           (fat32-entry-mask
+            (fati x fat32-in-memory))
+           0))))
+       ((mv fat32-in-memory dir-ent-list error-code)
+        (m1-fs-to-fat32-in-memory-helper fat32-in-memory
+                                         fs current-dir-first-cluster)))
+    (implies
+     (zp error-code)
+     (and
+      (equal
+       (mv-nth
+        3
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         dir-ent-list
+         (m1-entry-count fs)))
+       0)
+      (implies
+       x-hypotheses
+       (not-intersectp-list
+        (list x)
+        (mv-nth
+         2
+         (fat32-in-memory-to-m1-fs-helper
+          fat32-in-memory
+          dir-ent-list
+          (m1-entry-count fs)))))))))
+ :hints (("Goal" :induct
+          (m1-fs-to-fat32-in-memory-helper fat32-in-memory
+                                           fs current-dir-first-cluster)
+          :in-theory (e/d
+                      (fat32-in-memory-to-m1-fs-helper)
+                      (floor
+                       mod
+                       nth
+                       (:rewrite make-clusters-correctness-1 . 1)
+                       (:rewrite nth-of-nats=>chars)
+                       (:rewrite by-slice-you-mean-the-whole-cake-2))))
+         ("subgoal *1/4"
+          :expand
+          (:free
+           (fat32-in-memory dir-ent dir-ent-list entry-limit)
+           (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                            (cons dir-ent dir-ent-list)
+                                            entry-limit)))
+         ("Subgoal *1/3"
+          :expand
+          ((:free (y) (intersectp-equal nil y))
+           (:free (x1 x2 y) (intersectp-equal (list x1) (cons x2 y)))))))
 
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-3
@@ -9941,80 +10283,6 @@
     fat32-in-memory
     (append dir-contents (make-list-ac n 0 nil))
     entry-limit)) ))
-
-(thm-cp
- (implies
-  (and
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (equal (mod *ms-max-dir-size* (cluster-size fat32-in-memory))
-          0)
-   (m1-file-alist-p fs)
-   (m1-bounded-file-alist-p fs)
-   (m1-file-no-dups-p fs)
-   (fat32-masked-entry-p current-dir-first-cluster)
-   (<= *ms-first-data-cluster* current-dir-first-cluster)
-   (< current-dir-first-cluster
-      (+ *ms-first-data-cluster*
-         (count-of-clusters fat32-in-memory))))
-  (b*
-      ((x-hypotheses
-        (and
-         (integerp x)
-         (<= 2 x)
-         (< x (+ 2 (count-of-clusters fat32-in-memory)))
-         (not
-          (equal
-           (fat32-entry-mask
-            (fati x fat32-in-memory))
-           0))))
-       ((mv fat32-in-memory dir-ent-list error-code)
-        (m1-fs-to-fat32-in-memory-helper fat32-in-memory
-                                         fs current-dir-first-cluster)))
-    (implies
-     (zp error-code)
-     (and
-      (equal
-       (mv-nth
-        3
-        (fat32-in-memory-to-m1-fs-helper
-         fat32-in-memory
-         (flatten dir-ent-list)
-         (m1-entry-count fs)))
-       0)
-      (implies
-       x-hypotheses
-       (not-intersectp-list
-        (list x)
-        (mv-nth
-         2
-         (fat32-in-memory-to-m1-fs-helper
-          fat32-in-memory
-          (flatten dir-ent-list)
-          (m1-entry-count fs)))))))))
- :hints (("Goal" :induct
-          (m1-fs-to-fat32-in-memory-helper fat32-in-memory
-                                           fs current-dir-first-cluster)
-          :in-theory (e/d
-                      (m1-fs-to-fat32-in-memory-inversion-lemma-2
-                       m1-fs-to-fat32-in-memory-inversion-lemma-21)
-                      (floor
-                       mod
-                       nth
-                       (:rewrite make-clusters-correctness-1 . 1)
-                       (:rewrite nth-of-nats=>chars)
-                       (:rewrite by-slice-you-mean-the-whole-cake-2)
-                       (:definition m1-fs-to-fat32-in-memory-helper)
-                       (:definition FAT32-IN-MEMORY-TO-M1-FS-HELPER))))
-         ("Subgoal *1/4"
-          :expand
-          (m1-fs-to-fat32-in-memory-helper fat32-in-memory
-                                           fs current-dir-first-cluster))
-         ("Subgoal *1/3"
-          :expand
-          ((m1-fs-to-fat32-in-memory-helper fat32-in-memory
-                                            fs current-dir-first-cluster)
-           (:free (y) (intersectp-equal nil y))
-           (:free (x1 x2 y) (intersectp-equal (list x1) (cons x2 y)))))))
 
 (thm
  (implies
