@@ -3194,17 +3194,6 @@
          fat32-in-memory
          (cdr dir-ent-list)
          tail-entry-limit))
-       ;; This clause states that we simply can't store any files with length
-       ;; (ash 1 32) or more - of course, this arises from the bit-width (32)
-       ;; of the segment of the directory entry which is going to store the
-       ;; length of the file.
-       ((unless
-            (mbt
-             (or directory-p (unsigned-byte-p 32 (length contents)))))
-        (fat32-in-memory-to-m1-fs-helper
-         fat32-in-memory
-         (cdr dir-ent-list)
-         (- entry-limit 1)))
        (error-code (if (zp error-code) tail-error-code error-code)))
     ;; We add the file to this m1 instance.
     (mv (list* (cons filename
@@ -5977,7 +5966,10 @@
      (update-nth (:definition get-clusterchain-contents)
                  (:rewrite natp-of-cluster-size . 1)
                  (:rewrite by-slice-you-mean-the-whole-cake-2)
-                 (:definition fat32-build-index-list))))))
+                 (:definition fat32-build-index-list))))
+   ;; This case split, below, is needed because :brr shows ACL2 hesitating
+   ;; before a case split it needs to do...
+   ("Subgoal *1/3" :cases ((natp i)))))
 
 (encapsulate
   ()
