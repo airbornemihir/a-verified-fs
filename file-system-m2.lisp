@@ -7006,7 +7006,15 @@
          (fat32-in-memory-to-m1-fs-helper
           fat32-in-memory
           dir-ent-list
-          entry-limit))))))))
+          entry-limit))))
+      (m1-dir-equiv
+       (mv-nth
+        0
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         dir-ent-list
+         entry-limit))
+       fs)))))
  :hints (("Goal" :induct
           (induction-scheme
            fat32-in-memory fs current-dir-first-cluster entry-limit x)
