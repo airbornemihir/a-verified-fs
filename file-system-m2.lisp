@@ -6819,6 +6819,15 @@
              1))))))))
      (cluster-size (cluster-size fat32-in-memory))))))
 
+(skip-proofs
+ (defthm
+   m1-fs-to-fat32-in-memory-inversion-lemma-2
+   (implies (and (m1-file-alist-p m1-file-alist1)
+                 (m1-file-no-dups-p m1-file-alist1)
+                 (m1-dir-equiv m1-file-alist1 m1-file-alist2))
+            (equal (m1-entry-count m1-file-alist1)
+                   (m1-entry-count m1-file-alist2)))))
+
 (local
  (defun-nx
     induction-scheme
