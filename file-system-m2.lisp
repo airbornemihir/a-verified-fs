@@ -5723,11 +5723,23 @@
       (atom fs)
       0
     (if (m1-directory-file-p (cdar fs))
-        (+ 3
+        (+ 1
            (m1-entry-count (m1-file->contents (cdar fs)))
            (m1-entry-count (cdr fs)))
       (+ 1
          (m1-entry-count (cdr fs))))))
+
+(defthm
+  fat32-in-memory-to-m1-fs-helper-correctness-3
+  (b* (((mv m1-file-alist entry-count & &)
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         dir-ent-list entry-limit)))
+    (equal entry-count
+           (m1-entry-count m1-file-alist)))
+  :hints
+  (("goal"
+    :in-theory (enable fat32-in-memory-to-m1-fs-helper))))
 
 (defthm
   data-regioni-of-stobj-set-clusters
