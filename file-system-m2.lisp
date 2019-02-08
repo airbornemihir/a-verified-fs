@@ -6561,12 +6561,6 @@
         *enospc*))))
   :hints (("goal" :in-theory (enable place-contents))))
 
-;; Move this to file-system-m1.lisp
-(defthm true-list-fix-when-dir-ent-p
-  (implies (dir-ent-p dir-ent)
-           (equal (true-list-fix dir-ent)
-                  dir-ent)))
-
 (defthm
   make-dir-ent-list-of-append-1
   (implies
@@ -6580,20 +6574,6 @@
                         (make-dir-ent-list dir-contents))))))
   :hints (("goal" :in-theory (e/d (make-dir-ent-list)
                                   (nth floor mod)))))
-
-;; Move this to file-system-m1.lisp
-(defthm
-  dir-ent-set-filename-of-constant-1
-  (implies
-   (and (dir-ent-p dir-ent)
-        (or (equal filename *current-dir-fat32-name*)
-            (equal filename *parent-dir-fat32-name*)))
-   (not (equal (nth 0
-                    (dir-ent-set-filename dir-ent filename))
-               0)))
-  :hints
-  (("goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p)
-                           (nth)))))
 
 (defthm
   make-dir-ent-list-of-append-2
@@ -6826,18 +6806,6 @@
                        current-dir-first-cluster)))
              1))))))))
      (cluster-size (cluster-size fat32-in-memory))))))
-
-;; Rename and move next to acl2-count-of-m1-file->contents.
-(defthm
-  m1-fs-to-fat32-in-memory-inversion-lemma-2
-  (<= (acl2-count (m1-file->contents file))
-      (acl2-count file))
-  :rule-classes :linear
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (m1-file-p m1-file->contents m1-file-contents-fix)
-         (acl2-count-of-m1-file->contents)))))
 
 (local
  (defun-nx

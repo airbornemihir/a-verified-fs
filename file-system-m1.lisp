@@ -205,6 +205,11 @@
            (unsigned-byte-listp 8 dir-ent))
   :hints (("goal" :in-theory (enable dir-ent-p))))
 
+(defthm true-list-fix-when-dir-ent-p
+  (implies (dir-ent-p dir-ent)
+           (equal (true-list-fix dir-ent)
+                  dir-ent)))
+
 (defthm dir-ent-p-of-update-nth
   (implies (dir-ent-p l)
            (equal (dir-ent-p (update-nth key val l))
@@ -493,6 +498,19 @@
     :corollary
     (true-listp (dir-ent-set-filename dir-ent filename))
     :hints (("goal" :in-theory (enable dir-ent-p))))))
+
+(defthm
+  dir-ent-set-filename-of-constant-1
+  (implies
+   (and (dir-ent-p dir-ent)
+        (or (equal filename *current-dir-fat32-name*)
+            (equal filename *parent-dir-fat32-name*)))
+   (not (equal (nth 0
+                    (dir-ent-set-filename dir-ent filename))
+               0)))
+  :hints
+  (("goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p)
+                           (nth)))))
 
 (encapsulate
   ()
@@ -818,12 +836,23 @@
 
 (defthm
   acl2-count-of-m1-file->contents
-  (implies (m1-file-p file)
-           (< (acl2-count (m1-file->contents file))
-              (acl2-count file)))
-  :rule-classes :linear
-  :hints
-  (("goal" :in-theory (enable m1-file-p m1-file->contents))))
+  t
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies (m1-file-p file)
+             (< (acl2-count (m1-file->contents file))
+                (acl2-count file)))
+    :hints
+    (("goal" :in-theory (enable m1-file-p m1-file->contents))))
+   (:linear
+    :corollary
+    (<= (acl2-count (m1-file->contents file))
+        (acl2-count file))
+    :hints
+    (("goal"
+      :in-theory
+      (enable m1-file-p m1-file->contents m1-file-contents-fix))))))
 
 (defund m1-regular-file-p (file)
   (declare (xargs :guard t))
