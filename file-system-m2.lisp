@@ -3054,7 +3054,7 @@
            (make-dir-ent-list
             (nthcdr *ms-dir-ent-length* dir-contents)))))
 
-(defun useful-dir-ent-list-p (dir-ent-list)
+(defund useful-dir-ent-list-p (dir-ent-list)
   (declare (xargs :guard t))
   (if (atom dir-ent-list)
       (equal dir-ent-list nil)
@@ -3065,12 +3065,17 @@
 
 (defthm dir-ent-list-p-when-useful-dir-ent-list-p
   (implies (useful-dir-ent-list-p dir-ent-list)
-           (dir-ent-list-p dir-ent-list)))
+           (dir-ent-list-p dir-ent-list))
+  :hints
+  (("Goal" :in-theory (enable useful-dir-ent-list-p))))
 
 (defthm
   useful-dir-ent-list-p-of-make-dir-ent-list
   (useful-dir-ent-list-p (make-dir-ent-list dir-contents))
-  :hints (("goal" :in-theory (e/d (make-dir-ent-list) (nth)))))
+  :hints
+  (("goal"
+    :in-theory (e/d (make-dir-ent-list useful-dir-ent-list-p)
+                    (nth)))))
 
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
@@ -3287,26 +3292,26 @@
 
 (defthm
   fat32-in-memory-to-m1-fs-helper-correctness-2
-  (implies
-   (useful-dir-ent-list-p dir-ent-list)
-   (b* (((mv m1-file-alist & & &)
-         (fat32-in-memory-to-m1-fs-helper
-          fat32-in-memory
-          dir-ent-list entry-limit)))
-     (m1-file-alist-p m1-file-alist)))
+  (implies (useful-dir-ent-list-p dir-ent-list)
+           (b* (((mv m1-file-alist & & &)
+                 (fat32-in-memory-to-m1-fs-helper
+                  fat32-in-memory
+                  dir-ent-list entry-limit)))
+             (m1-file-alist-p m1-file-alist)))
   :hints
   (("goal"
     :in-theory
-    (e/d
-     (fat32-filename-p useless-dir-ent-p fat32-in-memory-to-m1-fs-helper)
-     (nth-of-string=>nats natp-of-cluster-size
-                          get-clusterchain-contents
-                          take-redefinition
-                          by-slice-you-mean-the-whole-cake-2
-                          nth floor))
-    :induct
-    (fat32-in-memory-to-m1-fs-helper fat32-in-memory
-                                     dir-ent-list entry-limit))))
+    (e/d (fat32-filename-p useless-dir-ent-p
+                           fat32-in-memory-to-m1-fs-helper
+                           useful-dir-ent-list-p)
+         (nth-of-string=>nats natp-of-cluster-size
+                              get-clusterchain-contents
+                              take-redefinition
+                              by-slice-you-mean-the-whole-cake-2
+                              nth floor))
+    :induct (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory
+             dir-ent-list entry-limit))))
 
 (defthm
   fat32-in-memory-to-m1-fs-helper-guard-lemma-1
@@ -3358,21 +3363,12 @@
   :hints
   (("goal"
     :in-theory
-    (disable
-     nth
-     (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
-               . 2)
-     (:e dir-ent-directory-p)
-     (:t dir-ent-directory-p)
-     (:definition get-clusterchain-contents)
-     (:rewrite by-slice-you-mean-the-whole-cake-2)
-     (:definition fat32-build-index-list))
-    :use
-    ((:instance
-      (:rewrite fat32-in-memory-to-m1-fs-helper-guard-lemma-2
-                . 2)
-      (i 16)
-      (n 11))))))
+    (e/d (useful-dir-ent-list-p)
+         (nth (:e dir-ent-directory-p)
+              (:t dir-ent-directory-p)
+              (:definition get-clusterchain-contents)
+              (:rewrite by-slice-you-mean-the-whole-cake-2)
+              (:definition fat32-build-index-list))))))
 
 (defund
   fat32-in-memory-to-m1-fs
@@ -4622,24 +4618,17 @@
 
 (defthm
   useful-dir-ent-list-p-of-m1-fs-to-fat32-in-memory-helper
-  (implies (m1-file-alist-p fs)
-           (useful-dir-ent-list-p
-            (mv-nth 1
-                    (m1-fs-to-fat32-in-memory-helper
-                     fat32-in-memory fs first-cluster))))
-  :hints (("Goal" :in-theory (e/d (lower-bounded-integer-listp) (nth
-                                                                 floor mod)))))
-
-(defthm
-  useful-dir-ent-list-p-of-m1-fs-to-fat32-in-memory-helper
   (implies
    (m1-file-alist-p fs)
    (useful-dir-ent-list-p
     (mv-nth 1
             (m1-fs-to-fat32-in-memory-helper
              fat32-in-memory fs first-cluster))))
-  :hints (("goal" :in-theory (e/d (lower-bounded-integer-listp)
-                                  (nth floor mod)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (useful-dir-ent-list-p lower-bounded-integer-listp)
+         (nth floor mod)))))
 
 (defthm
   unsigned-byte-listp-of-flatten-when-dir-ent-list-p
@@ -6605,8 +6594,11 @@
   (implies (useful-dir-ent-list-p dir-ent-list)
            (equal (make-dir-ent-list (flatten dir-ent-list))
                   dir-ent-list))
-  :hints (("goal" :in-theory (e/d (make-dir-ent-list flatten)
-                                  (nth floor mod)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (useful-dir-ent-list-p make-dir-ent-list flatten)
+         (nth floor mod)))))
 
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-1
@@ -6946,8 +6938,8 @@
 (defthm
   m1-entry-count-when-m1-dir-equiv
   (implies (and (m1-dir-equiv m1-file-alist1 m1-file-alist2)
-                (m1-file-alist-p m1-file-alist1)
-                (m1-file-no-dups-p m1-file-alist1))
+                (m1-file-alist-p m1-file-alist2)
+                (m1-file-no-dups-p m1-file-alist2))
            (equal (m1-entry-count m1-file-alist1)
                   (m1-entry-count m1-file-alist2)))
   :hints
