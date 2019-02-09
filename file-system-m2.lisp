@@ -6878,31 +6878,6 @@
            (cdr (assoc-equal x m1-file-alist)))))
       1)))))
 
-;; Move later
-(defthm
-  m1-dir-subsetp-of-remove1-assoc-1
-  (implies
-   (and (m1-file-no-dups-p m1-file-alist2)
-        (m1-file-alist-p m1-file-alist1)
-        (atom (assoc-equal key m1-file-alist1)))
-   (equal (m1-dir-subsetp m1-file-alist1
-                          (remove1-assoc key m1-file-alist2))
-          (m1-dir-subsetp m1-file-alist1 m1-file-alist2))))
-
-;; Move to file-system-lemmas.lisp later.
-(defthm
-  member-of-remove1-assoc
-  (implies
-   (not (member-equal x lst))
-   (not (member-equal x (remove1-assoc-equal key lst)))))
-
-;; Move later
-(defthm
-  m1-file-no-dups-p-of-remove1-assoc-equal
-  (implies
-   (m1-file-no-dups-p m1-file-alist)
-   (m1-file-no-dups-p (remove1-assoc-equal key m1-file-alist))))
-
 (encapsulate
   ()
 
@@ -7014,12 +6989,6 @@
     :in-theory (enable useless-dir-ent-p
                        dir-ent-filename dir-ent-set-filename
                        dir-ent-fix dir-ent-p))))
-
-;; Move this later
-(defthm m1-file-no-dups-p-correctness-1
-  (implies (and (consp fs) (m1-file-no-dups-p fs))
-           (m1-file-no-dups-p (cdr fs)))
-  :hints (("goal" :do-not-induct t)))
 
 (skip-proofs
  (defthm lemma-1-4-120
@@ -7714,20 +7683,82 @@
           (< key (len fa-table)))
      (unmodifiable-listp x (update-nth key val fa-table))))))
 
-(thm
- (implies
-  (and
-   (compliant-fat32-in-memoryp fat32-in-memory)
-   (UNMODIFIABLE-LISTP
-    X
-    (EFFECTIVE-FAT fat32-in-memory)))
-   (UNMODIFIABLE-LISTP
-    X
-    (EFFECTIVE-FAT
-     (MV-NTH 0
-             (M1-FS-TO-FAT32-IN-MEMORY-HELPER FAT32-IN-MEMORY fs
-                                              CURRENT-DIR-FIRST-CLUSTER)))))
- :hints (("Goal" :in-theory (disable nth floor mod)) ))
+(defthm
+  unmodifiable-listp-correctness-3
+  (implies
+   (and
+    (compliant-fat32-in-memoryp fat32-in-memory)
+    (unmodifiable-listp x (effective-fat fat32-in-memory))
+    (not (member-equal first-cluster x))
+    (integerp first-cluster)
+    (<= *ms-first-data-cluster* first-cluster)
+    (stringp contents)
+    (equal
+     (mv-nth
+      2
+      (place-contents fat32-in-memory dir-ent
+                      contents file-length first-cluster))
+     0))
+   (unmodifiable-listp
+    x
+    (effective-fat
+     (mv-nth
+      0
+      (place-contents fat32-in-memory dir-ent
+                      contents file-length first-cluster))))))
+
+(defthm
+  unmodifiable-listp-correctness-4-lemma-1
+  (implies
+   (and
+    (compliant-fat32-in-memoryp fat32-in-memory)
+    (natp n1)
+    (<
+     (nfix n2)
+     (len (find-n-free-clusters (effective-fat fat32-in-memory)
+                                n1))))
+   (equal
+    (fat32-entry-mask
+     (fati
+      (nth n2
+           (find-n-free-clusters (effective-fat fat32-in-memory)
+                                 n1))
+      fat32-in-memory))
+    0))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d nil
+                    (find-n-free-clusters-correctness-5 nth))
+    :use
+    ((:instance find-n-free-clusters-correctness-5
+                (fa-table (effective-fat fat32-in-memory)))))
+   ("subgoal 2"
+    :in-theory
+    (disable (:linear find-n-free-clusters-correctness-7))
+    :use (:instance (:linear find-n-free-clusters-correctness-7)
+                    (n n1)
+                    (fa-table (effective-fat fat32-in-memory))
+                    (m n2)))))
+
+(defthm
+  unmodifiable-listp-correctness-4
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (equal (mv-nth 2
+                       (m1-fs-to-fat32-in-memory-helper
+                        fat32-in-memory
+                        fs current-dir-first-cluster))
+               0)
+        (unmodifiable-listp x (effective-fat fat32-in-memory)))
+   (unmodifiable-listp
+    x
+    (effective-fat
+     (mv-nth 0
+             (m1-fs-to-fat32-in-memory-helper
+              fat32-in-memory
+              fs current-dir-first-cluster)))))
+  :hints (("goal" :in-theory (disable nth floor mod))))
 
 (local
  (defun-nx
