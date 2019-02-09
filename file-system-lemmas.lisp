@@ -722,3 +722,9 @@
   (implies (rational-listp x)
            (iff (rationalp (nth n x))
                 (< (nfix n) (len x)))))
+
+(defthm
+  member-of-remove1-assoc
+  (implies
+   (not (member-equal x lst))
+   (not (member-equal x (remove1-assoc-equal key lst)))))

@@ -4646,7 +4646,20 @@
    (equal (len (mv-nth 1
                        (m1-fs-to-fat32-in-memory-helper
                         fat32-in-memory fs first-cluster)))
-          (len fs))))
+          (len fs)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (m1-file-alist-p fs)
+          (zp (mv-nth 2
+                      (m1-fs-to-fat32-in-memory-helper
+                       fat32-in-memory fs first-cluster))))
+     (equal (consp (mv-nth 1
+                         (m1-fs-to-fat32-in-memory-helper
+                          fat32-in-memory fs first-cluster)))
+            (consp fs))))))
 
 (defthm
   true-listp-of-m1-fs-to-fat32-in-memory-helper
@@ -6537,6 +6550,27 @@
         *enospc*))))
   :hints (("goal" :in-theory (enable place-contents))))
 
+(defthm place-contents-expansion-3
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (not (zp (cluster-size fat32-in-memory)))
+        (dir-ent-p dir-ent)
+        (fat32-masked-entry-p first-cluster)
+        (< first-cluster
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory)))
+        (equal (length contents) 0))
+   (equal
+    (mv-nth 0
+            (place-contents fat32-in-memory dir-ent
+                            contents file-length first-cluster))
+    (update-fati first-cluster
+                 (fat32-update-lower-28
+                  (fati first-cluster fat32-in-memory)
+                  0)
+                 fat32-in-memory)))
+  :hints (("goal" :in-theory (enable place-contents))))
+
 (defthm
   make-dir-ent-list-of-append-1
   (implies
@@ -6575,6 +6609,29 @@
     :in-theory
     (e/d (useful-dir-ent-list-p make-dir-ent-list flatten)
          (nth floor mod)))))
+
+;; Move to fat32.lisp later
+(defthm
+  fat32-update-lower-28-of-fat32-update-lower-28
+  (implies
+   (fat32-masked-entry-p masked-entry1)
+   (equal (fat32-update-lower-28 (fat32-update-lower-28 entry masked-entry1)
+                                 masked-entry2)
+          (fat32-update-lower-28 entry masked-entry2)))
+  :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
+                                  (logapp logtail)))))
+
+;; Move to fat32.lisp later
+(defthm
+  fat32-update-lower-28-of-fat32-entry-mask
+  (implies (and (fat32-entry-p entry)
+                (equal masked-entry (fat32-entry-mask entry)))
+           (equal (fat32-update-lower-28 entry masked-entry)
+                  entry))
+  :hints
+  (("goal"
+    :in-theory (e/d (fat32-update-lower-28 fat32-entry-mask)
+                    (logapp loghead logtail)))))
 
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-1
@@ -7760,6 +7817,16 @@
               fs current-dir-first-cluster)))))
   :hints (("goal" :in-theory (disable nth floor mod))))
 
+(defthm
+  unmodifiable-listp-correctness-5
+  (implies
+   (and (unmodifiable-listp x fa-table)
+        (natp n)
+        (fat32-entry-list-p fa-table))
+   (not (intersectp-equal x (find-n-free-clusters fa-table n))))
+  :hints (("goal" :in-theory (e/d (intersectp-equal)
+                                  (nth floor mod)))))
+
 (local
  (defun-nx
     induction-scheme
@@ -7960,11 +8027,11 @@
                        (:DEFINITION M1-FILE-NO-DUPS-P))))
          ("subgoal *1/4"
           :expand
-          (:free
-           (fat32-in-memory dir-ent dir-ent-list entry-limit)
-           (fat32-in-memory-to-m1-fs-helper fat32-in-memory
-                                            (cons dir-ent dir-ent-list)
-                                            entry-limit)))
+          ((:free
+            (fat32-in-memory dir-ent dir-ent-list entry-limit)
+            (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                             (cons dir-ent dir-ent-list)
+                                             entry-limit))))
          ("Subgoal *1/3"
           :expand
           ((:free (y) (intersectp-equal nil y))

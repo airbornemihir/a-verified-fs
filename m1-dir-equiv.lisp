@@ -52,6 +52,27 @@
          (m1-file-no-dups-p (m1-file->contents (cdar m1-file-alist))))
         (t t)))
 
+(defthm m1-file-no-dups-p-correctness-1
+  (implies (and (consp fs) (m1-file-no-dups-p fs))
+           (m1-file-no-dups-p (cdr fs)))
+  :hints (("goal" :do-not-induct t)))
+
+(defthm
+  m1-dir-subsetp-of-remove1-assoc-1
+  (implies
+   (and (m1-file-no-dups-p m1-file-alist2)
+        (m1-file-alist-p m1-file-alist1)
+        (atom (assoc-equal key m1-file-alist1)))
+   (equal (m1-dir-subsetp m1-file-alist1
+                          (remove1-assoc key m1-file-alist2))
+          (m1-dir-subsetp m1-file-alist1 m1-file-alist2))))
+
+(defthm
+  m1-file-no-dups-p-of-remove1-assoc-equal
+  (implies
+   (m1-file-no-dups-p m1-file-alist)
+   (m1-file-no-dups-p (remove1-assoc-equal key m1-file-alist))))
+
 (defund m1-dir-equiv (m1-file-alist1 m1-file-alist2)
   (declare (xargs :guard t))
   (or (equal m1-file-alist1 m1-file-alist2)
