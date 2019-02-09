@@ -7396,8 +7396,16 @@
       (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
       (:rewrite fati-of-m1-fs-to-fat32-in-memory-helper-disjoint-lemma-2)
       (:rewrite fat32-in-memory-to-m1-fs-helper-correctness-2)
-      (:definition induction-scheme)
       (:definition m1-file-no-dups-p))))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-6
+  (implies (and (stringp (m1-file->contents file))
+                (equal (len (explode (m1-file->contents file)))
+                       0))
+           (equal (m1-file->contents file) ""))
+  :hints
+  (("goal" :expand (len (explode (m1-file->contents file))))))
 
 (defthmd
   m1-entry-count-when-m1-file-no-dups-p
@@ -8336,7 +8344,7 @@
        ((mv fat32-in-memory tail-list errno tail-index-list)
         (induction-scheme fat32-in-memory (cdr fs)
                           current-dir-first-cluster
-                          entry-limit x))
+                          (- entry-limit 1) x))
        ;; If there was an error in the recursive call, terminate.
        ((unless (zp errno)) (mv fat32-in-memory tail-list errno tail-index-list))
        (head (car fs))
@@ -8515,7 +8523,12 @@
          ("Subgoal *1/3"
           :expand
           ((:free (y) (intersectp-equal nil y))
-           (:free (x1 x2 y) (intersectp-equal (list x1) (cons x2 y)))))))
+           (:free (x1 x2 y) (intersectp-equal (list x1) (cons x2 y)))
+           (:free
+            (fat32-in-memory dir-ent dir-ent-list entry-limit)
+            (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                             (cons dir-ent dir-ent-list)
+                                             entry-limit))))))
 
 (defthmd m1-fs-to-fat32-in-memory-inversion-lemma-4
   (not (< (binary-+ '32 (binary-* '32 (len x)))
@@ -8538,15 +8551,6 @@
                   (not (m1-file-no-dups-p m1-file-alist1)))
              (not (m1-dir-equiv m1-file-alist1 m1-file-alist2)))
     :hints (("goal" :in-theory (enable m1-dir-equiv))))))
-
-(defthm
-  m1-fs-to-fat32-in-memory-inversion-lemma-6
-  (implies (and (stringp (m1-file->contents file))
-                (equal (len (explode (m1-file->contents file)))
-                       0))
-           (equal (m1-file->contents file) ""))
-  :hints
-  (("goal" :expand (len (explode (m1-file->contents file))))))
 
 (defthmd
   m1-fs-to-fat32-in-memory-inversion-lemma-7
