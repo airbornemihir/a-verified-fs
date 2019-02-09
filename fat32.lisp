@@ -671,6 +671,30 @@
       (fa-table (nthcdr *ms-first-data-cluster* fa-table))
       (start *ms-first-data-cluster*))))))
 
+;; Holding off for now on determining what
+;; find-n-free-clusters-helper-correctness-5 should look like.
+(defthm
+  find-n-free-clusters-correctness-5
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (natp n1)
+        (< (nfix n2)
+           (len (find-n-free-clusters fa-table n1))))
+   (equal (fat32-entry-mask
+           (nth (nth n2 (find-n-free-clusters fa-table n1))
+                fa-table))
+          0))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d nil
+                    (find-n-free-clusters-correctness-4))
+    :use ((:instance
+           find-n-free-clusters-correctness-4
+           (n n1)
+           (x (nth n2
+                   (find-n-free-clusters fa-table n1))))))))
+
 (defthm
   find-n-free-clusters-correctness-6
   (implies
