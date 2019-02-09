@@ -6633,6 +6633,261 @@
     :in-theory (e/d (fat32-update-lower-28 fat32-entry-mask)
                     (logapp loghead logtail)))))
 
+(defthmd
+  m1-entry-count-when-m1-file-no-dups-p
+  (implies
+   (and (m1-file-alist-p m1-file-alist)
+        (m1-file-no-dups-p m1-file-alist)
+        (consp (assoc-equal x m1-file-alist)))
+   (equal
+    (m1-entry-count m1-file-alist)
+    (+
+     (m1-entry-count (remove1-assoc x m1-file-alist))
+     (if
+      (m1-directory-file-p (cdr (assoc-equal x m1-file-alist)))
+      (+ 1
+         (m1-entry-count
+          (m1-file->contents
+           (cdr (assoc-equal x m1-file-alist)))))
+      1)))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun
+       induction-scheme
+       (m1-file-alist1 m1-file-alist2)
+     (declare
+      (xargs
+       :guard (and (m1-file-alist-p m1-file-alist1)
+                   (m1-file-alist-p m1-file-alist2))
+       :hints (("goal" :in-theory (enable m1-file->contents
+                                          m1-directory-file-p)))))
+     (b* (((when (atom m1-file-alist1)) t)
+          ((when (or (atom (car m1-file-alist1))
+                     (not (stringp (car (car m1-file-alist1))))))
+           (and (member-equal (car m1-file-alist1)
+                              m1-file-alist2)
+                (induction-scheme (cdr m1-file-alist1)
+                                  (remove1-assoc-equal
+                                   (caar m1-file-alist1)
+                                   m1-file-alist2))))
+          (name (caar m1-file-alist1))
+          (file1 (cdar m1-file-alist1))
+          ((unless (consp (assoc-equal name m1-file-alist2)))
+           nil)
+          (file2 (cdr (assoc-equal name m1-file-alist2))))
+       (if (not (m1-directory-file-p file1))
+           (and (not (m1-directory-file-p file2))
+                (induction-scheme (cdr m1-file-alist1)
+                                  (remove1-assoc-equal
+                                   name
+                                   m1-file-alist2))
+                (equal (m1-file->contents file1)
+                       (m1-file->contents file2)))
+         (and (m1-directory-file-p file2)
+              (induction-scheme (cdr m1-file-alist1)
+                                (remove1-assoc-equal
+                                 name
+                                 m1-file-alist2))
+              (induction-scheme (m1-file->contents file1)
+                                (m1-file->contents file2)))))))
+
+  (local
+   (defthm induction-scheme-correctness
+     (implies
+      (and (m1-file-no-dups-p m1-file-alist1)
+           (m1-file-no-dups-p m1-file-alist2)
+           (m1-file-alist-p m1-file-alist1)
+           (m1-file-alist-p m1-file-alist2))
+      (iff
+       (induction-scheme
+        m1-file-alist1 m1-file-alist2)
+       (m1-dir-subsetp m1-file-alist1 m1-file-alist2)))
+     :hints (("Goal" :induct (induction-scheme
+                              m1-file-alist1 m1-file-alist2)) )))
+
+  (defthm
+    m1-entry-count-when-m1-dir-subsetp
+    (implies (and (m1-file-no-dups-p m1-file-alist1)
+                  (m1-file-no-dups-p m1-file-alist2)
+                  (m1-file-alist-p m1-file-alist1)
+                  (m1-file-alist-p m1-file-alist2)
+                  (m1-dir-subsetp m1-file-alist1 m1-file-alist2))
+             (<= (m1-entry-count m1-file-alist1)
+                 (m1-entry-count m1-file-alist2)))
+    :rule-classes :linear
+    :hints
+    (("goal"
+      :induct (induction-scheme m1-file-alist1 m1-file-alist2))
+     ("subgoal *1/7"
+      :use
+      (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
+                 (m1-file-alist m1-file-alist2)
+                 (x (car (car m1-file-alist1)))))
+     ("subgoal *1/4"
+      :use
+      (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
+                 (m1-file-alist m1-file-alist2)
+                 (x (car (car m1-file-alist1))))))))
+
+(defthm
+  m1-entry-count-when-m1-dir-equiv
+  (implies (and (m1-dir-equiv m1-file-alist1 m1-file-alist2)
+                (m1-file-alist-p m1-file-alist2)
+                (m1-file-no-dups-p m1-file-alist2))
+           (equal (m1-entry-count m1-file-alist1)
+                  (m1-entry-count m1-file-alist2)))
+  :hints
+  (("goal" :in-theory (e/d (m1-dir-equiv)
+                           (m1-entry-count-when-m1-dir-subsetp))
+    :do-not-induct t
+    :use ((:instance m1-entry-count-when-m1-dir-subsetp
+                     (m1-file-alist1 m1-file-alist2)
+                     (m1-file-alist2 m1-file-alist1))
+          m1-entry-count-when-m1-dir-subsetp))))
+
+(defthm
+  useless-dir-ent-p-of-dir-ent-set-filename-of-constant
+  (implies
+   (dir-ent-p dir-ent)
+   (and
+    (useless-dir-ent-p
+     (dir-ent-set-filename dir-ent *parent-dir-fat32-name*))
+    (useless-dir-ent-p
+     (dir-ent-set-filename dir-ent *current-dir-fat32-name*))))
+  :hints
+  (("goal"
+    :in-theory (enable useless-dir-ent-p
+                       dir-ent-filename dir-ent-set-filename
+                       dir-ent-fix dir-ent-p))))
+
+(defun
+    unmodifiable-listp (x fa-table)
+  (if
+      (atom x)
+      (equal x nil)
+    (and (integerp (car x))
+         (<= *ms-first-data-cluster* (car x))
+         (< (car x) (len fa-table))
+         (not (equal (fat32-entry-mask (nth (car x) fa-table))
+                     0))
+         (unmodifiable-listp (cdr x)
+                             fa-table))))
+
+(defthm
+  unmodifiable-listp-correctness-1
+  (implies
+   (and (not (member-equal key x))
+        (< key (len fa-table)))
+   (equal (unmodifiable-listp x (update-nth key val fa-table))
+          (unmodifiable-listp x fa-table))))
+
+(defthm
+  unmodifiable-listp-correctness-2
+  (implies (and (unmodifiable-listp x fa-table)
+                (equal (fat32-entry-mask (nth key fa-table))
+                       0))
+           (not (member-equal key x)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (unmodifiable-listp x fa-table)
+          (equal (fat32-entry-mask (nth key fa-table))
+                 0)
+          (< key (len fa-table)))
+     (unmodifiable-listp x (update-nth key val fa-table))))))
+
+(defthm
+  unmodifiable-listp-correctness-3
+  (implies
+   (and
+    (compliant-fat32-in-memoryp fat32-in-memory)
+    (unmodifiable-listp x (effective-fat fat32-in-memory))
+    (not (member-equal first-cluster x))
+    (integerp first-cluster)
+    (<= *ms-first-data-cluster* first-cluster)
+    (stringp contents)
+    (equal
+     (mv-nth
+      2
+      (place-contents fat32-in-memory dir-ent
+                      contents file-length first-cluster))
+     0))
+   (unmodifiable-listp
+    x
+    (effective-fat
+     (mv-nth
+      0
+      (place-contents fat32-in-memory dir-ent
+                      contents file-length first-cluster))))))
+
+(defthm
+  unmodifiable-listp-correctness-4-lemma-1
+  (implies
+   (and
+    (compliant-fat32-in-memoryp fat32-in-memory)
+    (natp n1)
+    (<
+     (nfix n2)
+     (len (find-n-free-clusters (effective-fat fat32-in-memory)
+                                n1))))
+   (equal
+    (fat32-entry-mask
+     (fati
+      (nth n2
+           (find-n-free-clusters (effective-fat fat32-in-memory)
+                                 n1))
+      fat32-in-memory))
+    0))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d nil
+                    (find-n-free-clusters-correctness-5 nth))
+    :use
+    ((:instance find-n-free-clusters-correctness-5
+                (fa-table (effective-fat fat32-in-memory)))))
+   ("subgoal 2"
+    :in-theory
+    (disable (:linear find-n-free-clusters-correctness-7))
+    :use (:instance (:linear find-n-free-clusters-correctness-7)
+                    (n n1)
+                    (fa-table (effective-fat fat32-in-memory))
+                    (m n2)))))
+
+(defthm
+  unmodifiable-listp-correctness-4
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (equal (mv-nth 2
+                       (m1-fs-to-fat32-in-memory-helper
+                        fat32-in-memory
+                        fs current-dir-first-cluster))
+               0)
+        (unmodifiable-listp x (effective-fat fat32-in-memory)))
+   (unmodifiable-listp
+    x
+    (effective-fat
+     (mv-nth 0
+             (m1-fs-to-fat32-in-memory-helper
+              fat32-in-memory
+              fs current-dir-first-cluster)))))
+  :hints (("goal" :in-theory (disable nth floor mod))))
+
+(defthm
+  unmodifiable-listp-correctness-5
+  (implies
+   (and (unmodifiable-listp x fa-table)
+        (natp n)
+        (fat32-entry-list-p fa-table))
+   (not (intersectp-equal x (find-n-free-clusters fa-table n))))
+  :hints (("goal" :in-theory (e/d (intersectp-equal)
+                                  (nth floor mod)))))
+
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-1
   (implies
@@ -7407,136 +7662,6 @@
   :hints
   (("goal" :expand (len (explode (m1-file->contents file))))))
 
-(defthmd
-  m1-entry-count-when-m1-file-no-dups-p
-  (implies
-   (and (m1-file-alist-p m1-file-alist)
-        (m1-file-no-dups-p m1-file-alist)
-        (consp (assoc-equal x m1-file-alist)))
-   (equal
-    (m1-entry-count m1-file-alist)
-    (+
-     (m1-entry-count (remove1-assoc x m1-file-alist))
-     (if
-      (m1-directory-file-p (cdr (assoc-equal x m1-file-alist)))
-      (+ 1
-         (m1-entry-count
-          (m1-file->contents
-           (cdr (assoc-equal x m1-file-alist)))))
-      1)))))
-
-(encapsulate
-  ()
-
-  (local
-   (defun
-       induction-scheme
-       (m1-file-alist1 m1-file-alist2)
-     (declare
-      (xargs
-       :guard (and (m1-file-alist-p m1-file-alist1)
-                   (m1-file-alist-p m1-file-alist2))
-       :hints (("goal" :in-theory (enable m1-file->contents
-                                          m1-directory-file-p)))))
-     (b* (((when (atom m1-file-alist1)) t)
-          ((when (or (atom (car m1-file-alist1))
-                     (not (stringp (car (car m1-file-alist1))))))
-           (and (member-equal (car m1-file-alist1)
-                              m1-file-alist2)
-                (induction-scheme (cdr m1-file-alist1)
-                                  (remove1-assoc-equal
-                                   (caar m1-file-alist1)
-                                   m1-file-alist2))))
-          (name (caar m1-file-alist1))
-          (file1 (cdar m1-file-alist1))
-          ((unless (consp (assoc-equal name m1-file-alist2)))
-           nil)
-          (file2 (cdr (assoc-equal name m1-file-alist2))))
-       (if (not (m1-directory-file-p file1))
-           (and (not (m1-directory-file-p file2))
-                (induction-scheme (cdr m1-file-alist1)
-                                  (remove1-assoc-equal
-                                   name
-                                   m1-file-alist2))
-                (equal (m1-file->contents file1)
-                       (m1-file->contents file2)))
-         (and (m1-directory-file-p file2)
-              (induction-scheme (cdr m1-file-alist1)
-                                (remove1-assoc-equal
-                                 name
-                                 m1-file-alist2))
-              (induction-scheme (m1-file->contents file1)
-                                (m1-file->contents file2)))))))
-
-  (local
-   (defthm induction-scheme-correctness
-     (implies
-      (and (m1-file-no-dups-p m1-file-alist1)
-           (m1-file-no-dups-p m1-file-alist2)
-           (m1-file-alist-p m1-file-alist1)
-           (m1-file-alist-p m1-file-alist2))
-      (iff
-       (induction-scheme
-        m1-file-alist1 m1-file-alist2)
-       (m1-dir-subsetp m1-file-alist1 m1-file-alist2)))
-     :hints (("Goal" :induct (induction-scheme
-                              m1-file-alist1 m1-file-alist2)) )))
-
-  (defthm
-    m1-entry-count-when-m1-dir-subsetp
-    (implies (and (m1-file-no-dups-p m1-file-alist1)
-                  (m1-file-no-dups-p m1-file-alist2)
-                  (m1-file-alist-p m1-file-alist1)
-                  (m1-file-alist-p m1-file-alist2)
-                  (m1-dir-subsetp m1-file-alist1 m1-file-alist2))
-             (<= (m1-entry-count m1-file-alist1)
-                 (m1-entry-count m1-file-alist2)))
-    :rule-classes :linear
-    :hints
-    (("goal"
-      :induct (induction-scheme m1-file-alist1 m1-file-alist2))
-     ("subgoal *1/7"
-      :use
-      (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
-                 (m1-file-alist m1-file-alist2)
-                 (x (car (car m1-file-alist1)))))
-     ("subgoal *1/4"
-      :use
-      (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
-                 (m1-file-alist m1-file-alist2)
-                 (x (car (car m1-file-alist1))))))))
-
-(defthm
-  m1-entry-count-when-m1-dir-equiv
-  (implies (and (m1-dir-equiv m1-file-alist1 m1-file-alist2)
-                (m1-file-alist-p m1-file-alist2)
-                (m1-file-no-dups-p m1-file-alist2))
-           (equal (m1-entry-count m1-file-alist1)
-                  (m1-entry-count m1-file-alist2)))
-  :hints
-  (("goal" :in-theory (e/d (m1-dir-equiv)
-                           (m1-entry-count-when-m1-dir-subsetp))
-    :do-not-induct t
-    :use ((:instance m1-entry-count-when-m1-dir-subsetp
-                     (m1-file-alist1 m1-file-alist2)
-                     (m1-file-alist2 m1-file-alist1))
-          m1-entry-count-when-m1-dir-subsetp))))
-
-(defthm
-  useless-dir-ent-p-of-dir-ent-set-filename-of-constant
-  (implies
-   (dir-ent-p dir-ent)
-   (and
-    (useless-dir-ent-p
-     (dir-ent-set-filename dir-ent *parent-dir-fat32-name*))
-    (useless-dir-ent-p
-     (dir-ent-set-filename dir-ent *current-dir-fat32-name*))))
-  :hints
-  (("goal"
-    :in-theory (enable useless-dir-ent-p
-                       dir-ent-filename dir-ent-set-filename
-                       dir-ent-fix dir-ent-p))))
-
 (skip-proofs
  (defthm lemma-1-4-120
    (implies
@@ -8191,131 +8316,6 @@
               (m1-fs-to-fat32-in-memory-helper fat32-in-memory (cdr fs)
                                                current-dir-first-cluster))
       entry-limit)))))
-
-(defun
-    unmodifiable-listp (x fa-table)
-  (if
-      (atom x)
-      (equal x nil)
-    (and (integerp (car x))
-         (<= *ms-first-data-cluster* (car x))
-         (< (car x) (len fa-table))
-         (not (equal (fat32-entry-mask (nth (car x) fa-table))
-                     0))
-         (unmodifiable-listp (cdr x)
-                             fa-table))))
-
-(defthm
-  unmodifiable-listp-correctness-1
-  (implies
-   (and (not (member-equal key x))
-        (< key (len fa-table)))
-   (equal (unmodifiable-listp x (update-nth key val fa-table))
-          (unmodifiable-listp x fa-table))))
-
-(defthm
-  unmodifiable-listp-correctness-2
-  (implies (and (unmodifiable-listp x fa-table)
-                (equal (fat32-entry-mask (nth key fa-table))
-                       0))
-           (not (member-equal key x)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (and (unmodifiable-listp x fa-table)
-          (equal (fat32-entry-mask (nth key fa-table))
-                 0)
-          (< key (len fa-table)))
-     (unmodifiable-listp x (update-nth key val fa-table))))))
-
-(defthm
-  unmodifiable-listp-correctness-3
-  (implies
-   (and
-    (compliant-fat32-in-memoryp fat32-in-memory)
-    (unmodifiable-listp x (effective-fat fat32-in-memory))
-    (not (member-equal first-cluster x))
-    (integerp first-cluster)
-    (<= *ms-first-data-cluster* first-cluster)
-    (stringp contents)
-    (equal
-     (mv-nth
-      2
-      (place-contents fat32-in-memory dir-ent
-                      contents file-length first-cluster))
-     0))
-   (unmodifiable-listp
-    x
-    (effective-fat
-     (mv-nth
-      0
-      (place-contents fat32-in-memory dir-ent
-                      contents file-length first-cluster))))))
-
-(defthm
-  unmodifiable-listp-correctness-4-lemma-1
-  (implies
-   (and
-    (compliant-fat32-in-memoryp fat32-in-memory)
-    (natp n1)
-    (<
-     (nfix n2)
-     (len (find-n-free-clusters (effective-fat fat32-in-memory)
-                                n1))))
-   (equal
-    (fat32-entry-mask
-     (fati
-      (nth n2
-           (find-n-free-clusters (effective-fat fat32-in-memory)
-                                 n1))
-      fat32-in-memory))
-    0))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (e/d nil
-                    (find-n-free-clusters-correctness-5 nth))
-    :use
-    ((:instance find-n-free-clusters-correctness-5
-                (fa-table (effective-fat fat32-in-memory)))))
-   ("subgoal 2"
-    :in-theory
-    (disable (:linear find-n-free-clusters-correctness-7))
-    :use (:instance (:linear find-n-free-clusters-correctness-7)
-                    (n n1)
-                    (fa-table (effective-fat fat32-in-memory))
-                    (m n2)))))
-
-(defthm
-  unmodifiable-listp-correctness-4
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (equal (mv-nth 2
-                       (m1-fs-to-fat32-in-memory-helper
-                        fat32-in-memory
-                        fs current-dir-first-cluster))
-               0)
-        (unmodifiable-listp x (effective-fat fat32-in-memory)))
-   (unmodifiable-listp
-    x
-    (effective-fat
-     (mv-nth 0
-             (m1-fs-to-fat32-in-memory-helper
-              fat32-in-memory
-              fs current-dir-first-cluster)))))
-  :hints (("goal" :in-theory (disable nth floor mod))))
-
-(defthm
-  unmodifiable-listp-correctness-5
-  (implies
-   (and (unmodifiable-listp x fa-table)
-        (natp n)
-        (fat32-entry-list-p fa-table))
-   (not (intersectp-equal x (find-n-free-clusters fa-table n))))
-  :hints (("goal" :in-theory (e/d (intersectp-equal)
-                                  (nth floor mod)))))
 
 (local
  (defun-nx
