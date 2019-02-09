@@ -3313,31 +3313,6 @@
              fat32-in-memory
              dir-ent-list entry-limit))))
 
-(defthm
-  fat32-in-memory-to-m1-fs-helper-guard-lemma-1
-  (implies (and (unsigned-byte-listp 8 dir-contents)
-                (>= (len dir-contents) *ms-dir-ent-length*))
-           (dir-ent-p (take *ms-dir-ent-length* dir-contents)))
-  :hints (("Goal" :in-theory (enable dir-ent-p))))
-
-(defthmd fat32-in-memory-to-m1-fs-helper-guard-lemma-2
-  (implies (unsigned-byte-listp 8 dir-contents)
-           (iff (unsigned-byte-p 8 (nth n dir-contents))
-                (< (nfix n) (len dir-contents))))
-  :rule-classes ((:rewrite :corollary
-                           (implies (and (unsigned-byte-listp 8 dir-contents)
-                                         (< (nfix n) (len dir-contents)))
-                                    (integerp (nth n dir-contents))))
-                 (:rewrite :corollary
-                           (implies (and (unsigned-byte-listp 8 dir-contents)
-                                         (< (nfix n) (len dir-contents))
-                                         (unsigned-byte-p 8 i))
-                                    (unsigned-byte-p 8 (logand i (nth
-                                                                  n
-                                                                  dir-contents))))
-                           :hints (("Goal" :in-theory (disable unsigned-byte-p)
-                                    :do-not-induct t)))))
-
 (defthm true-listp-of-fat32-in-memory-to-m1-fs-helper
   (true-listp (mv-nth 2
                       (fat32-in-memory-to-m1-fs-helper
@@ -6586,7 +6561,8 @@
    (equal (make-dir-ent-list (append (flatten dir-ent-list) y))
           (make-dir-ent-list (flatten dir-ent-list))))
   :hints
-  (("goal" :in-theory (e/d (make-dir-ent-list flatten) (nth))
+  (("goal" :in-theory (e/d (make-dir-ent-list flatten dir-ent-p)
+                           (nth))
     :induct (flatten dir-ent-list))))
 
 (defthm
@@ -7329,7 +7305,8 @@
          (mv-nth 0
                  (fat32-in-memory-to-m1-fs-helper fat32-in-memory
                                                   dir-ent-list entry-limit))
-         fs)))))))
+         fs))))))
+  :hints (("Goal" :in-theory (disable nth floor mod m1-file-no-dups-p)) ))
 
 ;; Move this later
 (defthm m1-file-no-dups-p-correctness-1
