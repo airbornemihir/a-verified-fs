@@ -58,9 +58,16 @@
 (defconst *current-dir-name* ".")
 (defconst *parent-dir-name* "..")
 
-;; from page 36 of the FAT specification
-(defconst *ms-max-dir-ent-count* (ash 1 16))
-(defconst *ms-max-dir-size* (* *ms-dir-ent-length* *ms-max-dir-ent-count*))
+;; Page 36 of the FAT specification states that a directory shouldn't have more
+;; than 65536 entries. However, *ms-max-dir-ent-count* below is used for the
+;; definition of m1-bounded-file-alist-p, and since that's applicable to our
+;; internal representation of the filesystem, we need to leave room for two
+;; entries (dot and dotdot) to be added when we store a directory in the stobj
+;; representation. However, *ms-max-dir-size* is applicable to extracting
+;; directory contents from the disk, and therefore it needs to be 2097152 as
+;; stipulated.
+(defconst *ms-max-dir-ent-count* (- (ash 1 16) 2))
+(defconst *ms-max-dir-size* (ash 1 21))
 
 ;; from include/uapi/asm-generic/errno-base.h in the linux kernel sources
 (defconst *ENOENT* 2) ;; No such file or directory
@@ -371,15 +378,16 @@
 (defthm
   fat32-build-index-list-correctness-4
   (implies
-   (fat32-masked-entry-p masked-current-cluster)
+   (and (<= *ms-first-data-cluster*
+            masked-current-cluster)
+        (fat32-masked-entry-p masked-current-cluster))
    (mv-let
      (index-list error-code)
      (fat32-build-index-list fa-table masked-current-cluster
                              length cluster-size)
      (implies
-      (and (fat32-masked-entry-p key)
-           (< key (len fa-table))
-           (not (member-equal key index-list))
+      (and (not (member-equal key index-list))
+           (< (nfix key) (len fa-table))
            (equal error-code 0))
       (equal
        (fat32-build-index-list (update-nth key val fa-table)
@@ -388,7 +396,11 @@
        (fat32-build-index-list fa-table masked-current-cluster
                                length cluster-size)))))
   :hints
-  (("subgoal *1/3"
+  (("goal"
+    :induct
+    (fat32-build-index-list fa-table masked-current-cluster
+                            length cluster-size)
+    :in-theory (disable nth update-nth)
     :expand
     (fat32-build-index-list (update-nth key val fa-table)
                             masked-current-cluster
@@ -554,6 +566,14 @@
       (nth m
            (find-n-free-clusters-helper fa-table n start)))))))
 
+(defthm
+  len-of-find-n-free-clusters-helper
+  (<= (len (find-n-free-clusters-helper fa-table n start))
+      (nfix n))
+  :rule-classes :linear
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters-helper))))
+
 (defund
     find-n-free-clusters (fa-table n)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
@@ -651,6 +671,30 @@
       (fa-table (nthcdr *ms-first-data-cluster* fa-table))
       (start *ms-first-data-cluster*))))))
 
+;; Holding off for now on determining what
+;; find-n-free-clusters-helper-correctness-5 should look like.
+(defthm
+  find-n-free-clusters-correctness-5
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (natp n1)
+        (< (nfix n2)
+           (len (find-n-free-clusters fa-table n1))))
+   (equal (fat32-entry-mask
+           (nth (nth n2 (find-n-free-clusters fa-table n1))
+                fa-table))
+          0))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d nil
+                    (find-n-free-clusters-correctness-4))
+    :use ((:instance
+           find-n-free-clusters-correctness-4
+           (n n1)
+           (x (nth n2
+                   (find-n-free-clusters fa-table n1))))))))
+
 (defthm
   find-n-free-clusters-correctness-6
   (implies
@@ -662,6 +706,10 @@
   :hints (("goal" :in-theory (enable find-n-free-clusters))))
 
 (defthm
+  find-n-free-clusters-correctness-8
+  (integer-listp (find-n-free-clusters fa-table n)))
+
+(defthm
   find-n-free-clusters-correctness-7
   (implies
    (and
@@ -670,42 +718,22 @@
     (>= (len fa-table)
         *ms-first-data-cluster*))
    (and
-    (integerp
-     (nth m
-          (find-n-free-clusters fa-table n)))
     (<= *ms-first-data-cluster*
         (nth m
              (find-n-free-clusters fa-table n)))
     (< (nth m
              (find-n-free-clusters fa-table n))
         (len fa-table))))
-  :rule-classes
-  ((:linear :corollary
-            (implies
-             (and
-              (< (nfix m)
-                 (len (find-n-free-clusters fa-table n)))
-              (>= (len fa-table)
-                  *ms-first-data-cluster*))
-             (and
-              (<= *ms-first-data-cluster*
-                  (nth m
-                       (find-n-free-clusters fa-table n)))
-              (< (nth m
-                      (find-n-free-clusters fa-table n))
-                 (len fa-table)))))
-   (:rewrite :corollary
-             (implies
-              (and
-               (< (nfix m)
-                  (len (find-n-free-clusters fa-table n)))
-               (>= (len fa-table)
-                   *ms-first-data-cluster*))
-              (integerp
-               (nth m
-                    (find-n-free-clusters fa-table n))))))
+  :rule-classes :linear
   :hints
   (("goal" :in-theory (e/d (find-n-free-clusters) (nth)))))
+
+(defthm
+  len-of-find-n-free-clusters
+  (<= (len (find-n-free-clusters fa-table n))
+      (nfix n))
+  :rule-classes :linear
+  :hints (("goal" :in-theory (enable find-n-free-clusters))))
 
 (defthmd
   fat32-masked-entry-list-p-alt
@@ -860,6 +888,34 @@
    (fat32-masked-entry-list-p file-index-list))
   :hints (("goal" :in-theory (enable fat32-masked-entry-p))))
 
+(defthm
+  fat32-build-index-list-correctness-6
+  (implies
+   (and
+    (natp masked-current-cluster)
+    (nat-listp index-list)
+    (not
+     (intersectp-equal
+      (mv-nth
+       0
+       (fat32-build-index-list fa-table masked-current-cluster
+                               length cluster-size))
+      index-list)))
+   (equal
+    (fat32-build-index-list
+     (set-indices-in-fa-table fa-table index-list value-list)
+     masked-current-cluster
+     length cluster-size)
+    (fat32-build-index-list fa-table masked-current-cluster
+                            length cluster-size)))
+  :hints
+  (("goal"
+    :induct
+    (fat32-build-index-list fa-table masked-current-cluster
+                            length cluster-size)
+    :in-theory (e/d (intersectp-equal)
+                    (intersectp-is-commutative)))))
+
 (encapsulate
   ()
 
@@ -878,24 +934,23 @@
     (implies
      (and (natp file-length)
           (no-duplicatesp-equal file-index-list)
-          (< (* cluster-size (+ -1 (len file-index-list)))
+          (< (* cluster-size
+                (+ -1 (len file-index-list)))
              file-length)
-          (lower-bounded-integer-listp
-           file-index-list *ms-first-data-cluster*)
+          (lower-bounded-integer-listp file-index-list *ms-first-data-cluster*)
           (bounded-nat-listp file-index-list (len fa-table))
           (consp file-index-list)
           (fat32-entry-list-p fa-table)
           (<= (len fa-table) *ms-bad-cluster*)
-          (<= *ms-first-data-cluster* (len fa-table))
           (not (zp cluster-size)))
-     (equal (fat32-build-index-list
-             (set-indices-in-fa-table
-              fa-table file-index-list
-              (append (cdr file-index-list)
-                      (list *ms-end-of-clusterchain*)))
-             (car file-index-list)
-             file-length cluster-size)
-            (mv file-index-list 0)))
+     (equal
+      (fat32-build-index-list
+       (set-indices-in-fa-table fa-table file-index-list
+                                (append (cdr file-index-list)
+                                        (list *ms-end-of-clusterchain*)))
+       (car file-index-list)
+       file-length cluster-size)
+      (mv file-index-list 0)))
     :hints
     (("goal" :in-theory (enable set-indices-in-fa-table
                                 lower-bounded-integer-listp)
@@ -904,19 +959,79 @@
      ("subgoal *1/2"
       :expand
       ((:free (fa-table value-list)
-              (set-indices-in-fa-table
-               fa-table file-index-list value-list))
+              (set-indices-in-fa-table fa-table file-index-list value-list))
        (fat32-build-index-list
-        (update-nth
-         (car file-index-list)
-         (fat32-update-lower-28
-          (nth (car file-index-list) fa-table)
-          (cadr file-index-list))
-         (set-indices-in-fa-table fa-table (cdr file-index-list)
-                                  (append (cddr file-index-list)
-                                          '(268435455))))
+        (update-nth (car file-index-list)
+                    (fat32-update-lower-28 (nth (car file-index-list) fa-table)
+                                           (cadr file-index-list))
+                    (set-indices-in-fa-table fa-table (cdr file-index-list)
+                                             (append (cddr file-index-list)
+                                                     '(268435455))))
         (car file-index-list)
         file-length cluster-size))
       :in-theory (e/d (set-indices-in-fa-table lower-bounded-integer-listp)
                       (fat32-masked-entry-list-p-when-bounded-nat-listp))
       :use fat32-masked-entry-list-p-when-bounded-nat-listp))))
+
+(defthm
+  member-of-fat32-build-index-list
+  (implies
+   (and
+    (equal
+     (mv-nth
+      1
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     0)
+    (equal (fat32-entry-mask (nth x fa-table))
+           0))
+   (not
+    (member-equal
+     x
+     (mv-nth
+      0
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))))))
+
+(defthm
+  fat32-build-index-list-correctness-7
+  (implies
+   (and
+    (fat32-entry-list-p fa-table)
+    (natp n)
+    (equal
+     (mv-nth
+      1
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     0))
+   (not
+    (intersectp-equal
+     (mv-nth
+      0
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     (find-n-free-clusters fa-table n))))
+  :hints (("goal" :in-theory (e/d (intersectp-equal)
+                                  (intersectp-is-commutative))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and
+      (fat32-entry-list-p fa-table)
+      (natp n)
+      (equal
+       (mv-nth
+        1
+        (fat32-build-index-list fa-table masked-current-cluster
+                                length cluster-size))
+       0))
+     (not
+      (intersectp-equal
+       (find-n-free-clusters fa-table n)
+       (mv-nth
+        0
+        (fat32-build-index-list fa-table masked-current-cluster
+                                length cluster-size))))))))

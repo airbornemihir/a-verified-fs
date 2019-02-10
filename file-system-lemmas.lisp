@@ -693,6 +693,18 @@
   painful-debugging-lemma-7
   (equal (- (- x)) (fix x)))
 
+(defthm
+  painful-debugging-lemma-8
+  (implies (not (zp x))
+           (iff (< (binary-* x (len y)) x)
+                (atom y))))
+
+(defthmd
+  painful-debugging-lemma-9
+  (implies (and (integerp x) (integerp y) (< x y))
+           (equal (< (+ 1 x) y)
+                  (not (equal (+ 1 x) y)))))
+
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/typed-lists/integer-listp.lisp, from where it was taken with
 ;; thanks.
@@ -705,3 +717,19 @@
 (defthm true-list-listp-of-append
   (equal (true-list-listp (append x y))
          (and (true-list-listp (true-list-fix x)) (true-list-listp y))))
+
+(defthm rationalp-of-nth-when-rational-listp
+  (implies (rational-listp x)
+           (iff (rationalp (nth n x))
+                (< (nfix n) (len x)))))
+
+(defthm
+  member-of-remove1-assoc
+  (implies
+   (not (member-equal x lst))
+   (not (member-equal x (remove1-assoc-equal key lst)))))
+
+(defthm acl2-count-of-true-list-fix
+  (<= (acl2-count (true-list-fix x))
+      (acl2-count x))
+  :rule-classes :linear)
