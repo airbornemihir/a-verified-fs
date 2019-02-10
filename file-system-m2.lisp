@@ -6782,7 +6782,7 @@
                              fa-table))))
 
 (defthm
-  unmodifiable-listp-correctness-1
+  unmodifiable-listp-of-update-nth
   (implies
    (and (not (member-equal key x))
         (< key (len fa-table)))
@@ -6892,6 +6892,33 @@
    (not (intersectp-equal x (find-n-free-clusters fa-table n))))
   :hints (("goal" :in-theory (e/d (intersectp-equal)
                                   (nth floor mod)))))
+
+(defthm
+  unmodifiable-listp-of-append
+  (equal (unmodifiable-listp (append x y) fa-table)
+         (and
+          (unmodifiable-listp (true-list-fix x) fa-table)
+          (unmodifiable-listp y fa-table))))
+
+(defthm
+  unmodifiable-listp-of-fat32-build-index-list
+  (implies
+   (and
+    (equal
+     (mv-nth
+      1
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     0)
+    (integerp masked-current-cluster)
+    (<= 2 masked-current-cluster)
+    (< masked-current-cluster (len fa-table)))
+   (unmodifiable-listp
+    (mv-nth
+     0
+     (fat32-build-index-list fa-table masked-current-cluster
+                             length cluster-size))
+    fa-table)))
 
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-1
@@ -7615,6 +7642,43 @@
            (equal (m1-file->contents file) ""))
   :hints
   (("goal" :expand (len (explode (m1-file->contents file))))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-6
+  (b*
+      (((mv & & clusterchain-list error-code)
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         dir-ent-list entry-limit)))
+    (implies
+     (zp error-code)
+     (unmodifiable-listp (flatten clusterchain-list)
+                         (effective-fat fat32-in-memory))))
+  :hints
+  (("goal"
+    :in-theory (e/d (flatten fat32-in-memory-to-m1-fs-helper)
+                    (nth floor mod)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion-lemma-7
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (equal (mv-nth 3
+                       (fat32-in-memory-to-m1-fs-helper
+                        fat32-in-memory
+                        dir-ent-list entry-limit))
+               0)
+        (dir-ent-list-p dir-ent-list))
+   (equal
+    (fat32-in-memory-to-m1-fs-helper
+     (mv-nth 0
+             (m1-fs-to-fat32-in-memory-helper
+              fat32-in-memory
+              fs current-dir-first-cluster))
+     dir-ent-list entry-limit)
+    (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                     dir-ent-list entry-limit)))
+  :hints (("goal" :in-theory (disable nth floor mod))))
 
 ;; So, this skip-proofs form is going to give us some trouble with
 ;; certification. Instructions from Matt to allow "certification" with skipped
