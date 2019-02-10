@@ -728,3 +728,8 @@
   (implies
    (not (member-equal x lst))
    (not (member-equal x (remove1-assoc-equal key lst)))))
+
+(defthm acl2-count-of-true-list-fix
+  (<= (acl2-count (true-list-fix x))
+      (acl2-count x))
+  :rule-classes :linear)
