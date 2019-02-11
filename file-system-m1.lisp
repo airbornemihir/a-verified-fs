@@ -1810,9 +1810,15 @@
 ;; where the last file is deleted from the root directory, the root directory
 ;; will still occupy one cluster, which in turn contains one entry which
 ;; points to the deleted file, with the filename's first character changed to
-;; #xe5, which signifies a deleted file, its the file length changed to 0, and
+;; #xe5, which signifies a deleted file, its file length changed to 0, and
 ;; the first cluster changed to 0. This may even hold for other directories
 ;; than root.
+
+;; This may be a place where co-simulation of statfs may have to be
+;; compromised... because, now, we don't have m1-file-alist-p as an invariant
+;; unless we delete the file from our tree representation. The way forward, I
+;; think, is to delete the file from the tree, and make an m2-unlink that does
+;; the same thing as m1-unlink.
 (defun
     m1-unlink (fs pathname)
   (declare
@@ -1845,39 +1851,10 @@
                           (equal (car dirname) *current-dir-fat32-name*)))
                     (cdr dirname)
                   dirname))
-       ;; ((mv parent-dir errno)
-       ;;  (find-file-by-pathname fs dirname))
-       ;; ((unless (or (atom dirname)
-       ;;              (and (equal errno 0)
-       ;;                   (m1-directory-file-p parent-dir))))
-       ;;  (mv fs -1 *enoent*))
-       ((mv file errno)
-        (find-file-by-pathname fs pathname))
-       ((unless (equal errno 0))
-        (mv fs -1 *enoent*))
        (basename (m1-basename pathname))
        (pathname (append dirname (list basename)))
        ((mv fs error-code)
         (remove-file-by-pathname fs pathname))
-       ((unless (equal error-code 0))
-        (mv fs -1 error-code))
-       ;; the byte #xe5 marks deleted files, according to the spec
-       (coerced-basename-after-deletion (update-nth 0 #xe5
-                                                    (string=>nats basename)))
-       (dir-ent-after-deletion
-        (append coerced-basename-after-deletion
-                (nthcdr 11 (m1-file->dir-ent file))))
-       ;; zeroing out the first cluster and file size
-       (dir-ent-after-deletion
-        (dir-ent-set-first-cluster-file-size
-         dir-ent-after-deletion 0 0))
-       (file-after-deletion
-        (make-m1-file :dir-ent dir-ent-after-deletion
-                      :contents nil))
-       (pathname (append dirname (list (nats=>string
-                                        coerced-basename-after-deletion))))
-       ((mv fs error-code)
-        (place-file-by-pathname fs pathname file-after-deletion))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))

@@ -31,7 +31,7 @@
       (mv fat32-in-memory state))
      ((mv fs & &)
       (m1-unlink fs fat32-pathname))
-     (fat32-in-memory
+     ((mv fat32-in-memory &)
       (m1-fs-to-fat32-in-memory fat32-in-memory fs))
      ;; ((mv errmsg opts ?extra-args) (parse-rm-opts argv))
      (state
