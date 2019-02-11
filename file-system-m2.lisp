@@ -272,6 +272,8 @@
 ;; should simplify things.
 ;; Later note: the certification time went down to 632 seconds after this
 ;; change.
+;; Later note: the certification time went down to 517 seconds after some more
+;; changes were made based on accumulated-persistence.
 (local
  (in-theory (disable nth update-nth floor mod)))
 
@@ -4640,23 +4642,6 @@
   :hints (("goal" :in-theory (enable flatten))))
 
 (defthm
-  m1-fs-to-fat32-in-memory-helper-correctness-3
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (equal (data-region-length fat32-in-memory)
-               (count-of-clusters fat32-in-memory)))
-   (b*
-       (((mv & dir-ent-list errno)
-         (m1-fs-to-fat32-in-memory-helper
-          fat32-in-memory
-          fs current-dir-first-cluster)))
-     (implies
-      (and (zp errno)
-           (atom (assoc-equal *current-dir-fat32-name* fs))
-           (atom (assoc-equal *parent-dir-fat32-name* fs)))
-      (equal (len dir-ent-list) (len fs))))))
-
-(defthm
   m1-fs-to-fat32-in-memory-helper-correctness-4
   (implies
    (and (m1-file-alist-p fs)
@@ -4666,20 +4651,7 @@
    (equal (len (mv-nth 1
                        (m1-fs-to-fat32-in-memory-helper
                         fat32-in-memory fs first-cluster)))
-          (len fs)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (and (m1-file-alist-p fs)
-          (zp (mv-nth 2
-                      (m1-fs-to-fat32-in-memory-helper
-                       fat32-in-memory fs first-cluster))))
-     (equal (consp (mv-nth 1
-                         (m1-fs-to-fat32-in-memory-helper
-                          fat32-in-memory fs first-cluster)))
-            (consp fs))))))
+          (len fs))))
 
 (defthm
   true-listp-of-m1-fs-to-fat32-in-memory-helper
@@ -7627,7 +7599,7 @@
   :hints
   (("goal" :expand (len (explode (m1-file->contents file))))))
 
-(defthm
+(defthmd
   m1-fs-to-fat32-in-memory-inversion-lemma-6
   (b*
       (((mv & & clusterchain-list error-code)

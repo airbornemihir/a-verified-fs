@@ -284,13 +284,14 @@
     :use (:instance m1-dir-equiv-of-cons-lemma-6
                     (fs (cons head tail))))))
 
-(defthm
-  m1-dir-equiv-of-cons-lemma-8
-  (implies (and (m1-file-alist-p contents1)
-                (m1-file-no-dups-p contents1)
-                (not (m1-file-no-dups-p (m1-file-contents-fix contents2))))
-           (not (m1-dir-equiv contents1 contents2)))
-  :hints (("goal" :expand (m1-dir-equiv contents1 contents2))))
+(local
+ (defthm
+   m1-dir-equiv-of-cons-lemma-8
+   (implies (and (m1-file-alist-p contents1)
+                 (m1-file-no-dups-p contents1)
+                 (not (m1-file-no-dups-p (m1-file-contents-fix contents2))))
+            (not (m1-dir-equiv contents1 contents2)))
+   :hints (("goal" :expand (m1-dir-equiv contents1 contents2)))))
 
 (defthm
   m1-dir-equiv-of-cons-lemma-9
@@ -304,32 +305,35 @@
     :use (:instance m1-dir-equiv-of-cons-lemma-4
                     (x nil)))))
 
-(defthm
-  m1-dir-equiv-of-cons-lemma-10
-  (implies (and (m1-file-alist-p contents1)
-                (m1-file-no-dups-p contents1)
-                (not (m1-dir-subsetp contents1
-                                     (m1-file-contents-fix contents2))))
-           (not (m1-dir-equiv contents1 contents2)))
-  :hints (("goal" :expand (m1-dir-equiv contents1 contents2))))
+(local
+ (defthm
+   m1-dir-equiv-of-cons-lemma-10
+   (implies (and (m1-file-alist-p contents1)
+                 (m1-file-no-dups-p contents1)
+                 (not (m1-dir-subsetp contents1
+                                      (m1-file-contents-fix contents2))))
+            (not (m1-dir-equiv contents1 contents2)))
+   :hints (("goal" :expand (m1-dir-equiv contents1 contents2)))))
 
-(defthm
-  m1-dir-equiv-of-cons-lemma-11
-  (implies
-   (and (m1-file-alist-p contents1)
-        (m1-file-no-dups-p contents1)
-        (not (m1-dir-subsetp (m1-file-contents-fix contents2)
-                             contents1)))
-   (not (m1-dir-equiv contents1 contents2)))
-  :hints (("goal" :expand (m1-dir-equiv contents1 contents2))))
+(local
+ (defthm
+   m1-dir-equiv-of-cons-lemma-11
+   (implies
+    (and (m1-file-alist-p contents1)
+         (m1-file-no-dups-p contents1)
+         (not (m1-dir-subsetp (m1-file-contents-fix contents2)
+                              contents1)))
+    (not (m1-dir-equiv contents1 contents2)))
+   :hints (("goal" :expand (m1-dir-equiv contents1 contents2)))))
 
-(defthm
-  m1-dir-equiv-of-cons-lemma-12
-  (implies (and (m1-file-alist-p contents1)
-                (m1-file-no-dups-p contents1)
-                (not (m1-file-alist-p contents2)))
-           (not (m1-dir-equiv contents1 contents2)))
-  :hints (("goal" :expand (m1-dir-equiv contents1 contents2))))
+(local
+ (defthm
+   m1-dir-equiv-of-cons-lemma-12
+   (implies (and (m1-file-alist-p contents1)
+                 (m1-file-no-dups-p contents1)
+                 (not (m1-file-alist-p contents2)))
+            (not (m1-dir-equiv contents1 contents2)))
+   :hints (("goal" :expand (m1-dir-equiv contents1 contents2)))))
 
 (defthm
   m1-dir-equiv-of-cons-lemma-13
