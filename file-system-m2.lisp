@@ -6614,29 +6614,6 @@
     (e/d (useful-dir-ent-list-p make-dir-ent-list flatten)
          (nth floor mod)))))
 
-;; Move to fat32.lisp later
-(defthm
-  fat32-update-lower-28-of-fat32-update-lower-28
-  (implies
-   (fat32-masked-entry-p masked-entry1)
-   (equal (fat32-update-lower-28 (fat32-update-lower-28 entry masked-entry1)
-                                 masked-entry2)
-          (fat32-update-lower-28 entry masked-entry2)))
-  :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
-                                  (logapp logtail)))))
-
-;; Move to fat32.lisp later
-(defthm
-  fat32-update-lower-28-of-fat32-entry-mask
-  (implies (and (fat32-entry-p entry)
-                (equal masked-entry (fat32-entry-mask entry)))
-           (equal (fat32-update-lower-28 entry masked-entry)
-                  entry))
-  :hints
-  (("goal"
-    :in-theory (e/d (fat32-update-lower-28 fat32-entry-mask)
-                    (logapp loghead logtail)))))
-
 (defthmd
   m1-entry-count-when-m1-file-no-dups-p
   (implies

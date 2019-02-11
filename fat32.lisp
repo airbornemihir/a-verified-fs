@@ -281,18 +281,36 @@
     :in-theory (e/d (fat32-update-lower-28 fat32-entry-p) (unsigned-byte-p logapp logtail)))))
 
 (defthm
-  fat32-update-lower-28-correctness-2
+  fat32-entry-mask-of-fat32-update-lower-28
   (implies
-   (and (fat32-entry-p entry)
-        (fat32-masked-entry-p masked-entry))
-   (equal (fat32-entry-mask
-           (fat32-update-lower-28 entry masked-entry))
+   (fat32-masked-entry-p masked-entry)
+   (equal (fat32-entry-mask (fat32-update-lower-28 entry masked-entry))
           masked-entry))
   :hints
+  (("goal" :in-theory
+    (e/d (fat32-update-lower-28 fat32-entry-mask fat32-masked-entry-p)
+         (unsigned-byte-p loghead logapp)))))
+
+(defthm
+  fat32-update-lower-28-of-fat32-update-lower-28
+  (implies
+   (fat32-masked-entry-p masked-entry1)
+   (equal (fat32-update-lower-28 (fat32-update-lower-28 entry masked-entry1)
+                                 masked-entry2)
+          (fat32-update-lower-28 entry masked-entry2)))
+  :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
+                                  (logapp logtail)))))
+
+(defthmd
+  fat32-update-lower-28-of-fat32-entry-mask
+  (implies (and (fat32-entry-p entry)
+                (equal masked-entry (fat32-entry-mask entry)))
+           (equal (fat32-update-lower-28 entry masked-entry)
+                  entry))
+  :hints
   (("goal"
-    :in-theory (e/d (fat32-update-lower-28
-                     fat32-entry-mask fat32-masked-entry-p)
-                    (unsigned-byte-p loghead logapp)))))
+    :in-theory (e/d (fat32-update-lower-28 fat32-entry-mask)
+                    (logapp loghead logtail)))))
 
 ;; taken from page 18 of the fat overview - the constant 268435448 is written
 ;; out as 0xFFFFFF8 therein
