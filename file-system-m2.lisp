@@ -5,7 +5,9 @@
 ; This is a stobj model of the FAT32 filesystem.
 
 (include-book "generate-index-list")
-(include-book "m1-dir-equiv")
+;; (include-book "file-system-m1")
+;; (include-book "m1-dir-equiv")
+(include-book "m1-entry-count")
 (include-book "flatten-lemmas")
 
 (include-book "std/lists/resize-list" :dir :system)
@@ -5685,20 +5687,6 @@
 (update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
                              update-bpb_bytspersec-of-update-bs_jmpboot)
 
-;; We're not counting this very directory, because the root does not have a
-;; directory entry for itself.
-(defun m1-entry-count (fs)
-  (declare (xargs :guard (m1-file-alist-p fs)))
-  (if
-      (atom fs)
-      0
-    (if (m1-directory-file-p (cdar fs))
-        (+ 1
-           (m1-entry-count (m1-file->contents (cdar fs)))
-           (m1-entry-count (cdr fs)))
-      (+ 1
-         (m1-entry-count (cdr fs))))))
-
 (defthm
   fat32-in-memory-to-m1-fs-helper-correctness-3
   (b* (((mv m1-file-alist entry-count & &)
@@ -6596,121 +6584,6 @@
   (("goal"
     :in-theory
     (enable useful-dir-ent-list-p make-dir-ent-list flatten))))
-
-(defthmd
-  m1-entry-count-when-m1-file-no-dups-p
-  (implies
-   (and (m1-file-alist-p m1-file-alist)
-        (m1-file-no-dups-p m1-file-alist)
-        (consp (assoc-equal x m1-file-alist)))
-   (equal
-    (m1-entry-count m1-file-alist)
-    (+
-     (m1-entry-count (remove1-assoc x m1-file-alist))
-     (if
-      (m1-directory-file-p (cdr (assoc-equal x m1-file-alist)))
-      (+ 1
-         (m1-entry-count
-          (m1-file->contents
-           (cdr (assoc-equal x m1-file-alist)))))
-      1)))))
-
-(encapsulate
-  ()
-
-  (local
-   (defun
-       induction-scheme
-       (m1-file-alist1 m1-file-alist2)
-     (declare
-      (xargs
-       :guard (and (m1-file-alist-p m1-file-alist1)
-                   (m1-file-alist-p m1-file-alist2))
-       :hints (("goal" :in-theory (enable m1-file->contents
-                                          m1-directory-file-p)))))
-     (b* (((when (atom m1-file-alist1)) t)
-          ((when (or (atom (car m1-file-alist1))
-                     (not (stringp (car (car m1-file-alist1))))))
-           (and (member-equal (car m1-file-alist1)
-                              m1-file-alist2)
-                (induction-scheme (cdr m1-file-alist1)
-                                  (remove1-assoc-equal
-                                   (caar m1-file-alist1)
-                                   m1-file-alist2))))
-          (name (caar m1-file-alist1))
-          (file1 (cdar m1-file-alist1))
-          ((unless (consp (assoc-equal name m1-file-alist2)))
-           nil)
-          (file2 (cdr (assoc-equal name m1-file-alist2))))
-       (if (not (m1-directory-file-p file1))
-           (and (not (m1-directory-file-p file2))
-                (induction-scheme (cdr m1-file-alist1)
-                                  (remove1-assoc-equal
-                                   name
-                                   m1-file-alist2))
-                (equal (m1-file->contents file1)
-                       (m1-file->contents file2)))
-         (and (m1-directory-file-p file2)
-              (induction-scheme (cdr m1-file-alist1)
-                                (remove1-assoc-equal
-                                 name
-                                 m1-file-alist2))
-              (induction-scheme (m1-file->contents file1)
-                                (m1-file->contents file2)))))))
-
-  (local
-   (defthm induction-scheme-correctness
-     (implies
-      (and (m1-file-no-dups-p m1-file-alist1)
-           (m1-file-no-dups-p m1-file-alist2)
-           (m1-file-alist-p m1-file-alist1)
-           (m1-file-alist-p m1-file-alist2))
-      (iff
-       (induction-scheme
-        m1-file-alist1 m1-file-alist2)
-       (m1-dir-subsetp m1-file-alist1 m1-file-alist2)))
-     :hints (("Goal" :induct (induction-scheme
-                              m1-file-alist1 m1-file-alist2)) )))
-
-  (defthm
-    m1-entry-count-when-m1-dir-subsetp
-    (implies (and (m1-file-no-dups-p m1-file-alist1)
-                  (m1-file-no-dups-p m1-file-alist2)
-                  (m1-file-alist-p m1-file-alist1)
-                  (m1-file-alist-p m1-file-alist2)
-                  (m1-dir-subsetp m1-file-alist1 m1-file-alist2))
-             (<= (m1-entry-count m1-file-alist1)
-                 (m1-entry-count m1-file-alist2)))
-    :rule-classes :linear
-    :hints
-    (("goal"
-      :induct (induction-scheme m1-file-alist1 m1-file-alist2))
-     ("subgoal *1/7"
-      :use
-      (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
-                 (m1-file-alist m1-file-alist2)
-                 (x (car (car m1-file-alist1)))))
-     ("subgoal *1/4"
-      :use
-      (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
-                 (m1-file-alist m1-file-alist2)
-                 (x (car (car m1-file-alist1))))))))
-
-(defthm
-  m1-entry-count-when-m1-dir-equiv
-  (implies (and (m1-dir-equiv m1-file-alist1 m1-file-alist2)
-                (m1-file-alist-p m1-file-alist2)
-                (m1-file-no-dups-p m1-file-alist2))
-           (equal (m1-entry-count m1-file-alist1)
-                  (m1-entry-count m1-file-alist2)))
-  :hints
-  (("goal" :in-theory (e/d (m1-dir-equiv)
-                           (m1-entry-count-when-m1-dir-subsetp))
-    :do-not-induct t
-    :use ((:instance m1-entry-count-when-m1-dir-subsetp
-                     (m1-file-alist1 m1-file-alist2)
-                     (m1-file-alist2 m1-file-alist1))
-          m1-entry-count-when-m1-dir-subsetp))))
 
 (defthm
   useless-dir-ent-p-of-dir-ent-set-filename-of-constant
