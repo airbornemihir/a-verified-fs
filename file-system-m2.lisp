@@ -4401,8 +4401,6 @@
     :stobjs fat32-in-memory
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (m1-file-alist-p fs)
-                (>= (fat-length fat32-in-memory)
-                    *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*)
                 (fat32-masked-entry-p current-dir-first-cluster))
@@ -4709,7 +4707,7 @@
        (painful-debugging-lemma-9)
        (stobj-set-indices-in-fa-table))))))
 
-(defthm
+(defthmd
   m1-fs-to-fat32-in-memory-guard-lemma-1
   (implies
    (and (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
@@ -4730,10 +4728,6 @@
     :stobjs fat32-in-memory
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (m1-file-alist-p fs)
-                (equal (data-region-length fat32-in-memory)
-                       (count-of-clusters fat32-in-memory))
-                (>= (fat-length fat32-in-memory)
-                    *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*))
     :guard-hints
