@@ -9141,12 +9141,9 @@ Some (rather awful) testing forms are
   (b*
       ((total_blocks (count-of-clusters fat32-in-memory))
        (available_blocks
-        (- (+ total_blocks
-              2
-              (len (stobj-find-n-free-clusters
-                    fat32-in-memory
-                    (fat-length fat32-in-memory))))
-           (fat-length fat32-in-memory))))
+        (len (stobj-find-n-free-clusters
+              fat32-in-memory
+              (count-of-clusters fat32-in-memory)))))
     (make-struct-statfs
      :f_type *S_MAGIC_FUSEBLK*
      :f_bsize (cluster-size fat32-in-memory)
