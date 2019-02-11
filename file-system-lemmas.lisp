@@ -733,3 +733,14 @@
   (<= (acl2-count (true-list-fix x))
       (acl2-count x))
   :rule-classes :linear)
+
+(defthmd
+  update-nth-of-revappend
+  (equal (update-nth key val (revappend x y))
+         (if (< (nfix key) (len x))
+             (revappend (update-nth (- (len x) (+ 1 (nfix key)))
+                                    val x)
+                        y)
+             (revappend x
+                        (update-nth (- (nfix key) (len x))
+                                    val y)))))
