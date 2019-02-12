@@ -2,6 +2,8 @@
 
 ;  m1-dir-equiv.lisp                                   Mihir Mehta
 
+; Some definitions and theorems for the equivalence relation m1-dir-equiv.
+
 (include-book "file-system-m1")
 
 (defun m1-dir-subsetp (m1-file-alist1 m1-file-alist2)

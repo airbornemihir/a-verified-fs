@@ -5,7 +5,9 @@
 ; This is a stobj model of the FAT32 filesystem.
 
 (include-book "generate-index-list")
-(include-book "m1-dir-equiv")
+;; (include-book "file-system-m1")
+;; (include-book "m1-dir-equiv")
+(include-book "m1-entry-count")
 (include-book "flatten-lemmas")
 
 (include-book "std/lists/resize-list" :dir :system)
@@ -855,6 +857,9 @@
                   (>= (bpb_fatsz32 fat32-in-memory) 1)
                   (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                       *ms-first-data-cluster*)
+                  ;; This is a shortcoming in the specification! bpb_rootclus
+                  ;; should be able to reach all the way until the end of the
+                  ;; effective-fat.
                   (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                      (count-of-clusters fat32-in-memory))
                   (>= (bpb_bytspersec fat32-in-memory)
@@ -4399,8 +4404,6 @@
     :stobjs fat32-in-memory
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (m1-file-alist-p fs)
-                (>= (fat-length fat32-in-memory)
-                    *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*)
                 (fat32-masked-entry-p current-dir-first-cluster))
@@ -4641,7 +4644,7 @@
             (* *ms-dir-ent-length* (len dir-ent-list))))
   :hints (("goal" :in-theory (enable flatten))))
 
-(defthm
+(defthmd
   m1-fs-to-fat32-in-memory-helper-correctness-4
   (implies
    (and (m1-file-alist-p fs)
@@ -4651,7 +4654,20 @@
    (equal (len (mv-nth 1
                        (m1-fs-to-fat32-in-memory-helper
                         fat32-in-memory fs first-cluster)))
-          (len fs))))
+          (len fs)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (m1-file-alist-p fs)
+          (zp (mv-nth 2
+                      (m1-fs-to-fat32-in-memory-helper
+                       fat32-in-memory fs first-cluster))))
+     (equal (consp (mv-nth 1
+                         (m1-fs-to-fat32-in-memory-helper
+                          fat32-in-memory fs first-cluster)))
+            (consp fs))))))
 
 (defthm
   true-listp-of-m1-fs-to-fat32-in-memory-helper
@@ -4710,11 +4726,7 @@
 (defthm
   m1-fs-to-fat32-in-memory-guard-lemma-1
   (implies
-   (and (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-           (count-of-clusters fat32-in-memory))
-        (<= (+ (count-of-clusters fat32-in-memory)
-               *ms-first-data-cluster*)
-            (fat-length fat32-in-memory)))
+   (compliant-fat32-in-memoryp fat32-in-memory)
    (<
     (binary-+ '1
               (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
@@ -4728,47 +4740,52 @@
     :stobjs fat32-in-memory
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (m1-file-alist-p fs)
-                (equal (data-region-length fat32-in-memory)
-                       (count-of-clusters fat32-in-memory))
-                (>= (fat-length fat32-in-memory)
-                    *ms-first-data-cluster*)
                 (<= (fat-length fat32-in-memory)
                     *ms-bad-cluster*))
+    :guard-debug t
     :guard-hints
     (("goal" :in-theory (e/d (lower-bounded-integer-listp))
       :do-not-induct t))))
   (b*
       ((rootclus (bpb_rootclus fat32-in-memory))
-       (cluster-size (cluster-size fat32-in-memory))
-       ;; we keep the root cluster uncleared because we don't want anything
-       ;; other than the root directory going into it
        (index-list-to-clear
-        (remove
-         (fat32-entry-mask rootclus)
-         (generate-index-list *ms-first-data-cluster*
-                              (- (fat-length fat32-in-memory)
-                                 *ms-first-data-cluster*))))
+        (generate-index-list *ms-first-data-cluster*
+                             (count-of-clusters fat32-in-memory)))
        (fat32-in-memory (stobj-set-indices-in-fa-table
                          fat32-in-memory index-list-to-clear
                          (make-list (len index-list-to-clear)
                                     :initial-element 0)))
-       ((mv fat32-in-memory root-dir-ent-list errno &)
+       (fat32-in-memory (update-fati (fat32-entry-mask rootclus)
+                                     (fat32-update-lower-28
+                                      (fati
+                                       (fat32-entry-mask rootclus)
+                                       fat32-in-memory)
+                                      *ms-end-of-clusterchain*)
+                                     fat32-in-memory))
+       ((mv fat32-in-memory
+            root-dir-ent-list errno &)
         (m1-fs-to-fat32-in-memory-helper
          fat32-in-memory
          fs (fat32-entry-mask rootclus)))
        ((unless (zp errno))
         (mv fat32-in-memory errno))
-       (contents (nats=>string (flatten root-dir-ent-list)))
-       (clusters (make-clusters contents cluster-size))
-       ;; Quote: "Note that a zero-length file [...] has a first cluster
-       ;; number of 0 placed in its directory entry." from page 17 of the FAT
-       ;; specification. This applies here in the very specific case of an
-       ;; empty root directory with no files in it, which came up in a
-       ;; regression test.
-       ((when (atom clusters))
+       (contents (nats=>string (flatten root-dir-ent-list))))
+    (if
+        (atom root-dir-ent-list)
+        ;; Quote: "Note that a zero-length file [...] has a first cluster
+        ;; number of 0 placed in its directory entry." from page 17 of the FAT
+        ;; specification. This applies here in the very specific case of an
+        ;; empty root directory with no files in it, which came up in a
+        ;; regression test.
         (b*
-            ((fat32-in-memory (update-fati (fat32-entry-mask rootclus)
-                                           0 fat32-in-memory))
+            ((fat32-in-memory (update-fati
+                               (fat32-entry-mask rootclus)
+                               (fat32-update-lower-28
+                                (fati
+                                 (fat32-entry-mask rootclus)
+                                 fat32-in-memory)
+                                0)
+                               fat32-in-memory))
              (fat32-in-memory
               (update-data-regioni
                (- (fat32-entry-mask rootclus)
@@ -4777,22 +4794,13 @@
                                   :initial-element (code-char 0))
                        'string)
                fat32-in-memory)))
-          (mv fat32-in-memory 0)))
-       (fat32-in-memory (update-fati (fat32-entry-mask rootclus)
-                                     *ms-end-of-clusterchain* fat32-in-memory))
-       (indices (list* (fat32-entry-mask rootclus)
-                       (stobj-find-n-free-clusters
-                        fat32-in-memory (- (len clusters) 1))))
-       ((unless (equal (len indices) (len clusters)))
-        (mv fat32-in-memory *enospc*))
-       (fat32-in-memory
-        (stobj-set-clusters clusters indices fat32-in-memory))
-       (fat32-in-memory
-        (stobj-set-indices-in-fa-table
-         fat32-in-memory indices
-         (binary-append (cdr indices)
-                        (list *ms-end-of-clusterchain*)))))
-    (mv fat32-in-memory 0)))
+          (mv fat32-in-memory 0))
+      (b*
+          (((mv fat32-in-memory & error-code &)
+            (place-contents fat32-in-memory (dir-ent-fix nil)
+                            contents
+                            0 (fat32-entry-mask rootclus))))
+        (mv fat32-in-memory error-code)))))
 
 (encapsulate
   ()
@@ -5685,20 +5693,6 @@
 (update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
                              update-bpb_bytspersec-of-update-bs_jmpboot)
 
-;; We're not counting this very directory, because the root does not have a
-;; directory entry for itself.
-(defun m1-entry-count (fs)
-  (declare (xargs :guard (m1-file-alist-p fs)))
-  (if
-      (atom fs)
-      0
-    (if (m1-directory-file-p (cdar fs))
-        (+ 1
-           (m1-entry-count (m1-file->contents (cdar fs)))
-           (m1-entry-count (cdr fs)))
-      (+ 1
-         (m1-entry-count (cdr fs))))))
-
 (defthm
   fat32-in-memory-to-m1-fs-helper-correctness-3
   (b* (((mv m1-file-alist entry-count & &)
@@ -6588,6 +6582,18 @@
     :induct (flatten dir-ent-list))))
 
 (defthm
+  make-dir-ent-list-of-make-list-ac-1
+  (implies (not (zp n))
+           (equal (make-dir-ent-list (make-list-ac n 0 ac))
+                  nil))
+  :hints
+  (("goal"
+    :in-theory (e/d (make-dir-ent-list) (make-list-ac))
+    :expand ((make-dir-ent-list (make-list-ac n 0 ac))
+             (dir-ent-fix (take *ms-dir-ent-length*
+                                (make-list-ac n 0 ac)))))))
+
+(defthm
   make-dir-ent-list-of-flatten-when-useful-dir-ent-listp
   (implies (useful-dir-ent-list-p dir-ent-list)
            (equal (make-dir-ent-list (flatten dir-ent-list))
@@ -6596,121 +6602,6 @@
   (("goal"
     :in-theory
     (enable useful-dir-ent-list-p make-dir-ent-list flatten))))
-
-(defthmd
-  m1-entry-count-when-m1-file-no-dups-p
-  (implies
-   (and (m1-file-alist-p m1-file-alist)
-        (m1-file-no-dups-p m1-file-alist)
-        (consp (assoc-equal x m1-file-alist)))
-   (equal
-    (m1-entry-count m1-file-alist)
-    (+
-     (m1-entry-count (remove1-assoc x m1-file-alist))
-     (if
-      (m1-directory-file-p (cdr (assoc-equal x m1-file-alist)))
-      (+ 1
-         (m1-entry-count
-          (m1-file->contents
-           (cdr (assoc-equal x m1-file-alist)))))
-      1)))))
-
-(encapsulate
-  ()
-
-  (local
-   (defun
-       induction-scheme
-       (m1-file-alist1 m1-file-alist2)
-     (declare
-      (xargs
-       :guard (and (m1-file-alist-p m1-file-alist1)
-                   (m1-file-alist-p m1-file-alist2))
-       :hints (("goal" :in-theory (enable m1-file->contents
-                                          m1-directory-file-p)))))
-     (b* (((when (atom m1-file-alist1)) t)
-          ((when (or (atom (car m1-file-alist1))
-                     (not (stringp (car (car m1-file-alist1))))))
-           (and (member-equal (car m1-file-alist1)
-                              m1-file-alist2)
-                (induction-scheme (cdr m1-file-alist1)
-                                  (remove1-assoc-equal
-                                   (caar m1-file-alist1)
-                                   m1-file-alist2))))
-          (name (caar m1-file-alist1))
-          (file1 (cdar m1-file-alist1))
-          ((unless (consp (assoc-equal name m1-file-alist2)))
-           nil)
-          (file2 (cdr (assoc-equal name m1-file-alist2))))
-       (if (not (m1-directory-file-p file1))
-           (and (not (m1-directory-file-p file2))
-                (induction-scheme (cdr m1-file-alist1)
-                                  (remove1-assoc-equal
-                                   name
-                                   m1-file-alist2))
-                (equal (m1-file->contents file1)
-                       (m1-file->contents file2)))
-         (and (m1-directory-file-p file2)
-              (induction-scheme (cdr m1-file-alist1)
-                                (remove1-assoc-equal
-                                 name
-                                 m1-file-alist2))
-              (induction-scheme (m1-file->contents file1)
-                                (m1-file->contents file2)))))))
-
-  (local
-   (defthm induction-scheme-correctness
-     (implies
-      (and (m1-file-no-dups-p m1-file-alist1)
-           (m1-file-no-dups-p m1-file-alist2)
-           (m1-file-alist-p m1-file-alist1)
-           (m1-file-alist-p m1-file-alist2))
-      (iff
-       (induction-scheme
-        m1-file-alist1 m1-file-alist2)
-       (m1-dir-subsetp m1-file-alist1 m1-file-alist2)))
-     :hints (("Goal" :induct (induction-scheme
-                              m1-file-alist1 m1-file-alist2)) )))
-
-  (defthm
-    m1-entry-count-when-m1-dir-subsetp
-    (implies (and (m1-file-no-dups-p m1-file-alist1)
-                  (m1-file-no-dups-p m1-file-alist2)
-                  (m1-file-alist-p m1-file-alist1)
-                  (m1-file-alist-p m1-file-alist2)
-                  (m1-dir-subsetp m1-file-alist1 m1-file-alist2))
-             (<= (m1-entry-count m1-file-alist1)
-                 (m1-entry-count m1-file-alist2)))
-    :rule-classes :linear
-    :hints
-    (("goal"
-      :induct (induction-scheme m1-file-alist1 m1-file-alist2))
-     ("subgoal *1/7"
-      :use
-      (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
-                 (m1-file-alist m1-file-alist2)
-                 (x (car (car m1-file-alist1)))))
-     ("subgoal *1/4"
-      :use
-      (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
-                 (m1-file-alist m1-file-alist2)
-                 (x (car (car m1-file-alist1))))))))
-
-(defthm
-  m1-entry-count-when-m1-dir-equiv
-  (implies (and (m1-dir-equiv m1-file-alist1 m1-file-alist2)
-                (m1-file-alist-p m1-file-alist2)
-                (m1-file-no-dups-p m1-file-alist2))
-           (equal (m1-entry-count m1-file-alist1)
-                  (m1-entry-count m1-file-alist2)))
-  :hints
-  (("goal" :in-theory (e/d (m1-dir-equiv)
-                           (m1-entry-count-when-m1-dir-subsetp))
-    :do-not-induct t
-    :use ((:instance m1-entry-count-when-m1-dir-subsetp
-                     (m1-file-alist1 m1-file-alist2)
-                     (m1-file-alist2 m1-file-alist1))
-          m1-entry-count-when-m1-dir-subsetp))))
 
 (defthm
   useless-dir-ent-p-of-dir-ent-set-filename-of-constant
@@ -7009,7 +6900,9 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable (:linear make-clusters-correctness-3))
+    :in-theory (e/d
+                (m1-fs-to-fat32-in-memory-helper-correctness-4)
+                ((:linear make-clusters-correctness-3)))
     :use
     (:instance
      (:linear make-clusters-correctness-3)
@@ -7811,7 +7704,8 @@
                         current-dir-first-cluster entry-limit x)
       :in-theory
       (e/d
-       (fat32-in-memory-to-m1-fs-helper)
+       (fat32-in-memory-to-m1-fs-helper
+        m1-fs-to-fat32-in-memory-helper-correctness-4)
        ((:rewrite make-clusters-correctness-1 . 1)
         (:rewrite nth-of-nats=>chars)
         (:rewrite by-slice-you-mean-the-whole-cake-2)
@@ -7880,6 +7774,77 @@
     :use
     (:instance m1-fs-to-fat32-in-memory-inversion-big-induction
                (x nil)))))
+
+(defthmd m1-fs-to-fat32-in-memory-inversion-lemma-8
+  (implies (not (zp x1))
+           (iff (equal (* x1 (len x2)) 0)
+                (atom x2))))
+
+(defthmd m1-fs-to-fat32-in-memory-inversion-lemma-9
+  (implies (not (zp x1))
+           (equal (< 0 (* x1 (len x2)))
+                  (consp x2))))
+
+(defthmd m1-fs-to-fat32-in-memory-inversion-lemma-10
+  (implies
+   (atom dir-ent-list)
+   (equal
+    (FAT32-IN-MEMORY-TO-M1-FS-HELPER FAT32-IN-MEMORY
+                                     DIR-ENT-LIST ENTRY-LIMIT)
+    (mv NIL 0 NIL 0)))
+  :hints (("Goal" :in-theory (enable FAT32-IN-MEMORY-TO-M1-FS-HELPER)) ))
+
+(defthmd
+  m1-fs-to-fat32-in-memory-inversion-lemma-11
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (and
+    (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+       (binary-+ '2
+                 (count-of-clusters fat32-in-memory)))
+    (not
+     (<
+      (binary-+ '2
+                (count-of-clusters fat32-in-memory))
+      (binary-+
+       '1
+       (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-inversion
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (equal (mod *ms-max-dir-size*
+                    (cluster-size fat32-in-memory))
+               0)
+        (m1-file-alist-p fs)
+        (m1-bounded-file-alist-p fs)
+        (m1-file-no-dups-p fs)
+        (>=
+         (floor (* (data-region-length fat32-in-memory)
+                   (cluster-size fat32-in-memory))
+                *ms-dir-ent-length*)
+         (m1-entry-count fs)))
+   (b*
+       (((mv fat32-in-memory error-code)
+         (m1-fs-to-fat32-in-memory
+          fat32-in-memory fs)))
+     (implies
+      (zp error-code)
+      (m1-dir-equiv
+       (fat32-in-memory-to-m1-fs
+        fat32-in-memory)
+       fs))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (enable fat32-in-memory-to-m1-fs
+                       m1-fs-to-fat32-in-memory-inversion-lemma-8
+                       m1-fs-to-fat32-in-memory-helper-correctness-4
+                       m1-fs-to-fat32-in-memory-inversion-lemma-9
+                       m1-fs-to-fat32-in-memory-inversion-lemma-10
+                       (:REWRITE M1-FS-TO-FAT32-IN-MEMORY-INVERSION-BIG-INDUCTION)
+                       m1-fs-to-fat32-in-memory-inversion-lemma-11)))
+  :otf-flg t)
 
 ;; (encapsulate
 ;;   ()
