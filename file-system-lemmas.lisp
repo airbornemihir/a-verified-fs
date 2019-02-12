@@ -47,7 +47,7 @@
              (equal (first-n-ac i l ac)
                     (revappend ac (true-list-fix l)))))))
 
-(defthm by-slice-you-mean-the-whole-cake-2
+(defthmd by-slice-you-mean-the-whole-cake-2
   (implies (equal i (len l))
            (equal (take i l) (true-list-fix l))))
 

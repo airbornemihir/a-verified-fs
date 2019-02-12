@@ -176,7 +176,7 @@
   :hints (("goal" :in-theory (enable dir-ent-p)))
   :rule-classes :forward-chaining)
 
-(defthm len-when-dir-ent-p
+(defthmd len-when-dir-ent-p
   (implies (dir-ent-p dir-ent)
            (equal (len dir-ent)
                   *ms-dir-ent-length*))
@@ -230,6 +230,9 @@
   (implies (dir-ent-p dir-ent)
            (equal (unsigned-byte-p 8 (nth n dir-ent))
                   (< (nfix n) *ms-dir-ent-length*)))
+  :hints (("Goal"
+           :in-theory
+           (e/d (len-when-dir-ent-p))))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -254,8 +257,8 @@
     :hints
     (("goal"
       :in-theory
-      (disable unsigned-byte-p-of-nth-when-unsigned-byte-listp
-               nth))))))
+      (e/d ()
+      (unsigned-byte-p-of-nth-when-unsigned-byte-listp nth)))))))
 
 (defund dir-ent-fix (x)
   (declare (xargs :guard t))
@@ -475,7 +478,8 @@
     :guard (and (dir-ent-p dir-ent)
                 (stringp filename)
                 (equal (length filename) 11))
-    :guard-hints (("goal" :in-theory (enable dir-ent-p-of-append)))))
+    :guard-hints (("goal" :in-theory (enable dir-ent-p-of-append
+                                             len-when-dir-ent-p)))))
   (mbe :exec (append (string=>nats filename)
                      (subseq dir-ent 11 *ms-dir-ent-length*))
        :logic
@@ -738,7 +742,8 @@
     (dir-ent-file-size dir-ent)))
   :hints (("goal" :in-theory (enable dir-ent-file-size
                                      dir-ent-set-filename
-                                     dir-ent-p-of-append))))
+                                     dir-ent-p-of-append
+                                     len-when-dir-ent-p))))
 
 (defthm
   dir-ent-directory-p-of-dir-ent-set-first-cluster-file-size
