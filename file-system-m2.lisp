@@ -817,7 +817,8 @@
        (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
            *ms-first-data-cluster*)
        (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-          (count-of-clusters fat32-in-memory))
+          (+ *ms-first-data-cluster*
+             (count-of-clusters fat32-in-memory)))
        ;; This is a stop-gap until we figure out the proper constraints to
        ;; impose on the cluster size. The spec (page 9) imposes both hard and
        ;; soft limits on the legal values of the cluster size, but this is less
@@ -857,11 +858,14 @@
                   (>= (bpb_fatsz32 fat32-in-memory) 1)
                   (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                       *ms-first-data-cluster*)
-                  ;; This is a shortcoming in the specification! bpb_rootclus
-                  ;; should be able to reach all the way until the end of the
-                  ;; effective-fat.
+                  ;; There was a bug here, which we fixed - previously,
+                  ;; bpb_rootclus was only allowed to point at clusters up to
+                  ;; but not including (count-of-clusters fat32-in-memory),
+                  ;; which causes two clusters (up to but not including
+                  ;; (+ 2 (count-of-clusters fat32-in-memory))) to be left out.
                   (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-                     (count-of-clusters fat32-in-memory))
+                     (+ *ms-first-data-cluster*
+                        (count-of-clusters fat32-in-memory)))
                   (>= (bpb_bytspersec fat32-in-memory)
                       *ms-min-bytes-per-sector*)
                   (equal (data-region-length fat32-in-memory)
@@ -903,7 +907,8 @@
                     (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                         *ms-first-data-cluster*)
                     (< (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-                       (count-of-clusters fat32-in-memory))
+                       (+ *ms-first-data-cluster*
+                          (count-of-clusters fat32-in-memory)))
                     (>= (bpb_bytspersec fat32-in-memory)
                         *ms-min-bytes-per-sector*)
                     (>= (* (cluster-size fat32-in-memory)
@@ -4723,14 +4728,27 @@
        (painful-debugging-lemma-9)
        (stobj-set-indices-in-fa-table))))))
 
-(defthm
+(defthmd
   m1-fs-to-fat32-in-memory-guard-lemma-1
   (implies
    (compliant-fat32-in-memoryp fat32-in-memory)
-   (<
-    (binary-+ '1
-              (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
-    (fat-length fat32-in-memory))))
+   (iff
+    (< (binary-+
+        '1
+        (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
+       (fat-length fat32-in-memory))
+    (or
+     (not
+      (equal (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+             (+ (count-of-clusters fat32-in-memory)
+                1)))
+     (not (equal (fat-length fat32-in-memory)
+                 (+ (count-of-clusters fat32-in-memory)
+                    2))))))
+  :hints
+  (("goal" :in-theory
+    (disable compliant-fat32-in-memoryp-correctness-1)
+    :use compliant-fat32-in-memoryp-correctness-1)))
 
 (defun
   m1-fs-to-fat32-in-memory
@@ -4744,7 +4762,19 @@
                     *ms-bad-cluster*))
     :guard-debug t
     :guard-hints
-    (("goal" :in-theory (e/d (lower-bounded-integer-listp))
+    (("goal" :in-theory (e/d (lower-bounded-integer-listp
+                              m1-fs-to-fat32-in-memory-guard-lemma-1)
+                             (unsigned-byte-p))
+      ;; This is the second time we've had to add a :cases hint, really. The
+      ;; reason is the same: brr tells us that a case split which should be
+      ;; happening is not happening automatically.
+      :cases
+      ((not (equal (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                   (binary-+ '1
+                             (count-of-clusters fat32-in-memory))))
+       (not (equal (fat-length fat32-in-memory)
+                   (binary-+ '2
+                             (count-of-clusters fat32-in-memory)))))
       :do-not-induct t))))
   (b*
       ((rootclus (bpb_rootclus fat32-in-memory))
