@@ -165,6 +165,94 @@
   (implies (not (rational-listp x))
            (not (unsigned-byte-listp n x))))
 
+(defthm take-of-update-nth
+  (equal (take n (update-nth key val l))
+         (if (< (nfix key) (nfix n))
+             (update-nth key val (take n l))
+           (take n l))))
+
+(defthm
+  unsigned-byte-listp-of-make-list-ac
+  (equal (unsigned-byte-listp n1 (make-list-ac n2 val ac))
+         (and (unsigned-byte-listp n1 ac)
+              (or (zp n2) (unsigned-byte-p n1 val)))))
+
+(defthm consp-of-chars=>nats
+  (iff (consp (chars=>nats chars))
+       (consp chars))
+  :hints (("goal" :in-theory (enable chars=>nats))))
+
+(defthm consp-of-string=>nats
+  (iff (consp (string=>nats string))
+       (consp (explode string)))
+  :hints (("goal" :in-theory (enable string=>nats))))
+
+(defthm chars=>nats-of-make-list-ac
+  (equal (chars=>nats (make-list-ac n val ac))
+         (make-list-ac n (char-code val)
+                       (chars=>nats ac)))
+  :hints (("goal" :in-theory (enable chars=>nats))))
+
+(defthm string=>nats-of-implode
+  (implies (character-listp chars)
+           (equal (string=>nats (implode chars))
+                  (chars=>nats chars)))
+  :hints (("goal" :in-theory (enable string=>nats))))
+
+(defthmd chars=>nats-of-take
+  (implies (<= (nfix n) (len chars))
+           (equal (chars=>nats (take n chars))
+                  (take n (chars=>nats chars))))
+  :hints (("goal" :in-theory (enable chars=>nats))))
+
+(defthmd chars=>nats-of-nthcdr
+  (equal (chars=>nats (nthcdr n chars))
+         (nthcdr n (chars=>nats chars)))
+  :hints (("goal" :in-theory (enable chars=>nats nthcdr-of-nil))))
+
+(defthmd chars=>nats-of-revappend
+  (equal (chars=>nats (revappend x y))
+         (revappend (chars=>nats x) (chars=>nats y)))
+  :hints (("goal" :in-theory (enable chars=>nats))))
+
+(defthm explode-of-nats=>string
+  (equal (explode (nats=>string nats))
+         (nats=>chars nats))
+  :hints (("goal" :in-theory (enable nats=>string))))
+
+(defthmd nats=>chars-of-revappend
+  (equal (nats=>chars (revappend x y))
+         (revappend (nats=>chars x) (nats=>chars y)))
+  :hints (("goal" :in-theory (enable nats=>chars))))
+
+(encapsulate
+  ()
+
+  (local (include-book "std/basic/inductions" :dir :system))
+
+  (defthm take-of-make-list-ac
+    (implies (<= (nfix n1) (nfix n2))
+             (equal (take n1 (make-list-ac n2 val ac))
+                    (make-list-ac n1 val nil)))
+    :hints (("goal'" :induct (dec-dec-induct n1 n2))))
+
+  (defcong
+    str::charlisteqv equal (chars=>nats x)
+    1
+    :hints
+    (("goal" :in-theory (enable chars=>nats)
+      :induct (cdr-cdr-induct x str::x-equiv)))))
+
+;; This is to get the theorem about the nth element of a list of unsigned
+;; bytes.
+(local (include-book "std/typed-lists/integer-listp" :dir :system))
+
+(defthm unsigned-byte-listp-of-revappend
+  (equal (unsigned-byte-listp width (revappend x y))
+         (and (unsigned-byte-listp width (list-fix x))
+              (unsigned-byte-listp width y)))
+  :hints (("goal" :induct (revappend x y))))
+
 (defund dir-ent-p (x)
   (declare (xargs :guard t))
   (and (unsigned-byte-listp 8 x)
@@ -471,6 +559,11 @@
     (e/d (dir-ent-set-first-cluster-file-size dir-ent-filename)
          (loghead logtail (:rewrite logtail-loghead))))))
 
+(defthm explode-of-dir-ent-filename
+  (equal (explode (dir-ent-filename dir-ent))
+         (nats=>chars (subseq dir-ent 0 11)))
+  :hints (("goal" :in-theory (enable dir-ent-filename))))
+
 (defund
   dir-ent-set-filename (dir-ent filename)
   (declare
@@ -623,6 +716,17 @@
          (dir-ent-file-size dir-ent))
   :hints
   (("goal" :in-theory (enable dir-ent-file-size
+                              dir-ent-install-directory-bit))))
+
+(defthm
+  dir-ent-filename-of-dir-ent-install-directory-bit
+  (implies
+   (dir-ent-p dir-ent)
+   (equal (dir-ent-filename
+           (dir-ent-install-directory-bit dir-ent val))
+          (dir-ent-filename dir-ent)))
+  :hints
+  (("goal" :in-theory (enable dir-ent-filename
                               dir-ent-install-directory-bit))))
 
 (defun fat32-filename-p (x)
