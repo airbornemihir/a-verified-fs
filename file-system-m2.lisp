@@ -2652,8 +2652,8 @@
          ((unless
               (and (<= (data-region-length fat32-in-memory)
                        (- *ms-bad-cluster* *ms-first-data-cluster*))
-                (>= (length str)
-                    (+ tmp_init data-byte-count))))
+                   (>= (length str)
+                       (+ tmp_init data-byte-count))))
           (mv fat32-in-memory -1))
          (data-region-string
           (subseq str tmp_init
@@ -4136,10 +4136,6 @@
                 (dir-ent-p dir-ent)
                 (unsigned-byte-p 32 file-length)
                 (stringp contents)
-                (<= (fat-length fat32-in-memory)
-                    *ms-bad-cluster*)
-                (>= (fat-length fat32-in-memory)
-                    *ms-first-data-cluster*)
                 (fat32-masked-entry-p first-cluster)
                 (>= first-cluster *ms-first-data-cluster*)
                 (< first-cluster
@@ -4447,8 +4443,6 @@
     :stobjs fat32-in-memory
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (m1-file-alist-p fs)
-                (<= (fat-length fat32-in-memory)
-                    *ms-bad-cluster*)
                 (fat32-masked-entry-p current-dir-first-cluster))
     :hints (("goal" :in-theory (enable m1-file->contents
                                        m1-file-contents-fix)))
@@ -6024,9 +6018,11 @@
   ()
 
   (local
+   (in-theory (enable by-slice-you-mean-the-whole-cake-2)))
+
+  (local
    (defun induction-scheme
        (index-list text cluster-size length)
-     (declare (xargs :hints (("Goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2)) )))
      (if (or (zp (length text))
              (zp cluster-size))
          (mv index-list length)
@@ -6045,8 +6041,7 @@
   (local
    (in-theory (enable make-clusters
                       lower-bounded-integer-listp
-                      nthcdr-when->=-n-len-l
-                      by-slice-you-mean-the-whole-cake-2)))
+                      nthcdr-when->=-n-len-l)))
 
   (defthm
     get-contents-from-clusterchain-of-stobj-set-clusters-coincident
@@ -7616,10 +7611,6 @@
        :guard
        (and (compliant-fat32-in-memoryp fat32-in-memory)
             (m1-file-alist-p fs)
-            (>= (fat-length fat32-in-memory)
-                *ms-first-data-cluster*)
-            (<= (fat-length fat32-in-memory)
-                *ms-bad-cluster*)
             (fat32-masked-entry-p current-dir-first-cluster))
        :hints (("goal" :in-theory (enable m1-file->contents
                                           m1-file-contents-fix)))
@@ -8376,8 +8367,7 @@
 (encapsulate
   ()
 
-  (local
-   (include-book "rtl/rel9/arithmetic/top" :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-27
@@ -8399,51 +8389,7 @@
               (nthcdr (* (cluster-size fat32-in-memory)
                          (- index (nfix len)))
                       (make-character-list ac))))))
-    :hints (("Goal" :in-theory (enable BY-SLICE-YOU-MEAN-THE-WHOLE-CAKE-2)) )))
-
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-28
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (natp len)
-        (<= len
-            (data-region-length fat32-in-memory)))
-   (equal (update-data-region
-           fat32-in-memory
-           (implode (data-region-string-helper
-                     fat32-in-memory
-                     (count-of-clusters fat32-in-memory)
-                     nil))
-           len)
-          fat32-in-memory))
-  :hints
-  (("goal" :in-theory (disable data-region-string-helper))
-   ("subgoal *1/6"
-    :in-theory
-    (disable
-     (:rewrite fat32-in-memory-to-string-inversion-lemma-27))
-    :use
-    (:instance
-     (:rewrite fat32-in-memory-to-string-inversion-lemma-27)
-     (ac nil)
-     (len (count-of-clusters fat32-in-memory))
-     (index (+ (count-of-clusters fat32-in-memory)
-               (- len)))
-     (fat32-in-memory fat32-in-memory)))
-   ("subgoal *1/2"
-    :in-theory
-    (disable fat32-in-memory-to-string-inversion-lemma-27)
-    :use
-    (:instance fat32-in-memory-to-string-inversion-lemma-27
-               (index (- (count-of-clusters fat32-in-memory)
-                         len))
-               (len (count-of-clusters fat32-in-memory))
-               (ac nil)))))
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+    :hints (("Goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2))))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-30
@@ -8489,6 +8435,45 @@
               (* (bpb_numfats fat32-in-memory)
                  4 (fat-length fat32-in-memory))))
     :rule-classes :linear))
+
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-28
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (natp len)
+        (<= len
+            (data-region-length fat32-in-memory)))
+   (equal (update-data-region
+           fat32-in-memory
+           (implode (data-region-string-helper
+                     fat32-in-memory
+                     (count-of-clusters fat32-in-memory)
+                     nil))
+           len)
+          fat32-in-memory))
+  :hints
+  (("goal" :in-theory (disable data-region-string-helper))
+   ("subgoal *1/6"
+    :in-theory
+    (disable
+     (:rewrite fat32-in-memory-to-string-inversion-lemma-27))
+    :use
+    (:instance
+     (:rewrite fat32-in-memory-to-string-inversion-lemma-27)
+     (ac nil)
+     (len (count-of-clusters fat32-in-memory))
+     (index (+ (count-of-clusters fat32-in-memory)
+               (- len)))
+     (fat32-in-memory fat32-in-memory)))
+   ("subgoal *1/2"
+    :in-theory
+    (disable fat32-in-memory-to-string-inversion-lemma-27)
+    :use
+    (:instance fat32-in-memory-to-string-inversion-lemma-27
+               (index (- (count-of-clusters fat32-in-memory)
+                         len))
+               (len (count-of-clusters fat32-in-memory))
+               (ac nil)))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-33
@@ -8836,7 +8821,9 @@
                                                                 logtail
                                                                 unsigned-byte-p)))))
 
-  (local (in-theory (enable chars=>nats-of-take)))
+  (local (in-theory (enable chars=>nats-of-take get-initial-bytes
+                            fat32-in-memory-to-string
+                            compliant-fat32-in-memoryp)))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-43
@@ -8848,12 +8835,7 @@
              (get-initial-bytes
               (fat32-in-memory-to-string fat32-in-memory)))
        fat32-in-memory)
-      fat32-in-memory))
-    :hints
-    (("goal" :in-theory
-      (e/d (get-initial-bytes fat32-in-memory-to-string
-                              compliant-fat32-in-memoryp)
-           (fat32-in-memoryp)))))
+      fat32-in-memory)))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-44
@@ -8868,14 +8850,9 @@
          (get-initial-bytes
           (fat32-in-memory-to-string fat32-in-memory))))
        fat32-in-memory)
-      fat32-in-memory))
-    :hints
-    (("goal" :in-theory
-      (e/d (get-initial-bytes fat32-in-memory-to-string
-                              compliant-fat32-in-memoryp)
-           (fat32-in-memoryp)))))
+      fat32-in-memory)))
 
-  (local (in-theory (enable chars=>nats-of-nthcdr)))
+  (local (in-theory (enable chars=>nats-of-nthcdr get-remaining-rsvdbyts)))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-45
@@ -8890,13 +8867,7 @@
          (get-remaining-rsvdbyts
           (fat32-in-memory-to-string fat32-in-memory))))
        fat32-in-memory)
-      fat32-in-memory))
-    :hints
-    (("goal" :in-theory
-      (e/d (get-initial-bytes get-remaining-rsvdbyts
-                              fat32-in-memory-to-string
-                              compliant-fat32-in-memoryp)
-           (fat32-in-memoryp)))))
+      fat32-in-memory)))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-46
@@ -8911,13 +8882,7 @@
          (get-remaining-rsvdbyts
           (fat32-in-memory-to-string fat32-in-memory))))
        fat32-in-memory)
-      fat32-in-memory))
-    :hints
-    (("goal" :in-theory
-      (e/d (get-initial-bytes get-remaining-rsvdbyts
-                              fat32-in-memory-to-string
-                              compliant-fat32-in-memoryp)
-           (fat32-in-memoryp))))))
+      fat32-in-memory))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-47
