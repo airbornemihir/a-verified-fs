@@ -746,7 +746,10 @@
                 (count-of-clusters fat32-in-memory))
          (<= (+ (count-of-clusters fat32-in-memory)
                 *ms-first-data-cluster*)
-             (fat-length fat32-in-memory))))
+             (fat-length fat32-in-memory))
+         (equal (* (bpb_fatsz32 fat32-in-memory)
+                   1/4 (bpb_bytspersec fat32-in-memory))
+                (fat-length fat32-in-memory))))
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
@@ -786,7 +789,10 @@
                          (count-of-clusters fat32-in-memory))
                   (<= (+ (count-of-clusters fat32-in-memory)
                          *ms-first-data-cluster*)
-                      (fat-length fat32-in-memory))))
+                      (fat-length fat32-in-memory))
+                  (equal (* (bpb_fatsz32 fat32-in-memory)
+                            1/4 (bpb_bytspersec fat32-in-memory))
+                         (fat-length fat32-in-memory))))
     :hints
     (("goal"
       :in-theory (e/d (compliant-fat32-in-memoryp cluster-size)
@@ -803,7 +809,10 @@
                                                    fat32-in-memory))
                            0)
                     (equal (data-region-length fat32-in-memory)
-                           (count-of-clusters fat32-in-memory)))))
+                           (count-of-clusters fat32-in-memory))
+                    (equal (* (bpb_fatsz32 fat32-in-memory)
+                              1/4 (bpb_bytspersec fat32-in-memory))
+                           (fat-length fat32-in-memory)))))
      (:forward-chaining
       :corollary
       (implies (compliant-fat32-in-memoryp fat32-in-memory)
@@ -4684,17 +4693,14 @@
     (disable compliant-fat32-in-memoryp-correctness-1)
     :use compliant-fat32-in-memoryp-correctness-1)))
 
-(defun
+(defund
   m1-fs-to-fat32-in-memory
   (fat32-in-memory fs)
   (declare
    (xargs
     :stobjs fat32-in-memory
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (m1-file-alist-p fs)
-                (<= (fat-length fat32-in-memory)
-                    *ms-bad-cluster*))
-    :guard-debug t
+                (m1-file-alist-p fs))
     :guard-hints
     (("goal" :in-theory (e/d (lower-bounded-integer-listp
                               m1-fs-to-fat32-in-memory-guard-lemma-1)
@@ -4765,6 +4771,52 @@
                             contents
                             0 (fat32-entry-mask rootclus))))
         (mv fat32-in-memory error-code)))))
+
+(defthm natp-of-m1-fs-to-fat32-in-memory
+  (natp (mv-nth 1
+                (m1-fs-to-fat32-in-memory
+                 fat32-in-memory
+                 fs)))
+  :rule-classes
+  (:type-prescription
+   (:rewrite
+    :corollary
+    (integerp (mv-nth 1
+                      (m1-fs-to-fat32-in-memory
+                       fat32-in-memory
+                       fs))))
+   (:linear
+    :corollary
+    (<= 0
+        (mv-nth 1
+                (m1-fs-to-fat32-in-memory
+                 fat32-in-memory
+                 fs)))))
+  :hints (("Goal" :in-theory (enable m1-fs-to-fat32-in-memory)) ))
+
+(defthm
+  compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (m1-file-alist-p fs))
+   (compliant-fat32-in-memoryp
+    (mv-nth 0
+            (m1-fs-to-fat32-in-memory fat32-in-memory fs))))
+  :hints
+  (("goal"
+    :in-theory (enable m1-fs-to-fat32-in-memory
+                       m1-fs-to-fat32-in-memory-guard-lemma-1)
+    :do-not-induct t
+    :cases
+    ((not
+      (equal (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+             (binary-+ '1
+                       (count-of-clusters fat32-in-memory))))
+     (not
+      (equal
+       (fat-length fat32-in-memory)
+       (binary-+ '2
+                 (count-of-clusters fat32-in-memory))))))))
 
 (encapsulate
   ()
@@ -7825,6 +7877,7 @@
   :hints
   (("goal" :do-not-induct t
     :in-theory (enable fat32-in-memory-to-m1-fs
+                       m1-fs-to-fat32-in-memory
                        m1-fs-to-fat32-in-memory-inversion-lemma-8
                        m1-fs-to-fat32-in-memory-helper-correctness-4
                        m1-fs-to-fat32-in-memory-inversion-lemma-9
@@ -8861,10 +8914,7 @@
 (defthm
   fat32-in-memory-to-string-inversion
   (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (equal (* (bpb_fatsz32 fat32-in-memory)
-                  1/4 (bpb_bytspersec fat32-in-memory))
-               (fat-length fat32-in-memory)))
+   (compliant-fat32-in-memoryp fat32-in-memory)
    (equal
     (mv-nth 0
             (string-to-fat32-in-memory
@@ -8878,6 +8928,32 @@
                                     painful-debugging-lemma-5
                                     by-slice-you-mean-the-whole-cake-2)
          (loghead logtail)))))
+
+(defthm
+  m1-fs-to-fat32-in-memory-to-string-inversion
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (m1-file-alist-p fs)
+        (m1-bounded-file-alist-p fs)
+        (m1-file-no-dups-p fs)
+        (>= (floor (* (data-region-length fat32-in-memory)
+                      (cluster-size fat32-in-memory))
+                   *ms-dir-ent-length*)
+            (m1-entry-count fs)))
+   (b*
+       (((mv fat32-in-memory error-code)
+         (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
+     (implies
+      (zp error-code)
+      (m1-dir-equiv
+       (fat32-in-memory-to-m1-fs
+        (mv-nth
+         0
+         (string-to-fat32-in-memory
+          fat32-in-memory
+          (fat32-in-memory-to-string fat32-in-memory))))
+       fs))))
+  :hints (("goal" :do-not-induct t)))
 
 #|
 Some (rather awful) testing forms are
