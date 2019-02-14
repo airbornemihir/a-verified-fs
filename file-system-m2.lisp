@@ -746,7 +746,10 @@
                 (count-of-clusters fat32-in-memory))
          (<= (+ (count-of-clusters fat32-in-memory)
                 *ms-first-data-cluster*)
-             (fat-length fat32-in-memory))))
+             (fat-length fat32-in-memory))
+         (equal (* (bpb_fatsz32 fat32-in-memory)
+                   1/4 (bpb_bytspersec fat32-in-memory))
+                (fat-length fat32-in-memory))))
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
@@ -786,7 +789,10 @@
                          (count-of-clusters fat32-in-memory))
                   (<= (+ (count-of-clusters fat32-in-memory)
                          *ms-first-data-cluster*)
-                      (fat-length fat32-in-memory))))
+                      (fat-length fat32-in-memory))
+                  (equal (* (bpb_fatsz32 fat32-in-memory)
+                            1/4 (bpb_bytspersec fat32-in-memory))
+                         (fat-length fat32-in-memory))))
     :hints
     (("goal"
       :in-theory (e/d (compliant-fat32-in-memoryp cluster-size)
@@ -803,7 +809,10 @@
                                                    fat32-in-memory))
                            0)
                     (equal (data-region-length fat32-in-memory)
-                           (count-of-clusters fat32-in-memory)))))
+                           (count-of-clusters fat32-in-memory))
+                    (equal (* (bpb_fatsz32 fat32-in-memory)
+                              1/4 (bpb_bytspersec fat32-in-memory))
+                           (fat-length fat32-in-memory)))))
      (:forward-chaining
       :corollary
       (implies (compliant-fat32-in-memoryp fat32-in-memory)
@@ -8861,10 +8870,7 @@
 (defthm
   fat32-in-memory-to-string-inversion
   (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (equal (* (bpb_fatsz32 fat32-in-memory)
-                  1/4 (bpb_bytspersec fat32-in-memory))
-               (fat-length fat32-in-memory)))
+   (compliant-fat32-in-memoryp fat32-in-memory)
    (equal
     (mv-nth 0
             (string-to-fat32-in-memory
