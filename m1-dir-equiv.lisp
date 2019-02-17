@@ -76,11 +76,12 @@
    (m1-file-no-dups-p (remove1-assoc-equal key m1-file-alist))))
 
 (defund m1-dir-equiv (m1-file-alist1 m1-file-alist2)
-  (declare (xargs :guard t))
+  (declare (xargs :guard (and (m1-file-alist-p m1-file-alist1)
+                              (m1-file-alist-p m1-file-alist2))))
   (or (equal m1-file-alist1 m1-file-alist2)
-      (let ((good1 (and (m1-file-alist-p m1-file-alist1)
+      (let ((good1 (and (mbt (m1-file-alist-p m1-file-alist1))
                         (m1-file-no-dups-p m1-file-alist1)))
-            (good2 (and (m1-file-alist-p m1-file-alist2)
+            (good2 (and (mbt (m1-file-alist-p m1-file-alist2))
                         (m1-file-no-dups-p m1-file-alist2))))
         (cond ((not good1) (not good2)) ; all bad objects are equivalent
               ((not good2) nil) ; one good, one bad; hence, not equivalent

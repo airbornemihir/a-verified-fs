@@ -3348,6 +3348,34 @@
           (:t dir-ent-directory-p)
           (:definition fat32-build-index-list))))))
 
+(defthm
+  data-region-length-of-update-fati
+  (equal (data-region-length (update-fati i v fat32-in-memory))
+         (data-region-length fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable data-region-length update-fati))))
+
+(defund max-entry-count (fat32-in-memory)
+  (declare
+   (xargs :guard (compliant-fat32-in-memoryp fat32-in-memory)
+          :stobjs fat32-in-memory))
+  (mbe
+   :exec
+   (floor (* (data-region-length fat32-in-memory)
+             (cluster-size fat32-in-memory))
+          *ms-dir-ent-length*)
+   :logic
+   (nfix
+    (floor (* (data-region-length fat32-in-memory)
+              (cluster-size fat32-in-memory))
+           *ms-dir-ent-length*))))
+
+(defthm max-entry-count-of-update-fati
+  (equal
+   (max-entry-count (update-fati i v fat32-in-memory))
+   (max-entry-count fat32-in-memory))
+  :hints (("Goal" :in-theory (enable max-entry-count)) ))
+
 (defund
   fat32-in-memory-to-m1-fs
   (fat32-in-memory)
@@ -3379,9 +3407,7 @@
          *ms-max-dir-size*))
        ((unless (equal error-code 0))
         (mv nil (- error-code)))
-       (entry-limit (floor (* (data-region-length fat32-in-memory)
-                              (cluster-size fat32-in-memory))
-                           *ms-dir-ent-length*))
+       (entry-limit (max-entry-count fat32-in-memory))
        ((mv m1-file-alist & & error-code)
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
@@ -3454,6 +3480,17 @@
   (("goal"
     :in-theory
     (enable fat32-in-memory-to-m1-fs fat32-in-memory-to-m1-fs-helper))))
+
+(defthm
+  m1-entry-count-of-fat32-in-memory-to-m1-fs
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (<= (m1-entry-count
+        (mv-nth 0
+                (fat32-in-memory-to-m1-fs fat32-in-memory)))
+       (max-entry-count fat32-in-memory)))
+  :hints (("goal" :in-theory (enable fat32-in-memory-to-m1-fs)))
+  :rule-classes :linear)
 
 (defund
   stobj-find-n-free-clusters-helper
@@ -3766,13 +3803,6 @@
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
 (defthm
-  data-region-length-of-update-fati
-  (equal (data-region-length (update-fati i v fat32-in-memory))
-         (data-region-length fat32-in-memory))
-  :hints
-  (("goal" :in-theory (enable data-region-length update-fati))))
-
-(defthm
   data-region-length-of-stobj-set-indices-in-fa-table
   (equal
    (data-region-length (stobj-set-indices-in-fa-table
@@ -3806,6 +3836,14 @@
          (data-regioni i fat32-in-memory))
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
+
+(defthm
+  max-entry-count-of-stobj-set-indices-in-fa-table
+  (equal
+   (max-entry-count (stobj-set-indices-in-fa-table
+                     fat32-in-memory index-list value-list))
+   (max-entry-count fat32-in-memory))
+  :hints (("goal" :in-theory (enable max-entry-count))))
 
 (defund
   make-clusters (text cluster-size)
@@ -4395,6 +4433,18 @@
                            (cluster-size fat32-in-memory)))))
      (fa-table (effective-fat fat32-in-memory))))))
 
+(defthm
+  max-entry-count-of-place-contents
+  (equal
+   (max-entry-count
+    (mv-nth
+     0
+     (place-contents fat32-in-memory dir-ent
+                     contents file-length first-cluster)))
+   (max-entry-count fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable max-entry-count place-contents))))
+
 ;; OK, this function needs to return a list of directory entries, so that when
 ;; it is called recursively to take care of all the entries in a subdirectory,
 ;; the caller gets the list of these entries and becomes able to concatenate
@@ -4737,6 +4787,16 @@
       (e/d
        (painful-debugging-lemma-9)
        (stobj-set-indices-in-fa-table))))))
+
+(defthm
+  max-entry-count-of-m1-fs-to-fat32-in-memory-helper
+  (equal
+   (max-entry-count
+    (mv-nth
+     0
+     (M1-FS-TO-FAT32-IN-MEMORY-HELPER FAT32-IN-MEMORY
+                                      FS CURRENT-DIR-FIRST-CLUSTER)))
+   (max-entry-count fat32-in-memory)))
 
 (defthmd
   m1-fs-to-fat32-in-memory-guard-lemma-1
@@ -7946,11 +8006,9 @@
         (m1-file-alist-p fs)
         (m1-bounded-file-alist-p fs)
         (m1-file-no-dups-p fs)
-        (>=
-         (floor (* (data-region-length fat32-in-memory)
-                   (cluster-size fat32-in-memory))
-                *ms-dir-ent-length*)
-         (m1-entry-count fs)))
+        (<=
+         (m1-entry-count fs)
+         (max-entry-count fat32-in-memory)))
    (b*
        (((mv fat32-in-memory error-code)
          (m1-fs-to-fat32-in-memory
@@ -7977,8 +8035,63 @@
                        m1-fs-to-fat32-in-memory-inversion-lemma-9
                        m1-fs-to-fat32-in-memory-inversion-lemma-10
                        m1-fs-to-fat32-in-memory-inversion-lemma-11
-                       m1-fs-to-fat32-in-memory-inversion-lemma-13
-                       get-clusterchain-contents))))
+                       m1-fs-to-fat32-in-memory-inversion-lemma-13))))
+
+(defund-nx
+  fat32-in-memory-equiv
+  (fat32-in-memory1 fat32-in-memory2)
+  (b* (((mv fs1 error-code1)
+        (fat32-in-memory-to-m1-fs fat32-in-memory1))
+       (good1 (and (compliant-fat32-in-memoryp fat32-in-memory1)
+                   (equal error-code1 0)))
+       ((mv fs2 error-code2)
+        (fat32-in-memory-to-m1-fs fat32-in-memory2))
+       (good2 (and (compliant-fat32-in-memoryp fat32-in-memory2)
+                   (equal error-code2 0)))
+       ((unless (and good1 good2))
+        (and (not good1) (not good2))))
+    (m1-dir-equiv fs1 fs2)))
+
+(defequiv
+  fat32-in-memory-equiv
+  :hints (("goal" :in-theory (enable fat32-in-memory-equiv))))
+
+(defthm
+  fat32-in-memory-to-m1-fs-inversion
+  (implies
+   (compliant-fat32-in-memoryp fat32-in-memory)
+   (b*
+       (((mv fs error-code)
+         (fat32-in-memory-to-m1-fs fat32-in-memory))
+        )
+     (implies
+      (and
+       (equal error-code 0)
+       (m1-bounded-file-alist-p fs)
+       (m1-file-no-dups-p fs)
+       ;; This clause should always be true, but that's not yet proven. The
+       ;; argument is: The only time we get an error out of
+       ;; m1-fs-to-fat32-in-memory-helper (and the wrapper) is when we run out
+       ;; of space. We shouldn't be able to run out of space when we just
+       ;; extracted an m1 instance from fat32-in-memory, and we didn't change
+       ;; the size of fat32-in-memory at all. However, that's going to involve
+       ;; reasoning about the number of clusters taken up by an m1 instance,
+       ;; which is not really where it's at right now.
+       (equal
+        (mv-nth
+         1
+         (m1-fs-to-fat32-in-memory
+          fat32-in-memory
+          fs))
+        0))
+      (fat32-in-memory-equiv
+       (mv-nth
+        0
+        (m1-fs-to-fat32-in-memory
+         fat32-in-memory
+         fs))
+       fat32-in-memory))))
+  :hints (("Goal" :in-theory (enable fat32-in-memory-equiv)) ))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-1
@@ -9102,10 +9215,8 @@
         (m1-file-alist-p fs)
         (m1-bounded-file-alist-p fs)
         (m1-file-no-dups-p fs)
-        (>= (floor (* (data-region-length fat32-in-memory)
-                      (cluster-size fat32-in-memory))
-                   *ms-dir-ent-length*)
-            (m1-entry-count fs)))
+        (<= (m1-entry-count fs)
+            (max-entry-count fat32-in-memory)))
    (b*
        (((mv fat32-in-memory error-code)
          (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
