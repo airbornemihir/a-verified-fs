@@ -11,7 +11,6 @@
 (include-book "flatten-lemmas")
 
 (include-book "std/lists/resize-list" :dir :system)
-(include-book "std/io/read-file-characters" :dir :system)
 
 (make-event
  `(defstobj fat32-in-memory
@@ -2860,23 +2859,6 @@
         :in-theory (e/d (fati-when-compliant-fat32-in-memoryp))))))
 
 (defthm
-  get-clusterchain-contents-correctness-2-lemma-1
-  (implies
-   (not
-    (equal
-     (mv-nth
-      1
-      (fat32-build-index-list fa-table masked-current-cluster
-                              length cluster-size))
-     0))
-   (equal
-    (mv-nth
-     1
-     (fat32-build-index-list fa-table masked-current-cluster
-                             length cluster-size))
-    (- *eio*))))
-
-(defthm
   get-clusterchain-contents-correctness-2
   (implies
    (>= masked-current-cluster
@@ -2986,6 +2968,20 @@
                                 masked-current-cluster length)))
    (get-clusterchain-contents fat32-in-memory
                               masked-current-cluster length))
+  :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
+
+(defthm
+  length-of-get-clusterchain-contents
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (natp length))
+   (<=
+    (len (explode (mv-nth 0
+                          (get-clusterchain-contents
+                           fat32-in-memory
+                           masked-current-cluster length))))
+    length))
+  :rule-classes :linear
   :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
 
 ;; The following is not a theorem, because we took our error codes, more or
@@ -3341,20 +3337,6 @@
                        fat32-in-memory
                        dir-contents entry-limit))))
 
-(defthm
-  length-of-get-clusterchain-contents
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (natp length))
-   (<=
-    (len (explode (mv-nth 0
-                          (get-clusterchain-contents
-                           fat32-in-memory
-                           masked-current-cluster length))))
-    length))
-  :rule-classes :linear
-  :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
-
 (verify-guards
   fat32-in-memory-to-m1-fs-helper
   :guard-debug t
@@ -3369,34 +3351,91 @@
 (defund
   fat32-in-memory-to-m1-fs
   (fat32-in-memory)
-  (declare (xargs :stobjs fat32-in-memory
-                  :guard (compliant-fat32-in-memoryp fat32-in-memory)))
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (compliant-fat32-in-memoryp fat32-in-memory)
+    :guard-hints
+    (("goal"
+      :in-theory
+      (disable
+       (:rewrite get-clusterchain-contents-correctness-2))
+      :use
+      (:instance
+       (:rewrite get-clusterchain-contents-correctness-2)
+       (length *ms-max-dir-size*)
+       (masked-current-cluster
+        (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
+       (fat32-in-memory fat32-in-memory))))))
   (b*
-      (((mv root-dir-contents &)
+      (((unless
+         (mbt (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                  *ms-first-data-cluster*)))
+        (mv nil *eio*))
+       ((mv root-dir-contents error-code)
         (get-clusterchain-contents
          fat32-in-memory
          (fat32-entry-mask (bpb_rootclus fat32-in-memory))
          *ms-max-dir-size*))
+       ((unless (equal error-code 0))
+        (mv nil (- error-code)))
        (entry-limit (floor (* (data-region-length fat32-in-memory)
                               (cluster-size fat32-in-memory))
                            *ms-dir-ent-length*))
-       ((mv m1-file-alist & & &)
+       ((mv m1-file-alist & & error-code)
         (fat32-in-memory-to-m1-fs-helper
          fat32-in-memory
          (make-dir-ent-list (string=>nats root-dir-contents))
          entry-limit)))
-    m1-file-alist))
+    (mv m1-file-alist error-code)))
 
 (defthm
   fat32-in-memory-to-m1-fs-correctness-1
-  (m1-file-alist-p (fat32-in-memory-to-m1-fs fat32-in-memory))
-  :hints (("goal" :in-theory (e/d (fat32-in-memory-to-m1-fs)
-                                  (m1-file-p))))
+  (and
+   (m1-file-alist-p
+    (mv-nth 0
+            (fat32-in-memory-to-m1-fs fat32-in-memory)))
+   (natp (mv-nth 1
+                 (fat32-in-memory-to-m1-fs fat32-in-memory))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (fat32-in-memory-to-m1-fs)
+     (m1-file-p
+      (:rewrite get-clusterchain-contents-correctness-2)))
+    :use
+    (:instance
+     (:rewrite get-clusterchain-contents-correctness-2)
+     (length *ms-max-dir-size*)
+     (masked-current-cluster
+      (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
+     (fat32-in-memory fat32-in-memory))))
   :rule-classes
-  (:rewrite
+  ((:rewrite
+    :corollary
+    (and
+     (m1-file-alist-p
+      (mv-nth 0
+              (fat32-in-memory-to-m1-fs fat32-in-memory)))
+     (integerp
+      (mv-nth 1
+              (fat32-in-memory-to-m1-fs fat32-in-memory)))))
+   (:linear
+    :corollary
+    (<= 0
+        (mv-nth 1
+                (fat32-in-memory-to-m1-fs fat32-in-memory))))
    (:type-prescription
     :corollary
-    (true-listp (fat32-in-memory-to-m1-fs fat32-in-memory)))))
+    (true-listp
+     (mv-nth 0
+             (fat32-in-memory-to-m1-fs fat32-in-memory))))
+   (:type-prescription
+    :corollary
+    (natp
+     (mv-nth 1
+             (fat32-in-memory-to-m1-fs fat32-in-memory))))))
 
 (defthm
   fat32-in-memory-to-m1-fs-correctness-2
@@ -3409,7 +3448,7 @@
       (fat32-entry-mask (bpb_rootclus fat32-in-memory))
       *ms-max-dir-size*))
     "")
-   (equal (fat32-in-memory-to-m1-fs fat32-in-memory)
+   (equal (mv-nth 0 (fat32-in-memory-to-m1-fs fat32-in-memory))
           nil))
   :hints
   (("goal"
@@ -4767,38 +4806,22 @@
          fs (fat32-entry-mask rootclus)))
        ((unless (zp errno))
         (mv fat32-in-memory errno))
-       (contents (nats=>string (flatten root-dir-ent-list))))
-    (if
-        (atom root-dir-ent-list)
-        ;; Quote: "Note that a zero-length file [...] has a first cluster
-        ;; number of 0 placed in its directory entry." from page 17 of the FAT
-        ;; specification. This applies here in the very specific case of an
-        ;; empty root directory with no files in it, which came up in a
-        ;; regression test.
-        (b*
-            ((fat32-in-memory (update-fati
-                               (fat32-entry-mask rootclus)
-                               (fat32-update-lower-28
-                                (fati
-                                 (fat32-entry-mask rootclus)
-                                 fat32-in-memory)
-                                0)
-                               fat32-in-memory))
-             (fat32-in-memory
-              (update-data-regioni
-               (- (fat32-entry-mask rootclus)
-                  *ms-first-data-cluster*)
-               (coerce (make-list (cluster-size fat32-in-memory)
-                                  :initial-element (code-char 0))
-                       'string)
-               fat32-in-memory)))
-          (mv fat32-in-memory 0))
-      (b*
-          (((mv fat32-in-memory & error-code &)
-            (place-contents fat32-in-memory (dir-ent-fix nil)
-                            contents
-                            0 (fat32-entry-mask rootclus))))
-        (mv fat32-in-memory error-code)))))
+       (contents
+        (if
+            (atom root-dir-ent-list)
+            ;; Here's the reasoning: there has to be something in the root
+            ;; directory, even if the root directory is empty (i.e. the
+            ;; contents of the root directory are all zeros, occupying at least
+            ;; one cluster.)
+            (coerce (make-list (cluster-size fat32-in-memory)
+                               :initial-element (code-char 0))
+                    'string)
+          (nats=>string (flatten root-dir-ent-list))))
+       ((mv fat32-in-memory & error-code &)
+        (place-contents fat32-in-memory (dir-ent-fix nil)
+                        contents
+                        0 (fat32-entry-mask rootclus))))
+    (mv fat32-in-memory error-code)))
 
 (defthm natp-of-m1-fs-to-fat32-in-memory
   (natp (mv-nth 1
@@ -7880,6 +7903,42 @@
        '1
        (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    m1-fs-to-fat32-in-memory-inversion-lemma-12
+    (implies (compliant-fat32-in-memoryp fat32-in-memory)
+             (>= *ms-max-dir-size*
+                 (cluster-size fat32-in-memory)))
+    :rule-classes :linear
+    :hints
+    (("goal" :in-theory
+      (disable compliant-fat32-in-memoryp-correctness-1)
+      :use compliant-fat32-in-memoryp-correctness-1)))
+
+  (defthmd
+    m1-fs-to-fat32-in-memory-inversion-lemma-13
+    (implies
+     (and (compliant-fat32-in-memoryp fat32-in-memory)
+          (stringp text)
+          (equal (length text)
+                 (cluster-size fat32-in-memory)))
+     (equal
+      (len (make-clusters text (cluster-size fat32-in-memory)))
+      1))
+    :hints
+    (("goal"
+      :in-theory
+      (disable compliant-fat32-in-memoryp-correctness-1)
+      :use
+      (compliant-fat32-in-memoryp-correctness-1
+       (:instance
+        len-of-make-clusters
+        (cluster-size (cluster-size fat32-in-memory))))))))
+
 (defthm
   m1-fs-to-fat32-in-memory-inversion
   (implies
@@ -7898,10 +7957,17 @@
           fat32-in-memory fs)))
      (implies
       (zp error-code)
-      (m1-dir-equiv
-       (fat32-in-memory-to-m1-fs
-        fat32-in-memory)
-       fs))))
+      (and
+       (equal
+        (mv-nth 1
+                (fat32-in-memory-to-m1-fs
+                 fat32-in-memory))
+        0)
+       (m1-dir-equiv
+        (mv-nth 0
+                (fat32-in-memory-to-m1-fs
+                 fat32-in-memory))
+        fs)))))
   :hints
   (("goal" :do-not-induct t
     :in-theory (enable fat32-in-memory-to-m1-fs
@@ -7911,6 +7977,7 @@
                        m1-fs-to-fat32-in-memory-inversion-lemma-9
                        m1-fs-to-fat32-in-memory-inversion-lemma-10
                        m1-fs-to-fat32-in-memory-inversion-lemma-11
+                       m1-fs-to-fat32-in-memory-inversion-lemma-13
                        get-clusterchain-contents))))
 
 (defthm
@@ -9045,12 +9112,14 @@
      (implies
       (zp error-code)
       (m1-dir-equiv
-       (fat32-in-memory-to-m1-fs
-        (mv-nth
-         0
-         (string-to-fat32-in-memory
-          fat32-in-memory
-          (fat32-in-memory-to-string fat32-in-memory))))
+       (mv-nth
+        0
+        (fat32-in-memory-to-m1-fs
+         (mv-nth
+          0
+          (string-to-fat32-in-memory
+           fat32-in-memory
+           (fat32-in-memory-to-string fat32-in-memory)))))
        fs))))
   :hints (("goal" :do-not-induct t)))
 

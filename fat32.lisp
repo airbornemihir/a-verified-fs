@@ -1012,6 +1012,32 @@
                               length cluster-size))))))
 
 (defthm
+  integerp-of-fat32-build-index-list
+  (implies
+   (not
+    (equal
+     (mv-nth
+      1
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     0))
+   (equal
+    (mv-nth
+     1
+     (fat32-build-index-list fa-table masked-current-cluster
+                             length cluster-size))
+    (- *eio*)))
+  :rule-classes
+  (:rewrite
+   (:type-prescription
+    :corollary
+    (integerp
+     (mv-nth
+      1
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))))))
+
+(defthm
   fat32-build-index-list-correctness-7
   (implies
    (and
