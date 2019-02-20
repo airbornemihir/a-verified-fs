@@ -1298,9 +1298,7 @@
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (fat32-filename-list-p pathname)
                               (m1-file-p file))
-                  :measure (acl2-count pathname)
-                  ;; temporary
-                  :verify-guards nil))
+                  :measure (acl2-count pathname)))
   (b*
       ((fs (m1-file-alist-fix fs))
        (file (m1-file-fix file))
@@ -1345,8 +1343,6 @@
          (integerp error-code)))
   :hints
   (("goal" :induct (place-file-by-pathname fs pathname file))))
-
-(verify-guards place-file-by-pathname)
 
 (defthm
   place-file-by-pathname-correctness-2
@@ -1570,6 +1566,47 @@
   find-new-index-correctness-1-lemma-2
   (integerp (find-new-index fd-list))
   :hints (("Goal" :in-theory (enable find-new-index))))
+
+(defun realpath-helper (pathname ac)
+  (cond ((atom pathname) (revappend ac nil))
+        ((equal (car pathname)
+                *current-dir-fat32-name*)
+         (realpath-helper (cdr pathname) ac))
+        ((equal (car pathname)
+                *parent-dir-fat32-name*)
+         (realpath-helper (cdr pathname)
+                          (cdr ac)))
+        (t (realpath-helper (cdr pathname)
+                            (cons (car pathname) ac)))))
+
+(defthm
+  realpath-helper-correctness-1
+  (implies
+   (and (not (member-equal *current-dir-fat32-name* pathname))
+        (not (member-equal *parent-dir-fat32-name* pathname)))
+   (equal (realpath-helper pathname ac)
+          (revappend ac (true-list-fix pathname))))
+  :hints
+  (("goal" :in-theory (disable (:rewrite revappend-removal)
+                               revappend-of-true-list-fix)
+    :induct (realpath-helper pathname ac))
+   ("subgoal *1/1"
+    :use (:instance revappend-of-true-list-fix (x ac)
+                    (y pathname)))))
+
+(defund realpath (relpathname abspathname)
+  (realpath-helper (append abspathname relpathname) nil))
+
+(defthm
+  realpath-correctness-1
+  (implies
+   (and (not (member-equal *current-dir-fat32-name* (append abspathname relpathname)))
+        (not (member-equal *parent-dir-fat32-name* (append abspathname relpathname))))
+   (equal (realpath relpathname abspathname)
+          (true-list-fix
+           (append abspathname relpathname))))
+  :hints
+  (("goal" :in-theory (enable realpath))))
 
 (defthm m1-open-guard-lemma-1
   (implies (fd-table-p fd-table)
@@ -1836,9 +1873,9 @@
        ((unless (equal (length basename) 11))
         (mv fs -1 *enametoolong*))
        (dir-ent
-        (update-nth 11 (ash 1 4)
-                    (append (string=>nats basename)
-                            (nthcdr 11 (dir-ent-fix nil)))))
+        (DIR-ENT-INSTALL-DIRECTORY-BIT
+         (dir-ent-fix nil)
+         t))
        (file (make-m1-file :dir-ent dir-ent
                            :contents nil))
        (pathname (append dirname (list basename)))
