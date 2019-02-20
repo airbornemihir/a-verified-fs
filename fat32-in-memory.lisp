@@ -1041,3 +1041,184 @@
   (("goal" :in-theory (enable fat32-in-memoryp
                               data-regioni update-data-regioni
                               data-region-length))))
+
+(defthm
+  bpb_secperclus-of-resize-data-region
+  (equal (bpb_secperclus (resize-data-region i fat32-in-memory))
+         (bpb_secperclus fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable bpb_secperclus resize-data-region))))
+
+(defthm
+  bpb_bytspersec-of-resize-data-region
+  (equal (bpb_bytspersec (resize-data-region i fat32-in-memory))
+         (bpb_bytspersec fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable bpb_bytspersec resize-data-region))))
+
+(defthm
+  update-fati-of-fati
+  (implies (and (fat32-in-memoryp fat32-in-memory)
+                (< (nfix i)
+                   (fat-length fat32-in-memory)))
+           (equal (update-fati i (fati i fat32-in-memory)
+                               fat32-in-memory)
+                  fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable update-fati fati fat-length))))
+
+(defmacro
+    update-bpb_secperclus-macro
+    (name stobj update-bpb_secperclus-of-name)
+  `(defthm
+     ,update-bpb_secperclus-of-name
+     (equal
+      (update-bpb_secperclus
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_secperclus v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_secperclus ,name)))))
+
+(update-bpb_secperclus-macro update-bs_oemname fat32-in-memory
+                             update-bpb_secperclus-of-update-bs_oemname)
+
+(update-bpb_secperclus-macro update-bs_jmpboot fat32-in-memory
+                             update-bpb_secperclus-of-update-bs_jmpboot)
+
+(update-bpb_secperclus-macro update-bpb_bytspersec fat32-in-memory
+                             update-bpb_secperclus-of-update-bpb_bytspersec)
+
+(update-bpb_secperclus-macro update-bpb_fatsz32 fat32-in-memory
+                             update-bpb_secperclus-of-update-bpb_fatsz32)
+
+(update-bpb_secperclus-macro update-bpb_numfats fat32-in-memory
+                             update-bpb_secperclus-of-update-bpb_numfats)
+
+(update-bpb_secperclus-macro update-bpb_rsvdseccnt fat32-in-memory
+                             update-bpb_secperclus-of-update-bpb_rsvdseccnt)
+
+(defmacro
+    update-bpb_rsvdseccnt-macro
+    (name stobj update-bpb_rsvdseccnt-of-name)
+  `(defthm
+     ,update-bpb_rsvdseccnt-of-name
+     (equal
+      (update-bpb_rsvdseccnt
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_rsvdseccnt v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_rsvdseccnt ,name)))))
+
+(update-bpb_rsvdseccnt-macro update-bs_oemname fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bs_oemname)
+
+(update-bpb_rsvdseccnt-macro update-bs_jmpboot fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bs_jmpboot)
+
+(update-bpb_rsvdseccnt-macro update-bpb_bytspersec fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bpb_bytspersec)
+
+(update-bpb_rsvdseccnt-macro update-bpb_fatsz32 fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bpb_fatsz32)
+
+(update-bpb_rsvdseccnt-macro update-bpb_numfats fat32-in-memory
+                             update-bpb_rsvdseccnt-of-update-bpb_numfats)
+
+(defmacro
+    update-bpb_numfats-macro
+    (name stobj update-bpb_numfats-of-name)
+  `(defthm
+     ,update-bpb_numfats-of-name
+     (equal
+      (update-bpb_numfats
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_numfats v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_numfats ,name)))))
+
+(update-bpb_numfats-macro update-bs_oemname fat32-in-memory
+                          update-bpb_numfats-of-update-bs_oemname)
+
+(update-bpb_numfats-macro update-bs_jmpboot fat32-in-memory
+                          update-bpb_numfats-of-update-bs_jmpboot)
+
+(update-bpb_numfats-macro update-bpb_bytspersec fat32-in-memory
+                          update-bpb_numfats-of-update-bpb_bytspersec)
+
+(update-bpb_numfats-macro update-bpb_fatsz32 fat32-in-memory
+                          update-bpb_numfats-of-update-bpb_fatsz32)
+
+(defmacro
+    update-bpb_fatsz32-macro
+    (name stobj update-bpb_fatsz32-of-name)
+  `(defthm
+     ,update-bpb_fatsz32-of-name
+     (equal
+      (update-bpb_fatsz32
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_fatsz32 v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_fatsz32 ,name)))))
+
+(update-bpb_fatsz32-macro update-bs_oemname fat32-in-memory
+                          update-bpb_fatsz32-of-update-bs_oemname)
+
+(update-bpb_fatsz32-macro update-bs_jmpboot fat32-in-memory
+                          update-bpb_fatsz32-of-update-bs_jmpboot)
+
+(update-bpb_fatsz32-macro update-bpb_totsec32 fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_totsec32)
+
+(update-bpb_fatsz32-macro update-bpb_hiddsec fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_hiddsec)
+
+(update-bpb_fatsz32-macro update-bpb_numheads fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_numheads)
+
+(update-bpb_fatsz32-macro update-bpb_secpertrk fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_secpertrk)
+
+(update-bpb_fatsz32-macro update-bpb_fatsz16 fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_fatsz16)
+
+(update-bpb_fatsz32-macro update-bpb_media fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_media)
+
+(update-bpb_fatsz32-macro update-bpb_totsec16 fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_totsec16)
+
+(update-bpb_fatsz32-macro update-bpb_rootentcnt fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_rootentcnt)
+
+(update-bpb_fatsz32-macro update-bpb_bytspersec fat32-in-memory
+                          update-bpb_fatsz32-of-update-bpb_bytspersec)
+
+(defmacro
+    update-bpb_bytspersec-macro
+    (name stobj update-bpb_bytspersec-of-name)
+  `(defthm
+     ,update-bpb_bytspersec-of-name
+     (equal
+      (update-bpb_bytspersec
+       v1
+       (,name v2 ,stobj))
+      (,name
+       v2
+       (update-bpb_bytspersec v1 ,stobj)))
+     :hints (("goal" :in-theory (enable update-bpb_bytspersec ,name)))))
+
+(update-bpb_bytspersec-macro update-bs_oemname fat32-in-memory
+                             update-bpb_bytspersec-of-update-bs_oemname)
+
+(update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
+                             update-bpb_bytspersec-of-update-bs_jmpboot)

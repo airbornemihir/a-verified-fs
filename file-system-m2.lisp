@@ -996,22 +996,6 @@
   :hints (("goal" :do-not-induct t
            :in-theory (disable subseq))))
 
-(defthm
-  bpb_secperclus-of-resize-data-region
-  (equal (bpb_secperclus (resize-data-region i fat32-in-memory))
-         (bpb_secperclus fat32-in-memory))
-  :hints
-  (("goal"
-    :in-theory (enable bpb_secperclus resize-data-region))))
-
-(defthm
-  bpb_bytspersec-of-resize-data-region
-  (equal (bpb_bytspersec (resize-data-region i fat32-in-memory))
-         (bpb_bytspersec fat32-in-memory))
-  :hints
-  (("goal"
-    :in-theory (enable bpb_bytspersec resize-data-region))))
-
 (encapsulate
   ()
 
@@ -2548,76 +2532,6 @@
     :induct (stobj-set-clusters cluster-list
                                 index-list fat32-in-memory))))
 
-;; (defthm
-;;   bounded-nat-listp-of-stobj-set-clusters
-;;   (implies
-;;    (and (lower-bounded-integer-listp
-;;          index-list *ms-first-data-cluster*)
-;;         (equal (len index-list)
-;;                (len cluster-list)))
-;;    (bounded-nat-listp
-;;     (mv-nth 1
-;;             (stobj-set-clusters cluster-list
-;;                                 index-list fat32-in-memory))
-;;     (+ *ms-first-data-cluster*
-;;        (data-region-length fat32-in-memory))))
-;;   :hints
-;;   (("goal" :in-theory (enable lower-bounded-integer-listp))))
-
-;; (defthm
-;;   fat32-masked-entry-list-p-of-stobj-set-clusters
-;;   (implies
-;;    (and (lower-bounded-integer-listp
-;;          index-list *ms-first-data-cluster*)
-;;         (equal (len index-list)
-;;                (len cluster-list))
-;;         (<= (+ *ms-first-data-cluster*
-;;                (data-region-length fat32-in-memory))
-;;             *ms-bad-cluster*))
-;;    (fat32-masked-entry-list-p
-;;     (mv-nth 1
-;;             (stobj-set-clusters cluster-list
-;;                                 index-list fat32-in-memory))))
-;;   :rule-classes
-;;   (:rewrite
-;;    (:rewrite
-;;     :corollary
-;;     (implies
-;;      (and (lower-bounded-integer-listp
-;;            index-list *ms-first-data-cluster*)
-;;           (equal (len index-list)
-;;                  (len cluster-list))
-;;           (<= (+ *ms-first-data-cluster*
-;;                  (data-region-length fat32-in-memory))
-;;               *ms-bad-cluster*))
-;;      (let
-;;       ((l
-;;         (mv-nth
-;;          1
-;;          (stobj-set-clusters cluster-list
-;;                              index-list fat32-in-memory))))
-;;       (implies (consp l)
-;;                (and (fat32-masked-entry-list-p (cdr l))
-;;                     (fat32-masked-entry-p (car l))))))))
-;;   :hints
-;;   (("goal"
-;;     :use
-;;     ((:instance
-;;       fat32-masked-entry-list-p-alt
-;;       (x (mv-nth
-;;           1
-;;           (stobj-set-clusters cluster-list
-;;                               index-list fat32-in-memory))))
-;;      (:instance
-;;       bounded-nat-listp-correctness-5
-;;       (l
-;;        (mv-nth 1
-;;                (stobj-set-clusters cluster-list
-;;                                    index-list fat32-in-memory)))
-;;       (x (+ (data-region-length fat32-in-memory)
-;;             *ms-first-data-cluster*))
-;;       (y *expt-2-28*))))))
-
 (defthm
   fat-length-of-stobj-set-clusters
   (equal
@@ -3298,8 +3212,8 @@
    (max-entry-count
     (mv-nth
      0
-     (M1-FS-TO-FAT32-IN-MEMORY-HELPER FAT32-IN-MEMORY
-                                      FS CURRENT-DIR-FIRST-CLUSTER)))
+     (m1-fs-to-fat32-in-memory-helper fat32-in-memory
+                                      fs current-dir-first-cluster)))
    (max-entry-count fat32-in-memory)))
 
 (defthmd
@@ -4170,160 +4084,6 @@
            (princ$ "" channel state))))
        (state (close-output-channel channel state)))
     state))
-
-(defmacro
-    update-bpb_secperclus-macro
-    (name stobj update-bpb_secperclus-of-name)
-  `(defthm
-     ,update-bpb_secperclus-of-name
-     (equal
-      (update-bpb_secperclus
-       v1
-       (,name v2 ,stobj))
-      (,name
-       v2
-       (update-bpb_secperclus v1 ,stobj)))
-     :hints (("goal" :in-theory (enable update-bpb_secperclus ,name)))))
-
-(update-bpb_secperclus-macro update-bs_oemname fat32-in-memory
-                             update-bpb_secperclus-of-update-bs_oemname)
-
-(update-bpb_secperclus-macro update-bs_jmpboot fat32-in-memory
-                             update-bpb_secperclus-of-update-bs_jmpboot)
-
-(update-bpb_secperclus-macro update-bpb_bytspersec fat32-in-memory
-                             update-bpb_secperclus-of-update-bpb_bytspersec)
-
-(update-bpb_secperclus-macro update-bpb_fatsz32 fat32-in-memory
-                             update-bpb_secperclus-of-update-bpb_fatsz32)
-
-(update-bpb_secperclus-macro update-bpb_numfats fat32-in-memory
-                             update-bpb_secperclus-of-update-bpb_numfats)
-
-(update-bpb_secperclus-macro update-bpb_rsvdseccnt fat32-in-memory
-                             update-bpb_secperclus-of-update-bpb_rsvdseccnt)
-
-(defmacro
-    update-bpb_rsvdseccnt-macro
-    (name stobj update-bpb_rsvdseccnt-of-name)
-  `(defthm
-     ,update-bpb_rsvdseccnt-of-name
-     (equal
-      (update-bpb_rsvdseccnt
-       v1
-       (,name v2 ,stobj))
-      (,name
-       v2
-       (update-bpb_rsvdseccnt v1 ,stobj)))
-     :hints (("goal" :in-theory (enable update-bpb_rsvdseccnt ,name)))))
-
-(update-bpb_rsvdseccnt-macro update-bs_oemname fat32-in-memory
-                             update-bpb_rsvdseccnt-of-update-bs_oemname)
-
-(update-bpb_rsvdseccnt-macro update-bs_jmpboot fat32-in-memory
-                             update-bpb_rsvdseccnt-of-update-bs_jmpboot)
-
-(update-bpb_rsvdseccnt-macro update-bpb_bytspersec fat32-in-memory
-                             update-bpb_rsvdseccnt-of-update-bpb_bytspersec)
-
-(update-bpb_rsvdseccnt-macro update-bpb_fatsz32 fat32-in-memory
-                             update-bpb_rsvdseccnt-of-update-bpb_fatsz32)
-
-(update-bpb_rsvdseccnt-macro update-bpb_numfats fat32-in-memory
-                             update-bpb_rsvdseccnt-of-update-bpb_numfats)
-
-(defmacro
-    update-bpb_numfats-macro
-    (name stobj update-bpb_numfats-of-name)
-  `(defthm
-     ,update-bpb_numfats-of-name
-     (equal
-      (update-bpb_numfats
-       v1
-       (,name v2 ,stobj))
-      (,name
-       v2
-       (update-bpb_numfats v1 ,stobj)))
-     :hints (("goal" :in-theory (enable update-bpb_numfats ,name)))))
-
-(update-bpb_numfats-macro update-bs_oemname fat32-in-memory
-                          update-bpb_numfats-of-update-bs_oemname)
-
-(update-bpb_numfats-macro update-bs_jmpboot fat32-in-memory
-                          update-bpb_numfats-of-update-bs_jmpboot)
-
-(update-bpb_numfats-macro update-bpb_bytspersec fat32-in-memory
-                          update-bpb_numfats-of-update-bpb_bytspersec)
-
-(update-bpb_numfats-macro update-bpb_fatsz32 fat32-in-memory
-                          update-bpb_numfats-of-update-bpb_fatsz32)
-
-(defmacro
-    update-bpb_fatsz32-macro
-    (name stobj update-bpb_fatsz32-of-name)
-  `(defthm
-     ,update-bpb_fatsz32-of-name
-     (equal
-      (update-bpb_fatsz32
-       v1
-       (,name v2 ,stobj))
-      (,name
-       v2
-       (update-bpb_fatsz32 v1 ,stobj)))
-     :hints (("goal" :in-theory (enable update-bpb_fatsz32 ,name)))))
-
-(update-bpb_fatsz32-macro update-bs_oemname fat32-in-memory
-                          update-bpb_fatsz32-of-update-bs_oemname)
-
-(update-bpb_fatsz32-macro update-bs_jmpboot fat32-in-memory
-                          update-bpb_fatsz32-of-update-bs_jmpboot)
-
-(update-bpb_fatsz32-macro update-bpb_totsec32 fat32-in-memory
-                          update-bpb_fatsz32-of-update-bpb_totsec32)
-
-(update-bpb_fatsz32-macro update-bpb_hiddsec fat32-in-memory
-                          update-bpb_fatsz32-of-update-bpb_hiddsec)
-
-(update-bpb_fatsz32-macro update-bpb_numheads fat32-in-memory
-                          update-bpb_fatsz32-of-update-bpb_numheads)
-
-(update-bpb_fatsz32-macro update-bpb_secpertrk fat32-in-memory
-                          update-bpb_fatsz32-of-update-bpb_secpertrk)
-
-(update-bpb_fatsz32-macro update-bpb_fatsz16 fat32-in-memory
-                          update-bpb_fatsz32-of-update-bpb_fatsz16)
-
-(update-bpb_fatsz32-macro update-bpb_media fat32-in-memory
-                          update-bpb_fatsz32-of-update-bpb_media)
-
-(update-bpb_fatsz32-macro update-bpb_totsec16 fat32-in-memory
-                          update-bpb_fatsz32-of-update-bpb_totsec16)
-
-(update-bpb_fatsz32-macro update-bpb_rootentcnt fat32-in-memory
-                          update-bpb_fatsz32-of-update-bpb_rootentcnt)
-
-(update-bpb_fatsz32-macro update-bpb_bytspersec fat32-in-memory
-                          update-bpb_fatsz32-of-update-bpb_bytspersec)
-
-(defmacro
-    update-bpb_bytspersec-macro
-    (name stobj update-bpb_bytspersec-of-name)
-  `(defthm
-     ,update-bpb_bytspersec-of-name
-     (equal
-      (update-bpb_bytspersec
-       v1
-       (,name v2 ,stobj))
-      (,name
-       v2
-       (update-bpb_bytspersec v1 ,stobj)))
-     :hints (("goal" :in-theory (enable update-bpb_bytspersec ,name)))))
-
-(update-bpb_bytspersec-macro update-bs_oemname fat32-in-memory
-                             update-bpb_bytspersec-of-update-bs_oemname)
-
-(update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
-                             update-bpb_bytspersec-of-update-bs_jmpboot)
 
 (defthm
   data-regioni-of-stobj-set-clusters
@@ -5397,17 +5157,6 @@
     fa-table)))
 
 (defthm
-  update-fati-of-fati
-  (implies (and (fat32-in-memoryp fat32-in-memory)
-                (< (nfix i)
-                   (fat-length fat32-in-memory)))
-           (equal (update-fati i (fati i fat32-in-memory)
-                               fat32-in-memory)
-                  fat32-in-memory))
-  :hints
-  (("goal" :in-theory (enable update-fati fati fat-length))))
-
-(defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-1
   (implies
    (and
@@ -6446,10 +6195,10 @@
   (implies
    (atom dir-ent-list)
    (equal
-    (FAT32-IN-MEMORY-TO-M1-FS-HELPER FAT32-IN-MEMORY
-                                     DIR-ENT-LIST ENTRY-LIMIT)
-    (mv NIL 0 NIL 0)))
-  :hints (("Goal" :in-theory (enable FAT32-IN-MEMORY-TO-M1-FS-HELPER)) ))
+    (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                     dir-ent-list entry-limit)
+    (mv nil 0 nil 0)))
+  :hints (("goal" :in-theory (enable fat32-in-memory-to-m1-fs-helper)) ))
 
 (defthmd
   m1-fs-to-fat32-in-memory-inversion-lemma-11
