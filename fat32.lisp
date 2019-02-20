@@ -202,10 +202,11 @@
    (fat32-masked-entry-list-p (true-list-fix x))))
 
 (defthm fat32-entry-list-p-of-update-nth
-  (implies (and (< key (len l))
-                (fat32-entry-list-p l))
-           (equal (fat32-entry-list-p (update-nth key val l))
-                  (fat32-entry-p val))))
+  (implies
+   (fat32-entry-list-p l)
+   (equal (fat32-entry-list-p (update-nth key val l))
+          (and (<= (nfix key) (len l))
+               (fat32-entry-p val)))))
 
 (defthm fat32-entry-list-p-of-revappend
   (equal (fat32-entry-list-p (revappend x y))
