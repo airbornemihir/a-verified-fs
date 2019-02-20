@@ -7484,6 +7484,16 @@
   disk-image-string-equiv
   :hints (("goal" :in-theory (enable disk-image-string-equiv))))
 
+;; (thm
+;;  (implies
+;;   (fat32-in-memoryp fat32-in-memory)
+;;   (equal
+;;    (string-to-fat32-in-memory fat32-in-memory str)
+;;    (string-to-fat32-in-memory (create-fat32-in-memory)
+;;                               str)))
+;;  :hints (("Goal" :in-theory (e/d (string-to-fat32-in-memory)
+;;                                  (create-fat32-in-memory))) ))
+
 (defthm
   string-to-fat32-in-memory-inversion
   (implies

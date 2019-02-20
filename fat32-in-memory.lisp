@@ -8,6 +8,13 @@
 (include-book "fat32")
 (include-book "std/lists/resize-list" :dir :system)
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
+(local (include-book "std/lists/take" :dir :system))
+
+(defthm take-of-update-nth
+  (equal (take n (update-nth key val l))
+         (if (< (nfix key) (nfix n))
+             (update-nth key val (take n l))
+           (take n l))))
 
 (make-event
  `(defstobj fat32-in-memory
@@ -743,12 +750,24 @@
   :hints (("goal" :in-theory (enable data-region-length
                                      resize-data-region))))
 
+(defthmd append-of-take-and-cons
+  (implies (and (natp n) (equal x (nth n l)))
+           (equal (append (take n l) (cons x y))
+                  (append (take (+ n 1) l) y)))
+  :hints (("goal" :in-theory (disable take))))
+
+(defthmd remember-that-time-with-update-nth
+  (implies (and (equal (nfix key) (- (len l) 1))
+                (true-listp l))
+           (equal (update-nth key val l)
+                  (append (take key l) (list val)))))
+
 (defmacro
   update-stobj-array
   (name array-length bit-width array-updater array-accessor constant
         stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3
         unsigned-byte-p-of-array-accessor lemma-name5 lemma-name6 lemma-name7
-        lemma-name8 lemma-name9)
+        lemma-name8 lemma-name9 lemma-name10)
   (let
       ((upper-bound (ash 1 bit-width)))
   `(encapsulate
@@ -897,7 +916,27 @@
              (natp i)
              (< i (,array-length ,stobj)))
         (equal (,array-updater i (,array-accessor i ,stobj) ,stobj)
-               ,stobj))))))
+               ,stobj)))
+
+     (defthmd ,lemma-name10
+       (implies
+        (and (<= (len v)
+                 (,array-length ,stobj))
+             (,stobj-recogniser ,stobj)
+             (unsigned-byte-p ,bit-width v))
+        (equal
+         (,name v ,stobj)
+         (update-nth
+          ,constant
+          (append (take (- (,array-length ,stobj)
+                           (len v))
+                        (nth ,constant ,stobj))
+                  (true-list-fix v))
+          ,stobj)))
+       :hints
+       (("goal" :in-theory (enable append-of-take-and-cons
+                                   ,array-length
+                                   remember-that-time-with-update-nth)))))))
 
 (update-stobj-array
  update-bs_jmpboot bs_jmpboot-length 8
@@ -911,7 +950,8 @@
  update-bs_jmpboot-correctness-6
  update-bs_jmpboot-correctness-7
  update-bs_jmpboot-correctness-8
- update-bs_jmpboot-correctness-9)
+ update-bs_jmpboot-correctness-9
+ update-bs_jmpboot-alt)
 
 (update-stobj-array
  update-bs_oemname bs_oemname-length 8
@@ -925,7 +965,8 @@
  update-bs_oemname-correctness-6
  update-bs_oemname-correctness-7
  update-bs_oemname-correctness-8
- update-bs_oemname-correctness-9)
+ update-bs_oemname-correctness-9
+ update-bs_oemname-alt)
 
 (update-stobj-array
  update-bs_vollab bs_vollab-length 8
@@ -939,7 +980,8 @@
  update-bs_vollab-correctness-6
  update-bs_vollab-correctness-7
  update-bs_vollab-correctness-8
- update-bs_vollab-correctness-9)
+ update-bs_vollab-correctness-9
+ update-bs_vollab-alt)
 
 (update-stobj-array
  update-bs_filsystype bs_filsystype-length 8
@@ -953,7 +995,8 @@
  update-bs_filsystype-correctness-6
  update-bs_filsystype-correctness-7
  update-bs_filsystype-correctness-8
- update-bs_filsystype-correctness-9)
+ update-bs_filsystype-correctness-9
+ update-bs_filsystype-alt)
 
 (update-stobj-array
  update-bpb_reserved bpb_reserved-length 8
@@ -967,7 +1010,8 @@
  update-bpb_reserved-correctness-6
  update-bpb_reserved-correctness-7
  update-bpb_reserved-correctness-8
- update-bpb_reserved-correctness-9)
+ update-bpb_reserved-correctness-9
+ update-bpb_reserved-alt)
 
 ;; The strategy of just using compliant-fat32-in-memoryp everywhere is not
 ;; going to work. It's going to be desirable to prove lemmas with the weaker
@@ -1067,7 +1111,9 @@
                                fat32-in-memory)
                   fat32-in-memory))
   :hints
-  (("goal" :in-theory (enable update-fati fati fat-length))))
+  (("goal"
+    :in-theory (enable update-fati
+                       fati fat-length fat32-in-memoryp))))
 
 (defmacro
     update-bpb_secperclus-macro
