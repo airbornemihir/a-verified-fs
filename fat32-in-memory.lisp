@@ -976,3 +976,68 @@
 ;; (compliant-fat32-in-memoryp fat32-in-memory) is known to be true without
 ;; allowing for the definition of fat32-in-memoryp to be expanded.
 (in-theory (disable fat32-in-memoryp))
+
+(defthm
+  bpb_bytspersec-of-update-data-regioni
+  (equal
+   (bpb_bytspersec (update-data-regioni i v fat32-in-memory))
+   (bpb_bytspersec fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-data-regioni))))
+
+(defthm
+  bpb_secperclus-of-update-data-regioni
+  (equal
+   (bpb_secperclus (update-data-regioni i v fat32-in-memory))
+   (bpb_secperclus fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-data-regioni))))
+
+(defthm
+  bpb_totsec32-of-update-data-regioni
+  (equal
+   (bpb_totsec32 (update-data-regioni i v fat32-in-memory))
+   (bpb_totsec32 fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable update-data-regioni bpb_totsec32))))
+
+(defthm
+  bpb_rsvdseccnt-of-update-data-regioni
+  (equal
+   (bpb_rsvdseccnt (update-data-regioni i v fat32-in-memory))
+   (bpb_rsvdseccnt fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable update-data-regioni bpb_rsvdseccnt))))
+
+(defthm
+  bpb_numfats-of-update-data-regioni
+  (equal
+   (bpb_numfats (update-data-regioni i v fat32-in-memory))
+   (bpb_numfats fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable update-data-regioni bpb_numfats))))
+
+(defthm
+  bpb_fatsz32-of-update-data-regioni
+  (equal
+   (bpb_fatsz32 (update-data-regioni i v fat32-in-memory))
+   (bpb_fatsz32 fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable update-data-regioni bpb_fatsz32))))
+
+(defthm
+  update-data-regioni-of-data-regioni
+  (implies
+   (and (fat32-in-memoryp fat32-in-memory)
+        (< (nfix i)
+           (data-region-length fat32-in-memory)))
+   (equal
+    (update-data-regioni i (data-regioni i fat32-in-memory)
+                         fat32-in-memory)
+    fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable fat32-in-memoryp
+                              data-regioni update-data-regioni
+                              data-region-length))))
