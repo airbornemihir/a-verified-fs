@@ -968,3 +968,11 @@
  update-bpb_reserved-correctness-7
  update-bpb_reserved-correctness-8
  update-bpb_reserved-correctness-9)
+
+;; The strategy of just using compliant-fat32-in-memoryp everywhere is not
+;; going to work. It's going to be desirable to prove lemmas with the weaker
+;; hypothesis (fat32-in-memoryp fat32-in-memory) where possible, and we do want
+;; to be able to use those lemmas in a context where
+;; (compliant-fat32-in-memoryp fat32-in-memory) is known to be true without
+;; allowing for the definition of fat32-in-memoryp to be expanded.
+(in-theory (disable fat32-in-memoryp))

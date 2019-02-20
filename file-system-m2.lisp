@@ -43,7 +43,8 @@
 (defthm natp-of-cluster-size
   (implies (fat32-in-memoryp fat32-in-memory)
            (natp (cluster-size fat32-in-memory)))
-  :hints (("goal" :in-theory (e/d (cluster-size bpb_bytspersec bpb_secperclus) ())))
+  :hints (("goal" :in-theory (enable fat32-in-memoryp cluster-size
+                                     bpb_bytspersec bpb_secperclus)))
   :rule-classes ((:rewrite
                   :corollary
                   (implies (fat32-in-memoryp fat32-in-memory)
@@ -363,7 +364,7 @@
                 (< (nfix i) (fat-length fat32-in-memory)))
            (fat32-entry-p (fati i fat32-in-memory)))
   :hints (("goal" :in-theory (enable compliant-fat32-in-memoryp
-                                     fati fat-length))))
+                                     fat32-in-memoryp fati fat-length))))
 
 (defthm
   cluster-size-of-update-fati
@@ -391,6 +392,7 @@
   :hints
   (("goal"
     :in-theory (e/d (compliant-fat32-in-memoryp
+                     fat32-in-memoryp
                      update-fati fat-length count-of-clusters
                      data-region-length)
                     (cluster-size-of-update-fati))
@@ -405,6 +407,7 @@
                       (cluster-size fat32-in-memory)))
   :hints
   (("goal" :in-theory (e/d (compliant-fat32-in-memoryp
+                            fat32-in-memoryp
                             data-regioni data-region-length)
                            (unsigned-byte-p))))
   :rule-classes
@@ -441,6 +444,7 @@
   :hints
   (("goal" :do-not-induct t
     :in-theory (e/d (compliant-fat32-in-memoryp
+                     fat32-in-memoryp
                      update-data-regioni
                      data-region-length count-of-clusters
                      fat-length)
@@ -450,25 +454,20 @@
 
 (defconst *initialbytcnt* 16)
 
-(defthm
-  compliant-fat32-in-memoryp-of-update-bs_oemnamei
-  (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
-                (< i (bs_oemname-length fat32-in-memory)))
-           (equal (compliant-fat32-in-memoryp
-                   (update-bs_oemnamei i v fat32-in-memory))
-                  (unsigned-byte-p 8 v)))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (enable compliant-fat32-in-memoryp
-                       update-bs_oemnamei bs_oemname-length
-                       fat-length data-region-length
-                       count-of-clusters cluster-size))))
-
-;; Look, the strategy of just using compliant-fat32-in-memoryp everywhere does
-;; not seem to be working.
-(local
- (in-theory (disable fat32-in-memoryp)))
+;; (defthm
+;;   compliant-fat32-in-memoryp-of-update-bs_oemnamei
+;;   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
+;;                 (< i (bs_oemname-length fat32-in-memory)))
+;;            (equal (compliant-fat32-in-memoryp
+;;                    (update-bs_oemnamei i v fat32-in-memory))
+;;                   (unsigned-byte-p 8 v)))
+;;   :hints
+;;   (("goal"
+;;     :do-not-induct t
+;;     :in-theory (enable compliant-fat32-in-memoryp
+;;                        update-bs_oemnamei bs_oemname-length
+;;                        fat-length data-region-length
+;;                        count-of-clusters cluster-size))))
 
 (defund get-initial-bytes (str)
   (declare (xargs :guard (and (stringp str)
