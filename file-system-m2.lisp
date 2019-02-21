@@ -8170,32 +8170,18 @@
                                  (create-fat32-in-memory))) ))
 
 (defthm
+  fat32-in-memoryp-of-create-fat32-in-memory
+  (fat32-in-memoryp (create-fat32-in-memory)))
+
+(defthm
   string-to-fat32-in-memory-inversion
   (implies
    (and
     (stringp str)
-    (compliant-fat32-in-memoryp
-     (mv-nth
-      0
-      (string-to-fat32-in-memory
-       fat32-in-memory
-       str)))
-    (equal
-     (mv-nth
-      0
-      (string-to-fat32-in-memory
-       (create-fat32-in-memory)
-       (fat32-in-memory-to-string
-        (mv-nth 0
-                (string-to-fat32-in-memory fat32-in-memory str)))))
-     (mv-nth
-      0
-      (string-to-fat32-in-memory
-       (mv-nth 0
-               (string-to-fat32-in-memory fat32-in-memory str))
-       (fat32-in-memory-to-string
-        (mv-nth 0
-                (string-to-fat32-in-memory fat32-in-memory str))))))
+    (equal (mv-nth 1
+                   (string-to-fat32-in-memory (create-fat32-in-memory)
+                                              str))
+           0)
     (equal
      (mv-nth
       1
@@ -8205,30 +8191,24 @@
         (mv-nth 0
                 (string-to-fat32-in-memory fat32-in-memory str)))))
      0)
-    (equal (mv-nth 1
-                   (string-to-fat32-in-memory (create-fat32-in-memory)
-                                              str))
-           0)
-    (compliant-fat32-in-memoryp
-     (mv-nth 0
-             (string-to-fat32-in-memory (create-fat32-in-memory)
-                                        str)))
     (fat32-in-memory-equiv
-     (mv-nth 0
-             (string-to-fat32-in-memory fat32-in-memory str))
+     (mv-nth
+      0
+      (string-to-fat32-in-memory
+       (create-fat32-in-memory)
+       (fat32-in-memory-to-string
+        (mv-nth 0
+                (string-to-fat32-in-memory fat32-in-memory str)))))
      (mv-nth 0
              (string-to-fat32-in-memory (create-fat32-in-memory)
                                         str))))
    (disk-image-string-equiv
     (fat32-in-memory-to-string
-     (mv-nth
-      0
-      (string-to-fat32-in-memory
-       fat32-in-memory
-       str)))
+     (mv-nth 0
+             (string-to-fat32-in-memory fat32-in-memory str)))
     str))
-  :hints (("Goal" :in-theory (e/d (disk-image-string-equiv)
-                                  (create-fat32-in-memory))) ))
+  :hints (("goal" :in-theory (e/d (disk-image-string-equiv)
+                                  (create-fat32-in-memory)))))
 
 (defthm
   m1-fs-to-fat32-in-memory-to-string-inversion
