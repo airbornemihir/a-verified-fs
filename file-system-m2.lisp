@@ -120,8 +120,11 @@
            :in-theory (enable cluster-p nth))))
 
 (defthm cluster-listp-of-append
-  (equal (cluster-listp (append x y) cluster-size)
-         (AND (cluster-listp (true-list-fix x) cluster-size) (cluster-listp y cluster-size))))
+  (equal (cluster-listp (append x y)
+                        cluster-size)
+         (and (cluster-listp (true-list-fix x)
+                             cluster-size)
+              (cluster-listp y cluster-size))))
 
 (defun
   stobj-cluster-listp-helper
@@ -8079,84 +8082,12 @@
                   (<= 1
                       (combine16u (nth 15 (get-initial-bytes str))
                                   (nth 14 (get-initial-bytes str)))))
-             (and
-              (not (< (+ -82
-                         (* (combine16u (nth 12 (get-initial-bytes str))
-                                        (nth 11 (get-initial-bytes str)))
-                            (combine16u (nth 15 (get-initial-bytes str))
-                                        (nth 14 (get-initial-bytes str)))))
-                      0))
-              (not
-               (< (binary-+
-                   '-71
-                   (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                                (nth '11 (get-initial-bytes str)))
-                             (combine16u$inline (nth '15 (get-initial-bytes str))
-                                                (nth '14 (get-initial-bytes str)))))
-                  '0))
-              (not
-               (< (binary-+
-                   '-71
-                   (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                                (nth '11 (get-initial-bytes str)))
-                             (combine16u$inline (nth '15 (get-initial-bytes str))
-                                                (nth '14 (get-initial-bytes str)))))
-                  '11))
-              (< '0
-                 (binary-+
-                  '-16
-                  (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                               (nth '11 (get-initial-bytes str)))
-                            (combine16u$inline (nth '15 (get-initial-bytes str))
-                                               (nth '14 (get-initial-bytes
-                                                         str))))))
-              (< '5
-                 (binary-+
-                  '-16
-                  (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                               (nth '11 (get-initial-bytes str)))
-                            (combine16u$inline (nth '15 (get-initial-bytes str))
-                                               (nth '14 (get-initial-bytes
-                                                         str))))))
-              (<
-               '26
-               (binary-+ '-16
-                         (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                                      (nth '11 (get-initial-bytes str)))
-                                   (combine16u$inline (nth '15 (get-initial-bytes str))
-                                                      (nth '14
-                                                           (get-initial-bytes str))))))
-              (<
-               '27
-               (binary-+ '-16
-                         (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                                      (nth '11 (get-initial-bytes str)))
-                                   (combine16u$inline (nth '15 (get-initial-bytes str))
-                                                      (nth '14
-                                                           (get-initial-bytes str))))))
-              (<
-               '48
-               (binary-+ '-16
-                         (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                                      (nth '11 (get-initial-bytes str)))
-                                   (combine16u$inline (nth '15 (get-initial-bytes str))
-                                                      (nth '14
-                                                           (get-initial-bytes str))))))
-              (<
-               '49
-               (binary-+ '-16
-                         (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                                      (nth '11 (get-initial-bytes str)))
-                                   (combine16u$inline (nth '15 (get-initial-bytes str))
-                                                      (nth '14
-                                                           (get-initial-bytes str))))))
-              (<
-               '50
-               (binary-+ '-16
-                         (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                                      (nth '11 (get-initial-bytes str)))
-                                   (combine16u$inline (nth '15 (get-initial-bytes str))
-                                                      (nth '14 (get-initial-bytes str))))))))
+             (<= 512
+                 (* (combine16u (nth 12 (get-initial-bytes str))
+                                (nth 11 (get-initial-bytes str)))
+                    (combine16u (nth 15 (get-initial-bytes str))
+                                (nth 14 (get-initial-bytes str))))))
+    :rule-classes :linear
     :hints
     (("goal"
       :do-not-induct t
@@ -8201,46 +8132,28 @@
 
 (defthm
   compliant-fat32-in-memoryp-of-string-to-fat32-in-memory
- (implies
-  (and
-   (stringp str)
-   (equal
-    (mv-nth 1
-            (string-to-fat32-in-memory
-             fat32-in-memory str))
-    0)
-   (fat32-in-memoryp fat32-in-memory))
-  (compliant-fat32-in-memoryp
-   (mv-nth 0
-    (string-to-fat32-in-memory
-     fat32-in-memory str))))
- :hints (("GOal"
-          :do-not-induct t
-          :in-theory (e/d (string-to-fat32-in-memory
-                           count-of-clusters
-                           cluster-size
-                           fat-entry-count
-                           compliant-fat32-in-memoryp
-                           painful-debugging-lemma-1
-                           painful-debugging-lemma-2
-                           painful-debugging-lemma-3)
-                          (loghead logtail))
-          :use
-          (:theorem (equal (* 4 1/4
-                              (combine16u (nth 12 (get-initial-bytes str))
-                                          (nth 11 (get-initial-bytes str)))
-                              (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                          (nth 22 (get-remaining-rsvdbyts str))
-                                          (nth 21 (get-remaining-rsvdbyts str))
-                                          (nth 20 (get-remaining-rsvdbyts str))))
-                           (*
-                            (combine16u (nth 12 (get-initial-bytes str))
-                                        (nth 11 (get-initial-bytes str)))
-                            (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                        (nth 22 (get-remaining-rsvdbyts str))
-                                        (nth 21 (get-remaining-rsvdbyts str))
-                                        (nth 20 (get-remaining-rsvdbyts
-                                                 str))))))) ))
+  (implies
+   (and
+    (stringp str)
+    (equal
+     (mv-nth 1
+             (string-to-fat32-in-memory fat32-in-memory str))
+     0)
+    (fat32-in-memoryp fat32-in-memory))
+   (compliant-fat32-in-memoryp
+    (mv-nth 0
+            (string-to-fat32-in-memory fat32-in-memory str))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d (string-to-fat32-in-memory count-of-clusters
+                                    cluster-size fat-entry-count
+                                    compliant-fat32-in-memoryp
+                                    painful-debugging-lemma-1
+                                    painful-debugging-lemma-2
+                                    painful-debugging-lemma-3)
+         (loghead logtail)))))
 
 (thm
  (implies
