@@ -8016,20 +8016,81 @@
 
   (defthm
     compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-2
-    (implies (and (<= 512
-                      (combine16u (nth 12 (get-initial-bytes str))
-                                  (nth 11 (get-initial-bytes str))))
-                  (<= 1
-                      (combine16u (nth 15 (get-initial-bytes str))
-                                  (nth 14 (get-initial-bytes str)))))
-             (not (< (+ -82
-                        (* (combine16u (nth 12 (get-initial-bytes str))
-                                       (nth 11 (get-initial-bytes str)))
-                           (combine16u (nth 15 (get-initial-bytes str))
-                                       (nth 14 (get-initial-bytes str)))))
-                     8))))
+    (implies
+     (and (<= 512
+              (combine16u (nth 12 (get-initial-bytes str))
+                          (nth 11 (get-initial-bytes str))))
+          (<= 1
+              (combine16u (nth 15 (get-initial-bytes str))
+                          (nth 14 (get-initial-bytes str)))))
+     (and
+      (<= 512
+          (* (combine16u (nth 12 (get-initial-bytes str))
+                         (nth 11 (get-initial-bytes str)))
+             (combine16u (nth 15 (get-initial-bytes str))
+                         (nth 14 (get-initial-bytes str)))))
+      (equal
+       (nfix
+        (binary-+
+         '-16
+         (binary-*
+          (combine16u$inline (nth '12 (get-initial-bytes str))
+                             (nth '11 (get-initial-bytes str)))
+          (combine16u$inline
+           (nth '15 (get-initial-bytes str))
+           (nth '14 (get-initial-bytes str))))))
+       (binary-+
+        '-16
+        (binary-*
+         (combine16u$inline (nth '12 (get-initial-bytes str))
+                            (nth '11 (get-initial-bytes str)))
+         (combine16u$inline
+          (nth '15 (get-initial-bytes str))
+          (nth '14 (get-initial-bytes str))))))))
+    :rule-classes
+    ((:linear
+      :corollary
+      (implies
+       (and (<= 512
+                (combine16u (nth 12 (get-initial-bytes str))
+                            (nth 11 (get-initial-bytes str))))
+            (<= 1
+                (combine16u (nth 15 (get-initial-bytes str))
+                            (nth 14 (get-initial-bytes str)))))
+       (<= 512
+           (* (combine16u (nth 12 (get-initial-bytes str))
+                          (nth 11 (get-initial-bytes str)))
+              (combine16u (nth 15 (get-initial-bytes str))
+                          (nth 14 (get-initial-bytes str)))))))
+     (:rewrite
+      :corollary
+      (implies
+       (and (<= 512
+                (combine16u (nth 12 (get-initial-bytes str))
+                            (nth 11 (get-initial-bytes str))))
+            (<= 1
+                (combine16u (nth 15 (get-initial-bytes str))
+                            (nth 14 (get-initial-bytes str)))))
+       (equal
+        (nfix
+         (binary-+
+          '-16
+          (binary-*
+           (combine16u$inline (nth '12 (get-initial-bytes str))
+                              (nth '11 (get-initial-bytes str)))
+           (combine16u$inline
+            (nth '15 (get-initial-bytes str))
+            (nth '14 (get-initial-bytes str))))))
+        (binary-+
+         '-16
+         (binary-*
+          (combine16u$inline (nth '12 (get-initial-bytes str))
+                             (nth '11 (get-initial-bytes str)))
+          (combine16u$inline
+           (nth '15 (get-initial-bytes str))
+           (nth '14
+                (get-initial-bytes str))))))))))
 
-  
   (defthm
     compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-4
     (implies
@@ -8050,7 +8111,7 @@
                                       (nth '21 (get-remaining-rsvdbyts str))
                                       (nth '20
                                            (get-remaining-rsvdbyts str))))))
-       '0))))
+       0))))
 
   (defthm
     compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-6
@@ -8072,51 +8133,7 @@
                                                  painful-debugging-lemma-1
                                                  painful-debugging-lemma-2
                                                  painful-debugging-lemma-3)
-                      (loghead logtail)))))
-
-  (defthm
-    compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-7
-    (implies (and (<= 512
-                      (combine16u (nth 12 (get-initial-bytes str))
-                                  (nth 11 (get-initial-bytes str))))
-                  (<= 1
-                      (combine16u (nth 15 (get-initial-bytes str))
-                                  (nth 14 (get-initial-bytes str)))))
-             (<= 512
-                 (* (combine16u (nth 12 (get-initial-bytes str))
-                                (nth 11 (get-initial-bytes str)))
-                    (combine16u (nth 15 (get-initial-bytes str))
-                                (nth 14 (get-initial-bytes str))))))
-    :rule-classes :linear
-    :hints
-    (("goal"
-      :do-not-induct t
-      :in-theory (e/d (string-to-fat32-in-memory count-of-clusters
-                                                 cluster-size fat-entry-count
-                                                 compliant-fat32-in-memoryp
-                                                 painful-debugging-lemma-1
-                                                 painful-debugging-lemma-2
-                                                 painful-debugging-lemma-3)
                       (loghead logtail))))))
-
-(defthm
-  compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-3
-  (implies
-   (<= 0
-       (+ -82
-          (* (combine16u (nth 12 (get-initial-bytes str))
-                         (nth 11 (get-initial-bytes str)))
-             (combine16u (nth 15 (get-initial-bytes str))
-                         (nth 14 (get-initial-bytes str))))))
-   (<
-    '0
-    (nfix
-     (binary-+
-      '-16
-      (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                   (nth '11 (get-initial-bytes str)))
-                (combine16u$inline (nth '15 (get-initial-bytes str))
-                                   (nth '14 (get-initial-bytes str)))))))))
 
 (defthm
   compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-5
