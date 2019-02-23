@@ -7936,21 +7936,29 @@
                (nth *data-regioni* fat32-in-memory)))
   :hints (("goal" :in-theory (enable update-data-regioni)) ))
 
-(defthmd
-  update-data-region-alt-lemma-8
-  (implies (fat32-in-memoryp fat32-in-memory)
-           (true-listp (nth *data-regioni* fat32-in-memory)))
-  :hints (("goal" :in-theory (enable fat32-in-memoryp))))
-
-(defthmd
-  update-data-region-alt-lemma-9
-  (equal (update-nth *data-regioni* val
-                     (update-data-regioni i v fat32-in-memory))
-         (update-nth *data-regioni* val fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-data-regioni))))
-
 (encapsulate
   ()
+
+  (local
+   (defthm
+     update-data-region-alt-lemma-8
+     (implies (fat32-in-memoryp fat32-in-memory)
+              (and
+               (true-listp (nth *data-regioni* fat32-in-memory))
+               (equal
+                (update-nth *data-regioni*
+                            (nth *data-regioni* fat32-in-memory)
+                            fat32-in-memory)
+                fat32-in-memory)))
+     :hints (("goal" :in-theory (enable fat32-in-memoryp)))))
+
+  (local
+   (defthm
+     update-data-region-alt-lemma-9
+     (equal (update-nth *data-regioni* val
+                        (update-data-regioni i v fat32-in-memory))
+            (update-nth *data-regioni* val fat32-in-memory))
+     :hints (("goal" :in-theory (enable update-data-regioni)))))
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
@@ -7992,14 +8000,9 @@
                                by-slice-you-mean-the-whole-cake-2
                                update-data-region-alt-lemma-5
                                update-data-region-alt-lemma-6
-                               update-data-region-alt-lemma-7
-                               update-data-region-alt-lemma-8
-                               update-data-region-alt-lemma-9)
+                               update-data-region-alt-lemma-7)
            (append take take-redefinition))
       :induct (update-data-region fat32-in-memory str len))
-     ("subgoal *1/1"
-      :in-theory (enable data-region-length
-                         make-clusters fat32-in-memoryp))
      ("subgoal *1/2"
       :expand
       ((make-clusters
