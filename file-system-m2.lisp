@@ -7477,16 +7477,10 @@
           painful-debugging-lemma-4
           painful-debugging-lemma-5
           by-slice-you-mean-the-whole-cake-2
-          fat32-in-memory-to-string-inversion-lemma-51)
-         (loghead logtail)))
-   ("Subgoal 7''" :in-theory (e/d (cluster-size)
-                                  (compliant-fat32-in-memoryp-correctness-1))
-    :use compliant-fat32-in-memoryp-correctness-1)
-   ("Subgoal 2''" :in-theory (e/d (cluster-size)
-                                  (compliant-fat32-in-memoryp-correctness-1))
-    :use compliant-fat32-in-memoryp-correctness-1)
-   ("Subgoal 1''" :in-theory (e/d (cluster-size)
-                                  (compliant-fat32-in-memoryp-correctness-1))
+          fat32-in-memory-to-string-inversion-lemma-51
+          cluster-size)
+         (loghead logtail
+                  compliant-fat32-in-memoryp-correctness-1))
     :use compliant-fat32-in-memoryp-correctness-1)))
 
 (defund-nx
