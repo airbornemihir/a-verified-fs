@@ -1,6 +1,8 @@
+# test-mkfs-replicant-3 was always problematic; it's now removed
+# because our model has finally become strict enough to reject it.
 test: test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 \
 test-cat-replicant-4 test-mkfs-replicant-1 test-mkfs-replicant-2 \
-test-mkfs-replicant-3 test-wc-replicant-1 test-wc-replicant-2 \
+test-wc-replicant-1 test-wc-replicant-2 \
 test-wc-replicant-3 test-stat-replicant-1 test-stat-replicant-2 \
 test-rm-replicant-1 test-rm-replicant-2 mtools-test-cat-replicant-2 \
 mtools-test-rm-replicant-1
