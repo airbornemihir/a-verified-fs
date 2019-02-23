@@ -227,9 +227,6 @@
          (>= (bpb_secperclus fat32-in-memory) 1)
          (>= (count-of-clusters fat32-in-memory)
              *ms-fat32-min-count-of-clusters*)
-         (<= (+ *ms-first-data-cluster*
-                (count-of-clusters fat32-in-memory))
-             *ms-bad-cluster*)
          (>= (bpb_rsvdseccnt fat32-in-memory) 1)
          (>= (bpb_numfats fat32-in-memory) 1)
          (>= (bpb_fatsz32 fat32-in-memory) 1)
@@ -243,6 +240,8 @@
          (<= (+ (count-of-clusters fat32-in-memory)
                 *ms-first-data-cluster*)
              (fat-entry-count fat32-in-memory))
+         (<= (fat-entry-count fat32-in-memory)
+             *ms-bad-cluster*)
          ;; The spec (page 9) imposes both hard and soft limits on the legal
          ;; values of the cluster size, limiting it to being a power of 2 from
          ;; 512 through 32768. The following two clauses, however, are less
@@ -283,8 +282,7 @@
                   (equal (mod *ms-max-dir-size*
                               (cluster-size fat32-in-memory))
                          0)
-                  (<= (+ *ms-first-data-cluster*
-                         (count-of-clusters fat32-in-memory))
+                  (<= (fat-entry-count fat32-in-memory)
                       *ms-bad-cluster*)
                   (>= (bpb_secperclus fat32-in-memory) 1)
                   (>= (bpb_rsvdseccnt fat32-in-memory) 1)
@@ -343,8 +341,7 @@
                 *ms-min-bytes-per-sector*)
             (>= (count-of-clusters fat32-in-memory)
                 *ms-fat32-min-count-of-clusters*)
-            (<= (+ *ms-first-data-cluster*
-                   (count-of-clusters fat32-in-memory))
+            (<= (fat-entry-count fat32-in-memory)
                 *ms-bad-cluster*)
             (>= (bpb_secperclus fat32-in-memory) 1)
             (>= (bpb_rsvdseccnt fat32-in-memory) 1)
@@ -7464,12 +7461,19 @@
   fat32-in-memory-to-string-inversion
   (implies
    (compliant-fat32-in-memoryp fat32-in-memory)
-   (equal
-    (mv-nth 0
-            (string-to-fat32-in-memory
-             fat32-in-memory
-             (fat32-in-memory-to-string fat32-in-memory)))
-    fat32-in-memory))
+   (and
+    (equal
+     (mv-nth 0
+             (string-to-fat32-in-memory
+              fat32-in-memory
+              (fat32-in-memory-to-string fat32-in-memory)))
+     fat32-in-memory)
+    (equal
+     (mv-nth 1
+             (string-to-fat32-in-memory
+              fat32-in-memory
+              (fat32-in-memory-to-string fat32-in-memory)))
+     0)))
   :hints
   (("goal"
     :in-theory
@@ -7477,11 +7481,13 @@
           painful-debugging-lemma-4
           painful-debugging-lemma-5
           by-slice-you-mean-the-whole-cake-2
-          fat32-in-memory-to-string-inversion-lemma-51
-          cluster-size)
+          cluster-size
+          fat-entry-count)
          (loghead logtail
                   compliant-fat32-in-memoryp-correctness-1))
-    :use compliant-fat32-in-memoryp-correctness-1)))
+    :use
+    (compliant-fat32-in-memoryp-correctness-1
+     fat32-in-memory-to-string-inversion-lemma-51))))
 
 (defund-nx
   disk-image-string-equiv (str1 str2)
