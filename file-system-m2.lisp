@@ -4,6 +4,46 @@
 
 ; This is a stobj model of the FAT32 filesystem.
 
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/nth" :dir :system))
+
+  (encapsulate
+    (((equal-by-nths-hyp) => *)
+     ((equal-by-nths-lhs) => *)
+     ((equal-by-nths-rhs) => *))
+    (local (value-triple :elided))
+    (local (value-triple :elided))
+    (local (value-triple :elided))
+    (defthmd equal-by-nths-constraint
+      (implies (and (equal-by-nths-hyp)
+                    (natp n)
+                    (< n (len (equal-by-nths-lhs))))
+               (equal (nth n (equal-by-nths-lhs))
+                      (nth n (equal-by-nths-rhs))))))
+
+  (defthm
+    equal-by-nths
+    (implies (and (equal-by-nths-hyp)
+                  (true-listp (equal-by-nths-lhs))
+                  (true-listp (equal-by-nths-rhs)))
+             (equal (equal (equal-by-nths-lhs)
+                           (equal-by-nths-rhs))
+                    (equal (len (equal-by-nths-lhs))
+                           (len (equal-by-nths-rhs)))))
+    :hints
+    (("goal"
+      :use ((:instance nth-badguy-is-equality
+                       (x (equal-by-nths-lhs))
+                       (y (equal-by-nths-rhs)))
+            (:instance nth-badguy-is-bad
+                       (x (equal-by-nths-lhs))
+                       (y (equal-by-nths-rhs)))
+            (:instance equal-by-nths-constraint
+                       (n (nth-badguy (equal-by-nths-lhs)
+                                      (equal-by-nths-rhs)))))))))
+
 (include-book "generate-index-list")
 ;; (include-book "file-system-m1")
 ;; (include-book "m1-dir-equiv")
@@ -7530,6 +7570,56 @@
     :use compliant-fat32-in-memoryp-correctness-1)))
 
 (defthm
+  fat32-in-memoryp-of-create-fat32-in-memory
+  (fat32-in-memoryp (create-fat32-in-memory)))
+
+(defthm
+  true-listp-when-compliant-fat32-in-memoryp
+  (implies
+   (COMPLIANT-FAT32-IN-MEMORYP FAT32-IN-MEMORY)
+   (and
+    (EQUAL (LEN FAT32-IN-MEMORY) 30)
+    (true-listp FAT32-IN-MEMORY ))) :hints
+   (("Goal" :in-theory (enable
+  compliant-fat32-in-memoryp fat32-in-memoryp)) ))
+
+(skip-proofs
+ (defthm
+   true-listp-of-STRING-TO-FAT32-IN-MEMORY
+   (implies
+    (fat32-in-memoryp fat32-in-memory)
+    (and
+     (EQUAL (LEN
+             (mv-nth 0
+                     (STRING-TO-FAT32-IN-MEMORY
+                      FAT32-IN-MEMORY STR))) 30)
+     (true-listp (mv-nth 0
+                         (STRING-TO-FAT32-IN-MEMORY
+                          FAT32-IN-MEMORY STR)))))))
+
+(thm
+ (implies
+  (compliant-fat32-in-memoryp fat32-in-memory)
+  (equal
+   (mv-nth 0
+           (string-to-fat32-in-memory
+            (create-fat32-in-memory)
+            (fat32-in-memory-to-string fat32-in-memory)))
+   fat32-in-memory))
+ :hints(("Goal" :in-theory (disable create-fat32-in-memory) :do-not-induct t
+         :use ((:functional-instance
+                equal-by-nths
+                (equal-by-nths-hyp (lambda ()
+                                     (fat32-in-memoryp fat32-in-memory)))
+                (equal-by-nths-lhs (lambda ()
+                                     (mv-nth 0
+                                             (string-to-fat32-in-memory
+                                              (create-fat32-in-memory)
+                                              (fat32-in-memory-to-string fat32-in-memory)))))
+                (equal-by-nths-rhs (lambda ()
+                                     fat32-in-memory)))))))
+
+(defthm
   fat32-in-memory-to-string-inversion
   (implies
    (compliant-fat32-in-memoryp fat32-in-memory)
@@ -8275,10 +8365,6 @@
                                     painful-debugging-lemma-2
                                     painful-debugging-lemma-3)
          (loghead logtail)))))
-
-(defthm
-  fat32-in-memoryp-of-create-fat32-in-memory
-  (fat32-in-memoryp (create-fat32-in-memory)))
 
 (defthm
   string-to-fat32-in-memory-inversion
