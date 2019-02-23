@@ -7891,53 +7891,57 @@
                               bpb_bytspersec bpb_secperclus)
     :do-not-induct t)))
 
-(defthmd
-  update-data-region-alt-lemma-5
-  (equal (len (nth *data-regioni*
-                   (update-data-regioni i v fat32-in-memory)))
-         (max (len (nth *data-regioni* fat32-in-memory))
-              (1+ (nfix i))))
-  :hints
-  (("goal"
-    :in-theory (e/d (data-region-length)
-                    (data-region-length-of-update-data-regioni))
-    :use data-region-length-of-update-data-regioni)))
-
-(defthmd
-  update-data-region-alt-lemma-6
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (equal
-    (true-list-fix
-     (nth *data-regioni*
-          (update-data-regioni
-           (+ -1
-              (len (nth *data-regioni* fat32-in-memory)))
-           (implode (nthcdr (+ (len (explode str))
-                               (* -1 (cluster-size fat32-in-memory)))
-                            (explode str)))
-           fat32-in-memory)))
-    (nth *data-regioni*
-         (update-data-regioni
-          (+ -1
-             (len (nth *data-regioni* fat32-in-memory)))
-          (implode (nthcdr (+ (len (explode str))
-                              (* -1 (cluster-size fat32-in-memory)))
-                           (explode str)))
-          fat32-in-memory))))
-  :hints (("goal" :in-theory (enable update-data-regioni fat32-in-memoryp))))
-
-(defthmd
-  update-data-region-alt-lemma-7
-  (equal
-   (nth *data-regioni*
-        (update-data-regioni i v fat32-in-memory))
-   (update-nth i v
-               (nth *data-regioni* fat32-in-memory)))
-  :hints (("goal" :in-theory (enable update-data-regioni)) ))
-
 (encapsulate
   ()
+
+  (local
+   (defthm
+     update-data-region-alt-lemma-5
+     (equal (len (nth *data-regioni*
+                      (update-data-regioni i v fat32-in-memory)))
+            (max (len (nth *data-regioni* fat32-in-memory))
+                 (1+ (nfix i))))
+     :hints
+     (("goal"
+       :in-theory (e/d (data-region-length)
+                       (data-region-length-of-update-data-regioni))
+       :use data-region-length-of-update-data-regioni))))
+
+  (local
+   (defthm
+     update-data-region-alt-lemma-6
+     (implies
+      (fat32-in-memoryp fat32-in-memory)
+      (equal
+       (true-list-fix
+        (nth *data-regioni*
+             (update-data-regioni
+              (+ -1
+                 (len (nth *data-regioni* fat32-in-memory)))
+              (implode (nthcdr (+ (len (explode str))
+                                  (* -1 (cluster-size fat32-in-memory)))
+                               (explode str)))
+              fat32-in-memory)))
+       (nth *data-regioni*
+            (update-data-regioni
+             (+ -1
+                (len (nth *data-regioni* fat32-in-memory)))
+             (implode (nthcdr (+ (len (explode str))
+                                 (* -1 (cluster-size fat32-in-memory)))
+                              (explode str)))
+             fat32-in-memory))))
+     :hints (("goal" :in-theory (enable update-data-regioni
+                                        fat32-in-memoryp)))))
+
+  (local
+   (defthm
+     update-data-region-alt-lemma-7
+     (equal
+      (nth *data-regioni*
+           (update-data-regioni i v fat32-in-memory))
+      (update-nth i v
+                  (nth *data-regioni* fat32-in-memory)))
+     :hints (("goal" :in-theory (enable update-data-regioni)) )))
 
   (local
    (defthm
@@ -7997,13 +8001,9 @@
       (e/d (data-region-length make-clusters
                                remember-that-time-with-update-nth
                                append-of-take-and-cons
-                               by-slice-you-mean-the-whole-cake-2
-                               update-data-region-alt-lemma-5
-                               update-data-region-alt-lemma-6
-                               update-data-region-alt-lemma-7)
+                               by-slice-you-mean-the-whole-cake-2)
            (append take take-redefinition))
-      :induct (update-data-region fat32-in-memory str len))
-     ("subgoal *1/2"
+      :induct (update-data-region fat32-in-memory str len)
       :expand
       ((make-clusters
         (implode
