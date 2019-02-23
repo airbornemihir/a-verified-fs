@@ -744,3 +744,19 @@
              (revappend x
                         (update-nth (- (nfix key) (len x))
                                     val y)))))
+
+(defthm
+  true-listp-of-update-nth
+  (equal (true-listp (update-nth key val l))
+         (or (>= (nfix key) (len l))
+             (true-listp l)))
+  :hints (("goal" :in-theory (enable update-nth)
+           :induct (update-nth key val l)
+           :expand ((true-listp l)
+                    (:free (x y)
+                           (true-listp (cons x y)))))))
+
+(defthm nthcdr-of-nthcdr
+  (equal (nthcdr a (nthcdr b x))
+         (nthcdr (+ (nfix a) (nfix b)) x))
+  :hints(("goal" :induct (nthcdr b x))))

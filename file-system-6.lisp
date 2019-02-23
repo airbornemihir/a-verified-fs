@@ -13,6 +13,11 @@
 (include-book "file-system-4")
 (include-book "fat32")
 
+(local
+ (in-theory (e/d
+             ((:rewrite fat32-entry-list-p-of-update-nth . 2))
+             ((:rewrite fat32-entry-list-p-of-update-nth . 1)))))
+
 ;; question: if fat entries are 28 bits long, then how is the maximum size
 ;; determined to be 4 GB?
 ;; also, how are we gonna do this without a feasible length restriction?
