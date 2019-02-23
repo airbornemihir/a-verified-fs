@@ -652,7 +652,7 @@
          (fat32-in-memory
           (update-bpb_secperclus tmp_secperclus
                                  fat32-in-memory))
-         ((unless (and 
+         ((unless (and
                    (equal (mod (cluster-size fat32-in-memory)
                                *ms-dir-ent-length*)
                           0)
@@ -7860,11 +7860,11 @@
 (defthmd
   update-data-region-alt-lemma-7
   (equal
-   (NTH *DATA-REGIONI*
-        (UPDATE-DATA-REGIONI I V FAT32-IN-MEMORY))
+   (nth *data-regioni*
+        (update-data-regioni i v fat32-in-memory))
    (update-nth i v
-               (NTH *DATA-REGIONI* FAT32-IN-MEMORY)))
-  :hints (("Goal" :in-theory (enable update-data-regioni)) ))
+               (nth *data-regioni* fat32-in-memory)))
+  :hints (("goal" :in-theory (enable update-data-regioni)) ))
 
 (defthmd
   update-data-region-alt-lemma-8
