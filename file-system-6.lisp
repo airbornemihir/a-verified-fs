@@ -13,6 +13,11 @@
 (include-book "file-system-4")
 (include-book "fat32")
 
+(local
+ (in-theory (e/d
+             ((:rewrite fat32-entry-list-p-of-update-nth . 2))
+             ((:rewrite fat32-entry-list-p-of-update-nth . 1)))))
+
 ;; question: if fat entries are 28 bits long, then how is the maximum size
 ;; determined to be 4 GB?
 ;; also, how are we gonna do this without a feasible length restriction?
@@ -1589,23 +1594,19 @@
         (fat32-masked-entry-list-p value-list)
         (equal (len index-list)
                (len value-list))
-        (lower-bounded-integer-listp
-         index-list *ms-first-data-cluster*)
+        (lower-bounded-integer-listp index-list *ms-first-data-cluster*)
         (bounded-nat-listp index-list (len fa-table))
-        (lower-bounded-integer-listp
-         value-list *ms-first-data-cluster*))
+        (lower-bounded-integer-listp value-list *ms-first-data-cluster*))
    (equal
-    (fa-table-to-alv
-     (set-indices-in-fa-table fa-table index-list value-list))
+    (fa-table-to-alv (set-indices-in-fa-table fa-table index-list value-list))
     (set-indices-in-alv (fa-table-to-alv fa-table)
                         index-list t)))
   :hints
-  (("goal"
-    :in-theory (enable set-indices-in-fa-table
-                       lower-bounded-integer-listp
-                       set-indices-in-alv)
-    :induct
-    (set-indices-in-fa-table fa-table index-list value-list))))
+  (("goal" :in-theory (enable set-indices-in-fa-table
+                              lower-bounded-integer-listp)
+    :induct (set-indices-in-fa-table fa-table index-list value-list))
+   ("subgoal *1/1''" :in-theory (enable set-indices-in-alv))
+   ("subgoal *1/3.4'" :in-theory (e/d (set-indices-in-alv)))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-18
@@ -1850,36 +1851,6 @@
   (("goal"
     :in-theory (enable feasible-file-length-p)
     :do-not-induct t)))
-
-(defthm
-  l6-wrchs-correctness-1-lemma-2
-  (implies
-   (and (fat32-entry-list-p fa-table)
-        (<= 2 (len fa-table))
-        (equal (len index-list)
-               (len value-list))
-        (fat32-masked-entry-list-p value-list)
-        (lower-bounded-integer-listp index-list 2)
-        (bounded-nat-listp index-list (len fa-table))
-        (lower-bounded-integer-listp value-list 2))
-   (equal
-    (find-n-free-blocks
-     (set-indices-in-alv (fa-table-to-alv fa-table)
-                         index-list t)
-     n)
-    (find-n-free-clusters
-     (set-indices-in-fa-table fa-table index-list value-list)
-     n)))
-  :hints (("Goal" :in-theory (disable
-                              l6-wrchs-correctness-1-lemma-17
-                              l6-wrchs-correctness-1-lemma-9)
-           :do-not-induct t
-           :use
-           (l6-wrchs-correctness-1-lemma-17
-            (:instance
-             l6-wrchs-correctness-1-lemma-9
-             (fa-table
-              (SET-INDICES-IN-FA-TABLE FA-TABLE INDEX-LIST VALUE-LIST))))) ))
 
 (defthm
   l6-wrchs-correctness-1-lemma-30
@@ -3525,9 +3496,86 @@
 
 (defthm
   l6-wrchs-correctness-1-lemma-3
-  (equal (set-indices-in-fa-table fa-table nil nil)
-         fa-table)
-  :hints (("goal" :in-theory (enable set-indices-in-fa-table))))
+  (implies
+   (and
+    (consp hns)
+    (consp fs)
+    (consp (assoc-equal (car hns) fs))
+    (l6-regular-file-entry-p (cdr (assoc-equal (car hns) fs)))
+    (not (cdr hns))
+    (>=
+     (count-free-blocks
+      (fa-table-to-alv
+       (set-indices-in-fa-table
+        fa-table
+        (mv-nth 0
+                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                    fa-table))
+        (make-list-ac
+         (len (mv-nth 0
+                      (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                          fa-table)))
+         0 nil))))
+     (len
+      (make-blocks
+       (insert-text
+        (unmake-blocks-without-feasibility
+         (fetch-blocks-by-indices
+          disk
+          (mv-nth 0
+                  (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                      fa-table)))
+         (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+        start text))))
+    (consp
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       fa-table
+       (mv-nth 0
+               (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                   fa-table))
+       (make-list-ac
+        (len (mv-nth 0
+                     (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                         fa-table)))
+        0 nil))
+      (len
+       (make-blocks
+        (insert-text
+         (unmake-blocks-without-feasibility
+          (fetch-blocks-by-indices
+           disk
+           (mv-nth 0
+                   (l6-file-index-list (cdr (assoc-equal (car hns) fs))
+                                       fa-table)))
+          (l6-regular-file-length (cdr (assoc-equal (car hns) fs))))
+         start text)))))
+    (l6-stricter-fs-p fs fa-table)
+    (fat32-entry-list-p fa-table)
+    (stringp text)
+    (integerp start)
+    (<= 0 start)
+    (symbol-listp hns)
+    (block-listp disk)
+    (equal (len disk) (len fa-table))
+    (<= (len fa-table) *ms-bad-cluster*)
+    (<= 2 (len fa-table))
+    (<= (len (make-blocks (insert-text nil start text)))
+        (count-free-blocks (fa-table-to-alv fa-table))))
+   (equal
+    (l4-wrchs hns (l6-to-l4-fs-helper fs fa-table)
+              disk (fa-table-to-alv fa-table)
+              start text)
+    (list
+     (l6-to-l4-fs-helper (mv-nth 0
+                                 (l6-wrchs hns fs disk fa-table start text))
+                         (mv-nth 2
+                                 (l6-wrchs hns fs disk fa-table start text)))
+     (mv-nth 1
+             (l6-wrchs hns fs disk fa-table start text))
+     (fa-table-to-alv (mv-nth 2
+                              (l6-wrchs hns fs disk fa-table start text))))))
+  :hints (("goal" :in-theory (enable l6-wrchs))))
 
 ;; This theorem shows the equivalence of the l6 and l4 versions of wrchs.
 (defthm
