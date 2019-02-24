@@ -6201,15 +6201,7 @@
         (:rewrite
          fati-of-m1-fs-to-fat32-in-memory-helper-disjoint-lemma-2)
         (:definition induction-scheme)
-        (:definition m1-file-no-dups-p))))
-     ("subgoal *1/4"
-      :expand
-      ((:free (fat32-in-memory dir-ent dir-ent-list entry-limit)
-              (fat32-in-memory-to-m1-fs-helper
-               fat32-in-memory
-               (cons dir-ent dir-ent-list)
-               entry-limit))))
-     ("subgoal *1/3"
+        (:definition m1-file-no-dups-p)))
       :expand
       ((:free (y) (intersectp-equal nil y))
        (:free (x1 x2 y)
