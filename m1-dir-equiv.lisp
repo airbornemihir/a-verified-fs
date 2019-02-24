@@ -55,19 +55,16 @@
         (t t)))
 
 (defthm m1-file-no-dups-p-correctness-1
-  (implies (and (consp fs) (m1-file-no-dups-p fs))
+  (implies (m1-file-no-dups-p fs)
            (m1-file-no-dups-p (cdr fs)))
   :hints (("goal" :do-not-induct t)))
 
-(defthm
-  m1-dir-subsetp-of-remove1-assoc-1
-  (implies
-   (and (m1-file-no-dups-p m1-file-alist2)
-        (m1-file-alist-p m1-file-alist1)
-        (atom (assoc-equal key m1-file-alist1)))
-   (equal (m1-dir-subsetp m1-file-alist1
-                          (remove1-assoc key m1-file-alist2))
-          (m1-dir-subsetp m1-file-alist1 m1-file-alist2))))
+(defthm m1-dir-subsetp-of-remove1-assoc-1
+  (implies (and (m1-file-alist-p m1-file-alist1)
+                (atom (assoc-equal key m1-file-alist1)))
+           (equal (m1-dir-subsetp m1-file-alist1
+                                  (remove1-assoc key m1-file-alist2))
+                  (m1-dir-subsetp m1-file-alist1 m1-file-alist2))))
 
 (defthm
   m1-file-no-dups-p-of-remove1-assoc-equal
@@ -114,20 +111,16 @@
   m1-dir-subsetp-transitive-lemma-2
   (implies (and (m1-file-alist-p z)
                 (m1-file-no-dups-p z)
-                (consp (assoc-equal key z))
                 (m1-directory-file-p (cdr (assoc-equal key z))))
-           (m1-file-no-dups-p
-            (m1-file->contents (cdr (assoc-equal key z))))))
+           (m1-file-no-dups-p (m1-file->contents (cdr (assoc-equal key z))))))
 
 (defthm
   m1-dir-subsetp-transitive-lemma-3
   (implies (and (m1-file-alist-p y)
-                (consp (assoc-equal key y))
                 (m1-directory-file-p (cdr (assoc-equal key y)))
                 (m1-dir-subsetp y z))
-           (m1-dir-subsetp
-            (m1-file->contents (cdr (assoc-equal key y)))
-            (m1-file->contents (cdr (assoc-equal key z))))))
+           (m1-dir-subsetp (m1-file->contents (cdr (assoc-equal key y)))
+                           (m1-file->contents (cdr (assoc-equal key z))))))
 
 (defthm
   m1-dir-subsetp-transitive-lemma-4
@@ -142,21 +135,16 @@
 (defthm
   m1-dir-subsetp-transitive
   (implies (and (m1-file-alist-p x)
-                (m1-file-no-dups-p x)
                 (m1-file-alist-p y)
-                (m1-file-no-dups-p y)
                 (m1-file-alist-p z)
-                (m1-file-no-dups-p z)
                 (m1-dir-subsetp x y)
                 (m1-dir-subsetp y z))
            (m1-dir-subsetp x z))
   :hints
-  (("subgoal *1/9'''"
-    :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
+  (("subgoal *1/9'''" :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
     :use (:instance m1-dir-subsetp-transitive-lemma-1
                     (key (car (car x)))))
-   ("subgoal *1/6'''"
-    :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
+   ("subgoal *1/6'''" :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
     :use (:instance m1-dir-subsetp-transitive-lemma-1
                     (key (car (car x)))))))
 
@@ -174,10 +162,8 @@
           (null m1-file-alist)))
   :hints (("Goal" :in-theory (enable m1-dir-equiv))))
 
-(defthm
-  m1-dir-equiv-of-cons-lemma-1
+(defthm m1-dir-equiv-of-cons-lemma-1
   (implies (and (m1-file-alist-p x)
-                (m1-file-alist-p y)
                 (m1-file-no-dups-p (append x y)))
            (equal (assoc-equal (car (car y)) (append x y))
                   (car y))))
@@ -186,14 +172,11 @@
   (implies (not (m1-file-no-dups-p y))
            (not (m1-file-no-dups-p (append x y)))))
 
-(defthm
-  m1-dir-equiv-of-cons-lemma-3
-  (implies
-   (and (consp y)
-        (m1-file-alist-p y)
-        (m1-file-no-dups-p y)
-        (m1-directory-file-p (cdr (car y))))
-   (m1-file-no-dups-p (m1-file->contents (cdr (car y))))))
+(defthm m1-dir-equiv-of-cons-lemma-3
+  (implies (and (m1-file-alist-p y)
+                (m1-file-no-dups-p y)
+                (m1-directory-file-p (cdr (car y))))
+           (m1-file-no-dups-p (m1-file->contents (cdr (car y))))))
 
 (encapsulate
   ()
