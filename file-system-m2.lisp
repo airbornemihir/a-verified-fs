@@ -4969,89 +4969,6 @@
                           (cluster-size fat32-in-memory)))))))
       (fa-table (effective-fat fat32-in-memory)))))))
 
-(defthm place-contents-expansion-1
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (not (zp (cluster-size fat32-in-memory)))
-        (dir-ent-p dir-ent)
-        (fat32-masked-entry-p first-cluster)
-        (< first-cluster
-           (+ *ms-first-data-cluster*
-              (count-of-clusters fat32-in-memory))))
-   (equal
-    (mv-nth 1
-            (place-contents fat32-in-memory dir-ent
-                            contents file-length first-cluster))
-    (if
-        (equal (length contents) 0)
-        (dir-ent-set-first-cluster-file-size dir-ent 0 file-length)
-      (if
-          (equal
-           (+
-            1
-            (len (stobj-find-n-free-clusters
-                  fat32-in-memory
-                  (+ -1
-                     (len (make-clusters contents
-                                         (cluster-size fat32-in-memory)))))))
-           (len (make-clusters contents
-                               (cluster-size fat32-in-memory))))
-          (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-length)
-        dir-ent))))
-  :hints (("goal" :in-theory (enable place-contents))))
-
-(defthm place-contents-expansion-2
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (not (zp (cluster-size fat32-in-memory)))
-        (dir-ent-p dir-ent)
-        (fat32-masked-entry-p first-cluster)
-        (< first-cluster
-           (+ *ms-first-data-cluster*
-              (count-of-clusters fat32-in-memory))))
-   (equal
-    (mv-nth 2
-            (place-contents fat32-in-memory dir-ent
-                            contents file-length first-cluster))
-    (if
-        (equal (length contents) 0)
-        0
-      (if
-          (equal
-           (+
-            1
-            (len (stobj-find-n-free-clusters
-                  fat32-in-memory
-                  (+ -1
-                     (len (make-clusters contents
-                                         (cluster-size fat32-in-memory)))))))
-           (len (make-clusters contents
-                               (cluster-size fat32-in-memory))))
-          0
-        *enospc*))))
-  :hints (("goal" :in-theory (enable place-contents))))
-
-(defthm place-contents-expansion-3
-  (implies
-   (and (compliant-fat32-in-memoryp fat32-in-memory)
-        (not (zp (cluster-size fat32-in-memory)))
-        (dir-ent-p dir-ent)
-        (fat32-masked-entry-p first-cluster)
-        (< first-cluster
-           (+ *ms-first-data-cluster*
-              (count-of-clusters fat32-in-memory)))
-        (equal (length contents) 0))
-   (equal
-    (mv-nth 0
-            (place-contents fat32-in-memory dir-ent
-                            contents file-length first-cluster))
-    (update-fati first-cluster
-                 (fat32-update-lower-28
-                  (fati first-cluster fat32-in-memory)
-                  0)
-                 fat32-in-memory)))
-  :hints (("goal" :in-theory (enable place-contents))))
-
 (defthm
   make-dir-ent-list-of-append-1
   (implies
@@ -5264,6 +5181,24 @@
      (fat32-build-index-list fa-table masked-current-cluster
                              length cluster-size))
     fa-table)))
+
+(defthm
+  place-contents-correctness-1
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (unsigned-byte-p 32 file-length)
+        (fat32-masked-entry-p first-cluster)
+        (equal (mv-nth 2
+                       (place-contents fat32-in-memory dir-ent
+                                       contents file-length first-cluster))
+               0)
+        (> (length contents) 0))
+   (equal (dir-ent-first-cluster
+           (mv-nth 1
+                   (place-contents fat32-in-memory dir-ent
+                                   contents file-length first-cluster)))
+          first-cluster))
+  :hints (("goal" :in-theory (enable place-contents))))
 
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-1
@@ -6191,6 +6126,7 @@
       :induct
       (induction-scheme fat32-in-memory fs
                         current-dir-first-cluster entry-limit x)
+      :do-not-induct t
       :in-theory
       (e/d
        (fat32-in-memory-to-m1-fs-helper
