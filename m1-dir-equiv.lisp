@@ -75,16 +75,13 @@
 (defund m1-dir-equiv (m1-file-alist1 m1-file-alist2)
   (declare (xargs :guard (and (m1-file-alist-p m1-file-alist1)
                               (m1-file-alist-p m1-file-alist2))))
-  (or (equal m1-file-alist1 m1-file-alist2)
-      (let ((good1 (and (mbt (m1-file-alist-p m1-file-alist1))
-                        (m1-file-no-dups-p m1-file-alist1)))
-            (good2 (and (mbt (m1-file-alist-p m1-file-alist2))
-                        (m1-file-no-dups-p m1-file-alist2))))
-        (cond ((not good1) (not good2)) ; all bad objects are equivalent
-              ((not good2) nil) ; one good, one bad; hence, not equivalent
-              (t                ; both good
-               (and (m1-dir-subsetp m1-file-alist1 m1-file-alist2)
-                    (m1-dir-subsetp m1-file-alist2 m1-file-alist1)))))))
+  (b* ((good1 (and (mbt (m1-file-alist-p m1-file-alist1))
+                   (m1-file-no-dups-p m1-file-alist1)))
+       (good2 (and (mbt (m1-file-alist-p m1-file-alist2))
+                   (m1-file-no-dups-p m1-file-alist2)))
+       ((unless (and good1 good2)) (and (not good1) (not good2))))
+    (and (m1-dir-subsetp m1-file-alist1 m1-file-alist2)
+         (m1-dir-subsetp m1-file-alist2 m1-file-alist1))))
 
 (defthm m1-dir-subsetp-preserves-assoc-equal
   (implies (and (m1-dir-subsetp x y)
@@ -150,9 +147,6 @@
    ("subgoal *1/6'''" :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
     :use (:instance m1-dir-subsetp-transitive-lemma-1
                     (key (car (car x)))))))
-
-(defequiv m1-dir-equiv
-  :hints (("Goal" :in-theory (enable m1-dir-equiv))))
 
 (defthm
   m1-dir-subsetp-when-atom
@@ -290,6 +284,9 @@
     (disable m1-dir-equiv-of-cons-lemma-4)
     :use (:instance m1-dir-equiv-of-cons-lemma-4
                     (x nil)))))
+
+(defequiv m1-dir-equiv
+  :hints (("Goal" :in-theory (enable m1-dir-equiv))))
 
 (local
  (defthm
