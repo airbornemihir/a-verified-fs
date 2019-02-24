@@ -342,70 +342,54 @@
 
 (defthm
   m1-dir-equiv-of-cons-lemma-13
-  (implies
-   (and (fat32-filename-p (car head))
-        (m1-directory-file-p (cdr head))
-        (m1-file-alist-p tail)
-        (m1-file-no-dups-p (m1-file->contents (cdr head)))
-        (m1-dir-equiv (m1-file->contents (cdr head))
-                      contents))
-   (m1-dir-equiv (cons (cons (car head)
-                             (m1-file dir-ent contents))
-                       tail)
-                 (cons head tail)))
+  (implies (and (m1-directory-file-p (cdr head))
+                (m1-file-no-dups-p (m1-file->contents (cdr head)))
+                (m1-dir-equiv (m1-file->contents (cdr head))
+                              contents))
+           (m1-dir-equiv (cons (cons (car head)
+                                     (m1-file dir-ent contents))
+                               tail)
+                         (cons head tail)))
   :hints
-  (("goal"
-    :expand
-    (m1-dir-equiv (cons (cons (car head)
-                              (m1-file dir-ent contents))
-                        tail)
-                  (cons head tail))
-    :in-theory
-    (disable m1-dir-equiv-of-cons-lemma-4
-             m1-directory-file-p-of-m1-file)
-    :use
-    ((:instance m1-dir-equiv-of-cons-lemma-4
-                (x (list head))
-                (y tail))
-     (:instance m1-dir-equiv-of-cons-lemma-4
-                (x (list (cons (car head)
-                               (m1-file dir-ent contents))))
-                (y tail))
-     (:instance m1-directory-file-p-of-m1-file
-                (contents contents)
-                (dir-ent dir-ent))))))
+  (("goal" :expand (m1-dir-equiv (cons (cons (car head)
+                                             (m1-file dir-ent contents))
+                                       tail)
+                                 (cons head tail))
+    :in-theory (disable m1-dir-equiv-of-cons-lemma-4
+                        m1-directory-file-p-of-m1-file)
+    :use ((:instance m1-dir-equiv-of-cons-lemma-4
+                     (x (list head))
+                     (y tail))
+          (:instance m1-dir-equiv-of-cons-lemma-4
+                     (x (list (cons (car head)
+                                    (m1-file dir-ent contents))))
+                     (y tail))
+          (:instance m1-directory-file-p-of-m1-file
+                     (contents contents)
+                     (dir-ent dir-ent))))))
 
 (defthm m1-dir-equiv-of-cons-lemma-14
-  (implies (and (m1-file-alist-p tail1)
-                (not (assoc-equal (car head) tail1))
-                (m1-file-no-dups-p tail1)
+  (implies (and (not (assoc-equal (car head) tail1))
                 (m1-dir-subsetp tail2 tail1)
-                (consp head)
                 (fat32-filename-p (car head)))
            (not (assoc-equal (car head) tail2))))
 
 (defthm m1-dir-equiv-of-cons-lemma-15
-  (implies (and (m1-file-alist-p tail1)
-                (m1-file-no-dups-p (cons head tail1))
-                (m1-file-no-dups-p tail1)
-                (m1-dir-subsetp tail2 tail1)
-                (consp head)
-                (fat32-filename-p (car head)))
+  (implies (and (m1-file-no-dups-p (cons head tail1))
+                (m1-dir-subsetp tail2 tail1))
            (m1-dir-subsetp tail2 (cons head tail1))))
 
-(defthm
-  m1-dir-equiv-of-cons
-  (implies (and (m1-file-alist-p tail1)
-                (m1-file-no-dups-p (cons head tail1))
-                (m1-dir-equiv tail1 tail2))
-           (m1-dir-equiv (cons head tail1)
-                         (cons head tail2)))
-  :hints
-  (("goal" :in-theory (enable m1-dir-equiv)
-    :do-not-induct t
-    :expand ((m1-file-no-dups-p (cons head tail2))
-             (m1-file-no-dups-p (cons head tail1))
-             (m1-dir-subsetp (cons head tail2)
-                             (cons head tail1))
-             (m1-dir-subsetp (cons head tail1)
-                             (cons head tail2))))))
+;; This rule had a problem earlier - no loop-stopper could be defined on it,
+;; because it was an m1-dir-equiv rule, not an equal rule. Without a
+;; loop-stopper, we were going round and round in a big induction proof. By
+;; explicitly stipulating equality as the equivalence relation, we get around
+;; this.
+(defthm m1-dir-equiv-of-cons
+  (implies (m1-dir-equiv tail1 tail2)
+           (equal
+            (m1-dir-equiv (cons head tail1)
+                          (cons head tail2))
+            t))
+  :hints (("goal" :in-theory (e/d (m1-dir-equiv) (m1-file-no-dups-p))
+           :expand ((m1-file-no-dups-p (cons head tail2))
+                    (m1-file-no-dups-p (cons head tail1))))))
