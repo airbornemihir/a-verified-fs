@@ -4,8 +4,115 @@
 
 ; Utilities for FAT32.
 
-(include-book "ihs/logops-lemmas" :dir :system)
 (include-book "centaur/fty/top" :dir :system)
+
+(local (include-book "ihs/logops-lemmas" :dir :system))
+(define
+  imod :short
+  "@('(imod i j)') is the same as @(see mod), except that it coerces its
+  arguments to integers."
+  ((i integerp)
+   (j (and (integerp j) (not (= 0 j)))))
+  :returns
+  (int integerp
+       :rule-classes :type-prescription)
+  :inline t :enabled t
+  (mbe :logic (mod (ifix i) (ifix j))
+       :exec (mod i j)))
+
+(define
+  expt2 :short
+  "@('(expt2 n)') is the same as @('(expt 2 n)'), except that it coerces
+  its argument to a natural."
+  ((n natp))
+  :returns
+  (nat natp
+       :rule-classes :type-prescription)
+  :enabled t :inline t
+  (mbe :logic (expt 2 (nfix n))
+       :exec (the unsigned-byte
+               (ash 1 (the unsigned-byte n)))))
+
+(define
+  loghead :short
+  "@('(loghead size i)') returns the @('size') low-order bits of @('i')."
+  ((size (and (integerp size) (<= 0 size))
+         :type unsigned-byte)
+   (i integerp))
+  :long
+  "Documentation is available via :doc."
+  :inline
+  t :enabled t :split-types t :guard-hints
+  (("goal" :in-theory (enable mod-of-expt-2-is-logand)))
+  (mbe
+   :logic (imod i (expt2 size))
+   :exec
+   (the unsigned-byte
+     (logand i
+             (the unsigned-byte
+               (1- (the unsigned-byte (ash 1 size)))))))
+  ///
+
+  (defthm loghead-type
+    (b* ((nat (loghead$inline size i)))
+      (natp nat))
+    :rule-classes :type-prescription))
+
+(define
+  logapp :short
+  "@('(logapp size i j)') is a binary append of i to j, where i
+  effectively becomes the 'low' bits and j becomes the 'high' bits."
+  ((size (and (integerp size) (<= 0 size))
+         :type unsigned-byte)
+   (i integerp)
+   (j integerp))
+  :split-types t :long
+  "documentation is available via :doc."
+  :enabled t
+  (mbe :logic (let ((j (ifix j)))
+                (+ (loghead size i) (* j (expt2 size))))
+       :exec (+ (loghead size i) (ash j size)))
+  ///
+
+  (defthm logapp-type
+    (b* ((int (logapp size i j)))
+      (integerp int))
+    :rule-classes :type-prescription))
+
+(define
+  ifloor :short
+  "@('(ifloor i j)') is the same as @(see floor), except that it coerces
+  its arguments to integers."
+  ((i integerp)
+   (j (and (integerp j) (not (= 0 j)))))
+  :returns
+  (int integerp
+       :rule-classes :type-prescription)
+  :inline t :enabled t
+  (mbe :logic (floor (ifix i) (ifix j))
+       :exec (floor i j)))
+
+(define
+  logtail :short
+  "@('(logtail pos i)') returns the high-order part of @('i'), starting
+  at bit position @('pos')."
+  ((pos (and (integerp pos) (<= 0 pos))
+        :type unsigned-byte)
+   (i integerp))
+  :long
+  "documentation is available via :doc."
+  :split-types t :inline t :enabled t
+  (declare (xargs :guard (and (integerp pos)
+                              (>= pos 0)
+                              (integerp i))))
+  (mbe :logic (ifloor i (expt2 pos))
+       :exec (ash i (- (the unsigned-byte pos))))
+  ///
+
+  (defthm logtail-type
+    (b* ((int (logtail$inline pos i)))
+      (integerp int))
+    :rule-classes :type-prescription))
 
 (include-book "file-system-lemmas")
 (include-book "bounded-nat-listp")

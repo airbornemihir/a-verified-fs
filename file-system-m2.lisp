@@ -11,6 +11,8 @@
 (include-book "fat32-in-memory")
 (include-book "flatten-lemmas")
 
+(local (include-book "ihs/logops-lemmas" :dir :system))
+
 ;; These are some lemmas from other books which are interacting badly with the
 ;; theory I've built up so far.
 (local
@@ -3456,33 +3458,28 @@
        (binary-+ '2
                  (count-of-clusters fat32-in-memory))))))))
 
-(encapsulate
-  ()
-
-  (local (include-book "ihs/logops-lemmas" :dir :system))
-
-  (defun
+(defun
     stobj-fa-table-to-string-helper
     (fat32-in-memory length ac)
-    (declare
-     (xargs
-      :stobjs fat32-in-memory
-      :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                  (natp length)
-                  (<= length (fat-length fat32-in-memory)))
-      :guard-hints
-      (("goal"
-        :in-theory
-        (e/d
-         (fat32-entry-p)
-         (unsigned-byte-p loghead logtail
-                          fati-when-compliant-fat32-in-memoryp))
-        :use (:instance fati-when-compliant-fat32-in-memoryp
-                        (i (+ -1 length)))))))
-    (if
-     (zp length)
-        ac
-       (let ((current (fati (- length 1) fat32-in-memory)))
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (natp length)
+                (<= length (fat-length fat32-in-memory)))
+    :guard-hints
+    (("goal"
+      :in-theory
+      (e/d
+       (fat32-entry-p)
+       (unsigned-byte-p loghead logtail
+                        fati-when-compliant-fat32-in-memoryp))
+      :use (:instance fati-when-compliant-fat32-in-memoryp
+                      (i (+ -1 length)))))))
+  (if
+      (zp length)
+      ac
+    (let ((current (fati (- length 1) fat32-in-memory)))
       (stobj-fa-table-to-string-helper
        fat32-in-memory (- length 1)
        (list*
@@ -3490,7 +3487,7 @@
         (code-char (loghead 8 (logtail  8 current)))
         (code-char (loghead 8 (logtail 16 current)))
         (code-char            (logtail 24 current))
-        ac))))))
+        ac)))))
 
 (defthm
   character-listp-of-stobj-fa-table-to-string-helper
@@ -3582,8 +3579,6 @@
 
 (encapsulate
   ()
-
-  (local (include-book "ihs/logops-lemmas" :dir :system))
 
   (local
    (defthm
