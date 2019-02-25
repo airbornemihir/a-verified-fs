@@ -5770,21 +5770,6 @@
   :hints
   (("goal" :expand (len (explode (m1-file->contents file))))))
 
-(defthmd
-  m1-fs-to-fat32-in-memory-inversion-lemma-6
-  (b*
-      (((mv & & clusterchain-list error-code)
-        (fat32-in-memory-to-m1-fs-helper
-         fat32-in-memory
-         dir-ent-list entry-limit)))
-    (implies
-     (zp error-code)
-     (unmodifiable-listp (flatten clusterchain-list)
-                         (effective-fat fat32-in-memory))))
-  :hints
-  (("goal"
-    :in-theory (enable flatten fat32-in-memory-to-m1-fs-helper))))
-
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-7
   (implies
