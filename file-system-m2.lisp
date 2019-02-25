@@ -3456,33 +3456,29 @@
        (binary-+ '2
                  (count-of-clusters fat32-in-memory))))))))
 
-(encapsulate
-  ()
 
-  (local (include-book "ihs/logops-lemmas" :dir :system))
-
-  (defun
+(defun
     stobj-fa-table-to-string-helper
     (fat32-in-memory length ac)
-    (declare
-     (xargs
-      :stobjs fat32-in-memory
-      :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
-                  (natp length)
-                  (<= length (fat-length fat32-in-memory)))
-      :guard-hints
-      (("goal"
-        :in-theory
-        (e/d
-         (fat32-entry-p)
-         (unsigned-byte-p loghead logtail
-                          fati-when-compliant-fat32-in-memoryp))
-        :use (:instance fati-when-compliant-fat32-in-memoryp
-                        (i (+ -1 length)))))))
-    (if
-     (zp length)
-        ac
-       (let ((current (fati (- length 1) fat32-in-memory)))
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                (natp length)
+                (<= length (fat-length fat32-in-memory)))
+    :guard-hints
+    (("goal"
+      :in-theory
+      (e/d
+       (fat32-entry-p)
+       (unsigned-byte-p loghead logtail
+                        fati-when-compliant-fat32-in-memoryp))
+      :use (:instance fati-when-compliant-fat32-in-memoryp
+                      (i (+ -1 length)))))))
+  (if
+      (zp length)
+      ac
+    (let ((current (fati (- length 1) fat32-in-memory)))
       (stobj-fa-table-to-string-helper
        fat32-in-memory (- length 1)
        (list*
@@ -3490,7 +3486,7 @@
         (code-char (loghead 8 (logtail  8 current)))
         (code-char (loghead 8 (logtail 16 current)))
         (code-char            (logtail 24 current))
-        ac))))))
+        ac)))))
 
 (defthm
   character-listp-of-stobj-fa-table-to-string-helper
@@ -3582,8 +3578,6 @@
 
 (encapsulate
   ()
-
-  (local (include-book "ihs/logops-lemmas" :dir :system))
 
   (local
    (defthm
@@ -6147,6 +6141,14 @@
        fat32-in-memory
        fs current-dir-first-cluster))))
 
+  ;; We tried (in commit aaf008a0e4edf4343b3d33e23d4aeff897cb1138) removing the
+  ;; three place-contents-expansion rules in favour of rules which do not
+  ;; introduce case splits. This is not easily doable, because the case split
+  ;; based on the emptiness of the file contents is necessary for Subgoal *1/3
+  ;; of this induction. Either we'd have to do the case split in a different
+  ;; rule, or else we'd have to introduce a hint for Subgoal *1/3 - neither
+  ;; seems very much better than the status quo. Therefore, this will remain
+  ;; the slowest proof because the case splitting is necessary.
   (defthm
     m1-fs-to-fat32-in-memory-inversion-big-induction
     (implies

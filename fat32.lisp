@@ -4,7 +4,13 @@
 
 ; Utilities for FAT32.
 
+;; In commit e1d2e33807c4c529d2c7b1eb7d481f466e7a7d67 there's a (successful)
+;; attempt to remove the non-local inclusion of this book. Ultimately, though,
+;; this commit was rolled back since the redundant redefinition of logapp,
+;; loghead, logtail, imod, ifloor and expt2 is deemed excessively
+;; cumbersome. This is part of our theory now.
 (include-book "ihs/logops-lemmas" :dir :system)
+
 (include-book "centaur/fty/top" :dir :system)
 
 (include-book "file-system-lemmas")
