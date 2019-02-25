@@ -6284,16 +6284,6 @@
     (:instance m1-fs-to-fat32-in-memory-inversion-big-induction
                (x nil)))))
 
-(defthmd m1-fs-to-fat32-in-memory-inversion-lemma-8
-  (implies (not (zp x1))
-           (iff (equal (* x1 (len x2)) 0)
-                (atom x2))))
-
-(defthmd m1-fs-to-fat32-in-memory-inversion-lemma-9
-  (implies (not (zp x1))
-           (equal (< 0 (* x1 (len x2)))
-                  (consp x2))))
-
 (defthmd m1-fs-to-fat32-in-memory-inversion-lemma-10
   (implies
    (atom dir-ent-list)
@@ -6386,12 +6376,12 @@
   (("goal" :do-not-induct t
     :in-theory (enable fat32-in-memory-to-m1-fs
                        m1-fs-to-fat32-in-memory
-                       m1-fs-to-fat32-in-memory-inversion-lemma-8
                        m1-fs-to-fat32-in-memory-helper-correctness-4
-                       m1-fs-to-fat32-in-memory-inversion-lemma-9
                        m1-fs-to-fat32-in-memory-inversion-lemma-10
                        m1-fs-to-fat32-in-memory-inversion-lemma-11
-                       m1-fs-to-fat32-in-memory-inversion-lemma-13))))
+                       m1-fs-to-fat32-in-memory-inversion-lemma-13
+                       painful-debugging-lemma-10
+                       painful-debugging-lemma-11))))
 
 (defund-nx
   fat32-in-memory-equiv

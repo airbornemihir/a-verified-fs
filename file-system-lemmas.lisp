@@ -705,6 +705,18 @@
            (equal (< (+ 1 x) y)
                   (not (equal (+ 1 x) y)))))
 
+(defthmd
+  painful-debugging-lemma-10
+  (implies (not (zp x1))
+           (iff (equal (* x1 (len x2)) 0)
+                (atom x2))))
+
+(defthmd
+  painful-debugging-lemma-11
+  (implies (not (zp x1))
+           (equal (< 0 (* x1 (len x2)))
+                  (consp x2))))
+
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/typed-lists/integer-listp.lisp, from where it was taken with
 ;; thanks.
