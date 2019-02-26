@@ -165,11 +165,17 @@
   (implies (not (rational-listp x))
            (not (unsigned-byte-listp n x))))
 
+;; At some point, the following two theorems have to be moved to
+;; file-system-lemmas.lisp.
 (defthm take-of-update-nth
   (equal (take n (update-nth key val l))
          (if (< (nfix key) (nfix n))
              (update-nth key val (take n l))
            (take n l))))
+
+(defthmd take-of-nthcdr
+  (equal (take n1 (nthcdr n2 l))
+         (nthcdr n2 (take (+ (nfix n1) (nfix n2)) l))))
 
 (defthm
   unsigned-byte-listp-of-make-list-ac
