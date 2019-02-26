@@ -1137,10 +1137,11 @@
           (mv fat32-in-memory error-code))
          ;; The expression below should eventually be replaced by
          ;; fat-entry-count, but that is going to open a can of worms...
-         (fat-read-size (/ (* (bpb_fatsz32 fat32-in-memory)
-                              (bpb_bytspersec fat32-in-memory))
-                           4))
-         ((unless (integerp fat-read-size))
+         (fat-read-size (fat-entry-count fat32-in-memory))
+         ((unless (integerp
+                   (/ (* (bpb_fatsz32 fat32-in-memory)
+                         (bpb_bytspersec fat32-in-memory))
+                      4)))
           (mv fat32-in-memory -1))
          (data-byte-count (* (count-of-clusters fat32-in-memory)
                              (cluster-size fat32-in-memory)))
@@ -7942,6 +7943,31 @@
            (nth '15 (get-initial-bytes str))
            (nth '14
                 (get-initial-bytes str))))))))))
+
+  (defthm
+    compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-3
+    (implies
+     (integerp (* 1/4
+                  (combine16u (nth 12 (get-initial-bytes str))
+                              (nth 11 (get-initial-bytes str)))
+                  (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                              (nth 22 (get-remaining-rsvdbyts str))
+                              (nth 21 (get-remaining-rsvdbyts str))
+                              (nth 20 (get-remaining-rsvdbyts str)))))
+     (equal (* 4
+               (floor (* (combine16u (nth 12 (get-initial-bytes str))
+                                     (nth 11 (get-initial-bytes str)))
+                         (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                     (nth 22 (get-remaining-rsvdbyts str))
+                                     (nth 21 (get-remaining-rsvdbyts str))
+                                     (nth 20 (get-remaining-rsvdbyts str))))
+                      4))
+            (* (combine16u (nth 12 (get-initial-bytes str))
+                           (nth 11 (get-initial-bytes str)))
+               (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                           (nth 22 (get-remaining-rsvdbyts str))
+                           (nth 21 (get-remaining-rsvdbyts str))
+                           (nth 20 (get-remaining-rsvdbyts str)))))))
 
   (defthm
     compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-4
