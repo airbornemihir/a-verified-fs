@@ -3858,11 +3858,12 @@
                       (bpb_bytspersec fat32-in-memory))
                    90)
                 :initial-element (code-char 0)))))
+  
   :instructions ((:in-theory (disable loghead logtail))
                  (:dive 1 2 1)
                  :x
                  :up (:rewrite str::explode-of-implode)
-                 :s (:rewrite already-a-character-list)
+                 :s (:rewrite str::make-character-list-when-character-listp)
                  :x :top
                  :bash :bash))
 
