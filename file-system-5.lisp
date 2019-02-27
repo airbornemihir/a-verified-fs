@@ -1011,7 +1011,6 @@
                (:rewrite default-cdr)
                (:type-prescription l2-fs-p)
                (:rewrite default-car)
-               (:rewrite already-a-character-list)
                (:rewrite l2-stat-correctness-1-lemma-5)
                (:definition l3-fs-p)
                (:rewrite character-listp-of-first-n-ac)
@@ -1200,7 +1199,6 @@
                         (:DEFINITION L5-STAT)
                         (:DEFINITION L2-FS-P)
                         (:REWRITE DEFAULT-CDR)
-                        (:REWRITE ALREADY-A-CHARACTER-LIST)
                         (:REWRITE
                          L5-REGULAR-FILE-ENTRY-P-CORRECTNESS-3 . 2)
                         (:REWRITE DEFAULT-CAR)

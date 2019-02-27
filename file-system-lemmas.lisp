@@ -96,8 +96,12 @@
   (implies (and (character-listp l))
            (character-listp (nthcdr n l))))
 
-(defthmd already-a-character-list
-  (implies (character-listp x) (equal (make-character-list x) x)))
+;; The following is redundant with the definition in
+;; books/std/strings/make-character-list.lisp, from where it was taken with
+;; thanks.
+(defthm str::make-character-list-when-character-listp
+  (implies (character-listp x)
+           (equal (make-character-list x) x)))
 
 (defthm make-character-list-of-binary-append
   (equal (make-character-list (binary-append x y))
