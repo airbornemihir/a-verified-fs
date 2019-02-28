@@ -164,21 +164,24 @@
      (cluster-size fat32-in-memory))))
   :hints
   (("goal"
-    :in-theory (enable data-regioni data-region-length nth)
-    :induct (stobj-cluster-listp-helper fat32-in-memory n))
-   ("subgoal *1/3''"
+    :in-theory (enable data-regioni data-region-length
+                       nth nthcdr-when->=-n-len-l)
+    :induct (stobj-cluster-listp-helper fat32-in-memory n)
     :expand
-    (cluster-listp
-     (nthcdr
-      (+ (- n)
-         (len (nth *data-regioni* fat32-in-memory)))
-      (true-list-fix (nth *data-regioni* fat32-in-memory)))
-     (cluster-size fat32-in-memory)))
-   ("subgoal *1/2.1"
-    :in-theory (disable car-of-list-fix cdr-of-list-fix)
-    :expand
-    (true-list-fix (nth *data-regioni* fat32-in-memory)))
-   ("subgoal *1/1.1" :in-theory (enable nthcdr-when->=-n-len-l))))
+    ((true-list-fix (nth *data-regioni* fat32-in-memory))
+     (cluster-listp
+      (nthcdr
+       (+ (- n)
+          (len (nth *data-regioni* fat32-in-memory)))
+       (true-list-fix (nth *data-regioni* fat32-in-memory)))
+      (cluster-size fat32-in-memory))
+     (cluster-listp
+      (nthcdr
+       (+ (- n)
+          (len (cdr (nth *data-regioni* fat32-in-memory))))
+       (true-list-fix
+        (cdr (nth *data-regioni* fat32-in-memory))))
+      (cluster-size fat32-in-memory))))))
 
 (defund
   fat-entry-count (fat32-in-memory)
