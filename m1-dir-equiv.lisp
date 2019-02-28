@@ -72,17 +72,6 @@
    (m1-file-no-dups-p m1-file-alist)
    (m1-file-no-dups-p (remove1-assoc-equal key m1-file-alist))))
 
-(defund m1-dir-equiv (m1-file-alist1 m1-file-alist2)
-  (declare (xargs :guard (and (m1-file-alist-p m1-file-alist1)
-                              (m1-file-alist-p m1-file-alist2))))
-  (b* ((good1 (and (mbt (m1-file-alist-p m1-file-alist1))
-                   (m1-file-no-dups-p m1-file-alist1)))
-       (good2 (and (mbt (m1-file-alist-p m1-file-alist2))
-                   (m1-file-no-dups-p m1-file-alist2)))
-       ((unless (and good1 good2)) (and (not good1) (not good2))))
-    (and (m1-dir-subsetp m1-file-alist1 m1-file-alist2)
-         (m1-dir-subsetp m1-file-alist2 m1-file-alist1))))
-
 (defthm m1-dir-subsetp-preserves-assoc-equal
   (implies (and (m1-dir-subsetp x y)
                 (stringp file)
@@ -154,14 +143,6 @@
            (equal (m1-dir-subsetp m1-file-alist1 m1-file-alist2)
                   (atom m1-file-alist1))))
 
-(defthm m1-dir-equiv-of-nil
-  (and
-   (equal (m1-dir-equiv m1-file-alist nil)
-          (null m1-file-alist))
-   (equal (m1-dir-equiv nil m1-file-alist)
-          (null m1-file-alist)))
-  :hints (("Goal" :in-theory (enable m1-dir-equiv))))
-
 (defthm m1-dir-equiv-of-cons-lemma-1
   (implies (and (m1-file-alist-p x)
                 (m1-file-no-dups-p (append x y)))
@@ -224,6 +205,25 @@
     (disable m1-dir-equiv-of-cons-lemma-4)
     :use (:instance m1-dir-equiv-of-cons-lemma-4
                     (x nil)))))
+
+(defund m1-dir-equiv (m1-file-alist1 m1-file-alist2)
+  (declare (xargs :guard (and (m1-file-alist-p m1-file-alist1)
+                              (m1-file-alist-p m1-file-alist2))))
+  (b* ((good1 (and (mbt (m1-file-alist-p m1-file-alist1))
+                   (m1-file-no-dups-p m1-file-alist1)))
+       (good2 (and (mbt (m1-file-alist-p m1-file-alist2))
+                   (m1-file-no-dups-p m1-file-alist2)))
+       ((unless (and good1 good2)) (and (not good1) (not good2))))
+    (and (m1-dir-subsetp m1-file-alist1 m1-file-alist2)
+         (m1-dir-subsetp m1-file-alist2 m1-file-alist1))))
+
+(defthm m1-dir-equiv-of-nil
+  (and
+   (equal (m1-dir-equiv m1-file-alist nil)
+          (null m1-file-alist))
+   (equal (m1-dir-equiv nil m1-file-alist)
+          (null m1-file-alist)))
+  :hints (("Goal" :in-theory (enable m1-dir-equiv))))
 
 ;; A bug was here: after we changed the definition of m1-dir-equiv, we placed
 ;; this defequiv form somewhat later in the file, with the result that two
