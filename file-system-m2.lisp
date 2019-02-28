@@ -2366,15 +2366,10 @@
      (nthcdr start (effective-fat fat32-in-memory))
      n start)))
   :hints
-  (("goal"
-    :in-theory (enable stobj-find-n-free-clusters-helper
-                       find-n-free-clusters-helper)
-    :induct
-    (stobj-find-n-free-clusters-helper fat32-in-memory n start))
-   ("subgoal *1/2"
-    :expand (find-n-free-clusters-helper
-             (nthcdr start (effective-fat fat32-in-memory))
-             n start))))
+  (("goal" :in-theory (enable stobj-find-n-free-clusters-helper
+                              find-n-free-clusters-helper)
+    :induct (stobj-find-n-free-clusters-helper
+             fat32-in-memory n start))))
 
 (defund
   stobj-find-n-free-clusters
@@ -2798,9 +2793,7 @@
   (("goal"
     :induct
     (stobj-set-clusters cluster-list index-list fat32-in-memory)
-    :in-theory (enable lower-bounded-integer-listp))
-   ("subgoal *1/1"
-    :expand (lower-bounded-integer-listp index-list 2))))
+    :in-theory (enable lower-bounded-integer-listp))))
 
 (defthm
   fati-of-stobj-set-clusters
@@ -3357,11 +3350,6 @@
                         (count-of-clusters fat32-in-memory)))
         '2)))))
 
-;; These subgoal hints were needed because :brr was unhelpful in figuring out
-;; why compliant-fat32-in-memoryp-of-place-contents - a reasonably general
-;; rewrite rule - was failing. The hypothesis cited as the cause was an
-;; inequality which a linear rule should have take care of, but... no clear
-;; further explanation emerged.
 (defthm
   compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory-helper
   (implies
@@ -5370,17 +5358,16 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable find-n-free-clusters-correctness-5)
+    :in-theory
+    (disable find-n-free-clusters-correctness-5
+             (:linear find-n-free-clusters-correctness-7))
     :use
     ((:instance find-n-free-clusters-correctness-5
-                (fa-table (effective-fat fat32-in-memory)))))
-   ("subgoal 2"
-    :in-theory
-    (disable (:linear find-n-free-clusters-correctness-7))
-    :use (:instance (:linear find-n-free-clusters-correctness-7)
-                    (n n1)
-                    (fa-table (effective-fat fat32-in-memory))
-                    (m n2)))))
+                (fa-table (effective-fat fat32-in-memory)))
+     (:instance (:linear find-n-free-clusters-correctness-7)
+                (n n1)
+                (fa-table (effective-fat fat32-in-memory))
+                (m n2))))))
 
 (defthm
   unmodifiable-listp-correctness-4
@@ -7081,8 +7068,8 @@
              :induct
              (stobj-fa-table-to-string-helper fat32-in-memory
                                               length
-                                              ac))
-            ("subgoal *1/2" :expand (:free (n x y) (nth n (cons x y)))))))
+                                              ac)
+              :expand (:free (n x y) (nth n (cons x y)))))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-39
