@@ -143,17 +143,17 @@
            (equal (m1-dir-subsetp m1-file-alist1 m1-file-alist2)
                   (atom m1-file-alist1))))
 
-(defthm m1-dir-equiv-of-cons-lemma-1
+(defthm m1-dir-subsetp-reflexive-lemma-1
   (implies (and (m1-file-alist-p x)
                 (m1-file-no-dups-p (append x y)))
            (equal (assoc-equal (car (car y)) (append x y))
                   (car y))))
 
-(defthm m1-dir-equiv-of-cons-lemma-2
+(defthm m1-dir-subsetp-reflexive-lemma-2
   (implies (not (m1-file-no-dups-p y))
            (not (m1-file-no-dups-p (append x y)))))
 
-(defthm m1-dir-equiv-of-cons-lemma-3
+(defthm m1-dir-subsetp-reflexive-lemma-3
   (implies (and (m1-file-alist-p y)
                 (m1-file-no-dups-p y)
                 (m1-directory-file-p (cdr (car y))))
@@ -178,7 +178,7 @@
        (induction-scheme (append x (list (car y)))
                          (cdr y))))))
 
-  (defthm m1-dir-equiv-of-cons-lemma-4
+  (defthm m1-dir-subsetp-reflexive-lemma-4
     (implies (and (m1-file-alist-p x)
                   (m1-file-alist-p y)
                   (m1-file-no-dups-p (append x y)))
@@ -186,7 +186,7 @@
     :hints (("goal" :induct (induction-scheme x y)))))
 
 (defthm
-  m1-dir-equiv-of-cons-lemma-5
+  m1-dir-subsetp-reflexive-lemma-5
   (implies
    (m1-file-p file)
    (equal (m1-directory-file-p
@@ -195,15 +195,15 @@
   :hints (("goal" :in-theory (enable m1-directory-file-p))))
 
 (defthm
-  m1-dir-equiv-of-cons-lemma-9
+  m1-dir-subsetp-reflexive
   (implies (and (m1-file-alist-p y)
                 (m1-file-no-dups-p y))
            (m1-dir-subsetp y y))
   :hints
   (("goal"
     :in-theory
-    (disable m1-dir-equiv-of-cons-lemma-4)
-    :use (:instance m1-dir-equiv-of-cons-lemma-4
+    (disable m1-dir-subsetp-reflexive-lemma-4)
+    :use (:instance m1-dir-subsetp-reflexive-lemma-4
                     (x nil)))))
 
 (defund m1-dir-equiv (m1-file-alist1 m1-file-alist2)
@@ -234,7 +234,7 @@
   :hints (("Goal" :in-theory (enable m1-dir-equiv))))
 
 (defthm
-  m1-dir-equiv-of-cons-lemma-6
+  m1-dir-equiv-of-cons-lemma-1
   (implies
    (and (m1-file-alist-p fs)
         (m1-regular-file-p (cdar fs)))
@@ -253,22 +253,22 @@
       (cdr fs))
      fs)
     :in-theory
-    (disable m1-dir-equiv-of-cons-lemma-4)
+    (disable m1-dir-subsetp-reflexive-lemma-4)
     :use
     ((:instance
-      m1-dir-equiv-of-cons-lemma-4
+      m1-dir-subsetp-reflexive-lemma-4
       (x
        (list
         (cons (car (car fs))
               (m1-file dir-ent
                        (m1-file->contents (cdr (car fs)))))))
       (y (cdr fs)))
-     (:instance m1-dir-equiv-of-cons-lemma-4
+     (:instance m1-dir-subsetp-reflexive-lemma-4
                 (x (list (car fs)))
                 (y (cdr fs)))))))
 
 (defthm
-  m1-dir-equiv-of-cons-lemma-7
+  m1-dir-equiv-of-cons-lemma-2
   (implies (and (fat32-filename-p (car head))
                 (m1-regular-file-p (cdr head))
                 (equal contents (m1-file->contents (cdr head)))
@@ -280,13 +280,13 @@
   :hints
   (("goal"
     :in-theory
-    (disable m1-dir-equiv-of-cons-lemma-6)
-    :use (:instance m1-dir-equiv-of-cons-lemma-6
+    (disable m1-dir-equiv-of-cons-lemma-1)
+    :use (:instance m1-dir-equiv-of-cons-lemma-1
                     (fs (cons head tail))))))
 
 (local
  (defthm
-   m1-dir-equiv-of-cons-lemma-8
+   m1-dir-equiv-of-cons-lemma-3
    (implies (and (m1-file-alist-p contents1)
                  (m1-file-no-dups-p contents1)
                  (not (m1-file-no-dups-p (m1-file-contents-fix contents2))))
@@ -295,7 +295,7 @@
 
 (local
  (defthm
-   m1-dir-equiv-of-cons-lemma-10
+   m1-dir-equiv-of-cons-lemma-4
    (implies (and (m1-file-alist-p contents1)
                  (m1-file-no-dups-p contents1)
                  (not (m1-dir-subsetp contents1
@@ -305,7 +305,7 @@
 
 (local
  (defthm
-   m1-dir-equiv-of-cons-lemma-11
+   m1-dir-equiv-of-cons-lemma-5
    (implies
     (and (m1-file-alist-p contents1)
          (m1-file-no-dups-p contents1)
@@ -316,7 +316,7 @@
 
 (local
  (defthm
-   m1-dir-equiv-of-cons-lemma-12
+   m1-dir-equiv-of-cons-lemma-6
    (implies (and (m1-file-alist-p contents1)
                  (m1-file-no-dups-p contents1)
                  (not (m1-file-alist-p contents2)))
@@ -324,7 +324,7 @@
    :hints (("goal" :expand (m1-dir-equiv contents1 contents2)))))
 
 (defthm
-  m1-dir-equiv-of-cons-lemma-13
+  m1-dir-equiv-of-cons-lemma-7
   (implies (and (m1-directory-file-p (cdr head))
                 (m1-file-no-dups-p (m1-file->contents (cdr head)))
                 (m1-dir-equiv (m1-file->contents (cdr head))
@@ -338,12 +338,12 @@
                                              (m1-file dir-ent contents))
                                        tail)
                                  (cons head tail))
-    :in-theory (disable m1-dir-equiv-of-cons-lemma-4
+    :in-theory (disable m1-dir-subsetp-reflexive-lemma-4
                         m1-directory-file-p-of-m1-file)
-    :use ((:instance m1-dir-equiv-of-cons-lemma-4
+    :use ((:instance m1-dir-subsetp-reflexive-lemma-4
                      (x (list head))
                      (y tail))
-          (:instance m1-dir-equiv-of-cons-lemma-4
+          (:instance m1-dir-subsetp-reflexive-lemma-4
                      (x (list (cons (car head)
                                     (m1-file dir-ent contents))))
                      (y tail))
@@ -351,13 +351,13 @@
                      (contents contents)
                      (dir-ent dir-ent))))))
 
-(defthm m1-dir-equiv-of-cons-lemma-14
+(defthm m1-dir-equiv-of-cons-lemma-8
   (implies (and (not (assoc-equal (car head) tail1))
                 (m1-dir-subsetp tail2 tail1)
                 (fat32-filename-p (car head)))
            (not (assoc-equal (car head) tail2))))
 
-(defthm m1-dir-equiv-of-cons-lemma-15
+(defthm m1-dir-equiv-of-cons-lemma-9
   (implies (and (m1-file-no-dups-p (cons head tail1))
                 (m1-dir-subsetp tail2 tail1))
            (m1-dir-subsetp tail2 (cons head tail1))))
