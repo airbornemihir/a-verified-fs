@@ -1308,6 +1308,9 @@
   (b*
       ((fs (m1-file-alist-fix fs))
        (file (m1-file-fix file))
+       ;; Pathnames aren't going to be empty lists. Even the emptiest of
+       ;; empty pathnames has to have at least a slash in it, because we are
+       ;; absolutely dealing in absolute pathnames.
        ((unless (consp pathname))
         (mv fs *enoent*))
        (name (fat32-filename-fix (car pathname)))
@@ -1799,12 +1802,12 @@
          (list *current-dir-fat32-name*)))
        ((when (atom (cddr path)))
         (mv basename
-            (list (str-fix (car path))))))
-    (mv-let (tail-basename tail-dirname)
-      (m1-basename-dirname-helper (cdr path))
-      (mv tail-basename
-          (list* (str-fix (car path))
-                 tail-dirname)))))
+            (list (str-fix (car path)))))
+       ((mv tail-basename tail-dirname)
+        (m1-basename-dirname-helper (cdr path))))
+    (mv tail-basename
+        (list* (str-fix (car path))
+               tail-dirname))))
 
 (defthm
   m1-basename-dirname-helper-correctness-1
@@ -1858,13 +1861,13 @@
        (path pathname))))
     :verify-guards nil))
   (b* ((dirname (m1-dirname pathname))
-       ;; It's OK to strip out the leading "" when the pathname begins with /,
-       ;; but what about when it doesn't and the pathname is relative to the
-       ;; current working directory?
-       (dirname (if (and (consp dirname)
-                         (equal (car dirname) ""))
-                    (cdr dirname)
-                  dirname))
+       ;; Never pass relative pathnames to syscalls - make them always begin
+       ;; with "\" so that the first part of the fat32 pathname list is the
+       ;; empty string, "        ".
+       ((when (or (atom dirname)
+                  (not (equal (car dirname) *empty-fat32-name*))))
+        (mv fs -1 *enoent*))
+       (dirname (cdr dirname))
        ((mv parent-dir errno)
         (find-file-by-pathname fs dirname))
        ((unless (or (atom dirname)
@@ -2135,6 +2138,10 @@
   (equal (fat32-name-to-name (coerce "11CHARAC1  " 'list))
          (coerce "11charac.1" 'list))))
 
+;; We're combining two operations into one here - a different approach would be
+;; to have two recursive functions for drawing out the different
+;; slash-delimited strings and then for transforming the resulting list
+;; element-by-element to a list of fat32 names.
 (defun pathname-to-fat32-pathname (character-list)
   (declare (xargs :guard (character-listp character-list)))
   (b*
@@ -2143,7 +2150,10 @@
        (characters-before-slash (take (- (len character-list)
                                          (len slash-and-later-characters))
                                       character-list))
-       ((when (atom slash-and-later-characters))
+       ;; We want to treat anything that ends with a slash the same way we
+       ;; would if the slash weren't there.
+       ((when (or (atom slash-and-later-characters)
+                  (equal slash-and-later-characters (list #\/))))
         (list
          (coerce (name-to-fat32-name characters-before-slash) 'string))))
     (cons
@@ -2154,10 +2164,31 @@
  (and
   (equal (pathname-to-fat32-pathname (coerce "/bin/mkdir" 'list))
          (list "           " "BIN        " "MKDIR      "))
+  (equal (pathname-to-fat32-pathname (coerce "/bin/" 'list))
+         (list "           " "BIN        "))
   (equal (pathname-to-fat32-pathname (coerce "books/build/cert.pl" 'list))
-   (list "BOOKS      " "BUILD      " "CERT    PL "))))
+   (list "BOOKS      " "BUILD      " "CERT    PL "))
+  (equal (pathname-to-fat32-pathname (coerce "books/build/" 'list))
+   (list "BOOKS      " "BUILD      "))))
 
-(defun fat32-pathname-to-name (string-list)
+;; for later
+;; (defthmd pathname-to-fat32-pathname-correctness-1
+;;   (implies
+;;    (and (character-listp character-list)
+;;         (consp character-list)
+;;         (equal (last character-list)
+;;                (coerce "\/" 'list)))
+;;    (equal
+;;     (pathname-to-fat32-pathname (take (- (len character-list) 1)
+;;                                       character-list))
+;;     (pathname-to-fat32-pathname character-list)))
+;;   :hints (("Goal"
+;;            :induct (pathname-to-fat32-pathname character-list)
+;;            :in-theory (disable name-to-fat32-name)
+;;            :expand (PATHNAME-TO-FAT32-PATHNAME (TAKE (+ -1 (LEN CHARACTER-LIST))
+;;                                                      CHARACTER-LIST))) ))
+
+(defun fat32-pathname-to-pathname (string-list)
   ;; (declare (xargs :guard (string-listp string-list)))
   (if (atom string-list)
       nil
@@ -2165,16 +2196,16 @@
             (if (atom (cdr string-list))
                 nil
               (list* #\/
-                     (fat32-pathname-to-name (cdr string-list)))))))
+                     (fat32-pathname-to-pathname (cdr string-list)))))))
 
 (assert-event
  (and
-  (equal (coerce (fat32-pathname-to-name (list "BOOKS      " "BUILD      "
+  (equal (coerce (fat32-pathname-to-pathname (list "BOOKS      " "BUILD      "
                                                "CERT    PL ")) 'string)
          "books/build/cert.pl")
-  (equal (coerce (fat32-pathname-to-name (list "           " "BIN        "
+  (equal (coerce (fat32-pathname-to-pathname (list "           " "BIN        "
                                                "MKDIR      ")) 'string)
          "/bin/mkdir")))
 
-(defthm character-listp-of-fat32-pathname-to-name
-  (character-listp (fat32-pathname-to-name string-list)))
+(defthm character-listp-of-fat32-pathname-to-pathname
+  (character-listp (fat32-pathname-to-pathname string-list)))
