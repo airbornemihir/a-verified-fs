@@ -321,6 +321,24 @@ rm-ref-output-2.raw rm-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lis
 	env DISK=$(DISK) RM_OUTPUT="rm-output-2.raw" \
 	RM_INPUT="initrd.img" $(ACL2) -- < rm-replicant.lisp
 
+rm-ref-output-3.raw rm-output-3.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	mkdir  $(FUSEPOINT)/tmp
+	cp input-1204-bytes.txt $(FUSEPOINT)/tmp/file.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	cp $(DISK) rm-ref-output-3.raw
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos rm-ref-output-3.raw $(MOUNTPOINT)
+	rm $(MOUNTPOINT)/tmp/file.txt
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) RM_OUTPUT="rm-output-2.raw" \
+	RM_INPUT="/tmp/file.txt" $(ACL2) -- < rm-replicant.lisp
+
 mtools-rm-ref-output-1.raw mtools-rm-output-1.raw: cat-replicant.lisp
 	rm -f $(DISK) mtools-cat-ref-output-2.txt
 	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
