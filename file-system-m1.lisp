@@ -2159,14 +2159,23 @@
 ;; to have two recursive functions for drawing out the different
 ;; slash-delimited strings and then for transforming the resulting list
 ;; element-by-element to a list of fat32 names.
+;; This function now necessitates unconditionally using absolute paths every
+;; place where its return value is the argument to something else. Perhaps we
+;; can have one layer of abstraction for generating the absolute path, but
+;; right now we don't have any per-process data structure for storing the
+;; current directory, nor are we planning to implement chdir.
 (defun pathname-to-fat32-pathname (character-list)
   (declare (xargs :guard (character-listp character-list)))
   (b*
-      ((slash-and-later-characters
+      (((when (atom character-list))
+        nil)
+       (slash-and-later-characters
         (member #\/ character-list))
        (characters-before-slash (take (- (len character-list)
                                          (len slash-and-later-characters))
                                       character-list))
+       ((when (atom characters-before-slash))
+        (pathname-to-fat32-pathname (cdr slash-and-later-characters)))
        ;; We want to treat anything that ends with a slash the same way we
        ;; would if the slash weren't there.
        ((when (or (atom slash-and-later-characters)
@@ -2180,9 +2189,11 @@
 (assert-event
  (and
   (equal (pathname-to-fat32-pathname (coerce "/bin/mkdir" 'list))
-         (list "           " "BIN        " "MKDIR      "))
+         (list "BIN        " "MKDIR      "))
+  (equal (pathname-to-fat32-pathname (coerce "//bin//mkdir" 'list))
+         (list "BIN        " "MKDIR      "))
   (equal (pathname-to-fat32-pathname (coerce "/bin/" 'list))
-         (list "           " "BIN        "))
+         (list "BIN        "))
   (equal (pathname-to-fat32-pathname (coerce "books/build/cert.pl" 'list))
    (list "BOOKS      " "BUILD      " "CERT    PL "))
   (equal (pathname-to-fat32-pathname (coerce "books/build/" 'list))

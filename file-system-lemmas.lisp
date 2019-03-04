@@ -793,3 +793,8 @@
          (if (member-equal x lst)
              (last lst)
              nil)))
+
+(defthm acl2-count-of-member-equal
+  (<= (acl2-count (member-equal x lst))
+      (acl2-count lst))
+  :rule-classes :linear)
