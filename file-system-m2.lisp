@@ -858,15 +858,6 @@
                                         (+ 82 (- *initialbytcnt*) 8)) fat32-in-memory)))
       (mv fat32-in-memory 0))))
 
-(defthmd
-  read-reserved-area-correctness-1-lemma-1
-  (implies (<= (nfix n) (len (explode string)))
-           (equal (take n (string=>nats string))
-                  (chars=>nats (take n (explode string)))))
-  :hints
-  (("goal" :in-theory (enable string=>nats chars=>nats-of-take)
-    :do-not-induct t)))
-
 (encapsulate
   ()
 
@@ -875,73 +866,71 @@
   (defthm
     read-reserved-area-correctness-1-lemma-2
     (implies
-     (and (>= (length str) *initialbytcnt*)
-          (>= (combine16u (nth 12 (get-initial-bytes (str-fix str)))
-                          (nth 11 (get-initial-bytes (str-fix str))))
+     (and (>= (combine16u (char-code (char str 12))
+                          (char-code (char str 11)))
               512)
-          (>= (combine16u (nth 15 (get-initial-bytes (str-fix str)))
-                          (nth 14 (get-initial-bytes (str-fix str))))
+          (>= (combine16u (char-code (char str 15))
+                          (char-code (char str 14)))
               1))
-     (equal
-      (get-initial-bytes
-       (implode (take (* (combine16u (nth 12 (get-initial-bytes str))
-                                     (nth 11 (get-initial-bytes str)))
-                         (combine16u (nth 15 (get-initial-bytes str))
-                                     (nth 14 (get-initial-bytes str))))
-                      (explode str))))
-      (get-initial-bytes str)))
+     (equal (get-initial-bytes
+             (implode (take (* (combine16u (char-code (char str 12))
+                                           (char-code (char str 11)))
+                               (combine16u (char-code (char str 15))
+                                           (char-code (char str 14))))
+                            (explode str))))
+            (get-initial-bytes str)))
     :hints (("goal" :in-theory (enable get-initial-bytes))))
 
   (defthm
     read-reserved-area-correctness-1-lemma-3
     (implies
      (and (>= (length str) *initialbytcnt*)
-          (>= (combine16u (nth 12 (get-initial-bytes (str-fix str)))
-                          (nth 11 (get-initial-bytes (str-fix str))))
+          (>= (combine16u (char-code (char str 12))
+                          (char-code (char str 11)))
               512)
-          (>= (combine16u (nth 15 (get-initial-bytes (str-fix str)))
-                          (nth 14 (get-initial-bytes (str-fix str))))
+          (>= (combine16u (char-code (char str 15))
+                          (char-code (char str 14)))
               1)
-          (<= (* (combine16u (nth 15 (get-initial-bytes (str-fix str)))
-                             (nth 14 (get-initial-bytes (str-fix str))))
-                 (combine16u (nth 12 (get-initial-bytes (str-fix str)))
-                             (nth 11 (get-initial-bytes (str-fix str)))))
-              (length (str-fix str))))
-     (equal
-      (get-remaining-rsvdbyts
-       (implode (take (* (combine16u (nth 12 (get-initial-bytes str))
-                                     (nth 11 (get-initial-bytes str)))
-                         (combine16u (nth 15 (get-initial-bytes str))
-                                     (nth 14 (get-initial-bytes str))))
-                      (explode str))))
-      (get-remaining-rsvdbyts str)))
-    :hints (("goal" :in-theory (enable get-remaining-rsvdbyts take-of-nthcdr)
+          (<= (* (combine16u (char-code (char str 15))
+                             (char-code (char str 14)))
+                 (combine16u (char-code (char str 12))
+                             (char-code (char str 11))))
+              (length str)))
+     (equal (get-remaining-rsvdbyts
+             (implode (take (* (combine16u (char-code (char str 12))
+                                           (char-code (char str 11)))
+                               (combine16u (char-code (char str 15))
+                                           (char-code (char str 14))))
+                            (explode str))))
+            (get-remaining-rsvdbyts str)))
+    :hints (("goal" :in-theory (enable get-remaining-rsvdbyts
+                                       take-of-nthcdr get-initial-bytes)
              :do-not-induct t))))
 
 (defthm
   read-reserved-area-correctness-1
   (implies
-   (and (>= (length str) *initialbytcnt*)
-        (>= (combine16u (nth 12 (get-initial-bytes (str-fix str)))
-                        (nth 11 (get-initial-bytes (str-fix str))))
+   (and (stringp str)
+        (>= (length str) *initialbytcnt*)
+        (>= (combine16u (char-code (char str 12))
+                        (char-code (char str 11)))
             512)
-        (>= (combine16u (nth 15 (get-initial-bytes (str-fix str)))
-                        (nth 14 (get-initial-bytes (str-fix str))))
+        (>= (combine16u (char-code (char str 15))
+                        (char-code (char str 14)))
             1)
-        (<= (* (combine16u (nth 15 (get-initial-bytes (str-fix str)))
-                           (nth 14 (get-initial-bytes (str-fix str))))
-               (combine16u (nth 12 (get-initial-bytes (str-fix str)))
-                           (nth 11 (get-initial-bytes (str-fix str)))))
-            (length (str-fix str))))
+        (<= (* (combine16u (char-code (char str 15))
+                           (char-code (char str 14)))
+               (combine16u (char-code (char str 12))
+                           (char-code (char str 11))))
+            (length str)))
    (equal
     (read-reserved-area
      fat32-in-memory
      (subseq str 0
-             (* (combine16u (nth 15 (get-initial-bytes (str-fix str)))
-                            (nth 14 (get-initial-bytes (str-fix str))))
-                (combine16u (nth 12 (get-initial-bytes (str-fix str)))
-                            (nth 11
-                                 (get-initial-bytes (str-fix str)))))))
+             (* (combine16u (char-code (char str 15))
+                            (char-code (char str 14)))
+                (combine16u (char-code (char str 12))
+                            (char-code (char str 11))))))
     (read-reserved-area fat32-in-memory str)))
   :hints (("goal" :in-theory (enable read-reserved-area
                                      fat-entry-count count-of-clusters
