@@ -864,7 +864,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    read-reserved-area-correctness-1-lemma-2
+    read-reserved-area-correctness-1-lemma-1
     (implies
      (and (>= (length str) *initialbytcnt*)
           (>= (combine16u (nth 12 (get-initial-bytes (str-fix str)))
@@ -884,7 +884,7 @@
     :hints (("goal" :in-theory (enable get-initial-bytes))))
 
   (defthm
-    read-reserved-area-correctness-1-lemma-3
+    read-reserved-area-correctness-1-lemma-2
     (implies
      (and (>= (length str) *initialbytcnt*)
           (>= (combine16u (nth 12 (get-initial-bytes (str-fix str)))
@@ -913,30 +913,34 @@
   read-reserved-area-correctness-1
   (implies
    (and (>= (length str) *initialbytcnt*)
-        (>= (combine16u (nth 12 (get-initial-bytes (str-fix str)))
-                        (nth 11 (get-initial-bytes (str-fix str))))
+        (>= (combine16u (char-code (char str 12))
+                        (char-code (char str 11)))
             512)
-        (>= (combine16u (nth 15 (get-initial-bytes (str-fix str)))
-                        (nth 14 (get-initial-bytes (str-fix str))))
+        (>= (combine16u (char-code (char str 15))
+                        (char-code (char str 14)))
             1)
-        (<= (* (combine16u (nth 15 (get-initial-bytes (str-fix str)))
-                           (nth 14 (get-initial-bytes (str-fix str))))
-               (combine16u (nth 12 (get-initial-bytes (str-fix str)))
-                           (nth 11 (get-initial-bytes (str-fix str)))))
-            (length (str-fix str))))
+        (<= (* (combine16u (char-code (char str 15))
+                           (char-code (char str 14)))
+               (combine16u (char-code (char str 12))
+                           (char-code (char str 11))))
+            (length str)))
    (equal
-    (read-reserved-area
-     fat32-in-memory
-     (subseq str 0
-             (* (combine16u (nth 15 (get-initial-bytes (str-fix str)))
-                            (nth 14 (get-initial-bytes (str-fix str))))
-                (combine16u (nth 12 (get-initial-bytes (str-fix str)))
-                            (nth 11
-                                 (get-initial-bytes (str-fix str)))))))
+    (read-reserved-area fat32-in-memory
+                        (subseq str 0
+                                (* (combine16u (char-code (char str 15))
+                                               (char-code (char str 14)))
+                                   (combine16u (char-code (char str 12))
+                                               (char-code (char str 11))))))
     (read-reserved-area fat32-in-memory str)))
-  :hints (("goal" :in-theory (enable read-reserved-area
-                                     fat-entry-count count-of-clusters
-                                     cluster-size take-of-nthcdr))))
+  :hints
+  (("goal"
+    :in-theory (e/d (read-reserved-area get-initial-bytes
+                                        fat-entry-count count-of-clusters
+                                        cluster-size take-of-nthcdr)
+                    (read-reserved-area-correctness-1-lemma-1
+                     read-reserved-area-correctness-1-lemma-2))
+    :use (read-reserved-area-correctness-1-lemma-1
+          read-reserved-area-correctness-1-lemma-2))))
 
 (defthm
   read-fat-guard-lemma-1
