@@ -1320,18 +1320,149 @@
   (implies
    (and (natp bytes1)
         (natp bytes2)
-        (natp start)
-        (stringp (read-file-into-string2 filename (+ start bytes1)
+        (natp start1)
+        (stringp (read-file-into-string2 filename (+ start1 bytes1)
                                          bytes2 state))
-        (<= (+ bytes1 bytes2 start)
-            (len (explode (read-file-into-string2 filename (+ start bytes1)
+        (<= (+ bytes1 bytes2 start1)
+            (len (explode (read-file-into-string2 filename (+ start1 bytes1)
                                                   bytes2 state)))))
-   (equal (string-append (read-file-into-string2 filename start bytes1 state)
-                         (read-file-into-string2 filename (+ start bytes1)
+   (equal (string-append (read-file-into-string2 filename start1 bytes1 state)
+                         (read-file-into-string2 filename (+ start1 bytes1)
                                                  bytes2 state))
-          (read-file-into-string2 filename start (+ bytes1 bytes2)
+          (read-file-into-string2 filename start1 (+ bytes1 bytes2)
                                   state)))
-  :hints (("goal" :in-theory (e/d (take-of-nthcdr) nil))))
+  :hints (("goal" :in-theory (e/d (take-of-nthcdr) nil)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (natp bytes1)
+          (natp bytes2)
+          (natp start1)
+          (stringp (read-file-into-string2 filename (+ start1 bytes1)
+                                           bytes2 state))
+          (<= (+ bytes1 bytes2 start1)
+              (len (explode (read-file-into-string2 filename (+ start1 bytes1)
+                                                    bytes2 state))))
+          (equal start2 (+ start1 bytes1)))
+     (equal (string-append (read-file-into-string2 filename start1 bytes1 state)
+                           (read-file-into-string2 filename start2 bytes2 state))
+            (read-file-into-string2 filename start1 (+ bytes1 bytes2)
+                                    state))))))
+
+(defthm
+  consecutive-read-file-into-string-2
+  (implies
+   (and
+    (natp bytes1)
+    (natp start1)
+    (stringp (read-file-into-string2 filename (+ start1 bytes1)
+                                     nil state)))
+   (equal
+    (string-append
+     (read-file-into-string2 filename start1 bytes1 state)
+     (read-file-into-string2 filename (+ start1 bytes1)
+                             nil state))
+    (read-file-into-string2 filename start1 nil state)))
+  :hints
+  (("goal"
+    :in-theory (e/d (take-of-nthcdr)
+                    (binary-append-take-nthcdr))
+    :do-not-induct t
+    :use
+    ((:instance
+      binary-append-take-nthcdr (i bytes1)
+      (l
+       (nthcdr
+        start1
+        (explode
+         (mv-nth
+          0
+          (read-file-into-string1
+           (mv-nth 0
+                   (open-input-channel filename
+                                       :character state))
+           (mv-nth 1
+                   (open-input-channel filename
+                                       :character state))
+           nil 1152921504606846975))))))
+     (:theorem
+      (implies
+       (and (natp bytes1) (natp start1))
+       (equal
+        (+
+         bytes1 (- bytes1)
+         start1 (- start1)
+         (len
+          (explode
+           (mv-nth
+            0
+            (read-file-into-string1
+             (mv-nth 0
+                     (open-input-channel filename
+                                         :character state))
+             (mv-nth 1
+                     (open-input-channel filename
+                                         :character state))
+             nil 1152921504606846975)))))
+        (len
+         (explode
+          (mv-nth
+           0
+           (read-file-into-string1
+            (mv-nth 0
+                    (open-input-channel filename
+                                        :character state))
+            (mv-nth 1
+                    (open-input-channel filename
+                                        :character state))
+            nil 1152921504606846975)))))))
+     (:theorem
+      (implies
+       (natp start1)
+       (equal
+        (+
+         start1 (- start1)
+         (len
+          (explode
+           (mv-nth
+            0
+            (read-file-into-string1
+             (mv-nth 0
+                     (open-input-channel filename
+                                         :character state))
+             (mv-nth 1
+                     (open-input-channel filename
+                                         :character state))
+             nil 1152921504606846975)))))
+        (len
+         (explode
+          (mv-nth
+           0
+           (read-file-into-string1
+            (mv-nth 0
+                    (open-input-channel filename
+                                        :character state))
+            (mv-nth 1
+                    (open-input-channel filename
+                                        :character state))
+            nil 1152921504606846975))))))))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and
+      (natp bytes1)
+      (natp start1)
+      (stringp
+       (read-file-into-string2 filename (+ start1 bytes1)
+                               nil state))
+      (equal start2 (+ start1 bytes1)))
+     (equal
+      (string-append
+       (read-file-into-string2 filename start1 bytes1 state)
+       (read-file-into-string2 filename start2 nil state))
+      (read-file-into-string2 filename start1 nil state))))))
 
 ;; Move this to file-system-lemmas.lisp later.
 (defthm len-of-explode-of-string-append
@@ -1357,6 +1488,22 @@
   (implies (<= *initialbytcnt*
                (len (explode (read-file-into-string2 image-path 0 *initialbytcnt* state))))
            (stringp (read-file-into-string2 image-path 0 nil state))))
+
+(defthm
+  disk-image-to-fat32-in-memory-lemma-4
+  (implies
+   (<= 16
+       (len (explode (read-file-into-string2 image-path 0 16 state))))
+   (not (< (len (explode (read-file-into-string2 image-path 0 nil state)))
+           16))))
+
+(defthm
+  disk-image-to-fat32-in-memory-lemma-5
+  (implies
+   (<= 16
+       (len (explode (read-file-into-string2 image-path 0 nil state))))
+   (not (< (len (explode (read-file-into-string2 image-path 0 16 state)))
+           16))))
 
 (defun
   disk-image-to-fat32-in-memory
