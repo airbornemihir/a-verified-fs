@@ -1475,35 +1475,22 @@
   (implies
    (<= *initialbytcnt*
        (len (explode (read-file-into-string2 image-path 0 nil state))))
-   (stringp (read-file-into-string2 image-path 0 *initialbytcnt* state))))
+   (and
+    (stringp (read-file-into-string2 image-path 0 *initialbytcnt* state))
+    (not (< (len (explode (read-file-into-string2 image-path 0 16 state)))
+            16)))))
 
 (defthm
   disk-image-to-fat32-in-memory-lemma-2
   (implies (<= *initialbytcnt*
-               (len (explode (read-file-into-string2 image-path 0 *initialbytcnt* state))))
-           (stringp (read-file-into-string2 image-path *initialbytcnt* nil state))))
-
-(defthm
-  disk-image-to-fat32-in-memory-lemma-3
-  (implies (<= *initialbytcnt*
-               (len (explode (read-file-into-string2 image-path 0 *initialbytcnt* state))))
-           (stringp (read-file-into-string2 image-path 0 nil state))))
-
-(defthm
-  disk-image-to-fat32-in-memory-lemma-4
-  (implies
-   (<= 16
-       (len (explode (read-file-into-string2 image-path 0 16 state))))
-   (not (< (len (explode (read-file-into-string2 image-path 0 nil state)))
-           16))))
-
-(defthm
-  disk-image-to-fat32-in-memory-lemma-5
-  (implies
-   (<= 16
-       (len (explode (read-file-into-string2 image-path 0 nil state))))
-   (not (< (len (explode (read-file-into-string2 image-path 0 16 state)))
-           16))))
+               (len (explode (read-file-into-string2 image-path 0
+                                                     *initialbytcnt* state))))
+           (and
+            (stringp (read-file-into-string2 image-path *initialbytcnt* nil
+                                             state))
+            (stringp (read-file-into-string2 image-path 0 nil state))
+            (not (< (len (explode (read-file-into-string2 image-path 0 nil state)))
+                    *initialbytcnt*)))))
 
 (defun
   disk-image-to-fat32-in-memory
