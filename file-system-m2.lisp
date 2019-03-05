@@ -1284,7 +1284,7 @@
       (mv fat32-in-memory error-code))))
 
 (defthm
-  consecutive-read-file-into-string-lemma-1
+  consecutive-read-file-into-string-1-lemma-1
   (implies (and (state-p1 state-state)
                 (open-input-channel-p1 channel
                                        :character state-state))
@@ -1293,7 +1293,7 @@
             :character (mv-nth 1 (read-char$ channel state-state)))))
 
 (defthm
-  consecutive-read-file-into-string-lemma-2
+  consecutive-read-file-into-string-1-lemma-2
   (implies
    (and
     (symbolp channel)
@@ -1306,7 +1306,7 @@
                     (read-file-into-string1 channel state ans bound)))))
 
 (defthm
-  consecutive-read-file-into-string-lemma-3
+  consecutive-read-file-into-string-1-lemma-3
   (implies
    (and (symbolp channel)
         (open-input-channel-p channel
@@ -1316,75 +1316,22 @@
                      (read-file-into-string1 channel state ans bound)))))
 
 (defthm
-  consecutive-read-file-into-string
-    (implies
-     (and
-      (natp bytes1)
-      (natp bytes2)
-      (natp start)
-      (mv-nth 0
-              (open-input-channel filename
-                                  :character state))
-      (state-p1 state)
-      (stringp filename)
-      (not
-       (null
-        (mv-nth 0
-                (read-file-into-string1
-                 (mv-nth 0
-                         (open-input-channel filename
-                                             :character state))
-                 (mv-nth 1
-                         (open-input-channel filename
-                                             :character state))
-                 nil 1152921504606846975))))
-      (<=
-       (+ bytes1 bytes2 start)
-       (len
-        (explode
-         (mv-nth 0
-                 (read-file-into-string1
-                  (mv-nth 0
-                          (open-input-channel filename
-                                              :character state))
-                  (mv-nth 1
-                          (open-input-channel filename
-                                              :character state))
-                  nil 1152921504606846975))))))
-     (equal
-      (string-append
-       (read-file-into-string2 filename start bytes1 state)
-       (read-file-into-string2 filename (+ start bytes1)
-                               bytes2 state))
-      (read-file-into-string2 filename start (+ bytes1 bytes2)
-                              state)))
-  :hints
-  (("goal"
-    :in-theory (e/d (take-of-nthcdr)
-                    (binary-append-take-nthcdr))
-    :use
-    ((:instance
-      binary-append-take-nthcdr
-      (l
-       (take
-        (+ bytes1 bytes2)
-        (nthcdr
-         start
-         (explode
-          (mv-nth
-           0
-           (read-file-into-string1
-            (mv-nth 0
-                    (open-input-channel filename
-                                        :character state))
-            (mv-nth 1
-                    (open-input-channel filename
-                                        :character state))
-            nil 1152921504606846975))))))
-      (i bytes1))
-     (:theorem (implies (natp bytes2)
-                        (equal (+ bytes1 (- bytes1) bytes2)
-                               bytes2)))))))
+  consecutive-read-file-into-string-1
+  (implies
+   (and (natp bytes1)
+        (natp bytes2)
+        (natp start)
+        (stringp (read-file-into-string2 filename (+ start bytes1)
+                                         bytes2 state))
+        (<= (+ bytes1 bytes2 start)
+            (len (explode (read-file-into-string2 filename (+ start bytes1)
+                                                  bytes2 state)))))
+   (equal (string-append (read-file-into-string2 filename start bytes1 state)
+                         (read-file-into-string2 filename (+ start bytes1)
+                                                 bytes2 state))
+          (read-file-into-string2 filename start (+ bytes1 bytes2)
+                                  state)))
+  :hints (("goal" :in-theory (e/d (take-of-nthcdr) nil))))
 
 ;; Move this to file-system-lemmas.lisp later.
 (defthm len-of-explode-of-string-append
