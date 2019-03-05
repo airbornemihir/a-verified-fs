@@ -1189,6 +1189,115 @@
                               (data-region-length fat32-in-memory))))
       (mv fat32-in-memory error-code))))
 
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-1
+  (implies (and (state-p1 state-state)
+                (open-input-channel-p1 channel
+                                       :character state-state))
+           (open-input-channel-p1
+            channel
+            :character (mv-nth 1 (read-char$ channel state-state)))))
+
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-2
+  (implies
+   (and
+    (symbolp channel)
+    (open-input-channel-p channel
+                          :character state)
+    (state-p state)
+    (not (null (mv-nth 0
+                       (read-file-into-string1 channel state ans bound)))))
+   (stringp (mv-nth 0
+                    (read-file-into-string1 channel state ans bound)))))
+
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-3
+  (implies
+   (and (symbolp channel)
+        (open-input-channel-p channel
+                              :character state)
+        (state-p state))
+   (state-p1 (mv-nth 1
+                     (read-file-into-string1 channel state ans bound)))))
+
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-4
+  (implies
+   (and
+    (natp bytes1)
+    (natp bytes2)
+    (natp start)
+    (mv-nth 0
+            (open-input-channel filename
+                                :character state))
+    (state-p1 state)
+    (stringp filename)
+    (not
+     (null
+      (mv-nth
+       0
+       (read-file-into-string1
+        (mv-nth 0
+                (open-input-channel filename
+                                    :character state))
+        (mv-nth 1
+                (open-input-channel filename
+                                    :character state))
+        nil *read-file-into-string-bound*))))
+    (<=
+     (+ bytes1 bytes2 start)
+     (len
+      (explode
+       (mv-nth
+        0
+        (read-file-into-string1
+         (mv-nth 0
+                 (open-input-channel filename
+                                     :character state))
+         (mv-nth 1
+                 (open-input-channel filename
+                                     :character state))
+         nil *read-file-into-string-bound*))))))
+   (equal
+    (let* ((str1 (read-file-into-string filename
+                                        :start start
+                                        :bytes bytes1))
+           (str2 (read-file-into-string filename
+                                        :start (+ start bytes1)
+                                        :bytes bytes2)))
+          (concatenate 'string str1 str2))
+    (read-file-into-string filename
+                           :start start
+                           :bytes (+ bytes1 bytes2))))
+  :hints
+  (("goal"
+    :in-theory (e/d (take-of-nthcdr)
+                    (binary-append-take-nthcdr))
+    :use
+    ((:instance
+      binary-append-take-nthcdr
+      (l
+       (take
+        (+ bytes1 bytes2)
+        (nthcdr
+         start
+         (explode
+          (mv-nth
+           0
+           (read-file-into-string1
+            (mv-nth 0
+                    (open-input-channel filename
+                                        :character state))
+            (mv-nth 1
+                    (open-input-channel filename
+                                        :character state))
+            nil 1152921504606846975))))))
+      (i bytes1))
+     (:theorem (implies (natp bytes2)
+                        (equal (+ bytes1 (- bytes1) bytes2)
+                               bytes2)))))))
+
 (defun
   disk-image-to-fat32-in-memory
   (fat32-in-memory image-path state)
