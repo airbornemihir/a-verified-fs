@@ -1709,12 +1709,7 @@
                               (fat32-filename-list-p pathname))
                   :verify-guards nil))
   (b*
-      ((dirname (m1-dirname pathname))
-       ((unless (and (consp dirname) (equal (car dirname) "")))
-        (mv (make-struct-stat) -1 *enoent*))
-       (dirname (cdr dirname))
-       (pathname (append dirname (list (m1-basename pathname))))
-       ((mv file errno)
+      (((mv file errno)
         (find-file-by-pathname fs pathname))
        ((when (not (equal errno 0)))
         (mv (make-struct-stat) -1 errno)))
@@ -1879,12 +1874,9 @@
     :verify-guards nil))
   (b* ((dirname (m1-dirname pathname))
        ;; Never pass relative pathnames to syscalls - make them always begin
-       ;; with "\" so that the first part of the fat32 pathname list is the
-       ;; empty string, "        ".
-       ((when (or (atom dirname)
-                  (not (equal (car dirname) *empty-fat32-name*))))
+       ;; with "/".
+       ((when (atom dirname))
         (mv fs -1 *enoent*))
-       (dirname (cdr dirname))
        ((mv parent-dir errno)
         (find-file-by-pathname fs dirname))
        ((unless (or (atom dirname)
@@ -1904,7 +1896,6 @@
          t))
        (file (make-m1-file :dir-ent dir-ent
                            :contents nil))
-       (pathname (append dirname (list basename)))
        ((mv fs error-code)
         (place-file-by-pathname fs pathname file))
        ((unless (equal error-code 0))
@@ -1930,13 +1921,7 @@
        (path pathname))))
     :verify-guards nil))
   (b* ((dirname (m1-dirname pathname))
-       ;; It's OK to strip out the leading "" when the pathname begins with /,
-       ;; but what about when it doesn't and the pathname is relative to the
-       ;; current working directory?
-       (dirname (if (and (consp dirname)
-                         (equal (car dirname) *empty-fat32-name*))
-                    (cdr dirname)
-                  dirname))
+       (basename (m1-basename pathname))
        ((mv parent-dir errno)
         (find-file-by-pathname fs dirname))
        ((unless (or (atom dirname)
@@ -1947,14 +1932,12 @@
         (find-file-by-pathname fs pathname))
        ((unless (not (equal errno 0)))
         (mv fs -1 *eexist*))
-       (basename (m1-basename pathname))
        ((unless (equal (length basename) 11))
         (mv fs -1 *enametoolong*))
        (dir-ent (append (string=>nats basename)
                         (nthcdr 11 (dir-ent-fix nil))))
        (file (make-m1-file :dir-ent dir-ent
                            :contents nil))
-       (pathname (append dirname (list basename)))
        ((mv fs error-code)
         (place-file-by-pathname fs pathname file))
        ((unless (equal error-code 0))
@@ -2013,19 +1996,7 @@
                    (mv-nth 0
                            (m1-basename-dirname-helper pathname)))))))
     :verify-guards nil))
-  (b* ((dirname (m1-dirname pathname))
-       ;; It's OK to strip out the leading "" when the pathname begins with /,
-       ;; but what about when it doesn't and the pathname is relative to the
-       ;; current working directory?
-       (dirname (if (and (consp dirname)
-                         (or
-                          (equal (car dirname) *empty-fat32-name*)
-                          (equal (car dirname) *current-dir-fat32-name*)))
-                    (cdr dirname)
-                  dirname))
-       (basename (m1-basename pathname))
-       (pathname (append dirname (list basename)))
-       ((mv fs error-code)
+  (b* (((mv fs error-code)
         (remove-file-by-pathname fs pathname))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
