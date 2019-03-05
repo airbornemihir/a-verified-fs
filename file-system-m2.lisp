@@ -858,15 +858,6 @@
                                         (+ 82 (- *initialbytcnt*) 8)) fat32-in-memory)))
       (mv fat32-in-memory 0))))
 
-(defthmd
-  read-reserved-area-correctness-1-lemma-1
-  (implies (<= (nfix n) (len (explode string)))
-           (equal (take n (string=>nats string))
-                  (chars=>nats (take n (explode string)))))
-  :hints
-  (("goal" :in-theory (enable string=>nats chars=>nats-of-take)
-    :do-not-induct t)))
-
 (encapsulate
   ()
 
