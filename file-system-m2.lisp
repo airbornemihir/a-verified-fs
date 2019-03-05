@@ -689,14 +689,20 @@
          ;; common stuff for fat filesystems
          (initial-bytes
           (get-initial-bytes str))
+         (tmp_bytspersec (combine16u (nth (+ 11 1) initial-bytes)
+                                     (nth (+ 11 0) initial-bytes)))
+         (tmp_rsvdseccnt (combine16u (nth (+ 14 1) initial-bytes)
+                                     (nth (+ 14 0) initial-bytes)))
+         (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec))
+         ((unless (and (>= tmp_bytspersec 512)
+                       (>= tmp_rsvdseccnt 1)
+                       (>= tmp_rsvdbytcnt *initialbytcnt*)
+                       (>= (length str) tmp_rsvdbytcnt)))
+          (mv fat32-in-memory -1))
          (fat32-in-memory
           (update-bs_jmpboot (subseq initial-bytes 0 3) fat32-in-memory))
          (fat32-in-memory
           (update-bs_oemname (subseq initial-bytes 3 11) fat32-in-memory))
-         (tmp_bytspersec (combine16u (nth (+ 11 1) initial-bytes)
-                                     (nth (+ 11 0) initial-bytes)))
-         ((unless (>= tmp_bytspersec 512))
-          (mv fat32-in-memory -1))
          (fat32-in-memory
           (update-bpb_bytspersec tmp_bytspersec fat32-in-memory))
          (tmp_secperclus (nth 13 initial-bytes))
@@ -715,16 +721,8 @@
                                (cluster-size fat32-in-memory))
                           0)))
           (mv fat32-in-memory -1))
-         (tmp_rsvdseccnt (combine16u (nth (+ 14 1) initial-bytes)
-                                     (nth (+ 14 0) initial-bytes)))
-         ((unless (>= tmp_rsvdseccnt 1))
-          (mv fat32-in-memory -1))
          (fat32-in-memory
           (update-bpb_rsvdseccnt tmp_rsvdseccnt fat32-in-memory))
-         (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec))
-         ((unless (and (>= tmp_rsvdbytcnt *initialbytcnt*)
-                       (>= (length str) tmp_rsvdbytcnt)))
-          (mv fat32-in-memory -1))
          (remaining-rsvdbyts
           (get-remaining-rsvdbyts str))
          (tmp_numfats (nth (- 16 *initialbytcnt*) remaining-rsvdbyts))
@@ -1466,7 +1464,7 @@
             (len (explode str2)))))
 
 (defthm
-  disk-image-to-fat32-in-memory-lemma-1
+  disk-image-to-fat32-in-memory-guard-lemma-1
   (implies
    (<= *initialbytcnt*
        (len (explode (read-file-into-string2 image-path 0 nil state))))
@@ -1476,7 +1474,7 @@
             16)))))
 
 (defthm
-  disk-image-to-fat32-in-memory-lemma-2
+  disk-image-to-fat32-in-memory-guard-lemma-2
   (implies (<= *initialbytcnt*
                (len (explode (read-file-into-string2 image-path 0
                                                      *initialbytcnt* state))))
