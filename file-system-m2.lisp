@@ -993,8 +993,10 @@
            ((cluster-size (cluster-size fat32-in-memory))
             (index (- (data-region-length fat32-in-memory)
                       len))
-            (current-cluster (subseq str (* index cluster-size)
-                                     (* (+ index 1) cluster-size)))
+            (current-cluster
+             (time$
+              (subseq str (* index cluster-size)
+                      (* (+ index 1) cluster-size))))
             (fat32-in-memory
              (update-data-regioni
               index current-cluster fat32-in-memory)))
@@ -1272,15 +1274,17 @@
                        (+ tmp_init data-byte-count))))
           (mv fat32-in-memory -1))
          (data-region-string
-          (subseq str tmp_init
-                  (+ tmp_init data-byte-count)))
+          (time$
+           (subseq str tmp_init
+                   (+ tmp_init data-byte-count))))
          (fat32-in-memory
-          (update-data-region fat32-in-memory data-region-string
-                              (data-region-length fat32-in-memory))))
+          (time$
+           (update-data-region fat32-in-memory data-region-string
+                               (data-region-length fat32-in-memory)))))
       (mv fat32-in-memory error-code))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-1
+  consecutive-read-file-into-string-lemma-1
   (implies (and (state-p1 state-state)
                 (open-input-channel-p1 channel
                                        :character state-state))
@@ -1289,7 +1293,7 @@
             :character (mv-nth 1 (read-char$ channel state-state)))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-2
+  consecutive-read-file-into-string-lemma-2
   (implies
    (and
     (symbolp channel)
@@ -1302,7 +1306,7 @@
                     (read-file-into-string1 channel state ans bound)))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-3
+  consecutive-read-file-into-string-lemma-3
   (implies
    (and (symbolp channel)
         (open-input-channel-p channel
@@ -1312,54 +1316,48 @@
                      (read-file-into-string1 channel state ans bound)))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-4
-  (implies
-   (and
-    (natp bytes1)
-    (natp bytes2)
-    (natp start)
-    (mv-nth 0
-            (open-input-channel filename
-                                :character state))
-    (state-p1 state)
-    (stringp filename)
-    (not
-     (null
-      (mv-nth
-       0
-       (read-file-into-string1
+  consecutive-read-file-into-string
+    (implies
+     (and
+      (natp bytes1)
+      (natp bytes2)
+      (natp start)
+      (mv-nth 0
+              (open-input-channel filename
+                                  :character state))
+      (state-p1 state)
+      (stringp filename)
+      (not
+       (null
         (mv-nth 0
-                (open-input-channel filename
-                                    :character state))
-        (mv-nth 1
-                (open-input-channel filename
-                                    :character state))
-        nil *read-file-into-string-bound*))))
-    (<=
-     (+ bytes1 bytes2 start)
-     (len
-      (explode
-       (mv-nth
-        0
-        (read-file-into-string1
+                (read-file-into-string1
+                 (mv-nth 0
+                         (open-input-channel filename
+                                             :character state))
+                 (mv-nth 1
+                         (open-input-channel filename
+                                             :character state))
+                 nil 1152921504606846975))))
+      (<=
+       (+ bytes1 bytes2 start)
+       (len
+        (explode
          (mv-nth 0
-                 (open-input-channel filename
-                                     :character state))
-         (mv-nth 1
-                 (open-input-channel filename
-                                     :character state))
-         nil *read-file-into-string-bound*))))))
-   (equal
-    (let* ((str1 (read-file-into-string filename
-                                        :start start
-                                        :bytes bytes1))
-           (str2 (read-file-into-string filename
-                                        :start (+ start bytes1)
-                                        :bytes bytes2)))
-          (concatenate 'string str1 str2))
-    (read-file-into-string filename
-                           :start start
-                           :bytes (+ bytes1 bytes2))))
+                 (read-file-into-string1
+                  (mv-nth 0
+                          (open-input-channel filename
+                                              :character state))
+                  (mv-nth 1
+                          (open-input-channel filename
+                                              :character state))
+                  nil 1152921504606846975))))))
+     (equal
+      (string-append
+       (read-file-into-string2 filename start bytes1 state)
+       (read-file-into-string2 filename (+ start bytes1)
+                               bytes2 state))
+      (read-file-into-string2 filename start (+ bytes1 bytes2)
+                              state)))
   :hints
   (("goal"
     :in-theory (e/d (take-of-nthcdr)
@@ -1388,6 +1386,31 @@
                         (equal (+ bytes1 (- bytes1) bytes2)
                                bytes2)))))))
 
+;; Move this to file-system-lemmas.lisp later.
+(defthm len-of-explode-of-string-append
+  (equal (len (explode (string-append str1 str2)))
+         (+ (len (explode str1))
+            (len (explode str2)))))
+
+(defthm
+  disk-image-to-fat32-in-memory-lemma-1
+  (implies
+   (<= *initialbytcnt*
+       (len (explode (read-file-into-string2 image-path 0 nil state))))
+   (stringp (read-file-into-string2 image-path 0 *initialbytcnt* state))))
+
+(defthm
+  disk-image-to-fat32-in-memory-lemma-2
+  (implies (<= *initialbytcnt*
+               (len (explode (read-file-into-string2 image-path 0 *initialbytcnt* state))))
+           (stringp (read-file-into-string2 image-path *initialbytcnt* nil state))))
+
+(defthm
+  disk-image-to-fat32-in-memory-lemma-3
+  (implies (<= *initialbytcnt*
+               (len (explode (read-file-into-string2 image-path 0 *initialbytcnt* state))))
+           (stringp (read-file-into-string2 image-path 0 nil state))))
+
 (defun
   disk-image-to-fat32-in-memory
   (fat32-in-memory image-path state)
@@ -1398,13 +1421,27 @@
     :guard-hints
     (("goal"
       :do-not-induct t
-      :in-theory (disable read-reserved-area)))
+      :in-theory (disable read-reserved-area string-append read-file-into-string2)))
+    :guard-debug t
     :stobjs (fat32-in-memory state)))
-  (b* ((str (read-file-into-string image-path))
-       ((unless (and (stringp str)
-                     (>= (length str) *initialbytcnt*)))
-        (mv fat32-in-memory -1)))
-    (string-to-fat32-in-memory fat32-in-memory str)))
+  (mbe
+   :logic
+   (b* ((str (read-file-into-string image-path))
+        ((unless (and (stringp str)
+                      (>= (length str) *initialbytcnt*)))
+         (mv fat32-in-memory -1)))
+     (string-to-fat32-in-memory fat32-in-memory str))
+   :exec
+   (b* ((initial-bytes-str (read-file-into-string image-path :bytes
+                                                  *initialbytcnt*))
+        ((unless (and (stringp initial-bytes-str)
+                      (>= (length initial-bytes-str) *initialbytcnt*)))
+         (mv fat32-in-memory -1))
+        (remaining-bytes-str (read-file-into-string image-path :start
+                                                    *initialbytcnt*)))
+     (string-to-fat32-in-memory
+      fat32-in-memory
+      (concatenate 'string initial-bytes-str remaining-bytes-str)))))
 
 (defund
   get-clusterchain
