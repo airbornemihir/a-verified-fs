@@ -6,21 +6,23 @@
 
 (include-book "file-system-m1")
 
-(defun m1-dir-subsetp (m1-file-alist1 m1-file-alist2)
+(defun
+  m1-dir-subsetp
+  (m1-file-alist1 m1-file-alist2)
   (declare
    (xargs
     :guard (and (m1-file-alist-p m1-file-alist1)
                 (m1-file-alist-p m1-file-alist2))
-    :hints (("goal" :in-theory (enable m1-file->contents m1-directory-file-p)))))
-  (b* (((when (atom m1-file-alist1))
-        t)
-       ((when (or (atom (car m1-file-alist1))
-                  (not (stringp (car (car m1-file-alist1))))))
+    :hints (("goal" :in-theory (enable m1-file->contents
+                                       m1-directory-file-p)))))
+  (b*
+      (((when (atom m1-file-alist1)) t)
+       ((unless (mbt (and (consp (car m1-file-alist1))
+                          (stringp (car (car m1-file-alist1))))))
         (and (member-equal (car m1-file-alist1)
                            m1-file-alist2)
-             (m1-dir-subsetp
-              (cdr m1-file-alist1)
-              m1-file-alist2)))
+             (m1-dir-subsetp (cdr m1-file-alist1)
+                             m1-file-alist2)))
        (name (caar m1-file-alist1))
        (file1 (cdar m1-file-alist1))
        ((unless (consp (assoc-equal name m1-file-alist2)))
@@ -28,30 +30,32 @@
        (file2 (cdr (assoc-equal name m1-file-alist2))))
     (if (not (m1-directory-file-p file1))
         (and (not (m1-directory-file-p file2))
-             (m1-dir-subsetp (cdr m1-file-alist1) m1-file-alist2)
+             (m1-dir-subsetp (cdr m1-file-alist1)
+                             m1-file-alist2)
              (equal (m1-file->contents file1)
                     (m1-file->contents file2)))
-      (and (m1-directory-file-p file2)
-           (m1-dir-subsetp (cdr m1-file-alist1) m1-file-alist2)
-           (m1-dir-subsetp (m1-file->contents file1)
-                           (m1-file->contents file2))))))
+        (and (m1-directory-file-p file2)
+             (m1-dir-subsetp (cdr m1-file-alist1)
+                             m1-file-alist2)
+             (m1-dir-subsetp (m1-file->contents file1)
+                             (m1-file->contents file2))))))
 
-(defun m1-file-no-dups-p (m1-file-alist)
-  (declare
-   (xargs
-    :guard (m1-file-alist-p m1-file-alist)))
-  (cond ((atom m1-file-alist)
-         t)
+(defun
+  m1-file-no-dups-p (m1-file-alist)
+  (declare (xargs :guard (m1-file-alist-p m1-file-alist)))
+  (cond ((atom m1-file-alist) t)
         ((not (m1-file-no-dups-p (cdr m1-file-alist)))
          nil)
-        ((or (atom (car m1-file-alist))
-             (not (stringp (car (car m1-file-alist)))))
+        ((not (mbt (and (consp (car m1-file-alist))
+                        (stringp (car (car m1-file-alist))))))
          (not (member-equal (car m1-file-alist)
                             (cdr m1-file-alist))))
-        ((assoc-equal (caar m1-file-alist) (cdr m1-file-alist))
+        ((assoc-equal (caar m1-file-alist)
+                      (cdr m1-file-alist))
          nil)
         ((m1-directory-file-p (cdar m1-file-alist))
-         (m1-file-no-dups-p (m1-file->contents (cdar m1-file-alist))))
+         (m1-file-no-dups-p
+          (m1-file->contents (cdar m1-file-alist))))
         (t t)))
 
 (defthm m1-file-no-dups-p-correctness-1
@@ -130,10 +134,12 @@
                 (m1-dir-subsetp y z))
            (m1-dir-subsetp x z))
   :hints
-  (("subgoal *1/9'''" :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
+  (("Goal"
+    :induct (mv (m1-dir-subsetp x z) (m1-dir-subsetp x y)))
+   ("subgoal *1/5" :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
     :use (:instance m1-dir-subsetp-transitive-lemma-1
                     (key (car (car x)))))
-   ("subgoal *1/6'''" :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
+   ("subgoal *1/2" :in-theory (disable m1-dir-subsetp-transitive-lemma-1)
     :use (:instance m1-dir-subsetp-transitive-lemma-1
                     (key (car (car x)))))))
 

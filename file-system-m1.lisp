@@ -1235,15 +1235,6 @@
                :val-type nat ;; index into the file-table
                :true-listp t)
 
-(defthm lstat-guard-lemma-1
-  (implies (and (m1-file-alist-p fs)
-                (consp (assoc-equal filename fs)))
-           (m1-file-p (cdr (assoc-equal filename fs)))))
-
-(defthm lstat-guard-lemma-2
-  (implies (m1-file-alist-p fs)
-           (alistp fs)))
-
 (defun find-file-by-pathname (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (fat32-filename-list-p pathname))
@@ -1264,6 +1255,12 @@
        ((unless (atom (cdr pathname)))
         (mv (make-m1-file) *enotdir*)))
     (mv (cdr alist-elem) 0)))
+
+(defthm
+  find-file-by-pathname-correctness-1-lemma-1
+  (implies (and (m1-file-alist-p fs)
+                (consp (assoc-equal filename fs)))
+           (m1-file-p (cdr (assoc-equal filename fs)))))
 
 (defthm
   find-file-by-pathname-correctness-1
@@ -1308,6 +1305,9 @@
   (b*
       ((fs (m1-file-alist-fix fs))
        (file (m1-file-fix file))
+       ;; Pathnames aren't going to be empty lists. Even the emptiest of
+       ;; empty pathnames has to have at least a slash in it, because we are
+       ;; absolutely dealing in absolute pathnames.
        ((unless (consp pathname))
         (mv fs *enoent*))
        (name (fat32-filename-fix (car pathname)))
@@ -1514,20 +1514,6 @@
       :in-theory (enable fat32-filename-list-fix
                          m1-regular-file-p)))))
 
-(defun m1-lstat (fs pathname)
-  (declare (xargs :guard (and (m1-file-alist-p fs)
-                              (fat32-filename-list-p pathname))))
-  (mv-let
-    (file errno)
-    (find-file-by-pathname fs pathname)
-    (if (not (equal errno 0))
-        (mv (make-struct-stat) -1 errno)
-      (mv
-       (make-struct-stat
-        :st_size (dir-ent-file-size
-                  (m1-file->dir-ent file)))
-       0 0))))
-
 (defun
   find-new-index-helper (fd-list ac)
   (declare (xargs :guard (and (nat-listp fd-list) (natp ac))
@@ -1573,6 +1559,13 @@
   (integerp (find-new-index fd-list))
   :hints (("Goal" :in-theory (enable find-new-index))))
 
+;; Here's a problem with our current formulation: realpath-helper will receive
+;; something that was emitted by pathname-to-fat32-pathname, and that means all
+;; absolute paths will start with *empty-fat32-name* or "        ". That's
+;; problematic because then anytime we have to compute the realpath of "/.." or
+;; "/home/../.." we will return something that breaks this convention of having
+;; absolute paths begin with *empty-fat32-name*. Most likely, the convention
+;; itself is hard to sustain.
 (defun realpath-helper (pathname ac)
   (cond ((atom pathname) (revappend ac nil))
         ((equal (car pathname)
@@ -1613,6 +1606,123 @@
            (append abspathname relpathname))))
   :hints
   (("goal" :in-theory (enable realpath))))
+
+;; From the common man page basename(3)/dirname(3):
+;; --
+;; If  path  does  not contain a slash, dirname() returns the string "." while
+;; basename() returns a copy of path.  If path is the string  "/",  then  both
+;; dirname()  and basename() return the string "/".  If path is a NULL pointer
+;; or points to an empty string, then both dirname() and basename() return the
+;; string ".".
+;; --
+;; Of course, an empty list means something went wrong with the parsing code,
+;; because even in the case of an empty path string, (list "") should be passed
+;; to these functions. Still, we do the default thing, because neither of these
+;; functions sets errno.
+
+;; Also, an empty string right in the beginning indicates that the path began
+;; with a "/". While not documented properly in the man page, for a path such
+;; as "/home" or "/tmp", the dirname will be "/".
+(defund
+  m1-basename-dirname-helper (path)
+  (declare (xargs :guard (string-listp path)
+                  :guard-hints (("Goal" :in-theory (disable
+                                                    make-list-ac-removal)))
+                  :guard-debug t))
+  (b*
+      (((when (atom path))
+        (mv *current-dir-fat32-name* (list *current-dir-fat32-name*)))
+       (coerced-basename
+        (if
+            (or (atom (cdr path))
+                (and (not (streqv (car path) ""))
+                     (atom (cddr path))
+                     (streqv (cadr path) "")))
+            (coerce (str-fix (car path)) 'list)
+          (coerce (str-fix (cadr path)) 'list)))
+       (basename
+        (coerce
+         (append
+          (take (min 11 (len coerced-basename)) coerced-basename)
+          (make-list
+           (nfix (- 11 (len coerced-basename)))
+           :initial-element (code-char 0)))
+         'string))
+       ((when (or (atom (cdr path))
+                  (and (not (streqv (car path) ""))
+                       (atom (cddr path))
+                       (streqv (cadr path) ""))))
+        (mv
+         basename
+         (list *current-dir-fat32-name*)))
+       ((when (atom (cddr path)))
+        (mv basename
+            (list (str-fix (car path)))))
+       ((mv tail-basename tail-dirname)
+        (m1-basename-dirname-helper (cdr path))))
+    (mv tail-basename
+        (list* (str-fix (car path))
+               tail-dirname))))
+
+(defthm
+  m1-basename-dirname-helper-correctness-1
+  (mv-let (basename dirname)
+    (m1-basename-dirname-helper path)
+    (and (stringp basename)
+         (equal (len (explode basename)) 11)
+         (string-listp dirname)))
+  :hints
+  (("goal" :induct (m1-basename-dirname-helper path)
+    :in-theory (enable m1-basename-dirname-helper)))
+  :rule-classes
+  (:rewrite
+   (:type-prescription
+    :corollary
+    (stringp (mv-nth 0 (m1-basename-dirname-helper path))))
+   (:type-prescription
+    :corollary
+    (true-listp (mv-nth 1 (m1-basename-dirname-helper path))))))
+
+(defun m1-basename (path)
+  (declare (xargs :guard (string-listp path)))
+  (mv-let (basename dirname)
+    (m1-basename-dirname-helper path)
+    (declare (ignore dirname))
+    basename))
+
+(defun m1-dirname (path)
+  (declare (xargs :guard (string-listp path)))
+  (mv-let (basename dirname)
+    (m1-basename-dirname-helper path)
+    (declare (ignore basename))
+    dirname))
+
+;; This used to be guard verified, and then we brought in the
+;; fat32-filename-list-p predicate and made everything complicated. Let's let
+;; the system calls remain guard-unverified until we can test some more and
+;; demonstrate that they work. That should give us enough time to figure out
+;; the point at which we want to figure out the correct level of abstraction at
+;; which to clean up all the weird pathnames such as "/home/ ihir" and
+;; and "/home/ihir" and "/../home/mihir".
+(defun m1-lstat (fs pathname)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (fat32-filename-list-p pathname))
+                  :verify-guards nil))
+  (b*
+      ((dirname (m1-dirname pathname))
+       ((unless (and (consp dirname) (equal (car dirname) "")))
+        (mv (make-struct-stat) -1 *enoent*))
+       (dirname (cdr dirname))
+       (pathname (append dirname (list (m1-basename pathname))))
+       ((mv file errno)
+        (find-file-by-pathname fs pathname))
+       ((when (not (equal errno 0)))
+        (mv (make-struct-stat) -1 errno)))
+    (mv
+       (make-struct-stat
+        :st_size (dir-ent-file-size
+                  (m1-file->dir-ent file)))
+       0 0)))
 
 (defthm m1-open-guard-lemma-1
   (implies (fd-table-p fd-table)
@@ -1749,96 +1859,6 @@
     (mv fs (if (equal error-code 0) 0 -1)
         error-code)))
 
-;; From the common man page basename(3)/dirname(3):
-;; --
-;; If  path  does  not contain a slash, dirname() returns the string "." while
-;; basename() returns a copy of path.  If path is the string  "/",  then  both
-;; dirname()  and basename() return the string "/".  If path is a NULL pointer
-;; or points to an empty string, then both dirname() and basename() return the
-;; string ".".
-;; --
-;; Of course, an empty list means something went wrong with the parsing code,
-;; because even in the case of an empty path string, (list "") should be passed
-;; to these functions. Still, we do the default thing, because neither of these
-;; functions sets errno.
-
-;; Also, an empty string right in the beginning indicates that the path began
-;; with a "/". While not documented properly in the man page, for a path such
-;; as "/home" or "/tmp", the dirname will be "/".
-(defund
-  m1-basename-dirname-helper (path)
-  (declare (xargs :guard (string-listp path)
-                  :guard-hints (("Goal" :in-theory (disable
-                                                    make-list-ac-removal)))
-                  :guard-debug t))
-  (b*
-      (((when (atom path))
-        (mv *current-dir-fat32-name* (list *current-dir-fat32-name*)))
-       (coerced-basename
-        (if
-            (or (atom (cdr path))
-                (and (not (streqv (car path) ""))
-                     (atom (cddr path))
-                     (streqv (cadr path) "")))
-            (coerce (str-fix (car path)) 'list)
-          (coerce (str-fix (cadr path)) 'list)))
-       (basename
-        (coerce
-         (append
-          (take (min 11 (len coerced-basename)) coerced-basename)
-          (make-list
-           (nfix (- 11 (len coerced-basename)))
-           :initial-element (code-char 0)))
-         'string))
-       ((when (or (atom (cdr path))
-                  (and (not (streqv (car path) ""))
-                       (atom (cddr path))
-                       (streqv (cadr path) ""))))
-        (mv
-         basename
-         (list *current-dir-fat32-name*)))
-       ((when (atom (cddr path)))
-        (mv basename
-            (list (str-fix (car path))))))
-    (mv-let (tail-basename tail-dirname)
-      (m1-basename-dirname-helper (cdr path))
-      (mv tail-basename
-          (list* (str-fix (car path))
-                 tail-dirname)))))
-
-(defthm
-  m1-basename-dirname-helper-correctness-1
-  (mv-let (basename dirname)
-    (m1-basename-dirname-helper path)
-    (and (stringp basename)
-         (equal (len (explode basename)) 11)
-         (string-listp dirname)))
-  :hints
-  (("goal" :induct (m1-basename-dirname-helper path)
-    :in-theory (enable m1-basename-dirname-helper)))
-  :rule-classes
-  (:rewrite
-   (:type-prescription
-    :corollary
-    (stringp (mv-nth 0 (m1-basename-dirname-helper path))))
-   (:type-prescription
-    :corollary
-    (true-listp (mv-nth 1 (m1-basename-dirname-helper path))))))
-
-(defun m1-basename (path)
-  (declare (xargs :guard (string-listp path)))
-  (mv-let (basename dirname)
-    (m1-basename-dirname-helper path)
-    (declare (ignore dirname))
-    basename))
-
-(defun m1-dirname (path)
-  (declare (xargs :guard (string-listp path)))
-  (mv-let (basename dirname)
-    (m1-basename-dirname-helper path)
-    (declare (ignore basename))
-    dirname))
-
 ;; I'm leaving this guard unverified because that's not what I want to put my
 ;; time and energy into right now...
 (defun
@@ -1858,13 +1878,13 @@
        (path pathname))))
     :verify-guards nil))
   (b* ((dirname (m1-dirname pathname))
-       ;; It's OK to strip out the leading "" when the pathname begins with /,
-       ;; but what about when it doesn't and the pathname is relative to the
-       ;; current working directory?
-       (dirname (if (and (consp dirname)
-                         (equal (car dirname) ""))
-                    (cdr dirname)
-                  dirname))
+       ;; Never pass relative pathnames to syscalls - make them always begin
+       ;; with "\" so that the first part of the fat32 pathname list is the
+       ;; empty string, "        ".
+       ((when (or (atom dirname)
+                  (not (equal (car dirname) *empty-fat32-name*))))
+        (mv fs -1 *enoent*))
+       (dirname (cdr dirname))
        ((mv parent-dir errno)
         (find-file-by-pathname fs dirname))
        ((unless (or (atom dirname)
@@ -2135,15 +2155,31 @@
   (equal (fat32-name-to-name (coerce "11CHARAC1  " 'list))
          (coerce "11charac.1" 'list))))
 
+;; We're combining two operations into one here - a different approach would be
+;; to have two recursive functions for drawing out the different
+;; slash-delimited strings and then for transforming the resulting list
+;; element-by-element to a list of fat32 names.
+;; This function now necessitates unconditionally using absolute paths every
+;; place where its return value is the argument to something else. Perhaps we
+;; can have one layer of abstraction for generating the absolute path, but
+;; right now we don't have any per-process data structure for storing the
+;; current directory, nor are we planning to implement chdir.
 (defun pathname-to-fat32-pathname (character-list)
   (declare (xargs :guard (character-listp character-list)))
   (b*
-      ((slash-and-later-characters
+      (((when (atom character-list))
+        nil)
+       (slash-and-later-characters
         (member #\/ character-list))
        (characters-before-slash (take (- (len character-list)
                                          (len slash-and-later-characters))
                                       character-list))
-       ((when (atom slash-and-later-characters))
+       ((when (atom characters-before-slash))
+        (pathname-to-fat32-pathname (cdr slash-and-later-characters)))
+       ;; We want to treat anything that ends with a slash the same way we
+       ;; would if the slash weren't there.
+       ((when (or (atom slash-and-later-characters)
+                  (equal slash-and-later-characters (list #\/))))
         (list
          (coerce (name-to-fat32-name characters-before-slash) 'string))))
     (cons
@@ -2153,11 +2189,34 @@
 (assert-event
  (and
   (equal (pathname-to-fat32-pathname (coerce "/bin/mkdir" 'list))
-         (list "           " "BIN        " "MKDIR      "))
+         (list "BIN        " "MKDIR      "))
+  (equal (pathname-to-fat32-pathname (coerce "//bin//mkdir" 'list))
+         (list "BIN        " "MKDIR      "))
+  (equal (pathname-to-fat32-pathname (coerce "/bin/" 'list))
+         (list "BIN        "))
   (equal (pathname-to-fat32-pathname (coerce "books/build/cert.pl" 'list))
-   (list "BOOKS      " "BUILD      " "CERT    PL "))))
+   (list "BOOKS      " "BUILD      " "CERT    PL "))
+  (equal (pathname-to-fat32-pathname (coerce "books/build/" 'list))
+   (list "BOOKS      " "BUILD      "))))
 
-(defun fat32-pathname-to-name (string-list)
+;; for later
+;; (defthmd pathname-to-fat32-pathname-correctness-1
+;;   (implies
+;;    (and (character-listp character-list)
+;;         (consp character-list)
+;;         (equal (last character-list)
+;;                (coerce "\/" 'list)))
+;;    (equal
+;;     (pathname-to-fat32-pathname (take (- (len character-list) 1)
+;;                                       character-list))
+;;     (pathname-to-fat32-pathname character-list)))
+;;   :hints (("Goal"
+;;            :induct (pathname-to-fat32-pathname character-list)
+;;            :in-theory (disable name-to-fat32-name)
+;;            :expand (PATHNAME-TO-FAT32-PATHNAME (TAKE (+ -1 (LEN CHARACTER-LIST))
+;;                                                      CHARACTER-LIST))) ))
+
+(defun fat32-pathname-to-pathname (string-list)
   ;; (declare (xargs :guard (string-listp string-list)))
   (if (atom string-list)
       nil
@@ -2165,16 +2224,16 @@
             (if (atom (cdr string-list))
                 nil
               (list* #\/
-                     (fat32-pathname-to-name (cdr string-list)))))))
+                     (fat32-pathname-to-pathname (cdr string-list)))))))
 
 (assert-event
  (and
-  (equal (coerce (fat32-pathname-to-name (list "BOOKS      " "BUILD      "
+  (equal (coerce (fat32-pathname-to-pathname (list "BOOKS      " "BUILD      "
                                                "CERT    PL ")) 'string)
          "books/build/cert.pl")
-  (equal (coerce (fat32-pathname-to-name (list "           " "BIN        "
+  (equal (coerce (fat32-pathname-to-pathname (list "           " "BIN        "
                                                "MKDIR      ")) 'string)
          "/bin/mkdir")))
 
-(defthm character-listp-of-fat32-pathname-to-name
-  (character-listp (fat32-pathname-to-name string-list)))
+(defthm character-listp-of-fat32-pathname-to-pathname
+  (character-listp (fat32-pathname-to-pathname string-list)))

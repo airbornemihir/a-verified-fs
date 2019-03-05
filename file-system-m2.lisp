@@ -858,6 +858,95 @@
                                         (+ 82 (- *initialbytcnt*) 8)) fat32-in-memory)))
       (mv fat32-in-memory 0))))
 
+(defthmd
+  read-reserved-area-correctness-1-lemma-1
+  (implies (<= (nfix n) (len (explode string)))
+           (equal (take n (string=>nats string))
+                  (chars=>nats (take n (explode string)))))
+  :hints
+  (("goal" :in-theory (enable string=>nats chars=>nats-of-take)
+    :do-not-induct t)))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    read-reserved-area-correctness-1-lemma-2
+    (implies
+     (and (>= (length str) *initialbytcnt*)
+          (>= (combine16u (nth 12 (get-initial-bytes (str-fix str)))
+                          (nth 11 (get-initial-bytes (str-fix str))))
+              512)
+          (>= (combine16u (nth 15 (get-initial-bytes (str-fix str)))
+                          (nth 14 (get-initial-bytes (str-fix str))))
+              1))
+     (equal
+      (get-initial-bytes
+       (implode (take (* (combine16u (nth 12 (get-initial-bytes str))
+                                     (nth 11 (get-initial-bytes str)))
+                         (combine16u (nth 15 (get-initial-bytes str))
+                                     (nth 14 (get-initial-bytes str))))
+                      (explode str))))
+      (get-initial-bytes str)))
+    :hints (("goal" :in-theory (enable get-initial-bytes))))
+
+  (defthm
+    read-reserved-area-correctness-1-lemma-3
+    (implies
+     (and (>= (length str) *initialbytcnt*)
+          (>= (combine16u (nth 12 (get-initial-bytes (str-fix str)))
+                          (nth 11 (get-initial-bytes (str-fix str))))
+              512)
+          (>= (combine16u (nth 15 (get-initial-bytes (str-fix str)))
+                          (nth 14 (get-initial-bytes (str-fix str))))
+              1)
+          (<= (* (combine16u (nth 15 (get-initial-bytes (str-fix str)))
+                             (nth 14 (get-initial-bytes (str-fix str))))
+                 (combine16u (nth 12 (get-initial-bytes (str-fix str)))
+                             (nth 11 (get-initial-bytes (str-fix str)))))
+              (length (str-fix str))))
+     (equal
+      (get-remaining-rsvdbyts
+       (implode (take (* (combine16u (nth 12 (get-initial-bytes str))
+                                     (nth 11 (get-initial-bytes str)))
+                         (combine16u (nth 15 (get-initial-bytes str))
+                                     (nth 14 (get-initial-bytes str))))
+                      (explode str))))
+      (get-remaining-rsvdbyts str)))
+    :hints (("goal" :in-theory (enable get-remaining-rsvdbyts take-of-nthcdr)
+             :do-not-induct t))))
+
+(defthm
+  read-reserved-area-correctness-1
+  (implies
+   (and (>= (length str) *initialbytcnt*)
+        (>= (combine16u (nth 12 (get-initial-bytes (str-fix str)))
+                        (nth 11 (get-initial-bytes (str-fix str))))
+            512)
+        (>= (combine16u (nth 15 (get-initial-bytes (str-fix str)))
+                        (nth 14 (get-initial-bytes (str-fix str))))
+            1)
+        (<= (* (combine16u (nth 15 (get-initial-bytes (str-fix str)))
+                           (nth 14 (get-initial-bytes (str-fix str))))
+               (combine16u (nth 12 (get-initial-bytes (str-fix str)))
+                           (nth 11 (get-initial-bytes (str-fix str)))))
+            (length (str-fix str))))
+   (equal
+    (read-reserved-area
+     fat32-in-memory
+     (subseq str 0
+             (* (combine16u (nth 15 (get-initial-bytes (str-fix str)))
+                            (nth 14 (get-initial-bytes (str-fix str))))
+                (combine16u (nth 12 (get-initial-bytes (str-fix str)))
+                            (nth 11
+                                 (get-initial-bytes (str-fix str)))))))
+    (read-reserved-area fat32-in-memory str)))
+  :hints (("goal" :in-theory (enable read-reserved-area
+                                     fat-entry-count count-of-clusters
+                                     cluster-size take-of-nthcdr))))
+
 (defthm
   read-fat-guard-lemma-1
   (implies
@@ -1111,7 +1200,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    read-reserved-area-correctness-1
+    fat32-in-memory-of-read-reserved-area
     (implies (and (fat32-in-memoryp fat32-in-memory)
                   (stringp str))
              (fat32-in-memoryp
@@ -1138,12 +1227,13 @@
           (read-reserved-area fat32-in-memory str))
          ((unless (equal error-code 0))
           (mv fat32-in-memory error-code))
+         (fat-read-size (fat-entry-count fat32-in-memory))
          ;; The expression below should eventually be replaced by
          ;; fat-entry-count, but that is going to open a can of worms...
-         (fat-read-size (/ (* (bpb_fatsz32 fat32-in-memory)
-                              (bpb_bytspersec fat32-in-memory))
-                           4))
-         ((unless (integerp fat-read-size))
+         ((unless (integerp
+                   (/ (* (bpb_fatsz32 fat32-in-memory)
+                         (bpb_bytspersec fat32-in-memory))
+                      4)))
           (mv fat32-in-memory -1))
          (data-byte-count (* (count-of-clusters fat32-in-memory)
                              (cluster-size fat32-in-memory)))
@@ -2302,15 +2392,10 @@
      (nthcdr start (effective-fat fat32-in-memory))
      n start)))
   :hints
-  (("goal"
-    :in-theory (enable stobj-find-n-free-clusters-helper
-                       find-n-free-clusters-helper)
-    :induct
-    (stobj-find-n-free-clusters-helper fat32-in-memory n start))
-   ("subgoal *1/2"
-    :expand (find-n-free-clusters-helper
-             (nthcdr start (effective-fat fat32-in-memory))
-             n start))))
+  (("goal" :in-theory (enable stobj-find-n-free-clusters-helper
+                              find-n-free-clusters-helper)
+    :induct (stobj-find-n-free-clusters-helper
+             fat32-in-memory n start))))
 
 (defund
   stobj-find-n-free-clusters
@@ -2734,9 +2819,7 @@
   (("goal"
     :induct
     (stobj-set-clusters cluster-list index-list fat32-in-memory)
-    :in-theory (enable lower-bounded-integer-listp))
-   ("subgoal *1/1"
-    :expand (lower-bounded-integer-listp index-list 2))))
+    :in-theory (enable lower-bounded-integer-listp))))
 
 (defthm
   fati-of-stobj-set-clusters
@@ -3293,11 +3376,6 @@
                         (count-of-clusters fat32-in-memory)))
         '2)))))
 
-;; These subgoal hints were needed because :brr was unhelpful in figuring out
-;; why compliant-fat32-in-memoryp-of-place-contents - a reasonably general
-;; rewrite rule - was failing. The hypothesis cited as the cause was an
-;; inequality which a linear rule should have take care of, but... no clear
-;; further explanation emerged.
 (defthm
   compliant-fat32-in-memoryp-of-m1-fs-to-fat32-in-memory-helper
   (implies
@@ -5306,17 +5384,16 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable find-n-free-clusters-correctness-5)
+    :in-theory
+    (disable find-n-free-clusters-correctness-5
+             (:linear find-n-free-clusters-correctness-7))
     :use
     ((:instance find-n-free-clusters-correctness-5
-                (fa-table (effective-fat fat32-in-memory)))))
-   ("subgoal 2"
-    :in-theory
-    (disable (:linear find-n-free-clusters-correctness-7))
-    :use (:instance (:linear find-n-free-clusters-correctness-7)
-                    (n n1)
-                    (fa-table (effective-fat fat32-in-memory))
-                    (m n2)))))
+                (fa-table (effective-fat fat32-in-memory)))
+     (:instance (:linear find-n-free-clusters-correctness-7)
+                (n n1)
+                (fa-table (effective-fat fat32-in-memory))
+                (m n2))))))
 
 (defthm
   unmodifiable-listp-correctness-4
@@ -7017,8 +7094,8 @@
              :induct
              (stobj-fa-table-to-string-helper fat32-in-memory
                                               length
-                                              ac))
-            ("subgoal *1/2" :expand (:free (n x y) (nth n (cons x y)))))))
+                                              ac)
+              :expand (:free (n x y) (nth n (cons x y)))))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-39
@@ -8055,6 +8132,31 @@
            (nth '15 (get-initial-bytes str))
            (nth '14
                 (get-initial-bytes str))))))))))
+
+  (defthm
+    compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-3
+    (implies
+     (integerp (* 1/4
+                  (combine16u (nth 12 (get-initial-bytes str))
+                              (nth 11 (get-initial-bytes str)))
+                  (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                              (nth 22 (get-remaining-rsvdbyts str))
+                              (nth 21 (get-remaining-rsvdbyts str))
+                              (nth 20 (get-remaining-rsvdbyts str)))))
+     (equal (* 4
+               (floor (* (combine16u (nth 12 (get-initial-bytes str))
+                                     (nth 11 (get-initial-bytes str)))
+                         (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                     (nth 22 (get-remaining-rsvdbyts str))
+                                     (nth 21 (get-remaining-rsvdbyts str))
+                                     (nth 20 (get-remaining-rsvdbyts str))))
+                      4))
+            (* (combine16u (nth 12 (get-initial-bytes str))
+                           (nth 11 (get-initial-bytes str)))
+               (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                           (nth 22 (get-remaining-rsvdbyts str))
+                           (nth 21 (get-remaining-rsvdbyts str))
+                           (nth 20 (get-remaining-rsvdbyts str)))))))
 
   (defthm
     compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-4
