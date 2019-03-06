@@ -1198,7 +1198,44 @@
                       (bpb_bytspersec-of-read-reserved-area
                        bpb_secperclus-of-read-reserved-area))
       :use (bpb_bytspersec-of-read-reserved-area
-            bpb_secperclus-of-read-reserved-area)))))
+            bpb_secperclus-of-read-reserved-area))))
+
+  (defthm
+    fat-entry-count-of-read-reserved-area
+    (implies
+     (equal (mv-nth 1
+                    (read-reserved-area fat32-in-memory str))
+            0)
+     (and
+      (<= 0
+          (fat-entry-count
+           (mv-nth 0
+                   (read-reserved-area fat32-in-memory str))))
+      (< (fat-entry-count
+          (mv-nth 0
+                  (read-reserved-area fat32-in-memory str)))
+         (ash 1 48))))
+    :rule-classes :linear
+    :hints
+    (("goal"
+      :in-theory (e/d (fat-entry-count)
+                      ((:rewrite combine16u-unsigned-byte)
+                       (:rewrite combine32u-unsigned-byte)))
+      :use
+      ((:instance
+        (:rewrite combine16u-unsigned-byte)
+        (a0 (nth 11 (get-initial-bytes (str-fix str))))
+        (a1 (nth 12 (get-initial-bytes (str-fix str)))))
+       (:instance
+        (:rewrite combine32u-unsigned-byte)
+        (a0 (nth 20
+                 (get-remaining-rsvdbyts (str-fix str))))
+        (a1 (nth 21
+                 (get-remaining-rsvdbyts (str-fix str))))
+        (a2 (nth 22
+                 (get-remaining-rsvdbyts (str-fix str))))
+        (a3 (nth 23
+                 (get-remaining-rsvdbyts (str-fix str))))))))))
 
 (defthm
   count-of-clusters-of-read-reserved-area
@@ -1873,6 +1910,81 @@
       :use (cluster-size-of-read-reserved-area
             count-of-clusters-of-read-reserved-area)))))
 
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-9
+  (implies
+   (<
+    (len
+     (explode
+      (read-file-into-string2
+       image-path 16
+       (+
+        -16
+        (*
+         (combine16u
+          (char-code
+           (nth
+            12
+            (explode
+             (read-file-into-string2 image-path 0 16 state))))
+          (char-code
+           (nth
+            11
+            (explode
+             (read-file-into-string2 image-path 0 16 state)))))
+         (combine16u
+          (char-code
+           (nth
+            15
+            (explode
+             (read-file-into-string2 image-path 0 16 state))))
+          (char-code
+           (nth 14
+                (explode (read-file-into-string2
+                          image-path 0 16 state)))))))
+       state)))
+    (+
+     -16
+     (*
+      (combine16u
+       (char-code
+        (nth
+         12
+         (explode
+          (read-file-into-string2 image-path 0 16 state))))
+       (char-code
+        (nth
+         11
+         (explode
+          (read-file-into-string2 image-path 0 16 state)))))
+      (combine16u
+       (char-code
+        (nth
+         15
+         (explode
+          (read-file-into-string2 image-path 0 16 state))))
+       (char-code
+        (nth
+         14
+         (explode
+          (read-file-into-string2 image-path 0 16 state))))))))
+   (equal
+    (read-reserved-area
+     fat32-in-memory
+     (read-file-into-string2 image-path 0 nil state))
+    (mv
+     (update-bpb_bytspersec
+      512
+      (update-bpb_fatsz32
+       1
+       (update-bpb_numfats
+        1
+        (update-bpb_rsvdseccnt 1
+                               (update-bpb_secperclus 1 fat32-in-memory)))))
+     -1)))
+  :rule-classes :linear
+  :hints (("goal" :in-theory (enable get-initial-bytes))))
+
 (defun
     disk-image-to-fat32-in-memory
     (fat32-in-memory image-path state)
@@ -1884,7 +1996,7 @@
     (("goal"
       :do-not-induct t
       :in-theory (e/d
-                  (string-to-fat32-in-memory fat-entry-count)
+                  (string-to-fat32-in-memory)
                   (read-reserved-area string-append read-file-into-string2))))
     :guard-debug t
     :stobjs (fat32-in-memory state)))
