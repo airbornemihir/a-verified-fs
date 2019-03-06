@@ -77,6 +77,12 @@
                   (bpb_fatsz32 fat32-in-memory))))
          (bpb_secperclus fat32-in-memory)))
 
+(defthm
+  count-of-clusters-of-resize-fat
+  (equal (count-of-clusters (resize-fat i fat32-in-memory))
+         (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
 (defund cluster-p (cluster cluster-size)
   (declare (xargs :guard t))
   (and (stringp cluster)
@@ -1185,6 +1191,7 @@
         (cluster-size
          (mv-nth 0
                  (read-reserved-area fat32-in-memory str))))
+    :rule-classes :linear
     :hints
     (("goal"
       :in-theory (e/d (cluster-size)
@@ -1192,6 +1199,19 @@
                        bpb_secperclus-of-read-reserved-area))
       :use (bpb_bytspersec-of-read-reserved-area
             bpb_secperclus-of-read-reserved-area)))))
+
+(defthm
+  count-of-clusters-of-read-reserved-area
+  (implies
+   (equal (mv-nth 1
+                  (read-reserved-area fat32-in-memory str))
+          0)
+   (<= *ms-fat32-min-count-of-clusters*
+       (count-of-clusters
+        (mv-nth 0
+                (read-reserved-area fat32-in-memory str)))))
+  :rule-classes :linear
+  :hints (("goal" :in-theory (enable count-of-clusters))))
 
 (encapsulate
   ()
@@ -1822,6 +1842,37 @@
                  (read-file-into-string2 image-path 0 nil state))))))
      state))))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top"
+                       :dir :system))
+
+  (defthm
+    disk-image-to-fat32-in-memory-guard-lemma-8
+    (implies
+     (equal (mv-nth 1
+                    (read-reserved-area fat32-in-memory str))
+            0)
+     (<=
+      (* *ms-min-bytes-per-sector*
+         *ms-fat32-min-count-of-clusters*)
+      (*
+       (cluster-size
+        (mv-nth 0
+                (read-reserved-area fat32-in-memory str)))
+       (count-of-clusters
+        (mv-nth 0
+                (read-reserved-area fat32-in-memory str))))))
+    :rule-classes :linear
+    :hints
+    (("goal"
+      :in-theory (disable cluster-size-of-read-reserved-area
+                          count-of-clusters-of-read-reserved-area
+                          read-reserved-area)
+      :use (cluster-size-of-read-reserved-area
+            count-of-clusters-of-read-reserved-area)))))
+
 (defun
     disk-image-to-fat32-in-memory
     (fat32-in-memory image-path state)
@@ -1833,7 +1884,7 @@
     (("goal"
       :do-not-induct t
       :in-theory (e/d
-                  (string-to-fat32-in-memory count-of-clusters fat-entry-count)
+                  (string-to-fat32-in-memory fat-entry-count)
                   (read-reserved-area string-append read-file-into-string2))))
     :guard-debug t
     :stobjs (fat32-in-memory state)))
