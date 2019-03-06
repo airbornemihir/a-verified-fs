@@ -895,24 +895,24 @@
   read-reserved-area-correctness-1
   (implies
    (and (>= (length str) *initialbytcnt*)
-        (>= (combine16u (char-code (char str 12))
-                        (char-code (char str 11)))
+        (>= (combine16u (char-code (nth 12 (explode str)))
+                        (char-code (nth 11 (explode str))))
             512)
-        (>= (combine16u (char-code (char str 15))
-                        (char-code (char str 14)))
+        (>= (combine16u (char-code (nth 15 (explode str)))
+                        (char-code (nth 14 (explode str))))
             1)
-        (<= (* (combine16u (char-code (char str 15))
-                           (char-code (char str 14)))
-               (combine16u (char-code (char str 12))
-                           (char-code (char str 11))))
+        (<= (* (combine16u (char-code (nth 15 (explode str)))
+                           (char-code (nth 14 (explode str))))
+               (combine16u (char-code (nth 12 (explode str)))
+                           (char-code (nth 11 (explode str)))))
             (length str)))
    (equal
     (read-reserved-area fat32-in-memory
                         (subseq str 0
-                                (* (combine16u (char-code (char str 15))
-                                               (char-code (char str 14)))
-                                   (combine16u (char-code (char str 12))
-                                               (char-code (char str 11))))))
+                                (* (combine16u (char-code (nth 15 (explode str)))
+                                               (char-code (nth 14 (explode str))))
+                                   (combine16u (char-code (nth 12 (explode str)))
+                                               (char-code (nth 11 (explode str)))))))
     (read-reserved-area fat32-in-memory str)))
   :hints
   (("goal"
@@ -1533,17 +1533,30 @@
                        (char-code (nth 11 (explode str))))
            512))
    (equal
-    (mv-nth 0
-            (read-reserved-area fat32-in-memory str))
-    (update-bpb_bytspersec
-     512
-     (update-bpb_fatsz32
-      1
-      (update-bpb_numfats
+    (read-reserved-area fat32-in-memory str)
+    (mv
+     (update-bpb_bytspersec
+      512
+      (update-bpb_fatsz32
        1
-       (update-bpb_rsvdseccnt 1
-                              (update-bpb_secperclus 1 fat32-in-memory)))))))
+       (update-bpb_numfats
+        1
+        (update-bpb_rsvdseccnt
+         1
+         (update-bpb_secperclus 1 fat32-in-memory)))))
+     -1)))
   :hints (("goal" :in-theory (enable get-initial-bytes))))
+
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-5
+  (implies
+   (and (natp n) (< n *initialbytcnt*))
+   (equal
+    (nth
+     n
+     (explode (read-file-into-string2 image-path 0 *initialbytcnt* state)))
+    (nth n
+         (explode (read-file-into-string2 image-path 0 nil state))))))
 
 (defun
     disk-image-to-fat32-in-memory
