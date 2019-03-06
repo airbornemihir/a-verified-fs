@@ -1550,13 +1550,56 @@
 (defthm
   disk-image-to-fat32-in-memory-guard-lemma-5
   (implies
-   (and (natp n) (< n *initialbytcnt*))
+   (and
+    (>= (length (read-file-into-string2 image-path 0 nil state))
+        *initialbytcnt*)
+    (>=
+     (combine16u
+      (char-code
+       (nth 12
+            (explode (read-file-into-string2 image-path 0 nil state))))
+      (char-code
+       (nth 11
+            (explode (read-file-into-string2 image-path 0 nil state)))))
+     512)
+    (>=
+     (combine16u
+      (char-code
+       (nth 15
+            (explode (read-file-into-string2 image-path 0 nil state))))
+      (char-code
+       (nth 14
+            (explode (read-file-into-string2 image-path 0 nil state)))))
+     1))
    (equal
-    (nth
-     n
-     (explode (read-file-into-string2 image-path 0 *initialbytcnt* state)))
-    (nth n
-         (explode (read-file-into-string2 image-path 0 nil state))))))
+    (read-reserved-area
+     fat32-in-memory
+     (read-file-into-string2
+      image-path 0
+      (*
+       (combine16u
+        (char-code
+         (nth 12
+              (explode (read-file-into-string2 image-path 0 16 state))))
+        (char-code
+         (nth 11
+              (explode (read-file-into-string2 image-path 0 16 state)))))
+       (combine16u
+        (char-code
+         (nth 15
+              (explode (read-file-into-string2 image-path 0 16 state))))
+        (char-code
+         (nth 14
+              (explode (read-file-into-string2 image-path 0 16 state))))))
+      state))
+    (read-reserved-area fat32-in-memory
+                        (read-file-into-string2 image-path 0 nil state))))
+  :hints
+  (("goal"
+    :in-theory (e/d nil
+                    (read-reserved-area read-reserved-area-correctness-1))
+    :use (:instance read-reserved-area-correctness-1
+                    (str (read-file-into-string2 image-path 0 nil state))))))
 
 (defun
     disk-image-to-fat32-in-memory
