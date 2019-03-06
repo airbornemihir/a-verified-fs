@@ -1176,6 +1176,26 @@
 (encapsulate
   ()
 
+  (local (include-book "rtl/rel9/arithmetic/top"
+                       :dir :system))
+
+  (defthm
+    cluster-size-of-read-reserved-area
+    (<= *ms-min-bytes-per-sector*
+        (cluster-size
+         (mv-nth 0
+                 (read-reserved-area fat32-in-memory str))))
+    :hints
+    (("goal"
+      :in-theory (e/d (cluster-size)
+                      (bpb_bytspersec-of-read-reserved-area
+                       bpb_secperclus-of-read-reserved-area))
+      :use (bpb_bytspersec-of-read-reserved-area
+            bpb_secperclus-of-read-reserved-area)))))
+
+(encapsulate
+  ()
+
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
@@ -1557,19 +1577,19 @@
      (combine16u
       (char-code
        (nth 12
-            (explode (read-file-into-string2 image-path 0 nil state))))
+            (explode (read-file-into-string2 image-path 0 *initialbytcnt* state))))
       (char-code
        (nth 11
-            (explode (read-file-into-string2 image-path 0 nil state)))))
+            (explode (read-file-into-string2 image-path 0 *initialbytcnt* state)))))
      512)
     (>=
      (combine16u
       (char-code
        (nth 15
-            (explode (read-file-into-string2 image-path 0 nil state))))
+            (explode (read-file-into-string2 image-path 0 *initialbytcnt* state))))
       (char-code
        (nth 14
-            (explode (read-file-into-string2 image-path 0 nil state)))))
+            (explode (read-file-into-string2 image-path 0 *initialbytcnt* state)))))
      1))
    (equal
     (read-reserved-area
@@ -1600,6 +1620,207 @@
                     (read-reserved-area read-reserved-area-correctness-1))
     :use (:instance read-reserved-area-correctness-1
                     (str (read-file-into-string2 image-path 0 nil state))))))
+
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-6
+  (implies
+   (and
+    (<=
+     (+
+      -16
+      (*
+       (combine16u
+        (char-code
+         (nth 12
+              (explode (read-file-into-string2 image-path 0 16 state))))
+        (char-code
+         (nth 11
+              (explode (read-file-into-string2 image-path 0 16 state)))))
+       (combine16u
+        (char-code
+         (nth 15
+              (explode (read-file-into-string2 image-path 0 16 state))))
+        (char-code
+         (nth 14
+              (explode (read-file-into-string2 image-path 0 16 state)))))))
+     (len
+      (explode
+       (read-file-into-string2
+        image-path 16
+        (+
+         -16
+         (*
+          (combine16u
+           (char-code
+            (nth 12
+                 (explode (read-file-into-string2 image-path 0 16 state))))
+           (char-code
+            (nth 11
+                 (explode (read-file-into-string2 image-path 0 16 state)))))
+          (combine16u
+           (char-code
+            (nth 15
+                 (explode (read-file-into-string2 image-path 0 16 state))))
+           (char-code
+            (nth 14
+                 (explode (read-file-into-string2 image-path 0 16 state)))))))
+        state))))
+    (<=
+     (*
+      4
+      (floor
+       (*
+        (bpb_bytspersec
+         (mv-nth 0
+                 (read-reserved-area
+                  fat32-in-memory
+                  (read-file-into-string2 image-path 0 nil state))))
+        (bpb_fatsz32
+         (mv-nth 0
+                 (read-reserved-area
+                  fat32-in-memory
+                  (read-file-into-string2 image-path 0 nil state)))))
+       4))
+     0))
+   (stringp
+    (read-file-into-string2
+     image-path
+     (*
+      (combine16u
+       (char-code
+        (nth 12
+             (explode (read-file-into-string2 image-path 0 16 state))))
+       (char-code
+        (nth 11
+             (explode (read-file-into-string2 image-path 0 16 state)))))
+      (combine16u
+       (char-code
+        (nth 15
+             (explode (read-file-into-string2 image-path 0 16 state))))
+       (char-code
+        (nth 14
+             (explode (read-file-into-string2 image-path 0 16 state))))))
+     (*
+      4
+      (floor
+       (*
+        (bpb_bytspersec
+         (mv-nth 0
+                 (read-reserved-area
+                  fat32-in-memory
+                  (read-file-into-string2 image-path 0 nil state))))
+        (bpb_fatsz32
+         (mv-nth 0
+                 (read-reserved-area
+                  fat32-in-memory
+                  (read-file-into-string2 image-path 0 nil state)))))
+       4))
+     state))))
+
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-7
+  (implies
+   (and
+    (equal
+     (mv-nth
+      1
+      (read-reserved-area fat32-in-memory
+                          (read-file-into-string2 image-path 0 nil state)))
+     0)
+    (not
+     (integerp
+      (*
+       1/4
+       (bpb_bytspersec
+        (mv-nth 0
+                (read-reserved-area
+                 fat32-in-memory
+                 (read-file-into-string2 image-path 0 nil state))))
+       (bpb_fatsz32
+        (mv-nth 0
+                (read-reserved-area
+                 fat32-in-memory
+                 (read-file-into-string2 image-path 0 nil state)))))))
+    (integerp
+     (*
+      (bpb_fatsz32
+       (mv-nth
+        0
+        (read-reserved-area fat32-in-memory
+                            (read-file-into-string2 image-path 0 nil state))))
+      1/4
+      (bpb_bytspersec
+       (mv-nth 0
+               (read-reserved-area
+                fat32-in-memory
+                (read-file-into-string2 image-path 0 nil state)))))))
+   (stringp
+    (read-file-into-string2
+     image-path
+     (+
+      (* (bpb_bytspersec
+          (mv-nth 0
+                  (read-reserved-area
+                   fat32-in-memory
+                   (read-file-into-string2 image-path 0 nil state))))
+         (bpb_rsvdseccnt
+          (mv-nth 0
+                  (read-reserved-area
+                   fat32-in-memory
+                   (read-file-into-string2 image-path 0 nil state)))))
+      (*
+       (bpb_bytspersec
+        (mv-nth 0
+                (read-reserved-area
+                 fat32-in-memory
+                 (read-file-into-string2 image-path 0 nil state))))
+       (bpb_fatsz32
+        (mv-nth 0
+                (read-reserved-area
+                 fat32-in-memory
+                 (read-file-into-string2 image-path 0 nil state))))
+       (bpb_numfats
+        (mv-nth 0
+                (read-reserved-area
+                 fat32-in-memory
+                 (read-file-into-string2 image-path 0 nil state))))))
+     (*
+      (cluster-size
+       (mv-nth
+        0
+        (read-reserved-area fat32-in-memory
+                            (read-file-into-string2 image-path 0 nil state))))
+      (floor
+       (+
+        (-
+         (bpb_rsvdseccnt
+          (mv-nth 0
+                  (read-reserved-area
+                   fat32-in-memory
+                   (read-file-into-string2 image-path 0 nil state)))))
+        (bpb_totsec32
+         (mv-nth 0
+                 (read-reserved-area
+                  fat32-in-memory
+                  (read-file-into-string2 image-path 0 nil state))))
+        (-
+         (*
+          (bpb_fatsz32
+           (mv-nth 0
+                   (read-reserved-area
+                    fat32-in-memory
+                    (read-file-into-string2 image-path 0 nil state))))
+          (bpb_numfats
+           (mv-nth 0
+                   (read-reserved-area
+                    fat32-in-memory
+                    (read-file-into-string2 image-path 0 nil state)))))))
+       (bpb_secperclus
+        (mv-nth 0
+                (read-reserved-area
+                 fat32-in-memory
+                 (read-file-into-string2 image-path 0 nil state))))))
+     state))))
 
 (defun
     disk-image-to-fat32-in-memory
