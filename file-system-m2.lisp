@@ -639,24 +639,8 @@
                   (fat32-in-memoryp fat32-in-memory))
       :guard-hints
       (("goal"
-        :do-not-induct t
         :in-theory (e/d (cluster-size)
-                        (unsigned-byte-p nth)))
-       ("subgoal 7" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-listp)
-        :use ((:instance
-               unsigned-byte-p-of-nth-when-unsigned-byte-listp
-               (n 13)
-               (l (get-initial-bytes str))
-               (bits 8))
-              (:instance unsigned-byte-p-forward-to-nonnegative-integerp
-                         (n bits)
-                         (x (nth 13 (get-initial-bytes str))))))
-       ("subgoal 6" :in-theory (disable unsigned-byte-p-of-nth-when-unsigned-byte-listp)
-        :use (:instance
-              unsigned-byte-p-of-nth-when-unsigned-byte-listp
-              (n 0)
-              (l (get-remaining-rsvdbyts str))
-              (bits 8))))
+                        (unsigned-byte-p nth))))
       :stobjs (fat32-in-memory)))
     (b*
         (;; We want to do this unconditionally, in order to prove a strong linear
@@ -1311,37 +1295,76 @@
 (defthm
   consecutive-read-file-into-string-1
   (implies
-   (and (natp bytes1)
-        (natp bytes2)
-        (natp start1)
-        (stringp (read-file-into-string2 filename (+ start1 bytes1)
-                                         bytes2 state))
-        (<= (+ bytes1 bytes2 start1)
-            (len (explode (read-file-into-string2 filename (+ start1 bytes1)
-                                                  bytes2 state)))))
-   (equal (string-append (read-file-into-string2 filename start1 bytes1 state)
-                         (read-file-into-string2 filename (+ start1 bytes1)
-                                                 bytes2 state))
-          (read-file-into-string2 filename start1 (+ bytes1 bytes2)
-                                  state)))
-  :hints (("goal" :in-theory (e/d (take-of-nthcdr) nil)))
+   (and
+    (natp bytes1)
+    (natp bytes2)
+    (natp start1)
+    (stringp (read-file-into-string2 filename (+ start1 bytes1)
+                                     bytes2 state))
+    (<=
+     bytes2
+     (len
+      (explode
+       (read-file-into-string2 filename (+ start1 bytes1)
+                               bytes2 state)))))
+   (equal
+    (string-append
+     (read-file-into-string2 filename start1 bytes1 state)
+     (read-file-into-string2 filename (+ start1 bytes1)
+                             bytes2 state))
+    (read-file-into-string2 filename start1 (+ bytes1 bytes2)
+                            state)))
+  :hints
+  (("goal"
+    :in-theory (e/d (take-of-nthcdr)
+                    (binary-append-take-nthcdr))
+    :use
+    ((:theorem (implies (natp bytes1)
+                        (equal (+ bytes1 bytes1 (- bytes1)
+                                  bytes2 start1)
+                               (+ bytes1 bytes2 start1))))
+     (:instance
+      binary-append-take-nthcdr (i bytes1)
+      (l
+       (nthcdr
+        start1
+        (take
+         (+ bytes1 bytes2 start1)
+         (explode
+          (mv-nth
+           0
+           (read-file-into-string1
+            (mv-nth 0
+                    (open-input-channel filename
+                                        :character state))
+            (mv-nth 1
+                    (open-input-channel filename
+                                        :character state))
+            nil 1152921504606846975))))))))))
   :rule-classes
   ((:rewrite
     :corollary
     (implies
-     (and (natp bytes1)
-          (natp bytes2)
-          (natp start1)
-          (stringp (read-file-into-string2 filename (+ start1 bytes1)
-                                           bytes2 state))
-          (<= (+ bytes1 bytes2 start1)
-              (len (explode (read-file-into-string2 filename (+ start1 bytes1)
-                                                    bytes2 state))))
-          (equal start2 (+ start1 bytes1)))
-     (equal (string-append (read-file-into-string2 filename start1 bytes1 state)
-                           (read-file-into-string2 filename start2 bytes2 state))
-            (read-file-into-string2 filename start1 (+ bytes1 bytes2)
-                                    state))))))
+     (and
+      (natp bytes1)
+      (natp bytes2)
+      (natp start1)
+      (stringp
+       (read-file-into-string2 filename (+ start1 bytes1)
+                               bytes2 state))
+      (<=
+       bytes2
+       (len
+        (explode
+         (read-file-into-string2 filename (+ start1 bytes1)
+                                 bytes2 state))))
+      (equal start2 (+ start1 bytes1)))
+     (equal
+      (string-append
+       (read-file-into-string2 filename start1 bytes1 state)
+       (read-file-into-string2 filename start2 bytes2 state))
+      (read-file-into-string2 filename start1 (+ bytes1 bytes2)
+                              state))))))
 
 (defthm
   consecutive-read-file-into-string-2
@@ -1485,9 +1508,46 @@
             (not (< (len (explode (read-file-into-string2 image-path 0 nil state)))
                     *initialbytcnt*)))))
 
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-3
+  (equal
+   (read-reserved-area
+    (update-bpb_bytspersec
+     512
+     (update-bpb_fatsz32
+      1
+      (update-bpb_numfats
+       1
+       (update-bpb_rsvdseccnt
+        1
+        (update-bpb_secperclus 1 fat32-in-memory)))))
+    str)
+   (read-reserved-area fat32-in-memory str)))
+
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-4
+  (implies
+   (and (stringp str)
+        (<= *initialbytcnt* (len (explode str)))
+        (< (combine16u (char-code (nth 12 (explode str)))
+                       (char-code (nth 11 (explode str))))
+           512))
+   (equal
+    (mv-nth 0
+            (read-reserved-area fat32-in-memory str))
+    (update-bpb_bytspersec
+     512
+     (update-bpb_fatsz32
+      1
+      (update-bpb_numfats
+       1
+       (update-bpb_rsvdseccnt 1
+                              (update-bpb_secperclus 1 fat32-in-memory)))))))
+  :hints (("goal" :in-theory (enable get-initial-bytes))))
+
 (defun
-  disk-image-to-fat32-in-memory
-  (fat32-in-memory image-path state)
+    disk-image-to-fat32-in-memory
+    (fat32-in-memory image-path state)
   (declare
    (xargs
     :guard (and (stringp image-path)
@@ -1495,7 +1555,9 @@
     :guard-hints
     (("goal"
       :do-not-induct t
-      :in-theory (disable read-reserved-area string-append read-file-into-string2)))
+      :in-theory (e/d
+                  (string-to-fat32-in-memory count-of-clusters fat-entry-count)
+                  (read-reserved-area string-append read-file-into-string2))))
     :guard-debug t
     :stobjs (fat32-in-memory state)))
   (mbe
@@ -1511,11 +1573,89 @@
         ((unless (and (stringp initial-bytes-str)
                       (>= (length initial-bytes-str) *initialbytcnt*)))
          (mv fat32-in-memory -1))
-        (remaining-bytes-str (read-file-into-string image-path :start
-                                                    *initialbytcnt*)))
-     (string-to-fat32-in-memory
-      fat32-in-memory
-      (concatenate 'string initial-bytes-str remaining-bytes-str)))))
+        (fat32-in-memory
+         (update-bpb_secperclus 1
+                                fat32-in-memory))
+        (fat32-in-memory
+         (update-bpb_rsvdseccnt 1
+                                fat32-in-memory))
+        (fat32-in-memory
+         (update-bpb_numfats 1
+                             fat32-in-memory))
+        (fat32-in-memory
+         (update-bpb_fatsz32 1
+                             fat32-in-memory))
+        (fat32-in-memory
+         (update-bpb_bytspersec 512
+                                fat32-in-memory))
+        (tmp_bytspersec (combine16u (char-code (char initial-bytes-str 12))
+                                    (char-code (char initial-bytes-str 11))))
+        (tmp_rsvdseccnt (combine16u (char-code (char initial-bytes-str 15))
+                                    (char-code (char initial-bytes-str 14))))
+        (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec))
+        ((unless (and (>= tmp_bytspersec 512)
+                      (>= tmp_rsvdseccnt 1)
+                      (>= tmp_rsvdbytcnt *initialbytcnt*)))
+         (mv fat32-in-memory -1))
+        (remaining-rsvdbyts-str
+         (read-file-into-string image-path :start *initialbytcnt*
+                                :bytes (- tmp_rsvdbytcnt *initialbytcnt*)))
+        ((unless (and
+                  (stringp remaining-rsvdbyts-str)
+                  (>= (length remaining-rsvdbyts-str)
+                      (- tmp_rsvdbytcnt *initialbytcnt*))))
+         (mv fat32-in-memory -1))
+        ((mv fat32-in-memory error-code)
+         (read-reserved-area
+          fat32-in-memory
+          (string-append initial-bytes-str remaining-rsvdbyts-str)))
+        (fat-read-size (fat-entry-count fat32-in-memory))
+        ((unless (integerp
+                  (/ (* (bpb_fatsz32 fat32-in-memory)
+                        (bpb_bytspersec fat32-in-memory))
+                     4)))
+         (mv fat32-in-memory -1))
+        (data-byte-count (* (count-of-clusters fat32-in-memory)
+                            (cluster-size fat32-in-memory)))
+        ((unless (> data-byte-count 0))
+         (mv fat32-in-memory -1))
+        (tmp_bytspersec (bpb_bytspersec fat32-in-memory))
+        (tmp_init (* tmp_bytspersec
+                     (+ (bpb_rsvdseccnt fat32-in-memory)
+                        (* (bpb_numfats fat32-in-memory)
+                           (bpb_fatsz32 fat32-in-memory)))))
+        (fat32-in-memory
+         (resize-fat fat-read-size fat32-in-memory))
+        (fat-string
+         (read-file-into-string image-path :start tmp_rsvdbytcnt
+                                :bytes (* fat-read-size 4)))
+        ((unless (and
+                  (<= (* fat-read-size 4)
+                      (length fat-string))
+                  (unsigned-byte-p 48 fat-read-size)))
+         (mv fat32-in-memory -1))
+        (fat32-in-memory
+         (update-fat
+          fat32-in-memory
+          fat-string
+          fat-read-size))
+        (fat32-in-memory
+         (resize-data-region (count-of-clusters fat32-in-memory) fat32-in-memory))
+        (data-region-string
+         (read-file-into-string image-path
+                                :start tmp_init
+                                :bytes data-byte-count))
+        ((unless
+             (and (<= (data-region-length fat32-in-memory)
+                      (- *ms-bad-cluster* *ms-first-data-cluster*))
+                  (>= (length data-region-string)
+                      data-byte-count)))
+         (mv fat32-in-memory -1))
+        (fat32-in-memory
+         (time$
+          (update-data-region fat32-in-memory data-region-string
+                              (data-region-length fat32-in-memory)))))
+     (mv fat32-in-memory error-code))))
 
 (defund
   get-clusterchain
