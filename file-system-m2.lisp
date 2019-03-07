@@ -64,6 +64,18 @@
                            (nfix (cluster-size fat32-in-memory))
                            (cluster-size fat32-in-memory))))))
 
+(defthm
+  cluster-size-of-resize-data-region
+  (equal (cluster-size (resize-data-region i fat32-in-memory))
+         (cluster-size fat32-in-memory))
+  :hints (("goal" :in-theory (enable cluster-size))))
+
+(defthm
+  cluster-size-of-resize-fat
+  (equal (cluster-size (resize-fat i fat32-in-memory))
+         (cluster-size fat32-in-memory))
+  :hints (("goal" :in-theory (enable cluster-size))))
+
 (defund
   count-of-clusters (fat32-in-memory)
   (declare
@@ -1082,6 +1094,12 @@
           (update-fat fat32-in-memory str pos))
          (count-of-clusters fat32-in-memory))
   :hints (("Goal" :in-theory (enable count-of-clusters)) ))
+
+(defthm cluster-size-of-update-fat
+  (equal (cluster-size
+          (update-fat fat32-in-memory str pos))
+         (cluster-size fat32-in-memory))
+  :hints (("Goal" :in-theory (enable cluster-size)) ))
 
 (defthm
   bpb_secperclus-of-read-reserved-area
@@ -2376,7 +2394,140 @@
     :hints
     (("goal"
       :in-theory (enable count-of-clusters cluster-size
-                         fat-entry-count get-initial-bytes)))))
+                         fat-entry-count get-initial-bytes))))
+
+  (defthm
+    disk-image-to-fat32-in-memory-guard-lemma-28
+    (integerp
+     (+
+      (*
+       (bpb_bytspersec
+        (mv-nth
+         0
+         (read-reserved-area fat32-in-memory
+                             str)))
+       (bpb_rsvdseccnt
+        (mv-nth
+         0
+         (read-reserved-area fat32-in-memory
+                             str))))
+      (-
+       (*
+        (bpb_bytspersec
+         (mv-nth
+          0
+          (read-reserved-area fat32-in-memory
+                              str)))
+        (bpb_rsvdseccnt
+         (mv-nth 0
+                 (read-reserved-area
+                  fat32-in-memory
+                  str)))))
+      (*
+       (cluster-size
+        (mv-nth
+         0
+         (read-reserved-area fat32-in-memory
+                             str)))
+       (count-of-clusters
+        (mv-nth 0
+                (read-reserved-area
+                 fat32-in-memory
+                 str))))))
+    :hints
+    (("goal" :in-theory (enable cluster-size count-of-clusters get-initial-bytes)) ))
+
+  (defthm
+    disk-image-to-fat32-in-memory-guard-lemma-29
+    (equal
+     (+
+      (*
+       (bpb_bytspersec
+        (mv-nth
+         0
+         (read-reserved-area fat32-in-memory
+                             str)))
+       (bpb_rsvdseccnt
+        (mv-nth
+         0
+         (read-reserved-area fat32-in-memory
+                             str))))
+      (-
+       (*
+        (bpb_bytspersec
+         (mv-nth
+          0
+          (read-reserved-area fat32-in-memory
+                              str)))
+        (bpb_rsvdseccnt
+         (mv-nth 0
+                 (read-reserved-area
+                  fat32-in-memory
+                  str)))))
+      (*
+       (cluster-size
+        (mv-nth
+         0
+         (read-reserved-area fat32-in-memory
+                             str)))
+       (count-of-clusters
+        (mv-nth 0
+                (read-reserved-area
+                 fat32-in-memory
+                 str)))))
+     (*
+      (count-of-clusters
+       (mv-nth
+        0
+        (read-reserved-area fat32-in-memory
+                            str)))
+      (cluster-size
+       (resize-data-region
+        (count-of-clusters
+         (mv-nth
+          0
+          (read-reserved-area fat32-in-memory
+                              str)))
+        (update-fat
+         (resize-fat
+          (fat-entry-count
+           (mv-nth 0
+                   (read-reserved-area
+                    fat32-in-memory
+                    str)))
+          (mv-nth 0
+                  (read-reserved-area
+                   fat32-in-memory
+                   str)))
+         (implode
+          (take
+           (*
+            4
+            (fat-entry-count
+             (mv-nth 0
+                     (read-reserved-area
+                      fat32-in-memory
+                      str))))
+           (nthcdr
+            (*
+             (bpb_bytspersec
+              (mv-nth 0
+                      (read-reserved-area
+                       fat32-in-memory
+                       str)))
+             (bpb_rsvdseccnt
+              (mv-nth 0
+                      (read-reserved-area
+                       fat32-in-memory
+                       str))))
+            (explode str))))
+         (fat-entry-count
+          (mv-nth 0
+                  (read-reserved-area
+                   fat32-in-memory
+                   str))))))))
+    :hints
+    (("goal" :in-theory (enable cluster-size count-of-clusters get-initial-bytes)) )))
 
 (defthm
   disk-image-to-fat32-in-memory-guard-lemma-9
