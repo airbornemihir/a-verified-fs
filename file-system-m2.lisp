@@ -1205,11 +1205,30 @@
 
   (defthm
     cluster-size-of-read-reserved-area
-    (<= *ms-min-bytes-per-sector*
-        (cluster-size
+    (natp
+    (- (cluster-size
          (mv-nth 0
-                 (read-reserved-area fat32-in-memory str))))
-    :rule-classes :linear
+                 (read-reserved-area fat32-in-memory str)))
+       *ms-min-bytes-per-sector*))
+    :rule-classes
+    ((:linear
+      :corollary
+      (<= *ms-min-bytes-per-sector*
+          (cluster-size
+           (mv-nth 0
+                   (read-reserved-area fat32-in-memory str)))))
+     (:rewrite
+      :corollary
+      (integerp
+       (cluster-size
+        (mv-nth 0
+                (read-reserved-area fat32-in-memory str)))))
+     (:type-prescription
+      :corollary
+      (natp
+       (cluster-size
+        (mv-nth 0
+                (read-reserved-area fat32-in-memory str))))))
     :hints
     (("goal"
       :in-theory (e/d (cluster-size)
@@ -1261,11 +1280,36 @@
    (equal (mv-nth 1
                   (read-reserved-area fat32-in-memory str))
           0)
-   (<= *ms-fat32-min-count-of-clusters*
-       (count-of-clusters
-        (mv-nth 0
-                (read-reserved-area fat32-in-memory str)))))
-  :rule-classes :linear
+   (and
+    (<= *ms-fat32-min-count-of-clusters*
+        (count-of-clusters
+         (mv-nth 0
+                 (read-reserved-area fat32-in-memory str))))
+    (integerp
+     (count-of-clusters
+      (mv-nth 0
+              (read-reserved-area fat32-in-memory str))))))
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies
+     (equal (mv-nth 1
+                    (read-reserved-area fat32-in-memory str))
+            0)
+     (<= *ms-fat32-min-count-of-clusters*
+         (count-of-clusters
+          (mv-nth 0
+                  (read-reserved-area fat32-in-memory str))))))
+   (:rewrite
+    :corollary
+    (implies
+     (equal (mv-nth 1
+                    (read-reserved-area fat32-in-memory str))
+            0)
+     (integerp
+      (count-of-clusters
+       (mv-nth 0
+               (read-reserved-area fat32-in-memory str)))))))
   :hints (("goal" :in-theory (enable count-of-clusters))))
 
 (encapsulate
