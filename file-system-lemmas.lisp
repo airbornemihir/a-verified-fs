@@ -776,3 +776,25 @@
   (equal (nthcdr a (nthcdr b x))
          (nthcdr (+ (nfix a) (nfix b)) x))
   :hints(("goal" :induct (nthcdr b x))))
+
+(defthm
+  take-of-make-character-list
+  (implies (and (<= n (len l)))
+           (equal (take n (make-character-list l))
+                  (make-character-list (take n l))))
+  :hints
+  (("goal"
+    :in-theory (disable first-n-ac-of-make-character-list)
+    :use (:instance first-n-ac-of-make-character-list (i n)
+                    (ac nil)))))
+
+(defthm last-of-member-equal
+  (equal (last (member-equal x lst))
+         (if (member-equal x lst)
+             (last lst)
+             nil)))
+
+(defthm acl2-count-of-member-equal
+  (<= (acl2-count (member-equal x lst))
+      (acl2-count lst))
+  :rule-classes :linear)
