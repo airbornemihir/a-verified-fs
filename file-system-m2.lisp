@@ -648,7 +648,7 @@
      :hints (("Goal" :in-theory (enable nth)) )))
 
   ;; This must be called after the file is opened.
-  (defun
+  (defund
       read-reserved-area (fat32-in-memory str)
     (declare
      (xargs
@@ -1114,7 +1114,7 @@
   :hints
     (("goal"
       :do-not-induct t
-      :in-theory (disable subseq)))
+      :in-theory (e/d (read-reserved-area) (subseq))))
   :rule-classes
   ((:linear
     :corollary
@@ -1124,7 +1124,7 @@
                  (read-reserved-area fat32-in-memory str))))
     :hints
     (("goal" :do-not-induct t
-      :in-theory (disable subseq))))
+      :in-theory (e/d (read-reserved-area) (subseq)))))
    (:rewrite
     :corollary
     (implies
@@ -1136,7 +1136,7 @@
     :hints
     (("goal"
       :do-not-induct t
-      :in-theory (disable subseq))))))
+      :in-theory (e/d (read-reserved-area) (subseq)))))))
 
 (defthm
   bpb_rsvdseccnt-of-read-reserved-area
@@ -1147,7 +1147,7 @@
         (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t
-           :in-theory (disable subseq))))
+           :in-theory (e/d (read-reserved-area) (subseq)))))
 
 (defthm
   bpb_numfats-of-read-reserved-area
@@ -1158,7 +1158,7 @@
         (read-reserved-area fat32-in-memory str))))
   :rule-classes :linear
   :hints (("goal" :do-not-induct t
-           :in-theory (disable subseq))))
+           :in-theory (e/d (read-reserved-area) (subseq)))))
 
 (defthm
   bpb_fatsz32-of-read-reserved-area
@@ -1170,7 +1170,7 @@
   :rule-classes
   :linear
   :hints (("goal" :do-not-induct t
-           :in-theory (disable subseq))))
+           :in-theory (e/d (read-reserved-area) (subseq)))))
 
 (defthm
   bpb_bytspersec-of-read-reserved-area
@@ -1187,7 +1187,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable subseq unsigned-byte-p)
+    :in-theory (e/d (read-reserved-area) (subseq unsigned-byte-p))
     :use
     ((:instance
       (:theorem (implies (unsigned-byte-p 16 x)
@@ -1231,7 +1231,7 @@
                 (read-reserved-area fat32-in-memory str))))))
     :hints
     (("goal"
-      :in-theory (e/d (cluster-size)
+      :in-theory (e/d (cluster-size read-reserved-area)
                       (bpb_bytspersec-of-read-reserved-area
                        bpb_secperclus-of-read-reserved-area))
       :use (bpb_bytspersec-of-read-reserved-area
@@ -1255,7 +1255,7 @@
     :rule-classes :linear
     :hints
     (("goal"
-      :in-theory (e/d (fat-entry-count)
+      :in-theory (e/d (fat-entry-count read-reserved-area)
                       ((:rewrite combine16u-unsigned-byte)
                        (:rewrite combine32u-unsigned-byte)))
       :use
@@ -1310,7 +1310,7 @@
       (count-of-clusters
        (mv-nth 0
                (read-reserved-area fat32-in-memory str)))))))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
+  :hints (("goal" :in-theory (enable count-of-clusters read-reserved-area))))
 
 (encapsulate
   ()
@@ -1323,7 +1323,8 @@
                   (stringp str))
              (fat32-in-memoryp
               (mv-nth 0
-                      (read-reserved-area fat32-in-memory str)))))
+                      (read-reserved-area fat32-in-memory str))))
+    :hints (("Goal" :in-theory (enable read-reserved-area)) ))
 
   (defund
     string-to-fat32-in-memory
@@ -1337,8 +1338,7 @@
       :guard-hints
       (("goal"
         :do-not-induct t
-        :in-theory (e/d (cluster-size count-of-clusters)
-                        (read-reserved-area))))
+        :in-theory (enable cluster-size count-of-clusters)))
       :stobjs fat32-in-memory))
     (b*
         (((mv fat32-in-memory error-code)
