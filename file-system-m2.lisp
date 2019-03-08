@@ -942,20 +942,6 @@
     :use (read-reserved-area-correctness-1-lemma-1
           read-reserved-area-correctness-1-lemma-2))))
 
-(defthm
-  read-fat-guard-lemma-1
-  (implies
-   (and (state-p1 state)
-        (symbolp channel)
-        (open-input-channel-p1 channel
-                               :byte state)
-        (not (equal (mv-nth 0 (read-32ule-n n channel state))
-                    'fail)))
-   (unsigned-byte-listp
-    32
-    (mv-nth 0 (read-32ule-n n channel state))))
-  :hints (("goal" :in-theory (disable unsigned-byte-p))))
-
 (encapsulate
   ()
 
@@ -970,33 +956,39 @@
                   (natp len)
                   (<= len
                       (data-region-length fat32-in-memory))
-                  (equal (length str)
-                         (* (data-region-length fat32-in-memory)
-                            (cluster-size fat32-in-memory)))
+                  (>= (length str)
+                      (* (- (data-region-length fat32-in-memory)
+                            len)
+                         (cluster-size fat32-in-memory)))
                   (<= len
                       (- *ms-bad-cluster*
                          *ms-first-data-cluster*)))
-      :guard-hints
-      (("goal" :in-theory (e/d nil (fat32-in-memoryp))))
-      :stobjs fat32-in-memory))
+      :stobjs fat32-in-memory
+      :measure (nfix len)))
     (b*
-        ((len (the (unsigned-byte 28) len)))
+        ((len (the (unsigned-byte 28) len))
+         ((when (zp len)) (mv fat32-in-memory 0))
+         (cluster-size (cluster-size fat32-in-memory))
+         (index (- (data-region-length fat32-in-memory)
+                   len)))
       (if
-       (zp len)
-       fat32-in-memory
+       (<= (* (+ index 1) cluster-size)
+           (length str))
        (b*
-           ((cluster-size (cluster-size fat32-in-memory))
-            (index (- (data-region-length fat32-in-memory)
-                      len))
-            (current-cluster
-             (subseq str (* index cluster-size)
-                     (* (+ index 1) cluster-size)))
+           ((current-cluster (subseq str (* index cluster-size)
+                                     (* (+ index 1) cluster-size)))
             (fat32-in-memory
              (update-data-regioni
               index current-cluster fat32-in-memory)))
          (update-data-region
-          fat32-in-memory str
-          (the (unsigned-byte 28) (- len 1))))))))
+          fat32-in-memory
+          str (the (unsigned-byte 28) (- len 1))))
+       (b*
+           ((current-cluster (subseq str (* index cluster-size) nil))
+            (fat32-in-memory
+             (update-data-regioni
+              index current-cluster fat32-in-memory)))
+         (mv fat32-in-memory *eio*))))))
 
 (defthm
   count-of-clusters-of-update-data-regioni
