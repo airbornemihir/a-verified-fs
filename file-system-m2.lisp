@@ -3142,11 +3142,18 @@
           fat-string
           fat-read-size))
         (fat32-in-memory
-         (resize-data-region (count-of-clusters fat32-in-memory) fat32-in-memory))
-        (&
-         (read-file-into-string image-path
-                                :start (+ tmp_rsvdbytcnt (* fat-read-size 4))
-                                :bytes (- tmp_init (+ tmp_rsvdbytcnt (* fat-read-size 4)))))
+         (resize-data-region (count-of-clusters fat32-in-memory)
+                             fat32-in-memory))
+        ((unless
+             (>=
+              (length
+               (read-file-into-string image-path
+                                      :start (+ tmp_rsvdbytcnt (* fat-read-size 4))
+                                      :bytes (- tmp_init (+ tmp_rsvdbytcnt (*
+                                                                            fat-read-size 4)))))
+              (- tmp_init (+ tmp_rsvdbytcnt (*
+                                             fat-read-size 4)))))
+         (mv fat32-in-memory -1))
         (data-region-string
          (read-file-into-string image-path
                                 :start tmp_init
