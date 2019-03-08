@@ -1005,8 +1005,8 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defun
-    update-data-region-from-disk-image
-    (fat32-in-memory len state tmp_init image-path)
+      update-data-region-from-disk-image
+      (fat32-in-memory len state tmp_init image-path)
     (declare
      (xargs
       :guard
@@ -1046,7 +1046,40 @@
            fat32-in-memory
            (the (unsigned-byte 28) (- len 1))
            state tmp_init image-path)
-          (mv fat32-in-memory *eio*)))))
+        (mv fat32-in-memory *eio*)))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    update-data-region-from-disk-image-correctness-1
+    (implies
+     (and (natp tmp_init)
+          (<= len
+              (data-region-length fat32-in-memory))
+          (>= (length (read-file-into-string image-path))
+              (+ tmp_init
+                 (* (- (data-region-length fat32-in-memory)
+                       len)
+                    (cluster-size fat32-in-memory))))
+          (not (zp (cluster-size fat32-in-memory))))
+     (equal (update-data-region-from-disk-image fat32-in-memory
+                                                len state tmp_init image-path)
+            (update-data-region fat32-in-memory
+                                (subseq (read-file-into-string image-path)
+                                        tmp_init nil)
+                                len)))
+    :hints
+    (("goal"
+      :induct (update-data-region-from-disk-image fat32-in-memory
+                                                  len state tmp_init image-path)
+      :in-theory (e/d (take-of-nthcdr nthcdr-when->=-n-len-l
+                                      by-slice-you-mean-the-whole-cake-2)
+                      nil)
+      :expand (:free (fat32-in-memory str)
+                     (update-data-region fat32-in-memory str len))))))
 
 (defun
   update-fat (fat32-in-memory str pos)
