@@ -9310,7 +9310,7 @@
           painful-debugging-lemma-5
           by-slice-you-mean-the-whole-cake-2
           fat32-in-memory-to-string-inversion-lemma-51
-          cluster-size)
+          cluster-size read-reserved-area)
          (loghead logtail
                   compliant-fat32-in-memoryp-correctness-1))
     :use compliant-fat32-in-memoryp-correctness-1)))
@@ -10051,6 +10051,7 @@
     :in-theory
     (e/d (string-to-fat32-in-memory count-of-clusters
                                     cluster-size fat-entry-count
+                                    read-reserved-area
                                     compliant-fat32-in-memoryp
                                     painful-debugging-lemma-1
                                     painful-debugging-lemma-2
