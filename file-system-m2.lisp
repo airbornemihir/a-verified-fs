@@ -989,9 +989,8 @@
             (index (- (data-region-length fat32-in-memory)
                       len))
             (current-cluster
-             (time$
-              (subseq str (* index cluster-size)
-                      (* (+ index 1) cluster-size))))
+             (subseq str (* index cluster-size)
+                     (* (+ index 1) cluster-size)))
             (fat32-in-memory
              (update-data-regioni
               index current-cluster fat32-in-memory)))
@@ -3482,8 +3481,8 @@
                     nil 1152921504606846975))))))))))))
 
 (defun
-    disk-image-to-fat32-in-memory
-    (fat32-in-memory image-path state)
+  disk-image-to-fat32-in-memory
+  (fat32-in-memory image-path state)
   (declare
    (xargs
     :guard (and (stringp image-path)
@@ -3491,72 +3490,79 @@
     :guard-hints
     (("goal"
       :do-not-induct t
-      :in-theory (e/d
-                  (string-to-fat32-in-memory)
-                  (string-append
-                   read-file-into-string2
-                   (:REWRITE STR::EXPLODE-WHEN-NOT-STRINGP)
-                   (:DEFINITION UPDATE-FAT)
-                   (:REWRITE NTH-OF-MAKE-CHARACTER-LIST)
-                   (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1)))))
+      :in-theory
+      (e/d (string-to-fat32-in-memory)
+           (string-append
+            read-file-into-string2
+            ;; The following came from accumulated-persistence results.
+            (:rewrite str::explode-when-not-stringp)
+            (:definition update-fat)
+            (:rewrite nth-of-make-character-list)
+            (:rewrite fat32-filename-p-correctness-1)))))
     :guard-debug t
     :stobjs (fat32-in-memory state)))
+  ;; The idea behind this MBE is that slurping in the whole string at once is
+  ;; causing inefficiencies in terms of memory allocated for all these subseq
+  ;; operations. For instance, for one disk image of size 64 MB with 69441
+  ;; clusters, each subseq operation allocated 4,112 bytes and the whole
+  ;; update-data-region operation allocated 496,573,872 bytes. This is several
+  ;; times the size of the disk, and is probably the reason why we can't
+  ;; execute for disks of size 300 MB or more.
   (mbe
-   :logic
-   (b* ((str (read-file-into-string image-path))
-        ((unless (and (stringp str)
-                      (>= (length str) *initialbytcnt*)))
-         (mv fat32-in-memory -1)))
-     (string-to-fat32-in-memory fat32-in-memory str))
+   ;; It's a good idea to keep the spec simple.
+   :logic (b* ((str (read-file-into-string image-path))
+               ((unless (and (stringp str)
+                             (>= (length str) *initialbytcnt*)))
+                (mv fat32-in-memory -1)))
+            (string-to-fat32-in-memory fat32-in-memory str))
+   ;; This b* form pretty closely follows the structure of
+   ;; string-to-fat32-in-memory.
    :exec
-   (b* ((initial-bytes-str (read-file-into-string image-path :bytes
-                                                  *initialbytcnt*))
+   (b*
+       ((initial-bytes-str
+         (read-file-into-string image-path
+                                :bytes *initialbytcnt*))
         ((unless (and (stringp initial-bytes-str)
-                      (>= (length initial-bytes-str) *initialbytcnt*)))
+                      (>= (length initial-bytes-str)
+                          *initialbytcnt*)))
          (mv fat32-in-memory -1))
+        (fat32-in-memory (update-bpb_secperclus 1 fat32-in-memory))
+        (fat32-in-memory (update-bpb_rsvdseccnt 1 fat32-in-memory))
+        (fat32-in-memory (update-bpb_numfats 1 fat32-in-memory))
+        (fat32-in-memory (update-bpb_fatsz32 1 fat32-in-memory))
         (fat32-in-memory
-         (update-bpb_secperclus 1
-                                fat32-in-memory))
-        (fat32-in-memory
-         (update-bpb_rsvdseccnt 1
-                                fat32-in-memory))
-        (fat32-in-memory
-         (update-bpb_numfats 1
-                             fat32-in-memory))
-        (fat32-in-memory
-         (update-bpb_fatsz32 1
-                             fat32-in-memory))
-        (fat32-in-memory
-         (update-bpb_bytspersec 512
-                                fat32-in-memory))
-        (tmp_bytspersec (combine16u (char-code (char initial-bytes-str 12))
-                                    (char-code (char initial-bytes-str 11))))
-        (tmp_rsvdseccnt (combine16u (char-code (char initial-bytes-str 15))
-                                    (char-code (char initial-bytes-str 14))))
+         (update-bpb_bytspersec 512 fat32-in-memory))
+        (tmp_bytspersec
+         (combine16u (char-code (char initial-bytes-str 12))
+                     (char-code (char initial-bytes-str 11))))
+        (tmp_rsvdseccnt
+         (combine16u (char-code (char initial-bytes-str 15))
+                     (char-code (char initial-bytes-str 14))))
         (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec))
         ((unless (and (>= tmp_bytspersec 512)
                       (>= tmp_rsvdseccnt 1)
                       (>= tmp_rsvdbytcnt *initialbytcnt*)))
          (mv fat32-in-memory -1))
         (remaining-rsvdbyts-str
-         (read-file-into-string image-path :start *initialbytcnt*
-                                :bytes (- tmp_rsvdbytcnt *initialbytcnt*)))
-        ((unless (and
-                  (stringp remaining-rsvdbyts-str)
-                  (>= (length remaining-rsvdbyts-str)
-                      (- tmp_rsvdbytcnt *initialbytcnt*))))
+         (read-file-into-string
+          image-path
+          :start *initialbytcnt*
+          :bytes (- tmp_rsvdbytcnt *initialbytcnt*)))
+        ((unless (and (stringp remaining-rsvdbyts-str)
+                      (>= (length remaining-rsvdbyts-str)
+                          (- tmp_rsvdbytcnt *initialbytcnt*))))
          (mv fat32-in-memory -1))
         ((mv fat32-in-memory error-code)
          (read-reserved-area
           fat32-in-memory
-          (string-append initial-bytes-str remaining-rsvdbyts-str)))
+          (string-append initial-bytes-str
+                         remaining-rsvdbyts-str)))
         ((unless (equal error-code 0))
          (mv fat32-in-memory error-code))
         (fat-read-size (fat-entry-count fat32-in-memory))
-        ((unless (integerp
-                  (/ (* (bpb_fatsz32 fat32-in-memory)
-                        (bpb_bytspersec fat32-in-memory))
-                     4)))
+        ((unless (integerp (/ (* (bpb_fatsz32 fat32-in-memory)
+                                 (bpb_bytspersec fat32-in-memory))
+                              4)))
          (mv fat32-in-memory -1))
         (data-byte-count (* (count-of-clusters fat32-in-memory)
                             (cluster-size fat32-in-memory)))
@@ -3570,45 +3576,50 @@
         (fat32-in-memory
          (resize-fat fat-read-size fat32-in-memory))
         (fat-string
-         (read-file-into-string image-path :start tmp_rsvdbytcnt
+         (read-file-into-string image-path
+                                :start tmp_rsvdbytcnt
                                 :bytes (* fat-read-size 4)))
-        ((unless (and
-                  (<= (* fat-read-size 4)
-                      (length fat-string))
-                  (unsigned-byte-p 48 fat-read-size)))
+        ((unless (and (<= (* fat-read-size 4)
+                          (length fat-string))
+                      (unsigned-byte-p 48 fat-read-size)))
          (mv fat32-in-memory -1))
-        (fat32-in-memory
-         (update-fat
-          fat32-in-memory
-          fat-string
-          fat-read-size))
+        (fat32-in-memory (update-fat fat32-in-memory
+                                     fat-string fat-read-size))
         (fat32-in-memory
          (resize-data-region (count-of-clusters fat32-in-memory)
                              fat32-in-memory))
+        ;; This test doesn't accomplish much other than getting the extra
+        ;; copies of the file allocation table out of the way.
         ((unless
-             (>=
-              (length
-               (read-file-into-string image-path
-                                      :start (+ tmp_rsvdbytcnt (* fat-read-size 4))
-                                      :bytes (- tmp_init (+ tmp_rsvdbytcnt (*
-                                                                            fat-read-size 4)))))
-              (- tmp_init (+ tmp_rsvdbytcnt (*
-                                             fat-read-size 4)))))
+          (>=
+           (length
+            (read-file-into-string
+             image-path
+             :start (+ tmp_rsvdbytcnt (* fat-read-size 4))
+             :bytes (- tmp_init
+                       (+ tmp_rsvdbytcnt (* fat-read-size 4)))))
+           (- tmp_init
+              (+ tmp_rsvdbytcnt (* fat-read-size 4)))))
          (mv fat32-in-memory -1))
         (data-region-string
          (read-file-into-string image-path
                                 :start tmp_init
                                 :bytes data-byte-count))
-        ((unless
-             (and (<= (data-region-length fat32-in-memory)
-                      (- *ms-bad-cluster* *ms-first-data-cluster*))
-                  (>= (length data-region-string)
-                      data-byte-count)))
+        ((unless (and (<= (data-region-length fat32-in-memory)
+                          (- *ms-bad-cluster*
+                             *ms-first-data-cluster*))
+                      (>= (length data-region-string)
+                          data-byte-count)))
          (mv fat32-in-memory -1))
+        ;; This is the form we would like to replace with something which
+        ;; slurps one cluster at a time. However, this will require the
+        ;; definition of update-data-region to be updated to match the result
+        ;; for our desired cluster-by-cluster execution when we run out of data
+        ;; in the middle of an execution.
         (fat32-in-memory
-         (time$
-          (update-data-region fat32-in-memory data-region-string
-                              (data-region-length fat32-in-memory)))))
+         (time$ (update-data-region
+                 fat32-in-memory data-region-string
+                 (data-region-length fat32-in-memory)))))
      (mv fat32-in-memory error-code))))
 
 (defund
