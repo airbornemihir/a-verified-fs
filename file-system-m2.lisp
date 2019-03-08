@@ -988,21 +988,50 @@
             (fat32-in-memory
              (update-data-regioni
               index current-cluster fat32-in-memory)))
-         (mv fat32-in-memory *eio*))))))
-
-(defthm
-  count-of-clusters-of-update-data-regioni
-  (equal
-   (count-of-clusters (update-data-regioni i v fat32-in-memory))
-   (count-of-clusters fat32-in-memory))
-  :hints
-  (("goal"
-    :in-theory (enable count-of-clusters))))
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+         (mv fat32-in-memory *eio*)))))
+  (defun
+      update-data-region-from-disk-image
+      (fat32-in-memory len state tmp_init image-path)
+    (declare
+     (xargs
+      :guard
+      (and (natp tmp_init)
+           (stringp image-path)
+           (stringp (read-file-into-string image-path))
+           (natp len)
+           (<= len
+               (data-region-length fat32-in-memory))
+           (>= (length (read-file-into-string image-path))
+               (+ tmp_init
+                  (* (- (data-region-length fat32-in-memory)
+                        len)
+                     (cluster-size fat32-in-memory))))
+           (<= len
+               (- *ms-bad-cluster*
+                  *ms-first-data-cluster*)))
+      :stobjs (fat32-in-memory state)
+      :measure (nfix len)))
+    (b*
+        ((len (the (unsigned-byte 28) len))
+         ((when (zp len)) (mv fat32-in-memory 0))
+         (cluster-size (cluster-size fat32-in-memory))
+         (index (- (data-region-length fat32-in-memory)
+                   len))
+         (fat32-in-memory
+          (update-data-regioni
+           index
+           (read-file-into-string
+            image-path
+            :start (+ tmp_init (* index cluster-size))
+            :bytes cluster-size)
+           fat32-in-memory)))
+      (if (equal (length (data-regioni index fat32-in-memory))
+                 cluster-size)
+          (update-data-region-from-disk-image
+           fat32-in-memory
+           (the (unsigned-byte 28) (- len 1))
+           state tmp_init image-path)
+        (mv fat32-in-memory *eio*))))
 
   (defun
       update-data-region-from-disk-image
@@ -1046,12 +1075,7 @@
            fat32-in-memory
            (the (unsigned-byte 28) (- len 1))
            state tmp_init image-path)
-        (mv fat32-in-memory *eio*)))))
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+        (mv fat32-in-memory *eio*))))
 
   (defthm
     update-data-region-from-disk-image-correctness-1
@@ -1080,6 +1104,15 @@
                       nil)
       :expand (:free (fat32-in-memory str)
                      (update-data-region fat32-in-memory str len))))))
+
+(defthm
+  count-of-clusters-of-update-data-regioni
+  (equal
+   (count-of-clusters (update-data-regioni i v fat32-in-memory))
+   (count-of-clusters fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable count-of-clusters))))
 
 (defun
   update-fat (fat32-in-memory str pos)
