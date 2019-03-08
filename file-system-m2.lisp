@@ -1011,7 +1011,10 @@
                 (<= len
                     (data-region-length fat32-in-memory))
                 (>= (length (read-file-into-string image-path))
-                    tmp_init)
+                    (+ tmp_init
+                       (* (- (data-region-length fat32-in-memory)
+                             len)
+                          (cluster-size fat32-in-memory))))
                 (<= len
                     (- *ms-bad-cluster*
                        *ms-first-data-cluster*)))
@@ -1026,7 +1029,7 @@
         (update-data-regioni
          index
          (read-file-into-string image-path
-                                :start tmp_init
+                                :start (+ tmp_init (* index cluster-size))
                                 :bytes cluster-size)
          fat32-in-memory)))
     (if (equal (length (data-regioni index fat32-in-memory))
@@ -1034,9 +1037,48 @@
         (update-data-region-from-disk-image
          fat32-in-memory
          (the (unsigned-byte 28) (- len 1))
-         state (+ tmp_init cluster-size)
+         state tmp_init
          image-path)
         (mv fat32-in-memory *eio*))))
+
+(local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+(defthm
+  update-data-region-from-disk-image-correctness-1
+  (implies
+   (and (natp tmp_init)
+        (stringp image-path)
+        (stringp (read-file-into-string image-path))
+        (natp len)
+        (<= len
+            (data-region-length fat32-in-memory))
+        (>= (length (read-file-into-string image-path))
+            tmp_init)
+        (<= len
+            (- *ms-bad-cluster*
+               *ms-first-data-cluster*))
+        (not (zp (cluster-size fat32-in-memory))))
+   (equal
+    (update-data-region-from-disk-image
+     fat32-in-memory len state tmp_init image-path)
+    (update-data-region
+     fat32-in-memory
+     (subseq
+      (read-file-into-string image-path)
+      tmp_init
+      (+ tmp_init (* len (cluster-size fat32-in-memory))))
+     len)))
+  :hints
+  (("Goal"
+    :in-theory (e/d (take-of-nthcdr nthcdr-when->=-n-len-l)
+                    (read-file-into-string2))
+    :induct
+    (update-data-region-from-disk-image fat32-in-memory
+                                        len state tmp_init image-path)
+    :expand
+    (:free
+     (fat32-in-memory str)
+     (update-data-region fat32-in-memory str len))) ))
 
 (defun
   update-fat (fat32-in-memory str pos)
