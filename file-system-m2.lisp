@@ -3089,6 +3089,18 @@
                                                 :character state))
                     nil 1152921504606846975))))))))))))
 
+(defthm
+  disk-image-to-fat32-in-memory-guard-lemma-21
+  (implies
+   (<= 16
+       (len (explode (read-file-into-string2 image-path 0 nil state))))
+   (and
+    (< 12
+       (len (explode (read-file-into-string2 image-path 0 16 state))))
+    (< 15
+       (len (explode (read-file-into-string2 image-path 0 16 state))))))
+  :rule-classes :linear)
+
 (defun
     disk-image-to-fat32-in-memory
     (fat32-in-memory image-path state)
