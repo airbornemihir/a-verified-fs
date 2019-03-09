@@ -1178,7 +1178,9 @@
         len))
    (cluster-listp
     (nth *data-regioni*
-         (update-data-region fat32-in-memory str len))
+         (mv-nth
+          0
+          (update-data-region fat32-in-memory str len)))
     (cluster-size fat32-in-memory)))
   :hints (("goal" :use update-data-region-alt))
   :rule-classes
@@ -1205,7 +1207,9 @@
      (cluster-listp
       (true-list-fix
        (nth *data-regioni*
-            (update-data-region fat32-in-memory str len)))
+            (mv-nth
+             0
+             (update-data-region fat32-in-memory str len))))
       cluster-size))
     :hints
     (("goal"
@@ -5859,8 +5863,8 @@
   :hints (("Goal" :in-theory (enable make-fat-string-ac))))
 
 (defun
-  data-region-string-helper
-  (fat32-in-memory len ac)
+    data-region-string-helper
+    (fat32-in-memory len ac)
   (declare
    (xargs
     :stobjs (fat32-in-memory)
@@ -5872,18 +5876,18 @@
     :guard-hints
     (("goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2)))))
   (if
-   (zp len)
-   (mbe :exec ac
-        :logic (make-character-list ac))
-   (data-region-string-helper
-    fat32-in-memory (- len 1)
-    (append
-     (mbe :exec (coerce (data-regioni (- len 1) fat32-in-memory)
-                        'list)
-          :logic (take (cluster-size fat32-in-memory)
-                       (coerce (data-regioni (- len 1) fat32-in-memory)
-                               'list)))
-            ac))))
+      (zp len)
+      (mbe :exec ac
+           :logic (make-character-list ac))
+    (data-region-string-helper
+     fat32-in-memory (- len 1)
+     (append
+      (mbe :exec (coerce (data-regioni (- len 1) fat32-in-memory)
+                         'list)
+           :logic (take (cluster-size fat32-in-memory)
+                        (coerce (data-regioni (- len 1) fat32-in-memory)
+                                'list)))
+      ac))))
 
 (defthm
   character-listp-of-data-region-string-helper
@@ -5909,6 +5913,47 @@
    (+ (len ac)
       (* (nfix len)
          (nfix (cluster-size fat32-in-memory))))))
+
+;; Later
+;; (thm
+;;  (implies
+;;   (and (natp len)
+;;        (compliant-fat32-in-memoryp fat32-in-memory)
+;;        (<= len
+;;            (data-region-length fat32-in-memory))
+;;        (character-listp ac))
+;;   (equal
+;;    (make-clusters
+;;     (implode
+;;      (data-region-string-helper
+;;       fat32-in-memory len ac))
+;;     (cluster-size fat32-in-memory))
+;;    (append
+;;     (take
+;;      len
+;;      (nth *data-regioni* fat32-in-memory))
+;;     (make-clusters
+;;      (implode ac)
+;;      (cluster-size fat32-in-memory)))))
+;;  :hints (("Goal" :in-theory (enable make-clusters remember-that-time-with-update-nth
+;;                                     append-of-take-and-cons)
+;;           :induct
+;;           (data-region-string-helper fat32-in-memory len ac))
+;;          ("Subgoal *1/2.2"
+;;           :expand
+;;           (make-clusters
+;;            (implode (append (take (cluster-size fat32-in-memory)
+;;                                   (explode (data-regioni (+ -1 len)
+;;                                                          fat32-in-memory)))
+;;                             ac))
+;;            (cluster-size fat32-in-memory))
+;;           :use
+;;           (:theorem
+;;            (equal
+;;             (+ (CLUSTER-SIZE FAT32-IN-MEMORY)
+;;                (- (CLUSTER-SIZE FAT32-IN-MEMORY))
+;;                (LEN AC))
+;;             (len ac))))))
 
 (defun
     princ$-data-region-string-helper
@@ -8657,46 +8702,57 @@
               (* 4 (fat-length fat32-in-memory))
               (* (bpb_numfats fat32-in-memory)
                  4 (fat-length fat32-in-memory))))
+    :rule-classes :linear)
+
+  (defthm fat32-in-memory-to-string-inversion-lemma-32
+    (implies (and (not (zp len))
+                  (< (* (cluster-size fat32-in-memory)
+                        (count-of-clusters fat32-in-memory))
+                     (+ (cluster-size fat32-in-memory)
+                        (* (cluster-size fat32-in-memory)
+                           (count-of-clusters fat32-in-memory))
+                        (* (cluster-size fat32-in-memory)
+                           (- len))))
+                  (compliant-fat32-in-memoryp fat32-in-memory))
+             (< (count-of-clusters fat32-in-memory)
+                len))
     :rule-classes :linear))
 
-;; (defthm
-;;   fat32-in-memory-to-string-inversion-lemma-28
-;;   (implies
-;;    (and (compliant-fat32-in-memoryp fat32-in-memory)
-;;         (natp len)
-;;         (<= len
-;;             (data-region-length fat32-in-memory)))
-;;    (equal (update-data-region
-;;            fat32-in-memory
-;;            (implode (data-region-string-helper
-;;                      fat32-in-memory
-;;                      (count-of-clusters fat32-in-memory)
-;;                      nil))
-;;            len)
-;;           fat32-in-memory))
-;;   :hints
-;;   (("goal" :in-theory (disable data-region-string-helper))
-;;    ("subgoal *1/6"
-;;     :in-theory
-;;     (disable
-;;      (:rewrite fat32-in-memory-to-string-inversion-lemma-27))
-;;     :use
-;;     (:instance
-;;      (:rewrite fat32-in-memory-to-string-inversion-lemma-27)
-;;      (ac nil)
-;;      (len (count-of-clusters fat32-in-memory))
-;;      (index (+ (count-of-clusters fat32-in-memory)
-;;                (- len)))
-;;      (fat32-in-memory fat32-in-memory)))
-;;    ("subgoal *1/2"
-;;     :in-theory
-;;     (disable fat32-in-memory-to-string-inversion-lemma-27)
-;;     :use
-;;     (:instance fat32-in-memory-to-string-inversion-lemma-27
-;;                (index (- (count-of-clusters fat32-in-memory)
-;;                          len))
-;;                (len (count-of-clusters fat32-in-memory))
-;;                (ac nil)))))
+(defthm
+  fat32-in-memory-to-string-inversion-lemma-28
+  (implies
+   (and (compliant-fat32-in-memoryp fat32-in-memory)
+        (natp len)
+        (<= len
+            (data-region-length fat32-in-memory)))
+   (equal (update-data-region
+           fat32-in-memory
+           (implode (data-region-string-helper
+                     fat32-in-memory
+                     (count-of-clusters fat32-in-memory)
+                     nil))
+           len)
+          (mv
+           fat32-in-memory
+           0)))
+  :hints
+  (("goal" :in-theory (disable data-region-string-helper)
+    :induct
+    (update-data-region
+     fat32-in-memory
+     (implode (data-region-string-helper fat32-in-memory
+                                         (count-of-clusters fat32-in-memory)
+                                         nil))
+     len))
+   ("subgoal *1/2"
+    :in-theory
+    (disable fat32-in-memory-to-string-inversion-lemma-27)
+    :use
+    (:instance fat32-in-memory-to-string-inversion-lemma-27
+               (index (- (count-of-clusters fat32-in-memory)
+                         len))
+               (len (count-of-clusters fat32-in-memory))
+               (ac nil)))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-33
@@ -9253,7 +9309,7 @@
           painful-debugging-lemma-5
           by-slice-you-mean-the-whole-cake-2
           fat32-in-memory-to-string-inversion-lemma-51
-          cluster-size read-reserved-area)
+          cluster-size read-reserved-area update-data-region-alt)
          (loghead logtail
                   compliant-fat32-in-memoryp-correctness-1))
     :use compliant-fat32-in-memoryp-correctness-1)))
