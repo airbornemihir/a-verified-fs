@@ -2115,7 +2115,7 @@
       fat32-in-memory
       (read-file-into-string2 image-path 0 nil state)))
     0)
-   (>=
+   (equal
     (len
      (explode
       (read-file-into-string2
@@ -2151,8 +2151,7 @@
         (read-reserved-area
          fat32-in-memory
          (read-file-into-string2 image-path 0 nil state))))))))
-  :hints (("goal" :in-theory (enable read-reserved-area)))
-  :rule-classes :linear)
+  :hints (("goal" :in-theory (enable read-reserved-area))))
 
 (defthm
   disk-image-to-fat32-in-memory-guard-lemma-11
