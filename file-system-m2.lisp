@@ -1037,51 +1037,110 @@
   (("goal"
     :in-theory (enable count-of-clusters))))
 
-(defthmd
-  update-data-region-alt
+(defthm
+  fat32-in-memoryp-of-update-data-regioni
   (implies
-   (and (stringp str)
-        (natp len)
-        (>= (data-region-length fat32-in-memory)
-            len)
-        (fat32-in-memoryp fat32-in-memory)
-        (< 0 (cluster-size fat32-in-memory))
-        (>= (length str)
-            (* (data-region-length fat32-in-memory)
-               (cluster-size fat32-in-memory)))
-        (equal
-         (mv-nth
-          1
-          (update-data-region fat32-in-memory str len))
-         0))
+   (fat32-in-memoryp fat32-in-memory)
    (equal
-    (mv-nth
-     0
-     (update-data-region fat32-in-memory str len))
-    (update-nth
-     *data-regioni*
-     (append
-      (take (- (data-region-length fat32-in-memory)
-               len)
-            (nth *data-regioni* fat32-in-memory))
-      (make-clusters
-       (subseq str
-               (* (- (data-region-length fat32-in-memory)
-                     len)
-                  (cluster-size fat32-in-memory))
-               (* (data-region-length fat32-in-memory)
-                  (cluster-size fat32-in-memory)))
-       (cluster-size fat32-in-memory)))
-     fat32-in-memory)))
+    (fat32-in-memoryp (update-data-regioni i v fat32-in-memory))
+    (and (stringp v)
+         (<= (nfix i)
+             (data-region-length fat32-in-memory)))))
   :hints
   (("goal"
-    :in-theory
-    (e/d (data-region-length make-clusters
-                             remember-that-time-with-update-nth
-                             append-of-take-and-cons
-                             by-slice-you-mean-the-whole-cake-2)
-         (append take take-redefinition))
-    :induct (update-data-region fat32-in-memory str len))))
+    :in-theory (enable fat32-in-memoryp update-data-regioni
+                       data-region-length))))
+
+(defthm
+  fat32-in-memoryp-of-update-data-region
+  (implies (and (fat32-in-memoryp fat32-in-memory)
+                (stringp str))
+           (fat32-in-memoryp
+            (mv-nth 0
+                    (update-data-region fat32-in-memory str len)))))
+
+(encapsulate
+  ()
+  
+  (local
+   (defthm
+     update-data-region-alt-lemma-1
+     (equal (update-nth *data-regioni* val
+                        (update-data-regioni i v fat32-in-memory))
+            (update-nth *data-regioni* val fat32-in-memory))
+     :hints (("goal" :in-theory (enable update-data-regioni)))))
+
+  (local
+   (defthm
+     update-data-region-alt-lemma-2
+     (implies (fat32-in-memoryp fat32-in-memory)
+              (and
+               (true-listp (nth *data-regioni* fat32-in-memory))
+               (equal
+                (update-nth *data-regioni*
+                            (nth *data-regioni* fat32-in-memory)
+                            fat32-in-memory)
+                fat32-in-memory)))
+     :hints (("goal" :in-theory (enable fat32-in-memoryp)))))
+
+  (local
+   (defthm
+     update-data-region-alt-lemma-3
+     (equal
+      (nth *data-regioni*
+           (update-data-regioni i v fat32-in-memory))
+      (update-nth i v
+                  (nth *data-regioni* fat32-in-memory)))
+     :hints (("goal" :in-theory (enable update-data-regioni)) )))
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthmd
+    update-data-region-alt
+    (implies
+     (and (stringp str)
+          (natp len)
+          (>= (data-region-length fat32-in-memory)
+              len)
+          (fat32-in-memoryp fat32-in-memory)
+          (< 0 (cluster-size fat32-in-memory))
+          (>= (length str)
+              (* (data-region-length fat32-in-memory)
+                 (cluster-size fat32-in-memory)))
+          (equal
+           (mv-nth
+            1
+            (update-data-region fat32-in-memory str len))
+           0))
+     (equal
+      (mv-nth
+       0
+       (update-data-region fat32-in-memory str len))
+      (update-nth
+       *data-regioni*
+       (append
+        (take (- (data-region-length fat32-in-memory)
+                 len)
+              (nth *data-regioni* fat32-in-memory))
+        (make-clusters
+         (subseq str
+                 (* (- (data-region-length fat32-in-memory)
+                       len)
+                    (cluster-size fat32-in-memory))
+                 (* (data-region-length fat32-in-memory)
+                    (cluster-size fat32-in-memory)))
+         (cluster-size fat32-in-memory)))
+       fat32-in-memory)))
+    :hints
+    (("goal"
+      :in-theory
+      (e/d (data-region-length make-clusters
+                               remember-that-time-with-update-nth
+                               append-of-take-and-cons
+                               by-slice-you-mean-the-whole-cake-2
+                               take-of-nthcdr)
+           (append take take-redefinition))
+      :induct (update-data-region fat32-in-memory str len)))))
 
 (defthm
   update-data-region-alt-lemma-1
@@ -1161,18 +1220,6 @@
 (encapsulate
   ()
 
-  (local
-   (defthm
-     update-data-region-alt-lemma-5
-     (equal (len (nth *data-regioni*
-                      (update-data-regioni i v fat32-in-memory)))
-            (max (len (nth *data-regioni* fat32-in-memory))
-                 (1+ (nfix i))))
-     :hints
-     (("goal"
-       :in-theory (e/d (data-region-length)
-                       (data-region-length-of-update-data-regioni))
-       :use data-region-length-of-update-data-regioni))))
 
   (local
    (defthm
@@ -1199,37 +1246,6 @@
              fat32-in-memory))))
      :hints (("goal" :in-theory (enable update-data-regioni
                                         fat32-in-memoryp)))))
-
-  (local
-   (defthm
-     update-data-region-alt-lemma-7
-     (equal
-      (nth *data-regioni*
-           (update-data-regioni i v fat32-in-memory))
-      (update-nth i v
-                  (nth *data-regioni* fat32-in-memory)))
-     :hints (("goal" :in-theory (enable update-data-regioni)) )))
-
-  (local
-   (defthm
-     update-data-region-alt-lemma-8
-     (implies (fat32-in-memoryp fat32-in-memory)
-              (and
-               (true-listp (nth *data-regioni* fat32-in-memory))
-               (equal
-                (update-nth *data-regioni*
-                            (nth *data-regioni* fat32-in-memory)
-                            fat32-in-memory)
-                fat32-in-memory)))
-     :hints (("goal" :in-theory (enable fat32-in-memoryp)))))
-
-  (local
-   (defthm
-     update-data-region-alt-lemma-9
-     (equal (update-nth *data-regioni* val
-                        (update-data-regioni i v fat32-in-memory))
-            (update-nth *data-regioni* val fat32-in-memory))
-     :hints (("goal" :in-theory (enable update-data-regioni)))))
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system)))
 
@@ -9354,27 +9370,6 @@
 (defequiv
   disk-image-string-equiv
   :hints (("goal" :in-theory (enable disk-image-string-equiv))))
-
-(defthm
-  fat32-in-memoryp-of-update-data-regioni
-  (implies
-   (fat32-in-memoryp fat32-in-memory)
-   (equal
-    (fat32-in-memoryp (update-data-regioni i v fat32-in-memory))
-    (and (stringp v)
-         (<= (nfix i)
-             (data-region-length fat32-in-memory)))))
-  :hints
-  (("goal"
-    :in-theory (enable fat32-in-memoryp update-data-regioni
-                       data-region-length))))
-
-(defthm
-  fat32-in-memoryp-of-update-data-region
-  (implies (and (fat32-in-memoryp fat32-in-memory)
-                (stringp str))
-           (fat32-in-memoryp
-            (update-data-region fat32-in-memory str len))))
 
 (defthm string-listp-of-repeat
   (implies (stringp x)
