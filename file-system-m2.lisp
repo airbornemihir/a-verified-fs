@@ -9,6 +9,7 @@
 ;; (include-book "m1-dir-equiv")
 (include-book "m1-entry-count")
 (include-book "fat32-in-memory")
+(include-book "cluster-listp")
 (include-book "flatten-lemmas")
 
 ;; These are some lemmas from other books which are interacting badly with the
@@ -94,55 +95,6 @@
   (equal (count-of-clusters (resize-fat i fat32-in-memory))
          (count-of-clusters fat32-in-memory))
   :hints (("goal" :in-theory (enable count-of-clusters))))
-
-(defund cluster-p (cluster cluster-size)
-  (declare (xargs :guard t))
-  (and (stringp cluster)
-       (equal (length cluster) cluster-size)))
-
-(defthm cluster-p-of-implode
-  (iff (cluster-p (implode x) cluster-size)
-       (equal (len x) cluster-size))
-  :hints (("goal" :in-theory (enable cluster-p))))
-
-(defthm
-  cluster-p-correctness-1
-  (implies (not (stringp v))
-           (not (cluster-p v (cluster-size fat32-in-memory))))
-  :hints (("goal" :in-theory (enable cluster-p))))
-
-(defun cluster-listp (l cluster-size)
-  (declare (xargs :guard t))
-  (if
-      (atom l)
-      (equal l nil)
-    (and (cluster-p (car l) cluster-size)
-         (cluster-listp (cdr l) cluster-size))))
-
-(defthm
-  cluster-listp-of-update-nth
-  (implies (cluster-listp l cluster-size)
-           (equal (cluster-listp (update-nth key val l)
-                                 cluster-size)
-                  (and (<= (nfix key) (len l))
-                       (cluster-p val cluster-size))))
-  :hints (("goal" :induct (mv (update-nth key val l)
-                              (cluster-listp l cluster-size))
-           :in-theory (enable cluster-p update-nth))))
-
-(defthm cluster-p-of-nth
-  (implies (cluster-listp l cluster-size)
-           (iff (cluster-p (nth n l) cluster-size)
-                (< (nfix n) (len l))))
-  :hints (("goal" :induct (nth n l)
-           :in-theory (enable cluster-p nth))))
-
-(defthm cluster-listp-of-append
-  (equal (cluster-listp (append x y)
-                        cluster-size)
-         (and (cluster-listp (true-list-fix x)
-                             cluster-size)
-              (cluster-listp y cluster-size))))
 
 (defun
   stobj-cluster-listp-helper
@@ -1085,6 +1037,52 @@
   (("goal"
     :in-theory (enable count-of-clusters))))
 
+(defthmd
+  update-data-region-alt
+  (implies
+   (and (stringp str)
+        (natp len)
+        (>= (data-region-length fat32-in-memory)
+            len)
+        (fat32-in-memoryp fat32-in-memory)
+        (< 0 (cluster-size fat32-in-memory))
+        (>= (length str)
+            (* (data-region-length fat32-in-memory)
+               (cluster-size fat32-in-memory)))
+        (equal
+         (mv-nth
+          1
+          (update-data-region fat32-in-memory str len))
+         0))
+   (equal
+    (mv-nth
+     0
+     (update-data-region fat32-in-memory str len))
+    (update-nth
+     *data-regioni*
+     (append
+      (take (- (data-region-length fat32-in-memory)
+               len)
+            (nth *data-regioni* fat32-in-memory))
+      (make-clusters
+       (subseq str
+               (* (- (data-region-length fat32-in-memory)
+                     len)
+                  (cluster-size fat32-in-memory))
+               (* (data-region-length fat32-in-memory)
+                  (cluster-size fat32-in-memory)))
+       (cluster-size fat32-in-memory)))
+     fat32-in-memory)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (data-region-length make-clusters
+                             remember-that-time-with-update-nth
+                             append-of-take-and-cons
+                             by-slice-you-mean-the-whole-cake-2)
+         (append take take-redefinition))
+    :induct (update-data-region fat32-in-memory str len))))
+
 (defthm
   update-data-region-alt-lemma-1
   (implies
@@ -1233,59 +1231,7 @@
             (update-nth *data-regioni* val fat32-in-memory))
      :hints (("goal" :in-theory (enable update-data-regioni)))))
 
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthmd
-    update-data-region-alt
-    (implies
-     (and (stringp str)
-          (natp len)
-          (>= (data-region-length fat32-in-memory)
-              len)
-          (fat32-in-memoryp fat32-in-memory)
-          (< 0 (cluster-size fat32-in-memory))
-          (equal (length str)
-                 (* (data-region-length fat32-in-memory)
-                    (cluster-size fat32-in-memory))))
-     (equal
-      (update-data-region fat32-in-memory str len)
-      (update-nth
-       *data-regioni*
-       (append
-        (take (- (data-region-length fat32-in-memory)
-                 len)
-              (nth *data-regioni* fat32-in-memory))
-        (make-clusters
-         (subseq str
-                 (* (- (data-region-length fat32-in-memory)
-                       len)
-                    (cluster-size fat32-in-memory))
-                 (* (data-region-length fat32-in-memory)
-                    (cluster-size fat32-in-memory)))
-         (cluster-size fat32-in-memory)))
-       fat32-in-memory)))
-    :hints
-    (("goal"
-      :in-theory
-      (e/d (data-region-length make-clusters
-                               remember-that-time-with-update-nth
-                               append-of-take-and-cons
-                               by-slice-you-mean-the-whole-cake-2)
-           (append take take-redefinition))
-      :induct (update-data-region fat32-in-memory str len)
-      :expand
-      ((make-clusters
-        (implode
-         (nthcdr (+ (len (explode str))
-                    (* -1 (cluster-size fat32-in-memory)))
-                 (explode str)))
-        (cluster-size fat32-in-memory))
-       (make-clusters
-        (implode
-         (nthcdr (+ (len (explode str))
-                    (* -1 len (cluster-size fat32-in-memory)))
-                 (explode str)))
-        (cluster-size fat32-in-memory)))))))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system)))
 
 (defthm
   cluster-listp-after-update-data-region
@@ -4633,112 +4579,6 @@
                      fat32-in-memory index-list value-list))
    (max-entry-count fat32-in-memory))
   :hints (("goal" :in-theory (enable max-entry-count))))
-
-(defund
-  make-clusters (text cluster-size)
-  (declare
-   (xargs :guard (and (stringp text) (natp cluster-size))
-          :measure (length text)))
-  (if
-      (or (zp (length text))
-          (zp cluster-size))
-      nil
-    (list*
-     (concatenate
-      'string
-      (subseq text 0 (min cluster-size (length text)))
-      (coerce (make-list (nfix (- cluster-size (length text)))
-                         :initial-element (code-char 0))
-              'string))
-     (make-clusters
-      (subseq text (min cluster-size (length text))
-              nil)
-      cluster-size))))
-
-(defthm
-  make-clusters-correctness-1
-  (iff (consp (make-clusters text cluster-size))
-       (and (not (zp (length text)))
-            (not (zp cluster-size))))
-  :hints (("goal" :in-theory (enable make-clusters)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (iff (equal (len (make-clusters text cluster-size))
-                0)
-         (or (zp (length text)) (zp cluster-size)))
-    :hints
-    (("goal"
-      :expand (len (make-clusters text cluster-size)))))))
-
-(defthm
-  cluster-listp-of-make-clusters
-  (implies (stringp text)
-           (cluster-listp (make-clusters text cluster-size)
-                          cluster-size))
-  :hints
-  (("goal"
-    :in-theory (enable cluster-listp
-                       make-clusters make-list-ac-removal)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (stringp text)
-     (let ((l (make-clusters text cluster-size)))
-          (implies (consp l)
-                   (and (cluster-p (car l) cluster-size)
-                        (cluster-listp (cdr l)
-                                       cluster-size))))))))
-
-(defthm
-  make-clusters-correctness-2
-  (implies (not (zp cluster-size))
-           (and (>= (* cluster-size
-                       (len (make-clusters text cluster-size)))
-                    (length text))
-                (< (* cluster-size
-                      (len (make-clusters text cluster-size)))
-                   (+ cluster-size (length text)))))
-  :rule-classes :linear
-  :hints (("goal" :in-theory (enable make-clusters))))
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthmd
-    len-of-make-clusters
-    (implies (not (zp cluster-size))
-             (equal (len (make-clusters text cluster-size))
-                    (floor (+ (length text) cluster-size -1)
-                           cluster-size)))
-    :hints (("goal" :in-theory (enable make-clusters)))))
-
-(encapsulate
-  ()
-
-  (local (include-book "arithmetic-5/top" :dir :system))
-
-  (set-default-hints '((nonlinearp-default-hint++
-                        id
-                        stable-under-simplificationp hist nil)))
-
-  (defthm
-    make-clusters-correctness-3
-    (implies (and (stringp text)
-                  (not (zp cluster-size))
-                  (<= (length text) max-length)
-                  (equal (mod max-length cluster-size) 0))
-             (<= (* cluster-size
-                    (len (make-clusters text cluster-size)))
-                 max-length))
-    :rule-classes :linear
-    :hints (("goal" :in-theory (disable make-clusters-correctness-2)
-             :use len-of-make-clusters))))
 
 (defun
     stobj-set-clusters
