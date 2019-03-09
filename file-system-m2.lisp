@@ -1832,23 +1832,6 @@
        *initialbytcnt*))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-2
-  (implies
-   (<= *initialbytcnt*
-       (len (explode (read-file-into-string2
-                      image-path 0 *initialbytcnt* state))))
-   (and
-    (stringp (read-file-into-string2
-              image-path *initialbytcnt* nil state))
-    (stringp (read-file-into-string2 image-path 0 nil state))
-    (not
-     (<
-      (len
-       (explode
-        (read-file-into-string2 image-path 0 nil state)))
-      *initialbytcnt*)))))
-
-(defthm
   disk-image-to-fat32-in-memory-guard-lemma-3
   (equal
    (read-reserved-area
