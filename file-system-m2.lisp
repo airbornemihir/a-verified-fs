@@ -1061,6 +1061,28 @@
 
 (encapsulate
   ()
+
+  (local (include-book "arithmetic-3/top" :dir :system))
+
+  (set-default-hints
+   '((nonlinearp-default-hint stable-under-simplificationp
+                              hist pspv)))
+
+  (defthm update-data-region-alt-lemma-4
+    (implies (and (not (zp len))
+                  (< (len (explode str))
+                     (+ (cluster-size fat32-in-memory)
+                        (* -1 len (cluster-size fat32-in-memory))
+                        (* (cluster-size fat32-in-memory)
+                           (len (nth *data-regioni* fat32-in-memory)))))
+                  (< 0 (cluster-size fat32-in-memory)))
+             (< (len (explode str))
+                (* (cluster-size fat32-in-memory)
+                   (len (nth *data-regioni* fat32-in-memory)))))
+    :rule-classes :linear))
+
+(encapsulate
+  ()
   
   (local
    (defthm
@@ -1106,31 +1128,26 @@
           (< 0 (cluster-size fat32-in-memory))
           (>= (length str)
               (* (data-region-length fat32-in-memory)
-                 (cluster-size fat32-in-memory)))
-          (equal
-           (mv-nth
-            1
-            (update-data-region fat32-in-memory str len))
-           0))
+                 (cluster-size fat32-in-memory))))
      (equal
-      (mv-nth
-       0
-       (update-data-region fat32-in-memory str len))
-      (update-nth
-       *data-regioni*
-       (append
-        (take (- (data-region-length fat32-in-memory)
-                 len)
-              (nth *data-regioni* fat32-in-memory))
-        (make-clusters
-         (subseq str
-                 (* (- (data-region-length fat32-in-memory)
-                       len)
-                    (cluster-size fat32-in-memory))
-                 (* (data-region-length fat32-in-memory)
-                    (cluster-size fat32-in-memory)))
-         (cluster-size fat32-in-memory)))
-       fat32-in-memory)))
+      (update-data-region fat32-in-memory str len)
+      (mv
+       (update-nth
+        *data-regioni*
+        (append
+         (take (- (data-region-length fat32-in-memory)
+                  len)
+               (nth *data-regioni* fat32-in-memory))
+         (make-clusters
+          (subseq str
+                  (* (- (data-region-length fat32-in-memory)
+                        len)
+                     (cluster-size fat32-in-memory))
+                  (* (data-region-length fat32-in-memory)
+                     (cluster-size fat32-in-memory)))
+          (cluster-size fat32-in-memory)))
+        fat32-in-memory)
+       0)))
     :hints
     (("goal"
       :in-theory
