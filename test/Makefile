@@ -488,3 +488,33 @@ mtools-read-write-test-210MB: read-disk-image-write-disk-image.lisp
 	2 -F -c 2 c:
 	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
 	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
+
+# The following test creates a 280 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-280MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=71680
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 560000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
+
+# The following test creates a 560 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-560MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=143360
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 1120000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
+
+# The following test creates a 1120 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-1120MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=286720
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 2240000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
