@@ -2724,58 +2724,6 @@
       (read-file-into-string2 image-path 0 nil state))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-26
-  (implies
-   (<= 16
-       (len (explode (read-file-into-string2 image-path 0 nil state))))
-   (iff
-    (<
-     (len
-      (explode
-       (read-file-into-string2
-        image-path 16
-        (+
-         -16
-         (*
-          (bpb_bytspersec
-           (mv-nth 0
-                   (read-reserved-area
-                    fat32-in-memory
-                    (read-file-into-string2 image-path 0 nil state))))
-          (bpb_rsvdseccnt
-           (mv-nth 0
-                   (read-reserved-area
-                    fat32-in-memory
-                    (read-file-into-string2 image-path 0 nil state))))))
-        state)))
-     (+
-      -16
-      (*
-       (bpb_bytspersec
-        (mv-nth 0
-                (read-reserved-area
-                 fat32-in-memory
-                 (read-file-into-string2 image-path 0 nil state))))
-       (bpb_rsvdseccnt
-        (mv-nth 0
-                (read-reserved-area
-                 fat32-in-memory
-                 (read-file-into-string2 image-path 0 nil state)))))))
-    (<
-     (len (explode (read-file-into-string2 image-path 0 nil state)))
-     (*
-      (bpb_bytspersec
-       (mv-nth
-        0
-        (read-reserved-area fat32-in-memory
-                            (read-file-into-string2 image-path 0 nil state))))
-      (bpb_rsvdseccnt
-       (mv-nth 0
-               (read-reserved-area
-                fat32-in-memory
-                (read-file-into-string2 image-path 0 nil state)))))))))
-
-(defthm
   disk-image-to-fat32-in-memory-guard-lemma-27
   (implies
    (and
