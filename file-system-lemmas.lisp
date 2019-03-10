@@ -407,36 +407,6 @@
   (equal (update-nth key val2 (update-nth key val1 l))
          (update-nth key val2 l)))
 
-(encapsulate
-  ()
-
-  (local
-   (include-book "ihs/logops-definitions" :dir :system))
-
-  (local
-   (include-book "ihs/logops-lemmas" :dir :system))
-
-  (local
-   (include-book "arithmetic/top-with-meta" :dir :system))
-
-  (local
-   (defun induction-scheme (bits x)
-     (if (zp bits)
-         x
-       (induction-scheme (- bits 1)
-                         (logcdr x)))))
-
-  (defthmd
-    unsigned-byte-p-alt
-    (implies (natp bits)
-             (equal (unsigned-byte-p bits x)
-                    (and (unsigned-byte-p (+ bits 1) x)
-                         (zp (logand (ash 1 bits) x)))))
-    :hints
-    (("goal" :in-theory (e/d nil (logand ash logcar logcdr)
-                             (logand* ash*))
-      :induct (induction-scheme bits x)))))
-
 ;; This can probably be replaced by a functional instantiation.
 (defthm nat-listp-of-remove
   (implies (nat-listp l)

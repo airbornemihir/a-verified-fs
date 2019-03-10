@@ -9125,12 +9125,10 @@
              (bs_filsystypei 7 fat32-in-memory))
        (make-list
         (- (* (bpb_rsvdseccnt fat32-in-memory) (bpb_bytspersec fat32-in-memory)) 90)
-        :initial-element 0)))) :hints (("Goal" :in-theory (e/d (chars=>nats
-                                                                reserved-area-string
-                                                                reserved-area-chars)
-                                                               (loghead
-                                                                logtail
-                                                                unsigned-byte-p)))))
+        :initial-element 0))))
+    :hints (("Goal" :in-theory (e/d (chars=>nats reserved-area-string
+                                                 reserved-area-chars)
+                                    (loghead logtail unsigned-byte-p)))))
 
   (local (in-theory (enable chars=>nats-of-take get-initial-bytes
                             fat32-in-memory-to-string)))

@@ -91,6 +91,30 @@
 (encapsulate
   ()
 
+  (local
+   (include-book "arithmetic/top-with-meta" :dir :system))
+
+  (local
+   (defun induction-scheme (bits x)
+     (if (zp bits)
+         x
+       (induction-scheme (- bits 1)
+                         (logcdr x)))))
+
+  (defthmd
+    unsigned-byte-p-alt
+    (implies (natp bits)
+             (equal (unsigned-byte-p bits x)
+                    (and (unsigned-byte-p (+ bits 1) x)
+                         (zp (logand (ash 1 bits) x)))))
+    :hints
+    (("goal" :in-theory (e/d nil (logand ash logcar logcdr)
+                             (logand* ash*))
+      :induct (induction-scheme bits x)))))
+
+(encapsulate
+  ()
+
   (local (include-book "arithmetic-5/top" :dir :system))
 
   (defthm
