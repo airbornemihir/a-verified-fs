@@ -289,6 +289,18 @@
            (equal (fat32-entry-list-p (take n l))
                   (<= (nfix n) (len l)))))
 
+(defthm fat32-entry-list-p-of-repeat
+  (implies (fat32-entry-p x)
+           (fat32-entry-list-p (repeat n x)))
+  :hints (("goal" :in-theory (enable repeat))))
+
+(defthm
+  fat32-entry-list-p-of-resize-list
+  (implies
+   (and (fat32-entry-list-p lst)
+        (fat32-entry-p default-value))
+   (fat32-entry-list-p (resize-list lst n default-value))))
+
 (defthm natp-when-fat32-entry-p
   (implies (fat32-entry-p x) (natp x))
   :hints (("goal" :in-theory (enable fat32-entry-p)))

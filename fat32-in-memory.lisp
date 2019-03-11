@@ -121,10 +121,6 @@
          ;; per spec
          :initially "")))
 
-(defthm
-  fat32-in-memoryp-of-create-fat32-in-memory
-  (fat32-in-memoryp (create-fat32-in-memory)))
-
 (defthm bs_oemnamep-alt
   (equal (bs_oemnamep x)
          (unsigned-byte-listp 8 x))
@@ -1385,3 +1381,43 @@
 
 (update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
                              update-bpb_bytspersec-of-update-bs_jmpboot)
+
+(defthm
+  fat32-in-memoryp-of-create-fat32-in-memory
+  (fat32-in-memoryp (create-fat32-in-memory)))
+
+(defthm
+  fat32-in-memoryp-of-resize-data-region
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (fat32-in-memoryp (resize-data-region i fat32-in-memory)))
+  :hints
+  (("goal"
+    :in-theory (enable fat32-in-memoryp resize-data-region))))
+
+(defthm
+  fat32-in-memoryp-of-update-fati
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (equal (fat32-in-memoryp (update-fati i v fat32-in-memory))
+          (and (fat32-entry-p v)
+               (<= (nfix i)
+                   (fat-length fat32-in-memory)))))
+  :hints
+  (("goal" :in-theory (enable update-fati
+                              fat32-in-memoryp fat-length))))
+
+(defthm
+  fat-length-of-update-nth
+  (implies
+   (not (equal key *fati*))
+   (equal (fat-length (update-nth key val fat32-in-memory))
+          (fat-length fat32-in-memory)))
+  :hints (("goal" :in-theory (enable fat-length))))
+
+(defthm
+  fat32-in-memoryp-of-resize-fat
+  (implies (fat32-in-memoryp fat32-in-memory)
+           (fat32-in-memoryp (resize-fat i fat32-in-memory)))
+  :hints
+  (("goal" :in-theory (enable fat32-in-memoryp resize-fat))))

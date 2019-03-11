@@ -768,3 +768,9 @@
   (<= (acl2-count (member-equal x lst))
       (acl2-count lst))
   :rule-classes :linear)
+
+(defthm
+  string-listp-of-resize-list
+  (implies (and (string-listp lst)
+                (stringp default-value))
+           (string-listp (resize-list lst n default-value))))
