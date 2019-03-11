@@ -121,6 +121,10 @@
          ;; per spec
          :initially "")))
 
+(defthm
+  fat32-in-memoryp-of-create-fat32-in-memory
+  (fat32-in-memoryp (create-fat32-in-memory)))
+
 (defthm bs_oemnamep-alt
   (equal (bs_oemnamep x)
          (unsigned-byte-listp 8 x))

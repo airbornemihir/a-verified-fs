@@ -9357,14 +9357,12 @@
         (string-to-fat32-in-memory (create-fat32-in-memory)
                                    str1))
        (good1 (and (stringp str1)
-                   (equal error-code1 0)
-                   (compliant-fat32-in-memoryp fat32-in-memory1)))
+                   (equal error-code1 0)))
        ((mv fat32-in-memory2 error-code2)
         (string-to-fat32-in-memory (create-fat32-in-memory)
                                    str2))
        (good2 (and (stringp str2)
-                   (equal error-code2 0)
-                   (compliant-fat32-in-memoryp fat32-in-memory2)))
+                   (equal error-code2 0)))
        ((unless (and good1 good2))
         (and (not good1) (not good2))))
     (fat32-in-memory-equiv fat32-in-memory1 fat32-in-memory2)))
@@ -9980,10 +9978,6 @@
                       (nth 22 (get-remaining-rsvdbyts str))
                       (nth 21 (get-remaining-rsvdbyts str))
                       (nth 20 (get-remaining-rsvdbyts str))))))))))
-
-(defthm
-  fat32-in-memoryp-of-create-fat32-in-memory
-  (fat32-in-memoryp (create-fat32-in-memory)))
 
 (defthm
   string-to-fat32-in-memory-inversion
