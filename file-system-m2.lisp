@@ -1047,13 +1047,6 @@
                      (update-data-region fat32-in-memory str len))))))
 
 (defthm
-  cluster-listp-of-resize-list
-  (implies (and (cluster-listp lst cluster-size)
-                (<= (nfix n) (len lst)))
-           (cluster-listp (resize-list lst n default-value)
-                          cluster-size)))
-
-(defthm
   fat32-in-memoryp-of-update-data-regioni
   (implies
    (fat32-in-memoryp fat32-in-memory)
@@ -1074,6 +1067,54 @@
            (fat32-in-memoryp
             (mv-nth 0
                     (update-data-region fat32-in-memory str len)))))
+
+(defthm
+  bpb_bytspersec-of-update-data-region
+  (equal
+   (bpb_bytspersec (mv-nth 0 (update-data-region fat32-in-memory str len)))
+   (bpb_bytspersec fat32-in-memory)))
+
+(defthm
+  bpb_secperclus-of-update-data-region
+  (equal
+   (bpb_secperclus (mv-nth 0 (update-data-region fat32-in-memory str len)))
+   (bpb_secperclus fat32-in-memory)))
+
+(defthm
+  bpb_rsvdseccnt-of-update-data-region
+  (equal
+   (bpb_rsvdseccnt (mv-nth 0 (update-data-region fat32-in-memory str len)))
+   (bpb_rsvdseccnt fat32-in-memory)))
+
+(defthm
+  bpb_totsec32-of-update-data-region
+  (equal
+   (bpb_totsec32 (mv-nth 0 (update-data-region fat32-in-memory str len)))
+   (bpb_totsec32 fat32-in-memory)))
+
+(defthm
+  bpb_fatsz32-of-update-data-region
+  (equal
+   (bpb_fatsz32 (mv-nth 0 (update-data-region fat32-in-memory str len)))
+   (bpb_fatsz32 fat32-in-memory)))
+
+(defthm
+  bpb_numfats-of-update-data-region
+  (equal
+   (bpb_numfats (mv-nth 0 (update-data-region fat32-in-memory str len)))
+   (bpb_numfats fat32-in-memory)))
+
+(defthm
+  bpb_rootclus-of-update-data-region
+  (equal
+   (bpb_rootclus (mv-nth 0 (update-data-region fat32-in-memory str len)))
+   (bpb_rootclus fat32-in-memory)))
+
+(defthm
+  fat-length-of-update-data-region
+  (equal
+   (fat-length (mv-nth 0 (update-data-region fat32-in-memory str len)))
+   (fat-length fat32-in-memory)))
 
 (defthm
   update-data-region-correctness-1
@@ -4266,13 +4307,6 @@
    (effective-fat (update-data-regioni i v fat32-in-memory))
    (effective-fat fat32-in-memory))
   :hints (("goal" :in-theory (enable effective-fat))))
-
-(defthm
-  fat-length-of-update-data-regioni
-  (equal
-   (fat-length (update-data-regioni i v fat32-in-memory))
-   (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-data-regioni fat-length))))
 
 (defthm
   stobj-set-indices-in-fa-table-correctness-1-lemma-3
@@ -9377,60 +9411,6 @@
 (defequiv
   disk-image-string-equiv
   :hints (("goal" :in-theory (enable disk-image-string-equiv))))
-
-(defthm
-  bpb_bytspersec-of-update-data-region
-  (equal
-   (bpb_bytspersec (mv-nth 0 (update-data-region fat32-in-memory str len)))
-   (bpb_bytspersec fat32-in-memory)))
-
-(defthm
-  bpb_secperclus-of-update-data-region
-  (equal
-   (bpb_secperclus (mv-nth 0 (update-data-region fat32-in-memory str len)))
-   (bpb_secperclus fat32-in-memory)))
-
-(defthm
-  bpb_rsvdseccnt-of-update-data-region
-  (equal
-   (bpb_rsvdseccnt (mv-nth 0 (update-data-region fat32-in-memory str len)))
-   (bpb_rsvdseccnt fat32-in-memory)))
-
-(defthm
-  bpb_totsec32-of-update-data-region
-  (equal
-   (bpb_totsec32 (mv-nth 0 (update-data-region fat32-in-memory str len)))
-   (bpb_totsec32 fat32-in-memory)))
-
-(defthm
-  bpb_fatsz32-of-update-data-region
-  (equal
-   (bpb_fatsz32 (mv-nth 0 (update-data-region fat32-in-memory str len)))
-   (bpb_fatsz32 fat32-in-memory)))
-
-(defthm
-  bpb_numfats-of-update-data-region
-  (equal
-   (bpb_numfats (mv-nth 0 (update-data-region fat32-in-memory str len)))
-   (bpb_numfats fat32-in-memory)))
-
-(defthm
-  bpb_rootclus-of-update-data-region
-  (equal
-   (bpb_rootclus (mv-nth 0 (update-data-region fat32-in-memory str len)))
-   (bpb_rootclus fat32-in-memory)))
-
-(defthm
-  fat-length-of-update-data-region
-  (equal
-   (fat-length (mv-nth 0 (update-data-region fat32-in-memory str len)))
-   (fat-length fat32-in-memory)))
-
-(defthm
-  fat-length-of-resize-data-region
-  (equal (fat-length (resize-data-region i fat32-in-memory))
-         (fat-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable resize-data-region))))
 
 (defthm
   bpb_rootclus-of-update-fat

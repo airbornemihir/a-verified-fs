@@ -163,3 +163,10 @@
     :rule-classes :linear
     :hints (("goal" :in-theory (disable make-clusters-correctness-2)
              :use len-of-make-clusters))))
+
+(defthm
+  cluster-listp-of-resize-list
+  (implies (and (cluster-listp lst cluster-size)
+                (<= (nfix n) (len lst)))
+           (cluster-listp (resize-list lst n default-value)
+                          cluster-size)))

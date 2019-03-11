@@ -1421,3 +1421,16 @@
            (fat32-in-memoryp (resize-fat i fat32-in-memory)))
   :hints
   (("goal" :in-theory (enable fat32-in-memoryp resize-fat))))
+
+(defthm
+  fat-length-of-resize-data-region
+  (equal (fat-length (resize-data-region i fat32-in-memory))
+         (fat-length fat32-in-memory))
+  :hints (("goal" :in-theory (enable resize-data-region))))
+
+(defthm
+  fat-length-of-update-data-regioni
+  (equal
+   (fat-length (update-data-regioni i v fat32-in-memory))
+   (fat-length fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-data-regioni fat-length))))
