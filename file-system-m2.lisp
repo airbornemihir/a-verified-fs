@@ -106,13 +106,25 @@
   :hints (("goal" :in-theory (enable count-of-clusters))))
 
 (defthm
+  count-of-clusters-of-update-nth
+  (implies
+   (not (member key
+                (list *bpb_totsec32*
+                      *bpb_rsvdseccnt* *bpb_numfats*
+                      *bpb_fatsz32* *bpb_secperclus*)))
+   (equal
+    (count-of-clusters (update-nth key val fat32-in-memory))
+    (count-of-clusters fat32-in-memory)))
+  :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
   count-of-clusters-of-update-data-regioni
   (equal
    (count-of-clusters (update-data-regioni i v fat32-in-memory))
    (count-of-clusters fat32-in-memory))
   :hints
   (("goal"
-    :in-theory (enable count-of-clusters))))
+    :in-theory (enable update-data-regioni))))
 
 (defun
   stobj-cluster-listp-helper
@@ -3457,6 +3469,24 @@
              nil))
   :hints (("goal" :in-theory (enable fati effective-fat nth))))
 
+(defthm
+  effective-fat-of-update-data-regioni
+  (equal
+   (effective-fat (update-data-regioni i v fat32-in-memory))
+   (effective-fat fat32-in-memory))
+  :hints (("goal" :in-theory (enable effective-fat))))
+
+(defthm
+  effective-fat-of-update-fati
+  (equal (effective-fat (update-fati i v fat32-in-memory))
+         (if (< (nfix i)
+                (+ (count-of-clusters fat32-in-memory)
+                   *ms-first-data-cluster*))
+             (update-nth i v (effective-fat fat32-in-memory))
+             (effective-fat fat32-in-memory)))
+  :hints (("goal" :in-theory (enable effective-fat update-fati)
+           :do-not-induct t)))
+
 ;; Avoid a subinduction
 (defthmd
   get-clusterchain-alt-lemma-1
@@ -4291,45 +4321,6 @@
    (:rewrite
     :corollary (integer-listp (stobj-find-n-free-clusters-helper
                                fat32-in-memory n start)))))
-
-(defthm
-  nth-of-update-data-regioni
-  (implies
-   (not (equal (nfix n) *data-regioni*))
-   (equal (nth n
-               (update-data-regioni i v fat32-in-memory))
-          (nth n fat32-in-memory)))
-  :hints (("goal" :in-theory (enable update-data-regioni))))
-
-(defthm
-  effective-fat-of-update-data-regioni
-  (equal
-   (effective-fat (update-data-regioni i v fat32-in-memory))
-   (effective-fat fat32-in-memory))
-  :hints (("goal" :in-theory (enable effective-fat))))
-
-(defthm
-  stobj-set-indices-in-fa-table-correctness-1-lemma-3
-  (implies
-   (not (member key
-                (list *bpb_totsec32*
-                      *bpb_rsvdseccnt* *bpb_numfats*
-                      *bpb_fatsz32* *bpb_secperclus*)))
-   (equal
-    (count-of-clusters (update-nth key val fat32-in-memory))
-    (count-of-clusters fat32-in-memory)))
-  :hints (("goal" :in-theory (enable count-of-clusters))))
-
-(defthm
-  effective-fat-of-update-fati
-  (equal (effective-fat (update-fati i v fat32-in-memory))
-         (if (< (nfix i)
-                (+ (count-of-clusters fat32-in-memory)
-                   *ms-first-data-cluster*))
-             (update-nth i v (effective-fat fat32-in-memory))
-             (effective-fat fat32-in-memory)))
-  :hints (("goal" :in-theory (enable effective-fat update-fati)
-           :do-not-induct t)))
 
 (defthm
   stobj-find-n-free-clusters-helper-correctness-1

@@ -1434,3 +1434,12 @@
    (fat-length (update-data-regioni i v fat32-in-memory))
    (fat-length fat32-in-memory))
   :hints (("goal" :in-theory (enable update-data-regioni fat-length))))
+
+(defthm
+  nth-of-update-data-regioni
+  (implies
+   (not (equal (nfix n) *data-regioni*))
+   (equal (nth n
+               (update-data-regioni i v fat32-in-memory))
+          (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable update-data-regioni))))
