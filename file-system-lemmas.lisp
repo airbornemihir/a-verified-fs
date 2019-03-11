@@ -524,10 +524,11 @@
                 (nth (- (len ac) (+ (nfix n) 1)) ac))
                (t (nth (- (nfix n) (len ac)) l)))))
 
+;; Contributed to books/std/lists/nth.lisp
 (defthm nth-of-take
-  (equal (nth n (take i l))
-         (if (>= (nfix n) (nfix i))
-             nil (nth (nfix n) l))))
+  (equal (nth i (take n l))
+         (if (>= (nfix i) (nfix n))
+             nil (nth (nfix i) l))))
 
 (defthm nthcdr-of-nil (equal (nthcdr n nil) nil))
 
