@@ -8888,45 +8888,6 @@
                (ac nil)))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-33
-  (implies (fat32-in-memoryp fat32-in-memory)
-           (equal (resize-fat (fat-length fat32-in-memory)
-                              fat32-in-memory)
-                  fat32-in-memory))
-  :hints
-  (("goal" :in-theory (enable resize-fat
-                              fat-length fat32-in-memoryp)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies (and (fat32-in-memoryp fat32-in-memory)
-                  (equal i (fat-length fat32-in-memory)))
-             (equal (resize-fat i fat32-in-memory)
-                    fat32-in-memory)))))
-
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-34
-  (implies (fat32-in-memoryp fat32-in-memory)
-           (equal (resize-data-region (data-region-length fat32-in-memory)
-                                      fat32-in-memory)
-                  fat32-in-memory))
-  :hints (("goal" :in-theory (enable resize-data-region data-region-length
-                                     fat32-in-memoryp)))
-  :rule-classes (:rewrite
-                 (:rewrite :corollary
-                           (implies
-                            (and
-                             (fat32-in-memoryp fat32-in-memory)
-                             (EQUAL (COUNT-OF-CLUSTERS FAT32-IN-MEMORY)
-                                    (DATA-REGION-LENGTH FAT32-IN-MEMORY)))
-                            (equal (resize-data-region
-                                    (COUNT-OF-CLUSTERS FAT32-IN-MEMORY)
-                                    fat32-in-memory)
-                                   fat32-in-memory))
-                           :hints (("Goal" :in-theory (enable resize-data-region))))))
-
-(defthm
   fat32-in-memory-to-string-inversion-lemma-35
   (implies
    (and (natp n2)
@@ -9083,17 +9044,6 @@
        (stobj-fa-table-to-string fat32-in-memory)))
      (code-char (loghead 8 (fati (- pos 1) fat32-in-memory))))))
   :hints (("goal" :in-theory (e/d (stobj-fa-table-to-string) (logtail loghead)))))
-
-(defthm
-  fat32-in-memory-to-string-inversion-lemma-40
-  (implies (and (fat32-in-memoryp fat32-in-memory)
-                (< (nfix i)
-                   (fat-length fat32-in-memory)))
-           (equal (update-fati i (fati i fat32-in-memory)
-                               fat32-in-memory)
-                  fat32-in-memory))
-  :hints
-  (("goal" :in-theory (enable fati update-fati fat-length))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-41
