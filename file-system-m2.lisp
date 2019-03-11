@@ -66,16 +66,25 @@
                            (cluster-size fat32-in-memory))))))
 
 (defthm
+  cluster-size-of-update-nth
+  (implies
+   (not (member-equal key
+                      (list *bpb_secperclus* *bpb_bytspersec*)))
+   (equal (cluster-size (update-nth key val fat32-in-memory))
+          (cluster-size fat32-in-memory)))
+  :hints (("goal" :in-theory (enable cluster-size))))
+
+(defthm
   cluster-size-of-resize-data-region
   (equal (cluster-size (resize-data-region i fat32-in-memory))
          (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+  :hints (("goal" :in-theory (enable resize-data-region))))
 
 (defthm
   cluster-size-of-resize-fat
   (equal (cluster-size (resize-fat i fat32-in-memory))
          (cluster-size fat32-in-memory))
-  :hints (("goal" :in-theory (enable cluster-size))))
+  :hints (("goal" :in-theory (enable resize-fat))))
 
 (defund
   count-of-clusters (fat32-in-memory)
@@ -95,6 +104,15 @@
   (equal (count-of-clusters (resize-fat i fat32-in-memory))
          (count-of-clusters fat32-in-memory))
   :hints (("goal" :in-theory (enable count-of-clusters))))
+
+(defthm
+  count-of-clusters-of-update-data-regioni
+  (equal
+   (count-of-clusters (update-data-regioni i v fat32-in-memory))
+   (count-of-clusters fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable count-of-clusters))))
 
 (defun
   stobj-cluster-listp-helper
@@ -1029,13 +1047,11 @@
                      (update-data-region fat32-in-memory str len))))))
 
 (defthm
-  count-of-clusters-of-update-data-regioni
-  (equal
-   (count-of-clusters (update-data-regioni i v fat32-in-memory))
-   (count-of-clusters fat32-in-memory))
-  :hints
-  (("goal"
-    :in-theory (enable count-of-clusters))))
+  cluster-listp-of-resize-list
+  (implies (and (cluster-listp lst cluster-size)
+                (<= (nfix n) (len lst)))
+           (cluster-listp (resize-list lst n default-value)
+                          cluster-size)))
 
 (defthm
   fat32-in-memoryp-of-update-data-regioni
@@ -1325,6 +1341,13 @@
           (update-fat fat32-in-memory str pos))
          (cluster-size fat32-in-memory))
   :hints (("Goal" :in-theory (enable cluster-size)) ))
+
+(defthm
+  data-region-length-of-update-fat
+  (equal (data-region-length
+          (update-fat fat32-in-memory str pos))
+         (data-region-length fat32-in-memory))
+  :hints (("goal" :in-theory (enable data-region-length))))
 
 (defthm
   bpb_secperclus-of-read-reserved-area
@@ -1662,7 +1685,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    fat32-in-memory-of-read-reserved-area
+    fat32-in-memoryp-of-read-reserved-area
     (implies (and (fat32-in-memoryp fat32-in-memory)
                   (stringp str))
              (fat32-in-memoryp
@@ -9532,36 +9555,6 @@
       ((len (nth *data-regioni*
                  (mv-nth 0 (update-data-region fat32-in-memory str len))))
        (len (nth *data-regioni* fat32-in-memory))))))))
-
-(defthm
-  cluster-size-of-update-nth
-  (implies
-   (not (member-equal key
-                      (list *bpb_secperclus* *bpb_bytspersec*)))
-   (equal (cluster-size (update-nth key val fat32-in-memory))
-          (cluster-size fat32-in-memory)))
-  :hints (("goal" :in-theory (enable cluster-size))))
-
-(defthm
-  cluster-listp-of-resize-list
-  (implies (and (cluster-listp lst cluster-size)
-                (<= (nfix n) (len lst)))
-           (cluster-listp (resize-list lst n default-value)
-                          cluster-size)))
-
-(defthm
-  data-region-length-of-update-fat
-  (equal (data-region-length
-          (update-fat fat32-in-memory str pos))
-         (data-region-length fat32-in-memory))
-  :hints (("goal" :in-theory (enable data-region-length))))
-
-(defthm
-  data-region-length-of-resize-fat
-  (equal (data-region-length (resize-fat i fat32-in-memory))
-         (data-region-length fat32-in-memory))
-  :hints
-  (("goal" :in-theory (enable data-region-length resize-fat))))
 
 (encapsulate
   ()

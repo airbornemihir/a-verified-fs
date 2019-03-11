@@ -621,6 +621,13 @@
   (("goal"
     :in-theory (enable data-regioni update-data-regioni))))
 
+(defthm
+  data-region-length-of-resize-fat
+  (equal (data-region-length (resize-fat i fat32-in-memory))
+         (data-region-length fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable data-region-length resize-fat))))
+
 ;; Per accumulated-persistence, the rule (:rewrite
 ;; update-bpb_secperclus-correctness-2 . 3) is pretty darned useless. We need
 ;; to find a way to do without it and its kind.
