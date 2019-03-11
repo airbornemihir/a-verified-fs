@@ -417,7 +417,7 @@
           (if (l6-regular-file-entry-p (cdr sd))
               (if (cdr hns)
                   (mv (cons (cons (car sd) (cdr sd))
-                            (delete-assoc (car hns) fs))
+                            (remove1-assoc (car hns) fs))
                       disk
                       fa-table (- *enoent*)) ;; error, so leave fs unchanged
                 (b* (((mv old-indices read-error-code)
@@ -439,7 +439,7 @@
                       ;; we have an error because of insufficient disk space
                       ;; - so we leave the fs unchanged
                       (mv (cons (cons (car sd) (cdr sd))
-                                (delete-assoc (car hns) fs))
+                                (remove1-assoc (car hns) fs))
                           disk
                           fa-table (- *enospc*))
                     (if (consp new-indices)
@@ -447,7 +447,7 @@
                                         (l6-make-regular-file
                                          (car new-indices)
                                          (len new-text)))
-                                  (delete-assoc (car hns) fs))
+                                  (remove1-assoc (car hns) fs))
                             (set-indices disk new-indices new-blocks)
                             (set-indices-in-fa-table fa-table-after-free
                                                      new-indices
@@ -459,14 +459,14 @@
                                        ;; 0 is chosen by default
                                        0
                                        (len new-text)))
-                                (delete-assoc (car hns) fs))
+                                (remove1-assoc (car hns) fs))
                           disk
                           fa-table-after-free
                           read-error-code)))))
             (mv-let (new-contents new-disk new-fa-table error-code)
               (l6-wrchs (cdr hns) (cdr sd) disk fa-table start text)
               (mv (cons (cons (car sd) new-contents)
-                        (delete-assoc (car hns) fs))
+                        (remove1-assoc (car hns) fs))
                   new-disk
                   new-fa-table
                   error-code))))))))
@@ -522,7 +522,7 @@
         (let ((contents (cdr sd)))
           (if (l6-regular-file-entry-p contents)
               (mv (cons (cons (car sd) contents) ;; file already exists, so leave fs unchanged
-                        (delete-assoc (car hns) fs))
+                        (remove1-assoc (car hns) fs))
                   disk
                   fa-table
                   (- *EEXIST*))
@@ -530,7 +530,7 @@
               (l6-create (cdr hns) contents disk fa-table text)
               (mv (cons (cons (car sd)
                               new-fs)
-                        (delete-assoc (car hns) fs))
+                        (remove1-assoc (car hns) fs))
                   new-disk
                   new-fa-table
                   error-code)))
@@ -555,12 +555,12 @@
             (b* (((mv old-indices read-error-code)
                   (l6-file-index-list (cdr (assoc (car hns) fs)) fa-table)))
               (mv
-               (delete-assoc (car hns) fs)
+               (remove1-assoc (car hns) fs)
                (set-indices-in-fa-table fa-table old-indices
                                         (make-list (len old-indices) :initial-element 0))
                read-error-code))
           (mv
-           (delete-assoc (car hns) fs)
+           (remove1-assoc (car hns) fs)
            fa-table
            0))
       (if
@@ -578,7 +578,7 @@
                 (mv-let (new-fs new-fa-table new-error-code)
                   (l6-unlink (cdr hns) contents fa-table)
                   (mv (cons (cons (car sd) new-fs)
-                            (delete-assoc (car hns) fs))
+                            (remove1-assoc (car hns) fs))
                       new-fa-table new-error-code))))))))))
 
 ;; From the FAT specification, page 18: "The list of free clusters in the FAT
@@ -1373,7 +1373,7 @@
 
 (defthm l6-wrchs-returns-fs-lemma-1
   (implies (l6-fs-p fs)
-           (l6-fs-p (delete-assoc-equal name fs))))
+           (l6-fs-p (remove1-assoc-equal name fs))))
 
 (defthm
   l6-wrchs-returns-fs
@@ -1401,8 +1401,8 @@
         (fat32-entry-list-p fa-table)
         (mv-nth 1 (l6-list-all-ok-indices fs fa-table)))
    (equal
-    (delete-assoc-equal name (l6-to-l4-fs-helper fs fa-table))
-    (l6-to-l4-fs-helper (delete-assoc-equal name fs)
+    (remove1-assoc-equal name (l6-to-l4-fs-helper fs fa-table))
+    (l6-to-l4-fs-helper (remove1-assoc-equal name fs)
                         fa-table)))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices)))
   :rule-classes
@@ -1414,8 +1414,8 @@
           (l6-stricter-fs-p fs fa-table)
           (fat32-entry-list-p fa-table))
      (equal
-      (delete-assoc-equal name (l6-to-l4-fs-helper fs fa-table))
-      (l6-to-l4-fs-helper (delete-assoc-equal name fs)
+      (remove1-assoc-equal name (l6-to-l4-fs-helper fs fa-table))
+      (l6-to-l4-fs-helper (remove1-assoc-equal name fs)
                           fa-table)))
     :hints (("goal" :in-theory (enable l6-stricter-fs-p))))))
 
@@ -1961,14 +1961,14 @@
      l
      (mv-nth
       0
-      (l6-list-all-ok-indices (delete-assoc-equal name fs)
+      (l6-list-all-ok-indices (remove1-assoc-equal name fs)
                               fa-table)))))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-33
   (implies (l6-stricter-fs-p fs fa-table)
-           (l6-stricter-fs-p (delete-assoc-equal name fs)
+           (l6-stricter-fs-p (remove1-assoc-equal name fs)
                              fa-table))
   :hints (("goal" :in-theory (enable l6-stricter-fs-p
                                      l6-list-all-ok-indices))
@@ -2072,7 +2072,7 @@
                                       (l6-list-all-ok-indices fs fa-table))))
    (not (intersectp-equal
          (mv-nth 0
-                 (l6-list-all-ok-indices (delete-assoc-equal name fs)
+                 (l6-list-all-ok-indices (remove1-assoc-equal name fs)
                                          fa-table))
          (mv-nth 0
                  (l6-file-index-list (cdr (assoc-equal name fs))
@@ -2087,7 +2087,7 @@
           (l6-stricter-fs-p fs fa-table))
      (not (intersectp-equal
            (mv-nth 0
-                   (l6-list-all-ok-indices (delete-assoc-equal name fs)
+                   (l6-list-all-ok-indices (remove1-assoc-equal name fs)
                                            fa-table))
            (mv-nth 0
                    (l6-file-index-list (cdr (assoc-equal name fs))
@@ -2145,18 +2145,18 @@
   l6-wrchs-correctness-1-lemma-42
   (implies (and (l6-fs-p fs)
                 (fat32-entry-list-p fa-table))
-           (equal (delete-assoc-equal name
+           (equal (remove1-assoc-equal name
                                       (l6-to-l4-fs-helper fs fa-table))
-                  (l6-to-l4-fs-helper (delete-assoc-equal name fs)
+                  (l6-to-l4-fs-helper (remove1-assoc-equal name fs)
                                       fa-table)))
   :rule-classes
   (:rewrite
    (:rewrite
     :corollary
     (implies (l6-stricter-fs-p fs fa-table)
-             (equal (delete-assoc-equal name
+             (equal (remove1-assoc-equal name
                                         (l6-to-l4-fs-helper fs fa-table))
-                    (l6-to-l4-fs-helper (delete-assoc-equal name fs)
+                    (l6-to-l4-fs-helper (remove1-assoc-equal name fs)
                                         fa-table)))
     :hints (("goal" :in-theory (enable l6-stricter-fs-p))))))
 
@@ -2435,7 +2435,7 @@
                                       (l6-list-all-ok-indices fs fa-table))))
    (not (intersectp-equal
          (mv-nth 0
-                 (l6-list-all-ok-indices (delete-assoc-equal name fs)
+                 (l6-list-all-ok-indices (remove1-assoc-equal name fs)
                                          fa-table))
          (mv-nth 0
                  (l6-list-all-ok-indices (cdr (assoc-equal name fs))
@@ -2451,7 +2451,7 @@
           (fat32-entry-list-p fa-table))
      (not (intersectp-equal
            (mv-nth 0
-                   (l6-list-all-ok-indices (delete-assoc-equal name fs)
+                   (l6-list-all-ok-indices (remove1-assoc-equal name fs)
                                            fa-table))
            (mv-nth 0
                    (l6-list-all-ok-indices (cdr (assoc-equal name fs))
@@ -2641,7 +2641,7 @@
      (mv-nth
       0
       (l6-list-all-ok-indices
-       (delete-assoc-equal (car hns) fs)
+       (remove1-assoc-equal (car hns) fs)
        (set-indices-in-fa-table
         fa-table
         (mv-nth 0
@@ -2685,7 +2685,7 @@
       (mv-nth
        0
        (l6-list-all-ok-indices
-        (delete-assoc-equal (car hns) fs)
+        (remove1-assoc-equal (car hns) fs)
         (set-indices-in-fa-table
          fa-table
          (mv-nth 0
@@ -2975,7 +2975,7 @@
    (not
     (intersectp-equal
      (mv-nth 0
-             (l6-list-all-ok-indices (delete-assoc-equal (car hns) fs)
+             (l6-list-all-ok-indices (remove1-assoc-equal (car hns) fs)
                                      fa-table))
      (find-n-free-clusters
       (set-indices-in-fa-table
@@ -3006,7 +3006,7 @@
     :use
     ((:instance
       l6-wrchs-correctness-1-lemma-45
-      (fs (delete-assoc-equal (car hns) fs))
+      (fs (remove1-assoc-equal (car hns) fs))
       (disjoint-index-list
        (mv-nth 0
                (l6-file-index-list (cdr (assoc-equal (car hns) fs))
@@ -3019,7 +3019,7 @@
         0 nil)))
      (:instance
       l6-wrchs-correctness-1-lemma-46
-      (fs (delete-assoc-equal (car hns) fs))
+      (fs (remove1-assoc-equal (car hns) fs))
       (fa-table
        (set-indices-in-fa-table
         fa-table
@@ -3836,7 +3836,7 @@
         (fat32-entry-list-p fa-table)
         (mv-nth 1 (l6-list-all-ok-indices fs fa-table)))
    (mv-nth 1
-           (l6-list-all-ok-indices (delete-assoc-equal name fs)
+           (l6-list-all-ok-indices (remove1-assoc-equal name fs)
                                    fa-table)))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
@@ -3848,7 +3848,7 @@
         (fat32-entry-list-p fa-table))
    (no-duplicatesp-equal
     (mv-nth 0
-            (l6-list-all-ok-indices (delete-assoc-equal name fs)
+            (l6-list-all-ok-indices (remove1-assoc-equal name fs)
                                     fa-table))))
   :hints (("goal" :in-theory (enable l6-list-all-ok-indices))))
 
@@ -4051,7 +4051,7 @@
            (l6-regular-file-length
             (cdr (assoc-equal (car hns) fs))))
           start text))))
-      (delete-assoc-equal (car hns) fs))
+      (remove1-assoc-equal (car hns) fs))
      (set-indices-in-fa-table
       (set-indices-in-fa-table
        fa-table
@@ -4163,7 +4163,7 @@
            (l6-regular-file-length
             (cdr (assoc-equal (car hns) fs))))
           start text))))
-      (delete-assoc-equal (car hns) fs))
+      (remove1-assoc-equal (car hns) fs))
      (set-indices-in-fa-table
       (set-indices-in-fa-table
        fa-table
@@ -4245,14 +4245,14 @@
     :expand (l6-list-all-ok-indices
              (cons (cons (car hns)
                          (cdr (assoc-equal (car hns) fs)))
-                   (delete-assoc-equal (car hns) fs))
+                   (remove1-assoc-equal (car hns) fs))
              fa-table))
    ("subgoal *1/4" :in-theory (disable l6-file-index-list))
    ("subgoal *1/4''"
     :expand (l6-list-all-ok-indices
              (cons (cons (car hns)
                          (cdr (assoc-equal (car hns) fs)))
-                   (delete-assoc-equal (car hns) fs))
+                   (remove1-assoc-equal (car hns) fs))
              fa-table))))
 (in-theory (disable l6-wrchs))
 

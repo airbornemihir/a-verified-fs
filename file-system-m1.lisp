@@ -1084,9 +1084,9 @@
 (in-theory (disable fat32-filename-p fat32-filename-fix))
 
 (defthm
-  m1-file-alist-p-of-delete-assoc-equal
+  m1-file-alist-p-of-remove1-assoc-equal
   (implies (m1-file-alist-p fs)
-           (m1-file-alist-p (delete-assoc-equal key fs))))
+           (m1-file-alist-p (remove1-assoc-equal key fs))))
 
 (defun
   m1-bounded-file-alist-p-helper (x ac)
@@ -1406,7 +1406,7 @@
                error-code))
           (if (consp (cdr pathname))
               (mv fs *enotdir*)
-            (mv (delete-assoc-equal name fs) 0)))
+            (mv (remove1-assoc-equal name fs) 0)))
       ;; if it's not there, it can't be removed
       (mv fs *enoent*))))
 
