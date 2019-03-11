@@ -1381,3 +1381,118 @@
 
 (update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
                              update-bpb_bytspersec-of-update-bs_jmpboot)
+
+(defthm
+  fat32-in-memoryp-of-create-fat32-in-memory
+  (fat32-in-memoryp (create-fat32-in-memory)))
+
+(defthm
+  fat32-in-memoryp-of-resize-data-region
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (fat32-in-memoryp (resize-data-region i fat32-in-memory)))
+  :hints
+  (("goal"
+    :in-theory (enable fat32-in-memoryp resize-data-region))))
+
+(defthm
+  fat32-in-memoryp-of-update-fati
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (equal (fat32-in-memoryp (update-fati i v fat32-in-memory))
+          (and (fat32-entry-p v)
+               (<= (nfix i)
+                   (fat-length fat32-in-memory)))))
+  :hints
+  (("goal" :in-theory (enable update-fati
+                              fat32-in-memoryp fat-length))))
+
+(defthm
+  fat-length-of-update-nth
+  (implies
+   (not (equal key *fati*))
+   (equal (fat-length (update-nth key val fat32-in-memory))
+          (fat-length fat32-in-memory)))
+  :hints (("goal" :in-theory (enable fat-length))))
+
+(defthm
+  fat32-in-memoryp-of-resize-fat
+  (implies (fat32-in-memoryp fat32-in-memory)
+           (fat32-in-memoryp (resize-fat i fat32-in-memory)))
+  :hints
+  (("goal" :in-theory (enable fat32-in-memoryp resize-fat))))
+
+(defthm
+  fat-length-of-resize-data-region
+  (equal (fat-length (resize-data-region i fat32-in-memory))
+         (fat-length fat32-in-memory))
+  :hints (("goal" :in-theory (enable resize-data-region))))
+
+(defthm
+  fat-length-of-update-data-regioni
+  (equal
+   (fat-length (update-data-regioni i v fat32-in-memory))
+   (fat-length fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-data-regioni fat-length))))
+
+(defthm
+  nth-of-update-data-regioni
+  (implies
+   (not (equal (nfix n) *data-regioni*))
+   (equal (nth n
+               (update-data-regioni i v fat32-in-memory))
+          (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable update-data-regioni))))
+
+(defthm
+  resize-fat-of-fat-length-when-fat32-in-memoryp
+  (implies (fat32-in-memoryp fat32-in-memory)
+           (equal (resize-fat (fat-length fat32-in-memory)
+                              fat32-in-memory)
+                  fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable resize-fat
+                              fat-length fat32-in-memoryp)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (fat32-in-memoryp fat32-in-memory)
+                  (equal i (fat-length fat32-in-memory)))
+             (equal (resize-fat i fat32-in-memory)
+                    fat32-in-memory)))))
+
+(defthm
+  resize-data-region-of-data-region-length-when-fat32-in-memoryp
+  (implies
+   (fat32-in-memoryp fat32-in-memory)
+   (equal
+    (resize-data-region (data-region-length fat32-in-memory)
+                        fat32-in-memory)
+    fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory (enable resize-data-region
+                       data-region-length fat32-in-memoryp)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (fat32-in-memoryp fat32-in-memory)
+          (equal i (data-region-length fat32-in-memory)))
+     (equal (resize-data-region i fat32-in-memory)
+            fat32-in-memory))
+    :hints (("goal" :in-theory (enable resize-data-region))))))
+
+(defthm
+  update-fati-of-fati-when-fat32-in-memoryp
+  (implies (and (fat32-in-memoryp fat32-in-memory)
+                (< (nfix i)
+                   (fat-length fat32-in-memory)))
+           (equal (update-fati i (fati i fat32-in-memory)
+                               fat32-in-memory)
+                  fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable fati update-fati
+                              fat-length fat32-in-memoryp))))
