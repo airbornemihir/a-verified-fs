@@ -1626,52 +1626,31 @@
 ;; as "/home" or "/tmp", the dirname will be "/".
 (defund
   m1-basename-dirname-helper (path)
-  (declare (xargs :guard (string-listp path)
+  (declare (xargs :guard (fat32-filename-list-p path)
                   :guard-hints (("Goal" :in-theory (disable
                                                     make-list-ac-removal)))
                   :guard-debug t))
   (b*
-      (((when (atom path))
-        (mv *current-dir-fat32-name* (list *current-dir-fat32-name*)))
-       (coerced-basename
-        (if
-            (or (atom (cdr path))
-                (and (not (streqv (car path) ""))
-                     (atom (cddr path))
-                     (streqv (cadr path) "")))
-            (coerce (str-fix (car path)) 'list)
-          (coerce (str-fix (cadr path)) 'list)))
-       (basename
-        (coerce
-         (append
-          (take (min 11 (len coerced-basename)) coerced-basename)
-          (make-list
-           (nfix (- 11 (len coerced-basename)))
-           :initial-element (code-char 0)))
-         'string))
-       ((when (or (atom (cdr path))
-                  (and (not (streqv (car path) ""))
-                       (atom (cddr path))
-                       (streqv (cadr path) ""))))
+      (;; Under the assumption that all pathnames begin with a /, this really
+       ;; is the case where there's a / and nothing else.
+       ((when (atom path))
+        (mv *empty-fat32-name* nil))
+       ((when (atom (cdr path)))
         (mv
-         basename
-         (list *current-dir-fat32-name*)))
-       ((when (atom (cddr path)))
-        (mv basename
-            (list (str-fix (car path)))))
+         (fat32-filename-fix (car path))
+         nil))
        ((mv tail-basename tail-dirname)
         (m1-basename-dirname-helper (cdr path))))
     (mv tail-basename
-        (list* (str-fix (car path))
+        (list* (fat32-filename-fix (car path))
                tail-dirname))))
 
 (defthm
   m1-basename-dirname-helper-correctness-1
   (mv-let (basename dirname)
     (m1-basename-dirname-helper path)
-    (and (stringp basename)
-         (equal (len (explode basename)) 11)
-         (string-listp dirname)))
+    (and (fat32-filename-p basename)
+         (fat32-filename-list-p dirname)))
   :hints
   (("goal" :induct (m1-basename-dirname-helper path)
     :in-theory (enable m1-basename-dirname-helper)))
@@ -1685,14 +1664,14 @@
     (true-listp (mv-nth 1 (m1-basename-dirname-helper path))))))
 
 (defun m1-basename (path)
-  (declare (xargs :guard (string-listp path)))
+  (declare (xargs :guard (fat32-filename-list-p path)))
   (mv-let (basename dirname)
     (m1-basename-dirname-helper path)
     (declare (ignore dirname))
     basename))
 
 (defun m1-dirname (path)
-  (declare (xargs :guard (string-listp path)))
+  (declare (xargs :guard (fat32-filename-list-p path)))
   (mv-let (basename dirname)
     (m1-basename-dirname-helper path)
     (declare (ignore basename))
