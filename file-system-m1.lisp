@@ -1372,9 +1372,6 @@
 (defcong m1-file-equiv equal
   (place-file-by-pathname fs pathname file) 3)
 
-;; This function should continue to take pathnames which refer to top-level
-;; fs... but what happens when "." and ".." appear in a pathname? We'll have to
-;; modify the code to deal with that.
 (defun
     remove-file-by-pathname
     (fs pathname)
@@ -1383,32 +1380,37 @@
                   :measure (acl2-count pathname)))
   (b*
       ((fs (m1-file-alist-fix fs))
+       ;; Design choice - calls which ask for the entire root directory to be
+       ;; affected will fail.
        ((unless (consp pathname))
         (mv fs *enoent*))
        (name (fat32-filename-fix (car pathname)))
-       (alist-elem (assoc-equal name fs)))
-    (if
-        (consp alist-elem)
-        (if
-            (m1-directory-file-p (cdr alist-elem))
-            (mv-let
-              (new-contents error-code)
-              (remove-file-by-pathname
-               (m1-file->contents (cdr alist-elem))
-               (cdr pathname))
-              (mv
-               (put-assoc-equal
-                name
-                (make-m1-file
-                 :dir-ent (m1-file->dir-ent (cdr alist-elem))
-                 :contents new-contents)
-                fs)
-               error-code))
-          (if (consp (cdr pathname))
-              (mv fs *enotdir*)
-            (mv (remove1-assoc-equal name fs) 0)))
-      ;; if it's not there, it can't be removed
-      (mv fs *enoent*))))
+       (alist-elem (assoc-equal name fs))
+       ;; If it's not there, it can't be removed
+       ((unless
+            (consp alist-elem))
+        (mv fs *enoent*))
+       ;; Design choice - this lower-level function will unquestioningly delete
+       ;; entire subdirectory trees, as long as they are not the root.
+       ((when (atom (cdr pathname)))
+        (mv (remove1-assoc-equal name fs) 0))
+       ;; ENOTDIR - can't delete anything that supposedly exists inside a
+       ;; regular file.
+       ((unless (m1-directory-file-p (cdr alist-elem)))
+        (mv fs *enotdir*))
+       ;; Recursion
+       ((mv new-contents error-code)
+        (remove-file-by-pathname
+         (m1-file->contents (cdr alist-elem))
+         (cdr pathname))))
+    (mv
+     (put-assoc-equal
+      name
+      (make-m1-file
+       :dir-ent (m1-file->dir-ent (cdr alist-elem))
+       :contents new-contents)
+      fs)
+     error-code)))
 
 (defthm
   remove-file-by-pathname-correctness-1
@@ -1970,10 +1972,11 @@
 ;; than root.
 
 ;; This may be a place where co-simulation of statfs may have to be
-;; compromised... because, now, we don't have m1-file-alist-p as an invariant
-;; unless we delete the file from our tree representation. The way forward, I
-;; think, is to delete the file from the tree, and make an m2-unlink that does
-;; the same thing as m1-unlink.
+;; compromised... because, now, we delete the file from our tree representation
+;; and as a result we have a little more extra space than an implementation
+;; which simply marks the file as removed. The way forward, I think, is to
+;; delete the file from the tree, and make an m2-unlink that provably does the
+;; same thing as m1-unlink while actually just marking files as deleted.
 (defun
     m1-unlink (fs pathname)
   (declare
@@ -1996,7 +1999,49 @@
                    (mv-nth 0
                            (m1-basename-dirname-helper pathname)))))))
     :verify-guards nil))
-  (b* (((mv fs error-code)
+  (b* (((mv file error-code)
+        (find-file-by-pathname fs pathname))
+       ((unless (equal error-code 0)) (mv fs -1 *ENOENT*))
+       ((unless (m1-regular-file-p file)) (mv fs -1 *EISDIR*))
+       ((mv fs error-code)
+        (remove-file-by-pathname fs pathname))
+       ((unless (equal error-code 0))
+        (mv fs -1 error-code)))
+    (mv fs 0 0)))
+
+;; This may be a place where co-simulation of statfs may have to be
+;; compromised... because, now, we delete the file from our tree representation
+;; and as a result we have a little more extra space than an implementation
+;; which simply marks the file as removed. The way forward, I think, is to
+;; delete the file from the tree, and make an m2-unlink that provably does the
+;; same thing as m1-unlink while actually just marking files as deleted.
+(defun
+    m1-unlink-recursive (fs pathname)
+  (declare
+   (xargs
+    :guard (and (m1-file-alist-p fs)
+                (string-listp pathname))
+    :guard-debug t
+    :guard-hints
+    (("goal"
+      :in-theory
+      (disable
+       (:rewrite m1-basename-dirname-helper-correctness-1)
+       return-type-of-string=>nats update-nth)
+      :use
+      ((:instance
+        (:rewrite m1-basename-dirname-helper-correctness-1)
+        (path pathname))
+       (:instance return-type-of-string=>nats
+                  (string
+                   (mv-nth 0
+                           (m1-basename-dirname-helper pathname)))))))
+    :verify-guards nil))
+  (b* (((mv file error-code)
+        (find-file-by-pathname fs pathname))
+       ((unless (equal error-code 0)) (mv fs -1 *ENOENT*))
+       ((unless (m1-directory-file-p file)) (mv fs -1 *ENOTDIR*))
+       ((mv fs error-code)
         (remove-file-by-pathname fs pathname))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
