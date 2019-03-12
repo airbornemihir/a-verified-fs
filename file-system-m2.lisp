@@ -9834,6 +9834,392 @@
                       (nth 21 (get-remaining-rsvdbyts str))
                       (nth 20 (get-remaining-rsvdbyts str))))))))))
 
+;; Start encapsulate here.
+
+(local
+ (defthm
+   string-to-fat32-in-memory-ignore-lemma-1
+   (implies
+    (and
+     (stringp str)
+     (equal
+      (mv-nth 1
+              (string-to-fat32-in-memory fat32-in-memory str))
+      0)
+     (fat32-in-memoryp fat32-in-memory))
+    (and
+     (true-listp
+      (mv-nth 0
+              (string-to-fat32-in-memory fat32-in-memory str)))
+     (equal
+      (len
+       (mv-nth 0
+               (string-to-fat32-in-memory fat32-in-memory str)))
+      30)))
+   :hints
+   (("goal"
+     :in-theory
+     (e/d
+      (compliant-fat32-in-memoryp fat32-in-memoryp)
+      (compliant-fat32-in-memoryp-of-string-to-fat32-in-memory))
+     :use
+     compliant-fat32-in-memoryp-of-string-to-fat32-in-memory))))
+
+(local
+ (defthmd
+   string-to-fat32-in-memory-ignore-lemma-2
+   (IMPLIES
+    (AND (STRINGP STR)
+         (NATP LEN)
+         (>= (DATA-REGION-LENGTH FAT32-IN-MEMORY)
+             LEN)
+         (FAT32-IN-MEMORYP FAT32-IN-MEMORY)
+         (< 0 (CLUSTER-SIZE FAT32-IN-MEMORY))
+         (>= (LENGTH STR)
+             (* (- (DATA-REGION-LENGTH FAT32-IN-MEMORY)
+                   LEN)
+                (CLUSTER-SIZE FAT32-IN-MEMORY)))
+         (equal
+          (mv-nth
+           1
+           (UPDATE-DATA-REGION FAT32-IN-MEMORY STR LEN))
+          0))
+    (EQUAL
+     (nth
+      *data-regioni*
+      (mv-nth
+       0
+       (UPDATE-DATA-REGION FAT32-IN-MEMORY STR LEN)))
+     (APPEND
+      (TAKE (- (DATA-REGION-LENGTH FAT32-IN-MEMORY)
+               LEN)
+            (NTH *DATA-REGIONI* FAT32-IN-MEMORY))
+      (MAKE-CLUSTERS
+       (SUBSEQ STR
+               (* (- (DATA-REGION-LENGTH FAT32-IN-MEMORY)
+                     LEN)
+                  (CLUSTER-SIZE FAT32-IN-MEMORY))
+               (* (DATA-REGION-LENGTH FAT32-IN-MEMORY)
+                  (CLUSTER-SIZE FAT32-IN-MEMORY)))
+       (CLUSTER-SIZE FAT32-IN-MEMORY)))))
+   :hints
+   (("goal"
+     :in-theory (disable update-data-region-correctness-1)
+     :do-not-induct t
+     :use
+     (update-data-region-alt
+      update-data-region-correctness-1)))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-3
+  (implies
+   (not
+    (equal fat32-in-memory (create-fat32-in-memory)))
+   (equal
+    (bpb_bytspersec
+     (mv-nth 0
+             (read-reserved-area fat32-in-memory str)))
+    (bpb_bytspersec
+     (mv-nth 0
+             (read-reserved-area (create-fat32-in-memory)
+                                 str)))))
+  :hints (("goal" :in-theory (e/d (read-reserved-area)
+                                  (create-fat32-in-memory)))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-4
+  (implies
+   (not
+    (equal fat32-in-memory (create-fat32-in-memory)))
+   (equal
+    (bpb_rsvdseccnt
+     (mv-nth 0
+             (read-reserved-area fat32-in-memory str)))
+    (bpb_rsvdseccnt
+     (mv-nth 0
+             (read-reserved-area (create-fat32-in-memory)
+                                 str)))))
+  :hints (("goal" :in-theory (e/d (read-reserved-area
+                                   cluster-size
+                                   count-of-clusters
+                                   fat-entry-count)
+                                  (create-fat32-in-memory)))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-5
+  (implies
+   (not
+    (equal fat32-in-memory (create-fat32-in-memory)))
+   (equal
+    (bpb_fatsz32
+     (mv-nth 0
+             (read-reserved-area fat32-in-memory str)))
+    (bpb_fatsz32
+     (mv-nth 0
+             (read-reserved-area (create-fat32-in-memory)
+                                 str)))))
+  :hints (("goal" :in-theory (e/d (read-reserved-area count-of-clusters
+                                                      fat-entry-count
+                                                      cluster-size)
+                                  (create-fat32-in-memory)))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-6
+  (implies
+   (not
+    (equal fat32-in-memory (create-fat32-in-memory)))
+   (equal
+    (bpb_numfats
+     (mv-nth 0
+             (read-reserved-area fat32-in-memory str)))
+    (bpb_numfats
+     (mv-nth 0
+             (read-reserved-area (create-fat32-in-memory)
+                                 str)))))
+  :hints (("goal" :in-theory (e/d (read-reserved-area
+                                   count-of-clusters
+                                   fat-entry-count
+                                   cluster-size)
+                                  (create-fat32-in-memory)))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-7
+  (implies
+   (and
+    (not
+     (equal fat32-in-memory (create-fat32-in-memory)))
+    (equal
+     (mv-nth 1
+             (read-reserved-area fat32-in-memory str))
+     0))
+   (equal
+    (bpb_totsec32
+     (mv-nth 0
+             (read-reserved-area fat32-in-memory str)))
+    (bpb_totsec32
+     (mv-nth 0
+             (read-reserved-area (create-fat32-in-memory)
+                                 str)))))
+  :hints (("goal" :in-theory (e/d (read-reserved-area
+                                   count-of-clusters
+                                   fat-entry-count
+                                   cluster-size)
+                                  (create-fat32-in-memory)))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-8
+  (implies
+   (not
+    (equal fat32-in-memory (create-fat32-in-memory)))
+   (equal
+    (bpb_secperclus
+     (mv-nth 0
+             (read-reserved-area fat32-in-memory str)))
+    (bpb_secperclus
+     (mv-nth 0
+             (read-reserved-area (create-fat32-in-memory)
+                                 str)))))
+  :hints (("goal" :in-theory (e/d (read-reserved-area
+                                   count-of-clusters
+                                   fat-entry-count
+                                   cluster-size)
+                                  (create-fat32-in-memory)))))
+
+(local
+ (defthm
+   string-to-fat32-in-memory-ignore-lemma-9
+   (implies
+    (not
+     (equal fat32-in-memory (create-fat32-in-memory)))
+    (equal
+     (mv-nth 1
+             (read-reserved-area fat32-in-memory str))
+     (mv-nth 1
+             (read-reserved-area (create-fat32-in-memory)
+                                 str))))
+   :hints (("goal" :in-theory (e/d (read-reserved-area
+                                    count-of-clusters
+                                    fat-entry-count
+                                    cluster-size)
+                                   (create-fat32-in-memory))))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-10
+  (< '0
+     (binary-*
+      (bpb_bytspersec (mv-nth 0
+                              (read-reserved-area fat32-in-memory str)))
+      (bpb_secperclus (mv-nth 0
+                              (read-reserved-area fat32-in-memory str)))))
+  :rule-classes :linear
+  :hints (("goal" :in-theory (e/d (read-reserved-area cluster-size)))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-11
+  (implies
+   (not (equal n *data-regioni*))
+   (equal
+    (nth n
+         (mv-nth 0
+                 (update-data-region fat32-in-memory str len)))
+    (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable update-data-regioni))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-12
+  (implies (not (equal n *data-regioni*))
+           (equal (nth n
+                       (resize-data-region i fat32-in-memory))
+                  (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable resize-data-region))))
+
+(defund
+  update-fat-aux (fa-table str pos)
+  (if
+   (zp pos)
+   fa-table
+   (let*
+    ((ch-word
+      (combine32u (char-code (char str (+ -1 (* pos 4))))
+                  (char-code (char str (+ -2 (* pos 4))))
+                  (char-code (char str (+ -3 (* pos 4))))
+                  (char-code (char str (+ -4 (* pos 4))))))
+     (fa-table (update-nth (+ -1 pos)
+                           ch-word fa-table)))
+    (update-fat-aux fa-table str (+ -1 pos)))))
+
+(defthmd
+  update-fat-alt
+  (equal
+   (update-fat fat32-in-memory str pos)
+   (if (zp pos)
+       fat32-in-memory
+       (update-nth *fati*
+                   (update-fat-aux (nth *fati* fat32-in-memory)
+                                   str pos)
+                   fat32-in-memory)))
+  :hints
+  (("goal" :in-theory (enable update-fat-aux update-fati)
+    :induct (update-fat fat32-in-memory str pos))))
+
+(defthmd string-to-fat32-in-memory-ignore-lemma-13
+  (equal (nth *fati* (resize-fat i fat32-in-memory))
+         (resize-list (nth *fati* fat32-in-memory)
+                      i '0))
+  :hints (("goal" :in-theory (enable resize-fat))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-15
+  (implies (not (equal n *bs_oemnamei*))
+           (equal (nth n (update-bs_oemname v fat32-in-memory))
+                  (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable update-bs_oemnamei))))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-16
+  (implies (not (equal (nfix n) *bs_jmpbooti*))
+           (equal (nth n (update-bs_jmpboot v fat32-in-memory))
+                  (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable update-bs_jmpbooti))))
+
+(defthm string-to-fat32-in-memory-ignore-lemma-14
+  (equal (nth *fati*
+              (mv-nth 0
+                      (read-reserved-area fat32-in-memory str)))
+         (nth *fati* fat32-in-memory))
+  :hints (("Goal" :in-theory (enable read-reserved-area)) ))
+
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/nth" :dir :system))
+
+  (local (in-theory (e/d
+                     (count-of-clusters cluster-size fat-entry-count)
+                     (nth-when-zp create-fat32-in-memory))))
+
+  (defthm
+    string-to-fat32-in-memory-ignore
+    (implies
+     (and
+      (stringp str)
+      (not (equal fat32-in-memory (create-fat32-in-memory)))
+      (fat32-in-memoryp fat32-in-memory)
+      (equal (mv-nth 1
+                     (string-to-fat32-in-memory fat32-in-memory str))
+             0)
+      (equal (mv-nth 1
+                     (string-to-fat32-in-memory (create-fat32-in-memory) str))
+             0))
+     (equal (mv-nth 0 (string-to-fat32-in-memory fat32-in-memory str))
+            (mv-nth 0 (string-to-fat32-in-memory (create-fat32-in-memory) str))))
+    :otf-flg t
+    :hints (("Goal"
+             :use ((:functional-instance
+                    equal-by-nths
+                    (equal-by-nths-hyp
+                     (lambda ()
+                       (and (stringp str)
+                            (not (equal fat32-in-memory (create-fat32-in-memory)))
+                            (fat32-in-memoryp fat32-in-memory)
+                            (equal (mv-nth 1
+                                           (string-to-fat32-in-memory
+                                            fat32-in-memory
+                                            str))
+                                   0)
+                            (equal (mv-nth 1
+                                           (string-to-fat32-in-memory
+                                            (create-fat32-in-memory)
+                                            str))
+                                   0))))
+                    (equal-by-nths-lhs
+                     (lambda ()
+                       (mv-nth 0 (string-to-fat32-in-memory fat32-in-memory str))))
+                    (equal-by-nths-rhs
+                     (lambda ()
+                       (mv-nth 0 (string-to-fat32-in-memory (create-fat32-in-memory)
+                                                            str)))))))
+            ("Subgoal 1'"
+             :cases ((equal n *bs_jmpbooti*)
+                     (equal n *bs_oemnamei*)
+                     (equal n *bpb_bytspersec*)
+                     (equal n *bpb_secperclus*)
+                     (equal n *bpb_rsvdseccnt*)
+                     (equal n *bpb_numfats*)
+                     (equal n *bpb_rootentcnt*)
+                     (equal n *bpb_totsec16*)
+                     (equal n *bpb_media*)
+                     (equal n *bpb_fatsz16*)
+                     (equal n *bpb_secpertrk*)
+                     (equal n *bpb_numheads*)
+                     (equal n *bpb_hiddsec*)
+                     (equal n *bpb_totsec32*)
+                     (equal n *bpb_fatsz32*)
+                     (equal n *bpb_extflags*)
+                     (equal n *bpb_fsver_minor*)
+                     (equal n *bpb_fsver_major*)
+                     (equal n *bpb_rootclus*)
+                     (equal n *bpb_fsinfo*)
+                     (equal n *bpb_bkbootsec*)
+                     (equal n *bpb_reservedi*)
+                     (equal n *bs_drvnum*)
+                     (equal n *bs_reserved1*)
+                     (equal n *bs_bootsig*)
+                     (equal n *bs_volid*)
+                     (equal n *bs_vollabi*)
+                     (equal n *bs_filsystypei*)
+                     (equal n *fati*)
+                     (equal n *data-regioni*)))
+            ("subgoal 1.1'" :in-theory (e/d
+                                        (string-to-fat32-in-memory
+                                         string-to-fat32-in-memory-ignore-lemma-2)))
+            ("subgoal 1.2'" :in-theory (e/d
+                                        (string-to-fat32-in-memory
+                                         update-fat-alt
+                                         string-to-fat32-in-memory-ignore-lemma-13))))))
+
+;; End encapsulate here.
+
 (defthm
   string-to-fat32-in-memory-inversion
   (implies
