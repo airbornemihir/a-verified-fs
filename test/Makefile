@@ -403,7 +403,7 @@ mkdir-ref-output-1.raw mkdir-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) mkdir-repl
 	sleep 1
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) MKDIR_OUTPUT="mkdir-output-1.raw" \
-	MKDIR_INPUT="/dir1" $(ACL2) -- < mkdir-replicant.lisp
+	$(ACL2) -- "/dir1" < mkdir-replicant.lisp
 
 mkdir-ref-output-2.raw mkdir-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) mkdir-replicant.lisp
 	rm -f $(DISK)
@@ -420,7 +420,7 @@ mkdir-ref-output-2.raw mkdir-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) mkdir-repl
 	sleep 1
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) MKDIR_OUTPUT="mkdir-output-2.raw" \
-	MKDIR_INPUT="/dir1/dir2" $(ACL2) -- < mkdir-replicant.lisp
+	$(ACL2) -- "/dir1/dir2" < mkdir-replicant.lisp
 
 mtools-mkdir-ref-output-1.raw mtools-mkdir-output-1.raw: mkdir-replicant.lisp
 	rm -f $(DISK) mtools-cat-ref-output-2.txt
