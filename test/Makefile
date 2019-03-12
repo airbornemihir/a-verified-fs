@@ -423,7 +423,7 @@ mkdir-ref-output-2.raw mkdir-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) mkdir-repl
 	MKDIR_INPUT="/dir1/dir2" $(ACL2) -- < mkdir-replicant.lisp
 
 mtools-mkdir-ref-output-1.raw mtools-mkdir-output-1.raw: mkdir-replicant.lisp
-	mkdir -f $(DISK) mtools-cat-ref-output-2.txt
+	rm -f $(DISK) mtools-cat-ref-output-2.txt
 	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
 	env MTOOLSRC=$(MTOOLSRC) mformat -T 140000 -h 64 -s 32 -S \
 	2 -F -c 2 c:

@@ -1,4 +1,5 @@
 (include-book "../file-system-m2")
+(include-book "../m1-syscalls")
 (include-book "centaur/getopt/top" :dir :system)
 (include-book "oslib/argv" :dir :system)
 
@@ -11,7 +12,7 @@
                :rule-classes :type-prescription
                :alias #\p)))
 
-(defun mkdir-list (fs r name-list exit-status)
+(defun mkdir-list (fs name-list exit-status)
   (b*
       (((when (atom name-list))
         (mv fs exit-status))
@@ -22,7 +23,7 @@
        ((mv fs retval &)
         (m1-mkdir fs fat32-pathname))
        (exit-status (if (equal retval 0) exit-status 1)))
-    (mkdir-list fs r (cdr name-list) exit-status)))
+    (mkdir-list fs (cdr name-list) exit-status)))
 
 (b*
     (((mv argv state)
@@ -40,7 +41,10 @@
      ((mv fs &)
       (fat32-in-memory-to-m1-fs fat32-in-memory))
      ((mv fs exit-status)
-      (mkdir-list fs nil extra-args 0))
+      ;; The -p option to mkdir is not yet supported.
+      (if opts.parents
+          (mv fs -1)
+        (mkdir-list fs extra-args 0)))
      ((mv fat32-in-memory &)
       (m1-fs-to-fat32-in-memory fat32-in-memory fs))
      ((mv & val state)
