@@ -1,4 +1,5 @@
 (include-book "../test-stuff")
+(include-book "oslib/argv" :dir :system)
 
 (b*
     (((mv argv state)

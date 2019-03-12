@@ -1,31 +1,5 @@
-(include-book "../file-system-m2")
-(include-book "../m1-syscalls")
-(include-book "centaur/getopt/top" :dir :system)
+(include-book "../test-stuff")
 (include-book "oslib/argv" :dir :system)
-
-(defoptions rm-opts
-  :parents (demo2)
-  :tag :demo2
-
-  ((recursive    "Recursively delete a directory"
-                 booleanp
-                 :rule-classes :type-prescription
-                 :alias #\r)))
-
-(defun rm-list (fs r name-list exit-status)
-  (b*
-      (((when (atom name-list))
-        (mv fs exit-status))
-       (fat32-pathname
-        (pathname-to-fat32-pathname (coerce (car name-list) 'list)))
-       ;; It doesn't really matter for these purposes what the errno is. We're
-       ;; not trying to match this program for its stderr output.
-       ((mv fs retval &)
-        (if r
-            (m1-unlink-recursive fs fat32-pathname)
-          (m1-unlink fs fat32-pathname)))
-       (exit-status (if (equal retval 0) exit-status 1)))
-    (rm-list fs r (cdr name-list) exit-status)))
 
 (b*
     (((mv argv state)
