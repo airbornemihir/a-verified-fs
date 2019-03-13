@@ -8,6 +8,8 @@ test-stat-replicant-1 test-stat-replicant-2 \
 test-rm-replicant-1 test-rm-replicant-2 test-rm-replicant-3 \
 test-rm-replicant-4 mtools-test-rm-replicant-1 \
 mtools-test-rm-replicant-2 \
+test-unlink-replicant-1 test-unlink-replicant-2 \
+test-unlink-replicant-3 \
 test-mkdir-replicant-1 test-mkdir-replicant-2 \
 mtools-test-mkdir-replicant-1 \
 test-rmdir-replicant-1 test-rmdir-replicant-2 \
@@ -111,6 +113,18 @@ mtools-test-rm-replicant-1: mtools-rm-ref-output-1.raw mtools-rm-output-1.raw
 mtools-test-rm-replicant-2: mtools-rm-ref-output-2.raw mtools-rm-output-2.raw
 	env DISK=$(DISK) REF_INPUT="mtools-rm-ref-output-2.raw" \
 	INPUT="mtools-rm-output-2.raw" $(ACL2) -- < compare-disks.lisp
+
+test-unlink-replicant-1: unlink-output-1.raw unlink-ref-output-1.raw
+	env DISK=$(DISK) REF_INPUT="unlink-ref-output-1.raw" \
+	INPUT="unlink-output-1.raw" $(ACL2) -- < compare-disks.lisp
+
+test-unlink-replicant-2: unlink-output-2.raw unlink-ref-output-2.raw
+	env DISK=$(DISK) REF_INPUT="unlink-ref-output-2.raw" \
+	INPUT="unlink-output-2.raw" $(ACL2) -- < compare-disks.lisp
+
+test-unlink-replicant-3: unlink-output-3.raw unlink-ref-output-3.raw
+	env DISK=$(DISK) REF_INPUT="unlink-ref-output-3.raw" \
+	INPUT="unlink-output-3.raw" $(ACL2) -- < compare-disks.lisp
 
 test-mkdir-replicant-1: mkdir-output-1.raw mkdir-ref-output-1.raw
 	env DISK=$(DISK) REF_INPUT="mkdir-ref-output-1.raw" \
@@ -424,6 +438,65 @@ mtools-rm-ref-output-2.raw mtools-rm-output-2.raw: rm-replicant.lisp
 	cp $(DISK) mtools-rm-ref-output-2.raw
 	env DISK="mtools-rm-output-2.raw" RM_OUTPUT="mtools-rm-output-2.raw" \
 	$(ACL2) -- -r "/tmp" < rm-replicant.lisp
+
+unlink-ref-output-1.raw unlink-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	cp $(DISK) unlink-ref-output-1.raw
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos unlink-ref-output-1.raw $(MOUNTPOINT)
+	unlink $(MOUNTPOINT)/initrd.img
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) RM_OUTPUT="unlink-output-1.raw" \
+	$(ACL2) -- "/initrd.img" \
+	< rm-replicant.lisp
+
+unlink-ref-output-2.raw unlink-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
+	for i1 in $(shell seq 1 32); do \
+		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+	done
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	cp $(DISK) unlink-ref-output-2.raw
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos unlink-ref-output-2.raw $(MOUNTPOINT)
+	unlink $(MOUNTPOINT)/initrd.img
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) RM_OUTPUT="unlink-output-2.raw" \
+	$(ACL2) -- "/initrd.img" \
+	< rm-replicant.lisp
+
+unlink-ref-output-3.raw unlink-output-3.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
+	mkdir $(FUSEPOINT)/tmp
+	cp input-1204-bytes.txt $(FUSEPOINT)/tmp/file.txt
+	sleep 1
+	fusermount -u $(FUSEPOINT)
+	sudo umount $(MOUNTPOINT)
+	cp $(DISK) unlink-ref-output-3.raw
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos unlink-ref-output-3.raw $(MOUNTPOINT)
+	unlink $(MOUNTPOINT)/tmp/file.txt
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) RM_OUTPUT="unlink-output-3.raw" \
+	$(ACL2) -- "/tmp/file.txt" \
+	< rm-replicant.lisp
 
 mkdir-ref-output-1.raw mkdir-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) mkdir-replicant.lisp
 	rm -f $(DISK)
