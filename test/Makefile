@@ -1,14 +1,15 @@
 # test-mkfs-replicant-3 was always problematic; it's now removed
 # because our model has finally become strict enough to reject it.
 TEST:= test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 \
-test-cat-replicant-4 test-mkfs-replicant-1 test-mkfs-replicant-2 \
-test-wc-replicant-1 test-wc-replicant-2 \
-test-wc-replicant-3 test-stat-replicant-1 test-stat-replicant-2 \
+test-cat-replicant-4 mtools-test-cat-replicant-2 \
+test-mkfs-replicant-1 test-mkfs-replicant-2 \
+test-wc-replicant-1 test-wc-replicant-2 test-wc-replicant-3 \
+test-stat-replicant-1 test-stat-replicant-2 \
 test-rm-replicant-1 test-rm-replicant-2 test-rm-replicant-3 \
-test-rm-replicant-4 mtools-test-cat-replicant-2 \
-mtools-test-rm-replicant-1 test-mkdir-replicant-1 \
-test-mkdir-replicant-2 mtools-test-mkdir-replicant-1 \
-mtools-test-mkdir-replicant-2
+test-rm-replicant-4 mtools-test-rm-replicant-1 \
+mtools-test-rm-replicant-2 \
+test-mkdir-replicant-1 test-mkdir-replicant-2 \
+mtools-test-mkdir-replicant-1 mtools-test-mkdir-replicant-2
 
 test: $(TEST)
 
@@ -104,6 +105,10 @@ test-rm-replicant-4: rm-output-4.raw rm-ref-output-4.raw
 mtools-test-rm-replicant-1: mtools-rm-ref-output-1.raw mtools-rm-output-1.raw
 	env DISK=$(DISK) REF_INPUT="mtools-rm-ref-output-1.raw" \
 	INPUT="mtools-rm-output-1.raw" $(ACL2) -- < compare-disks.lisp
+
+mtools-test-rm-replicant-2: mtools-rm-ref-output-2.raw mtools-rm-output-2.raw
+	env DISK=$(DISK) REF_INPUT="mtools-rm-ref-output-2.raw" \
+	INPUT="mtools-rm-output-2.raw" $(ACL2) -- < compare-disks.lisp
 
 test-mkdir-replicant-1: mkdir-output-1.raw mkdir-ref-output-1.raw
 	env DISK=$(DISK) REF_INPUT="mkdir-ref-output-1.raw" \
@@ -386,7 +391,21 @@ mtools-rm-ref-output-1.raw mtools-rm-output-1.raw: rm-replicant.lisp
 	env MTOOLSRC=$(MTOOLSRC) mdel c:/vmlinuz
 	cp $(DISK) mtools-rm-ref-output-1.raw
 	env DISK="mtools-rm-output-1.raw" RM_OUTPUT="mtools-rm-output-1.raw" \
-	RM_INPUT="vmlinuz" $(ACL2) -- < rm-replicant.lisp
+	$(ACL2) -- "/vmlinuz" < rm-replicant.lisp
+
+mtools-rm-ref-output-2.raw mtools-rm-output-2.raw: rm-replicant.lisp
+	rm -f $(DISK) mtools-cat-ref-output-2.txt
+	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 140000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env MTOOLSRC=$(MTOOLSRC) mmd c:/tmp
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/tmp/file.txt
+	cp $(DISK) mtools-rm-output-2.raw
+	env MTOOLSRC=$(MTOOLSRC) mdeltree c:/tmp
+	cp $(DISK) mtools-rm-ref-output-2.raw
+	env DISK="mtools-rm-output-2.raw" RM_OUTPUT="mtools-rm-output-2.raw" \
+	$(ACL2) -- -r "/tmp" < rm-replicant.lisp
 
 mkdir-ref-output-1.raw mkdir-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) mkdir-replicant.lisp
 	rm -f $(DISK)
