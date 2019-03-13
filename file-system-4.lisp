@@ -137,7 +137,7 @@
             (if (l3-regular-file-entry-p contents)
                 (if (cdr hns)
                     (mv (cons (cons (car sd) contents)
-                              (delete-assoc (car hns) fs))
+                              (remove1-assoc (car hns) fs))
                         disk
                         alv) ;; error, so leave fs unchanged
                   (let* ((old-text
@@ -154,12 +154,12 @@
                         ;; we have an error because of insufficient disk space
                         ;; - so we leave the fs unchanged
                         (mv (cons (cons (car sd) contents)
-                                  (delete-assoc (car hns) fs))
+                                  (remove1-assoc (car hns) fs))
                             disk
                             alv)
                       (mv (cons (cons (car sd)
                                       (cons new-indices (len new-text)))
-                                (delete-assoc (car hns) fs))
+                                (remove1-assoc (car hns) fs))
                           ;; this (take) means we write as many blocks as we can
                           ;; if we run out of space
                           (set-indices disk new-indices new-blocks)
@@ -167,7 +167,7 @@
               (mv-let (new-contents new-disk new-alv)
                 (l4-wrchs (cdr hns) contents disk alv start text)
                 (mv (cons (cons (car sd) new-contents)
-                          (delete-assoc (car hns) fs))
+                          (remove1-assoc (car hns) fs))
                     new-disk
                     new-alv)))
             ))))))
@@ -332,7 +332,7 @@
                                       l)))
    (not (member-intersectp-equal
          l
-         (l4-collect-all-index-lists (delete-assoc-equal name fs))))))
+         (l4-collect-all-index-lists (remove1-assoc-equal name fs))))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-6
@@ -340,21 +340,21 @@
                 (not-intersectp-list l (l4-collect-all-index-lists fs)))
            (not-intersectp-list
             l
-            (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
+            (l4-collect-all-index-lists (remove1-assoc-equal name fs)))))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-7
   (implies
    (and (l3-fs-p fs)
         (disjoint-list-listp (l4-collect-all-index-lists fs)))
    (disjoint-list-listp
-    (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
+    (l4-collect-all-index-lists (remove1-assoc-equal name fs)))))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-8
   (implies
    (and (l3-fs-p fs)
         (no-duplicates-listp (l4-collect-all-index-lists fs)))
    (no-duplicates-listp
-    (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
+    (l4-collect-all-index-lists (remove1-assoc-equal name fs)))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-9
@@ -363,7 +363,7 @@
                 (indices-marked-listp (l4-collect-all-index-lists fs)
                                       alv))
            (indices-marked-listp
-            (l4-collect-all-index-lists (delete-assoc-equal name fs))
+            (l4-collect-all-index-lists (remove1-assoc-equal name fs))
             alv)))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-10
@@ -404,7 +404,7 @@
                 (disjoint-list-listp (l4-collect-all-index-lists fs)))
            (not-intersectp-list
             (cadr (assoc-equal name fs))
-            (l4-collect-all-index-lists (delete-assoc-equal name fs)))))
+            (l4-collect-all-index-lists (remove1-assoc-equal name fs)))))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-15
   (implies (and (boolean-listp alv)
@@ -640,7 +640,7 @@
         (indices-marked-listp (l4-collect-all-index-lists fs)
                               alv))
    (bounded-nat-listp
-    (flatten (l4-collect-all-index-lists (delete-assoc-equal (car hns) fs)))
+    (flatten (l4-collect-all-index-lists (remove1-assoc-equal (car hns) fs)))
     (len alv)))
   :hints
   (("Goal" :in-theory (disable l4-collect-all-index-lists-correctness-2))
@@ -673,7 +673,7 @@
         (disjoint-list-listp (l4-collect-all-index-lists fs))
         (no-duplicates-listp (l4-collect-all-index-lists fs)))
    (not (member-intersectp-equal
-         (l4-collect-all-index-lists (delete-assoc-equal name fs))
+         (l4-collect-all-index-lists (remove1-assoc-equal name fs))
          (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
   :hints
   (("Subgoal *1/7''"
@@ -685,7 +685,7 @@
      (y
       (cons
        (cadr (car fs))
-       (l4-collect-all-index-lists (delete-assoc-equal name
+       (l4-collect-all-index-lists (remove1-assoc-equal name
                                                        (cdr fs)))))))))
 
 (defthm
@@ -1714,13 +1714,13 @@
         (let ((contents (cdr sd)))
           (if (l3-regular-file-entry-p contents)
               (mv (cons (cons (car sd) contents) ;; file already exists, so leave fs unchanged
-                        (delete-assoc (car hns) fs))
+                        (remove1-assoc (car hns) fs))
                   disk
                   alv)
             (mv-let (new-fs new-disk new-alv) (l4-create (cdr hns) contents disk alv text)
               (mv (cons (cons (car sd)
                               new-fs)
-                        (delete-assoc (car hns) fs))
+                        (remove1-assoc (car hns) fs))
                   new-disk
                   new-alv)))
           )))))
@@ -1900,7 +1900,7 @@
    (if
     (atom (cdr hns))
     (mv
-     (delete-assoc (car hns) fs)
+     (remove1-assoc (car hns) fs)
      (if
       (and (consp (assoc (car hns) fs))
            (l3-regular-file-entry-p (cdr (assoc (car hns) fs))))
@@ -1921,7 +1921,7 @@
                 (mv-let (new-fs new-alv)
                   (l4-unlink (cdr hns) contents alv)
                   (mv (cons (cons (car sd) new-fs)
-                            (delete-assoc (car hns) fs))
+                            (remove1-assoc (car hns) fs))
                       new-alv))))))))))
 
 (defthm l4-unlink-returns-fs
