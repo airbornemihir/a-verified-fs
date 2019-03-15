@@ -14,7 +14,8 @@ test-mkdir-replicant-1 test-mkdir-replicant-2 \
 mtools-test-mkdir-replicant-1 \
 test-rmdir-replicant-1 test-rmdir-replicant-2 \
 mtools-test-rmdir-replicant-1 \
-test-mv-replicant-1
+test-mv-replicant-1 mtools-test-mv-replicant-1 \
+mtools-test-mv-replicant-2
 
 test: $(TEST)
 
@@ -162,6 +163,14 @@ mtools-test-rmdir-replicant-2: mtools-rmdir-ref-output-2.raw mtools-rmdir-output
 test-mv-replicant-1: mv-output-1.raw mv-ref-output-1.raw
 	env DISK=$(DISK) REF_INPUT="mv-ref-output-1.raw" \
 	INPUT="mv-output-1.raw" $(ACL2) -- < compare-disks.lisp
+
+mtools-test-mv-replicant-1: mtools-mv-output-1.raw mtools-mv-ref-output-1.raw
+	env DISK=$(DISK) REF_INPUT="mtools-mv-ref-output-1.raw" \
+	INPUT="mtools-mv-output-1.raw" $(ACL2) -- < compare-disks.lisp
+
+mtools-test-mv-replicant-2: mtools-mv-ref-output-2.raw mtools-mv-output-2.raw
+	env DISK=$(DISK) REF_INPUT="mtools-mv-ref-output-2.raw" \
+	INPUT="mtools-mv-output-2.raw" $(ACL2) -- < compare-disks.lisp
 
 cat-ref-output-1.txt cat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
@@ -618,6 +627,34 @@ mv-ref-output-1.raw mv-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) mv-replicant.lis
 	env DISK=$(DISK) MV_OUTPUT="mv-output-1.raw" \
 	$(ACL2) -- "/tmp/file1.txt" "/tmp/file2.txt" \
 	< mv-replicant.lisp
+
+mtools-mv-ref-output-1.raw mtools-mv-output-1.raw: mv-replicant.lisp
+	rm -f $(DISK) mtools-cat-ref-output-2.txt
+	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 140000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env MTOOLSRC=$(MTOOLSRC) mmd c:/tmp
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/tmp/file1.txt
+	cp $(DISK) mtools-mv-output-1.raw
+	env MTOOLSRC=$(MTOOLSRC) mmove c:/tmp/file1.txt c:/tmp/file2.txt
+	cp $(DISK) mtools-mv-ref-output-1.raw
+	env DISK="mtools-mv-output-1.raw" MV_OUTPUT="mtools-mv-output-1.raw" \
+	$(ACL2) -- "/tmp/file1.txt" "/tmp/file2.txt" < mv-replicant.lisp
+
+mtools-mv-ref-output-2.raw mtools-mv-output-2.raw: mv-replicant.lisp
+	rm -f $(DISK) mtools-cat-ref-output-2.txt
+	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 140000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env MTOOLSRC=$(MTOOLSRC) mmd c:/tmp
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/tmp/file1.txt
+	cp $(DISK) mtools-mv-output-2.raw
+	env MTOOLSRC=$(MTOOLSRC) mren c:/tmp/file1.txt c:/tmp/file2.txt
+	cp $(DISK) mtools-mv-ref-output-2.raw
+	env DISK="mtools-mv-output-2.raw" MV_OUTPUT="mtools-mv-output-2.raw" \
+	$(ACL2) -- "/tmp/file1.txt" "/tmp/file2.txt" < mv-replicant.lisp
 
 debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	rm -f $(DISK)
