@@ -776,3 +776,38 @@
   (implies (and (string-listp lst)
                 (stringp default-value))
            (string-listp (resize-list lst n default-value))))
+
+(defthmd
+  update-nth-of-first-n-ac
+  (implies
+   (< (nfix key) (+ (nfix i) (len ac)))
+   (equal
+    (update-nth key val (first-n-ac i l ac))
+    (if (< (nfix key) (len ac))
+        (first-n-ac i l
+                    (update-nth (- (len ac) (+ (nfix key) 1))
+                                val ac))
+        (first-n-ac i
+                    (update-nth (- (nfix key) (len ac))
+                                val l)
+                    ac))))
+  :hints (("goal" :induct (first-n-ac i l ac)
+           :in-theory (enable update-nth-of-revappend))))
+
+(defthm
+  first-n-ac-of-update-nth
+  (equal (first-n-ac i (update-nth key val l) ac)
+         (if (< (nfix key) (nfix i))
+             (update-nth (+ (nfix key) (len ac))
+                         val (first-n-ac i l ac))
+             (first-n-ac i l ac)))
+  :hints
+  (("goal" :induct (mv (first-n-ac i l ac)
+                       (update-nth key val l))
+    :in-theory (enable update-nth-of-first-n-ac))))
+
+(defthm take-of-update-nth
+  (equal (take n (update-nth key val l))
+         (if (< (nfix key) (nfix n))
+             (update-nth key val (take n l))
+             (take n l))))

@@ -10,12 +10,6 @@
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
 (local (include-book "std/lists/take" :dir :system))
 
-(defthm take-of-update-nth
-  (equal (take n (update-nth key val l))
-         (if (< (nfix key) (nfix n))
-             (update-nth key val (take n l))
-           (take n l))))
-
 (make-event
  `(defstobj fat32-in-memory
 
