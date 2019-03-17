@@ -176,11 +176,11 @@
 
 (defmacro
   update-stobj-scalar-correctness
-  (bit-width updater accessor
-             stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3
-             lemma-name4 lemma-name5 updater-of-updater updater-of-accessor
-             accessor-of-resize-fat fat-length-of-updater
-             accessor-of-resize-data-region data-region-length-of-updater)
+    (bit-width updater accessor stobj stobj-recogniser constant lemma-name1
+               lemma-name2 lemma-name3 lemma-name4 resize-data-region-of-updater
+               updater-of-updater updater-of-accessor accessor-of-resize-fat
+               fat-length-of-updater accessor-of-resize-data-region
+               data-region-length-of-updater nth-of-updater)
   (let
       ((upper-bound (ash 1 bit-width)))
   `(encapsulate
@@ -233,7 +233,7 @@
        (("goal" :in-theory (enable resize-fat ,updater))))
 
      (defthm
-       ,lemma-name5
+       ,resize-data-region-of-updater
        (equal (resize-data-region i (,updater v ,stobj))
               (,updater v (resize-data-region i ,stobj)))
        :hints
@@ -274,10 +274,17 @@
      (defthm ,data-region-length-of-updater
        (equal (data-region-length (,updater v ,stobj))
               (data-region-length ,stobj))
+       :hints (("goal" :in-theory (enable data-region-length ,updater))))
+
+     (defthm ,nth-of-updater
+       (implies (not (equal n ,constant))
+                (equal (nth n (,updater v ,stobj))
+                       (nth n ,stobj)))
        :hints (("goal" :in-theory (enable data-region-length ,updater)))))))
 
 (update-stobj-scalar-correctness 16 update-bpb_rsvdseccnt bpb_rsvdseccnt
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_rsvdseccnt*
                                  update-bpb_rsvdseccnt-correctness-1
                                  update-bpb_rsvdseccnt-correctness-2
                                  update-bpb_rsvdseccnt-correctness-3
@@ -288,10 +295,12 @@
                                  bpb_rsvdseccnt-of-resize-fat
                                  fat-length-of-bpb_rsvdseccnt
                                  bpb_rsvdseccnt-of-resize-data-region
-                                 data-region-length-of-bpb_rsvdseccnt)
+                                 data-region-length-of-bpb_rsvdseccnt
+                                 nth-of-bpb_rsvdseccnt)
 
 (update-stobj-scalar-correctness 8 update-bpb_secperclus bpb_secperclus
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_secperclus*
                                  update-bpb_secperclus-correctness-1
                                  update-bpb_secperclus-correctness-2
                                  update-bpb_secperclus-correctness-3
@@ -302,10 +311,12 @@
                                  bpb_secperclus-of-resize-fat
                                  fat-length-of-bpb_secperclus
                                  bpb_secperclus-of-resize-data-region
-                                 data-region-length-of-bpb_secperclus)
+                                 data-region-length-of-bpb_secperclus
+                                 nth-of-bpb_secperclus)
 
 (update-stobj-scalar-correctness 16 update-bpb_bytspersec bpb_bytspersec
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_bytspersec*
                                  update-bpb_bytspersec-correctness-1
                                  update-bpb_bytspersec-correctness-2
                                  update-bpb_bytspersec-correctness-3
@@ -316,10 +327,12 @@
                                  bpb_bytspersec-of-resize-fat
                                  fat-length-of-bpb_bytspersec
                                  bpb_bytspersec-of-resize-data-region
-                                 data-region-length-of-bpb_bytspersec)
+                                 data-region-length-of-bpb_bytspersec
+                                 nth-of-bpb_bytspersec)
 
 (update-stobj-scalar-correctness 8 update-bpb_numfats bpb_numfats
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_numfats*
                                  update-bpb_numfats-correctness-1
                                  update-bpb_numfats-correctness-2
                                  update-bpb_numfats-correctness-3
@@ -330,10 +343,12 @@
                                  bpb_numfats-of-resize-fat
                                  fat-length-of-bpb_numfats
                                  bpb_numfats-of-resize-data-region
-                                 data-region-length-of-bpb_numfats)
+                                 data-region-length-of-bpb_numfats
+                                 nth-of-bpb_numfats)
 
 (update-stobj-scalar-correctness 32 update-bpb_rootclus bpb_rootclus
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_rootclus*
                                  update-bpb_rootclus-correctness-1
                                  update-bpb_rootclus-correctness-2
                                  update-bpb_rootclus-correctness-3
@@ -344,10 +359,12 @@
                                  bpb_rootclus-of-resize-fat
                                  fat-length-of-bpb_rootclus
                                  bpb_rootclus-of-resize-data-region
-                                 data-region-length-of-bpb_rootclus)
+                                 data-region-length-of-bpb_rootclus
+                                 nth-of-bpb_rootclus)
 
 (update-stobj-scalar-correctness 16 update-bpb_fsinfo bpb_fsinfo
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_fsinfo*
                                  update-bpb_fsinfo-correctness-1
                                  update-bpb_fsinfo-correctness-2
                                  update-bpb_fsinfo-correctness-3
@@ -358,10 +375,12 @@
                                  bpb_fsinfo-of-resize-fat
                                  fat-length-of-bpb_fsinfo
                                  bpb_fsinfo-of-resize-data-region
-                                 data-region-length-of-bpb_fsinfo)
+                                 data-region-length-of-bpb_fsinfo
+                                 nth-of-bpb_fsinfo)
 
 (update-stobj-scalar-correctness 16 update-bpb_bkbootsec bpb_bkbootsec
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_bkbootsec*
                                  update-bpb_bkbootsec-correctness-1
                                  update-bpb_bkbootsec-correctness-2
                                  update-bpb_bkbootsec-correctness-3
@@ -372,10 +391,12 @@
                                  bpb_bkbootsec-of-resize-fat
                                  fat-length-of-bpb_bkbootsec
                                  bpb_bkbootsec-of-resize-data-region
-                                 data-region-length-of-bpb_bkbootsec)
+                                 data-region-length-of-bpb_bkbootsec
+                                 nth-of-bpb_bkbootsec)
 
 (update-stobj-scalar-correctness 8 update-bs_drvnum bs_drvnum
                                  fat32-in-memory fat32-in-memoryp
+                                 *bs_drvnum*
                                  update-bs_drvnum-correctness-1
                                  update-bs_drvnum-correctness-2
                                  update-bs_drvnum-correctness-3
@@ -386,10 +407,12 @@
                                  bs_drvnum-of-resize-fat
                                  fat-length-of-bs_drvnum
                                  bs_drvnum-of-resize-data-region
-                                 data-region-length-of-bs_drvnum)
+                                 data-region-length-of-bs_drvnum
+                                 nth-of-bs_drvnum)
 
 (update-stobj-scalar-correctness 8 update-bs_reserved1 bs_reserved1
                                  fat32-in-memory fat32-in-memoryp
+                                 *bs_reserved1*
                                  update-bs_reserved1-correctness-1
                                  update-bs_reserved1-correctness-2
                                  update-bs_reserved1-correctness-3
@@ -400,10 +423,12 @@
                                  bs_reserved1-of-resize-fat
                                  fat-length-of-bs_reserved1
                                  bs_reserved1-of-resize-data-region
-                                 data-region-length-of-bs_reserved1)
+                                 data-region-length-of-bs_reserved1
+                                 nth-of-bs_reserved1)
 
 (update-stobj-scalar-correctness 8 update-bs_bootsig bs_bootsig
                                  fat32-in-memory fat32-in-memoryp
+                                 *bs_bootsig*
                                  update-bs_bootsig-correctness-1
                                  update-bs_bootsig-correctness-2
                                  update-bs_bootsig-correctness-3
@@ -414,10 +439,12 @@
                                  bs_bootsig-of-resize-fat
                                  fat-length-of-bs_bootsig
                                  bs_bootsig-of-resize-data-region
-                                 data-region-length-of-bs_bootsig)
+                                 data-region-length-of-bs_bootsig
+                                 nth-of-bs_bootsig)
 
 (update-stobj-scalar-correctness 8 update-bpb_media bpb_media
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_media*
                                  update-bpb_media-correctness-1
                                  update-bpb_media-correctness-2
                                  update-bpb_media-correctness-3
@@ -428,10 +455,12 @@
                                  bpb_media-of-resize-fat
                                  fat-length-of-bpb_media
                                  bpb_media-of-resize-data-region
-                                 data-region-length-of-bpb_media)
+                                 data-region-length-of-bpb_media
+                                 nth-of-bpb_media)
 
 (update-stobj-scalar-correctness 8 update-bpb_fsver_minor bpb_fsver_minor
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_fsver_minor*
                                  update-bpb_fsver_minor-correctness-1
                                  update-bpb_fsver_minor-correctness-2
                                  update-bpb_fsver_minor-correctness-3
@@ -442,10 +471,12 @@
                                  bpb_fsver_minor-of-resize-fat
                                  fat-length-of-bpb_fsver_minor
                                  bpb_fsver_minor-of-resize-data-region
-                                 data-region-length-of-bpb_fsver_minor)
+                                 data-region-length-of-bpb_fsver_minor
+                                 nth-of-bpb_fsver_minor)
 
 (update-stobj-scalar-correctness 8 update-bpb_fsver_major bpb_fsver_major
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_fsver_major*
                                  update-bpb_fsver_major-correctness-1
                                  update-bpb_fsver_major-correctness-2
                                  update-bpb_fsver_major-correctness-3
@@ -456,10 +487,12 @@
                                  bpb_fsver_major-of-resize-fat
                                  fat-length-of-bpb_fsver_major
                                  bpb_fsver_major-of-resize-data-region
-                                 data-region-length-of-bpb_fsver_major)
+                                 data-region-length-of-bpb_fsver_major
+                                 nth-of-bpb_fsver_major)
 
 (update-stobj-scalar-correctness 16 update-bpb_fatsz16 bpb_fatsz16
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_fatsz16*
                                  update-bpb_fatsz16-correctness-1
                                  update-bpb_fatsz16-correctness-2
                                  update-bpb_fatsz16-correctness-3
@@ -470,10 +503,12 @@
                                  bpb_fatsz16-of-resize-fat
                                  fat-length-of-bpb_fatsz16
                                  bpb_fatsz16-of-resize-data-region
-                                 data-region-length-of-bpb_fatsz16)
+                                 data-region-length-of-bpb_fatsz16
+                                 nth-of-bpb_fatsz16)
 
 (update-stobj-scalar-correctness 16 update-bpb_secpertrk bpb_secpertrk
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_secpertrk*
                                  update-bpb_secpertrk-correctness-1
                                  update-bpb_secpertrk-correctness-2
                                  update-bpb_secpertrk-correctness-3
@@ -484,10 +519,12 @@
                                  bpb_secpertrk-of-resize-fat
                                  fat-length-of-bpb_secpertrk
                                  bpb_secpertrk-of-resize-data-region
-                                 data-region-length-of-bpb_secpertrk)
+                                 data-region-length-of-bpb_secpertrk
+                                 nth-of-bpb_secpertrk)
 
 (update-stobj-scalar-correctness 16 update-bpb_numheads bpb_numheads
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_numheads*
                                  update-bpb_numheads-correctness-1
                                  update-bpb_numheads-correctness-2
                                  update-bpb_numheads-correctness-3
@@ -498,10 +535,12 @@
                                  bpb_numheads-of-resize-fat
                                  fat-length-of-bpb_numheads
                                  bpb_numheads-of-resize-data-region
-                                 data-region-length-of-bpb_numheads)
+                                 data-region-length-of-bpb_numheads
+                                 nth-of-bpb_numheads)
 
 (update-stobj-scalar-correctness 16 update-bpb_extflags bpb_extflags
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_extflags*
                                  update-bpb_extflags-correctness-1
                                  update-bpb_extflags-correctness-2
                                  update-bpb_extflags-correctness-3
@@ -512,10 +551,12 @@
                                  bpb_extflags-of-resize-fat
                                  fat-length-of-bpb_extflags
                                  bpb_extflags-of-resize-data-region
-                                 data-region-length-of-bpb_extflags)
+                                 data-region-length-of-bpb_extflags
+                                 nth-of-bpb_extflags)
 
 (update-stobj-scalar-correctness 32 update-bpb_hiddsec bpb_hiddsec
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_hiddsec*
                                  update-bpb_hiddsec-correctness-1
                                  update-bpb_hiddsec-correctness-2
                                  update-bpb_hiddsec-correctness-3
@@ -526,10 +567,12 @@
                                  bpb_hiddsec-of-resize-fat
                                  fat-length-of-bpb_hiddsec
                                  bpb_hiddsec-of-resize-data-region
-                                 data-region-length-of-bpb_hiddsec)
+                                 data-region-length-of-bpb_hiddsec
+                                 nth-of-bpb_hiddsec)
 
 (update-stobj-scalar-correctness 32 update-bpb_totsec32 bpb_totsec32
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_totsec32*
                                  update-bpb_totsec32-correctness-1
                                  update-bpb_totsec32-correctness-2
                                  update-bpb_totsec32-correctness-3
@@ -540,10 +583,12 @@
                                  bpb_totsec32-of-resize-fat
                                  fat-length-of-bpb_totsec32
                                  bpb_totsec32-of-resize-data-region
-                                 data-region-length-of-bpb_totsec32)
+                                 data-region-length-of-bpb_totsec32
+                                 nth-of-bpb_totsec32)
 
 (update-stobj-scalar-correctness 32 update-bpb_fatsz32 bpb_fatsz32
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_fatsz32*
                                  update-bpb_fatsz32-correctness-1
                                  update-bpb_fatsz32-correctness-2
                                  update-bpb_fatsz32-correctness-3
@@ -554,10 +599,12 @@
                                  bpb_fatsz32-of-resize-fat
                                  fat-length-of-bpb_fatsz32
                                  bpb_fatsz32-of-resize-data-region
-                                 data-region-length-of-bpb_fatsz32)
+                                 data-region-length-of-bpb_fatsz32
+                                 nth-of-bpb_fatsz32)
 
 (update-stobj-scalar-correctness 16 update-bpb_rootentcnt bpb_rootentcnt
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_rootentcnt*
                                  update-bpb_rootentcnt-correctness-1
                                  update-bpb_rootentcnt-correctness-2
                                  update-bpb_rootentcnt-correctness-3
@@ -568,10 +615,12 @@
                                  bpb_rootentcnt-of-resize-fat
                                  fat-length-of-bpb_rootentcnt
                                  bpb_rootentcnt-of-resize-data-region
-                                 data-region-length-of-bpb_rootentcnt)
+                                 data-region-length-of-bpb_rootentcnt
+                                 nth-of-bpb_rootentcnt)
 
 (update-stobj-scalar-correctness 16 update-bpb_totsec16 bpb_totsec16
                                  fat32-in-memory fat32-in-memoryp
+                                 *bpb_totsec16*
                                  update-bpb_totsec16-correctness-1
                                  update-bpb_totsec16-correctness-2
                                  update-bpb_totsec16-correctness-3
@@ -582,10 +631,12 @@
                                  bpb_totsec16-of-resize-fat
                                  fat-length-of-bpb_totsec16
                                  bpb_totsec16-of-resize-data-region
-                                 data-region-length-of-bpb_totsec16)
+                                 data-region-length-of-bpb_totsec16
+                                 nth-of-bpb_totsec16)
 
 (update-stobj-scalar-correctness 32 update-bs_volid bs_volid
                                  fat32-in-memory fat32-in-memoryp
+                                 *bs_volid*
                                  update-bs_volid-correctness-1
                                  update-bs_volid-correctness-2
                                  update-bs_volid-correctness-3
@@ -596,7 +647,8 @@
                                  bs_volid-of-resize-fat
                                  fat-length-of-bs_volid
                                  bs_volid-of-resize-data-region
-                                 data-region-length-of-bs_volid)
+                                 data-region-length-of-bs_volid
+                                 nth-of-bs_volid)
 
 (defthm fati-of-update-fati
   (equal (fati i1 (update-fati i2 v fat32-in-memory))
