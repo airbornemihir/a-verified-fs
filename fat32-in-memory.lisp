@@ -922,7 +922,7 @@
   (name array-length bit-width array-updater array-accessor constant
         stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3
         unsigned-byte-p-of-array-accessor lemma-name5 lemma-name6 lemma-name7
-        lemma-name8 lemma-name9 lemma-name10)
+        lemma-name8 lemma-name9 lemma-name10 lemma-name-11)
   (let
       ((upper-bound (ash 1 bit-width)))
   `(encapsulate
@@ -1082,7 +1082,7 @@
         (and (<= (len v)
                  (,array-length ,stobj))
              (,stobj-recogniser ,stobj)
-             (unsigned-byte-p ,bit-width v))
+             (unsigned-byte-listp ,bit-width v))
         (equal
          (,name v ,stobj)
          (update-nth
@@ -1095,7 +1095,13 @@
        :hints
        (("goal" :in-theory (enable append-of-take-and-cons
                                    ,array-length
-                                   remember-that-time-with-update-nth)))))))
+                                   remember-that-time-with-update-nth))))
+
+     (defthm ,lemma-name-11
+       (implies
+        (not (equal (nfix n) ,constant))
+        (equal (nth n (,name v ,stobj))
+               (nth n ,stobj)))))))
 
 (update-stobj-array
  update-bs_jmpboot bs_jmpboot-length 8
@@ -1109,8 +1115,9 @@
  update-bs_jmpboot-correctness-6
  update-bs_jmpboot-correctness-7
  update-bs_jmpboot-correctness-8
- update-bs_jmpboot-correctness-9
- update-bs_jmpboot-alt)
+ update-bs_jmpbooti-of-bs_jmpbooti
+ update-bs_jmpboot-alt
+ nth-of-bs_jmpboot)
 
 (update-stobj-array
  update-bs_oemname bs_oemname-length 8
@@ -1124,8 +1131,9 @@
  update-bs_oemname-correctness-6
  update-bs_oemname-correctness-7
  update-bs_oemname-correctness-8
- update-bs_oemname-correctness-9
- update-bs_oemname-alt)
+ update-bs_oemnamei-of-bs_oemnamei
+ update-bs_oemname-alt
+ nth-of-bs_oemname)
 
 (update-stobj-array
  update-bs_vollab bs_vollab-length 8
@@ -1139,8 +1147,9 @@
  update-bs_vollab-correctness-6
  update-bs_vollab-correctness-7
  update-bs_vollab-correctness-8
- update-bs_vollab-correctness-9
- update-bs_vollab-alt)
+ update-bs_vollabi-of-bs_vollabi
+ update-bs_vollab-alt
+ nth-of-bs_vollab)
 
 (update-stobj-array
  update-bs_filsystype bs_filsystype-length 8
@@ -1154,8 +1163,9 @@
  update-bs_filsystype-correctness-6
  update-bs_filsystype-correctness-7
  update-bs_filsystype-correctness-8
- update-bs_filsystype-correctness-9
- update-bs_filsystype-alt)
+ update-bs_filsystypei-of-bs_filsystypei
+ update-bs_filsystype-alt
+ nth-of-bs_filsystype)
 
 (update-stobj-array
  update-bpb_reserved bpb_reserved-length 8
@@ -1169,8 +1179,9 @@
  update-bpb_reserved-correctness-6
  update-bpb_reserved-correctness-7
  update-bpb_reserved-correctness-8
- update-bpb_reserved-correctness-9
- update-bpb_reserved-alt)
+ update-bpb_reservedi-of-bpb_reservedi
+ update-bpb_reserved-alt
+ nth-of-bpb_reserved)
 
 ;; The strategy of just using compliant-fat32-in-memoryp everywhere is not
 ;; going to work. It's going to be desirable to prove lemmas with the weaker
