@@ -170,6 +170,13 @@
   (equal (take n1 (nthcdr n2 l))
          (nthcdr n2 (take (+ (nfix n1) (nfix n2)) l))))
 
+;; This cannot be moved to to file-system-lemmas.lisp, because it's expressed
+;; in terms of explode.
+(defthm len-of-explode-of-string-append
+  (equal (len (explode (string-append str1 str2)))
+         (+ (len (explode str1))
+            (len (explode str2)))))
+
 (defthm
   unsigned-byte-listp-of-make-list-ac
   (equal (unsigned-byte-listp n1 (make-list-ac n2 val ac))

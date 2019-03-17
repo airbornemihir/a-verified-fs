@@ -2104,12 +2104,6 @@
        (read-file-into-string2 filename start2 nil state))
       (read-file-into-string2 filename start1 nil state))))))
 
-;; Move this to file-system-lemmas.lisp later.
-(defthm len-of-explode-of-string-append
-  (equal (len (explode (string-append str1 str2)))
-         (+ (len (explode str1))
-            (len (explode str2)))))
-
 (defthm
   disk-image-to-fat32-in-memory-guard-lemma-1
   (iff
