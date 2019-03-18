@@ -11031,7 +11031,7 @@
      string-to-fat32-in-memory-inversion-lemma-1))))
 
 (defthm
-  m1-fs-to-fat32-in-memory-to-string-inversion
+  m1-fs-to-string-inversion
   (implies
    (and (compliant-fat32-in-memoryp fat32-in-memory)
         (m1-file-alist-p fs)
