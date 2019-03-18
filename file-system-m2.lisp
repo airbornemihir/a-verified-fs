@@ -9868,40 +9868,40 @@
 (local
  (defthmd
    string-to-fat32-in-memory-ignore-lemma-2
-   (IMPLIES
-    (AND (STRINGP STR)
-         (NATP LEN)
-         (>= (DATA-REGION-LENGTH FAT32-IN-MEMORY)
-             LEN)
-         (FAT32-IN-MEMORYP FAT32-IN-MEMORY)
-         (< 0 (CLUSTER-SIZE FAT32-IN-MEMORY))
-         (>= (LENGTH STR)
-             (* (- (DATA-REGION-LENGTH FAT32-IN-MEMORY)
-                   LEN)
-                (CLUSTER-SIZE FAT32-IN-MEMORY)))
+   (implies
+    (and (stringp str)
+         (natp len)
+         (>= (data-region-length fat32-in-memory)
+             len)
+         (fat32-in-memoryp fat32-in-memory)
+         (< 0 (cluster-size fat32-in-memory))
+         (>= (length str)
+             (* (- (data-region-length fat32-in-memory)
+                   len)
+                (cluster-size fat32-in-memory)))
          (equal
           (mv-nth
            1
-           (UPDATE-DATA-REGION FAT32-IN-MEMORY STR LEN))
+           (update-data-region fat32-in-memory str len))
           0))
-    (EQUAL
+    (equal
      (nth
       *data-regioni*
       (mv-nth
        0
-       (UPDATE-DATA-REGION FAT32-IN-MEMORY STR LEN)))
-     (APPEND
-      (TAKE (- (DATA-REGION-LENGTH FAT32-IN-MEMORY)
-               LEN)
-            (NTH *DATA-REGIONI* FAT32-IN-MEMORY))
-      (MAKE-CLUSTERS
-       (SUBSEQ STR
-               (* (- (DATA-REGION-LENGTH FAT32-IN-MEMORY)
-                     LEN)
-                  (CLUSTER-SIZE FAT32-IN-MEMORY))
-               (* (DATA-REGION-LENGTH FAT32-IN-MEMORY)
-                  (CLUSTER-SIZE FAT32-IN-MEMORY)))
-       (CLUSTER-SIZE FAT32-IN-MEMORY)))))
+       (update-data-region fat32-in-memory str len)))
+     (append
+      (take (- (data-region-length fat32-in-memory)
+               len)
+            (nth *data-regioni* fat32-in-memory))
+      (make-clusters
+       (subseq str
+               (* (- (data-region-length fat32-in-memory)
+                     len)
+                  (cluster-size fat32-in-memory))
+               (* (data-region-length fat32-in-memory)
+                  (cluster-size fat32-in-memory)))
+       (cluster-size fat32-in-memory)))))
    :hints
    (("goal"
      :in-theory (disable update-data-region-correctness-1)
@@ -10088,6 +10088,117 @@
                            ch-word fa-table)))
     (update-fat-aux fa-table str (+ -1 pos)))))
 
+(defthm
+  nth-of-update-fat-aux
+  (implies
+   (integerp pos)
+   (equal
+    (nth n (update-fat-aux fa-table str pos))
+    (if (< (nfix n) (nfix pos))
+        (combine32u (char-code (char str (+ 3 (* (nfix n) 4))))
+                    (char-code (char str (+ 2 (* (nfix n) 4))))
+                    (char-code (char str (+ 1 (* (nfix n) 4))))
+                    (char-code (char str (+ 0 (* (nfix n) 4)))))
+        (nth n fa-table))))
+  :hints (("goal" :in-theory (enable update-fat-aux)
+           :induct (update-fat-aux fa-table str pos))
+          ("subgoal *1/2.6'"
+           :use (:theorem (implies (integerp pos)
+                                   (iff (equal 0 (+ -1 pos))
+                                        (equal pos 1)))))
+          ("subgoal *1/2.1'"
+           :use (:theorem (implies (integerp pos)
+                                   (iff (equal 0 (+ -1 pos))
+                                        (equal pos 1)))))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun
+       induction-scheme
+       (fa-table1 fa-table2 pos str)
+     (if
+         (zp pos)
+         (mv fa-table1 fa-table2 pos str)
+       (induction-scheme
+        (update-nth
+         (+ -1 pos)
+         (combine32u (char-code (char str (+ -1 (* pos 4))))
+                     (char-code (char str (+ -2 (* pos 4))))
+                     (char-code (char str (+ -3 (* pos 4))))
+                     (char-code (char str (+ -4 (* pos 4)))))
+         fa-table1)
+        (update-nth
+         (+ -1 pos)
+         (combine32u (char-code (char str (+ -1 (* pos 4))))
+                     (char-code (char str (+ -2 (* pos 4))))
+                     (char-code (char str (+ -3 (* pos 4))))
+                     (char-code (char str (+ -4 (* pos 4)))))
+         fa-table2)
+        (+ -1 pos)
+        str))))
+
+  (defthmd
+    take-of-update-fat-aux
+    (implies (and (fat32-entry-list-p fa-table1)
+                  (fat32-entry-list-p fa-table2)
+                  (>= (len fa-table1) (+ -1 pos))
+                  (>= (len fa-table2) (+ -1 pos)))
+             (equal (take pos (update-fat-aux fa-table1 str pos))
+                    (take pos
+                          (update-fat-aux fa-table2 str pos))))
+    :hints
+    (("goal"
+      :induct (induction-scheme fa-table1 fa-table2 pos str)
+      :in-theory (e/d (update-fat-aux)
+                      (equal-of-append-repeat))
+      :expand (update-fat-aux fa-table2 str pos))
+     ("subgoal *1/2"
+      :use
+      ((:instance
+        (:rewrite append-of-take-and-cons)
+        (y nil)
+        (x
+         (combine32u
+          (char-code (nth (+ -1 (* 4 pos)) (explode str)))
+          (char-code (nth (+ -2 (* 4 pos)) (explode str)))
+          (char-code (nth (+ -3 (* 4 pos)) (explode str)))
+          (char-code (nth (+ -4 (* 4 pos)) (explode str)))))
+        (l
+         (update-fat-aux
+          (update-nth
+           (+ -1 pos)
+           (combine32u
+            (char-code (nth (+ -1 (* 4 pos)) (explode str)))
+            (char-code (nth (+ -2 (* 4 pos)) (explode str)))
+            (char-code (nth (+ -3 (* 4 pos)) (explode str)))
+            (char-code (nth (+ -4 (* 4 pos)) (explode str))))
+           fa-table1)
+          str (+ -1 pos)))
+        (n (+ -1 pos)))
+       (:instance
+        (:rewrite append-of-take-and-cons)
+        (y nil)
+        (x
+         (combine32u
+          (char-code (nth (+ -1 (* 4 pos)) (explode str)))
+          (char-code (nth (+ -2 (* 4 pos)) (explode str)))
+          (char-code (nth (+ -3 (* 4 pos)) (explode str)))
+          (char-code (nth (+ -4 (* 4 pos)) (explode str)))))
+        (l
+         (update-fat-aux
+          (update-nth
+           (+ -1 pos)
+           (combine32u
+            (char-code (nth (+ -1 (* 4 pos)) (explode str)))
+            (char-code (nth (+ -2 (* 4 pos)) (explode str)))
+            (char-code (nth (+ -3 (* 4 pos)) (explode str)))
+            (char-code (nth (+ -4 (* 4 pos)) (explode str))))
+           fa-table2)
+          str (+ -1 pos)))
+        (n (+ -1 pos))))))))
+
 (defthmd
   update-fat-alt
   (equal
@@ -10202,25 +10313,38 @@
                      (equal n *bs_vollabi*)
                      (equal n *bs_filsystypei*)
                      (equal n *fati*)
-                     (equal n *data-regioni*)))
-            ("subgoal 1.1'" :in-theory (e/d
-                                        (string-to-fat32-in-memory
-                                         string-to-fat32-in-memory-ignore-lemma-2)))
-            ("subgoal 1.2'" :in-theory (e/d
-                                        (string-to-fat32-in-memory
-                                         update-fat-alt
-                                         string-to-fat32-in-memory-ignore-lemma-13)))
-            ("subgoal 1.3'" :in-theory (e/d
-                                        (string-to-fat32-in-memory
-                                         read-reserved-area
-                                         update-bs_filsystype-alt)))
-            ("subgoal 1.4'" :in-theory (e/d
-                                        (string-to-fat32-in-memory
-                                         read-reserved-area
-                                         update-bs_vollab-alt)))
-            ("subgoal 1.5'" :in-theory (e/d
-                                        (string-to-fat32-in-memory
-                                         read-reserved-area))))))
+                     (equal n *data-regioni*))
+             :in-theory (e/d
+                         (string-to-fat32-in-memory
+                          read-reserved-area)))
+            ("Subgoal 1.30"
+             :in-theory (e/d
+                         (string-to-fat32-in-memory
+                          read-reserved-area
+                          update-bs_jmpboot-alt)))
+            ("Subgoal 1.29"
+             :in-theory (e/d
+                         (string-to-fat32-in-memory
+                          read-reserved-area
+                          update-bs_oemname-alt)))
+            ("Subgoal 1.4"
+             :in-theory (e/d
+                         (string-to-fat32-in-memory
+                          read-reserved-area
+                          update-bs_vollab-alt)))
+            ("Subgoal 1.3"
+             :in-theory (e/d
+                         (string-to-fat32-in-memory
+                          read-reserved-area
+                          update-bs_filsystype-alt)))
+            ("Subgoal 1.2"
+             :in-theory (e/d
+                         (string-to-fat32-in-memory
+                          update-fat-alt
+                          string-to-fat32-in-memory-ignore-lemma-13)))
+            ("subgoal 1.1" :in-theory (e/d
+                                       (string-to-fat32-in-memory
+                                        string-to-fat32-in-memory-ignore-lemma-2))))))
 
 ;; End encapsulate here.
 
