@@ -10108,26 +10108,19 @@
                       i '0))
   :hints (("goal" :in-theory (enable resize-fat))))
 
-(defthm
-  string-to-fat32-in-memory-ignore-lemma-15
-  (implies (not (equal n *bs_oemnamei*))
-           (equal (nth n (update-bs_oemname v fat32-in-memory))
-                  (nth n fat32-in-memory)))
-  :hints (("goal" :in-theory (enable update-bs_oemnamei))))
-
-(defthm
-  string-to-fat32-in-memory-ignore-lemma-16
-  (implies (not (equal (nfix n) *bs_jmpbooti*))
-           (equal (nth n (update-bs_jmpboot v fat32-in-memory))
-                  (nth n fat32-in-memory)))
-  :hints (("goal" :in-theory (enable update-bs_jmpbooti))))
-
 (defthm string-to-fat32-in-memory-ignore-lemma-14
   (equal (nth *fati*
               (mv-nth 0
                       (read-reserved-area fat32-in-memory str)))
          (nth *fati* fat32-in-memory))
   :hints (("Goal" :in-theory (enable read-reserved-area)) ))
+
+(defthm
+  string-to-fat32-in-memory-ignore-lemma-15
+  (implies (not (equal n *fati*))
+           (equal (nth n (resize-fat i fat32-in-memory))
+                  (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable resize-fat))))
 
 (encapsulate
   ()
@@ -10216,7 +10209,18 @@
             ("subgoal 1.2'" :in-theory (e/d
                                         (string-to-fat32-in-memory
                                          update-fat-alt
-                                         string-to-fat32-in-memory-ignore-lemma-13))))))
+                                         string-to-fat32-in-memory-ignore-lemma-13)))
+            ("subgoal 1.3'" :in-theory (e/d
+                                        (string-to-fat32-in-memory
+                                         read-reserved-area
+                                         update-bs_filsystype-alt)))
+            ("subgoal 1.4'" :in-theory (e/d
+                                        (string-to-fat32-in-memory
+                                         read-reserved-area
+                                         update-bs_vollab-alt)))
+            ("subgoal 1.5'" :in-theory (e/d
+                                        (string-to-fat32-in-memory
+                                         read-reserved-area))))))
 
 ;; End encapsulate here.
 
