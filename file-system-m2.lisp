@@ -10141,16 +10141,10 @@
 
   (defthmd
     take-of-update-fat-aux
-    (implies (and (fat32-entry-list-p fa-table1)
-                  (fat32-entry-list-p fa-table2)
-                  (>= (len fa-table1) (+ -1 pos))
-                  (>= (len fa-table2) (+ -1 pos)))
-             (equal (take pos (update-fat-aux fa-table1 str pos))
-                    (take pos
-                          (update-fat-aux fa-table2 str pos))))
+    (equal (take pos (update-fat-aux fa-table1 str pos))
+           (take pos (update-fat-aux fa-table2 str pos)))
     :hints
-    (("goal"
-      :induct (induction-scheme fa-table1 fa-table2 pos str)
+    (("goal" :induct (induction-scheme fa-table1 fa-table2 pos str)
       :in-theory (e/d (update-fat-aux)
                       (equal-of-append-repeat))
       :expand (update-fat-aux fa-table2 str pos))
@@ -10159,45 +10153,52 @@
       ((:instance
         (:rewrite append-of-take-and-cons)
         (y nil)
-        (x
-         (combine32u
-          (char-code (nth (+ -1 (* 4 pos)) (explode str)))
-          (char-code (nth (+ -2 (* 4 pos)) (explode str)))
-          (char-code (nth (+ -3 (* 4 pos)) (explode str)))
-          (char-code (nth (+ -4 (* 4 pos)) (explode str)))))
+        (x (combine32u (char-code (nth (+ -1 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -2 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -3 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -4 (* 4 pos)) (explode str)))))
         (l
          (update-fat-aux
           (update-nth
            (+ -1 pos)
-           (combine32u
-            (char-code (nth (+ -1 (* 4 pos)) (explode str)))
-            (char-code (nth (+ -2 (* 4 pos)) (explode str)))
-            (char-code (nth (+ -3 (* 4 pos)) (explode str)))
-            (char-code (nth (+ -4 (* 4 pos)) (explode str))))
+           (combine32u (char-code (nth (+ -1 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -2 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -3 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -4 (* 4 pos)) (explode str))))
            fa-table1)
           str (+ -1 pos)))
         (n (+ -1 pos)))
        (:instance
         (:rewrite append-of-take-and-cons)
         (y nil)
-        (x
-         (combine32u
-          (char-code (nth (+ -1 (* 4 pos)) (explode str)))
-          (char-code (nth (+ -2 (* 4 pos)) (explode str)))
-          (char-code (nth (+ -3 (* 4 pos)) (explode str)))
-          (char-code (nth (+ -4 (* 4 pos)) (explode str)))))
+        (x (combine32u (char-code (nth (+ -1 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -2 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -3 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -4 (* 4 pos)) (explode str)))))
         (l
          (update-fat-aux
           (update-nth
            (+ -1 pos)
-           (combine32u
-            (char-code (nth (+ -1 (* 4 pos)) (explode str)))
-            (char-code (nth (+ -2 (* 4 pos)) (explode str)))
-            (char-code (nth (+ -3 (* 4 pos)) (explode str)))
-            (char-code (nth (+ -4 (* 4 pos)) (explode str))))
+           (combine32u (char-code (nth (+ -1 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -2 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -3 (* 4 pos)) (explode str)))
+                       (char-code (nth (+ -4 (* 4 pos)) (explode str))))
            fa-table2)
           str (+ -1 pos)))
         (n (+ -1 pos))))))))
+
+(defthm len-of-update-fat-aux
+  (equal (len (update-fat-aux fa-table str pos))
+         (max (nfix pos) (len fa-table)))
+  :hints (("goal" :in-theory (enable update-fat-aux))))
+
+(defthm
+  true-list-fix-of-update-fat-aux
+  (implies
+   (true-listp fa-table)
+   (equal (true-list-fix (update-fat-aux fa-table str pos))
+          (update-fat-aux fa-table str pos)))
+  :hints (("goal" :in-theory (enable update-fat-aux))))
 
 (defthmd
   update-fat-alt
@@ -10240,7 +10241,13 @@
 
   (local (in-theory (e/d
                      (count-of-clusters cluster-size fat-entry-count)
-                     (nth-when-zp create-fat32-in-memory))))
+                     (nth-when-zp
+                      create-fat32-in-memory
+                      (:DEFINITION UPDATE-NTH-ARRAY)
+                      (:DEFINITION UPDATE-BS_OEMNAME)
+                      (:DEFINITION LEN)
+                      (:DEFINITION UPDATE-BS_OEMNAMEI)
+                      (:DEFINITION UPDATE-BS_JMPBOOT)))))
 
   (defthm
     string-to-fat32-in-memory-ignore
@@ -10341,7 +10348,99 @@
              :in-theory (e/d
                          (string-to-fat32-in-memory
                           update-fat-alt
-                          string-to-fat32-in-memory-ignore-lemma-13)))
+                          string-to-fat32-in-memory-ignore-lemma-13
+                          by-slice-you-mean-the-whole-cake-2))
+             :use (:instance
+                   (:rewrite take-of-update-fat-aux)
+                   (str
+                    (implode
+                     (take
+                      (+
+                       (*
+                        (bpb_bytspersec
+                         (mv-nth 0
+                                 (read-reserved-area (create-fat32-in-memory)
+                                                     str)))
+                        (bpb_rsvdseccnt
+                         (mv-nth 0
+                                 (read-reserved-area (create-fat32-in-memory)
+                                                     str))))
+                       (-
+                        (*
+                         (bpb_bytspersec
+                          (mv-nth 0
+                                  (read-reserved-area (create-fat32-in-memory)
+                                                      str)))
+                         (bpb_rsvdseccnt
+                          (mv-nth 0
+                                  (read-reserved-area (create-fat32-in-memory)
+                                                      str)))))
+                       (*
+                        4
+                        (floor
+                         (*
+                          (bpb_bytspersec
+                           (mv-nth 0
+                                   (read-reserved-area (create-fat32-in-memory)
+                                                       str)))
+                          (bpb_fatsz32
+                           (mv-nth 0
+                                   (read-reserved-area (create-fat32-in-memory)
+                                                       str))))
+                         4)))
+                      (nthcdr
+                       (*
+                        (bpb_bytspersec
+                         (mv-nth 0
+                                 (read-reserved-area (create-fat32-in-memory)
+                                                     str)))
+                        (bpb_rsvdseccnt
+                         (mv-nth 0
+                                 (read-reserved-area (create-fat32-in-memory)
+                                                     str))))
+                       (explode str)))))
+                   (fa-table1
+                    (resize-list
+                     (nth *fati* fat32-in-memory)
+                     (floor
+                      (*
+                       (bpb_bytspersec
+                        (mv-nth 0
+                                (read-reserved-area (create-fat32-in-memory)
+                                                    str)))
+                       (bpb_fatsz32
+                        (mv-nth 0
+                                (read-reserved-area (create-fat32-in-memory)
+                                                    str))))
+                      4)
+                     0))
+                   (fa-table2
+                    (resize-list
+                     (nth *fati* (create-fat32-in-memory))
+                     (floor
+                      (*
+                       (bpb_bytspersec
+                        (mv-nth 0
+                                (read-reserved-area (create-fat32-in-memory)
+                                                    str)))
+                       (bpb_fatsz32
+                        (mv-nth 0
+                                (read-reserved-area (create-fat32-in-memory)
+                                                    str))))
+                      4)
+                     0))
+                   (pos
+                    (floor
+                     (*
+                      (bpb_bytspersec
+                       (mv-nth 0
+                               (read-reserved-area (create-fat32-in-memory)
+                                                   str)))
+                      (bpb_fatsz32
+                       (mv-nth 0
+                               (read-reserved-area (create-fat32-in-memory)
+                                                   str))))
+                     4))))
             ("subgoal 1.1" :in-theory (e/d
                                        (string-to-fat32-in-memory
                                         string-to-fat32-in-memory-ignore-lemma-2))))))
