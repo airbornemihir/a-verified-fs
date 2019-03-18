@@ -10954,53 +10954,79 @@
    (and
     (stringp str)
     (fat32-in-memoryp fat32-in-memory)
-    (equal (mv-nth 1
-                   (string-to-fat32-in-memory (create-fat32-in-memory)
-                                              str))
-           0))
+    (equal
+     (mv-nth 1
+             (string-to-fat32-in-memory (create-fat32-in-memory)
+                                        str))
+     0))
    (disk-image-string-equiv
     (fat32-in-memory-to-string
      (mv-nth 0
              (string-to-fat32-in-memory fat32-in-memory str)))
     str))
-  :otf-flg t
-  :hints (("goal" :in-theory (e/d (disk-image-string-equiv)
-                                  (create-fat32-in-memory
-                                   (:rewrite string-to-fat32-in-memory-ignore)
-                                   (:rewrite fat32-in-memory-to-string-inversion)))
-           :cases ((equal fat32-in-memory (create-fat32-in-memory)) )
-           :use
-           ((:rewrite string-to-fat32-in-memory-ignore)
-            (:instance
-             (:rewrite fat32-in-memory-to-string-inversion)
-             (fat32-in-memory
-              (mv-nth 0
-                      (string-to-fat32-in-memory (create-fat32-in-memory)
-                                                 str))))
-            (:instance
-             (:rewrite string-to-fat32-in-memory-ignore)
-             (str
-              (fat32-in-memory-to-string
-               (mv-nth
-                0
-                (string-to-fat32-in-memory (create-fat32-in-memory)
-                                           str))))
-             (fat32-in-memory
-              (mv-nth 0
-                      (string-to-fat32-in-memory (create-fat32-in-memory)
-                                                 str))))
-            (:instance
-             (:rewrite string-to-fat32-in-memory-ignore-lemma-17)
-             (str
-              (fat32-in-memory-to-string
-               (mv-nth
-                0
-                (string-to-fat32-in-memory (create-fat32-in-memory)
-                                           str))))
-             (fat32-in-memory
-              (mv-nth 0
-                      (string-to-fat32-in-memory (create-fat32-in-memory)
-                                                 str))))))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (disk-image-string-equiv)
+         (create-fat32-in-memory
+          (:rewrite string-to-fat32-in-memory-ignore)
+          (:rewrite fat32-in-memory-to-string-inversion)))
+    :cases ((equal fat32-in-memory
+                   (create-fat32-in-memory)))
+    :use
+    ((:rewrite string-to-fat32-in-memory-ignore)
+     (:instance
+      (:rewrite fat32-in-memory-to-string-inversion)
+      (fat32-in-memory
+       (mv-nth
+        0
+        (string-to-fat32-in-memory (create-fat32-in-memory)
+                                   str))))
+     (:instance
+      (:rewrite string-to-fat32-in-memory-ignore)
+      (str
+       (fat32-in-memory-to-string
+        (mv-nth
+         0
+         (string-to-fat32-in-memory (create-fat32-in-memory)
+                                    str))))
+      (fat32-in-memory
+       (mv-nth
+        0
+        (string-to-fat32-in-memory (create-fat32-in-memory)
+                                   str))))
+     (:instance
+      (:rewrite string-to-fat32-in-memory-ignore-lemma-17)
+      (str
+       (fat32-in-memory-to-string
+        (mv-nth
+         0
+         (string-to-fat32-in-memory (create-fat32-in-memory)
+                                    str))))
+      (fat32-in-memory
+       (mv-nth
+        0
+        (string-to-fat32-in-memory (create-fat32-in-memory)
+                                   str)))))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and
+      (stringp str)
+      (fat32-in-memoryp fat32-in-memory)
+      (equal
+       (mv-nth 1
+               (string-to-fat32-in-memory fat32-in-memory str))
+       0))
+     (disk-image-string-equiv
+      (fat32-in-memory-to-string
+       (mv-nth 0
+               (string-to-fat32-in-memory fat32-in-memory str)))
+      str))
+    :hints
+    (("goal" :in-theory (e/d nil (create-fat32-in-memory))
+      :use string-to-fat32-in-memory-ignore-lemma-17)))))
 
 (defthm
   m1-fs-to-fat32-in-memory-to-string-inversion
