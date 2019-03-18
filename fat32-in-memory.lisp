@@ -277,9 +277,10 @@
        :hints (("goal" :in-theory (enable data-region-length ,updater))))
 
      (defthm ,nth-of-updater
-       (implies (not (equal n ,constant))
-                (equal (nth n (,updater v ,stobj))
-                       (nth n ,stobj)))
+       (equal (nth n (,updater v ,stobj))
+              (if (equal n ,constant)
+                  v
+                (nth n ,stobj)))
        :hints (("goal" :in-theory (enable data-region-length ,updater)))))))
 
 (update-stobj-scalar-correctness 16 update-bpb_rsvdseccnt bpb_rsvdseccnt
