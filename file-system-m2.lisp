@@ -834,7 +834,11 @@
            (combine16u (nth (+ 50 1 (- *initialbytcnt*)) remaining-rsvdbyts)
                        (nth (+ 50 0 (- *initialbytcnt*)) remaining-rsvdbyts))
            fat32-in-memory))
-         ;; skipping bpb_reserved for now
+         ;; no longer skipping bpb_reserved
+         (fat32-in-memory
+          (update-bpb_reserved (subseq remaining-rsvdbyts
+                                       (+ 52 (- *initialbytcnt*) 0)
+                                       (+ 52 (- *initialbytcnt*) 12)) fat32-in-memory))
          (fat32-in-memory
           (update-bs_drvnum (nth (- 64 *initialbytcnt*) remaining-rsvdbyts)
                             fat32-in-memory))
@@ -9251,6 +9255,21 @@
          (get-remaining-rsvdbyts
           (fat32-in-memory-to-string fat32-in-memory))))
        fat32-in-memory)
+      fat32-in-memory)))
+
+  ;; Kinda wish we could have made use of update_bpb_reserved-alt for this
+  ;; theorem, and then done the same kind of thing elsewhere.
+  (defthm
+    fat32-in-memory-to-string-inversion-lemma-40
+    (implies
+     (compliant-fat32-in-memoryp fat32-in-memory)
+     (equal
+      (update-bpb_reserved
+       (take 12
+             (nthcdr 36
+                     (get-remaining-rsvdbyts
+                      (fat32-in-memory-to-string fat32-in-memory))))
+       fat32-in-memory)
       fat32-in-memory))))
 
 (defthm
@@ -9713,85 +9732,89 @@
               (nth 49 (get-remaining-rsvdbyts str))
               (update-bs_drvnum
                (nth 48 (get-remaining-rsvdbyts str))
-               (update-bpb_bkbootsec
-                (combine16u (nth 35 (get-remaining-rsvdbyts str))
-                            (nth 34 (get-remaining-rsvdbyts str)))
-                (update-bpb_fsinfo
-                 (combine16u (nth 33 (get-remaining-rsvdbyts str))
-                             (nth 32 (get-remaining-rsvdbyts str)))
-                 (update-bpb_rootclus
-                  (combine32u (nth 31 (get-remaining-rsvdbyts str))
-                              (nth 30 (get-remaining-rsvdbyts str))
-                              (nth 29 (get-remaining-rsvdbyts str))
-                              (nth 28 (get-remaining-rsvdbyts str)))
-                  (update-bpb_fsver_major
-                   (nth 27 (get-remaining-rsvdbyts str))
-                   (update-bpb_fsver_minor
-                    (nth 26 (get-remaining-rsvdbyts str))
-                    (update-bpb_extflags
-                     (combine16u (nth 25 (get-remaining-rsvdbyts str))
-                                 (nth 24 (get-remaining-rsvdbyts str)))
-                     (update-bpb_totsec32
-                      (combine32u (nth 19 (get-remaining-rsvdbyts str))
-                                  (nth 18 (get-remaining-rsvdbyts str))
-                                  (nth 17 (get-remaining-rsvdbyts str))
-                                  (nth 16 (get-remaining-rsvdbyts str)))
-                      (update-bpb_hiddsec
-                       (combine32u (nth 15 (get-remaining-rsvdbyts str))
-                                   (nth 14 (get-remaining-rsvdbyts str))
-                                   (nth 13 (get-remaining-rsvdbyts str))
-                                   (nth 12 (get-remaining-rsvdbyts str)))
-                       (update-bpb_numheads
-                        (combine16u (nth 11 (get-remaining-rsvdbyts str))
-                                    (nth 10 (get-remaining-rsvdbyts str)))
-                        (update-bpb_secpertrk
-                         (combine16u (nth 9 (get-remaining-rsvdbyts str))
-                                     (nth 8 (get-remaining-rsvdbyts str)))
-                         (update-bpb_fatsz16
-                          (combine16u (nth 7 (get-remaining-rsvdbyts str))
-                                      (nth 6 (get-remaining-rsvdbyts str)))
-                          (update-bpb_media
-                           (nth 5 (get-remaining-rsvdbyts str))
-                           (update-bpb_totsec16
-                            (combine16u (nth 4 (get-remaining-rsvdbyts str))
-                                        (nth 3 (get-remaining-rsvdbyts str)))
-                            (update-bpb_rootentcnt
-                             (combine16u (nth 2 (get-remaining-rsvdbyts str))
-                                         (nth 1 (get-remaining-rsvdbyts str)))
-                             (update-bs_oemname
-                              (take 8 (nthcdr 3 (get-initial-bytes str)))
-                              (update-bs_jmpboot
-                               (take 3 (get-initial-bytes str))
-                               (update-bpb_bytspersec
-                                (combine16u (nth 12 (get-initial-bytes str))
-                                            (nth 11 (get-initial-bytes str)))
-                                (update-bpb_fatsz32
-                                 (combine32u
-                                  (nth 23 (get-remaining-rsvdbyts str))
-                                  (nth 22 (get-remaining-rsvdbyts str))
-                                  (nth 21 (get-remaining-rsvdbyts str))
-                                  (nth 20 (get-remaining-rsvdbyts str)))
-                                 (update-bpb_numfats
-                                  (nth 0 (get-remaining-rsvdbyts str))
-                                  (update-bpb_rsvdseccnt
-                                   (combine16u
-                                    (nth 15 (get-initial-bytes str))
-                                    (nth 14 (get-initial-bytes str)))
-                                   (update-bpb_secperclus
-                                    (nth 13 (get-initial-bytes str))
-                                    (resize-fat
-                                     (floor
-                                      (*
-                                       (combine16u
-                                        (nth 12 (get-initial-bytes str))
-                                        (nth 11 (get-initial-bytes str)))
-                                       (combine32u
-                                        (nth 23 (get-remaining-rsvdbyts str))
-                                        (nth 22 (get-remaining-rsvdbyts str))
-                                        (nth 21 (get-remaining-rsvdbyts str))
-                                        (nth 20 (get-remaining-rsvdbyts str))))
-                                      4)
-                                     fat32-in-memory))))))))))))))))))))))))))))
+               (update-bpb_reserved
+                (take 12
+                      (nthcdr 36 (get-remaining-rsvdbyts str)))
+                (update-bpb_bkbootsec
+                 (combine16u (nth 35 (get-remaining-rsvdbyts str))
+                             (nth 34 (get-remaining-rsvdbyts str)))
+                 (update-bpb_fsinfo
+                  (combine16u (nth 33 (get-remaining-rsvdbyts str))
+                              (nth 32 (get-remaining-rsvdbyts str)))
+                  (update-bpb_rootclus
+                   (combine32u (nth 31 (get-remaining-rsvdbyts str))
+                               (nth 30 (get-remaining-rsvdbyts str))
+                               (nth 29 (get-remaining-rsvdbyts str))
+                               (nth 28 (get-remaining-rsvdbyts str)))
+                   (update-bpb_fsver_major
+                    (nth 27 (get-remaining-rsvdbyts str))
+                    (update-bpb_fsver_minor
+                     (nth 26 (get-remaining-rsvdbyts str))
+                     (update-bpb_extflags
+                      (combine16u (nth 25 (get-remaining-rsvdbyts str))
+                                  (nth 24 (get-remaining-rsvdbyts str)))
+                      (update-bpb_totsec32
+                       (combine32u (nth 19 (get-remaining-rsvdbyts str))
+                                   (nth 18 (get-remaining-rsvdbyts str))
+                                   (nth 17 (get-remaining-rsvdbyts str))
+                                   (nth 16 (get-remaining-rsvdbyts str)))
+                       (update-bpb_hiddsec
+                        (combine32u (nth 15 (get-remaining-rsvdbyts str))
+                                    (nth 14 (get-remaining-rsvdbyts str))
+                                    (nth 13 (get-remaining-rsvdbyts str))
+                                    (nth 12 (get-remaining-rsvdbyts str)))
+                        (update-bpb_numheads
+                         (combine16u (nth 11 (get-remaining-rsvdbyts str))
+                                     (nth 10 (get-remaining-rsvdbyts str)))
+                         (update-bpb_secpertrk
+                          (combine16u (nth 9 (get-remaining-rsvdbyts str))
+                                      (nth 8 (get-remaining-rsvdbyts str)))
+                          (update-bpb_fatsz16
+                           (combine16u (nth 7 (get-remaining-rsvdbyts str))
+                                       (nth 6 (get-remaining-rsvdbyts str)))
+                           (update-bpb_media
+                            (nth 5 (get-remaining-rsvdbyts str))
+                            (update-bpb_totsec16
+                             (combine16u (nth 4 (get-remaining-rsvdbyts str))
+                                         (nth 3 (get-remaining-rsvdbyts str)))
+                             (update-bpb_rootentcnt
+                              (combine16u (nth 2 (get-remaining-rsvdbyts str))
+                                          (nth 1 (get-remaining-rsvdbyts str)))
+                              (update-bs_oemname
+                               (take 8 (nthcdr 3 (get-initial-bytes str)))
+                               (update-bs_jmpboot
+                                (take 3 (get-initial-bytes str))
+                                (update-bpb_bytspersec
+                                 (combine16u (nth 12 (get-initial-bytes str))
+                                             (nth 11 (get-initial-bytes str)))
+                                 (update-bpb_fatsz32
+                                  (combine32u
+                                   (nth 23 (get-remaining-rsvdbyts str))
+                                   (nth 22 (get-remaining-rsvdbyts str))
+                                   (nth 21 (get-remaining-rsvdbyts str))
+                                   (nth 20 (get-remaining-rsvdbyts str)))
+                                  (update-bpb_numfats
+                                   (nth 0 (get-remaining-rsvdbyts str))
+                                   (update-bpb_rsvdseccnt
+                                    (combine16u
+                                     (nth 15 (get-initial-bytes str))
+                                     (nth 14 (get-initial-bytes str)))
+                                    (update-bpb_secperclus
+                                     (nth 13 (get-initial-bytes str))
+                                     (resize-fat
+                                      (floor
+                                       (*
+                                        (combine16u
+                                         (nth 12 (get-initial-bytes str))
+                                         (nth 11 (get-initial-bytes str)))
+                                        (combine32u
+                                         (nth 23 (get-remaining-rsvdbyts str))
+                                         (nth 22 (get-remaining-rsvdbyts str))
+                                         (nth 21 (get-remaining-rsvdbyts str))
+                                         (nth
+                                          20 (get-remaining-rsvdbyts str))))
+                                       4)
+                                      fat32-in-memory)))))))))))))))))))))))))))))
          (implode
           (take (* (combine16u (nth 12 (get-initial-bytes str))
                                (nth 11 (get-initial-bytes str)))
@@ -10334,6 +10357,11 @@
                          (string-to-fat32-in-memory
                           read-reserved-area
                           update-bs_oemname-alt)))
+            ("Subgoal 1.9"
+             :in-theory (e/d
+                         (string-to-fat32-in-memory
+                          read-reserved-area
+                          update-bpb_reserved-alt)))
             ("Subgoal 1.4"
              :in-theory (e/d
                          (string-to-fat32-in-memory
