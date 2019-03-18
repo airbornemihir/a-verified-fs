@@ -10948,8 +10948,8 @@
       (e/d (string-to-fat32-in-memory
             string-to-fat32-in-memory-ignore-lemma-2))))))
 
-(defthm
-  string-to-fat32-in-memory-inversion
+(defthmd
+  string-to-fat32-in-memory-inversion-lemma-1
   (implies
    (and
     (stringp str)
@@ -11007,26 +11007,28 @@
        (mv-nth
         0
         (string-to-fat32-in-memory (create-fat32-in-memory)
-                                   str)))))))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and
-      (stringp str)
-      (fat32-in-memoryp fat32-in-memory)
-      (equal
-       (mv-nth 1
-               (string-to-fat32-in-memory fat32-in-memory str))
-       0))
-     (disk-image-string-equiv
-      (fat32-in-memory-to-string
-       (mv-nth 0
-               (string-to-fat32-in-memory fat32-in-memory str)))
-      str))
-    :hints
-    (("goal" :in-theory (e/d nil (create-fat32-in-memory))
-      :use string-to-fat32-in-memory-ignore-lemma-17)))))
+                                   str))))))))
+
+(defthm
+  string-to-fat32-in-memory-inversion
+  (implies
+   (and
+    (stringp str)
+    (fat32-in-memoryp fat32-in-memory)
+    (equal
+     (mv-nth 1
+             (string-to-fat32-in-memory fat32-in-memory str))
+     0))
+   (disk-image-string-equiv
+    (fat32-in-memory-to-string
+     (mv-nth 0
+             (string-to-fat32-in-memory fat32-in-memory str)))
+    str))
+  :hints
+  (("goal" :in-theory (e/d nil (create-fat32-in-memory))
+    :use
+    (string-to-fat32-in-memory-ignore-lemma-17
+     string-to-fat32-in-memory-inversion-lemma-1))))
 
 (defthm
   m1-fs-to-fat32-in-memory-to-string-inversion
