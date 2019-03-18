@@ -10377,200 +10377,229 @@
     (implies
      (and
       (stringp str)
-      (not (equal fat32-in-memory (create-fat32-in-memory)))
+      (not (equal fat32-in-memory
+                  (create-fat32-in-memory)))
       (fat32-in-memoryp fat32-in-memory)
-      (equal (mv-nth 1
-                     (string-to-fat32-in-memory fat32-in-memory str))
-             0)
-      (equal (mv-nth 1
-                     (string-to-fat32-in-memory (create-fat32-in-memory) str))
-             0))
+      (equal
+       (mv-nth 1
+               (string-to-fat32-in-memory fat32-in-memory str))
+       0)
+      (equal
+       (mv-nth 1
+               (string-to-fat32-in-memory (create-fat32-in-memory)
+                                          str))
+       0))
      (equal (string-to-fat32-in-memory fat32-in-memory str)
-            (string-to-fat32-in-memory (create-fat32-in-memory) str)))
-    :hints (("Goal"
-             :use ((:functional-instance
-                    equal-by-nths
-                    (equal-by-nths-hyp
-                     (lambda ()
-                       (and (stringp str)
-                            (not (equal fat32-in-memory (create-fat32-in-memory)))
-                            (fat32-in-memoryp fat32-in-memory)
-                            (equal (mv-nth 1
-                                           (string-to-fat32-in-memory
-                                            fat32-in-memory
-                                            str))
-                                   0)
-                            (equal (mv-nth 1
-                                           (string-to-fat32-in-memory
-                                            (create-fat32-in-memory)
-                                            str))
-                                   0))))
-                    (equal-by-nths-lhs
-                     (lambda ()
-                       (mv-nth 0 (string-to-fat32-in-memory fat32-in-memory str))))
-                    (equal-by-nths-rhs
-                     (lambda ()
-                       (mv-nth 0 (string-to-fat32-in-memory (create-fat32-in-memory)
-                                                            str)))))))
-            ("Subgoal 2''"
-             :cases ((equal n *bs_jmpbooti*)
-                     (equal n *bs_oemnamei*)
-                     (equal n *bpb_bytspersec*)
-                     (equal n *bpb_secperclus*)
-                     (equal n *bpb_rsvdseccnt*)
-                     (equal n *bpb_numfats*)
-                     (equal n *bpb_rootentcnt*)
-                     (equal n *bpb_totsec16*)
-                     (equal n *bpb_media*)
-                     (equal n *bpb_fatsz16*)
-                     (equal n *bpb_secpertrk*)
-                     (equal n *bpb_numheads*)
-                     (equal n *bpb_hiddsec*)
-                     (equal n *bpb_totsec32*)
-                     (equal n *bpb_fatsz32*)
-                     (equal n *bpb_extflags*)
-                     (equal n *bpb_fsver_minor*)
-                     (equal n *bpb_fsver_major*)
-                     (equal n *bpb_rootclus*)
-                     (equal n *bpb_fsinfo*)
-                     (equal n *bpb_bkbootsec*)
-                     (equal n *bpb_reservedi*)
-                     (equal n *bs_drvnum*)
-                     (equal n *bs_reserved1*)
-                     (equal n *bs_bootsig*)
-                     (equal n *bs_volid*)
-                     (equal n *bs_vollabi*)
-                     (equal n *bs_filsystypei*)
-                     (equal n *fati*)
-                     (equal n *data-regioni*))
-             :in-theory (e/d
-                         (string-to-fat32-in-memory
-                          read-reserved-area)))
-            ("Subgoal 1.30"
-             :in-theory (e/d
-                         (string-to-fat32-in-memory
-                          read-reserved-area
-                          update-bs_jmpboot-alt)))
-            ("Subgoal 1.29"
-             :in-theory (e/d
-                         (string-to-fat32-in-memory
-                          read-reserved-area
-                          update-bs_oemname-alt)))
-            ("Subgoal 1.9"
-             :in-theory (e/d
-                         (string-to-fat32-in-memory
-                          read-reserved-area
-                          update-bpb_reserved-alt)))
-            ("Subgoal 1.4"
-             :in-theory (e/d
-                         (string-to-fat32-in-memory
-                          read-reserved-area
-                          update-bs_vollab-alt)))
-            ("Subgoal 1.3"
-             :in-theory (e/d
-                         (string-to-fat32-in-memory
-                          read-reserved-area
-                          update-bs_filsystype-alt)))
-            ("Subgoal 1.2"
-             :in-theory (e/d
-                         (string-to-fat32-in-memory
-                          update-fat-alt
-                          string-to-fat32-in-memory-ignore-lemma-13
-                          by-slice-you-mean-the-whole-cake-2))
-             :use (:instance
-                   (:rewrite take-of-update-fat-aux)
-                   (str
-                    (implode
-                     (take
-                      (+
-                       (*
-                        (bpb_bytspersec
-                         (mv-nth 0
-                                 (read-reserved-area (create-fat32-in-memory)
-                                                     str)))
-                        (bpb_rsvdseccnt
-                         (mv-nth 0
-                                 (read-reserved-area (create-fat32-in-memory)
-                                                     str))))
-                       (-
-                        (*
-                         (bpb_bytspersec
-                          (mv-nth 0
-                                  (read-reserved-area (create-fat32-in-memory)
-                                                      str)))
-                         (bpb_rsvdseccnt
-                          (mv-nth 0
-                                  (read-reserved-area (create-fat32-in-memory)
-                                                      str)))))
-                       (*
-                        4
-                        (floor
-                         (*
-                          (bpb_bytspersec
-                           (mv-nth 0
-                                   (read-reserved-area (create-fat32-in-memory)
-                                                       str)))
-                          (bpb_fatsz32
-                           (mv-nth 0
-                                   (read-reserved-area (create-fat32-in-memory)
-                                                       str))))
-                         4)))
-                      (nthcdr
-                       (*
-                        (bpb_bytspersec
-                         (mv-nth 0
-                                 (read-reserved-area (create-fat32-in-memory)
-                                                     str)))
-                        (bpb_rsvdseccnt
-                         (mv-nth 0
-                                 (read-reserved-area (create-fat32-in-memory)
-                                                     str))))
-                       (explode str)))))
-                   (fa-table1
-                    (resize-list
-                     (nth *fati* fat32-in-memory)
-                     (floor
-                      (*
-                       (bpb_bytspersec
-                        (mv-nth 0
-                                (read-reserved-area (create-fat32-in-memory)
-                                                    str)))
-                       (bpb_fatsz32
-                        (mv-nth 0
-                                (read-reserved-area (create-fat32-in-memory)
-                                                    str))))
-                      4)
-                     0))
-                   (fa-table2
-                    (resize-list
-                     (nth *fati* (create-fat32-in-memory))
-                     (floor
-                      (*
-                       (bpb_bytspersec
-                        (mv-nth 0
-                                (read-reserved-area (create-fat32-in-memory)
-                                                    str)))
-                       (bpb_fatsz32
-                        (mv-nth 0
-                                (read-reserved-area (create-fat32-in-memory)
-                                                    str))))
-                      4)
-                     0))
-                   (pos
-                    (floor
-                     (*
-                      (bpb_bytspersec
-                       (mv-nth 0
-                               (read-reserved-area (create-fat32-in-memory)
-                                                   str)))
-                      (bpb_fatsz32
-                       (mv-nth 0
-                               (read-reserved-area (create-fat32-in-memory)
-                                                   str))))
-                     4))))
-            ("subgoal 1.1" :in-theory (e/d
-                                       (string-to-fat32-in-memory
-                                        string-to-fat32-in-memory-ignore-lemma-2))))))
+            (string-to-fat32-in-memory (create-fat32-in-memory)
+                                       str)))
+    :otf-flg t
+    :hints
+    (("goal"
+      :use
+      (string-to-fat32-in-memory-correctness-1
+       (:instance string-to-fat32-in-memory-correctness-1
+                  (fat32-in-memory (create-fat32-in-memory))))
+      :cases
+      ((equal
+        (mv-nth 0
+                (string-to-fat32-in-memory fat32-in-memory str))
+        (mv-nth
+         0
+         (string-to-fat32-in-memory (create-fat32-in-memory)
+                                    str)))))
+     ("subgoal 2''"
+      :use
+      ((:functional-instance
+        equal-by-nths
+        (equal-by-nths-hyp
+         (lambda
+          nil
+          (and
+           (stringp str)
+           (not (equal fat32-in-memory
+                       (create-fat32-in-memory)))
+           (fat32-in-memoryp fat32-in-memory)
+           (equal
+            (mv-nth
+             1
+             (string-to-fat32-in-memory fat32-in-memory str))
+            0)
+           (equal
+            (mv-nth
+             1
+             (string-to-fat32-in-memory (create-fat32-in-memory)
+                                        str))
+            0))))
+        (equal-by-nths-lhs
+         (lambda
+          nil
+          (mv-nth
+           0
+           (string-to-fat32-in-memory fat32-in-memory str))))
+        (equal-by-nths-rhs
+         (lambda
+          nil
+          (mv-nth
+           0
+           (string-to-fat32-in-memory (create-fat32-in-memory)
+                                      str)))))))
+     ("subgoal 2.1'"
+      :cases ((equal n *bs_jmpbooti*)
+              (equal n *bs_oemnamei*)
+              (equal n *bpb_bytspersec*)
+              (equal n *bpb_secperclus*)
+              (equal n *bpb_rsvdseccnt*)
+              (equal n *bpb_numfats*)
+              (equal n *bpb_rootentcnt*)
+              (equal n *bpb_totsec16*)
+              (equal n *bpb_media*)
+              (equal n *bpb_fatsz16*)
+              (equal n *bpb_secpertrk*)
+              (equal n *bpb_numheads*)
+              (equal n *bpb_hiddsec*)
+              (equal n *bpb_totsec32*)
+              (equal n *bpb_fatsz32*)
+              (equal n *bpb_extflags*)
+              (equal n *bpb_fsver_minor*)
+              (equal n *bpb_fsver_major*)
+              (equal n *bpb_rootclus*)
+              (equal n *bpb_fsinfo*)
+              (equal n *bpb_bkbootsec*)
+              (equal n *bpb_reservedi*)
+              (equal n *bs_drvnum*)
+              (equal n *bs_reserved1*)
+              (equal n *bs_bootsig*)
+              (equal n *bs_volid*)
+              (equal n *bs_vollabi*)
+              (equal n *bs_filsystypei*)
+              (equal n *fati*)
+              (equal n *data-regioni*))
+      :in-theory
+      (e/d (string-to-fat32-in-memory read-reserved-area)))
+     ("subgoal 2.1.30"
+      :in-theory
+      (e/d (string-to-fat32-in-memory read-reserved-area
+                                      update-bs_jmpboot-alt)))
+     ("subgoal 2.1.29"
+      :in-theory
+      (e/d (string-to-fat32-in-memory read-reserved-area
+                                      update-bs_oemname-alt)))
+     ("subgoal 2.1.9"
+      :in-theory
+      (e/d (string-to-fat32-in-memory read-reserved-area
+                                      update-bpb_reserved-alt)))
+     ("subgoal 2.1.4"
+      :in-theory
+      (e/d (string-to-fat32-in-memory read-reserved-area
+                                      update-bs_vollab-alt)))
+     ("subgoal 2.1.3"
+      :in-theory
+      (e/d (string-to-fat32-in-memory read-reserved-area
+                                      update-bs_filsystype-alt)))
+     ("subgoal 2.1.2"
+      :in-theory
+      (e/d (string-to-fat32-in-memory
+            update-fat-alt
+            string-to-fat32-in-memory-ignore-lemma-13
+            by-slice-you-mean-the-whole-cake-2))
+      :use
+      (:instance
+       (:rewrite take-of-update-fat-aux)
+       (str
+        (implode
+         (take
+          (+
+           (*
+            (bpb_bytspersec
+             (mv-nth 0
+                     (read-reserved-area (create-fat32-in-memory)
+                                         str)))
+            (bpb_rsvdseccnt
+             (mv-nth 0
+                     (read-reserved-area (create-fat32-in-memory)
+                                         str))))
+           (-
+            (*
+             (bpb_bytspersec
+              (mv-nth 0
+                      (read-reserved-area (create-fat32-in-memory)
+                                          str)))
+             (bpb_rsvdseccnt
+              (mv-nth 0
+                      (read-reserved-area (create-fat32-in-memory)
+                                          str)))))
+           (*
+            4
+            (floor
+             (*
+              (bpb_bytspersec
+               (mv-nth
+                0
+                (read-reserved-area (create-fat32-in-memory)
+                                    str)))
+              (bpb_fatsz32
+               (mv-nth
+                0
+                (read-reserved-area (create-fat32-in-memory)
+                                    str))))
+             4)))
+          (nthcdr
+           (*
+            (bpb_bytspersec
+             (mv-nth 0
+                     (read-reserved-area (create-fat32-in-memory)
+                                         str)))
+            (bpb_rsvdseccnt
+             (mv-nth 0
+                     (read-reserved-area (create-fat32-in-memory)
+                                         str))))
+           (explode str)))))
+       (fa-table1
+        (resize-list
+         (nth *fati* fat32-in-memory)
+         (floor
+          (*
+           (bpb_bytspersec
+            (mv-nth 0
+                    (read-reserved-area (create-fat32-in-memory)
+                                        str)))
+           (bpb_fatsz32
+            (mv-nth 0
+                    (read-reserved-area (create-fat32-in-memory)
+                                        str))))
+          4)
+         0))
+       (fa-table2
+        (resize-list
+         (nth *fati* (create-fat32-in-memory))
+         (floor
+          (*
+           (bpb_bytspersec
+            (mv-nth 0
+                    (read-reserved-area (create-fat32-in-memory)
+                                        str)))
+           (bpb_fatsz32
+            (mv-nth 0
+                    (read-reserved-area (create-fat32-in-memory)
+                                        str))))
+          4)
+         0))
+       (pos
+        (floor
+         (*
+          (bpb_bytspersec
+           (mv-nth 0
+                   (read-reserved-area (create-fat32-in-memory)
+                                       str)))
+          (bpb_fatsz32
+           (mv-nth 0
+                   (read-reserved-area (create-fat32-in-memory)
+                                       str))))
+         4))))
+     ("subgoal 2.1.1"
+      :in-theory
+      (e/d (string-to-fat32-in-memory
+            string-to-fat32-in-memory-ignore-lemma-2))))))
 
 (defthm
   string-to-fat32-in-memory-inversion
