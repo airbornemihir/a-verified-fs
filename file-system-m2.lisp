@@ -10188,11 +10188,10 @@
         (mv-nth 0
                 (read-reserved-area (create-fat32-in-memory)
                                     str)))))
-     :hints (("goal" :in-theory (e/d (read-reserved-area
-                                      cluster-size
-                                      count-of-clusters
-                                      fat-entry-count)
-                                     (create-fat32-in-memory))))))
+     :hints (("goal" :in-theory (enable read-reserved-area
+                                        cluster-size
+                                        count-of-clusters
+                                        fat-entry-count)))))
 
   (local
    (defthm
@@ -10208,10 +10207,10 @@
         (mv-nth 0
                 (read-reserved-area (create-fat32-in-memory)
                                     str)))))
-     :hints (("goal" :in-theory (e/d (read-reserved-area count-of-clusters
-                                                         fat-entry-count
-                                                         cluster-size)
-                                     (create-fat32-in-memory))))))
+     :hints (("goal" :in-theory (enable read-reserved-area
+                                        count-of-clusters
+                                        fat-entry-count
+                                        cluster-size)))))
 
   (local
    (defthm
@@ -10227,11 +10226,10 @@
         (mv-nth 0
                 (read-reserved-area (create-fat32-in-memory)
                                     str)))))
-     :hints (("goal" :in-theory (e/d (read-reserved-area
-                                      count-of-clusters
-                                      fat-entry-count
-                                      cluster-size)
-                                     (create-fat32-in-memory))))))
+     :hints (("goal" :in-theory (enable read-reserved-area
+                                        count-of-clusters
+                                        fat-entry-count
+                                        cluster-size)))))
 
   (local
    (defthm
@@ -10252,11 +10250,10 @@
         (mv-nth 0
                 (read-reserved-area (create-fat32-in-memory)
                                     str)))))
-     :hints (("goal" :in-theory (e/d (read-reserved-area
-                                      count-of-clusters
-                                      fat-entry-count
-                                      cluster-size)
-                                     (create-fat32-in-memory))))))
+     :hints (("goal" :in-theory (enable read-reserved-area
+                                        count-of-clusters
+                                        fat-entry-count
+                                        cluster-size)))))
 
   (local
    (defthm
@@ -10272,11 +10269,10 @@
         (mv-nth 0
                 (read-reserved-area (create-fat32-in-memory)
                                     str)))))
-     :hints (("goal" :in-theory (e/d (read-reserved-area
-                                      count-of-clusters
-                                      fat-entry-count
-                                      cluster-size)
-                                     (create-fat32-in-memory))))))
+     :hints (("goal" :in-theory (enable read-reserved-area
+                                        count-of-clusters
+                                        fat-entry-count
+                                        cluster-size)))))
 
   (local
    (defthm
@@ -10290,11 +10286,10 @@
        (mv-nth 1
                (read-reserved-area (create-fat32-in-memory)
                                    str))))
-     :hints (("goal" :in-theory (e/d (read-reserved-area
-                                      count-of-clusters
-                                      fat-entry-count
-                                      cluster-size)
-                                     (create-fat32-in-memory))))))
+     :hints (("goal" :in-theory (enable read-reserved-area
+                                        count-of-clusters
+                                        fat-entry-count
+                                        cluster-size)))))
 
   (local
    (defthm
@@ -10378,10 +10373,9 @@
     :hints
     (("goal"
       :in-theory
-      (e/d (string-to-fat32-in-memory read-reserved-area
-                                      update-data-region-alt cluster-size
-                                      count-of-clusters fat-entry-count)
-           (create-fat32-in-memory))
+      (enable string-to-fat32-in-memory read-reserved-area
+              update-data-region-alt cluster-size
+              count-of-clusters fat-entry-count)
       :use
       (:instance
        (:rewrite string-to-fat32-in-memory-ignore-lemma-16)
@@ -10715,7 +10709,6 @@
   (local (in-theory (e/d
                      (count-of-clusters cluster-size fat-entry-count)
                      (nth-when-zp
-                      create-fat32-in-memory
                       (:DEFINITION UPDATE-NTH-ARRAY)
                       (:DEFINITION UPDATE-BS_OEMNAME)
                       (:DEFINITION LEN)
