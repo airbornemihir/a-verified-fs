@@ -11063,52 +11063,63 @@
         (mv-nth
          0
          (m1-fs-to-fat32-in-memory
+          (mv-nth 0
+                  (string-to-fat32-in-memory fat32-in-memory str))
           (mv-nth
            0
-           (string-to-fat32-in-memory fat32-in-memory str))
-          (mv-nth 0
-                  (fat32-in-memory-to-m1-fs
-                   (mv-nth 0
-                           (string-to-fat32-in-memory
-                            fat32-in-memory str)))))))))
+           (fat32-in-memory-to-m1-fs
+            (mv-nth 0
+                    (string-to-fat32-in-memory fat32-in-memory str)))))))))
      0)
+    (equal (mv-nth 1
+                   (string-to-fat32-in-memory (create-fat32-in-memory)
+                                              str))
+           0)
     (equal
      (mv-nth 1
-             (string-to-fat32-in-memory (create-fat32-in-memory)
-                                        str))
+             (fat32-in-memory-to-m1-fs
+              (mv-nth 0
+                      (string-to-fat32-in-memory fat32-in-memory str))))
      0)
-    (not (equal fat32-in-memory
-                (create-fat32-in-memory))))
-   (b*
-       (((mv fat32-in-memory error-code1)
-         (string-to-fat32-in-memory fat32-in-memory str))
-        ((mv fs error-code2)
-         (fat32-in-memory-to-m1-fs fat32-in-memory)))
-     (implies
-      (and
-       (equal error-code1 0)
-       (equal error-code2 0)
-       (m1-bounded-file-alist-p fs)
-       (m1-file-no-dups-p fs)
-       (equal
-        (mv-nth 1
-                (m1-fs-to-fat32-in-memory fat32-in-memory fs))
-        0)
-       (not
-        (equal
+    (m1-bounded-file-alist-p
+     (mv-nth 0
+             (fat32-in-memory-to-m1-fs
+              (mv-nth 0
+                      (string-to-fat32-in-memory fat32-in-memory str)))))
+    (m1-file-no-dups-p
+     (mv-nth 0
+             (fat32-in-memory-to-m1-fs
+              (mv-nth 0
+                      (string-to-fat32-in-memory fat32-in-memory str)))))
+    (equal
+     (mv-nth
+      1
+      (m1-fs-to-fat32-in-memory
+       (mv-nth 0
+               (string-to-fat32-in-memory fat32-in-memory str))
+       (mv-nth
+        0
+        (fat32-in-memory-to-m1-fs
          (mv-nth 0
-                 (m1-fs-to-fat32-in-memory fat32-in-memory fs))
-         (create-fat32-in-memory))))
-      (disk-image-string-equiv
-       (fat32-in-memory-to-string
-        (mv-nth 0
-                (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
-       str))))
+                 (string-to-fat32-in-memory fat32-in-memory str))))))
+     0))
+   (disk-image-string-equiv
+    (fat32-in-memory-to-string
+     (mv-nth
+      0
+      (m1-fs-to-fat32-in-memory
+       (mv-nth 0
+               (string-to-fat32-in-memory fat32-in-memory str))
+       (mv-nth
+        0
+        (fat32-in-memory-to-m1-fs
+         (mv-nth 0
+                 (string-to-fat32-in-memory fat32-in-memory str)))))))
+    str))
   :hints
   (("goal"
-    :in-theory
-    (e/d (disk-image-string-equiv)
-         ((:rewrite fat32-in-memory-to-string-inversion)))
+    :in-theory (e/d (disk-image-string-equiv)
+                    ((:rewrite fat32-in-memory-to-string-inversion)))
     :use
     ((:instance
       (:rewrite fat32-in-memory-to-string-inversion)
@@ -11116,17 +11127,15 @@
        (mv-nth
         0
         (m1-fs-to-fat32-in-memory
-         (mv-nth
-          0
-          (string-to-fat32-in-memory (create-fat32-in-memory)
-                                     str))
+         (mv-nth 0
+                 (string-to-fat32-in-memory (create-fat32-in-memory)
+                                            str))
          (mv-nth
           0
           (fat32-in-memory-to-m1-fs
-           (mv-nth
-            0
-            (string-to-fat32-in-memory (create-fat32-in-memory)
-                                       str))))))))
+           (mv-nth 0
+                   (string-to-fat32-in-memory (create-fat32-in-memory)
+                                              str))))))))
      (:instance
       (:rewrite string-to-fat32-in-memory-ignore)
       (str
@@ -11134,32 +11143,31 @@
         (mv-nth
          0
          (m1-fs-to-fat32-in-memory
-          (mv-nth
-           0
-           (string-to-fat32-in-memory (create-fat32-in-memory)
-                                      str))
+          (mv-nth 0
+                  (string-to-fat32-in-memory (create-fat32-in-memory)
+                                             str))
           (mv-nth
            0
            (fat32-in-memory-to-m1-fs
-            (mv-nth
-             0
-             (string-to-fat32-in-memory (create-fat32-in-memory)
-                                        str))))))))
+            (mv-nth 0
+                    (string-to-fat32-in-memory (create-fat32-in-memory)
+                                               str))))))))
       (fat32-in-memory
        (mv-nth
         0
         (m1-fs-to-fat32-in-memory
-         (mv-nth
-          0
-          (string-to-fat32-in-memory (create-fat32-in-memory)
-                                     str))
+         (mv-nth 0
+                 (string-to-fat32-in-memory (create-fat32-in-memory)
+                                            str))
          (mv-nth
           0
           (fat32-in-memory-to-m1-fs
-           (mv-nth
-            0
-            (string-to-fat32-in-memory (create-fat32-in-memory)
-                                       str))))))))))))
+           (mv-nth 0
+                   (string-to-fat32-in-memory (create-fat32-in-memory)
+                                              str)))))))))
+    :cases
+    ((equal fat32-in-memory
+                (create-fat32-in-memory))))))
 
 #|
 Some (rather awful) testing forms are
