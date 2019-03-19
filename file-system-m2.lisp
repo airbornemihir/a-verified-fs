@@ -12,15 +12,16 @@
 (include-book "cluster-listp")
 (include-book "flatten-lemmas")
 
-;; These are some lemmas from other books which are interacting badly with the
+;; These are some rules from other books which are interacting badly with the
 ;; theory I've built up so far.
 (local
  (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
-                     revappend-removal)))
+                     revappend-removal
+                     loghead logtail)))
 
-;; These are some lemmas I've had to disable a lot in this book - and I'm still
-;; taking 847 seconds to certify the whole thing. Disabling them everywhere
-;; should simplify things.
+;; These are some definitions I've had to disable a lot in this book - and I'm
+;; still taking 847 seconds to certify the whole thing. Disabling them
+;; everywhere should simplify things.
 ;; Later note: the certification time went down to 632 seconds after this
 ;; change.
 ;; Later note: the certification time went down to 517 seconds after some more
@@ -5054,7 +5055,7 @@
     :in-theory
     (e/d (useless-dir-ent-p dir-ent-p dir-ent-filename
                             dir-ent-set-first-cluster-file-size)
-         (loghead logtail (:rewrite logtail-loghead))))))
+         ((:rewrite logtail-loghead))))))
 
 (defthm
   useless-dir-ent-p-of-place-contents
@@ -5646,8 +5647,7 @@
       :in-theory
       (e/d
        (fat32-entry-p)
-       (unsigned-byte-p loghead logtail
-                        fati-when-compliant-fat32-in-memoryp))
+       (unsigned-byte-p fati-when-compliant-fat32-in-memoryp))
       :use (:instance fati-when-compliant-fat32-in-memoryp
                       (i (+ -1 length)))))))
   (if
@@ -5668,8 +5668,7 @@
   (equal
    (character-listp
     (stobj-fa-table-to-string-helper fat32-in-memory length ac))
-   (character-listp ac))
-  :hints (("Goal" :in-theory (disable loghead logtail))))
+   (character-listp ac)))
 
 (defthm
   len-of-stobj-fa-table-to-string-helper
@@ -5677,8 +5676,7 @@
    (len
     (stobj-fa-table-to-string-helper
      fat32-in-memory length ac))
-   (+ (len ac) (* 4 (nfix length))))
-  :hints (("Goal" :in-theory (disable loghead logtail))))
+   (+ (len ac) (* 4 (nfix length)))))
 
 (defund
     stobj-fa-table-to-string
@@ -5781,11 +5779,9 @@
   (defund reserved-area-chars (fat32-in-memory)
     (declare (xargs :stobjs fat32-in-memory
                     :guard (compliant-fat32-in-memoryp fat32-in-memory)
-                    :guard-debug t
                     :guard-hints (("Goal"
                                    :do-not-induct t
-                                   :in-theory (disable loghead logtail
-                                                       bs_vollabi
+                                   :in-theory (disable bs_vollabi
                                                        bs_jmpbooti
                                                        bs_oemnamei
                                                        bs_filsystypei
@@ -5901,7 +5897,7 @@
    (equal (len (reserved-area-chars fat32-in-memory))
           (* (bpb_rsvdseccnt fat32-in-memory)
              (bpb_bytspersec fat32-in-memory))))
-  :hints (("goal" :in-theory (e/d (reserved-area-chars) (loghead logtail)))))
+  :hints (("goal" :in-theory (enable reserved-area-chars))))
 
 (defund
   reserved-area-string (fat32-in-memory)
@@ -6034,8 +6030,7 @@
                    90)
                 :initial-element (code-char 0)))))
   
-  :instructions ((:in-theory (disable loghead logtail))
-                 (:dive 1 2 1)
+  :instructions ((:dive 1 2 1)
                  :x
                  :up (:rewrite str::explode-of-implode)
                  :s (:rewrite str::make-character-list-when-character-listp)
@@ -6070,7 +6065,7 @@
    (len
     (explode (stobj-fa-table-to-string fat32-in-memory)))
    (* (fat-length fat32-in-memory) 4))
-  :hints (("goal" :in-theory (e/d (stobj-fa-table-to-string) (loghead logtail)))))
+  :hints (("goal" :in-theory (enable stobj-fa-table-to-string))))
 
 (defthm
   length-of-make-fat-string-ac
@@ -8475,10 +8470,9 @@
 
   (local
    (in-theory (e/d (fat32-in-memory-to-string get-initial-bytes get-remaining-rsvdbyts)
-                   (logtail loghead
-                            ;; the splitter-note suggests these could usefully
-                            ;; be disabled
-                            nth-of-append nthcdr-of-append take-of-append))))
+                   (;; the splitter-note suggests these could usefully be
+                    ;; disabled
+                    nth-of-append nthcdr-of-append take-of-append))))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-4
@@ -9001,7 +8995,7 @@
                                (logtail 24 current)))))
   :hints
   (("goal" :in-theory (e/d (fat32-entry-p)
-                           (unsigned-byte-p loghead logtail))))
+                           (unsigned-byte-p))))
   :rule-classes
   ((:linear
     :corollary
@@ -9088,7 +9082,7 @@
              (if (zp (- pos length))
                  (code-char (loghead 8 (fati (+ -1 pos) fat32-in-memory)))
                (nth (+ -4 (* 4 (- pos length))) ac)))))
-    :hints (("goal" :in-theory (disable loghead logtail)
+    :hints (("goal"
              :induct
              (stobj-fa-table-to-string-helper fat32-in-memory
                                               length
@@ -9130,7 +9124,7 @@
       (explode
        (stobj-fa-table-to-string fat32-in-memory)))
      (code-char (loghead 8 (fati (- pos 1) fat32-in-memory))))))
-  :hints (("goal" :in-theory (e/d (stobj-fa-table-to-string) (logtail loghead)))))
+  :hints (("goal" :in-theory (enable stobj-fa-table-to-string))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-41
@@ -9151,12 +9145,10 @@
      fat32-in-memory
      (make-fat-string-ac (bpb_numfats fat32-in-memory)
                          fat32-in-memory "")
-     pos)
-    :in-theory (e/d nil (loghead logtail)))
+     pos))
    ("subgoal *1/3"
     :in-theory
-    (disable loghead logtail
-             fat32-in-memory-to-string-inversion-lemma-39)
+    (disable fat32-in-memory-to-string-inversion-lemma-39)
     :use (:instance fat32-in-memory-to-string-inversion-lemma-39
                     (pos 1)))))
 
@@ -9177,7 +9169,7 @@
 
   (local (in-theory (disable bs_jmpbooti update-bs_jmpbooti
                              bs_oemnamei bpb_reservedi bs_vollabi
-                             bs_filsystypei loghead logtail)))
+                             bs_filsystypei)))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-42
@@ -9283,7 +9275,7 @@
         :initial-element 0))))
     :hints (("Goal" :in-theory (e/d (chars=>nats reserved-area-string
                                                  reserved-area-chars)
-                                    (loghead logtail unsigned-byte-p)))))
+                                    (unsigned-byte-p)))))
 
   (local (in-theory (enable chars=>nats-of-take get-initial-bytes
                             fat32-in-memory-to-string)))
@@ -9396,9 +9388,7 @@
     (update-fat
      fat32-in-memory
      (stobj-fa-table-to-string fat32-in-memory)
-     pos)
-    :in-theory (e/d ()
-                    (loghead logtail)))))
+     pos))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-49
@@ -9485,8 +9475,7 @@
           fat32-in-memory-to-string-inversion-lemma-51
           cluster-size read-reserved-area
           update-data-region-alt)
-         (loghead logtail
-                  compliant-fat32-in-memoryp-correctness-1))
+         (compliant-fat32-in-memoryp-correctness-1))
     :use compliant-fat32-in-memoryp-correctness-1)))
 
 (defund-nx
@@ -9693,13 +9682,12 @@
     :hints
     (("goal"
       :do-not-induct t
-      :in-theory (e/d (string-to-fat32-in-memory count-of-clusters
-                                                 cluster-size fat-entry-count
-                                                 compliant-fat32-in-memoryp
-                                                 painful-debugging-lemma-1
-                                                 painful-debugging-lemma-2
-                                                 painful-debugging-lemma-3)
-                      (loghead logtail))))))
+      :in-theory (enable string-to-fat32-in-memory count-of-clusters
+                         cluster-size fat-entry-count
+                         compliant-fat32-in-memoryp
+                         painful-debugging-lemma-1
+                         painful-debugging-lemma-2
+                         painful-debugging-lemma-3)))))
 
 (defthm
   compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-5
@@ -9737,8 +9725,7 @@
                                     painful-debugging-lemma-1
                                     painful-debugging-lemma-2
                                     painful-debugging-lemma-3)
-         (loghead logtail 
-                  (:linear update-data-region-correctness-1)))
+         ((:linear update-data-region-correctness-1)))
     :use
     ((:instance
       (:linear update-data-region-correctness-1)
