@@ -11187,8 +11187,8 @@
     :cases ((equal fat32-in-memory
                    (create-fat32-in-memory))))))
 
-(defthm
-  string-to-m1-fs-inversion
+(defthmd
+  string-to-m1-fs-inversion-lemma-2
   (implies
    (and
     (stringp str)
@@ -11306,6 +11306,87 @@
            (mv-nth
             0
             (string-to-fat32-in-memory fat32-in-memory str))))))))))))
+
+(defthm
+  string-to-m1-fs-inversion
+  (implies
+   (and
+    (stringp str)
+    (fat32-in-memoryp fat32-in-memory)
+    (equal
+     (mv-nth 1
+             (string-to-fat32-in-memory fat32-in-memory str))
+     0)
+    (equal
+     (mv-nth
+      1
+      (fat32-in-memory-to-m1-fs
+       (mv-nth
+        0
+        (string-to-fat32-in-memory fat32-in-memory str))))
+     0)
+    (m1-bounded-file-alist-p
+     (mv-nth
+      0
+      (fat32-in-memory-to-m1-fs
+       (mv-nth
+        0
+        (string-to-fat32-in-memory fat32-in-memory str)))))
+    (m1-file-no-dups-p
+     (mv-nth
+      0
+      (fat32-in-memory-to-m1-fs
+       (mv-nth
+        0
+        (string-to-fat32-in-memory fat32-in-memory str)))))
+    (equal
+     (mv-nth
+      1
+      (m1-fs-to-fat32-in-memory
+       (mv-nth 0
+               (string-to-fat32-in-memory fat32-in-memory str))
+       (mv-nth
+        0
+        (fat32-in-memory-to-m1-fs
+         (mv-nth
+          0
+          (string-to-fat32-in-memory fat32-in-memory str))))))
+     0))
+   (disk-image-string-equiv
+    (fat32-in-memory-to-string
+     (mv-nth
+      0
+      (m1-fs-to-fat32-in-memory
+       (mv-nth 0
+               (string-to-fat32-in-memory fat32-in-memory str))
+       (mv-nth
+        0
+        (fat32-in-memory-to-m1-fs
+         (mv-nth
+          0
+          (string-to-fat32-in-memory fat32-in-memory str)))))))
+    str))
+  :hints
+  (("goal"
+    :in-theory
+    (disable (:rewrite fat32-in-memory-to-string-inversion))
+    :use
+    (string-to-m1-fs-inversion-lemma-2
+     (:instance
+      (:rewrite fat32-in-memory-to-string-inversion)
+      (fat32-in-memory
+       (mv-nth
+        0
+        (m1-fs-to-fat32-in-memory
+         (mv-nth
+          0
+          (string-to-fat32-in-memory fat32-in-memory str))
+         (mv-nth
+          0
+          (fat32-in-memory-to-m1-fs
+           (mv-nth 0
+                   (string-to-fat32-in-memory
+                    fat32-in-memory str))))))))))))
 
 #|
 Some (rather awful) testing forms are
