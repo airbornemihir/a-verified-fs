@@ -1184,13 +1184,24 @@
  update-bpb_reserved-alt
  nth-of-bpb_reserved)
 
+(defthm
+  fat32-in-memoryp-of-create-fat32-in-memory
+  (fat32-in-memoryp (create-fat32-in-memory)))
+
 ;; The strategy of just using compliant-fat32-in-memoryp everywhere is not
 ;; going to work. It's going to be desirable to prove lemmas with the weaker
 ;; hypothesis (fat32-in-memoryp fat32-in-memory) where possible, and we do want
 ;; to be able to use those lemmas in a context where
 ;; (compliant-fat32-in-memoryp fat32-in-memory) is known to be true without
 ;; allowing for the definition of fat32-in-memoryp to be expanded.
-(in-theory (disable fat32-in-memoryp))
+;;
+;; We're also disabling create-fat32-in-memory because any time it gets
+;; expanded in a subgoal there's trouble discharging it as well as writing it
+;; out in full.
+;;
+;; Note, we're non-locally disabling these because we want them to be off by
+;; default in other books.
+(in-theory (disable fat32-in-memoryp create-fat32-in-memory))
 
 (defthm
   bpb_bytspersec-of-update-data-regioni
@@ -1439,10 +1450,6 @@
 
 (update-bpb_bytspersec-macro update-bs_jmpboot fat32-in-memory
                              update-bpb_bytspersec-of-update-bs_jmpboot)
-
-(defthm
-  fat32-in-memoryp-of-create-fat32-in-memory
-  (fat32-in-memoryp (create-fat32-in-memory)))
 
 (defthm
   fat32-in-memoryp-of-resize-data-region
