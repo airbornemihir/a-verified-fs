@@ -251,7 +251,7 @@
              *ms-min-bytes-per-sector*)
          (>= (bpb_secperclus fat32-in-memory) 1)
          (>= (count-of-clusters fat32-in-memory)
-             *ms-fat32-min-count-of-clusters*)
+             *ms-min-count-of-clusters*)
          (<= (+ *ms-first-data-cluster*
                 (count-of-clusters fat32-in-memory))
              *ms-bad-cluster*)
@@ -315,7 +315,7 @@
                   (>= (cluster-size fat32-in-memory)
                       *ms-min-bytes-per-sector*)
                   (>= (count-of-clusters fat32-in-memory)
-                      *ms-fat32-min-count-of-clusters*)
+                      *ms-min-count-of-clusters*)
                   (equal (mod (cluster-size fat32-in-memory)
                               *ms-dir-ent-length*)
                          0)
@@ -391,7 +391,7 @@
        (and (>= (cluster-size fat32-in-memory)
                 *ms-min-bytes-per-sector*)
             (>= (count-of-clusters fat32-in-memory)
-                *ms-fat32-min-count-of-clusters*)
+                *ms-min-count-of-clusters*)
             (<= (+ *ms-first-data-cluster*
                    (count-of-clusters fat32-in-memory))
                 *ms-bad-cluster*)
@@ -409,7 +409,7 @@
             (>= (* (cluster-size fat32-in-memory)
                    (count-of-clusters fat32-in-memory))
                 (* *ms-min-bytes-per-sector*
-                   *ms-fat32-min-count-of-clusters*))
+                   *ms-min-count-of-clusters*))
             (<= (+ (count-of-clusters fat32-in-memory)
                    *ms-first-data-cluster*)
                 (fat-entry-count fat32-in-memory))
@@ -794,7 +794,7 @@
          ((unless
               (and
                (>= (count-of-clusters fat32-in-memory)
-                   *ms-fat32-min-count-of-clusters*)
+                   *ms-min-count-of-clusters*)
                (<= (+ (count-of-clusters fat32-in-memory)
                       *ms-first-data-cluster*)
                    (fat-entry-count fat32-in-memory))))
@@ -1784,7 +1784,7 @@
                   (read-reserved-area fat32-in-memory str))
           0)
    (and
-    (<= *ms-fat32-min-count-of-clusters*
+    (<= *ms-min-count-of-clusters*
         (count-of-clusters
          (mv-nth 0
                  (read-reserved-area fat32-in-memory str))))
@@ -1799,7 +1799,7 @@
      (equal (mv-nth 1
                     (read-reserved-area fat32-in-memory str))
             0)
-     (<= *ms-fat32-min-count-of-clusters*
+     (<= *ms-min-count-of-clusters*
          (count-of-clusters
           (mv-nth 0
                   (read-reserved-area fat32-in-memory str))))))
@@ -2309,7 +2309,7 @@
             0)
      (<=
       (* *ms-min-bytes-per-sector*
-         *ms-fat32-min-count-of-clusters*)
+         *ms-min-count-of-clusters*)
       (*
        (cluster-size
         (mv-nth 0
@@ -10696,11 +10696,9 @@
   (local (in-theory (e/d
                      (count-of-clusters cluster-size fat-entry-count)
                      (nth-when-zp
-                      (:DEFINITION UPDATE-NTH-ARRAY)
-                      (:DEFINITION UPDATE-BS_OEMNAME)
-                      (:DEFINITION LEN)
-                      (:DEFINITION UPDATE-BS_OEMNAMEI)
-                      (:DEFINITION UPDATE-BS_JMPBOOT)))))
+                      ;; These are from accumulated-persistence.
+                      (:definition update-nth-array)
+                      (:definition len)))))
 
   (defthm
     string-to-fat32-in-memory-ignore

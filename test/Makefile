@@ -25,7 +25,8 @@ test: $(TEST)
 debug-create-dir-copy-file
 
 .PHONY: mtools-read-write-test-70MB mtools-read-write-test-140MB \
-mtools-read-write-test-210MB
+mtools-read-write-test-210MB mtools-read-write-test-280MB \
+mtools-read-write-test-560MB mtools-read-write-test-1120MB
 
 DISK=disk1.raw
 SIZE=70000

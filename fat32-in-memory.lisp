@@ -62,7 +62,7 @@
     ;; specification.
     (bpb_fatsz32 :type (unsigned-byte 32)
                  ;; per spec
-                 :initially ,*ms-fat32-min-count-of-clusters*)
+                 :initially ,*ms-min-count-of-clusters*)
     (bpb_extflags :type (unsigned-byte 16)
                   ;; boilerplate
                   :initially 0)
@@ -105,12 +105,12 @@
 
     ;; The first FAT is placed here. Other copies are not guaranteed to be
     ;; consistent.
-    (fat :type (array (unsigned-byte 32) (*ms-fat32-min-count-of-clusters*))
+    (fat :type (array (unsigned-byte 32) (*ms-min-count-of-clusters*))
          :resizable t
          ;; per spec
          :initially 0)
 
-    (data-region :type (array string (*ms-fat32-min-count-of-clusters*))
+    (data-region :type (array string (*ms-min-count-of-clusters*))
          :resizable t
          ;; per spec
          :initially "")))
