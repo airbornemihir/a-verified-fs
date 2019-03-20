@@ -68,3 +68,41 @@
         (m1-rmdir fs fat32-pathname))
        (exit-status (if (equal retval 0) exit-status 1)))
     (rmdir-list fs (cdr name-list) exit-status)))
+
+(defun compare-disks (image-path1 image-path2 fat32-in-memory state)
+  (declare (xargs :stobjs (fat32-in-memory state)
+                  :guard-debug t
+                  :guard (and (fat32-in-memoryp fat32-in-memory)
+                              (stringp image-path1)
+                              (stringp image-path2))
+                  :guard-hints (("Goal" :in-theory (disable
+                                                    read-file-into-string2)) )
+                  :otf-flg t))
+  (b*
+    (((mv fat32-in-memory error-code1)
+      (disk-image-to-fat32-in-memory
+       fat32-in-memory image-path1 state))
+     ((mv fs-ref error-code2)
+      (if
+          (not (equal error-code1 0))
+          (mv nil *EIO*)
+        (fat32-in-memory-to-m1-fs fat32-in-memory)))
+     ((mv fat32-in-memory error-code3)
+      (disk-image-to-fat32-in-memory
+       fat32-in-memory image-path2 state))
+     ((mv fs error-code4)
+      (if
+          (or (not (equal error-code1 0)) (not (equal error-code3 0)))
+          (mv nil *EIO*)
+        (fat32-in-memory-to-m1-fs fat32-in-memory)))
+     ((unless (or (equal error-code1 0) (equal error-code3 0)))
+      (mv (good-bye 0) fat32-in-memory))
+     ((unless (and (equal error-code1 0) (equal error-code3 0)))
+      (mv (good-bye 1) fat32-in-memory))
+     ((unless (or (equal error-code2 0) (equal error-code4 0)))
+      (mv (good-bye 0) fat32-in-memory))
+     ((unless (and (equal error-code2 0) (equal error-code4 0)))
+      (mv (good-bye 1) fat32-in-memory))
+     ((unless (m1-dir-equiv fs-ref fs))
+      (mv (good-bye 1) fat32-in-memory)))
+  (mv (good-bye 0) fat32-in-memory)))
