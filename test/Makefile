@@ -292,7 +292,7 @@ wc-ref-output-1.txt wc-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) wc-replicant.lis
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) WC_OUTPUT="wc-output-1.txt" \
-	WC_INPUT="initrd.img" $(ACL2) -- -c < wc-replicant.lisp
+	WC_INPUT="/initrd.img" $(ACL2) -- -c < wc-replicant.lisp
 
 wc-ref-output-2.txt wc-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) wc-replicant.lisp
 	rm -f $(DISK)
@@ -305,7 +305,7 @@ wc-ref-output-2.txt wc-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) wc-replicant.lis
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) WC_OUTPUT="wc-output-2.txt" \
-	WC_INPUT="initrd.img" $(ACL2) -- -l < wc-replicant.lisp
+	WC_INPUT="/initrd.img" $(ACL2) -- -l < wc-replicant.lisp
 
 wc-ref-output-3.txt wc-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) wc-replicant.lisp
 	rm -f $(DISK)
@@ -318,7 +318,7 @@ wc-ref-output-3.txt wc-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) wc-replicant.lis
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) WC_OUTPUT="wc-output-3.txt" \
-	WC_INPUT="initrd.img" $(ACL2) -- -w < wc-replicant.lisp
+	WC_INPUT="/initrd.img" $(ACL2) -- -w < wc-replicant.lisp
 
 stat-ref-output-1.txt stat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) stat-replicant.lisp
 	rm -f $(DISK)

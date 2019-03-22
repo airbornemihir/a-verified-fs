@@ -69,6 +69,42 @@
        (exit-status (if (equal retval 0) exit-status 1)))
     (rmdir-list fs (cdr name-list) exit-status)))
 
+(defoptions wc-opts
+  :parents (demo2)
+  :tag :demo2
+
+  ((bytes    "Count bytes"
+             booleanp
+             :rule-classes :type-prescription
+             :alias #\c)
+
+   (lines "Count lines"
+          booleanp
+          :rule-classes :type-prescription
+          :alias #\l)
+
+   (words "Count words"
+           booleanp
+           :rule-classes :type-prescription
+           :alias #\w)))
+
+(defun wc-helper (text nl nw nc beginning-of-word-p pos)
+  (declare (xargs :measure (nfix (- (length text) pos))))
+  (if
+      (zp (- (length text) pos))
+      (mv nl nw nc)
+    (b*
+        ((c (char text pos))
+         (nc (+ nc 1))
+         (nl (if (equal c #\newline) (+ nl 1) nl))
+         ((mv beginning-of-word-p nw)
+          (if (or (equal c #\space) (equal c #\newline) (equal c #\tab))
+              (mv t nw)
+            (if beginning-of-word-p
+                (mv nil (+ nw 1))
+              (mv beginning-of-word-p nw)))))
+      (wc-helper text nl nw nc beginning-of-word-p (+ pos 1)))))
+
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
                   :guard-debug t
