@@ -1,4 +1,4 @@
-(include-book "../file-system-m2")
+(include-book "../test-stuff")
 
 (b*
     (((mv & val state)
@@ -7,11 +7,11 @@
       (disk-image-to-fat32-in-memory
        fat32-in-memory val state))
      ((mv & val state)
-      (getenv$ "CAT_OUTPUT" state))
+      (getenv$ "CP_OUTPUT" state))
      ((mv channel state)
       (open-output-channel val :character state))
      ((mv & val state)
-      (getenv$ "CAT_INPUT" state))
+      (getenv$ "CP_INPUT" state))
      (fat32-pathname (pathname-to-fat32-pathname (coerce val 'list)))
      ((mv fs &)
       (fat32-in-memory-to-m1-fs fat32-in-memory))

@@ -1,7 +1,7 @@
 # test-mkfs-replicant-3 was always problematic; it's now removed
 # because our model has finally become strict enough to reject it.
-TEST:= test-cat-replicant-1 test-cat-replicant-2 test-cat-replicant-3 \
-test-cat-replicant-4 mtools-test-cat-replicant-2 \
+TEST:= test-cp-replicant-1 test-cp-replicant-2 test-cp-replicant-3 \
+test-cp-replicant-4 mtools-test-cp-replicant-2 \
 test-mkfs-replicant-1 test-mkfs-replicant-2 \
 test-wc-replicant-1 test-wc-replicant-2 test-wc-replicant-3 \
 test-stat-replicant-1 test-stat-replicant-2 \
@@ -51,23 +51,23 @@ $(FUSEPOINT):
 	rm -rf $(FUSEPOINT)
 	mkdir -p $(FUSEPOINT)
 
-test-cat-replicant-1: cat-ref-output-1.txt cat-output-1.txt
-	diff -u -i cat-ref-output-1.txt cat-output-1.txt
+test-cp-replicant-1: cp-ref-output-1.txt cp-output-1.txt
+	diff -u -i cp-ref-output-1.txt cp-output-1.txt
 
-test-cat-replicant-2: cat-ref-output-2.txt cat-output-2.txt
-	diff -u -i cat-ref-output-2.txt cat-output-2.txt
+test-cp-replicant-2: cp-ref-output-2.txt cp-output-2.txt
+	diff -u -i cp-ref-output-2.txt cp-output-2.txt
 
-test-cat-replicant-3: cat-ref-output-3.txt cat-output-3.txt
-	diff -u -i cat-ref-output-3.txt cat-output-3.txt
+test-cp-replicant-3: cp-ref-output-3.txt cp-output-3.txt
+	diff -u -i cp-ref-output-3.txt cp-output-3.txt
 
-test-cat-replicant-4: cat-ref-output-4.txt cat-output-4.txt
-	diff -u -i cat-ref-output-4.txt cat-output-4.txt
+test-cp-replicant-4: cp-ref-output-4.txt cp-output-4.txt
+	diff -u -i cp-ref-output-4.txt cp-output-4.txt
 
-mtools-test-cat-replicant-2: mtools-cat-ref-output-2.txt mtools-cat-output-2.txt
-	diff -u -i mtools-cat-ref-output-2.txt mtools-cat-output-2.txt
+mtools-test-cp-replicant-2: mtools-cp-ref-output-2.txt mtools-cp-output-2.txt
+	diff -u -i mtools-cp-ref-output-2.txt mtools-cp-output-2.txt
 
-test-cat-replicant-5: cat-ref-output-5.txt cat-output-5.txt
-	diff -u -i cat-ref-output-5.txt cat-output-5.txt
+test-cp-replicant-5: cp-ref-output-5.txt cp-output-5.txt
+	diff -u -i cp-ref-output-5.txt cp-output-5.txt
 
 test-mkfs-replicant-1: mkfs-ref-output-1.txt mkfs-output-1.txt
 	diff -u -i mkfs-ref-output-1.txt mkfs-output-1.txt
@@ -173,47 +173,47 @@ mtools-test-mv-replicant-2: mtools-mv-ref-output-2.raw mtools-mv-output-2.raw
 	env DISK=$(DISK) REF_INPUT="mtools-mv-ref-output-2.raw" \
 	INPUT="mtools-mv-output-2.raw" $(ACL2) -- < compare-disks.lisp
 
-cat-ref-output-1.txt cat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cp-ref-output-1.txt cp-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	echo "four" > $(FUSEPOINT)/vmlinuz
-	cat $(FUSEPOINT)/vmlinuz > cat-ref-output-1.txt
+	cat $(FUSEPOINT)/vmlinuz > cp-ref-output-1.txt
 	sleep 1
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) CAT_OUTPUT="cat-output-1.txt" \
-	CAT_INPUT="vmlinuz" $(ACL2) < cat-replicant.lisp
+	env DISK=$(DISK) CP_OUTPUT="cp-output-1.txt" \
+	CP_INPUT="/vmlinuz" $(ACL2) < cp-replicant.lisp
 
-cat-ref-output-2.txt cat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cp-ref-output-2.txt cp-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	cp input-1204-bytes.txt $(FUSEPOINT)/vmlinuz
-	cat $(FUSEPOINT)/vmlinuz > cat-ref-output-2.txt
+	cat $(FUSEPOINT)/vmlinuz > cp-ref-output-2.txt
 	sleep 1
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) CAT_OUTPUT="cat-output-2.txt" \
-	CAT_INPUT="vmlinuz" $(ACL2) < cat-replicant.lisp
+	env DISK=$(DISK) CP_OUTPUT="cp-output-2.txt" \
+	CP_INPUT="/vmlinuz" $(ACL2) < cp-replicant.lisp
 
-cat-ref-output-3.txt cat-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cp-ref-output-3.txt cp-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	cp input-1204-bytes.txt $(FUSEPOINT)/vmlinuz
 	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	cat $(FUSEPOINT)/initrd.img > cat-ref-output-3.txt
+	cat $(FUSEPOINT)/initrd.img > cp-ref-output-3.txt
 	sleep 1
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) CAT_OUTPUT="cat-output-3.txt" \
-	CAT_INPUT="initrd.img" $(ACL2) < cat-replicant.lisp
+	env DISK=$(DISK) CP_OUTPUT="cp-output-3.txt" \
+	CP_INPUT="/initrd.img" $(ACL2) < cp-replicant.lisp
 
-cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cp-ref-output-4.txt cp-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -222,14 +222,14 @@ cat-ref-output-4.txt cat-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
 	done
 	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	cat $(FUSEPOINT)/initrd.img > cat-ref-output-4.txt
+	cat $(FUSEPOINT)/initrd.img > cp-ref-output-4.txt
 	sleep 1
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) CAT_OUTPUT="cat-output-4.txt" \
-	CAT_INPUT="initrd.img" $(ACL2) < cat-replicant.lisp
+	env DISK=$(DISK) CP_OUTPUT="cp-output-4.txt" \
+	CP_INPUT="/initrd.img" $(ACL2) < cp-replicant.lisp
 
-cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+cp-ref-output-5.txt cp-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -241,22 +241,22 @@ cat-ref-output-5.txt cat-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.
 		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
 	done
 	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	cat $(FUSEPOINT)/initrd.img > cat-ref-output-5.txt
+	cat $(FUSEPOINT)/initrd.img > cp-ref-output-5.txt
 	sleep 1
 	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) CAT_OUTPUT="cat-output-5.txt" \
-	CAT_INPUT="initrd.img" $(ACL2) < cat-replicant.lisp
+	env DISK=$(DISK) CP_OUTPUT="cp-output-5.txt" \
+	CP_INPUT="/initrd.img" $(ACL2) < cp-replicant.lisp
 
-mtools-cat-ref-output-2.txt mtools-cat-output-2.txt: cat-replicant.lisp
-	rm -f $(DISK) mtools-cat-ref-output-2.txt
+mtools-cp-ref-output-2.txt mtools-cp-output-2.txt: cp-replicant.lisp
+	rm -f $(DISK) mtools-cp-ref-output-2.txt
 	dd if=/dev/zero of=$(DISK) bs=4096 count=17920
 	env MTOOLSRC=$(MTOOLSRC) mformat -T 140000 -h 64 -s 32 -S \
 	2 -F -c 2 c:
 	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
-	env MTOOLSRC=$(MTOOLSRC) mcopy c:/vmlinuz mtools-cat-ref-output-2.txt
-	env DISK=$(DISK) CAT_OUTPUT="mtools-cat-output-2.txt" \
-	CAT_INPUT="vmlinuz" $(ACL2) < cat-replicant.lisp
+	env MTOOLSRC=$(MTOOLSRC) mcopy c:/vmlinuz mtools-cp-ref-output-2.txt
+	env DISK=$(DISK) CP_OUTPUT="mtools-cp-output-2.txt" \
+	CP_INPUT="/vmlinuz" $(ACL2) < cp-replicant.lisp
 
 mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) \
 mkfs.fat-3.0.28-replicant.lisp
@@ -657,7 +657,7 @@ mtools-mv-ref-output-2.raw mtools-mv-output-2.raw: mv-replicant.lisp
 	env DISK="mtools-mv-output-2.raw" MV_OUTPUT="mtools-mv-output-2.raw" \
 	$(ACL2) -- "/tmp/file1.txt" "/tmp/file2.txt" < mv-replicant.lisp
 
-debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -667,7 +667,7 @@ debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+debug-create-dir: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -678,7 +678,7 @@ debug-create-dir: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-and-file: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+debug-create-dir-and-file: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -690,7 +690,7 @@ debug-create-dir-and-file: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-copy-file: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+debug-create-dir-copy-file: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -703,7 +703,7 @@ debug-create-dir-copy-file: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-and-file-rm: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+debug-create-dir-and-file-rm: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -717,7 +717,7 @@ debug-create-dir-and-file-rm: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-and-file-mv: $(MOUNTPOINT) $(FUSEPOINT) cat-replicant.lisp
+debug-create-dir-and-file-mv: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
