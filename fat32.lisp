@@ -28,7 +28,7 @@
 (defconst *ms-bad-cluster* 268435447)
 
 ;; from page 15 of the FAT specification
-(defconst *ms-fat32-min-count-of-clusters* 65525)
+(defconst *ms-min-count-of-clusters* 65525)
 
 ;; from page 9 of the FAT specification
 (defconst *ms-min-bytes-per-sector* 512)
@@ -36,7 +36,7 @@
 ;; inferred - there can be as few as one sectors in a cluster
 (defconst *ms-min-data-region-size* (* *ms-min-bytes-per-sector*
                                        1
-                                       *ms-fat32-min-count-of-clusters*))
+                                       *ms-min-count-of-clusters*))
 
 (defconst *ms-max-bytes-per-sector* 4096)
 

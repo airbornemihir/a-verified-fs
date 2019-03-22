@@ -12,15 +12,16 @@
 (include-book "cluster-listp")
 (include-book "flatten-lemmas")
 
-;; These are some lemmas from other books which are interacting badly with the
+;; These are some rules from other books which are interacting badly with the
 ;; theory I've built up so far.
 (local
  (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
-                     revappend-removal)))
+                     revappend-removal
+                     loghead logtail)))
 
-;; These are some lemmas I've had to disable a lot in this book - and I'm still
-;; taking 847 seconds to certify the whole thing. Disabling them everywhere
-;; should simplify things.
+;; These are some definitions I've had to disable a lot in this book - and I'm
+;; still taking 847 seconds to certify the whole thing. Disabling them
+;; everywhere should simplify things.
 ;; Later note: the certification time went down to 632 seconds after this
 ;; change.
 ;; Later note: the certification time went down to 517 seconds after some more
@@ -250,7 +251,7 @@
              *ms-min-bytes-per-sector*)
          (>= (bpb_secperclus fat32-in-memory) 1)
          (>= (count-of-clusters fat32-in-memory)
-             *ms-fat32-min-count-of-clusters*)
+             *ms-min-count-of-clusters*)
          (<= (+ *ms-first-data-cluster*
                 (count-of-clusters fat32-in-memory))
              *ms-bad-cluster*)
@@ -314,7 +315,7 @@
                   (>= (cluster-size fat32-in-memory)
                       *ms-min-bytes-per-sector*)
                   (>= (count-of-clusters fat32-in-memory)
-                      *ms-fat32-min-count-of-clusters*)
+                      *ms-min-count-of-clusters*)
                   (equal (mod (cluster-size fat32-in-memory)
                               *ms-dir-ent-length*)
                          0)
@@ -390,7 +391,7 @@
        (and (>= (cluster-size fat32-in-memory)
                 *ms-min-bytes-per-sector*)
             (>= (count-of-clusters fat32-in-memory)
-                *ms-fat32-min-count-of-clusters*)
+                *ms-min-count-of-clusters*)
             (<= (+ *ms-first-data-cluster*
                    (count-of-clusters fat32-in-memory))
                 *ms-bad-cluster*)
@@ -408,7 +409,7 @@
             (>= (* (cluster-size fat32-in-memory)
                    (count-of-clusters fat32-in-memory))
                 (* *ms-min-bytes-per-sector*
-                   *ms-fat32-min-count-of-clusters*))
+                   *ms-min-count-of-clusters*))
             (<= (+ (count-of-clusters fat32-in-memory)
                    *ms-first-data-cluster*)
                 (fat-entry-count fat32-in-memory))
@@ -793,7 +794,7 @@
          ((unless
               (and
                (>= (count-of-clusters fat32-in-memory)
-                   *ms-fat32-min-count-of-clusters*)
+                   *ms-min-count-of-clusters*)
                (<= (+ (count-of-clusters fat32-in-memory)
                       *ms-first-data-cluster*)
                    (fat-entry-count fat32-in-memory))))
@@ -1783,7 +1784,7 @@
                   (read-reserved-area fat32-in-memory str))
           0)
    (and
-    (<= *ms-fat32-min-count-of-clusters*
+    (<= *ms-min-count-of-clusters*
         (count-of-clusters
          (mv-nth 0
                  (read-reserved-area fat32-in-memory str))))
@@ -1798,7 +1799,7 @@
      (equal (mv-nth 1
                     (read-reserved-area fat32-in-memory str))
             0)
-     (<= *ms-fat32-min-count-of-clusters*
+     (<= *ms-min-count-of-clusters*
          (count-of-clusters
           (mv-nth 0
                   (read-reserved-area fat32-in-memory str))))))
@@ -1979,226 +1980,6 @@
                (read-reserved-area fat32-in-memory str))))))))
 
 (defthm
-  consecutive-read-file-into-string-1-lemma-1
-  (implies (and (state-p1 state-state)
-                (open-input-channel-p1 channel
-                                       :character state-state))
-           (open-input-channel-p1
-            channel
-            :character (mv-nth 1 (read-char$ channel state-state)))))
-
-(defthm
-  consecutive-read-file-into-string-1-lemma-2
-  (implies
-   (and
-    (symbolp channel)
-    (open-input-channel-p channel
-                          :character state)
-    (state-p state)
-    (not (null (mv-nth 0
-                       (read-file-into-string1 channel state ans bound)))))
-   (stringp (mv-nth 0
-                    (read-file-into-string1 channel state ans bound)))))
-
-(defthm
-  consecutive-read-file-into-string-1-lemma-3
-  (implies
-   (and (symbolp channel)
-        (open-input-channel-p channel
-                              :character state)
-        (state-p state))
-   (state-p1 (mv-nth 1
-                     (read-file-into-string1 channel state ans bound)))))
-
-(defthm
-  consecutive-read-file-into-string-1
-  (implies
-   (and
-    (natp bytes1)
-    (natp bytes2)
-    (natp start1)
-    (stringp (read-file-into-string2 filename (+ start1 bytes1)
-                                     bytes2 state))
-    (<=
-     bytes2
-     (len
-      (explode
-       (read-file-into-string2 filename (+ start1 bytes1)
-                               bytes2 state)))))
-   (equal
-    (string-append
-     (read-file-into-string2 filename start1 bytes1 state)
-     (read-file-into-string2 filename (+ start1 bytes1)
-                             bytes2 state))
-    (read-file-into-string2 filename start1 (+ bytes1 bytes2)
-                            state)))
-  :hints
-  (("goal"
-    :in-theory (e/d (take-of-nthcdr)
-                    (binary-append-take-nthcdr))
-    :use
-    ((:theorem (implies (natp bytes1)
-                        (equal (+ bytes1 bytes1 (- bytes1)
-                                  bytes2 start1)
-                               (+ bytes1 bytes2 start1))))
-     (:instance
-      binary-append-take-nthcdr (i bytes1)
-      (l
-       (nthcdr
-        start1
-        (take
-         (+ bytes1 bytes2 start1)
-         (explode
-          (mv-nth
-           0
-           (read-file-into-string1
-            (mv-nth 0
-                    (open-input-channel filename
-                                        :character state))
-            (mv-nth 1
-                    (open-input-channel filename
-                                        :character state))
-            nil 1152921504606846975))))))))))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and
-      (natp bytes1)
-      (natp bytes2)
-      (natp start1)
-      (stringp
-       (read-file-into-string2 filename (+ start1 bytes1)
-                               bytes2 state))
-      (<=
-       bytes2
-       (len
-        (explode
-         (read-file-into-string2 filename (+ start1 bytes1)
-                                 bytes2 state))))
-      (equal start2 (+ start1 bytes1)))
-     (equal
-      (string-append
-       (read-file-into-string2 filename start1 bytes1 state)
-       (read-file-into-string2 filename start2 bytes2 state))
-      (read-file-into-string2 filename start1 (+ bytes1 bytes2)
-                              state))))))
-
-(defthm
-  consecutive-read-file-into-string-2
-  (implies
-   (and
-    (natp bytes1)
-    (natp start1)
-    (stringp (read-file-into-string2 filename (+ start1 bytes1)
-                                     nil state)))
-   (equal
-    (string-append
-     (read-file-into-string2 filename start1 bytes1 state)
-     (read-file-into-string2 filename (+ start1 bytes1)
-                             nil state))
-    (read-file-into-string2 filename start1 nil state)))
-  :hints
-  (("goal"
-    :in-theory (e/d (take-of-nthcdr)
-                    (binary-append-take-nthcdr))
-    :do-not-induct t
-    :use
-    ((:instance
-      binary-append-take-nthcdr (i bytes1)
-      (l
-       (nthcdr
-        start1
-        (explode
-         (mv-nth
-          0
-          (read-file-into-string1
-           (mv-nth 0
-                   (open-input-channel filename
-                                       :character state))
-           (mv-nth 1
-                   (open-input-channel filename
-                                       :character state))
-           nil 1152921504606846975))))))
-     (:theorem
-      (implies
-       (and (natp bytes1) (natp start1))
-       (equal
-        (+
-         bytes1 (- bytes1)
-         start1 (- start1)
-         (len
-          (explode
-           (mv-nth
-            0
-            (read-file-into-string1
-             (mv-nth 0
-                     (open-input-channel filename
-                                         :character state))
-             (mv-nth 1
-                     (open-input-channel filename
-                                         :character state))
-             nil 1152921504606846975)))))
-        (len
-         (explode
-          (mv-nth
-           0
-           (read-file-into-string1
-            (mv-nth 0
-                    (open-input-channel filename
-                                        :character state))
-            (mv-nth 1
-                    (open-input-channel filename
-                                        :character state))
-            nil 1152921504606846975)))))))
-     (:theorem
-      (implies
-       (natp start1)
-       (equal
-        (+
-         start1 (- start1)
-         (len
-          (explode
-           (mv-nth
-            0
-            (read-file-into-string1
-             (mv-nth 0
-                     (open-input-channel filename
-                                         :character state))
-             (mv-nth 1
-                     (open-input-channel filename
-                                         :character state))
-             nil 1152921504606846975)))))
-        (len
-         (explode
-          (mv-nth
-           0
-           (read-file-into-string1
-            (mv-nth 0
-                    (open-input-channel filename
-                                        :character state))
-            (mv-nth 1
-                    (open-input-channel filename
-                                        :character state))
-            nil 1152921504606846975))))))))))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and
-      (natp bytes1)
-      (natp start1)
-      (stringp
-       (read-file-into-string2 filename (+ start1 bytes1)
-                               nil state))
-      (equal start2 (+ start1 bytes1)))
-     (equal
-      (string-append
-       (read-file-into-string2 filename start1 bytes1 state)
-       (read-file-into-string2 filename start2 nil state))
-      (read-file-into-string2 filename start1 nil state))))))
-
-(defthm
   disk-image-to-fat32-in-memory-guard-lemma-1
   (iff
    (< (len (explode (read-file-into-string2
@@ -2308,7 +2089,7 @@
             0)
      (<=
       (* *ms-min-bytes-per-sector*
-         *ms-fat32-min-count-of-clusters*)
+         *ms-min-count-of-clusters*)
       (*
        (cluster-size
         (mv-nth 0
@@ -5054,7 +4835,7 @@
     :in-theory
     (e/d (useless-dir-ent-p dir-ent-p dir-ent-filename
                             dir-ent-set-first-cluster-file-size)
-         (loghead logtail (:rewrite logtail-loghead))))))
+         ((:rewrite logtail-loghead))))))
 
 (defthm
   useless-dir-ent-p-of-place-contents
@@ -5646,8 +5427,7 @@
       :in-theory
       (e/d
        (fat32-entry-p)
-       (unsigned-byte-p loghead logtail
-                        fati-when-compliant-fat32-in-memoryp))
+       (unsigned-byte-p fati-when-compliant-fat32-in-memoryp))
       :use (:instance fati-when-compliant-fat32-in-memoryp
                       (i (+ -1 length)))))))
   (if
@@ -5668,8 +5448,7 @@
   (equal
    (character-listp
     (stobj-fa-table-to-string-helper fat32-in-memory length ac))
-   (character-listp ac))
-  :hints (("Goal" :in-theory (disable loghead logtail))))
+   (character-listp ac)))
 
 (defthm
   len-of-stobj-fa-table-to-string-helper
@@ -5677,8 +5456,7 @@
    (len
     (stobj-fa-table-to-string-helper
      fat32-in-memory length ac))
-   (+ (len ac) (* 4 (nfix length))))
-  :hints (("Goal" :in-theory (disable loghead logtail))))
+   (+ (len ac) (* 4 (nfix length)))))
 
 (defund
     stobj-fa-table-to-string
@@ -5781,11 +5559,9 @@
   (defund reserved-area-chars (fat32-in-memory)
     (declare (xargs :stobjs fat32-in-memory
                     :guard (compliant-fat32-in-memoryp fat32-in-memory)
-                    :guard-debug t
                     :guard-hints (("Goal"
                                    :do-not-induct t
-                                   :in-theory (disable loghead logtail
-                                                       bs_vollabi
+                                   :in-theory (disable bs_vollabi
                                                        bs_jmpbooti
                                                        bs_oemnamei
                                                        bs_filsystypei
@@ -5901,7 +5677,7 @@
    (equal (len (reserved-area-chars fat32-in-memory))
           (* (bpb_rsvdseccnt fat32-in-memory)
              (bpb_bytspersec fat32-in-memory))))
-  :hints (("goal" :in-theory (e/d (reserved-area-chars) (loghead logtail)))))
+  :hints (("goal" :in-theory (enable reserved-area-chars))))
 
 (defund
   reserved-area-string (fat32-in-memory)
@@ -6034,8 +5810,7 @@
                    90)
                 :initial-element (code-char 0)))))
   
-  :instructions ((:in-theory (disable loghead logtail))
-                 (:dive 1 2 1)
+  :instructions ((:dive 1 2 1)
                  :x
                  :up (:rewrite str::explode-of-implode)
                  :s (:rewrite str::make-character-list-when-character-listp)
@@ -6070,7 +5845,7 @@
    (len
     (explode (stobj-fa-table-to-string fat32-in-memory)))
    (* (fat-length fat32-in-memory) 4))
-  :hints (("goal" :in-theory (e/d (stobj-fa-table-to-string) (loghead logtail)))))
+  :hints (("goal" :in-theory (enable stobj-fa-table-to-string))))
 
 (defthm
   length-of-make-fat-string-ac
@@ -8475,10 +8250,9 @@
 
   (local
    (in-theory (e/d (fat32-in-memory-to-string get-initial-bytes get-remaining-rsvdbyts)
-                   (logtail loghead
-                            ;; the splitter-note suggests these could usefully
-                            ;; be disabled
-                            nth-of-append nthcdr-of-append take-of-append))))
+                   (;; the splitter-note suggests these could usefully be
+                    ;; disabled
+                    nth-of-append nthcdr-of-append take-of-append))))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-4
@@ -9001,7 +8775,7 @@
                                (logtail 24 current)))))
   :hints
   (("goal" :in-theory (e/d (fat32-entry-p)
-                           (unsigned-byte-p loghead logtail))))
+                           (unsigned-byte-p))))
   :rule-classes
   ((:linear
     :corollary
@@ -9088,7 +8862,7 @@
              (if (zp (- pos length))
                  (code-char (loghead 8 (fati (+ -1 pos) fat32-in-memory)))
                (nth (+ -4 (* 4 (- pos length))) ac)))))
-    :hints (("goal" :in-theory (disable loghead logtail)
+    :hints (("goal"
              :induct
              (stobj-fa-table-to-string-helper fat32-in-memory
                                               length
@@ -9130,7 +8904,7 @@
       (explode
        (stobj-fa-table-to-string fat32-in-memory)))
      (code-char (loghead 8 (fati (- pos 1) fat32-in-memory))))))
-  :hints (("goal" :in-theory (e/d (stobj-fa-table-to-string) (logtail loghead)))))
+  :hints (("goal" :in-theory (enable stobj-fa-table-to-string))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-41
@@ -9151,12 +8925,10 @@
      fat32-in-memory
      (make-fat-string-ac (bpb_numfats fat32-in-memory)
                          fat32-in-memory "")
-     pos)
-    :in-theory (e/d nil (loghead logtail)))
+     pos))
    ("subgoal *1/3"
     :in-theory
-    (disable loghead logtail
-             fat32-in-memory-to-string-inversion-lemma-39)
+    (disable fat32-in-memory-to-string-inversion-lemma-39)
     :use (:instance fat32-in-memory-to-string-inversion-lemma-39
                     (pos 1)))))
 
@@ -9177,7 +8949,7 @@
 
   (local (in-theory (disable bs_jmpbooti update-bs_jmpbooti
                              bs_oemnamei bpb_reservedi bs_vollabi
-                             bs_filsystypei loghead logtail)))
+                             bs_filsystypei)))
 
   (defthm
     fat32-in-memory-to-string-inversion-lemma-42
@@ -9283,7 +9055,7 @@
         :initial-element 0))))
     :hints (("Goal" :in-theory (e/d (chars=>nats reserved-area-string
                                                  reserved-area-chars)
-                                    (loghead logtail unsigned-byte-p)))))
+                                    (unsigned-byte-p)))))
 
   (local (in-theory (enable chars=>nats-of-take get-initial-bytes
                             fat32-in-memory-to-string)))
@@ -9396,9 +9168,7 @@
     (update-fat
      fat32-in-memory
      (stobj-fa-table-to-string fat32-in-memory)
-     pos)
-    :in-theory (e/d ()
-                    (loghead logtail)))))
+     pos))))
 
 (defthm
   fat32-in-memory-to-string-inversion-lemma-49
@@ -9485,8 +9255,7 @@
           fat32-in-memory-to-string-inversion-lemma-51
           cluster-size read-reserved-area
           update-data-region-alt)
-         (loghead logtail
-                  compliant-fat32-in-memoryp-correctness-1))
+         (compliant-fat32-in-memoryp-correctness-1))
     :use compliant-fat32-in-memoryp-correctness-1)))
 
 (defund-nx
@@ -9693,13 +9462,12 @@
     :hints
     (("goal"
       :do-not-induct t
-      :in-theory (e/d (string-to-fat32-in-memory count-of-clusters
-                                                 cluster-size fat-entry-count
-                                                 compliant-fat32-in-memoryp
-                                                 painful-debugging-lemma-1
-                                                 painful-debugging-lemma-2
-                                                 painful-debugging-lemma-3)
-                      (loghead logtail))))))
+      :in-theory (enable string-to-fat32-in-memory count-of-clusters
+                         cluster-size fat-entry-count
+                         compliant-fat32-in-memoryp
+                         painful-debugging-lemma-1
+                         painful-debugging-lemma-2
+                         painful-debugging-lemma-3)))))
 
 (defthm
   compliant-fat32-in-memoryp-of-string-to-fat32-in-memory-lemma-5
@@ -9737,8 +9505,7 @@
                                     painful-debugging-lemma-1
                                     painful-debugging-lemma-2
                                     painful-debugging-lemma-3)
-         (loghead logtail 
-                  (:linear update-data-region-correctness-1)))
+         ((:linear update-data-region-correctness-1)))
     :use
     ((:instance
       (:linear update-data-region-correctness-1)
@@ -10709,11 +10476,9 @@
   (local (in-theory (e/d
                      (count-of-clusters cluster-size fat-entry-count)
                      (nth-when-zp
-                      (:DEFINITION UPDATE-NTH-ARRAY)
-                      (:DEFINITION UPDATE-BS_OEMNAME)
-                      (:DEFINITION LEN)
-                      (:DEFINITION UPDATE-BS_OEMNAMEI)
-                      (:DEFINITION UPDATE-BS_JMPBOOT)))))
+                      ;; These are from accumulated-persistence.
+                      (:definition update-nth-array)
+                      (:definition len)))))
 
   (defthm
     string-to-fat32-in-memory-ignore
@@ -10941,87 +10706,91 @@
       (e/d (string-to-fat32-in-memory
             string-to-fat32-in-memory-ignore-lemma-2))))))
 
-(defthmd
-  string-to-fat32-in-memory-inversion-lemma-1
-  (implies
-   (and
-    (stringp str)
-    (fat32-in-memoryp fat32-in-memory)
-    (equal
-     (mv-nth 1
-             (string-to-fat32-in-memory (create-fat32-in-memory)
-                                        str))
-     0))
-   (disk-image-string-equiv
-    (fat32-in-memory-to-string
-     (mv-nth 0
-             (string-to-fat32-in-memory fat32-in-memory str)))
-    str))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (disk-image-string-equiv)
-         (create-fat32-in-memory
-          (:rewrite string-to-fat32-in-memory-ignore)
-          (:rewrite fat32-in-memory-to-string-inversion)))
-    :cases ((equal fat32-in-memory
-                   (create-fat32-in-memory)))
-    :use
-    ((:rewrite string-to-fat32-in-memory-ignore)
-     (:instance
-      (:rewrite fat32-in-memory-to-string-inversion)
-      (fat32-in-memory
-       (mv-nth
-        0
-        (string-to-fat32-in-memory (create-fat32-in-memory)
-                                   str))))
-     (:instance
-      (:rewrite string-to-fat32-in-memory-ignore)
-      (str
-       (fat32-in-memory-to-string
-        (mv-nth
-         0
-         (string-to-fat32-in-memory (create-fat32-in-memory)
-                                    str))))
-      (fat32-in-memory
-       (mv-nth
-        0
-        (string-to-fat32-in-memory (create-fat32-in-memory)
-                                   str))))
-     (:instance
-      (:rewrite string-to-fat32-in-memory-ignore-lemma-17)
-      (str
-       (fat32-in-memory-to-string
-        (mv-nth
-         0
-         (string-to-fat32-in-memory (create-fat32-in-memory)
-                                    str))))
-      (fat32-in-memory
-       (mv-nth
-        0
-        (string-to-fat32-in-memory (create-fat32-in-memory)
-                                   str))))))))
+(encapsulate
+  ()
 
-(defthm
-  string-to-fat32-in-memory-inversion
-  (implies
-   (and
-    (stringp str)
-    (fat32-in-memoryp fat32-in-memory)
-    (equal
-     (mv-nth 1
-             (string-to-fat32-in-memory fat32-in-memory str))
-     0))
-   (disk-image-string-equiv
-    (fat32-in-memory-to-string
-     (mv-nth 0
-             (string-to-fat32-in-memory fat32-in-memory str)))
-    str))
-  :hints
-  (("goal" :in-theory (e/d nil (create-fat32-in-memory))
-    :use
-    (string-to-fat32-in-memory-ignore-lemma-17
-     string-to-fat32-in-memory-inversion-lemma-1))))
+  (local
+   (defthmd
+     string-to-fat32-in-memory-inversion-lemma-1
+     (implies
+      (and
+       (stringp str)
+       (fat32-in-memoryp fat32-in-memory)
+       (equal
+        (mv-nth 1
+                (string-to-fat32-in-memory (create-fat32-in-memory)
+                                           str))
+        0))
+      (disk-image-string-equiv
+       (fat32-in-memory-to-string
+        (mv-nth 0
+                (string-to-fat32-in-memory fat32-in-memory str)))
+       str))
+     :hints
+     (("goal"
+       :in-theory
+       (e/d (disk-image-string-equiv)
+            (create-fat32-in-memory
+             (:rewrite string-to-fat32-in-memory-ignore)
+             (:rewrite fat32-in-memory-to-string-inversion)))
+       :cases ((equal fat32-in-memory
+                      (create-fat32-in-memory)))
+       :use
+       ((:rewrite string-to-fat32-in-memory-ignore)
+        (:instance
+         (:rewrite fat32-in-memory-to-string-inversion)
+         (fat32-in-memory
+          (mv-nth
+           0
+           (string-to-fat32-in-memory (create-fat32-in-memory)
+                                      str))))
+        (:instance
+         (:rewrite string-to-fat32-in-memory-ignore)
+         (str
+          (fat32-in-memory-to-string
+           (mv-nth
+            0
+            (string-to-fat32-in-memory (create-fat32-in-memory)
+                                       str))))
+         (fat32-in-memory
+          (mv-nth
+           0
+           (string-to-fat32-in-memory (create-fat32-in-memory)
+                                      str))))
+        (:instance
+         (:rewrite string-to-fat32-in-memory-ignore-lemma-17)
+         (str
+          (fat32-in-memory-to-string
+           (mv-nth
+            0
+            (string-to-fat32-in-memory (create-fat32-in-memory)
+                                       str))))
+         (fat32-in-memory
+          (mv-nth
+           0
+           (string-to-fat32-in-memory (create-fat32-in-memory)
+                                      str)))))))))
+
+  (defthm
+    string-to-fat32-in-memory-inversion
+    (implies
+     (and
+      (stringp str)
+      (fat32-in-memoryp fat32-in-memory)
+      (equal
+       (mv-nth 1
+               (string-to-fat32-in-memory fat32-in-memory str))
+       0))
+     (disk-image-string-equiv
+      (fat32-in-memory-to-string
+       (mv-nth 0
+               (string-to-fat32-in-memory fat32-in-memory str)))
+      str))
+    :hints
+    (("goal" :in-theory (e/d nil (create-fat32-in-memory))
+      :use
+      (string-to-fat32-in-memory-ignore-lemma-17
+       string-to-fat32-in-memory-inversion-lemma-1)))))
 
 (defthm
   m1-fs-to-string-inversion
