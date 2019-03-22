@@ -249,6 +249,217 @@
     (("goal" :in-theory (enable chars=>nats)
       :induct (cdr-cdr-induct x str::x-equiv)))))
 
+(defthm
+  stringp-of-read-file-into-string1
+  (implies
+   (and
+    (symbolp channel)
+    (open-input-channel-p channel
+                          :character state)
+    (state-p state)
+    (not (null (mv-nth 0
+                       (read-file-into-string1 channel state ans bound)))))
+   (stringp (mv-nth 0
+                    (read-file-into-string1 channel state ans bound)))))
+
+(defthm
+  state-p1-of-read-file-into-string1
+  (implies
+   (and (symbolp channel)
+        (open-input-channel-p channel
+                              :character state)
+        (state-p state))
+   (state-p1 (mv-nth 1
+                     (read-file-into-string1 channel state ans bound)))))
+
+(defthm
+  consecutive-read-file-into-string-1
+  (implies
+   (and
+    (natp bytes1)
+    (natp bytes2)
+    (natp start1)
+    (stringp (read-file-into-string2 filename (+ start1 bytes1)
+                                     bytes2 state))
+    (<=
+     bytes2
+     (len
+      (explode
+       (read-file-into-string2 filename (+ start1 bytes1)
+                               bytes2 state)))))
+   (equal
+    (string-append
+     (read-file-into-string2 filename start1 bytes1 state)
+     (read-file-into-string2 filename (+ start1 bytes1)
+                             bytes2 state))
+    (read-file-into-string2 filename start1 (+ bytes1 bytes2)
+                            state)))
+  :hints
+  (("goal"
+    :in-theory (e/d (take-of-nthcdr)
+                    (binary-append-take-nthcdr))
+    :use
+    ((:theorem (implies (natp bytes1)
+                        (equal (+ bytes1 bytes1 (- bytes1)
+                                  bytes2 start1)
+                               (+ bytes1 bytes2 start1))))
+     (:instance
+      binary-append-take-nthcdr (i bytes1)
+      (l
+       (nthcdr
+        start1
+        (take
+         (+ bytes1 bytes2 start1)
+         (explode
+          (mv-nth
+           0
+           (read-file-into-string1
+            (mv-nth 0
+                    (open-input-channel filename
+                                        :character state))
+            (mv-nth 1
+                    (open-input-channel filename
+                                        :character state))
+            nil 1152921504606846975))))))))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and
+      (natp bytes1)
+      (natp bytes2)
+      (natp start1)
+      (stringp
+       (read-file-into-string2 filename (+ start1 bytes1)
+                               bytes2 state))
+      (<=
+       bytes2
+       (len
+        (explode
+         (read-file-into-string2 filename (+ start1 bytes1)
+                                 bytes2 state))))
+      (equal start2 (+ start1 bytes1)))
+     (equal
+      (string-append
+       (read-file-into-string2 filename start1 bytes1 state)
+       (read-file-into-string2 filename start2 bytes2 state))
+      (read-file-into-string2 filename start1 (+ bytes1 bytes2)
+                              state))))))
+
+(defthm
+  consecutive-read-file-into-string-2
+  (implies
+   (and
+    (natp bytes1)
+    (natp start1)
+    (stringp (read-file-into-string2 filename (+ start1 bytes1)
+                                     nil state)))
+   (equal
+    (string-append
+     (read-file-into-string2 filename start1 bytes1 state)
+     (read-file-into-string2 filename (+ start1 bytes1)
+                             nil state))
+    (read-file-into-string2 filename start1 nil state)))
+  :hints
+  (("goal"
+    :in-theory (e/d (take-of-nthcdr)
+                    (binary-append-take-nthcdr))
+    :do-not-induct t
+    :use
+    ((:instance
+      binary-append-take-nthcdr (i bytes1)
+      (l
+       (nthcdr
+        start1
+        (explode
+         (mv-nth
+          0
+          (read-file-into-string1
+           (mv-nth 0
+                   (open-input-channel filename
+                                       :character state))
+           (mv-nth 1
+                   (open-input-channel filename
+                                       :character state))
+           nil 1152921504606846975))))))
+     (:theorem
+      (implies
+       (and (natp bytes1) (natp start1))
+       (equal
+        (+
+         bytes1 (- bytes1)
+         start1 (- start1)
+         (len
+          (explode
+           (mv-nth
+            0
+            (read-file-into-string1
+             (mv-nth 0
+                     (open-input-channel filename
+                                         :character state))
+             (mv-nth 1
+                     (open-input-channel filename
+                                         :character state))
+             nil 1152921504606846975)))))
+        (len
+         (explode
+          (mv-nth
+           0
+           (read-file-into-string1
+            (mv-nth 0
+                    (open-input-channel filename
+                                        :character state))
+            (mv-nth 1
+                    (open-input-channel filename
+                                        :character state))
+            nil 1152921504606846975)))))))
+     (:theorem
+      (implies
+       (natp start1)
+       (equal
+        (+
+         start1 (- start1)
+         (len
+          (explode
+           (mv-nth
+            0
+            (read-file-into-string1
+             (mv-nth 0
+                     (open-input-channel filename
+                                         :character state))
+             (mv-nth 1
+                     (open-input-channel filename
+                                         :character state))
+             nil 1152921504606846975)))))
+        (len
+         (explode
+          (mv-nth
+           0
+           (read-file-into-string1
+            (mv-nth 0
+                    (open-input-channel filename
+                                        :character state))
+            (mv-nth 1
+                    (open-input-channel filename
+                                        :character state))
+            nil 1152921504606846975))))))))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and
+      (natp bytes1)
+      (natp start1)
+      (stringp
+       (read-file-into-string2 filename (+ start1 bytes1)
+                               nil state))
+      (equal start2 (+ start1 bytes1)))
+     (equal
+      (string-append
+       (read-file-into-string2 filename start1 bytes1 state)
+       (read-file-into-string2 filename start2 nil state))
+      (read-file-into-string2 filename start1 nil state))))))
+
 ;; This is to get the theorem about the nth element of a list of unsigned
 ;; bytes.
 (local (include-book "std/typed-lists/integer-listp" :dir :system))
