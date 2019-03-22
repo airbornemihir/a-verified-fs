@@ -815,12 +815,14 @@
              (update-nth key val (take n l))
            (take n l))))
 
+;; The following is redundant with the definition in
+;; books/std/io/base.lisp, from where it was taken with thanks.
 (defthm
   open-input-channel-p1-of-read-char$
   (implies
-   (and (state-p1 state-state)
+   (and (state-p1 state)
         (open-input-channel-p1 channel
-                               :character state-state))
+                               :character state))
    (open-input-channel-p1
     channel
-    :character (mv-nth 1 (read-char$ channel state-state)))))
+    :character (mv-nth 1 (read-char$ channel state)))))
