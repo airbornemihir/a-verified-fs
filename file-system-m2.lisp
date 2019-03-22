@@ -10091,7 +10091,7 @@
      :hints (("Goal" :in-theory (enable read-reserved-area)) )))
 
   (defthmd
-    string-to-fat32-in-memory-ignore-lemma-16
+    string-to-fat32-in-memory-ignore-lemma-13
     (implies (and (equal (data-region-length fat32-in-memory1)
                          (data-region-length fat32-in-memory2))
                   (equal (cluster-size fat32-in-memory1)
@@ -10105,7 +10105,7 @@
                          (update-data-region fat32-in-memory2 str len)))))
 
   (defthmd
-    string-to-fat32-in-memory-ignore-lemma-17
+    string-to-fat32-in-memory-ignore-lemma-14
     (implies
      (not (equal fat32-in-memory (create-fat32-in-memory)))
      (equal (mv-nth 1
@@ -10121,7 +10121,7 @@
               count-of-clusters fat-entry-count)
       :use
       (:instance
-       (:rewrite string-to-fat32-in-memory-ignore-lemma-16)
+       (:rewrite string-to-fat32-in-memory-ignore-lemma-13)
        (len
         (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
                                  (nth 14 (get-initial-bytes str))))
@@ -10447,6 +10447,21 @@
                                 (nth 20 (get-remaining-rsvdbyts str))))
                  4))))))))
 
+  (defthm
+    string-to-fat32-in-memory-ignore-lemma-15
+    (implies
+     (and (<= (len v)
+              (bs_jmpboot-length fat32-in-memory))
+          (fat32-in-memoryp fat32-in-memory)
+          (unsigned-byte-listp 8 v))
+     (equal (nth *bs_jmpbooti*
+                 (update-bs_jmpboot v fat32-in-memory))
+            (append (take (+ 3 (- (len v)))
+                          (nth *bs_jmpbooti* fat32-in-memory))
+                    v)))
+    :hints (("goal" :in-theory (e/d (update-bs_jmpboot-alt)
+                                    (update-bs_jmpboot)))))
+
   (local (include-book "std/lists/nth" :dir :system))
 
   (local (in-theory (e/d
@@ -10479,7 +10494,7 @@
       (string-to-fat32-in-memory-correctness-1
        (:instance string-to-fat32-in-memory-correctness-1
                   (fat32-in-memory (create-fat32-in-memory)))
-       string-to-fat32-in-memory-ignore-lemma-17)
+       string-to-fat32-in-memory-ignore-lemma-14)
       :cases
       ((equal
         (mv-nth 0
@@ -10557,10 +10572,6 @@
               (equal n *data-regioni*))
       :in-theory
       (e/d (string-to-fat32-in-memory read-reserved-area)))
-     ("subgoal 2.1.30"
-      :in-theory
-      (e/d (string-to-fat32-in-memory read-reserved-area
-                                      update-bs_jmpboot-alt)))
      ("subgoal 2.1.29"
       :in-theory
       (e/d (string-to-fat32-in-memory read-reserved-area
@@ -10733,7 +10744,7 @@
            (string-to-fat32-in-memory (create-fat32-in-memory)
                                       str))))
         (:instance
-         (:rewrite string-to-fat32-in-memory-ignore-lemma-17)
+         (:rewrite string-to-fat32-in-memory-ignore-lemma-14)
          (str
           (fat32-in-memory-to-string
            (mv-nth
@@ -10764,7 +10775,7 @@
     :hints
     (("goal" :in-theory (e/d nil (create-fat32-in-memory))
       :use
-      (string-to-fat32-in-memory-ignore-lemma-17
+      (string-to-fat32-in-memory-ignore-lemma-14
        string-to-fat32-in-memory-inversion-lemma-1)))))
 
 (defthm
@@ -11028,9 +11039,9 @@
      (("goal"
        :use
        (string-to-m1-fs-inversion-lemma-1
-        string-to-fat32-in-memory-ignore-lemma-17
+        string-to-fat32-in-memory-ignore-lemma-14
         (:instance
-         (:rewrite string-to-fat32-in-memory-ignore-lemma-17)
+         (:rewrite string-to-fat32-in-memory-ignore-lemma-14)
          (str
           (fat32-in-memory-to-string
            (mv-nth
