@@ -10083,36 +10083,12 @@
      :hints (("goal" :in-theory (enable update-data-regioni)))))
 
   (local
-   (defthm
-     string-to-fat32-in-memory-ignore-lemma-12
-     (implies (not (equal n *data-regioni*))
-              (equal (nth n
-                          (resize-data-region i fat32-in-memory))
-                     (nth n fat32-in-memory)))
-     :hints (("goal" :in-theory (enable resize-data-region)))))
-
-  (local
-   (defthmd string-to-fat32-in-memory-ignore-lemma-13
-     (equal (nth *fati* (resize-fat i fat32-in-memory))
-            (resize-list (nth *fati* fat32-in-memory)
-                         i '0))
-     :hints (("goal" :in-theory (enable resize-fat)))))
-
-  (local
-   (defthm string-to-fat32-in-memory-ignore-lemma-14
+   (defthm string-to-fat32-in-memory-ignore-lemma-12
      (equal (nth *fati*
                  (mv-nth 0
                          (read-reserved-area fat32-in-memory str)))
             (nth *fati* fat32-in-memory))
      :hints (("Goal" :in-theory (enable read-reserved-area)) )))
-
-  (local
-   (defthm
-     string-to-fat32-in-memory-ignore-lemma-15
-     (implies (not (equal n *fati*))
-              (equal (nth n (resize-fat i fat32-in-memory))
-                     (nth n fat32-in-memory)))
-     :hints (("goal" :in-theory (enable resize-fat)))))
 
   (defthmd
     string-to-fat32-in-memory-ignore-lemma-16
@@ -10605,7 +10581,6 @@
       :in-theory
       (e/d (string-to-fat32-in-memory
             update-fat-alt
-            string-to-fat32-in-memory-ignore-lemma-13
             by-slice-you-mean-the-whole-cake-2))
       :use
       (:instance

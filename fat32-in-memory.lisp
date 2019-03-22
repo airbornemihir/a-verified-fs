@@ -1561,3 +1561,20 @@
   :hints
   (("goal" :in-theory (enable fati update-fati
                               fat-length fat32-in-memoryp))))
+
+(defthm
+  nth-of-resize-data-region
+  (implies (not (equal n *data-regioni*))
+           (equal (nth n
+                       (resize-data-region i fat32-in-memory))
+                  (nth n fat32-in-memory)))
+  :hints (("goal" :in-theory (enable resize-data-region))))
+
+(defthm
+  nth-of-resize-fat
+  (equal (nth n (resize-fat i fat32-in-memory))
+         (if (not (equal n *fati*))
+             (nth n fat32-in-memory)
+           (resize-list (nth *fati* fat32-in-memory)
+                        i '0)))
+  :hints (("goal" :in-theory (enable resize-fat))))
