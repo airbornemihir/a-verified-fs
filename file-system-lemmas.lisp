@@ -814,3 +814,13 @@
          (if (< (nfix key) (nfix n))
              (update-nth key val (take n l))
            (take n l))))
+
+(defthm
+  open-input-channel-p1-of-read-char$
+  (implies
+   (and (state-p1 state-state)
+        (open-input-channel-p1 channel
+                               :character state-state))
+   (open-input-channel-p1
+    channel
+    :character (mv-nth 1 (read-char$ channel state-state)))))

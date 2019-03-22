@@ -1980,15 +1980,6 @@
                (read-reserved-area fat32-in-memory str))))))))
 
 (defthm
-  consecutive-read-file-into-string-1-lemma-1
-  (implies (and (state-p1 state-state)
-                (open-input-channel-p1 channel
-                                       :character state-state))
-           (open-input-channel-p1
-            channel
-            :character (mv-nth 1 (read-char$ channel state-state)))))
-
-(defthm
   consecutive-read-file-into-string-1-lemma-2
   (implies
    (and
