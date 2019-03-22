@@ -790,3 +790,13 @@ mtools-read-write-test-1120MB: read-disk-image-write-disk-image.lisp
 	2 -F -c 2 c:
 	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
 	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
+
+# The following test creates a 1680 MB disk image, copies a file to the
+# root directory, reads it in ACL2, then writes it back without change.
+mtools-read-write-test-1680MB: read-disk-image-write-disk-image.lisp
+	rm -f $(DISK)
+	dd if=/dev/zero of=$(DISK) bs=4096 count=430080
+	env MTOOLSRC=$(MTOOLSRC) mformat -T 3360000 -h 64 -s 32 -S \
+	2 -F -c 2 c:
+	env MTOOLSRC=$(MTOOLSRC) mcopy input-1204-bytes.txt c:/vmlinuz
+	env DISK=$(DISK) $(ACL2) -- < read-disk-image-write-disk-image.lisp
