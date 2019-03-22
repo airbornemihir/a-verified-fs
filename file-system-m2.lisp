@@ -10447,166 +10447,79 @@
                                 (nth 20 (get-remaining-rsvdbyts str))))
                  4))))))))
 
-  (defthm
-    string-to-fat32-in-memory-ignore-lemma-17
-    (implies
-     (and
-      (not (equal fat32-in-memory (create-fat32-in-memory)))
-      (<=
-       (+ 2
-          (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
-                                   (nth 14 (get-initial-bytes str))))
-                    (combine32u (nth 19 (get-remaining-rsvdbyts str))
-                                (nth 18 (get-remaining-rsvdbyts str))
-                                (nth 17 (get-remaining-rsvdbyts str))
-                                (nth 16 (get-remaining-rsvdbyts str)))
-                    (- (* (nth 0 (get-remaining-rsvdbyts str))
-                          (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                      (nth 22 (get-remaining-rsvdbyts str))
-                                      (nth 21 (get-remaining-rsvdbyts str))
-                                      (nth 20 (get-remaining-rsvdbyts str))))))
-                 (nth 13 (get-initial-bytes str))))
-       (floor (* (combine16u (nth 12 (get-initial-bytes str))
-                             (nth 11 (get-initial-bytes str)))
-                 (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                             (nth 22 (get-remaining-rsvdbyts str))
-                             (nth 21 (get-remaining-rsvdbyts str))
-                             (nth 20 (get-remaining-rsvdbyts str))))
-              4))
-      (<
-       (fat32-entry-mask (combine32u (nth 31 (get-remaining-rsvdbyts str))
-                                     (nth 30 (get-remaining-rsvdbyts str))
-                                     (nth 29 (get-remaining-rsvdbyts str))
-                                     (nth 28 (get-remaining-rsvdbyts str))))
-       (+ 2
-          (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
-                                   (nth 14 (get-initial-bytes str))))
-                    (combine32u (nth 19 (get-remaining-rsvdbyts str))
-                                (nth 18 (get-remaining-rsvdbyts str))
-                                (nth 17 (get-remaining-rsvdbyts str))
-                                (nth 16 (get-remaining-rsvdbyts str)))
-                    (- (* (nth 0 (get-remaining-rsvdbyts str))
-                          (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                      (nth 22 (get-remaining-rsvdbyts str))
-                                      (nth 21 (get-remaining-rsvdbyts str))
-                                      (nth 20 (get-remaining-rsvdbyts str))))))
-                 (nth 13 (get-initial-bytes str)))))
-      (<= (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
-                                   (nth 14 (get-initial-bytes str))))
-                    (combine32u (nth 19 (get-remaining-rsvdbyts str))
-                                (nth 18 (get-remaining-rsvdbyts str))
-                                (nth 17 (get-remaining-rsvdbyts str))
-                                (nth 16 (get-remaining-rsvdbyts str)))
-                    (- (* (nth 0 (get-remaining-rsvdbyts str))
-                          (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                      (nth 22 (get-remaining-rsvdbyts str))
-                                      (nth 21 (get-remaining-rsvdbyts str))
-                                      (nth 20 (get-remaining-rsvdbyts str))))))
-                 (nth 13 (get-initial-bytes str)))
-          268435445))
+  (local
+   (defthm
+     string-to-fat32-in-memory-ignore-lemma-16
      (equal
-      (update-fat-aux
-       (resize-list
-        (nth *fati* fat32-in-memory)
+      (nth *fati*
+           (update-fat fat32-in-memory str pos))
+      (if (zp pos)
+          (nth *fati* fat32-in-memory)
+        (update-fat-aux (nth *fati* fat32-in-memory)
+                        str pos)))
+     :hints
+     (("goal" :use update-fat-alt))))
+
+  (local
+   (defthm
+     string-to-fat32-in-memory-ignore-lemma-17
+     (implies
+      (and
+       (not (equal fat32-in-memory (create-fat32-in-memory)))
+       (<=
+        (+ 2
+           (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
+                                    (nth 14 (get-initial-bytes str))))
+                     (combine32u (nth 19 (get-remaining-rsvdbyts str))
+                                 (nth 18 (get-remaining-rsvdbyts str))
+                                 (nth 17 (get-remaining-rsvdbyts str))
+                                 (nth 16 (get-remaining-rsvdbyts str)))
+                     (- (* (nth 0 (get-remaining-rsvdbyts str))
+                           (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                       (nth 22 (get-remaining-rsvdbyts str))
+                                       (nth 21 (get-remaining-rsvdbyts str))
+                                       (nth 20 (get-remaining-rsvdbyts str))))))
+                  (nth 13 (get-initial-bytes str))))
         (floor (* (combine16u (nth 12 (get-initial-bytes str))
                               (nth 11 (get-initial-bytes str)))
                   (combine32u (nth 23 (get-remaining-rsvdbyts str))
                               (nth 22 (get-remaining-rsvdbyts str))
                               (nth 21 (get-remaining-rsvdbyts str))
                               (nth 20 (get-remaining-rsvdbyts str))))
-               4)
-        0)
-       (implode (take (+ (* (combine16u (nth 12 (get-initial-bytes str))
-                                        (nth 11 (get-initial-bytes str)))
-                            (combine16u (nth 15 (get-initial-bytes str))
-                                        (nth 14 (get-initial-bytes str))))
-                         (- (* (combine16u (nth 12 (get-initial-bytes str))
-                                           (nth 11 (get-initial-bytes str)))
-                               (combine16u (nth 15 (get-initial-bytes str))
-                                           (nth 14 (get-initial-bytes str)))))
-                         (* (combine16u (nth 12 (get-initial-bytes str))
-                                        (nth 11 (get-initial-bytes str)))
-                            (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                        (nth 22 (get-remaining-rsvdbyts str))
-                                        (nth 21 (get-remaining-rsvdbyts str))
-                                        (nth 20 (get-remaining-rsvdbyts str)))))
-                      (nthcdr (* (combine16u (nth 12 (get-initial-bytes str))
-                                             (nth 11 (get-initial-bytes str)))
-                                 (combine16u (nth 15 (get-initial-bytes str))
-                                             (nth 14 (get-initial-bytes str))))
-                              (explode str))))
-       (floor (* (combine16u (nth 12 (get-initial-bytes str))
-                             (nth 11 (get-initial-bytes str)))
-                 (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                             (nth 22 (get-remaining-rsvdbyts str))
-                             (nth 21 (get-remaining-rsvdbyts str))
-                             (nth 20 (get-remaining-rsvdbyts str))))
-              4))
-      (update-fat-aux
-       (resize-list
-        (nth *fati* (create-fat32-in-memory))
-        (floor (* (combine16u (nth 12 (get-initial-bytes str))
-                              (nth 11 (get-initial-bytes str)))
-                  (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                              (nth 22 (get-remaining-rsvdbyts str))
-                              (nth 21 (get-remaining-rsvdbyts str))
-                              (nth 20 (get-remaining-rsvdbyts str))))
-               4)
-        0)
-       (implode (take (+ (* (combine16u (nth 12 (get-initial-bytes str))
-                                        (nth 11 (get-initial-bytes str)))
-                            (combine16u (nth 15 (get-initial-bytes str))
-                                        (nth 14 (get-initial-bytes str))))
-                         (- (* (combine16u (nth 12 (get-initial-bytes str))
-                                           (nth 11 (get-initial-bytes str)))
-                               (combine16u (nth 15 (get-initial-bytes str))
-                                           (nth 14 (get-initial-bytes str)))))
-                         (* (combine16u (nth 12 (get-initial-bytes str))
-                                        (nth 11 (get-initial-bytes str)))
-                            (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                        (nth 22 (get-remaining-rsvdbyts str))
-                                        (nth 21 (get-remaining-rsvdbyts str))
-                                        (nth 20 (get-remaining-rsvdbyts str)))))
-                      (nthcdr (* (combine16u (nth 12 (get-initial-bytes str))
-                                             (nth 11 (get-initial-bytes str)))
-                                 (combine16u (nth 15 (get-initial-bytes str))
-                                             (nth 14 (get-initial-bytes str))))
-                              (explode str))))
-       (floor (* (combine16u (nth 12 (get-initial-bytes str))
-                             (nth 11 (get-initial-bytes str)))
-                 (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                             (nth 22 (get-remaining-rsvdbyts str))
-                             (nth 21 (get-remaining-rsvdbyts str))
-                             (nth 20 (get-remaining-rsvdbyts str))))
-              4))))
-    :hints
-    (("goal"
-      :in-theory (enable by-slice-you-mean-the-whole-cake-2)
-      :use
-      (:instance
-       (:rewrite take-of-update-fat-aux)
-       (str
-        (implode
-         (take (+ (* (combine16u (nth 12 (get-initial-bytes str))
-                                 (nth 11 (get-initial-bytes str)))
-                     (combine16u (nth 15 (get-initial-bytes str))
-                                 (nth 14 (get-initial-bytes str))))
-                  (- (* (combine16u (nth 12 (get-initial-bytes str))
-                                    (nth 11 (get-initial-bytes str)))
-                        (combine16u (nth 15 (get-initial-bytes str))
-                                    (nth 14 (get-initial-bytes str)))))
-                  (* (combine16u (nth 12 (get-initial-bytes str))
-                                 (nth 11 (get-initial-bytes str)))
-                     (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                 (nth 22 (get-remaining-rsvdbyts str))
-                                 (nth 21 (get-remaining-rsvdbyts str))
-                                 (nth 20 (get-remaining-rsvdbyts str)))))
-               (nthcdr (* (combine16u (nth 12 (get-initial-bytes str))
-                                      (nth 11 (get-initial-bytes str)))
-                          (combine16u (nth 15 (get-initial-bytes str))
-                                      (nth 14 (get-initial-bytes str))))
-                       (explode str)))))
-       (fa-table1
+               4))
+       (<
+        (fat32-entry-mask (combine32u (nth 31 (get-remaining-rsvdbyts str))
+                                      (nth 30 (get-remaining-rsvdbyts str))
+                                      (nth 29 (get-remaining-rsvdbyts str))
+                                      (nth 28 (get-remaining-rsvdbyts str))))
+        (+ 2
+           (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
+                                    (nth 14 (get-initial-bytes str))))
+                     (combine32u (nth 19 (get-remaining-rsvdbyts str))
+                                 (nth 18 (get-remaining-rsvdbyts str))
+                                 (nth 17 (get-remaining-rsvdbyts str))
+                                 (nth 16 (get-remaining-rsvdbyts str)))
+                     (- (* (nth 0 (get-remaining-rsvdbyts str))
+                           (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                       (nth 22 (get-remaining-rsvdbyts str))
+                                       (nth 21 (get-remaining-rsvdbyts str))
+                                       (nth 20 (get-remaining-rsvdbyts str))))))
+                  (nth 13 (get-initial-bytes str)))))
+       (<= (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
+                                    (nth 14 (get-initial-bytes str))))
+                     (combine32u (nth 19 (get-remaining-rsvdbyts str))
+                                 (nth 18 (get-remaining-rsvdbyts str))
+                                 (nth 17 (get-remaining-rsvdbyts str))
+                                 (nth 16 (get-remaining-rsvdbyts str)))
+                     (- (* (nth 0 (get-remaining-rsvdbyts str))
+                           (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                       (nth 22 (get-remaining-rsvdbyts str))
+                                       (nth 21 (get-remaining-rsvdbyts str))
+                                       (nth 20 (get-remaining-rsvdbyts str))))))
+                  (nth 13 (get-initial-bytes str)))
+           268435445))
+      (equal
+       (update-fat-aux
         (resize-list
          (nth *fati* fat32-in-memory)
          (floor (* (combine16u (nth 12 (get-initial-bytes str))
@@ -10616,8 +10529,34 @@
                                (nth 21 (get-remaining-rsvdbyts str))
                                (nth 20 (get-remaining-rsvdbyts str))))
                 4)
-         0))
-       (fa-table2
+         0)
+        (implode (take (+ (* (combine16u (nth 12 (get-initial-bytes str))
+                                         (nth 11 (get-initial-bytes str)))
+                             (combine16u (nth 15 (get-initial-bytes str))
+                                         (nth 14 (get-initial-bytes str))))
+                          (- (* (combine16u (nth 12 (get-initial-bytes str))
+                                            (nth 11 (get-initial-bytes str)))
+                                (combine16u (nth 15 (get-initial-bytes str))
+                                            (nth 14 (get-initial-bytes str)))))
+                          (* (combine16u (nth 12 (get-initial-bytes str))
+                                         (nth 11 (get-initial-bytes str)))
+                             (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                         (nth 22 (get-remaining-rsvdbyts str))
+                                         (nth 21 (get-remaining-rsvdbyts str))
+                                         (nth 20 (get-remaining-rsvdbyts str)))))
+                       (nthcdr (* (combine16u (nth 12 (get-initial-bytes str))
+                                              (nth 11 (get-initial-bytes str)))
+                                  (combine16u (nth 15 (get-initial-bytes str))
+                                              (nth 14 (get-initial-bytes str))))
+                               (explode str))))
+        (floor (* (combine16u (nth 12 (get-initial-bytes str))
+                              (nth 11 (get-initial-bytes str)))
+                  (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                              (nth 22 (get-remaining-rsvdbyts str))
+                              (nth 21 (get-remaining-rsvdbyts str))
+                              (nth 20 (get-remaining-rsvdbyts str))))
+               4))
+       (update-fat-aux
         (resize-list
          (nth *fati* (create-fat32-in-memory))
          (floor (* (combine16u (nth 12 (get-initial-bytes str))
@@ -10627,14 +10566,89 @@
                                (nth 21 (get-remaining-rsvdbyts str))
                                (nth 20 (get-remaining-rsvdbyts str))))
                 4)
-         0))
-       (pos (floor (* (combine16u (nth 12 (get-initial-bytes str))
+         0)
+        (implode (take (+ (* (combine16u (nth 12 (get-initial-bytes str))
+                                         (nth 11 (get-initial-bytes str)))
+                             (combine16u (nth 15 (get-initial-bytes str))
+                                         (nth 14 (get-initial-bytes str))))
+                          (- (* (combine16u (nth 12 (get-initial-bytes str))
+                                            (nth 11 (get-initial-bytes str)))
+                                (combine16u (nth 15 (get-initial-bytes str))
+                                            (nth 14 (get-initial-bytes str)))))
+                          (* (combine16u (nth 12 (get-initial-bytes str))
+                                         (nth 11 (get-initial-bytes str)))
+                             (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                         (nth 22 (get-remaining-rsvdbyts str))
+                                         (nth 21 (get-remaining-rsvdbyts str))
+                                         (nth 20 (get-remaining-rsvdbyts str)))))
+                       (nthcdr (* (combine16u (nth 12 (get-initial-bytes str))
+                                              (nth 11 (get-initial-bytes str)))
+                                  (combine16u (nth 15 (get-initial-bytes str))
+                                              (nth 14 (get-initial-bytes str))))
+                               (explode str))))
+        (floor (* (combine16u (nth 12 (get-initial-bytes str))
+                              (nth 11 (get-initial-bytes str)))
+                  (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                              (nth 22 (get-remaining-rsvdbyts str))
+                              (nth 21 (get-remaining-rsvdbyts str))
+                              (nth 20 (get-remaining-rsvdbyts str))))
+               4))))
+     :hints
+     (("goal"
+       :in-theory (enable by-slice-you-mean-the-whole-cake-2)
+       :use
+       (:instance
+        (:rewrite take-of-update-fat-aux)
+        (str
+         (implode
+          (take (+ (* (combine16u (nth 12 (get-initial-bytes str))
+                                  (nth 11 (get-initial-bytes str)))
+                      (combine16u (nth 15 (get-initial-bytes str))
+                                  (nth 14 (get-initial-bytes str))))
+                   (- (* (combine16u (nth 12 (get-initial-bytes str))
+                                     (nth 11 (get-initial-bytes str)))
+                         (combine16u (nth 15 (get-initial-bytes str))
+                                     (nth 14 (get-initial-bytes str)))))
+                   (* (combine16u (nth 12 (get-initial-bytes str))
                                   (nth 11 (get-initial-bytes str)))
                       (combine32u (nth 23 (get-remaining-rsvdbyts str))
                                   (nth 22 (get-remaining-rsvdbyts str))
                                   (nth 21 (get-remaining-rsvdbyts str))
-                                  (nth 20 (get-remaining-rsvdbyts str))))
-                   4))))))
+                                  (nth 20 (get-remaining-rsvdbyts str)))))
+                (nthcdr (* (combine16u (nth 12 (get-initial-bytes str))
+                                       (nth 11 (get-initial-bytes str)))
+                           (combine16u (nth 15 (get-initial-bytes str))
+                                       (nth 14 (get-initial-bytes str))))
+                        (explode str)))))
+        (fa-table1
+         (resize-list
+          (nth *fati* fat32-in-memory)
+          (floor (* (combine16u (nth 12 (get-initial-bytes str))
+                                (nth 11 (get-initial-bytes str)))
+                    (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                (nth 22 (get-remaining-rsvdbyts str))
+                                (nth 21 (get-remaining-rsvdbyts str))
+                                (nth 20 (get-remaining-rsvdbyts str))))
+                 4)
+          0))
+        (fa-table2
+         (resize-list
+          (nth *fati* (create-fat32-in-memory))
+          (floor (* (combine16u (nth 12 (get-initial-bytes str))
+                                (nth 11 (get-initial-bytes str)))
+                    (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                (nth 22 (get-remaining-rsvdbyts str))
+                                (nth 21 (get-remaining-rsvdbyts str))
+                                (nth 20 (get-remaining-rsvdbyts str))))
+                 4)
+          0))
+        (pos (floor (* (combine16u (nth 12 (get-initial-bytes str))
+                                   (nth 11 (get-initial-bytes str)))
+                       (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                   (nth 22 (get-remaining-rsvdbyts str))
+                                   (nth 21 (get-remaining-rsvdbyts str))
+                                   (nth 20 (get-remaining-rsvdbyts str))))
+                    4)))))))
 
   (local (include-book "std/lists/nth" :dir :system))
 
@@ -10645,25 +10659,210 @@
                       (:definition update-nth-array)
                       (:definition len)))))
 
-  (defthm
-    string-to-fat32-in-memory-ignore-lemma-15
-    (implies
-     (and
-      (<= 512
-          (combine16u (nth 12 (get-initial-bytes str))
-                      (nth 11 (get-initial-bytes str))))
-      (<= 1 (nth 13 (get-initial-bytes str)))
-      (<= 2
-          (fat32-entry-mask (combine32u (nth 31 (get-remaining-rsvdbyts str))
-                                        (nth 30 (get-remaining-rsvdbyts str))
-                                        (nth 29 (get-remaining-rsvdbyts str))
-                                        (nth 28 (get-remaining-rsvdbyts str)))))
-      (<
-       (fat32-entry-mask (combine32u (nth 31 (get-remaining-rsvdbyts str))
-                                     (nth 30 (get-remaining-rsvdbyts str))
-                                     (nth 29 (get-remaining-rsvdbyts str))
-                                     (nth 28 (get-remaining-rsvdbyts str))))
-       (+ 2
+  (local
+   (defthm
+     string-to-fat32-in-memory-ignore-lemma-15
+     (implies
+      (and
+       (<= 512
+           (combine16u (nth 12 (get-initial-bytes str))
+                       (nth 11 (get-initial-bytes str))))
+       (<= 1 (nth 13 (get-initial-bytes str)))
+       (<= 2
+           (fat32-entry-mask (combine32u (nth 31 (get-remaining-rsvdbyts str))
+                                         (nth 30 (get-remaining-rsvdbyts str))
+                                         (nth 29 (get-remaining-rsvdbyts str))
+                                         (nth 28 (get-remaining-rsvdbyts str)))))
+       (<
+        (fat32-entry-mask (combine32u (nth 31 (get-remaining-rsvdbyts str))
+                                      (nth 30 (get-remaining-rsvdbyts str))
+                                      (nth 29 (get-remaining-rsvdbyts str))
+                                      (nth 28 (get-remaining-rsvdbyts str))))
+        (+ 2
+           (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
+                                    (nth 14 (get-initial-bytes str))))
+                     (combine32u (nth 19 (get-remaining-rsvdbyts str))
+                                 (nth 18 (get-remaining-rsvdbyts str))
+                                 (nth 17 (get-remaining-rsvdbyts str))
+                                 (nth 16 (get-remaining-rsvdbyts str)))
+                     (- (* (nth 0 (get-remaining-rsvdbyts str))
+                           (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                       (nth 22 (get-remaining-rsvdbyts str))
+                                       (nth 21 (get-remaining-rsvdbyts str))
+                                       (nth 20 (get-remaining-rsvdbyts str))))))
+                  (nth 13 (get-initial-bytes str)))))
+       (equal
+        (mv-nth
+         1
+         (update-data-region
+          (resize-data-region
+           (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
+                                    (nth 14 (get-initial-bytes str))))
+                     (combine32u (nth 19 (get-remaining-rsvdbyts str))
+                                 (nth 18 (get-remaining-rsvdbyts str))
+                                 (nth 17 (get-remaining-rsvdbyts str))
+                                 (nth 16 (get-remaining-rsvdbyts str)))
+                     (- (* (nth 0 (get-remaining-rsvdbyts str))
+                           (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                       (nth 22 (get-remaining-rsvdbyts str))
+                                       (nth 21 (get-remaining-rsvdbyts str))
+                                       (nth 20 (get-remaining-rsvdbyts str))))))
+                  (nth 13 (get-initial-bytes str)))
+           (update-fat
+            (update-bs_filsystype
+             (take 8
+                   (nthcdr 66 (get-remaining-rsvdbyts str)))
+             (update-bs_vollab
+              (take 11
+                    (nthcdr 55 (get-remaining-rsvdbyts str)))
+              (update-bs_volid
+               (combine32u (nth 54 (get-remaining-rsvdbyts str))
+                           (nth 53 (get-remaining-rsvdbyts str))
+                           (nth 52 (get-remaining-rsvdbyts str))
+                           (nth 51 (get-remaining-rsvdbyts str)))
+               (update-bs_bootsig
+                (nth 50 (get-remaining-rsvdbyts str))
+                (update-bs_reserved1
+                 (nth 49 (get-remaining-rsvdbyts str))
+                 (update-bs_drvnum
+                  (nth 48 (get-remaining-rsvdbyts str))
+                  (update-bpb_reserved
+                   (take 12
+                         (nthcdr 36 (get-remaining-rsvdbyts str)))
+                   (update-bpb_bkbootsec
+                    (combine16u (nth 35 (get-remaining-rsvdbyts str))
+                                (nth 34 (get-remaining-rsvdbyts str)))
+                    (update-bpb_fsinfo
+                     (combine16u (nth 33 (get-remaining-rsvdbyts str))
+                                 (nth 32 (get-remaining-rsvdbyts str)))
+                     (update-bpb_rootclus
+                      (combine32u (nth 31 (get-remaining-rsvdbyts str))
+                                  (nth 30 (get-remaining-rsvdbyts str))
+                                  (nth 29 (get-remaining-rsvdbyts str))
+                                  (nth 28 (get-remaining-rsvdbyts str)))
+                      (update-bpb_fsver_major
+                       (nth 27 (get-remaining-rsvdbyts str))
+                       (update-bpb_fsver_minor
+                        (nth 26 (get-remaining-rsvdbyts str))
+                        (update-bpb_extflags
+                         (combine16u (nth 25 (get-remaining-rsvdbyts str))
+                                     (nth 24 (get-remaining-rsvdbyts str)))
+                         (update-bpb_totsec32
+                          (combine32u (nth 19 (get-remaining-rsvdbyts str))
+                                      (nth 18 (get-remaining-rsvdbyts str))
+                                      (nth 17 (get-remaining-rsvdbyts str))
+                                      (nth 16 (get-remaining-rsvdbyts str)))
+                          (update-bpb_hiddsec
+                           (combine32u (nth 15 (get-remaining-rsvdbyts str))
+                                       (nth 14 (get-remaining-rsvdbyts str))
+                                       (nth 13 (get-remaining-rsvdbyts str))
+                                       (nth 12 (get-remaining-rsvdbyts str)))
+                           (update-bpb_numheads
+                            (combine16u (nth 11 (get-remaining-rsvdbyts str))
+                                        (nth 10 (get-remaining-rsvdbyts str)))
+                            (update-bpb_secpertrk
+                             (combine16u (nth 9 (get-remaining-rsvdbyts str))
+                                         (nth 8 (get-remaining-rsvdbyts str)))
+                             (update-bpb_fatsz16
+                              (combine16u (nth 7 (get-remaining-rsvdbyts str))
+                                          (nth 6 (get-remaining-rsvdbyts str)))
+                              (update-bpb_media
+                               (nth 5 (get-remaining-rsvdbyts str))
+                               (update-bpb_totsec16
+                                (combine16u (nth 4 (get-remaining-rsvdbyts str))
+                                            (nth 3 (get-remaining-rsvdbyts str)))
+                                (update-bpb_rootentcnt
+                                 (combine16u
+                                  (nth 2 (get-remaining-rsvdbyts str))
+                                  (nth 1 (get-remaining-rsvdbyts str)))
+                                 (update-bs_oemname
+                                  (take 8 (nthcdr 3 (get-initial-bytes str)))
+                                  (update-bs_jmpboot
+                                   (take 3 (get-initial-bytes str))
+                                   (update-bpb_bytspersec
+                                    (combine16u (nth 12 (get-initial-bytes str))
+                                                (nth 11 (get-initial-bytes str)))
+                                    (update-bpb_fatsz32
+                                     (combine32u
+                                      (nth 23 (get-remaining-rsvdbyts str))
+                                      (nth 22 (get-remaining-rsvdbyts str))
+                                      (nth 21 (get-remaining-rsvdbyts str))
+                                      (nth 20 (get-remaining-rsvdbyts str)))
+                                     (update-bpb_numfats
+                                      (nth 0 (get-remaining-rsvdbyts str))
+                                      (update-bpb_rsvdseccnt
+                                       (combine16u
+                                        (nth 15 (get-initial-bytes str))
+                                        (nth 14 (get-initial-bytes str)))
+                                       (update-bpb_secperclus
+                                        (nth 13 (get-initial-bytes str))
+                                        (resize-fat
+                                         (floor
+                                          (*
+                                           (combine16u
+                                            (nth 12 (get-initial-bytes str))
+                                            (nth 11 (get-initial-bytes str)))
+                                           (combine32u
+                                            (nth 23 (get-remaining-rsvdbyts str))
+                                            (nth 22 (get-remaining-rsvdbyts str))
+                                            (nth 21 (get-remaining-rsvdbyts str))
+                                            (nth
+                                             20 (get-remaining-rsvdbyts str))))
+                                          4)
+                                         (create-fat32-in-memory))))))))))))))))))))))))))))))
+            (implode
+             (take (+ (* (combine16u (nth 12 (get-initial-bytes str))
+                                     (nth 11 (get-initial-bytes str)))
+                         (combine16u (nth 15 (get-initial-bytes str))
+                                     (nth 14 (get-initial-bytes str))))
+                      (- (* (combine16u (nth 12 (get-initial-bytes str))
+                                        (nth 11 (get-initial-bytes str)))
+                            (combine16u (nth 15 (get-initial-bytes str))
+                                        (nth 14 (get-initial-bytes str)))))
+                      (* (combine16u (nth 12 (get-initial-bytes str))
+                                     (nth 11 (get-initial-bytes str)))
+                         (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                     (nth 22 (get-remaining-rsvdbyts str))
+                                     (nth 21 (get-remaining-rsvdbyts str))
+                                     (nth 20 (get-remaining-rsvdbyts str)))))
+                   (nthcdr (* (combine16u (nth 12 (get-initial-bytes str))
+                                          (nth 11 (get-initial-bytes str)))
+                              (combine16u (nth 15 (get-initial-bytes str))
+                                          (nth 14 (get-initial-bytes str))))
+                           (explode str))))
+            (floor (* (combine16u (nth 12 (get-initial-bytes str))
+                                  (nth 11 (get-initial-bytes str)))
+                      (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                  (nth 22 (get-remaining-rsvdbyts str))
+                                  (nth 21 (get-remaining-rsvdbyts str))
+                                  (nth 20 (get-remaining-rsvdbyts str))))
+                   4)))
+          (implode
+           (take
+            (+ (len (explode str))
+               (- (* (combine16u (nth 12 (get-initial-bytes str))
+                                 (nth 11 (get-initial-bytes str)))
+                     (combine16u (nth 15 (get-initial-bytes str))
+                                 (nth 14 (get-initial-bytes str)))))
+               (- (* (combine16u (nth 12 (get-initial-bytes str))
+                                 (nth 11 (get-initial-bytes str)))
+                     (nth 0 (get-remaining-rsvdbyts str))
+                     (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                 (nth 22 (get-remaining-rsvdbyts str))
+                                 (nth 21 (get-remaining-rsvdbyts str))
+                                 (nth 20 (get-remaining-rsvdbyts str))))))
+            (nthcdr (+ (* (combine16u (nth 12 (get-initial-bytes str))
+                                      (nth 11 (get-initial-bytes str)))
+                          (combine16u (nth 15 (get-initial-bytes str))
+                                      (nth 14 (get-initial-bytes str))))
+                       (* (combine16u (nth 12 (get-initial-bytes str))
+                                      (nth 11 (get-initial-bytes str)))
+                          (nth 0 (get-remaining-rsvdbyts str))
+                          (combine32u (nth 23 (get-remaining-rsvdbyts str))
+                                      (nth 22 (get-remaining-rsvdbyts str))
+                                      (nth 21 (get-remaining-rsvdbyts str))
+                                      (nth 20 (get-remaining-rsvdbyts str)))))
+                    (explode str))))
           (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
                                    (nth 14 (get-initial-bytes str))))
                     (combine32u (nth 19 (get-remaining-rsvdbyts str))
@@ -10676,223 +10875,95 @@
                                       (nth 21 (get-remaining-rsvdbyts str))
                                       (nth 20 (get-remaining-rsvdbyts str))))))
                  (nth 13 (get-initial-bytes str)))))
-      (equal
-       (mv-nth
-        1
-        (update-data-region
-         (resize-data-region
-          (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
-                                   (nth 14 (get-initial-bytes str))))
-                    (combine32u (nth 19 (get-remaining-rsvdbyts str))
-                                (nth 18 (get-remaining-rsvdbyts str))
-                                (nth 17 (get-remaining-rsvdbyts str))
-                                (nth 16 (get-remaining-rsvdbyts str)))
-                    (- (* (nth 0 (get-remaining-rsvdbyts str))
-                          (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                      (nth 22 (get-remaining-rsvdbyts str))
-                                      (nth 21 (get-remaining-rsvdbyts str))
-                                      (nth 20 (get-remaining-rsvdbyts str))))))
-                 (nth 13 (get-initial-bytes str)))
-          (update-fat
-           (update-bs_filsystype
-            (take 8
-                  (nthcdr 66 (get-remaining-rsvdbyts str)))
-            (update-bs_vollab
-             (take 11
-                   (nthcdr 55 (get-remaining-rsvdbyts str)))
-             (update-bs_volid
-              (combine32u (nth 54 (get-remaining-rsvdbyts str))
-                          (nth 53 (get-remaining-rsvdbyts str))
-                          (nth 52 (get-remaining-rsvdbyts str))
-                          (nth 51 (get-remaining-rsvdbyts str)))
-              (update-bs_bootsig
-               (nth 50 (get-remaining-rsvdbyts str))
-               (update-bs_reserved1
-                (nth 49 (get-remaining-rsvdbyts str))
-                (update-bs_drvnum
-                 (nth 48 (get-remaining-rsvdbyts str))
-                 (update-bpb_reserved
-                  (take 12
-                        (nthcdr 36 (get-remaining-rsvdbyts str)))
-                  (update-bpb_bkbootsec
-                   (combine16u (nth 35 (get-remaining-rsvdbyts str))
-                               (nth 34 (get-remaining-rsvdbyts str)))
-                   (update-bpb_fsinfo
-                    (combine16u (nth 33 (get-remaining-rsvdbyts str))
-                                (nth 32 (get-remaining-rsvdbyts str)))
-                    (update-bpb_rootclus
-                     (combine32u (nth 31 (get-remaining-rsvdbyts str))
-                                 (nth 30 (get-remaining-rsvdbyts str))
-                                 (nth 29 (get-remaining-rsvdbyts str))
-                                 (nth 28 (get-remaining-rsvdbyts str)))
-                     (update-bpb_fsver_major
-                      (nth 27 (get-remaining-rsvdbyts str))
-                      (update-bpb_fsver_minor
-                       (nth 26 (get-remaining-rsvdbyts str))
-                       (update-bpb_extflags
-                        (combine16u (nth 25 (get-remaining-rsvdbyts str))
-                                    (nth 24 (get-remaining-rsvdbyts str)))
-                        (update-bpb_totsec32
-                         (combine32u (nth 19 (get-remaining-rsvdbyts str))
-                                     (nth 18 (get-remaining-rsvdbyts str))
-                                     (nth 17 (get-remaining-rsvdbyts str))
-                                     (nth 16 (get-remaining-rsvdbyts str)))
-                         (update-bpb_hiddsec
-                          (combine32u (nth 15 (get-remaining-rsvdbyts str))
-                                      (nth 14 (get-remaining-rsvdbyts str))
-                                      (nth 13 (get-remaining-rsvdbyts str))
-                                      (nth 12 (get-remaining-rsvdbyts str)))
-                          (update-bpb_numheads
-                           (combine16u (nth 11 (get-remaining-rsvdbyts str))
-                                       (nth 10 (get-remaining-rsvdbyts str)))
-                           (update-bpb_secpertrk
-                            (combine16u (nth 9 (get-remaining-rsvdbyts str))
-                                        (nth 8 (get-remaining-rsvdbyts str)))
-                            (update-bpb_fatsz16
-                             (combine16u (nth 7 (get-remaining-rsvdbyts str))
-                                         (nth 6 (get-remaining-rsvdbyts str)))
-                             (update-bpb_media
-                              (nth 5 (get-remaining-rsvdbyts str))
-                              (update-bpb_totsec16
-                               (combine16u (nth 4 (get-remaining-rsvdbyts str))
-                                           (nth 3 (get-remaining-rsvdbyts str)))
-                               (update-bpb_rootentcnt
-                                (combine16u
-                                 (nth 2 (get-remaining-rsvdbyts str))
-                                 (nth 1 (get-remaining-rsvdbyts str)))
-                                (update-bs_oemname
-                                 (take 8 (nthcdr 3 (get-initial-bytes str)))
-                                 (update-bs_jmpboot
-                                  (take 3 (get-initial-bytes str))
-                                  (update-bpb_bytspersec
-                                   (combine16u (nth 12 (get-initial-bytes str))
-                                               (nth 11 (get-initial-bytes str)))
-                                   (update-bpb_fatsz32
-                                    (combine32u
-                                     (nth 23 (get-remaining-rsvdbyts str))
-                                     (nth 22 (get-remaining-rsvdbyts str))
-                                     (nth 21 (get-remaining-rsvdbyts str))
-                                     (nth 20 (get-remaining-rsvdbyts str)))
-                                    (update-bpb_numfats
-                                     (nth 0 (get-remaining-rsvdbyts str))
-                                     (update-bpb_rsvdseccnt
-                                      (combine16u
-                                       (nth 15 (get-initial-bytes str))
-                                       (nth 14 (get-initial-bytes str)))
-                                      (update-bpb_secperclus
-                                       (nth 13 (get-initial-bytes str))
-                                       (resize-fat
-                                        (floor
-                                         (*
-                                          (combine16u
-                                           (nth 12 (get-initial-bytes str))
-                                           (nth 11 (get-initial-bytes str)))
-                                          (combine32u
-                                           (nth 23 (get-remaining-rsvdbyts str))
-                                           (nth 22 (get-remaining-rsvdbyts str))
-                                           (nth 21 (get-remaining-rsvdbyts str))
-                                           (nth
-                                            20 (get-remaining-rsvdbyts str))))
-                                         4)
-                                        (create-fat32-in-memory))))))))))))))))))))))))))))))
-           (implode
-            (take (+ (* (combine16u (nth 12 (get-initial-bytes str))
-                                    (nth 11 (get-initial-bytes str)))
-                        (combine16u (nth 15 (get-initial-bytes str))
-                                    (nth 14 (get-initial-bytes str))))
-                     (- (* (combine16u (nth 12 (get-initial-bytes str))
-                                       (nth 11 (get-initial-bytes str)))
-                           (combine16u (nth 15 (get-initial-bytes str))
-                                       (nth 14 (get-initial-bytes str)))))
-                     (* (combine16u (nth 12 (get-initial-bytes str))
-                                    (nth 11 (get-initial-bytes str)))
-                        (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                    (nth 22 (get-remaining-rsvdbyts str))
-                                    (nth 21 (get-remaining-rsvdbyts str))
-                                    (nth 20 (get-remaining-rsvdbyts str)))))
-                  (nthcdr (* (combine16u (nth 12 (get-initial-bytes str))
-                                         (nth 11 (get-initial-bytes str)))
-                             (combine16u (nth 15 (get-initial-bytes str))
-                                         (nth 14 (get-initial-bytes str))))
-                          (explode str))))
-           (floor (* (combine16u (nth 12 (get-initial-bytes str))
-                                 (nth 11 (get-initial-bytes str)))
-                     (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                 (nth 22 (get-remaining-rsvdbyts str))
-                                 (nth 21 (get-remaining-rsvdbyts str))
-                                 (nth 20 (get-remaining-rsvdbyts str))))
-                  4)))
-         (implode
-          (take
-           (+ (len (explode str))
-              (- (* (combine16u (nth 12 (get-initial-bytes str))
-                                (nth 11 (get-initial-bytes str)))
-                    (combine16u (nth 15 (get-initial-bytes str))
-                                (nth 14 (get-initial-bytes str)))))
-              (- (* (combine16u (nth 12 (get-initial-bytes str))
-                                (nth 11 (get-initial-bytes str)))
-                    (nth 0 (get-remaining-rsvdbyts str))
-                    (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                (nth 22 (get-remaining-rsvdbyts str))
-                                (nth 21 (get-remaining-rsvdbyts str))
-                                (nth 20 (get-remaining-rsvdbyts str))))))
-           (nthcdr (+ (* (combine16u (nth 12 (get-initial-bytes str))
-                                     (nth 11 (get-initial-bytes str)))
-                         (combine16u (nth 15 (get-initial-bytes str))
-                                     (nth 14 (get-initial-bytes str))))
-                      (* (combine16u (nth 12 (get-initial-bytes str))
-                                     (nth 11 (get-initial-bytes str)))
-                         (nth 0 (get-remaining-rsvdbyts str))
-                         (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                     (nth 22 (get-remaining-rsvdbyts str))
-                                     (nth 21 (get-remaining-rsvdbyts str))
-                                     (nth 20 (get-remaining-rsvdbyts str)))))
-                   (explode str))))
-         (floor (+ (- (combine16u (nth 15 (get-initial-bytes str))
-                                  (nth 14 (get-initial-bytes str))))
-                   (combine32u (nth 19 (get-remaining-rsvdbyts str))
-                               (nth 18 (get-remaining-rsvdbyts str))
-                               (nth 17 (get-remaining-rsvdbyts str))
-                               (nth 16 (get-remaining-rsvdbyts str)))
-                   (- (* (nth 0 (get-remaining-rsvdbyts str))
-                         (combine32u (nth 23 (get-remaining-rsvdbyts str))
-                                     (nth 22 (get-remaining-rsvdbyts str))
-                                     (nth 21 (get-remaining-rsvdbyts str))
-                                     (nth 20 (get-remaining-rsvdbyts str))))))
-                (nth 13 (get-initial-bytes str)))))
-       0))
-     (integerp
-      (binary-+
-       (len (explode$inline str))
+        0))
+      (integerp
        (binary-+
-        (unary--
-         (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
-                                      (nth '11 (get-initial-bytes str)))
-                   (combine16u$inline (nth '15 (get-initial-bytes str))
-                                      (nth '14 (get-initial-bytes str)))))
-        (unary--
-         (binary-*
-          (combine16u$inline (nth '12 (get-initial-bytes str))
-                             (nth '11 (get-initial-bytes str)))
+        (len (explode$inline str))
+        (binary-+
+         (unary--
+          (binary-* (combine16u$inline (nth '12 (get-initial-bytes str))
+                                       (nth '11 (get-initial-bytes str)))
+                    (combine16u$inline (nth '15 (get-initial-bytes str))
+                                       (nth '14 (get-initial-bytes str)))))
+         (unary--
           (binary-*
-           (nth '0 (get-remaining-rsvdbyts str))
-           (combine32u$inline (nth '23 (get-remaining-rsvdbyts str))
-                              (nth '22 (get-remaining-rsvdbyts str))
-                              (nth '21 (get-remaining-rsvdbyts str))
-                              (nth '20
-                                   (get-remaining-rsvdbyts str)))))))))))
+           (combine16u$inline (nth '12 (get-initial-bytes str))
+                              (nth '11 (get-initial-bytes str)))
+           (binary-*
+            (nth '0 (get-remaining-rsvdbyts str))
+            (combine32u$inline (nth '23 (get-remaining-rsvdbyts str))
+                               (nth '22 (get-remaining-rsvdbyts str))
+                               (nth '21 (get-remaining-rsvdbyts str))
+                               (nth '20
+                                    (get-remaining-rsvdbyts str))))))))))))
 
   (defthm
-    string-to-fat32-in-memory-ignore-lemma-16
-    (equal
-     (nth *fati*
-          (update-fat fat32-in-memory str pos))
-     (if (zp pos)
-      (nth *fati* fat32-in-memory)
-      (update-fat-aux (nth *fati* fat32-in-memory)
-                      str pos)))
+    string-to-fat32-in-memory-ignore-lemma-18
+    (implies
+     (and (not (equal fat32-in-memory
+                      (create-fat32-in-memory)))
+          (fat32-in-memoryp fat32-in-memory)
+          (equal (mv-nth 1
+                         (string-to-fat32-in-memory fat32-in-memory str))
+                 0)
+          (equal (mv-nth 1
+                         (string-to-fat32-in-memory (create-fat32-in-memory)
+                                                    str))
+                 0)
+          (integerp n)
+          (<= 0 n)
+          (< n 30))
+     (equal (nth n
+                 (mv-nth 0
+                         (string-to-fat32-in-memory fat32-in-memory str)))
+            (nth n
+                 (mv-nth 0
+                         (string-to-fat32-in-memory (create-fat32-in-memory)
+                                                    str)))))
     :hints
-    (("goal" :use update-fat-alt)))
+    (("goal" :cases ((equal n *bs_jmpbooti*)
+                     (equal n *bs_oemnamei*)
+                     (equal n *bpb_bytspersec*)
+                     (equal n *bpb_secperclus*)
+                     (equal n *bpb_rsvdseccnt*)
+                     (equal n *bpb_numfats*)
+                     (equal n *bpb_rootentcnt*)
+                     (equal n *bpb_totsec16*)
+                     (equal n *bpb_media*)
+                     (equal n *bpb_fatsz16*)
+                     (equal n *bpb_secpertrk*)
+                     (equal n *bpb_numheads*)
+                     (equal n *bpb_hiddsec*)
+                     (equal n *bpb_totsec32*)
+                     (equal n *bpb_fatsz32*)
+                     (equal n *bpb_extflags*)
+                     (equal n *bpb_fsver_minor*)
+                     (equal n *bpb_fsver_major*)
+                     (equal n *bpb_rootclus*)
+                     (equal n *bpb_fsinfo*)
+                     (equal n *bpb_bkbootsec*)
+                     (equal n *bpb_reservedi*)
+                     (equal n *bs_drvnum*)
+                     (equal n *bs_reserved1*)
+                     (equal n *bs_bootsig*)
+                     (equal n *bs_volid*)
+                     (equal n *bs_vollabi*)
+                     (equal n *bs_filsystypei*)
+                     (equal n *fati*)
+                     (equal n *data-regioni*))
+      :in-theory (e/d (string-to-fat32-in-memory read-reserved-area)
+                      (;; accumulated-persistence suggests disabling a bunch of
+                       ;; rules.
+                       (:REWRITE NTH-WHEN-ATOM)
+                       (:DEFINITION UPDATE-DATA-REGION)
+                       (:REWRITE CONSP-OF-TAKE)
+                       (:DEFINITION TAKE-REDEFINITION)
+                       (:REWRITE
+                        RESIZE-FAT-OF-FAT-LENGTH-WHEN-FAT32-IN-MEMORYP
+                        . 2)
+                       (:REWRITE CAR-OF-NTHCDR)
+                       (:REWRITE NTH-OF-MAKE-CHARACTER-LIST)
+                       (:DEFINITION UPDATE-FAT))))))
 
   (defthm
     string-to-fat32-in-memory-ignore
@@ -10960,40 +11031,7 @@
           (mv-nth
            0
            (string-to-fat32-in-memory (create-fat32-in-memory)
-                                      str)))))))
-     ("subgoal 2.1'"
-      :cases ((equal n *bs_jmpbooti*)
-              (equal n *bs_oemnamei*)
-              (equal n *bpb_bytspersec*)
-              (equal n *bpb_secperclus*)
-              (equal n *bpb_rsvdseccnt*)
-              (equal n *bpb_numfats*)
-              (equal n *bpb_rootentcnt*)
-              (equal n *bpb_totsec16*)
-              (equal n *bpb_media*)
-              (equal n *bpb_fatsz16*)
-              (equal n *bpb_secpertrk*)
-              (equal n *bpb_numheads*)
-              (equal n *bpb_hiddsec*)
-              (equal n *bpb_totsec32*)
-              (equal n *bpb_fatsz32*)
-              (equal n *bpb_extflags*)
-              (equal n *bpb_fsver_minor*)
-              (equal n *bpb_fsver_major*)
-              (equal n *bpb_rootclus*)
-              (equal n *bpb_fsinfo*)
-              (equal n *bpb_bkbootsec*)
-              (equal n *bpb_reservedi*)
-              (equal n *bs_drvnum*)
-              (equal n *bs_reserved1*)
-              (equal n *bs_bootsig*)
-              (equal n *bs_volid*)
-              (equal n *bs_vollabi*)
-              (equal n *bs_filsystypei*)
-              (equal n *fati*)
-              (equal n *data-regioni*))
-      :in-theory
-      (e/d (string-to-fat32-in-memory read-reserved-area))))))
+                                      str))))))))))
 
 (encapsulate
   ()
