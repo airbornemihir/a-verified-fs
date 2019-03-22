@@ -10447,21 +10447,6 @@
                                 (nth 20 (get-remaining-rsvdbyts str))))
                  4))))))))
 
-  (defthm
-    string-to-fat32-in-memory-ignore-lemma-15
-    (implies
-     (and (<= (len v)
-              (bs_jmpboot-length fat32-in-memory))
-          (fat32-in-memoryp fat32-in-memory)
-          (unsigned-byte-listp 8 v))
-     (equal (nth *bs_jmpbooti*
-                 (update-bs_jmpboot v fat32-in-memory))
-            (append (take (+ 3 (- (len v)))
-                          (nth *bs_jmpbooti* fat32-in-memory))
-                    v)))
-    :hints (("goal" :in-theory (e/d (update-bs_jmpboot-alt)
-                                    (update-bs_jmpboot)))))
-
   (local (include-book "std/lists/nth" :dir :system))
 
   (local (in-theory (e/d
@@ -10572,22 +10557,6 @@
               (equal n *data-regioni*))
       :in-theory
       (e/d (string-to-fat32-in-memory read-reserved-area)))
-     ("subgoal 2.1.29"
-      :in-theory
-      (e/d (string-to-fat32-in-memory read-reserved-area
-                                      update-bs_oemname-alt)))
-     ("subgoal 2.1.9"
-      :in-theory
-      (e/d (string-to-fat32-in-memory read-reserved-area
-                                      update-bpb_reserved-alt)))
-     ("subgoal 2.1.4"
-      :in-theory
-      (e/d (string-to-fat32-in-memory read-reserved-area
-                                      update-bs_vollab-alt)))
-     ("subgoal 2.1.3"
-      :in-theory
-      (e/d (string-to-fat32-in-memory read-reserved-area
-                                      update-bs_filsystype-alt)))
      ("subgoal 2.1.2"
       :in-theory
       (e/d (string-to-fat32-in-memory

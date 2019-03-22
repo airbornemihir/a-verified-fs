@@ -923,7 +923,7 @@
   (name array-length bit-width array-updater array-accessor constant
         stobj stobj-recogniser lemma-name1 lemma-name2 lemma-name3
         unsigned-byte-p-of-array-accessor lemma-name5 lemma-name6 lemma-name7
-        lemma-name8 lemma-name9 lemma-name10 lemma-name-11)
+        lemma-name8 lemma-name9 name-alt nth-of-name-1 nth-of-name-2)
   (let
       ((upper-bound (ash 1 bit-width)))
   `(encapsulate
@@ -1078,7 +1078,7 @@
         (equal (,array-updater i (,array-accessor i ,stobj) ,stobj)
                ,stobj)))
 
-     (defthmd ,lemma-name10
+     (defthmd ,name-alt
        (implies
         (and (<= (len v)
                  (,array-length ,stobj))
@@ -1098,11 +1098,26 @@
                                    ,array-length
                                    remember-that-time-with-update-nth))))
 
-     (defthm ,lemma-name-11
+     (defthm ,nth-of-name-1
        (implies
         (not (equal (nfix n) ,constant))
         (equal (nth n (,name v ,stobj))
-               (nth n ,stobj)))))))
+               (nth n ,stobj))))
+
+     (defthm ,nth-of-name-2
+       (implies
+        (and (<= (len v)
+                 (,array-length ,stobj))
+             (,stobj-recogniser ,stobj)
+             (unsigned-byte-listp ,bit-width v))
+        (equal
+         (nth ,constant (,name v ,stobj))
+         (append (take (- (,array-length ,stobj)
+                          (len v))
+                       (nth ,constant ,stobj))
+                 (true-list-fix v))))
+       :hints
+       (("goal" :use ,name-alt))))))
 
 (update-stobj-array
  update-bs_jmpboot bs_jmpboot-length 8
@@ -1115,10 +1130,11 @@
  update-bs_jmpboot-correctness-5
  update-bs_jmpboot-correctness-6
  update-bs_jmpboot-correctness-7
- update-bs_jmpboot-correctness-8
+ data-region-length-of-update-bs_jmpboot
  update-bs_jmpbooti-of-bs_jmpbooti
  update-bs_jmpboot-alt
- nth-of-bs_jmpboot)
+ nth-of-bs_jmpboot-1
+ nth-of-bs_jmpboot-2)
 
 (update-stobj-array
  update-bs_oemname bs_oemname-length 8
@@ -1131,10 +1147,11 @@
  update-bs_oemname-correctness-5
  update-bs_oemname-correctness-6
  update-bs_oemname-correctness-7
- update-bs_oemname-correctness-8
+ data-region-length-of-update-bs_oemname
  update-bs_oemnamei-of-bs_oemnamei
  update-bs_oemname-alt
- nth-of-bs_oemname)
+ nth-of-bs_oemname-1
+ nth-of-bs_oemname-2)
 
 (update-stobj-array
  update-bs_vollab bs_vollab-length 8
@@ -1147,10 +1164,11 @@
  update-bs_vollab-correctness-5
  update-bs_vollab-correctness-6
  update-bs_vollab-correctness-7
- update-bs_vollab-correctness-8
+ data-region-length-of-update-bs_vollab
  update-bs_vollabi-of-bs_vollabi
  update-bs_vollab-alt
- nth-of-bs_vollab)
+ nth-of-bs_vollab-1
+ nth-of-bs_vollab-2)
 
 (update-stobj-array
  update-bs_filsystype bs_filsystype-length 8
@@ -1163,10 +1181,11 @@
  update-bs_filsystype-correctness-5
  update-bs_filsystype-correctness-6
  update-bs_filsystype-correctness-7
- update-bs_filsystype-correctness-8
+ data-region-length-of-update-bs_filsystype
  update-bs_filsystypei-of-bs_filsystypei
  update-bs_filsystype-alt
- nth-of-bs_filsystype)
+ nth-of-bs_filsystype-1
+ nth-of-bs_filsystype-2)
 
 (update-stobj-array
  update-bpb_reserved bpb_reserved-length 8
@@ -1179,10 +1198,11 @@
  update-bpb_reserved-correctness-5
  update-bpb_reserved-correctness-6
  update-bpb_reserved-correctness-7
- update-bpb_reserved-correctness-8
+ data-region-length-of-update-bpb_reserved
  update-bpb_reservedi-of-bpb_reservedi
  update-bpb_reserved-alt
- nth-of-bpb_reserved)
+ nth-of-bpb_reserved-1
+ nth-of-bpb_reserved-2)
 
 (defthm
   fat32-in-memoryp-of-create-fat32-in-memory
