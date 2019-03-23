@@ -19,7 +19,7 @@ mtools-test-mv-replicant-2
 
 test: $(TEST)
 
-.PHONY: clean-mountpoint clean-fusepoint test $(TEST)
+.PHONY: clean-mountpoint test $(TEST)
 
 .PHONY: debug-create-dir-and-file debug-create-dir debug-do-nothing \
 debug-create-dir-copy-file
@@ -31,8 +31,6 @@ mtools-read-write-test-560MB mtools-read-write-test-1120MB
 DISK=disk1.raw
 SIZE=70000
 MOUNTPOINT=mount1
-FUSEPOINT=mount2
-BBFS=$(HOME)/src/bbfs/fuse-tutorial-2018-02-04/src/bbfs
 UID=$(shell id -u)
 GID=$(shell id -g)
 MTOOLSRC=$(shell pwd)/.mtoolsrc
@@ -40,16 +38,9 @@ MTOOLSRC=$(shell pwd)/.mtoolsrc
 clean-mountpoint:
 	rm -rf $(MOUNTPOINT)
 
-clean-fusepoint:
-	rm -rf $(FUSEPOINT)
-
 $(MOUNTPOINT):
 	rm -rf $(MOUNTPOINT)
 	mkdir -p $(MOUNTPOINT)
-
-$(FUSEPOINT):
-	rm -rf $(FUSEPOINT)
-	mkdir -p $(FUSEPOINT)
 
 test-cp-replicant-1: cp-ref-output-1.txt cp-output-1.txt
 	diff -u -i cp-ref-output-1.txt cp-output-1.txt
@@ -173,77 +164,67 @@ mtools-test-mv-replicant-2: mtools-mv-ref-output-2.raw mtools-mv-output-2.raw
 	env DISK=$(DISK) REF_INPUT="mtools-mv-ref-output-2.raw" \
 	INPUT="mtools-mv-output-2.raw" $(ACL2) -- < compare-disks.lisp
 
-cp-ref-output-1.txt cp-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+cp-ref-output-1.txt cp-output-1.txt: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	echo "four" > $(FUSEPOINT)/vmlinuz
-	cat $(FUSEPOINT)/vmlinuz > cp-ref-output-1.txt
+	echo "four" > $(MOUNTPOINT)/vmlinuz
+	cat $(MOUNTPOINT)/vmlinuz > cp-ref-output-1.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CP_OUTPUT="cp-output-1.txt" \
 	CP_INPUT="/vmlinuz" $(ACL2) < cp-replicant.lisp
 
-cp-ref-output-2.txt cp-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+cp-ref-output-2.txt cp-output-2.txt: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-1204-bytes.txt $(FUSEPOINT)/vmlinuz
-	cat $(FUSEPOINT)/vmlinuz > cp-ref-output-2.txt
+	cp input-1204-bytes.txt $(MOUNTPOINT)/vmlinuz
+	cat $(MOUNTPOINT)/vmlinuz > cp-ref-output-2.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CP_OUTPUT="cp-output-2.txt" \
 	CP_INPUT="/vmlinuz" $(ACL2) < cp-replicant.lisp
 
-cp-ref-output-3.txt cp-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+cp-ref-output-3.txt cp-output-3.txt: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-1204-bytes.txt $(FUSEPOINT)/vmlinuz
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	cat $(FUSEPOINT)/initrd.img > cp-ref-output-3.txt
+	cp input-1204-bytes.txt $(MOUNTPOINT)/vmlinuz
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	cat $(MOUNTPOINT)/initrd.img > cp-ref-output-3.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CP_OUTPUT="cp-output-3.txt" \
 	CP_INPUT="/initrd.img" $(ACL2) < cp-replicant.lisp
 
-cp-ref-output-4.txt cp-output-4.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+cp-ref-output-4.txt cp-output-4.txt: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	for i1 in $(shell seq 1 32); do \
-		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+		cp input-1204-bytes.txt $(MOUNTPOINT)/initrd$$i1.img; \
 	done
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	cat $(FUSEPOINT)/initrd.img > cp-ref-output-4.txt
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	cat $(MOUNTPOINT)/initrd.img > cp-ref-output-4.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CP_OUTPUT="cp-output-4.txt" \
 	CP_INPUT="/initrd.img" $(ACL2) < cp-replicant.lisp
 
-cp-ref-output-5.txt cp-output-5.txt: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+cp-ref-output-5.txt cp-output-5.txt: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
-	sync $(FUSEPOINT)/initrd.img
-	rm $(FUSEPOINT)/initrd.img
+	cp input-1204-bytes.txt $(MOUNTPOINT)/initrd.img
+	sync $(MOUNTPOINT)/initrd.img
+	rm $(MOUNTPOINT)/initrd.img
 	for i1 in $(shell seq 1 32); do \
-		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+		cp input-1204-bytes.txt $(MOUNTPOINT)/initrd$$i1.img; \
 	done
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	cat $(FUSEPOINT)/initrd.img > cp-ref-output-5.txt
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	cat $(MOUNTPOINT)/initrd.img > cp-ref-output-5.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) CP_OUTPUT="cp-output-5.txt" \
 	CP_INPUT="/initrd.img" $(ACL2) < cp-replicant.lisp
@@ -258,14 +239,14 @@ mtools-cp-ref-output-2.txt mtools-cp-output-2.txt: cp-replicant.lisp
 	env DISK=$(DISK) CP_OUTPUT="mtools-cp-output-2.txt" \
 	CP_INPUT="/vmlinuz" $(ACL2) < cp-replicant.lisp
 
-mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) \
+mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) \
 mkfs.fat-3.0.28-replicant.lisp
 	rm -f $(DISK)
 	(mkfs.fat -C -v -F 32 -s 1 $(DISK) $(SIZE)) > mkfs-ref-output-1.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-1.txt" $(ACL2) < \
 	mkfs.fat-3.0.28-replicant.lisp
 
-mkfs-ref-output-2.txt mkfs-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) \
+mkfs-ref-output-2.txt mkfs-output-2.txt: $(MOUNTPOINT) \
 mkfs.fat-3.0.28-replicant.lisp
 	rm -f $(DISK)
 	(mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)) > mkfs-ref-output-2.txt
@@ -274,89 +255,77 @@ mkfs.fat-3.0.28-replicant.lisp
 
 # this case does not actually produce a valid FAT32 filesystem, since
 # there are fewer than 65525 clusters.
-mkfs-ref-output-3.txt mkfs-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) \
+mkfs-ref-output-3.txt mkfs-output-3.txt: $(MOUNTPOINT) \
 mkfs.fat-3.0.28-replicant.lisp
 	rm -f $(DISK)
 	(mkfs.fat -C -v -F 32 -s 4 $(DISK) $(SIZE)) > mkfs-ref-output-3.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-3.txt" $(ACL2) < \
 	mkfs.fat-3.0.28-replicant.lisp
 
-wc-ref-output-1.txt wc-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) wc-replicant.lisp
+wc-ref-output-1.txt wc-output-1.txt: $(MOUNTPOINT) wc-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	wc -c < $(FUSEPOINT)/initrd.img > wc-ref-output-1.txt
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	wc -c < $(MOUNTPOINT)/initrd.img > wc-ref-output-1.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) WC_OUTPUT="wc-output-1.txt" \
 	WC_INPUT="/initrd.img" $(ACL2) -- -c < wc-replicant.lisp
 
-wc-ref-output-2.txt wc-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) wc-replicant.lisp
+wc-ref-output-2.txt wc-output-2.txt: $(MOUNTPOINT) wc-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	wc -l < $(FUSEPOINT)/initrd.img > wc-ref-output-2.txt
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	wc -l < $(MOUNTPOINT)/initrd.img > wc-ref-output-2.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) WC_OUTPUT="wc-output-2.txt" \
 	WC_INPUT="/initrd.img" $(ACL2) -- -l < wc-replicant.lisp
 
-wc-ref-output-3.txt wc-output-3.txt: $(MOUNTPOINT) $(FUSEPOINT) wc-replicant.lisp
+wc-ref-output-3.txt wc-output-3.txt: $(MOUNTPOINT) wc-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	wc -w < $(FUSEPOINT)/initrd.img > wc-ref-output-3.txt
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	wc -w < $(MOUNTPOINT)/initrd.img > wc-ref-output-3.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) WC_OUTPUT="wc-output-3.txt" \
 	WC_INPUT="/initrd.img" $(ACL2) -- -w < wc-replicant.lisp
 
-stat-ref-output-1.txt stat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) stat-replicant.lisp
+stat-ref-output-1.txt stat-output-1.txt: $(MOUNTPOINT) stat-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	cd $(FUSEPOINT); stat -f initrd.img > ../stat-ref-output-1.txt; cd -
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	cd $(MOUNTPOINT); stat -f initrd.img > ../stat-ref-output-1.txt; cd -
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) STAT_OUTPUT="stat-output-1.txt" \
 	STAT_INPUT="initrd.img" $(ACL2) -- -f < stat-replicant.lisp
 
-stat-ref-output-2.txt stat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) stat-replicant.lisp
+stat-ref-output-2.txt stat-output-2.txt: $(MOUNTPOINT) stat-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	for i1 in $(shell seq 1 32); do \
-		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+		cp input-1204-bytes.txt $(MOUNTPOINT)/initrd$$i1.img; \
 	done
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	cd $(FUSEPOINT); stat -f initrd.img > ../stat-ref-output-2.txt; cd -
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	cd $(MOUNTPOINT); stat -f initrd.img > ../stat-ref-output-2.txt; cd -
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	env DISK=$(DISK) STAT_OUTPUT="stat-output-2.txt" \
 	STAT_INPUT="initrd.img" $(ACL2) -- -f < stat-replicant.lisp
 
-rm-ref-output-1.raw rm-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+rm-ref-output-1.raw rm-output-1.raw: $(MOUNTPOINT) rm-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) rm-ref-output-1.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos rm-ref-output-1.raw $(MOUNTPOINT)
@@ -367,17 +336,15 @@ rm-ref-output-1.raw rm-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lis
 	$(ACL2) -- "/initrd.img" \
 	< rm-replicant.lisp
 
-rm-ref-output-2.raw rm-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+rm-ref-output-2.raw rm-output-2.raw: $(MOUNTPOINT) rm-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
+	cp input-1204-bytes.txt $(MOUNTPOINT)/initrd.img
 	for i1 in $(shell seq 1 32); do \
-		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+		cp input-1204-bytes.txt $(MOUNTPOINT)/initrd$$i1.img; \
 	done
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) rm-ref-output-2.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos rm-ref-output-2.raw $(MOUNTPOINT)
@@ -388,16 +355,14 @@ rm-ref-output-2.raw rm-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lis
 	$(ACL2) -- "/initrd.img" \
 	< rm-replicant.lisp
 
-rm-ref-output-3.raw rm-output-3.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+rm-ref-output-3.raw rm-output-3.raw: $(MOUNTPOINT) rm-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
-	mkdir $(FUSEPOINT)/tmp
-	cp input-1204-bytes.txt $(FUSEPOINT)/tmp/file.txt
+	cp input-1204-bytes.txt $(MOUNTPOINT)/initrd.img
+	mkdir $(MOUNTPOINT)/tmp
+	cp input-1204-bytes.txt $(MOUNTPOINT)/tmp/file.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) rm-ref-output-3.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos rm-ref-output-3.raw $(MOUNTPOINT)
@@ -408,16 +373,14 @@ rm-ref-output-3.raw rm-output-3.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lis
 	$(ACL2) -- "/tmp/file.txt" \
 	< rm-replicant.lisp
 
-rm-ref-output-4.raw rm-output-4.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+rm-ref-output-4.raw rm-output-4.raw: $(MOUNTPOINT) rm-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
-	mkdir $(FUSEPOINT)/tmp
-	cp input-1204-bytes.txt $(FUSEPOINT)/tmp/file.txt
+	cp input-1204-bytes.txt $(MOUNTPOINT)/initrd.img
+	mkdir $(MOUNTPOINT)/tmp
+	cp input-1204-bytes.txt $(MOUNTPOINT)/tmp/file.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) rm-ref-output-4.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos rm-ref-output-4.raw $(MOUNTPOINT)
@@ -454,14 +417,12 @@ mtools-rm-ref-output-2.raw mtools-rm-output-2.raw: rm-replicant.lisp
 	env DISK="mtools-rm-output-2.raw" RM_OUTPUT="mtools-rm-output-2.raw" \
 	$(ACL2) -- -r "/tmp" < rm-replicant.lisp
 
-unlink-ref-output-1.raw unlink-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+unlink-ref-output-1.raw unlink-output-1.raw: $(MOUNTPOINT) rm-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) unlink-ref-output-1.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos unlink-ref-output-1.raw $(MOUNTPOINT)
@@ -472,17 +433,15 @@ unlink-ref-output-1.raw unlink-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-repli
 	$(ACL2) -- "/initrd.img" \
 	< rm-replicant.lisp
 
-unlink-ref-output-2.raw unlink-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+unlink-ref-output-2.raw unlink-output-2.raw: $(MOUNTPOINT) rm-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
+	cp input-1204-bytes.txt $(MOUNTPOINT)/initrd.img
 	for i1 in $(shell seq 1 32); do \
-		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+		cp input-1204-bytes.txt $(MOUNTPOINT)/initrd$$i1.img; \
 	done
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) unlink-ref-output-2.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos unlink-ref-output-2.raw $(MOUNTPOINT)
@@ -493,16 +452,14 @@ unlink-ref-output-2.raw unlink-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-repli
 	$(ACL2) -- "/initrd.img" \
 	< rm-replicant.lisp
 
-unlink-ref-output-3.raw unlink-output-3.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-replicant.lisp
+unlink-ref-output-3.raw unlink-output-3.raw: $(MOUNTPOINT) rm-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
-	mkdir $(FUSEPOINT)/tmp
-	cp input-1204-bytes.txt $(FUSEPOINT)/tmp/file.txt
+	cp input-1204-bytes.txt $(MOUNTPOINT)/initrd.img
+	mkdir $(MOUNTPOINT)/tmp
+	cp input-1204-bytes.txt $(MOUNTPOINT)/tmp/file.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) unlink-ref-output-3.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos unlink-ref-output-3.raw $(MOUNTPOINT)
@@ -513,14 +470,12 @@ unlink-ref-output-3.raw unlink-output-3.raw: $(MOUNTPOINT) $(FUSEPOINT) rm-repli
 	$(ACL2) -- "/tmp/file.txt" \
 	< rm-replicant.lisp
 
-mkdir-ref-output-1.raw mkdir-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) mkdir-replicant.lisp
+mkdir-ref-output-1.raw mkdir-output-1.raw: $(MOUNTPOINT) mkdir-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) mkdir-ref-output-1.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos mkdir-ref-output-1.raw $(MOUNTPOINT)
@@ -530,14 +485,12 @@ mkdir-ref-output-1.raw mkdir-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) mkdir-repl
 	env DISK=$(DISK) MKDIR_OUTPUT="mkdir-output-1.raw" \
 	$(ACL2) -- "/dir1" < mkdir-replicant.lisp
 
-mkdir-ref-output-2.raw mkdir-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) mkdir-replicant.lisp
+mkdir-ref-output-2.raw mkdir-output-2.raw: $(MOUNTPOINT) mkdir-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	mkdir $(MOUNTPOINT)/dir1
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) mkdir-ref-output-2.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos mkdir-ref-output-2.raw $(MOUNTPOINT)
@@ -560,15 +513,13 @@ mtools-mkdir-ref-output-1.raw mtools-mkdir-output-1.raw: mkdir-replicant.lisp
 	$(ACL2) -- "/tmp" \
 	< mkdir-replicant.lisp
 
-rmdir-ref-output-1.raw rmdir-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) rmdir-replicant.lisp
+rmdir-ref-output-1.raw rmdir-output-1.raw: $(MOUNTPOINT) rmdir-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
-	mkdir $(FUSEPOINT)/dir1
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	mkdir $(MOUNTPOINT)/dir1
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) rmdir-ref-output-1.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos rmdir-ref-output-1.raw $(MOUNTPOINT)
@@ -578,14 +529,12 @@ rmdir-ref-output-1.raw rmdir-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) rmdir-repl
 	env DISK=$(DISK) RMDIR_OUTPUT="rmdir-output-1.raw" \
 	$(ACL2) -- "/dir1" < rmdir-replicant.lisp
 
-rmdir-ref-output-2.raw rmdir-output-2.raw: $(MOUNTPOINT) $(FUSEPOINT) rmdir-replicant.lisp
+rmdir-ref-output-2.raw rmdir-output-2.raw: $(MOUNTPOINT) rmdir-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	mkdir -p $(MOUNTPOINT)/dir1/dir2
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) rmdir-ref-output-2.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos rmdir-ref-output-2.raw $(MOUNTPOINT)
@@ -609,16 +558,14 @@ mtools-rmdir-ref-output-1.raw mtools-rmdir-output-1.raw: rmdir-replicant.lisp
 	$(ACL2) -- "/tmp" \
 	< rmdir-replicant.lisp
 
-mv-ref-output-1.raw mv-output-1.raw: $(MOUNTPOINT) $(FUSEPOINT) mv-replicant.lisp
+mv-ref-output-1.raw mv-output-1.raw: $(MOUNTPOINT) mv-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	cp input-1204-bytes.txt $(FUSEPOINT)/initrd.img
-	mkdir $(FUSEPOINT)/tmp
-	cp input-1204-bytes.txt $(FUSEPOINT)/tmp/file1.txt
+	cp input-1204-bytes.txt $(MOUNTPOINT)/initrd.img
+	mkdir $(MOUNTPOINT)/tmp
+	cp input-1204-bytes.txt $(MOUNTPOINT)/tmp/file1.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	cp $(DISK) mv-ref-output-1.raw
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos mv-ref-output-1.raw $(MOUNTPOINT)
@@ -657,77 +604,65 @@ mtools-mv-ref-output-2.raw mtools-mv-output-2.raw: mv-replicant.lisp
 	env DISK="mtools-mv-output-2.raw" MV_OUTPUT="mtools-mv-output-2.raw" \
 	$(ACL2) -- "/tmp/file1.txt" "/tmp/file2.txt" < mv-replicant.lisp
 
-debug-do-nothing: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+debug-do-nothing: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+debug-create-dir: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	mkdir $(FUSEPOINT)/tmp
+	mkdir $(MOUNTPOINT)/tmp
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-and-file: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+debug-create-dir-and-file: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	mkdir $(FUSEPOINT)/tmp
-	touch $(FUSEPOINT)/tmp/ticket1.txt
+	mkdir $(MOUNTPOINT)/tmp
+	touch $(MOUNTPOINT)/tmp/ticket1.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-copy-file: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+debug-create-dir-copy-file: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	mkdir $(FUSEPOINT)/tmp
-	touch $(FUSEPOINT)/tmp/ticket1.txt
-	cp $(FUSEPOINT)/tmp/ticket1.txt $(FUSEPOINT)/tmp/ticket2.txt
+	mkdir $(MOUNTPOINT)/tmp
+	touch $(MOUNTPOINT)/tmp/ticket1.txt
+	cp $(MOUNTPOINT)/tmp/ticket1.txt $(MOUNTPOINT)/tmp/ticket2.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-and-file-rm: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+debug-create-dir-and-file-rm: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	mkdir $(FUSEPOINT)/tmp
-	touch $(FUSEPOINT)/tmp/ticket1.txt
-	sync $(FUSEPOINT)/tmp/ticket1.txt
-	rm $(FUSEPOINT)/tmp/ticket1.txt
+	mkdir $(MOUNTPOINT)/tmp
+	touch $(MOUNTPOINT)/tmp/ticket1.txt
+	sync $(MOUNTPOINT)/tmp/ticket1.txt
+	rm $(MOUNTPOINT)/tmp/ticket1.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-and-file-mv: $(MOUNTPOINT) $(FUSEPOINT) cp-replicant.lisp
+debug-create-dir-and-file-mv: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
-	mkdir $(FUSEPOINT)/tmp
-	touch $(FUSEPOINT)/tmp/ticket1.txt
-	sync $(FUSEPOINT)/tmp/ticket1.txt
-	mv $(FUSEPOINT)/tmp/ticket1.txt $(FUSEPOINT)/tmp/ticket2.txt
+	mkdir $(MOUNTPOINT)/tmp
+	touch $(MOUNTPOINT)/tmp/ticket1.txt
+	sync $(MOUNTPOINT)/tmp/ticket1.txt
+	mv $(MOUNTPOINT)/tmp/ticket1.txt $(MOUNTPOINT)/tmp/ticket2.txt
 	sleep 1
-	fusermount -u $(FUSEPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
 
