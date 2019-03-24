@@ -912,12 +912,6 @@
                   (append (take (+ n 1) l) y)))
   :hints (("goal" :in-theory (disable take))))
 
-(defthmd remember-that-time-with-update-nth
-  (implies (and (equal (nfix key) (- (len l) 1))
-                (true-listp l))
-           (equal (update-nth key val l)
-                  (append (take key l) (list val)))))
-
 (defmacro
   update-stobj-array
   (name array-length bit-width array-updater array-accessor constant
