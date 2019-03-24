@@ -250,29 +250,6 @@
       :induct (cdr-cdr-induct x str::x-equiv)))))
 
 (defthm
-  stringp-of-read-file-into-string1
-  (implies
-   (and
-    (symbolp channel)
-    (open-input-channel-p channel
-                          :character state)
-    (state-p state)
-    (not (null (mv-nth 0
-                       (read-file-into-string1 channel state ans bound)))))
-   (stringp (mv-nth 0
-                    (read-file-into-string1 channel state ans bound)))))
-
-(defthm
-  state-p1-of-read-file-into-string1
-  (implies
-   (and (symbolp channel)
-        (open-input-channel-p channel
-                              :character state)
-        (state-p state))
-   (state-p1 (mv-nth 1
-                     (read-file-into-string1 channel state ans bound)))))
-
-(defthm
   consecutive-read-file-into-string-1
   (implies
    (and
