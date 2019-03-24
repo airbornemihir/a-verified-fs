@@ -906,12 +906,6 @@
   :hints (("goal" :in-theory (enable data-region-length
                                      resize-data-region))))
 
-(defthmd append-of-take-and-cons
-  (implies (and (natp n) (equal x (nth n l)))
-           (equal (append (take n l) (cons x y))
-                  (append (take (+ n 1) l) y)))
-  :hints (("goal" :in-theory (disable take))))
-
 (defmacro
   update-stobj-array
   (name array-length bit-width array-updater array-accessor constant
@@ -1088,8 +1082,7 @@
                   (true-list-fix v))
           ,stobj)))
        :hints
-       (("goal" :in-theory (enable append-of-take-and-cons
-                                   ,array-length
+       (("goal" :in-theory (enable ,array-length
                                    remember-that-time-with-update-nth))))
 
      (defthm ,nth-of-name-1
