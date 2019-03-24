@@ -1,10 +1,12 @@
 # test-mkfs-replicant-3 was always problematic; it's now removed
 # because our model has finally become strict enough to reject it.
+#
+# test-stat-replicant-1 and test-stat-replicant-2 are also removed,
+# for reasons explained in a comment below.
 TEST:= test-cp-replicant-1 test-cp-replicant-2 test-cp-replicant-3 \
 test-cp-replicant-4 mtools-test-cp-replicant-2 \
 test-mkfs-replicant-1 test-mkfs-replicant-2 \
 test-wc-replicant-1 test-wc-replicant-2 test-wc-replicant-3 \
-test-stat-replicant-1 test-stat-replicant-2 \
 test-rm-replicant-1 test-rm-replicant-2 test-rm-replicant-3 \
 test-rm-replicant-4 mtools-test-rm-replicant-1 \
 mtools-test-rm-replicant-2 \
@@ -28,9 +30,23 @@ debug-create-dir-copy-file
 mtools-read-write-test-210MB mtools-read-write-test-280MB \
 mtools-read-write-test-560MB mtools-read-write-test-1120MB
 
+# FUSEPOINT and BBFS are commented below because they refer to Joseph
+# Pfeiffer's pedagogical Big Brother Filesystem, which I used in some
+# of the tests. For almost every test, they only helped log the
+# syscalls and their return values without affecting the course of the
+# test; however, the stat tests do rely on them because without the
+# interposition of the FUSE layer, the id value in the struct statfs
+# can be completely arbitrary depending on mount time details which
+# our stat implementation has no access to. When FUSE is interposed,
+# however, a 0 value is assigned to id, which is hard-coded for the
+# stat tests to make them work. They can be run by downloading and
+# compiling BBFS and noting the path to the executable in the BBFS
+# variable, below.
 DISK=disk1.raw
 SIZE=70000
 MOUNTPOINT=mount1
+# FUSEPOINT=mount2
+# BBFS=$(HOME)/src/bbfs/fuse-tutorial-2018-02-04/src/bbfs
 UID=$(shell id -u)
 GID=$(shell id -g)
 MTOOLSRC=$(shell pwd)/.mtoolsrc
@@ -41,6 +57,10 @@ clean-mountpoint:
 $(MOUNTPOINT):
 	rm -rf $(MOUNTPOINT)
 	mkdir -p $(MOUNTPOINT)
+
+# $(FUSEPOINT):
+# 	rm -rf $(FUSEPOINT)
+# 	mkdir -p $(FUSEPOINT)
 
 test-cp-replicant-1: cp-ref-output-1.txt cp-output-1.txt
 	diff -u -i cp-ref-output-1.txt cp-output-1.txt
@@ -295,30 +315,34 @@ wc-ref-output-3.txt wc-output-3.txt: $(MOUNTPOINT) wc-replicant.lisp
 	env DISK=$(DISK) WC_OUTPUT="wc-output-3.txt" \
 	WC_INPUT="/initrd.img" $(ACL2) -- -w < wc-replicant.lisp
 
-stat-ref-output-1.txt stat-output-1.txt: $(MOUNTPOINT) stat-replicant.lisp
-	rm -f $(DISK)
-	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
-	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
-	cd $(MOUNTPOINT); stat -f initrd.img > ../stat-ref-output-1.txt; cd -
-	sleep 1
-	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) STAT_OUTPUT="stat-output-1.txt" \
-	STAT_INPUT="initrd.img" $(ACL2) -- -f < stat-replicant.lisp
+# stat-ref-output-1.txt stat-output-1.txt: $(MOUNTPOINT) $(FUSEPOINT) stat-replicant.lisp
+# 	rm -f $(DISK)
+# 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+# 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+# 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+# 	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+# 	cd $(FUSEPOINT); stat -f initrd.img > ../stat-ref-output-1.txt; cd -
+# 	sleep 1
+# 	fusermount -u $(FUSEPOINT)
+# 	sudo umount $(MOUNTPOINT)
+# 	env DISK=$(DISK) STAT_OUTPUT="stat-output-1.txt" \
+# 	STAT_INPUT="initrd.img" $(ACL2) -- -f < stat-replicant.lisp
 
-stat-ref-output-2.txt stat-output-2.txt: $(MOUNTPOINT) stat-replicant.lisp
-	rm -f $(DISK)
-	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
-	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	for i1 in $(shell seq 1 32); do \
-		cp input-1204-bytes.txt $(MOUNTPOINT)/initrd$$i1.img; \
-	done
-	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
-	cd $(MOUNTPOINT); stat -f initrd.img > ../stat-ref-output-2.txt; cd -
-	sleep 1
-	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) STAT_OUTPUT="stat-output-2.txt" \
-	STAT_INPUT="initrd.img" $(ACL2) -- -f < stat-replicant.lisp
+# stat-ref-output-2.txt stat-output-2.txt: $(MOUNTPOINT) $(FUSEPOINT) stat-replicant.lisp
+# 	rm -f $(DISK)
+# 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+# 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+# 	$(BBFS) $(MOUNTPOINT) $(FUSEPOINT)
+# 	for i1 in $(shell seq 1 32); do \
+# 		cp input-1204-bytes.txt $(FUSEPOINT)/initrd$$i1.img; \
+# 	done
+# 	cp input-4623-bytes.txt $(FUSEPOINT)/initrd.img
+# 	cd $(FUSEPOINT); stat -f initrd.img > ../stat-ref-output-2.txt; cd -
+# 	sleep 1
+# 	fusermount -u $(FUSEPOINT)
+# 	sudo umount $(MOUNTPOINT)
+# 	env DISK=$(DISK) STAT_OUTPUT="stat-output-2.txt" \
+# 	STAT_INPUT="initrd.img" $(ACL2) -- -f < stat-replicant.lisp
 
 rm-ref-output-1.raw rm-output-1.raw: $(MOUNTPOINT) rm-replicant.lisp
 	rm -f $(DISK)
