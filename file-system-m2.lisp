@@ -439,7 +439,7 @@
   (("goal"
     :in-theory (enable count-of-clusters update-fati bpb_totsec32))))
 
-(defthm
+(defthmd
   compliant-fat32-in-memoryp-of-update-fati
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (< i (fat-length fat32-in-memory)))
@@ -4322,7 +4322,8 @@
                 (equal (len index-list)
                        (len value-list)))
     :guard-hints
-    (("goal" :in-theory (disable unsigned-byte-p)))))
+    (("goal" :in-theory (e/d (compliant-fat32-in-memoryp-of-update-fati)
+                             (unsigned-byte-p))))))
   (b*
       (((when (atom index-list))
         fat32-in-memory)
@@ -4379,16 +4380,17 @@
         (equal (len index-list)
                (len value-list))
         (compliant-fat32-in-memoryp fat32-in-memory))
-   (equal (effective-fat
-               (stobj-set-indices-in-fa-table
-                fat32-in-memory index-list value-list))
-          (set-indices-in-fa-table (effective-fat fat32-in-memory)
-                                   index-list value-list)))
+   (equal
+    (effective-fat (stobj-set-indices-in-fa-table
+                    fat32-in-memory index-list value-list))
+    (set-indices-in-fa-table (effective-fat fat32-in-memory)
+                             index-list value-list)))
   :hints
   (("goal"
     :in-theory
-    (e/d (set-indices-in-fa-table stobj-set-indices-in-fa-table))
-    :induct t)))
+    (e/d (set-indices-in-fa-table
+          stobj-set-indices-in-fa-table
+          compliant-fat32-in-memoryp-of-update-fati)))))
 
 (defthm
   fati-of-stobj-set-indices-in-fa-table
@@ -4441,11 +4443,9 @@
             (stobj-set-indices-in-fa-table
              fat32-in-memory index-list value-list)))
   :hints
-  (("goal"
-    :in-theory (enable stobj-set-indices-in-fa-table)
-    :induct
-    (stobj-set-indices-in-fa-table fat32-in-memory
-                                   index-list value-list))))
+  (("goal" :in-theory
+    (enable stobj-set-indices-in-fa-table
+            compliant-fat32-in-memoryp-of-update-fati))))
 
 (defthm
   cluster-size-of-stobj-set-indices-in-fa-table
@@ -4705,22 +4705,9 @@
      (place-contents fat32-in-memory dir-ent
                      contents file-length first-cluster))))
   :hints
-  (("goal"
-    :in-theory
-    (e/d (place-contents)
-         ((:rewrite
-           fat32-masked-entry-list-p-of-find-n-free-clusters
-           . 1)))
-    :use
-    (:instance
-     (:rewrite fat32-masked-entry-list-p-of-find-n-free-clusters
-               . 1)
-     (n
-      (binary-+
-       '-1
-       (len (make-clusters contents
-                           (cluster-size fat32-in-memory)))))
-     (fa-table (effective-fat fat32-in-memory))))))
+  (("goal" :in-theory
+    (enable place-contents
+            compliant-fat32-in-memoryp-of-update-fati))))
 
 (defthm
   cluster-size-of-place-contents
@@ -5128,8 +5115,8 @@
              fat32-in-memory fs first-cluster))))
   :hints
   (("goal"
-    :in-theory
-    (disable stobj-set-indices-in-fa-table))))
+    :in-theory (e/d (compliant-fat32-in-memoryp-of-update-fati)
+                    (stobj-set-indices-in-fa-table)))))
 
 (defthm
   dir-ent-list-p-of-m1-fs-to-fat32-in-memory-helper
@@ -5241,7 +5228,7 @@
     (("goal"
       :in-theory
       (e/d
-       (painful-debugging-lemma-9)
+       (painful-debugging-lemma-9 compliant-fat32-in-memoryp-of-update-fati)
        (stobj-set-indices-in-fa-table))))))
 
 (defthm
@@ -5285,7 +5272,8 @@
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (m1-file-alist-p fs))
     :guard-hints
-    (("goal" :in-theory (e/d (m1-fs-to-fat32-in-memory-guard-lemma-1)
+    (("goal" :in-theory (e/d (m1-fs-to-fat32-in-memory-guard-lemma-1
+                              compliant-fat32-in-memoryp-of-update-fati)
                              (unsigned-byte-p))
       ;; This is the second time we've had to add a :cases hint, really. The
       ;; reason is the same: brr tells us that a case split which should be
@@ -5371,7 +5359,8 @@
   :hints
   (("goal"
     :in-theory (enable m1-fs-to-fat32-in-memory
-                       m1-fs-to-fat32-in-memory-guard-lemma-1)
+                       m1-fs-to-fat32-in-memory-guard-lemma-1
+                       compliant-fat32-in-memoryp-of-update-fati)
     :do-not-induct t
     :cases
     ((not
@@ -5383,7 +5372,6 @@
        (fat-length fat32-in-memory)
        (binary-+ '2
                  (count-of-clusters fat32-in-memory))))))))
-
 
 (defun
     stobj-fa-table-to-string-helper
@@ -6565,8 +6553,7 @@
         :initial-element (code-char 0))))
      0)))
   :hints
-  (("goal" :in-theory (e/d (lower-bounded-integer-listp
-                            place-contents)
+  (("goal" :in-theory (e/d (place-contents)
                            ((:rewrite
                              fat32-build-index-list-of-set-indices-in-fa-table)
                             (:rewrite get-clusterchain-contents-correctness-3)
@@ -6714,8 +6701,7 @@
                       contents file-length first-cluster)))
     (fati x fat32-in-memory)))
   :hints
-  (("goal" :in-theory (enable place-contents
-                              lower-bounded-integer-listp))))
+  (("goal" :in-theory (enable place-contents))))
 
 (defthm
   fati-of-m1-fs-to-fat32-in-memory-helper-disjoint-lemma-1
@@ -6852,8 +6838,8 @@
           (fati x fat32-in-memory)))
   :hints
   (("goal"
-    :in-theory
-    (disable (:rewrite make-clusters-correctness-1 . 1)))))
+    :in-theory (e/d (compliant-fat32-in-memoryp-of-update-fati)
+                    ((:rewrite make-clusters-correctness-1 . 1))))))
 
 (defthm
   fat32-build-index-list-of-place-contents-coincident
@@ -6902,7 +6888,7 @@
   (("goal"
     :in-theory
     (e/d
-     (lower-bounded-integer-listp place-contents)
+     (place-contents)
      ((:rewrite
        fat32-build-index-list-of-set-indices-in-fa-table)))
     :do-not-induct t
@@ -7181,7 +7167,8 @@
      (mv-nth 0
              (m1-fs-to-fat32-in-memory-helper
               fat32-in-memory
-              fs current-dir-first-cluster))))))
+              fs current-dir-first-cluster)))))
+  :hints (("Goal" :in-theory (enable compliant-fat32-in-memoryp-of-update-fati)) ))
 
 (defthm
   unmodifiable-listp-correctness-5
@@ -7308,7 +7295,8 @@
               fs current-dir-first-cluster))
      dir-ent-list entry-limit)
     (fat32-in-memory-to-m1-fs-helper fat32-in-memory
-                                     dir-ent-list entry-limit))))
+                                     dir-ent-list entry-limit)))
+  :hints (("Goal" :in-theory (enable compliant-fat32-in-memoryp-of-update-fati)) ))
 
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-1
@@ -7920,7 +7908,8 @@
       :in-theory
       (e/d
        (fat32-in-memory-to-m1-fs-helper
-        m1-fs-to-fat32-in-memory-helper-correctness-4)
+        m1-fs-to-fat32-in-memory-helper-correctness-4
+        compliant-fat32-in-memoryp-of-update-fati)
        ((:rewrite make-clusters-correctness-1 . 1)
         (:rewrite nth-of-nats=>chars)
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
@@ -8105,7 +8094,8 @@
                        m1-fs-to-fat32-in-memory-inversion-lemma-11
                        m1-fs-to-fat32-in-memory-inversion-lemma-13
                        painful-debugging-lemma-10
-                       painful-debugging-lemma-11))))
+                       painful-debugging-lemma-11
+                       compliant-fat32-in-memoryp-of-update-fati))))
 
 (defund-nx
   fat32-in-memory-equiv
