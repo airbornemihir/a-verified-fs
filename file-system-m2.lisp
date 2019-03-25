@@ -11363,3 +11363,75 @@ Some (rather awful) testing forms are
      :f_ffree 0
      :f_fsid 0
      :f_namelen 72)))
+
+(defun
+  find-dir-ent (dir-ent-list filename)
+  (declare (xargs :guard (and (fat32-filename-p filename)
+                              (dir-ent-list-p dir-ent-list))))
+  (b* (((when (atom dir-ent-list))
+        (mv (dir-ent-fix nil) *enoent*))
+       (dir-ent (mbe :exec (car dir-ent-list)
+                     :logic (dir-ent-fix (car dir-ent-list))))
+       ((when (equal (dir-ent-filename dir-ent)
+                     filename))
+        (mv dir-ent 0)))
+    (find-dir-ent (cdr dir-ent-list)
+                  filename)))
+
+(defthm
+  find-dir-ent-correctness-1
+  (and
+   (dir-ent-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+   (natp (mv-nth 1
+                 (find-dir-ent dir-ent-list filename))))
+  :hints (("goal" :induct (find-dir-ent dir-ent-list filename)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (dir-ent-p (mv-nth 0
+                       (find-dir-ent dir-ent-list filename))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 1
+                  (find-dir-ent dir-ent-list filename))))))
+
+(defun lofat-find-file-by-pathname (fat32-in-memory dir-ent-list pathname)
+  (declare (xargs :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                              (fat32-filename-list-p pathname)
+                              (useful-dir-ent-list-p dir-ent-list))
+                  :measure (acl2-count pathname)
+                  :stobjs fat32-in-memory))
+  (b* (((unless (consp pathname))
+        (mv nil *enoent*))
+       (name (fat32-filename-fix (car pathname)))
+       ((mv dir-ent error-code) (find-dir-ent dir-ent-list name))
+       ((unless (equal error-code 0))
+        (mv nil error-code))
+       (first-cluster (dir-ent-first-cluster dir-ent))
+       (directory-p
+        (dir-ent-directory-p dir-ent))
+       (length (if directory-p
+                   *ms-max-dir-size*
+                 (dir-ent-file-size dir-ent)))
+       ((mv contents &)
+        (if
+            (or (< first-cluster
+                   *ms-first-data-cluster*)
+                (>=
+                 first-cluster
+                 (+ (count-of-clusters fat32-in-memory)
+                    *ms-first-data-cluster*)))
+            (mv "" 0)
+          (get-clusterchain-contents fat32-in-memory
+                                     first-cluster
+                                     length)))
+       ((unless directory-p)
+        (if (consp (cdr pathname))
+            (mv nil *enotdir*)
+          (mv contents 0)))
+       ((when (atom (cdr pathname)))
+        (mv (make-dir-ent-list (string=>nats contents)) 0)))
+    (lofat-find-file-by-pathname
+     fat32-in-memory
+     (make-dir-ent-list (string=>nats contents))
+     (cdr pathname))))
