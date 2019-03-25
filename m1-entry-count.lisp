@@ -10,7 +10,10 @@
 
 ;; We're not counting this very directory, because the root does not have a
 ;; directory entry for itself.
-(defun m1-entry-count (fs)
+;;
+;; Before disabling, this rule used to cause 436909 frames and 8297 tries in
+;; the main book; now those numbers are 4997 and 63 respectively.
+(defund m1-entry-count (fs)
   (declare (xargs :guard (m1-file-alist-p fs)))
   (if
       (atom fs)
@@ -21,6 +24,8 @@
            (m1-entry-count (cdr fs)))
       (+ 1
          (m1-entry-count (cdr fs))))))
+
+(local (in-theory (enable m1-entry-count)))
 
 (defthmd
   m1-entry-count-when-m1-file-no-dups-p

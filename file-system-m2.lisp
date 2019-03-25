@@ -440,6 +440,9 @@
   (("goal"
     :in-theory (enable count-of-clusters update-fati bpb_totsec32))))
 
+;; Before disabling, this function used to cause 11030904 frames and 95410
+;; tries in this book; after disabling those numbers are 4919970 and 33324
+;; respectively.
 (defthmd
   compliant-fat32-in-memoryp-of-update-fati
   (implies (and (compliant-fat32-in-memoryp fat32-in-memory)
@@ -4023,7 +4026,7 @@
     (equal entry-count
            (m1-entry-count m1-file-alist)))
   :hints
-  (("goal" :in-theory (enable fat32-in-memory-to-m1-fs-helper)))
+  (("goal" :in-theory (enable fat32-in-memory-to-m1-fs-helper m1-entry-count)))
   :rule-classes
   (:rewrite
    (:linear
@@ -7912,7 +7915,8 @@
       (e/d
        (fat32-in-memory-to-m1-fs-helper
         m1-fs-to-fat32-in-memory-helper-correctness-4
-        compliant-fat32-in-memoryp-of-update-fati)
+        compliant-fat32-in-memoryp-of-update-fati
+        m1-entry-count)
        ((:rewrite make-clusters-correctness-1 . 1)
         (:rewrite nth-of-nats=>chars)
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
