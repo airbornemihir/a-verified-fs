@@ -40,7 +40,7 @@
              (m1-dir-subsetp (m1-file->contents file1)
                              (m1-file->contents file2))))))
 
-(defun
+(defund
   m1-file-no-dups-p (m1-file-alist)
   (declare (xargs :guard (m1-file-alist-p m1-file-alist)))
   (cond ((atom m1-file-alist) t)
@@ -57,6 +57,8 @@
          (m1-file-no-dups-p
           (m1-file->contents (cdar m1-file-alist))))
         (t t)))
+
+(local (in-theory (enable m1-file-no-dups-p)))
 
 (defthm m1-file-no-dups-p-correctness-1
   (implies (m1-file-no-dups-p fs)

@@ -7325,6 +7325,9 @@
             (append (find-n-free-clusters fa-table 1)
                     y))))))
 
+;; At least once, accumulated-persistence has reported this rule as :useless,
+;; but in fact it is needed to discharge a subgoal. There's no trivial way
+;; around it.
 (defthm
   m1-fs-to-fat32-in-memory-inversion-lemma-2
   (implies (and (stringp (m1-file->contents file))
@@ -7916,14 +7919,15 @@
        (fat32-in-memory-to-m1-fs-helper
         m1-fs-to-fat32-in-memory-helper-correctness-4
         compliant-fat32-in-memoryp-of-update-fati
-        m1-entry-count)
+        m1-entry-count
+        (:definition m1-file-no-dups-p))
        ((:rewrite make-clusters-correctness-1 . 1)
         (:rewrite nth-of-nats=>chars)
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
         (:rewrite
          fati-of-m1-fs-to-fat32-in-memory-helper-disjoint-lemma-2)
         (:definition induction-scheme)
-        (:definition m1-file-no-dups-p)))
+        (:linear m1-entry-count-when-m1-dir-subsetp)))
       :expand
       ((:free (y) (intersectp-equal nil y))
        (:free (x1 x2 y)
