@@ -1423,6 +1423,11 @@
                :val-type nat ;; index into the file-table
                :true-listp t)
 
+;; This function returns *ENOENT* when the root directory is asked for. There's
+;; a simple reason: we want to return the whole file, including the directory
+;; entry - and nowhere is there a directory entry for the root. Any
+;; directory other than the root will be caught before a recursive call which
+;; makes it the root.
 (defun find-file-by-pathname (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (fat32-filename-list-p pathname))
