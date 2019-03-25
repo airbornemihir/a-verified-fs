@@ -12,11 +12,12 @@
 (include-book "cluster-listp")
 (include-book "flatten-lemmas")
 
-;; These are some rules from other books which are interacting badly with the
-;; theory I've built up so far.
+;; These are some rules from other books which are either interacting badly
+;; with the theory I've built up so far, or else causing a lot of unnecessary
+;; frames and tries.
 (local
  (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
-                     revappend-removal
+                     revappend-removal str::hex-digit-listp-of-cons
                      loghead logtail)))
 
 ;; These are some definitions I've had to disable a lot in this book - and I'm
@@ -2506,7 +2507,10 @@
                     (disk-image-to-fat32-in-memory-guard-lemma-13))
     :use disk-image-to-fat32-in-memory-guard-lemma-13)))
 
-(defthmd
+;; Accumulated-persistence suggests disabling this rule, but really it only
+;; gets tried in the main lemma, where we have to leave it enabled anyway. So
+;; we might as well skip (or at least shrink) that one in-theory hint.
+(defthm
   disk-image-to-fat32-in-memory-guard-lemma-16
   (implies
    (and (stringp str)
@@ -3181,8 +3185,7 @@
     (("goal"
       :in-theory
       (e/d (string-to-fat32-in-memory
-            disk-image-to-fat32-in-memory-guard-lemma-12
-            disk-image-to-fat32-in-memory-guard-lemma-16)
+            disk-image-to-fat32-in-memory-guard-lemma-12)
            (string-append
             read-file-into-string2
             ;; The following came from accumulated-persistence results.
