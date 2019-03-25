@@ -2387,7 +2387,7 @@
      *EIO*)))
   :hints (("goal" :in-theory (enable get-initial-bytes read-reserved-area))))
 
-(defthm
+(defthmd
   disk-image-to-fat32-in-memory-guard-lemma-12
   (implies
    (and (stringp str)
@@ -2506,7 +2506,7 @@
                     (disk-image-to-fat32-in-memory-guard-lemma-13))
     :use disk-image-to-fat32-in-memory-guard-lemma-13)))
 
-(defthm
+(defthmd
   disk-image-to-fat32-in-memory-guard-lemma-16
   (implies
    (and (stringp str)
@@ -3179,9 +3179,10 @@
                 (fat32-in-memoryp fat32-in-memory))
     :guard-hints
     (("goal"
-      :do-not-induct t
       :in-theory
-      (e/d (string-to-fat32-in-memory)
+      (e/d (string-to-fat32-in-memory
+            disk-image-to-fat32-in-memory-guard-lemma-12
+            disk-image-to-fat32-in-memory-guard-lemma-16)
            (string-append
             read-file-into-string2
             ;; The following came from accumulated-persistence results.
@@ -3189,7 +3190,6 @@
             (:definition update-fat)
             (:rewrite nth-of-make-character-list)
             (:rewrite fat32-filename-p-correctness-1)))))
-    :guard-debug t
     :stobjs (fat32-in-memory state)))
   ;; The idea behind this MBE is that slurping in the whole string at once is
   ;; causing inefficiencies in terms of memory allocated for all these subseq
@@ -3471,8 +3471,7 @@
        (bounded-nat-listp clusterchain
                           (count-of-clusters fat32-in-memory))
        (lower-bounded-integer-listp
-        clusterchain *ms-first-data-cluster*))
-      :verify-guards nil))
+        clusterchain *ms-first-data-cluster*))))
     (if
         (atom clusterchain)
         ""
@@ -3493,13 +3492,10 @@
 
   (defthm
     stringp-of-get-contents-from-clusterchain
-      (stringp
-       (get-contents-from-clusterchain
-        fat32-in-memory clusterchain file-size)))
-
-  (verify-guards get-contents-from-clusterchain
-      :hints
-      (("goal" :in-theory (e/d (lower-bounded-integer-listp)))))
+    (stringp
+     (get-contents-from-clusterchain
+      fat32-in-memory clusterchain file-size))
+    :rule-classes :type-prescription)
 
   (defund
     get-clusterchain-contents
@@ -3564,15 +3560,10 @@
      (mv-nth 0
              (get-clusterchain-contents
               fat32-in-memory masked-current-cluster length)))
-    :rule-classes (:rewrite :type-prescription)
+    :rule-classes :type-prescription
     :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
 
-  (verify-guards
-    get-clusterchain-contents
-    :hints
-      (("goal"
-        :do-not-induct t
-        :in-theory (e/d (fati-when-compliant-fat32-in-memoryp))))))
+  (verify-guards get-clusterchain-contents))
 
 (defthm
   get-clusterchain-contents-correctness-2
@@ -3610,9 +3601,7 @@
      (update-data-regioni i v fat32-in-memory)
      clusterchain file-size)
     (get-contents-from-clusterchain fat32-in-memory
-                                    clusterchain file-size)))
-  :hints
-  (("goal" :in-theory (enable lower-bounded-integer-listp))))
+                                    clusterchain file-size))))
 
 (defthm
   get-clusterchain-contents-correctness-1
@@ -4522,8 +4511,7 @@
           index-list *ms-first-data-cluster*)
          (cluster-listp cluster-list (cluster-size fat32-in-memory))
          (equal (len index-list)
-                (len cluster-list)))
-    :verify-guards nil))
+                (len cluster-list)))))
   (b*
       (((unless (consp cluster-list))
         fat32-in-memory)
@@ -4583,8 +4571,7 @@
   :hints
   (("goal"
     :induct
-    (stobj-set-clusters cluster-list index-list fat32-in-memory)
-    :in-theory (enable lower-bounded-integer-listp))))
+    (stobj-set-clusters cluster-list index-list fat32-in-memory))))
 
 (defthm
   fati-of-stobj-set-clusters
@@ -4592,14 +4579,6 @@
                (stobj-set-clusters cluster-list
                                    index-list fat32-in-memory))
          (fati i fat32-in-memory)))
-
-(verify-guards
-  stobj-set-clusters
-  :hints
-  (("goal"
-    :in-theory (e/d (lower-bounded-integer-listp))
-    :induct (stobj-set-clusters cluster-list
-                                index-list fat32-in-memory))))
 
 (defthm
   fat-length-of-stobj-set-clusters
@@ -4646,14 +4625,12 @@
                       (count-of-clusters fat32-in-memory))))
     :guard-hints
     (("goal"
-      :do-not-induct t
       :in-theory
-      (e/d
-       (lower-bounded-integer-listp)
-       ((:rewrite
-         fat32-masked-entry-list-p-of-find-n-free-clusters
-         . 1)
-        unsigned-byte-p))
+      (disable
+       (:rewrite
+        fat32-masked-entry-list-p-of-find-n-free-clusters
+        . 1)
+       unsigned-byte-p)
       :use
       (:instance
        (:rewrite
@@ -4730,7 +4707,7 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (place-contents lower-bounded-integer-listp)
+    (e/d (place-contents)
          ((:rewrite
            fat32-masked-entry-list-p-of-find-n-free-clusters
            . 1)))
@@ -5152,17 +5129,14 @@
   :hints
   (("goal"
     :in-theory
-    (e/d
-     (lower-bounded-integer-listp)
-     (stobj-set-indices-in-fa-table)))))
+    (disable stobj-set-indices-in-fa-table))))
 
 (defthm
   dir-ent-list-p-of-m1-fs-to-fat32-in-memory-helper
   (dir-ent-list-p
    (mv-nth 1
            (m1-fs-to-fat32-in-memory-helper
-            fat32-in-memory fs first-cluster)))
-  :hints (("goal" :in-theory (enable lower-bounded-integer-listp))))
+            fat32-in-memory fs first-cluster))))
 
 (defthm
   useful-dir-ent-list-p-of-m1-fs-to-fat32-in-memory-helper
@@ -5175,7 +5149,7 @@
   :hints
   (("goal"
     :in-theory
-    (enable useful-dir-ent-list-p lower-bounded-integer-listp))))
+    (enable useful-dir-ent-list-p))))
 
 (defthm
   unsigned-byte-listp-of-flatten-when-dir-ent-list-p
@@ -5311,8 +5285,7 @@
     :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
                 (m1-file-alist-p fs))
     :guard-hints
-    (("goal" :in-theory (e/d (lower-bounded-integer-listp
-                              m1-fs-to-fat32-in-memory-guard-lemma-1)
+    (("goal" :in-theory (e/d (m1-fs-to-fat32-in-memory-guard-lemma-1)
                              (unsigned-byte-p))
       ;; This is the second time we've had to add a :cases hint, really. The
       ;; reason is the same: brr tells us that a case split which should be
@@ -6188,8 +6161,7 @@
    (equal (data-regioni i
                         (stobj-set-clusters cluster-list
                                             index-list fat32-in-memory))
-          (data-regioni i fat32-in-memory)))
-  :hints (("goal" :in-theory (enable lower-bounded-integer-listp))))
+          (data-regioni i fat32-in-memory))))
 
 (defthm
   get-clusterchain-contents-of-place-contents-disjoint
@@ -6224,8 +6196,7 @@
                                masked-current-cluster length)))
   :hints
   (("goal"
-    :in-theory (e/d (place-contents lower-bounded-integer-listp
-                                    intersectp-equal
+    :in-theory (e/d (place-contents intersectp-equal
                                     get-clusterchain-contents)
                     (intersectp-is-commutative)))))
 
@@ -6271,7 +6242,7 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (place-contents lower-bounded-integer-listp)
+    (e/d (place-contents)
          ((:rewrite fat32-masked-entry-list-p-of-find-n-free-clusters
                     . 1)
           (:rewrite intersectp-is-commutative)))
@@ -6451,7 +6422,6 @@
 
   (local
    (in-theory (enable make-clusters
-                      lower-bounded-integer-listp
                       nthcdr-when->=-n-len-l)))
 
   (defthm
