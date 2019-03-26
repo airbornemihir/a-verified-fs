@@ -11435,3 +11435,208 @@ Some (rather awful) testing forms are
      fat32-in-memory
      (make-dir-ent-list (string=>nats contents))
      (cdr pathname))))
+
+(defthmd
+  lofat-find-file-by-pathname-correctness-2
+  (iff
+   (stringp
+    (mv-nth 0
+            (lofat-find-file-by-pathname
+             fat32-in-memory dir-ent-list pathname)))
+   (not
+    (dir-ent-list-p
+     (mv-nth
+      0
+      (lofat-find-file-by-pathname fat32-in-memory
+                                   dir-ent-list pathname))))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-1-lemma-1
+  (implies
+   (and (dir-ent-list-p dir-ent-list)
+        (equal (mv-nth 3
+                       (fat32-in-memory-to-m1-fs-helper
+                        fat32-in-memory
+                        dir-ent-list entry-limit))
+               0))
+   (iff
+    (consp
+     (assoc-equal name
+                  (mv-nth 0
+                          (fat32-in-memory-to-m1-fs-helper
+                           fat32-in-memory
+                           dir-ent-list entry-limit))))
+    (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
+           0)))
+  :hints
+  (("goal"
+    :in-theory (enable fat32-in-memory-to-m1-fs-helper))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-1-lemma-2
+  (implies
+   (and
+    (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
+           0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                    dir-ent-list entry-limit))
+           0)
+    (not (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name))))
+    (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list name)))
+       2))
+   (equal
+    (m1-file->contents
+     (cdr
+      (assoc-equal
+       name
+       (mv-nth 0
+               (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                dir-ent-list entry-limit)))))
+    ""))
+  :hints (("goal" :in-theory (enable fat32-in-memory-to-m1-fs-helper
+                                     useful-dir-ent-list-p))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-1-lemma-3
+  (implies
+   (and
+    (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
+           0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                    dir-ent-list entry-limit))
+           0)
+    (not (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name))))
+    (<= (+ 2 (count-of-clusters fat32-in-memory))
+        (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list name)))))
+   (equal
+    (m1-file->contents
+     (cdr
+      (assoc-equal
+       name
+       (mv-nth 0
+               (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                dir-ent-list entry-limit)))))
+    ""))
+  :hints (("goal" :in-theory (enable fat32-in-memory-to-m1-fs-helper
+                                     useful-dir-ent-list-p))))
+
+(defthmd
+  lofat-find-file-by-pathname-correctness-1-lemma-4
+  (implies (and (stringp x)
+                (unsigned-byte-p 32 (length x)))
+           (equal (m1-file-contents-fix x) x))
+  :hints (("goal" :in-theory (enable m1-file-contents-fix))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-1-lemma-5
+  (implies
+   (and
+    (compliant-fat32-in-memoryp fat32-in-memory)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                    dir-ent-list entry-limit))
+           0)
+    (not (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name))))
+    (<= 2
+        (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list name))))
+    (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list name)))
+       (+ 2 (count-of-clusters fat32-in-memory))))
+   (equal
+    (m1-file->contents
+     (cdr
+      (assoc-equal
+       name
+       (mv-nth 0
+               (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                dir-ent-list entry-limit)))))
+    (mv-nth
+     0
+     (get-clusterchain-contents
+      fat32-in-memory
+      (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list name)))
+      (dir-ent-file-size (mv-nth 0 (find-dir-ent dir-ent-list name)))))))
+  :hints
+  (("goal"
+    :in-theory (enable fat32-in-memory-to-m1-fs-helper
+                       useful-dir-ent-list-p
+                       lofat-find-file-by-pathname-correctness-1-lemma-4))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-1-lemma-6
+  (implies
+   (and
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                    dir-ent-list entry-limit))
+           0))
+   (equal
+    (m1-file->dir-ent
+     (cdr
+      (assoc-equal
+       name
+       (mv-nth 0
+               (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                dir-ent-list entry-limit)))))
+    (mv-nth 0 (find-dir-ent dir-ent-list name))))
+  :hints (("goal" :in-theory (enable fat32-in-memory-to-m1-fs-helper
+                                     useful-dir-ent-list-p))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-1-lemma-7
+  (implies
+   (and
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                    dir-ent-list entry-limit))
+           0))
+   (iff
+    (m1-directory-file-p
+     (cdr
+      (assoc-equal
+       (fat32-filename-fix (car pathname))
+       (mv-nth 0
+               (fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                                dir-ent-list entry-limit)))))
+    (dir-ent-directory-p
+     (mv-nth 0
+             (find-dir-ent dir-ent-list
+                           (fat32-filename-fix (car pathname)))))))
+  :hints (("goal" :in-theory (enable fat32-in-memory-to-m1-fs-helper
+                                     useful-dir-ent-list-p
+                                     m1-directory-file-p))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-1
+  (b*
+      (((mv contents &)
+        (lofat-find-file-by-pathname fat32-in-memory dir-ent-list pathname)))
+    (implies
+     (and
+      (compliant-fat32-in-memoryp fat32-in-memory)
+      (useful-dir-ent-list-p dir-ent-list)
+      (equal
+       (mv-nth 3
+               (fat32-in-memory-to-m1-fs-helper
+                fat32-in-memory
+                dir-ent-list
+                entry-limit))
+       0)
+      (stringp contents))
+     (equal contents
+            (m1-file->contents (mv-nth
+                                0
+                                (find-file-by-pathname
+                                 (mv-nth 0
+                                         (fat32-in-memory-to-m1-fs-helper
+                                          fat32-in-memory
+                                          dir-ent-list
+                                          entry-limit))
+                                 pathname))))))
+  :hints (("Goal" :in-theory (enable fat32-in-memory-to-m1-fs-helper))))
