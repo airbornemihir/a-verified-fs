@@ -11857,3 +11857,41 @@ Some (rather awful) testing forms are
                  fat32-in-memory dir-ent-list pathname)))
     :expand (fat32-in-memory-to-m1-fs-helper
              fat32-in-memory nil entry-limit))))
+
+;; This needs some revision... obviously, we don't want to be staring into the
+;; computation to get the root directory's directory entries here.
+(defun lofat-open (pathname fat32-in-memory fd-table file-table)
+  (declare (xargs :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                              (fat32-filename-list-p pathname)
+                              (fd-table-p fd-table)
+                              (file-table-p file-table))
+                  :stobjs fat32-in-memory))
+  (b*
+      ((fd-table (fd-table-fix fd-table))
+       (file-table (file-table-fix file-table))
+       ((mv root-contents &)
+        (get-clusterchain-contents
+         fat32-in-memory
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+         2097152))
+       ((mv & errno)
+        (lofat-find-file-by-pathname
+         fat32-in-memory
+         (make-dir-ent-list
+          (string=>nats
+           root-contents))
+         pathname))
+       ((unless (equal errno 0))
+        (mv fd-table file-table -1 errno))
+       (file-table-index
+        (find-new-index (strip-cars file-table)))
+       (fd-table-index
+        (find-new-index (strip-cars fd-table))))
+    (mv
+     (cons
+      (cons fd-table-index file-table-index)
+      fd-table)
+     (cons
+      (cons file-table-index (make-file-table-element :pos 0 :fid pathname))
+      file-table)
+     fd-table-index 0)))
