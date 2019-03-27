@@ -11805,7 +11805,7 @@ Some (rather awful) testing forms are
 (defthm
   lofat-find-file-by-pathname-correctness-3
   (b*
-      (((mv file &)
+      (((mv file error-code)
         (find-file-by-pathname
          (mv-nth 0
                  (fat32-in-memory-to-m1-fs-helper
@@ -11826,16 +11826,22 @@ Some (rather awful) testing forms are
         0
         (lofat-find-file-by-pathname fat32-in-memory
                                      dir-ent-list pathname))))
-     (equal
-      (mv-nth
-       0
-       (fat32-in-memory-to-m1-fs-helper
-        fat32-in-memory
-        (mv-nth 0
-                (lofat-find-file-by-pathname
-                 fat32-in-memory dir-ent-list pathname))
-        entry-limit))
-      (m1-file->contents file))))
+     (and
+      (equal
+       (mv-nth
+        0
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         (mv-nth 0
+                 (lofat-find-file-by-pathname
+                  fat32-in-memory dir-ent-list pathname))
+         entry-limit))
+       (m1-file->contents file))
+      (equal
+       (mv-nth 1
+               (lofat-find-file-by-pathname
+                fat32-in-memory dir-ent-list pathname))
+       error-code))))
   :hints
   (("goal"
     :induct
