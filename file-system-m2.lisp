@@ -11733,6 +11733,47 @@ Some (rather awful) testing forms are
              dir-ent-list entry-limit))))
 
 (defthm
+  lofat-find-file-by-pathname-correctness-1-lemma-8
+  (implies
+   (and
+    (dir-ent-directory-p
+     (mv-nth 0 (find-dir-ent dir-ent-list name)))
+    (not
+     (and (<= 2
+              (dir-ent-first-cluster
+               (mv-nth 0 (find-dir-ent dir-ent-list name))))
+          (< (dir-ent-first-cluster
+              (mv-nth 0 (find-dir-ent dir-ent-list name)))
+             (+ 2
+                (count-of-clusters fat32-in-memory)))))
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (fat32-in-memory-to-m1-fs-helper
+                    fat32-in-memory
+                    dir-ent-list entry-limit))
+           0))
+   (equal
+    (cdr (assoc-equal name
+                      (mv-nth 0
+                              (fat32-in-memory-to-m1-fs-helper
+                               fat32-in-memory
+                               dir-ent-list entry-limit))))
+    (make-m1-file
+     :dir-ent (mv-nth 0 (find-dir-ent dir-ent-list name))
+     :contents nil)))
+  :hints
+  (("goal"
+    :in-theory
+    (enable fat32-in-memory-to-m1-fs-helper-correctness-4)
+    :induct (find-dir-ent dir-ent-list name)
+    :expand
+    ((fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                      dir-ent-list entry-limit)
+     (fat32-in-memory-to-m1-fs-helper
+      fat32-in-memory
+      nil (+ -1 entry-limit))))))
+
+(defthm
   lofat-find-file-by-pathname-correctness-1
   (b*
       (((mv file error-code)
@@ -11760,3 +11801,53 @@ Some (rather awful) testing forms are
              fat32-in-memory dir-ent-list pathname)
             (mv (m1-file->contents file)
                 error-code)))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-3
+  (b*
+      (((mv file &)
+        (find-file-by-pathname
+         (mv-nth 0
+                 (fat32-in-memory-to-m1-fs-helper
+                  fat32-in-memory
+                  dir-ent-list entry-limit))
+         pathname)))
+    (implies
+     (and
+      (compliant-fat32-in-memoryp fat32-in-memory)
+      (useful-dir-ent-list-p dir-ent-list)
+      (equal (mv-nth 3
+                     (fat32-in-memory-to-m1-fs-helper
+                      fat32-in-memory
+                      dir-ent-list entry-limit))
+             0)
+      (dir-ent-list-p
+       (mv-nth
+        0
+        (lofat-find-file-by-pathname fat32-in-memory
+                                     dir-ent-list pathname))))
+     (equal
+      (mv-nth
+       0
+       (fat32-in-memory-to-m1-fs-helper
+        fat32-in-memory
+        (mv-nth 0
+                (lofat-find-file-by-pathname
+                 fat32-in-memory dir-ent-list pathname))
+        entry-limit))
+      (m1-file->contents file))))
+  :hints
+  (("goal"
+    :induct
+    (mv (mv-nth 0
+                (find-file-by-pathname
+                 (mv-nth 0
+                         (fat32-in-memory-to-m1-fs-helper
+                          fat32-in-memory
+                          dir-ent-list entry-limit))
+                 pathname))
+        (mv-nth 0
+                (lofat-find-file-by-pathname
+                 fat32-in-memory dir-ent-list pathname)))
+    :expand (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory nil entry-limit))))
