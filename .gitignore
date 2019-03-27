@@ -1,5 +1,5 @@
 **/*.lisp~
-/*.port
+**/*.port
 **/*.txt~
 *.aux
 *.log
