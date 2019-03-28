@@ -116,7 +116,7 @@
                   :otf-flg t))
   (b*
     (((mv fat32-in-memory error-code1)
-      (disk-image-to-fat32-in-memory
+      (disk-image-to-lofat
        fat32-in-memory image-path1 state))
      ((mv fs-ref error-code2)
       (if
@@ -124,7 +124,7 @@
           (mv nil *EIO*)
         (lofat-to-m1-fs fat32-in-memory)))
      ((mv fat32-in-memory error-code3)
-      (disk-image-to-fat32-in-memory
+      (disk-image-to-lofat
        fat32-in-memory image-path2 state))
      ((mv fs error-code4)
       (if

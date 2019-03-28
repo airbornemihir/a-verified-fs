@@ -22,7 +22,7 @@
           (mv fs -1)
         (mkdir-list fs extra-args 0)))
      ((mv fat32-in-memory &)
-      (m1-fs-to-fat32-in-memory fat32-in-memory fs))
+      (m1-fs-to-lofat fat32-in-memory fs))
      ((mv & val state)
       (getenv$ "MKDIR_OUTPUT" state))
      (state
