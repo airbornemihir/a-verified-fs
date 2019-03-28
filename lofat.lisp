@@ -9276,7 +9276,7 @@
     :use lofat-fs-p-correctness-1)))
 
 (defund-nx
-  disk-image-string-equiv (str1 str2)
+  eqfat (str1 str2)
   (b*
       (((mv fat32-in-memory1 error-code1)
         (string-to-lofat (create-fat32-in-memory)
@@ -9293,8 +9293,8 @@
     (fat32-in-memory-equiv fat32-in-memory1 fat32-in-memory2)))
 
 (defequiv
-  disk-image-string-equiv
-  :hints (("goal" :in-theory (enable disk-image-string-equiv))))
+  eqfat
+  :hints (("goal" :in-theory (enable eqfat))))
 
 (encapsulate
   ()
@@ -10868,7 +10868,7 @@
                 (string-to-lofat (create-fat32-in-memory)
                                            str))
         0))
-      (disk-image-string-equiv
+      (eqfat
        (lofat-to-string
         (mv-nth 0
                 (string-to-lofat fat32-in-memory str)))
@@ -10876,7 +10876,7 @@
      :hints
      (("goal"
        :in-theory
-       (e/d (disk-image-string-equiv)
+       (e/d (eqfat)
             (create-fat32-in-memory
              (:rewrite string-to-lofat-ignore)
              (:rewrite lofat-to-string-inversion)))
@@ -10928,7 +10928,7 @@
        (mv-nth 1
                (string-to-lofat fat32-in-memory str))
        0))
-     (disk-image-string-equiv
+     (eqfat
       (lofat-to-string
        (mv-nth 0
                (string-to-lofat fat32-in-memory str)))
@@ -11032,7 +11032,7 @@
              0
              (string-to-lofat fat32-in-memory str))))))
         0))
-      (disk-image-string-equiv
+      (eqfat
        (lofat-to-string
         (mv-nth
          0
@@ -11049,7 +11049,7 @@
      :hints
      (("goal"
        :in-theory
-       (e/d (disk-image-string-equiv)
+       (e/d (eqfat)
             ((:rewrite lofat-to-string-inversion)
              (:rewrite string-to-lofat-ignore)))
        :use
@@ -11182,7 +11182,7 @@
              0
              (string-to-lofat fat32-in-memory str))))))
         0))
-      (disk-image-string-equiv
+      (eqfat
        (lofat-to-string
         (mv-nth
          0
@@ -11248,7 +11248,7 @@
           (mv-nth 1
                   (m1-fs-to-lofat fat32-in-memory fs))
           0))
-        (disk-image-string-equiv
+        (eqfat
          (lofat-to-string
           (mv-nth 0
                   (m1-fs-to-lofat fat32-in-memory fs)))
