@@ -1983,7 +1983,7 @@
                (read-reserved-area fat32-in-memory str))))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-1
+  disk-image-to-lofat-guard-lemma-1
   (iff
    (< (len (explode (read-file-into-string2
                      image-path 0 *initialbytcnt* state)))
@@ -2011,7 +2011,7 @@
        *initialbytcnt*))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-3
+  disk-image-to-lofat-guard-lemma-3
   (equal
    (read-reserved-area
     (update-bpb_bytspersec
@@ -2028,7 +2028,7 @@
   :hints (("Goal" :in-theory (enable read-reserved-area)) ))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-9
+  disk-image-to-lofat-guard-lemma-9
   (implies
    (< (nfix n) 16)
    (equal
@@ -2042,7 +2042,7 @@
   :hints (("goal" :in-theory (enable nth))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-4
+  disk-image-to-lofat-guard-lemma-4
   (implies
    (equal
     (mv-nth
@@ -2085,7 +2085,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    disk-image-to-fat32-in-memory-guard-lemma-5
+    disk-image-to-lofat-guard-lemma-5
     (implies
      (equal (mv-nth 1
                     (read-reserved-area fat32-in-memory str))
@@ -2110,7 +2110,7 @@
             count-of-clusters-of-read-reserved-area))))
 
   (defthm
-    disk-image-to-fat32-in-memory-guard-lemma-15
+    disk-image-to-lofat-guard-lemma-15
     (iff
      (integerp
       (*
@@ -2144,7 +2144,7 @@
           (read-file-into-string2 image-path 0 nil state))))))))
 
   (defthm
-    disk-image-to-fat32-in-memory-guard-lemma-22
+    disk-image-to-lofat-guard-lemma-22
     (implies
      (and
       (integerp
@@ -2187,7 +2187,7 @@
     :hints (("Goal" :in-theory (enable fat-entry-count)) )))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-6
+  disk-image-to-lofat-guard-lemma-6
   (implies
    (<=
     16
@@ -2212,7 +2212,7 @@
      state))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-7
+  disk-image-to-lofat-guard-lemma-7
   (implies
    (and
     (not
@@ -2260,7 +2260,7 @@
   :hints (("goal" :in-theory (enable read-reserved-area))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-8
+  disk-image-to-lofat-guard-lemma-8
   (implies
    (and (stringp str)
         (<= *initialbytcnt* (len (explode str)))
@@ -2285,7 +2285,7 @@
     :in-theory (enable read-reserved-area get-initial-bytes))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-10
+  disk-image-to-lofat-guard-lemma-10
   (implies
    (equal
     (mv-nth
@@ -2333,7 +2333,7 @@
   :hints (("goal" :in-theory (enable read-reserved-area))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-11
+  disk-image-to-lofat-guard-lemma-11
   (implies
    (<
     (len
@@ -2392,7 +2392,7 @@
   :hints (("goal" :in-theory (enable get-initial-bytes read-reserved-area))))
 
 (defthmd
-  disk-image-to-fat32-in-memory-guard-lemma-12
+  disk-image-to-lofat-guard-lemma-12
   (implies
    (and (stringp str)
         (<= *initialbytcnt* (len (explode str)))
@@ -2423,7 +2423,7 @@
     :in-theory (enable read-reserved-area get-initial-bytes))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-13
+  disk-image-to-lofat-guard-lemma-13
   (implies
    (and
     (<= 16
@@ -2477,7 +2477,7 @@
                     (str (read-file-into-string2 image-path 0 nil state))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-14
+  disk-image-to-lofat-guard-lemma-14
   (implies
    (equal
     (mv-nth
@@ -2507,14 +2507,14 @@
   :hints
   (("goal"
     :in-theory (e/d (read-reserved-area)
-                    (disk-image-to-fat32-in-memory-guard-lemma-13))
-    :use disk-image-to-fat32-in-memory-guard-lemma-13)))
+                    (disk-image-to-lofat-guard-lemma-13))
+    :use disk-image-to-lofat-guard-lemma-13)))
 
 ;; Accumulated-persistence suggests disabling this rule, but really it only
 ;; gets tried in the main lemma, where we have to leave it enabled anyway. So
 ;; we might as well skip (or at least shrink) that one in-theory hint.
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-16
+  disk-image-to-lofat-guard-lemma-16
   (implies
    (and (stringp str)
         (<= *initialbytcnt* (len (explode str)))
@@ -2553,7 +2553,7 @@
     :in-theory (enable read-reserved-area get-initial-bytes))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-17
+  disk-image-to-lofat-guard-lemma-17
   (implies
    (equal
     (mv-nth
@@ -2615,7 +2615,7 @@
                  (read-file-into-string2 image-path 0 nil state))))))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-19
+  disk-image-to-lofat-guard-lemma-19
   (implies
    (and
     (equal
@@ -2769,7 +2769,7 @@
           nil 1152921504606846975)))))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-21
+  disk-image-to-lofat-guard-lemma-21
   (equal
    (+
     (-
@@ -2820,7 +2820,7 @@
               (read-reserved-area fat32-in-memory str)))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-25
+  disk-image-to-lofat-guard-lemma-25
   (implies
    (stringp (read-file-into-string2 image-path 0 nil state))
    (iff
@@ -2906,7 +2906,7 @@
       (read-file-into-string2 image-path 0 nil state))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-27
+  disk-image-to-lofat-guard-lemma-27
   (implies
    (and
     (<=
@@ -3056,7 +3056,7 @@
                  (read-file-into-string2 image-path 0 nil state))))))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-28
+  disk-image-to-lofat-guard-lemma-28
   (implies
    (stringp (read-file-into-string2 image-path 0 nil state))
    (iff
@@ -3104,7 +3104,7 @@
        (read-file-into-string2 image-path 0 nil state)))))))
 
 (defthm
-  disk-image-to-fat32-in-memory-guard-lemma-29
+  disk-image-to-lofat-guard-lemma-29
   (implies
    (and
     (stringp (read-file-into-string2 image-path 0 nil state))
@@ -3178,7 +3178,7 @@
   :rule-classes :linear)
 
 (defun
-  disk-image-to-fat32-in-memory
+  disk-image-to-lofat
   (fat32-in-memory image-path state)
   (declare
    (xargs
@@ -3188,7 +3188,7 @@
     (("goal"
       :in-theory
       (e/d (string-to-lofat
-            disk-image-to-fat32-in-memory-guard-lemma-12)
+            disk-image-to-lofat-guard-lemma-12)
            (string-append
             read-file-into-string2
             ;; The following came from accumulated-persistence results.

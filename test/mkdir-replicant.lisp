@@ -12,7 +12,7 @@
      ((mv & val state)
       (getenv$ "DISK" state))
      ((mv fat32-in-memory &)
-      (disk-image-to-fat32-in-memory
+      (disk-image-to-lofat
        fat32-in-memory val state))
      ((mv fs &)
       (fat32-in-memory-to-m1-fs fat32-in-memory))

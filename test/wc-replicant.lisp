@@ -5,7 +5,7 @@
     (((mv & val state)
       (getenv$ "DISK" state))
      ((mv fat32-in-memory &)
-      (disk-image-to-fat32-in-memory
+      (disk-image-to-lofat
        fat32-in-memory val state))
      ((mv & val state)
       (getenv$ "WC_OUTPUT" state))

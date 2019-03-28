@@ -5,7 +5,7 @@
       (getenv$ "DISK" state))
      ((mv fat32-in-memory &)
       (time$
-       (disk-image-to-fat32-in-memory
+       (disk-image-to-lofat
         fat32-in-memory image-path state)))
      (state
       (time$
