@@ -1417,11 +1417,19 @@
  :val-type file-table-element
  :true-listp t)
 
+(defthm file-table-p-correctness-1
+  (implies (file-table-p file-table)
+           (nat-listp (strip-cars file-table))))
+
 ;; This data structure may change later.
 (fty::defalist fd-table
                :key-type nat ;; index into the fd-table
                :val-type nat ;; index into the file-table
                :true-listp t)
+
+(defthm file-table-p-correctness-2
+  (implies (fd-table-p fd-table)
+           (nat-listp (strip-cars fd-table))))
 
 ;; This function returns *ENOENT* when the root directory is asked for. There's
 ;; a simple reason: we want to return the whole file, including the directory

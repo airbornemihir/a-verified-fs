@@ -11733,6 +11733,47 @@ Some (rather awful) testing forms are
              dir-ent-list entry-limit))))
 
 (defthm
+  lofat-find-file-by-pathname-correctness-1-lemma-8
+  (implies
+   (and
+    (dir-ent-directory-p
+     (mv-nth 0 (find-dir-ent dir-ent-list name)))
+    (not
+     (and (<= 2
+              (dir-ent-first-cluster
+               (mv-nth 0 (find-dir-ent dir-ent-list name))))
+          (< (dir-ent-first-cluster
+              (mv-nth 0 (find-dir-ent dir-ent-list name)))
+             (+ 2
+                (count-of-clusters fat32-in-memory)))))
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (fat32-in-memory-to-m1-fs-helper
+                    fat32-in-memory
+                    dir-ent-list entry-limit))
+           0))
+   (equal
+    (cdr (assoc-equal name
+                      (mv-nth 0
+                              (fat32-in-memory-to-m1-fs-helper
+                               fat32-in-memory
+                               dir-ent-list entry-limit))))
+    (make-m1-file
+     :dir-ent (mv-nth 0 (find-dir-ent dir-ent-list name))
+     :contents nil)))
+  :hints
+  (("goal"
+    :in-theory
+    (enable fat32-in-memory-to-m1-fs-helper-correctness-4)
+    :induct (find-dir-ent dir-ent-list name)
+    :expand
+    ((fat32-in-memory-to-m1-fs-helper fat32-in-memory
+                                      dir-ent-list entry-limit)
+     (fat32-in-memory-to-m1-fs-helper
+      fat32-in-memory
+      nil (+ -1 entry-limit))))))
+
+(defthm
   lofat-find-file-by-pathname-correctness-1
   (b*
       (((mv file error-code)
@@ -11760,3 +11801,97 @@ Some (rather awful) testing forms are
              fat32-in-memory dir-ent-list pathname)
             (mv (m1-file->contents file)
                 error-code)))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-3
+  (b*
+      (((mv file error-code)
+        (find-file-by-pathname
+         (mv-nth 0
+                 (fat32-in-memory-to-m1-fs-helper
+                  fat32-in-memory
+                  dir-ent-list entry-limit))
+         pathname)))
+    (implies
+     (and
+      (compliant-fat32-in-memoryp fat32-in-memory)
+      (useful-dir-ent-list-p dir-ent-list)
+      (equal (mv-nth 3
+                     (fat32-in-memory-to-m1-fs-helper
+                      fat32-in-memory
+                      dir-ent-list entry-limit))
+             0)
+      (dir-ent-list-p
+       (mv-nth
+        0
+        (lofat-find-file-by-pathname fat32-in-memory
+                                     dir-ent-list pathname))))
+     (and
+      (equal
+       (mv-nth
+        0
+        (fat32-in-memory-to-m1-fs-helper
+         fat32-in-memory
+         (mv-nth 0
+                 (lofat-find-file-by-pathname
+                  fat32-in-memory dir-ent-list pathname))
+         entry-limit))
+       (m1-file->contents file))
+      (equal
+       (mv-nth 1
+               (lofat-find-file-by-pathname
+                fat32-in-memory dir-ent-list pathname))
+       error-code))))
+  :hints
+  (("goal"
+    :induct
+    (mv (mv-nth 0
+                (find-file-by-pathname
+                 (mv-nth 0
+                         (fat32-in-memory-to-m1-fs-helper
+                          fat32-in-memory
+                          dir-ent-list entry-limit))
+                 pathname))
+        (mv-nth 0
+                (lofat-find-file-by-pathname
+                 fat32-in-memory dir-ent-list pathname)))
+    :expand (fat32-in-memory-to-m1-fs-helper
+             fat32-in-memory nil entry-limit))))
+
+;; This needs some revision... obviously, we don't want to be staring into the
+;; computation to get the root directory's directory entries here.
+(defun lofat-open (pathname fat32-in-memory fd-table file-table)
+  (declare (xargs :guard (and (compliant-fat32-in-memoryp fat32-in-memory)
+                              (fat32-filename-list-p pathname)
+                              (fd-table-p fd-table)
+                              (file-table-p file-table))
+                  :stobjs fat32-in-memory))
+  (b*
+      ((fd-table (fd-table-fix fd-table))
+       (file-table (file-table-fix file-table))
+       ((mv root-contents &)
+        (get-clusterchain-contents
+         fat32-in-memory
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+         2097152))
+       ((mv & errno)
+        (lofat-find-file-by-pathname
+         fat32-in-memory
+         (make-dir-ent-list
+          (string=>nats
+           root-contents))
+         pathname))
+       ((unless (equal errno 0))
+        (mv fd-table file-table -1 errno))
+       (file-table-index
+        (find-new-index (strip-cars file-table)))
+       (fd-table-index
+        (find-new-index (strip-cars fd-table))))
+    (mv
+     (cons
+      (cons fd-table-index file-table-index)
+      fd-table)
+     (cons
+      (cons file-table-index (make-file-table-element :pos 0 :fid pathname))
+      file-table)
+     fd-table-index 0)))
