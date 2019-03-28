@@ -90,15 +90,15 @@
      (implies (and (m1-file-no-dups-p m1-file-alist1)
                    (m1-file-alist-p m1-file-alist1))
               (iff (induction-scheme m1-file-alist1 m1-file-alist2)
-                   (m1-dir-subsetp m1-file-alist1 m1-file-alist2)))
+                   (hifat-subsetp m1-file-alist1 m1-file-alist2)))
      :hints (("goal" :induct (induction-scheme m1-file-alist1 m1-file-alist2)
               :in-theory (enable m1-file-no-dups-p)))))
 
   (defthm
-    m1-entry-count-when-m1-dir-subsetp
+    m1-entry-count-when-hifat-subsetp
     (implies (and (m1-file-no-dups-p m1-file-alist1)
                   (m1-file-alist-p m1-file-alist1)
-                  (m1-dir-subsetp m1-file-alist1 m1-file-alist2))
+                  (hifat-subsetp m1-file-alist1 m1-file-alist2))
              (<= (m1-entry-count m1-file-alist1)
                  (m1-entry-count m1-file-alist2)))
     :rule-classes :linear
@@ -123,9 +123,9 @@
                   (m1-entry-count m1-file-alist2)))
   :hints
   (("goal" :in-theory (e/d (hifat-equiv)
-                           (m1-entry-count-when-m1-dir-subsetp))
+                           (m1-entry-count-when-hifat-subsetp))
     :do-not-induct t
-    :use ((:instance m1-entry-count-when-m1-dir-subsetp
+    :use ((:instance m1-entry-count-when-hifat-subsetp
                      (m1-file-alist1 m1-file-alist2)
                      (m1-file-alist2 m1-file-alist1))
-          m1-entry-count-when-m1-dir-subsetp))))
+          m1-entry-count-when-hifat-subsetp))))

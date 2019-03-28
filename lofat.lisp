@@ -7973,8 +7973,7 @@
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
         (:rewrite
          fati-of-m1-fs-to-lofat-helper-disjoint-lemma-2)
-        (:definition induction-scheme)
-        (:linear m1-entry-count-when-m1-dir-subsetp)))
+        (:definition induction-scheme)))
       :expand
       ((:free (y) (intersectp-equal nil y))
        (:free (x1 x2 y)
