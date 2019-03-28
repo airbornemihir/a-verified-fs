@@ -11391,7 +11391,7 @@ Some (rather awful) testing forms are
   (m1-fs-to-fat32-in-memory fat32-in-memory fs))
 |#
 
-(defun m2-statfs (fat32-in-memory)
+(defun lofat-statfs (fat32-in-memory)
   (declare (xargs :stobjs (fat32-in-memory)
                   :verify-guards nil))
   (b*
