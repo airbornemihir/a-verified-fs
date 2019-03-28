@@ -139,6 +139,6 @@
       (mv (good-bye 0) fat32-in-memory))
      ((unless (and (equal error-code2 0) (equal error-code4 0)))
       (mv (good-bye 1) fat32-in-memory))
-     ((unless (m1-dir-equiv fs-ref fs))
+     ((unless (hifat-equiv fs-ref fs))
       (mv (good-bye 1) fat32-in-memory)))
   (mv (good-bye 0) fat32-in-memory)))

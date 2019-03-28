@@ -6,7 +6,7 @@
 
 (include-book "generate-index-list")
 ;; (include-book "file-system-m1")
-;; (include-book "m1-dir-equiv")
+;; (include-book "hifat-equiv")
 (include-book "m1-entry-count")
 (include-book "fat32-in-memory")
 (include-book "cluster-listp")
@@ -7951,7 +7951,7 @@
                       (lofat-to-m1-fs-helper
                        fat32-in-memory
                        dir-ent-list entry-limit)))
-             (m1-dir-equiv (mv-nth 0
+             (hifat-equiv (mv-nth 0
                                    (lofat-to-m1-fs-helper
                                     fat32-in-memory
                                     dir-ent-list entry-limit))
@@ -8043,7 +8043,7 @@
                            fat32-in-memory
                            dir-ent-list entry-limit))
                   0)
-           (m1-dir-equiv (mv-nth 0
+           (hifat-equiv (mv-nth 0
                                  (lofat-to-m1-fs-helper
                                   fat32-in-memory
                                   dir-ent-list entry-limit))
@@ -8138,7 +8138,7 @@
                 (lofat-to-m1-fs
                  fat32-in-memory))
         0)
-       (m1-dir-equiv
+       (hifat-equiv
         (mv-nth 0
                 (lofat-to-m1-fs
                  fat32-in-memory))
@@ -8168,7 +8168,7 @@
                    (equal error-code2 0)))
        ((unless (and good1 good2))
         (and (not good1) (not good2))))
-    (m1-dir-equiv fs1 fs2)))
+    (hifat-equiv fs1 fs2)))
 
 (defequiv
   lofat-equiv
@@ -10953,7 +10953,7 @@
          (m1-fs-to-lofat fat32-in-memory fs)))
      (implies
       (zp error-code)
-      (m1-dir-equiv
+      (hifat-equiv
        (mv-nth
         0
         (lofat-to-m1-fs

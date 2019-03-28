@@ -19,7 +19,7 @@
       (lofat-to-m1-fs fat32-in-memory)))
   (mv
        (good-bye
-        (if (m1-dir-equiv fs-ref fs)
+        (if (hifat-equiv fs-ref fs)
             0
           1))
        fat32-in-memory

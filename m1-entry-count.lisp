@@ -6,7 +6,7 @@
 ; FAT32 disk image into a tree in a bounded amount of time. Some lemmas for
 ; reasoning about it are placed here.
 
-(include-book "m1-dir-equiv")
+(include-book "hifat-equiv")
 
 ;; We're not counting this very directory, because the root does not have a
 ;; directory entry for itself.
@@ -115,14 +115,14 @@
                       (x (car (car m1-file-alist1))))))))
 
 (defthm
-  m1-entry-count-when-m1-dir-equiv
-  (implies (and (m1-dir-equiv m1-file-alist1 m1-file-alist2)
+  m1-entry-count-when-hifat-equiv
+  (implies (and (hifat-equiv m1-file-alist1 m1-file-alist2)
                 (m1-file-alist-p m1-file-alist2)
                 (m1-file-no-dups-p m1-file-alist2))
            (equal (m1-entry-count m1-file-alist1)
                   (m1-entry-count m1-file-alist2)))
   :hints
-  (("goal" :in-theory (e/d (m1-dir-equiv)
+  (("goal" :in-theory (e/d (hifat-equiv)
                            (m1-entry-count-when-m1-dir-subsetp))
     :do-not-induct t
     :use ((:instance m1-entry-count-when-m1-dir-subsetp
