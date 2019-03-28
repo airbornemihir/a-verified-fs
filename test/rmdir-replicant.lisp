@@ -22,7 +22,7 @@
           (mv fs -1)
         (rmdir-list fs extra-args 0)))
      ((mv fat32-in-memory &)
-      (m1-fs-to-lofat fat32-in-memory fs))
+      (hifat-to-lofat fat32-in-memory fs))
      ((mv & val state)
       (getenv$ "RMDIR_OUTPUT" state))
      (state

@@ -18,7 +18,7 @@
      ((mv fs exit-status &)
       (m1-rename fs oldpathname newpathname))
      ((mv fat32-in-memory &)
-      (m1-fs-to-lofat fat32-in-memory fs))
+      (hifat-to-lofat fat32-in-memory fs))
      ((mv & val state)
       (getenv$ "MV_OUTPUT" state))
      (state
