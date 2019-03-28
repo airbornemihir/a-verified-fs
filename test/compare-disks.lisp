@@ -1,4 +1,4 @@
-(include-book "../file-system-m2")
+(include-book "../lofat")
 (include-book "centaur/getopt/top" :dir :system)
 (include-book "oslib/argv" :dir :system)
 

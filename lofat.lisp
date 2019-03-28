@@ -1,6 +1,6 @@
 (in-package "ACL2")
 
-;  file-system-m2.lisp                                  Mihir Mehta
+;  lofat.lisp                                           Mihir Mehta
 
 ; This is a stobj model of the FAT32 filesystem.
 

@@ -1,4 +1,4 @@
-(include-book "../file-system-m2")
+(include-book "../lofat")
 
 (b*
     (((mv & disk state)
