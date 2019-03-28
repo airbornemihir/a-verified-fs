@@ -4,7 +4,7 @@
 
 ; Some definitions and theorems for the equivalence relation hifat-equiv.
 
-(include-book "file-system-m1")
+(include-book "hifat")
 
 (defun
   hifat-subsetp

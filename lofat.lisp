@@ -5,7 +5,7 @@
 ; This is a stobj model of the FAT32 filesystem.
 
 (include-book "generate-index-list")
-;; (include-book "file-system-m1")
+;; (include-book "hifat")
 ;; (include-book "hifat-equiv")
 (include-book "m1-entry-count")
 (include-book "fat32-in-memory")

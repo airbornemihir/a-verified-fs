@@ -1,8 +1,8 @@
 (in-package "ACL2")
 
-;  file-system-m1.lisp                                 Mihir Mehta
+;  hifat.lisp                                          Mihir Mehta
 
-; M1, a model which abstracts M2.
+; HiFAT, a model which abstracts LoFAT.
 
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
 (include-book "std/io/read-ints" :dir :system)
