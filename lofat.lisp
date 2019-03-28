@@ -642,7 +642,7 @@
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
-  (defthm fat32-in-memory-to-string-inversion-lemma-29
+  (defthm lofat-to-string-inversion-lemma-29
     (implies (and (not (zp j)) (integerp i) (> i j))
              (> (floor i j) 0))
     :rule-classes :linear)
@@ -5832,7 +5832,7 @@
 
 ;; A bit of explanation is in order here - this function recurs on n, which is
 ;; instantiated with (bpb_numfats fat32-in-memory) in
-;; fat32-in-memory-to-string. stobj-fa-table-to-string, in contrast, generates
+;; lofat-to-string. stobj-fa-table-to-string, in contrast, generates
 ;; one copy of the FAT string from the fat32-in-memory instance, and does all
 ;; the part-select heavy lifting.
 (defund
@@ -6046,7 +6046,7 @@
   :hints (("Goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2))))
 
 (defund
-  fat32-in-memory-to-string
+  lofat-to-string
   (fat32-in-memory)
   (declare
    (xargs :stobjs fat32-in-memory
@@ -6067,7 +6067,7 @@
                  fat-string data-region-string)))
 
 (defthm
-  length-of-fat32-in-memory-to-string-lemma-1
+  length-of-lofat-to-string-lemma-1
   (implies (lofat-fs-p fat32-in-memory)
            (and
            (equal (nfix (bpb_numfats fat32-in-memory))
@@ -6079,12 +6079,12 @@
                                      bpb_numfats))))
 
 (defthm
-  length-of-fat32-in-memory-to-string
+  length-of-lofat-to-string
   (implies
    (lofat-fs-p fat32-in-memory)
    (equal
     (len
-     (explode (fat32-in-memory-to-string fat32-in-memory)))
+     (explode (lofat-to-string fat32-in-memory)))
     (+ (* (bpb_rsvdseccnt fat32-in-memory)
           (bpb_bytspersec fat32-in-memory))
        (* (bpb_numfats fat32-in-memory)
@@ -6093,7 +6093,7 @@
        (* (cluster-size fat32-in-memory)
           (data-region-length fat32-in-memory)))))
   :hints
-  (("goal" :in-theory (e/d (fat32-in-memory-to-string) (nfix)))))
+  (("goal" :in-theory (e/d (lofat-to-string) (nfix)))))
 
 (defun
   fat32-in-memory-to-disk-image
@@ -6108,7 +6108,7 @@
     (("goal"
       :do-not-induct t
       :in-theory
-      (e/d (fat32-in-memory-to-string)
+      (e/d (lofat-to-string)
            (princ$-of-princ$
             princ$-data-region-string-helper-correctness-1))
       :use
@@ -6174,7 +6174,7 @@
        ((when (null channel)) state)
        (state
         (mbe
-         :logic (princ$ (fat32-in-memory-to-string fat32-in-memory)
+         :logic (princ$ (lofat-to-string fat32-in-memory)
                         channel state)
          :exec
          (b*
@@ -8212,7 +8212,7 @@
   :hints (("Goal" :in-theory (enable fat32-in-memory-equiv)) ))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-1
+  lofat-to-string-inversion-lemma-1
   (implies
    (and (< (nfix n)
            (* (bpb_rsvdseccnt fat32-in-memory)
@@ -8238,7 +8238,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-2
+    lofat-to-string-inversion-lemma-2
     (implies (fat32-in-memoryp fat32-in-memory)
              (>= (+ (data-region-length fat32-in-memory)
                     (* (bpb_bytspersec fat32-in-memory)
@@ -8252,7 +8252,7 @@
     :rule-classes :linear)
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-3
+    lofat-to-string-inversion-lemma-3
     (implies (equal (* (bpb_fatsz32 fat32-in-memory)
                        1/4 (bpb_bytspersec fat32-in-memory))
                     (fat-length fat32-in-memory))
@@ -8266,381 +8266,381 @@
   ()
 
   (local
-   (in-theory (e/d (fat32-in-memory-to-string get-initial-bytes get-remaining-rsvdbyts)
+   (in-theory (e/d (lofat-to-string get-initial-bytes get-remaining-rsvdbyts)
                    (;; the splitter-note suggests these could usefully be
                     ;; disabled
                     nth-of-append nthcdr-of-append take-of-append))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-4
+    lofat-to-string-inversion-lemma-4
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth 11
             (get-initial-bytes
-             (fat32-in-memory-to-string fat32-in-memory)))
+             (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_bytspersec fat32-in-memory)))
       (equal
        (nth 12
             (get-initial-bytes
-             (fat32-in-memory-to-string fat32-in-memory)))
+             (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_bytspersec fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-5
+    lofat-to-string-inversion-lemma-5
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
       (nth 13
            (get-initial-bytes
-            (fat32-in-memory-to-string fat32-in-memory)))
+            (lofat-to-string fat32-in-memory)))
       (bpb_secperclus fat32-in-memory))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-6
+    lofat-to-string-inversion-lemma-6
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth 14
             (get-initial-bytes
-             (fat32-in-memory-to-string fat32-in-memory)))
+             (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_rsvdseccnt fat32-in-memory)))
       (equal
        (nth 15
             (get-initial-bytes
-             (fat32-in-memory-to-string fat32-in-memory)))
+             (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_rsvdseccnt fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-7
+    lofat-to-string-inversion-lemma-7
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
       (nth 0
            (get-remaining-rsvdbyts
-            (fat32-in-memory-to-string fat32-in-memory)))
+            (lofat-to-string fat32-in-memory)))
       (bpb_numfats fat32-in-memory)))
     :hints
     (("goal" :in-theory (e/d (string=>nats) (nth)))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-8
+    lofat-to-string-inversion-lemma-8
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         1
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_rootentcnt fat32-in-memory)))
       (equal
        (nth
         2
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_rootentcnt fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-9
+    lofat-to-string-inversion-lemma-9
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         3
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_totsec16 fat32-in-memory)))
       (equal
        (nth
         4
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_totsec16 fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-10
+    lofat-to-string-inversion-lemma-10
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
       (nth
        5
-       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+       (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
       (bpb_media fat32-in-memory))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-11
+    lofat-to-string-inversion-lemma-11
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         6
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_fatsz16 fat32-in-memory)))
       (equal
        (nth
         7
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_fatsz16 fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-12
+    lofat-to-string-inversion-lemma-12
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         8
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_secpertrk fat32-in-memory)))
       (equal
        (nth
         9
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_secpertrk fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-13
+    lofat-to-string-inversion-lemma-13
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         10
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_numheads fat32-in-memory)))
       (equal
        (nth
         11
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_numheads fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-14
+    lofat-to-string-inversion-lemma-14
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         12
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_hiddsec fat32-in-memory)))
       (equal
        (nth
         13
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail  8 (bpb_hiddsec fat32-in-memory))))
       (equal
        (nth
         14
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail 16 (bpb_hiddsec fat32-in-memory))))
       (equal
        (nth
         15
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 24 (bpb_hiddsec fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-15
+    lofat-to-string-inversion-lemma-15
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         16
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_totsec32 fat32-in-memory)))
       (equal
        (nth
         17
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail  8 (bpb_totsec32 fat32-in-memory))))
       (equal
        (nth
         18
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail 16 (bpb_totsec32 fat32-in-memory))))
       (equal
        (nth
         19
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 24 (bpb_totsec32 fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-16
+    lofat-to-string-inversion-lemma-16
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         20
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_fatsz32 fat32-in-memory)))
       (equal
        (nth
         21
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail 8 (bpb_fatsz32 fat32-in-memory))))
       (equal
        (nth
         22
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail 16 (bpb_fatsz32 fat32-in-memory))))
       (equal
        (nth
         23
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 24 (bpb_fatsz32 fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-17
+    lofat-to-string-inversion-lemma-17
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         24
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_extflags fat32-in-memory)))
       (equal
        (nth
         25
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_extflags fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-18
+    lofat-to-string-inversion-lemma-18
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
       (nth
        26
-       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+       (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
       (bpb_fsver_minor fat32-in-memory))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-19
+    lofat-to-string-inversion-lemma-19
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
       (nth
        27
-       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+       (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
       (bpb_fsver_major fat32-in-memory))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-20
+    lofat-to-string-inversion-lemma-20
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         28
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_rootclus fat32-in-memory)))
       (equal
        (nth
         29
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail  8 (bpb_rootclus fat32-in-memory))))
       (equal
        (nth
         30
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail 16 (bpb_rootclus fat32-in-memory))))
       (equal
        (nth
         31
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 24 (bpb_rootclus fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-21
+    lofat-to-string-inversion-lemma-21
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         32
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_fsinfo fat32-in-memory)))
       (equal
        (nth
         33
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_fsinfo fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-22
+    lofat-to-string-inversion-lemma-22
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         34
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bpb_bkbootsec fat32-in-memory)))
       (equal
        (nth
         35
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 8 (bpb_bkbootsec fat32-in-memory))))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-23
+    lofat-to-string-inversion-lemma-23
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
       (nth
        48
-       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+       (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
       (bs_drvnum fat32-in-memory))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-24
+    lofat-to-string-inversion-lemma-24
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
       (nth
        49
-       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+       (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
       (bs_reserved1 fat32-in-memory))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-25
+    lofat-to-string-inversion-lemma-25
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
       (nth
        50
-       (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+       (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
       (bs_bootsig fat32-in-memory))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-26
+    lofat-to-string-inversion-lemma-26
     (implies
      (lofat-fs-p fat32-in-memory)
      (and
       (equal
        (nth
         51
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (bs_volid fat32-in-memory)))
       (equal
        (nth
         52
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail  8 (bs_volid fat32-in-memory))))
       (equal
        (nth
         53
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (loghead 8 (logtail 16 (bs_volid fat32-in-memory))))
       (equal
        (nth
         54
-        (get-remaining-rsvdbyts (fat32-in-memory-to-string fat32-in-memory)))
+        (get-remaining-rsvdbyts (lofat-to-string fat32-in-memory)))
        (logtail 24 (bs_volid fat32-in-memory)))))))
 
 (encapsulate
@@ -8649,7 +8649,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-27
+    lofat-to-string-inversion-lemma-27
     (implies
      (and (lofat-fs-p fat32-in-memory)
           (natp index)
@@ -8671,7 +8671,7 @@
     :hints (("Goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2))))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-30
+    lofat-to-string-inversion-lemma-30
     (implies (and (fat32-in-memoryp fat32-in-memory)
                   (<= 512 (bpb_bytspersec fat32-in-memory))
                   (<= 1 (bpb_secperclus fat32-in-memory))
@@ -8696,7 +8696,7 @@
               (:rewrite product-greater-than-zero-2)
               (:change-goal nil t)
               :bash :s-prop
-              (:use (:instance fat32-in-memory-to-string-inversion-lemma-29
+              (:use (:instance lofat-to-string-inversion-lemma-29
                                (i (+ (- (bpb_rsvdseccnt fat32-in-memory))
                                      (bpb_totsec32 fat32-in-memory)
                                      (- (* (bpb_fatsz32 fat32-in-memory)
@@ -8707,7 +8707,7 @@
               (:= t)
               :top :bash))
 
-  (defthm fat32-in-memory-to-string-inversion-lemma-31
+  (defthm lofat-to-string-inversion-lemma-31
     (implies (lofat-fs-p fat32-in-memory)
              (<=
               (* 4 (fat-length fat32-in-memory))
@@ -8715,7 +8715,7 @@
                  4 (fat-length fat32-in-memory))))
     :rule-classes :linear)
 
-  (defthm fat32-in-memory-to-string-inversion-lemma-32
+  (defthm lofat-to-string-inversion-lemma-32
     (implies (and (not (zp len))
                   (< (* (cluster-size fat32-in-memory)
                         (count-of-clusters fat32-in-memory))
@@ -8730,7 +8730,7 @@
     :rule-classes :linear))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-28
+  lofat-to-string-inversion-lemma-28
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (natp len)
@@ -8757,16 +8757,16 @@
      len))
    ("subgoal *1/2"
     :in-theory
-    (disable fat32-in-memory-to-string-inversion-lemma-27)
+    (disable lofat-to-string-inversion-lemma-27)
     :use
-    (:instance fat32-in-memory-to-string-inversion-lemma-27
+    (:instance lofat-to-string-inversion-lemma-27
                (index (- (count-of-clusters fat32-in-memory)
                          len))
                (len (count-of-clusters fat32-in-memory))
                (ac nil)))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-35
+  lofat-to-string-inversion-lemma-35
   (implies
    (and (natp n2)
         (< n2 (* 4 (fat-length fat32-in-memory)))
@@ -8780,7 +8780,7 @@
   :hints (("Goal" :in-theory (enable make-fat-string-ac))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-36
+  lofat-to-string-inversion-lemma-36
   (implies
    (and (fat32-entry-p current)
         (< (nfix n) 4))
@@ -8823,7 +8823,7 @@
                           (logtail 24 current))))))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-37
+  lofat-to-string-inversion-lemma-37
   (implies (and (integerp pos)
                 (integerp length)
                 (<= pos length))
@@ -8842,7 +8842,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-38
+    lofat-to-string-inversion-lemma-38
     (implies
      (and (lofat-fs-p fat32-in-memory)
           (not (zp pos))
@@ -8887,7 +8887,7 @@
               :expand (:free (n x y) (nth n (cons x y)))))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-39
+  lofat-to-string-inversion-lemma-39
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (not (zp pos))
@@ -8924,7 +8924,7 @@
   :hints (("goal" :in-theory (enable stobj-fa-table-to-string))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-41
+  lofat-to-string-inversion-lemma-41
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (not (zp pos))
@@ -8945,12 +8945,12 @@
      pos))
    ("subgoal *1/3"
     :in-theory
-    (disable fat32-in-memory-to-string-inversion-lemma-39)
-    :use (:instance fat32-in-memory-to-string-inversion-lemma-39
+    (disable lofat-to-string-inversion-lemma-39)
+    :use (:instance lofat-to-string-inversion-lemma-39
                     (pos 1)))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-50
+  lofat-to-string-inversion-lemma-50
   (implies (lofat-fs-p fat32-in-memory)
            (> (* (bpb_numfats fat32-in-memory)
                  4 (fat-entry-count fat32-in-memory))
@@ -8969,7 +8969,7 @@
                              bs_filsystypei)))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-42
+    lofat-to-string-inversion-lemma-42
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
@@ -9075,22 +9075,22 @@
                                     (unsigned-byte-p)))))
 
   (local (in-theory (enable chars=>nats-of-take get-initial-bytes
-                            fat32-in-memory-to-string)))
+                            lofat-to-string)))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-43
+    lofat-to-string-inversion-lemma-43
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
       (update-bs_jmpboot
        (take 3
              (get-initial-bytes
-              (fat32-in-memory-to-string fat32-in-memory)))
+              (lofat-to-string fat32-in-memory)))
        fat32-in-memory)
       fat32-in-memory)))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-44
+    lofat-to-string-inversion-lemma-44
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
@@ -9100,14 +9100,14 @@
         (nthcdr
          3
          (get-initial-bytes
-          (fat32-in-memory-to-string fat32-in-memory))))
+          (lofat-to-string fat32-in-memory))))
        fat32-in-memory)
       fat32-in-memory)))
 
   (local (in-theory (enable chars=>nats-of-nthcdr get-remaining-rsvdbyts)))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-45
+    lofat-to-string-inversion-lemma-45
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
@@ -9117,12 +9117,12 @@
         (nthcdr
          55
          (get-remaining-rsvdbyts
-          (fat32-in-memory-to-string fat32-in-memory))))
+          (lofat-to-string fat32-in-memory))))
        fat32-in-memory)
       fat32-in-memory)))
 
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-46
+    lofat-to-string-inversion-lemma-46
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
@@ -9132,14 +9132,14 @@
         (nthcdr
          66
          (get-remaining-rsvdbyts
-          (fat32-in-memory-to-string fat32-in-memory))))
+          (lofat-to-string fat32-in-memory))))
        fat32-in-memory)
       fat32-in-memory)))
 
   ;; Kinda wish we could have made use of update_bpb_reserved-alt for this
   ;; theorem, and then done the same kind of thing elsewhere.
   (defthm
-    fat32-in-memory-to-string-inversion-lemma-40
+    lofat-to-string-inversion-lemma-40
     (implies
      (lofat-fs-p fat32-in-memory)
      (equal
@@ -9147,12 +9147,12 @@
        (take 12
              (nthcdr 36
                      (get-remaining-rsvdbyts
-                      (fat32-in-memory-to-string fat32-in-memory))))
+                      (lofat-to-string fat32-in-memory))))
        fat32-in-memory)
       fat32-in-memory))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-47
+  lofat-to-string-inversion-lemma-47
   (implies
    (and (natp n2)
         (zp (+ n2
@@ -9169,7 +9169,7 @@
                               by-slice-you-mean-the-whole-cake-2))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-48
+  lofat-to-string-inversion-lemma-48
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (not (zp pos))
@@ -9188,11 +9188,11 @@
      pos))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-49
+  lofat-to-string-inversion-lemma-49
   (equal
    (nthcdr
     n
-    (explode (fat32-in-memory-to-string fat32-in-memory)))
+    (explode (lofat-to-string fat32-in-memory)))
    (if
     (<= (nfix n)
         (len (explode (reserved-area-string fat32-in-memory))))
@@ -9217,7 +9217,7 @@
        nil)))))
   :hints
   (("goal" :in-theory
-    (e/d (fat32-in-memory-to-string)
+    (e/d (lofat-to-string)
          (fat32-in-memoryp
           length-of-reserved-area-string
           nth-of-explode-of-reserved-area-string)))))
@@ -9228,7 +9228,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthmd
-    fat32-in-memory-to-string-inversion-lemma-51
+    lofat-to-string-inversion-lemma-51
     (implies (lofat-fs-p fat32-in-memory)
              (equal (* (bpb_fatsz32 fat32-in-memory)
                        1/4 (bpb_bytspersec fat32-in-memory))
@@ -9238,7 +9238,7 @@
       :use fat-entry-count))))
 
 (defthm
-  fat32-in-memory-to-string-inversion-lemma-52
+  lofat-to-string-inversion-lemma-52
   (implies
    (lofat-fs-p fat32-in-memory)
    (equal (take (+ (* 4 (fat-entry-count fat32-in-memory))
@@ -9255,12 +9255,12 @@
     :use lofat-fs-p-correctness-1)))
 
 (defthm
-  fat32-in-memory-to-string-inversion
+  lofat-to-string-inversion
   (implies
    (lofat-fs-p fat32-in-memory)
    (equal (string-to-fat32-in-memory
            fat32-in-memory
-           (fat32-in-memory-to-string fat32-in-memory))
+           (lofat-to-string fat32-in-memory))
           (mv fat32-in-memory 0)))
   :hints
   (("goal"
@@ -9269,7 +9269,7 @@
           painful-debugging-lemma-4
           painful-debugging-lemma-5
           by-slice-you-mean-the-whole-cake-2
-          fat32-in-memory-to-string-inversion-lemma-51
+          lofat-to-string-inversion-lemma-51
           cluster-size read-reserved-area
           update-data-region-alt)
          (lofat-fs-p-correctness-1))
@@ -10869,7 +10869,7 @@
                                            str))
         0))
       (disk-image-string-equiv
-       (fat32-in-memory-to-string
+       (lofat-to-string
         (mv-nth 0
                 (string-to-fat32-in-memory fat32-in-memory str)))
        str))
@@ -10879,13 +10879,13 @@
        (e/d (disk-image-string-equiv)
             (create-fat32-in-memory
              (:rewrite string-to-fat32-in-memory-ignore)
-             (:rewrite fat32-in-memory-to-string-inversion)))
+             (:rewrite lofat-to-string-inversion)))
        :cases ((equal fat32-in-memory
                       (create-fat32-in-memory)))
        :use
        ((:rewrite string-to-fat32-in-memory-ignore)
         (:instance
-         (:rewrite fat32-in-memory-to-string-inversion)
+         (:rewrite lofat-to-string-inversion)
          (fat32-in-memory
           (mv-nth
            0
@@ -10894,7 +10894,7 @@
         (:instance
          (:rewrite string-to-fat32-in-memory-ignore)
          (str
-          (fat32-in-memory-to-string
+          (lofat-to-string
            (mv-nth
             0
             (string-to-fat32-in-memory (create-fat32-in-memory)
@@ -10907,7 +10907,7 @@
         (:instance
          (:rewrite string-to-fat32-in-memory-ignore-lemma-14)
          (str
-          (fat32-in-memory-to-string
+          (lofat-to-string
            (mv-nth
             0
             (string-to-fat32-in-memory (create-fat32-in-memory)
@@ -10929,7 +10929,7 @@
                (string-to-fat32-in-memory fat32-in-memory str))
        0))
      (disk-image-string-equiv
-      (fat32-in-memory-to-string
+      (lofat-to-string
        (mv-nth 0
                (string-to-fat32-in-memory fat32-in-memory str)))
       str))
@@ -10961,7 +10961,7 @@
           0
           (string-to-fat32-in-memory
            fat32-in-memory
-           (fat32-in-memory-to-string fat32-in-memory)))))
+           (lofat-to-string fat32-in-memory)))))
        fs)))))
 
 (encapsulate
@@ -10979,7 +10979,7 @@
          1
          (string-to-fat32-in-memory
           (create-fat32-in-memory)
-          (fat32-in-memory-to-string
+          (lofat-to-string
            (mv-nth
             0
             (m1-fs-to-fat32-in-memory
@@ -11033,7 +11033,7 @@
              (string-to-fat32-in-memory fat32-in-memory str))))))
         0))
       (disk-image-string-equiv
-       (fat32-in-memory-to-string
+       (lofat-to-string
         (mv-nth
          0
          (m1-fs-to-fat32-in-memory
@@ -11050,11 +11050,11 @@
      (("goal"
        :in-theory
        (e/d (disk-image-string-equiv)
-            ((:rewrite fat32-in-memory-to-string-inversion)
+            ((:rewrite lofat-to-string-inversion)
              (:rewrite string-to-fat32-in-memory-ignore)))
        :use
        ((:instance
-         (:rewrite fat32-in-memory-to-string-inversion)
+         (:rewrite lofat-to-string-inversion)
          (fat32-in-memory
           (mv-nth
            0
@@ -11073,7 +11073,7 @@
         (:instance
          (:rewrite string-to-fat32-in-memory-ignore)
          (str
-          (fat32-in-memory-to-string
+          (lofat-to-string
            (mv-nth
             0
             (m1-fs-to-fat32-in-memory
@@ -11129,7 +11129,7 @@
                      (mv-nth 0
                              (string-to-fat32-in-memory
                               fat32-in-memory str))))))
-          (fat32-in-memory-to-string
+          (lofat-to-string
            (mv-nth
             0
             (m1-fs-to-fat32-in-memory
@@ -11183,7 +11183,7 @@
              (string-to-fat32-in-memory fat32-in-memory str))))))
         0))
       (disk-image-string-equiv
-       (fat32-in-memory-to-string
+       (lofat-to-string
         (mv-nth
          0
          (m1-fs-to-fat32-in-memory
@@ -11204,7 +11204,7 @@
         (:instance
          (:rewrite string-to-fat32-in-memory-ignore-lemma-14)
          (str
-          (fat32-in-memory-to-string
+          (lofat-to-string
            (mv-nth
             0
             (m1-fs-to-fat32-in-memory
@@ -11249,18 +11249,18 @@
                   (m1-fs-to-fat32-in-memory fat32-in-memory fs))
           0))
         (disk-image-string-equiv
-         (fat32-in-memory-to-string
+         (lofat-to-string
           (mv-nth 0
                   (m1-fs-to-fat32-in-memory fat32-in-memory fs)))
          str))))
     :hints
     (("goal"
       :in-theory
-      (disable (:rewrite fat32-in-memory-to-string-inversion))
+      (disable (:rewrite lofat-to-string-inversion))
       :use
       (string-to-m1-fs-inversion-lemma-2
        (:instance
-        (:rewrite fat32-in-memory-to-string-inversion)
+        (:rewrite lofat-to-string-inversion)
         (fat32-in-memory
          (mv-nth
           0
@@ -11324,7 +11324,7 @@ Some (rather awful) testing forms are
   (m1-fs-to-fat32-in-memory fat32-in-memory fs))
 (time$
  (b*
-     ((str (fat32-in-memory-to-string
+     ((str (lofat-to-string
             fat32-in-memory))
       ((unless (and (stringp str)
                     (>= (length str) *initialbytcnt*)))
@@ -11378,7 +11378,7 @@ Some (rather awful) testing forms are
        (open-output-channel "test/disk2.raw" :character state))
       (state
          (princ$
-          (fat32-in-memory-to-string fat32-in-memory)
+          (lofat-to-string fat32-in-memory)
           channel state))
       (state
        (close-output-channel channel state)))
