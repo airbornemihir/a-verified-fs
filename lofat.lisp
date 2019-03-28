@@ -8156,7 +8156,7 @@
                        lofat-fs-p-of-update-fati))))
 
 (defund-nx
-  fat32-in-memory-equiv
+  lofat-equiv
   (fat32-in-memory1 fat32-in-memory2)
   (b* (((mv fs1 error-code1)
         (lofat-to-m1-fs fat32-in-memory1))
@@ -8171,8 +8171,8 @@
     (m1-dir-equiv fs1 fs2)))
 
 (defequiv
-  fat32-in-memory-equiv
-  :hints (("goal" :in-theory (enable fat32-in-memory-equiv))))
+  lofat-equiv
+  :hints (("goal" :in-theory (enable lofat-equiv))))
 
 (defthm
   lofat-to-m1-fs-inversion
@@ -8202,14 +8202,14 @@
           fat32-in-memory
           fs))
         0))
-      (fat32-in-memory-equiv
+      (lofat-equiv
        (mv-nth
         0
         (m1-fs-to-lofat
          fat32-in-memory
          fs))
        fat32-in-memory))))
-  :hints (("Goal" :in-theory (enable fat32-in-memory-equiv)) ))
+  :hints (("Goal" :in-theory (enable lofat-equiv)) ))
 
 (defthm
   lofat-to-string-inversion-lemma-1
@@ -9290,7 +9290,7 @@
                    (equal error-code2 0)))
        ((unless (and good1 good2))
         (and (not good1) (not good2))))
-    (fat32-in-memory-equiv fat32-in-memory1 fat32-in-memory2)))
+    (lofat-equiv fat32-in-memory1 fat32-in-memory2)))
 
 (defequiv
   eqfat
