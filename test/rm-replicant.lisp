@@ -15,7 +15,7 @@
       (disk-image-to-lofat
        fat32-in-memory val state))
      ((mv fs &)
-      (fat32-in-memory-to-m1-fs fat32-in-memory))
+      (lofat-to-m1-fs fat32-in-memory))
      ((mv fs exit-status)
       (if
           opts.recursive

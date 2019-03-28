@@ -12,7 +12,7 @@
       (disk-image-to-lofat
        fat32-in-memory val state))
      ((mv fs &)
-      (fat32-in-memory-to-m1-fs fat32-in-memory))
+      (lofat-to-m1-fs fat32-in-memory))
      (oldpathname (pathname-to-fat32-pathname (coerce (nth 0 argv) 'list)))
      (newpathname (pathname-to-fat32-pathname (coerce (nth 1 argv) 'list)))
      ((mv fs exit-status &)
