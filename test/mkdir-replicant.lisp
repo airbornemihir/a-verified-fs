@@ -15,7 +15,7 @@
       (disk-image-to-lofat
        fat32-in-memory val state))
      ((mv fs &)
-      (lofat-to-m1-fs fat32-in-memory))
+      (lofat-to-hifat fat32-in-memory))
      ((mv fs exit-status)
       ;; The -p option to mkdir is not yet supported.
       (if opts.parents
