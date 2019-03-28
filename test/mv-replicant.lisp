@@ -12,13 +12,13 @@
       (disk-image-to-lofat
        fat32-in-memory val state))
      ((mv fs &)
-      (lofat-to-m1-fs fat32-in-memory))
+      (lofat-to-hifat fat32-in-memory))
      (oldpathname (pathname-to-fat32-pathname (coerce (nth 0 argv) 'list)))
      (newpathname (pathname-to-fat32-pathname (coerce (nth 1 argv) 'list)))
      ((mv fs exit-status &)
       (m1-rename fs oldpathname newpathname))
      ((mv fat32-in-memory &)
-      (m1-fs-to-lofat fat32-in-memory fs))
+      (hifat-to-lofat fat32-in-memory fs))
      ((mv & val state)
       (getenv$ "MV_OUTPUT" state))
      (state

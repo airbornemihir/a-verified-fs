@@ -15,14 +15,14 @@
       (disk-image-to-lofat
        fat32-in-memory val state))
      ((mv fs &)
-      (lofat-to-m1-fs fat32-in-memory))
+      (lofat-to-hifat fat32-in-memory))
      ((mv fs exit-status)
       (if
           opts.recursive
           (rm-list fs t extra-args 0)
         (rm-list fs nil extra-args 0)))
      ((mv fat32-in-memory &)
-      (m1-fs-to-lofat fat32-in-memory fs))
+      (hifat-to-lofat fat32-in-memory fs))
      ((mv & val state)
       (getenv$ "RM_OUTPUT" state))
      (state

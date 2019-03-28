@@ -15,14 +15,14 @@
       (disk-image-to-lofat
        fat32-in-memory val state))
      ((mv fs &)
-      (lofat-to-m1-fs fat32-in-memory))
+      (lofat-to-hifat fat32-in-memory))
      ((mv fs exit-status)
       ;; The -p option to rmdir is not yet supported.
       (if opts.parents
           (mv fs -1)
         (rmdir-list fs extra-args 0)))
      ((mv fat32-in-memory &)
-      (m1-fs-to-lofat fat32-in-memory fs))
+      (hifat-to-lofat fat32-in-memory fs))
      ((mv & val state)
       (getenv$ "RMDIR_OUTPUT" state))
      (state

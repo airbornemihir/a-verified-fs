@@ -122,7 +122,7 @@
       (if
           (not (equal error-code1 0))
           (mv nil *EIO*)
-        (lofat-to-m1-fs fat32-in-memory)))
+        (lofat-to-hifat fat32-in-memory)))
      ((mv fat32-in-memory error-code3)
       (disk-image-to-lofat
        fat32-in-memory image-path2 state))
@@ -130,7 +130,7 @@
       (if
           (or (not (equal error-code1 0)) (not (equal error-code3 0)))
           (mv nil *EIO*)
-        (lofat-to-m1-fs fat32-in-memory)))
+        (lofat-to-hifat fat32-in-memory)))
      ((unless (or (equal error-code1 0) (equal error-code3 0)))
       (mv (good-bye 0) fat32-in-memory))
      ((unless (and (equal error-code1 0) (equal error-code3 0)))
@@ -139,6 +139,6 @@
       (mv (good-bye 0) fat32-in-memory))
      ((unless (and (equal error-code2 0) (equal error-code4 0)))
       (mv (good-bye 1) fat32-in-memory))
-     ((unless (m1-dir-equiv fs-ref fs))
+     ((unless (hifat-equiv fs-ref fs))
       (mv (good-bye 1) fat32-in-memory)))
   (mv (good-bye 0) fat32-in-memory)))
