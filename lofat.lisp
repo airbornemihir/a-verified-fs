@@ -6096,7 +6096,7 @@
   (("goal" :in-theory (e/d (lofat-to-string) (nfix)))))
 
 (defun
-  fat32-in-memory-to-disk-image
+  lofat-to-disk-image
   (fat32-in-memory image-path state)
   (declare
    (xargs
