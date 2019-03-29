@@ -11390,6 +11390,48 @@ Some (rather awful) testing forms are
   (hifat-to-lofat fat32-in-memory fs))
 |#
 
+(defund lofat-file-contents-p (contents)
+  (declare (xargs :guard t))
+  (or (and (stringp contents)
+           (unsigned-byte-p 32 (length contents)))
+      (dir-ent-list-p contents)))
+
+(defund lofat-file-contents-fix (contents)
+  (declare (xargs :guard t))
+  (if (lofat-file-contents-p contents)
+      contents
+    ""))
+
+(defthm
+  lofat-file-contents-fix-of-lofat-file-contents-fix
+  (equal (lofat-file-contents-fix (lofat-file-contents-fix x))
+         (lofat-file-contents-fix x))
+  :hints (("goal" :in-theory (enable lofat-file-contents-fix))))
+
+(fty::deffixtype lofat-file-contents
+                 :pred lofat-file-contents-p
+                 :fix lofat-file-contents-fix
+                 :equiv lofat-file-contents-equiv
+                 :define t)
+
+(defthm
+  lofat-file-contents-p-of-lofat-file-contents-fix
+  (lofat-file-contents-p (lofat-file-contents-fix x))
+  :hints (("goal" :in-theory (enable lofat-file-contents-fix
+                                     lofat-file-contents-p))))
+
+(defthm
+  lofat-file-contents-fix-when-lofat-file-contents-p
+  (implies (lofat-file-contents-p x)
+           (equal (lofat-file-contents-fix x) x))
+  :hints (("goal" :in-theory (enable lofat-file-contents-fix
+                                     lofat-file-contents-p))))
+
+(fty::defprod
+ lofat-file
+ ((dir-ent dir-ent-p :default (dir-ent-fix nil))
+  (contents lofat-file-contents-p :default (lofat-file-contents-fix nil))))
+
 (defun lofat-statfs (fat32-in-memory)
   (declare (xargs :stobjs (fat32-in-memory)
                   :verify-guards nil))
@@ -11447,7 +11489,7 @@ Some (rather awful) testing forms are
    (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
                0))
    (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
-          2)))
+          *enoent*)))
 
 (defun lofat-find-file-by-pathname (fat32-in-memory dir-ent-list pathname)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
