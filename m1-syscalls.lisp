@@ -34,8 +34,7 @@
   m1-basename-dirname-helper (path)
   (declare (xargs :guard (fat32-filename-list-p path)
                   :guard-hints (("Goal" :in-theory (disable
-                                                    make-list-ac-removal)))
-                  :guard-debug t))
+                                                    make-list-ac-removal)))))
   (b*
       (;; Under the assumption that all pathnames begin with a /, this really
        ;; is the case where there's a / and nothing else.
@@ -83,12 +82,6 @@
     (declare (ignore basename))
     dirname))
 
-;; This used to be guard verified, and then we brought in the
-;; fat32-filename-list-p predicate and made everything complicated. Let's let
-;; the system calls remain guard-unverified until we can test some more and
-;; demonstrate that they work. That should give us enough time to figure out
-;; the point at which we want to figure out the correct level of abstraction to
-;; clean up all the weird pathnames.
 (defun m1-lstat (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (fat32-filename-list-p pathname))))
@@ -153,8 +146,7 @@
                               (natp offset)
                               (fd-table-p fd-table)
                               (file-table-p file-table)
-                              (m1-file-alist-p fs))
-                  :guard-debug t))
+                              (m1-file-alist-p fs))))
   (b*
       ((fd-table-entry (assoc-equal fd fd-table))
        ((unless (consp fd-table-entry))
@@ -196,14 +188,13 @@
                               (fd-table-p fd-table)
                               (file-table-p file-table)
                               (m1-file-alist-p fs))
-                  :guard-debug t
-                  :guard-hints (("Goal" :in-theory (enable len-of-insert-text))
-                                ("Subgoal 2'" :in-theory (disable
+                  :guard-hints (("goal" :in-theory (enable len-of-insert-text))
+                                ("subgoal 2'" :in-theory (disable
                                                           consp-assoc-equal)
                                  :use (:instance consp-assoc-equal
-                                                 (name (CDR (CAR FD-TABLE)))
+                                                 (name (cdr (car fd-table)))
                                                  (l
-                                                  FILE-TABLE))))))
+                                                  file-table))))))
   (b*
       ((fd-table-entry (assoc-equal fd fd-table))
        (fs (m1-file-alist-fix fs))

@@ -11894,3 +11894,47 @@ Some (rather awful) testing forms are
       (cons file-table-index (make-file-table-element :pos 0 :fid pathname))
       file-table)
      fd-table-index 0)))
+
+;; This needs some revision... obviously, we don't want to be staring into the
+;; computation to get the root directory's directory entries here.
+(defun
+  lofat-pread
+  (fd count offset fat32-in-memory fd-table file-table)
+  (declare (xargs :guard (and (natp fd)
+                              (natp count)
+                              (natp offset)
+                              (fd-table-p fd-table)
+                              (file-table-p file-table)
+                              (lofat-fs-p fat32-in-memory))
+                  :stobjs fat32-in-memory))
+  (b*
+      ((fd-table-entry (assoc-equal fd fd-table))
+       ((unless (consp fd-table-entry))
+        (mv "" -1 *ebadf*))
+       (file-table-entry (assoc-equal (cdr fd-table-entry)
+                                      file-table))
+       ((unless (consp file-table-entry))
+        (mv "" -1 *ebadf*))
+       (pathname (file-table-element->fid (cdr file-table-entry)))
+       ((mv root-contents &)
+        (get-clusterchain-contents
+         fat32-in-memory
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+         2097152))
+       ((mv file-contents error-code)
+        (lofat-find-file-by-pathname
+         fat32-in-memory
+         (make-dir-ent-list
+          (string=>nats
+           root-contents))
+         pathname))
+       ((unless (and (equal error-code 0)
+                     (stringp file-contents)))
+        (mv "" -1 error-code))
+       (new-offset (min (+ offset count)
+                        (length file-contents)))
+       (buf (subseq file-contents
+                    (min offset
+                         (length file-contents))
+                    new-offset)))
+    (mv buf (length buf) 0)))
