@@ -1009,7 +1009,7 @@
      (xargs
       :guard
       (and (natp tmp_init)
-           (time$ (stringp image-path))
+           (stringp image-path)
            (stringp (read-file-into-string image-path))
            (natp len)
            (<= len
@@ -1895,11 +1895,9 @@
                    (>= (length str) tmp_init)))
           (mv fat32-in-memory *EIO*))
          (data-region-string
-          (time$
-           (subseq str tmp_init nil))))
-      (time$
-       (update-data-region fat32-in-memory data-region-string
-                           (data-region-length fat32-in-memory))))))
+          (subseq str tmp_init nil)))
+      (update-data-region fat32-in-memory data-region-string
+                          (data-region-length fat32-in-memory)))))
 
 (defthmd
   string-to-lofat-correctness-1
@@ -3216,9 +3214,8 @@
    :exec
    (b*
        ((initial-bytes-str
-         (time$
-          (read-file-into-string image-path
-                                 :bytes *initialbytcnt*)))
+         (read-file-into-string image-path
+                                :bytes *initialbytcnt*))
         ((unless (and (stringp initial-bytes-str)
                       (>= (length initial-bytes-str)
                           *initialbytcnt*)))
@@ -3241,11 +3238,10 @@
                       (>= tmp_rsvdbytcnt *initialbytcnt*)))
          (mv fat32-in-memory *EIO*))
         (remaining-rsvdbyts-str
-         (time$
-          (read-file-into-string
-           image-path
-           :start *initialbytcnt*
-           :bytes (- tmp_rsvdbytcnt *initialbytcnt*))))
+         (read-file-into-string
+          image-path
+          :start *initialbytcnt*
+          :bytes (- tmp_rsvdbytcnt *initialbytcnt*)))
         ((unless (and (stringp remaining-rsvdbyts-str)
                       (>= (length remaining-rsvdbyts-str)
                           (- tmp_rsvdbytcnt *initialbytcnt*))))
@@ -3303,13 +3299,12 @@
                (- tmp_init
                   (+ tmp_rsvdbytcnt (* fat-read-size 4))))))
          (mv fat32-in-memory *EIO*)))
-     (time$
-      (update-data-region-from-disk-image
-       fat32-in-memory
-       (data-region-length fat32-in-memory)
-       state
-       tmp_init
-       image-path)))))
+     (update-data-region-from-disk-image
+      fat32-in-memory
+      (data-region-length fat32-in-memory)
+      state
+      tmp_init
+      image-path))))
 
 (defund
   get-clusterchain
