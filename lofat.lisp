@@ -20,18 +20,6 @@
                      revappend-removal str::hex-digit-listp-of-cons
                      loghead logtail)))
 
-;; These are some definitions I've had to disable a lot in this book - and I'm
-;; still taking 847 seconds to certify the whole thing. Disabling them
-;; everywhere should simplify things.
-;; Later note: the certification time went down to 632 seconds after this
-;; change.
-;; Later note: the certification time went down to 517 seconds after some more
-;; changes were made based on accumulated-persistence.
-;; Later note: the certification time has gone back up to 573 seconds.
-;; Later note: back down to 504 seconds after disabling true-listp and
-;; len-when-dir-ent-p.
-;; Later note: back down to 367 seconds after disabling
-;; get-clusterchain-contents and by-slice-you-mean-the-whole-cake-2.
 (local
  (in-theory (disable nth update-nth floor mod
                      true-listp)))
