@@ -11410,10 +11410,47 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable lofat-file-contents-fix
                                      lofat-file-contents-p))))
 
+(defthm
+  lofat-file-contents-p-when-stringp
+  (implies (stringp contents)
+           (equal (lofat-file-contents-p contents)
+                  (unsigned-byte-p 32 (length contents))))
+  :hints (("goal" :in-theory (enable lofat-file-contents-p))))
+
+(defthm lofat-file-contents-p-when-dir-ent-listp
+  (implies (dir-ent-list-p contents)
+           (lofat-file-contents-p contents))
+  :hints (("goal" :in-theory (enable lofat-file-contents-p))))
+
 (fty::defprod
  lofat-file
  ((dir-ent dir-ent-p :default (dir-ent-fix nil))
   (contents lofat-file-contents-p :default (lofat-file-contents-fix nil))))
+
+(defund lofat-regular-file-p (file)
+  (declare (xargs :guard t))
+  (and (lofat-file-p file)
+       (stringp (lofat-file->contents file))
+       (unsigned-byte-p 32 (length (lofat-file->contents file)))))
+
+(defund lofat-directory-file-p (file)
+  (declare (xargs :guard t))
+  (and (lofat-file-p file)
+       (dir-ent-list-p (lofat-file->contents file))))
+
+(defthm
+  lofat-regular-file-p-correctness-1
+  (implies
+   (dir-ent-list-p contents)
+   (not (lofat-regular-file-p (lofat-file dir-ent contents))))
+  :hints (("goal" :in-theory (enable lofat-regular-file-p))))
+
+(defthm
+  lofat-directory-file-p-correctness-1
+  (implies
+   (stringp contents)
+   (not (lofat-directory-file-p (lofat-file dir-ent contents))))
+  :hints (("goal" :in-theory (enable lofat-directory-file-p))))
 
 (defun lofat-statfs (fat32-in-memory)
   (declare (xargs :stobjs (fat32-in-memory)
@@ -11481,11 +11518,11 @@ Some (rather awful) testing forms are
                   :measure (acl2-count pathname)
                   :stobjs fat32-in-memory))
   (b* (((unless (consp pathname))
-        (mv nil *enoent*))
+        (mv (make-lofat-file) *enoent*))
        (name (fat32-filename-fix (car pathname)))
        ((mv dir-ent error-code) (find-dir-ent dir-ent-list name))
        ((unless (equal error-code 0))
-        (mv nil error-code))
+        (mv (make-lofat-file) error-code))
        (first-cluster (dir-ent-first-cluster dir-ent))
        (directory-p
         (dir-ent-directory-p dir-ent))
@@ -11506,28 +11543,32 @@ Some (rather awful) testing forms are
                                      length)))
        ((unless directory-p)
         (if (consp (cdr pathname))
-            (mv nil *enotdir*)
-          (mv contents 0)))
+            (mv (make-lofat-file) *enotdir*)
+          (mv (make-lofat-file :dir-ent dir-ent :contents contents) 0)))
        ((when (atom (cdr pathname)))
-        (mv (make-dir-ent-list (string=>nats contents)) 0)))
+        (mv
+         (make-lofat-file :dir-ent dir-ent
+                          :contents (make-dir-ent-list
+                                     (string=>nats contents)))
+         0)))
     (lofat-find-file-by-pathname
      fat32-in-memory
      (make-dir-ent-list (string=>nats contents))
      (cdr pathname))))
 
-(defthmd
-  lofat-find-file-by-pathname-correctness-2
-  (iff
-   (stringp
-    (mv-nth 0
-            (lofat-find-file-by-pathname
-             fat32-in-memory dir-ent-list pathname)))
-   (not
-    (dir-ent-list-p
-     (mv-nth
-      0
-      (lofat-find-file-by-pathname fat32-in-memory
-                                   dir-ent-list pathname))))))
+;; (defthmd
+;;   lofat-find-file-by-pathname-correctness-2
+;;   (iff
+;;    (stringp
+;;     (mv-nth 0
+;;             (lofat-find-file-by-pathname
+;;              fat32-in-memory dir-ent-list pathname)))
+;;    (not
+;;     (dir-ent-list-p
+;;      (mv-nth
+;;       0
+;;       (lofat-find-file-by-pathname fat32-in-memory
+;;                                    dir-ent-list pathname))))))
 
 ;; The dir-ent-list-p hypothesis is only there because
 ;; lofat-to-hifat-helper doesn't fix its arguments. Should it?
@@ -11816,14 +11857,15 @@ Some (rather awful) testing forms are
                       fat32-in-memory
                       dir-ent-list entry-limit))
              0)
-      (stringp
+      (lofat-regular-file-p
        (mv-nth
         0
         (lofat-find-file-by-pathname fat32-in-memory
                                      dir-ent-list pathname))))
      (equal (lofat-find-file-by-pathname
              fat32-in-memory dir-ent-list pathname)
-            (mv (m1-file->contents file)
+            (mv (make-lofat-file :contents (m1-file->contents file)
+                                 :dir-ent (m1-file->dir-ent file))
                 error-code)))))
 
 (defthm
@@ -11845,20 +11887,27 @@ Some (rather awful) testing forms are
                       fat32-in-memory
                       dir-ent-list entry-limit))
              0)
-      (dir-ent-list-p
+      (lofat-directory-file-p
        (mv-nth
         0
         (lofat-find-file-by-pathname fat32-in-memory
                                      dir-ent-list pathname))))
      (and
       (equal
+       (lofat-file->dir-ent
+        (mv-nth 0
+                (lofat-find-file-by-pathname
+                 fat32-in-memory dir-ent-list pathname)))
+       (m1-file->dir-ent file))
+      (equal
        (mv-nth
         0
         (lofat-to-hifat-helper
          fat32-in-memory
-         (mv-nth 0
-                 (lofat-find-file-by-pathname
-                  fat32-in-memory dir-ent-list pathname))
+         (lofat-file->contents
+          (mv-nth 0
+                  (lofat-find-file-by-pathname
+                   fat32-in-memory dir-ent-list pathname)))
          entry-limit))
        (m1-file->contents file))
       (equal
