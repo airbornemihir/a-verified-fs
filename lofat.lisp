@@ -11556,20 +11556,6 @@ Some (rather awful) testing forms are
      (make-dir-ent-list (string=>nats contents))
      (cdr pathname))))
 
-;; (defthmd
-;;   lofat-find-file-by-pathname-correctness-2
-;;   (iff
-;;    (stringp
-;;     (mv-nth 0
-;;             (lofat-find-file-by-pathname
-;;              fat32-in-memory dir-ent-list pathname)))
-;;    (not
-;;     (dir-ent-list-p
-;;      (mv-nth
-;;       0
-;;       (lofat-find-file-by-pathname fat32-in-memory
-;;                                    dir-ent-list pathname))))))
-
 ;; The dir-ent-list-p hypothesis is only there because
 ;; lofat-to-hifat-helper doesn't fix its arguments. Should it?
 (defthm
@@ -11869,7 +11855,7 @@ Some (rather awful) testing forms are
                 error-code)))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-3
+  lofat-find-file-by-pathname-correctness-2
   (b*
       (((mv file error-code)
         (find-file-by-pathname
@@ -11930,6 +11916,13 @@ Some (rather awful) testing forms are
                  fat32-in-memory dir-ent-list pathname)))
     :expand (lofat-to-hifat-helper
              fat32-in-memory nil entry-limit))))
+
+(defthm
+  lofat-find-file-by-pathname-correctness-3
+  (lofat-file-p
+   (mv-nth 0
+           (lofat-find-file-by-pathname
+            fat32-in-memory dir-ent-list pathname))))
 
 ;; This needs some revision... obviously, we don't want to be staring into the
 ;; computation to get the root directory's directory entries here.
@@ -12012,3 +12005,28 @@ Some (rather awful) testing forms are
                          (length file-contents))
                     new-offset)))
     (mv buf (length buf) 0)))
+
+(defun lofat-lstat (fat32-in-memory pathname)
+  (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
+                              (fat32-filename-list-p pathname))
+                  :stobjs fat32-in-memory))
+  (b*
+      (((mv root-contents &)
+        (get-clusterchain-contents
+         fat32-in-memory
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+         2097152))
+       ((mv file errno)
+        (lofat-find-file-by-pathname
+         fat32-in-memory
+         (make-dir-ent-list
+          (string=>nats
+           root-contents))
+         pathname))
+       ((when (not (equal errno 0)))
+        (mv (make-struct-stat) -1 errno)))
+    (mv
+       (make-struct-stat
+        :st_size (dir-ent-file-size
+                  (lofat-file->dir-ent file)))
+       0 0)))
