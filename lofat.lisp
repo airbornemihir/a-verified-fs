@@ -9909,7 +9909,7 @@
   (defthmd
     string-to-lofat-ignore-lemma-14
     (implies
-     (not (equal fat32-in-memory (create-fat32-in-memory)))
+     (case-split (not (equal fat32-in-memory (create-fat32-in-memory))))
      (equal (mv-nth 1
                     (string-to-lofat fat32-in-memory str))
             (mv-nth 1
