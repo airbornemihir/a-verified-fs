@@ -43,8 +43,8 @@
        ;; not trying to match this program for its stderr output.
        ((mv fs retval &)
         (if r
-            (m1-unlink-recursive fs fat32-pathname)
-          (m1-unlink fs fat32-pathname)))
+            (hifat-unlink-recursive fs fat32-pathname)
+          (hifat-unlink fs fat32-pathname)))
        (exit-status (if (equal retval 0) exit-status 1)))
     (rm-list fs r (cdr name-list) exit-status)))
 
@@ -65,7 +65,7 @@
        ;; It doesn't really matter for these purposes what the errno is. We're
        ;; not trying to match this program for its stderr output.
        ((mv fs retval &)
-        (m1-rmdir fs fat32-pathname))
+        (hifat-rmdir fs fat32-pathname))
        (exit-status (if (equal retval 0) exit-status 1)))
     (rmdir-list fs (cdr name-list) exit-status)))
 

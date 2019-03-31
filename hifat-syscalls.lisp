@@ -290,7 +290,7 @@
     (mv fs 0 0)))
 
 (defthm
-  m1-unlink-guard-lemma-1
+  hifat-unlink-guard-lemma-1
   (implies (m1-file-p file)
            (and
             (true-listp (m1-file->dir-ent file))
@@ -316,9 +316,9 @@
 ;; and as a result we have a little more extra space than an implementation
 ;; which simply marks the file as removed. The way forward, I think, is to
 ;; delete the file from the tree, and make an m2-unlink that provably does the
-;; same thing as m1-unlink while actually just marking files as deleted.
+;; same thing as hifat-unlink while actually just marking files as deleted.
 (defun
-    m1-unlink (fs pathname)
+    hifat-unlink (fs pathname)
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
@@ -342,9 +342,9 @@
 ;; and as a result we have a little more extra space than an implementation
 ;; which simply marks the file as removed. The way forward, I think, is to
 ;; delete the file from the tree, and make an m2-unlink that provably does the
-;; same thing as m1-unlink while actually just marking files as deleted.
+;; same thing as hifat-unlink while actually just marking files as deleted.
 (defun
-    m1-unlink-recursive (fs pathname)
+    hifat-unlink-recursive (fs pathname)
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
@@ -364,9 +364,9 @@
 ;; and as a result we have a little more extra space than an implementation
 ;; which simply marks the file as removed. The way forward, I think, is to
 ;; delete the file from the tree, and make an m2-unlink that provably does the
-;; same thing as m1-unlink while actually just marking files as deleted.
+;; same thing as hifat-unlink while actually just marking files as deleted.
 (defun
-    m1-rmdir (fs pathname)
+    hifat-rmdir (fs pathname)
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
@@ -383,7 +383,7 @@
     (mv fs 0 0)))
 
 (defun
-    m1-rename (fs oldpathname newpathname)
+    hifat-rename (fs oldpathname newpathname)
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
