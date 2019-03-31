@@ -3163,6 +3163,147 @@
     (len (explode (read-file-into-string2 image-path 0 nil state)))))
   :rule-classes :linear)
 
+(defund
+  disk-image-to-lofat-exec
+  (fat32-in-memory image-path state)
+  (declare
+   (xargs
+    :guard (and (stringp image-path)
+                (fat32-in-memoryp fat32-in-memory))
+    :guard-hints
+    (("goal"
+      :in-theory
+      (e/d (string-to-lofat
+            disk-image-to-lofat-guard-lemma-12)
+           (string-append
+            read-file-into-string2))))
+    :stobjs (fat32-in-memory state)))
+  ;; The idea behind this MBE is that slurping in the whole string at once is
+  ;; causing inefficiencies in terms of memory allocated for all these subseq
+  ;; operations. For instance, for one disk image of size 64 MB with 69441
+  ;; clusters, each subseq operation allocated 4,112 bytes and the whole
+  ;; update-data-region operation allocated 496,573,872 bytes. This is several
+  ;; times the size of the disk, and is probably the reason why we can't
+  ;; execute for disks of size 300 MB or more.
+  (b*
+      ((initial-bytes-str
+        (read-file-into-string image-path
+                               :bytes *initialbytcnt*))
+       ((unless (and (stringp initial-bytes-str)
+                     (>= (length initial-bytes-str)
+                         *initialbytcnt*)))
+        (mv fat32-in-memory *EIO*))
+       (fat32-in-memory (update-bpb_secperclus 1 fat32-in-memory))
+       (fat32-in-memory (update-bpb_rsvdseccnt 1 fat32-in-memory))
+       (fat32-in-memory (update-bpb_numfats 1 fat32-in-memory))
+       (fat32-in-memory (update-bpb_fatsz32 1 fat32-in-memory))
+       (fat32-in-memory
+        (update-bpb_bytspersec 512 fat32-in-memory))
+       (tmp_bytspersec
+        (combine16u (char-code (char initial-bytes-str 12))
+                    (char-code (char initial-bytes-str 11))))
+       (tmp_rsvdseccnt
+        (combine16u (char-code (char initial-bytes-str 15))
+                    (char-code (char initial-bytes-str 14))))
+       (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec))
+       ((unless (and (>= tmp_bytspersec 512)
+                     (>= tmp_rsvdseccnt 1)
+                     (>= tmp_rsvdbytcnt *initialbytcnt*)))
+        (mv fat32-in-memory *EIO*))
+       (remaining-rsvdbyts-str
+        (read-file-into-string
+         image-path
+         :start *initialbytcnt*
+         :bytes (- tmp_rsvdbytcnt *initialbytcnt*)))
+       ((unless (and (stringp remaining-rsvdbyts-str)
+                     (>= (length remaining-rsvdbyts-str)
+                         (- tmp_rsvdbytcnt *initialbytcnt*))))
+        (mv fat32-in-memory *EIO*))
+       ((mv fat32-in-memory error-code)
+        (read-reserved-area
+         fat32-in-memory
+         (string-append initial-bytes-str
+                        remaining-rsvdbyts-str)))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory error-code))
+       (fat-read-size (fat-entry-count fat32-in-memory))
+       ((unless (integerp (/ (* (bpb_fatsz32 fat32-in-memory)
+                                (bpb_bytspersec fat32-in-memory))
+                             4)))
+        (mv fat32-in-memory *EIO*))
+       (data-byte-count (* (count-of-clusters fat32-in-memory)
+                           (cluster-size fat32-in-memory)))
+       ((unless (> data-byte-count 0))
+        (mv fat32-in-memory *EIO*))
+       (tmp_bytspersec (bpb_bytspersec fat32-in-memory))
+       (tmp_init (* tmp_bytspersec
+                    (+ (bpb_rsvdseccnt fat32-in-memory)
+                       (* (bpb_numfats fat32-in-memory)
+                          (bpb_fatsz32 fat32-in-memory)))))
+       (fat32-in-memory
+        (resize-fat fat-read-size fat32-in-memory))
+       (fat-string
+        (read-file-into-string image-path
+                               :start tmp_rsvdbytcnt
+                               :bytes (* fat-read-size 4)))
+       ((unless (and (<= (* fat-read-size 4)
+                         (length fat-string))
+                     (unsigned-byte-p 48 fat-read-size)))
+        (mv fat32-in-memory *EIO*))
+       (fat32-in-memory (update-fat fat32-in-memory
+                                    fat-string fat-read-size))
+       (fat32-in-memory
+        (resize-data-region (count-of-clusters fat32-in-memory)
+                            fat32-in-memory))
+       ;; This test doesn't accomplish much other than getting the extra
+       ;; copies of the file allocation table out of the way.
+       ((unless
+            (and
+             (<= (data-region-length fat32-in-memory)
+                 (- *ms-bad-cluster*
+                    *ms-first-data-cluster*))
+             (>=
+              (length
+               (read-file-into-string
+                image-path
+                :start (+ tmp_rsvdbytcnt (* fat-read-size 4))
+                :bytes (- tmp_init
+                          (+ tmp_rsvdbytcnt (* fat-read-size 4)))))
+              (- tmp_init
+                 (+ tmp_rsvdbytcnt (* fat-read-size 4))))))
+        (mv fat32-in-memory *EIO*)))
+    (update-data-region-from-disk-image
+     fat32-in-memory
+     (data-region-length fat32-in-memory)
+     state
+     tmp_init
+     image-path)))
+
+(defthm
+  disk-image-to-lofat-guard-lemma-30
+  (implies (and (stringp image-path)
+                (fat32-in-memoryp fat32-in-memory))
+           (equal
+            (disk-image-to-lofat-exec
+             fat32-in-memory image-path state)
+            (b* ((str (read-file-into-string image-path))
+                 ((unless (and (stringp str)
+                               (>= (length str) *initialbytcnt*)))
+                  (mv fat32-in-memory *EIO*)))
+              (string-to-lofat fat32-in-memory str))))
+  :hints
+    (("goal"
+      :in-theory
+      (e/d (disk-image-to-lofat-exec string-to-lofat
+            disk-image-to-lofat-guard-lemma-12)
+           (string-append
+            read-file-into-string2
+            ;; The following came from accumulated-persistence results.
+            (:rewrite str::explode-when-not-stringp)
+            (:definition update-fat)
+            (:rewrite nth-of-make-character-list)
+            (:rewrite fat32-filename-p-correctness-1))))))
+
 (defun
   disk-image-to-lofat
   (fat32-in-memory image-path state)
@@ -3173,7 +3314,7 @@
     :guard-hints
     (("goal"
       :in-theory
-      (e/d (string-to-lofat
+      (e/d (disk-image-to-lofat-exec string-to-lofat
             disk-image-to-lofat-guard-lemma-12)
            (string-append
             read-file-into-string2
@@ -3200,99 +3341,8 @@
    ;; This b* form pretty closely follows the structure of
    ;; string-to-lofat.
    :exec
-   (b*
-       ((initial-bytes-str
-         (read-file-into-string image-path
-                                :bytes *initialbytcnt*))
-        ((unless (and (stringp initial-bytes-str)
-                      (>= (length initial-bytes-str)
-                          *initialbytcnt*)))
-         (mv fat32-in-memory *EIO*))
-        (fat32-in-memory (update-bpb_secperclus 1 fat32-in-memory))
-        (fat32-in-memory (update-bpb_rsvdseccnt 1 fat32-in-memory))
-        (fat32-in-memory (update-bpb_numfats 1 fat32-in-memory))
-        (fat32-in-memory (update-bpb_fatsz32 1 fat32-in-memory))
-        (fat32-in-memory
-         (update-bpb_bytspersec 512 fat32-in-memory))
-        (tmp_bytspersec
-         (combine16u (char-code (char initial-bytes-str 12))
-                     (char-code (char initial-bytes-str 11))))
-        (tmp_rsvdseccnt
-         (combine16u (char-code (char initial-bytes-str 15))
-                     (char-code (char initial-bytes-str 14))))
-        (tmp_rsvdbytcnt (* tmp_rsvdseccnt tmp_bytspersec))
-        ((unless (and (>= tmp_bytspersec 512)
-                      (>= tmp_rsvdseccnt 1)
-                      (>= tmp_rsvdbytcnt *initialbytcnt*)))
-         (mv fat32-in-memory *EIO*))
-        (remaining-rsvdbyts-str
-         (read-file-into-string
-          image-path
-          :start *initialbytcnt*
-          :bytes (- tmp_rsvdbytcnt *initialbytcnt*)))
-        ((unless (and (stringp remaining-rsvdbyts-str)
-                      (>= (length remaining-rsvdbyts-str)
-                          (- tmp_rsvdbytcnt *initialbytcnt*))))
-         (mv fat32-in-memory *EIO*))
-        ((mv fat32-in-memory error-code)
-         (read-reserved-area
-          fat32-in-memory
-          (string-append initial-bytes-str
-                         remaining-rsvdbyts-str)))
-        ((unless (equal error-code 0))
-         (mv fat32-in-memory error-code))
-        (fat-read-size (fat-entry-count fat32-in-memory))
-        ((unless (integerp (/ (* (bpb_fatsz32 fat32-in-memory)
-                                 (bpb_bytspersec fat32-in-memory))
-                              4)))
-         (mv fat32-in-memory *EIO*))
-        (data-byte-count (* (count-of-clusters fat32-in-memory)
-                            (cluster-size fat32-in-memory)))
-        ((unless (> data-byte-count 0))
-         (mv fat32-in-memory *EIO*))
-        (tmp_bytspersec (bpb_bytspersec fat32-in-memory))
-        (tmp_init (* tmp_bytspersec
-                     (+ (bpb_rsvdseccnt fat32-in-memory)
-                        (* (bpb_numfats fat32-in-memory)
-                           (bpb_fatsz32 fat32-in-memory)))))
-        (fat32-in-memory
-         (resize-fat fat-read-size fat32-in-memory))
-        (fat-string
-         (read-file-into-string image-path
-                                :start tmp_rsvdbytcnt
-                                :bytes (* fat-read-size 4)))
-        ((unless (and (<= (* fat-read-size 4)
-                          (length fat-string))
-                      (unsigned-byte-p 48 fat-read-size)))
-         (mv fat32-in-memory *EIO*))
-        (fat32-in-memory (update-fat fat32-in-memory
-                                     fat-string fat-read-size))
-        (fat32-in-memory
-         (resize-data-region (count-of-clusters fat32-in-memory)
-                             fat32-in-memory))
-        ;; This test doesn't accomplish much other than getting the extra
-        ;; copies of the file allocation table out of the way.
-        ((unless
-             (and
-              (<= (data-region-length fat32-in-memory)
-                  (- *ms-bad-cluster*
-                     *ms-first-data-cluster*))
-              (>=
-               (length
-                (read-file-into-string
-                 image-path
-                 :start (+ tmp_rsvdbytcnt (* fat-read-size 4))
-                 :bytes (- tmp_init
-                           (+ tmp_rsvdbytcnt (* fat-read-size 4)))))
-               (- tmp_init
-                  (+ tmp_rsvdbytcnt (* fat-read-size 4))))))
-         (mv fat32-in-memory *EIO*)))
-     (update-data-region-from-disk-image
-      fat32-in-memory
-      (data-region-length fat32-in-memory)
-      state
-      tmp_init
-      image-path))))
+   (disk-image-to-lofat-exec
+    fat32-in-memory image-path state)))
 
 (defund
   get-clusterchain
