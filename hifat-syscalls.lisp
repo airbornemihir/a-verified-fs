@@ -1,6 +1,6 @@
 (in-package "ACL2")
 
-;  m1-syscalls.lisp                                    Mihir Mehta
+;  hifat-syscalls.lisp                                 Mihir Mehta
 
 ; Syscalls for HiFAT. These syscalls usually return, among other things, a
 ; return value (corresponding to the C return value) and an errno.
