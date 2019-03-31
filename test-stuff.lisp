@@ -131,21 +131,16 @@
              (mv nil *EIO*)
            (lofat-to-hifat fat32-in-memory)))
         ((unless (or (equal error-code1 0) (equal error-code3 0)))
-         (mv (good-bye 0) fat32-in-memory))
+         (mv t fat32-in-memory))
         ((unless (and (equal error-code1 0) (equal error-code3 0)))
-         (mv (good-bye 1) fat32-in-memory))
+         (mv nil fat32-in-memory))
         ((unless (or (equal error-code2 0) (equal error-code4 0)))
-         (mv (good-bye 0) fat32-in-memory))
+         (mv t fat32-in-memory))
         ((unless (and (equal error-code2 0) (equal error-code4 0)))
-         (mv (good-bye 1) fat32-in-memory))
+         (mv nil fat32-in-memory))
         ((unless (hifat-equiv fs-ref fs))
-         (mv (good-bye 1) fat32-in-memory)))
-     (mv (good-bye 0) fat32-in-memory)))
-
-;; (defthm compare-disks-correctness-1-lemma-1
-;;   (implies (not
-;;             (stringp (read-file-into-string2 filename start bytes state)))
-;;            (equal (read-file-into-string2 filename start bytes state) nil)))
+         (mv nil fat32-in-memory)))
+     (mv t fat32-in-memory)))
 
 (defthm compare-disks-correctness-1
   (let*
@@ -162,9 +157,6 @@
      (equal (mv-nth
              0
              (compare-disks image-path1 image-path2 fat32-in-memory state))
-            (if
-                (eqfat str1 str2)
-                (good-bye 0)
-              (good-bye 1)))))
+            (eqfat str1 str2))))
   :hints (("goal" :in-theory (e/d (eqfat string-to-lofat-ignore-lemma-14 lofat-equiv)
                                   (read-file-into-string2)))))
