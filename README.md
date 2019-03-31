@@ -1,23 +1,66 @@
-# turbo-octo-sniffle
-This repository contains a series of filesystem models of increasing
-complexity.
+This is the accompanying artefact submission for the paper titled
+"Binary-compatible verification of filesystems with ACL2". The paper
+details certain filesystem models and co-simulation tests applied to
+them; instructions for reviewing and executing these tests follow.
 
-More technical details can be found in the "papers" subdirectory,
-where each of the models is described at length.
+Note: The books mentioned below were certified with a development
+snapshot of ACL2, dated 2019-03-30 and identified by commit hash
+d77877d834596f87ee503879c1ff818bcf45421d. The GNU/Linux programs
+mkfs.fat, diff, sudo, cp, mkdir, mv, rm, rmdir, stat, unlink, and wc
+are required in order to run the tests, as is the mtools suite of
+programs (version 4.0.18).
 
-Model 5, in the file file-system-5.lisp, is the most
-complex, and contains a model of a filesystem with read and write
-permissions for each regular file in the filesystem, differentiated
-for the owner of the file and all other users in the filesystem (as
-yet, there are no groups or access control lists).
+The FAT32 models HiFAT and LoFAT can be found in files hifat.lisp and
+lofat.lisp respectively. These depend on a number of helper
+functions and lemmas in other files; the cert.pl utility distributed
+with ACL2 is useful in tracking and building these dependencies. The
+shell command below certifies all the filesystem models, assuming
+proper substitutions for ACL2_DIR (the directory containing ACL2) and
+ACL2 (the ACL2 executable, likely to be $ACL2/saved_acl2) below.
 
-The key functions are l5-fs-p (this is a predicate that recognises a
-well-formed filesystem), l5-rdchs (this reads a given
-number of characters from a given file at a given point) and l5-wrchs
-(this writes a given string to a given file at a given point.)
+$ ACL2_DIR/books/build/cert.pl --acl2 ACL2 file-system-*.lisp
 
-The two read-over-write theorems are proven; see theorems
-l5-read-after-write-1 and l5-read-after-write-2. These proofs are
-accomplished using equivalence proofs between reading and writing in
-model 5 and model 4 respectively; see theorems l5-rdchs-correctness-1
-and l5-wrchs-correctness-1 respectively.
+Alternatively, the filesystem models can be certified through the
+normal process of building the ACL2 books, explained on the ACL2
+[homepage](http://www.cs.utexas.edu/users/moore/acl2/v8-1/HTML/installation/installation.html).
+The "make certify-books" command in step 4 will build the filesystem
+books; this is simpler than using cert.pl although it takes longer.
+
+Either way, the certification must be completed before attempting the
+tests, which are located in the test/ subdirectory. This subdirectory
+has its own Makefile, which can be invoked as follows, again
+substituting a proper value for ACL2.
+
+$ cd test; sudo make ACL2=ACL2 test
+
+This should run a number of tests built on LoFAT against the actual
+programs from the Coreutils and the mtools. mkfs.fat versions 3.0.28
+and 3.0.20 are supported; the former is configured by default while
+the latter can be configured with some changes to the Makefile. sudo is
+required for mounting and unmounting the disk images involved in these
+tests; thus, root privileges on the testing machine are
+required. Implementation details can be found in the "Co-simulation"
+subsection of the accompanying paper.
+
+A brief listing of functions and theorems mentioned in the paper
+follows.
+* The function lofat-fs-p is in lofat.lisp.
+* The functions lofat-to-hifat-helper and lofat-to-hifat are in
+lofat.lisp.
+* The functions hifat-subsetp and hifat-equiv are in hifat-equiv.lisp.
+* The functions lofat-equiv and eqfat are in lofat.lisp.
+* The equivalence proofs hifat-to-lofat-inversion,
+lofat-to-hifat-inversion, lofat-to-string-inversion,
+string-to-lofat-inversion and string-to-m1-fs-inversion are in
+lofat.lisp.
+* The LoFAT implementations of the various system calls are in
+lofat.lisp; the HiFAT implementations are in hifat-syscalls.lisp.
+* An ACL2 program for checking disk equivalence is mentioned in the
+"Co-simulation" subsection; this is test/compare-disks.lisp. A proof
+of its correspondence with the equivalence relation eqfat is in the
+theorem compare-disks-correctness-1 in test-stuff.lisp.
+* Two optimizations are mentioned in the "Performance" subsection; they
+are implemented in the functions disk-image-to-lofat and
+lofat-to-disk-image in lofat.lisp.
+* Finally, all co-simulation tests, along with the ACL2 programs used
+for each, are enumerated in test/Makefile.
