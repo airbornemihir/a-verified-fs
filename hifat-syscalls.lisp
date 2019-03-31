@@ -31,7 +31,7 @@
 ;; with a "/". While not documented properly in the man page, for a path such
 ;; as "/home" or "/tmp", the dirname will be "/".
 (defund
-  m1-basename-dirname-helper (path)
+  hifat-basename-dirname-helper (path)
   (declare (xargs :guard (fat32-filename-list-p path)
                   :guard-hints (("Goal" :in-theory (disable
                                                     make-list-ac-removal)))))
@@ -45,44 +45,44 @@
          (fat32-filename-fix (car path))
          nil))
        ((mv tail-basename tail-dirname)
-        (m1-basename-dirname-helper (cdr path))))
+        (hifat-basename-dirname-helper (cdr path))))
     (mv tail-basename
         (list* (fat32-filename-fix (car path))
                tail-dirname))))
 
 (defthm
-  m1-basename-dirname-helper-correctness-1
+  hifat-basename-dirname-helper-correctness-1
   (mv-let (basename dirname)
-    (m1-basename-dirname-helper path)
+    (hifat-basename-dirname-helper path)
     (and (fat32-filename-p basename)
          (fat32-filename-list-p dirname)))
   :hints
-  (("goal" :induct (m1-basename-dirname-helper path)
-    :in-theory (enable m1-basename-dirname-helper)))
+  (("goal" :induct (hifat-basename-dirname-helper path)
+    :in-theory (enable hifat-basename-dirname-helper)))
   :rule-classes
   (:rewrite
    (:type-prescription
     :corollary
-    (stringp (mv-nth 0 (m1-basename-dirname-helper path))))
+    (stringp (mv-nth 0 (hifat-basename-dirname-helper path))))
    (:type-prescription
     :corollary
-    (true-listp (mv-nth 1 (m1-basename-dirname-helper path))))))
+    (true-listp (mv-nth 1 (hifat-basename-dirname-helper path))))))
 
-(defun m1-basename (path)
+(defun hifat-basename (path)
   (declare (xargs :guard (fat32-filename-list-p path)))
   (mv-let (basename dirname)
-    (m1-basename-dirname-helper path)
+    (hifat-basename-dirname-helper path)
     (declare (ignore dirname))
     basename))
 
-(defun m1-dirname (path)
+(defun hifat-dirname (path)
   (declare (xargs :guard (fat32-filename-list-p path)))
   (mv-let (basename dirname)
-    (m1-basename-dirname-helper path)
+    (hifat-basename-dirname-helper path)
     (declare (ignore basename))
     dirname))
 
-(defun m1-lstat (fs pathname)
+(defun hifat-lstat (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (fat32-filename-list-p pathname))))
   (b*
@@ -96,7 +96,7 @@
                   (m1-file->dir-ent file)))
        0 0)))
 
-(defun m1-open (pathname fs fd-table file-table)
+(defun hifat-open (pathname fs fd-table file-table)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (fat32-filename-list-p pathname)
                               (fd-table-p fd-table)
@@ -121,25 +121,18 @@
       file-table)
      fd-table-index 0)))
 
-(defthm m1-open-correctness-1
+(defthm hifat-open-correctness-1
   (b*
-      (((mv fd-table file-table & &) (m1-open pathname fs fd-table file-table)))
+      (((mv fd-table file-table & &) (hifat-open pathname fs fd-table file-table)))
     (and
      (fd-table-p fd-table)
      (file-table-p file-table))))
-
-(defthm
-  m1-pread-guard-lemma-1
-  (implies
-   (and (file-table-p file-table)
-        (consp (assoc-equal x file-table)))
-   (file-table-element-p (cdr (assoc-equal x file-table)))))
 
 ;; Per the man page pread(2), this should not change the offset of the file
 ;; descriptor in the file table. Thus, there's no need for the file table to be
 ;; an argument.
 (defun
-  m1-pread
+  hifat-pread
   (fd count offset fs fd-table file-table)
   (declare (xargs :guard (and (natp fd)
                               (natp count)
@@ -170,9 +163,9 @@
     (mv buf (length buf) 0)))
 
 (defthm
-  m1-pread-correctness-1
+  hifat-pread-correctness-1
   (mv-let (buf ret error-code)
-    (m1-pread fd count offset fs fd-table file-table)
+    (hifat-pread fd count offset fs fd-table file-table)
     (and (stringp buf)
          (integerp ret)
          (integerp error-code)
@@ -180,7 +173,7 @@
                   (equal (length buf) ret)))))
 
 (defun
-  m1-pwrite
+  hifat-pwrite
   (fd buf offset fs fd-table file-table)
   (declare (xargs :guard (and (natp fd)
                               (stringp buf)
@@ -226,7 +219,7 @@
         error-code)))
 
 (defun
-    m1-mkdir (fs pathname)
+    hifat-mkdir (fs pathname)
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
@@ -235,12 +228,12 @@
     (("goal"
       :in-theory
       (disable
-       (:rewrite m1-basename-dirname-helper-correctness-1))
+       (:rewrite hifat-basename-dirname-helper-correctness-1))
       :use
       (:instance
-       (:rewrite m1-basename-dirname-helper-correctness-1)
+       (:rewrite hifat-basename-dirname-helper-correctness-1)
        (path pathname))))))
-  (b* ((dirname (m1-dirname pathname))
+  (b* ((dirname (hifat-dirname pathname))
        ;; Never pass relative pathnames to syscalls - make them always begin
        ;; with "/".
        ((mv parent-dir errno)
@@ -253,11 +246,11 @@
         (find-file-by-pathname fs pathname))
        ((unless (not (equal errno 0)))
         (mv fs -1 *eexist*))
-       (basename (m1-basename pathname))
+       (basename (hifat-basename pathname))
        ((unless (equal (length basename) 11))
         (mv fs -1 *enametoolong*))
        (dir-ent
-        (DIR-ENT-INSTALL-DIRECTORY-BIT
+        (dir-ent-install-directory-bit
          (dir-ent-fix nil)
          t))
        (file (make-m1-file :dir-ent dir-ent
@@ -269,11 +262,11 @@
     (mv fs 0 0)))
 
 (defun
-  m1-mknod (fs pathname)
+  hifat-mknod (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (fat32-filename-list-p pathname))))
-  (b* ((dirname (m1-dirname pathname))
-       (basename (m1-basename pathname))
+  (b* ((dirname (hifat-dirname pathname))
+       (basename (hifat-basename pathname))
        ((mv parent-dir errno)
         (find-file-by-pathname fs dirname))
        ((unless (or (atom dirname)
@@ -403,7 +396,7 @@
         (remove-file-by-pathname fs oldpathname))
        ((unless (equal error-code 0))
         (mv fs -1 error-code))
-       (dirname (m1-dirname newpathname))
+       (dirname (hifat-dirname newpathname))
        ((mv dir error-code)
         (find-file-by-pathname fs dirname))
        ((unless (and (equal error-code 0) (m1-directory-file-p dir)))

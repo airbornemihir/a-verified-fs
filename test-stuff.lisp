@@ -21,7 +21,7 @@
        ;; It doesn't really matter for these purposes what the errno is. We're
        ;; not trying to match this program for its stderr output.
        ((mv fs retval &)
-        (m1-mkdir fs fat32-pathname))
+        (hifat-mkdir fs fat32-pathname))
        (exit-status (if (equal retval 0) exit-status 1)))
     (mkdir-list fs (cdr name-list) exit-status)))
 
