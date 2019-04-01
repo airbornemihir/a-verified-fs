@@ -682,8 +682,8 @@
          (fat32-in-memory
           (update-bpb_bytspersec 512
                                  fat32-in-memory))
-         ;; One final bit of fixing.
-         (str (str-fix str))
+         ((unless (mbt (and (stringp str) (>= (length str) *initialbytcnt*))))
+          (mv fat32-in-memory *EIO*))
          ;; common stuff for fat filesystems
          (initial-bytes
           (get-initial-bytes str))
@@ -1988,13 +1988,10 @@
       (len
        (explode
         (read-file-into-string2 image-path 0 nil state))))
-     (and
-      (stringp (read-file-into-string2
-                image-path 0 *initialbytcnt* state))
-      (equal
-       (len (explode (read-file-into-string2
-                      image-path 0 *initialbytcnt* state)))
-       *initialbytcnt*))))))
+     (equal
+      (len (explode (read-file-into-string2
+                     image-path 0 *initialbytcnt* state)))
+      *initialbytcnt*)))))
 
 (defthm
   disk-image-to-lofat-guard-lemma-3
@@ -2200,20 +2197,8 @@
 (defthm
   disk-image-to-lofat-guard-lemma-7
   (implies
-   (and
-    (not
-     (equal
-      (mv-nth
-       1
-       (read-reserved-area
-        fat32-in-memory
-        (read-file-into-string2 image-path 0 nil state)))
-      0))
-    (<=
-     16
-     (len
-      (explode
-       (read-file-into-string2 image-path 0 16 state)))))
+   (<= 16
+       (len (explode (read-file-into-string2 image-path 0 16 state))))
    (stringp
     (read-file-into-string2
      image-path 16
@@ -2222,37 +2207,27 @@
       (*
        (combine16u
         (char-code
-         (nth
-          12
-          (explode
-           (read-file-into-string2 image-path 0 nil state))))
+         (nth 12
+              (explode (read-file-into-string2 image-path 0 nil state))))
         (char-code
-         (nth
-          11
-          (explode
-           (read-file-into-string2 image-path 0 nil state)))))
+         (nth 11
+              (explode (read-file-into-string2 image-path 0 nil state)))))
        (combine16u
         (char-code
-         (nth
-          15
-          (explode
-           (read-file-into-string2 image-path 0 nil state))))
+         (nth 15
+              (explode (read-file-into-string2 image-path 0 nil state))))
         (char-code
-         (nth
-          14
-          (explode
-           (read-file-into-string2 image-path 0 nil state)))))))
+         (nth 14
+              (explode (read-file-into-string2 image-path 0 nil state)))))))
      state)))
   :hints (("goal" :in-theory (enable read-reserved-area))))
 
 (defthm
   disk-image-to-lofat-guard-lemma-8
   (implies
-   (and (stringp str)
-        (<= *initialbytcnt* (len (explode str)))
-        (< (combine16u (char-code (nth 15 (explode str)))
-                       (char-code (nth 14 (explode str))))
-           1))
+   (< (combine16u (char-code (nth 15 (explode str)))
+                  (char-code (nth 14 (explode str))))
+      1)
    (equal
     (read-reserved-area fat32-in-memory str)
     (mv
@@ -2262,13 +2237,10 @@
        1
        (update-bpb_numfats
         1
-        (update-bpb_rsvdseccnt
-         1
-         (update-bpb_secperclus 1 fat32-in-memory)))))
-     *EIO*)))
-  :hints
-  (("goal"
-    :in-theory (enable read-reserved-area get-initial-bytes))))
+        (update-bpb_rsvdseccnt 1
+                               (update-bpb_secperclus 1 fat32-in-memory)))))
+     *eio*)))
+  :hints (("goal" :in-theory (enable read-reserved-area get-initial-bytes))))
 
 (defthm
   disk-image-to-lofat-guard-lemma-10
@@ -2380,17 +2352,9 @@
 (defthmd
   disk-image-to-lofat-guard-lemma-12
   (implies
-   (and (stringp str)
-        (<= *initialbytcnt* (len (explode str)))
-        (<
-         (combine16u
-          (char-code
-           (nth 12
-                (explode str)))
-          (char-code
-           (nth 11
-                (explode str))))
-         512))
+   (< (combine16u (char-code (nth 12 (explode str)))
+                  (char-code (nth 11 (explode str))))
+      512)
    (equal
     (read-reserved-area fat32-in-memory str)
     (mv
@@ -2400,13 +2364,10 @@
        1
        (update-bpb_numfats
         1
-        (update-bpb_rsvdseccnt
-         1
-         (update-bpb_secperclus 1 fat32-in-memory)))))
-     *EIO*)))
-  :hints
-  (("goal"
-    :in-theory (enable read-reserved-area get-initial-bytes))))
+        (update-bpb_rsvdseccnt 1
+                               (update-bpb_secperclus 1 fat32-in-memory)))))
+     *eio*)))
+  :hints (("goal" :in-theory (enable read-reserved-area get-initial-bytes))))
 
 (defthm
   disk-image-to-lofat-guard-lemma-13
@@ -2502,25 +2463,11 @@
 (defthm
   disk-image-to-lofat-guard-lemma-16
   (implies
-   (and (stringp str)
-        (<= *initialbytcnt* (len (explode str)))
-        (<
-         (*
-          (combine16u
-           (char-code
-            (nth 12
-                 (explode str)))
-           (char-code
-            (nth 11
-                 (explode str))))
-          (combine16u
-           (char-code
-            (nth 15
-                 (explode str)))
-           (char-code
-            (nth 14
-                 (explode str)))))
-         16))
+   (< (* (combine16u (char-code (nth 12 (explode str)))
+                     (char-code (nth 11 (explode str))))
+         (combine16u (char-code (nth 15 (explode str)))
+                     (char-code (nth 14 (explode str)))))
+      16)
    (equal
     (read-reserved-area fat32-in-memory str)
     (mv
@@ -2530,13 +2477,10 @@
        1
        (update-bpb_numfats
         1
-        (update-bpb_rsvdseccnt
-         1
-         (update-bpb_secperclus 1 fat32-in-memory)))))
-     *EIO*)))
-  :hints
-  (("goal"
-    :in-theory (enable read-reserved-area get-initial-bytes))))
+        (update-bpb_rsvdseccnt 1
+                               (update-bpb_secperclus 1 fat32-in-memory)))))
+     *eio*)))
+  :hints (("goal" :in-theory (enable read-reserved-area get-initial-bytes))))
 
 (defthm
   disk-image-to-lofat-guard-lemma-17
@@ -3163,6 +3107,67 @@
     (len (explode (read-file-into-string2 image-path 0 nil state)))))
   :rule-classes :linear)
 
+(defthm
+  disk-image-to-lofat-guard-lemma-30
+  (implies
+   (or (not (stringp str))
+       (> *initialbytcnt* (len (explode str))))
+   (equal
+    (read-reserved-area fat32-in-memory str)
+    (mv
+     (update-bpb_bytspersec
+      512
+      (update-bpb_fatsz32
+       1
+       (update-bpb_numfats
+        1
+        (update-bpb_rsvdseccnt
+         1
+         (update-bpb_secperclus 1 fat32-in-memory)))))
+     *eio*)))
+  :hints (("goal" :in-theory (enable read-reserved-area))))
+
+(defthm
+  disk-image-to-lofat-guard-lemma-31
+  (iff
+   (stringp (read-file-into-string2 image-path 0 16 state))
+   (stringp (read-file-into-string2 image-path 0 nil state))))
+
+(defthm
+  disk-image-to-lofat-guard-lemma-32
+  (implies
+   (<
+    (*
+     (bpb_bytspersec
+      (mv-nth
+       0
+       (read-reserved-area
+        fat32-in-memory
+        (read-file-into-string2 image-path 0 nil state))))
+     (bpb_rsvdseccnt
+      (mv-nth
+       0
+       (read-reserved-area
+        fat32-in-memory
+        (read-file-into-string2 image-path 0 nil state)))))
+    16)
+   (equal
+    (read-reserved-area
+     fat32-in-memory
+     (read-file-into-string2 image-path 0 nil state))
+    (mv
+     (update-bpb_bytspersec
+      512
+      (update-bpb_fatsz32
+       1
+       (update-bpb_numfats
+        1
+        (update-bpb_rsvdseccnt
+         1
+         (update-bpb_secperclus 1 fat32-in-memory)))))
+     *eio*)))
+  :hints (("goal" :in-theory (enable read-reserved-area))))
+
 (defun
   disk-image-to-lofat
   (fat32-in-memory image-path state)
@@ -3192,10 +3197,7 @@
   ;; execute for disks of size 300 MB or more.
   (mbe
    ;; It's a good idea to keep the spec simple.
-   :logic (b* ((str (read-file-into-string image-path))
-               ((unless (and (stringp str)
-                             (>= (length str) *initialbytcnt*)))
-                (mv fat32-in-memory *EIO*)))
+   :logic (b* ((str (read-file-into-string image-path)))
             (string-to-lofat fat32-in-memory str))
    ;; This b* form pretty closely follows the structure of
    ;; string-to-lofat.
@@ -3204,16 +3206,16 @@
        ((initial-bytes-str
          (read-file-into-string image-path
                                 :bytes *initialbytcnt*))
-        ((unless (and (stringp initial-bytes-str)
-                      (>= (length initial-bytes-str)
-                          *initialbytcnt*)))
-         (mv fat32-in-memory *EIO*))
         (fat32-in-memory (update-bpb_secperclus 1 fat32-in-memory))
         (fat32-in-memory (update-bpb_rsvdseccnt 1 fat32-in-memory))
         (fat32-in-memory (update-bpb_numfats 1 fat32-in-memory))
         (fat32-in-memory (update-bpb_fatsz32 1 fat32-in-memory))
         (fat32-in-memory
          (update-bpb_bytspersec 512 fat32-in-memory))
+        ((unless (and (stringp initial-bytes-str)
+                      (>= (length initial-bytes-str)
+                          *initialbytcnt*)))
+         (mv fat32-in-memory *EIO*))
         (tmp_bytspersec
          (combine16u (char-code (char initial-bytes-str 12))
                      (char-code (char initial-bytes-str 11))))
