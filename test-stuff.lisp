@@ -143,19 +143,46 @@
      (mv t fat32-in-memory)))
 
 (defthm
+  compare-disks-correctness-1-lemma-1
+  (not (lofat-fs-p (create-fat32-in-memory)))
+  :hints
+  (("goal"
+    :in-theory (enable lofat-fs-p create-fat32-in-memory)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and
+      (equal (mv-nth 1 (string-to-lofat fat32-in-memory str))
+             0)
+      (fat32-in-memoryp fat32-in-memory))
+     (not
+      (equal (mv-nth 0 (string-to-lofat fat32-in-memory str))
+             (create-fat32-in-memory)))))))
+
+(defthm
+  compare-disks-correctness-1-lemma-2
+  (implies
+   (not (stringp str))
+   (not (equal (mv-nth 1 (string-to-lofat fat32-in-memory str))
+               0)))
+  :hints (("goal" :in-theory (enable string-to-lofat))))
+
+(defthm
   compare-disks-correctness-1
   (let*
    ((str1 (read-file-into-string image-path1))
     (str2 (read-file-into-string image-path2)))
-   (declare (ignorable str1 str2))
-   (implies (and (fat32-in-memoryp fat32-in-memory)
-                 (>= (length str1) *initialbytcnt*)
-                 (>= (length str2) *initialbytcnt*))
-            (equal (mv-nth 0
-                           (compare-disks image-path1
-                                          image-path2 fat32-in-memory state))
-                   (eqfat str1 str2))))
-  :hints (("goal" :in-theory (e/d (eqfat string-to-lofat-ignore-lemma-14
-                                         lofat-equiv)
-                                  (read-file-into-string2)))))
+   (implies
+    (fat32-in-memoryp fat32-in-memory)
+    (equal
+     (mv-nth 0
+             (compare-disks image-path1
+                            image-path2 fat32-in-memory state))
+     (eqfat str1 str2))))
+  :hints
+  (("goal"
+    :in-theory (e/d (eqfat string-to-lofat-ignore-lemma-14
+                           lofat-equiv)
+                    (read-file-into-string2)))))
 
