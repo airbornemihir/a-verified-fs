@@ -9484,25 +9484,17 @@
 
 (defthm
   lofat-fs-p-of-string-to-lofat
-  (implies
-   (and
-    (stringp str)
-    (equal
-     (mv-nth 1
-             (string-to-lofat fat32-in-memory str))
-     0)
-    (fat32-in-memoryp fat32-in-memory))
-   (lofat-fs-p
-    (mv-nth 0
-            (string-to-lofat fat32-in-memory str))))
-  :hints
-  (("goal" :in-theory (enable string-to-lofat
-                              count-of-clusters cluster-size
-                              fat-entry-count read-reserved-area
-                              lofat-fs-p
-                              painful-debugging-lemma-1
-                              painful-debugging-lemma-2
-                              painful-debugging-lemma-3))))
+  (implies (and (equal (mv-nth 1 (string-to-lofat fat32-in-memory str))
+                       0)
+                (fat32-in-memoryp fat32-in-memory))
+           (lofat-fs-p (mv-nth 0
+                               (string-to-lofat fat32-in-memory str))))
+  :hints (("goal" :in-theory (enable string-to-lofat
+                                     count-of-clusters cluster-size
+                                     fat-entry-count read-reserved-area
+                                     lofat-fs-p painful-debugging-lemma-1
+                                     painful-debugging-lemma-2
+                                     painful-debugging-lemma-3))))
 
 (defund
   update-fat-aux (fa-table str pos)

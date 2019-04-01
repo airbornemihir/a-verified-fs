@@ -142,21 +142,20 @@
          (mv nil fat32-in-memory)))
      (mv t fat32-in-memory)))
 
-(defthm compare-disks-correctness-1
+(defthm
+  compare-disks-correctness-1
   (let*
-      ((str1 (read-file-into-string image-path1))
-       (str2 (read-file-into-string image-path2)))
-    (implies
-     (and (fat32-in-memoryp fat32-in-memory)
-          (stringp image-path1)
-          (stringp image-path2)
-          (stringp str1)
-          (>= (length str1) *initialbytcnt*)
-          (stringp str2)
-          (>= (length str2) *initialbytcnt*))
-     (equal (mv-nth
-             0
-             (compare-disks image-path1 image-path2 fat32-in-memory state))
-            (eqfat str1 str2))))
-  :hints (("goal" :in-theory (e/d (eqfat string-to-lofat-ignore-lemma-14 lofat-equiv)
+   ((str1 (read-file-into-string image-path1))
+    (str2 (read-file-into-string image-path2)))
+   (declare (ignorable str1 str2))
+   (implies (and (fat32-in-memoryp fat32-in-memory)
+                 (>= (length str1) *initialbytcnt*)
+                 (>= (length str2) *initialbytcnt*))
+            (equal (mv-nth 0
+                           (compare-disks image-path1
+                                          image-path2 fat32-in-memory state))
+                   (eqfat str1 str2))))
+  :hints (("goal" :in-theory (e/d (eqfat string-to-lofat-ignore-lemma-14
+                                         lofat-equiv)
                                   (read-file-into-string2)))))
+
