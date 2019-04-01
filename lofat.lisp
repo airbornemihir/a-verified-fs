@@ -10767,6 +10767,54 @@
                        (:REWRITE NTH-OF-MAKE-CHARACTER-LIST)
                        (:DEFINITION UPDATE-FAT))))))
 
+  (local
+   (defthm
+     string-to-lofat-ignore-lemma-19
+     (implies (and (equal (mv-nth 1 (string-to-lofat fat32-in-memory str))
+                          0)
+                   (stringp str)
+                   (not (equal fat32-in-memory
+                               (create-fat32-in-memory)))
+                   (fat32-in-memoryp fat32-in-memory)
+                   (equal (mv-nth 1
+                                  (string-to-lofat (create-fat32-in-memory)
+                                                   str))
+                          0)
+                   (case-split
+                    (not (equal (mv-nth 0 (string-to-lofat fat32-in-memory str))
+                                (mv-nth 0
+                                        (string-to-lofat (create-fat32-in-memory)
+                                                         str))))))
+              (equal (string-to-lofat fat32-in-memory str)
+                     (string-to-lofat (create-fat32-in-memory)
+                                      str)))
+     :hints
+     (("goal"
+       :use
+       ((:functional-instance
+         equal-by-nths
+         (equal-by-nths-hyp
+          (lambda nil
+            (and (stringp str)
+                 (not (equal fat32-in-memory
+                             (create-fat32-in-memory)))
+                 (fat32-in-memoryp fat32-in-memory)
+                 (equal (mv-nth 1 (string-to-lofat fat32-in-memory str))
+                        0)
+                 (equal (mv-nth 1
+                                (string-to-lofat (create-fat32-in-memory)
+                                                 str))
+                        0))))
+         (equal-by-nths-lhs
+          (lambda nil
+            (mv-nth 0
+                    (string-to-lofat fat32-in-memory str))))
+         (equal-by-nths-rhs
+          (lambda nil
+            (mv-nth 0
+                    (string-to-lofat (create-fat32-in-memory)
+                                     str))))))))))
+
   (defthm
     string-to-lofat-ignore
     (implies
@@ -10785,11 +10833,12 @@
                                        str)))
     :hints
     (("goal"
+      :in-theory (enable
+                  string-to-lofat-ignore-lemma-14)
       :use
       (string-to-lofat-correctness-1
        (:instance string-to-lofat-correctness-1
-                  (fat32-in-memory (create-fat32-in-memory)))
-       string-to-lofat-ignore-lemma-14)
+                  (fat32-in-memory (create-fat32-in-memory))))
       :cases
       ((equal
         (mv-nth 0
@@ -10797,43 +10846,7 @@
         (mv-nth
          0
          (string-to-lofat (create-fat32-in-memory)
-                                    str)))))
-     ("subgoal 2''"
-      :use
-      ((:functional-instance
-        equal-by-nths
-        (equal-by-nths-hyp
-         (lambda
-          nil
-          (and
-           (stringp str)
-           (not (equal fat32-in-memory
-                       (create-fat32-in-memory)))
-           (fat32-in-memoryp fat32-in-memory)
-           (equal
-            (mv-nth
-             1
-             (string-to-lofat fat32-in-memory str))
-            0)
-           (equal
-            (mv-nth
-             1
-             (string-to-lofat (create-fat32-in-memory)
-                                        str))
-            0))))
-        (equal-by-nths-lhs
-         (lambda
-          nil
-          (mv-nth
-           0
-           (string-to-lofat fat32-in-memory str))))
-        (equal-by-nths-rhs
-         (lambda
-          nil
-          (mv-nth
-           0
-           (string-to-lofat (create-fat32-in-memory)
-                                      str))))))))))
+                                    str))))))))
 
 (encapsulate
   ()
