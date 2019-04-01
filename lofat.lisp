@@ -10699,73 +10699,74 @@
                                (nth '20
                                     (get-remaining-rsvdbyts str))))))))))))
 
-  (defthm
-    string-to-lofat-ignore-lemma-18
-    (implies
-     (and (not (equal fat32-in-memory
-                      (create-fat32-in-memory)))
-          (fat32-in-memoryp fat32-in-memory)
-          (equal (mv-nth 1
-                         (string-to-lofat fat32-in-memory str))
-                 0)
-          (equal (mv-nth 1
-                         (string-to-lofat (create-fat32-in-memory)
-                                                    str))
-                 0)
-          (integerp n)
-          (<= 0 n)
-          (< n 30))
-     (equal (nth n
-                 (mv-nth 0
-                         (string-to-lofat fat32-in-memory str)))
-            (nth n
-                 (mv-nth 0
-                         (string-to-lofat (create-fat32-in-memory)
-                                                    str)))))
-    :hints
-    (("goal" :cases ((equal n *bs_jmpbooti*)
-                     (equal n *bs_oemnamei*)
-                     (equal n *bpb_bytspersec*)
-                     (equal n *bpb_secperclus*)
-                     (equal n *bpb_rsvdseccnt*)
-                     (equal n *bpb_numfats*)
-                     (equal n *bpb_rootentcnt*)
-                     (equal n *bpb_totsec16*)
-                     (equal n *bpb_media*)
-                     (equal n *bpb_fatsz16*)
-                     (equal n *bpb_secpertrk*)
-                     (equal n *bpb_numheads*)
-                     (equal n *bpb_hiddsec*)
-                     (equal n *bpb_totsec32*)
-                     (equal n *bpb_fatsz32*)
-                     (equal n *bpb_extflags*)
-                     (equal n *bpb_fsver_minor*)
-                     (equal n *bpb_fsver_major*)
-                     (equal n *bpb_rootclus*)
-                     (equal n *bpb_fsinfo*)
-                     (equal n *bpb_bkbootsec*)
-                     (equal n *bpb_reservedi*)
-                     (equal n *bs_drvnum*)
-                     (equal n *bs_reserved1*)
-                     (equal n *bs_bootsig*)
-                     (equal n *bs_volid*)
-                     (equal n *bs_vollabi*)
-                     (equal n *bs_filsystypei*)
-                     (equal n *fati*)
-                     (equal n *data-regioni*))
-      :in-theory (e/d (string-to-lofat read-reserved-area)
-                      (;; accumulated-persistence suggests disabling a bunch of
-                       ;; rules.
-                       (:REWRITE NTH-WHEN-ATOM)
-                       (:DEFINITION UPDATE-DATA-REGION)
-                       (:REWRITE CONSP-OF-TAKE)
-                       (:DEFINITION TAKE-REDEFINITION)
-                       (:REWRITE
-                        RESIZE-FAT-OF-FAT-LENGTH-WHEN-FAT32-IN-MEMORYP
-                        . 2)
-                       (:REWRITE CAR-OF-NTHCDR)
-                       (:REWRITE NTH-OF-MAKE-CHARACTER-LIST)
-                       (:DEFINITION UPDATE-FAT))))))
+  (local
+   (defthm
+     string-to-lofat-ignore-lemma-18
+     (implies
+      (and (not (equal fat32-in-memory
+                       (create-fat32-in-memory)))
+           (fat32-in-memoryp fat32-in-memory)
+           (equal (mv-nth 1
+                          (string-to-lofat fat32-in-memory str))
+                  0)
+           (equal (mv-nth 1
+                          (string-to-lofat (create-fat32-in-memory)
+                                           str))
+                  0)
+           (integerp n)
+           (<= 0 n)
+           (< n 30))
+      (equal (nth n
+                  (mv-nth 0
+                          (string-to-lofat fat32-in-memory str)))
+             (nth n
+                  (mv-nth 0
+                          (string-to-lofat (create-fat32-in-memory)
+                                           str)))))
+     :hints
+     (("goal" :cases ((equal n *bs_jmpbooti*)
+                      (equal n *bs_oemnamei*)
+                      (equal n *bpb_bytspersec*)
+                      (equal n *bpb_secperclus*)
+                      (equal n *bpb_rsvdseccnt*)
+                      (equal n *bpb_numfats*)
+                      (equal n *bpb_rootentcnt*)
+                      (equal n *bpb_totsec16*)
+                      (equal n *bpb_media*)
+                      (equal n *bpb_fatsz16*)
+                      (equal n *bpb_secpertrk*)
+                      (equal n *bpb_numheads*)
+                      (equal n *bpb_hiddsec*)
+                      (equal n *bpb_totsec32*)
+                      (equal n *bpb_fatsz32*)
+                      (equal n *bpb_extflags*)
+                      (equal n *bpb_fsver_minor*)
+                      (equal n *bpb_fsver_major*)
+                      (equal n *bpb_rootclus*)
+                      (equal n *bpb_fsinfo*)
+                      (equal n *bpb_bkbootsec*)
+                      (equal n *bpb_reservedi*)
+                      (equal n *bs_drvnum*)
+                      (equal n *bs_reserved1*)
+                      (equal n *bs_bootsig*)
+                      (equal n *bs_volid*)
+                      (equal n *bs_vollabi*)
+                      (equal n *bs_filsystypei*)
+                      (equal n *fati*)
+                      (equal n *data-regioni*))
+       :in-theory (e/d (string-to-lofat read-reserved-area)
+                       (;; accumulated-persistence suggests disabling a bunch of
+                        ;; rules.
+                        (:REWRITE NTH-WHEN-ATOM)
+                        (:DEFINITION UPDATE-DATA-REGION)
+                        (:REWRITE CONSP-OF-TAKE)
+                        (:DEFINITION TAKE-REDEFINITION)
+                        (:REWRITE
+                         RESIZE-FAT-OF-FAT-LENGTH-WHEN-FAT32-IN-MEMORYP
+                         . 2)
+                        (:REWRITE CAR-OF-NTHCDR)
+                        (:REWRITE NTH-OF-MAKE-CHARACTER-LIST)
+                        (:DEFINITION UPDATE-FAT)))))))
 
   (local
    (defthm
@@ -10773,18 +10774,17 @@
      (implies (and (equal (mv-nth 1 (string-to-lofat fat32-in-memory str))
                           0)
                    (stringp str)
-                   (not (equal fat32-in-memory
-                               (create-fat32-in-memory)))
                    (fat32-in-memoryp fat32-in-memory)
                    (equal (mv-nth 1
                                   (string-to-lofat (create-fat32-in-memory)
                                                    str))
                           0)
-                   (case-split
-                    (not (equal (mv-nth 0 (string-to-lofat fat32-in-memory str))
-                                (mv-nth 0
-                                        (string-to-lofat (create-fat32-in-memory)
-                                                         str))))))
+                   (not (equal fat32-in-memory
+                               (create-fat32-in-memory)))
+                   (not (equal (mv-nth 0 (string-to-lofat fat32-in-memory str))
+                               (mv-nth 0
+                                       (string-to-lofat (create-fat32-in-memory)
+                                                        str)))))
               (equal (string-to-lofat fat32-in-memory str)
                      (string-to-lofat (create-fat32-in-memory)
                                       str)))
@@ -10820,8 +10820,9 @@
     (implies
      (and
       (stringp str)
-      (not (equal fat32-in-memory
-                  (create-fat32-in-memory)))
+      (case-split
+       (not (equal fat32-in-memory
+                   (create-fat32-in-memory))))
       (fat32-in-memoryp fat32-in-memory)
       (equal
        (mv-nth 1
@@ -10873,27 +10874,10 @@
        :in-theory
        (e/d (eqfat)
             (create-fat32-in-memory
-             (:rewrite string-to-lofat-ignore)
              (:rewrite lofat-to-string-inversion)))
-       :cases ((equal fat32-in-memory
-                      (create-fat32-in-memory)))
        :use
-       ((:rewrite string-to-lofat-ignore)
-        (:instance
+       ((:instance
          (:rewrite lofat-to-string-inversion)
-         (fat32-in-memory
-          (mv-nth
-           0
-           (string-to-lofat (create-fat32-in-memory)
-                                      str))))
-        (:instance
-         (:rewrite string-to-lofat-ignore)
-         (str
-          (lofat-to-string
-           (mv-nth
-            0
-            (string-to-lofat (create-fat32-in-memory)
-                                       str))))
          (fat32-in-memory
           (mv-nth
            0
