@@ -260,7 +260,7 @@
          ;; The spec (page 9) imposes both hard and soft limits on the legal
          ;; values of the cluster size, limiting it to being a power of 2 from
          ;; 512 through 32768. The following two clauses, however, are less
-         ;; stringent - they allow value of cluster size which are powers of 2
+         ;; stringent - they allow values of cluster size which are powers of 2
          ;; going up to 2097152, although the lower bound of 512 is retained
          ;; thanks to the lower bounds on bpb_bytspersec and bpb_secperclus
          ;; above.
@@ -9259,19 +9259,18 @@
          (lofat-fs-p-correctness-1))
     :use lofat-fs-p-correctness-1)))
 
+(defund-nx string-to-lofat-nx (str)
+  (string-to-lofat (create-fat32-in-memory) str))
+
 (defund-nx
   eqfat (str1 str2)
   (b*
       (((mv fat32-in-memory1 error-code1)
-        (string-to-lofat (create-fat32-in-memory)
-                                   str1))
-       (good1 (and (stringp str1)
-                   (equal error-code1 0)))
+        (string-to-lofat-nx str1))
+       (good1 (and (stringp str1) (equal error-code1 0)))
        ((mv fat32-in-memory2 error-code2)
-        (string-to-lofat (create-fat32-in-memory)
-                                   str2))
-       (good2 (and (stringp str2)
-                   (equal error-code2 0)))
+        (string-to-lofat-nx str2))
+       (good2 (and (stringp str2) (equal error-code2 0)))
        ((unless (and good1 good2))
         (and (not good1) (not good2))))
     (lofat-equiv fat32-in-memory1 fat32-in-memory2)))
@@ -9902,19 +9901,16 @@
 
   (defthmd
     string-to-lofat-ignore-lemma-14
-    (implies
-     (case-split (not (equal fat32-in-memory (create-fat32-in-memory))))
      (equal (mv-nth 1
                     (string-to-lofat fat32-in-memory str))
             (mv-nth 1
-                    (string-to-lofat (create-fat32-in-memory)
-                                               str))))
+                    (string-to-lofat-nx str)))
     :hints
     (("goal"
       :in-theory
       (enable string-to-lofat read-reserved-area
               update-data-region-alt cluster-size
-              count-of-clusters fat-entry-count)
+              count-of-clusters fat-entry-count string-to-lofat-nx)
       :use
       (:instance
        (:rewrite string-to-lofat-ignore-lemma-13)
