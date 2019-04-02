@@ -144,29 +144,11 @@
 
 (defthm
   compare-disks-correctness-1-lemma-1
-  (not (lofat-fs-p (create-fat32-in-memory)))
-  :hints
-  (("goal"
-    :in-theory (enable lofat-fs-p create-fat32-in-memory)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and
-      (equal (mv-nth 1 (string-to-lofat fat32-in-memory str))
-             0)
-      (fat32-in-memoryp fat32-in-memory))
-     (not
-      (equal (mv-nth 0 (string-to-lofat fat32-in-memory str))
-             (create-fat32-in-memory)))))))
-
-(defthm
-  compare-disks-correctness-1-lemma-2
   (implies
    (not (stringp str))
-   (not (equal (mv-nth 1 (string-to-lofat fat32-in-memory str))
+   (not (equal (mv-nth 1 (string-to-lofat-nx str))
                0)))
-  :hints (("goal" :in-theory (enable string-to-lofat))))
+  :hints (("goal" :in-theory (enable string-to-lofat string-to-lofat-nx))))
 
 (defthm
   compare-disks-correctness-1
@@ -182,7 +164,9 @@
      (eqfat str1 str2))))
   :hints
   (("goal"
-    :in-theory (e/d (eqfat string-to-lofat-ignore-lemma-14
-                           lofat-equiv)
-                    (read-file-into-string2)))))
+    :in-theory
+    (e/d (eqfat string-to-lofat-ignore-lemma-14
+                lofat-equiv)
+         (read-file-into-string2 (:e string-to-lofat-nx)))
+    :expand (hide (string-to-lofat-nx nil)))))
 
