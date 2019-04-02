@@ -10805,108 +10805,99 @@
                     (string-to-lofat (create-fat32-in-memory)
                                      str))))))))))
 
+  (local
+   (defthmd
+     string-to-lofat-ignore-lemma-20
+     (implies
+      (and
+       (stringp str)
+       (case-split
+        (not (equal fat32-in-memory
+                    (create-fat32-in-memory))))
+       (fat32-in-memoryp fat32-in-memory)
+       (equal
+        (mv-nth 1
+                (string-to-lofat (create-fat32-in-memory)
+                                 str))
+        0))
+      (equal (string-to-lofat fat32-in-memory str)
+             (string-to-lofat (create-fat32-in-memory)
+                              str)))
+     :hints
+     (("goal"
+       :in-theory (enable
+                   string-to-lofat-ignore-lemma-14)
+       :use
+       (string-to-lofat-correctness-1
+        (:instance string-to-lofat-correctness-1
+                   (fat32-in-memory (create-fat32-in-memory))))
+       :cases
+       ((equal
+         (mv-nth 0
+                 (string-to-lofat fat32-in-memory str))
+         (mv-nth
+          0
+          (string-to-lofat (create-fat32-in-memory)
+                           str))))))))
+
   (defthm
     string-to-lofat-ignore
     (implies
      (and
       (stringp str)
-      (case-split
-       (not (equal fat32-in-memory
-                   (create-fat32-in-memory))))
       (fat32-in-memoryp fat32-in-memory)
-      (equal
-       (mv-nth 1
-               (string-to-lofat (create-fat32-in-memory)
-                                          str))
-       0))
+      (equal (mv-nth 1 (string-to-lofat-nx str)) 0))
      (equal (string-to-lofat fat32-in-memory str)
-            (string-to-lofat (create-fat32-in-memory)
-                                       str)))
+            (string-to-lofat-nx str)))
     :hints
     (("goal"
-      :in-theory (enable
-                  string-to-lofat-ignore-lemma-14)
-      :use
-      (string-to-lofat-correctness-1
-       (:instance string-to-lofat-correctness-1
-                  (fat32-in-memory (create-fat32-in-memory))))
+      :in-theory (enable string-to-lofat-nx)
+      :use string-to-lofat-ignore-lemma-20
       :cases
-      ((equal
-        (mv-nth 0
-                (string-to-lofat fat32-in-memory str))
-        (mv-nth
-         0
-         (string-to-lofat (create-fat32-in-memory)
-                                    str))))))))
+      ((equal fat32-in-memory (create-fat32-in-memory)))))))
 
-(encapsulate
-  ()
+(defthm
+  string-to-lofat-inversion-lemma-1
+  (implies (equal (mv-nth 1 (string-to-lofat-nx str))
+                  0)
+           (lofat-fs-p (mv-nth 0 (string-to-lofat-nx str))))
+  :hints (("goal" :in-theory (enable string-to-lofat-nx))))
 
-  (local
-   (defthmd
-     string-to-lofat-inversion-lemma-1
-     (implies
-      (and
-       (stringp str)
-       (fat32-in-memoryp fat32-in-memory)
-       (equal
-        (mv-nth 1
-                (string-to-lofat (create-fat32-in-memory)
-                                           str))
-        0))
-      (eqfat
+(defthm
+  string-to-lofat-inversion
+  (implies
+   (and (stringp str)
+        (fat32-in-memoryp fat32-in-memory)
+        (equal (mv-nth 1 (string-to-lofat fat32-in-memory str))
+               0))
+   (eqfat (lofat-to-string
+           (mv-nth 0
+                   (string-to-lofat fat32-in-memory str)))
+          str))
+  :hints
+  (("goal"
+    :in-theory (e/d (eqfat)
+                    (create-fat32-in-memory
+                     (:rewrite lofat-to-string-inversion)))
+    :use
+    ((:instance
+      (:rewrite lofat-to-string-inversion)
+      (fat32-in-memory
+       (mv-nth 0
+               (string-to-lofat (create-fat32-in-memory)
+                                str))))
+     (:instance
+      (:rewrite string-to-lofat-ignore-lemma-14)
+      (str
        (lofat-to-string
         (mv-nth 0
-                (string-to-lofat fat32-in-memory str)))
-       str))
-     :hints
-     (("goal"
-       :in-theory
-       (e/d (eqfat)
-            (create-fat32-in-memory
-             (:rewrite lofat-to-string-inversion)))
-       :use
-       ((:instance
-         (:rewrite lofat-to-string-inversion)
-         (fat32-in-memory
-          (mv-nth
-           0
-           (string-to-lofat (create-fat32-in-memory)
-                                      str))))
-        (:instance
-         (:rewrite string-to-lofat-ignore-lemma-14)
-         (str
-          (lofat-to-string
-           (mv-nth
-            0
-            (string-to-lofat (create-fat32-in-memory)
-                                       str))))
-         (fat32-in-memory
-          (mv-nth
-           0
-           (string-to-lofat (create-fat32-in-memory)
-                                      str)))))))))
-
-  (defthm
-    string-to-lofat-inversion
-    (implies
-     (and
-      (stringp str)
-      (fat32-in-memoryp fat32-in-memory)
-      (equal
-       (mv-nth 1
-               (string-to-lofat fat32-in-memory str))
-       0))
-     (eqfat
-      (lofat-to-string
+                (string-to-lofat (create-fat32-in-memory)
+                                 str))))
+      (fat32-in-memory
        (mv-nth 0
-               (string-to-lofat fat32-in-memory str)))
-      str))
-    :hints
-    (("goal" :in-theory (e/d nil (create-fat32-in-memory))
-      :use
-      (string-to-lofat-ignore-lemma-14
-       string-to-lofat-inversion-lemma-1)))))
+               (string-to-lofat (create-fat32-in-memory)
+                                str))))
+     string-to-lofat-ignore-lemma-14))))
 
 (defthm
   m1-fs-to-string-inversion
@@ -10933,316 +10924,99 @@
            (lofat-to-string fat32-in-memory)))))
        fs)))))
 
-(encapsulate
-  ()
-
-  (local
-   (defthmd
-     string-to-m1-fs-inversion-lemma-1
+(defthm
+  string-to-m1-fs-inversion
+  (implies
+   (and (stringp str)
+        (fat32-in-memoryp fat32-in-memory))
+   (b*
+       (((mv fat32-in-memory error-code1)
+         (string-to-lofat fat32-in-memory str))
+        ((mv fs error-code2)
+         (lofat-to-hifat fat32-in-memory)))
      (implies
-      (and
-       (stringp str)
-       (fat32-in-memoryp fat32-in-memory)
-       (equal
-        (mv-nth
-         1
-         (string-to-lofat
-          (create-fat32-in-memory)
-          (lofat-to-string
-           (mv-nth
-            0
-            (hifat-to-lofat
-             (mv-nth
-              0
-              (string-to-lofat fat32-in-memory str))
-             (mv-nth 0
-                     (lofat-to-hifat
-                      (mv-nth 0
-                              (string-to-lofat
-                               fat32-in-memory str)))))))))
-        0)
-       (equal
-        (mv-nth 1
-                (string-to-lofat (create-fat32-in-memory)
-                                           str))
-        0)
-       (equal
-        (mv-nth
-         1
-         (lofat-to-hifat
-          (mv-nth
-           0
-           (string-to-lofat fat32-in-memory str))))
-        0)
-       (m1-bounded-file-alist-p
-        (mv-nth
-         0
-         (lofat-to-hifat
-          (mv-nth
-           0
-           (string-to-lofat fat32-in-memory str)))))
-       (m1-file-no-dups-p
-        (mv-nth
-         0
-         (lofat-to-hifat
-          (mv-nth
-           0
-           (string-to-lofat fat32-in-memory str)))))
-       (equal
-        (mv-nth
-         1
-         (hifat-to-lofat
-          (mv-nth 0
-                  (string-to-lofat fat32-in-memory str))
-          (mv-nth
-           0
-           (lofat-to-hifat
-            (mv-nth
-             0
-             (string-to-lofat fat32-in-memory str))))))
-        0))
-      (eqfat
+      (and (equal error-code1 0)
+           (equal error-code2 0)
+           (m1-bounded-file-alist-p fs)
+           (m1-file-no-dups-p fs)
+           (equal (mv-nth 1 (hifat-to-lofat fat32-in-memory fs))
+                  0))
+      (eqfat (lofat-to-string
+              (mv-nth 0 (hifat-to-lofat fat32-in-memory fs)))
+             str))))
+  :hints
+  (("goal"
+    :in-theory (e/d (eqfat)
+                    ((:rewrite lofat-to-string-inversion)
+                     (:rewrite string-to-lofat-ignore)))
+    :use
+    ((:instance
+      (:rewrite lofat-to-string-inversion)
+      (fat32-in-memory
+       (mv-nth
+        0
+        (hifat-to-lofat
+         (mv-nth 0 (string-to-lofat-nx str))
+         (mv-nth 0
+                 (lofat-to-hifat
+                  (mv-nth 0 (string-to-lofat-nx str))))))))
+     (:instance
+      (:rewrite string-to-lofat-ignore)
+      (str
        (lofat-to-string
         (mv-nth
          0
          (hifat-to-lofat
+          (mv-nth 0 (string-to-lofat-nx str))
           (mv-nth 0
-                  (string-to-lofat fat32-in-memory str))
-          (mv-nth
-           0
-           (lofat-to-hifat
-            (mv-nth
-             0
-             (string-to-lofat fat32-in-memory str)))))))
-       str))
-     :hints
-     (("goal"
-       :in-theory
-       (e/d (eqfat)
-            ((:rewrite lofat-to-string-inversion)
-             (:rewrite string-to-lofat-ignore)))
-       :use
-       ((:instance
-         (:rewrite lofat-to-string-inversion)
-         (fat32-in-memory
-          (mv-nth
-           0
-           (hifat-to-lofat
-            (mv-nth
-             0
-             (string-to-lofat (create-fat32-in-memory)
-                                        str))
-            (mv-nth
-             0
-             (lofat-to-hifat
-              (mv-nth
-               0
-               (string-to-lofat (create-fat32-in-memory)
-                                          str))))))))
-        (:instance
-         (:rewrite string-to-lofat-ignore)
-         (str
-          (lofat-to-string
-           (mv-nth
-            0
-            (hifat-to-lofat
-             (mv-nth
-              0
-              (string-to-lofat (create-fat32-in-memory)
-                                         str))
-             (mv-nth
-              0
-              (lofat-to-hifat
-               (mv-nth
-                0
-                (string-to-lofat (create-fat32-in-memory)
-                                           str))))))))
-         (fat32-in-memory
-          (mv-nth
-           0
-           (hifat-to-lofat
-            (mv-nth
-             0
-             (string-to-lofat (create-fat32-in-memory)
-                                        str))
-            (mv-nth
-             0
-             (lofat-to-hifat
-              (mv-nth
-               0
-               (string-to-lofat (create-fat32-in-memory)
-                                          str))))))))
-        (:rewrite string-to-lofat-ignore))
-       :cases ((equal fat32-in-memory
-                      (create-fat32-in-memory)))))))
-
-  (local
-   (defthmd
-     string-to-m1-fs-inversion-lemma-2
-     (implies
-      (and
-       (stringp str)
-       (fat32-in-memoryp fat32-in-memory)
-       (equal
-        (mv-nth
-         1
-         (string-to-lofat
-          (mv-nth
-           0
-           (hifat-to-lofat
-            (mv-nth
-             0
-             (string-to-lofat fat32-in-memory str))
-            (mv-nth 0
-                    (lofat-to-hifat
-                     (mv-nth 0
-                             (string-to-lofat
-                              fat32-in-memory str))))))
-          (lofat-to-string
-           (mv-nth
-            0
-            (hifat-to-lofat
-             (mv-nth
-              0
-              (string-to-lofat fat32-in-memory str))
-             (mv-nth 0
-                     (lofat-to-hifat
-                      (mv-nth 0
-                              (string-to-lofat
-                               fat32-in-memory str)))))))))
-        0)
-       (equal
-        (mv-nth 1
-                (string-to-lofat fat32-in-memory
-                                           str))
-        0)
-       (equal
-        (mv-nth
-         1
-         (lofat-to-hifat
-          (mv-nth
-           0
-           (string-to-lofat fat32-in-memory str))))
-        0)
-       (m1-bounded-file-alist-p
-        (mv-nth
-         0
-         (lofat-to-hifat
-          (mv-nth
-           0
-           (string-to-lofat fat32-in-memory str)))))
-       (m1-file-no-dups-p
-        (mv-nth
-         0
-         (lofat-to-hifat
-          (mv-nth
-           0
-           (string-to-lofat fat32-in-memory str)))))
-       (equal
-        (mv-nth
-         1
-         (hifat-to-lofat
-          (mv-nth 0
-                  (string-to-lofat fat32-in-memory str))
-          (mv-nth
-           0
-           (lofat-to-hifat
-            (mv-nth
-             0
-             (string-to-lofat fat32-in-memory str))))))
-        0))
-      (eqfat
+                  (lofat-to-hifat
+                   (mv-nth 0 (string-to-lofat-nx str))))))))
+      (fat32-in-memory
+       (mv-nth
+        0
+        (hifat-to-lofat
+         (mv-nth 0 (string-to-lofat-nx str))
+         (mv-nth 0
+                 (lofat-to-hifat
+                  (mv-nth 0 (string-to-lofat-nx str))))))))
+     (:rewrite string-to-lofat-ignore)
+     string-to-lofat-ignore-lemma-14
+     (:instance
+      (:rewrite string-to-lofat-ignore-lemma-14)
+      (str
        (lofat-to-string
         (mv-nth
          0
          (hifat-to-lofat
-          (mv-nth 0
-                  (string-to-lofat fat32-in-memory str))
+          (mv-nth 0 (string-to-lofat fat32-in-memory str))
           (mv-nth
            0
            (lofat-to-hifat
-            (mv-nth
-             0
-             (string-to-lofat fat32-in-memory str)))))))
-       str))
-     :hints
-     (("goal"
-       :use
-       (string-to-m1-fs-inversion-lemma-1
-        string-to-lofat-ignore-lemma-14
-        (:instance
-         (:rewrite string-to-lofat-ignore-lemma-14)
-         (str
-          (lofat-to-string
-           (mv-nth
-            0
-            (hifat-to-lofat
-             (mv-nth 0
-                     (string-to-lofat fat32-in-memory str))
-             (mv-nth 0
-                     (lofat-to-hifat
-                      (mv-nth 0
-                              (string-to-lofat
-                               fat32-in-memory str))))))))
-         (fat32-in-memory
-          (mv-nth
-           0
-           (hifat-to-lofat
             (mv-nth 0
-                    (string-to-lofat fat32-in-memory str))
-            (mv-nth
-             0
-             (lofat-to-hifat
-              (mv-nth
-               0
-               (string-to-lofat fat32-in-memory str)))))))))))))
-
-  (defthm
-    string-to-m1-fs-inversion
-    (implies
-     (and (stringp str)
-          (fat32-in-memoryp fat32-in-memory))
-     (b*
-         (((mv fat32-in-memory error-code1)
-           (string-to-lofat fat32-in-memory str))
-          ((mv fs error-code2)
-           (lofat-to-hifat fat32-in-memory)))
-       (implies
-        (and
-         (equal error-code1 0)
-         (equal error-code2 0)
-         (m1-bounded-file-alist-p fs)
-         (m1-file-no-dups-p fs)
-         (equal
-          (mv-nth 1
-                  (hifat-to-lofat fat32-in-memory fs))
-          0))
-        (eqfat
-         (lofat-to-string
-          (mv-nth 0
-                  (hifat-to-lofat fat32-in-memory fs)))
-         str))))
-    :hints
-    (("goal"
-      :in-theory
-      (disable (:rewrite lofat-to-string-inversion))
-      :use
-      (string-to-m1-fs-inversion-lemma-2
-       (:instance
-        (:rewrite lofat-to-string-inversion)
-        (fat32-in-memory
+                    (string-to-lofat fat32-in-memory str))))))))
+      (fat32-in-memory
+       (mv-nth
+        0
+        (hifat-to-lofat
+         (mv-nth 0 (string-to-lofat fat32-in-memory str))
          (mv-nth
           0
-          (hifat-to-lofat
+          (lofat-to-hifat
+           (mv-nth 0
+                   (string-to-lofat fat32-in-memory str))))))))
+     (:instance
+      (:rewrite lofat-to-string-inversion)
+      (fat32-in-memory
+       (mv-nth
+        0
+        (hifat-to-lofat
+         (mv-nth 0 (string-to-lofat fat32-in-memory str))
+         (mv-nth
+          0
+          (lofat-to-hifat
            (mv-nth
             0
-            (string-to-lofat fat32-in-memory str))
-           (mv-nth
-            0
-            (lofat-to-hifat
-             (mv-nth 0
-                     (string-to-lofat
-                      fat32-in-memory str)))))))))))))
+            (string-to-lofat fat32-in-memory str))))))))))))
 
 #|
 Some (rather awful) testing forms are
