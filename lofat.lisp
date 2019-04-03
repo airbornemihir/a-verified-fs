@@ -11692,6 +11692,8 @@ Some (rather awful) testing forms are
            (lofat-find-file-by-pathname
             fat32-in-memory dir-ent-list pathname))))
 
+(include-book "hifat-syscalls")
+
 ;; This needs some revision... obviously, we don't want to be staring into the
 ;; computation to get the root directory's directory entries here.
 (defun lofat-open (pathname fat32-in-memory fd-table file-table)
@@ -11774,6 +11776,17 @@ Some (rather awful) testing forms are
                          (length file-contents))
                     new-offset)))
     (mv buf (length buf) 0)))
+
+(defthm
+  lofat-pread-refinement
+  (implies (equal (mv-nth 3 (lofat-to-hifat fat32-in-memory))
+                  0)
+           (equal (lofat-pread fd count offset
+                               fat32-in-memory fd-table file-table)
+                  (hifat-pread fd count offset
+                               (mv-nth 3 (lofat-to-hifat fat32-in-memory))
+                               fd-table file-table)))
+  :hints (("goal" :in-theory (enable lofat-to-hifat))))
 
 (defun lofat-lstat (fat32-in-memory pathname)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
