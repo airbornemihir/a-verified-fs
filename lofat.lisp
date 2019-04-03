@@ -11207,6 +11207,13 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable lofat-regular-file-p))))
 
 (defthm
+  lofat-regular-file-p-correctness-2
+  (implies
+   (lofat-regular-file-p file)
+   (stringp (lofat-file->contents file)))
+  :hints (("goal" :in-theory (enable lofat-regular-file-p))))
+
+(defthm
   lofat-directory-file-p-correctness-1
   (implies
    (stringp contents)
@@ -11749,7 +11756,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (fat32-entry-mask (bpb_rootclus fat32-in-memory))
          2097152))
-       ((mv file-contents error-code)
+       ((mv file error-code)
         (lofat-find-file-by-pathname
          fat32-in-memory
          (make-dir-ent-list
@@ -11757,8 +11764,9 @@ Some (rather awful) testing forms are
            root-contents))
          pathname))
        ((unless (and (equal error-code 0)
-                     (stringp file-contents)))
+                     (lofat-regular-file-p file)))
         (mv "" -1 error-code))
+       (file-contents (lofat-file->contents file))
        (new-offset (min (+ offset count)
                         (length file-contents)))
        (buf (subseq file-contents
