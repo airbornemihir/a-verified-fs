@@ -11825,3 +11825,13 @@ Some (rather awful) testing forms are
         :st_size (dir-ent-file-size
                   (lofat-file->dir-ent file)))
        0 0)))
+
+(defthm lofat-lstat-refinement
+  (implies
+   (equal (mv-nth 3 (lofat-to-hifat fat32-in-memory))
+          0)
+   (equal
+    (lofat-lstat fat32-in-memory pathname)
+    (hifat-lstat (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                 pathname)))
+  :hints (("goal" :in-theory (enable lofat-to-hifat))))
