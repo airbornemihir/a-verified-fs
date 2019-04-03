@@ -11732,6 +11732,19 @@ Some (rather awful) testing forms are
       file-table)
      fd-table-index 0)))
 
+(defthm
+  lofat-open-refinement
+  (implies
+   (equal (mv-nth 3 (lofat-to-hifat fat32-in-memory))
+          0)
+   (equal
+    (lofat-open pathname
+                fat32-in-memory fd-table file-table)
+    (hifat-open pathname
+                (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                fd-table file-table)))
+  :hints (("goal" :in-theory (enable lofat-to-hifat))))
+
 ;; This needs some revision... obviously, we don't want to be staring into the
 ;; computation to get the root directory's directory entries here.
 (defun
