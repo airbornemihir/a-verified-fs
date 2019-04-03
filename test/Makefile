@@ -258,18 +258,18 @@ mtools-cp-ref-output-2.txt mtools-cp-output-2.txt: cp-replicant.lisp
 	CP_INPUT="/vmlinuz" $(ACL2) < cp-replicant.lisp
 
 mkfs-ref-output-1.txt mkfs-output-1.txt: $(MOUNTPOINT) \
-mkfs.fat-3.0.28-replicant.lisp
+mkfs.fat-4.1-replicant.lisp
 	rm -f $(DISK)
 	(mkfs.fat -C -v -F 32 -s 1 $(DISK) $(SIZE)) > mkfs-ref-output-1.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-1.txt" $(ACL2) < \
-	mkfs.fat-3.0.28-replicant.lisp
+	mkfs.fat-4.1-replicant.lisp
 
 mkfs-ref-output-2.txt mkfs-output-2.txt: $(MOUNTPOINT) \
-mkfs.fat-3.0.28-replicant.lisp
+mkfs.fat-4.1-replicant.lisp
 	rm -f $(DISK)
 	(mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)) > mkfs-ref-output-2.txt
 	env DISK=$(DISK) MKFS_OUTPUT="mkfs-output-2.txt" $(ACL2) < \
-	mkfs.fat-3.0.28-replicant.lisp
+	mkfs.fat-4.1-replicant.lisp
 
 wc-ref-output-1.txt wc-output-1.txt: $(MOUNTPOINT) wc-replicant.lisp
 	rm -f $(DISK)
