@@ -7010,16 +7010,16 @@
         *enospc*))))
   :hints (("goal" :in-theory (enable place-contents))))
 
-(defthm place-contents-expansion-3
+(defthmd place-contents-expansion-3
   (implies
-   (and (lofat-fs-p fat32-in-memory)
+   (and (equal (length contents) 0)
+        (lofat-fs-p fat32-in-memory)
         (not (zp (cluster-size fat32-in-memory)))
         (dir-ent-p dir-ent)
         (fat32-masked-entry-p first-cluster)
         (< first-cluster
            (+ *ms-first-data-cluster*
-              (count-of-clusters fat32-in-memory)))
-        (equal (length contents) 0))
+              (count-of-clusters fat32-in-memory))))
    (equal
     (mv-nth 0
             (place-contents fat32-in-memory dir-ent
