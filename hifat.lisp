@@ -128,18 +128,6 @@
                                      (unsigned-byte-p))))))
   )
 
-;; This was taken from rtl/rel9/arithmetic/top with thanks.
-(defthm product-less-than-zero
-  (implies (case-split (or (not (complex-rationalp x))
-                           (not (complex-rationalp y))))
-           (equal (< (* x y) 0)
-                  (if (< x 0)
-                      (< 0 y)
-                      (if (equal 0 x)
-                          nil
-                          (if (not (acl2-numberp x))
-                              nil (< y 0)))))))
-
 (defthm
   down-alpha-p-of-upcase-char
   (not (str::down-alpha-p (str::upcase-char x)))
