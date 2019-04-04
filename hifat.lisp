@@ -1486,9 +1486,6 @@
    (equal (m1-file-alist-p (put-assoc-equal name val alist))
           (and (fat32-filename-p name) (m1-file-p val)))))
 
-;; This function should continue to take pathnames which refer to top-level
-;; fs... but what happens when "." and ".." appear in a pathname? We'll have to
-;; modify the code to deal with that.
 (defun
     place-file-by-pathname
     (fs pathname file)
@@ -1505,35 +1502,34 @@
        ((unless (consp pathname))
         (mv fs *enoent*))
        (name (fat32-filename-fix (car pathname)))
-       (alist-elem (assoc-equal name fs)))
-    (if
-        (consp alist-elem)
-        (if
-            (m1-directory-file-p (cdr alist-elem))
-            (mv-let
-              (new-contents error-code)
-              (place-file-by-pathname
-               (m1-file->contents (cdr alist-elem))
-               (cdr pathname)
-               file)
-              (mv
-               (put-assoc-equal
-                name
-                (make-m1-file
-                 :dir-ent (m1-file->dir-ent (cdr alist-elem))
-                 :contents new-contents)
-                fs)
-               error-code))
-          (if (or
-               (consp (cdr pathname))
-               ;; this is the case where a regular file could get replaced by a
-               ;; directory, which is a bad idea
-               (m1-directory-file-p file))
-              (mv fs *enotdir*)
-            (mv (put-assoc-equal name file fs) 0)))
-      (if (atom (cdr pathname))
-          (mv (put-assoc-equal name file fs) 0)
-        (mv fs *enotdir*)))))
+       (alist-elem (assoc-equal name fs))
+       ((unless
+            (consp alist-elem))
+        (if (atom (cdr pathname))
+            (mv (put-assoc-equal name file fs) 0)
+          (mv fs *enotdir*)))
+       ((unless
+            (m1-directory-file-p (cdr alist-elem)))
+        (if (or
+             (consp (cdr pathname))
+             ;; this is the case where a regular file could get replaced by a
+             ;; directory, which is a bad idea
+             (m1-directory-file-p file))
+            (mv fs *enotdir*)
+          (mv (put-assoc-equal name file fs) 0)))
+       ((mv new-contents error-code)
+        (place-file-by-pathname
+         (m1-file->contents (cdr alist-elem))
+         (cdr pathname)
+         file)))
+    (mv
+     (put-assoc-equal
+      name
+      (make-m1-file
+       :dir-ent (m1-file->dir-ent (cdr alist-elem))
+       :contents new-contents)
+      fs)
+     error-code)))
 
 (defthm
   place-file-by-pathname-correctness-1
