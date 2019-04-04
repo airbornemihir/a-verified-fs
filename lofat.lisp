@@ -5977,20 +5977,18 @@
    (and (open-output-channel-p1 channel
                                 :character state)
         (symbolp channel)
-        (<= len
-            (data-region-length fat32-in-memory))
-        (lofat-fs-p fat32-in-memory)
-        (natp len)
         (state-p1 state))
-   (and (open-output-channel-p1
-         channel
-         :character (princ$-data-region-string-helper
-                     fat32-in-memory len channel state))
-        (state-p1 (princ$-data-region-string-helper
-                   fat32-in-memory len channel state))))
+   (and
+    (open-output-channel-p1
+     channel
+     :character
+     (princ$-data-region-string-helper fat32-in-memory len channel state))
+    (state-p1
+     (princ$-data-region-string-helper fat32-in-memory len channel state))))
   :hints
-  (("goal" :induct (princ$-data-region-string-helper
-                    fat32-in-memory len channel state))))
+  (("goal"
+    :induct
+    (princ$-data-region-string-helper fat32-in-memory len channel state))))
 
 (verify-guards
   princ$-data-region-string-helper)
