@@ -128,18 +128,6 @@
                                      (unsigned-byte-p))))))
   )
 
-;; This was taken from rtl/rel9/arithmetic/top with thanks.
-(defthm product-less-than-zero
-  (implies (case-split (or (not (complex-rationalp x))
-                           (not (complex-rationalp y))))
-           (equal (< (* x y) 0)
-                  (if (< x 0)
-                      (< 0 y)
-                      (if (equal 0 x)
-                          nil
-                          (if (not (acl2-numberp x))
-                              nil (< y 0)))))))
-
 (defthm
   down-alpha-p-of-upcase-char
   (not (str::down-alpha-p (str::upcase-char x)))
@@ -514,7 +502,7 @@
                   (< (nfix n) *ms-dir-ent-length*)))
   :hints (("Goal"
            :in-theory
-           (e/d (len-when-dir-ent-p))))
+           (enable len-when-dir-ent-p)))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -530,7 +518,8 @@
              (equal (rationalp (nth n dir-ent))
                     (< (nfix n) *ms-dir-ent-length*)))
     :hints
-    (("goal" :in-theory (enable rational-listp-when-dir-ent-p))))
+    (("goal" :in-theory (enable rational-listp-when-dir-ent-p
+                                rationalp-of-nth-when-rational-listp))))
    (:linear
     :corollary (implies (and (dir-ent-p dir-ent)
                              (< (nfix n) *ms-dir-ent-length*))

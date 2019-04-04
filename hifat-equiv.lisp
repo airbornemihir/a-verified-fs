@@ -117,15 +117,16 @@
            (hifat-subsetp (m1-file->contents (cdr (assoc-equal key y)))
                            (m1-file->contents (cdr (assoc-equal key z))))))
 
-(defthm
-  hifat-subsetp-transitive-lemma-4
-  (implies
-   (and (m1-file-alist-p y)
-        (consp (assoc-equal key y))
-        (not (m1-directory-file-p (cdr (assoc-equal key y))))
-        (hifat-subsetp y z))
-   (equal (m1-file->contents (cdr (assoc-equal key y)))
-          (m1-file->contents (cdr (assoc-equal key z))))))
+(local
+ (defthm
+   hifat-subsetp-transitive-lemma-4
+   (implies
+    (and (m1-file-alist-p y)
+         (consp (assoc-equal key y))
+         (not (m1-directory-file-p (cdr (assoc-equal key y))))
+         (hifat-subsetp y z))
+    (equal (m1-file->contents (cdr (assoc-equal key y)))
+           (m1-file->contents (cdr (assoc-equal key z)))))))
 
 (defthm
   hifat-subsetp-transitive
