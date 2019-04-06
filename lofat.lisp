@@ -11664,19 +11664,32 @@ Some (rather awful) testing forms are
             fat32-in-memory dir-ent-list pathname))))
 
 (defun
-    place-dir-ent (dir-ent-list dir-ent)
+  place-dir-ent (dir-ent-list dir-ent)
   (declare (xargs :guard (and (dir-ent-p dir-ent)
                               (dir-ent-list-p dir-ent-list))))
-  (b* ((dir-ent (mbe :exec dir-ent
+  (b*
+      ((dir-ent (mbe :exec dir-ent
                      :logic (dir-ent-fix dir-ent)))
-       ((when (atom dir-ent-list)) (list dir-ent))
+       ((when (atom dir-ent-list))
+        (list dir-ent))
        ((when (equal (dir-ent-filename dir-ent)
                      (dir-ent-filename (car dir-ent-list))))
-        (list* dir-ent
-               (mbe :exec (cdr dir-ent-list)
-                    :logic (dir-ent-list-fix (cdr dir-ent-list))))))
+        (list*
+         dir-ent
+         (mbe :exec (cdr dir-ent-list)
+              :logic (dir-ent-list-fix (cdr dir-ent-list))))))
     (list* (dir-ent-fix (car dir-ent-list))
-           (place-dir-ent (cdr dir-ent-list) dir-ent))))
+           (place-dir-ent (cdr dir-ent-list)
+                          dir-ent))))
 
 (defthm place-dir-ent-correctness-1
   (dir-ent-list-p (place-dir-ent dir-ent-list dir-ent)))
+
+(defthm
+  find-dir-ent-of-place-dir-ent
+  (implies
+   (and (dir-ent-list-p dir-ent-list)
+        (dir-ent-p dir-ent))
+   (equal (find-dir-ent (place-dir-ent dir-ent-list dir-ent)
+                        (dir-ent-filename dir-ent))
+          (mv dir-ent 0))))
