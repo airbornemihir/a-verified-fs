@@ -630,13 +630,13 @@
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
-  (defthm lofat-to-string-inversion-lemma-29
+  (defthm read-reserved-area-guard-lemma-1
     (implies (and (not (zp j)) (integerp i) (> i j))
              (> (floor i j) 0))
     :rule-classes :linear)
 
   (local
-   (defthm read-reserved-area-guard-lemma-5
+   (defthm read-reserved-area-guard-lemma-2
      (implies (and (unsigned-byte-listp 8 l)
                    (natp n)
                    (< n (len l)))
@@ -5977,20 +5977,18 @@
    (and (open-output-channel-p1 channel
                                 :character state)
         (symbolp channel)
-        (<= len
-            (data-region-length fat32-in-memory))
-        (lofat-fs-p fat32-in-memory)
-        (natp len)
         (state-p1 state))
-   (and (open-output-channel-p1
-         channel
-         :character (princ$-data-region-string-helper
-                     fat32-in-memory len channel state))
-        (state-p1 (princ$-data-region-string-helper
-                   fat32-in-memory len channel state))))
+   (and
+    (open-output-channel-p1
+     channel
+     :character
+     (princ$-data-region-string-helper fat32-in-memory len channel state))
+    (state-p1
+     (princ$-data-region-string-helper fat32-in-memory len channel state))))
   :hints
-  (("goal" :induct (princ$-data-region-string-helper
-                    fat32-in-memory len channel state))))
+  (("goal"
+    :induct
+    (princ$-data-region-string-helper fat32-in-memory len channel state))))
 
 (verify-guards
   princ$-data-region-string-helper)
@@ -8634,41 +8632,35 @@
     :hints (("Goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2))))
 
   (defthm
-    lofat-to-string-inversion-lemma-30
-    (implies (and (fat32-in-memoryp fat32-in-memory)
-                  (<= 512 (bpb_bytspersec fat32-in-memory))
-                  (<= 1 (bpb_secperclus fat32-in-memory))
-                  (> (+ (- (bpb_rsvdseccnt fat32-in-memory))
-                        (bpb_totsec32 fat32-in-memory)
-                        (- (* (bpb_fatsz32 fat32-in-memory)
-                              (bpb_numfats fat32-in-memory))))
-                     (bpb_secperclus fat32-in-memory)))
-             (> (* (bpb_bytspersec fat32-in-memory)
-                   (bpb_secperclus fat32-in-memory)
-                   (floor (+ (- (bpb_rsvdseccnt fat32-in-memory))
-                             (bpb_totsec32 fat32-in-memory)
-                             (- (* (bpb_fatsz32 fat32-in-memory)
-                                   (bpb_numfats fat32-in-memory))))
-                          (bpb_secperclus fat32-in-memory)))
-                0))
+    lofat-to-string-inversion-lemma-29
+    (implies
+     (and (fat32-in-memoryp fat32-in-memory)
+          (<= 512 (bpb_bytspersec fat32-in-memory))
+          (<= 1 (bpb_secperclus fat32-in-memory))
+          (> (+ (- (bpb_rsvdseccnt fat32-in-memory))
+                (bpb_totsec32 fat32-in-memory)
+                (- (* (bpb_fatsz32 fat32-in-memory)
+                      (bpb_numfats fat32-in-memory))))
+             (bpb_secperclus fat32-in-memory)))
+     (> (* (bpb_bytspersec fat32-in-memory)
+           (bpb_secperclus fat32-in-memory)
+           (floor (+ (- (bpb_rsvdseccnt fat32-in-memory))
+                     (bpb_totsec32 fat32-in-memory)
+                     (- (* (bpb_fatsz32 fat32-in-memory)
+                           (bpb_numfats fat32-in-memory))))
+                  (bpb_secperclus fat32-in-memory)))
+        0))
     :rule-classes :linear
-    :instructions
-    (:promote (:rewrite product-greater-than-zero-2)
-              (:change-goal nil t)
-              :bash :s-prop
-              (:rewrite product-greater-than-zero-2)
-              (:change-goal nil t)
-              :bash :s-prop
-              (:use (:instance lofat-to-string-inversion-lemma-29
-                               (i (+ (- (bpb_rsvdseccnt fat32-in-memory))
-                                     (bpb_totsec32 fat32-in-memory)
-                                     (- (* (bpb_fatsz32 fat32-in-memory)
-                                           (bpb_numfats fat32-in-memory)))))
-                               (j (bpb_secperclus fat32-in-memory))))
-              :promote (:demote 1)
-              (:dive 1 1)
-              (:= t)
-              :top :bash))
+    :hints
+    (("goal"
+      :in-theory (disable read-reserved-area-guard-lemma-1)
+      :use
+      (:instance read-reserved-area-guard-lemma-1
+                 (i (+ (- (bpb_rsvdseccnt fat32-in-memory))
+                       (bpb_totsec32 fat32-in-memory)
+                       (- (* (bpb_fatsz32 fat32-in-memory)
+                             (bpb_numfats fat32-in-memory)))))
+                 (j (bpb_secperclus fat32-in-memory))))))
 
   (defthm lofat-to-string-inversion-lemma-31
     (implies (lofat-fs-p fat32-in-memory)
@@ -10879,7 +10871,7 @@
      string-to-lofat-ignore-lemma-14))))
 
 (defthm
-  m1-fs-to-string-inversion
+  hifat-to-string-inversion
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
@@ -10904,7 +10896,7 @@
        fs)))))
 
 (defthm
-  string-to-m1-fs-inversion
+  string-to-hifat-inversion
   (implies
    (and (stringp str)
         (fat32-in-memoryp fat32-in-memory))
@@ -11670,3 +11662,34 @@ Some (rather awful) testing forms are
    (mv-nth 0
            (lofat-find-file-by-pathname
             fat32-in-memory dir-ent-list pathname))))
+
+(defun
+  place-dir-ent (dir-ent-list dir-ent)
+  (declare (xargs :guard (and (dir-ent-p dir-ent)
+                              (dir-ent-list-p dir-ent-list))))
+  (b*
+      ((dir-ent (mbe :exec dir-ent
+                     :logic (dir-ent-fix dir-ent)))
+       ((when (atom dir-ent-list))
+        (list dir-ent))
+       ((when (equal (dir-ent-filename dir-ent)
+                     (dir-ent-filename (car dir-ent-list))))
+        (list*
+         dir-ent
+         (mbe :exec (cdr dir-ent-list)
+              :logic (dir-ent-list-fix (cdr dir-ent-list))))))
+    (list* (dir-ent-fix (car dir-ent-list))
+           (place-dir-ent (cdr dir-ent-list)
+                          dir-ent))))
+
+(defthm place-dir-ent-correctness-1
+  (dir-ent-list-p (place-dir-ent dir-ent-list dir-ent)))
+
+(defthm
+  find-dir-ent-of-place-dir-ent
+  (implies
+   (and (dir-ent-list-p dir-ent-list)
+        (dir-ent-p dir-ent))
+   (equal (find-dir-ent (place-dir-ent dir-ent-list dir-ent)
+                        (dir-ent-filename dir-ent))
+          (mv dir-ent 0))))
