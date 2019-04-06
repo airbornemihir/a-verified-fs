@@ -10871,7 +10871,7 @@
      string-to-lofat-ignore-lemma-14))))
 
 (defthm
-  m1-fs-to-string-inversion
+  hifat-to-string-inversion
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
@@ -10896,7 +10896,7 @@
        fs)))))
 
 (defthm
-  string-to-m1-fs-inversion
+  string-to-hifat-inversion
   (implies
    (and (stringp str)
         (fat32-in-memoryp fat32-in-memory))
