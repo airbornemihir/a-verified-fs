@@ -3476,8 +3476,7 @@
                 (equal (len index-list)
                        (len value-list)))
     :guard-hints
-    (("goal" :in-theory (e/d (lofat-fs-p-of-update-fati)
-                             (unsigned-byte-p))))))
+    (("goal" :in-theory (disable unsigned-byte-p)))))
   (b*
       (((when (atom index-list))
         fat32-in-memory)
@@ -3543,8 +3542,7 @@
   (("goal"
     :in-theory
     (e/d (set-indices-in-fa-table
-          stobj-set-indices-in-fa-table
-          lofat-fs-p-of-update-fati)))))
+          stobj-set-indices-in-fa-table)))))
 
 (defthm
   fati-of-stobj-set-indices-in-fa-table
@@ -3598,8 +3596,7 @@
              fat32-in-memory index-list value-list)))
   :hints
   (("goal" :in-theory
-    (enable stobj-set-indices-in-fa-table
-            lofat-fs-p-of-update-fati))))
+    (enable stobj-set-indices-in-fa-table))))
 
 (defthm
   cluster-size-of-stobj-set-indices-in-fa-table
@@ -3860,8 +3857,7 @@
                      contents file-length first-cluster))))
   :hints
   (("goal" :in-theory
-    (enable place-contents
-            lofat-fs-p-of-update-fati))))
+    (enable place-contents))))
 
 (defthm
   cluster-size-of-place-contents
@@ -4269,8 +4265,7 @@
              fat32-in-memory fs first-cluster))))
   :hints
   (("goal"
-    :in-theory (e/d (lofat-fs-p-of-update-fati)
-                    (stobj-set-indices-in-fa-table)))))
+    :in-theory (disable stobj-set-indices-in-fa-table))))
 
 (defthm
   dir-ent-list-p-of-hifat-to-lofat-helper
@@ -4382,7 +4377,7 @@
     (("goal"
       :in-theory
       (e/d
-       (painful-debugging-lemma-9 lofat-fs-p-of-update-fati)
+       (painful-debugging-lemma-9)
        (stobj-set-indices-in-fa-table))))))
 
 (defthm
@@ -4426,8 +4421,7 @@
     :guard (and (lofat-fs-p fat32-in-memory)
                 (m1-file-alist-p fs))
     :guard-hints
-    (("goal" :in-theory (e/d (hifat-to-lofat-guard-lemma-1
-                              lofat-fs-p-of-update-fati)
+    (("goal" :in-theory (e/d (hifat-to-lofat-guard-lemma-1)
                              (unsigned-byte-p))
       ;; This is the second time we've had to add a :cases hint, really. The
       ;; reason is the same: brr tells us that a case split which should be
@@ -4513,8 +4507,7 @@
   :hints
   (("goal"
     :in-theory (enable hifat-to-lofat
-                       hifat-to-lofat-guard-lemma-1
-                       lofat-fs-p-of-update-fati)
+                       hifat-to-lofat-guard-lemma-1)
     :do-not-induct t
     :cases
     ((not
@@ -5990,8 +5983,7 @@
           (fati x fat32-in-memory)))
   :hints
   (("goal"
-    :in-theory (e/d (lofat-fs-p-of-update-fati)
-                    ((:rewrite make-clusters-correctness-1 . 1))))))
+    :in-theory (disable (:rewrite make-clusters-correctness-1 . 1)))))
 
 (defthm
   fat32-build-index-list-of-place-contents-coincident
@@ -6298,8 +6290,7 @@
      (mv-nth 0
              (hifat-to-lofat-helper
               fat32-in-memory
-              fs current-dir-first-cluster)))))
-  :hints (("Goal" :in-theory (enable lofat-fs-p-of-update-fati)) ))
+              fs current-dir-first-cluster))))))
 
 (defthm
   unmodifiable-listp-correctness-5
@@ -6426,8 +6417,7 @@
               fs current-dir-first-cluster))
      dir-ent-list entry-limit)
     (lofat-to-hifat-helper fat32-in-memory
-                                     dir-ent-list entry-limit)))
-  :hints (("Goal" :in-theory (enable lofat-fs-p-of-update-fati)) ))
+                           dir-ent-list entry-limit))))
 
 (defthm
   hifat-to-lofat-inversion-lemma-1
@@ -7043,7 +7033,6 @@
       (e/d
        (lofat-to-hifat-helper
         hifat-to-lofat-helper-correctness-4
-        lofat-fs-p-of-update-fati
         m1-entry-count
         (:definition m1-file-no-dups-p))
        ((:rewrite make-clusters-correctness-1 . 1)
@@ -7221,7 +7210,7 @@
                  fat32-in-memory))
         fs)))))
   :hints
-  (("goal" :do-not-induct t
+  (("goal"
     :in-theory (enable lofat-to-hifat
                        hifat-to-lofat
                        hifat-to-lofat-helper-correctness-4
@@ -7229,8 +7218,7 @@
                        hifat-to-lofat-inversion-lemma-11
                        hifat-to-lofat-inversion-lemma-13
                        painful-debugging-lemma-10
-                       painful-debugging-lemma-11
-                       lofat-fs-p-of-update-fati))))
+                       painful-debugging-lemma-11))))
 
 (defund-nx
   lofat-equiv

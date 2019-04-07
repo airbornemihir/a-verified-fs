@@ -430,10 +430,10 @@
   (("goal"
     :in-theory (enable count-of-clusters update-fati bpb_totsec32))))
 
-;; Before disabling, this function used to cause 11030904 frames and 95410
-;; tries in this book; after disabling those numbers are 4919970 and 33324
-;; respectively.
-(defthmd
+;; After disabling, this function used to cause  9419883 frames and 76526
+;; tries. So we went back to leaving it enabled and those numbers are now
+;; 9446133 and 82621 respectively.
+(defthm
   lofat-fs-p-of-update-fati
   (implies (and (lofat-fs-p fat32-in-memory)
                 (< i (fat-length fat32-in-memory)))
