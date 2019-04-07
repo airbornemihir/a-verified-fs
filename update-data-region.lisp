@@ -14,11 +14,11 @@
 ;; frames and tries.
 (local
  (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
-                     revappend-removal str::hex-digit-listp-of-cons
-                     loghead logtail)))
+                     revappend-removal)))
 
 (local
- (in-theory (disable nth update-nth floor mod true-listp)))
+ (in-theory (disable read-file-into-string1 nth update-nth floor mod
+                     true-listp)))
 
 ;; At some point, the following theorem has to be moved to
 ;; file-system-lemmas.lisp.
@@ -741,6 +741,9 @@
 (encapsulate
   ()
 
+  ;; The two lemmas inside this encapsulation require this particular
+  ;; arithmetic book, and cannot be made to work with the RTL arithmetic
+  ;; libraries even though that would make this whole thing a lot simpler.
   (local (include-book "arithmetic-3/top" :dir :system))
 
   (set-default-hints
@@ -760,6 +763,10 @@
                    (len (nth *data-regioni* fat32-in-memory)))))
     :rule-classes :linear)
 
+  ;; It would be nice to make this a rule that just rewrites the inner (mv-nth
+  ;; 1 ...) subexpression rather than the (equal (mv-nth 1 ...) ...)
+  ;; expression, but that causes trouble with
+  ;; string-to-lofat-ignore-lemma-14 in another book.
   (defthm
     update-data-region-correctness-1
     (implies (and (natp len)
