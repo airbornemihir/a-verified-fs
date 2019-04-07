@@ -14,11 +14,11 @@
 ;; frames and tries.
 (local
  (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
-                     revappend-removal str::hex-digit-listp-of-cons
-                     loghead logtail)))
+                     revappend-removal)))
 
 (local
- (in-theory (disable nth update-nth floor mod true-listp)))
+ (in-theory (disable read-file-into-string1 nth update-nth floor mod
+                     true-listp)))
 
 ;; At some point, the following theorem has to be moved to
 ;; file-system-lemmas.lisp.
@@ -741,6 +741,9 @@
 (encapsulate
   ()
 
+  ;; The two lemmas inside this encapsulation require this particular
+  ;; arithmetic book, and cannot be made to work with the RTL arithmetic
+  ;; libraries even though that would make this whole thing a lot simpler.
   (local (include-book "arithmetic-3/top" :dir :system))
 
   (set-default-hints
@@ -769,13 +772,14 @@
                       (* (- (data-region-length fat32-in-memory)
                             len)
                          (cluster-size fat32-in-memory))))
-             (iff
               (equal (mv-nth 1
                              (update-data-region fat32-in-memory str len))
-                     0)
-              (>= (length str)
-                  (* (data-region-length fat32-in-memory)
-                     (cluster-size fat32-in-memory)))))))
+                     (if
+                      (>= (length str)
+                          (* (data-region-length fat32-in-memory)
+                             (cluster-size fat32-in-memory)))
+                         0
+                       *EIO*)))))
 
 (encapsulate
   ()
