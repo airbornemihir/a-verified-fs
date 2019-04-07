@@ -26,6 +26,8 @@
   (equal (take n1 (nthcdr n2 l))
          (nthcdr n2 (take (+ (nfix n1) (nfix n2)) l))))
 
+(local (include-book "arithmetic-3/top" :dir :system))
+
 (defund
   cluster-size (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory
@@ -282,8 +284,6 @@
                 (* (bpb_fatsz32 fat32-in-memory)
                    (bpb_bytspersec fat32-in-memory)))))
 
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
   (local
    (defthm
      lofat-fs-p-guard-lemma-3
@@ -504,125 +504,120 @@
     :use
     cluster-size-of-update-data-regioni)))
 
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defun
+(defun
     update-data-region
     (fat32-in-memory str len)
-    (declare
-     (xargs
-      :guard (and (stringp str)
-                  (natp len)
-                  (<= len
-                      (data-region-length fat32-in-memory))
-                  (>= (length str)
-                      (* (- (data-region-length fat32-in-memory)
-                            len)
-                         (cluster-size fat32-in-memory)))
-                  (<= len
-                      (- *ms-bad-cluster*
-                         *ms-first-data-cluster*)))
-      :stobjs fat32-in-memory
-      :measure (nfix len)))
-    (b*
-        ((len (the (unsigned-byte 28) len))
-         ((when (zp len)) (mv fat32-in-memory 0))
-         (cluster-size (cluster-size fat32-in-memory))
-         (index (- (data-region-length fat32-in-memory)
-                   len)))
-      (if
-       (<= (* (+ index 1) cluster-size)
-           (length str))
-       (b*
-           ((current-cluster (subseq str (* index cluster-size)
-                                     (* (+ index 1) cluster-size)))
-            (fat32-in-memory
-             (update-data-regioni
-              index current-cluster fat32-in-memory)))
-         (update-data-region
-          fat32-in-memory
-          str (the (unsigned-byte 28) (- len 1))))
-       (b*
-           ((current-cluster (subseq str (* index cluster-size) nil))
-            (fat32-in-memory
-             (update-data-regioni
-              index current-cluster fat32-in-memory)))
-         (mv fat32-in-memory *eio*)))))
-
-  (defun
-      update-data-region-from-disk-image
-      (fat32-in-memory len state tmp_init image-path)
-    (declare
-     (xargs
-      :guard
-      (and (natp tmp_init)
-           (stringp image-path)
-           (stringp (read-file-into-string image-path))
-           (natp len)
-           (<= len
-               (data-region-length fat32-in-memory))
-           (>= (length (read-file-into-string image-path))
-               (+ tmp_init
-                  (* (- (data-region-length fat32-in-memory)
-                        len)
-                     (cluster-size fat32-in-memory))))
-           (<= len
-               (- *ms-bad-cluster*
-                  *ms-first-data-cluster*)))
-      :stobjs (fat32-in-memory state)
-      :measure (nfix len)))
-    (b*
-        ((len (the (unsigned-byte 28) len))
-         ((when (zp len)) (mv fat32-in-memory 0))
-         (cluster-size (cluster-size fat32-in-memory))
-         (index (- (data-region-length fat32-in-memory)
-                   len))
-         (fat32-in-memory
-          (update-data-regioni
-           index
-           (read-file-into-string
-            image-path
-            :start (+ tmp_init (* index cluster-size))
-            :bytes cluster-size)
-           fat32-in-memory)))
-      (if (equal (length (data-regioni index fat32-in-memory))
-                 cluster-size)
-          (update-data-region-from-disk-image
+  (declare
+   (xargs
+    :guard (and (stringp str)
+                (natp len)
+                (<= len
+                    (data-region-length fat32-in-memory))
+                (>= (length str)
+                    (* (- (data-region-length fat32-in-memory)
+                          len)
+                       (cluster-size fat32-in-memory)))
+                (<= len
+                    (- *ms-bad-cluster*
+                       *ms-first-data-cluster*)))
+    :stobjs fat32-in-memory
+    :measure (nfix len)))
+  (b*
+      ((len (the (unsigned-byte 28) len))
+       ((when (zp len)) (mv fat32-in-memory 0))
+       (cluster-size (cluster-size fat32-in-memory))
+       (index (- (data-region-length fat32-in-memory)
+                 len)))
+    (if
+        (<= (* (+ index 1) cluster-size)
+            (length str))
+        (b*
+            ((current-cluster (subseq str (* index cluster-size)
+                                      (* (+ index 1) cluster-size)))
+             (fat32-in-memory
+              (update-data-regioni
+               index current-cluster fat32-in-memory)))
+          (update-data-region
            fat32-in-memory
-           (the (unsigned-byte 28) (- len 1))
-           state tmp_init image-path)
-        (mv fat32-in-memory *eio*))))
+           str (the (unsigned-byte 28) (- len 1))))
+      (b*
+          ((current-cluster (subseq str (* index cluster-size) nil))
+           (fat32-in-memory
+            (update-data-regioni
+             index current-cluster fat32-in-memory)))
+        (mv fat32-in-memory *eio*)))))
 
-  (defthm
-    update-data-region-from-disk-image-correctness-1
-    (implies
-     (and (natp tmp_init)
-          (<= len
-              (data-region-length fat32-in-memory))
-          (>= (length (read-file-into-string image-path))
-              (+ tmp_init
-                 (* (- (data-region-length fat32-in-memory)
-                       len)
-                    (cluster-size fat32-in-memory))))
-          (not (zp (cluster-size fat32-in-memory))))
-     (equal (update-data-region-from-disk-image fat32-in-memory
+(defun
+    update-data-region-from-disk-image
+    (fat32-in-memory len state tmp_init image-path)
+  (declare
+   (xargs
+    :guard
+    (and (natp tmp_init)
+         (stringp image-path)
+         (stringp (read-file-into-string image-path))
+         (natp len)
+         (<= len
+             (data-region-length fat32-in-memory))
+         (>= (length (read-file-into-string image-path))
+             (+ tmp_init
+                (* (- (data-region-length fat32-in-memory)
+                      len)
+                   (cluster-size fat32-in-memory))))
+         (<= len
+             (- *ms-bad-cluster*
+                *ms-first-data-cluster*)))
+    :stobjs (fat32-in-memory state)
+    :measure (nfix len)))
+  (b*
+      ((len (the (unsigned-byte 28) len))
+       ((when (zp len)) (mv fat32-in-memory 0))
+       (cluster-size (cluster-size fat32-in-memory))
+       (index (- (data-region-length fat32-in-memory)
+                 len))
+       (fat32-in-memory
+        (update-data-regioni
+         index
+         (read-file-into-string
+          image-path
+          :start (+ tmp_init (* index cluster-size))
+          :bytes cluster-size)
+         fat32-in-memory)))
+    (if (equal (length (data-regioni index fat32-in-memory))
+               cluster-size)
+        (update-data-region-from-disk-image
+         fat32-in-memory
+         (the (unsigned-byte 28) (- len 1))
+         state tmp_init image-path)
+      (mv fat32-in-memory *eio*))))
+
+(defthm
+  update-data-region-from-disk-image-correctness-1
+  (implies
+   (and (natp tmp_init)
+        (<= len
+            (data-region-length fat32-in-memory))
+        (>= (length (read-file-into-string image-path))
+            (+ tmp_init
+               (* (- (data-region-length fat32-in-memory)
+                     len)
+                  (cluster-size fat32-in-memory))))
+        (not (zp (cluster-size fat32-in-memory))))
+   (equal (update-data-region-from-disk-image fat32-in-memory
+                                              len state tmp_init image-path)
+          (update-data-region fat32-in-memory
+                              (subseq (read-file-into-string image-path)
+                                      tmp_init nil)
+                              len)))
+  :hints
+  (("goal"
+    :induct (update-data-region-from-disk-image fat32-in-memory
                                                 len state tmp_init image-path)
-            (update-data-region fat32-in-memory
-                                (subseq (read-file-into-string image-path)
-                                        tmp_init nil)
-                                len)))
-    :hints
-    (("goal"
-      :induct (update-data-region-from-disk-image fat32-in-memory
-                                                  len state tmp_init image-path)
-      :in-theory (e/d (take-of-nthcdr nthcdr-when->=-n-len-l
-                                      by-slice-you-mean-the-whole-cake-2)
-                      nil)
-      :expand (:free (fat32-in-memory str)
-                     (update-data-region fat32-in-memory str len))))))
+    :in-theory (e/d (take-of-nthcdr nthcdr-when->=-n-len-l
+                                    by-slice-you-mean-the-whole-cake-2)
+                    nil)
+    :expand (:free (fat32-in-memory str)
+                   (update-data-region fat32-in-memory str len)))))
 
 (defthm
   fat32-in-memoryp-of-update-data-regioni
@@ -741,8 +736,6 @@
 (encapsulate
   ()
 
-  (local (include-book "arithmetic-3/top" :dir :system))
-
   (set-default-hints
    '((nonlinearp-default-hint stable-under-simplificationp
                               hist pspv)))
@@ -810,8 +803,6 @@
       (update-nth i v
                   (nth *data-regioni* fat32-in-memory)))
      :hints (("goal" :in-theory (enable update-data-regioni)) )))
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthmd
     update-data-region-alt
