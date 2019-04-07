@@ -1522,8 +1522,7 @@
                         (read-file-into-string2 image-path 0 nil state))))
   :hints
   (("goal"
-    :in-theory (e/d nil
-                    (read-reserved-area-correctness-1))
+    :in-theory (disable read-reserved-area-correctness-1)
     :use (:instance read-reserved-area-correctness-1
                     (str (read-file-into-string2 image-path 0 nil state))))))
 
@@ -2415,41 +2414,39 @@
                 (< masked-current-cluster
                    (+ (count-of-clusters fat32-in-memory)
                       *ms-first-data-cluster*)))))
-  (let
-   ((cluster-size (cluster-size fat32-in-memory)))
-   (if
-    (or (zp length) (zp cluster-size))
-    (mv nil (- *eio*))
-    (let
-     ((masked-next-cluster
-       (fat32-entry-mask
-        (if (mbt (< (nfix masked-current-cluster)
-                    (nfix (+ (count-of-clusters fat32-in-memory)
-                             *ms-first-data-cluster*))))
-            (fati masked-current-cluster fat32-in-memory)
-            nil))))
-     (if
-      (< masked-next-cluster
-         *ms-first-data-cluster*)
-      (mv (list masked-current-cluster)
-          (- *eio*))
-      (if
-       (or
-        (fat32-is-eof masked-next-cluster)
-        (>=
-         masked-next-cluster
-         (mbe
-          :exec (+ (count-of-clusters fat32-in-memory)
-                   *ms-first-data-cluster*)
-          :logic (nfix (+ (count-of-clusters fat32-in-memory)
-                          *ms-first-data-cluster*)))))
-       (mv (list masked-current-cluster) 0)
-       (b*
-           (((mv tail-index-list tail-error)
-             (get-clusterchain fat32-in-memory masked-next-cluster
-                               (nfix (- length cluster-size)))))
-         (mv (list* masked-current-cluster tail-index-list)
-             tail-error))))))))
+  (b*
+      ((cluster-size (cluster-size fat32-in-memory))
+       ((when
+            (or (zp length) (zp cluster-size)))
+        (mv nil (- *eio*)))
+       (masked-next-cluster
+        (fat32-entry-mask
+         (if (mbt (< (nfix masked-current-cluster)
+                     (nfix (+ (count-of-clusters fat32-in-memory)
+                              *ms-first-data-cluster*))))
+             (fati masked-current-cluster fat32-in-memory)
+           nil)))
+       ((when
+            (< masked-next-cluster
+               *ms-first-data-cluster*))
+        (mv (list masked-current-cluster)
+            (- *eio*)))
+       ((when
+            (or
+             (fat32-is-eof masked-next-cluster)
+             (>=
+              masked-next-cluster
+              (mbe
+               :exec (+ (count-of-clusters fat32-in-memory)
+                        *ms-first-data-cluster*)
+               :logic (nfix (+ (count-of-clusters fat32-in-memory)
+                               *ms-first-data-cluster*))))))
+        (mv (list masked-current-cluster) 0))
+       ((mv tail-index-list tail-error)
+        (get-clusterchain fat32-in-memory masked-next-cluster
+                          (nfix (- length cluster-size)))))
+    (mv (list* masked-current-cluster tail-index-list)
+        tail-error)))
 
 (defund-nx
   effective-fat (fat32-in-memory)
