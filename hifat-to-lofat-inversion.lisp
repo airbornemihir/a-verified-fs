@@ -8,6 +8,7 @@
 (include-book "generate-index-list")
 (include-book "m1-entry-count")
 (include-book "update-data-region")
+(local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
 ;; These are some rules from other books which are either interacting badly
 ;; with the theory I've built up so far, or else causing a lot of unnecessary
@@ -166,120 +167,116 @@
     (("goal" :in-theory (enable get-clusterchain
                                 fati fat-length effective-fat nth)))))
 
-(encapsulate
-  ()
 
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defun
-      get-contents-from-clusterchain
-      (fat32-in-memory clusterchain file-size)
-    (declare
-     (xargs
-      :stobjs (fat32-in-memory)
-      :guard
-      (and
-       (lofat-fs-p fat32-in-memory)
-       (equal (data-region-length fat32-in-memory)
-              (count-of-clusters fat32-in-memory))
-       (fat32-masked-entry-list-p clusterchain)
-       (natp file-size)
-       (bounded-nat-listp clusterchain
-                          (count-of-clusters fat32-in-memory))
-       (lower-bounded-integer-listp
-        clusterchain *ms-first-data-cluster*))))
-    (if
-        (atom clusterchain)
-        ""
-      (let*
-          ((cluster-size (cluster-size fat32-in-memory))
-           (masked-current-cluster (car clusterchain)))
-        (concatenate
-         'string
-         (subseq
-          (data-regioni
-           (nfix (- masked-current-cluster *ms-first-data-cluster*))
-           fat32-in-memory)
-          0
-          (min file-size cluster-size))
-         (get-contents-from-clusterchain
-          fat32-in-memory (cdr clusterchain)
-          (nfix (- file-size cluster-size)))))))
-
-  (defthm
-    stringp-of-get-contents-from-clusterchain
-    (stringp
-     (get-contents-from-clusterchain
-      fat32-in-memory clusterchain file-size))
-    :rule-classes :type-prescription)
-
-  (defund
-    get-clusterchain-contents
-    (fat32-in-memory masked-current-cluster length)
-    (declare
-     (xargs
-      :stobjs fat32-in-memory
-      :measure (nfix length)
-      :guard (and (lofat-fs-p fat32-in-memory)
-                  (equal (data-region-length fat32-in-memory)
-                         (count-of-clusters fat32-in-memory))
-                  (fat32-masked-entry-p masked-current-cluster)
-                  (natp length)
-                  (>= masked-current-cluster
-                      *ms-first-data-cluster*)
-                  (< masked-current-cluster
-                     (+ (count-of-clusters fat32-in-memory)
-                        *ms-first-data-cluster*)))
-      :verify-guards nil))
-    (b*
+(defun
+    get-contents-from-clusterchain
+    (fat32-in-memory clusterchain file-size)
+  (declare
+   (xargs
+    :stobjs (fat32-in-memory)
+    :guard
+    (and
+     (lofat-fs-p fat32-in-memory)
+     (equal (data-region-length fat32-in-memory)
+            (count-of-clusters fat32-in-memory))
+     (fat32-masked-entry-list-p clusterchain)
+     (natp file-size)
+     (bounded-nat-listp clusterchain
+                        (count-of-clusters fat32-in-memory))
+     (lower-bounded-integer-listp
+      clusterchain *ms-first-data-cluster*))))
+  (if
+      (atom clusterchain)
+      ""
+    (let*
         ((cluster-size (cluster-size fat32-in-memory))
-         ((unless (and (not (zp length))
-                       (not (zp cluster-size))
-                       (>= masked-current-cluster
-                           *ms-first-data-cluster*)))
-          (mv "" (- *eio*)))
-         (current-cluster-contents
-          (str-fix
-           (data-regioni (- masked-current-cluster 2) fat32-in-memory)))
-         (masked-next-cluster
-          (fat32-entry-mask
-           ;; This mbt (must be true) form was inserted in order to comport
-           ;; with our current definition of effective-fat, which is implicitly
-           ;; used in the rule get-clusterchain-contents-correctness-1.
-           (if (mbt (< (nfix masked-current-cluster)
-                       (nfix (+ (count-of-clusters fat32-in-memory)
-                                *ms-first-data-cluster*))))
-               (fati masked-current-cluster fat32-in-memory)
-             nil)))
-         ((unless (>= masked-next-cluster
-                      *ms-first-data-cluster*))
-          (mv (subseq current-cluster-contents 0 (min length cluster-size))
-              (- *eio*)))
-         ((unless (and (not (fat32-is-eof masked-next-cluster))
-                       (< masked-next-cluster
-                          (+ (count-of-clusters fat32-in-memory)
-                             *ms-first-data-cluster*))))
-          (mv (subseq current-cluster-contents 0 (min length cluster-size)) 0))
-         ((mv tail-string tail-error)
-          (get-clusterchain-contents
-           fat32-in-memory masked-next-cluster
-           (nfix (- length cluster-size))))
-         ((unless (equal tail-error 0))
-          (mv "" (- *eio*))))
-      (mv (concatenate 'string
-                       current-cluster-contents
-                       tail-string)
-          0)))
+         (masked-current-cluster (car clusterchain)))
+      (concatenate
+       'string
+       (subseq
+        (data-regioni
+         (nfix (- masked-current-cluster *ms-first-data-cluster*))
+         fat32-in-memory)
+        0
+        (min file-size cluster-size))
+       (get-contents-from-clusterchain
+        fat32-in-memory (cdr clusterchain)
+        (nfix (- file-size cluster-size)))))))
 
-  (defthm stringp-of-get-clusterchain-contents
-    (stringp
-     (mv-nth 0
-             (get-clusterchain-contents
-              fat32-in-memory masked-current-cluster length)))
-    :rule-classes :type-prescription
-    :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
+(defthm
+  stringp-of-get-contents-from-clusterchain
+  (stringp
+   (get-contents-from-clusterchain
+    fat32-in-memory clusterchain file-size))
+  :rule-classes :type-prescription)
 
-  (verify-guards get-clusterchain-contents))
+(defund
+  get-clusterchain-contents
+  (fat32-in-memory masked-current-cluster length)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :measure (nfix length)
+    :guard (and (lofat-fs-p fat32-in-memory)
+                (equal (data-region-length fat32-in-memory)
+                       (count-of-clusters fat32-in-memory))
+                (fat32-masked-entry-p masked-current-cluster)
+                (natp length)
+                (>= masked-current-cluster
+                    *ms-first-data-cluster*)
+                (< masked-current-cluster
+                   (+ (count-of-clusters fat32-in-memory)
+                      *ms-first-data-cluster*)))
+    :verify-guards nil))
+  (b*
+      ((cluster-size (cluster-size fat32-in-memory))
+       ((unless (and (not (zp length))
+                     (not (zp cluster-size))
+                     (>= masked-current-cluster
+                         *ms-first-data-cluster*)))
+        (mv "" (- *eio*)))
+       (current-cluster-contents
+        (str-fix
+         (data-regioni (- masked-current-cluster 2) fat32-in-memory)))
+       (masked-next-cluster
+        (fat32-entry-mask
+         ;; This mbt (must be true) form was inserted in order to comport
+         ;; with our current definition of effective-fat, which is implicitly
+         ;; used in the rule get-clusterchain-contents-correctness-1.
+         (if (mbt (< (nfix masked-current-cluster)
+                     (nfix (+ (count-of-clusters fat32-in-memory)
+                              *ms-first-data-cluster*))))
+             (fati masked-current-cluster fat32-in-memory)
+           nil)))
+       ((unless (>= masked-next-cluster
+                    *ms-first-data-cluster*))
+        (mv (subseq current-cluster-contents 0 (min length cluster-size))
+            (- *eio*)))
+       ((unless (and (not (fat32-is-eof masked-next-cluster))
+                     (< masked-next-cluster
+                        (+ (count-of-clusters fat32-in-memory)
+                           *ms-first-data-cluster*))))
+        (mv (subseq current-cluster-contents 0 (min length cluster-size)) 0))
+       ((mv tail-string tail-error)
+        (get-clusterchain-contents
+         fat32-in-memory masked-next-cluster
+         (nfix (- length cluster-size))))
+       ((unless (equal tail-error 0))
+        (mv "" (- *eio*))))
+    (mv (concatenate 'string
+                     current-cluster-contents
+                     tail-string)
+        0)))
+
+(defthm stringp-of-get-clusterchain-contents
+  (stringp
+   (mv-nth 0
+           (get-clusterchain-contents
+            fat32-in-memory masked-current-cluster length)))
+  :rule-classes :type-prescription
+  :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
+
+(verify-guards get-clusterchain-contents)
 
 (defthm
   get-clusterchain-contents-correctness-2
@@ -823,15 +820,10 @@
   :hints
   (("goal" :in-theory (enable data-region-length update-fati))))
 
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthm max-entry-count-guard-lemma-1
-    (implies (and (not (zp j)) (integerp i) (> i j))
-             (> (floor i j) 0))
-    :rule-classes :linear))
+(defthm max-entry-count-guard-lemma-1
+  (implies (and (not (zp j)) (integerp i) (> i j))
+           (> (floor i j) 0))
+  :rule-classes :linear)
 
 (defund max-entry-count (fat32-in-memory)
   (declare
@@ -2493,18 +2485,13 @@
    (get-contents-from-clusterchain fat32-in-memory
                                    clusterchain file-size)))
 
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthm
-    get-clusterchain-contents-of-place-contents-coincident-lemma-1
-    (implies (not (zp x))
-             (<= (* x
-                    (len (find-n-free-clusters fa-table n)))
-                 (* x (nfix n))))
-    :rule-classes :linear))
+(defthm
+  get-clusterchain-contents-of-place-contents-coincident-lemma-1
+  (implies (not (zp x))
+           (<= (* x
+                  (len (find-n-free-clusters fa-table n)))
+               (* x (nfix n))))
+  :rule-classes :linear)
 
 (defthm
   get-clusterchain-contents-of-place-contents-coincident
@@ -3894,7 +3881,14 @@
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
         (:rewrite
          fati-of-hifat-to-lofat-helper-disjoint-lemma-2)
-        (:definition induction-scheme)))
+        (:definition induction-scheme)
+        (:DEFINITION FAT32-BUILD-INDEX-LIST)
+        (:LINEAR NTH-WHEN-DIR-ENT-P)
+        (:DEFINITION BINARY-APPEND)
+        (:REWRITE
+         HIFAT-TO-LOFAT-HELPER-CORRECTNESS-4 . 2)
+        (:REWRITE NTH-WHEN-DIR-ENT-P . 2)
+        (:LINEAR M1-ENTRY-COUNT-WHEN-HIFAT-SUBSETP)))
       :expand
       ((:free (y) (intersectp-equal nil y))
        (:free (x1 x2 y)
