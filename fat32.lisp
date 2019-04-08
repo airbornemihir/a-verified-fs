@@ -365,12 +365,11 @@
     :in-theory (e/d (fat32-update-lower-28 fat32-entry-mask)
                     (logapp loghead logtail)))))
 
-;; taken from page 18 of the fat overview - the constant 268435448 is written
-;; out as 0xFFFFFF8 therein
+;; This is taken from page 18 of the fat specification.
 (defund fat32-is-eof (fat-content)
   (declare (xargs :guard (fat32-masked-entry-p fat-content)
                   :guard-hints (("Goal'" :in-theory (enable fat32-masked-entry-p)))))
-  (>= fat-content 268435448))
+  (>= fat-content #xFFFFFF8))
 
 (defthm fat32-is-eof-correctness-1
   (implies (< fat-content *ms-bad-cluster*)

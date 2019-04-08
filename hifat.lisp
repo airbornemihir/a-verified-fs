@@ -1487,15 +1487,17 @@
           (and (fat32-filename-p name) (m1-file-p val)))))
 
 (defun
-    place-file-by-pathname
-    (fs pathname file)
+  place-file-by-pathname
+  (fs pathname file)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (fat32-filename-list-p pathname)
                               (m1-file-p file))
                   :measure (acl2-count pathname)))
   (b*
-      ((fs (m1-file-alist-fix fs))
-       (file (m1-file-fix file))
+      ((fs (mbe :logic (m1-file-alist-fix fs)
+                :exec fs))
+       (file (mbe :logic (m1-file-fix file)
+                  :exec file))
        ;; Pathnames aren't going to be empty lists. Even the emptiest of
        ;; empty pathnames has to have at least a slash in it, because we are
        ;; absolutely dealing in absolute pathnames.
@@ -1503,20 +1505,17 @@
         (mv fs *enoent*))
        (name (fat32-filename-fix (car pathname)))
        (alist-elem (assoc-equal name fs))
-       ((unless
-            (consp alist-elem))
+       ((unless (consp alist-elem))
         (if (atom (cdr pathname))
             (mv (put-assoc-equal name file fs) 0)
-          (mv fs *enotdir*)))
-       ((unless
-            (m1-directory-file-p (cdr alist-elem)))
-        (if (or
-             (consp (cdr pathname))
-             ;; this is the case where a regular file could get replaced by a
-             ;; directory, which is a bad idea
-             (m1-directory-file-p file))
+            (mv fs *enotdir*)))
+       ((unless (m1-directory-file-p (cdr alist-elem)))
+        (if (or (consp (cdr pathname))
+                ;; This is the case where a regular file could get replaced by
+                ;; a directory, which is a bad idea.
+                (m1-directory-file-p file))
             (mv fs *enotdir*)
-          (mv (put-assoc-equal name file fs) 0)))
+            (mv (put-assoc-equal name file fs) 0)))
        ((mv new-contents error-code)
         (place-file-by-pathname
          (m1-file->contents (cdr alist-elem))
@@ -1525,9 +1524,8 @@
     (mv
      (put-assoc-equal
       name
-      (make-m1-file
-       :dir-ent (m1-file->dir-ent (cdr alist-elem))
-       :contents new-contents)
+      (make-m1-file :dir-ent (m1-file->dir-ent (cdr alist-elem))
+                    :contents new-contents)
       fs)
      error-code)))
 
@@ -1563,22 +1561,21 @@
   (place-file-by-pathname fs pathname file) 3)
 
 (defun
-    remove-file-by-pathname
-    (fs pathname)
+  remove-file-by-pathname (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (fat32-filename-list-p pathname))
                   :measure (acl2-count pathname)))
   (b*
-      ((fs (m1-file-alist-fix fs))
-       ;; Design choice - calls which ask for the entire root directory to be
-       ;; affected will fail.
+      ((fs (mbe :logic (m1-file-alist-fix fs)
+                :exec fs))
        ((unless (consp pathname))
         (mv fs *enoent*))
+       ;; Design choice - calls which ask for the entire root directory to be
+       ;; affected will fail.
        (name (fat32-filename-fix (car pathname)))
        (alist-elem (assoc-equal name fs))
        ;; If it's not there, it can't be removed
-       ((unless
-            (consp alist-elem))
+       ((unless (consp alist-elem))
         (mv fs *enoent*))
        ;; Design choice - this lower-level function will unquestioningly delete
        ;; entire subdirectory trees, as long as they are not the root.
@@ -1596,9 +1593,8 @@
     (mv
      (put-assoc-equal
       name
-      (make-m1-file
-       :dir-ent (m1-file->dir-ent (cdr alist-elem))
-       :contents new-contents)
+      (make-m1-file :dir-ent (m1-file->dir-ent (cdr alist-elem))
+                    :contents new-contents)
       fs)
      error-code)))
 
