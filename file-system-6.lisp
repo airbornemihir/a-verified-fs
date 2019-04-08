@@ -334,8 +334,8 @@
   :hints
   (("goal" :in-theory (enable l6-file-index-list))
    ("Goal'''"
-    :in-theory (disable fat32-build-index-list-correctness-3)
-    :use (:instance fat32-build-index-list-correctness-3
+    :in-theory (disable integerp-of-fat32-build-index-list)
+    :use (:instance integerp-of-fat32-build-index-list
                     (masked-current-cluster
                      (l6-regular-file-first-cluster file))
                     (length (l6-regular-file-length file))

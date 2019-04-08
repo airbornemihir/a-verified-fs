@@ -436,15 +436,6 @@
      (fat32-masked-entry-list-p index-list))))
 
 (defthm
-  fat32-build-index-list-correctness-3
-  (b* (((mv & error-code)
-        (fat32-build-index-list fa-table masked-current-cluster
-                                length cluster-size)))
-    (and (integerp error-code)
-         (or (equal error-code 0)
-             (equal error-code (- *eio*))))))
-
-(defthm
   fat32-build-index-list-correctness-4
   (implies
    (and (<= *ms-first-data-cluster*
@@ -1086,7 +1077,15 @@
      (mv-nth
       1
       (fat32-build-index-list fa-table masked-current-cluster
-                              length cluster-size))))))
+                              length cluster-size))))
+   (:linear
+    :corollary
+    (<=
+     (mv-nth
+      1
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     0))))
 
 (defthm
   fat32-build-index-list-correctness-7
