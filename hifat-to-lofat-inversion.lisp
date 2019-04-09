@@ -1100,13 +1100,13 @@
       (((when (atom index-list))
         fat32-in-memory)
        (current-index (car index-list))
-       ((when (or (not (natp current-index))
-                  (>= current-index
-                      (+ (count-of-clusters fat32-in-memory)
-                         *ms-first-data-cluster*))
-                  (mbe :logic (>= current-index
-                                  (fat-length fat32-in-memory))
-                       :exec nil)))
+       ((unless (and (natp current-index)
+                     (< current-index
+                        (+ (count-of-clusters fat32-in-memory)
+                           *ms-first-data-cluster*))
+                     (mbt
+                      (< current-index
+                         (fat-length fat32-in-memory)))))
         fat32-in-memory)
        (fat32-in-memory
         (update-fati current-index
@@ -2361,7 +2361,7 @@
      (update-fati i v fat32-in-memory)
      dir-ent-list entry-limit)
     (lofat-to-hifat-helper-exec fat32-in-memory
-                                     dir-ent-list entry-limit)))
+                                dir-ent-list entry-limit)))
   :hints
   (("goal"
     :induct
@@ -2557,7 +2557,6 @@
                             (:rewrite get-clusterchain-contents-correctness-3)
                             (:rewrite get-clusterchain-contents-correctness-2)
                             (:rewrite get-clusterchain-contents-correctness-1)))
-    :do-not-induct t
     :use
     ((:instance
       (:rewrite get-clusterchain-contents-correctness-1)
@@ -3234,7 +3233,6 @@
                dir-ent-list entry-limit))))
     :hints
     (("goal"
-      :do-not-induct t
       :expand
       ((len
         (find-n-free-clusters (effective-fat fat32-in-memory)
