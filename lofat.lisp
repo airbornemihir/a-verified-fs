@@ -6275,13 +6275,13 @@ Some (rather awful) testing forms are
      (cdr pathname))))
 
 ;; The dir-ent-list-p hypothesis is only there because
-;; lofat-to-hifat-helper doesn't fix its arguments. Should it?
+;; lofat-to-hifat-helper-exec doesn't fix its arguments. Should it?
 (defthm
   lofat-find-file-by-pathname-correctness-1-lemma-1
   (implies
    (and (dir-ent-list-p dir-ent-list)
         (equal (mv-nth 3
-                       (lofat-to-hifat-helper
+                       (lofat-to-hifat-helper-exec
                         fat32-in-memory
                         dir-ent-list entry-limit))
                0))
@@ -6289,14 +6289,14 @@ Some (rather awful) testing forms are
     (consp
      (assoc-equal name
                   (mv-nth 0
-                          (lofat-to-hifat-helper
+                          (lofat-to-hifat-helper-exec
                            fat32-in-memory
                            dir-ent-list entry-limit))))
     (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
            0)))
   :hints
   (("goal"
-    :in-theory (enable lofat-to-hifat-helper))))
+    :in-theory (enable lofat-to-hifat-helper-exec))))
 
 (defthm
   lofat-find-file-by-pathname-correctness-1-lemma-2
@@ -6304,7 +6304,7 @@ Some (rather awful) testing forms are
    (and
     (useful-dir-ent-list-p dir-ent-list)
     (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32-in-memory
+                   (lofat-to-hifat-helper-exec fat32-in-memory
                                                     dir-ent-list entry-limit))
            0))
    (equal
@@ -6313,10 +6313,10 @@ Some (rather awful) testing forms are
       (assoc-equal
        name
        (mv-nth 0
-               (lofat-to-hifat-helper fat32-in-memory
+               (lofat-to-hifat-helper-exec fat32-in-memory
                                                 dir-ent-list entry-limit)))))
     (mv-nth 0 (find-dir-ent dir-ent-list name))))
-  :hints (("goal" :in-theory (enable lofat-to-hifat-helper))))
+  :hints (("goal" :in-theory (enable lofat-to-hifat-helper-exec))))
 
 (defthm
   lofat-find-file-by-pathname-correctness-1-lemma-3
@@ -6326,7 +6326,7 @@ Some (rather awful) testing forms are
            0)
     (useful-dir-ent-list-p dir-ent-list)
     (equal (mv-nth 3
-                   (lofat-to-hifat-helper
+                   (lofat-to-hifat-helper-exec
                     fat32-in-memory
                     dir-ent-list entry-limit))
            0)
@@ -6341,7 +6341,7 @@ Some (rather awful) testing forms are
    (equal
     (cdr (assoc-equal name
                       (mv-nth 0
-                              (lofat-to-hifat-helper
+                              (lofat-to-hifat-helper-exec
                                fat32-in-memory
                                dir-ent-list entry-limit))))
     (make-m1-file
@@ -6349,7 +6349,7 @@ Some (rather awful) testing forms are
      :dir-ent (mv-nth 0 (find-dir-ent dir-ent-list name)))))
   :hints
   (("goal"
-    :in-theory (enable lofat-to-hifat-helper))))
+    :in-theory (enable lofat-to-hifat-helper-exec))))
 
 (defthm
   lofat-find-file-by-pathname-correctness-1-lemma-4
@@ -6357,7 +6357,7 @@ Some (rather awful) testing forms are
    (and (lofat-fs-p fat32-in-memory)
         (useful-dir-ent-list-p dir-ent-list)
         (equal (mv-nth 3
-                       (lofat-to-hifat-helper
+                       (lofat-to-hifat-helper-exec
                         fat32-in-memory
                         dir-ent-list entry-limit))
                0)
@@ -6372,7 +6372,7 @@ Some (rather awful) testing forms are
    (equal
     (cdr (assoc-equal name
                       (mv-nth 0
-                              (lofat-to-hifat-helper
+                              (lofat-to-hifat-helper-exec
                                fat32-in-memory
                                dir-ent-list entry-limit))))
     (make-m1-file
@@ -6388,14 +6388,14 @@ Some (rather awful) testing forms are
      :dir-ent (mv-nth 0 (find-dir-ent dir-ent-list name)))))
   :hints
   (("goal"
-    :in-theory (enable lofat-to-hifat-helper))))
+    :in-theory (enable lofat-to-hifat-helper-exec))))
 
 (defthm
   lofat-find-file-by-pathname-correctness-1-lemma-5
   (implies
    (and (useful-dir-ent-list-p dir-ent-list)
         (equal (mv-nth 3
-                       (lofat-to-hifat-helper
+                       (lofat-to-hifat-helper-exec
                         fat32-in-memory
                         dir-ent-list entry-limit))
                0))
@@ -6404,14 +6404,14 @@ Some (rather awful) testing forms are
      (cdr
       (assoc-equal name
                    (mv-nth 0
-                           (lofat-to-hifat-helper
+                           (lofat-to-hifat-helper-exec
                             fat32-in-memory
                             dir-ent-list entry-limit)))))
     (dir-ent-directory-p
      (mv-nth 0
              (find-dir-ent dir-ent-list name)))))
   :hints
-  (("goal" :in-theory (enable lofat-to-hifat-helper
+  (("goal" :in-theory (enable lofat-to-hifat-helper-exec
                               m1-directory-file-p))))
 
 (defthm
@@ -6427,14 +6427,14 @@ Some (rather awful) testing forms are
            (+ 2 (count-of-clusters fat32-in-memory)))
         (useful-dir-ent-list-p dir-ent-list)
         (equal (mv-nth 3
-                       (lofat-to-hifat-helper
+                       (lofat-to-hifat-helper-exec
                         fat32-in-memory
                         dir-ent-list entry-limit))
                0))
    (equal
     (mv-nth
      3
-     (lofat-to-hifat-helper
+     (lofat-to-hifat-helper-exec
       fat32-in-memory
       (make-dir-ent-list
        (string=>nats
@@ -6449,8 +6449,8 @@ Some (rather awful) testing forms are
     0))
   :hints
   (("goal" :in-theory
-    (enable lofat-to-hifat-helper-correctness-4
-            lofat-to-hifat-helper))))
+    (enable lofat-to-hifat-helper-exec-correctness-4
+            lofat-to-hifat-helper-exec))))
 
 (defthm
   lofat-find-file-by-pathname-correctness-1-lemma-7
@@ -6465,14 +6465,14 @@ Some (rather awful) testing forms are
            (+ 2 (count-of-clusters fat32-in-memory)))
         (useful-dir-ent-list-p dir-ent-list)
         (equal (mv-nth 3
-                       (lofat-to-hifat-helper
+                       (lofat-to-hifat-helper-exec
                         fat32-in-memory
                         dir-ent-list entry-limit))
                0))
    (equal
     (cdr (assoc-equal name
                       (mv-nth 0
-                              (lofat-to-hifat-helper
+                              (lofat-to-hifat-helper-exec
                                fat32-in-memory
                                dir-ent-list entry-limit))))
     (make-m1-file
@@ -6480,7 +6480,7 @@ Some (rather awful) testing forms are
      :contents
      (mv-nth
       0
-      (lofat-to-hifat-helper
+      (lofat-to-hifat-helper-exec
        fat32-in-memory
        (make-dir-ent-list
         (string=>nats
@@ -6495,9 +6495,9 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory
-    (enable lofat-to-hifat-helper-correctness-4)
+    (enable lofat-to-hifat-helper-exec-correctness-4)
     :induct (find-dir-ent dir-ent-list name)
-    :expand (lofat-to-hifat-helper
+    :expand (lofat-to-hifat-helper-exec
              fat32-in-memory
              dir-ent-list entry-limit))))
 
@@ -6517,14 +6517,14 @@ Some (rather awful) testing forms are
                 (count-of-clusters fat32-in-memory)))))
     (useful-dir-ent-list-p dir-ent-list)
     (equal (mv-nth 3
-                   (lofat-to-hifat-helper
+                   (lofat-to-hifat-helper-exec
                     fat32-in-memory
                     dir-ent-list entry-limit))
            0))
    (equal
     (cdr (assoc-equal name
                       (mv-nth 0
-                              (lofat-to-hifat-helper
+                              (lofat-to-hifat-helper-exec
                                fat32-in-memory
                                dir-ent-list entry-limit))))
     (make-m1-file
@@ -6533,12 +6533,12 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory
-    (enable lofat-to-hifat-helper-correctness-4)
+    (enable lofat-to-hifat-helper-exec-correctness-4)
     :induct (find-dir-ent dir-ent-list name)
     :expand
-    ((lofat-to-hifat-helper fat32-in-memory
+    ((lofat-to-hifat-helper-exec fat32-in-memory
                                       dir-ent-list entry-limit)
-     (lofat-to-hifat-helper
+     (lofat-to-hifat-helper-exec
       fat32-in-memory
       nil (+ -1 entry-limit))))))
 
@@ -6548,7 +6548,7 @@ Some (rather awful) testing forms are
       (((mv file error-code)
         (find-file-by-pathname
          (mv-nth 0
-                 (lofat-to-hifat-helper
+                 (lofat-to-hifat-helper-exec
                   fat32-in-memory
                   dir-ent-list entry-limit))
          pathname)))
@@ -6557,7 +6557,7 @@ Some (rather awful) testing forms are
       (lofat-fs-p fat32-in-memory)
       (useful-dir-ent-list-p dir-ent-list)
       (equal (mv-nth 3
-                     (lofat-to-hifat-helper
+                     (lofat-to-hifat-helper-exec
                       fat32-in-memory
                       dir-ent-list entry-limit))
              0)
@@ -6578,7 +6578,7 @@ Some (rather awful) testing forms are
       (((mv file error-code)
         (find-file-by-pathname
          (mv-nth 0
-                 (lofat-to-hifat-helper
+                 (lofat-to-hifat-helper-exec
                   fat32-in-memory
                   dir-ent-list entry-limit))
          pathname)))
@@ -6587,7 +6587,7 @@ Some (rather awful) testing forms are
       (lofat-fs-p fat32-in-memory)
       (useful-dir-ent-list-p dir-ent-list)
       (equal (mv-nth 3
-                     (lofat-to-hifat-helper
+                     (lofat-to-hifat-helper-exec
                       fat32-in-memory
                       dir-ent-list entry-limit))
              0)
@@ -6606,7 +6606,7 @@ Some (rather awful) testing forms are
       (equal
        (mv-nth
         0
-        (lofat-to-hifat-helper
+        (lofat-to-hifat-helper-exec
          fat32-in-memory
          (lofat-file->contents
           (mv-nth 0
@@ -6625,14 +6625,14 @@ Some (rather awful) testing forms are
     (mv (mv-nth 0
                 (find-file-by-pathname
                  (mv-nth 0
-                         (lofat-to-hifat-helper
+                         (lofat-to-hifat-helper-exec
                           fat32-in-memory
                           dir-ent-list entry-limit))
                  pathname))
         (mv-nth 0
                 (lofat-find-file-by-pathname
                  fat32-in-memory dir-ent-list pathname)))
-    :expand (lofat-to-hifat-helper
+    :expand (lofat-to-hifat-helper-exec
              fat32-in-memory nil entry-limit))))
 
 (defthm
