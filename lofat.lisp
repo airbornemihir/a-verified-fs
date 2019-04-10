@@ -6673,11 +6673,16 @@ Some (rather awful) testing forms are
                         (dir-ent-filename dir-ent))
           (mv dir-ent 0))))
 
-;; This function is too buggy to be guard-verified.
 (defun
   lofat-place-file-by-pathname
   (fat32-in-memory rootclus pathname file)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
+                              (fat32-masked-entry-p rootclus)
+                              (>= ROOTCLUS
+                                  *ms-first-data-cluster*)
+                              (< ROOTCLUS
+                                 (+ *ms-first-data-cluster*
+                                    (COUNT-OF-CLUSTERS FAT32-IN-MEMORY)))
                               (fat32-filename-list-p pathname)
                               (lofat-file-p file))
                   :measure (acl2-count pathname)
@@ -6713,14 +6718,15 @@ Some (rather awful) testing forms are
                  ((mv fat32-in-memory & & &)
                   (place-contents
                    fat32-in-memory dir-ent
-                   (flatten dir-ent-list) 0 rootclus)))
+                   (nats=>string (flatten dir-ent-list))
+                   0 rootclus)))
               (mv fat32-in-memory 0))
           (mv fat32-in-memory *enotdir*)))
        ((unless (dir-ent-directory-p dir-ent))
         (if (or (consp (cdr pathname))
                 ;; This is the case where a regular file could get replaced by
                 ;; a directory, which is a bad idea.
-                (m1-directory-file-p file))
+                (lofat-directory-file-p file))
             (mv fat32-in-memory *enotdir*)
           (b*
               ((fat32-in-memory
@@ -6733,8 +6739,16 @@ Some (rather awful) testing forms are
                ((mv fat32-in-memory & & &)
                 (place-contents
                  fat32-in-memory dir-ent
-                 (flatten dir-ent-list) 0 rootclus)))
+                 (nats=>string (flatten dir-ent-list))
+                 0 rootclus)))
             (mv fat32-in-memory 0))))
+       ;; This case should never arise - we should never legitimately find a
+       ;; directory entry with a cluster index outside the allowable range.
+       ((unless (and (< (DIR-ENT-FIRST-CLUSTER (LOFAT-FILE->DIR-ENT FILE))
+                        (+ *ms-first-data-cluster* (COUNT-OF-CLUSTERS FAT32-IN-MEMORY)))
+                     (>= (DIR-ENT-FIRST-CLUSTER (LOFAT-FILE->DIR-ENT FILE))
+                        *ms-first-data-cluster*)))
+        (mv fat32-in-memory *eio*))
        ((mv fat32-in-memory error-code)
         (lofat-place-file-by-pathname
          fat32-in-memory
@@ -6751,5 +6765,34 @@ Some (rather awful) testing forms are
        ((mv fat32-in-memory & & &)
         (place-contents
          fat32-in-memory dir-ent
-         (flatten dir-ent-list) 0 rootclus)))
+         (nats=>string (flatten dir-ent-list))
+         0 rootclus)))
     (mv fat32-in-memory error-code)))
+
+(defthm
+  count-of-clusters-of-lofat-place-file-by-pathname
+  (equal
+   (count-of-clusters
+    (mv-nth
+     0
+     (lofat-place-file-by-pathname fat32-in-memory
+                                   rootclus pathname file)))
+   (count-of-clusters fat32-in-memory)))
+
+(defthm
+  lofat-fs-p-of-lofat-place-file-by-pathname
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (fat32-masked-entry-p rootclus)
+        (>= rootclus *ms-first-data-cluster*)
+        (< rootclus
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory))))
+   (lofat-fs-p
+    (mv-nth 0
+            (lofat-place-file-by-pathname fat32-in-memory
+                                          rootclus pathname file)))))
+
+(verify-guards
+  lofat-place-file-by-pathname
+  :guard-debug t)
