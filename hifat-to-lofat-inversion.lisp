@@ -519,7 +519,7 @@
 ;; This loop could be stopped most cleanly by maintaining a list of all
 ;; clusters which could be visited, and checking them off as we visit more
 ;; entries. Then, we would detect a second visit to the same cluster, and
-;; terminate with an error condition . Only otherwise would we make a recursive
+;; terminate with an error condition. Only otherwise would we make a recursive
 ;; call, and our measure - the length of the list of unvisited clusters - would
 ;; decrease.
 
@@ -1368,15 +1368,14 @@
 
 ;; This function needs to return an mv containing the fat32-in-memory stobj,
 ;; the new directory entry, and an errno value (either 0 or ENOSPC).
-
+;;
 ;; One idea we tried was setting first-cluster to *ms-end-of-clusterchain*
 ;; (basically, marking it used) inside the body of this function. This would
 ;; have made some proofs more modular... but it doesn't work, because when
-;; we're placing the contents of a directory (inside
-;; hifat-to-lofat-helper), we need to make a recursive call to get
-;; the contents of that directory in the first place... and first-cluster must
-;; be marked used before that call is made to ensure that cluster doesn't get
-;; used.
+;; we're placing the contents of a directory (inside hifat-to-lofat-helper), we
+;; need to make a recursive call to get the contents of that directory in the
+;; first place... and first-cluster must be marked used before that call is
+;; made to ensure that cluster doesn't get used.
 (defund
   place-contents
   (fat32-in-memory dir-ent
@@ -1394,24 +1393,7 @@
                    (+ *ms-first-data-cluster*
                       (count-of-clusters fat32-in-memory))))
     :guard-hints
-    (("goal"
-      :in-theory
-      (disable
-       (:rewrite
-        fat32-masked-entry-list-p-of-find-n-free-clusters
-        . 1)
-       unsigned-byte-p)
-      :use
-      (:instance
-       (:rewrite
-        fat32-masked-entry-list-p-of-find-n-free-clusters
-        . 1)
-       (n
-        (binary-+
-         '-1
-         (len (make-clusters contents
-                             (cluster-size fat32-in-memory)))))
-       (fa-table (effective-fat fat32-in-memory)))))))
+    (("goal" :in-theory (disable unsigned-byte-p)))))
   (b*
       ((dir-ent (dir-ent-fix dir-ent))
        (cluster-size (cluster-size fat32-in-memory))
