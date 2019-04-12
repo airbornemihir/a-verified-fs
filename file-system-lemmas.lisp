@@ -61,17 +61,6 @@
          (and (character-listp (true-list-fix x))
               (character-listp y))))
 
-(defthm
-  character-listp-of-true-list-fix
-  (implies (true-listp x)
-           (equal (character-listp (true-list-fix x))
-                  (character-listp x)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary (implies (character-listp x)
-                        (character-listp (true-list-fix x))))))
-
 (encapsulate
   ()
 
@@ -496,19 +485,6 @@
 
 (defthm len-of-true-list-fix
   (equal (len (true-list-fix x)) (len x)))
-
-(defthm string-listp-of-true-list-fix
-  (implies (string-listp x)
-           (string-listp (true-list-fix x))))
-
-(defthm nat-listp-of-true-list-fix
-  (implies (true-listp x)
-           (equal (nat-listp (true-list-fix x))
-                  (nat-listp x)))
-  :rule-classes (:rewrite
-                 (:rewrite :corollary
-                           (implies (nat-listp x)
-                                    (nat-listp (true-list-fix x))))))
 
 (defthm nth-of-make-character-list
   (equal (nth n (make-character-list x))
