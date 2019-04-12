@@ -6673,9 +6673,70 @@ Some (rather awful) testing forms are
                         (dir-ent-filename dir-ent))
           (mv dir-ent 0))))
 
+(defund
+  update-dir-contents
+  (fat32-in-memory first-cluster dir-contents dir-ent)
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (lofat-fs-p fat32-in-memory)
+                (fat32-masked-entry-p first-cluster)
+                (<= *ms-first-data-cluster* first-cluster)
+                (dir-ent-p dir-ent)
+                (> (+ *ms-first-data-cluster*
+                      (count-of-clusters fat32-in-memory))
+                   first-cluster)
+                (stringp dir-contents))
+    :guard-hints
+    (("goal" :expand (fat32-build-index-list
+                      (effective-fat fat32-in-memory)
+                      first-cluster 2097152
+                      (cluster-size fat32-in-memory))))))
+  (b* (((mv dir-clusterchain error-code)
+        (get-clusterchain fat32-in-memory
+                          first-cluster *ms-max-dir-size*))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory *eio*))
+       (fat32-in-memory
+        (stobj-set-indices-in-fa-table
+         fat32-in-memory (cdr dir-clusterchain)
+         (make-list (- (len dir-clusterchain) 1)
+                    :initial-element 0)))
+       ((mv fat32-in-memory & error-code &)
+        (place-contents fat32-in-memory
+                        dir-ent dir-contents 0 first-cluster)))
+    (mv fat32-in-memory error-code)))
+
+(defthm
+  count-of-clusters-of-update-dir-contents
+  (equal
+   (count-of-clusters
+    (mv-nth
+     0
+     (update-dir-contents fat32-in-memory
+                          first-cluster dir-contents dir-ent)))
+   (count-of-clusters fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-dir-contents))))
+
+(defthm
+  lofat-fs-p-of-update-dir-contents
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (fat32-masked-entry-p first-cluster)
+        (<= *ms-first-data-cluster* first-cluster)
+        (> (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory))
+           first-cluster)
+        (stringp dir-contents))
+   (lofat-fs-p
+    (mv-nth 0
+            (update-dir-contents fat32-in-memory
+                                 first-cluster dir-contents dir-ent))))
+  :hints (("goal" :in-theory (enable update-dir-contents))))
+
 (defun
-  lofat-place-file-by-pathname
-  (fat32-in-memory rootclus pathname file)
+    lofat-place-file-by-pathname
+    (fat32-in-memory rootclus pathname file)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
                               (fat32-masked-entry-p rootclus)
                               (>= ROOTCLUS
@@ -6689,38 +6750,47 @@ Some (rather awful) testing forms are
                   :stobjs fat32-in-memory
                   :verify-guards nil))
   (b*
-      (((mv dir-contents &)
-        (get-clusterchain-contents fat32-in-memory
-                                   rootclus
-                                   *ms-max-dir-size*))
-       ((mv clusterchain &)
-        (get-clusterchain
-         fat32-in-memory rootclus *ms-max-dir-size*))
-       (dir-ent-list (make-dir-ent-list (string=>nats dir-contents)))
-       ;; Pathnames aren't going to be empty lists. Even the emptiest of
+      (;; Pathnames aren't going to be empty lists. Even the emptiest of
        ;; empty pathnames has to have at least a slash in it, because we are
        ;; absolutely dealing in absolute pathnames.
        ((unless (consp pathname))
         (mv fat32-in-memory *enoent*))
-       (name (fat32-filename-fix (car pathname)))
+       (name (mbe :logic (fat32-filename-fix (car pathname)) :exec (car pathname)))
+       ((mv dir-contents &)
+        (get-clusterchain-contents fat32-in-memory
+                                   rootclus
+                                   *ms-max-dir-size*))
+       (dir-ent-list (make-dir-ent-list (string=>nats dir-contents)))
        ((mv dir-ent error-code)
         (find-dir-ent dir-ent-list name))
        ((unless (equal error-code 0))
         (if (atom (cdr pathname))
             (b*
-                ((fat32-in-memory
-                  (stobj-set-indices-in-fa-table
-                   fat32-in-memory clusterchain
-                   (make-list (len clusterchain)
-                              :initial-element 0)))
-                 (dir-ent-list
-                  (place-dir-ent dir-ent-list (lofat-file->dir-ent file)))
-                 ((mv fat32-in-memory & & &)
+                ((file-length
+                  (if
+                      (lofat-directory-file-p file)
+                      0
+                    (length (lofat-file->contents file))))
+                 (indices
+                  (stobj-find-n-free-clusters fat32-in-memory 1))
+                 ((when (< (len indices) 1)) (mv fat32-in-memory *enospc*))
+                 (first-cluster (nth 0 indices))
+                 (contents
+                  (if (lofat-directory-file-p file)
+                      (nats=>string (flatten (lofat-file->contents file)))
+                    (lofat-file->contents file)))
+                 ((mv fat32-in-memory dir-ent & &)
                   (place-contents
-                   fat32-in-memory dir-ent
-                   (nats=>string (flatten dir-ent-list))
-                   0 rootclus)))
-              (mv fat32-in-memory 0))
+                   fat32-in-memory (lofat-file->dir-ent file)
+                   contents
+                   file-length
+                   first-cluster))
+                 (dir-ent-list
+                  (place-dir-ent dir-ent-list dir-ent)))
+              (update-dir-contents
+               fat32-in-memory rootclus
+               (nats=>string (flatten dir-ent-list))
+               dir-ent))
           (mv fat32-in-memory *enotdir*)))
        ((unless (dir-ent-directory-p dir-ent))
         (if (or (consp (cdr pathname))
@@ -6729,45 +6799,36 @@ Some (rather awful) testing forms are
                 (lofat-directory-file-p file))
             (mv fat32-in-memory *enotdir*)
           (b*
-              ((fat32-in-memory
-                (stobj-set-indices-in-fa-table
-                 fat32-in-memory clusterchain
-                 (make-list (len clusterchain)
-                            :initial-element 0)))
-               (dir-ent-list
-                (place-dir-ent dir-ent-list (lofat-file->dir-ent file)))
-               ((mv fat32-in-memory & & &)
+              ((file-length
+                (length (lofat-file->contents file)))
+               (indices
+                (stobj-find-n-free-clusters fat32-in-memory 1))
+               ((when (< (len indices) 1)) (mv fat32-in-memory *enospc*))
+               (first-cluster (nth 0 indices))
+               ((mv fat32-in-memory dir-ent & &)
                 (place-contents
-                 fat32-in-memory dir-ent
-                 (nats=>string (flatten dir-ent-list))
-                 0 rootclus)))
-            (mv fat32-in-memory 0))))
+                 fat32-in-memory (lofat-file->dir-ent file)
+                 (lofat-file->contents file)
+                 file-length
+                 first-cluster))
+               (dir-ent-list
+                (place-dir-ent dir-ent-list (lofat-file->dir-ent file))))
+            (update-dir-contents
+             fat32-in-memory rootclus
+             (nats=>string (flatten dir-ent-list))
+             dir-ent))))
        ;; This case should never arise - we should never legitimately find a
        ;; directory entry with a cluster index outside the allowable range.
        ((unless (and (< (DIR-ENT-FIRST-CLUSTER (LOFAT-FILE->DIR-ENT FILE))
                         (+ *ms-first-data-cluster* (COUNT-OF-CLUSTERS FAT32-IN-MEMORY)))
                      (>= (DIR-ENT-FIRST-CLUSTER (LOFAT-FILE->DIR-ENT FILE))
-                        *ms-first-data-cluster*)))
-        (mv fat32-in-memory *eio*))
-       ((mv fat32-in-memory error-code)
-        (lofat-place-file-by-pathname
-         fat32-in-memory
-         (dir-ent-first-cluster (lofat-file->dir-ent file))
-         (cdr pathname)
-         file))
-       (fat32-in-memory
-        (stobj-set-indices-in-fa-table
-         fat32-in-memory clusterchain
-         (make-list (len clusterchain)
-                    :initial-element 0)))
-       (dir-ent-list
-        (place-dir-ent dir-ent-list (lofat-file->dir-ent file)))
-       ((mv fat32-in-memory & & &)
-        (place-contents
-         fat32-in-memory dir-ent
-         (nats=>string (flatten dir-ent-list))
-         0 rootclus)))
-    (mv fat32-in-memory error-code)))
+                         *ms-first-data-cluster*)))
+        (mv fat32-in-memory *eio*)))
+    (lofat-place-file-by-pathname
+     fat32-in-memory
+     (dir-ent-first-cluster (lofat-file->dir-ent file))
+     (cdr pathname)
+     file)))
 
 (defthm
   count-of-clusters-of-lofat-place-file-by-pathname
@@ -6780,6 +6841,16 @@ Some (rather awful) testing forms are
    (count-of-clusters fat32-in-memory)))
 
 (defthm
+  lofat-fs-p-of-lofat-place-file-by-pathname-lemma-1
+  (implies (lofat-file-p file)
+           (iff (stringp (lofat-file->contents file))
+                (not (lofat-directory-file-p file))))
+  :hints
+  (("goal" :in-theory (enable lofat-directory-file-p
+                              lofat-file-p lofat-file-contents-p
+                              lofat-file->contents))))
+
+(defthm
   lofat-fs-p-of-lofat-place-file-by-pathname
   (implies
    (and (lofat-fs-p fat32-in-memory)
@@ -6787,12 +6858,64 @@ Some (rather awful) testing forms are
         (>= rootclus *ms-first-data-cluster*)
         (< rootclus
            (+ *ms-first-data-cluster*
-              (count-of-clusters fat32-in-memory))))
+              (count-of-clusters fat32-in-memory)))
+        (lofat-file-p file))
    (lofat-fs-p
-    (mv-nth 0
-            (lofat-place-file-by-pathname fat32-in-memory
-                                          rootclus pathname file)))))
+    (mv-nth
+     0
+     (lofat-place-file-by-pathname fat32-in-memory
+                                   rootclus pathname file))))
+  :hints
+  (("goal" :induct (lofat-place-file-by-pathname
+                    fat32-in-memory rootclus pathname file))
+   ("subgoal *1/7"
+    :in-theory
+    (disable (:linear find-n-free-clusters-correctness-7))
+    :use (:instance (:linear find-n-free-clusters-correctness-7)
+                    (n 1)
+                    (fa-table (effective-fat fat32-in-memory))
+                    (m 0)))
+   ("subgoal *1/5"
+    :in-theory
+    (disable (:linear find-n-free-clusters-correctness-7))
+    :use (:instance (:linear find-n-free-clusters-correctness-7)
+                    (n 1)
+                    (fa-table (effective-fat fat32-in-memory))
+                    (m 0)))))
+
+(defthm
+  lofat-place-file-by-pathname-guard-lemma-1
+  (implies (lofat-regular-file-p file)
+           (unsigned-byte-p
+            32
+            (len (explode (lofat-file->contents file)))))
+  :hints (("goal" :in-theory (enable lofat-regular-file-p))))
+
+(defthm
+  lofat-place-file-by-pathname-guard-lemma-2
+  (implies (and (lofat-file-p file)
+                (not (lofat-directory-file-p file)))
+           (lofat-regular-file-p file))
+  :hints
+  (("goal" :in-theory (enable lofat-file-p lofat-regular-file-p
+                              lofat-directory-file-p
+                              lofat-file-contents-p
+                              lofat-file->contents))))
+
+(defthm
+  lofat-place-file-by-pathname-guard-lemma-3
+  (implies (lofat-directory-file-p file)
+           (dir-ent-list-p (lofat-file->contents file)))
+  :hints (("goal" :in-theory (enable lofat-directory-file-p))))
 
 (verify-guards
   lofat-place-file-by-pathname
-  :guard-debug t)
+  :hints
+  (("goal"
+    :in-theory
+    (disable (:linear find-n-free-clusters-correctness-7)
+             unsigned-byte-p)
+    :use (:instance (:linear find-n-free-clusters-correctness-7)
+                    (n 1)
+                    (fa-table (effective-fat fat32-in-memory))
+                    (m 0)))))
