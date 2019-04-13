@@ -769,24 +769,15 @@
   find-n-free-clusters-correctness-8
   (integer-listp (find-n-free-clusters fa-table n)))
 
-(defthm
-  find-n-free-clusters-correctness-7
-  (implies
-   (and
-    (< (nfix m)
-       (len (find-n-free-clusters fa-table n)))
-    (>= (len fa-table)
-        *ms-first-data-cluster*))
-   (and
-    (<= *ms-first-data-cluster*
-        (nth m
-             (find-n-free-clusters fa-table n)))
-    (< (nth m
-             (find-n-free-clusters fa-table n))
-        (len fa-table))))
+(defthm find-n-free-clusters-correctness-7
+  (implies (< (nfix m)
+              (len (find-n-free-clusters fa-table n)))
+           (and (<= *ms-first-data-cluster*
+                    (nth m (find-n-free-clusters fa-table n)))
+                (< (nth m (find-n-free-clusters fa-table n))
+                   (len fa-table))))
   :rule-classes :linear
-  :hints
-  (("goal" :in-theory (e/d (find-n-free-clusters) (nth)))))
+  :hints (("goal" :in-theory (e/d (find-n-free-clusters) (nth)))))
 
 (defthm
   len-of-find-n-free-clusters
