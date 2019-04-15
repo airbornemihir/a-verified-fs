@@ -18,8 +18,7 @@
 (defthm len-of-revappend
   (equal (len (revappend x y)) (+ (len x) (len y))))
 
-(defthm len-of-first-n-ac
-  (implies (natp i) (equal (len (first-n-ac i l ac)) (+ i (len ac)))))
+(defthm len-of-take (equal (len (take n xs)) (nfix n)))
 
 ;; The following is redundant with the definition in
 ;; books/coi/lists/basic.lisp, from where it was taken with thanks.
@@ -30,22 +29,10 @@
            (nthcdr (- n (len a)) b)))
   :hints(("Goal" :in-theory (enable nthcdr))))
 
-(defthm first-n-ac-of-binary-append-1
+(defthm take-of-binary-append-1
   (implies (and (natp i) (<= i (len x)))
-           (equal (first-n-ac i (binary-append x y) ac)
-                  (first-n-ac i x ac))))
-
-(defthm
-  by-slice-you-mean-the-whole-cake-1
-  (equal (first-n-ac (len l) l ac)
-         (revappend ac (true-list-fix l)))
-  :hints (("goal" :induct (revappend l ac)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies (equal i (len l))
-             (equal (first-n-ac i l ac)
-                    (revappend ac (true-list-fix l)))))))
+           (equal (take i (binary-append x y))
+                  (take i x))))
 
 (defthmd by-slice-you-mean-the-whole-cake-2
   (implies (equal i (len l))
@@ -60,21 +47,6 @@
   (equal (character-listp (revappend x y))
          (and (character-listp (true-list-fix x))
               (character-listp y))))
-
-(encapsulate
-  ()
-
-  (local
-   (defthm character-listp-of-first-n-ac-lemma-1
-     (implies (not (character-listp (true-list-fix ac)))
-              (not (character-listp (first-n-ac i l ac))))))
-
-  (defthm
-    character-listp-of-first-n-ac
-    (implies (character-listp l)
-             (equal (character-listp (first-n-ac n l ac))
-                    (and (character-listp (true-list-fix ac))
-                         (<= (nfix n) (len l)))))))
 
 (defthm character-listp-of-take
   (implies (character-listp l)
@@ -278,11 +250,10 @@
                     (make-character-list y))))
 
 (defthm
-  first-n-ac-of-make-character-list
-  (implies (and (<= i (len l)))
-           (equal (first-n-ac i (make-character-list l)
-                              (make-character-list ac))
-                  (make-character-list (first-n-ac i l ac)))))
+  take-of-make-character-list
+  (implies (<= i (len l))
+           (equal (take i (make-character-list l))
+                  (make-character-list (take i l)))))
 
 (defthm revappend-of-true-list-fix
   (equal (revappend x (true-list-fix y))
@@ -291,51 +262,6 @@
 (defthm append-of-true-list-fix
   (equal (append (true-list-fix x) y)
          (append x y)))
-
-(defthm
-  take-more
-  (implies
-   (and (integerp i) (>= i (len l)))
-   (equal
-    (binary-append (first-n-ac i l ac1) ac2)
-    (revappend
-     ac1
-     (binary-append l
-                    (make-list-ac (- i (len l)) nil ac2)))))
-  :hints
-  (("goal" :induct (first-n-ac i l ac1)
-    :in-theory (disable revappend-of-binary-append-1))
-   ("subgoal *1/2" :expand (make-list-ac i nil ac2))
-   ("subgoal *1/1"
-    :use (:instance revappend-of-binary-append-1 (x ac1)
-                    (y l)
-                    (z ac2)))))
-
-(defthm
-  take-of-take
-  (implies (and (natp m)
-                (integerp n)
-                (<= m n)
-                (<= m (len l)))
-           (equal (first-n-ac m (take n l) ac)
-                  (first-n-ac m l ac)))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (disable binary-append-first-n-ac-nthcdr
-                        first-n-ac-of-binary-append-1 take-more)
-    :use ((:instance binary-append-first-n-ac-nthcdr (ac nil)
-                     (i n))
-          (:instance first-n-ac-of-binary-append-1 (i m)
-                     (x (first-n-ac n l nil))
-                     (y (nthcdr n l)))
-          (:instance take-more (i n)
-                     (ac1 nil)
-                     (ac2 nil))
-          (:instance first-n-ac-of-binary-append-1 (i m)
-                     (x l)
-                     (y (make-list-ac (+ n (- (len l)))
-                                      nil nil)))))))
 
 (defthm boolean-listp-of-revappend
   (equal (boolean-listp (revappend x y))
@@ -347,9 +273,9 @@
            (equal (boolean-listp (first-n-ac i l ac))
                   (boolean-listp (true-list-fix ac)))))
 
-(defthm consp-of-first-n-ac
-  (iff (consp (first-n-ac i l ac))
-       (or (consp ac) (not (zp i)))))
+(defthm consp-of-take
+  (iff (consp (take i l))
+       (not (zp i))))
 
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/lists/nth.lisp, from where it was taken with thanks.
@@ -725,17 +651,6 @@
          (nthcdr (+ (nfix a) (nfix b)) x))
   :hints(("goal" :induct (nthcdr b x))))
 
-(defthm
-  take-of-make-character-list
-  (implies (and (<= n (len l)))
-           (equal (take n (make-character-list l))
-                  (make-character-list (take n l))))
-  :hints
-  (("goal"
-    :in-theory (disable first-n-ac-of-make-character-list)
-    :use (:instance first-n-ac-of-make-character-list (i n)
-                    (ac nil)))))
-
 (defthm last-of-member-equal
   (equal (last (member-equal x lst))
          (if (member-equal x lst)
@@ -820,23 +735,8 @@
     :use (:instance remember-that-time-with-update-nth-lemma-1
                     (ac nil)))))
 
-(defthm
-  append-of-first-n-ac-and-cons
-  (implies (natp i)
-           (equal (append (first-n-ac i l ac)
-                          (cons (nth i l) y))
-                  (append (first-n-ac (+ i 1) l ac) y)))
-  :hints
-  (("goal" :induct (first-n-ac i l ac)
-    :expand (first-n-ac 1 l ac))
-   ("subgoal *1/1"
-    :in-theory (disable (:rewrite revappend-of-binary-append-1))
-    :use (:instance (:rewrite revappend-of-binary-append-1)
-                    (z (list (car l)))
-                    (y nil)
-                    (x ac)))))
-
 (defthm append-of-take-and-cons
   (implies (and (natp n) (equal x (nth n l)))
            (equal (append (take n l) (cons x y))
-                  (append (take (+ n 1) l) y))))
+                  (append (take (+ n 1) l) y)))
+  :hints (("Goal" :induct (take n l)) ))
