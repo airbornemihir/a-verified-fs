@@ -34,6 +34,18 @@
            (equal (take i (binary-append x y))
                   (take i x))))
 
+(defthm
+  by-slice-you-mean-the-whole-cake-1
+  (equal (first-n-ac (len l) l ac)
+         (revappend ac (true-list-fix l)))
+  :hints (("goal" :induct (revappend l ac)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies (equal i (len l))
+             (equal (first-n-ac i l ac)
+                    (revappend ac (true-list-fix l)))))))
+
 (defthm by-slice-you-mean-the-whole-cake-2
   (implies (equal i (len l))
            (equal (take i l) (true-list-fix l))))
