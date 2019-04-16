@@ -34,7 +34,7 @@
            (equal (take i (binary-append x y))
                   (take i x))))
 
-(defthmd by-slice-you-mean-the-whole-cake-2
+(defthm by-slice-you-mean-the-whole-cake-2
   (implies (equal i (len l))
            (equal (take i l) (true-list-fix l))))
 
@@ -273,9 +273,11 @@
            (equal (boolean-listp (first-n-ac i l ac))
                   (boolean-listp (true-list-fix ac)))))
 
+;; The following is redundant with the eponymous theorem in
+;; books/std/lists/take.lisp, from where it was taken with thanks.
 (defthm consp-of-take
-  (iff (consp (take i l))
-       (not (zp i))))
+    (equal (consp (take n xs))
+           (not (zp n))))
 
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/lists/nth.lisp, from where it was taken with thanks.
