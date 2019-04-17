@@ -20,12 +20,6 @@
  (in-theory (disable read-file-into-string1 nth update-nth floor mod
                      true-listp)))
 
-;; At some point, the following theorem has to be moved to
-;; file-system-lemmas.lisp.
-(defthmd take-of-nthcdr
-  (equal (take n1 (nthcdr n2 l))
-         (nthcdr n2 (take (+ (nfix n1) (nfix n2)) l))))
-
 (defund
   cluster-size (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory

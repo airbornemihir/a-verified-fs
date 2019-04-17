@@ -754,3 +754,7 @@
            (equal (append (take n l) (cons x y))
                   (append (take (+ n 1) l) y)))
   :hints (("Goal" :induct (take n l)) ))
+
+(defthmd take-of-nthcdr
+  (equal (take n1 (nthcdr n2 l))
+         (nthcdr n2 (take (+ (nfix n1) (nfix n2)) l))))
