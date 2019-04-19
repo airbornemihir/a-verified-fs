@@ -150,3 +150,35 @@
                  pathname)))
   :hints (("goal" :in-theory (enable lofat-to-hifat))))
 
+(defthm
+  find-file-by-pathname-correctness-3-lemma-1
+  (implies
+   (and (m1-file-alist-p m1-file-alist1)
+        (hifat-subsetp m1-file-alist1 m1-file-alist2)
+        (m1-regular-file-p (cdr (assoc-equal name m1-file-alist1))))
+   (equal (m1-file->contents (cdr (assoc-equal name m1-file-alist2)))
+          (m1-file->contents (cdr (assoc-equal name m1-file-alist1)))))
+  :hints (("goal" :in-theory (enable m1-file-alist-p m1-file-no-dups-p))))
+
+(defthm find-file-by-pathname-correctness-3
+  (implies
+   (and (m1-file-alist-p m1-file-alist1)
+        (m1-file-alist-p m1-file-alist2)
+        (hifat-subsetp m1-file-alist1 m1-file-alist2))
+   (mv-let
+     (file error-code)
+     (find-file-by-pathname m1-file-alist1 pathname)
+     (implies
+      (and
+       (equal error-code 0)
+       (m1-regular-file-p file))
+      (and
+       (equal (mv-nth 1 (find-file-by-pathname m1-file-alist2 pathname)) 0)
+       (equal (m1-file->contents (mv-nth 0 (find-file-by-pathname
+                                            m1-file-alist2 pathname)))
+              (m1-file->contents file))))))
+  :hints (("goal"
+           :induct
+           (mv (mv-nth 1 (find-file-by-pathname m1-file-alist1 pathname))
+               (mv-nth 1 (find-file-by-pathname m1-file-alist2 pathname)))
+           :in-theory (enable m1-file-alist-p))))

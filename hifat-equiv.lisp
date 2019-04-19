@@ -7,8 +7,8 @@
 (include-book "hifat")
 
 (defun
-  hifat-subsetp
-  (m1-file-alist1 m1-file-alist2)
+    hifat-subsetp
+    (m1-file-alist1 m1-file-alist2)
   (declare
    (xargs
     :guard (and (m1-file-alist-p m1-file-alist1)
@@ -22,7 +22,7 @@
         (and (member-equal (car m1-file-alist1)
                            m1-file-alist2)
              (hifat-subsetp (cdr m1-file-alist1)
-                             m1-file-alist2)))
+                            m1-file-alist2)))
        (name (caar m1-file-alist1))
        (file1 (cdar m1-file-alist1))
        ((unless (consp (assoc-equal name m1-file-alist2)))
@@ -31,14 +31,14 @@
     (if (not (m1-directory-file-p file1))
         (and (not (m1-directory-file-p file2))
              (hifat-subsetp (cdr m1-file-alist1)
-                             m1-file-alist2)
+                            m1-file-alist2)
              (equal (m1-file->contents file1)
                     (m1-file->contents file2)))
-        (and (m1-directory-file-p file2)
-             (hifat-subsetp (cdr m1-file-alist1)
-                             m1-file-alist2)
-             (hifat-subsetp (m1-file->contents file1)
-                             (m1-file->contents file2))))))
+      (and (m1-directory-file-p file2)
+           (hifat-subsetp (cdr m1-file-alist1)
+                          m1-file-alist2)
+           (hifat-subsetp (m1-file->contents file1)
+                          (m1-file->contents file2))))))
 
 (defund
   m1-file-no-dups-p (m1-file-alist)
@@ -69,7 +69,7 @@
   (implies (and (m1-file-alist-p m1-file-alist1)
                 (atom (assoc-equal key m1-file-alist1)))
            (equal (hifat-subsetp m1-file-alist1
-                                  (remove1-assoc key m1-file-alist2))
+                                 (remove1-assoc key m1-file-alist2))
                   (hifat-subsetp m1-file-alist1 m1-file-alist2))))
 
 (defthm
@@ -115,7 +115,7 @@
                 (m1-directory-file-p (cdr (assoc-equal key y)))
                 (hifat-subsetp y z))
            (hifat-subsetp (m1-file->contents (cdr (assoc-equal key y)))
-                           (m1-file->contents (cdr (assoc-equal key z))))))
+                          (m1-file->contents (cdr (assoc-equal key z))))))
 
 (local
  (defthm
@@ -173,19 +173,19 @@
 
   (local
    (defun
-     induction-scheme (x y)
+       induction-scheme (x y)
      (declare
       (xargs
        :hints
        (("goal" :in-theory (enable m1-file->contents
                                    m1-file-contents-fix)))))
      (if
-      (atom y)
-      x
-      (append
-       (induction-scheme nil (m1-file->contents (cdr (car y))))
-       (induction-scheme (append x (list (car y)))
-                         (cdr y))))))
+         (atom y)
+         x
+       (append
+        (induction-scheme nil (m1-file->contents (cdr (car y))))
+        (induction-scheme (append x (list (car y)))
+                          (cdr y))))))
 
   (defthm hifat-subsetp-reflexive-lemma-4
     (implies (and (m1-file-alist-p x)
@@ -283,9 +283,9 @@
                 (equal contents (m1-file->contents (cdr head)))
                 (m1-file-alist-p tail))
            (hifat-equiv (cons (cons (car head)
-                                     (m1-file dir-ent contents))
-                               tail)
-                         (cons head tail)))
+                                    (m1-file dir-ent contents))
+                              tail)
+                        (cons head tail)))
   :hints
   (("goal"
     :in-theory
@@ -308,7 +308,7 @@
    (implies (and (m1-file-alist-p contents1)
                  (m1-file-no-dups-p contents1)
                  (not (hifat-subsetp contents1
-                                      (m1-file-contents-fix contents2))))
+                                     (m1-file-contents-fix contents2))))
             (not (hifat-equiv contents1 contents2)))
    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
 
@@ -319,7 +319,7 @@
     (and (m1-file-alist-p contents1)
          (m1-file-no-dups-p contents1)
          (not (hifat-subsetp (m1-file-contents-fix contents2)
-                              contents1)))
+                             contents1)))
     (not (hifat-equiv contents1 contents2)))
    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
 
@@ -337,16 +337,16 @@
   (implies (and (m1-directory-file-p (cdr head))
                 (m1-file-no-dups-p (m1-file->contents (cdr head)))
                 (hifat-equiv (m1-file->contents (cdr head))
-                              contents))
+                             contents))
            (hifat-equiv (cons (cons (car head)
-                                     (m1-file dir-ent contents))
-                               tail)
-                         (cons head tail)))
+                                    (m1-file dir-ent contents))
+                              tail)
+                        (cons head tail)))
   :hints
   (("goal" :expand (hifat-equiv (cons (cons (car head)
-                                             (m1-file dir-ent contents))
-                                       tail)
-                                 (cons head tail))
+                                            (m1-file dir-ent contents))
+                                      tail)
+                                (cons head tail))
     :in-theory (disable hifat-subsetp-reflexive-lemma-4
                         m1-directory-file-p-of-m1-file)
     :use ((:instance hifat-subsetp-reflexive-lemma-4
@@ -380,7 +380,7 @@
   (implies (hifat-equiv tail1 tail2)
            (equal
             (hifat-equiv (cons head tail1)
-                          (cons head tail2))
+                         (cons head tail2))
             t))
   :hints (("goal" :in-theory (e/d (hifat-equiv) (m1-file-no-dups-p))
            :expand ((m1-file-no-dups-p (cons head tail2))
