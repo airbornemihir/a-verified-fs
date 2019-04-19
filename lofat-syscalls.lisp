@@ -208,6 +208,7 @@
              (find-file-by-pathname m1-file-alist2 pathname)))
     :in-theory (enable m1-file-alist-p))))
 
+;; The hifat-subsetp part of this alone can be proved with fewer hypotheses.
 (defthm
   find-file-by-pathname-correctness-5
   (implies
@@ -217,15 +218,19 @@
    (mv-let
      (file error-code)
      (find-file-by-pathname m1-file-alist1 pathname)
-     (declare (ignore error-code))
      (implies
-      (m1-directory-file-p file)
-      (hifat-subsetp
-       (m1-file->contents file)
-       (m1-file->contents
-        (mv-nth
-         0
-         (find-file-by-pathname m1-file-alist2 pathname)))))))
+      (and (equal error-code 0)
+           (m1-directory-file-p file))
+      (and
+       (m1-directory-file-p
+        (mv-nth 0
+                (find-file-by-pathname m1-file-alist2 pathname)))
+       (hifat-subsetp
+        (m1-file->contents file)
+        (m1-file->contents
+         (mv-nth
+          0
+          (find-file-by-pathname m1-file-alist2 pathname))))))))
   :hints
   (("goal"
     :induct
@@ -255,3 +260,34 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable m1-file-alist-p hifat-equiv)
            :use (:rewrite find-file-by-pathname-correctness-4))))
+
+(defthm
+  find-file-by-pathname-correctness-7-lemma-1
+  (implies
+   (and (m1-file-alist-p fs)
+        (m1-file-no-dups-p fs)
+        (m1-directory-file-p (mv-nth 0 (find-file-by-pathname fs pathname))))
+   (m1-file-no-dups-p
+    (m1-file->contents (mv-nth 0
+                               (find-file-by-pathname fs pathname)))))
+  :hints (("goal" :in-theory (enable m1-file-no-dups-p m1-file-alist-p))))
+
+(defthm
+  find-file-by-pathname-correctness-7
+  (implies
+   (and (m1-file-alist-p m1-file-alist2)
+        (m1-file-no-dups-p m1-file-alist2)
+        (hifat-equiv m1-file-alist2 m1-file-alist1))
+   (mv-let
+     (file error-code)
+     (find-file-by-pathname m1-file-alist1 pathname)
+     (implies
+      (and (equal error-code 0)
+           (m1-directory-file-p file))
+      (hifat-equiv
+       (m1-file->contents file)
+       (m1-file->contents
+        (mv-nth 0
+                (find-file-by-pathname m1-file-alist2 pathname)))))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable m1-file-alist-p hifat-equiv))))
