@@ -104,6 +104,45 @@
               (mv beginning-of-word-p nw)))))
       (wc-helper text nl nw nc beginning-of-word-p (+ pos 1)))))
 
+(mutual-recursion
+
+ (defun lofat-unlink-recursive
+     (fat32-in-memory pathname)
+   (declare
+    (xargs :stobjs fat32-in-memory
+           :verify-guards nil))
+   (b*
+       (((mv contents &) (get-clusterchain-contents
+                          fat32-in-memory
+                          (bpb_rootclus fat32-in-memory)
+                          *ms-max-dir-size*))
+        (dir-ent-list (make-dir-ent-list
+                       (string=>nats
+                        contents)))
+        ((mv dir-file error-code)
+         (lofat-find-file-by-pathname fat32-in-memory dir-ent-list pathname))
+        ((unless (and (equal error-code 0)
+                      (lofat-directory-file-p dir-file)))
+         (mv fat32-in-memory *eio*))
+        (dir-ent-list (lofat-file->contents dir-file))
+        ((mv fat32-in-memory &)
+         (lofat-unlink-recursive-helper
+          fat32-in-memory dir-ent-list pathname)))
+     (lofat-rmdir fat32-in-memory pathname)))
+
+ (defun lofat-unlink-recursive-helper (fat32-in-memory dir-ent-list pathname)
+   (declare (xargs :stobjs fat32-in-memory :verify-guards nil))
+   (b*
+       (((unless (consp dir-ent-list))
+         (mv fat32-in-memory 0))
+        (head (car dir-ent-list))
+        (tail (cdr dir-ent-list))
+        ((mv fat32-in-memory &)
+         (lofat-remove-file-by-pathname
+          fat32-in-memory (bpb_rootclus fat32-in-memory)
+          (append pathname (list (dir-ent-filename head))))))
+     (lofat-unlink-recursive-helper fat32-in-memory tail pathname))))
+
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
                   :guard-debug t
