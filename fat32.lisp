@@ -236,17 +236,7 @@
    (fat32-entry-list-p l)
    (equal (fat32-entry-list-p (update-nth key val l))
           (and (<= (nfix key) (len l))
-               (fat32-entry-p val))))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies (and (< key (len l))
-                  (fat32-entry-list-p l))
-             (equal (fat32-entry-list-p (update-nth key val l))
-                    (fat32-entry-p val))))))
-
-(in-theory (disable (:rewrite fat32-entry-list-p-of-update-nth . 2)))
+               (fat32-entry-p val)))))
 
 (defthm fat32-entry-list-p-of-revappend
   (equal (fat32-entry-list-p (revappend x y))
