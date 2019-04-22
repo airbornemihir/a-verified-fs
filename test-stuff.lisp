@@ -1,7 +1,6 @@
 (in-package "ACL2")
 
-(include-book "lofat")
-(include-book "hifat-syscalls")
+(include-book "lofat-syscalls")
 (include-book "centaur/getopt/top" :dir :system)
 
 (defoptions mkdir-opts
@@ -84,9 +83,9 @@
           :alias #\l)
 
    (words "Count words"
-           booleanp
-           :rule-classes :type-prescription
-           :alias #\w)))
+          booleanp
+          :rule-classes :type-prescription
+          :alias #\w)))
 
 (defun wc-helper (text nl nw nc beginning-of-word-p pos)
   (declare (xargs :measure (nfix (- (length text) pos))))
@@ -113,34 +112,34 @@
                               (stringp image-path2))
                   :guard-hints (("Goal" :in-theory (disable
                                                     read-file-into-string2)) )))
-   (b*
-       (((mv fat32-in-memory error-code1)
-         (disk-image-to-lofat
-          fat32-in-memory image-path1 state))
-        ((mv fs-ref error-code2)
-         (if
-             (not (equal error-code1 0))
-             (mv nil *EIO*)
-           (lofat-to-hifat fat32-in-memory)))
-        ((mv fat32-in-memory error-code3)
-         (disk-image-to-lofat
-          fat32-in-memory image-path2 state))
-        ((mv fs error-code4)
-         (if
-             (or (not (equal error-code1 0)) (not (equal error-code3 0)))
-             (mv nil *EIO*)
-           (lofat-to-hifat fat32-in-memory)))
-        ((unless (or (equal error-code1 0) (equal error-code3 0)))
-         (mv t fat32-in-memory))
-        ((unless (and (equal error-code1 0) (equal error-code3 0)))
-         (mv nil fat32-in-memory))
-        ((unless (or (equal error-code2 0) (equal error-code4 0)))
-         (mv t fat32-in-memory))
-        ((unless (and (equal error-code2 0) (equal error-code4 0)))
-         (mv nil fat32-in-memory))
-        ((unless (hifat-equiv fs-ref fs))
-         (mv nil fat32-in-memory)))
-     (mv t fat32-in-memory)))
+  (b*
+      (((mv fat32-in-memory error-code1)
+        (disk-image-to-lofat
+         fat32-in-memory image-path1 state))
+       ((mv fs-ref error-code2)
+        (if
+            (not (equal error-code1 0))
+            (mv nil *EIO*)
+          (lofat-to-hifat fat32-in-memory)))
+       ((mv fat32-in-memory error-code3)
+        (disk-image-to-lofat
+         fat32-in-memory image-path2 state))
+       ((mv fs error-code4)
+        (if
+            (or (not (equal error-code1 0)) (not (equal error-code3 0)))
+            (mv nil *EIO*)
+          (lofat-to-hifat fat32-in-memory)))
+       ((unless (or (equal error-code1 0) (equal error-code3 0)))
+        (mv t fat32-in-memory))
+       ((unless (and (equal error-code1 0) (equal error-code3 0)))
+        (mv nil fat32-in-memory))
+       ((unless (or (equal error-code2 0) (equal error-code4 0)))
+        (mv t fat32-in-memory))
+       ((unless (and (equal error-code2 0) (equal error-code4 0)))
+        (mv nil fat32-in-memory))
+       ((unless (hifat-equiv fs-ref fs))
+        (mv nil fat32-in-memory)))
+    (mv t fat32-in-memory)))
 
 (defthm
   compare-disks-correctness-1-lemma-1
@@ -153,15 +152,15 @@
 (defthm
   compare-disks-correctness-1
   (let*
-   ((str1 (read-file-into-string image-path1))
-    (str2 (read-file-into-string image-path2)))
-   (implies
-    (fat32-in-memoryp fat32-in-memory)
-    (equal
-     (mv-nth 0
-             (compare-disks image-path1
-                            image-path2 fat32-in-memory state))
-     (eqfat str1 str2))))
+      ((str1 (read-file-into-string image-path1))
+       (str2 (read-file-into-string image-path2)))
+    (implies
+     (fat32-in-memoryp fat32-in-memory)
+     (equal
+      (mv-nth 0
+              (compare-disks image-path1
+                             image-path2 fat32-in-memory state))
+      (eqfat str1 str2))))
   :hints
   (("goal"
     :in-theory
