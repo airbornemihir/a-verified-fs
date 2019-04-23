@@ -3716,17 +3716,17 @@
 (defthm
   lofat-to-string-inversion-lemma-36
   (implies
-   (and (fat32-entry-p current)
-        (< (nfix n) 4))
-   (unsigned-byte-p 8
-                    (nth n
-                         (list (loghead 8 current)
-                               (loghead 8 (logtail 8 current))
-                               (loghead 8 (logtail 16 current))
-                               (logtail 24 current)))))
-  :hints
-  (("goal" :in-theory (e/d (fat32-entry-p)
-                           (unsigned-byte-p))))
+   (fat32-entry-p current)
+   (equal
+    (unsigned-byte-p 8
+                     (nth n
+                          (list (loghead 8 current)
+                                (loghead 8 (logtail 8 current))
+                                (loghead 8 (logtail 16 current))
+                                (logtail 24 current))))
+    (< (nfix n) 4)))
+  :hints (("goal" :in-theory (e/d (fat32-entry-p)
+                                  (unsigned-byte-p))))
   :rule-classes
   ((:linear
     :corollary
