@@ -110,13 +110,13 @@
                    nw nc beginning-of-word-p (+ pos 1)))))
 
 (defthm
-  wc-guard-lemma-1
+  wc-1-guard-lemma-1
   (implies (lofat-regular-file-p file)
            (not (lofat-directory-file-p file)))
   :hints (("goal" :in-theory (enable lofat-directory-file-p
                                      lofat-regular-file-p))))
 
-(defun wc-1 (fat32-in-memory pathname)
+(defund wc-1 (fat32-in-memory pathname)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (and (stringp pathname) (lofat-fs-p fat32-in-memory))
                   :guard-debug t))
@@ -143,6 +143,21 @@
        ((mv nl nw nc)
         (wc-helper file-text 0 0 0 t 0)))
     (mv nl nw nc 0)))
+
+(defthm
+  wc-1-correctness-1
+  (implies
+   (not
+    (equal
+     (mv-nth
+      1
+      (lofat-lstat
+       fat32-in-memory
+       (pathname-to-fat32-pathname (coerce pathname 'list))))
+     0))
+   (not (equal (mv-nth 3 (wc-1 fat32-in-memory pathname))
+               0)))
+  :hints (("goal" :in-theory (enable wc-1))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
