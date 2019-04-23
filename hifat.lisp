@@ -1651,21 +1651,20 @@
 
   (defthm
     m1-read-after-write
-    (implies
-     (m1-regular-file-p file2)
-     (b*
-         (((mv original-file original-error-code)
-           (find-file-by-pathname fs pathname1))
-          ((unless (and (equal original-error-code 0)
-                        (m1-regular-file-p original-file)))
-           t)
-          ((mv new-fs new-error-code)
-           (place-file-by-pathname fs pathname2 file2))
-          ((unless (equal new-error-code 0)) t))
+    (b*
+        (((mv original-file original-error-code)
+          (find-file-by-pathname fs pathname1))
+         ((mv new-fs new-error-code)
+          (place-file-by-pathname fs pathname2 file2)))
+      (implies
+       (and (m1-regular-file-p file2)
+            (equal original-error-code 0)
+            (m1-regular-file-p original-file)
+            (equal new-error-code 0))
        (equal (find-file-by-pathname new-fs pathname1)
               (if (fat32-filename-list-equiv pathname1 pathname2)
                   (mv file2 0)
-                  (find-file-by-pathname fs pathname1)))))
+                (find-file-by-pathname fs pathname1)))))
     :hints
     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
       :in-theory (enable m1-regular-file-p
@@ -1673,20 +1672,19 @@
 
   (defthm
     m1-read-after-create
-    (implies
-     (and
-      (m1-regular-file-p file2)
-      ;; This is to avoid an odd situation where a query which would return
-      ;; a "file not found" error earlier now returns "not a directory".
-      (or (not (fat32-filename-list-prefixp pathname2 pathname1))
-          (equal pathname2 pathname1)))
-     (b* (((mv & original-error-code)
-           (find-file-by-pathname fs pathname1))
-          ((unless (not (equal original-error-code 0)))
-           t)
-          ((mv new-fs new-error-code)
-           (place-file-by-pathname fs pathname2 file2))
-          ((unless (equal new-error-code 0)) t))
+    (b* (((mv & original-error-code)
+          (find-file-by-pathname fs pathname1))
+         ((mv new-fs new-error-code)
+          (place-file-by-pathname fs pathname2 file2)))
+      (implies
+       (and
+        (m1-regular-file-p file2)
+        ;; This is to avoid an odd situation where a query which would return
+        ;; a "file not found" error earlier now returns "not a directory".
+        (or (not (fat32-filename-list-prefixp pathname2 pathname1))
+            (equal pathname2 pathname1))
+        (not (equal original-error-code 0))
+        (equal new-error-code 0))
        (equal (find-file-by-pathname new-fs pathname1)
               (if (fat32-filename-list-equiv pathname1 pathname2)
                   (mv file2 0)
