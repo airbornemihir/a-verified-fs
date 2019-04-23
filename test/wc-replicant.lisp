@@ -17,7 +17,7 @@
      ((mv val error-code &)
       (lofat-lstat fat32-in-memory fat32-pathname))
      ((unless (equal error-code 0))
-      (mv fat32-in-memory state))
+      (mv fat32-in-memory state (good-bye 1)))
      (file-length (struct-stat->st_size val))
      ((mv fd-table file-table fd &)
       (lofat-open fat32-pathname fat32-in-memory nil nil))
@@ -25,7 +25,7 @@
       (lofat-pread
        fd file-length 0 fat32-in-memory fd-table file-table))
      ((unless (equal file-read-length file-length))
-      (mv fat32-in-memory state))
+      (mv fat32-in-memory state (good-bye 1)))
      ((mv nl nw nc)
       (wc-helper file-text 0 0 0 t 0))
      ((mv argv state)              (oslib::argv))
@@ -48,4 +48,4 @@
               state)))))
      (state (newline channel state))
      (state (close-output-channel channel state)))
-  (mv fat32-in-memory state))
+  (mv fat32-in-memory state (good-bye 0)))

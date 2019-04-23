@@ -71,17 +71,14 @@
 (defoptions wc-opts
   :parents (demo2)
   :tag :demo2
-
   ((bytes    "Count bytes"
              booleanp
              :rule-classes :type-prescription
              :alias #\c)
-
    (lines "Count lines"
           booleanp
           :rule-classes :type-prescription
           :alias #\l)
-
    (words "Count words"
           booleanp
           :rule-classes :type-prescription
