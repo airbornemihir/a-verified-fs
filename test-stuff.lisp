@@ -55,22 +55,28 @@
        (exit-status (if (equal retval 0) exit-status 1)))
     (rm-list fs r (cdr name-list) exit-status)))
 
-(defthm rm-1-guard-lemma-1
+(defthm
+  rm-1-guard-lemma-1
   (m1-file-alist-p
-   (mv-nth 0
-           (rm-list fs r name-list exit-status))))
+   (mv-nth 0 (rm-list fs r name-list exit-status)))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite hifat-subsetp-transitive)
+                        (:definition pathname-to-fat32-pathname)
+                        (:definition name-to-fat32-name)
+                        (:definition hifat-subsetp)))))
 
 (defund
   rm-1
-  (fat32-in-memory filenames recursive-p)
+  (fat32-in-memory pathnames recursive-p)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
-                              (string-listp filenames))
+                              (string-listp pathnames))
                   :stobjs fat32-in-memory))
   (b* (((mv fs &)
         (lofat-to-hifat fat32-in-memory))
        ((mv fs exit-status)
-        (if recursive-p (rm-list fs t filenames 0)
-            (rm-list fs nil filenames 0)))
+        (if recursive-p (rm-list fs t pathnames 0)
+            (rm-list fs nil pathnames 0)))
        ((mv fat32-in-memory &)
         (hifat-to-lofat fat32-in-memory fs)))
     (mv fat32-in-memory exit-status)))
@@ -191,19 +197,16 @@
   (b*
       (((mv fat32-in-memory &)
         (rm-1
-         fat32-in-memory filenames nil)))
+         fat32-in-memory pathnames nil)))
     (implies
-     (and (member-equal pathname filenames)
-          (not
-           (equal
-            (mv-nth
-             1
-             (lofat-lstat
-              fat32-in-memory
-              (pathname-to-fat32-pathname (coerce pathname 'list))))
-            0)))
+     (and
+      (member-equal pathname pathnames)
+      (stringp pathname)
+      (fat32-filename-list-p
+       (pathname-to-fat32-pathname (explode pathname))))
      (not (equal (mv-nth 3 (wc-1 fat32-in-memory pathname))
-                 0)))))
+                 0))))
+  :hints (("goal" :in-theory (enable rm-1 wc-1)) ))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
