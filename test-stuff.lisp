@@ -33,19 +33,47 @@
                  :alias #\r)))
 
 (defun rm-list (fs r name-list exit-status)
+  (declare (xargs :guard
+                  (and
+                   (m1-file-alist-p fs)
+                   (STRING-listp NAME-LIST))))
   (b*
       (((when (atom name-list))
-        (mv fs exit-status))
+        (mv
+         (mbe :logic (m1-file-alist-fix fs) :exec fs)
+         exit-status))
        (fat32-pathname
         (pathname-to-fat32-pathname (coerce (car name-list) 'list)))
        ;; It doesn't really matter for these purposes what the errno is. We're
        ;; not trying to match this program for its stderr output.
        ((mv fs retval &)
-        (if r
-            (hifat-unlink-recursive fs fat32-pathname)
-          (hifat-unlink fs fat32-pathname)))
+        (if (not (fat32-filename-list-p fat32-pathname))
+            (mv fs 1 *enoent*)
+          (if r
+              (hifat-unlink-recursive fs fat32-pathname)
+            (hifat-unlink fs fat32-pathname))))
        (exit-status (if (equal retval 0) exit-status 1)))
     (rm-list fs r (cdr name-list) exit-status)))
+
+(defthm rm-1-guard-lemma-1
+  (m1-file-alist-p
+   (mv-nth 0
+           (rm-list fs r name-list exit-status))))
+
+(defund
+  rm-1
+  (fat32-in-memory filenames recursive-p)
+  (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
+                              (string-listp filenames))
+                  :stobjs fat32-in-memory))
+  (b* (((mv fs &)
+        (lofat-to-hifat fat32-in-memory))
+       ((mv fs exit-status)
+        (if recursive-p (rm-list fs t filenames 0)
+            (rm-list fs nil filenames 0)))
+       ((mv fat32-in-memory &)
+        (hifat-to-lofat fat32-in-memory fs)))
+    (mv fat32-in-memory exit-status)))
 
 (defoptions rmdir-opts
   :parents (demo2)
@@ -158,6 +186,24 @@
    (not (equal (mv-nth 3 (wc-1 fat32-in-memory pathname))
                0)))
   :hints (("goal" :in-theory (enable wc-1))))
+
+(defthm wc-after-rm
+  (b*
+      (((mv fat32-in-memory &)
+        (rm-1
+         fat32-in-memory filenames nil)))
+    (implies
+     (and (member-equal pathname filenames)
+          (not
+           (equal
+            (mv-nth
+             1
+             (lofat-lstat
+              fat32-in-memory
+              (pathname-to-fat32-pathname (coerce pathname 'list))))
+            0)))
+     (not (equal (mv-nth 3 (wc-1 fat32-in-memory pathname))
+                 0)))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
