@@ -55,6 +55,12 @@
            (equal (assoc-equal name1 (remove1-assoc name2 alist))
                   (assoc-equal name1 alist))))
 
+(defthm assoc-after-remove-assoc
+  (equal (assoc-equal name1 (remove-assoc name2 alist))
+         (if (not (equal name1 name2))
+             (assoc-equal name1 alist)
+           nil)))
+
 (defthm character-listp-of-revappend
   (equal (character-listp (revappend x y))
          (and (character-listp (true-list-fix x))
