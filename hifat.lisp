@@ -1255,9 +1255,9 @@
 (in-theory (disable fat32-filename-p fat32-filename-fix))
 
 (defthm
-  m1-file-alist-p-of-remove1-assoc-equal
+  m1-file-alist-p-of-remove-assoc-equal
   (implies (m1-file-alist-p fs)
-           (m1-file-alist-p (remove1-assoc-equal key fs))))
+           (m1-file-alist-p (remove-assoc-equal key fs))))
 
 (defun
   m1-bounded-file-alist-p-helper (x ac)
@@ -1572,9 +1572,12 @@
        ((unless (consp alist-elem))
         (mv fs *enoent*))
        ;; Design choice - this lower-level function will unquestioningly delete
-       ;; entire subdirectory trees, as long as they are not the root.
+       ;; entire subdirectory trees, as long as they are not the root. It will
+       ;; also remove all possible copies for the filename, even though we
+       ;; try to avoid having multiple copies of a file, whether or not they're
+       ;; identical.
        ((when (atom (cdr pathname)))
-        (mv (remove1-assoc-equal name fs) 0))
+        (mv (remove-assoc-equal name fs) 0))
        ;; ENOTDIR - can't delete anything that supposedly exists inside a
        ;; regular file.
        ((unless (m1-directory-file-p (cdr alist-elem)))
@@ -1651,21 +1654,20 @@
 
   (defthm
     m1-read-after-write
-    (implies
-     (m1-regular-file-p file2)
-     (b*
-         (((mv original-file original-error-code)
-           (find-file-by-pathname fs pathname1))
-          ((unless (and (equal original-error-code 0)
-                        (m1-regular-file-p original-file)))
-           t)
-          ((mv new-fs new-error-code)
-           (place-file-by-pathname fs pathname2 file2))
-          ((unless (equal new-error-code 0)) t))
+    (b*
+        (((mv original-file original-error-code)
+          (find-file-by-pathname fs pathname1))
+         ((mv new-fs new-error-code)
+          (place-file-by-pathname fs pathname2 file2)))
+      (implies
+       (and (m1-regular-file-p file2)
+            (equal original-error-code 0)
+            (m1-regular-file-p original-file)
+            (equal new-error-code 0))
        (equal (find-file-by-pathname new-fs pathname1)
               (if (fat32-filename-list-equiv pathname1 pathname2)
                   (mv file2 0)
-                  (find-file-by-pathname fs pathname1)))))
+                (find-file-by-pathname fs pathname1)))))
     :hints
     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
       :in-theory (enable m1-regular-file-p
@@ -1673,23 +1675,41 @@
 
   (defthm
     m1-read-after-create
-    (implies
-     (and
-      (m1-regular-file-p file2)
-      ;; This is to avoid an odd situation where a query which would return
-      ;; a "file not found" error earlier now returns "not a directory".
-      (or (not (fat32-filename-list-prefixp pathname2 pathname1))
-          (equal pathname2 pathname1)))
-     (b* (((mv & original-error-code)
-           (find-file-by-pathname fs pathname1))
-          ((unless (not (equal original-error-code 0)))
-           t)
-          ((mv new-fs new-error-code)
-           (place-file-by-pathname fs pathname2 file2))
-          ((unless (equal new-error-code 0)) t))
+    (b*
+        (((mv & original-error-code)
+          (find-file-by-pathname fs pathname1))
+         ((mv new-fs new-error-code)
+          (place-file-by-pathname fs pathname2 file2)))
+      (implies
+       (and (m1-regular-file-p file2)
+            (not (equal original-error-code 0))
+            (equal new-error-code 0))
+       (equal
+        (find-file-by-pathname new-fs pathname1)
+        (if (fat32-filename-list-equiv pathname1 pathname2)
+            (mv file2 0)
+          (if (fat32-filename-list-prefixp pathname2 pathname1)
+              (mv (make-m1-file) *enotdir*)
+            (find-file-by-pathname fs pathname1))))))
+    :hints
+    (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+      :in-theory (enable fat32-filename-list-fix
+                         m1-regular-file-p))))
+
+  (defthm
+    m1-read-after-delete
+    (b* (((mv original-file original-error-code)
+          (find-file-by-pathname fs pathname1))
+         ((mv new-fs new-error-code)
+          (remove-file-by-pathname fs pathname2)))
+      (implies
+       (and
+        (equal original-error-code 0)
+        (m1-regular-file-p original-file)
+        (equal new-error-code 0))
        (equal (find-file-by-pathname new-fs pathname1)
-              (if (fat32-filename-list-equiv pathname1 pathname2)
-                  (mv file2 0)
+              (if (fat32-filename-list-prefixp pathname2 pathname1)
+                  (mv (make-m1-file) *enoent*)
                 (find-file-by-pathname fs pathname1)))))
     :hints
     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
