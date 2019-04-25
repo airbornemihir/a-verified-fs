@@ -6644,10 +6644,28 @@ Some (rather awful) testing forms are
 
 (defthm
   lofat-find-file-by-pathname-correctness-3
-  (lofat-file-p
-   (mv-nth 0
-           (lofat-find-file-by-pathname
-            fat32-in-memory dir-ent-list pathname))))
+  (and
+   (lofat-file-p
+    (mv-nth
+     0
+     (lofat-find-file-by-pathname fat32-in-memory dir-ent-list pathname)))
+   (integerp (mv-nth 1
+                     (lofat-find-file-by-pathname fat32-in-memory
+                                                  dir-ent-list pathname))))
+  :hints (("goal" :induct t))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (integerp (mv-nth 1
+                      (lofat-find-file-by-pathname fat32-in-memory
+                                                   dir-ent-list pathname))))
+   (:rewrite
+    :corollary
+    (lofat-file-p
+     (mv-nth 0
+             (lofat-find-file-by-pathname fat32-in-memory
+                                          dir-ent-list pathname))))))
+
 
 (defun
   place-dir-ent (dir-ent-list dir-ent)

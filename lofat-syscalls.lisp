@@ -8,8 +8,6 @@
 (include-book "lofat")
 (include-book "hifat-syscalls")
 
-;; This needs some revision... obviously, we don't want to be staring into the
-;; computation to get the root directory's directory entries here.
 (defund lofat-open (pathname fat32-in-memory fd-table file-table)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
                               (fat32-filename-list-p pathname)
@@ -19,17 +17,12 @@
   (b*
       ((fd-table (fd-table-fix fd-table))
        (file-table (file-table-fix file-table))
-       ((mv root-contents &)
-        (get-clusterchain-contents
-         fat32-in-memory
-         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-         2097152))
+       ((mv root-dir-ent-list &)
+        (root-dir-ent-list fat32-in-memory))
        ((mv & errno)
         (lofat-find-file-by-pathname
          fat32-in-memory
-         (make-dir-ent-list
-          (string=>nats
-           root-contents))
+         root-dir-ent-list
          pathname))
        ((unless (equal errno 0))
         (mv fd-table file-table -1 errno))
@@ -46,6 +39,10 @@
       file-table)
      fd-table-index 0)))
 
+;; This proof makes me wonder whether I should restructure
+;; lofat-find-file-by-pathname-correctness-1 and
+;; lofat-find-file-by-pathname-correctness-2 to avoid free variables... it's
+;; not ideal to have to instantiate them here.
 (defthm
   lofat-open-refinement
   (implies
@@ -69,33 +66,17 @@
       (:rewrite lofat-find-file-by-pathname-correctness-1)
       (pathname pathname)
       (dir-ent-list
-       (make-dir-ent-list
-        (string=>nats
-         (mv-nth
-          0
-          (get-clusterchain-contents
-           fat32-in-memory
-           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-           2097152)))))
+       (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
       (fat32-in-memory fat32-in-memory)
       (entry-limit (max-entry-count fat32-in-memory)))
      (:instance
       (:rewrite lofat-find-file-by-pathname-correctness-2)
       (pathname pathname)
       (dir-ent-list
-       (make-dir-ent-list
-        (string=>nats
-         (mv-nth
-          0
-          (get-clusterchain-contents
-           fat32-in-memory
-           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-           2097152)))))
+       (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
       (fat32-in-memory fat32-in-memory)
       (entry-limit (max-entry-count fat32-in-memory)))))))
 
-;; This needs some revision... obviously, we don't want to be staring into the
-;; computation to get the root directory's directory entries here.
 (defund
   lofat-pread
   (fd count offset fat32-in-memory fd-table file-table)
@@ -115,17 +96,11 @@
        ((unless (consp file-table-entry))
         (mv "" -1 *ebadf*))
        (pathname (file-table-element->fid (cdr file-table-entry)))
-       ((mv root-contents &)
-        (get-clusterchain-contents
-         fat32-in-memory
-         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-         2097152))
+       ((mv root-dir-ent-list &) (root-dir-ent-list fat32-in-memory))
        ((mv file error-code)
         (lofat-find-file-by-pathname
          fat32-in-memory
-         (make-dir-ent-list
-          (string=>nats
-           root-contents))
+         root-dir-ent-list
          pathname))
        ((unless (and (equal error-code 0)
                      (lofat-regular-file-p file)))
@@ -138,6 +113,58 @@
                          (length file-contents))
                     new-offset)))
     (mv buf (length buf) 0)))
+
+(defthm
+  lofat-pread-correctness-1
+  (mv-let (buf ret error-code)
+    (lofat-pread fd count offset
+                 fat32-in-memory fd-table file-table)
+    (and (stringp buf)
+         (integerp ret)
+         (integerp error-code)
+         (implies (>= ret 0)
+                  (equal (length buf) ret))))
+  :hints (("goal" :in-theory (enable lofat-pread)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (<=
+      0
+      (mv-nth
+       1
+       (lofat-pread fd count offset
+                    fat32-in-memory fd-table file-table)))
+     (equal
+      (length
+       (mv-nth
+        0
+        (lofat-pread fd count offset
+                     fat32-in-memory fd-table file-table)))
+      (mv-nth
+       1
+       (lofat-pread fd count offset
+                    fat32-in-memory fd-table file-table)))))
+   (:type-prescription
+    :corollary
+    (stringp
+     (mv-nth
+      0
+      (lofat-pread fd count offset
+                   fat32-in-memory fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (integerp
+     (mv-nth
+      1
+      (lofat-pread fd count offset
+                   fat32-in-memory fd-table file-table))))
+   (:type-prescription
+    :corollary
+    (integerp
+     (mv-nth 2
+             (lofat-pread fd count offset fat32-in-memory
+                          fd-table file-table))))))
 
 (defthm
   lofat-pread-refinement
