@@ -6170,6 +6170,13 @@ Some (rather awful) testing forms are
    (not (lofat-directory-file-p (lofat-file dir-ent contents))))
   :hints (("goal" :in-theory (enable lofat-directory-file-p))))
 
+(defthm
+  lofat-directory-file-p-correctness-2
+  (implies (lofat-regular-file-p file)
+           (not (lofat-directory-file-p file)))
+  :hints (("goal" :in-theory (enable lofat-directory-file-p
+                                     lofat-regular-file-p))))
+
 (defun lofat-statfs (fat32-in-memory)
   (declare (xargs :stobjs (fat32-in-memory)
                   :verify-guards nil))

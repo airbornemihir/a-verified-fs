@@ -143,13 +143,6 @@
         (wc-helper text nl
                    nw nc beginning-of-word-p (+ pos 1)))))
 
-(defthm
-  wc-1-guard-lemma-1
-  (implies (lofat-regular-file-p file)
-           (not (lofat-directory-file-p file)))
-  :hints (("goal" :in-theory (enable lofat-directory-file-p
-                                     lofat-regular-file-p))))
-
 (defund wc-1 (fat32-in-memory pathname)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (and (stringp pathname) (lofat-fs-p fat32-in-memory))
