@@ -64,7 +64,6 @@
     (e/d (lofat-to-hifat lofat-open)
          ((:rewrite lofat-find-file-by-pathname-correctness-1)
           (:rewrite lofat-find-file-by-pathname-correctness-2)))
-    :do-not-induct t
     :use
     ((:instance
       (:rewrite lofat-find-file-by-pathname-correctness-1)
