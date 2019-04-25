@@ -49,15 +49,51 @@
 (defthm
   lofat-open-refinement
   (implies
-   (equal (mv-nth 3 (lofat-to-hifat fat32-in-memory))
-          0)
+   (and (lofat-fs-p fat32-in-memory)
+        (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
+               0))
    (equal
     (lofat-open pathname
                 fat32-in-memory fd-table file-table)
     (hifat-open pathname
                 (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                 fd-table file-table)))
-  :hints (("goal" :in-theory (enable lofat-to-hifat lofat-open))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (lofat-to-hifat lofat-open)
+         ((:rewrite lofat-find-file-by-pathname-correctness-1)
+          (:rewrite lofat-find-file-by-pathname-correctness-2)))
+    :do-not-induct t
+    :use
+    ((:instance
+      (:rewrite lofat-find-file-by-pathname-correctness-1)
+      (pathname pathname)
+      (dir-ent-list
+       (make-dir-ent-list
+        (string=>nats
+         (mv-nth
+          0
+          (get-clusterchain-contents
+           fat32-in-memory
+           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+           2097152)))))
+      (fat32-in-memory fat32-in-memory)
+      (entry-limit (max-entry-count fat32-in-memory)))
+     (:instance
+      (:rewrite lofat-find-file-by-pathname-correctness-2)
+      (pathname pathname)
+      (dir-ent-list
+       (make-dir-ent-list
+        (string=>nats
+         (mv-nth
+          0
+          (get-clusterchain-contents
+           fat32-in-memory
+           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+           2097152)))))
+      (fat32-in-memory fat32-in-memory)
+      (entry-limit (max-entry-count fat32-in-memory)))))))
 
 ;; This needs some revision... obviously, we don't want to be staring into the
 ;; computation to get the root directory's directory entries here.

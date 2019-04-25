@@ -269,17 +269,31 @@
       (mv (concatenate 'string
                        current-cluster-contents
                        tail-string)
-          0)))
+          0))))
 
-  (defthm stringp-of-get-clusterchain-contents
-    (stringp
-     (mv-nth 0
-             (get-clusterchain-contents
-              fat32-in-memory masked-current-cluster length)))
-    :rule-classes :type-prescription
-    :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
+(defthm
+  stringp-of-get-clusterchain-contents
+  (stringp
+   (mv-nth
+    0
+    (get-clusterchain-contents fat32-in-memory
+                               masked-current-cluster length)))
+  :rule-classes :type-prescription
+  :hints
+  (("goal" :in-theory (enable get-clusterchain-contents))))
 
-  (verify-guards get-clusterchain-contents))
+(verify-guards get-clusterchain-contents)
+
+(defthm
+  integerp-of-get-clusterchain-contents
+  (integerp
+   (mv-nth
+    1
+    (get-clusterchain-contents fat32-in-memory
+                               masked-current-cluster length)))
+  :rule-classes :type-prescription
+  :hints
+  (("goal" :in-theory (enable get-clusterchain-contents))))
 
 (defthm
   get-clusterchain-contents-correctness-2
