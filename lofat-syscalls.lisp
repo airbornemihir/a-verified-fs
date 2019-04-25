@@ -166,6 +166,45 @@
              (lofat-pread fd count offset fat32-in-memory
                           fd-table file-table))))))
 
+(defthmd
+  lofat-pread-refinement-lemma-1
+  (equal
+   (m1-regular-file-p (m1-file dir-ent contents))
+   (and
+    (stringp (m1-file-contents-fix contents))
+    (unsigned-byte-p 32
+                     (length (m1-file-contents-fix contents)))))
+  :hints (("goal" :in-theory (enable m1-regular-file-p))))
+
+(defthm
+  lofat-pread-refinement-lemma-2
+  (b*
+      (((mv file &)
+        (find-file-by-pathname
+         (mv-nth
+          0
+          (lofat-to-hifat-helper-exec fat32-in-memory
+                                      dir-ent-list entry-limit))
+         pathname)))
+    (implies
+     (and
+      (lofat-fs-p fat32-in-memory)
+      (useful-dir-ent-list-p dir-ent-list)
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper-exec fat32-in-memory
+                                    dir-ent-list entry-limit))
+       0)
+      (lofat-regular-file-p
+       (mv-nth
+        0
+        (lofat-find-file-by-pathname fat32-in-memory
+                                     dir-ent-list pathname))))
+     (m1-regular-file-p file)))
+  :hints
+  (("goal" :in-theory (enable lofat-pread-refinement-lemma-1))))
+
 (defthm
   lofat-pread-refinement
   (implies (equal (mv-nth 3 (lofat-to-hifat fat32-in-memory))
