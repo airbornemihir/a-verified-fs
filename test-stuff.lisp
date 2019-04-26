@@ -227,42 +227,7 @@
                                                (lofat-to-hifat fat32-in-memory))
                                        'nil
                                        pathnames '0))))
-     0)
-    ;; This hypothesis should be trimmed...
-    (equal
-     (len
-      (explode
-       (m1-file->contents
-        (mv-nth
-         0
-         (find-file-by-pathname
-          (mv-nth
-           0
-           (lofat-to-hifat
-            (mv-nth
-             0
-             (hifat-to-lofat
-              fat32-in-memory
-              (mv-nth 0
-                      (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                               nil pathnames 0))))))
-          (pathname-to-fat32-pathname (explode pathname)))))))
-     (dir-ent-file-size
-      (m1-file->dir-ent
-       (mv-nth
-        0
-        (find-file-by-pathname
-         (mv-nth
-          0
-          (lofat-to-hifat
-           (mv-nth
-            0
-            (hifat-to-lofat
-             fat32-in-memory
-             (mv-nth 0
-                     (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                              nil pathnames 0))))))
-         (pathname-to-fat32-pathname (explode pathname))))))))
+     0))
    (b*
        (((mv fat32-in-memory &)
          (rm-1

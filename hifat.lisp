@@ -1165,17 +1165,11 @@
     m1-regular-file-p-correctness-1
     (implies (m1-regular-file-p file)
              (and (stringp (m1-file->contents file))
+                  (unsigned-byte-p 32 (len (explode (m1-file->contents file))))
                   (not (m1-directory-file-p file))))
     :hints
     (("goal"
-      :in-theory (enable m1-regular-file-p m1-directory-file-p)))
-    :rule-classes
-    ((:rewrite
-      :corollary (implies (m1-regular-file-p file)
-                          (stringp (m1-file->contents file))))
-     (:rewrite
-      :corollary (implies (m1-regular-file-p file)
-                          (not (m1-directory-file-p file)))))))
+      :in-theory (enable m1-regular-file-p m1-directory-file-p)))))
 
 (defthm m1-file-p-when-m1-regular-file-p
   (implies
@@ -1183,17 +1177,17 @@
    (m1-file-p file))
   :hints (("Goal" :in-theory (enable m1-regular-file-p))))
 
-(defthm
-  length-of-m1-file->contents
-  (implies
-   (m1-regular-file-p file)
-   (unsigned-byte-p 32 (length (m1-file->contents file))))
-  :hints (("goal" :in-theory (enable m1-regular-file-p)))
-  :rule-classes
-  ((:linear :corollary
-            (implies (m1-regular-file-p file)
-                     (< (len (explode (m1-file->contents file)))
-                        (ash 1 32))))))
+;; (defthm
+;;   length-of-m1-file->contents
+;;   (implies
+;;    (m1-regular-file-p file)
+;;    (unsigned-byte-p 32 (length (m1-file->contents file))))
+;;   :hints (("goal" :in-theory (enable m1-regular-file-p)))
+;;   :rule-classes
+;;   ((:linear :corollary
+;;             (implies (m1-regular-file-p file)
+;;                      (< (len (explode (m1-file->contents file)))
+;;                         (ash 1 32))))))
 
 (defthm
   m1-directory-file-p-correctness-1

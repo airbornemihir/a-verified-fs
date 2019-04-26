@@ -291,12 +291,22 @@
          root-dir-ent-list
          pathname))
        ((when (not (equal errno 0)))
-        (mv (make-struct-stat) -1 errno)))
+        (mv (make-struct-stat) -1 errno))
+       (st_size (if (lofat-directory-file-p file)
+                    *ms-max-dir-size*
+                  (length (lofat-file->contents file)))))
     (mv
        (make-struct-stat
-        :st_size (dir-ent-file-size
-                  (lofat-file->dir-ent file)))
+        :st_size st_size)
        0 0)))
+
+(defthmd
+  lofat-lstat-refinement-lemma-1
+  (implies
+   (and
+    (stringp x)
+    (unsigned-byte-p 32 (length x)))
+   (equal (lofat-file-contents-fix x) x)))
 
 (defthm
   lofat-lstat-refinement
@@ -311,14 +321,38 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (lofat-to-hifat lofat-lstat)
-         ((:rewrite lofat-find-file-by-pathname-correctness-1)))
+    (e/d (lofat-to-hifat lofat-lstat
+                         lofat-lstat-refinement-lemma-1)
+         ((:rewrite lofat-find-file-by-pathname-correctness-1)
+          (:rewrite lofat-pread-refinement-lemma-2)
+          unsigned-byte-p
+          (:rewrite m1-directory-file-p-when-m1-file-p)))
     :use
-    (:instance
-     (:rewrite lofat-find-file-by-pathname-correctness-1)
-     (dir-ent-list
-      (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
-     (entry-limit (max-entry-count fat32-in-memory))))))
+    ((:instance
+      (:rewrite lofat-find-file-by-pathname-correctness-1)
+      (dir-ent-list
+       (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+      (entry-limit (max-entry-count fat32-in-memory)))
+     (:instance
+      (:rewrite lofat-pread-refinement-lemma-2)
+      (pathname pathname)
+      (entry-limit (max-entry-count fat32-in-memory))
+      (dir-ent-list
+       (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite m1-directory-file-p-when-m1-file-p)
+      (x
+       (mv-nth
+        0
+        (find-file-by-pathname
+         (mv-nth
+          0
+          (lofat-to-hifat-helper-exec
+           fat32-in-memory
+           (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+           (max-entry-count fat32-in-memory)))
+         pathname))))))))
 
 (defthm
   find-file-by-pathname-correctness-3-lemma-1

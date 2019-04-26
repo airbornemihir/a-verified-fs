@@ -89,11 +89,13 @@
       (((mv file errno)
         (find-file-by-pathname fs pathname))
        ((when (not (equal errno 0)))
-        (mv (make-struct-stat) -1 errno)))
+        (mv (make-struct-stat) -1 errno))
+       (st_size (if (m1-directory-file-p file)
+                    *ms-max-dir-size*
+                  (length (m1-file->contents file)))))
     (mv
        (make-struct-stat
-        :st_size (dir-ent-file-size
-                  (m1-file->dir-ent file)))
+        :st_size st_size)
        0 0)))
 
 (defun hifat-open (pathname fs fd-table file-table)
@@ -181,9 +183,10 @@
                               (fd-table-p fd-table)
                               (file-table-p file-table)
                               (m1-file-alist-p fs))
-                  :guard-hints (("goal" :in-theory (enable len-of-insert-text))
-                                ("subgoal 2'" :in-theory (disable
-                                                          consp-assoc-equal)
+                  :guard-hints (("goal" :in-theory
+                                 (e/d (len-of-insert-text)
+                                      (unsigned-byte-p
+                                       consp-assoc-equal))
                                  :use (:instance consp-assoc-equal
                                                  (name (cdr (car fd-table)))
                                                  (l
