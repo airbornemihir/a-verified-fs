@@ -208,29 +208,74 @@
 
 (defthm
   lofat-pread-refinement
-  (implies (and (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
-                       0)
-                (lofat-fs-p fat32-in-memory))
-           (equal (lofat-pread fd count offset
-                               fat32-in-memory fd-table file-table)
-                  (hifat-pread fd count offset
-                               (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                               fd-table file-table)))
-  :otf-flg t
-  :hints (("goal" :do-not-induct t :in-theory
-           (e/d
-            (lofat-to-hifat lofat-pread)
-            ((:REWRITE LOFAT-FIND-FILE-BY-PATHNAME-CORRECTNESS-1)))
-           :use
-           (:instance
-            (:REWRITE LOFAT-FIND-FILE-BY-PATHNAME-CORRECTNESS-1)
-            (PATHNAME
-                      (FILE-TABLE-ELEMENT->FID
-                           (CDR (ASSOC-EQUAL (CDR (ASSOC-EQUAL FD FD-TABLE))
-                                             FILE-TABLE))))
-                 (DIR-ENT-LIST
-                      (MV-NTH 0 (ROOT-DIR-ENT-LIST FAT32-IN-MEMORY)))
-                 (entry-limit (max-entry-count fat32-in-memory))))))
+  (implies
+   (and (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
+               0)
+        (lofat-fs-p fat32-in-memory))
+   (equal
+    (lofat-pread fd count offset
+                 fat32-in-memory fd-table file-table)
+    (hifat-pread fd count offset
+                 (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                 fd-table file-table)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (lofat-to-hifat lofat-pread)
+         ((:rewrite lofat-find-file-by-pathname-correctness-1)
+          (:rewrite lofat-directory-file-p-when-lofat-file-p)
+          (:rewrite m1-directory-file-p-when-m1-file-p)
+          (:rewrite lofat-pread-refinement-lemma-2)
+          ;; from accumulated-persistence
+          (:definition find-file-by-pathname)
+          (:definition find-dir-ent)
+          (:definition lofat-find-file-by-pathname)))
+    :use
+    ((:instance
+      (:rewrite lofat-find-file-by-pathname-correctness-1)
+      (pathname
+       (file-table-element->fid
+        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                          file-table))))
+      (dir-ent-list
+       (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+      (entry-limit (max-entry-count fat32-in-memory)))
+     (:instance
+      (:rewrite lofat-directory-file-p-when-lofat-file-p)
+      (file
+       (mv-nth
+        0
+        (lofat-find-file-by-pathname
+         fat32-in-memory
+         (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+         (file-table-element->fid
+          (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                            file-table)))))))
+     (:instance
+      (:rewrite m1-directory-file-p-when-m1-file-p)
+      (x
+       (mv-nth
+        0
+        (find-file-by-pathname
+         (mv-nth
+          0
+          (lofat-to-hifat-helper-exec
+           fat32-in-memory
+           (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+           (max-entry-count fat32-in-memory)))
+         (file-table-element->fid
+          (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                            file-table)))))))
+     (:instance
+      (:rewrite lofat-pread-refinement-lemma-2)
+      (pathname
+       (file-table-element->fid
+        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                          file-table))))
+      (entry-limit (max-entry-count fat32-in-memory))
+      (dir-ent-list
+       (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+      (fat32-in-memory fat32-in-memory))))))
 
 (defund lofat-lstat (fat32-in-memory pathname)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)

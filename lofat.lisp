@@ -6177,6 +6177,16 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable lofat-directory-file-p
                                      lofat-regular-file-p))))
 
+(defthm
+  lofat-directory-file-p-when-lofat-file-p
+  (implies (and (lofat-file-p file)
+                (not (lofat-regular-file-p file)))
+           (lofat-directory-file-p file))
+  :hints (("goal" :in-theory (enable lofat-directory-file-p
+                                     lofat-regular-file-p lofat-file-p
+                                     lofat-file-contents-p
+                                     lofat-file->contents))))
+
 (defun lofat-statfs (fat32-in-memory)
   (declare (xargs :stobjs (fat32-in-memory)
                   :guard (lofat-fs-p fat32-in-memory)))
