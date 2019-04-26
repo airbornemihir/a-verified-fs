@@ -282,17 +282,13 @@
                               (fat32-filename-list-p pathname))
                   :stobjs fat32-in-memory))
   (b*
-      (((mv root-contents &)
-        (get-clusterchain-contents
-         fat32-in-memory
-         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-         2097152))
+      (((mv root-dir-ent-list &)
+        (root-dir-ent-list
+         fat32-in-memory))
        ((mv file errno)
         (lofat-find-file-by-pathname
          fat32-in-memory
-         (make-dir-ent-list
-          (string=>nats
-           root-contents))
+         root-dir-ent-list
          pathname))
        ((when (not (equal errno 0)))
         (mv (make-struct-stat) -1 errno)))
@@ -302,17 +298,27 @@
                   (lofat-file->dir-ent file)))
        0 0)))
 
-(defthm lofat-lstat-refinement
+(defthm
+  lofat-lstat-refinement
   (implies
-   (equal (mv-nth 3 (lofat-to-hifat fat32-in-memory))
-          0)
+   (and (lofat-fs-p fat32-in-memory)
+        (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
+               0))
    (equal
     (lofat-lstat fat32-in-memory pathname)
     (hifat-lstat (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                  pathname)))
-  :hints (("goal" :in-theory
-           (e/d
-            (lofat-to-hifat lofat-lstat)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (lofat-to-hifat lofat-lstat)
+         ((:rewrite lofat-find-file-by-pathname-correctness-1)))
+    :use
+    (:instance
+     (:rewrite lofat-find-file-by-pathname-correctness-1)
+     (dir-ent-list
+      (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+     (entry-limit (max-entry-count fat32-in-memory))))))
 
 (defthm
   find-file-by-pathname-correctness-3-lemma-1
