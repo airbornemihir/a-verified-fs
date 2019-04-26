@@ -6406,7 +6406,7 @@ Some (rather awful) testing forms are
                         fat32-in-memory
                         dir-ent-list entry-limit))
                0))
-   (iff
+   (equal
     (m1-directory-file-p
      (cdr
       (assoc-equal name
@@ -6548,6 +6548,61 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper-exec
       fat32-in-memory
       nil (+ -1 entry-limit))))))
+
+(encapsulate
+  () ;; start lemmas for lofat-find-file-by-pathname-correctness-1-lemma-9
+
+  (local
+   (defthm lemma-1
+     (implies (and (stringp contents) (unsigned-byte-p 32 (length contents)))
+              (equal (m1-file-contents-fix contents) contents))
+     :hints (("Goal" :in-theory (enable m1-file-contents-fix m1-file-contents-p)) )))
+
+  (defthm
+    lofat-find-file-by-pathname-correctness-1-lemma-9
+    (implies
+     (useful-dir-ent-list-p dir-ent-list)
+     (iff
+      (m1-file-p
+       (cdr
+        (assoc-equal name
+                     (mv-nth 0
+                             (lofat-to-hifat-helper-exec
+                              fat32-in-memory
+                              dir-ent-list entry-limit)))))
+      (consp
+       (assoc-equal name
+                    (mv-nth 0
+                            (lofat-to-hifat-helper-exec
+                             fat32-in-memory
+                             dir-ent-list entry-limit))))))
+    :hints
+    (("goal" :in-theory (enable lofat-to-hifat-helper-exec
+                                m1-regular-file-p))))
+
+  (defthm
+    lofat-find-file-by-pathname-correctness-1-lemma-10
+    (implies
+     (and
+      (lofat-fs-p fat32-in-memory)
+      (useful-dir-ent-list-p dir-ent-list)
+      (consp
+       (assoc-equal
+        name
+        (mv-nth 0
+                (lofat-to-hifat-helper-exec fat32-in-memory
+                                            dir-ent-list entry-limit)))))
+     (equal
+      (m1-regular-file-p
+       (cdr
+        (assoc-equal
+         name
+         (mv-nth 0
+                 (lofat-to-hifat-helper-exec fat32-in-memory
+                                             dir-ent-list entry-limit)))))
+      (not (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name))))))
+    :hints (("goal" :in-theory (enable lofat-to-hifat-helper-exec
+                                       m1-regular-file-p)))))
 
 (defthm
   lofat-find-file-by-pathname-correctness-1

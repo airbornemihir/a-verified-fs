@@ -195,26 +195,42 @@
         3
         (lofat-to-hifat-helper-exec fat32-in-memory
                                     dir-ent-list entry-limit))
-       0)
-      (lofat-regular-file-p
+       0))
+     (equal
+      (m1-directory-file-p file)
+      (lofat-directory-file-p
        (mv-nth
         0
         (lofat-find-file-by-pathname fat32-in-memory
-                                     dir-ent-list pathname))))
-     (m1-regular-file-p file)))
+                                     dir-ent-list pathname))))))
   :hints
   (("goal" :in-theory (enable lofat-pread-refinement-lemma-1))))
 
 (defthm
   lofat-pread-refinement
-  (implies (equal (mv-nth 3 (lofat-to-hifat fat32-in-memory))
-                  0)
+  (implies (and (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
+                       0)
+                (lofat-fs-p fat32-in-memory))
            (equal (lofat-pread fd count offset
                                fat32-in-memory fd-table file-table)
                   (hifat-pread fd count offset
-                               (mv-nth 3 (lofat-to-hifat fat32-in-memory))
+                               (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                                fd-table file-table)))
-  :hints (("goal" :in-theory (enable lofat-to-hifat lofat-pread))))
+  :otf-flg t
+  :hints (("goal" :do-not-induct t :in-theory
+           (e/d
+            (lofat-to-hifat lofat-pread)
+            ((:REWRITE LOFAT-FIND-FILE-BY-PATHNAME-CORRECTNESS-1)))
+           :use
+           (:instance
+            (:REWRITE LOFAT-FIND-FILE-BY-PATHNAME-CORRECTNESS-1)
+            (PATHNAME
+                      (FILE-TABLE-ELEMENT->FID
+                           (CDR (ASSOC-EQUAL (CDR (ASSOC-EQUAL FD FD-TABLE))
+                                             FILE-TABLE))))
+                 (DIR-ENT-LIST
+                      (MV-NTH 0 (ROOT-DIR-ENT-LIST FAT32-IN-MEMORY)))
+                 (entry-limit (max-entry-count fat32-in-memory))))))
 
 (defund lofat-lstat (fat32-in-memory pathname)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
@@ -249,7 +265,9 @@
     (lofat-lstat fat32-in-memory pathname)
     (hifat-lstat (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                  pathname)))
-  :hints (("goal" :in-theory (enable lofat-to-hifat lofat-lstat))))
+  :hints (("goal" :in-theory
+           (e/d
+            (lofat-to-hifat lofat-lstat)))))
 
 (defthm
   find-file-by-pathname-correctness-3-lemma-1

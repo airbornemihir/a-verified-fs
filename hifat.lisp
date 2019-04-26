@@ -1349,16 +1349,25 @@
   (("goal"
     :in-theory (enable m1-bounded-file-alist-p))))
 
-(defthm
-  m1-bounded-file-alist-p-of-cdar-lemma-1
-  (implies (and (m1-file-p x)
-                (not (m1-regular-file-p x)))
-           (m1-directory-file-p x))
+;; It would be nice to leave the rule-classes alone, but trying to
+;; unconditionally rewrite (m1-directory-file-p x) has unintended
+;; consequences.
+(defthm m1-directory-file-p-when-m1-file-p
+  (implies (m1-file-p x)
+           (equal (m1-directory-file-p x)
+                  (not (m1-regular-file-p x))))
   :hints
   (("goal"
     :in-theory (enable m1-regular-file-p
                        m1-directory-file-p m1-file-p
-                       m1-file-contents-p m1-file->contents))))
+                       m1-file-contents-p m1-file->contents)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (m1-file-p x)
+          (not (m1-regular-file-p x)))
+     (m1-directory-file-p x)))))
 
 (defthm
   m1-bounded-file-alist-p-of-cdar

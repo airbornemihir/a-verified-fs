@@ -144,9 +144,14 @@
                    nw nc beginning-of-word-p (+ pos 1)))))
 
 (defund wc-1 (fat32-in-memory pathname)
-  (declare (xargs :stobjs fat32-in-memory
-                  :guard (and (stringp pathname) (lofat-fs-p fat32-in-memory))
-                  :guard-debug t))
+  (declare
+   (xargs
+    :stobjs fat32-in-memory
+    :guard (and (stringp pathname)
+                (lofat-fs-p fat32-in-memory))
+    :guard-hints
+    (("goal" :in-theory
+      (enable lofat-open lofat-lstat)))))
   (b*
       ((fat32-pathname (pathname-to-fat32-pathname (coerce pathname 'list)))
        ;; It would be nice to eliminate this check by proving a theorem, but
@@ -199,7 +204,16 @@
        (pathname-to-fat32-pathname (explode pathname))))
      (not (equal (mv-nth 3 (wc-1 fat32-in-memory pathname))
                  0))))
-  :hints (("goal" :in-theory (enable rm-1 wc-1)) ))
+  :hints (("goal" :in-theory (e/d
+                              (rm-1 wc-1)
+                              ((:DEFINITION PATHNAME-TO-FAT32-PATHNAME)
+                               (:DEFINITION NAME-TO-FAT32-NAME)))
+           :expand (:with lofat-pread-refinement
+                          (:free
+                           (fd count offset
+                               fat32-in-memory fd-table file-table)
+                           (lofat-pread fd count offset
+                               fat32-in-memory fd-table file-table)))) ))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
