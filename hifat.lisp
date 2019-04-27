@@ -1701,19 +1701,18 @@
 
   (defthm
     m1-read-after-delete
-    (b* (((mv original-file original-error-code)
+    (b*
+        (((mv original-file &)
           (find-file-by-pathname fs pathname1))
-         ((mv new-fs new-error-code)
+         ((mv new-fs error-code)
           (remove-file-by-pathname fs pathname2)))
       (implies
-       (and
-        (equal original-error-code 0)
-        (m1-regular-file-p original-file)
-        (equal new-error-code 0))
+       (and (m1-regular-file-p original-file)
+            (equal error-code 0))
        (equal (find-file-by-pathname new-fs pathname1)
               (if (fat32-filename-list-prefixp pathname2 pathname1)
                   (mv (make-m1-file) *enoent*)
-                (find-file-by-pathname fs pathname1)))))
+                  (find-file-by-pathname fs pathname1)))))
     :hints
     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
       :in-theory (enable fat32-filename-list-fix
