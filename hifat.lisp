@@ -1165,17 +1165,11 @@
     m1-regular-file-p-correctness-1
     (implies (m1-regular-file-p file)
              (and (stringp (m1-file->contents file))
+                  (unsigned-byte-p 32 (len (explode (m1-file->contents file))))
                   (not (m1-directory-file-p file))))
     :hints
     (("goal"
-      :in-theory (enable m1-regular-file-p m1-directory-file-p)))
-    :rule-classes
-    ((:rewrite
-      :corollary (implies (m1-regular-file-p file)
-                          (stringp (m1-file->contents file))))
-     (:rewrite
-      :corollary (implies (m1-regular-file-p file)
-                          (not (m1-directory-file-p file)))))))
+      :in-theory (enable m1-regular-file-p m1-directory-file-p)))))
 
 (defthm m1-file-p-when-m1-regular-file-p
   (implies
@@ -1183,17 +1177,17 @@
    (m1-file-p file))
   :hints (("Goal" :in-theory (enable m1-regular-file-p))))
 
-(defthm
-  length-of-m1-file->contents
-  (implies
-   (m1-regular-file-p file)
-   (unsigned-byte-p 32 (length (m1-file->contents file))))
-  :hints (("goal" :in-theory (enable m1-regular-file-p)))
-  :rule-classes
-  ((:linear :corollary
-            (implies (m1-regular-file-p file)
-                     (< (len (explode (m1-file->contents file)))
-                        (ash 1 32))))))
+;; (defthm
+;;   length-of-m1-file->contents
+;;   (implies
+;;    (m1-regular-file-p file)
+;;    (unsigned-byte-p 32 (length (m1-file->contents file))))
+;;   :hints (("goal" :in-theory (enable m1-regular-file-p)))
+;;   :rule-classes
+;;   ((:linear :corollary
+;;             (implies (m1-regular-file-p file)
+;;                      (< (len (explode (m1-file->contents file)))
+;;                         (ash 1 32))))))
 
 (defthm
   m1-directory-file-p-correctness-1
@@ -1349,16 +1343,25 @@
   (("goal"
     :in-theory (enable m1-bounded-file-alist-p))))
 
-(defthm
-  m1-bounded-file-alist-p-of-cdar-lemma-1
-  (implies (and (m1-file-p x)
-                (not (m1-regular-file-p x)))
-           (m1-directory-file-p x))
+;; It would be nice to leave the rule-classes alone, but trying to
+;; unconditionally rewrite (m1-directory-file-p x) has unintended
+;; consequences.
+(defthm m1-directory-file-p-when-m1-file-p
+  (implies (m1-file-p x)
+           (equal (m1-directory-file-p x)
+                  (not (m1-regular-file-p x))))
   :hints
   (("goal"
     :in-theory (enable m1-regular-file-p
                        m1-directory-file-p m1-file-p
-                       m1-file-contents-p m1-file->contents))))
+                       m1-file-contents-p m1-file->contents)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (m1-file-p x)
+          (not (m1-regular-file-p x)))
+     (m1-directory-file-p x)))))
 
 (defthm
   m1-bounded-file-alist-p-of-cdar
@@ -1586,14 +1589,15 @@
        ((mv new-contents error-code)
         (remove-file-by-pathname
          (m1-file->contents (cdr alist-elem))
-         (cdr pathname))))
+         (cdr pathname)))
+       ((unless (equal error-code 0)) (mv fs error-code)))
     (mv
      (put-assoc-equal
       name
       (make-m1-file :dir-ent (m1-file->dir-ent (cdr alist-elem))
                     :contents new-contents)
       fs)
-     error-code)))
+     0)))
 
 (defthm
   remove-file-by-pathname-correctness-1
@@ -1697,24 +1701,83 @@
                          m1-regular-file-p))))
 
   (defthm
+    m1-read-after-delete-lemma-4
+    (implies
+     (not (equal (mv-nth 1 (remove-file-by-pathname fs pathname)) 0))
+     (equal (mv-nth 0 (remove-file-by-pathname fs pathname))
+            (m1-file-alist-fix fs))))
+
+  (local
+   (defthmd
+     m1-read-after-delete-lemma-1
+     (b*
+         (((mv original-file &)
+           (find-file-by-pathname fs pathname1))
+          ((mv new-fs error-code)
+           (remove-file-by-pathname fs pathname2)))
+       (implies
+        (m1-regular-file-p original-file)
+        (equal
+         (find-file-by-pathname new-fs pathname1)
+         (if (and (fat32-filename-list-prefixp pathname2 pathname1)
+                  (equal error-code 0))
+             (mv (make-m1-file) *enoent*)
+             (find-file-by-pathname fs pathname1)))))
+     :hints
+     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+       :in-theory (enable fat32-filename-list-fix
+                          m1-regular-file-p)))))
+
+  (local
+   (defthm
+     m1-read-after-delete-lemma-2
+     (implies
+      (equal (mv-nth 1 (find-file-by-pathname fs pathname))
+             *enoent*)
+      (equal (find-file-by-pathname fs pathname)
+             (mv (make-m1-file) *enoent*)))))
+
+  (local
+   (defthmd
+     m1-read-after-delete-lemma-3
+     (b* (((mv & error-code)
+           (find-file-by-pathname fs pathname1))
+          ((mv new-fs &)
+           (remove-file-by-pathname fs pathname2)))
+       (implies (equal error-code *enoent*)
+                (equal (find-file-by-pathname new-fs pathname1)
+                       (mv (make-m1-file) *enoent*))))
+     :hints
+     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+       :in-theory (enable fat32-filename-list-fix
+                          m1-regular-file-p)
+       :expand
+       ((:free (fs)
+               (find-file-by-pathname fs pathname1))
+        (:free (fs)
+               (remove-file-by-pathname fs pathname2)))))))
+
+  (defthm
     m1-read-after-delete
-    (b* (((mv original-file original-error-code)
+    (b*
+        (((mv original-file original-error-code)
           (find-file-by-pathname fs pathname1))
          ((mv new-fs new-error-code)
           (remove-file-by-pathname fs pathname2)))
       (implies
-       (and
-        (equal original-error-code 0)
-        (m1-regular-file-p original-file)
-        (equal new-error-code 0))
-       (equal (find-file-by-pathname new-fs pathname1)
-              (if (fat32-filename-list-prefixp pathname2 pathname1)
-                  (mv (make-m1-file) *enoent*)
-                (find-file-by-pathname fs pathname1)))))
-    :hints
-    (("goal" :induct (induction-scheme pathname1 pathname2 fs)
-      :in-theory (enable fat32-filename-list-fix
-                         m1-regular-file-p)))))
+       (or (equal original-error-code *enoent*)
+           (m1-regular-file-p original-file))
+       (equal
+        (find-file-by-pathname new-fs pathname1)
+        (if
+         (or
+          (equal original-error-code *enoent*)
+          (and (equal new-error-code 0)
+               (fat32-filename-list-prefixp pathname2 pathname1)))
+         (mv (make-m1-file) *enoent*)
+         (find-file-by-pathname fs pathname1)))))
+    :hints (("goal" :use (m1-read-after-delete-lemma-1
+                          m1-read-after-delete-lemma-3)))))
 
 (defun
   find-new-index-helper (fd-list ac)
