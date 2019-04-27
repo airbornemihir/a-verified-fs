@@ -1699,24 +1699,75 @@
       :in-theory (enable fat32-filename-list-fix
                          m1-regular-file-p))))
 
+  (local
+   (defthmd
+     m1-read-after-delete-lemma-1
+     (b*
+         (((mv original-file &)
+           (find-file-by-pathname fs pathname1))
+          ((mv new-fs error-code)
+           (remove-file-by-pathname fs pathname2)))
+       (implies
+        (and (m1-regular-file-p original-file)
+             (equal error-code 0))
+        (equal
+         (find-file-by-pathname new-fs pathname1)
+         (if (fat32-filename-list-prefixp pathname2 pathname1)
+             (mv (make-m1-file) *enoent*)
+           (find-file-by-pathname fs pathname1)))))
+     :hints
+     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+       :in-theory (enable fat32-filename-list-fix
+                          m1-regular-file-p)))))
+
+  (local
+   (defthm
+     m1-read-after-delete-lemma-2
+     (implies
+      (equal (mv-nth 1 (find-file-by-pathname fs pathname))
+             *enoent*)
+      (equal (find-file-by-pathname fs pathname)
+             (mv (make-m1-file) *enoent*)))))
+
+  (local
+   (defthmd
+     m1-read-after-delete-lemma-3
+     (b* (((mv & error-code)
+           (find-file-by-pathname fs pathname1))
+          ((mv new-fs &)
+           (remove-file-by-pathname fs pathname2)))
+       (implies (equal error-code *enoent*)
+                (equal (find-file-by-pathname new-fs pathname1)
+                       (mv (make-m1-file) *enoent*))))
+     :hints
+     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+       :in-theory (enable fat32-filename-list-fix
+                          m1-regular-file-p)
+       :expand
+       ((:free (fs)
+               (find-file-by-pathname fs pathname1))
+        (:free (fs)
+               (remove-file-by-pathname fs pathname2)))))))
+
   (defthm
     m1-read-after-delete
     (b*
-        (((mv original-file &)
+        (((mv original-file original-error-code)
           (find-file-by-pathname fs pathname1))
-         ((mv new-fs error-code)
+         ((mv new-fs new-error-code)
           (remove-file-by-pathname fs pathname2)))
       (implies
-       (and (m1-regular-file-p original-file)
-            (equal error-code 0))
-       (equal (find-file-by-pathname new-fs pathname1)
-              (if (fat32-filename-list-prefixp pathname2 pathname1)
-                  (mv (make-m1-file) *enoent*)
-                  (find-file-by-pathname fs pathname1)))))
-    :hints
-    (("goal" :induct (induction-scheme pathname1 pathname2 fs)
-      :in-theory (enable fat32-filename-list-fix
-                         m1-regular-file-p)))))
+       (or (equal original-error-code *enoent*)
+           (and (m1-regular-file-p original-file)
+                (equal new-error-code 0)))
+       (equal
+        (find-file-by-pathname new-fs pathname1)
+        (if (or (equal original-error-code *enoent*)
+                (fat32-filename-list-prefixp pathname2 pathname1))
+            (mv (make-m1-file) *enoent*)
+            (find-file-by-pathname fs pathname1)))))
+    :hints (("goal" :use (m1-read-after-delete-lemma-1
+                          m1-read-after-delete-lemma-3)))))
 
 (defun
   find-new-index-helper (fd-list ac)
