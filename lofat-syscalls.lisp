@@ -396,12 +396,18 @@
      (declare (ignore error-code))
      (implies
       (m1-regular-file-p file)
-      (equal
-       (m1-file->contents
+      (and
+       (equal
         (mv-nth
-         0
-         (find-file-by-pathname m1-file-alist2 pathname)))
-       (m1-file->contents file)))))
+         1
+         (find-file-by-pathname m1-file-alist2 pathname))
+        0)
+       (equal
+        (m1-file->contents
+         (mv-nth
+          0
+          (find-file-by-pathname m1-file-alist2 pathname)))
+        (m1-file->contents file))))))
   :hints
   (("goal"
     :induct
@@ -457,10 +463,14 @@
      (declare (ignore error-code))
      (implies
       (m1-regular-file-p file)
-      (equal (m1-file->contents
-              (mv-nth 0
-                      (find-file-by-pathname m1-file-alist2 pathname)))
-             (m1-file->contents file)))))
+      (and
+       (equal (mv-nth 1
+                      (find-file-by-pathname m1-file-alist2 pathname))
+              0)
+       (equal (m1-file->contents
+               (mv-nth 0
+                       (find-file-by-pathname m1-file-alist2 pathname)))
+              (m1-file->contents file))))))
   :hints (("goal" :do-not-induct t
            :in-theory (enable m1-file-alist-p hifat-equiv)
            :use (:rewrite find-file-by-pathname-correctness-4))))
