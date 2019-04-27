@@ -177,7 +177,7 @@
     (mv nl nw nc 0)))
 
 (defthm
-  wc-1-correctness-1
+  wc-after-rm-lemma-1
   (implies
    (not
     (equal
@@ -190,6 +190,69 @@
    (not (equal (mv-nth 3 (wc-1 fat32-in-memory pathname))
                0)))
   :hints (("goal" :in-theory (enable wc-1))))
+
+(defthm
+  wc-after-rm-lemma-2
+  (implies
+   (equal
+    (mv-nth
+     1
+     (find-file-by-pathname fs
+                            (pathname-to-fat32-pathname (explode pathname))))
+    *enoent*)
+   (equal
+    (mv-nth
+     1
+     (find-file-by-pathname (mv-nth 0
+                                    (rm-list fs nil pathnames exit-status))
+                            (pathname-to-fat32-pathname (explode pathname))))
+    *enoent*))
+  :hints (("goal" :induct (rm-list fs nil pathnames exit-status)
+           :in-theory (disable (:definition pathname-to-fat32-pathname)
+                               (:definition name-to-fat32-name)
+                               (:linear len-of-member-equal)
+                               (:definition take-redefinition)))))
+
+(defthm
+  wc-after-rm-lemma-3
+  (implies (m1-regular-file-p
+            (mv-nth 0 (find-file-by-pathname fs pathname)))
+           (equal (mv-nth 1 (find-file-by-pathname fs pathname))
+                  0)))
+
+(defthm wc-after-rm-lemma-4
+  (fat32-filename-list-prefixp x x))
+
+;; This ends up requiring a number of subinductions.
+(defthm
+  wc-after-rm-lemma-5
+  (implies
+   (and
+    (m1-regular-file-p
+     (mv-nth
+      0
+      (find-file-by-pathname
+       fs
+       (pathname-to-fat32-pathname (explode pathname)))))
+    (member-equal pathname pathnames)
+    (stringp pathname)
+    (fat32-filename-list-p
+     (pathname-to-fat32-pathname (explode pathname))))
+   (equal
+    (mv-nth
+     1
+     (find-file-by-pathname
+      (mv-nth 0
+              (rm-list fs nil pathnames exit-status))
+      (pathname-to-fat32-pathname (explode pathname))))
+    *enoent*))
+  :hints
+  (("goal"
+    :induct (rm-list fs nil pathnames exit-status)
+    :in-theory (disable (:definition pathname-to-fat32-pathname)
+                        (:definition name-to-fat32-name)
+                        (:linear len-of-member-equal)
+                        (:definition take-redefinition)))))
 
 (defthm wc-after-rm
   (implies
@@ -254,7 +317,7 @@
                   0)))))
   :hints (("goal" :in-theory (e/d
                               (rm-1 wc-1)
-                              ((:rewrite find-file-by-pathname-correctness-6)
+                              (FIND-FILE-BY-PATHNAME-CORRECTNESS-3-LEMMA-7
                                ;; from accumulated-persistence
                                (:definition pathname-to-fat32-pathname)
                                (:definition name-to-fat32-name)))
@@ -265,27 +328,26 @@
                                fat32-in-memory fd-table file-table)
                            (lofat-pread fd count offset
                                         fat32-in-memory fd-table file-table))))
-          ("subgoal 1"
-           :use
+          ("subgoal 1" :use
            (:instance
-            (:rewrite find-file-by-pathname-correctness-6)
-            (pathname (pathname-to-fat32-pathname (explode pathname)))
-            (m1-file-alist2
-             (mv-nth
+            FIND-FILE-BY-PATHNAME-CORRECTNESS-3-LEMMA-7
+            (PATHNAME (PATHNAME-TO-FAT32-PATHNAME (EXPLODE PATHNAME)))
+            (M1-FILE-ALIST2
+             (MV-NTH
               0
-              (lofat-to-hifat
-               (mv-nth
+              (LOFAT-TO-HIFAT
+               (MV-NTH
                 0
-                (hifat-to-lofat
-                 fat32-in-memory
-                 (mv-nth
+                (HIFAT-TO-LOFAT
+                 FAT32-IN-MEMORY
+                 (MV-NTH
                   0
-                  (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                           nil pathnames 0)))))))
+                  (RM-LIST (MV-NTH 0 (LOFAT-TO-HIFAT FAT32-IN-MEMORY))
+                           NIL PATHNAMES 0)))))))
             (m1-file-alist1
-             (mv-nth 0
-                     (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                              nil pathnames 0)))))))
+             (MV-NTH 0
+                     (RM-LIST (MV-NTH 0 (LOFAT-TO-HIFAT FAT32-IN-MEMORY))
+                              NIL PATHNAMES 0)))))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
