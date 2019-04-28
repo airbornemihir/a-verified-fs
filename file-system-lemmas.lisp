@@ -750,3 +750,10 @@
 (defthmd take-of-nthcdr
   (equal (take n1 (nthcdr n2 l))
          (nthcdr n2 (take (+ (nfix n1) (nfix n2)) l))))
+
+(defthm
+  put-assoc-equal-without-change
+  (implies (consp (assoc-equal x alist))
+           (equal (put-assoc-equal x (cdr (assoc-equal x alist))
+                                   alist)
+                  alist)))

@@ -1589,15 +1589,14 @@
        ((mv new-contents error-code)
         (remove-file-by-pathname
          (m1-file->contents (cdr alist-elem))
-         (cdr pathname)))
-       ((unless (equal error-code 0)) (mv fs error-code)))
+         (cdr pathname))))
     (mv
      (put-assoc-equal
       name
       (make-m1-file :dir-ent (m1-file->dir-ent (cdr alist-elem))
                     :contents new-contents)
       fs)
-     0)))
+     error-code)))
 
 (defthm
   remove-file-by-pathname-correctness-1
@@ -1700,10 +1699,6 @@
       :in-theory (enable fat32-filename-list-fix
                          m1-regular-file-p))))
 
-  ;; This lemma is problematic, and that's due to the definition of
-  ;; remove-file-by-pathname. Basically, we can't throw away a value of fs that
-  ;; we have already computed in the recursive call. That's not how it's going
-  ;; to work in the stobj - you can't refer back to an earlier copy of the stobj.
   (defthm
     m1-read-after-delete-lemma-1
     (implies
