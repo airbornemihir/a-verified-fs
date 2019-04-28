@@ -1700,33 +1700,16 @@
       :in-theory (enable fat32-filename-list-fix
                          m1-regular-file-p))))
 
+  ;; This lemma is problematic, and that's due to the definition of
+  ;; remove-file-by-pathname. Basically, we can't throw away a value of fs that
+  ;; we have already computed in the recursive call. That's not how it's going
+  ;; to work in the stobj - you can't refer back to an earlier copy of the stobj.
   (defthm
-    m1-read-after-delete-lemma-4
+    m1-read-after-delete-lemma-1
     (implies
      (not (equal (mv-nth 1 (remove-file-by-pathname fs pathname)) 0))
      (equal (mv-nth 0 (remove-file-by-pathname fs pathname))
             (m1-file-alist-fix fs))))
-
-  (local
-   (defthmd
-     m1-read-after-delete-lemma-1
-     (b*
-         (((mv original-file &)
-           (find-file-by-pathname fs pathname1))
-          ((mv new-fs error-code)
-           (remove-file-by-pathname fs pathname2)))
-       (implies
-        (m1-regular-file-p original-file)
-        (equal
-         (find-file-by-pathname new-fs pathname1)
-         (if (and (fat32-filename-list-prefixp pathname2 pathname1)
-                  (equal error-code 0))
-             (mv (make-m1-file) *enoent*)
-             (find-file-by-pathname fs pathname1)))))
-     :hints
-     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
-       :in-theory (enable fat32-filename-list-fix
-                          m1-regular-file-p)))))
 
   (local
    (defthm
@@ -1757,6 +1740,27 @@
         (:free (fs)
                (remove-file-by-pathname fs pathname2)))))))
 
+  (local
+   (defthmd
+     m1-read-after-delete-lemma-4
+     (b*
+         (((mv original-file &)
+           (find-file-by-pathname fs pathname1))
+          ((mv new-fs error-code)
+           (remove-file-by-pathname fs pathname2)))
+       (implies
+        (m1-regular-file-p original-file)
+        (equal
+         (find-file-by-pathname new-fs pathname1)
+         (if (and (fat32-filename-list-prefixp pathname2 pathname1)
+                  (equal error-code 0))
+             (mv (make-m1-file) *enoent*)
+           (find-file-by-pathname fs pathname1)))))
+     :hints
+     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+       :in-theory (enable fat32-filename-list-fix
+                          m1-regular-file-p)))))
+
   (defthm
     m1-read-after-delete
     (b*
@@ -1776,7 +1780,7 @@
                (fat32-filename-list-prefixp pathname2 pathname1)))
          (mv (make-m1-file) *enoent*)
          (find-file-by-pathname fs pathname1)))))
-    :hints (("goal" :use (m1-read-after-delete-lemma-1
+    :hints (("goal" :use (m1-read-after-delete-lemma-4
                           m1-read-after-delete-lemma-3)))))
 
 (defun
