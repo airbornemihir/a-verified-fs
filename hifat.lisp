@@ -1257,9 +1257,9 @@
   m1-bounded-file-alist-p-helper (x ac)
   (declare (xargs :guard (and (m1-file-alist-p x) (natp ac))
                   :measure (acl2-count x)))
-  (and
+  (or
    (atom x)
-   (or
+   (and
     (not (zp ac))
     (let
      ((head (car x)))
@@ -1323,14 +1323,16 @@
                                            ac))
   :hints
   (("goal" :induct (m1-bounded-file-alist-p-helper x ac))
-   ("subgoal *1/3" :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
-                                   (x (cdr x))
-                                   (ac1 (- ac 1))
-                                   (ac2 ac)))
-   ("subgoal *1/1" :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
-                                   (x (cdr x))
-                                   (ac1 (- ac 1))
-                                   (ac2 ac)))))
+   ("subgoal *1/4"
+    :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
+                    (x (cdr x))
+                    (ac1 (- ac 1))
+                    (ac2 ac)))
+   ("subgoal *1/2"
+    :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
+                    (x (cdr x))
+                    (ac1 (- ac 1))
+                    (ac2 ac)))))
 
 (defthm m1-bounded-file-alist-p-of-cdr
         (implies (m1-bounded-file-alist-p x)
@@ -1358,7 +1360,8 @@
      (m1-directory-file-p x)))))
 
 (defthm m1-bounded-file-alist-p-of-cdar
-  (implies (m1-bounded-file-alist-p x)
+  (implies (and (m1-bounded-file-alist-p x)
+                (m1-directory-file-p (cdar x)))
            (m1-bounded-file-alist-p (m1-file->contents (cdar x))))
   :hints (("goal" :in-theory (enable m1-bounded-file-alist-p))))
 
