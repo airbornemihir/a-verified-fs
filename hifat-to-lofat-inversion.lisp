@@ -375,8 +375,7 @@
              fat32-in-memory
              masked-current-cluster length))))
   :hints
-  (("goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2
-                              get-clusterchain-contents)))
+  (("goal" :in-theory (enable get-clusterchain-contents)))
   :rule-classes
   ((:rewrite
     :corollary
@@ -2409,9 +2408,6 @@
 
 (encapsulate
   ()
-
-  (local
-   (in-theory (enable by-slice-you-mean-the-whole-cake-2)))
 
   (local
    (defun induction-scheme
