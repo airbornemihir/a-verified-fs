@@ -848,10 +848,15 @@
                         (:definition fat32-build-index-list)))))
 
 (defthm m1-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec
-  (m1-bounded-file-alist-p-helper
-   (mv-nth 0 (lofat-to-hifat-helper-exec
-              fat32-in-memory dir-ent-list entry-limit))
-   (len dir-ent-list))
+  (implies
+   (equal
+    (mv-nth 1 (lofat-to-hifat-helper-exec
+               fat32-in-memory dir-ent-list entry-limit))
+    0)
+   (m1-bounded-file-alist-p-helper
+    (mv-nth 0 (lofat-to-hifat-helper-exec
+               fat32-in-memory dir-ent-list entry-limit))
+    (len dir-ent-list)))
   :hints (("Goal" :in-theory (enable lofat-to-hifat-helper-exec)) ))
 
 (defthm
