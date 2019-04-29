@@ -1258,9 +1258,9 @@
   (declare (xargs :guard (and (m1-file-alist-p x) (natp ac))
                   :measure (acl2-count x)))
   (and
-   (not (zp ac))
+   (atom x)
    (or
-    (atom x)
+    (not (zp ac))
     (let
      ((head (car x)))
      (and
@@ -1278,7 +1278,7 @@
 
 (defthmd len-when-m1-bounded-file-alist-p-helper
   (implies (m1-bounded-file-alist-p-helper x ac)
-           (< (len x) (nfix ac)))
+           (<= (len x) (nfix ac)))
   :rule-classes :linear)
 
 (defund
@@ -1289,21 +1289,21 @@
 (defthm
   len-when-m1-bounded-file-alist-p
   (implies (m1-bounded-file-alist-p x)
-           (< (len x) *ms-max-dir-ent-count*))
+           (<= (len x) *ms-max-dir-ent-count*))
   :rule-classes
   (:linear
    (:linear
     :corollary (implies (m1-bounded-file-alist-p x)
-                        (< (* *ms-dir-ent-length* (len x))
-                           (* *ms-dir-ent-length*
-                              *ms-max-dir-ent-count*))))
+                        (<= (* *ms-dir-ent-length* (len x))
+                            (* *ms-dir-ent-length*
+                               *ms-max-dir-ent-count*))))
    (:linear
     :corollary (implies (and (m1-bounded-file-alist-p x) (consp x))
-                        (< (* *ms-dir-ent-length* (len (cdr x)))
-                           (-
-                            (* *ms-dir-ent-length*
-                               *ms-max-dir-ent-count*)
-                            *ms-dir-ent-length*)))))
+                        (<= (* *ms-dir-ent-length* (len (cdr x)))
+                            (-
+                             (* *ms-dir-ent-length*
+                                *ms-max-dir-ent-count*)
+                             *ms-dir-ent-length*)))))
   :hints
   (("goal"
     :in-theory (enable m1-bounded-file-alist-p)
@@ -1338,7 +1338,7 @@
 (defthm
   m1-bounded-file-alist-p-of-cdr
   (implies (and (m1-bounded-file-alist-p x) (consp x))
-           (m1-bounded-file-alist-p (cdr x)) )
+           (m1-bounded-file-alist-p (cdr x)))
   :hints
   (("goal"
     :in-theory (enable m1-bounded-file-alist-p))))
