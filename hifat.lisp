@@ -1258,9 +1258,9 @@
   (declare (xargs :guard (and (m1-file-alist-p x) (natp ac))
                   :measure (acl2-count x)))
   (and
-   (not (zp ac))
+   (atom x)
    (or
-    (atom x)
+    (not (zp ac))
     (let
      ((head (car x)))
      (and
@@ -1278,7 +1278,7 @@
 
 (defthmd len-when-m1-bounded-file-alist-p-helper
   (implies (m1-bounded-file-alist-p-helper x ac)
-           (< (len x) (nfix ac)))
+           (<= (len x) (nfix ac)))
   :rule-classes :linear)
 
 (defund
@@ -1289,21 +1289,21 @@
 (defthm
   len-when-m1-bounded-file-alist-p
   (implies (m1-bounded-file-alist-p x)
-           (< (len x) *ms-max-dir-ent-count*))
+           (<= (len x) *ms-max-dir-ent-count*))
   :rule-classes
   (:linear
    (:linear
     :corollary (implies (m1-bounded-file-alist-p x)
-                        (< (* *ms-dir-ent-length* (len x))
-                           (* *ms-dir-ent-length*
-                              *ms-max-dir-ent-count*))))
+                        (<= (* *ms-dir-ent-length* (len x))
+                            (* *ms-dir-ent-length*
+                               *ms-max-dir-ent-count*))))
    (:linear
     :corollary (implies (and (m1-bounded-file-alist-p x) (consp x))
-                        (< (* *ms-dir-ent-length* (len (cdr x)))
-                           (-
-                            (* *ms-dir-ent-length*
-                               *ms-max-dir-ent-count*)
-                            *ms-dir-ent-length*)))))
+                        (<= (* *ms-dir-ent-length* (len (cdr x)))
+                            (-
+                             (* *ms-dir-ent-length*
+                                *ms-max-dir-ent-count*)
+                             *ms-dir-ent-length*)))))
   :hints
   (("goal"
     :in-theory (enable m1-bounded-file-alist-p)
@@ -1318,30 +1318,24 @@
 
 (defthm
   m1-bounded-file-alist-p-of-cdr-lemma-2
-  (implies (and (m1-bounded-file-alist-p-helper x ac)
-                (consp x))
+  (implies (m1-bounded-file-alist-p-helper x ac)
            (m1-bounded-file-alist-p-helper (cdr x)
                                            ac))
   :hints
   (("goal" :induct (m1-bounded-file-alist-p-helper x ac))
-   ("subgoal *1/3"
-    :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
-                    (x (cdr x))
-                    (ac1 (- ac 1))
-                    (ac2 ac)))
-   ("subgoal *1/1"
-    :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
-                    (x (cdr x))
-                    (ac1 (- ac 1))
-                    (ac2 ac)))))
+   ("subgoal *1/3" :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
+                                   (x (cdr x))
+                                   (ac1 (- ac 1))
+                                   (ac2 ac)))
+   ("subgoal *1/1" :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
+                                   (x (cdr x))
+                                   (ac1 (- ac 1))
+                                   (ac2 ac)))))
 
-(defthm
-  m1-bounded-file-alist-p-of-cdr
-  (implies (and (m1-bounded-file-alist-p x) (consp x))
-           (m1-bounded-file-alist-p (cdr x)) )
-  :hints
-  (("goal"
-    :in-theory (enable m1-bounded-file-alist-p))))
+(defthm m1-bounded-file-alist-p-of-cdr
+        (implies (m1-bounded-file-alist-p x)
+                 (m1-bounded-file-alist-p (cdr x)))
+        :hints (("goal" :in-theory (enable m1-bounded-file-alist-p))))
 
 ;; It would be nice to leave the rule-classes alone, but trying to
 ;; unconditionally rewrite (m1-directory-file-p x) has unintended
@@ -1363,13 +1357,9 @@
           (not (m1-regular-file-p x)))
      (m1-directory-file-p x)))))
 
-(defthm
-  m1-bounded-file-alist-p-of-cdar
-  (implies
-   (and (m1-bounded-file-alist-p x)
-        (consp x)
-        (m1-directory-file-p (cdar x)))
-   (m1-bounded-file-alist-p (m1-file->contents (cdar x))))
+(defthm m1-bounded-file-alist-p-of-cdar
+  (implies (m1-bounded-file-alist-p x)
+           (m1-bounded-file-alist-p (m1-file->contents (cdar x))))
   :hints (("goal" :in-theory (enable m1-bounded-file-alist-p))))
 
 (fty::defprod
@@ -1779,34 +1769,28 @@
                           m1-read-after-delete-lemma-3)))))
 
 (defun
-  find-new-index-helper (fd-list ac)
-  (declare (xargs :guard (and (nat-listp fd-list) (natp ac))
+  find-new-index-helper (fd-list candidate)
+  (declare (xargs :guard (and (nat-listp fd-list) (natp candidate))
                   :measure (len fd-list)))
-  (let ((snipped-list (remove ac fd-list)))
+  (let ((snipped-list (remove1 candidate fd-list)))
        (if (equal (len snipped-list) (len fd-list))
-           ac
-           (find-new-index-helper snipped-list (+ ac 1)))))
+           candidate
+           (find-new-index-helper snipped-list (+ candidate 1)))))
 
 (defthm find-new-index-helper-correctness-1-lemma-1
-  (>= (find-new-index-helper fd-list ac) ac)
+  (>= (find-new-index-helper fd-list candidate) candidate)
   :rule-classes :linear)
 
 (defthm
   find-new-index-helper-correctness-1-lemma-2
-  (implies (integerp ac)
-           (integerp (find-new-index-helper fd-list ac))))
+  (implies (integerp candidate)
+           (integerp (find-new-index-helper fd-list candidate))))
 
-(encapsulate
-  ()
-
-  (local (include-book "std/lists/remove" :dir :system))
-  (local (include-book "std/lists/duplicity" :dir :system))
-
-  (defthm
-    find-new-index-helper-correctness-1
-    (not (member-equal
-          (find-new-index-helper fd-list ac)
-          fd-list))))
+(defthm
+  find-new-index-helper-correctness-1
+  (not (member-equal
+        (find-new-index-helper fd-list candidate)
+        fd-list)))
 
 (defund
   find-new-index (fd-list)
