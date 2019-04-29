@@ -10,7 +10,7 @@
 ;; with the theory I've built up so far, or else causing a lot of unnecessary
 ;; frames and tries.
 (local
- (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
+ (in-theory (disable take-of-too-many make-list-ac-removal
                      revappend-removal str::hex-digit-listp-of-cons
                      loghead logtail)))
 

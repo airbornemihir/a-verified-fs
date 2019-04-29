@@ -46,9 +46,10 @@
              (equal (first-n-ac i l ac)
                     (revappend ac (true-list-fix l)))))))
 
-(defthm by-slice-you-mean-the-whole-cake-2
-  (implies (equal i (len l))
-           (equal (take i l) (true-list-fix l))))
+;; The following is redundant with the definition in
+;; books/std/lists/take.lisp, from where it was taken with thanks.
+(defthm take-of-len-free
+  (implies (equal len (len x)) (equal (take len x) (true-list-fix x))))
 
 (defthm assoc-after-remove1-assoc
   (implies (not (equal name1 name2))
