@@ -13,7 +13,7 @@
 ;; with the theory I've built up so far, or else causing a lot of unnecessary
 ;; frames and tries.
 (local
- (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
+ (in-theory (disable take-of-too-many make-list-ac-removal
                      revappend-removal str::hex-digit-listp-of-cons
                      loghead logtail)))
 
@@ -375,8 +375,7 @@
              fat32-in-memory
              masked-current-cluster length))))
   :hints
-  (("goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2
-                              get-clusterchain-contents)))
+  (("goal" :in-theory (enable get-clusterchain-contents)))
   :rule-classes
   ((:rewrite
     :corollary
@@ -2409,9 +2408,6 @@
 
 (encapsulate
   ()
-
-  (local
-   (in-theory (enable by-slice-you-mean-the-whole-cake-2)))
 
   (local
    (defun induction-scheme

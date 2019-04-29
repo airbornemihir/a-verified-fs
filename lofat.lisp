@@ -10,7 +10,7 @@
 ;; with the theory I've built up so far, or else causing a lot of unnecessary
 ;; frames and tries.
 (local
- (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
+ (in-theory (disable take-of-too-many make-list-ac-removal
                      revappend-removal str::hex-digit-listp-of-cons
                      loghead logtail)))
 
@@ -2840,9 +2840,7 @@
                 (lofat-fs-p fat32-in-memory)
                 (<= len
                     (data-region-length fat32-in-memory))
-                (character-listp ac))
-    :guard-hints
-    (("goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2)))))
+                (character-listp ac))))
   (if
       (zp len)
       (mbe :exec ac
@@ -3000,8 +2998,7 @@
     (princ$ (coerce ac 'string)
             channel
             (princ$-data-region-string-helper
-             fat32-in-memory len channel state))))
-  :hints (("Goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2))))
+             fat32-in-memory len channel state)))))
 
 (defund
   lofat-to-string
@@ -3607,8 +3604,7 @@
         (take (cluster-size fat32-in-memory)
               (nthcdr (* (cluster-size fat32-in-memory)
                          (- index (nfix len)))
-                      (make-character-list ac))))))
-    :hints (("Goal" :in-theory (enable by-slice-you-mean-the-whole-cake-2))))
+                      (make-character-list ac)))))))
 
   (defthm
     lofat-to-string-inversion-lemma-29
@@ -4099,8 +4095,7 @@
           (explode (stobj-fa-table-to-string
                     fat32-in-memory)))))
   :hints
-  (("goal" :in-theory (enable make-fat-string-ac
-                              by-slice-you-mean-the-whole-cake-2))))
+  (("goal" :in-theory (enable make-fat-string-ac))))
 
 (defthm
   lofat-to-string-inversion-lemma-48
@@ -4202,7 +4197,6 @@
     (e/d (string-to-lofat
           painful-debugging-lemma-4
           painful-debugging-lemma-5
-          by-slice-you-mean-the-whole-cake-2
           lofat-to-string-inversion-lemma-51
           cluster-size read-reserved-area
           update-data-region-alt)
@@ -5337,7 +5331,6 @@
                4))))
      :hints
      (("goal"
-       :in-theory (enable by-slice-you-mean-the-whole-cake-2)
        :use
        (:instance
         (:rewrite take-of-update-fat-aux)

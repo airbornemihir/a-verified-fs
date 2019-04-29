@@ -13,7 +13,7 @@
 ;; with the theory I've built up so far, or else causing a lot of unnecessary
 ;; frames and tries.
 (local
- (in-theory (disable take-of-too-many take-of-len-free make-list-ac-removal
+ (in-theory (disable take-of-too-many make-list-ac-removal
                      revappend-removal)))
 
 (local
@@ -612,9 +612,7 @@
     (("goal"
       :induct (update-data-region-from-disk-image fat32-in-memory
                                                   len state tmp_init image-path)
-      :in-theory (e/d (take-of-nthcdr nthcdr-when->=-n-len-l
-                                      by-slice-you-mean-the-whole-cake-2)
-                      nil)
+      :in-theory (enable take-of-nthcdr nthcdr-when->=-n-len-l)
       :expand (:free (fat32-in-memory str)
                      (update-data-region fat32-in-memory str len))))))
 
@@ -850,7 +848,6 @@
       :in-theory
       (e/d (data-region-length make-clusters
                                remember-that-time-with-update-nth
-                               by-slice-you-mean-the-whole-cake-2
                                take-of-nthcdr)
            (append take take-redefinition))
       :induct (update-data-region fat32-in-memory str len)))))
