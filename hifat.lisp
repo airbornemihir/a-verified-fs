@@ -1769,34 +1769,28 @@
                           m1-read-after-delete-lemma-3)))))
 
 (defun
-  find-new-index-helper (fd-list ac)
-  (declare (xargs :guard (and (nat-listp fd-list) (natp ac))
+  find-new-index-helper (fd-list candidate)
+  (declare (xargs :guard (and (nat-listp fd-list) (natp candidate))
                   :measure (len fd-list)))
-  (let ((snipped-list (remove ac fd-list)))
+  (let ((snipped-list (remove1 candidate fd-list)))
        (if (equal (len snipped-list) (len fd-list))
-           ac
-           (find-new-index-helper snipped-list (+ ac 1)))))
+           candidate
+           (find-new-index-helper snipped-list (+ candidate 1)))))
 
 (defthm find-new-index-helper-correctness-1-lemma-1
-  (>= (find-new-index-helper fd-list ac) ac)
+  (>= (find-new-index-helper fd-list candidate) candidate)
   :rule-classes :linear)
 
 (defthm
   find-new-index-helper-correctness-1-lemma-2
-  (implies (integerp ac)
-           (integerp (find-new-index-helper fd-list ac))))
+  (implies (integerp candidate)
+           (integerp (find-new-index-helper fd-list candidate))))
 
-(encapsulate
-  ()
-
-  (local (include-book "std/lists/remove" :dir :system))
-  (local (include-book "std/lists/duplicity" :dir :system))
-
-  (defthm
-    find-new-index-helper-correctness-1
-    (not (member-equal
-          (find-new-index-helper fd-list ac)
-          fd-list))))
+(defthm
+  find-new-index-helper-correctness-1
+  (not (member-equal
+        (find-new-index-helper fd-list candidate)
+        fd-list)))
 
 (defund
   find-new-index (fd-list)
