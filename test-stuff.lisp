@@ -336,8 +336,7 @@
      (:free (fd count offset
                 fat32-in-memory fd-table file-table)
             (lofat-pread fd count offset
-                         fat32-in-memory fd-table file-table))))
-   ("subgoal 1"
+                         fat32-in-memory fd-table file-table)))
     :use
     ((:instance
       find-file-by-pathname-correctness-3-lemma-7
@@ -360,11 +359,30 @@
         (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                  nil pathnames 0))))
      (:instance
-      wc-after-rm-lemma-5 (pathname pathname)
+      wc-after-rm-lemma-5
       (exit-status 0)
-      (pathnames pathnames)
       (fs (mv-nth 0
                   (lofat-to-hifat fat32-in-memory))))))))
+
+(defun ls-list (fat32-in-memory name-list)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and
+                          (lofat-fs-p fat32-in-memory) (string-listp name-list))))
+  (b*
+      (((when (atom name-list)) nil)
+       (fat32-pathname
+        (pathname-to-fat32-pathname (coerce (car name-list) 'list)))
+       ;; It doesn't really matter for these purposes what the errno is. We're
+       ;; not trying to match this program for its stderr output.
+       ((unless
+            (fat32-filename-list-p fat32-pathname))
+        (ls-list fat32-in-memory (cdr name-list)))
+       ((mv & retval &)
+        (lofat-lstat fat32-in-memory fat32-pathname)))
+    (if
+        (equal retval 0)
+        (cons (car name-list) (ls-list fat32-in-memory (cdr name-list)))
+      (ls-list fat32-in-memory (cdr name-list)))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
