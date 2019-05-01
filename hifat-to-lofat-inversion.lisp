@@ -841,11 +841,52 @@
 
 (verify-guards
   lofat-to-hifat-helper-exec
+  :guard-debug t
   :hints
   (("goal"
     :in-theory (disable (:e dir-ent-directory-p)
                         (:t dir-ent-directory-p)
                         (:definition fat32-build-index-list)))))
+
+;; (defthm m1-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec
+;;   (implies
+;;    (equal
+;;     (mv-nth 1 (lofat-to-hifat-helper-exec
+;;                fat32-in-memory dir-ent-list entry-limit))
+;;     0)
+;;    (m1-bounded-file-alist-p-helper
+;;     (mv-nth 0 (lofat-to-hifat-helper-exec
+;;                fat32-in-memory dir-ent-list entry-limit))
+;;     (len dir-ent-list)))
+;;   :hints (("Goal" :in-theory (enable lofat-to-hifat-helper-exec)
+;;            :induct
+;;            (LOFAT-TO-HIFAT-HELPER-EXEC FAT32-IN-MEMORY DIR-ENT-LIST ENTRY-LIMIT))
+;;           ("Subgoal *1/3" :use
+;;            ((:instance
+;;              (:rewrite m1-bounded-file-alist-p-of-cdr-lemma-1)
+;;              (ac1
+;;               (len
+;;                (make-dir-ent-list
+;;                 (string=>nats
+;;                  (mv-nth
+;;                   0
+;;                   (get-clusterchain-contents fat32-in-memory
+;;                                              (dir-ent-first-cluster (car dir-ent-list))
+;;                                              2097152))))))
+;;              (ac2 65534)
+;;              (x
+;;               (mv-nth
+;;                0
+;;                (lofat-to-hifat-helper-exec
+;;                 fat32-in-memory
+;;                 (make-dir-ent-list
+;;                  (string=>nats
+;;                   (mv-nth 0
+;;                           (get-clusterchain-contents
+;;                            fat32-in-memory
+;;                            (dir-ent-first-cluster (car dir-ent-list))
+;;                            2097152))))
+;;                 (+ -1 entry-limit)))))))))
 
 (defthm
   data-region-length-of-update-fati
