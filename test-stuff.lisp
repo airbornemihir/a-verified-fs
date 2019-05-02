@@ -419,6 +419,30 @@
     (stringp
      (ls-smallest-counterexample fat32-in-memory name-list)))))
 
+(defthm
+  len-of-ls-list-lemma-3
+  (implies
+   (string-listp name-list)
+   (let
+    ((name
+      (ls-smallest-counterexample fat32-in-memory name-list)))
+    (implies
+     (stringp name)
+     (and
+      (member-equal name name-list)
+      (or
+       (not
+        (fat32-filename-list-p
+         (pathname-to-fat32-pathname (coerce name 'list))))
+       (not
+        (equal
+         (mv-nth
+          1
+          (lofat-lstat
+           fat32-in-memory
+           (pathname-to-fat32-pathname (coerce name 'list))))
+         0))))))))
+
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
                   :guard-debug t
