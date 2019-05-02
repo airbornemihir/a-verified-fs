@@ -392,13 +392,13 @@
         (cons (car name-list) (ls-list fat32-in-memory (cdr name-list)))
       (ls-list fat32-in-memory (cdr name-list)))))
 
-(defthm len-of-ls-list-lemma-1
+(defthm ls-list-correctness-1
   (<= (len (ls-list fat32-in-memory name-list))
       (len name-list))
   :rule-classes :linear)
 
 (defthmd
-  len-of-ls-list-lemma-2
+  ls-list-correctness-2
   (implies
    (not (equal (mv-nth 1
                        (lofat-lstat fat32-in-memory pathname))
@@ -409,23 +409,22 @@
   :hints (("goal" :in-theory (enable lofat-lstat))))
 
 (defthm
-  len-of-ls-list-lemma-3
+  ls-list-correctness-3
   (implies
    (and
     (member-equal pathname name-list)
-    (or
-     (not
-      (fat32-filename-list-p
-       (pathname-to-fat32-pathname (coerce pathname 'list))))
+    (equal (len (ls-list fat32-in-memory name-list))
+           (len name-list)))
+    (and
+     (fat32-filename-list-p
+      (pathname-to-fat32-pathname (explode pathname)))
      (equal
       (mv-nth
        1
        (lofat-lstat
         fat32-in-memory
-        (pathname-to-fat32-pathname (coerce pathname 'list))))
-      -1)))
-   (< (len (ls-list fat32-in-memory name-list))
-      (len name-list))))
+        (pathname-to-fat32-pathname (explode pathname))))
+      0))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
