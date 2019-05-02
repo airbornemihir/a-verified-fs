@@ -617,6 +617,17 @@ mtools-mv-ref-output-2.raw mtools-mv-output-2.raw: mv-replicant.lisp
 	env DISK="mtools-mv-output-2.raw" MV_OUTPUT="mtools-mv-output-2.raw" \
 	$(ACL2) -- "/tmp/file1.txt" "/tmp/file2.txt" < mv-replicant.lisp
 
+ls-ref-output-1.txt ls-output-1.txt: $(MOUNTPOINT) ls-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	ls -c < $(MOUNTPOINT)/initrd.img > ls-ref-output-1.txt
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) LS_OUTPUT="ls-output-1.txt" \
+	$(ACL2) -- -d "/initrd.img" < ls-replicant.lisp
+
 debug-do-nothing: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)

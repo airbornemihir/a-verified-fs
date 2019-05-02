@@ -364,6 +364,14 @@
       (fs (mv-nth 0
                   (lofat-to-hifat fat32-in-memory))))))))
 
+(defoptions ls-opts
+  :parents (demo2)
+  :tag :demo2
+  ((directory    "Recursively delete a directory"
+                 booleanp
+                 :rule-classes :type-prescription
+                 :alias #\d)))
+
 (defun ls-list (fat32-in-memory name-list)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (and
@@ -419,8 +427,19 @@
     (stringp
      (ls-smallest-counterexample fat32-in-memory name-list)))))
 
-(defthm
+(defthmd
   len-of-ls-list-lemma-3
+  (implies
+   (not (equal (mv-nth 1
+                       (lofat-lstat fat32-in-memory pathname))
+               0))
+   (equal (mv-nth 1
+                  (lofat-lstat fat32-in-memory pathname))
+          -1))
+  :hints (("goal" :in-theory (enable lofat-lstat))))
+
+(defthm
+  len-of-ls-list-lemma-4
   (implies
    (string-listp name-list)
    (let
@@ -430,18 +449,17 @@
      (stringp name)
      (and
       (member-equal name name-list)
-      (or
-       (not
-        (fat32-filename-list-p
-         (pathname-to-fat32-pathname (coerce name 'list))))
-       (not
-        (equal
-         (mv-nth
-          1
-          (lofat-lstat
-           fat32-in-memory
-           (pathname-to-fat32-pathname (coerce name 'list))))
-         0))))))))
+      (implies
+       (fat32-filename-list-p
+        (pathname-to-fat32-pathname (coerce name 'list)))
+       (equal
+        (mv-nth
+         1
+         (lofat-lstat
+          fat32-in-memory
+          (pathname-to-fat32-pathname (coerce name 'list))))
+        -1))))))
+  :hints (("goal" :in-theory (enable len-of-ls-list-lemma-3))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
