@@ -384,6 +384,41 @@
         (cons (car name-list) (ls-list fat32-in-memory (cdr name-list)))
       (ls-list fat32-in-memory (cdr name-list)))))
 
+(defun ls-smallest-counterexample (fat32-in-memory name-list)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and
+                          (lofat-fs-p fat32-in-memory) (string-listp name-list))))
+  (b*
+      (((when (atom name-list)) nil)
+       (fat32-pathname
+        (pathname-to-fat32-pathname (coerce (car name-list) 'list)))
+       ;; It doesn't really matter for these purposes what the errno is. We're
+       ;; not trying to match this program for its stderr output.
+       ((unless
+            (fat32-filename-list-p fat32-pathname))
+        (car name-list))
+       ((mv & retval &)
+        (lofat-lstat fat32-in-memory fat32-pathname)))
+    (if
+        (equal retval 0)
+        (ls-smallest-counterexample fat32-in-memory (cdr name-list))
+      (car name-list))))
+
+(defthm len-of-ls-list-lemma-1
+  (<= (len (ls-list fat32-in-memory name-list))
+      (len name-list))
+  :rule-classes :linear)
+
+(defthm
+  len-of-ls-list-lemma-2
+  (implies
+   (string-listp name-list)
+   (iff
+    (< (len (ls-list fat32-in-memory name-list))
+       (len name-list))
+    (stringp
+     (ls-smallest-counterexample fat32-in-memory name-list)))))
+
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
                   :guard-debug t
