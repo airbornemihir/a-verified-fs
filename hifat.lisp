@@ -1749,6 +1749,34 @@
        :in-theory (enable fat32-filename-list-fix
                           m1-regular-file-p)))))
 
+  (local
+   (defthmd
+     m1-read-after-delete-lemma-5
+     (b*
+         (((mv original-file original-error-code)
+           (find-file-by-pathname fs pathname1))
+          ((mv new-fs new-error-code)
+           (remove-file-by-pathname fs pathname2)))
+       (implies
+        (and (equal original-error-code 0)
+             (m1-directory-file-p original-file))
+        (equal
+         (find-file-by-pathname new-fs pathname1)
+         (if (and (fat32-filename-list-prefixp pathname2 pathname1)
+                  (equal new-error-code 0))
+             (mv (make-m1-file) *enoent*)
+           (if
+               (and (fat32-filename-list-prefixp pathname1 pathname2)
+                    (equal new-error-code 0))
+               (remove-file-by-pathname (mv-nth 0 (find-file-by-pathname fs
+                                                                         pathname1))
+                                        (nthcdr (len pathname1) pathname2))
+             (find-file-by-pathname fs pathname1))))))
+     :hints
+     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+       :in-theory (enable fat32-filename-list-fix
+                          m1-regular-file-p)))))
+
   (defthm
     m1-read-after-delete
     (b*
