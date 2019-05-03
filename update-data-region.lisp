@@ -849,7 +849,7 @@
       (e/d (data-region-length make-clusters
                                remember-that-time-with-update-nth
                                take-of-nthcdr)
-           (append take take-redefinition))
+           (append take))
       :induct (update-data-region fat32-in-memory str len)))))
 
 (defthm

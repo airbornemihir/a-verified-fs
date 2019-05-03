@@ -210,8 +210,7 @@
   :hints (("goal" :induct (rm-list fs nil pathnames exit-status)
            :in-theory (disable (:definition pathname-to-fat32-pathname)
                                (:definition name-to-fat32-name)
-                               (:linear len-of-member-equal)
-                               (:definition take-redefinition)))))
+                               (:linear len-of-member-equal)))))
 
 (defthm
   wc-after-rm-lemma-3
@@ -251,8 +250,7 @@
     :induct (rm-list fs nil pathnames exit-status)
     :in-theory (disable (:definition pathname-to-fat32-pathname)
                         (:definition name-to-fat32-name)
-                        (:linear len-of-member-equal)
-                        (:definition take-redefinition)))))
+                        (:linear len-of-member-equal)))))
 
 (defthm
   wc-after-rm

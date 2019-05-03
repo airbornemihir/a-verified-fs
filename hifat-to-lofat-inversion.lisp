@@ -312,7 +312,6 @@
 
 (verify-guards get-clusterchain-contents)
 
-
 (defthm
   get-clusterchain-contents-correctness-2
   (implies
@@ -330,7 +329,8 @@
   :hints
   (("goal" :in-theory
     (e/d (fat-length fati effective-fat
-                     nth get-clusterchain-contents)))))
+                     nth get-clusterchain-contents)
+         (take-when-atom)))))
 
 (defthm
   get-contents-from-clusterchain-of-update-data-regioni
@@ -700,7 +700,7 @@
     :in-theory
     (e/d (fat32-filename-p lofat-to-hifat-helper-exec)
          (nth-of-string=>nats
-          natp-of-cluster-size take-redefinition))
+          natp-of-cluster-size))
     :induct
     (lofat-to-hifat-helper-exec fat32-in-memory
                                      dir-ent-list entry-limit)))
@@ -758,8 +758,7 @@
     (e/d (fat32-filename-p useless-dir-ent-p
                            lofat-to-hifat-helper-exec
                            useful-dir-ent-list-p)
-         (nth-of-string=>nats natp-of-cluster-size
-                              take-redefinition))
+         (nth-of-string=>nats natp-of-cluster-size))
     :induct (lofat-to-hifat-helper-exec
              fat32-in-memory
              dir-ent-list entry-limit))))

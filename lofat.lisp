@@ -5693,7 +5693,6 @@
                         (:REWRITE NTH-WHEN-ATOM)
                         (:DEFINITION UPDATE-DATA-REGION)
                         (:REWRITE CONSP-OF-TAKE)
-                        (:DEFINITION TAKE-REDEFINITION)
                         (:REWRITE
                          RESIZE-FAT-OF-FAT-LENGTH-WHEN-FAT32-IN-MEMORYP
                          . 2)
