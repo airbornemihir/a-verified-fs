@@ -163,8 +163,9 @@
             length (cluster-size fat32-in-memory)))
     :rule-classes :definition
     :hints
-    (("goal" :in-theory (enable get-clusterchain
-                                fati fat-length effective-fat nth)))))
+    (("goal" :in-theory (e/d (get-clusterchain
+                              fati fat-length effective-fat nth)
+                             (take-when-atom))))))
 
 (encapsulate
   ()

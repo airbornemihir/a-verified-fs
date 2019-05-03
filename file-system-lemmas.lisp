@@ -766,3 +766,20 @@
   (implies (not (equal x1 x2))
            (iff (member-equal x1 (remove1-equal x2 l))
                 (member-equal x1 l))))
+
+(defthm
+  member-of-intersection$
+  (implies (not (member-equal x l1))
+           (not (member-equal x (intersection-equal l1 l2)))))
+
+(defthm
+  nth-of-intersection$
+  (implies (< (nfix n)
+              (len (intersection-equal l1 l2)))
+           (member-equal (nth n (intersection-equal l1 l2))
+                         l1))
+  :hints
+  (("goal"
+    :in-theory (disable member-of-intersection$)
+    :use (:instance member-of-intersection$
+                    (x (nth n (intersection-equal l1 l2)))))))

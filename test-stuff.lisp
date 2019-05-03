@@ -222,28 +222,29 @@
 (defthm wc-after-rm-lemma-4
   (fat32-filename-list-prefixp x x))
 
-;; This ends up requiring a number of subinductions.
+(defthm
+  wc-after-rm-lemma-6
+  (implies (m1-regular-file-p (mv-nth 0 (find-file-by-pathname fs pathname)))
+           (equal (mv-nth 1 (remove-file-by-pathname fs pathname))
+                  0)))
+
 (defthm
   wc-after-rm-lemma-5
   (implies
    (and
     (m1-regular-file-p
-     (mv-nth
-      0
-      (find-file-by-pathname
-       fs
-       (pathname-to-fat32-pathname (explode pathname)))))
+     (mv-nth 0
+             (find-file-by-pathname
+              fs
+              (pathname-to-fat32-pathname (explode pathname)))))
     (member-equal pathname pathnames)
-    (stringp pathname)
-    (fat32-filename-list-p
-     (pathname-to-fat32-pathname (explode pathname))))
+    (fat32-filename-list-p (pathname-to-fat32-pathname (explode pathname))))
    (equal
     (mv-nth
      1
-     (find-file-by-pathname
-      (mv-nth 0
-              (rm-list fs nil pathnames exit-status))
-      (pathname-to-fat32-pathname (explode pathname))))
+     (find-file-by-pathname (mv-nth 0
+                                    (rm-list fs nil pathnames exit-status))
+                            (pathname-to-fat32-pathname (explode pathname))))
     *enoent*))
   :hints
   (("goal"
@@ -390,43 +391,13 @@
         (cons (car name-list) (ls-list fat32-in-memory (cdr name-list)))
       (ls-list fat32-in-memory (cdr name-list)))))
 
-(defun ls-smallest-counterexample (fat32-in-memory name-list)
-  (declare (xargs :stobjs fat32-in-memory
-                  :guard (and
-                          (lofat-fs-p fat32-in-memory) (string-listp name-list))))
-  (b*
-      (((when (atom name-list)) nil)
-       (fat32-pathname
-        (pathname-to-fat32-pathname (coerce (car name-list) 'list)))
-       ;; It doesn't really matter for these purposes what the errno is. We're
-       ;; not trying to match this program for its stderr output.
-       ((unless
-            (fat32-filename-list-p fat32-pathname))
-        (car name-list))
-       ((mv & retval &)
-        (lofat-lstat fat32-in-memory fat32-pathname)))
-    (if
-        (equal retval 0)
-        (ls-smallest-counterexample fat32-in-memory (cdr name-list))
-      (car name-list))))
-
-(defthm len-of-ls-list-lemma-1
+(defthm ls-list-correctness-1
   (<= (len (ls-list fat32-in-memory name-list))
       (len name-list))
   :rule-classes :linear)
 
-(defthm
-  len-of-ls-list-lemma-2
-  (implies
-   (string-listp name-list)
-   (iff
-    (< (len (ls-list fat32-in-memory name-list))
-       (len name-list))
-    (stringp
-     (ls-smallest-counterexample fat32-in-memory name-list)))))
-
 (defthmd
-  len-of-ls-list-lemma-3
+  ls-list-correctness-2
   (implies
    (not (equal (mv-nth 1
                        (lofat-lstat fat32-in-memory pathname))
@@ -437,27 +408,171 @@
   :hints (("goal" :in-theory (enable lofat-lstat))))
 
 (defthm
-  len-of-ls-list-lemma-4
+  ls-list-correctness-3
   (implies
-   (string-listp name-list)
-   (let
-    ((name
-      (ls-smallest-counterexample fat32-in-memory name-list)))
-    (implies
-     (stringp name)
-     (and
-      (member-equal name name-list)
-      (implies
-       (fat32-filename-list-p
-        (pathname-to-fat32-pathname (coerce name 'list)))
-       (equal
-        (mv-nth
-         1
-         (lofat-lstat
-          fat32-in-memory
-          (pathname-to-fat32-pathname (coerce name 'list))))
-        -1))))))
-  :hints (("goal" :in-theory (enable len-of-ls-list-lemma-3))))
+   (and
+    (member-equal pathname name-list)
+    (equal (len (ls-list fat32-in-memory name-list))
+           (len name-list)))
+    (and
+     (fat32-filename-list-p
+      (pathname-to-fat32-pathname (explode pathname)))
+     (equal
+      (mv-nth
+       1
+       (lofat-lstat
+        fat32-in-memory
+        (pathname-to-fat32-pathname (explode pathname))))
+      0))))
+
+(defthm
+  ls-after-rm
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (string-listp rm-pathnames)
+    (m1-bounded-file-alist-p
+     (mv-nth
+      0
+      (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+               nil rm-pathnames 0)))
+    (m1-file-no-dups-p
+     (mv-nth
+      0
+      (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+               nil rm-pathnames 0)))
+    (>=
+     (max-entry-count fat32-in-memory)
+     (m1-entry-count
+      (mv-nth
+       0
+       (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                nil rm-pathnames 0))))
+    (equal
+     (mv-nth
+      1
+      (hifat-to-lofat
+       fat32-in-memory
+       (mv-nth
+        0
+        (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                 nil rm-pathnames 0))))
+     0)
+    (m1-file-no-dups-p
+     (mv-nth
+      0
+      (lofat-to-hifat
+       (mv-nth
+        0
+        (hifat-to-lofat
+         fat32-in-memory
+         (mv-nth
+          0
+          (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                   nil rm-pathnames 0)))))))
+    (m1-regular-file-p
+     (mv-nth
+      0
+      (find-file-by-pathname
+       (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+       (pathname-to-fat32-pathname
+        (explode
+         (nth
+          0
+          (intersection-equal ls-pathnames rm-pathnames))))))))
+   (b*
+       (((mv fat32-in-memory &)
+         (rm-1 fat32-in-memory rm-pathnames nil)))
+     (implies
+      (and
+       (< 0
+          (len (intersection-equal ls-pathnames rm-pathnames))))
+      (< (len (ls-list fat32-in-memory ls-pathnames))
+         (len ls-pathnames)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (rm-1)
+     (ls-list-correctness-3
+      nth (:rewrite member-equal-nth)
+      (:rewrite lofat-lstat-refinement)
+      (:rewrite hifat-to-lofat-inversion)
+      (:rewrite find-file-by-pathname-correctness-3-lemma-7)
+      (:definition pathname-to-fat32-pathname)
+      (:definition name-to-fat32-name)
+      (:definition rm-list)
+      (:definition find-file-by-pathname)
+      (:rewrite m1-entry-count-when-hifat-equiv)))
+    :do-not-induct t
+    :use
+    ((:instance
+      ls-list-correctness-3
+      (pathname
+       (nth 0
+            (intersection-equal ls-pathnames rm-pathnames)))
+      (fat32-in-memory
+       (mv-nth
+        0
+        (hifat-to-lofat
+         fat32-in-memory
+         (mv-nth
+          0
+          (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                   nil rm-pathnames 0)))))
+      (name-list ls-pathnames))
+     (:instance
+      (:rewrite member-equal-nth)
+      (l (intersection-equal ls-pathnames rm-pathnames))
+      (n 0))
+     (:instance
+      (:rewrite lofat-lstat-refinement)
+      (pathname
+       (pathname-to-fat32-pathname
+        (explode
+         (nth 0
+              (intersection-equal ls-pathnames rm-pathnames)))))
+      (fat32-in-memory
+       (mv-nth
+        0
+        (hifat-to-lofat
+         fat32-in-memory
+         (mv-nth
+          0
+          (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                   nil rm-pathnames 0))))))
+     (:instance
+      (:rewrite hifat-to-lofat-inversion)
+      (fs
+       (mv-nth
+        0
+        (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                 nil rm-pathnames 0)))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite find-file-by-pathname-correctness-3-lemma-7)
+      (pathname
+       (pathname-to-fat32-pathname
+        (explode
+         (nth 0
+              (intersection-equal ls-pathnames rm-pathnames)))))
+      (m1-file-alist2
+       (mv-nth
+        0
+        (lofat-to-hifat
+         (mv-nth
+          0
+          (hifat-to-lofat
+           fat32-in-memory
+           (mv-nth
+            0
+            (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                     nil rm-pathnames 0)))))))
+      (m1-file-alist1
+       (mv-nth
+        0
+        (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                 nil rm-pathnames 0))))))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
