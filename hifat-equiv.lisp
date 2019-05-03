@@ -40,43 +40,12 @@
            (hifat-subsetp (m1-file->contents file1)
                           (m1-file->contents file2))))))
 
-(defund
-  m1-file-no-dups-p (m1-file-alist)
-  (declare (xargs :guard (m1-file-alist-p m1-file-alist)))
-  (cond ((atom m1-file-alist) t)
-        ((not (m1-file-no-dups-p (cdr m1-file-alist)))
-         nil)
-        ((not (mbt (and (consp (car m1-file-alist))
-                        (stringp (car (car m1-file-alist))))))
-         (not (member-equal (car m1-file-alist)
-                            (cdr m1-file-alist))))
-        ((assoc-equal (caar m1-file-alist)
-                      (cdr m1-file-alist))
-         nil)
-        ((m1-directory-file-p (cdar m1-file-alist))
-         (m1-file-no-dups-p
-          (m1-file->contents (cdar m1-file-alist))))
-        (t t)))
-
-(local (in-theory (enable m1-file-no-dups-p)))
-
-(defthm m1-file-no-dups-p-correctness-1
-  (implies (m1-file-no-dups-p fs)
-           (m1-file-no-dups-p (cdr fs)))
-  :hints (("goal" :do-not-induct t)))
-
 (defthm hifat-subsetp-of-remove1-assoc-1
   (implies (and (m1-file-alist-p m1-file-alist1)
                 (atom (assoc-equal key m1-file-alist1)))
            (equal (hifat-subsetp m1-file-alist1
                                  (remove1-assoc key m1-file-alist2))
                   (hifat-subsetp m1-file-alist1 m1-file-alist2))))
-
-(defthm
-  m1-file-no-dups-p-of-remove1-assoc-equal
-  (implies
-   (m1-file-no-dups-p m1-file-alist)
-   (m1-file-no-dups-p (remove1-assoc-equal key m1-file-alist))))
 
 (defthm hifat-subsetp-preserves-assoc-equal
   (implies (and (hifat-subsetp x y)
@@ -101,13 +70,6 @@
           (hifat-subsetp y z)
           (m1-directory-file-p (cdr (assoc-equal key y))))
      (m1-directory-file-p (cdr (assoc-equal key z)))))))
-
-(defthm
-  hifat-subsetp-transitive-lemma-2
-  (implies (and (m1-file-alist-p z)
-                (m1-file-no-dups-p z)
-                (m1-directory-file-p (cdr (assoc-equal key z))))
-           (m1-file-no-dups-p (m1-file->contents (cdr (assoc-equal key z))))))
 
 (defthm
   hifat-subsetp-transitive-lemma-3
@@ -152,21 +114,19 @@
            (equal (hifat-subsetp m1-file-alist1 m1-file-alist2)
                   (atom m1-file-alist1))))
 
-(defthm hifat-subsetp-reflexive-lemma-1
+(defthm
+  hifat-subsetp-reflexive-lemma-1
   (implies (and (m1-file-alist-p x)
-                (m1-file-no-dups-p (append x y)))
+                (not (intersectp-equal (strip-cars x)
+                                       (strip-cars y))))
            (equal (assoc-equal (car (car y)) (append x y))
-                  (car y))))
-
-(defthm hifat-subsetp-reflexive-lemma-2
-  (implies (not (m1-file-no-dups-p y))
-           (not (m1-file-no-dups-p (append x y)))))
-
-(defthm hifat-subsetp-reflexive-lemma-3
-  (implies (and (m1-file-alist-p y)
-                (m1-file-no-dups-p y)
-                (m1-directory-file-p (cdr (car y))))
-           (m1-file-no-dups-p (m1-file->contents (cdr (car y))))))
+                  (car y)))
+  :hints
+  (("goal" :in-theory (disable intersectp-is-commutative)
+    :induct (append x y)
+    :expand (intersectp-equal (cons (car (car x))
+                                    (strip-cars (cdr x)))
+                              (strip-cars y)))))
 
 (encapsulate
   ()
@@ -187,12 +147,25 @@
         (induction-scheme (append x (list (car y)))
                           (cdr y))))))
 
+  (local
+   (defthm
+     strip-cars-of-append
+     (equal (strip-cars (append x y))
+            (append (strip-cars x) (strip-cars y)))))
+
   (defthm hifat-subsetp-reflexive-lemma-4
     (implies (and (m1-file-alist-p x)
                   (m1-file-alist-p y)
-                  (m1-file-no-dups-p (append x y)))
+                  (not (intersectp-equal (strip-cars x) (strip-cars y))))
              (hifat-subsetp y (append x y)))
-    :hints (("goal" :induct (induction-scheme x y)))))
+    :hints (("goal" :induct (induction-scheme x y)
+             :expand
+             ((:free (y) (intersectp-equal nil y)))
+             :in-theory (disable (:REWRITE INTERSECTP-IS-COMMUTATIVE)))
+            ("subgoal *1/2.4"
+             :expand
+             (intersectp-equal (cons (car (car y)) (strip-cars x))
+                               (strip-cars (cdr y)))))))
 
 (defthm
   hifat-subsetp-reflexive-lemma-5
