@@ -1,6 +1,16 @@
 (include-book "../test-stuff")
 (include-book "oslib/argv" :dir :system)
 
+(defun ls-output (prefix ls-list channel state)
+  (declare (xargs :stobjs state :verify-guards nil))
+  (if
+      (atom ls-list)
+      state
+    (b*
+        ((state (princ$ (concatenate 'string prefix (car ls-list)) channel state))
+         (state (newline channel state)))
+      (ls-output prefix (cdr ls-list) channel state))))
+
 (b*
     (((mv argv state)
       (oslib::argv))
@@ -17,5 +27,13 @@
      (ls-list
       (ls-list fat32-in-memory extra-args))
      (exit-status
-      (if (< (len ls-list) (len extra-args)) 2 0)))
+      (if (< (len ls-list) (len extra-args)) 2 0))
+     ((mv & prefix state)
+      (getenv$ "LS_PREFIX" state))
+     ((mv & val state)
+      (getenv$ "LS_OUTPUT" state))
+     ((mv channel state)
+      (open-output-channel val :character state))
+     (state (ls-output prefix ls-list channel state))
+     (state (close-output-channel channel state)))
   (mv (good-bye exit-status) fat32-in-memory state))
