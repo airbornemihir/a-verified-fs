@@ -18,7 +18,6 @@
      ;; Parsing error.
      ((when errmsg)
       (mv (good-bye 1) fat32-in-memory state))
-     ;; ((rm-opts opts) opts)
      ((mv & val state)
       (getenv$ "DISK" state))
      ((mv fat32-in-memory &)

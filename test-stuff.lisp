@@ -79,9 +79,6 @@
     *enoent*))
   :hints (("goal" :in-theory (disable find-file-by-pathname))))
 
-(defthm rm-list-correctness-1-lemma-3
-  (fat32-filename-list-prefixp x x))
-
 (defthm
   rm-list-correctness-1
   (implies
@@ -280,22 +277,30 @@
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
+    (equal (mv-nth 1
+                   (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                            rm-pathnames 0))
+           0)
     (m1-bounded-file-alist-p
      (mv-nth 0
-             (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0)))
+             (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                      rm-pathnames 0)))
     (m1-file-no-dups-p
      (mv-nth 0
-             (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0)))
+             (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                      rm-pathnames 0)))
     (>= (max-entry-count fat32-in-memory)
         (m1-entry-count
          (mv-nth 0
-                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0))))
+                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                          rm-pathnames 0))))
     (equal
      (mv-nth 1
              (hifat-to-lofat
               fat32-in-memory
               (mv-nth 0
-                      (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0))))
+                      (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                               rm-pathnames 0))))
      0)
     (m1-file-no-dups-p
      (mv-nth
@@ -306,15 +311,8 @@
         (hifat-to-lofat
          fat32-in-memory
          (mv-nth 0
-                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0)))))))
-    (m1-regular-file-p
-     (mv-nth
-      0
-      (find-file-by-pathname
-       (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-       (pathname-to-fat32-pathname
-        (explode (nth 0
-                      (intersection-equal ls-pathnames rm-pathnames))))))))
+                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                          rm-pathnames 0))))))))
    (b* (((mv fat32-in-memory &)
          (rm-1 fat32-in-memory rm-pathnames)))
      (implies (and (< 0
@@ -347,7 +345,8 @@
         (hifat-to-lofat
          fat32-in-memory
          (mv-nth 0
-                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0)))))
+                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                          rm-pathnames 0)))))
       (name-list ls-pathnames))
      (:instance (:rewrite member-equal-nth)
                 (l (intersection-equal ls-pathnames rm-pathnames))
@@ -364,11 +363,13 @@
         (hifat-to-lofat
          fat32-in-memory
          (mv-nth 0
-                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0))))))
+                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                          rm-pathnames 0))))))
      (:instance
       (:rewrite hifat-to-lofat-inversion)
       (fs (mv-nth 0
-                  (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0)))
+                  (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                           rm-pathnames 0)))
       (fat32-in-memory fat32-in-memory))
      (:instance
       (:rewrite find-file-by-pathname-correctness-3-lemma-7)
@@ -385,10 +386,12 @@
           (hifat-to-lofat
            fat32-in-memory
            (mv-nth 0
-                   (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0)))))))
+                   (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                            rm-pathnames 0)))))))
       (m1-file-alist1
        (mv-nth 0
-               (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory)) rm-pathnames 0))))))))
+               (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+                        rm-pathnames 0))))))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
