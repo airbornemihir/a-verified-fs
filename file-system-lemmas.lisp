@@ -507,7 +507,8 @@
   (implies
    (and (not (equal key1 nil))
         (not (consp (assoc-equal key1 alist))))
-   (not (consp (assoc-equal key1 (remove1-equal x alist))))))
+   (not (consp (assoc-equal key1 (remove1-equal x alist)))))
+  :rule-classes (:rewrite :type-prescription))
 
 (defthm assoc-equal-when-member-equal
   (implies (and (member-equal x lst)
