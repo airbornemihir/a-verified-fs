@@ -14,7 +14,8 @@ mtools-test-mkdir-replicant-1 \
 test-rmdir-replicant-1 test-rmdir-replicant-2 \
 mtools-test-rmdir-replicant-1 \
 test-mv-replicant-1 mtools-test-mv-replicant-1 \
-mtools-test-mv-replicant-2
+mtools-test-mv-replicant-2 \
+test-ls-replicant-1
 
 test: $(TEST)
 
@@ -181,6 +182,9 @@ mtools-test-mv-replicant-1: mtools-mv-output-1.raw mtools-mv-ref-output-1.raw
 mtools-test-mv-replicant-2: mtools-mv-ref-output-2.raw mtools-mv-output-2.raw
 	env DISK=$(DISK) REF_INPUT="mtools-mv-ref-output-2.raw" \
 	INPUT="mtools-mv-output-2.raw" $(ACL2) -- < compare-disks.lisp
+
+test-ls-replicant-1: ls-ref-output-1.txt ls-output-1.txt
+	diff -u -i ls-ref-output-1.txt ls-output-1.txt
 
 cp-ref-output-1.txt cp-output-1.txt: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
@@ -622,11 +626,12 @@ ls-ref-output-1.txt ls-output-1.txt: $(MOUNTPOINT) ls-replicant.lisp
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
-	ls -c < $(MOUNTPOINT)/initrd.img > ls-ref-output-1.txt
+	ls -1d $(MOUNTPOINT)/initrd.img > ls-ref-output-1.txt
 	sleep 1
 	sudo umount $(MOUNTPOINT)
-	env DISK=$(DISK) LS_OUTPUT="ls-output-1.txt" \
-	$(ACL2) -- -d "/initrd.img" < ls-replicant.lisp
+	env DISK=$(DISK) LS_PREFIX=$(MOUNTPOINT) \
+	LS_OUTPUT="ls-output-1.txt" $(ACL2) -- -d "/initrd.img" \
+	< ls-replicant.lisp
 
 debug-do-nothing: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)

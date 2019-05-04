@@ -13,7 +13,7 @@
 ;; with the theory I've built up so far, or else causing a lot of unnecessary
 ;; frames and tries.
 (local
- (in-theory (disable take-of-too-many make-list-ac-removal
+ (in-theory (disable take-of-too-many take-when-atom make-list-ac-removal
                      revappend-removal str::hex-digit-listp-of-cons
                      loghead logtail)))
 
@@ -163,9 +163,8 @@
             length (cluster-size fat32-in-memory)))
     :rule-classes :definition
     :hints
-    (("goal" :in-theory (e/d (get-clusterchain
-                              fati fat-length effective-fat nth)
-                             (take-when-atom))))))
+    (("goal" :in-theory (enable get-clusterchain
+                                fati fat-length effective-fat nth)))))
 
 (encapsulate
   ()
@@ -329,9 +328,8 @@
                    masked-current-cluster length))))
   :hints
   (("goal" :in-theory
-    (e/d (fat-length fati effective-fat
-                     nth get-clusterchain-contents)
-         (take-when-atom)))))
+    (enable fat-length fati effective-fat
+            nth get-clusterchain-contents))))
 
 (defthm
   get-contents-from-clusterchain-of-update-data-regioni
