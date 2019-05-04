@@ -40,6 +40,22 @@
            (hifat-subsetp (m1-file->contents file1)
                           (m1-file->contents file2))))))
 
+;; It's tempting to remove this predicate, because it makes the fixing of
+;; certain functions hard... but it does give us the desirable property of
+;; maintaining equality for m1-entry-count between two directory trees whenever
+;; it holds for the two trees. I'm not sure that property is currently used,
+;; but it makes a good argument for keeping it. One other argument is the proof
+;; of anti-reflexivity for hifat-subsetp - if we are to prove that y is a
+;; subset of y under this definition of subsetp (that is, this definition which
+;; doesn't do remove-equal), then we need to make sure there are no duplicate
+;; bindings for the same filename within a directory. The third argument
+;; pertains to the generally understood semantics for filesystems, where there
+;; is generally no valid way of dealing with two directory entries referring to
+;; the same filename (not the same inode, which is OK in filesystems with hard
+;; linking.) There doesn't seem to be much in the literature supporting this,
+;; but there are folks on StackOverflow
+;; (https://unix.stackexchange.com/a/227370,
+;; https://unix.stackexchange.com/a/227361).
 (defund
   m1-file-no-dups-p (m1-file-alist)
   (declare (xargs :guard (m1-file-alist-p m1-file-alist)))
