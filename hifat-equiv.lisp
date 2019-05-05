@@ -475,10 +475,10 @@
 ;; explicitly stipulating equality as the equivalence relation, we get around
 ;; this.
 (defthm hifat-equiv-of-cons
-  (implies (and (hifat-equiv tail1 tail2)
-                (fat32-filename-p (car head))
-                (hifat-no-dups-p tail2))
+  (implies (hifat-equiv tail1 tail2)
            (equal (hifat-equiv (cons head tail1)
                                (cons head tail2))
                   t))
-  :hints (("goal" :in-theory (e/d (hifat-equiv hifat-no-dups-p)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (hifat-equiv hifat-no-dups-p))
+           :expand (hifat-file-alist-fix (cons head tail1)))))
