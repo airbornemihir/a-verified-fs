@@ -160,6 +160,8 @@
   (("goal" :in-theory (e/d (hifat-equiv)
                            (hifat-entry-count-when-hifat-subsetp))
     :use ((:instance hifat-entry-count-when-hifat-subsetp
-                     (m1-file-alist1 m1-file-alist2)
-                     (m1-file-alist2 m1-file-alist1))
-          hifat-entry-count-when-hifat-subsetp))))
+                     (m1-file-alist1 (hifat-file-alist-fix m1-file-alist2))
+                     (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1)))
+          (:instance hifat-entry-count-when-hifat-subsetp
+                     (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
+                     (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))))))

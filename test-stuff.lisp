@@ -331,8 +331,7 @@
           (:definition pathname-to-fat32-pathname)
           (:definition name-to-fat32-name)
           (:definition rm-list)
-          (:definition find-file-by-pathname)
-          (:rewrite hifat-entry-count-when-hifat-equiv)))
+          (:definition find-file-by-pathname)))
     :do-not-induct t
     :use
     ((:instance
