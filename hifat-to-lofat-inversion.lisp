@@ -742,7 +742,7 @@
                  (natp entry-count)))))
 
 (defthm
-  lofat-to-hifat-helper-exec-correctness-2-lemma-1
+  m1-file-alist-p-of-lofat-to-hifat-helper-exec-lemma-1
   (implies (and (dir-ent-p dir-ent)
                 (< (nfix n) *ms-dir-ent-length*))
            (rationalp (nth n dir-ent)))
@@ -753,23 +753,40 @@
                              (< (nfix n) *ms-dir-ent-length*))
                         (acl2-numberp (nth n dir-ent))))))
 
+(defthm
+  m1-file-alist-p-of-lofat-to-hifat-helper-exec
+  (implies (useful-dir-ent-list-p dir-ent-list)
+           (b* (((mv m1-file-alist & & &)
+                 (lofat-to-hifat-helper-exec
+                  fat32-in-memory
+                  dir-ent-list entry-limit)))
+             (m1-file-alist-p m1-file-alist)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (fat32-filename-p useless-dir-ent-p
+                           lofat-to-hifat-helper-exec
+                           useful-dir-ent-list-p hifat-no-dups-p)
+         (nth-of-string=>nats natp-of-cluster-size))
+    :induct (lofat-to-hifat-helper-exec
+             fat32-in-memory
+             dir-ent-list entry-limit))))
+
 (encapsulate
-  () ;; start lemmas for lofat-to-hifat-helper-exec-correctness-2
+  ()
 
   (local
-   (defthm lofat-to-hifat-helper-exec-correctness-2-lemma-2
+   (defthm hifat-no-dups-p-of-lofat-to-hifat-helper-exec-lemma-1
      (implies (alistp list)
               (iff (consp (assoc-equal x list)) (assoc-equal x list)))))
 
   (defthm
-    lofat-to-hifat-helper-exec-correctness-2
-    (implies (useful-dir-ent-list-p dir-ent-list)
-             (b* (((mv m1-file-alist & & &)
-                   (lofat-to-hifat-helper-exec
-                    fat32-in-memory
-                    dir-ent-list entry-limit)))
-               (and (m1-file-alist-p m1-file-alist)
-                    (hifat-no-dups-p m1-file-alist))))
+    hifat-no-dups-p-of-lofat-to-hifat-helper-exec
+    (b* (((mv m1-file-alist & & &)
+          (lofat-to-hifat-helper-exec
+           fat32-in-memory
+           dir-ent-list entry-limit)))
+      (hifat-no-dups-p m1-file-alist))
     :hints
     (("goal"
       :in-theory
