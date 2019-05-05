@@ -667,14 +667,17 @@
          tail-entry-limit))
        (error-code (if (zp error-code) tail-error-code error-code)))
     ;; We add the file to this m1 instance.
-    (mv (list* (cons filename
-                     (make-m1-file :dir-ent dir-ent
-                                   :contents head))
-               tail)
-        (+ 1 head-entry-count tail-entry-count)
-        (append (list clusterchain) head-clusterchain-list
-                tail-clusterchain-list)
-        error-code)))
+    (if
+        (consp (assoc-equal filename tail))
+        (mv tail tail-entry-count tail-clusterchain-list *EIO*)
+      (mv (list* (cons filename
+                       (make-m1-file :dir-ent dir-ent
+                                     :contents head))
+                 tail)
+          (+ 1 head-entry-count tail-entry-count)
+          (append (list clusterchain) head-clusterchain-list
+                  tail-clusterchain-list)
+          error-code))))
 
 (defthm lofat-to-hifat-helper-exec-correctness-1-lemma-1
   (equal (rationalp (nth n (dir-ent-fix x)))
@@ -718,18 +721,25 @@
                               (<= (len m1-file-alist)
                                   (len dir-ent-list)))))
    (:rewrite
-    :corollary (b* (((mv & & clusterchain-list error-code)
+    :corollary (b* (((mv m1-file-alist & clusterchain-list error-code)
                      (lofat-to-hifat-helper-exec
                       fat32-in-memory
                       dir-ent-list entry-limit)))
-                 (and (integerp error-code)
+                 (and (alistp m1-file-alist)
+                      (integerp error-code)
                       (true-list-listp clusterchain-list))))
    (:type-prescription
     :corollary (b* (((mv m1-file-alist &)
                      (lofat-to-hifat-helper-exec
                       fat32-in-memory
                       dir-ent-list entry-limit)))
-                 (true-listp m1-file-alist)))))
+                 (true-listp m1-file-alist)))
+   (:type-prescription
+    :corollary (b* (((mv & entry-count & &)
+                     (lofat-to-hifat-helper-exec
+                      fat32-in-memory
+                      dir-ent-list entry-limit)))
+                 (natp entry-count)))))
 
 (defthm
   lofat-to-hifat-helper-exec-correctness-2-lemma-1
@@ -743,24 +753,33 @@
                              (< (nfix n) *ms-dir-ent-length*))
                         (acl2-numberp (nth n dir-ent))))))
 
-(defthm
-  lofat-to-hifat-helper-exec-correctness-2
-  (implies (useful-dir-ent-list-p dir-ent-list)
-           (b* (((mv m1-file-alist & & &)
-                 (lofat-to-hifat-helper-exec
-                  fat32-in-memory
-                  dir-ent-list entry-limit)))
-             (m1-file-alist-p m1-file-alist)))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (fat32-filename-p useless-dir-ent-p
-                           lofat-to-hifat-helper-exec
-                           useful-dir-ent-list-p)
-         (nth-of-string=>nats natp-of-cluster-size))
-    :induct (lofat-to-hifat-helper-exec
-             fat32-in-memory
-             dir-ent-list entry-limit))))
+(encapsulate
+  () ;; start lemmas for lofat-to-hifat-helper-exec-correctness-2
+
+  (local
+   (defthm lofat-to-hifat-helper-exec-correctness-2-lemma-2
+     (implies (alistp list)
+              (iff (consp (assoc-equal x list)) (assoc-equal x list)))))
+
+  (defthm
+    lofat-to-hifat-helper-exec-correctness-2
+    (implies (useful-dir-ent-list-p dir-ent-list)
+             (b* (((mv m1-file-alist & & &)
+                   (lofat-to-hifat-helper-exec
+                    fat32-in-memory
+                    dir-ent-list entry-limit)))
+               (and (m1-file-alist-p m1-file-alist)
+                    (hifat-no-dups-p m1-file-alist))))
+    :hints
+    (("goal"
+      :in-theory
+      (e/d (fat32-filename-p useless-dir-ent-p
+                             lofat-to-hifat-helper-exec
+                             useful-dir-ent-list-p hifat-no-dups-p)
+           (nth-of-string=>nats natp-of-cluster-size))
+      :induct (lofat-to-hifat-helper-exec
+               fat32-in-memory
+               dir-ent-list entry-limit)))))
 
 (defthm
   lofat-to-hifat-helper-exec-correctness-3
