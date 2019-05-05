@@ -114,6 +114,12 @@
                       (m1-file-alist m1-file-alist2)
                       (x (car (car m1-file-alist1))))))))
 
+;; This rule is kinda problematic because it has caused an infinite rewrite at
+;; least once in hifat-to-lofat-inversion-big-induction, which was only
+;; resolved by disabling it. It would be nice to make this a plain congruence
+;; rule - but that would require the m1-file-alist and hifat-no-dups-p
+;; hypotheses to be removed, which in turn would require the definition of
+;; hifat-entry-count to be changed.
 (defthm
   hifat-entry-count-when-hifat-equiv
   (implies (and (hifat-equiv m1-file-alist1 m1-file-alist2)
@@ -124,7 +130,6 @@
   :hints
   (("goal" :in-theory (e/d (hifat-equiv)
                            (hifat-entry-count-when-hifat-subsetp))
-    :do-not-induct t
     :use ((:instance hifat-entry-count-when-hifat-subsetp
                      (m1-file-alist1 m1-file-alist2)
                      (m1-file-alist2 m1-file-alist1))

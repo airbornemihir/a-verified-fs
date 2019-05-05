@@ -74,12 +74,10 @@
           (m1-file->contents (cdar m1-file-alist))))
         (t t)))
 
-(local (in-theory (enable hifat-no-dups-p)))
-
 (defthm hifat-no-dups-p-correctness-1
   (implies (hifat-no-dups-p fs)
            (hifat-no-dups-p (cdr fs)))
-  :hints (("goal" :do-not-induct t)))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
 
 (defthm hifat-subsetp-of-remove1-assoc-1
   (implies (and (m1-file-alist-p m1-file-alist1)
@@ -92,7 +90,8 @@
   hifat-no-dups-p-of-remove1-assoc-equal
   (implies
    (hifat-no-dups-p m1-file-alist)
-   (hifat-no-dups-p (remove1-assoc-equal key m1-file-alist))))
+   (hifat-no-dups-p (remove1-assoc-equal key m1-file-alist)))
+  :hints (("Goal" :in-theory (enable hifat-no-dups-p))))
 
 (defthm hifat-subsetp-preserves-assoc-equal
   (implies (and (hifat-subsetp x y)
@@ -123,7 +122,8 @@
   (implies (and (m1-file-alist-p z)
                 (hifat-no-dups-p z)
                 (m1-directory-file-p (cdr (assoc-equal key z))))
-           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key z))))))
+           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key z)))))
+  :hints (("Goal" :in-theory (enable hifat-no-dups-p)) ))
 
 (defthm
   hifat-subsetp-transitive-lemma-3
@@ -172,17 +172,20 @@
   (implies (and (m1-file-alist-p x)
                 (hifat-no-dups-p (append x y)))
            (equal (assoc-equal (car (car y)) (append x y))
-                  (car y))))
+                  (car y)))
+  :hints (("Goal" :in-theory (enable hifat-no-dups-p)) ))
 
 (defthm hifat-subsetp-reflexive-lemma-2
   (implies (not (hifat-no-dups-p y))
-           (not (hifat-no-dups-p (append x y)))))
+           (not (hifat-no-dups-p (append x y))))
+  :hints (("Goal" :in-theory (enable hifat-no-dups-p)) ))
 
 (defthm hifat-subsetp-reflexive-lemma-3
   (implies (and (m1-file-alist-p y)
                 (hifat-no-dups-p y)
                 (m1-directory-file-p (cdr (car y))))
-           (hifat-no-dups-p (m1-file->contents (cdr (car y))))))
+           (hifat-no-dups-p (m1-file->contents (cdr (car y)))))
+  :hints (("Goal" :in-theory (enable hifat-no-dups-p)) ))
 
 (encapsulate
   ()
@@ -208,7 +211,8 @@
                   (m1-file-alist-p y)
                   (hifat-no-dups-p (append x y)))
              (hifat-subsetp y (append x y)))
-    :hints (("goal" :induct (induction-scheme x y)))))
+    :hints (("goal" :induct (induction-scheme x y)
+             :in-theory (enable hifat-no-dups-p)))))
 
 (defthm
   hifat-subsetp-reflexive-lemma-5
@@ -277,8 +281,8 @@
             (m1-file dir-ent (m1-file->contents (cdar fs))))
       (cdr fs))
      fs)
-    :in-theory
-    (disable hifat-subsetp-reflexive-lemma-4)
+    :in-theory (e/d (hifat-no-dups-p)
+                    (hifat-subsetp-reflexive-lemma-4))
     :use
     ((:instance
       hifat-subsetp-reflexive-lemma-4
@@ -363,8 +367,9 @@
                                             (m1-file dir-ent contents))
                                       tail)
                                 (cons head tail))
-    :in-theory (disable hifat-subsetp-reflexive-lemma-4
-                        m1-directory-file-p-of-m1-file)
+    :in-theory (e/d (hifat-no-dups-p)
+                    (hifat-subsetp-reflexive-lemma-4
+                     m1-directory-file-p-of-m1-file))
     :use ((:instance hifat-subsetp-reflexive-lemma-4
                      (x (list head))
                      (y tail))
@@ -385,7 +390,8 @@
 (defthm hifat-equiv-of-cons-lemma-9
   (implies (and (hifat-no-dups-p (cons head tail1))
                 (hifat-subsetp tail2 tail1))
-           (hifat-subsetp tail2 (cons head tail1))))
+           (hifat-subsetp tail2 (cons head tail1)))
+  :hints (("Goal" :in-theory (enable hifat-no-dups-p)) ))
 
 ;; This rule had a problem earlier - no loop-stopper could be defined on it,
 ;; because it was an hifat-equiv rule, not an equal rule. Without a

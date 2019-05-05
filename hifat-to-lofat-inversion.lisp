@@ -3639,7 +3639,8 @@
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
         (:rewrite
          fati-of-hifat-to-lofat-helper-disjoint-lemma-2)
-        (:definition induction-scheme)))
+        (:definition induction-scheme)
+        hifat-no-dups-p-of-lofat-to-hifat-helper-exec))
       :expand
       ((:free (y) (intersectp-equal nil y))
        (:free (x1 x2 y)
