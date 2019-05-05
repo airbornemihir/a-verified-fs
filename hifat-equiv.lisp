@@ -91,25 +91,47 @@
   (declare (xargs :guard (and (m1-file-alist-p hifat-file-alist)
                               (hifat-no-dups-p hifat-file-alist))
                   :verify-guards nil))
-  (b*
-      (((when (atom hifat-file-alist)) nil)
-       (head (cons
-              (fat32-filename-fix (caar hifat-file-alist))
-              (m1-file-fix (cdar hifat-file-alist))))
-       (tail (hifat-file-alist-fix (cdr hifat-file-alist)))
-       ((when (consp (assoc-equal (car head) tail)))
-        tail))
-    (if
-        (m1-directory-file-p (cdr head))
-        (cons
-         (cons (car head)
-               (make-m1-file :dir-ent (m1-file->dir-ent (cdr head))
-                             :contents (hifat-file-alist-fix (m1-file->contents (cdr head)))))
-         tail)
-      (cons head tail))))
+  (mbe
+   :exec
+   hifat-file-alist
+   :logic
+   (b*
+       (((when (atom hifat-file-alist)) nil)
+        (head (cons
+               (fat32-filename-fix (caar hifat-file-alist))
+               (m1-file-fix (cdar hifat-file-alist))))
+        (tail (hifat-file-alist-fix (cdr hifat-file-alist)))
+        ((when (consp (assoc-equal (car head) tail)))
+         tail))
+     (if
+         (m1-directory-file-p (cdr head))
+         (cons
+          (cons (car head)
+                (make-m1-file :dir-ent (m1-file->dir-ent (cdr head))
+                              :contents (hifat-file-alist-fix (m1-file->contents (cdr head)))))
+          tail)
+       (cons head tail)))))
 
 (defthm m1-file-alist-p-of-hifat-file-alist-fix
   (m1-file-alist-p (hifat-file-alist-fix hifat-file-alist)))
+
+(defthm
+  hifat-file-alist-fix-when-hifat-no-dups-p
+  (implies (and (hifat-no-dups-p hifat-file-alist)
+                (m1-file-alist-p hifat-file-alist))
+           (equal (hifat-file-alist-fix hifat-file-alist)
+                  hifat-file-alist))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defthm
+  hifat-file-alist-fix-guard-lemma-1
+  (implies (and (hifat-no-dups-p hifat-file-alist)
+                (m1-file-alist-p hifat-file-alist)
+                (consp hifat-file-alist)
+                (consp (car hifat-file-alist)))
+           (not (consp (assoc-equal (car (car hifat-file-alist))
+                                    (cdr hifat-file-alist)))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
 
 (verify-guards hifat-file-alist-fix)
 
