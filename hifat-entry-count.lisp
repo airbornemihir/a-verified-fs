@@ -13,17 +13,33 @@
 ;;
 ;; Before disabling, this rule used to cause 436909 frames and 8297 tries in
 ;; the main book; now those numbers are 4997 and 63 respectively.
-(defund hifat-entry-count (fs)
-  (declare (xargs :guard (m1-file-alist-p fs)))
+(defund
+  hifat-entry-count (fs)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs))))
   (if
-      (atom fs)
-      0
-    (if (m1-directory-file-p (cdar fs))
-        (+ 1
-           (hifat-entry-count (m1-file->contents (cdar fs)))
-           (hifat-entry-count (cdr fs)))
+   (atom fs)
+   0
+   (+
+    (hifat-entry-count (cdr fs))
+    (if
+     (consp
+      (assoc-equal (mbe :logic (fat32-filename-fix (caar fs))
+                        :exec (caar fs))
+                   (mbe :logic (hifat-file-alist-fix (cdr fs))
+                        :exec (cdr fs))))
+     0
+     (if
+      (m1-directory-file-p (mbe :logic (m1-file-fix (cdar fs))
+                                :exec (cdar fs)))
       (+ 1
-         (hifat-entry-count (cdr fs))))))
+         (hifat-entry-count (m1-file->contents (cdar fs))))
+      1)))))
+
+(defthm hifat-entry-count-of-hifat-file-alist-fix
+  (equal (hifat-entry-count (hifat-file-alist-fix fs))
+         (hifat-entry-count fs))
+  :hints (("Goal" :in-theory (enable hifat-entry-count)) ))
 
 ;; This function is kinda weirdly named now that the when-hifat-no-dups-p
 ;; part has been shorn by remove-hyps...
