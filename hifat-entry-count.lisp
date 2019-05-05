@@ -42,12 +42,6 @@
   :hints (("Goal" :in-theory (enable hifat-entry-count)) ))
 
 (defthm
-  hifat-no-dups-p-of-remove1-equal
-  (implies (hifat-no-dups-p m1-file-alist)
-           (hifat-no-dups-p (remove1-equal x m1-file-alist)))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
-
-(defthm
   m1-file-alist-p-of-remove1-assoc-equal
   (implies (m1-file-alist-p m1-file-alist)
            (m1-file-alist-p (remove1-assoc-equal key m1-file-alist))))
@@ -131,6 +125,8 @@
     hifat-entry-count-when-hifat-subsetp
     (implies (and (hifat-no-dups-p m1-file-alist1)
                   (m1-file-alist-p m1-file-alist1)
+                  (hifat-no-dups-p m1-file-alist2)
+                  (m1-file-alist-p m1-file-alist2)
                   (hifat-subsetp m1-file-alist1 m1-file-alist2))
              (<= (hifat-entry-count m1-file-alist1)
                  (hifat-entry-count m1-file-alist2)))
