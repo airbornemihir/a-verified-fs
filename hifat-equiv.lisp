@@ -74,10 +74,44 @@
           (m1-file->contents (cdar m1-file-alist))))
         (t t)))
 
-(defthm hifat-no-dups-p-correctness-1
+(defthm hifat-no-dups-p-of-cdr
   (implies (hifat-no-dups-p fs)
            (hifat-no-dups-p (cdr fs)))
   :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defthm
+  hifat-no-dups-p-of-m1-file-contents-of-cdar
+  (implies (and (hifat-no-dups-p hifat-file-alist)
+                (m1-file-alist-p hifat-file-alist)
+                (m1-directory-file-p (cdr (car hifat-file-alist))))
+           (hifat-no-dups-p (m1-file->contents (cdr (car hifat-file-alist)))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defun hifat-file-alist-fix (hifat-file-alist)
+  (declare (xargs :guard (and (m1-file-alist-p hifat-file-alist)
+                              (hifat-no-dups-p hifat-file-alist))
+                  :verify-guards nil))
+  (b*
+      (((when (atom hifat-file-alist)) nil)
+       (head (cons
+              (fat32-filename-fix (caar hifat-file-alist))
+              (m1-file-fix (cdar hifat-file-alist))))
+       (tail (hifat-file-alist-fix (cdr hifat-file-alist)))
+       ((when (consp (assoc-equal (car head) tail)))
+        tail))
+    (if
+        (m1-directory-file-p (cdr head))
+        (cons
+         (cons (car head)
+               (make-m1-file :dir-ent (m1-file->dir-ent (cdr head))
+                             :contents (hifat-file-alist-fix (m1-file->contents (cdr head)))))
+         tail)
+      (cons head tail))))
+
+(defthm m1-file-alist-p-of-hifat-file-alist-fix
+  (m1-file-alist-p (hifat-file-alist-fix hifat-file-alist)))
+
+(verify-guards hifat-file-alist-fix)
 
 (defthm hifat-subsetp-of-remove1-assoc-1
   (implies (and (m1-file-alist-p m1-file-alist1)
