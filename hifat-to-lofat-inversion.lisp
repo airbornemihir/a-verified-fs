@@ -775,11 +775,6 @@
 (encapsulate
   ()
 
-  (local
-   (defthm hifat-no-dups-p-of-lofat-to-hifat-helper-exec-lemma-1
-     (implies (alistp list)
-              (iff (consp (assoc-equal x list)) (assoc-equal x list)))))
-
   (defthm
     hifat-no-dups-p-of-lofat-to-hifat-helper-exec
     (b* (((mv m1-file-alist & & &)
@@ -792,7 +787,8 @@
       :in-theory
       (e/d (fat32-filename-p useless-dir-ent-p
                              lofat-to-hifat-helper-exec
-                             useful-dir-ent-list-p hifat-no-dups-p)
+                             useful-dir-ent-list-p hifat-no-dups-p
+                             consp-of-assoc-equal)
            (nth-of-string=>nats natp-of-cluster-size))
       :induct (lofat-to-hifat-helper-exec
                fat32-in-memory

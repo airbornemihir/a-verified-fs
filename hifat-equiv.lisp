@@ -124,6 +124,25 @@
   :hints (("goal" :in-theory (enable hifat-no-dups-p))))
 
 (defthm
+  hifat-no-dups-p-of-hifat-file-alist-fix
+  (hifat-no-dups-p (hifat-file-alist-fix hifat-file-alist))
+  :hints
+  (("goal"
+    :in-theory (e/d (hifat-no-dups-p consp-of-assoc-equal)
+                    (alistp-when-m1-file-alist-p))
+    :induct (hifat-file-alist-fix hifat-file-alist))
+   ("subgoal *1/4"
+    :use
+    (:instance
+     alistp-when-m1-file-alist-p
+     (x (hifat-file-alist-fix (cdr hifat-file-alist)))))
+   ("subgoal *1/3"
+    :use
+    (:instance
+     alistp-when-m1-file-alist-p
+     (x (hifat-file-alist-fix (cdr hifat-file-alist)))))))
+
+(defthm
   hifat-file-alist-fix-guard-lemma-1
   (implies (and (hifat-no-dups-p hifat-file-alist)
                 (m1-file-alist-p hifat-file-alist)
