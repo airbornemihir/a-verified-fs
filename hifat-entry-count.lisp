@@ -1,8 +1,8 @@
 (in-package "ACL2")
 
-;  m1-entry-count.lisp                                 Mihir Mehta
+;  hifat-entry-count.lisp                                 Mihir Mehta
 
-; m1-entry-count is related to the problem of transforming a potentially loopy
+; hifat-entry-count is related to the problem of transforming a potentially loopy
 ; FAT32 disk image into a tree in a bounded amount of time. Some lemmas for
 ; reasoning about it are placed here.
 
@@ -13,33 +13,33 @@
 ;;
 ;; Before disabling, this rule used to cause 436909 frames and 8297 tries in
 ;; the main book; now those numbers are 4997 and 63 respectively.
-(defund m1-entry-count (fs)
+(defund hifat-entry-count (fs)
   (declare (xargs :guard (m1-file-alist-p fs)))
   (if
       (atom fs)
       0
     (if (m1-directory-file-p (cdar fs))
         (+ 1
-           (m1-entry-count (m1-file->contents (cdar fs)))
-           (m1-entry-count (cdr fs)))
+           (hifat-entry-count (m1-file->contents (cdar fs)))
+           (hifat-entry-count (cdr fs)))
       (+ 1
-         (m1-entry-count (cdr fs))))))
+         (hifat-entry-count (cdr fs))))))
 
 ;; This function is kinda weirdly named now that the when-hifat-no-dups-p
 ;; part has been shorn by remove-hyps...
 (defthmd
-  m1-entry-count-when-hifat-no-dups-p
+  hifat-entry-count-when-hifat-no-dups-p
   (implies
    (consp (assoc-equal x m1-file-alist))
    (equal
-    (m1-entry-count m1-file-alist)
-    (+ (m1-entry-count (remove1-assoc x m1-file-alist))
+    (hifat-entry-count m1-file-alist)
+    (+ (hifat-entry-count (remove1-assoc x m1-file-alist))
        (if (m1-directory-file-p (cdr (assoc-equal x m1-file-alist)))
            (+ 1
-              (m1-entry-count
+              (hifat-entry-count
                (m1-file->contents (cdr (assoc-equal x m1-file-alist)))))
          1))))
-  :hints (("goal" :in-theory (enable m1-entry-count))))
+  :hints (("goal" :in-theory (enable hifat-entry-count))))
 
 (encapsulate
   ()
@@ -95,37 +95,37 @@
               :in-theory (enable hifat-no-dups-p)))))
 
   (defthm
-    m1-entry-count-when-hifat-subsetp
+    hifat-entry-count-when-hifat-subsetp
     (implies (and (hifat-no-dups-p m1-file-alist1)
                   (m1-file-alist-p m1-file-alist1)
                   (hifat-subsetp m1-file-alist1 m1-file-alist2))
-             (<= (m1-entry-count m1-file-alist1)
-                 (m1-entry-count m1-file-alist2)))
+             (<= (hifat-entry-count m1-file-alist1)
+                 (hifat-entry-count m1-file-alist2)))
     :rule-classes :linear
     :hints
     (("goal" :induct (induction-scheme m1-file-alist1 m1-file-alist2)
-      :in-theory (enable hifat-no-dups-p m1-entry-count))
+      :in-theory (enable hifat-no-dups-p hifat-entry-count))
      ("subgoal *1/7"
-      :use (:instance (:rewrite m1-entry-count-when-hifat-no-dups-p)
+      :use (:instance (:rewrite hifat-entry-count-when-hifat-no-dups-p)
                       (m1-file-alist m1-file-alist2)
                       (x (car (car m1-file-alist1)))))
      ("subgoal *1/4"
-      :use (:instance (:rewrite m1-entry-count-when-hifat-no-dups-p)
+      :use (:instance (:rewrite hifat-entry-count-when-hifat-no-dups-p)
                       (m1-file-alist m1-file-alist2)
                       (x (car (car m1-file-alist1))))))))
 
 (defthm
-  m1-entry-count-when-hifat-equiv
+  hifat-entry-count-when-hifat-equiv
   (implies (and (hifat-equiv m1-file-alist1 m1-file-alist2)
                 (m1-file-alist-p m1-file-alist2)
                 (hifat-no-dups-p m1-file-alist2))
-           (equal (m1-entry-count m1-file-alist1)
-                  (m1-entry-count m1-file-alist2)))
+           (equal (hifat-entry-count m1-file-alist1)
+                  (hifat-entry-count m1-file-alist2)))
   :hints
   (("goal" :in-theory (e/d (hifat-equiv)
-                           (m1-entry-count-when-hifat-subsetp))
+                           (hifat-entry-count-when-hifat-subsetp))
     :do-not-induct t
-    :use ((:instance m1-entry-count-when-hifat-subsetp
+    :use ((:instance hifat-entry-count-when-hifat-subsetp
                      (m1-file-alist1 m1-file-alist2)
                      (m1-file-alist2 m1-file-alist1))
-          m1-entry-count-when-hifat-subsetp))))
+          hifat-entry-count-when-hifat-subsetp))))

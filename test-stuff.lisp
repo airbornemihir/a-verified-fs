@@ -290,7 +290,7 @@
              (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                       rm-pathnames 0)))
     (>= (max-entry-count fat32-in-memory)
-        (m1-entry-count
+        (hifat-entry-count
          (mv-nth 0
                  (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                           rm-pathnames 0))))
@@ -332,7 +332,7 @@
           (:definition name-to-fat32-name)
           (:definition rm-list)
           (:definition find-file-by-pathname)
-          (:rewrite m1-entry-count-when-hifat-equiv)))
+          (:rewrite hifat-entry-count-when-hifat-equiv)))
     :do-not-induct t
     :use
     ((:instance

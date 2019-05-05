@@ -5848,7 +5848,7 @@
         (m1-file-alist-p fs)
         (m1-bounded-file-alist-p fs)
         (hifat-no-dups-p fs)
-        (<= (m1-entry-count fs)
+        (<= (hifat-entry-count fs)
             (max-entry-count fat32-in-memory)))
    (b*
        (((mv fat32-in-memory error-code)

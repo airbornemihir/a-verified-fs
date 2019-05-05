@@ -6,7 +6,7 @@
 ; well as its inverse transformation lofat-to-hifat.
 
 (include-book "generate-index-list")
-(include-book "m1-entry-count")
+(include-book "hifat-entry-count")
 (include-book "update-data-region")
 
 ;; These are some rules from other books which are either interacting badly
@@ -769,9 +769,9 @@
          fat32-in-memory
          dir-ent-list entry-limit)))
     (equal entry-count
-           (m1-entry-count m1-file-alist)))
+           (hifat-entry-count m1-file-alist)))
   :hints
-  (("goal" :in-theory (enable lofat-to-hifat-helper-exec m1-entry-count)))
+  (("goal" :in-theory (enable lofat-to-hifat-helper-exec hifat-entry-count)))
   :rule-classes
   (:rewrite
    (:linear
@@ -779,7 +779,7 @@
                      (lofat-to-hifat-helper-exec
                       fat32-in-memory
                       dir-ent-list entry-limit)))
-                 (<= (m1-entry-count m1-file-alist)
+                 (<= (hifat-entry-count m1-file-alist)
                      (nfix entry-limit)))
     :hints
     (("goal"
@@ -808,7 +808,7 @@
      dir-ent-list entry-limit1)))
   :hints
   (("goal" :in-theory (enable lofat-to-hifat-helper-exec
-                              m1-entry-count)))
+                              hifat-entry-count)))
   :rule-classes
   ((:rewrite
     :corollary
@@ -1041,10 +1041,10 @@
                                      root-dir-ent-list))))
 
 (defthm
-  m1-entry-count-of-lofat-to-hifat
+  hifat-entry-count-of-lofat-to-hifat
   (implies
    (lofat-fs-p fat32-in-memory)
-   (<= (m1-entry-count
+   (<= (hifat-entry-count
         (mv-nth 0
                 (lofat-to-hifat fat32-in-memory)))
        (max-entry-count fat32-in-memory)))
@@ -3449,7 +3449,7 @@
               (m1-regular-file-p (cdr head))
               1
               (+ 1
-                 (m1-entry-count (m1-file->contents (cdr head))))))
+                 (hifat-entry-count (m1-file->contents (cdr head))))))
             x))
           ((unless (zp errno))
            (mv fat32-in-memory
@@ -3562,7 +3562,7 @@
              (+ *ms-first-data-cluster*
                 (count-of-clusters fat32-in-memory)))
           (integerp entry-limit)
-          (>= entry-limit (m1-entry-count fs))
+          (>= entry-limit (hifat-entry-count fs))
           (unmodifiable-listp x (effective-fat fat32-in-memory)))
      (b*
          (((mv fat32-in-memory dir-ent-list error-code)
@@ -3596,7 +3596,7 @@
       (e/d
        (lofat-to-hifat-helper-exec
         hifat-to-lofat-helper-correctness-4
-        m1-entry-count
+        hifat-entry-count
         (:definition hifat-no-dups-p))
        ((:rewrite make-clusters-correctness-1 . 1)
         (:rewrite nth-of-nats=>chars)
@@ -3629,7 +3629,7 @@
                (+ *ms-first-data-cluster*
                   (count-of-clusters fat32-in-memory)))
             (integerp entry-limit)
-            (>= entry-limit (m1-entry-count fs))
+            (>= entry-limit (hifat-entry-count fs))
             (unmodifiable-listp x (effective-fat fat32-in-memory)))
        (b*
            (((mv fat32-in-memory dir-ent-list error-code)
@@ -3659,7 +3659,7 @@
            (+ *ms-first-data-cluster*
               (count-of-clusters fat32-in-memory)))
         (integerp entry-limit)
-        (>= entry-limit (m1-entry-count fs)))
+        (>= entry-limit (hifat-entry-count fs)))
    (b*
        (((mv fat32-in-memory dir-ent-list error-code)
          (hifat-to-lofat-helper
@@ -3753,7 +3753,7 @@
         (m1-bounded-file-alist-p fs)
         (hifat-no-dups-p fs)
         (<=
-         (m1-entry-count fs)
+         (hifat-entry-count fs)
          (max-entry-count fat32-in-memory)))
    (b*
        (((mv fat32-in-memory error-code)
@@ -3879,7 +3879,7 @@
              (make-dir-ent-list (string=>nats contents))
              (- entry-limit 1))
             (mv contents 0)))
-       (head-entry-count (if directory-p (m1-entry-count head)
+       (head-entry-count (if directory-p (hifat-entry-count head)
                              0))
        (error-code (if (equal error-code 0)
                        head-error-code *eio*))

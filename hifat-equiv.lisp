@@ -42,7 +42,7 @@
 
 ;; It's tempting to remove this predicate, because it makes the fixing of
 ;; certain functions hard... but it does give us the desirable property of
-;; maintaining equality for m1-entry-count between two directory trees whenever
+;; maintaining equality for hifat-entry-count between two directory trees whenever
 ;; it holds for the two trees. I'm not sure that property is currently used,
 ;; but it makes a good argument for keeping it. One other argument is the proof
 ;; of anti-reflexivity for hifat-subsetp - if we are to prove that y is a
