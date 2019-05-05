@@ -25,10 +25,10 @@
       (+ 1
          (m1-entry-count (cdr fs))))))
 
-;; This function is kinda weirdly named now that the when-m1-file-no-dups-p
+;; This function is kinda weirdly named now that the when-hifat-no-dups-p
 ;; part has been shorn by remove-hyps...
 (defthmd
-  m1-entry-count-when-m1-file-no-dups-p
+  m1-entry-count-when-hifat-no-dups-p
   (implies
    (consp (assoc-equal x m1-file-alist))
    (equal
@@ -87,16 +87,16 @@
   (local
    (defthm
      induction-scheme-correctness
-     (implies (and (m1-file-no-dups-p m1-file-alist1)
+     (implies (and (hifat-no-dups-p m1-file-alist1)
                    (m1-file-alist-p m1-file-alist1))
               (iff (induction-scheme m1-file-alist1 m1-file-alist2)
                    (hifat-subsetp m1-file-alist1 m1-file-alist2)))
      :hints (("goal" :induct (induction-scheme m1-file-alist1 m1-file-alist2)
-              :in-theory (enable m1-file-no-dups-p)))))
+              :in-theory (enable hifat-no-dups-p)))))
 
   (defthm
     m1-entry-count-when-hifat-subsetp
-    (implies (and (m1-file-no-dups-p m1-file-alist1)
+    (implies (and (hifat-no-dups-p m1-file-alist1)
                   (m1-file-alist-p m1-file-alist1)
                   (hifat-subsetp m1-file-alist1 m1-file-alist2))
              (<= (m1-entry-count m1-file-alist1)
@@ -104,13 +104,13 @@
     :rule-classes :linear
     :hints
     (("goal" :induct (induction-scheme m1-file-alist1 m1-file-alist2)
-      :in-theory (enable m1-file-no-dups-p m1-entry-count))
+      :in-theory (enable hifat-no-dups-p m1-entry-count))
      ("subgoal *1/7"
-      :use (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
+      :use (:instance (:rewrite m1-entry-count-when-hifat-no-dups-p)
                       (m1-file-alist m1-file-alist2)
                       (x (car (car m1-file-alist1)))))
      ("subgoal *1/4"
-      :use (:instance (:rewrite m1-entry-count-when-m1-file-no-dups-p)
+      :use (:instance (:rewrite m1-entry-count-when-hifat-no-dups-p)
                       (m1-file-alist m1-file-alist2)
                       (x (car (car m1-file-alist1))))))))
 
@@ -118,7 +118,7 @@
   m1-entry-count-when-hifat-equiv
   (implies (and (hifat-equiv m1-file-alist1 m1-file-alist2)
                 (m1-file-alist-p m1-file-alist2)
-                (m1-file-no-dups-p m1-file-alist2))
+                (hifat-no-dups-p m1-file-alist2))
            (equal (m1-entry-count m1-file-alist1)
                   (m1-entry-count m1-file-alist2)))
   :hints

@@ -57,10 +57,10 @@
 ;; (https://unix.stackexchange.com/a/227370,
 ;; https://unix.stackexchange.com/a/227361).
 (defund
-  m1-file-no-dups-p (m1-file-alist)
+  hifat-no-dups-p (m1-file-alist)
   (declare (xargs :guard (m1-file-alist-p m1-file-alist)))
   (cond ((atom m1-file-alist) t)
-        ((not (m1-file-no-dups-p (cdr m1-file-alist)))
+        ((not (hifat-no-dups-p (cdr m1-file-alist)))
          nil)
         ((not (mbt (and (consp (car m1-file-alist))
                         (stringp (car (car m1-file-alist))))))
@@ -70,15 +70,15 @@
                       (cdr m1-file-alist))
          nil)
         ((m1-directory-file-p (cdar m1-file-alist))
-         (m1-file-no-dups-p
+         (hifat-no-dups-p
           (m1-file->contents (cdar m1-file-alist))))
         (t t)))
 
-(local (in-theory (enable m1-file-no-dups-p)))
+(local (in-theory (enable hifat-no-dups-p)))
 
-(defthm m1-file-no-dups-p-correctness-1
-  (implies (m1-file-no-dups-p fs)
-           (m1-file-no-dups-p (cdr fs)))
+(defthm hifat-no-dups-p-correctness-1
+  (implies (hifat-no-dups-p fs)
+           (hifat-no-dups-p (cdr fs)))
   :hints (("goal" :do-not-induct t)))
 
 (defthm hifat-subsetp-of-remove1-assoc-1
@@ -89,10 +89,10 @@
                   (hifat-subsetp m1-file-alist1 m1-file-alist2))))
 
 (defthm
-  m1-file-no-dups-p-of-remove1-assoc-equal
+  hifat-no-dups-p-of-remove1-assoc-equal
   (implies
-   (m1-file-no-dups-p m1-file-alist)
-   (m1-file-no-dups-p (remove1-assoc-equal key m1-file-alist))))
+   (hifat-no-dups-p m1-file-alist)
+   (hifat-no-dups-p (remove1-assoc-equal key m1-file-alist))))
 
 (defthm hifat-subsetp-preserves-assoc-equal
   (implies (and (hifat-subsetp x y)
@@ -121,9 +121,9 @@
 (defthm
   hifat-subsetp-transitive-lemma-2
   (implies (and (m1-file-alist-p z)
-                (m1-file-no-dups-p z)
+                (hifat-no-dups-p z)
                 (m1-directory-file-p (cdr (assoc-equal key z))))
-           (m1-file-no-dups-p (m1-file->contents (cdr (assoc-equal key z))))))
+           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key z))))))
 
 (defthm
   hifat-subsetp-transitive-lemma-3
@@ -170,19 +170,19 @@
 
 (defthm hifat-subsetp-reflexive-lemma-1
   (implies (and (m1-file-alist-p x)
-                (m1-file-no-dups-p (append x y)))
+                (hifat-no-dups-p (append x y)))
            (equal (assoc-equal (car (car y)) (append x y))
                   (car y))))
 
 (defthm hifat-subsetp-reflexive-lemma-2
-  (implies (not (m1-file-no-dups-p y))
-           (not (m1-file-no-dups-p (append x y)))))
+  (implies (not (hifat-no-dups-p y))
+           (not (hifat-no-dups-p (append x y)))))
 
 (defthm hifat-subsetp-reflexive-lemma-3
   (implies (and (m1-file-alist-p y)
-                (m1-file-no-dups-p y)
+                (hifat-no-dups-p y)
                 (m1-directory-file-p (cdr (car y))))
-           (m1-file-no-dups-p (m1-file->contents (cdr (car y))))))
+           (hifat-no-dups-p (m1-file->contents (cdr (car y))))))
 
 (encapsulate
   ()
@@ -206,7 +206,7 @@
   (defthm hifat-subsetp-reflexive-lemma-4
     (implies (and (m1-file-alist-p x)
                   (m1-file-alist-p y)
-                  (m1-file-no-dups-p (append x y)))
+                  (hifat-no-dups-p (append x y)))
              (hifat-subsetp y (append x y)))
     :hints (("goal" :induct (induction-scheme x y)))))
 
@@ -222,7 +222,7 @@
 (defthm
   hifat-subsetp-reflexive
   (implies (and (m1-file-alist-p y)
-                (m1-file-no-dups-p y))
+                (hifat-no-dups-p y))
            (hifat-subsetp y y))
   :hints
   (("goal"
@@ -235,9 +235,9 @@
   (declare (xargs :guard (and (m1-file-alist-p m1-file-alist1)
                               (m1-file-alist-p m1-file-alist2))))
   (b* ((good1 (and (mbt (m1-file-alist-p m1-file-alist1))
-                   (m1-file-no-dups-p m1-file-alist1)))
+                   (hifat-no-dups-p m1-file-alist1)))
        (good2 (and (mbt (m1-file-alist-p m1-file-alist2))
-                   (m1-file-no-dups-p m1-file-alist2)))
+                   (hifat-no-dups-p m1-file-alist2)))
        ((unless (and good1 good2)) (and (not good1) (not good2))))
     (and (hifat-subsetp m1-file-alist1 m1-file-alist2)
          (hifat-subsetp m1-file-alist2 m1-file-alist1))))
@@ -313,8 +313,8 @@
  (defthm
    hifat-equiv-of-cons-lemma-3
    (implies (and (m1-file-alist-p contents1)
-                 (m1-file-no-dups-p contents1)
-                 (not (m1-file-no-dups-p (m1-file-contents-fix contents2))))
+                 (hifat-no-dups-p contents1)
+                 (not (hifat-no-dups-p (m1-file-contents-fix contents2))))
             (not (hifat-equiv contents1 contents2)))
    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
 
@@ -322,7 +322,7 @@
  (defthm
    hifat-equiv-of-cons-lemma-4
    (implies (and (m1-file-alist-p contents1)
-                 (m1-file-no-dups-p contents1)
+                 (hifat-no-dups-p contents1)
                  (not (hifat-subsetp contents1
                                      (m1-file-contents-fix contents2))))
             (not (hifat-equiv contents1 contents2)))
@@ -333,7 +333,7 @@
    hifat-equiv-of-cons-lemma-5
    (implies
     (and (m1-file-alist-p contents1)
-         (m1-file-no-dups-p contents1)
+         (hifat-no-dups-p contents1)
          (not (hifat-subsetp (m1-file-contents-fix contents2)
                              contents1)))
     (not (hifat-equiv contents1 contents2)))
@@ -343,7 +343,7 @@
  (defthm
    hifat-equiv-of-cons-lemma-6
    (implies (and (m1-file-alist-p contents1)
-                 (m1-file-no-dups-p contents1)
+                 (hifat-no-dups-p contents1)
                  (not (m1-file-alist-p contents2)))
             (not (hifat-equiv contents1 contents2)))
    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
@@ -351,7 +351,7 @@
 (defthm
   hifat-equiv-of-cons-lemma-7
   (implies (and (m1-directory-file-p (cdr head))
-                (m1-file-no-dups-p (m1-file->contents (cdr head)))
+                (hifat-no-dups-p (m1-file->contents (cdr head)))
                 (hifat-equiv (m1-file->contents (cdr head))
                              contents))
            (hifat-equiv (cons (cons (car head)
@@ -383,7 +383,7 @@
            (not (assoc-equal (car head) tail2))))
 
 (defthm hifat-equiv-of-cons-lemma-9
-  (implies (and (m1-file-no-dups-p (cons head tail1))
+  (implies (and (hifat-no-dups-p (cons head tail1))
                 (hifat-subsetp tail2 tail1))
            (hifat-subsetp tail2 (cons head tail1))))
 
@@ -398,6 +398,6 @@
             (hifat-equiv (cons head tail1)
                          (cons head tail2))
             t))
-  :hints (("goal" :in-theory (e/d (hifat-equiv) (m1-file-no-dups-p))
-           :expand ((m1-file-no-dups-p (cons head tail2))
-                    (m1-file-no-dups-p (cons head tail1))))))
+  :hints (("goal" :in-theory (e/d (hifat-equiv) (hifat-no-dups-p))
+           :expand ((hifat-no-dups-p (cons head tail2))
+                    (hifat-no-dups-p (cons head tail1))))))

@@ -3554,7 +3554,7 @@
      (and (lofat-fs-p fat32-in-memory)
           (m1-file-alist-p fs)
           (m1-bounded-file-alist-p fs)
-          (m1-file-no-dups-p fs)
+          (hifat-no-dups-p fs)
           (fat32-masked-entry-p current-dir-first-cluster)
           (<= *ms-first-data-cluster*
               current-dir-first-cluster)
@@ -3597,7 +3597,7 @@
        (lofat-to-hifat-helper-exec
         hifat-to-lofat-helper-correctness-4
         m1-entry-count
-        (:definition m1-file-no-dups-p))
+        (:definition hifat-no-dups-p))
        ((:rewrite make-clusters-correctness-1 . 1)
         (:rewrite nth-of-nats=>chars)
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
@@ -3621,7 +3621,7 @@
        (and (lofat-fs-p fat32-in-memory)
             (m1-file-alist-p fs)
             (m1-bounded-file-alist-p fs)
-            (m1-file-no-dups-p fs)
+            (hifat-no-dups-p fs)
             (fat32-masked-entry-p current-dir-first-cluster)
             (<= *ms-first-data-cluster*
                 current-dir-first-cluster)
@@ -3651,7 +3651,7 @@
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
         (m1-bounded-file-alist-p fs)
-        (m1-file-no-dups-p fs)
+        (hifat-no-dups-p fs)
         (fat32-masked-entry-p current-dir-first-cluster)
         (<= *ms-first-data-cluster*
             current-dir-first-cluster)
@@ -3751,7 +3751,7 @@
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
         (m1-bounded-file-alist-p fs)
-        (m1-file-no-dups-p fs)
+        (hifat-no-dups-p fs)
         (<=
          (m1-entry-count fs)
          (max-entry-count fat32-in-memory)))
@@ -3814,7 +3814,7 @@
       (and
        (equal error-code 0)
        (m1-bounded-file-alist-p fs)
-       (m1-file-no-dups-p fs)
+       (hifat-no-dups-p fs)
        ;; This clause should always be true, but that's not yet proven. The
        ;; argument is: The only time we get an error out of
        ;; hifat-to-lofat-helper (and the wrapper) is when we run out

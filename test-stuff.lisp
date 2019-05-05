@@ -285,7 +285,7 @@
      (mv-nth 0
              (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                       rm-pathnames 0)))
-    (m1-file-no-dups-p
+    (hifat-no-dups-p
      (mv-nth 0
              (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                       rm-pathnames 0)))
@@ -302,7 +302,7 @@
                       (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                                rm-pathnames 0))))
      0)
-    (m1-file-no-dups-p
+    (hifat-no-dups-p
      (mv-nth
       0
       (lofat-to-hifat

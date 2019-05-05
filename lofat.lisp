@@ -5847,7 +5847,7 @@
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
         (m1-bounded-file-alist-p fs)
-        (m1-file-no-dups-p fs)
+        (hifat-no-dups-p fs)
         (<= (m1-entry-count fs)
             (max-entry-count fat32-in-memory)))
    (b*
@@ -5880,7 +5880,7 @@
       (and (equal error-code1 0)
            (equal error-code2 0)
            (m1-bounded-file-alist-p fs)
-           (m1-file-no-dups-p fs)
+           (hifat-no-dups-p fs)
            (equal (mv-nth 1 (hifat-to-lofat fat32-in-memory fs))
                   0))
       (eqfat (lofat-to-string

@@ -362,7 +362,7 @@
         (m1-regular-file-p (cdr (assoc-equal name m1-file-alist1))))
    (equal (m1-file->contents (cdr (assoc-equal name m1-file-alist2)))
           (m1-file->contents (cdr (assoc-equal name m1-file-alist1)))))
-  :hints (("goal" :in-theory (enable m1-file-alist-p m1-file-no-dups-p))))
+  :hints (("goal" :in-theory (enable m1-file-alist-p hifat-no-dups-p))))
 
 (defthm
   find-file-by-pathname-correctness-3-lemma-2
@@ -520,7 +520,7 @@
   find-file-by-pathname-correctness-3-lemma-7
   (implies
    (and (m1-file-alist-p m1-file-alist2)
-        (m1-file-no-dups-p m1-file-alist2)
+        (hifat-no-dups-p m1-file-alist2)
         (hifat-equiv m1-file-alist2 m1-file-alist1))
    (mv-let
      (file error-code)
@@ -546,7 +546,7 @@
   find-file-by-pathname-correctness-3
   (implies
    (and (m1-file-alist-p m1-file-alist2)
-        (m1-file-no-dups-p m1-file-alist2)
+        (hifat-no-dups-p m1-file-alist2)
         (hifat-equiv m1-file-alist2 m1-file-alist1))
    (mv-let
      (file error-code)
@@ -566,18 +566,18 @@
   find-file-by-pathname-correctness-4-lemma-1
   (implies
    (and (m1-file-alist-p fs)
-        (m1-file-no-dups-p fs)
+        (hifat-no-dups-p fs)
         (m1-directory-file-p (mv-nth 0 (find-file-by-pathname fs pathname))))
-   (m1-file-no-dups-p
+   (hifat-no-dups-p
     (m1-file->contents (mv-nth 0
                                (find-file-by-pathname fs pathname)))))
-  :hints (("goal" :in-theory (enable m1-file-no-dups-p m1-file-alist-p))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p m1-file-alist-p))))
 
 (defthm
   find-file-by-pathname-correctness-4
   (implies
    (and (m1-file-alist-p m1-file-alist2)
-        (m1-file-no-dups-p m1-file-alist2)
+        (hifat-no-dups-p m1-file-alist2)
         (hifat-equiv m1-file-alist2 m1-file-alist1))
    (mv-let
      (file error-code)
