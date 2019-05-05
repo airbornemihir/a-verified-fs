@@ -66,8 +66,8 @@
                         (stringp (car (car m1-file-alist))))))
          (not (member-equal (car m1-file-alist)
                             (cdr m1-file-alist))))
-        ((assoc-equal (caar m1-file-alist)
-                      (cdr m1-file-alist))
+        ((consp (assoc-equal (caar m1-file-alist)
+                             (cdr m1-file-alist)))
          nil)
         ((m1-directory-file-p (cdar m1-file-alist))
          (hifat-no-dups-p
@@ -128,7 +128,7 @@
   (hifat-no-dups-p (hifat-file-alist-fix hifat-file-alist))
   :hints
   (("goal"
-    :in-theory (e/d (hifat-no-dups-p consp-of-assoc-equal)
+    :in-theory (e/d (hifat-no-dups-p)
                     (alistp-when-m1-file-alist-p))
     :induct (hifat-file-alist-fix hifat-file-alist))
    ("subgoal *1/4"

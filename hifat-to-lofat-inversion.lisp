@@ -787,8 +787,7 @@
       :in-theory
       (e/d (fat32-filename-p useless-dir-ent-p
                              lofat-to-hifat-helper-exec
-                             useful-dir-ent-list-p hifat-no-dups-p
-                             consp-of-assoc-equal)
+                             useful-dir-ent-list-p hifat-no-dups-p)
            (nth-of-string=>nats natp-of-cluster-size))
       :induct (lofat-to-hifat-helper-exec
                fat32-in-memory

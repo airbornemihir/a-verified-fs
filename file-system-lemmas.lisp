@@ -784,8 +784,3 @@
     :in-theory (disable member-of-intersection$)
     :use (:instance member-of-intersection$
                     (x (nth n (intersection-equal l1 l2)))))))
-
-
-(defthmd consp-of-assoc-equal
-  (implies (alistp list)
-           (iff (consp (assoc-equal x list)) (assoc-equal x list))))

@@ -41,21 +41,38 @@
          (hifat-entry-count fs))
   :hints (("Goal" :in-theory (enable hifat-entry-count)) ))
 
+(defthm
+  hifat-no-dups-p-of-remove1-equal
+  (implies (hifat-no-dups-p m1-file-alist)
+           (hifat-no-dups-p (remove1-equal x m1-file-alist)))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defthm
+  m1-file-alist-p-of-remove1-assoc-equal
+  (implies (m1-file-alist-p m1-file-alist)
+           (m1-file-alist-p (remove1-assoc-equal key m1-file-alist))))
+
 ;; This function is kinda weirdly named now that the when-hifat-no-dups-p
 ;; part has been shorn by remove-hyps...
 (defthmd
   hifat-entry-count-when-hifat-no-dups-p
   (implies
-   (consp (assoc-equal x m1-file-alist))
+   (and (m1-file-alist-p m1-file-alist)
+        (hifat-no-dups-p m1-file-alist)
+        (consp (assoc-equal x m1-file-alist)))
    (equal
     (hifat-entry-count m1-file-alist)
-    (+ (hifat-entry-count (remove1-assoc x m1-file-alist))
-       1
-       (if (m1-directory-file-p (cdr (assoc-equal x m1-file-alist)))
-           (hifat-entry-count
-            (m1-file->contents (cdr (assoc-equal x m1-file-alist))))
-         0))))
-  :hints (("goal" :in-theory (enable hifat-entry-count))))
+    (+
+     (hifat-entry-count (remove1-assoc x m1-file-alist))
+     1
+     (if
+      (m1-directory-file-p (cdr (assoc-equal x m1-file-alist)))
+      (hifat-entry-count
+       (m1-file->contents (cdr (assoc-equal x m1-file-alist))))
+      0))))
+  :hints
+  (("goal"
+    :in-theory (enable hifat-entry-count hifat-no-dups-p))))
 
 (encapsulate
   ()
