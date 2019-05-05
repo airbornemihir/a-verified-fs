@@ -34,11 +34,11 @@
    (equal
     (hifat-entry-count m1-file-alist)
     (+ (hifat-entry-count (remove1-assoc x m1-file-alist))
+       1
        (if (m1-directory-file-p (cdr (assoc-equal x m1-file-alist)))
-           (+ 1
-              (hifat-entry-count
-               (m1-file->contents (cdr (assoc-equal x m1-file-alist)))))
-         1))))
+           (hifat-entry-count
+            (m1-file->contents (cdr (assoc-equal x m1-file-alist))))
+         0))))
   :hints (("goal" :in-theory (enable hifat-entry-count))))
 
 (encapsulate
