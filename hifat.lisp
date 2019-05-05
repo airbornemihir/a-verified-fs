@@ -1619,6 +1619,9 @@
            (fat32-filename-list-prefixp (cdr x) (cdr y)))
     t))
 
+(defthm fat32-filename-list-prefixp-of-self
+  (fat32-filename-list-prefixp x x))
+
 (encapsulate
   ()
 
