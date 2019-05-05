@@ -151,17 +151,18 @@
 ;; hifat-entry-count to be changed.
 (defthm
   hifat-entry-count-when-hifat-equiv
-  (implies (and (hifat-equiv m1-file-alist1 m1-file-alist2)
-                (m1-file-alist-p m1-file-alist2)
-                (hifat-no-dups-p m1-file-alist2))
+  (implies (hifat-equiv m1-file-alist1 m1-file-alist2)
            (equal (hifat-entry-count m1-file-alist1)
                   (hifat-entry-count m1-file-alist2)))
+  :rule-classes :congruence
   :hints
-  (("goal" :in-theory (e/d (hifat-equiv)
-                           (hifat-entry-count-when-hifat-subsetp))
-    :use ((:instance hifat-entry-count-when-hifat-subsetp
-                     (m1-file-alist1 (hifat-file-alist-fix m1-file-alist2))
-                     (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1)))
-          (:instance hifat-entry-count-when-hifat-subsetp
-                     (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
-                     (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))))))
+  (("goal"
+    :in-theory (e/d (hifat-equiv)
+                    (hifat-entry-count-when-hifat-subsetp))
+    :use
+    ((:instance hifat-entry-count-when-hifat-subsetp
+                (m1-file-alist1 (hifat-file-alist-fix m1-file-alist2))
+                (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1)))
+     (:instance hifat-entry-count-when-hifat-subsetp
+                (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
+                (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))))))
