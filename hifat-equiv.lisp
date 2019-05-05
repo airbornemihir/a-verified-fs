@@ -221,15 +221,14 @@
 
 (defthm
   hifat-subsetp-transitive
-  (implies (and (m1-file-alist-p x)
-                (m1-file-alist-p y)
-                (m1-file-alist-p z)
-                (hifat-subsetp x y)
-                (hifat-subsetp y z))
+  (implies (and (hifat-subsetp x y)
+                (hifat-subsetp y z)
+                (m1-file-alist-p x)
+                (m1-file-alist-p y))
            (hifat-subsetp x z))
   :hints
-  (("Goal"
-    :induct (mv (hifat-subsetp x z) (hifat-subsetp x y)))
+  (("goal" :induct (mv (hifat-subsetp x z)
+                       (hifat-subsetp x y)))
    ("subgoal *1/5" :in-theory (disable hifat-subsetp-transitive-lemma-1)
     :use (:instance hifat-subsetp-transitive-lemma-1
                     (key (car (car x)))))
@@ -312,22 +311,13 @@
 
 (defund hifat-equiv (m1-file-alist1 m1-file-alist2)
   (declare (xargs :guard (and (m1-file-alist-p m1-file-alist1)
-                              (m1-file-alist-p m1-file-alist2))))
-  (b* ((good1 (and (mbt (m1-file-alist-p m1-file-alist1))
-                   (hifat-no-dups-p m1-file-alist1)))
-       (good2 (and (mbt (m1-file-alist-p m1-file-alist2))
-                   (hifat-no-dups-p m1-file-alist2)))
-       ((unless (and good1 good2)) (and (not good1) (not good2))))
+                              (hifat-no-dups-p m1-file-alist1)
+                              (m1-file-alist-p m1-file-alist2)
+                              (hifat-no-dups-p m1-file-alist2))))
+  (b* ((m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
+       (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))
     (and (hifat-subsetp m1-file-alist1 m1-file-alist2)
          (hifat-subsetp m1-file-alist2 m1-file-alist1))))
-
-(defthm hifat-equiv-of-nil
-  (and
-   (equal (hifat-equiv m1-file-alist nil)
-          (null m1-file-alist))
-   (equal (hifat-equiv nil m1-file-alist)
-          (null m1-file-alist)))
-  :hints (("Goal" :in-theory (enable hifat-equiv))))
 
 ;; A bug was here: after we changed the definition of hifat-equiv, we placed
 ;; this defequiv form somewhat later in the file, with the result that two
@@ -335,12 +325,14 @@
 ;; to rewrite in an equal context. Moving this defequiv form up here fixed the
 ;; issue.
 (defequiv hifat-equiv
-  :hints (("Goal" :in-theory (enable hifat-equiv))))
+  :hints (("Goal" :in-theory (enable hifat-equiv)
+           :do-not-induct t)))
 
 (defthm
   hifat-equiv-of-cons-lemma-1
   (implies
    (and (m1-file-alist-p fs)
+        (hifat-no-dups-p fs)
         (m1-regular-file-p (cdar fs)))
    (hifat-equiv
     (cons (cons (caar fs)
@@ -376,7 +368,8 @@
   (implies (and (fat32-filename-p (car head))
                 (m1-regular-file-p (cdr head))
                 (equal contents (m1-file->contents (cdr head)))
-                (m1-file-alist-p tail))
+                (m1-file-alist-p tail)
+                (hifat-no-dups-p (cons head tail)))
            (hifat-equiv (cons (cons (car head)
                                     (m1-file dir-ent contents))
                               tail)
@@ -388,73 +381,81 @@
     :use (:instance hifat-equiv-of-cons-lemma-1
                     (fs (cons head tail))))))
 
-(local
- (defthm
-   hifat-equiv-of-cons-lemma-3
-   (implies (and (m1-file-alist-p contents1)
-                 (hifat-no-dups-p contents1)
-                 (not (hifat-no-dups-p (m1-file-contents-fix contents2))))
-            (not (hifat-equiv contents1 contents2)))
-   :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
+;; (local
+;;  (defthm
+;;    hifat-equiv-of-cons-lemma-3
+;;    (implies (and (m1-file-alist-p contents1)
+;;                  (hifat-no-dups-p contents1)
+;;                  (not (hifat-no-dups-p (m1-file-contents-fix contents2))))
+;;             (not (hifat-equiv contents1 contents2)))
+;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
 
-(local
- (defthm
-   hifat-equiv-of-cons-lemma-4
-   (implies (and (m1-file-alist-p contents1)
-                 (hifat-no-dups-p contents1)
-                 (not (hifat-subsetp contents1
-                                     (m1-file-contents-fix contents2))))
-            (not (hifat-equiv contents1 contents2)))
-   :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
+;; (local
+;;  (defthm
+;;    hifat-equiv-of-cons-lemma-4
+;;    (implies (and (m1-file-alist-p contents1)
+;;                  (hifat-no-dups-p contents1)
+;;                  (not (hifat-subsetp contents1
+;;                                      (m1-file-contents-fix contents2))))
+;;             (not (hifat-equiv contents1 contents2)))
+;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
 
-(local
- (defthm
-   hifat-equiv-of-cons-lemma-5
-   (implies
-    (and (m1-file-alist-p contents1)
-         (hifat-no-dups-p contents1)
-         (not (hifat-subsetp (m1-file-contents-fix contents2)
-                             contents1)))
-    (not (hifat-equiv contents1 contents2)))
-   :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
+;; (local
+;;  (defthm
+;;    hifat-equiv-of-cons-lemma-5
+;;    (implies
+;;     (and (m1-file-alist-p contents1)
+;;          (hifat-no-dups-p contents1)
+;;          (not (hifat-subsetp (m1-file-contents-fix contents2)
+;;                              contents1)))
+;;     (not (hifat-equiv contents1 contents2)))
+;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
 
-(local
- (defthm
-   hifat-equiv-of-cons-lemma-6
-   (implies (and (m1-file-alist-p contents1)
-                 (hifat-no-dups-p contents1)
-                 (not (m1-file-alist-p contents2)))
-            (not (hifat-equiv contents1 contents2)))
-   :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
+;; (local
+;;  (defthm
+;;    hifat-equiv-of-cons-lemma-6
+;;    (implies (and (m1-file-alist-p contents1)
+;;                  (hifat-no-dups-p contents1)
+;;                  (not (m1-file-alist-p contents2)))
+;;             (not (hifat-equiv contents1 contents2)))
+;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
 
 (defthm
   hifat-equiv-of-cons-lemma-7
   (implies (and (m1-directory-file-p (cdr head))
-                (hifat-no-dups-p (m1-file->contents (cdr head)))
+                (m1-file-alist-p (cons head tail))
+                (hifat-no-dups-p (cons head tail))
+                (hifat-no-dups-p contents)
                 (hifat-equiv (m1-file->contents (cdr head))
-                             contents))
+                             contents)
+                (m1-file-alist-p contents))
            (hifat-equiv (cons (cons (car head)
                                     (m1-file dir-ent contents))
                               tail)
                         (cons head tail)))
   :hints
-  (("goal" :expand (hifat-equiv (cons (cons (car head)
-                                            (m1-file dir-ent contents))
-                                      tail)
-                                (cons head tail))
+  (("goal"
+    :expand
+    ((hifat-equiv (cons (cons (car head)
+                              (m1-file dir-ent contents))
+                        tail)
+                  (cons head tail))
+     (hifat-equiv (m1-file->contents (cdr head))
+                  contents))
     :in-theory (e/d (hifat-no-dups-p)
                     (hifat-subsetp-reflexive-lemma-4
                      m1-directory-file-p-of-m1-file))
-    :use ((:instance hifat-subsetp-reflexive-lemma-4
-                     (x (list head))
-                     (y tail))
-          (:instance hifat-subsetp-reflexive-lemma-4
-                     (x (list (cons (car head)
-                                    (m1-file dir-ent contents))))
-                     (y tail))
-          (:instance m1-directory-file-p-of-m1-file
-                     (contents contents)
-                     (dir-ent dir-ent))))))
+    :use
+    ((:instance hifat-subsetp-reflexive-lemma-4
+                (x (list head))
+                (y tail))
+     (:instance hifat-subsetp-reflexive-lemma-4
+                (x (list (cons (car head)
+                               (m1-file dir-ent contents))))
+                (y tail))
+     (:instance m1-directory-file-p-of-m1-file
+                (contents contents)
+                (dir-ent dir-ent))))))
 
 (defthm hifat-equiv-of-cons-lemma-8
   (implies (and (not (assoc-equal (car head) tail1))
@@ -474,11 +475,10 @@
 ;; explicitly stipulating equality as the equivalence relation, we get around
 ;; this.
 (defthm hifat-equiv-of-cons
-  (implies (hifat-equiv tail1 tail2)
-           (equal
-            (hifat-equiv (cons head tail1)
-                         (cons head tail2))
-            t))
-  :hints (("goal" :in-theory (e/d (hifat-equiv) (hifat-no-dups-p))
-           :expand ((hifat-no-dups-p (cons head tail2))
-                    (hifat-no-dups-p (cons head tail1))))))
+  (implies (and (hifat-equiv tail1 tail2)
+                (fat32-filename-p (car head))
+                (hifat-no-dups-p tail2))
+           (equal (hifat-equiv (cons head tail1)
+                               (cons head tail2))
+                  t))
+  :hints (("goal" :in-theory (e/d (hifat-equiv hifat-no-dups-p)))))
