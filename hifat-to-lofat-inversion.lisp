@@ -3456,40 +3456,6 @@
       (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1))))))
   :rule-classes :congruence)
 
-(defthm
-  hifat-to-lofat-inversion-lemma-7
-  (implies
-   (useful-dir-ent-list-p (MV-NTH 1
-                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
-                                               FS CURRENT-DIR-FIRST-CLUSTER)))
-   (equal
-    (assoc-equal
-     key
-     (MV-NTH
-               0
-               (LOFAT-TO-HIFAT-HELPER-EXEC
-                (MV-NTH 0
-                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
-                                               FS CURRENT-DIR-FIRST-CLUSTER))
-                (MV-NTH 1
-                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
-                                               FS CURRENT-DIR-FIRST-CLUSTER))
-                ENTRY-LIMIT)))
-    (assoc-equal
-     key
-     (hifat-file-alist-fix
-      (MV-NTH
-               0
-               (LOFAT-TO-HIFAT-HELPER-EXEC
-                (MV-NTH 0
-                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
-                                               FS CURRENT-DIR-FIRST-CLUSTER))
-                (MV-NTH 1
-                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
-                                               FS CURRENT-DIR-FIRST-CLUSTER))
-                ENTRY-LIMIT))))))
-  :hints (("goal" :do-not-induct t)))
-
 (encapsulate
   ()
 
@@ -3545,6 +3511,64 @@
               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
                                      current-dir-first-cluster)))
             1)))))))))
+
+  ;; This rule is weaker than it could be, but proving the stronger version
+  ;; can't be done until more stuff is proved.
+  (local
+   (defthm
+     hifat-to-lofat-inversion-lemma-7
+     (implies
+      (hifat-equiv
+       (mv-nth
+        0
+        (lofat-to-hifat-helper-exec
+         (mv-nth
+          0
+          (hifat-to-lofat-helper fat32-in-memory
+                                 fs current-dir-first-cluster))
+         (mv-nth
+          1
+          (hifat-to-lofat-helper fat32-in-memory
+                                 fs current-dir-first-cluster))
+         entry-limit))
+       fs)
+      (equal
+       (consp
+        (assoc-equal
+         key
+         (mv-nth
+          0
+          (lofat-to-hifat-helper-exec
+           (mv-nth
+            0
+            (hifat-to-lofat-helper fat32-in-memory
+                                   fs current-dir-first-cluster))
+           (mv-nth
+            1
+            (hifat-to-lofat-helper fat32-in-memory
+                                   fs current-dir-first-cluster))
+           entry-limit))))
+       (consp (assoc-equal key (hifat-file-alist-fix fs)))))
+     :hints
+     (("goal"
+       :in-theory (disable hifat-to-lofat-inversion-lemma-6)
+       :use
+       (:instance
+        hifat-to-lofat-inversion-lemma-6
+        (m1-file-alist1
+         (mv-nth
+          0
+          (lofat-to-hifat-helper-exec
+           (mv-nth
+            0
+            (hifat-to-lofat-helper fat32-in-memory
+                                   fs current-dir-first-cluster))
+           (mv-nth
+            1
+            (hifat-to-lofat-helper fat32-in-memory
+                                   fs current-dir-first-cluster))
+           entry-limit)))
+        (m1-file-alist2 fs))))))
 
   (local
    (defun-nx
@@ -3602,25 +3626,26 @@
                         (fat32-update-lower-28
                          (fati first-cluster fat32-in-memory)
                          *ms-end-of-clusterchain*)
-                        fat32-in-memory)))
+                        fat32-in-memory))
+          (contents (m1-file->contents (cdr head))))
        (if
         (m1-regular-file-p (cdr head))
         (b*
-            ((contents (m1-file->contents (cdr head)))
-             (file-length (length contents))
+            ((file-length (length contents))
              ((mv fat32-in-memory
                   dir-ent errno head-index-list)
               (place-contents fat32-in-memory dir-ent
                               contents file-length first-cluster))
-             (dir-ent (dir-ent-set-filename dir-ent (car head)))
+             (dir-ent (dir-ent-set-filename
+                       dir-ent
+                       (mbe :exec (car head) :logic (fat32-filename-fix (car head)))))
              (dir-ent (dir-ent-install-directory-bit dir-ent nil)))
           (mv fat32-in-memory
               (list* dir-ent tail-list)
               errno
               (append head-index-list tail-index-list)))
         (b*
-            ((contents (m1-file->contents (cdr head)))
-             (file-length 0)
+            ((file-length 0)
              ((mv fat32-in-memory unflattened-contents
                   errno head-index-list1)
               (induction-scheme
@@ -3649,7 +3674,9 @@
                   dir-ent errno head-index-list2)
               (place-contents fat32-in-memory dir-ent
                               contents file-length first-cluster))
-             (dir-ent (dir-ent-set-filename dir-ent (car head)))
+             (dir-ent (dir-ent-set-filename
+                       dir-ent
+                       (mbe :exec (car head) :logic (fat32-filename-fix (car head)))))
              (dir-ent (dir-ent-install-directory-bit dir-ent t)))
           (mv fat32-in-memory
               (list* dir-ent tail-list)
