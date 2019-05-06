@@ -1597,12 +1597,12 @@
   place-file-by-pathname
   (fs pathname file)
   (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs)
                               (fat32-filename-list-p pathname)
                               (m1-file-p file))
                   :measure (acl2-count pathname)))
   (b*
-      ((fs (mbe :logic (m1-file-alist-fix fs)
-                :exec fs))
+      ((fs (hifat-file-alist-fix fs))
        (file (mbe :logic (m1-file-fix file)
                   :exec file))
        ;; Pathnames aren't going to be empty lists. Even the emptiest of
@@ -1652,8 +1652,10 @@
                            file)
    (place-file-by-pathname fs pathname file)))
 
-(defcong m1-file-alist-equiv equal
-  (place-file-by-pathname fs pathname file) 1)
+(defthm place-file-by-pathname-of-hifat-file-alist-fix
+  (equal
+   (place-file-by-pathname (hifat-file-alist-fix fs) pathname file)
+   (place-file-by-pathname fs pathname file)))
 
 (defcong fat32-filename-list-equiv equal
   (place-file-by-pathname fs pathname file) 2
@@ -1666,6 +1668,28 @@
 
 (defcong m1-file-equiv equal
   (place-file-by-pathname fs pathname file) 3)
+
+(defthm
+  place-file-by-pathname-correctness-3-lemma-1
+  (implies
+   (and (m1-file-alist-p m1-file-alist)
+        (hifat-no-dups-p m1-file-alist)
+        (m1-regular-file-p file))
+   (hifat-no-dups-p (put-assoc-equal key file m1-file-alist)))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defthm place-file-by-pathname-correctness-3-lemma-2
+  (implies (and (m1-file-alist-p m1-file-alist)
+                (hifat-no-dups-p m1-file-alist)
+                (hifat-no-dups-p (m1-file->contents file)))
+           (hifat-no-dups-p (put-assoc-equal key file m1-file-alist)))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defthm
+  place-file-by-pathname-correctness-3
+  (implies
+   (m1-regular-file-p file)
+   (hifat-no-dups-p (mv-nth 0 (place-file-by-pathname fs pathname file)))))
 
 (defun
   remove-file-by-pathname (fs pathname)
@@ -1739,6 +1763,14 @@
 (defthm fat32-filename-list-prefixp-of-self
   (fat32-filename-list-prefixp x x))
 
+(defthm
+  m1-read-after-write-lemma-2
+  (implies (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs)
+                (m1-directory-file-p (cdr (assoc-equal key fs))))
+           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key fs)))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
 (encapsulate
   ()
 
@@ -1767,6 +1799,30 @@
                                    (cdr pathname2)
                                    (m1-file->contents (cdr alist-elem)))
                4)))))))
+
+  (local
+   (defthm
+     m1-read-after-write-lemma-3
+     (b*
+         (((mv original-file original-error-code)
+           (find-file-by-pathname fs pathname1))
+          ((mv new-fs new-error-code)
+           (place-file-by-pathname fs pathname2 file2)))
+       (implies
+        (and (m1-file-alist-p fs)
+             (hifat-no-dups-p fs)
+             (m1-regular-file-p file2)
+             (equal original-error-code 0)
+             (m1-regular-file-p original-file)
+             (equal new-error-code 0))
+        (equal (find-file-by-pathname new-fs pathname1)
+               (if (fat32-filename-list-equiv pathname1 pathname2)
+                   (mv file2 0)
+                 (find-file-by-pathname fs pathname1)))))
+     :hints
+     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+       :in-theory (enable m1-regular-file-p
+                          fat32-filename-list-fix)))))
 
   (defthm
     m1-read-after-write
