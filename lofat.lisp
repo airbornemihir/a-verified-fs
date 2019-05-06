@@ -6580,31 +6580,7 @@ Some (rather awful) testing forms are
                              dir-ent-list entry-limit))))))
     :hints
     (("goal" :in-theory (enable lofat-to-hifat-helper-exec
-                                m1-regular-file-p))))
-
-  (defthm
-    lofat-find-file-by-pathname-correctness-1-lemma-10
-    (implies
-     (and
-      (lofat-fs-p fat32-in-memory)
-      (useful-dir-ent-list-p dir-ent-list)
-      (consp
-       (assoc-equal
-        name
-        (mv-nth 0
-                (lofat-to-hifat-helper-exec fat32-in-memory
-                                            dir-ent-list entry-limit)))))
-     (equal
-      (m1-regular-file-p
-       (cdr
-        (assoc-equal
-         name
-         (mv-nth 0
-                 (lofat-to-hifat-helper-exec fat32-in-memory
-                                             dir-ent-list entry-limit)))))
-      (not (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name))))))
-    :hints (("goal" :in-theory (enable lofat-to-hifat-helper-exec
-                                       m1-regular-file-p)))))
+                                m1-regular-file-p)))))
 
 (defthm
   lofat-find-file-by-pathname-correctness-1
