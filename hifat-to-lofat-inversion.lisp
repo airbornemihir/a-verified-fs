@@ -1855,15 +1855,17 @@
          first-cluster
          (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
                                 *ms-end-of-clusterchain*)
-         fat32-in-memory)))
+         fat32-in-memory))
+       (contents (m1-file->contents (cdr head))))
     (if
         (m1-regular-file-p (cdr head))
-        (b* ((contents (m1-file->contents (cdr head)))
-             (file-length (length contents))
+        (b* ((file-length (length contents))
              ((mv fat32-in-memory dir-ent errno head-index-list)
               (place-contents fat32-in-memory
                               dir-ent contents file-length first-cluster))
-             (dir-ent (dir-ent-set-filename dir-ent (car head)))
+             (dir-ent (dir-ent-set-filename
+                       dir-ent
+                       (mbe :exec (car head) :logic (fat32-filename-fix (car head)))))
              (dir-ent
               (dir-ent-install-directory-bit
                dir-ent nil)))
@@ -1871,8 +1873,7 @@
               (list* dir-ent tail-list)
               errno
               (append head-index-list tail-index-list)))
-      (b* ((contents (m1-file->contents (cdr head)))
-           (file-length 0)
+      (b* ((file-length 0)
            ((mv fat32-in-memory unflattened-contents errno head-index-list1)
             (hifat-to-lofat-helper
              fat32-in-memory contents first-cluster))
@@ -1901,7 +1902,9 @@
             (place-contents fat32-in-memory
                             dir-ent contents file-length
                             first-cluster))
-           (dir-ent (dir-ent-set-filename dir-ent (car head)))
+           (dir-ent (dir-ent-set-filename
+                     dir-ent
+                     (mbe :exec (car head) :logic (fat32-filename-fix (car head)))))
            (dir-ent
             (dir-ent-install-directory-bit
              dir-ent t)))
@@ -2013,16 +2016,10 @@
 
 (defthm
   useful-dir-ent-list-p-of-hifat-to-lofat-helper
-  (implies
-   (m1-file-alist-p fs)
-   (useful-dir-ent-list-p
-    (mv-nth 1
-            (hifat-to-lofat-helper
-             fat32-in-memory fs first-cluster))))
-  :hints
-  (("goal"
-    :in-theory
-    (enable useful-dir-ent-list-p))))
+  (useful-dir-ent-list-p
+   (mv-nth 1
+           (hifat-to-lofat-helper fat32-in-memory fs first-cluster)))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
 
 (defthm
   unsigned-byte-listp-of-flatten-when-dir-ent-list-p
