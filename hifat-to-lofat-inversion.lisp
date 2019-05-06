@@ -772,26 +772,23 @@
              fat32-in-memory
              dir-ent-list entry-limit))))
 
-(encapsulate
-  ()
-
-  (defthm
-    hifat-no-dups-p-of-lofat-to-hifat-helper-exec
-    (b* (((mv m1-file-alist & & &)
-          (lofat-to-hifat-helper-exec
-           fat32-in-memory
-           dir-ent-list entry-limit)))
-      (hifat-no-dups-p m1-file-alist))
-    :hints
-    (("goal"
-      :in-theory
-      (e/d (fat32-filename-p useless-dir-ent-p
-                             lofat-to-hifat-helper-exec
-                             useful-dir-ent-list-p hifat-no-dups-p)
-           (nth-of-string=>nats natp-of-cluster-size))
-      :induct (lofat-to-hifat-helper-exec
-               fat32-in-memory
-               dir-ent-list entry-limit)))))
+(defthm
+  hifat-no-dups-p-of-lofat-to-hifat-helper-exec
+  (b* (((mv m1-file-alist & & &)
+        (lofat-to-hifat-helper-exec
+         fat32-in-memory
+         dir-ent-list entry-limit)))
+    (hifat-no-dups-p m1-file-alist))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (fat32-filename-p useless-dir-ent-p
+                           lofat-to-hifat-helper-exec
+                           useful-dir-ent-list-p hifat-no-dups-p)
+         (nth-of-string=>nats natp-of-cluster-size))
+    :induct (lofat-to-hifat-helper-exec
+             fat32-in-memory
+             dir-ent-list entry-limit))))
 
 (defthm
   lofat-to-hifat-helper-exec-correctness-3-lemma-1
