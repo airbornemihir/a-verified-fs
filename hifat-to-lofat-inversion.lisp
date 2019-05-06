@@ -4102,11 +4102,14 @@
          tail-entry-limit))
        (error-code (if (zp error-code)
                        tail-error-code error-code)))
-    (mv (list* (cons filename
-                     (make-m1-file :dir-ent dir-ent
-                                   :contents head))
-               tail)
-        error-code)))
+    (if
+        (consp (assoc-equal filename tail))
+        (mv tail *EIO*)
+      (mv (list* (cons filename
+                       (make-m1-file :dir-ent dir-ent
+                                     :contents head))
+                 tail)
+          error-code))))
 
 (defthmd
   lofat-to-hifat-helper-correctness-1
