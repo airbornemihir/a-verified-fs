@@ -3757,21 +3757,7 @@
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
         (:rewrite
          fati-of-hifat-to-lofat-helper-disjoint-lemma-2)
-        (:definition induction-scheme)
-        (:rewrite
-         m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-        (:definition hifat-file-alist-fix)
-        (:rewrite m1-file-alist-p-when-subsetp-equal)
-        (:rewrite useful-dir-ent-list-p-of-cdr)
-        (:rewrite default-+-2)
-        (:rewrite
-         lofat-to-hifat-helper-exec-of-hifat-to-lofat-helper-disjoint)
-        (:rewrite default-+-1)
-        (:linear nth-when-dir-ent-p)
-        (:rewrite m1-directory-file-p-correctness-1)
-        (:definition binary-append)
-        (:rewrite append-atom-under-list-equiv)
-        (:rewrite default-<-1)))
+        (:definition induction-scheme)))
       :expand
       ((:free (y) (intersectp-equal nil y))
        (:free (x1 x2 y)
