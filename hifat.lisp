@@ -1535,9 +1535,10 @@
 ;; makes it the root.
 (defun find-file-by-pathname (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs)
                               (fat32-filename-list-p pathname))
                   :measure (acl2-count pathname)))
-  (b* ((fs (m1-file-alist-fix fs))
+  (b* ((fs (hifat-file-alist-fix fs))
        ((unless (consp pathname))
         (mv (make-m1-file) *enoent*))
        (name (fat32-filename-fix (car pathname)))
@@ -1573,7 +1574,9 @@
     (find-file-by-pathname fs (fat32-filename-list-fix pathname))
     (find-file-by-pathname fs pathname)))
 
-(defcong m1-file-alist-equiv equal (find-file-by-pathname fs pathname) 1)
+(defthm find-file-by-pathname-of-hifat-file-alist-fix
+  (equal (find-file-by-pathname (hifat-file-alist-fix fs) pathname)
+         (find-file-by-pathname fs pathname)))
 
 (defcong fat32-filename-list-equiv equal (find-file-by-pathname fs pathname) 2
   :hints
