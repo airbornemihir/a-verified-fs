@@ -46,8 +46,6 @@
   (implies (m1-file-alist-p m1-file-alist)
            (m1-file-alist-p (remove1-assoc-equal key m1-file-alist))))
 
-;; This function is kinda weirdly named now that the when-hifat-no-dups-p
-;; part has been shorn by remove-hyps...
 (defthmd
   hifat-entry-count-when-hifat-no-dups-p
   (implies
@@ -67,6 +65,32 @@
   :hints
   (("goal"
     :in-theory (enable hifat-entry-count hifat-no-dups-p))))
+
+(defthm
+  hifat-entry-count-of-cdr-1
+  (implies (and (consp fs)
+                (m1-file-alist-p fs)
+                (hifat-no-dups-p fs))
+           (< (hifat-entry-count (cdr fs))
+              (hifat-entry-count fs)))
+  :rule-classes :linear
+  :hints
+  (("goal"
+    :in-theory (enable hifat-no-dups-p hifat-entry-count))))
+
+(defthm
+  hifat-entry-count-of-cdr-2
+  (implies
+   (and (consp fs)
+        (hifat-no-dups-p fs)
+        (m1-file-alist-p fs)
+        (not (m1-regular-file-p (cdr (car fs)))))
+   (< (+ (hifat-entry-count (m1-file->contents (cdr (car fs))))
+         (hifat-entry-count (cdr fs)))
+      (hifat-entry-count fs)))
+  :rule-classes :linear
+  :hints (("goal" :in-theory (enable hifat-no-dups-p)
+           :expand (hifat-entry-count fs))))
 
 (encapsulate
   ()
