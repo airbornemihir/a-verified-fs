@@ -1414,6 +1414,120 @@
   (implies (fd-table-p fd-table)
            (nat-listp (strip-cars fd-table))))
 
+;; It's tempting to remove this predicate, because it makes the fixing of
+;; certain functions hard... but it does give us the desirable property of
+;; maintaining equality for hifat-entry-count between two directory trees whenever
+;; it holds for the two trees. I'm not sure that property is currently used,
+;; but it makes a good argument for keeping it. One other argument is the proof
+;; of anti-reflexivity for hifat-subsetp - if we are to prove that y is a
+;; subset of y under this definition of subsetp (that is, this definition which
+;; doesn't do remove-equal), then we need to make sure there are no duplicate
+;; bindings for the same filename within a directory. The third argument
+;; pertains to the generally understood semantics for filesystems, where there
+;; is generally no valid way of dealing with two directory entries referring to
+;; the same filename (not the same inode, which is OK in filesystems with hard
+;; linking.) There doesn't seem to be much in the literature supporting this,
+;; but there are folks on StackOverflow
+;; (https://unix.stackexchange.com/a/227370,
+;; https://unix.stackexchange.com/a/227361).
+(defund
+  hifat-no-dups-p (m1-file-alist)
+  (declare (xargs :guard (m1-file-alist-p m1-file-alist)))
+  (cond ((atom m1-file-alist) t)
+        ((not (hifat-no-dups-p (cdr m1-file-alist)))
+         nil)
+        ((not (mbt (and (consp (car m1-file-alist))
+                        (stringp (car (car m1-file-alist))))))
+         (not (member-equal (car m1-file-alist)
+                            (cdr m1-file-alist))))
+        ((consp (assoc-equal (caar m1-file-alist)
+                             (cdr m1-file-alist)))
+         nil)
+        ((m1-directory-file-p (cdar m1-file-alist))
+         (hifat-no-dups-p
+          (m1-file->contents (cdar m1-file-alist))))
+        (t t)))
+
+(defthm hifat-no-dups-p-of-cdr
+  (implies (hifat-no-dups-p fs)
+           (hifat-no-dups-p (cdr fs)))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defthm
+  hifat-no-dups-p-of-m1-file-contents-of-cdar
+  (implies (and (hifat-no-dups-p hifat-file-alist)
+                (m1-file-alist-p hifat-file-alist)
+                (m1-directory-file-p (cdr (car hifat-file-alist))))
+           (hifat-no-dups-p (m1-file->contents (cdr (car hifat-file-alist)))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defun hifat-file-alist-fix (hifat-file-alist)
+  (declare (xargs :guard (and (m1-file-alist-p hifat-file-alist)
+                              (hifat-no-dups-p hifat-file-alist))
+                  :verify-guards nil))
+  (mbe
+   :exec
+   hifat-file-alist
+   :logic
+   (b*
+       (((when (atom hifat-file-alist)) nil)
+        (head (cons
+               (fat32-filename-fix (caar hifat-file-alist))
+               (m1-file-fix (cdar hifat-file-alist))))
+        (tail (hifat-file-alist-fix (cdr hifat-file-alist)))
+        ((when (consp (assoc-equal (car head) tail)))
+         tail))
+     (if
+         (m1-directory-file-p (cdr head))
+         (cons
+          (cons (car head)
+                (make-m1-file :dir-ent (m1-file->dir-ent (cdr head))
+                              :contents (hifat-file-alist-fix (m1-file->contents (cdr head)))))
+          tail)
+       (cons head tail)))))
+
+(defthm m1-file-alist-p-of-hifat-file-alist-fix
+  (m1-file-alist-p (hifat-file-alist-fix hifat-file-alist)))
+
+(defthm
+  hifat-file-alist-fix-when-hifat-no-dups-p
+  (implies (and (hifat-no-dups-p hifat-file-alist)
+                (m1-file-alist-p hifat-file-alist))
+           (equal (hifat-file-alist-fix hifat-file-alist)
+                  hifat-file-alist))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defthm
+  hifat-no-dups-p-of-hifat-file-alist-fix
+  (hifat-no-dups-p (hifat-file-alist-fix hifat-file-alist))
+  :hints
+  (("goal"
+    :in-theory (e/d (hifat-no-dups-p)
+                    (alistp-when-m1-file-alist-p))
+    :induct (hifat-file-alist-fix hifat-file-alist))
+   ("subgoal *1/4"
+    :use
+    (:instance
+     alistp-when-m1-file-alist-p
+     (x (hifat-file-alist-fix (cdr hifat-file-alist)))))
+   ("subgoal *1/3"
+    :use
+    (:instance
+     alistp-when-m1-file-alist-p
+     (x (hifat-file-alist-fix (cdr hifat-file-alist)))))))
+
+(defthm
+  hifat-file-alist-fix-guard-lemma-1
+  (implies (and (hifat-no-dups-p hifat-file-alist)
+                (m1-file-alist-p hifat-file-alist)
+                (consp hifat-file-alist)
+                (consp (car hifat-file-alist)))
+           (not (consp (assoc-equal (car (car hifat-file-alist))
+                                    (cdr hifat-file-alist)))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(verify-guards hifat-file-alist-fix)
+
 ;; This function returns *ENOENT* when the root directory is asked for. There's
 ;; a simple reason: we want to return the whole file, including the directory
 ;; entry - and nowhere is there a directory entry for the root. Any

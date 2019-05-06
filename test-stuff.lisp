@@ -316,7 +316,6 @@
           nth (:rewrite member-equal-nth)
           (:rewrite lofat-lstat-refinement)
           (:rewrite hifat-to-lofat-inversion)
-          (:rewrite find-file-by-pathname-correctness-3-lemma-7)
           (:definition pathname-to-fat32-pathname)
           (:definition name-to-fat32-name)
           (:definition rm-list)
