@@ -79,7 +79,7 @@
               nil)
       cluster-size))))
 
-(defthm
+(defthmd
   make-clusters-correctness-1
   (iff (consp (make-clusters text cluster-size))
        (and (not (zp (length text)))
@@ -95,6 +95,8 @@
     :hints
     (("goal"
       :expand (len (make-clusters text cluster-size)))))))
+
+(in-theory (enable (:rewrite make-clusters-correctness-1 . 2)))
 
 (defthm
   cluster-listp-of-make-clusters

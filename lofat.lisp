@@ -5847,8 +5847,8 @@
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
         (m1-bounded-file-alist-p fs)
-        (m1-file-no-dups-p fs)
-        (<= (m1-entry-count fs)
+        (hifat-no-dups-p fs)
+        (<= (hifat-entry-count fs)
             (max-entry-count fat32-in-memory)))
    (b*
        (((mv fat32-in-memory error-code)
@@ -5880,7 +5880,7 @@
       (and (equal error-code1 0)
            (equal error-code2 0)
            (m1-bounded-file-alist-p fs)
-           (m1-file-no-dups-p fs)
+           (hifat-no-dups-p fs)
            (equal (mv-nth 1 (hifat-to-lofat fat32-in-memory fs))
                   0))
       (eqfat (lofat-to-string
@@ -6580,31 +6580,7 @@ Some (rather awful) testing forms are
                              dir-ent-list entry-limit))))))
     :hints
     (("goal" :in-theory (enable lofat-to-hifat-helper-exec
-                                m1-regular-file-p))))
-
-  (defthm
-    lofat-find-file-by-pathname-correctness-1-lemma-10
-    (implies
-     (and
-      (lofat-fs-p fat32-in-memory)
-      (useful-dir-ent-list-p dir-ent-list)
-      (consp
-       (assoc-equal
-        name
-        (mv-nth 0
-                (lofat-to-hifat-helper-exec fat32-in-memory
-                                            dir-ent-list entry-limit)))))
-     (equal
-      (m1-regular-file-p
-       (cdr
-        (assoc-equal
-         name
-         (mv-nth 0
-                 (lofat-to-hifat-helper-exec fat32-in-memory
-                                             dir-ent-list entry-limit)))))
-      (not (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name))))))
-    :hints (("goal" :in-theory (enable lofat-to-hifat-helper-exec
-                                       m1-regular-file-p)))))
+                                m1-regular-file-p)))))
 
 (defthm
   lofat-find-file-by-pathname-correctness-1
