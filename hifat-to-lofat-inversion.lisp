@@ -3578,6 +3578,43 @@
         (m1-file-alist2 fs))))))
 
   (local
+   (defthm
+     hifat-to-lofat-inversion-lemma-8
+     (iff (equal (hifat-entry-count fs) 0) (atom fs))
+     :hints
+     (("goal"
+       :in-theory (enable hifat-entry-count)))))
+
+  (local
+   (defthm
+     hifat-to-lofat-inversion-lemma-9
+     (implies (and (stringp text)
+                   (not (zp cluster-size))
+                   (<= (length text) *ms-max-dir-size*)
+                   (equal (mod *ms-max-dir-size* cluster-size)
+                          0))
+              (<= (* cluster-size
+                     (len (make-clusters text cluster-size)))
+                  *ms-max-dir-size*))
+     :hints
+     (("goal" :in-theory (disable make-clusters-correctness-3)
+       :use (:instance make-clusters-correctness-3
+                       (max-length *ms-max-dir-size*))))))
+
+  (defthm
+    hifat-to-lofat-inversion-lemma-10
+    (implies
+     (and (consp fs)
+          (hifat-no-dups-p fs)
+          (m1-file-alist-p fs)
+          (not (m1-regular-file-p (cdr (car fs)))))
+     (< (hifat-entry-count (m1-file->contents (cdr (car fs))))
+        (hifat-entry-count fs)))
+    :rule-classes :linear
+    :hints (("goal" :in-theory (enable hifat-no-dups-p)
+             :expand (hifat-entry-count fs))))
+
+  (local
    (defun-nx
      induction-scheme
      (fat32-in-memory fs
@@ -3757,7 +3794,6 @@
       (e/d
        (lofat-to-hifat-helper-exec
         hifat-to-lofat-helper-correctness-4
-        hifat-entry-count
         (:definition hifat-no-dups-p))
        ((:rewrite nth-of-nats=>chars)
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
