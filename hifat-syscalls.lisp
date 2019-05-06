@@ -84,6 +84,7 @@
 
 (defun hifat-lstat (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs)
                               (fat32-filename-list-p pathname))))
   (b*
       (((mv file errno)
@@ -100,6 +101,7 @@
 
 (defun hifat-open (pathname fs fd-table file-table)
   (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs)
                               (fat32-filename-list-p pathname)
                               (fd-table-p fd-table)
                               (file-table-p file-table))))
@@ -141,7 +143,8 @@
                               (natp offset)
                               (fd-table-p fd-table)
                               (file-table-p file-table)
-                              (m1-file-alist-p fs))))
+                              (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs))))
   (b*
       ((fd-table-entry (assoc-equal fd fd-table))
        ((unless (consp fd-table-entry))
@@ -182,7 +185,8 @@
                               (natp offset)
                               (fd-table-p fd-table)
                               (file-table-p file-table)
-                              (m1-file-alist-p fs))
+                              (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs))
                   :guard-hints (("goal" :in-theory
                                  (e/d (len-of-insert-text)
                                       (unsigned-byte-p
@@ -226,6 +230,7 @@
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs)
                 (fat32-filename-list-p pathname))
     :guard-hints
     (("goal"
@@ -267,6 +272,7 @@
 (defun
   hifat-mknod (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs)
                               (fat32-filename-list-p pathname))))
   (b* ((dirname (hifat-dirname pathname))
        (basename (hifat-basename pathname))
@@ -325,6 +331,7 @@
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs)
                 (fat32-filename-list-p pathname))))
   (b* (((mv file error-code)
         (find-file-by-pathname fs pathname))
@@ -351,6 +358,7 @@
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs)
                 (fat32-filename-list-p pathname))))
   (b* (((mv file error-code)
         (find-file-by-pathname fs pathname))
@@ -373,6 +381,7 @@
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs)
                 (fat32-filename-list-p pathname))))
   (b* (((mv file error-code)
         (find-file-by-pathname fs pathname))
@@ -390,6 +399,7 @@
   (declare
    (xargs
     :guard (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs)
                 (fat32-filename-list-p oldpathname)
                 (fat32-filename-list-p newpathname))))
   (b* (((mv file error-code)
