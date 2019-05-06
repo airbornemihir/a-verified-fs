@@ -301,18 +301,7 @@
               (mv-nth 0
                       (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                                rm-pathnames 0))))
-     0)
-    (hifat-no-dups-p
-     (mv-nth
-      0
-      (lofat-to-hifat
-       (mv-nth
-        0
-        (hifat-to-lofat
-         fat32-in-memory
-         (mv-nth 0
-                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                          rm-pathnames 0))))))))
+     0))
    (b* (((mv fat32-in-memory &)
          (rm-1 fat32-in-memory rm-pathnames)))
      (implies (and (< 0
