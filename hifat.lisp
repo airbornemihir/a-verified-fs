@@ -1790,7 +1790,8 @@
 (defthm
   find-new-index-helper-correctness-1-lemma-2
   (implies (integerp candidate)
-           (integerp (find-new-index-helper fd-list candidate))))
+           (integerp (find-new-index-helper fd-list candidate)))
+  :rule-classes :type-prescription)
 
 (defthm
   find-new-index-helper-correctness-1
@@ -1811,6 +1812,14 @@
 (defthm
   find-new-index-correctness-1-lemma-2
   (integerp (find-new-index fd-list))
+  :hints (("Goal" :in-theory (enable find-new-index)))
+  :rule-classes :type-prescription)
+
+(defthm
+  find-new-index-correctness-1
+  (not (member-equal
+        (find-new-index fd-list)
+        fd-list))
   :hints (("Goal" :in-theory (enable find-new-index))))
 
 ;; Here's a problem with our current formulation: realpath-helper will receive
