@@ -2918,10 +2918,7 @@
         (mv-nth '0
                 (hifat-to-lofat-helper fat32-in-memory fs
                                                  current-dir-first-cluster)))
-       '1)))))
-  :hints
-  (("goal"
-    :in-theory (disable (:rewrite make-clusters-correctness-1 . 1)))))
+       '1))))))
 
 (defthm
   fati-of-hifat-to-lofat-helper-disjoint
@@ -2944,10 +2941,7 @@
                         (hifat-to-lofat-helper
                          fat32-in-memory
                          fs current-dir-first-cluster)))
-          (fati x fat32-in-memory)))
-  :hints
-  (("goal"
-    :in-theory (disable (:rewrite make-clusters-correctness-1 . 1)))))
+          (fati x fat32-in-memory))))
 
 (defthm
   fat32-build-index-list-of-place-contents-coincident
@@ -3018,7 +3012,8 @@
                           (cluster-size fat32-in-memory)))))))
       (fa-table (effective-fat fat32-in-memory)))))))
 
-(defthm place-contents-expansion-1
+(defthm
+  place-contents-expansion-1
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (not (zp (cluster-size fat32-in-memory)))
@@ -3032,22 +3027,30 @@
             (place-contents fat32-in-memory dir-ent
                             contents file-length first-cluster))
     (if
-        (equal (length contents) 0)
-        (dir-ent-set-first-cluster-file-size dir-ent 0 file-length)
-      (if
-          (equal
-           (+
-            1
-            (len (stobj-find-n-free-clusters
-                  fat32-in-memory
-                  (+ -1
-                     (len (make-clusters contents
-                                         (cluster-size fat32-in-memory)))))))
-           (len (make-clusters contents
-                               (cluster-size fat32-in-memory))))
-          (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-length)
-        dir-ent))))
-  :hints (("goal" :in-theory (enable place-contents))))
+     (equal (length contents) 0)
+     (dir-ent-set-first-cluster-file-size dir-ent 0 file-length)
+     (if
+      (equal
+       (+
+        1
+        (len
+         (stobj-find-n-free-clusters
+          fat32-in-memory
+          (+
+           -1
+           (len
+            (make-clusters contents
+                           (cluster-size fat32-in-memory)))))))
+       (len (make-clusters contents
+                           (cluster-size fat32-in-memory))))
+      (dir-ent-set-first-cluster-file-size
+       dir-ent first-cluster file-length)
+      dir-ent))))
+  :hints
+  (("goal"
+    :in-theory
+    (enable place-contents
+            (:rewrite make-clusters-correctness-1 . 1)))))
 
 (defthm place-contents-expansion-2
   (implies
@@ -3078,7 +3081,11 @@
                                (cluster-size fat32-in-memory))))
           0
         *enospc*))))
-  :hints (("goal" :in-theory (enable place-contents))))
+  :hints
+  (("goal"
+    :in-theory
+    (enable place-contents
+            (:rewrite make-clusters-correctness-1 . 1)))))
 
 (defthm
   make-dir-ent-list-of-append-1
@@ -3752,8 +3759,7 @@
         hifat-to-lofat-helper-correctness-4
         hifat-entry-count
         (:definition hifat-no-dups-p))
-       ((:rewrite make-clusters-correctness-1 . 1)
-        (:rewrite nth-of-nats=>chars)
+       ((:rewrite nth-of-nats=>chars)
         (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
         (:rewrite
          fati-of-hifat-to-lofat-helper-disjoint-lemma-2)
