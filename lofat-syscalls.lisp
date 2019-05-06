@@ -516,10 +516,12 @@
   (("goal"
     :induct (find-file-by-pathname m1-file-alist pathname))))
 
-(defthm
+(defthmd
   find-file-by-pathname-correctness-3-lemma-7
   (implies
-   (and (m1-file-alist-p m1-file-alist2)
+   (and (m1-file-alist-p m1-file-alist1)
+        (m1-file-alist-p m1-file-alist2)
+        (hifat-no-dups-p m1-file-alist1)
         (hifat-no-dups-p m1-file-alist2)
         (hifat-equiv m1-file-alist2 m1-file-alist1))
    (mv-let
@@ -532,8 +534,7 @@
       error-code)))
   :hints
   (("goal"
-    :do-not-induct t
-    :in-theory (enable m1-file-alist-p hifat-equiv)
+    :in-theory (enable hifat-equiv)
     :use
     (find-file-by-pathname-correctness-3-lemma-4
      (:instance find-file-by-pathname-correctness-3-lemma-4
@@ -542,10 +543,36 @@
      (:instance find-file-by-pathname-correctness-3-lemma-6
                 (m1-file-alist m1-file-alist1))))))
 
+(defthmd
+  find-file-by-pathname-correctness-3-lemma-8
+  (implies
+   (hifat-equiv m1-file-alist2 m1-file-alist1)
+   (equal (mv-nth 1
+                  (find-file-by-pathname
+                   (hifat-file-alist-fix m1-file-alist2)
+                   pathname))
+          (mv-nth 1
+                  (find-file-by-pathname
+                   (hifat-file-alist-fix m1-file-alist1)
+                   pathname))))
+  :rule-classes :congruence
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (hifat-equiv))
+    :use
+    ((:instance
+      find-file-by-pathname-correctness-3-lemma-7
+      (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
+      (m1-file-alist2
+       (hifat-file-alist-fix m1-file-alist2)))))))
+
 (defthm
   find-file-by-pathname-correctness-3
   (implies
-   (and (m1-file-alist-p m1-file-alist2)
+   (and (m1-file-alist-p m1-file-alist1)
+        (m1-file-alist-p m1-file-alist2)
+        (hifat-no-dups-p m1-file-alist1)
         (hifat-no-dups-p m1-file-alist2)
         (hifat-equiv m1-file-alist2 m1-file-alist1))
    (mv-let
@@ -554,13 +581,26 @@
      (declare (ignore error-code))
      (implies
       (m1-regular-file-p file)
-      (equal (m1-file->contents
-              (mv-nth 0
-                      (find-file-by-pathname m1-file-alist2 pathname)))
-             (m1-file->contents file)))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable m1-file-alist-p hifat-equiv)
-           :use (:rewrite find-file-by-pathname-correctness-3-lemma-5))))
+      (equal
+       (m1-file->contents
+        (mv-nth 0
+                (find-file-by-pathname m1-file-alist2 pathname)))
+       (m1-file->contents file)))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d (m1-file-alist-p hifat-equiv))
+    :use
+    ((:instance
+      find-file-by-pathname-correctness-3-lemma-5
+      (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
+      (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))
+     (:instance
+      find-file-by-pathname-correctness-3-lemma-5
+      (m1-file-alist1 (hifat-file-alist-fix m1-file-alist2))
+      (m1-file-alist2
+       (hifat-file-alist-fix m1-file-alist1)))))))
 
 (defthm
   find-file-by-pathname-correctness-4-lemma-1
@@ -576,7 +616,9 @@
 (defthm
   find-file-by-pathname-correctness-4
   (implies
-   (and (m1-file-alist-p m1-file-alist2)
+   (and (m1-file-alist-p m1-file-alist1)
+        (hifat-no-dups-p m1-file-alist1)
+        (m1-file-alist-p m1-file-alist2)
         (hifat-no-dups-p m1-file-alist2)
         (hifat-equiv m1-file-alist2 m1-file-alist1))
    (mv-let
