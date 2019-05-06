@@ -1103,6 +1103,15 @@
   :hints (("goal" :in-theory (enable lofat-to-hifat)))
   :rule-classes :linear)
 
+(defthm
+  hifat-no-dups-p-of-lofat-to-hifat
+  (b* (((mv m1-file-alist &)
+        (lofat-to-hifat fat32-in-memory)))
+    (hifat-no-dups-p m1-file-alist))
+  :hints
+  (("goal"
+    :in-theory (enable lofat-to-hifat))))
+
 (defund
   stobj-find-n-free-clusters-helper
   (fat32-in-memory n start)
@@ -4022,7 +4031,6 @@
       (and
        (equal error-code 0)
        (m1-bounded-file-alist-p fs)
-       (hifat-no-dups-p fs)
        ;; This clause should always be true, but that's not yet proven. The
        ;; argument is: The only time we get an error out of
        ;; hifat-to-lofat-helper (and the wrapper) is when we run out
