@@ -794,27 +794,51 @@
                dir-ent-list entry-limit)))))
 
 (defthm
-  lofat-to-hifat-helper-exec-correctness-3
-  (b* (((mv m1-file-alist entry-count & &)
-        (lofat-to-hifat-helper-exec
-         fat32-in-memory
-         dir-ent-list entry-limit)))
-    (equal entry-count
-           (hifat-entry-count m1-file-alist)))
+  lofat-to-hifat-helper-exec-correctness-3-lemma-1
+  (implies
+   (and (useful-dir-ent-list-p dir-ent-list)
+        (not (fat32-filename-p (dir-ent-filename dir-ent))))
+   (not (member-equal dir-ent dir-ent-list)))
   :hints
-  (("goal" :in-theory (enable lofat-to-hifat-helper-exec hifat-entry-count)))
+  (("goal"
+    :in-theory (enable useful-dir-ent-list-p
+                       fat32-filename-p useless-dir-ent-p))))
+
+(defthm
+  lofat-to-hifat-helper-exec-correctness-3
+  (implies
+   (useful-dir-ent-list-p dir-ent-list)
+   (b* (((mv m1-file-alist entry-count & &)
+         (lofat-to-hifat-helper-exec fat32-in-memory
+                                     dir-ent-list entry-limit)))
+     (equal entry-count
+            (hifat-entry-count m1-file-alist))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (lofat-to-hifat-helper-exec hifat-entry-count)
+         (lofat-to-hifat-helper-exec-correctness-3-lemma-1))
+    :induct
+    (lofat-to-hifat-helper-exec fat32-in-memory
+                                dir-ent-list entry-limit))
+   ("subgoal *1/4"
+    :use
+    (:instance lofat-to-hifat-helper-exec-correctness-3-lemma-1
+               (dir-ent (car dir-ent-list)))))
   :rule-classes
   (:rewrite
    (:linear
-    :corollary (b* (((mv m1-file-alist & & &)
-                     (lofat-to-hifat-helper-exec
-                      fat32-in-memory
-                      dir-ent-list entry-limit)))
-                 (<= (hifat-entry-count m1-file-alist)
-                     (nfix entry-limit)))
+    :corollary
+    (implies
+     (useful-dir-ent-list-p dir-ent-list)
+     (b*
+         (((mv m1-file-alist & & &)
+           (lofat-to-hifat-helper-exec fat32-in-memory
+                                       dir-ent-list entry-limit)))
+       (<= (hifat-entry-count m1-file-alist)
+           (nfix entry-limit))))
     :hints
-    (("goal"
-      :in-theory
+    (("goal" :in-theory
       (disable lofat-to-hifat-helper-exec-correctness-1)
       :use lofat-to-hifat-helper-exec-correctness-1)))))
 
@@ -3397,6 +3421,81 @@
 (encapsulate
   ()
 
+  (local
+   (defthm hifat-to-lofat-inversion-lemma-4
+     (implies (and (member-equal x lst) (alistp lst))
+              (consp (assoc-equal (car x) lst)))))
+
+  (defthmd
+    hifat-to-lofat-inversion-lemma-5
+    (implies (and (hifat-subsetp m1-file-alist1 m1-file-alist2)
+                  (alistp m1-file-alist2)
+                  (consp (assoc-equal key m1-file-alist1)))
+             (consp (assoc-equal key m1-file-alist2)))))
+
+;; Not ideal...
+(defthm
+  hifat-to-lofat-inversion-lemma-6
+  (implies
+   (hifat-equiv m1-file-alist1 m1-file-alist2)
+   (equal
+    (consp (assoc-equal key
+                        (hifat-file-alist-fix m1-file-alist1)))
+    (consp
+     (assoc-equal key
+                  (hifat-file-alist-fix m1-file-alist2)))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :expand (hifat-equiv m1-file-alist1 m1-file-alist2)
+    :use
+    ((:instance
+      hifat-to-lofat-inversion-lemma-5
+      (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
+      (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))
+     (:instance
+      hifat-to-lofat-inversion-lemma-5
+      (m1-file-alist1 (hifat-file-alist-fix m1-file-alist2))
+      (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1))))))
+  :rule-classes :congruence)
+
+(defthm
+  hifat-to-lofat-inversion-lemma-7
+  (implies
+   (useful-dir-ent-list-p (MV-NTH 1
+                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
+                                               FS CURRENT-DIR-FIRST-CLUSTER)))
+   (equal
+    (assoc-equal
+     key
+     (MV-NTH
+               0
+               (LOFAT-TO-HIFAT-HELPER-EXEC
+                (MV-NTH 0
+                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
+                                               FS CURRENT-DIR-FIRST-CLUSTER))
+                (MV-NTH 1
+                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
+                                               FS CURRENT-DIR-FIRST-CLUSTER))
+                ENTRY-LIMIT)))
+    (assoc-equal
+     key
+     (hifat-file-alist-fix
+      (MV-NTH
+               0
+               (LOFAT-TO-HIFAT-HELPER-EXEC
+                (MV-NTH 0
+                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
+                                               FS CURRENT-DIR-FIRST-CLUSTER))
+                (MV-NTH 1
+                        (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY
+                                               FS CURRENT-DIR-FIRST-CLUSTER))
+                ENTRY-LIMIT))))))
+  :hints (("goal" :do-not-induct t)))
+
+(encapsulate
+  ()
+
   ;; This is weird, but it's needed in order to discharge a subgoal.
   (local
    (defthm
@@ -3635,7 +3734,11 @@
         (:rewrite
          fati-of-hifat-to-lofat-helper-disjoint-lemma-2)
         (:definition induction-scheme)
-        hifat-no-dups-p-of-lofat-to-hifat-helper-exec))
+        (:rewrite
+         m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+        (:definition hifat-file-alist-fix)
+        (:rewrite m1-file-alist-p-when-subsetp-equal)
+        (:rewrite useful-dir-ent-list-p-of-cdr)))
       :expand
       ((:free (y) (intersectp-equal nil y))
        (:free (x1 x2 y)
