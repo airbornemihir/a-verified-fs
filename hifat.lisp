@@ -1694,11 +1694,11 @@
 (defun
   remove-file-by-pathname (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs)
                               (fat32-filename-list-p pathname))
                   :measure (acl2-count pathname)))
   (b*
-      ((fs (mbe :logic (m1-file-alist-fix fs)
-                :exec fs))
+      ((fs (hifat-file-alist-fix fs))
        ((unless (consp pathname))
         (mv fs *enoent*))
        ;; Design choice - calls which ask for the entire root directory to be
@@ -1740,6 +1740,24 @@
          (integerp error-code)))
   :hints
   (("goal" :induct (remove-file-by-pathname fs pathname))))
+
+(defthm
+  remove-file-by-pathname-correctness-2
+  (equal
+   (remove-file-by-pathname (hifat-file-alist-fix fs) pathname)
+   (remove-file-by-pathname fs pathname)))
+
+(defthm
+  remove-file-by-pathname-correctness-3-lemma-1
+  (implies
+   (and (m1-file-alist-p m1-file-alist)
+        (hifat-no-dups-p m1-file-alist))
+   (hifat-no-dups-p (remove-assoc-equal key m1-file-alist)))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+(defthm
+  remove-file-by-pathname-correctness-3
+  (hifat-no-dups-p (mv-nth 0 (remove-file-by-pathname fs pathname))))
 
 (defthm
   m1-read-after-write-lemma-1
@@ -1894,13 +1912,6 @@
       :in-theory (enable fat32-filename-list-fix
                          m1-regular-file-p))))
 
-  (defthm
-    m1-read-after-delete-lemma-1
-    (implies
-     (not (equal (mv-nth 1 (remove-file-by-pathname fs pathname)) 0))
-     (equal (mv-nth 0 (remove-file-by-pathname fs pathname))
-            (m1-file-alist-fix fs))))
-
   (local
    (defthm
      m1-read-after-delete-lemma-2
@@ -1917,7 +1928,10 @@
            (find-file-by-pathname fs pathname1))
           ((mv new-fs &)
            (remove-file-by-pathname fs pathname2)))
-       (implies (equal error-code *enoent*)
+       (implies (and
+                 (m1-file-alist-p fs)
+                 (hifat-no-dups-p fs)
+                 (equal error-code *enoent*))
                 (equal (find-file-by-pathname new-fs pathname1)
                        (mv (make-m1-file) *enoent*))))
      :hints
@@ -1939,7 +1953,10 @@
           ((mv new-fs error-code)
            (remove-file-by-pathname fs pathname2)))
        (implies
-        (m1-regular-file-p original-file)
+        (and
+         (m1-file-alist-p fs)
+         (hifat-no-dups-p fs)
+         (m1-regular-file-p original-file))
         (equal
          (find-file-by-pathname new-fs pathname1)
          (if (and (fat32-filename-list-prefixp pathname2 pathname1)
@@ -1950,6 +1967,32 @@
      (("goal" :induct (induction-scheme pathname1 pathname2 fs)
        :in-theory (enable fat32-filename-list-fix
                           m1-regular-file-p)))))
+
+  (local
+   (defthmd
+     m1-read-after-delete-lemma-1
+     (b*
+         (((mv original-file original-error-code)
+           (find-file-by-pathname fs pathname1))
+          ((mv new-fs new-error-code)
+           (remove-file-by-pathname fs pathname2)))
+       (implies
+        (and
+         (m1-file-alist-p fs)
+         (hifat-no-dups-p fs)
+         (or (equal original-error-code *enoent*)
+             (m1-regular-file-p original-file)))
+        (equal
+         (find-file-by-pathname new-fs pathname1)
+         (if
+             (or
+              (equal original-error-code *enoent*)
+              (and (equal new-error-code 0)
+                   (fat32-filename-list-prefixp pathname2 pathname1)))
+             (mv (make-m1-file) *enoent*)
+           (find-file-by-pathname fs pathname1)))))
+     :hints (("goal" :use (m1-read-after-delete-lemma-4
+                           m1-read-after-delete-lemma-3)))))
 
   (defthm
     m1-read-after-delete
@@ -1964,14 +2007,16 @@
        (equal
         (find-file-by-pathname new-fs pathname1)
         (if
-         (or
-          (equal original-error-code *enoent*)
-          (and (equal new-error-code 0)
-               (fat32-filename-list-prefixp pathname2 pathname1)))
-         (mv (make-m1-file) *enoent*)
-         (find-file-by-pathname fs pathname1)))))
-    :hints (("goal" :use (m1-read-after-delete-lemma-4
-                          m1-read-after-delete-lemma-3)))))
+            (or
+             (equal original-error-code *enoent*)
+             (and (equal new-error-code 0)
+                  (fat32-filename-list-prefixp pathname2 pathname1)))
+            (mv (make-m1-file) *enoent*)
+          (find-file-by-pathname fs pathname1)))))
+    :hints (("Goal"
+             :do-not-induct t
+             :use (:instance m1-read-after-delete-lemma-1
+                             (fs (hifat-file-alist-fix fs)))) )))
 
 (defun
   find-new-index-helper (fd-list candidate)
