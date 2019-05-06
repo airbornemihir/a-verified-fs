@@ -1845,6 +1845,32 @@
       :in-theory (enable m1-regular-file-p
                          fat32-filename-list-fix))))
 
+  (local
+   (defthm
+     m1-read-after-create-lemma-1
+     (b*
+         (((mv & original-error-code)
+           (find-file-by-pathname fs pathname1))
+          ((mv new-fs new-error-code)
+           (place-file-by-pathname fs pathname2 file2)))
+       (implies
+        (and (m1-file-alist-p fs)
+             (hifat-no-dups-p fs)
+             (m1-regular-file-p file2)
+             (not (equal original-error-code 0))
+             (equal new-error-code 0))
+        (equal
+         (find-file-by-pathname new-fs pathname1)
+         (if (fat32-filename-list-equiv pathname1 pathname2)
+             (mv file2 0)
+           (if (fat32-filename-list-prefixp pathname2 pathname1)
+               (mv (make-m1-file) *enotdir*)
+             (find-file-by-pathname fs pathname1))))))
+     :hints
+     (("goal" :induct (induction-scheme pathname1 pathname2 fs)
+       :in-theory (enable fat32-filename-list-fix
+                          m1-regular-file-p)))))
+
   (defthm
     m1-read-after-create
     (b*
