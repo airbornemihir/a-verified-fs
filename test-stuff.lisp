@@ -305,13 +305,13 @@
               (mv-nth 0
                       (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                                rm-pathnames 0))))
-     0))
+     0)
+    (< 0
+       (len (intersection-equal ls-pathnames rm-pathnames))))
    (b* (((mv fat32-in-memory &)
          (rm-1 fat32-in-memory rm-pathnames)))
-     (implies (and (< 0
-                      (len (intersection-equal ls-pathnames rm-pathnames))))
-              (< (len (ls-list fat32-in-memory ls-pathnames))
-                 (len ls-pathnames)))))
+     (< (len (ls-list fat32-in-memory ls-pathnames))
+        (len ls-pathnames))))
   :hints
   (("goal"
     :in-theory
