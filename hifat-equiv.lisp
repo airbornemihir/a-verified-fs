@@ -211,8 +211,7 @@
 ;; to rewrite in an equal context. Moving this defequiv form up here fixed the
 ;; issue.
 (defequiv hifat-equiv
-  :hints (("Goal" :in-theory (enable hifat-equiv)
-           :do-not-induct t)))
+  :hints (("goal" :in-theory (enable hifat-equiv))))
 
 (defthm
   hifat-equiv-of-cons-lemma-1
@@ -267,47 +266,8 @@
     :use (:instance hifat-equiv-of-cons-lemma-1
                     (fs (cons head tail))))))
 
-;; (local
-;;  (defthm
-;;    hifat-equiv-of-cons-lemma-3
-;;    (implies (and (m1-file-alist-p contents1)
-;;                  (hifat-no-dups-p contents1)
-;;                  (not (hifat-no-dups-p (m1-file-contents-fix contents2))))
-;;             (not (hifat-equiv contents1 contents2)))
-;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
-
-;; (local
-;;  (defthm
-;;    hifat-equiv-of-cons-lemma-4
-;;    (implies (and (m1-file-alist-p contents1)
-;;                  (hifat-no-dups-p contents1)
-;;                  (not (hifat-subsetp contents1
-;;                                      (m1-file-contents-fix contents2))))
-;;             (not (hifat-equiv contents1 contents2)))
-;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
-
-;; (local
-;;  (defthm
-;;    hifat-equiv-of-cons-lemma-5
-;;    (implies
-;;     (and (m1-file-alist-p contents1)
-;;          (hifat-no-dups-p contents1)
-;;          (not (hifat-subsetp (m1-file-contents-fix contents2)
-;;                              contents1)))
-;;     (not (hifat-equiv contents1 contents2)))
-;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
-
-;; (local
-;;  (defthm
-;;    hifat-equiv-of-cons-lemma-6
-;;    (implies (and (m1-file-alist-p contents1)
-;;                  (hifat-no-dups-p contents1)
-;;                  (not (m1-file-alist-p contents2)))
-;;             (not (hifat-equiv contents1 contents2)))
-;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
-
 (defthm
-  hifat-equiv-of-cons-lemma-7
+  hifat-equiv-of-cons-lemma-3
   (implies (and (m1-directory-file-p (cdr head))
                 (m1-file-alist-p (cons head tail))
                 (hifat-no-dups-p (cons head tail))
@@ -343,13 +303,13 @@
                 (contents contents)
                 (dir-ent dir-ent))))))
 
-(defthm hifat-equiv-of-cons-lemma-8
+(defthm hifat-equiv-of-cons-lemma-4
   (implies (and (not (assoc-equal (car head) tail1))
                 (hifat-subsetp tail2 tail1)
                 (fat32-filename-p (car head)))
            (not (assoc-equal (car head) tail2))))
 
-(defthm hifat-equiv-of-cons-lemma-9
+(defthm hifat-equiv-of-cons-lemma-5
   (implies (and (hifat-no-dups-p (cons head tail1))
                 (hifat-subsetp tail2 tail1))
            (hifat-subsetp tail2 (cons head tail1)))
@@ -360,11 +320,12 @@
 ;; loop-stopper, we were going round and round in a big induction proof. By
 ;; explicitly stipulating equality as the equivalence relation, we get around
 ;; this.
-(defthm hifat-equiv-of-cons
+(defthm
+  hifat-equiv-of-cons
   (implies (hifat-equiv tail1 tail2)
            (equal (hifat-equiv (cons head tail1)
                                (cons head tail2))
                   t))
-  :hints (("goal" :do-not-induct t
-           :in-theory (e/d (hifat-equiv hifat-no-dups-p))
-           :expand (hifat-file-alist-fix (cons head tail1)))))
+  :hints
+  (("goal" :in-theory (e/d (hifat-equiv hifat-no-dups-p))
+    :expand (hifat-file-alist-fix (cons head tail1)))))
