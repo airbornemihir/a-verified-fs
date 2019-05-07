@@ -279,6 +279,18 @@
         (pathname-to-fat32-pathname (explode pathname))))
       0))))
 
+(defund
+  ls-1
+  (fat32-in-memory pathnames)
+  (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
+                              (string-listp pathnames))
+                  :stobjs fat32-in-memory))
+  (b* ((ls-list
+        (ls-list fat32-in-memory pathnames))
+       (exit-status
+        (if (< (len ls-list) (len pathnames)) 2 0)))
+    (mv ls-list exit-status)))
+
 (defthm
   ls-list-after-rm-1
   (implies
