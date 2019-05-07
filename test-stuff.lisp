@@ -325,13 +325,10 @@
     (e/d (rm-1)
          (ls-list-correctness-3
           nth (:rewrite member-equal-nth)
-          (:rewrite lofat-lstat-refinement)
-          (:rewrite hifat-to-lofat-inversion)
           (:definition pathname-to-fat32-pathname)
           (:definition name-to-fat32-name)
           (:definition rm-list)
           (:definition find-file-by-pathname)))
-    :do-not-induct t
     :use
     ((:instance
       ls-list-correctness-3
@@ -351,31 +348,7 @@
      (:instance
       (:rewrite member-equal-nth)
       (l (intersection-equal ls-pathnames rm-pathnames))
-      (n 0))
-     (:instance
-      (:rewrite lofat-lstat-refinement)
-      (pathname
-       (pathname-to-fat32-pathname
-        (explode
-         (nth 0
-              (intersection-equal ls-pathnames rm-pathnames)))))
-      (fat32-in-memory
-       (mv-nth
-        0
-        (hifat-to-lofat
-         fat32-in-memory
-         (mv-nth
-          0
-          (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                   rm-pathnames 0))))))
-     (:instance
-      (:rewrite hifat-to-lofat-inversion)
-      (fs
-       (mv-nth
-        0
-        (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                 rm-pathnames 0)))
-      (fat32-in-memory fat32-in-memory))))))
+      (n 0))))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
