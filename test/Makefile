@@ -5,8 +5,7 @@ test-cp-replicant-4 mtools-test-cp-replicant-2 \
 test-mkfs-replicant-1 test-mkfs-replicant-2 \
 test-wc-replicant-1 test-wc-replicant-2 test-wc-replicant-3 \
 test-rm-replicant-1 test-rm-replicant-2 test-rm-replicant-3 \
-test-rm-replicant-4 mtools-test-rm-replicant-1 \
-mtools-test-rm-replicant-2 \
+mtools-test-rm-replicant-1 \
 test-unlink-replicant-1 test-unlink-replicant-2 \
 test-unlink-replicant-3 \
 test-mkdir-replicant-1 test-mkdir-replicant-2 \
@@ -15,7 +14,7 @@ test-rmdir-replicant-1 test-rmdir-replicant-2 \
 mtools-test-rmdir-replicant-1 \
 test-mv-replicant-1 mtools-test-mv-replicant-1 \
 mtools-test-mv-replicant-2 \
-test-ls-replicant-1
+test-ls-replicant-1 # test-rm-replicant-4 mtools-test-rm-replicant-2
 
 test: $(TEST)
 
