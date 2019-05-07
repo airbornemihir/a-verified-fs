@@ -246,13 +246,12 @@
         (cons (car name-list) (ls-list fat32-in-memory (cdr name-list)))
       (ls-list fat32-in-memory (cdr name-list)))))
 
-(defthm ls-list-correctness-1
+(defthm ls-list-correctness-1-lemma-1
   (<= (len (ls-list fat32-in-memory name-list))
       (len name-list))
   :rule-classes :linear)
 
-(defthmd
-  ls-list-correctness-2
+(defthmd ls-list-correctness-1-lemma-2
   (implies
    (not (equal (mv-nth 1
                        (lofat-lstat fat32-in-memory pathname))
@@ -263,7 +262,7 @@
   :hints (("goal" :in-theory (enable lofat-lstat))))
 
 (defthm
-  ls-list-correctness-3
+  ls-list-correctness-1
   (implies
    (and
     (member-equal pathname name-list)
@@ -289,6 +288,8 @@
                    (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                             rm-pathnames 0))
            0)
+    (< 0
+       (len (intersection-equal ls-pathnames rm-pathnames)))
     (m1-bounded-file-alist-p
      (mv-nth 0
              (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
@@ -305,9 +306,7 @@
               (mv-nth 0
                       (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                                rm-pathnames 0))))
-     0)
-    (< 0
-       (len (intersection-equal ls-pathnames rm-pathnames))))
+     0))
    (b* (((mv fat32-in-memory &)
          (rm-1 fat32-in-memory rm-pathnames)))
      (< (len (ls-list fat32-in-memory ls-pathnames))
@@ -316,14 +315,14 @@
   (("goal"
     :in-theory
     (e/d (rm-1)
-         (ls-list-correctness-3 nth (:rewrite member-equal-nth)
+         (ls-list-correctness-1 nth (:rewrite member-equal-nth)
                                 (:definition pathname-to-fat32-pathname)
                                 (:definition name-to-fat32-name)
                                 (:definition rm-list)
                                 (:definition find-file-by-pathname)))
     :use
     ((:instance
-      ls-list-correctness-3
+      ls-list-correctness-1
       (pathname (nth 0
                      (intersection-equal ls-pathnames rm-pathnames)))
       (fat32-in-memory
@@ -403,4 +402,3 @@
                 lofat-equiv)
          (read-file-into-string2 (:e string-to-lofat-nx)))
     :expand (hide (string-to-lofat-nx nil)))))
-
