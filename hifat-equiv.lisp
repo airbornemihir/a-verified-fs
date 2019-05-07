@@ -267,45 +267,6 @@
     :use (:instance hifat-equiv-of-cons-lemma-1
                     (fs (cons head tail))))))
 
-;; (local
-;;  (defthm
-;;    hifat-equiv-of-cons-lemma-3
-;;    (implies (and (m1-file-alist-p contents1)
-;;                  (hifat-no-dups-p contents1)
-;;                  (not (hifat-no-dups-p (m1-file-contents-fix contents2))))
-;;             (not (hifat-equiv contents1 contents2)))
-;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
-
-;; (local
-;;  (defthm
-;;    hifat-equiv-of-cons-lemma-4
-;;    (implies (and (m1-file-alist-p contents1)
-;;                  (hifat-no-dups-p contents1)
-;;                  (not (hifat-subsetp contents1
-;;                                      (m1-file-contents-fix contents2))))
-;;             (not (hifat-equiv contents1 contents2)))
-;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
-
-;; (local
-;;  (defthm
-;;    hifat-equiv-of-cons-lemma-5
-;;    (implies
-;;     (and (m1-file-alist-p contents1)
-;;          (hifat-no-dups-p contents1)
-;;          (not (hifat-subsetp (m1-file-contents-fix contents2)
-;;                              contents1)))
-;;     (not (hifat-equiv contents1 contents2)))
-;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
-
-;; (local
-;;  (defthm
-;;    hifat-equiv-of-cons-lemma-6
-;;    (implies (and (m1-file-alist-p contents1)
-;;                  (hifat-no-dups-p contents1)
-;;                  (not (m1-file-alist-p contents2)))
-;;             (not (hifat-equiv contents1 contents2)))
-;;    :hints (("goal" :expand (hifat-equiv contents1 contents2)))))
-
 (defthm
   hifat-equiv-of-cons-lemma-7
   (implies (and (m1-directory-file-p (cdr head))
