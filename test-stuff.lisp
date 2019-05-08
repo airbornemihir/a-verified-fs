@@ -292,7 +292,7 @@
     (mv ls-list exit-status)))
 
 (defthm
-  ls-list-after-rm-1
+  ls-1-after-rm-1
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -320,13 +320,14 @@
                                rm-pathnames 0))))
      0))
    (b* (((mv fat32-in-memory &)
-         (rm-1 fat32-in-memory rm-pathnames)))
-     (< (len (ls-list fat32-in-memory ls-pathnames))
-        (len ls-pathnames))))
+         (rm-1 fat32-in-memory rm-pathnames))
+        ((mv & exit-status)
+         (ls-1 fat32-in-memory ls-pathnames)))
+     (equal exit-status 2)))
   :hints
   (("goal"
     :in-theory
-    (e/d (rm-1)
+    (e/d (rm-1 ls-1)
          (ls-list-correctness-1 nth (:rewrite member-equal-nth)
                                 (:definition pathname-to-fat32-pathname)
                                 (:definition name-to-fat32-name)
