@@ -296,10 +296,6 @@
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (equal (mv-nth 1
-                   (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                            rm-pathnames 0))
-           0)
     (< 0
        (len (intersection-equal ls-pathnames rm-pathnames)))
     (m1-bounded-file-alist-p
@@ -319,11 +315,13 @@
                       (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                                rm-pathnames 0))))
      0))
-   (b* (((mv fat32-in-memory &)
+   (b* (((mv fat32-in-memory rm-exit-status)
          (rm-1 fat32-in-memory rm-pathnames))
-        ((mv & exit-status)
+        ((mv & ls-exit-status)
          (ls-1 fat32-in-memory ls-pathnames)))
-     (equal exit-status 2)))
+     (implies
+      (equal rm-exit-status 0)
+      (equal ls-exit-status 2))))
   :hints
   (("goal"
     :in-theory
