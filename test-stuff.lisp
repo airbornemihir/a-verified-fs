@@ -145,8 +145,8 @@
                               (stringp disk-path)
                               (stringp output-path)
                               (state-p state))
-                  :guard-hints (("Goal" :do-not-induct t
-                                 :in-theory (e/d (rm-1) (read-file-into-string2))) )))
+                  :guard-hints (("Goal" :in-theory (e/d (rm-1)
+                                                        (read-file-into-string2))))))
   (mbe :logic
        (b*
            ((disk-image-string (read-file-into-string disk-path))
@@ -339,15 +339,51 @@
 
 (defund
   ls-1
-  (fat32-in-memory pathnames)
+  (fat32-in-memory ls-pathnames disk-image-string)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
-                              (string-listp pathnames))
+                              (string-listp ls-pathnames)
+                              (stringp disk-image-string)
+                              (>= (length disk-image-string)
+                                  *initialbytcnt*))
                   :stobjs fat32-in-memory))
-  (b* ((ls-list
-        (ls-list fat32-in-memory pathnames))
+  (b* (((mv fat32-in-memory error-code)
+        (string-to-lofat fat32-in-memory disk-image-string))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory nil 2))
+       (ls-list
+        (ls-list fat32-in-memory ls-pathnames))
        (exit-status
-        (if (< (len ls-list) (len pathnames)) 2 0)))
-    (mv ls-list exit-status)))
+        (if (< (len ls-list) (len ls-pathnames)) 2 0)))
+    (mv fat32-in-memory ls-list exit-status)))
+
+(defun
+  ls-2
+  (fat32-in-memory state ls-pathnames disk-path)
+  (declare
+   (xargs :stobjs (state fat32-in-memory)
+          :guard (and (fat32-in-memoryp fat32-in-memory)
+                      (state-p state)
+                      (string-listp ls-pathnames)
+                      (stringp disk-path))
+          :guard-hints
+          (("goal" :in-theory (e/d (ls-1)
+                                   (read-file-into-string2))))))
+  (mbe
+   :logic
+   (b* ((disk-image-string (read-file-into-string disk-path))
+        ((mv fat32-in-memory ls-list exit-status)
+         (ls-1 fat32-in-memory
+               ls-pathnames disk-image-string)))
+     (mv fat32-in-memory ls-list exit-status))
+   :exec
+   (b* (((mv fat32-in-memory error-code)
+         (disk-image-to-lofat fat32-in-memory disk-path state))
+        ((unless (equal error-code 0))
+         (mv fat32-in-memory nil 2))
+        (ls-list (ls-list fat32-in-memory ls-pathnames))
+        (exit-status (if (< (len ls-list) (len ls-pathnames))
+                         2 0)))
+     (mv fat32-in-memory ls-list exit-status))))
 
 (defthm
   ls-1-after-rm-1
@@ -396,16 +432,15 @@
          (mv-nth 0
                  (string-to-lofat fat32-in-memory disk-image-string))))
        rm-pathnames 0))))
-   (b* (((mv fat32-in-memory & rm-exit-status)
+   (b* (((mv fat32-in-memory disk-image-string rm-exit-status)
          (rm-1 fat32-in-memory
                disk-image-string rm-pathnames))
-        ((mv & ls-exit-status)
-         (ls-1 fat32-in-memory ls-pathnames)))
+        ((mv & & ls-exit-status)
+         (ls-1 fat32-in-memory ls-pathnames disk-image-string)))
      (implies (equal rm-exit-status 0)
               (equal ls-exit-status 2))))
   :hints
   (("goal"
-    :do-not-induct t
     :in-theory (e/d (rm-1 ls-1)
                     ((:rewrite ls-list-correctness-1)
                      (:rewrite rm-list-correctness-1)
