@@ -116,8 +116,6 @@
                               (string-listp rm-pathnames)
                               (stringp disk-image-string)
                               (>= (length disk-image-string) *initialbytcnt*))
-                  :guard-debug t
-                  :guard-hints (("Goal" :do-not-induct t) )
                   :stobjs fat32-in-memory))
   (b* (((mv fat32-in-memory error-code)
         (string-to-lofat fat32-in-memory disk-image-string))
@@ -300,63 +298,71 @@
         (if (< (len ls-list) (len pathnames)) 2 0)))
     (mv ls-list exit-status)))
 
-(defthm
-  ls-1-after-rm-1
-  (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (< 0
-       (len (intersection-equal ls-pathnames rm-pathnames)))
-    (m1-bounded-file-alist-p
-     (mv-nth 0
-             (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                      rm-pathnames 0)))
-    (>= (max-entry-count fat32-in-memory)
-        (hifat-entry-count
-         (mv-nth 0
-                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                          rm-pathnames 0))))
-    (equal
-     (mv-nth 1
-             (hifat-to-lofat
-              fat32-in-memory
-              (mv-nth 0
-                      (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                               rm-pathnames 0))))
-     0))
-   (b* (((mv fat32-in-memory rm-exit-status)
-         (rm-1 fat32-in-memory rm-pathnames))
-        ((mv & ls-exit-status)
-         (ls-1 fat32-in-memory ls-pathnames)))
-     (implies
-      (equal rm-exit-status 0)
-      (equal ls-exit-status 2))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (rm-1 ls-1)
-         (ls-list-correctness-1 nth (:rewrite member-equal-nth)
-                                (:definition pathname-to-fat32-pathname)
-                                (:definition name-to-fat32-name)
-                                (:definition rm-list)
-                                (:definition find-file-by-pathname)))
-    :use
-    ((:instance
-      ls-list-correctness-1
-      (pathname (nth 0
-                     (intersection-equal ls-pathnames rm-pathnames)))
-      (fat32-in-memory
-       (mv-nth
-        0
-        (hifat-to-lofat
-         fat32-in-memory
-         (mv-nth 0
-                 (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                          rm-pathnames 0)))))
-      (name-list ls-pathnames))
-     (:instance (:rewrite member-equal-nth)
-                (l (intersection-equal ls-pathnames rm-pathnames))
-                (n 0))))))
+;; (defthm
+;;   ls-1-after-rm-1
+;;   (implies
+;;    (and
+;;     (lofat-fs-p fat32-in-memory)
+;;     (< 0
+;;        (len (intersection-equal ls-pathnames rm-pathnames)))
+;;     (m1-bounded-file-alist-p
+;;      (mv-nth 0
+;;              (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+;;                       rm-pathnames 0)))
+;;     (>= (max-entry-count fat32-in-memory)
+;;         (hifat-entry-count
+;;          (mv-nth 0
+;;                  (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+;;                           rm-pathnames 0))))
+;;     (equal
+;;      (mv-nth 1
+;;              (hifat-to-lofat
+;;               fat32-in-memory
+;;               (mv-nth 0
+;;                       (rm-list (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+;;                                rm-pathnames 0))))
+;;      0))
+;;    (b* (((mv fat32-in-memory & rm-exit-status)
+;;          (rm-1 fat32-in-memory disk-image-string rm-pathnames))
+;;         ((mv & ls-exit-status)
+;;          (ls-1 fat32-in-memory ls-pathnames)))
+;;      (implies
+;;       (equal rm-exit-status 0)
+;;       (equal ls-exit-status 2))))
+;;   :hints
+;;   (("goal"
+;;     :do-not-induct t
+;;     :in-theory
+;;     (e/d (rm-1 ls-1)
+;;          (ls-list-correctness-1 nth (:rewrite member-equal-nth)
+;;                                 (:definition pathname-to-fat32-pathname)
+;;                                 (:definition name-to-fat32-name)
+;;                                 (:definition rm-list)
+;;                                 (:definition find-file-by-pathname)))
+;;     :use
+;;     ((:instance
+;;       ls-list-correctness-1
+;;       (pathname (nth 0
+;;                      (intersection-equal ls-pathnames rm-pathnames)))
+;;       (fat32-in-memory
+;;        (mv-nth
+;;         0
+;;         (hifat-to-lofat
+;;          (mv-nth 0
+;;                  (string-to-lofat fat32-in-memory disk-image-string))
+;;          (mv-nth
+;;           0
+;;           (rm-list
+;;            (mv-nth
+;;             0
+;;             (lofat-to-hifat
+;;              (mv-nth 0
+;;                      (string-to-lofat fat32-in-memory disk-image-string))))
+;;            rm-pathnames 0)))))
+;;       (name-list ls-pathnames))
+;;      (:instance (:rewrite member-equal-nth)
+;;                 (l (intersection-equal ls-pathnames rm-pathnames))
+;;                 (n 0))))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
