@@ -3061,7 +3061,6 @@
                 (lofat-fs-p fat32-in-memory))
     :guard-hints
     (("goal"
-      :do-not-induct t
       :in-theory
       (e/d (lofat-to-string)
            (princ$-of-princ$
@@ -3126,7 +3125,7 @@
       (((mv channel state)
         (open-output-channel image-path
                              :character state))
-       ((when (null channel)) state)
+       ((when (null channel)) (mv state *EIO*))
        (state
         (mbe
          :logic (princ$ (lofat-to-string fat32-in-memory)
@@ -3146,7 +3145,7 @@
                       channel state)))
            (princ$ "" channel state))))
        (state (close-output-channel channel state)))
-    state))
+    (mv state 0)))
 
 (defthm
   lofat-to-string-inversion-lemma-1

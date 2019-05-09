@@ -23,10 +23,8 @@
      ((mv fat32-in-memory &)
       (disk-image-to-lofat
        fat32-in-memory val state))
-     (ls-list
-      (ls-list fat32-in-memory extra-args))
-     (exit-status
-      (if (< (len ls-list) (len extra-args)) 2 0))
+     ((mv ls-list exit-status)
+      (ls-1 fat32-in-memory extra-args))
      ((mv & prefix state)
       (getenv$ "LS_PREFIX" state))
      ((mv & val state)
