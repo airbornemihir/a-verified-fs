@@ -770,15 +770,28 @@
 
 (defthm
   member-of-intersection$
-  (implies (not (member-equal x l1))
-           (not (member-equal x (intersection-equal l1 l2)))))
+  (implies (or (not (member-equal x l1)) (not (member-equal x l2)))
+           (not (member-equal x (intersection-equal l1 l2))))
+  :rule-classes
+  (:rewrite
+   (:type-prescription
+    :corollary
+    (implies (not (member-equal x l1))
+             (not (member-equal x (intersection-equal l1 l2)))))
+   (:type-prescription
+    :corollary
+    (implies (not (member-equal x l2))
+             (not (member-equal x (intersection-equal l1 l2)))))))
 
 (defthm
   nth-of-intersection$
   (implies (< (nfix n)
               (len (intersection-equal l1 l2)))
-           (member-equal (nth n (intersection-equal l1 l2))
-                         l1))
+           (and
+            (member-equal (nth n (intersection-equal l1 l2))
+                          l1)
+            (member-equal (nth n (intersection-equal l1 l2))
+                          l2)))
   :hints
   (("goal"
     :in-theory (disable member-of-intersection$)
