@@ -111,17 +111,26 @@
 
 (defund
   rm-1
-  (fat32-in-memory pathnames)
+  (fat32-in-memory disk-image-string rm-pathnames)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
-                              (string-listp pathnames))
+                              (string-listp rm-pathnames)
+                              (stringp disk-image-string)
+                              (>= (length disk-image-string) *initialbytcnt*))
+                  :guard-debug t
+                  :guard-hints (("Goal" :do-not-induct t) )
                   :stobjs fat32-in-memory))
-  (b* (((mv fs &)
+  (b* (((mv fat32-in-memory error-code)
+        (string-to-lofat fat32-in-memory disk-image-string))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory disk-image-string 1))
+       ((mv fs &)
         (lofat-to-hifat fat32-in-memory))
        ((mv fs exit-status)
-        (rm-list fs pathnames 0))
+        (rm-list fs rm-pathnames 0))
        ((mv fat32-in-memory &)
-        (hifat-to-lofat fat32-in-memory fs)))
-    (mv fat32-in-memory exit-status)))
+        (hifat-to-lofat fat32-in-memory fs))
+       (disk-image-string (lofat-to-string fat32-in-memory)))
+    (mv fat32-in-memory disk-image-string exit-status)))
 
 (defoptions rmdir-opts
   :parents (demo2)
