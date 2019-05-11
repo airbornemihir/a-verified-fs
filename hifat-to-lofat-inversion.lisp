@@ -653,12 +653,6 @@
              head-dir-ent-list
              (- entry-limit 1))
           (mv contents 0 nil 0)))
-       ;; get-clusterchain-contents returns either 0 or a negative error code,
-       ;; which is not what we want...
-       (error-code
-        (if (equal error-code 0)
-            head-error-code
-          *EIO*))
        ;; we want entry-limit to serve both as a measure and an upper
        ;; bound on how many entries are found.
        (tail-entry-limit (nfix (- entry-limit
@@ -669,8 +663,12 @@
          (cdr dir-ent-list)
          tail-entry-limit))
        (error-code
-        (if (and (zp error-code)
-                 (consp (assoc-equal filename tail))
+        (if (and ;; get-clusterchain-contents returns an error code of 0.
+                 (equal error-code 0)
+                 (equal head-error-code 0)
+                 (equal tail-error-code 0)
+                 ;; There are no duplicate entries.
+                 (atom (assoc-equal filename tail))
                  (not
                   ;; This is the weird case where we have a directory... and
                   ;; it's 2^21 or fewer bytes long... but somehow it's managed
@@ -678,7 +676,7 @@
                   ;; means it's skipped either the . entry or the .. entry.
                   (and directory-p
                        (< *ms-max-dir-ent-count* (len head-dir-ent-list)))))
-            tail-error-code
+            0
           *EIO*)))
     ;; We add the file to this m1 instance.
     (mv (list* (cons filename
@@ -785,11 +783,12 @@
 
 (defthm
   hifat-no-dups-p-of-lofat-to-hifat-helper-exec
-  (b* (((mv m1-file-alist & & &)
+  (b* (((mv m1-file-alist & & error-code)
         (lofat-to-hifat-helper-exec
          fat32-in-memory
          dir-ent-list entry-limit)))
-    (hifat-no-dups-p m1-file-alist))
+    (implies (equal error-code 0)
+             (hifat-no-dups-p m1-file-alist)))
   :hints
   (("goal"
     :in-theory
