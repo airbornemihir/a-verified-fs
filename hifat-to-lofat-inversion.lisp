@@ -668,25 +668,27 @@
          fat32-in-memory
          (cdr dir-ent-list)
          tail-entry-limit))
-       (error-code (if (zp error-code) tail-error-code error-code)))
-    (if
-        (or (consp (assoc-equal filename tail))
-            ;; This is the weird case where we have a directory... and it's
-            ;; 2^21 or fewer bytes long... but somehow it's managed to have
-            ;; more than (2^16 -2) useful entries in it, which means it's
-            ;; skipped either the . entry or the .. entry.
-            (and directory-p
-                 (< *ms-max-dir-ent-count* (len head-dir-ent-list))))
-        (mv tail tail-entry-count tail-clusterchain-list *EIO*)
-      ;; We add the file to this m1 instance.
-      (mv (list* (cons filename
-                       (make-m1-file :dir-ent dir-ent
-                                     :contents head))
-                 tail)
-          (+ 1 head-entry-count tail-entry-count)
-          (append (list clusterchain) head-clusterchain-list
-                  tail-clusterchain-list)
-          error-code))))
+       (error-code
+        (if (and (zp error-code)
+                 (consp (assoc-equal filename tail))
+                 (not
+                  ;; This is the weird case where we have a directory... and
+                  ;; it's 2^21 or fewer bytes long... but somehow it's managed
+                  ;; to have more than (2^16 -2) useful entries in it, which
+                  ;; means it's skipped either the . entry or the .. entry.
+                  (and directory-p
+                       (< *ms-max-dir-ent-count* (len head-dir-ent-list)))))
+            tail-error-code
+          *EIO*)))
+    ;; We add the file to this m1 instance.
+    (mv (list* (cons filename
+                     (make-m1-file :dir-ent dir-ent
+                                   :contents head))
+               tail)
+        (+ 1 head-entry-count tail-entry-count)
+        (append (list clusterchain) head-clusterchain-list
+                tail-clusterchain-list)
+        error-code)))
 
 (defthm lofat-to-hifat-helper-exec-correctness-1-lemma-1
   (equal (rationalp (nth n (dir-ent-fix x)))

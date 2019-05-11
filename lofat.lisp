@@ -7019,7 +7019,7 @@ Some (rather awful) testing forms are
                 (fat32-filename-list-p pathname))
     :measure (acl2-count pathname)
     :stobjs fat32-in-memory
-    :verify-guards nil))
+    :guard-debug t))
   (b*
       (((unless (consp pathname))
         (mv fat32-in-memory *enoent*))
