@@ -640,6 +640,9 @@
             (get-clusterchain fat32-in-memory
                               first-cluster
                               length)))
+       (head-dir-ent-list (if directory-p
+                              (make-dir-ent-list (string=>nats contents))
+                            nil))
        ;; head-entry-count and head-clusterchain-list, here, do not include the
        ;; entry or clusterchain respectively for the head itself. Those will be
        ;; added at the end.
@@ -647,15 +650,9 @@
         (if directory-p
             (lofat-to-hifat-helper-exec
              fat32-in-memory
-             (make-dir-ent-list (string=>nats contents))
+             head-dir-ent-list
              (- entry-limit 1))
           (mv contents 0 nil 0)))
-       ;; get-clusterchain-contents returns either 0 or a negative error code,
-       ;; which is not what we want...
-       (error-code
-        (if (equal error-code 0)
-            head-error-code
-          *EIO*))
        ;; we want entry-limit to serve both as a measure and an upper
        ;; bound on how many entries are found.
        (tail-entry-limit (nfix (- entry-limit
@@ -665,11 +662,25 @@
          fat32-in-memory
          (cdr dir-ent-list)
          tail-entry-limit))
-       (error-code (if (zp error-code) tail-error-code error-code)))
-    ;; We add the file to this m1 instance.
+       (error-code
+        (if (and ;; get-clusterchain-contents returns an error code of 0.
+                 (equal error-code 0)
+                 (equal head-error-code 0)
+                 (equal tail-error-code 0)
+                 (not
+                  ;; This is the weird case where we have a directory... and
+                  ;; it's 2^21 or fewer bytes long... but somehow it's managed
+                  ;; to have more than (2^16 -2) useful entries in it, which
+                  ;; means it's skipped either the . entry or the .. entry.
+                  (and directory-p
+                       (< *ms-max-dir-ent-count* (len head-dir-ent-list)))))
+            0
+          *EIO*)))
     (if
         (consp (assoc-equal filename tail))
         (mv tail tail-entry-count tail-clusterchain-list *EIO*)
+      ;; We add the file to this m1 instance, having made sure it isn't a
+      ;; duplicate.
       (mv (list* (cons filename
                        (make-m1-file :dir-ent dir-ent
                                      :contents head))
@@ -898,45 +909,48 @@
                         (:t dir-ent-directory-p)
                         (:definition fat32-build-index-list)))))
 
-;; (defthm m1-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec
-;;   (implies
-;;    (equal
-;;     (mv-nth 1 (lofat-to-hifat-helper-exec
-;;                fat32-in-memory dir-ent-list entry-limit))
-;;     0)
-;;    (m1-bounded-file-alist-p-helper
-;;     (mv-nth 0 (lofat-to-hifat-helper-exec
-;;                fat32-in-memory dir-ent-list entry-limit))
-;;     (len dir-ent-list)))
-;;   :hints (("Goal" :in-theory (enable lofat-to-hifat-helper-exec)
-;;            :induct
-;;            (LOFAT-TO-HIFAT-HELPER-EXEC FAT32-IN-MEMORY DIR-ENT-LIST ENTRY-LIMIT))
-;;           ("Subgoal *1/3" :use
-;;            ((:instance
-;;              (:rewrite m1-bounded-file-alist-p-of-cdr-lemma-1)
-;;              (ac1
-;;               (len
-;;                (make-dir-ent-list
-;;                 (string=>nats
-;;                  (mv-nth
-;;                   0
-;;                   (get-clusterchain-contents fat32-in-memory
-;;                                              (dir-ent-first-cluster (car dir-ent-list))
-;;                                              2097152))))))
-;;              (ac2 65534)
-;;              (x
-;;               (mv-nth
-;;                0
-;;                (lofat-to-hifat-helper-exec
-;;                 fat32-in-memory
-;;                 (make-dir-ent-list
-;;                  (string=>nats
-;;                   (mv-nth 0
-;;                           (get-clusterchain-contents
-;;                            fat32-in-memory
-;;                            (dir-ent-first-cluster (car dir-ent-list))
-;;                            2097152))))
-;;                 (+ -1 entry-limit)))))))))
+(defthm
+  m1-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec
+  (b* (((mv m1-file-alist & & error-code)
+        (lofat-to-hifat-helper-exec fat32-in-memory
+                                    dir-ent-list entry-limit)))
+    (implies (equal error-code 0)
+             (m1-bounded-file-alist-p-helper
+              m1-file-alist (len dir-ent-list))))
+  :hints
+  (("goal"
+    :in-theory (enable lofat-to-hifat-helper-exec)
+    :induct
+    (lofat-to-hifat-helper-exec fat32-in-memory
+                                dir-ent-list entry-limit))
+   ("subgoal *1/4"
+    :use
+    (:instance
+     (:rewrite m1-bounded-file-alist-p-of-cdr-lemma-1)
+     (ac1
+      (len
+       (make-dir-ent-list
+        (string=>nats
+         (mv-nth 0
+                 (get-clusterchain-contents
+                  fat32-in-memory
+                  (dir-ent-first-cluster (car dir-ent-list))
+                  2097152))))))
+     (ac2 *ms-max-dir-ent-count*)
+     (x
+      (mv-nth
+       0
+       (lofat-to-hifat-helper-exec
+        fat32-in-memory
+        (make-dir-ent-list
+         (string=>nats
+          (mv-nth
+           0
+           (get-clusterchain-contents
+            fat32-in-memory
+            (dir-ent-first-cluster (car dir-ent-list))
+            2097152))))
+        (+ -1 entry-limit))))))))
 
 (defthm
   data-region-length-of-update-fati
@@ -1021,7 +1035,13 @@
         (mv nil *eio*))
        ((mv root-dir-ent-list error-code)
         (root-dir-ent-list fat32-in-memory))
-       ((unless (equal error-code 0))
+       ((unless (and (equal error-code 0)
+                     ;; This clause might be a problem, since the root
+                     ;; directory is not obliged to contain dot and dotdot
+                     ;; directory entries, which means we might be unfairly
+                     ;; constraining it to 2^16 -2 directory entries when it
+                     ;; can have 2^16.
+                     (<= (len root-dir-ent-list) *ms-max-dir-ent-count*)))
         (mv nil (- error-code)))
        ((mv m1-file-alist & & error-code)
         (lofat-to-hifat-helper-exec
@@ -1111,6 +1131,39 @@
   :hints
   (("goal"
     :in-theory (enable lofat-to-hifat))))
+
+(defthm
+  m1-bounded-file-alist-p-of-lofat-to-hifat
+  (b* (((mv m1-file-alist error-code)
+        (lofat-to-hifat fat32-in-memory)))
+    (implies (equal error-code 0)
+             (m1-bounded-file-alist-p m1-file-alist)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (lofat-to-hifat m1-bounded-file-alist-p)
+     ((:rewrite
+       m1-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec)))
+    :use
+    ((:instance
+      (:rewrite m1-bounded-file-alist-p-of-cdr-lemma-1)
+      (ac1 (len (mv-nth 0 (root-dir-ent-list fat32-in-memory))))
+      (ac2 *ms-max-dir-ent-count*)
+      (x
+       (mv-nth
+        0
+        (lofat-to-hifat-helper-exec
+         fat32-in-memory
+         (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+         (max-entry-count fat32-in-memory)))))
+     (:instance
+      (:rewrite
+       m1-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec)
+      (entry-limit (max-entry-count fat32-in-memory))
+      (dir-ent-list
+       (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
+      (fat32-in-memory fat32-in-memory))))))
 
 (defund
   stobj-find-n-free-clusters-helper
@@ -3970,7 +4023,6 @@
      (implies
       (and
        (equal error-code 0)
-       (m1-bounded-file-alist-p fs)
        ;; This clause should always be true, but that's not yet proven. The
        ;; argument is: The only time we get an error out of
        ;; hifat-to-lofat-helper (and the wrapper) is when we run out
