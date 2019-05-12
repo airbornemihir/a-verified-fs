@@ -1426,10 +1426,15 @@
 ;; pertains to the generally understood semantics for filesystems, where there
 ;; is generally no valid way of dealing with two directory entries referring to
 ;; the same filename (not the same inode, which is OK in filesystems with hard
-;; linking.) There doesn't seem to be much in the literature supporting this,
-;; but there are folks on StackOverflow
-;; (https://unix.stackexchange.com/a/227370,
-;; https://unix.stackexchange.com/a/227361).
+;; linking.)
+;;
+;; In support of this whole thing about ordering of files, there are folks on
+;; StackOverflow (https://unix.stackexchange.com/a/227370,
+;; https://unix.stackexchange.com/a/227361) and there is this somewhat related
+;; snippet from the readdir(3) man page: "The order in which filenames are read
+;; by successive calls to  readdir()  depends  on  the filesystem
+;; implementation; it is unlikely that the names will be sorted in any
+;; fashion."
 (defund
   hifat-no-dups-p (m1-file-alist)
   (declare (xargs :guard (m1-file-alist-p m1-file-alist)))
