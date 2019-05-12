@@ -1426,10 +1426,15 @@
 ;; pertains to the generally understood semantics for filesystems, where there
 ;; is generally no valid way of dealing with two directory entries referring to
 ;; the same filename (not the same inode, which is OK in filesystems with hard
-;; linking.) There doesn't seem to be much in the literature supporting this,
-;; but there are folks on StackOverflow
-;; (https://unix.stackexchange.com/a/227370,
-;; https://unix.stackexchange.com/a/227361).
+;; linking.)
+;;
+;; In support of this whole thing about ordering of files, there are folks on
+;; StackOverflow (https://unix.stackexchange.com/a/227370,
+;; https://unix.stackexchange.com/a/227361) and there is this somewhat related
+;; snippet from the readdir(3) man page: "The order in which filenames are read
+;; by successive calls to  readdir()  depends  on  the filesystem
+;; implementation; it is unlikely that the names will be sorted in any
+;; fashion."
 (defund
   hifat-no-dups-p (m1-file-alist)
   (declare (xargs :guard (m1-file-alist-p m1-file-alist)))
@@ -1759,16 +1764,9 @@
   remove-file-by-pathname-correctness-3
   (hifat-no-dups-p (mv-nth 0 (remove-file-by-pathname fs pathname))))
 
-(defthm
-  m1-read-after-write-lemma-1
-  (implies
-   (and (m1-file-alist-p alist)
-        (fat32-filename-p name))
-   (equal (m1-file-alist-fix (put-assoc-equal name val alist))
-          (put-assoc-equal name (m1-file-fix val)
-                           (m1-file-alist-fix alist))))
-  :hints (("goal" :in-theory (enable m1-file-alist-fix))))
-
+;; We decided to keep this around even though the motivation of preserving
+;; fat32-filename-list-equiv is somewhat weak. The alternative is to use
+;; prefixp (:doc prefixp) which is not built-in.
 (defun fat32-filename-list-prefixp (x y)
   (declare (xargs :guard (and (fat32-filename-list-p x)
                               (fat32-filename-list-p y))))
@@ -1806,8 +1804,7 @@
            (not (fat32-filename-equiv (car pathname2) (car pathname1)))
            2
          (let*
-             ((fs (m1-file-alist-fix fs))
-              (alist-elem (assoc-equal (fat32-filename-fix (car pathname1)) fs)))
+             ((alist-elem (assoc-equal (fat32-filename-fix (car pathname1)) fs)))
            (if
                (atom alist-elem)
                3

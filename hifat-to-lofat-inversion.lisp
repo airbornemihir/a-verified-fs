@@ -1647,20 +1647,15 @@
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (stringp contents)
-        (natp file-length)
         (integerp first-cluster)
         (>= first-cluster *ms-first-data-cluster*)
         (< first-cluster
            (+ *ms-first-data-cluster*
               (count-of-clusters fat32-in-memory))))
-   (lofat-fs-p
-    (mv-nth
-     0
-     (place-contents fat32-in-memory dir-ent
-                     contents file-length first-cluster))))
-  :hints
-  (("goal" :in-theory
-    (enable place-contents))))
+   (lofat-fs-p (mv-nth 0
+                       (place-contents fat32-in-memory dir-ent
+                                       contents file-length first-cluster))))
+  :hints (("goal" :in-theory (enable place-contents))))
 
 (defthm
   cluster-size-of-place-contents

@@ -7006,8 +7006,8 @@ Some (rather awful) testing forms are
   (dir-ent-list-p (clear-dir-ent dir-ent-list filename)))
 
 (defun
-  lofat-remove-file-by-pathname
-  (fat32-in-memory rootclus pathname)
+    lofat-remove-file-by-pathname
+    (fat32-in-memory rootclus pathname)
   (declare
    (xargs
     :guard (and (lofat-fs-p fat32-in-memory)
@@ -7018,8 +7018,7 @@ Some (rather awful) testing forms are
                       (count-of-clusters fat32-in-memory)))
                 (fat32-filename-list-p pathname))
     :measure (acl2-count pathname)
-    :stobjs fat32-in-memory
-    :verify-guards nil))
+    :stobjs fat32-in-memory))
   (b*
       (((unless (consp pathname))
         (mv fat32-in-memory *enoent*))
@@ -7035,37 +7034,32 @@ Some (rather awful) testing forms are
        ((mv dir-ent error-code)
         (find-dir-ent dir-ent-list name))
        ;; If it's not there, it can't be removed
-       ((unless (equal error-code 0))
+       ((unless (and (equal error-code 0)
+                     ;; Should either of these two things be allowed to happen?
+                     (<= *ms-first-data-cluster*
+                         (dir-ent-first-cluster dir-ent))
+                     (< (dir-ent-first-cluster dir-ent)
+                        (+ *ms-first-data-cluster*
+                           (count-of-clusters fat32-in-memory)))))
         (mv fat32-in-memory *enoent*))
        ((when (atom (cdr pathname)))
         (b*
-             ((file-length 0)
-              (first-cluster (dir-ent-first-cluster dir-ent))
-              (contents "")
-              ;; This will clear the file's first cluster, but not necessarily
-              ;; the rest...
-              ((mv fat32-in-memory dir-ent & &)
-               (place-contents fat32-in-memory dir-ent
-                               contents file-length first-cluster))
-              (dir-ent-list (clear-dir-ent dir-ent-list name)))
-           (update-dir-contents
-            fat32-in-memory rootclus
-            (nats=>string (flatten dir-ent-list))
-            dir-ent)))
+            ((file-length 0)
+             (first-cluster (dir-ent-first-cluster dir-ent))
+             (contents "")
+             ;; This will clear the file's first cluster, but not necessarily
+             ;; the rest...
+             ((mv fat32-in-memory dir-ent & &)
+              (place-contents fat32-in-memory dir-ent
+                              contents file-length first-cluster))
+             (dir-ent-list (clear-dir-ent dir-ent-list name)))
+          (update-dir-contents fat32-in-memory rootclus
+                               (nats=>string (flatten dir-ent-list))
+                               dir-ent)))
        ;; ENOTDIR - can't delete anything that supposedly exists inside a
        ;; regular file.
        ((unless (dir-ent-directory-p dir-ent))
-        (mv fat32-in-memory *enotdir*))
-       ;; This case should never arise - we should never legitimately find a
-       ;; directory entry with a cluster index outside the allowable range.
-       ((unless
-         (and
-          (< (dir-ent-first-cluster dir-ent)
-             (+ *ms-first-data-cluster*
-                (count-of-clusters fat32-in-memory)))
-          (>= (dir-ent-first-cluster dir-ent)
-              *ms-first-data-cluster*)))
-        (mv fat32-in-memory *eio*)))
+        (mv fat32-in-memory *enotdir*)))
     ;; Recursion
     (lofat-remove-file-by-pathname
      fat32-in-memory

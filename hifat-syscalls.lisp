@@ -197,7 +197,6 @@
                                                   file-table))))))
   (b*
       ((fd-table-entry (assoc-equal fd fd-table))
-       (fs (m1-file-alist-fix fs))
        ((unless (consp fd-table-entry))
         (mv fs -1 *ebadf*))
        (file-table-entry (assoc-equal (cdr fd-table-entry)
