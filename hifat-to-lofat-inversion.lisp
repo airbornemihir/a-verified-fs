@@ -4121,89 +4121,65 @@
                  tail)
           error-code))))
 
-(defthmd
-  lofat-to-hifat-helper-correctness-1
-  (equal
-   (lofat-to-hifat-helper fat32-in-memory
-                          dir-ent-list entry-limit)
-   (mv
-    (mv-nth
-     0
-     (lofat-to-hifat-helper-exec fat32-in-memory
-                                 dir-ent-list entry-limit))
-    (mv-nth
-     3
-     (lofat-to-hifat-helper-exec fat32-in-memory
-                                 dir-ent-list entry-limit))))
-  :hints
-  (("goal"
-    :in-theory (e/d (lofat-to-hifat-helper-exec)
-                    ((:definition fat32-build-index-list)
-                     (:rewrite len-of-effective-fat)
-                     (:rewrite nth-of-effective-fat)))
-    :induct
-    (lofat-to-hifat-helper-exec fat32-in-memory
-                                dir-ent-list entry-limit)
-    :expand (lofat-to-hifat-helper fat32-in-memory
+(encapsulate
+  () ;; start lemmas for lofat-to-hifat-helper-correctness-1
+
+  (local
+   (defthm
+     lofat-to-hifat-helper-correctness-1-lemma-1
+     (implies
+      (equal
+       (lofat-to-hifat-helper fat32-in-memory
+                              dir-ent-list entry-limit)
+       (mv
+        (mv-nth
+         0
+         (lofat-to-hifat-helper-exec fat32-in-memory
+                                     dir-ent-list entry-limit))
+        (mv-nth
+         3
+         (lofat-to-hifat-helper-exec fat32-in-memory
+                                     dir-ent-list entry-limit))))
+      (and
+       (equal
+        (mv-nth 0
+                (lofat-to-hifat-helper fat32-in-memory
+                                       dir-ent-list entry-limit))
+        (mv-nth
+         0
+         (lofat-to-hifat-helper-exec fat32-in-memory
+                                     dir-ent-list entry-limit)))
+       (equal
+        (mv-nth 1
+                (lofat-to-hifat-helper fat32-in-memory
+                                       dir-ent-list entry-limit))
+        (mv-nth
+         3
+         (lofat-to-hifat-helper-exec fat32-in-memory
+                                     dir-ent-list entry-limit)))))))
+
+  (defthmd
+    lofat-to-hifat-helper-correctness-1
+    (equal
+     (lofat-to-hifat-helper fat32-in-memory
+                            dir-ent-list entry-limit)
+     (mv
+      (mv-nth
+       0
+       (lofat-to-hifat-helper-exec fat32-in-memory
                                    dir-ent-list entry-limit))
-   ;; I'm not very fond of these subgoal hints, but I don't see how they can be
-   ;; avoided... ACL2 doesn't seem to get the idea of replacing the (mv-nth
-   ;; ...) expressions otherwise.
-   ("subgoal *1/4"
-    :cases
-    ((not
-      (equal
-       (mv-nth
-        0
-        (lofat-to-hifat-helper
-         fat32-in-memory
-         (make-dir-ent-list
-          (string=>nats
-           (mv-nth
-            0
-            (get-clusterchain-contents
-             fat32-in-memory
-             (dir-ent-first-cluster (car dir-ent-list))
-             2097152))))
-         (+ -1 entry-limit)))
-       (mv-nth
-        0
-        (lofat-to-hifat-helper-exec
-         fat32-in-memory
-         (make-dir-ent-list
-          (string=>nats
-           (mv-nth
-            0
-            (get-clusterchain-contents
-             fat32-in-memory
-             (dir-ent-first-cluster (car dir-ent-list))
-             2097152))))
-         (+ -1 entry-limit)))))
-     (not
-      (equal
-       (mv-nth
-        1
-        (lofat-to-hifat-helper
-         fat32-in-memory
-         (make-dir-ent-list
-          (string=>nats
-           (mv-nth
-            0
-            (get-clusterchain-contents
-             fat32-in-memory
-             (dir-ent-first-cluster (car dir-ent-list))
-             2097152))))
-         (+ -1 entry-limit)))
-       (mv-nth
-        3
-        (lofat-to-hifat-helper-exec
-         fat32-in-memory
-         (make-dir-ent-list
-          (string=>nats
-           (mv-nth
-            0
-            (get-clusterchain-contents
-             fat32-in-memory
-             (dir-ent-first-cluster (car dir-ent-list))
-             2097152))))
-         (+ -1 entry-limit)))))))))
+      (mv-nth
+       3
+       (lofat-to-hifat-helper-exec fat32-in-memory
+                                   dir-ent-list entry-limit))))
+    :hints
+    (("goal"
+      :in-theory (e/d (lofat-to-hifat-helper-exec)
+                      ((:definition fat32-build-index-list)
+                       (:rewrite len-of-effective-fat)
+                       (:rewrite nth-of-effective-fat)))
+      :induct
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit)
+      :expand (lofat-to-hifat-helper fat32-in-memory
+                                     dir-ent-list entry-limit)))))
