@@ -4080,6 +4080,9 @@
             (mv "" 0)
             (get-clusterchain-contents
              fat32-in-memory first-cluster length)))
+       (head-dir-ent-list (if directory-p
+                              (make-dir-ent-list (string=>nats contents))
+                            nil))
        ((mv head head-error-code)
         (if directory-p
             (lofat-to-hifat-helper
@@ -4089,16 +4092,26 @@
             (mv contents 0)))
        (head-entry-count (if directory-p (hifat-entry-count head)
                              0))
-       (error-code (if (equal error-code 0)
-                       head-error-code *eio*))
        (tail-entry-limit (nfix (- entry-limit
                                   (+ 1 (nfix head-entry-count)))))
        ((mv tail tail-error-code)
         (lofat-to-hifat-helper
          fat32-in-memory (cdr dir-ent-list)
          tail-entry-limit))
-       (error-code (if (zp error-code)
-                       tail-error-code error-code)))
+       (error-code
+        (if (and ;; get-clusterchain-contents returns an error code of 0.
+             (equal error-code 0)
+             (equal head-error-code 0)
+             (equal tail-error-code 0)
+             (not
+              ;; This is the weird case where we have a directory... and
+              ;; it's 2^21 or fewer bytes long... but somehow it's managed
+              ;; to have more than (2^16 -2) useful entries in it, which
+              ;; means it's skipped either the . entry or the .. entry.
+              (and directory-p
+                   (< *ms-max-dir-ent-count* (len head-dir-ent-list)))))
+            0
+          *EIO*)))
     (if
         (consp (assoc-equal filename tail))
         (mv tail *EIO*)
@@ -4112,19 +4125,85 @@
   lofat-to-hifat-helper-correctness-1
   (equal
    (lofat-to-hifat-helper fat32-in-memory
-                                dir-ent-list entry-limit)
+                          dir-ent-list entry-limit)
    (mv
-    (mv-nth 0
-            (lofat-to-hifat-helper-exec fat32-in-memory
-                                   dir-ent-list entry-limit))
-    (mv-nth 3
-            (lofat-to-hifat-helper-exec fat32-in-memory
-                                   dir-ent-list entry-limit))))
+    (mv-nth
+     0
+     (lofat-to-hifat-helper-exec fat32-in-memory
+                                 dir-ent-list entry-limit))
+    (mv-nth
+     3
+     (lofat-to-hifat-helper-exec fat32-in-memory
+                                 dir-ent-list entry-limit))))
   :hints
   (("goal"
-    :in-theory (enable lofat-to-hifat-helper-exec)
-    :induct (lofat-to-hifat-helper-exec fat32-in-memory
-                                   dir-ent-list entry-limit)
-    :expand
-    (lofat-to-hifat-helper fat32-in-memory
-                                 dir-ent-list entry-limit))))
+    :in-theory (e/d (lofat-to-hifat-helper-exec)
+                    ((:definition fat32-build-index-list)
+                     (:rewrite len-of-effective-fat)
+                     (:rewrite nth-of-effective-fat)))
+    :induct
+    (lofat-to-hifat-helper-exec fat32-in-memory
+                                dir-ent-list entry-limit)
+    :expand (lofat-to-hifat-helper fat32-in-memory
+                                   dir-ent-list entry-limit))
+   ;; I'm not very fond of these subgoal hints, but I don't see how they can be
+   ;; avoided... ACL2 doesn't seem to get the idea of replacing the (mv-nth
+   ;; ...) expressions otherwise.
+   ("subgoal *1/4"
+    :cases
+    ((not
+      (equal
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (string=>nats
+           (mv-nth
+            0
+            (get-clusterchain-contents
+             fat32-in-memory
+             (dir-ent-first-cluster (car dir-ent-list))
+             2097152))))
+         (+ -1 entry-limit)))
+       (mv-nth
+        0
+        (lofat-to-hifat-helper-exec
+         fat32-in-memory
+         (make-dir-ent-list
+          (string=>nats
+           (mv-nth
+            0
+            (get-clusterchain-contents
+             fat32-in-memory
+             (dir-ent-first-cluster (car dir-ent-list))
+             2097152))))
+         (+ -1 entry-limit)))))
+     (not
+      (equal
+       (mv-nth
+        1
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (string=>nats
+           (mv-nth
+            0
+            (get-clusterchain-contents
+             fat32-in-memory
+             (dir-ent-first-cluster (car dir-ent-list))
+             2097152))))
+         (+ -1 entry-limit)))
+       (mv-nth
+        3
+        (lofat-to-hifat-helper-exec
+         fat32-in-memory
+         (make-dir-ent-list
+          (string=>nats
+           (mv-nth
+            0
+            (get-clusterchain-contents
+             fat32-in-memory
+             (dir-ent-first-cluster (car dir-ent-list))
+             2097152))))
+         (+ -1 entry-limit)))))))))
