@@ -1042,7 +1042,14 @@
                      ;; constraining it to 2^16 -2 directory entries when it
                      ;; can have 2^16.
                      (<= (len root-dir-ent-list) *ms-max-dir-ent-count*)))
-        (mv nil (- error-code)))
+        ;; We're gradually trying to have more of the pattern where we
+        ;; explicitly say what the error code is going to be. We actually
+        ;; aren't changing what was there before! It's a nice thing about
+        ;; theorem proving (and the way we've set up our functions and lemmas)
+        ;; that we can actually prove that a given function, for instance, only
+        ;; returns the error codes 0 and *enoent* (or more commonly, 0 and
+        ;; *eio*).
+        (mv nil *eio*))
        ((mv m1-file-alist & & error-code)
         (lofat-to-hifat-helper-exec
          fat32-in-memory root-dir-ent-list
