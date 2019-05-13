@@ -3645,21 +3645,21 @@
      (("goal"
        :in-theory (enable hifat-entry-count)))))
 
-  (local
-   (defthm
-     hifat-to-lofat-inversion-lemma-9
-     (implies (and (stringp text)
-                   (not (zp cluster-size))
-                   (<= (length text) *ms-max-dir-size*)
-                   (equal (mod *ms-max-dir-size* cluster-size)
-                          0))
-              (<= (* cluster-size
-                     (len (make-clusters text cluster-size)))
-                  *ms-max-dir-size*))
-     :hints
-     (("goal" :in-theory (disable make-clusters-correctness-3)
-       :use (:instance make-clusters-correctness-3
-                       (max-length *ms-max-dir-size*))))))
+  (defthm
+    hifat-to-lofat-inversion-lemma-9
+    (implies (and (stringp text)
+                  (not (zp cluster-size))
+                  (<= (length text) *ms-max-dir-size*)
+                  (equal (mod *ms-max-dir-size* cluster-size)
+                         0))
+             (<= (* cluster-size
+                    (len (make-clusters text cluster-size)))
+                 *ms-max-dir-size*))
+    :rule-classes :linear
+    :hints
+    (("goal" :in-theory (disable make-clusters-correctness-3)
+      :use (:instance make-clusters-correctness-3
+                      (max-length *ms-max-dir-size*)))))
 
   (local
    (defun-nx

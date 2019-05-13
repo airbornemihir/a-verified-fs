@@ -6698,7 +6698,6 @@ Some (rather awful) testing forms are
              (lofat-find-file-by-pathname fat32-in-memory
                                           dir-ent-list pathname))))))
 
-
 (defun
   place-dir-ent (dir-ent-list dir-ent)
   (declare (xargs :guard (and (dir-ent-p dir-ent)
