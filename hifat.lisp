@@ -1005,7 +1005,8 @@
   dir-ent-filename-of-dir-ent-set-filename
   (implies
    (and (dir-ent-p dir-ent)
-        (fat32-filename-p filename))
+        (stringp filename)
+        (equal (length filename) 11))
    (equal
     (dir-ent-filename (dir-ent-set-filename dir-ent filename))
     filename))
