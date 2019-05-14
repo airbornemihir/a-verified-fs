@@ -748,19 +748,23 @@
     :guard (and (dir-ent-p dir-ent)
                 (stringp filename)
                 (equal (length filename) 11))
-    :guard-hints (("goal" :in-theory (enable dir-ent-p-of-append
-                                             len-when-dir-ent-p)))))
-  (mbe :exec (append (string=>nats filename)
-                     (subseq dir-ent 11 *ms-dir-ent-length*))
-       :logic
-       (dir-ent-fix
-        (append (string=>nats filename)
-                (subseq dir-ent 11 *ms-dir-ent-length*)))))
+    :guard-hints
+    (("goal"
+      :in-theory (enable dir-ent-p-of-append
+                         len-when-dir-ent-p string=>nats)))))
+  (append
+   (mbe :logic (chars=>nats (take 11 (coerce filename 'list)))
+        :exec (string=>nats filename))
+   (subseq (mbe :exec dir-ent
+                :logic (dir-ent-fix dir-ent))
+           11 *ms-dir-ent-length*)))
 
 (defthm
   dir-ent-p-of-dir-ent-set-filename
   (dir-ent-p (dir-ent-set-filename dir-ent filename))
-  :hints (("goal" :in-theory (enable dir-ent-set-filename)))
+  :hints
+  (("goal" :in-theory (enable dir-ent-set-filename
+                              dir-ent-fix dir-ent-p-of-append)))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -993,15 +997,15 @@
 (defthm
   dir-ent-filename-of-dir-ent-set-filename
   (implies
-   (and (dir-ent-p dir-ent)
-        (stringp filename)
+   (and (stringp filename)
         (equal (length filename) 11))
    (equal
     (dir-ent-filename (dir-ent-set-filename dir-ent filename))
     filename))
   :hints
-  (("goal" :in-theory (enable dir-ent-filename
-                              dir-ent-set-filename dir-ent-p))))
+  (("goal"
+    :in-theory (enable dir-ent-filename dir-ent-set-filename
+                       dir-ent-p nats=>string))))
 
 (defthm
   dir-ent-file-size-of-dir-ent-set-filename
