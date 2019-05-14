@@ -7050,6 +7050,26 @@ Some (rather awful) testing forms are
                 (n 0)
                 (m 0))))))
 
+;; This should be a theorem, but that would entail changes to dir-ent-filename
+;; (which would actually be fine...)
+;; (defthm
+;;   clear-dir-ent-correctness-1
+;;   (implies
+;;    (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
+;;                 0))
+;;    (equal (clear-dir-ent dir-ent-list filename)
+;;           (dir-ent-list-fix dir-ent-list))))
+
+(defthm
+  clear-dir-ent-correctness-1
+  (implies
+   (and
+    (dir-ent-list-p dir-ent-list)
+   (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
+                0)))
+   (equal (clear-dir-ent dir-ent-list filename)
+          (dir-ent-list-fix dir-ent-list))))
+
 (defun
     lofat-remove-file-by-pathname
     (fat32-in-memory rootclus pathname)
@@ -7349,25 +7369,71 @@ Some (rather awful) testing forms are
                                                   filename))))
       (fat32-in-memory fat32-in-memory))))))
 
-(thm
+(local
+ (defthm
+   lofat-remove-file-by-pathname-correctness-1-lemma-7
+   (implies
+    (and
+     (integerp entry-limit)
+     (equal
+      (mv-nth
+       3
+       (lofat-to-hifat-helper-exec
+        fat32-in-memory
+        (make-dir-ent-list
+         (flatten (clear-dir-ent (cdr dir-ent-list)
+                                 filename)))
+        (+ -1 entry-limit)))
+      0))
+    (equal
+     (lofat-to-hifat-helper-exec
+      fat32-in-memory
+      (make-dir-ent-list
+       (flatten (clear-dir-ent (cdr dir-ent-list)
+                               filename)))
+      (+ -1 entry-limit))
+     (lofat-to-hifat-helper-exec
+      fat32-in-memory
+      (make-dir-ent-list
+       (flatten (clear-dir-ent (cdr dir-ent-list)
+                               filename)))
+      entry-limit)))
+   :hints
+   (("goal"
+     :in-theory
+     (disable
+      (:linear lofat-to-hifat-helper-exec-correctness-3))
+     :use
+     ((:instance
+       (:rewrite lofat-to-hifat-helper-exec-correctness-4)
+       (entry-limit1 (+ -1 entry-limit))
+       (entry-limit2 entry-limit)
+       (dir-ent-list
+        (make-dir-ent-list
+         (flatten (clear-dir-ent (cdr dir-ent-list)
+                                 filename))))
+       (fat32-in-memory fat32-in-memory))
+      (:instance
+       (:linear lofat-to-hifat-helper-exec-correctness-3)
+       (entry-limit (+ -1 entry-limit))
+       (dir-ent-list
+        (make-dir-ent-list
+         (flatten (clear-dir-ent (cdr dir-ent-list)
+                                 filename))))
+       (fat32-in-memory fat32-in-memory)))))))
+
+(thm-cp
  (implies
   (and
+   (lofat-fs-p fat32-in-memory)
+   (integerp entry-limit)
    (equal
     (mv-nth 3
             (LOFAT-TO-HIFAT-HELPER-EXEC
              FAT32-IN-MEMORY dir-ent-list
              ENTRY-LIMIT))
     0)
-   (equal
-    (mv-nth 3
-            (LOFAT-TO-HIFAT-HELPER-EXEC
-             FAT32-IN-MEMORY
-             (make-dir-ent-list
-              (flatten
-               (clear-dir-ent DIR-ENT-LIST filename)))
-             ENTRY-LIMIT))
-    0)
-   (dir-ent-list-p dir-ent-list))
+   (useful-dir-ent-list-p dir-ent-list))
   (equal
    (mv-nth 0
             (LOFAT-TO-HIFAT-HELPER-EXEC
@@ -7382,7 +7448,7 @@ Some (rather awful) testing forms are
                                          ENTRY-LIMIT)))))
  :hints
  (("Goal"
-   :in-theory (enable LOFAT-TO-HIFAT-HELPER-EXEC dir-ent-list-p)
+   :in-theory (e/d (LOFAT-TO-HIFAT-HELPER-EXEC useful-dir-ent-list-p))
    :induct
    (LOFAT-TO-HIFAT-HELPER-EXEC
     FAT32-IN-MEMORY
@@ -7391,17 +7457,10 @@ Some (rather awful) testing forms are
       (clear-dir-ent DIR-ENT-LIST filename)))
     ENTRY-LIMIT)
    :expand
-   (LOFAT-TO-HIFAT-HELPER-EXEC
-    FAT32-IN-MEMORY
-    (CONS
-     (DIR-ENT-SET-FILENAME
-      (CAR DIR-ENT-LIST)
-      (NATS=>STRING
-       (UPDATE-NTH 0 0
-                   (STRING=>NATS (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))))))
-     (CLEAR-DIR-ENT (CDR DIR-ENT-LIST)
-                    (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))))
-    ENTRY-LIMIT))))
+   (:free
+    (FAT32-IN-MEMORY dir-ent DIR-ENT-LIST ENTRY-LIMIT)
+    (LOFAT-TO-HIFAT-HELPER-EXEC
+     FAT32-IN-MEMORY (cons dir-ent DIR-ENT-LIST) ENTRY-LIMIT)))))
 
 (thm-cp
  (b*
