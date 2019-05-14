@@ -716,29 +716,39 @@
                          dir-ent first-cluster file-size)))
     :hints (("goal" :in-theory (enable dir-ent-p))))))
 
-(defund dir-ent-filename (dir-ent)
+(defund
+  dir-ent-filename (dir-ent)
   (declare
-   (xargs :guard (dir-ent-p dir-ent)
-          :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
-  (nats=>string (subseq dir-ent 0 11)))
+   (xargs
+    :guard (dir-ent-p dir-ent)
+    :guard-hints (("goal" :in-theory (enable dir-ent-p)))))
+  (nats=>string (subseq (mbe :exec dir-ent
+                             :logic (dir-ent-fix dir-ent))
+                        0 11)))
 
+(defthm dir-ent-filename-of-dir-ent-fix
+  (equal (dir-ent-filename (dir-ent-fix dir-ent))
+         (dir-ent-filename dir-ent))
+  :hints (("goal" :in-theory (enable dir-ent-filename))))
+
+;; This had a dir-ent-p hypothesis before, which interestingly enough
+;; remove-hyps failed to remove. It did cause more subgoals, from what I saw on
+;; the screen.
 (defthm
   dir-ent-filename-of-dir-ent-set-first-cluster-file-size
-  (implies
-   (dir-ent-p dir-ent)
-   (equal
-    (dir-ent-filename (dir-ent-set-first-cluster-file-size
-                       dir-ent first-cluster file-size))
-    (dir-ent-filename dir-ent)))
+  (equal
+   (dir-ent-filename (dir-ent-set-first-cluster-file-size
+                      dir-ent first-cluster file-size))
+   (dir-ent-filename dir-ent))
   :hints
-  (("goal"
-    :in-theory
-    (e/d (dir-ent-set-first-cluster-file-size dir-ent-filename)
+  (("goal" :in-theory
+    (e/d (dir-ent-set-first-cluster-file-size
+          dir-ent-filename dir-ent-fix dir-ent-p)
          (loghead logtail (:rewrite logtail-loghead))))))
 
 (defthm explode-of-dir-ent-filename
   (equal (explode (dir-ent-filename dir-ent))
-         (nats=>chars (subseq dir-ent 0 11)))
+         (nats=>chars (take 11 (dir-ent-fix dir-ent))))
   :hints (("goal" :in-theory (enable dir-ent-filename))))
 
 (defund
@@ -1005,7 +1015,7 @@
   :hints
   (("goal"
     :in-theory (enable dir-ent-filename dir-ent-set-filename
-                       dir-ent-p nats=>string))))
+                       dir-ent-fix dir-ent-p nats=>string))))
 
 (defthm
   dir-ent-file-size-of-dir-ent-set-filename
