@@ -3645,21 +3645,21 @@
      (("goal"
        :in-theory (enable hifat-entry-count)))))
 
-  (local
-   (defthm
-     hifat-to-lofat-inversion-lemma-9
-     (implies (and (stringp text)
-                   (not (zp cluster-size))
-                   (<= (length text) *ms-max-dir-size*)
-                   (equal (mod *ms-max-dir-size* cluster-size)
-                          0))
-              (<= (* cluster-size
-                     (len (make-clusters text cluster-size)))
-                  *ms-max-dir-size*))
-     :hints
-     (("goal" :in-theory (disable make-clusters-correctness-3)
-       :use (:instance make-clusters-correctness-3
-                       (max-length *ms-max-dir-size*))))))
+  (defthm
+    hifat-to-lofat-inversion-lemma-9
+    (implies (and (stringp text)
+                  (not (zp cluster-size))
+                  (<= (length text) *ms-max-dir-size*)
+                  (equal (mod *ms-max-dir-size* cluster-size)
+                         0))
+             (<= (* cluster-size
+                    (len (make-clusters text cluster-size)))
+                 *ms-max-dir-size*))
+    :rule-classes :linear
+    :hints
+    (("goal" :in-theory (disable make-clusters-correctness-3)
+      :use (:instance make-clusters-correctness-3
+                      (max-length *ms-max-dir-size*)))))
 
   (local
    (defun-nx
@@ -4025,14 +4025,24 @@
      (implies
       (and
        (equal error-code 0)
-       ;; This clause should always be true, but that's not yet proven. The
-       ;; argument is: The only time we get an error out of
-       ;; hifat-to-lofat-helper (and the wrapper) is when we run out
-       ;; of space. We shouldn't be able to run out of space when we just
-       ;; extracted an m1 instance from fat32-in-memory, and we didn't change
-       ;; the size of fat32-in-memory at all. However, that's going to involve
-       ;; reasoning about the number of clusters taken up by an m1 instance,
-       ;; which is not really where it's at right now.
+       ;; This clause should almost always be true (which is a difficult thing
+       ;; to say in a theorem-proving setting...) The argument is: The only
+       ;; time we get an error out of hifat-to-lofat-helper (and the wrapper)
+       ;; is when we run out of space. We shouldn't be able to run out of space
+       ;; when we just extracted an m1 instance from fat32-in-memory, and we
+       ;; didn't change the size of fat32-in-memory at all. However, that's
+       ;; going to involve reasoning about the number of clusters taken up by
+       ;; an m1 instance, which is not really where it's at right now.
+       ;;
+       ;; One reason why this clause might not be true: we aren't requiring dot
+       ;; and dotdot entries to exist (except vaguely, by making sure that we
+       ;; don't have 65535 or 65536 useful directory entries in any directory.)
+       ;; As a result, it's possible for a lofat instance to exist which
+       ;; completely fills up the available clusters on the disk, but which
+       ;; leaves out at least one dot or dotdot entry, with the result that
+       ;; attempting to remake the stobj after coverting to hifat would cause
+       ;; the directory with the missing dot/dotdot entry to cross a cluster
+       ;; boundary and therefore occupy more space than available in the stobj.
        (equal
         (mv-nth
          1
