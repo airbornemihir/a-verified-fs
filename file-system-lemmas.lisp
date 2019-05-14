@@ -2,9 +2,9 @@
 
 ;; Some lemmas below are taken from other books with credit; in most cases they
 ;; replaced a theorem developed for this project which either had the same name
-;; as a theorem from a community book (causing a name conflict), or which
-;; rewrote the same target (causing :use hints to become :useless even if the
-;; project-specific lemma was disabled for the goal in question.)
+;; (causing a name conflict), or which rewrote the same target (causing :use
+;; hints to become :useless even if the project-specific lemma was disabled for
+;; the goal in question.)
 
 (defthm make-character-list-makes-character-list
   (character-listp (make-character-list x)))
