@@ -988,18 +988,7 @@
                   (dir-ent-first-cluster dir-ent)))
   :hints
   (("goal" :in-theory (enable dir-ent-first-cluster
-                              dir-ent-set-filename dir-ent-p)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (and (dir-ent-p dir-ent)
-          (fat32-filename-p filename))
-     (equal (dir-ent-first-cluster
-             (dir-ent-set-filename dir-ent filename))
-            (dir-ent-first-cluster dir-ent)))
-    :hints (("goal" :in-theory (enable fat32-filename-p))))))
+                              dir-ent-set-filename dir-ent-p))))
 
 (defthm
   dir-ent-filename-of-dir-ent-set-filename
