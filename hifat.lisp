@@ -1006,12 +1006,10 @@
 
 (defthm
   dir-ent-filename-of-dir-ent-set-filename
-  (implies
-   (and (stringp filename)
-        (equal (length filename) 11))
-   (equal
-    (dir-ent-filename (dir-ent-set-filename dir-ent filename))
-    filename))
+  (equal
+   (dir-ent-filename (dir-ent-set-filename dir-ent filename))
+   (coerce (take 11 (coerce filename 'list))
+           'string))
   :hints
   (("goal"
     :in-theory (enable dir-ent-filename dir-ent-set-filename
