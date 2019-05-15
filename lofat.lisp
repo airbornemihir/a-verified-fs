@@ -6980,6 +6980,31 @@ Some (rather awful) testing forms are
                     (fa-table (effective-fat fat32-in-memory))
                     (m 0)))))
 
+;; We're doing away with the old version of this function in order to get the
+;; proof process done in time for the paper deadline. The old version might
+;; have been nice in terms of preserving directory entries and just marking
+;; them as belonging to deleted files - thereby keeping the length of the
+;; directory contents the same - but we don't really have time for that.
+;; (defun
+;;   clear-dir-ent (dir-ent-list filename)
+;;   (declare (xargs :guard (and (fat32-filename-p filename)
+;;                               (dir-ent-list-p dir-ent-list))
+;;                   :guard-debug t))
+;;   (b*
+;;       (((when (atom dir-ent-list)) nil)
+;;        (dir-ent (car dir-ent-list))
+;;        ((when (equal (dir-ent-filename dir-ent)
+;;                      filename))
+;;         (list*
+;;          (dir-ent-set-filename
+;;           dir-ent
+;;           (nats=>string
+;;            (update-nth 0 0
+;;                        (string=>nats (dir-ent-filename dir-ent)))))
+;;          (clear-dir-ent (cdr dir-ent-list) filename))))
+;;     (list* (dir-ent-fix dir-ent)
+;;            (clear-dir-ent (cdr dir-ent-list)
+;;                           filename))))
 (defun
   clear-dir-ent (dir-ent-list filename)
   (declare (xargs :guard (and (fat32-filename-p filename)
@@ -6990,13 +7015,7 @@ Some (rather awful) testing forms are
        (dir-ent (car dir-ent-list))
        ((when (equal (dir-ent-filename dir-ent)
                      filename))
-        (list*
-         (dir-ent-set-filename
-          dir-ent
-          (nats=>string
-           (update-nth 0 0
-                       (string=>nats (dir-ent-filename dir-ent)))))
-         (clear-dir-ent (cdr dir-ent-list) filename))))
+        (clear-dir-ent (cdr dir-ent-list) filename)))
     (list* (dir-ent-fix dir-ent)
            (clear-dir-ent (cdr dir-ent-list)
                           filename))))
@@ -7005,17 +7024,19 @@ Some (rather awful) testing forms are
   (dir-ent-list-p (clear-dir-ent dir-ent-list filename)))
 
 (defthm len-of-clear-dir-ent
-  (equal
-   (len (clear-dir-ent dir-ent-list filename))
-   (len dir-ent-list)))
+  (<= (len (clear-dir-ent dir-ent-list filename))
+      (len dir-ent-list))
+  :rule-classes :linear)
 
 (defthm
   find-dir-ent-of-clear-dir-ent
   (implies
    (useful-dir-ent-list-p dir-ent-list)
-   (equal (find-dir-ent (clear-dir-ent dir-ent-list filename)
-                        filename)
-          (mv (dir-ent-fix nil) *enoent*)))
+   (equal (find-dir-ent (clear-dir-ent dir-ent-list filename1)
+                        filename2)
+          (if (equal filename1 filename2)
+              (mv (dir-ent-fix nil) *enoent*)
+              (find-dir-ent dir-ent-list filename2))))
   :hints
   (("goal"
     :in-theory
@@ -7024,7 +7045,7 @@ Some (rather awful) testing forms are
      ((:rewrite dir-ent-filename-of-dir-ent-set-filename)
       (:rewrite string=>nats-of-nats=>string)
       (:rewrite nth-update-nth)))
-    :induct (clear-dir-ent dir-ent-list filename))
+    :induct (clear-dir-ent dir-ent-list filename1))
    ("subgoal *1/2"
     :use
     ((:instance
