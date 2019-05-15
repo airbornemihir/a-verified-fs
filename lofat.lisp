@@ -6980,33 +6980,8 @@ Some (rather awful) testing forms are
                     (fa-table (effective-fat fat32-in-memory))
                     (m 0)))))
 
-;; We're doing away with the old version of this function in order to get the
-;; proof process done in time for the paper deadline. The old version might
-;; have been nice in terms of preserving directory entries and just marking
-;; them as belonging to deleted files - thereby keeping the length of the
-;; directory contents the same - but we don't really have time for that.
-;; (defun
-;;   clear-dir-ent (dir-ent-list filename)
-;;   (declare (xargs :guard (and (fat32-filename-p filename)
-;;                               (dir-ent-list-p dir-ent-list))
-;;                   :guard-debug t))
-;;   (b*
-;;       (((when (atom dir-ent-list)) nil)
-;;        (dir-ent (car dir-ent-list))
-;;        ((when (equal (dir-ent-filename dir-ent)
-;;                      filename))
-;;         (list*
-;;          (dir-ent-set-filename
-;;           dir-ent
-;;           (nats=>string
-;;            (update-nth 0 0
-;;                        (string=>nats (dir-ent-filename dir-ent)))))
-;;          (clear-dir-ent (cdr dir-ent-list) filename))))
-;;     (list* (dir-ent-fix dir-ent)
-;;            (clear-dir-ent (cdr dir-ent-list)
-;;                           filename))))
 (defun
-  clear-dir-ent (dir-ent-list filename)
+  delete-dir-ent (dir-ent-list filename)
   (declare (xargs :guard (and (fat32-filename-p filename)
                               (dir-ent-list-p dir-ent-list))
                   :guard-debug t))
@@ -7015,24 +6990,24 @@ Some (rather awful) testing forms are
        (dir-ent (car dir-ent-list))
        ((when (equal (dir-ent-filename dir-ent)
                      filename))
-        (clear-dir-ent (cdr dir-ent-list) filename)))
+        (delete-dir-ent (cdr dir-ent-list) filename)))
     (list* (dir-ent-fix dir-ent)
-           (clear-dir-ent (cdr dir-ent-list)
+           (delete-dir-ent (cdr dir-ent-list)
                           filename))))
 
-(defthm dir-ent-list-p-of-clear-dir-ent
-  (dir-ent-list-p (clear-dir-ent dir-ent-list filename)))
+(defthm dir-ent-list-p-of-delete-dir-ent
+  (dir-ent-list-p (delete-dir-ent dir-ent-list filename)))
 
-(defthm len-of-clear-dir-ent
-  (<= (len (clear-dir-ent dir-ent-list filename))
+(defthm len-of-delete-dir-ent
+  (<= (len (delete-dir-ent dir-ent-list filename))
       (len dir-ent-list))
   :rule-classes :linear)
 
 (defthm
-  find-dir-ent-of-clear-dir-ent
+  find-dir-ent-of-delete-dir-ent
   (implies
    (useful-dir-ent-list-p dir-ent-list)
-   (equal (find-dir-ent (clear-dir-ent dir-ent-list filename1)
+   (equal (find-dir-ent (delete-dir-ent dir-ent-list filename1)
                         filename2)
           (if (equal filename1 filename2)
               (mv (dir-ent-fix nil) *enoent*)
@@ -7045,7 +7020,7 @@ Some (rather awful) testing forms are
      ((:rewrite dir-ent-filename-of-dir-ent-set-filename)
       (:rewrite string=>nats-of-nats=>string)
       (:rewrite nth-update-nth)))
-    :induct (clear-dir-ent dir-ent-list filename1))
+    :induct (delete-dir-ent dir-ent-list filename1))
    ("subgoal *1/2"
     :use
     ((:instance
@@ -7071,15 +7046,64 @@ Some (rather awful) testing forms are
                 (n 0)
                 (m 0))))))
 
-;; This should be a theorem, but that would entail changes to dir-ent-filename
-;; (which would actually be fine...)
 (defthm
-  clear-dir-ent-correctness-1
+  delete-dir-ent-correctness-1
   (implies
    (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
                 0))
-   (equal (clear-dir-ent dir-ent-list filename)
+   (equal (delete-dir-ent dir-ent-list filename)
           (dir-ent-list-fix dir-ent-list))))
+
+(defun
+  clear-dir-ent (dir-contents filename)
+  (declare
+   (xargs :measure (len dir-contents)
+          :guard (and (fat32-filename-p filename)
+                      (unsigned-byte-listp 8 dir-contents))
+          :guard-hints (("goal" :in-theory (enable dir-ent-p)))
+          :guard-debug t))
+  (b*
+      (((when (< (len dir-contents)
+                 *ms-dir-ent-length*))
+        dir-contents)
+       (dir-ent (take *ms-dir-ent-length* dir-contents))
+       ((when (equal (char (dir-ent-filename dir-ent) 0)
+                     0))
+        dir-contents)
+       ((when (equal (dir-ent-filename dir-ent)
+                     filename))
+        (append
+         (dir-ent-set-filename
+          dir-ent
+          (nats=>string
+           (update-nth 0 229
+                       (string=>nats (dir-ent-filename dir-ent)))))
+         (clear-dir-ent (nthcdr *ms-dir-ent-length* dir-contents)
+                        filename))))
+    (append
+     dir-ent
+     (clear-dir-ent (nthcdr *ms-dir-ent-length* dir-contents)
+                    filename))))
+
+(defthm
+  len-of-clear-dir-ent
+  (equal (len (clear-dir-ent dir-contents filename))
+         (len dir-contents))
+  :hints (("goal" :in-theory (enable len-when-dir-ent-p))))
+
+(defthm
+  unsigned-byte-listp-of-clear-dir-ent
+  (implies
+   (unsigned-byte-listp 8 dir-contents)
+   (unsigned-byte-listp 8
+                        (clear-dir-ent dir-contents filename))))
+
+(defthm make-dir-ent-list-of-clear-dir-ent
+  (implies
+   (unsigned-byte-listp 8 dir-contents)
+   (equal (make-dir-ent-list (clear-dir-ent dir-contents filename))
+          (delete-dir-ent (make-dir-ent-list dir-contents) filename)))
+  :hints (("Goal" :in-theory (enable make-dir-ent-list dir-ent-fix)) ))
 
 (defun
     lofat-remove-file-by-pathname
@@ -7127,7 +7151,7 @@ Some (rather awful) testing forms are
             (consp (cdr pathname))
             (mv fat32-in-memory *eio*)
           (update-dir-contents fat32-in-memory rootclus
-                               (clear-dir-ent dir-ent-list name)
+                               (delete-dir-ent dir-ent-list name)
                                dir-ent)))
        ((when (consp (cdr pathname)))
         ;; Recursion
@@ -7155,7 +7179,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          clusterchain
          (make-list (len clusterchain) :initial-element 0)))
-       (dir-ent-list (clear-dir-ent dir-ent-list name)))
+       (dir-ent-list (delete-dir-ent dir-ent-list name)))
     (update-dir-contents fat32-in-memory rootclus
                          dir-ent-list
                          dir-ent)))
@@ -7271,7 +7295,7 @@ Some (rather awful) testing forms are
    (equal
     (find-dir-ent
      (make-dir-ent-list
-      (flatten (clear-dir-ent dir-ent-list filename2)))
+      (flatten (delete-dir-ent dir-ent-list filename2)))
      filename1)
     (mv (dir-ent-fix nil) *enoent*))))
 
@@ -7288,7 +7312,7 @@ Some (rather awful) testing forms are
      3
      (lofat-to-hifat-helper-exec
       fat32-in-memory
-      (make-dir-ent-list (flatten (clear-dir-ent dir-ent-list filename)))
+      (make-dir-ent-list (flatten (delete-dir-ent dir-ent-list filename)))
       entry-limit))
     0))
   :hints
@@ -7308,7 +7332,7 @@ Some (rather awful) testing forms are
       (entry-limit1 (- entry-limit 1))
       (entry-limit2 entry-limit)
       (dir-ent-list
-       (make-dir-ent-list (flatten (clear-dir-ent (cdr dir-ent-list)
+       (make-dir-ent-list (flatten (delete-dir-ent (cdr dir-ent-list)
                                                   filename))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -7332,7 +7356,7 @@ Some (rather awful) testing forms are
             (+ -1 entry-limit)))))))
       (entry-limit2 entry-limit)
       (dir-ent-list
-       (make-dir-ent-list (flatten (clear-dir-ent (cdr dir-ent-list)
+       (make-dir-ent-list (flatten (delete-dir-ent (cdr dir-ent-list)
                                                   filename))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -7355,7 +7379,7 @@ Some (rather awful) testing forms are
                        2097152))))
             (+ -1 entry-limit)))))))
       (dir-ent-list
-       (make-dir-ent-list (flatten (clear-dir-ent (cdr dir-ent-list)
+       (make-dir-ent-list (flatten (delete-dir-ent (cdr dir-ent-list)
                                                   filename))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -7373,23 +7397,34 @@ Some (rather awful) testing forms are
       (:linear lofat-to-hifat-helper-exec-correctness-3)
       (entry-limit (+ -1 entry-limit))
       (dir-ent-list
-       (make-dir-ent-list (flatten (clear-dir-ent (cdr dir-ent-list)
+       (make-dir-ent-list (flatten (delete-dir-ent (cdr dir-ent-list)
                                                   filename))))
       (fat32-in-memory fat32-in-memory))))))
 
-(local
- (defthm
-   lofat-remove-file-by-pathname-correctness-1-lemma-7
-   (implies
-    (and
-     (integerp entry-limit)
-     (equal
-      (mv-nth
-       3
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     lofat-remove-file-by-pathname-correctness-1-lemma-7
+     (implies
+      (and
+       (integerp entry-limit)
+       (equal
+        (mv-nth
+         3
+         (lofat-to-hifat-helper-exec
+          fat32-in-memory
+          (make-dir-ent-list
+           (flatten (delete-dir-ent (cdr dir-ent-list)
+                                   filename)))
+          (+ -1 entry-limit)))
+        0))
+      (equal
        (lofat-to-hifat-helper-exec
         fat32-in-memory
         (make-dir-ent-list
-         (flatten (clear-dir-ent (cdr dir-ent-list)
+         (flatten (delete-dir-ent (cdr dir-ent-list)
                                  filename)))
         (+ -1 entry-limit)))
       0))
@@ -7418,9 +7453,64 @@ Some (rather awful) testing forms are
        (entry-limit2 entry-limit)
        (dir-ent-list
         (make-dir-ent-list
-         (flatten (clear-dir-ent (cdr dir-ent-list)
-                                 filename))))
-       (fat32-in-memory fat32-in-memory))
+         (flatten (delete-dir-ent (cdr dir-ent-list)
+                                 filename)))
+        entry-limit)))
+     :hints
+     (("goal"
+       :in-theory
+       (disable
+        (:linear lofat-to-hifat-helper-exec-correctness-3))
+       :use
+       ((:instance
+         (:rewrite lofat-to-hifat-helper-exec-correctness-4)
+         (entry-limit1 (+ -1 entry-limit))
+         (entry-limit2 entry-limit)
+         (dir-ent-list
+          (make-dir-ent-list
+           (flatten (delete-dir-ent (cdr dir-ent-list)
+                                   filename))))
+         (fat32-in-memory fat32-in-memory))
+        (:instance
+         (:linear lofat-to-hifat-helper-exec-correctness-3)
+         (entry-limit (+ -1 entry-limit))
+         (dir-ent-list
+          (make-dir-ent-list
+           (flatten (delete-dir-ent (cdr dir-ent-list)
+                                   filename))))
+         (fat32-in-memory fat32-in-memory)))))))
+
+  (defthm
+    lofat-remove-file-by-pathname-correctness-1-lemma-8
+    (implies
+     (and (equal (mv-nth 3
+                         (lofat-to-hifat-helper-exec fat32-in-memory
+                                                     dir-ent-list entry-limit))
+                 0)
+          (useful-dir-ent-list-p dir-ent-list))
+     (equal
+      (mv-nth
+       0
+       (lofat-to-hifat-helper-exec
+        fat32-in-memory
+        (make-dir-ent-list (flatten (delete-dir-ent dir-ent-list filename)))
+        entry-limit))
+      (remove-assoc-equal
+       filename
+       (mv-nth 0
+               (lofat-to-hifat-helper-exec fat32-in-memory
+                                           dir-ent-list entry-limit)))))
+    :hints
+    (("goal"
+      :in-theory (e/d (lofat-to-hifat-helper-exec useful-dir-ent-list-p))
+      :induct (lofat-to-hifat-helper-exec fat32-in-memory
+                                          dir-ent-list entry-limit)
+      :expand (:free (fat32-in-memory dir-ent dir-ent-list entry-limit)
+                     (lofat-to-hifat-helper-exec fat32-in-memory
+                                                 (cons dir-ent dir-ent-list)
+                                                 entry-limit)))
+     ("subgoal *1/4"
+      :use
       (:instance
        (:linear lofat-to-hifat-helper-exec-correctness-3)
        (entry-limit (+ -1 entry-limit))
