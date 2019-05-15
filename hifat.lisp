@@ -716,29 +716,39 @@
                          dir-ent first-cluster file-size)))
     :hints (("goal" :in-theory (enable dir-ent-p))))))
 
-(defund dir-ent-filename (dir-ent)
+(defund
+  dir-ent-filename (dir-ent)
   (declare
-   (xargs :guard (dir-ent-p dir-ent)
-          :guard-hints (("Goal" :in-theory (enable dir-ent-p)))))
-  (nats=>string (subseq dir-ent 0 11)))
+   (xargs
+    :guard (dir-ent-p dir-ent)
+    :guard-hints (("goal" :in-theory (enable dir-ent-p)))))
+  (nats=>string (subseq (mbe :exec dir-ent
+                             :logic (dir-ent-fix dir-ent))
+                        0 11)))
 
+(defthm dir-ent-filename-of-dir-ent-fix
+  (equal (dir-ent-filename (dir-ent-fix dir-ent))
+         (dir-ent-filename dir-ent))
+  :hints (("goal" :in-theory (enable dir-ent-filename))))
+
+;; This had a dir-ent-p hypothesis before, which interestingly enough
+;; remove-hyps failed to remove. It did cause more subgoals, from what I saw on
+;; the screen.
 (defthm
   dir-ent-filename-of-dir-ent-set-first-cluster-file-size
-  (implies
-   (dir-ent-p dir-ent)
-   (equal
-    (dir-ent-filename (dir-ent-set-first-cluster-file-size
-                       dir-ent first-cluster file-size))
-    (dir-ent-filename dir-ent)))
+  (equal
+   (dir-ent-filename (dir-ent-set-first-cluster-file-size
+                      dir-ent first-cluster file-size))
+   (dir-ent-filename dir-ent))
   :hints
-  (("goal"
-    :in-theory
-    (e/d (dir-ent-set-first-cluster-file-size dir-ent-filename)
+  (("goal" :in-theory
+    (e/d (dir-ent-set-first-cluster-file-size
+          dir-ent-filename dir-ent-fix dir-ent-p)
          (loghead logtail (:rewrite logtail-loghead))))))
 
 (defthm explode-of-dir-ent-filename
   (equal (explode (dir-ent-filename dir-ent))
-         (nats=>chars (subseq dir-ent 0 11)))
+         (nats=>chars (take 11 (dir-ent-fix dir-ent))))
   :hints (("goal" :in-theory (enable dir-ent-filename))))
 
 (defund
@@ -748,19 +758,23 @@
     :guard (and (dir-ent-p dir-ent)
                 (stringp filename)
                 (equal (length filename) 11))
-    :guard-hints (("goal" :in-theory (enable dir-ent-p-of-append
-                                             len-when-dir-ent-p)))))
-  (mbe :exec (append (string=>nats filename)
-                     (subseq dir-ent 11 *ms-dir-ent-length*))
-       :logic
-       (dir-ent-fix
-        (append (string=>nats filename)
-                (subseq dir-ent 11 *ms-dir-ent-length*)))))
+    :guard-hints
+    (("goal"
+      :in-theory (enable dir-ent-p-of-append
+                         len-when-dir-ent-p string=>nats)))))
+  (append
+   (mbe :logic (chars=>nats (take 11 (coerce filename 'list)))
+        :exec (string=>nats filename))
+   (subseq (mbe :exec dir-ent
+                :logic (dir-ent-fix dir-ent))
+           11 *ms-dir-ent-length*)))
 
 (defthm
   dir-ent-p-of-dir-ent-set-filename
   (dir-ent-p (dir-ent-set-filename dir-ent filename))
-  :hints (("goal" :in-theory (enable dir-ent-set-filename)))
+  :hints
+  (("goal" :in-theory (enable dir-ent-set-filename
+                              dir-ent-fix dir-ent-p-of-append)))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -993,15 +1007,15 @@
 (defthm
   dir-ent-filename-of-dir-ent-set-filename
   (implies
-   (and (dir-ent-p dir-ent)
-        (stringp filename)
+   (and (stringp filename)
         (equal (length filename) 11))
    (equal
     (dir-ent-filename (dir-ent-set-filename dir-ent filename))
     filename))
   :hints
-  (("goal" :in-theory (enable dir-ent-filename
-                              dir-ent-set-filename dir-ent-p))))
+  (("goal"
+    :in-theory (enable dir-ent-filename dir-ent-set-filename
+                       dir-ent-fix dir-ent-p nats=>string))))
 
 (defthm
   dir-ent-file-size-of-dir-ent-set-filename

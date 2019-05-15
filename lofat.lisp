@@ -7052,21 +7052,11 @@ Some (rather awful) testing forms are
 
 ;; This should be a theorem, but that would entail changes to dir-ent-filename
 ;; (which would actually be fine...)
-;; (defthm
-;;   clear-dir-ent-correctness-1
-;;   (implies
-;;    (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
-;;                 0))
-;;    (equal (clear-dir-ent dir-ent-list filename)
-;;           (dir-ent-list-fix dir-ent-list))))
-
 (defthm
   clear-dir-ent-correctness-1
   (implies
-   (and
-    (dir-ent-list-p dir-ent-list)
    (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
-                0)))
+                0))
    (equal (clear-dir-ent dir-ent-list filename)
           (dir-ent-list-fix dir-ent-list))))
 
