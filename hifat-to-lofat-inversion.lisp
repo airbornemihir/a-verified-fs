@@ -460,7 +460,7 @@
                              (unsigned-byte-p))))))
   (or
    ;; the byte #xe5 marks deleted files, according to the spec
-   (equal (nth 0 dir-ent) #xe5)
+   (equal (char (dir-ent-filename dir-ent) 0) (code-char #xe5))
    (equal (dir-ent-filename dir-ent)
           *current-dir-fat32-name*)
    (equal (dir-ent-filename dir-ent)
@@ -3156,14 +3156,16 @@
   (implies
    (dir-ent-p dir-ent)
    (equal (make-dir-ent-list (append dir-ent dir-contents))
-          (if (equal (nth 0 dir-ent) 0)
+          (if (equal (char (dir-ent-filename dir-ent) 0)
+                     (code-char #x00))
               nil
               (if (useless-dir-ent-p dir-ent)
                   (make-dir-ent-list dir-contents)
                   (cons dir-ent
                         (make-dir-ent-list dir-contents))))))
-  :hints (("goal" :in-theory (enable make-dir-ent-list
-                                     len-when-dir-ent-p))))
+  :hints
+  (("goal"
+    :in-theory (enable make-dir-ent-list len-when-dir-ent-p))))
 
 (defthm
   make-dir-ent-list-of-append-2
