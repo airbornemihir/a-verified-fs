@@ -7108,12 +7108,33 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable useless-dir-ent-p))))
 
 (defthm make-dir-ent-list-of-clear-dir-ent
-  (implies
-   (unsigned-byte-listp 8 dir-contents)
-   (equal (make-dir-ent-list (clear-dir-ent dir-contents filename))
-          (delete-dir-ent (make-dir-ent-list dir-contents) filename)))
-  :hints (("Goal" :in-theory (enable make-dir-ent-list dir-ent-fix)) ))
+  (equal (make-dir-ent-list (clear-dir-ent dir-contents filename))
+         (delete-dir-ent (make-dir-ent-list dir-contents)
+                         filename))
+  :hints (("goal" :in-theory (enable make-dir-ent-list dir-ent-fix))))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    make-dir-ent-list-of-append-3
+    (implies
+     (equal (mod (len dir-contents)
+                 *ms-dir-ent-length*)
+            0)
+     (equal (make-dir-ent-list (append (clear-dir-ent dir-contents filename)
+                                       (make-list-ac n 0 nil)))
+            (delete-dir-ent (make-dir-ent-list dir-contents)
+                            filename)))
+    :hints (("goal" :induct (clear-dir-ent dir-contents filename)
+             :in-theory (enable make-dir-ent-list dir-ent-fix)
+             :expand (len dir-contents)))))
+
+;; We're going to have to add a weird stipulation here about the length of a
+;; directory file's contents being more than 0 (which is true, because dot and
+;; dotdot entries have to be everywhere other than the root.)
 (defun
     lofat-remove-file-by-pathname
     (fat32-in-memory rootclus pathname)
@@ -7507,6 +7528,56 @@ Some (rather awful) testing forms are
        (dir-ent-list (cdr dir-ent-list))
        (fat32-in-memory fat32-in-memory))))))
 
+(local
+ (defthm
+   lofat-remove-file-by-pathname-correctness-1-lemma-9
+   (iff
+    (equal
+     (len
+      (explode (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory rootclus 2097152))))
+     0)
+    (equal (mv-nth 0
+                   (get-clusterchain-contents
+                    fat32-in-memory rootclus 2097152))
+           ""))
+   :hints
+   (("goal"
+     :expand
+     (len
+      (explode
+       (mv-nth 0
+               (get-clusterchain-contents
+                fat32-in-memory rootclus 2097152))))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "arithmetic-3/top" :dir :system))
+
+  (defthm
+    lofat-remove-file-by-pathname-correctness-1-lemma-10
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (not (zp y))
+          (equal (mod length y) 0)
+          (equal (mod (cluster-size fat32-in-memory) y)
+                 0))
+     (equal
+      (mod
+       (len
+        (explode
+         (mv-nth 0
+                 (get-clusterchain-contents fat32-in-memory
+                                            masked-current-cluster length))))
+       y)
+      0))
+    :hints
+    (("goal" :induct (get-clusterchain-contents fat32-in-memory
+                                                masked-current-cluster length)
+      :in-theory (enable get-clusterchain-contents)))))
+
 (thm-cp
  (b*
      (((mv fs error-code)
@@ -7597,5 +7668,31 @@ Some (rather awful) testing forms are
      0
      (lofat-remove-file-by-pathname fat32-in-memory rootclus pathname)))
    :expand
-   (lofat-remove-file-by-pathname fat32-in-memory rootclus pathname))))
+   (lofat-remove-file-by-pathname fat32-in-memory rootclus pathname))
+  ("subgoal *1/3"
+   :in-theory
+   (disable (:REWRITE LOFAT-REMOVE-FILE-BY-PATHNAME-CORRECTNESS-1-LEMMA-1))
+   :use
+   (:instance
+    (:REWRITE LOFAT-REMOVE-FILE-BY-PATHNAME-CORRECTNESS-1-LEMMA-1)
+    (DIR-ENT
+                  (MV-NTH
+                   0
+                   (FIND-DIR-ENT
+                    (MAKE-DIR-ENT-LIST
+                       (STRING=>NATS
+                            (MV-NTH 0
+                                    (GET-CLUSTERCHAIN-CONTENTS
+                                         FAT32-IN-MEMORY ROOTCLUS 2097152))))
+                    (FAT32-FILENAME-FIX (CAR PATHNAME)))))
+                 (DIR-CONTENTS
+                  (NATS=>STRING
+                   (CLEAR-DIR-ENT
+                        (STRING=>NATS
+                             (MV-NTH 0
+                                     (GET-CLUSTERCHAIN-CONTENTS
+                                          FAT32-IN-MEMORY ROOTCLUS 2097152)))
+                        (FAT32-FILENAME-FIX (CAR PATHNAME)))))
+                 (FIRST-CLUSTER ROOTCLUS)
+                 (FAT32-IN-MEMORY FAT32-IN-MEMORY)))))
 
