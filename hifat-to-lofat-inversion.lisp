@@ -460,7 +460,7 @@
                              (unsigned-byte-p))))))
   (or
    ;; the byte #xe5 marks deleted files, according to the spec
-   (equal (nth 0 dir-ent) #xe5)
+   (equal (char (dir-ent-filename dir-ent) 0) (code-char #xe5))
    (equal (dir-ent-filename dir-ent)
           *current-dir-fat32-name*)
    (equal (dir-ent-filename dir-ent)
@@ -507,7 +507,7 @@
        ;; special 0 value, rather than the 0xE5 value, indicates to FAT file
        ;; system driver code that the rest of the entries in this directory do
        ;; not need to be examined because they are all free."
-       ((when (equal (nth 0 dir-ent) 0)) nil)
+       ((when (equal (char (dir-ent-filename dir-ent) 0) (code-char #x00))) nil)
        ((when (useless-dir-ent-p dir-ent))
         (make-dir-ent-list
          (nthcdr *ms-dir-ent-length* dir-contents))))
@@ -520,7 +520,10 @@
   (if (atom dir-ent-list)
       (equal dir-ent-list nil)
       (and (dir-ent-p (car dir-ent-list))
-           (not (equal (nth 0 (car dir-ent-list)) 0))
+           (not (equal (char (dir-ent-filename
+                              (car dir-ent-list))
+                             0)
+                       (code-char #x00)))
            (not (useless-dir-ent-p (car dir-ent-list)))
            (useful-dir-ent-list-p (cdr dir-ent-list)))))
 
@@ -3153,14 +3156,16 @@
   (implies
    (dir-ent-p dir-ent)
    (equal (make-dir-ent-list (append dir-ent dir-contents))
-          (if (equal (nth 0 dir-ent) 0)
+          (if (equal (char (dir-ent-filename dir-ent) 0)
+                     (code-char #x00))
               nil
               (if (useless-dir-ent-p dir-ent)
                   (make-dir-ent-list dir-contents)
                   (cons dir-ent
                         (make-dir-ent-list dir-contents))))))
-  :hints (("goal" :in-theory (enable make-dir-ent-list
-                                     len-when-dir-ent-p))))
+  :hints
+  (("goal"
+    :in-theory (enable make-dir-ent-list len-when-dir-ent-p))))
 
 (defthm
   make-dir-ent-list-of-append-2
