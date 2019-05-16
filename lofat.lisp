@@ -7068,7 +7068,7 @@ Some (rather awful) testing forms are
         dir-contents)
        (dir-ent (take *ms-dir-ent-length* dir-contents))
        ((when (equal (char (dir-ent-filename dir-ent) 0)
-                     0))
+                     (code-char 0)))
         dir-contents)
        ((when (equal (dir-ent-filename dir-ent)
                      filename))
@@ -7097,6 +7097,31 @@ Some (rather awful) testing forms are
    (unsigned-byte-listp 8 dir-contents)
    (unsigned-byte-listp 8
                         (clear-dir-ent dir-contents filename))))
+
+(defthm make-dir-ent-list-of-clear-dir-ent-lemma-1
+  (implies
+   (dir-ent-p dir-ent)
+   (equal
+    (nth
+     0
+     (dir-ent-set-filename
+      dir-ent
+      (nats=>string
+       (update-nth 0 #xe5
+                   (string=>nats (dir-ent-filename dir-ent))))))
+    #xe5))
+  :hints
+  (("goal"
+    :in-theory (enable dir-ent-set-filename dir-ent-fix))))
+
+(defthm
+  make-dir-ent-list-of-clear-dir-ent-lemma-2
+  (implies
+   (equal (char filename 0)
+          (code-char 229))
+   (useless-dir-ent-p (dir-ent-set-filename dir-ent filename)))
+  :hints (("goal" :in-theory (enable useless-dir-ent-p
+                                     dir-ent-set-filename))))
 
 (defthm make-dir-ent-list-of-clear-dir-ent
   (implies
@@ -7256,23 +7281,6 @@ Some (rather awful) testing forms are
   (("goal" :in-theory (enable lofat-to-hifat-helper-exec)
     :induct (lofat-to-hifat-helper-exec fat32-in-memory
                                         dir-ent-list entry-limit))))
-
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-3
-  (implies
-   (dir-ent-p dir-ent)
-   (equal
-    (nth
-     0
-     (dir-ent-set-filename
-      dir-ent
-      (nats=>string
-       (update-nth 0 0
-                   (string=>nats (dir-ent-filename dir-ent))))))
-    0))
-  :hints
-  (("goal"
-    :in-theory (enable dir-ent-set-filename dir-ent-fix))))
 
 (defthm
   lofat-remove-file-by-pathname-correctness-1-lemma-4
