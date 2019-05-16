@@ -6732,7 +6732,7 @@ Some (rather awful) testing forms are
 
 (defund
   update-dir-contents
-  (fat32-in-memory first-cluster dir-ent-list dir-ent)
+  (fat32-in-memory first-cluster dir-contents dir-ent)
   (declare
    (xargs
     :stobjs fat32-in-memory
@@ -6743,7 +6743,7 @@ Some (rather awful) testing forms are
                 (> (+ *ms-first-data-cluster*
                       (count-of-clusters fat32-in-memory))
                    first-cluster)
-                (dir-ent-list-p dir-ent-list))
+                (stringp dir-contents))
     :guard-hints
     (("goal" :expand (fat32-build-index-list
                       (effective-fat fat32-in-memory)
@@ -6754,16 +6754,14 @@ Some (rather awful) testing forms are
                           first-cluster *ms-max-dir-size*))
        ((unless (equal error-code 0))
         (mv fat32-in-memory *eio*))
-       (fat32-in-memory (stobj-set-indices-in-fa-table
-                         fat32-in-memory dir-clusterchain
-                         (make-list (len dir-clusterchain)
-                                    :initial-element 0)))
-       (fat32-in-memory (update-fati first-cluster *ms-end-of-clusterchain*
-                                     fat32-in-memory))
+       (fat32-in-memory
+        (stobj-set-indices-in-fa-table
+         fat32-in-memory (cdr dir-clusterchain)
+         (make-list (- (len dir-clusterchain) 1)
+                    :initial-element 0)))
        ((mv fat32-in-memory & error-code &)
-        (place-contents fat32-in-memory dir-ent
-                        (nats=>string (flatten dir-ent-list))
-                        0 first-cluster)))
+        (place-contents fat32-in-memory
+                        dir-ent dir-contents 0 first-cluster)))
     (mv fat32-in-memory error-code)))
 
 (defthm
@@ -6773,7 +6771,7 @@ Some (rather awful) testing forms are
     (mv-nth
      0
      (update-dir-contents fat32-in-memory
-                          first-cluster dir-ent-list dir-ent)))
+                          first-cluster dir-contents dir-ent)))
    (count-of-clusters fat32-in-memory))
   :hints (("goal" :in-theory (enable update-dir-contents))))
 
@@ -6785,11 +6783,12 @@ Some (rather awful) testing forms are
         (<= *ms-first-data-cluster* first-cluster)
         (> (+ *ms-first-data-cluster*
               (count-of-clusters fat32-in-memory))
-           first-cluster))
+           first-cluster)
+        (stringp dir-contents))
    (lofat-fs-p
     (mv-nth 0
             (update-dir-contents fat32-in-memory
-                                 first-cluster dir-ent-list dir-ent))))
+                                 first-cluster dir-contents dir-ent))))
   :hints (("goal" :in-theory (enable update-dir-contents))))
 
 (defun
@@ -6846,7 +6845,7 @@ Some (rather awful) testing forms are
               (dir-ent-list (place-dir-ent dir-ent-list dir-ent)))
            (update-dir-contents
             fat32-in-memory rootclus
-            dir-ent-list
+            (nats=>string (flatten dir-ent-list))
             dir-ent))
          (mv fat32-in-memory *enotdir*)))
        ((unless (dir-ent-directory-p dir-ent))
@@ -6872,7 +6871,7 @@ Some (rather awful) testing forms are
                               (lofat-file->dir-ent file))))
            (update-dir-contents
             fat32-in-memory rootclus
-            dir-ent-list
+            (nats=>string (flatten dir-ent-list))
             dir-ent))))
        ;; This case should never arise - we should never legitimately find a
        ;; directory entry with a cluster index outside the allowable range.
@@ -7159,7 +7158,7 @@ Some (rather awful) testing forms are
             (consp (cdr pathname))
             (mv fat32-in-memory *eio*)
           (update-dir-contents fat32-in-memory rootclus
-                               (delete-dir-ent dir-ent-list name)
+                               (nats=>string (clear-dir-ent (string=>nats dir-contents) name))
                                dir-ent)))
        ((when (consp (cdr pathname)))
         ;; Recursion
@@ -7186,10 +7185,9 @@ Some (rather awful) testing forms are
         (stobj-set-indices-in-fa-table
          fat32-in-memory
          clusterchain
-         (make-list (len clusterchain) :initial-element 0)))
-       (dir-ent-list (delete-dir-ent dir-ent-list name)))
+         (make-list (len clusterchain) :initial-element 0))))
     (update-dir-contents fat32-in-memory rootclus
-                         dir-ent-list
+                         (nats=>string (clear-dir-ent (string=>nats dir-contents) name))
                          dir-ent)))
 
 (defthm
