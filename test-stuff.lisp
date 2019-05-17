@@ -75,47 +75,6 @@
                        (rm-list fat32-in-memory
                                 name-list exit-status)))))
 
-(defthm rm-list-correctness-1-lemma-1
-  (equal (mv-nth 1 (rm-list fat32-in-memory pathname-list 1))
-         1))
-
-;; (defthm
-;;   rm-list-correctness-1-lemma-2
-;;   (implies
-;;    (equal (mv-nth 1
-;;                   (find-file-by-pathname fs fat32-pathname))
-;;           *enoent*)
-;;    (equal
-;;     (mv-nth 1
-;;             (find-file-by-pathname
-;;              (mv-nth 0
-;;                      (rm-list fs pathname-list exit-status))
-;;              fat32-pathname))
-;;     *enoent*))
-;;   :hints (("goal" :in-theory (disable find-file-by-pathname))))
-
-;; (defthm
-;;   rm-list-correctness-1
-;;   (implies
-;;    (and (member-equal pathname pathname-list)
-;;         (equal (mv-nth 1
-;;                        (rm-list fs pathname-list exit-status))
-;;                0))
-;;    (equal
-;;     (mv-nth
-;;      1
-;;      (find-file-by-pathname
-;;       (mv-nth 0
-;;               (rm-list fs pathname-list exit-status))
-;;       (pathname-to-fat32-pathname (explode pathname))))
-;;     *enoent*))
-;;   :hints
-;;   (("goal"
-;;     :in-theory (disable (:definition pathname-to-fat32-pathname)
-;;                         (:definition name-to-fat32-name)
-;;                         (:rewrite take-of-take-split)
-;;                         (:linear len-of-member-equal)))))
-
 (defund
   rm-1
   (fat32-in-memory disk-image-string rm-pathnames)
