@@ -38,6 +38,6 @@
         ((mv & lstat-errno)
          (lofat-lstat fat32-in-memory pathname)))
      (implies (equal unlink-errno 0)
-              (not (equal lstat-errno 0)))))
+              (equal lstat-errno -1))))
   :hints (("goal"
            :in-theory (enable lofat-unlink))))
