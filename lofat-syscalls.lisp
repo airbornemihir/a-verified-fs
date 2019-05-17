@@ -632,7 +632,7 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable m1-file-alist-p hifat-equiv))))
 
-(defun lofat-unlink (fat32-in-memory pathname)
+(defund lofat-unlink (fat32-in-memory pathname)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (and (lofat-fs-p fat32-in-memory)
                               (fat32-filename-list-p pathname))))
@@ -643,7 +643,13 @@
        ((mv fat32-in-memory &) (hifat-to-lofat fat32-in-memory fs)))
     (mv fat32-in-memory retval error-code)))
 
-(defun lofat-rmdir (fat32-in-memory pathname)
+(defthm lofat-fs-p-of-lofat-unlink
+  (implies (lofat-fs-p fat32-in-memory)
+           (lofat-fs-p
+            (mv-nth 0 (lofat-unlink fat32-in-memory pathname))))
+  :hints (("Goal" :in-theory (enable lofat-unlink)) ))
+
+(defund lofat-rmdir (fat32-in-memory pathname)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (and (lofat-fs-p fat32-in-memory)
                               (fat32-filename-list-p pathname))))
