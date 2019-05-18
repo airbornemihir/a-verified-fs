@@ -4047,7 +4047,31 @@
        ;; leaves out at least one dot or dotdot entry, with the result that
        ;; attempting to remake the stobj after coverting to hifat would cause
        ;; the directory with the missing dot/dotdot entry to cross a cluster
-       ;; boundary and therefore occupy more space than available in the stobj.
+       ;; boundary and therefore occupy more space than available in the
+       ;; stobj. This scenario wouldn't even need a directory with 65535 or
+       ;; 65536 useful directory entries. The largest possible cluster size for
+       ;; FAT32 is 2^15 bytes, which is a multiple of all other possible
+       ;; cluster sizes - so let's consider an example where a directory
+       ;; contains 2^11 useful directory entries and no dot or dotdot entries,
+       ;; completely filling 2, 4, 8, or however many clusters. Then, when we
+       ;; write back this directory, we'll have 3 clusters occupied by this
+       ;; directory, or 5 or 9 or something. The problem is clear.
+       ;;
+       ;; The solution is to return a non-zero error code when a directory is
+       ;; encountered without a dot or dotdot entry in it. Anything else wrecks
+       ;; our guarantees that the transformation from lofat to hifat is
+       ;; reversible. Then, the reasoning will involve the number of clusters
+       ;; taken up for the on-disk representation of a lofat instance. That
+       ;; reasoning will also involve proving that we can allocate upto
+       ;; (count-of-clusters fat32-in-memory) clusters and no more.
+       ;;
+       ;; By the way, what are our guarantees? We assure that a lofat instance
+       ;; which can successfully be transformed to a hifat instance has no more
+       ;; than (max-entry-count fat32-in-memory) directory entries, no
+       ;; duplicate entries in any directory and no directories with more than
+       ;; 2^16 - 2 useful entries. What about directories which blow past 2^16
+       ;; entries altogether? Those will be caught thanks to the error code of
+       ;; get-clusterchain-contents.
        (equal
         (mv-nth
          1
