@@ -143,3 +143,70 @@
               (equal lstat-errno -1))))
   :hints (("goal"
            :in-theory (enable lofat-unlink))))
+
+(defthm
+  ls-1-after-rm-1
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (< 0
+       (len (intersection-equal ls-pathnames rm-pathnames)))
+    ;; extra hypotheses
+    (not
+     (null
+      (mv-nth
+       1
+       (rm-list-extra-hypothesis
+        (mv-nth 0
+                (string-to-lofat fat32-in-memory disk-image-string))
+        rm-pathnames))))
+    (equal
+     (mv-nth
+      '1
+      (lofat-to-hifat
+       (mv-nth
+        '0
+        (rm-list (mv-nth '0
+                         (string-to-lofat fat32-in-memory disk-image-string))
+                 rm-pathnames '0))))
+     '0))
+   (b* (((mv fat32-in-memory
+             disk-image-string rm-exit-status)
+         (rm-1 fat32-in-memory
+               disk-image-string rm-pathnames))
+        ((mv & & ls-exit-status)
+         (ls-1 fat32-in-memory
+               ls-pathnames disk-image-string)))
+     (implies (equal rm-exit-status 0)
+              (equal ls-exit-status 2))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (rm-1 ls-1)
+                    ((:rewrite rm-list-correctness-1)
+                     ls-list-correctness-1 nth
+                     (:definition pathname-to-fat32-pathname)
+                     (:definition name-to-fat32-name)
+                     (:definition rm-list)
+                     (:definition find-file-by-pathname)))
+    :use
+    ((:instance
+      (:rewrite rm-list-correctness-1)
+      (pathname (nth 0
+                     (intersection-equal ls-pathnames rm-pathnames)))
+      (exit-status 0)
+      (pathname-list rm-pathnames)
+      (fat32-in-memory
+       (mv-nth 0
+               (string-to-lofat fat32-in-memory disk-image-string))))
+     (:instance
+      (:rewrite ls-list-correctness-1)
+      (pathname (nth 0
+                     (intersection-equal ls-pathnames rm-pathnames)))
+      (name-list ls-pathnames)
+      (fat32-in-memory
+       (mv-nth
+        0
+        (rm-list (mv-nth 0
+                         (string-to-lofat fat32-in-memory disk-image-string))
+                 rm-pathnames 0))))))))
