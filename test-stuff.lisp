@@ -223,58 +223,25 @@
                  :rule-classes :type-prescription
                  :alias #\d)))
 
-(defun ls-list (fat32-in-memory name-list)
+(defun ls-list (fat32-in-memory name-list exit-status)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (and
                           (lofat-fs-p fat32-in-memory) (string-listp name-list))))
   (b*
-      (((when (atom name-list)) nil)
+      (((when (atom name-list)) (mv nil exit-status))
        (fat32-pathname
         (pathname-to-fat32-pathname (coerce (car name-list) 'list)))
        ;; It doesn't really matter for these purposes what the errno is. We're
        ;; not trying to match this program for its stderr output.
        ((unless
             (fat32-filename-list-p fat32-pathname))
-        (ls-list fat32-in-memory (cdr name-list)))
+        (ls-list fat32-in-memory (cdr name-list) 2))
        ((mv & retval &)
-        (lofat-lstat fat32-in-memory fat32-pathname)))
-    (if
-        (equal retval 0)
-        (cons (car name-list) (ls-list fat32-in-memory (cdr name-list)))
-      (ls-list fat32-in-memory (cdr name-list)))))
-
-(defthm ls-list-correctness-1-lemma-1
-  (<= (len (ls-list fat32-in-memory name-list))
-      (len name-list))
-  :rule-classes :linear)
-
-(defthmd ls-list-correctness-1-lemma-2
-  (implies
-   (not (equal (mv-nth 1
-                       (lofat-lstat fat32-in-memory pathname))
-               0))
-   (equal (mv-nth 1
-                  (lofat-lstat fat32-in-memory pathname))
-          -1))
-  :hints (("goal" :in-theory (enable lofat-lstat))))
-
-(defthm
-  ls-list-correctness-1
-  (implies
-   (and
-    (member-equal pathname name-list)
-    (equal (len (ls-list fat32-in-memory name-list))
-           (len name-list)))
-    (and
-     (fat32-filename-list-p
-      (pathname-to-fat32-pathname (explode pathname)))
-     (equal
-      (mv-nth
-       1
-       (lofat-lstat
-        fat32-in-memory
-        (pathname-to-fat32-pathname (explode pathname))))
-      0))))
+        (lofat-lstat fat32-in-memory fat32-pathname))
+       ((unless (equal retval 0))
+        (ls-list fat32-in-memory (cdr name-list) 2))
+       ((mv tail-list exit-status) (ls-list fat32-in-memory (cdr name-list) exit-status)))
+    (mv (cons (car name-list) tail-list) exit-status)))
 
 (defund
   ls-1
@@ -289,10 +256,8 @@
         (string-to-lofat fat32-in-memory disk-image-string))
        ((unless (equal error-code 0))
         (mv fat32-in-memory nil 2))
-       (ls-list
-        (ls-list fat32-in-memory ls-pathnames))
-       (exit-status
-        (if (< (len ls-list) (len ls-pathnames)) 2 0)))
+       ((mv ls-list exit-status)
+        (ls-list fat32-in-memory ls-pathnames 0)))
     (mv fat32-in-memory ls-list exit-status)))
 
 (defun
@@ -319,9 +284,8 @@
          (disk-image-to-lofat fat32-in-memory disk-path state))
         ((unless (equal error-code 0))
          (mv fat32-in-memory nil 2))
-        (ls-list (ls-list fat32-in-memory ls-pathnames))
-        (exit-status (if (< (len ls-list) (len ls-pathnames))
-                         2 0)))
+        ((mv ls-list exit-status)
+         (ls-list fat32-in-memory ls-pathnames 0)))
      (mv fat32-in-memory ls-list exit-status))))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)

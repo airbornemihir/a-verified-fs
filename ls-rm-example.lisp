@@ -104,6 +104,52 @@
                  (:rewrite take-of-take-split)
                  (:linear len-of-member-equal))))))
 
+(defthm ls-list-correctness-1-lemma-1
+  (implies (not
+            (equal
+             (mv-nth
+              1
+              (ls-list fat32-in-memory name-list exit-status))
+             exit-status))
+           (equal
+            (mv-nth
+             1
+             (ls-list fat32-in-memory name-list exit-status))
+            2))
+  :rule-classes :linear)
+
+;; Not currently used.
+(defthmd ls-list-correctness-1-lemma-2
+  (implies
+   (not (equal (mv-nth 1
+                       (lofat-lstat fat32-in-memory pathname))
+               0))
+   (equal (mv-nth 1
+                  (lofat-lstat fat32-in-memory pathname))
+          -1))
+  :hints (("goal" :in-theory (enable lofat-lstat))))
+
+(defthm
+  ls-list-correctness-1
+  (implies
+   (and
+    (member-equal pathname name-list)
+    (not
+     (equal
+      (mv-nth 1
+              (ls-list fat32-in-memory name-list exit-status))
+      2)))
+   (and
+    (fat32-filename-list-p
+     (pathname-to-fat32-pathname (explode pathname)))
+    (equal
+     (mv-nth
+      1
+      (lofat-lstat
+       fat32-in-memory
+       (pathname-to-fat32-pathname (explode pathname))))
+     0))))
+
 (defthm
   lstat-after-unlink-1
   (implies
@@ -151,14 +197,14 @@
     (lofat-fs-p fat32-in-memory)
     (< 0
        (len (intersection-equal ls-pathnames rm-pathnames)))
-    ;; extra hypotheses
     (not
      (null
       (mv-nth
        1
        (rm-list-extra-hypothesis
-        (mv-nth 0
-                (string-to-lofat fat32-in-memory disk-image-string))
+        (mv-nth
+         0
+         (string-to-lofat fat32-in-memory disk-image-string))
         rm-pathnames))))
     (equal
      (mv-nth
@@ -166,9 +212,11 @@
       (lofat-to-hifat
        (mv-nth
         '0
-        (rm-list (mv-nth '0
-                         (string-to-lofat fat32-in-memory disk-image-string))
-                 rm-pathnames '0))))
+        (rm-list
+         (mv-nth
+          '0
+          (string-to-lofat fat32-in-memory disk-image-string))
+         rm-pathnames '0))))
      '0))
    (b* (((mv fat32-in-memory
              disk-image-string rm-exit-status)
@@ -192,21 +240,27 @@
     :use
     ((:instance
       (:rewrite rm-list-correctness-1)
-      (pathname (nth 0
-                     (intersection-equal ls-pathnames rm-pathnames)))
+      (pathname
+       (nth 0
+            (intersection-equal ls-pathnames rm-pathnames)))
       (exit-status 0)
       (pathname-list rm-pathnames)
       (fat32-in-memory
-       (mv-nth 0
-               (string-to-lofat fat32-in-memory disk-image-string))))
+       (mv-nth
+        0
+        (string-to-lofat fat32-in-memory disk-image-string))))
      (:instance
       (:rewrite ls-list-correctness-1)
-      (pathname (nth 0
-                     (intersection-equal ls-pathnames rm-pathnames)))
+      (exit-status 0)
+      (pathname
+       (nth 0
+            (intersection-equal ls-pathnames rm-pathnames)))
       (name-list ls-pathnames)
       (fat32-in-memory
        (mv-nth
         0
-        (rm-list (mv-nth 0
-                         (string-to-lofat fat32-in-memory disk-image-string))
-                 rm-pathnames 0))))))))
+        (rm-list
+         (mv-nth
+          0
+          (string-to-lofat fat32-in-memory disk-image-string))
+         rm-pathnames 0))))))))
