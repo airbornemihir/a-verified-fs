@@ -66,7 +66,6 @@
     *enoent*))
   :hints (("goal" :in-theory (e/d (lofat-unlink)
                                   (find-file-by-pathname
-                                   (:DEFINITION PATHNAME-TO-FAT32-PATHNAME)
                                    (:DEFINITION NAME-TO-FAT32-NAME)))
            :induct
            (rm-list
@@ -99,8 +98,7 @@
   (("goal"
     :in-theory (e/d
                 (lofat-unlink)
-                ((:definition pathname-to-fat32-pathname)
-                 (:definition name-to-fat32-name)
+                ((:definition name-to-fat32-name)
                  (:rewrite take-of-take-split)
                  (:linear len-of-member-equal))))))
 
@@ -133,8 +131,7 @@
   (("goal" :do-not-induct t
     :in-theory (e/d
                 (lofat-unlink)
-                ((:definition pathname-to-fat32-pathname)
-                 (:definition name-to-fat32-name)
+                ((:definition name-to-fat32-name)
                  (:rewrite take-of-take-split)
                  (:linear len-of-member-equal)))
     :use
@@ -269,7 +266,6 @@
     :in-theory (e/d (rm-1 ls-1)
                     ((:rewrite rm-list-correctness-1)
                      ls-list-correctness-1 nth
-                     (:definition pathname-to-fat32-pathname)
                      (:definition name-to-fat32-name)
                      (:definition rm-list)
                      (:definition find-file-by-pathname)))

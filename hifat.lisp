@@ -2246,7 +2246,7 @@
 ;; can have one layer of abstraction for generating the absolute path, but
 ;; right now we don't have any per-process data structure for storing the
 ;; current directory, nor are we planning to implement chdir.
-(defun pathname-to-fat32-pathname (character-list)
+(defund pathname-to-fat32-pathname (character-list)
   (declare (xargs :guard (character-listp character-list)))
   (b*
       (((when (atom character-list))
