@@ -74,15 +74,15 @@
             pathname-list
             exit-status))))
 
-(defthm
-  rm-list-correctness-1
+(defthmd
+  rm-list-correctness-1-lemma-3
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (member-equal pathname pathname-list)
         (equal (mv-nth 1
                        (rm-list fat32-in-memory pathname-list exit-status))
                0)
-        (not (null (mv-nth 1 
+        (not (null (mv-nth 1
                            (rm-list-extra-hypothesis
                             fat32-in-memory pathname-list)))))
    (equal
@@ -103,6 +103,42 @@
                  (:definition name-to-fat32-name)
                  (:rewrite take-of-take-split)
                  (:linear len-of-member-equal))))))
+
+(defthm
+  rm-list-correctness-1
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (member-equal pathname pathname-list)
+        (equal (mv-nth 1
+                       (rm-list fat32-in-memory pathname-list exit-status))
+               0)
+        (not (null (mv-nth 1
+                           (rm-list-extra-hypothesis
+                            fat32-in-memory pathname-list))))
+        (equal (mv-nth '1
+                       (lofat-to-hifat (mv-nth '0
+                                               (rm-list fat32-in-memory
+                                                        pathname-list exit-status))))
+               '0))
+   (not
+    (equal
+     (mv-nth
+      1
+      (lofat-lstat
+       (mv-nth 0
+               (rm-list fat32-in-memory pathname-list exit-status))
+       (pathname-to-fat32-pathname (explode pathname))))
+     0)))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d
+                (lofat-unlink)
+                ((:definition pathname-to-fat32-pathname)
+                 (:definition name-to-fat32-name)
+                 (:rewrite take-of-take-split)
+                 (:linear len-of-member-equal)))
+    :use
+    rm-list-correctness-1-lemma-3)))
 
 (defthm ls-list-correctness-1-lemma-1
   (implies (not
