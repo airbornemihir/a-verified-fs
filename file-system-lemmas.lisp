@@ -104,8 +104,8 @@
            :expand (len (nthcdr n x)))))
 
 (defthm revappend-of-binary-append-1
-  (equal (revappend x (binary-append y z))
-         (binary-append (revappend x y) z)))
+  (equal (binary-append (revappend x y) z)
+         (revappend x (binary-append y z))))
 
 (defthm
   binary-append-first-n-ac-nthcdr
@@ -113,12 +113,7 @@
            (equal (binary-append (first-n-ac i l ac)
                                  (nthcdr i l))
                   (revappend ac l)))
-  :hints (("goal" :induct (first-n-ac i l ac))
-          ("subgoal *1/1''"
-           :in-theory (disable revappend-of-binary-append-1)
-           :use (:instance revappend-of-binary-append-1 (x ac)
-                           (y nil)
-                           (z l)))))
+  :hints (("goal" :induct (first-n-ac i l ac))))
 
 ;; The following is redundant with the definition in books/std/lists/nth.lisp,
 ;; from where it was taken with thanks.
@@ -716,23 +711,15 @@
              (update-nth key val (take n l))
            (take n l))))
 
-(defthmd
-  remember-that-time-with-update-nth-lemma-1
+(defthmd remember-that-time-with-update-nth-lemma-1
   (implies (and (equal (nfix key) (- (len l) 1))
                 (true-listp l))
            (equal (revappend ac (update-nth key val l))
                   (append (first-n-ac key l ac)
                           (list val))))
-  :hints
-  (("goal" :induct (mv (first-n-ac key l ac)
-                       (update-nth key val l))
-    :expand ((len l) (len (cdr l))))
-   ("subgoal *1/1"
-    :in-theory (disable (:rewrite revappend-of-binary-append-1))
-    :use (:instance (:rewrite revappend-of-binary-append-1)
-                    (z (list val))
-                    (y nil)
-                    (x ac)))))
+  :hints (("goal" :induct (mv (first-n-ac key l ac)
+                              (update-nth key val l))
+           :expand ((len l) (len (cdr l))))))
 
 (defthmd
   remember-that-time-with-update-nth
