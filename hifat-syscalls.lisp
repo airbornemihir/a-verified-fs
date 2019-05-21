@@ -132,6 +132,21 @@
      (fd-table-p fd-table)
      (file-table-p file-table))))
 
+(defthm
+  hifat-open-correctness-2
+  (implies (no-duplicatesp (strip-cars (fd-table-fix fd-table)))
+           (b* (((mv fd-table & & &)
+                 (hifat-open pathname fs fd-table file-table)))
+             (no-duplicatesp (strip-cars fd-table)))))
+
+(defthm
+  hifat-open-correctness-3
+  (implies
+   (no-duplicatesp (strip-cars (file-table-fix file-table)))
+   (b* (((mv & file-table & &)
+         (hifat-open pathname fs fd-table file-table)))
+     (no-duplicatesp (strip-cars file-table)))))
+
 ;; Per the man page pread(2), this should not change the offset of the file
 ;; descriptor in the file table. Thus, there's no need for the file table to be
 ;; an argument.
@@ -418,3 +433,51 @@
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
+
+(defun hifat-close (fd fd-table file-table)
+  (declare (xargs :guard (and (fd-table-p fd-table)
+                              (file-table-p file-table))))
+  (b*
+      ((fd-table (fd-table-fix fd-table))
+       (file-table (file-table-fix file-table))
+       (fd-table-entry (assoc fd fd-table))
+       ;; FD not found.
+       ((unless (consp fd-table-entry)) (mv fd-table file-table *EBADF*))
+       (file-table-entry (assoc (cdr fd-table-entry) file-table))
+       ;; File table entry not found.
+       ((unless (consp file-table-entry)) (mv fd-table file-table *EBADF*)))
+    (mv
+     (remove-assoc fd fd-table)
+     (remove-assoc (cdr fd-table-entry) file-table)
+     0)))
+
+(defthm
+  fd-table-p-of-remove-assoc
+  (implies (fd-table-p fd-table)
+           (fd-table-p (remove-assoc-equal fd fd-table))))
+
+(defthm
+  file-table-p-of-remove-assoc
+  (implies (file-table-p file-table)
+           (file-table-p (remove-assoc-equal fd file-table))))
+
+(defthm hifat-close-correctness-1
+  (b* (((mv fd-table file-table &)
+        (hifat-close fd fd-table file-table)))
+    (and (fd-table-p fd-table)
+         (file-table-p file-table))))
+
+(defthm hifat-close-correctness-2
+  (implies (and (fd-table-p fd-table)
+                (no-duplicatesp (strip-cars fd-table)))
+           (b* (((mv fd-table & &)
+                 (hifat-close fd fd-table file-table)))
+             (no-duplicatesp (strip-cars fd-table)))))
+
+(defthm
+  hifat-close-correctness-3
+  (implies (and (file-table-p file-table)
+                (no-duplicatesp (strip-cars file-table)))
+           (b* (((mv & file-table &)
+                 (hifat-close fd fd-table file-table)))
+             (no-duplicatesp (strip-cars file-table)))))

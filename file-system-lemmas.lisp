@@ -784,3 +784,18 @@
     :in-theory (disable member-of-intersection$)
     :use (:instance member-of-intersection$
                     (x (nth n (intersection-equal l1 l2)))))))
+
+(defthm
+  member-of-strip-cars-of-remove-assoc
+  (implies
+   (not (member-equal x1 (strip-cars alist)))
+   (not
+    (member-equal x1
+                  (strip-cars (remove-assoc-equal x2 alist)))))
+  :rule-classes (:rewrite :type-prescription))
+
+(defthm
+  no-duplicatesp-of-strip-cars-of-remove-assoc
+  (implies (no-duplicatesp-equal (strip-cars alist))
+           (no-duplicatesp-equal
+            (strip-cars (remove-assoc-equal x alist)))))
