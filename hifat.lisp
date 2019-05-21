@@ -2142,7 +2142,7 @@
   (character-listp (name-to-fat32-name-helper character-list n))
   :hints (("goal" :in-theory (disable make-list-ac-removal))))
 
-(defun
+(defund
     name-to-fat32-name (character-list)
   (declare (xargs :guard (character-listp character-list)))
   (b*
@@ -2186,6 +2186,11 @@
          (coerce "11CHARAC1  " 'list))
   (equal (name-to-fat32-name (coerce "11characters.1.1" 'list))
          (coerce "11CHARAC1  " 'list))))
+
+(defthm
+  character-listp-of-name-to-fat32-name
+  (character-listp (name-to-fat32-name character-list))
+  :hints (("goal" :in-theory (enable name-to-fat32-name))))
 
 (defun
   fat32-name-to-name-helper
@@ -2246,7 +2251,7 @@
 ;; can have one layer of abstraction for generating the absolute path, but
 ;; right now we don't have any per-process data structure for storing the
 ;; current directory, nor are we planning to implement chdir.
-(defun pathname-to-fat32-pathname (character-list)
+(defund pathname-to-fat32-pathname (character-list)
   (declare (xargs :guard (character-listp character-list)))
   (b*
       (((when (atom character-list))
