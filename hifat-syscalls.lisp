@@ -481,3 +481,40 @@
            (b* (((mv & file-table &)
                  (hifat-close fd fd-table file-table)))
              (no-duplicatesp (strip-cars file-table)))))
+
+(defun
+  hifat-truncate
+  (fs pathname size)
+  (declare (xargs :guard (and (natp size)
+                              (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs)
+                              (fat32-filename-list-p pathname))
+                  :guard-hints (("goal" :in-theory
+                                 (e/d (len-of-insert-text)
+                                      (unsigned-byte-p
+                                       consp-assoc-equal))
+                                 :use (:instance consp-assoc-equal
+                                                 (name (cdr (car fd-table)))
+                                                 (l
+                                                  file-table))))))
+  (b*
+      (((mv file error-code)
+        (find-file-by-pathname fs pathname))
+       ((mv oldtext dir-ent)
+        (if (and (equal error-code 0)
+                 (m1-regular-file-p file))
+            (mv (coerce (m1-file->contents file) 'list)
+                (m1-file->dir-ent file))
+            (mv nil (dir-ent-fix nil))))
+       ((unless (unsigned-byte-p 32 size))
+        (mv fs -1 *enospc*))
+       (file
+        (make-m1-file
+         :dir-ent dir-ent
+         :contents (coerce (make-character-list
+                            (take size oldtext))
+                           'string)))
+       ((mv fs error-code)
+        (place-file-by-pathname fs pathname file)))
+    (mv fs (if (equal error-code 0) 0 -1)
+        error-code)))

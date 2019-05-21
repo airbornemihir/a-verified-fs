@@ -114,11 +114,12 @@
            (hifat-subsetp x z))
   :hints
   (("goal" :induct (mv (hifat-subsetp x z)
-                       (hifat-subsetp x y)))
-   ("subgoal *1/5" :in-theory (disable hifat-subsetp-transitive-lemma-1)
+                       (hifat-subsetp x y))
+    :in-theory (disable hifat-subsetp-transitive-lemma-1))
+   ("subgoal *1/5"
     :use (:instance hifat-subsetp-transitive-lemma-1
                     (key (car (car x)))))
-   ("subgoal *1/2" :in-theory (disable hifat-subsetp-transitive-lemma-1)
+   ("subgoal *1/2"
     :use (:instance hifat-subsetp-transitive-lemma-1
                     (key (car (car x)))))))
 
