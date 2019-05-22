@@ -14,11 +14,8 @@
      ((mv fat32-in-memory &)
       (disk-image-to-lofat
        fat32-in-memory val state))
-     ((mv fat32-in-memory retval &)
-      (lofat-truncate
-       fs
-       (pathname-to-fat32-pathname (coerce (nth 0 extra-args) 'list))
-       opts.size))
+     ((mv fat32-in-memory exit-status)
+      (truncate-list fat32-in-memory extra-args opts.size 0))
      ((mv & val state)
       (getenv$ "TRUNCATE_OUTPUT" state))
      ;; Will take the exit status from lofat-to-disk-image later.

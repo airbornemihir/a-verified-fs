@@ -671,3 +671,9 @@
        ((mv fs retval error-code) (hifat-truncate fs pathname size))
        ((mv fat32-in-memory &) (hifat-to-lofat fat32-in-memory fs)))
     (mv fat32-in-memory retval error-code)))
+
+(defthm lofat-fs-p-of-lofat-truncate
+  (implies
+   (lofat-fs-p fat32-in-memory)
+   (lofat-fs-p (mv-nth 0 (lofat-truncate fat32-in-memory pathname size))))
+  :hints (("Goal" :in-theory (enable lofat-truncate)) ))
