@@ -19,7 +19,7 @@ test-truncate-replicant-1 test-truncate-replicant-2 # test-rm-replicant-4 mtools
 
 test: $(TEST)
 
-.PHONY: clean-mountpoint test $(TEST)
+.PHONY: clean-mountpoint test clean $(TEST)
 
 .PHONY: debug-create-dir-and-file debug-create-dir debug-do-nothing \
 debug-create-dir-copy-file
@@ -49,6 +49,9 @@ MOUNTPOINT=mount1
 UID=$(shell id -u)
 GID=$(shell id -g)
 MTOOLSRC=$(shell pwd)/.mtoolsrc
+
+clean:
+	rm *output*
 
 clean-mountpoint:
 	rm -rf $(MOUNTPOINT)
