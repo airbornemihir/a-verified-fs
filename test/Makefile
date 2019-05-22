@@ -14,7 +14,8 @@ test-rmdir-replicant-1 test-rmdir-replicant-2 \
 mtools-test-rmdir-replicant-1 \
 test-mv-replicant-1 mtools-test-mv-replicant-1 \
 mtools-test-mv-replicant-2 \
-test-ls-replicant-1 # test-rm-replicant-4 mtools-test-rm-replicant-2
+test-ls-replicant-1 \
+test-truncate-replicant-1 test-truncate-replicant-2 # test-rm-replicant-4 mtools-test-rm-replicant-2
 
 test: $(TEST)
 
@@ -184,6 +185,14 @@ mtools-test-mv-replicant-2: mtools-mv-ref-output-2.raw mtools-mv-output-2.raw
 
 test-ls-replicant-1: ls-ref-output-1.txt ls-output-1.txt
 	diff -u -i ls-ref-output-1.txt ls-output-1.txt
+
+test-truncate-replicant-1: truncate-output-1.raw truncate-ref-output-1.raw
+	env DISK=$(DISK) REF_INPUT="truncate-ref-output-1.raw" \
+	INPUT="truncate-output-1.raw" $(ACL2) -- < compare-disks.lisp
+
+test-truncate-replicant-2: truncate-output-2.raw truncate-ref-output-2.raw
+	env DISK=$(DISK) REF_INPUT="truncate-ref-output-2.raw" \
+	INPUT="truncate-output-2.raw" $(ACL2) -- < compare-disks.lisp
 
 cp-ref-output-1.txt cp-output-1.txt: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)
@@ -631,6 +640,38 @@ ls-ref-output-1.txt ls-output-1.txt: $(MOUNTPOINT) ls-replicant.lisp
 	env DISK=$(DISK) LS_PREFIX=$(MOUNTPOINT) \
 	LS_OUTPUT="ls-output-1.txt" $(ACL2) -- -d "/initrd.img" \
 	< ls-replicant.lisp
+
+truncate-ref-output-1.raw truncate-output-1.raw: $(MOUNTPOINT) truncate-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	cp $(DISK) truncate-ref-output-1.raw
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos truncate-ref-output-1.raw $(MOUNTPOINT)
+	truncate --size 4626 $(MOUNTPOINT)/initrd.img
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) TRUNCATE_OUTPUT="truncate-output-1.raw" \
+	$(ACL2) -- --size 4626 "/initrd.img" \
+	< truncate-replicant.lisp
+
+truncate-ref-output-2.raw truncate-output-2.raw: $(MOUNTPOINT) truncate-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	cp input-4623-bytes.txt $(MOUNTPOINT)/initrd.img
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	cp $(DISK) truncate-ref-output-2.raw
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos truncate-ref-output-2.raw $(MOUNTPOINT)
+	truncate --size 4620 $(MOUNTPOINT)/initrd.img
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	env DISK=$(DISK) TRUNCATE_OUTPUT="truncate-output-2.raw" \
+	$(ACL2) -- --size 4620 "/initrd.img" \
+	< truncate-replicant.lisp
 
 debug-do-nothing: $(MOUNTPOINT) cp-replicant.lisp
 	rm -f $(DISK)

@@ -2316,10 +2316,12 @@
 (assert-event
  (and
   (equal (coerce (fat32-pathname-to-pathname (list "BOOKS      " "BUILD      "
-                                               "CERT    PL ")) 'string)
+                                                   "CERT    PL "))
+                 'string)
          "books/build/cert.pl")
   (equal (coerce (fat32-pathname-to-pathname (list "           " "BIN        "
-                                               "MKDIR      ")) 'string)
+                                                   "MKDIR      "))
+                 'string)
          "/bin/mkdir")))
 
 (defthm character-listp-of-fat32-pathname-to-pathname

@@ -288,9 +288,17 @@
          (ls-list fat32-in-memory ls-pathnames 0)))
      (mv fat32-in-memory ls-list exit-status))))
 
+(defoptions truncate-opts
+  :parents (demo2)
+  :tag :demo2
+  ((size       "set or adjust the file size by SIZE bytes"
+               natp
+               :rule-classes :type-prescription
+               :alias #\s
+               :default 0)))
+
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
-                  :guard-debug t
                   :guard (and (fat32-in-memoryp fat32-in-memory)
                               (stringp image-path1)
                               (stringp image-path2))
