@@ -288,9 +288,34 @@
          (ls-list fat32-in-memory ls-pathnames 0)))
      (mv fat32-in-memory ls-list exit-status))))
 
+(defoptions truncate-opts
+  :parents (demo2)
+  :tag :demo2
+  ((size       "set or adjust the file size by SIZE bytes"
+               natp
+               :rule-classes :type-prescription
+               :alias #\s
+               :default 0)))
+
+(defun
+  truncate-list (fat32-in-memory name-list size exit-status)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (lofat-fs-p fat32-in-memory)
+                              (string-listp name-list)
+                              (natp size))))
+  (b* (((when (atom name-list))
+        (mv fat32-in-memory exit-status))
+       (fat32-pathname (pathname-to-fat32-pathname
+                        (coerce (car name-list) 'list)))
+       ((mv fat32-in-memory retval &)
+        (if (not (fat32-filename-list-p fat32-pathname))
+            (mv fat32-in-memory 1 *enoent*)
+          (lofat-truncate fat32-in-memory fat32-pathname size)))
+       (exit-status (if (equal retval 0) exit-status 1)))
+    (truncate-list fat32-in-memory (cdr name-list) size exit-status)))
+
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
-                  :guard-debug t
                   :guard (and (fat32-in-memoryp fat32-in-memory)
                               (stringp image-path1)
                               (stringp image-path2))

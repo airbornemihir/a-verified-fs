@@ -659,3 +659,21 @@
        ((mv fs & error-code) (hifat-rmdir fs pathname))
        ((mv fat32-in-memory &) (hifat-to-lofat fat32-in-memory fs)))
     (mv fat32-in-memory error-code)))
+
+(defund lofat-truncate (fat32-in-memory pathname size)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (lofat-fs-p fat32-in-memory)
+                              (fat32-filename-list-p pathname)
+                              (natp size))))
+  (b*
+      (((mv fs error-code) (lofat-to-hifat fat32-in-memory))
+       ((unless (equal error-code 0)) (mv fat32-in-memory -1 *eio*))
+       ((mv fs retval error-code) (hifat-truncate fs pathname size))
+       ((mv fat32-in-memory &) (hifat-to-lofat fat32-in-memory fs)))
+    (mv fat32-in-memory retval error-code)))
+
+(defthm lofat-fs-p-of-lofat-truncate
+  (implies
+   (lofat-fs-p fat32-in-memory)
+   (lofat-fs-p (mv-nth 0 (lofat-truncate fat32-in-memory pathname size))))
+  :hints (("Goal" :in-theory (enable lofat-truncate)) ))
