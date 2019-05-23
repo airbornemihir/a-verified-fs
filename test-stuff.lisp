@@ -322,6 +322,166 @@
        (exit-status (if (equal retval 0) exit-status 1)))
     (truncate-list fat32-in-memory (cdr name-list) size exit-status)))
 
+(defun
+  truncate-list-extra-hypothesis
+  (fat32-in-memory name-list size)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (lofat-fs-p fat32-in-memory)
+                              (string-listp name-list)
+                              (natp size))
+                  :measure (len name-list)))
+  (b*
+      (((when (atom name-list))
+        (mv fat32-in-memory t))
+       (fat32-pathname (pathname-to-fat32-pathname
+                        (coerce (car name-list) 'list)))
+       ((unless (fat32-filename-list-p fat32-pathname))
+        (mv fat32-in-memory nil))
+       ((mv fs error-code)
+        (lofat-to-hifat fat32-in-memory))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory nil))
+       ((mv fs retval &)
+        (hifat-truncate fs fat32-pathname size))
+       ((unless (and (equal retval 0)
+                     (m1-bounded-file-alist-p fs)
+                     (<= (hifat-entry-count fs) (max-entry-count fat32-in-memory))))
+        (mv fat32-in-memory nil))
+       ((mv fat32-in-memory error-code)
+        (hifat-to-lofat fat32-in-memory fs))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory nil)))
+    (truncate-list-extra-hypothesis fat32-in-memory (cdr name-list) size)))
+
+(defthm
+  truncate-list-correctness-1-lemma-1
+  (implies
+   (lofat-fs-p fat32-in-memory)
+   (lofat-fs-p
+    (mv-nth 0
+            (truncate-list fat32-in-memory
+                           name-list size exit-status)))))
+
+(defthm
+  truncate-list-correctness-1-lemma-2
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (unsigned-byte-p 32 size)
+    (not (member-equal pathname pathname-list))
+    (equal
+     (mv-nth
+      1
+      (find-file-by-pathname
+       (mv-nth
+        0
+        (lofat-to-hifat
+         fat32-in-memory))
+       (pathname-to-fat32-pathname (explode pathname))))
+     0)
+    (m1-regular-file-p
+     (mv-nth
+      0
+      (find-file-by-pathname
+       (mv-nth
+        0
+        (lofat-to-hifat
+         fat32-in-memory))
+       (pathname-to-fat32-pathname (explode pathname)))))
+    (equal (mv-nth 1
+                   (truncate-list fat32-in-memory
+                                  pathname-list size exit-status))
+           0)
+    (equal
+     (mv-nth '1
+             (lofat-to-hifat
+              (mv-nth '0
+                      (truncate-list fat32-in-memory
+                                     pathname-list size exit-status))))
+     '0)
+    (not
+     (null
+      (mv-nth 1
+              (truncate-list-extra-hypothesis
+               fat32-in-memory pathname-list size)))))
+   (and
+    (equal
+     (mv-nth
+      1
+      (find-file-by-pathname
+       (mv-nth
+        0
+        (lofat-to-hifat
+         (mv-nth 0
+                 (truncate-list fat32-in-memory
+                                pathname-list size exit-status))))
+       (pathname-to-fat32-pathname (explode pathname))))
+     0)
+    (m1-regular-file-p
+     (mv-nth
+      0
+      (find-file-by-pathname
+       (mv-nth
+        0
+        (lofat-to-hifat
+         (mv-nth 0
+                 (truncate-list fat32-in-memory
+                                pathname-list size exit-status))))
+       (pathname-to-fat32-pathname (explode pathname)))))))
+  :hints
+  (("goal" :induct
+    (truncate-list fat32-in-memory
+                   pathname-list size exit-status)
+    :in-theory (e/d (lofat-truncate)
+                    ((:rewrite take-of-take-split)
+                     (:linear len-of-member-equal)
+                     (:definition place-file-by-pathname)
+                     (:rewrite fat32-filename-p-correctness-1))))))
+
+(defthm
+  truncate-list-correctness-1
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (unsigned-byte-p 32 size)
+    (member-equal pathname pathname-list)
+    (equal (mv-nth 1
+                   (truncate-list fat32-in-memory
+                                  pathname-list size exit-status))
+           0)
+    (equal
+     (mv-nth '1
+             (lofat-to-hifat
+              (mv-nth '0
+                      (truncate-list fat32-in-memory
+                                     pathname-list size exit-status))))
+     '0)
+    (not
+     (null
+      (mv-nth 1
+              (truncate-list-extra-hypothesis
+               fat32-in-memory pathname-list size)))))
+   (and
+    (equal
+     (mv-nth
+      1
+      (find-file-by-pathname
+       (mv-nth
+        0
+        (lofat-to-hifat
+         (mv-nth 0
+                 (truncate-list fat32-in-memory
+                                pathname-list size exit-status))))
+       (pathname-to-fat32-pathname (explode pathname))))
+     0)))
+  :hints
+  (("goal"
+    :in-theory (e/d (lofat-truncate)
+                    ((:rewrite take-of-take-split)
+                     (:linear len-of-member-equal)
+                     (:definition place-file-by-pathname)
+                     (:rewrite fat32-filename-p-correctness-1))))))
+
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
                   :guard (and (fat32-in-memoryp fat32-in-memory)
