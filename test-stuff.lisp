@@ -182,6 +182,14 @@
         (wc-helper text nl
                    nw nc beginning-of-word-p (+ pos 1)))))
 
+(defthm
+   wc-helper-correctness-1
+   (implies (and (integerp pos)
+                 (< pos (length text)))
+            (equal (mv-nth 2
+                           (wc-helper text nl nw nc beginning-of-word-p pos))
+                   (+ nc (length text) (- pos)))))
+
 (defund wc-1 (fat32-in-memory pathname)
   (declare
    (xargs
@@ -320,7 +328,7 @@
                               (stringp image-path1)
                               (stringp image-path2))
                   :guard-hints (("Goal" :in-theory (disable
-                                                    read-file-into-string2)) )))
+                                                    read-file-into-string2)))))
   (b*
       (((mv fat32-in-memory error-code1)
         (disk-image-to-lofat
