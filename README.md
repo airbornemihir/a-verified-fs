@@ -1,14 +1,11 @@
 This is the accompanying artefact submission for the paper titled
-"Binary-compatible verification of filesystems with ACL2". The paper
-details certain filesystem models and co-simulation tests applied to
-them; instructions for reviewing and executing these tests follow.
-
-Note: The books mentioned below were certified with a development
-snapshot of ACL2, dated 2019-05-02 and identified by commit hash
-4e079e4dc956bfb6301b29bba7f84db696a38186. The GNU/Linux programs
-mkfs.fat, diff, sudo, cp, mkdir, mv, rm, rmdir, stat, unlink, and wc
-are required in order to run the tests, as is the mtools suite of
-programs (version 4.0.18).
+"Code Proofs with a Binary-Compatible Filesystem Model". These ACL2
+books were certified with ACL2 version 8.2, the most recent release of
+the theorem prover. Apart from certifiable books, there is a
+co-simulation test suite in the test/ subdirectory; the GNU/Linux
+programs mkfs.fat, diff, sudo, cp, mkdir, mv, rm, rmdir, stat,
+truncate, unlink, and wc are required in order to run the tests, as is
+the mtools suite of programs (version 4.0.18).
 
 The FAT32 models HiFAT and LoFAT can be found in files hifat.lisp and
 lofat.lisp respectively. These depend on a number of helper
