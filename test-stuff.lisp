@@ -660,6 +660,41 @@
         (pathname-to-fat32-pathname (explode (car pathname-list))))))))))
 
 (defthm
+  truncate-list-correctness-1-lemma-4
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (m1-bounded-file-alist-p fs)
+        (<= (hifat-entry-count fs)
+            (max-entry-count fat32-in-memory))
+        (zp (mv-nth 1 (hifat-to-lofat fat32-in-memory fs)))
+        (m1-file-alist-p fs)
+        (hifat-no-dups-p fs)
+        (m1-regular-file-p (mv-nth 0 (find-file-by-pathname fs pathname))))
+   (equal
+    (m1-file->contents
+     (mv-nth
+      0
+      (find-file-by-pathname
+       (mv-nth
+        0
+        (lofat-to-hifat (mv-nth 0 (hifat-to-lofat fat32-in-memory fs))))
+       pathname)))
+    (m1-file->contents (mv-nth 0
+                               (find-file-by-pathname fs pathname)))))
+  :hints
+  (("goal"
+    :in-theory (disable find-file-by-pathname-correctness-3)
+    :use
+    (:instance
+     find-file-by-pathname-correctness-3
+     (m1-file-alist1 fs)
+     (m1-file-alist2
+      (mv-nth
+       0
+       (lofat-to-hifat (mv-nth 0
+                               (hifat-to-lofat fat32-in-memory fs)))))))))
+
+(defthm
   truncate-list-correctness-1
   (implies
    (and
