@@ -185,7 +185,8 @@
 (defthm
    wc-helper-correctness-1
    (implies (and (integerp pos)
-                 (< pos (length text)))
+                 (<= pos (length text))
+                 (integerp nc))
             (equal (mv-nth 2
                            (wc-helper text nl nw nc beginning-of-word-p pos))
                    (+ nc (length text) (- pos)))))
@@ -977,6 +978,51 @@
                                    (:definition find-file-by-pathname)
                                    (:definition take)
                                    (:rewrite take-of-len-free))))))
+
+(defthm
+  wc-after-truncate
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (member-equal pathname pathname-list)
+    (not
+     (null
+      (mv-nth
+       1
+       (truncate-list-extra-hypothesis fat32-in-memory pathname-list size))))
+    (equal
+     (mv-nth
+      '1
+      (lofat-to-hifat (mv-nth '0
+                              (truncate-list fat32-in-memory
+                                             pathname-list size exit-status))))
+     '0)
+    ;; Consider trimming this hypothesis
+    (fat32-filename-list-p (pathname-to-fat32-pathname (explode pathname))))
+   (and
+    (equal
+     (mv-nth
+      3
+      (wc-1
+       (mv-nth 0
+               (truncate-list fat32-in-memory
+                              pathname-list size exit-status))
+       pathname))
+     0)
+    (equal
+     (mv-nth
+      2
+      (wc-1
+       (mv-nth 0
+               (truncate-list fat32-in-memory
+                              pathname-list size exit-status))
+       pathname))
+     size)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (wc-1)
+                           (truncate-list-correctness-1))
+           :use
+           truncate-list-correctness-1)))
 
 (defun compare-disks (image-path1 image-path2 fat32-in-memory state)
   (declare (xargs :stobjs (fat32-in-memory state)
