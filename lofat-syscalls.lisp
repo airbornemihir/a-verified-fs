@@ -166,7 +166,7 @@
              (lofat-pread fd count offset fat32-in-memory
                           fd-table file-table))))))
 
-(defthmd
+(defthm
   lofat-pread-refinement-lemma-1
   (equal
    (m1-regular-file-p (m1-file dir-ent contents))
@@ -202,9 +202,7 @@
        (mv-nth
         0
         (lofat-find-file-by-pathname fat32-in-memory
-                                     dir-ent-list pathname))))))
-  :hints
-  (("goal" :in-theory (enable lofat-pread-refinement-lemma-1))))
+                                     dir-ent-list pathname)))))))
 
 (defthm
   lofat-pread-refinement
@@ -624,13 +622,53 @@
      (implies
       (and (equal error-code 0)
            (m1-directory-file-p file))
-      (hifat-equiv
-       (m1-file->contents file)
-       (m1-file->contents
+      (and
+       (hifat-equiv
+        (m1-file->contents file)
+        (m1-file->contents
+         (mv-nth 0
+                 (find-file-by-pathname m1-file-alist2 pathname))))
+       (m1-directory-file-p
         (mv-nth 0
                 (find-file-by-pathname m1-file-alist2 pathname)))))))
   :hints (("goal" :do-not-induct t
            :in-theory (enable m1-file-alist-p hifat-equiv))))
+
+(defthm
+  find-file-by-pathname-correctness-5
+  (implies
+   (hifat-equiv m1-file-alist2 m1-file-alist1)
+   (mv-let
+     (file error-code)
+     (find-file-by-pathname m1-file-alist1 pathname)
+     (declare (ignore error-code))
+     (equal
+      (m1-regular-file-p
+       (mv-nth 0
+               (find-file-by-pathname m1-file-alist2 pathname)))
+      (m1-regular-file-p file))))
+  :rule-classes :congruence
+  :hints (("goal" :do-not-induct t
+           :in-theory
+           (e/d
+            (m1-file-alist-p hifat-equiv)
+            ())
+           :use
+           ((:instance
+             find-file-by-pathname-correctness-3-lemma-5
+             (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
+             (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))
+            (:instance
+             find-file-by-pathname-correctness-3-lemma-5
+             (m1-file-alist1 (hifat-file-alist-fix m1-file-alist2))
+             (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1))))
+           :expand
+           ((m1-regular-file-p
+             (mv-nth 0
+                     (find-file-by-pathname m1-file-alist1 pathname)))
+            (m1-regular-file-p
+             (mv-nth 0
+                     (find-file-by-pathname m1-file-alist2 pathname)))))))
 
 (defund lofat-unlink (fat32-in-memory pathname)
   (declare (xargs :stobjs fat32-in-memory

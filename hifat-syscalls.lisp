@@ -498,16 +498,21 @@
                                                  (l
                                                   file-table))))))
   (b*
-      (((mv file error-code)
+      (((unless (unsigned-byte-p 32 size))
+        (mv fs -1 *enospc*))
+       ((mv file error-code)
         (find-file-by-pathname fs pathname))
+       ((when (and (equal error-code 0)
+                   (m1-directory-file-p file)))
+        ;; Can't truncate a directory file.
+        (mv fs -1 *eisdir*))
        ((mv oldtext dir-ent)
-        (if (and (equal error-code 0)
-                 (m1-regular-file-p file))
+        (if (equal error-code 0)
+            ;; Regular file
             (mv (coerce (m1-file->contents file) 'list)
                 (m1-file->dir-ent file))
-            (mv nil (dir-ent-fix nil))))
-       ((unless (unsigned-byte-p 32 size))
-        (mv fs -1 *enospc*))
+          ;; Nonexistent file
+          (mv nil (dir-ent-fix nil))))
        (file
         (make-m1-file
          :dir-ent dir-ent
