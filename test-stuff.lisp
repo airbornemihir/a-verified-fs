@@ -363,7 +363,7 @@
                            name-list size exit-status)))))
 
 (defthm
-  truncate-list-correctness-1-lemma-4
+  truncate-list-correctness-1-lemma-2
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (m1-bounded-file-alist-p fs)
@@ -398,7 +398,7 @@
                                (hifat-to-lofat fat32-in-memory fs)))))))))
 
 (defthm
-  truncate-list-correctness-1-lemma-2
+  truncate-list-correctness-1-lemma-3
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -474,13 +474,6 @@
     :induct (truncate-list fat32-in-memory
                            pathname-list size exit-status)
     :in-theory
-    (e/d (lofat-truncate)
-         ((:rewrite take-of-take-split)
-          (:linear len-of-member-equal)
-          (:definition place-file-by-pathname)
-          (:rewrite fat32-filename-p-correctness-1))))
-   ("subgoal *1/2"
-    :in-theory
     (e/d
      (lofat-truncate)
      ((:rewrite take-of-take-split)
@@ -492,10 +485,11 @@
       (:rewrite str::make-character-list-when-character-listp)
       (:rewrite hifat-to-lofat-inversion-lemma-2)
       (:definition take)
-      (:rewrite truncate-list-correctness-1-lemma-4)))
+      (:rewrite truncate-list-correctness-1-lemma-2))))
+   ("subgoal *1/2"
     :use
     ((:instance
-      (:rewrite truncate-list-correctness-1-lemma-4)
+      (:rewrite truncate-list-correctness-1-lemma-2)
       (pathname
        (pathname-to-fat32-pathname (explode pathname)))
       (fs
@@ -522,7 +516,7 @@
             nil))))))
       (fat32-in-memory fat32-in-memory))
      (:instance
-      (:rewrite truncate-list-correctness-1-lemma-4)
+      (:rewrite truncate-list-correctness-1-lemma-2)
       (pathname
        (pathname-to-fat32-pathname (explode pathname)))
       (fs
@@ -562,7 +556,7 @@
       (fat32-in-memory fat32-in-memory))))))
 
 (defthm
-  truncate-list-correctness-1-lemma-3
+  truncate-list-correctness-1-lemma-4
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -838,7 +832,20 @@
                 (mv-nth 0
                         (truncate-list fat32-in-memory
                                        pathname-list size exit-status))))
-       (pathname-to-fat32-pathname (explode pathname)))))))
+       (pathname-to-fat32-pathname (explode pathname)))))
+    (equal
+     (length
+      (m1-file->contents
+       (mv-nth
+        0
+        (find-file-by-pathname
+         (mv-nth 0
+                 (lofat-to-hifat
+                  (mv-nth 0
+                          (truncate-list fat32-in-memory
+                                         pathname-list size exit-status))))
+         (pathname-to-fat32-pathname (explode pathname))))))
+     size)))
   :hints (("goal" :in-theory (e/d (lofat-truncate)
                                   ((:rewrite take-of-take-split)
                                    (:linear len-of-member-equal)
