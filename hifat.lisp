@@ -1256,7 +1256,7 @@
            (m1-file-alist-p (remove-assoc-equal key fs))))
 
 (defun
-  m1-bounded-file-alist-p-helper (x ac)
+  hifat-bounded-file-alist-p-helper (x ac)
   (declare (xargs :guard (and (m1-file-alist-p x) (natp ac))
                   :measure (acl2-count x)))
   (or
@@ -1271,36 +1271,36 @@
        ((file (cdr head)))
        (if
         (m1-directory-file-p file)
-        (and (m1-bounded-file-alist-p-helper (m1-file->contents file)
+        (and (hifat-bounded-file-alist-p-helper (m1-file->contents file)
                                       *ms-max-dir-ent-count*)
-             (m1-bounded-file-alist-p-helper (cdr x)
+             (hifat-bounded-file-alist-p-helper (cdr x)
                                       (- ac 1)))
-        (m1-bounded-file-alist-p-helper (cdr x)
+        (hifat-bounded-file-alist-p-helper (cdr x)
                                  (- ac 1)))))))))
 
-(defthmd len-when-m1-bounded-file-alist-p-helper
-  (implies (m1-bounded-file-alist-p-helper x ac)
+(defthmd len-when-hifat-bounded-file-alist-p-helper
+  (implies (hifat-bounded-file-alist-p-helper x ac)
            (<= (len x) (nfix ac)))
   :rule-classes :linear)
 
 (defund
-  m1-bounded-file-alist-p (x)
+  hifat-bounded-file-alist-p (x)
   (declare (xargs :guard (m1-file-alist-p x)))
-  (m1-bounded-file-alist-p-helper x *ms-max-dir-ent-count*))
+  (hifat-bounded-file-alist-p-helper x *ms-max-dir-ent-count*))
 
 (defthm
-  len-when-m1-bounded-file-alist-p
-  (implies (m1-bounded-file-alist-p x)
+  len-when-hifat-bounded-file-alist-p
+  (implies (hifat-bounded-file-alist-p x)
            (<= (len x) *ms-max-dir-ent-count*))
   :rule-classes
   (:linear
    (:linear
-    :corollary (implies (m1-bounded-file-alist-p x)
+    :corollary (implies (hifat-bounded-file-alist-p x)
                         (<= (* *ms-dir-ent-length* (len x))
                             (* *ms-dir-ent-length*
                                *ms-max-dir-ent-count*))))
    (:linear
-    :corollary (implies (and (m1-bounded-file-alist-p x) (consp x))
+    :corollary (implies (and (hifat-bounded-file-alist-p x) (consp x))
                         (<= (* *ms-dir-ent-length* (len (cdr x)))
                             (-
                              (* *ms-dir-ent-length*
@@ -1308,38 +1308,38 @@
                              *ms-dir-ent-length*)))))
   :hints
   (("goal"
-    :in-theory (enable m1-bounded-file-alist-p)
-    :use (:instance len-when-m1-bounded-file-alist-p-helper
+    :in-theory (enable hifat-bounded-file-alist-p)
+    :use (:instance len-when-hifat-bounded-file-alist-p-helper
                     (ac *ms-max-dir-ent-count*)))))
 
-(defthmd m1-bounded-file-alist-p-of-cdr-lemma-1
-  (implies (and (m1-bounded-file-alist-p-helper x ac1)
+(defthmd hifat-bounded-file-alist-p-of-cdr-lemma-1
+  (implies (and (hifat-bounded-file-alist-p-helper x ac1)
                 (< ac1 ac2)
                 (not (zp ac2)))
-           (m1-bounded-file-alist-p-helper x ac2)))
+           (hifat-bounded-file-alist-p-helper x ac2)))
 
 (defthm
-  m1-bounded-file-alist-p-of-cdr-lemma-2
-  (implies (m1-bounded-file-alist-p-helper x ac)
-           (m1-bounded-file-alist-p-helper (cdr x)
+  hifat-bounded-file-alist-p-of-cdr-lemma-2
+  (implies (hifat-bounded-file-alist-p-helper x ac)
+           (hifat-bounded-file-alist-p-helper (cdr x)
                                            ac))
   :hints
-  (("goal" :induct (m1-bounded-file-alist-p-helper x ac))
+  (("goal" :induct (hifat-bounded-file-alist-p-helper x ac))
    ("subgoal *1/4"
-    :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
+    :use (:instance hifat-bounded-file-alist-p-of-cdr-lemma-1
                     (x (cdr x))
                     (ac1 (- ac 1))
                     (ac2 ac)))
    ("subgoal *1/2"
-    :use (:instance m1-bounded-file-alist-p-of-cdr-lemma-1
+    :use (:instance hifat-bounded-file-alist-p-of-cdr-lemma-1
                     (x (cdr x))
                     (ac1 (- ac 1))
                     (ac2 ac)))))
 
-(defthm m1-bounded-file-alist-p-of-cdr
-        (implies (m1-bounded-file-alist-p x)
-                 (m1-bounded-file-alist-p (cdr x)))
-        :hints (("goal" :in-theory (enable m1-bounded-file-alist-p))))
+(defthm hifat-bounded-file-alist-p-of-cdr
+        (implies (hifat-bounded-file-alist-p x)
+                 (hifat-bounded-file-alist-p (cdr x)))
+        :hints (("goal" :in-theory (enable hifat-bounded-file-alist-p))))
 
 ;; It would be nice to leave the rule-classes alone, but trying to
 ;; unconditionally rewrite (m1-directory-file-p x) has unintended
@@ -1361,11 +1361,11 @@
           (not (m1-regular-file-p x)))
      (m1-directory-file-p x)))))
 
-(defthm m1-bounded-file-alist-p-of-cdar
-  (implies (and (m1-bounded-file-alist-p x)
+(defthm hifat-bounded-file-alist-p-of-cdar
+  (implies (and (hifat-bounded-file-alist-p x)
                 (m1-directory-file-p (cdar x)))
-           (m1-bounded-file-alist-p (m1-file->contents (cdar x))))
-  :hints (("goal" :in-theory (enable m1-bounded-file-alist-p))))
+           (hifat-bounded-file-alist-p (m1-file->contents (cdar x))))
+  :hints (("goal" :in-theory (enable hifat-bounded-file-alist-p))))
 
 (fty::defprod
  struct-stat

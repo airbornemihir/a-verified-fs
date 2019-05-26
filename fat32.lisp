@@ -66,7 +66,7 @@
 
 ;; Page 36 of the FAT specification states that a directory shouldn't have more
 ;; than 65536 entries. However, *ms-max-dir-ent-count* below is used for the
-;; definition of m1-bounded-file-alist-p, and since that's applicable to our
+;; definition of hifat-bounded-file-alist-p, and since that's applicable to our
 ;; internal representation of the filesystem, we need to leave room for two
 ;; entries (dot and dotdot) to be added when we store a directory in the stobj
 ;; representation. However, *ms-max-dir-size* is applicable to extracting

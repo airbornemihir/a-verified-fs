@@ -25,7 +25,7 @@
        ((mv fs retval &)
         (hifat-truncate fs fat32-pathname size))
        ((unless (and (equal retval 0)
-                     (m1-bounded-file-alist-p fs)
+                     (hifat-bounded-file-alist-p fs)
                      (<= (hifat-entry-count fs) (max-entry-count fat32-in-memory))))
         (mv fat32-in-memory nil))
        ((mv fat32-in-memory error-code)
@@ -47,7 +47,7 @@
   truncate-list-correctness-1-lemma-2
   (implies
    (and (lofat-fs-p fat32-in-memory)
-        (m1-bounded-file-alist-p fs)
+        (hifat-bounded-file-alist-p fs)
         (<= (hifat-entry-count fs)
             (max-entry-count fat32-in-memory))
         (zp (mv-nth 1 (hifat-to-lofat fat32-in-memory fs)))
@@ -360,7 +360,7 @@
                      (pathname-to-fat32-pathname
                       (explode (car pathname-list))))))))))))
      0)
-    (m1-bounded-file-alist-p
+    (hifat-bounded-file-alist-p
      (mv-nth
       0
       (place-file-by-pathname

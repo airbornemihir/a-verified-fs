@@ -913,12 +913,12 @@
                         (:definition fat32-build-index-list)))))
 
 (defthm
-  m1-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec
+  hifat-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec
   (b* (((mv m1-file-alist & & error-code)
         (lofat-to-hifat-helper-exec fat32-in-memory
                                     dir-ent-list entry-limit)))
     (implies (equal error-code 0)
-             (m1-bounded-file-alist-p-helper
+             (hifat-bounded-file-alist-p-helper
               m1-file-alist (len dir-ent-list))))
   :hints
   (("goal"
@@ -929,7 +929,7 @@
    ("subgoal *1/4"
     :use
     (:instance
-     (:rewrite m1-bounded-file-alist-p-of-cdr-lemma-1)
+     (:rewrite hifat-bounded-file-alist-p-of-cdr-lemma-1)
      (ac1
       (len
        (make-dir-ent-list
@@ -1143,21 +1143,21 @@
     :in-theory (enable lofat-to-hifat))))
 
 (defthm
-  m1-bounded-file-alist-p-of-lofat-to-hifat
+  hifat-bounded-file-alist-p-of-lofat-to-hifat
   (b* (((mv m1-file-alist error-code)
         (lofat-to-hifat fat32-in-memory)))
     (implies (equal error-code 0)
-             (m1-bounded-file-alist-p m1-file-alist)))
+             (hifat-bounded-file-alist-p m1-file-alist)))
   :hints
   (("goal"
     :in-theory
     (e/d
-     (lofat-to-hifat m1-bounded-file-alist-p)
+     (lofat-to-hifat hifat-bounded-file-alist-p)
      ((:rewrite
-       m1-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec)))
+       hifat-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec)))
     :use
     ((:instance
-      (:rewrite m1-bounded-file-alist-p-of-cdr-lemma-1)
+      (:rewrite hifat-bounded-file-alist-p-of-cdr-lemma-1)
       (ac1 (len (mv-nth 0 (root-dir-ent-list fat32-in-memory))))
       (ac2 *ms-max-dir-ent-count*)
       (x
@@ -1169,7 +1169,7 @@
          (max-entry-count fat32-in-memory)))))
      (:instance
       (:rewrite
-       m1-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec)
+       hifat-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec)
       (entry-limit (max-entry-count fat32-in-memory))
       (dir-ent-list
        (mv-nth 0 (root-dir-ent-list fat32-in-memory)))
@@ -3803,7 +3803,7 @@
     (implies
      (and (lofat-fs-p fat32-in-memory)
           (m1-file-alist-p fs)
-          (m1-bounded-file-alist-p fs)
+          (hifat-bounded-file-alist-p fs)
           (hifat-no-dups-p fs)
           (integerp entry-limit)
           (>= entry-limit (hifat-entry-count fs))
@@ -3854,7 +3854,7 @@
       (implies
        (and (lofat-fs-p fat32-in-memory)
             (m1-file-alist-p fs)
-            (m1-bounded-file-alist-p fs)
+            (hifat-bounded-file-alist-p fs)
             (hifat-no-dups-p fs)
             (fat32-masked-entry-p current-dir-first-cluster)
             (integerp entry-limit)
@@ -3877,7 +3877,7 @@
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
-        (m1-bounded-file-alist-p fs)
+        (hifat-bounded-file-alist-p fs)
         (hifat-no-dups-p fs)
         (integerp entry-limit)
         (>= entry-limit (hifat-entry-count fs)))
@@ -3967,7 +3967,7 @@
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
-        (m1-bounded-file-alist-p fs)
+        (hifat-bounded-file-alist-p fs)
         (hifat-no-dups-p fs)
         (<=
          (hifat-entry-count fs)

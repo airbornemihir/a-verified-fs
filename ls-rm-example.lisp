@@ -23,7 +23,7 @@
        ((mv fs & error-code)
         (hifat-unlink fs fat32-pathname))
        ((unless (and (equal error-code 0)
-                     (m1-bounded-file-alist-p fs)
+                     (hifat-bounded-file-alist-p fs)
                      (<= (hifat-entry-count fs)
                          (max-entry-count fat32-in-memory))))
         (mv fat32-in-memory nil))
@@ -160,7 +160,7 @@
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (m1-bounded-file-alist-p
+    (hifat-bounded-file-alist-p
      (mv-nth
       '0
       (remove-file-by-pathname (mv-nth '0
