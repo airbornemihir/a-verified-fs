@@ -235,7 +235,7 @@
          :contents (coerce (insert-text oldtext offset buf)
                            'string)))
        ((mv fs error-code)
-        (place-file-by-pathname fs pathname file)))
+        (hifat-place-file-by-pathname fs pathname file)))
     (mv fs (if (equal error-code 0) 0 -1)
         error-code)))
 
@@ -278,7 +278,7 @@
        (file (make-m1-file :dir-ent dir-ent
                            :contents nil))
        ((mv fs error-code)
-        (place-file-by-pathname fs pathname file))
+        (hifat-place-file-by-pathname fs pathname file))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
@@ -307,7 +307,7 @@
        (file (make-m1-file :dir-ent dir-ent
                            :contents nil))
        ((mv fs error-code)
-        (place-file-by-pathname fs pathname file))
+        (hifat-place-file-by-pathname fs pathname file))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
@@ -429,7 +429,7 @@
        ((unless (and (equal error-code 0) (m1-directory-file-p dir)))
         (mv fs -1 error-code))
        ((mv fs error-code)
-        (place-file-by-pathname fs newpathname file))
+        (hifat-place-file-by-pathname fs newpathname file))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
@@ -520,6 +520,6 @@
                             (take size oldtext))
                            'string)))
        ((mv fs error-code)
-        (place-file-by-pathname fs pathname file)))
+        (hifat-place-file-by-pathname fs pathname file)))
     (mv fs (if (equal error-code 0) 0 -1)
         error-code)))
