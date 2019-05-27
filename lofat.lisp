@@ -6585,7 +6585,7 @@ Some (rather awful) testing forms are
   lofat-find-file-by-pathname-correctness-1
   (b*
       (((mv file error-code)
-        (find-file-by-pathname
+        (hifat-find-file-by-pathname
          (mv-nth 0
                  (lofat-to-hifat-helper-exec
                   fat32-in-memory
@@ -6609,13 +6609,14 @@ Some (rather awful) testing forms are
              fat32-in-memory dir-ent-list pathname)
             (mv (make-lofat-file :contents (m1-file->contents file)
                                  :dir-ent (m1-file->dir-ent file))
-                error-code)))))
+                error-code))))
+  :hints (("Goal" :in-theory (enable hifat-find-file-by-pathname)) ))
 
 (defthm
   lofat-find-file-by-pathname-correctness-2
   (b*
       (((mv file error-code)
-        (find-file-by-pathname
+        (hifat-find-file-by-pathname
          (mv-nth 0
                  (lofat-to-hifat-helper-exec
                   fat32-in-memory
@@ -6659,10 +6660,10 @@ Some (rather awful) testing forms are
                 fat32-in-memory dir-ent-list pathname))
        error-code))))
   :hints
-  (("goal"
+  (("goal" :in-theory (enable hifat-find-file-by-pathname)
     :induct
     (mv (mv-nth 0
-                (find-file-by-pathname
+                (hifat-find-file-by-pathname
                  (mv-nth 0
                          (lofat-to-hifat-helper-exec
                           fat32-in-memory

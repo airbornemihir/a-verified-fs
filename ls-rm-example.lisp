@@ -43,7 +43,7 @@
    (and
     (lofat-fs-p fat32-in-memory)
     (equal (mv-nth 1
-                   (find-file-by-pathname
+                   (hifat-find-file-by-pathname
                     (mv-nth 0
                             (lofat-to-hifat fat32-in-memory))
                     fat32-pathname))
@@ -54,7 +54,7 @@
                         fat32-in-memory pathname-list)))))
    (equal
     (mv-nth 1
-            (find-file-by-pathname
+            (hifat-find-file-by-pathname
              (mv-nth 0
                      (lofat-to-hifat
                       (mv-nth 0
@@ -65,7 +65,7 @@
              fat32-pathname))
     *enoent*))
   :hints (("goal" :in-theory (e/d (lofat-unlink)
-                                  (find-file-by-pathname))
+                                  (hifat-find-file-by-pathname))
            :induct
            (rm-list
             fat32-in-memory
@@ -238,8 +238,7 @@
     :in-theory (e/d (rm-1 ls-1)
                     ((:rewrite rm-list-correctness-1)
                      ls-list-correctness-1 nth
-                     (:definition rm-list)
-                     (:definition find-file-by-pathname)))
+                     (:definition rm-list)))
     :use
     ((:instance
       (:rewrite rm-list-correctness-1)
