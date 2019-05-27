@@ -296,6 +296,8 @@
   :hints (("goal" :in-theory (enable fat32-entry-p)))
   :rule-classes :forward-chaining)
 
+;; There's an obvious generalisation of this theorem, but it requires a silly
+;; arithmetic subgoal to be resolved.
 (defthm fat32-entry-p-of-nth
   (implies (and (fat32-entry-list-p l)
                 (< (nfix n) (len l)))
@@ -321,7 +323,18 @@
    (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
   :hints
   (("goal"
-    :in-theory (e/d (fat32-update-lower-28 fat32-entry-p) (unsigned-byte-p logapp logtail)))))
+    :in-theory (e/d (fat32-update-lower-28 fat32-entry-p)
+                    (unsigned-byte-p logapp logtail))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (fat32-entry-p entry)
+                  (fat32-masked-entry-p masked-entry))
+             (unsigned-byte-p
+              32
+              (fat32-update-lower-28 entry masked-entry)))
+    :hints (("goal" :in-theory (enable fat32-entry-p))))))
 
 (defthm
   fat32-entry-mask-of-fat32-update-lower-28

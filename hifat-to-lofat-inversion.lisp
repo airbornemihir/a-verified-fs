@@ -1273,20 +1273,6 @@
            (fat32-entry-list-p (nth *fati* fat32-in-memory)))
   :hints (("Goal" :in-theory (enable fat32-in-memoryp))))
 
-(defthm
-  stobj-set-indices-in-fa-table-guard-lemma-2
-  (implies
-   (and (fat32-entry-p entry)
-        (fat32-masked-entry-p masked-entry))
-   (unsigned-byte-p 32
-                    (fat32-update-lower-28 entry masked-entry)))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (fat32-entry-p)
-         (fat32-update-lower-28-correctness-1 unsigned-byte-p))
-    :use fat32-update-lower-28-correctness-1)))
-
 (defund
   stobj-set-indices-in-fa-table
   (fat32-in-memory index-list value-list)
