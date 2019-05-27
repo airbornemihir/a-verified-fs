@@ -23,7 +23,7 @@
        ((mv fs & error-code)
         (hifat-unlink fs fat32-pathname))
        ((unless (and (equal error-code 0)
-                     (m1-bounded-file-alist-p fs)
+                     (hifat-bounded-file-alist-p fs)
                      (<= (hifat-entry-count fs)
                          (max-entry-count fat32-in-memory))))
         (mv fat32-in-memory nil))
@@ -43,7 +43,7 @@
    (and
     (lofat-fs-p fat32-in-memory)
     (equal (mv-nth 1
-                   (find-file-by-pathname
+                   (hifat-find-file-by-pathname
                     (mv-nth 0
                             (lofat-to-hifat fat32-in-memory))
                     fat32-pathname))
@@ -54,7 +54,7 @@
                         fat32-in-memory pathname-list)))))
    (equal
     (mv-nth 1
-            (find-file-by-pathname
+            (hifat-find-file-by-pathname
              (mv-nth 0
                      (lofat-to-hifat
                       (mv-nth 0
@@ -65,7 +65,7 @@
              fat32-pathname))
     *enoent*))
   :hints (("goal" :in-theory (e/d (lofat-unlink)
-                                  (find-file-by-pathname))
+                                  (hifat-find-file-by-pathname))
            :induct
            (rm-list
             fat32-in-memory
@@ -106,8 +106,7 @@
   (("goal"
     :in-theory (e/d (lofat-unlink)
                     ((:rewrite take-of-take-split)
-                     (:linear len-of-member-equal)
-                     (:definition remove-file-by-pathname))))))
+                     (:linear len-of-member-equal))))))
 
 (defthm ls-list-correctness-1-lemma-1
   (implies (not
@@ -160,10 +159,10 @@
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (m1-bounded-file-alist-p
+    (hifat-bounded-file-alist-p
      (mv-nth
       '0
-      (remove-file-by-pathname (mv-nth '0
+      (hifat-remove-file-by-pathname (mv-nth '0
                                        (lofat-to-hifat fat32-in-memory))
                                pathname)))
     (not
@@ -172,7 +171,7 @@
       (hifat-entry-count
        (mv-nth
         '0
-        (remove-file-by-pathname (mv-nth '0
+        (hifat-remove-file-by-pathname (mv-nth '0
                                          (lofat-to-hifat fat32-in-memory))
                                  pathname)))))
     (equal
@@ -182,7 +181,7 @@
        fat32-in-memory
        (mv-nth
         '0
-        (remove-file-by-pathname (mv-nth '0
+        (hifat-remove-file-by-pathname (mv-nth '0
                                          (lofat-to-hifat fat32-in-memory))
                                  pathname))))
      0))
@@ -238,8 +237,7 @@
     :in-theory (e/d (rm-1 ls-1)
                     ((:rewrite rm-list-correctness-1)
                      ls-list-correctness-1 nth
-                     (:definition rm-list)
-                     (:definition find-file-by-pathname)))
+                     (:definition rm-list)))
     :use
     ((:instance
       (:rewrite rm-list-correctness-1)
