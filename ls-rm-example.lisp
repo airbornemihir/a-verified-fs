@@ -106,8 +106,7 @@
   (("goal"
     :in-theory (e/d (lofat-unlink)
                     ((:rewrite take-of-take-split)
-                     (:linear len-of-member-equal)
-                     (:definition remove-file-by-pathname))))))
+                     (:linear len-of-member-equal))))))
 
 (defthm ls-list-correctness-1-lemma-1
   (implies (not
@@ -163,7 +162,7 @@
     (hifat-bounded-file-alist-p
      (mv-nth
       '0
-      (remove-file-by-pathname (mv-nth '0
+      (hifat-remove-file-by-pathname (mv-nth '0
                                        (lofat-to-hifat fat32-in-memory))
                                pathname)))
     (not
@@ -172,7 +171,7 @@
       (hifat-entry-count
        (mv-nth
         '0
-        (remove-file-by-pathname (mv-nth '0
+        (hifat-remove-file-by-pathname (mv-nth '0
                                          (lofat-to-hifat fat32-in-memory))
                                  pathname)))))
     (equal
@@ -182,7 +181,7 @@
        fat32-in-memory
        (mv-nth
         '0
-        (remove-file-by-pathname (mv-nth '0
+        (hifat-remove-file-by-pathname (mv-nth '0
                                          (lofat-to-hifat fat32-in-memory))
                                  pathname))))
      0))

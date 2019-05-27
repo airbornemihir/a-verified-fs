@@ -7590,7 +7590,7 @@ Some (rather awful) testing forms are
 ;; (thm-cp
 ;;  (b*
 ;;      (((mv fs error-code)
-;;        (remove-file-by-pathname
+;;        (hifat-remove-file-by-pathname
 ;;         (mv-nth 0
 ;;                 (lofat-to-hifat-helper-exec
 ;;                  fat32-in-memory
@@ -7662,7 +7662,7 @@ Some (rather awful) testing forms are
 ;;    (mv
 ;;     (mv-nth
 ;;      0
-;;      (remove-file-by-pathname
+;;      (hifat-remove-file-by-pathname
 ;;       (mv-nth 0
 ;;               (lofat-to-hifat-helper-exec
 ;;                fat32-in-memory
