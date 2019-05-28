@@ -1026,6 +1026,28 @@
     :corollary
     (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))))
 
+(defun
+    stobj-count-free-clusters-helper
+    (fat32-in-memory n)
+  (declare
+   (xargs :stobjs fat32-in-memory
+          :guard (and (lofat-fs-p fat32-in-memory)
+                      (natp n)
+                      (<= n
+                          (count-of-clusters fat32-in-memory)))))
+  (if
+      (zp n)
+      0
+    (if
+        (equal
+         (fat32-entry-mask (fati (+ n *ms-first-data-cluster* -1)
+                                 fat32-in-memory))
+         0)
+        (stobj-count-free-clusters-helper fat32-in-memory (- n 1))
+      (+ 1
+         (stobj-count-free-clusters-helper
+          fat32-in-memory (- n 1))))))
+
 (defund
   lofat-to-hifat (fat32-in-memory)
   (declare
@@ -1331,7 +1353,7 @@
   count-of-clusters-of-stobj-set-indices-in-fa-table
   (equal
    (count-of-clusters (stobj-set-indices-in-fa-table
-                  fat32-in-memory index-list value-list))
+                       fat32-in-memory index-list value-list))
    (count-of-clusters fat32-in-memory))
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
