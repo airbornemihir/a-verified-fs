@@ -1039,10 +1039,11 @@
       (zp n)
       0
     (if
-        (equal
-         (fat32-entry-mask (fati (+ n *ms-first-data-cluster* -1)
-                                 fat32-in-memory))
-         0)
+        (not
+         (equal
+          (fat32-entry-mask (fati (+ n *ms-first-data-cluster* -1)
+                                  fat32-in-memory))
+          0))
         (stobj-count-free-clusters-helper fat32-in-memory (- n 1))
       (+ 1
          (stobj-count-free-clusters-helper
