@@ -1901,9 +1901,9 @@
        ((unless (zp errno)) (mv fat32-in-memory tail-list errno tail-index-list))
        (head (car fs))
        ;; "." and ".." entries are not even allowed to be part of an
-       ;; m1-file-alist, so perhaps we can use mbt to wipe out this clause...
-       ((when (or (equal (car head) *current-dir-fat32-name*)
-                  (equal (car head) *parent-dir-fat32-name*)))
+       ;; m1-file-alist, so we can use mbt to wipe out this clause...
+       ((unless (mbt (and (not (equal (car head) *current-dir-fat32-name*))
+                          (not (equal (car head) *parent-dir-fat32-name*)))))
         (mv fat32-in-memory tail-list errno tail-index-list))
        ;; Get the directory entry for the first file in this directory.
        (dir-ent (m1-file->dir-ent (cdr head)))
