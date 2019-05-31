@@ -25,5 +25,32 @@
    (equal
     (stobj-count-free-clusters-helper
      fat32-in-memory n)
-    (count-free-clusters-helper (effective-fat fat32-in-memory) n)))
-  :hints (("Goal" :in-theory (enable)) ))
+    (count-free-clusters-helper (effective-fat fat32-in-memory) n))))
+
+(defun indices-non-zero-p (index-list fa-table)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (bounded-nat-listp index-list (len fa-table)))))
+  (or (atom index-list)
+      (and (not (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0))
+           (indices-non-zero-p (cdr index-list) fa-table))))
+
+;; In the subdirectory case, we need to place all the entries (32 bytes each)
+;; and two entries (dot and dotdot). The space taken up for these things is
+;; determined by the rule len-of-make-clusters, which expresses the length in
+;; terms of the greates integer function.
+(defun
+  hifat-cluster-count (fs cluster-size)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (integerp cluster-size)
+                              (< 0 cluster-size))))
+  (b* (((unless (consp fs)) 0)
+       (head (car fs))
+       (contents (m1-file->contents (cdr head))))
+    (+ (hifat-cluster-count (cdr fs)
+                            cluster-size)
+       (if (m1-regular-file-p (cdr head))
+           (len (make-clusters contents cluster-size))
+           (+ (hifat-cluster-count contents cluster-size)
+              (floor (+ (* 32 (+ 2 (len contents)))
+                        cluster-size -1)
+                     cluster-size))))))
