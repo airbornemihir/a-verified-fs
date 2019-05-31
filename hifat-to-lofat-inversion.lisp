@@ -1026,6 +1026,29 @@
     :corollary
     (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))))
 
+(defun
+    stobj-count-free-clusters-helper
+    (fat32-in-memory n)
+  (declare
+   (xargs :stobjs fat32-in-memory
+          :guard (and (lofat-fs-p fat32-in-memory)
+                      (natp n)
+                      (<= n
+                          (count-of-clusters fat32-in-memory)))))
+  (if
+      (zp n)
+      0
+    (if
+        (not
+         (equal
+          (fat32-entry-mask (fati (+ n *ms-first-data-cluster* -1)
+                                  fat32-in-memory))
+          0))
+        (stobj-count-free-clusters-helper fat32-in-memory (- n 1))
+      (+ 1
+         (stobj-count-free-clusters-helper
+          fat32-in-memory (- n 1))))))
+
 (defund
   lofat-to-hifat (fat32-in-memory)
   (declare
@@ -1273,20 +1296,6 @@
            (fat32-entry-list-p (nth *fati* fat32-in-memory)))
   :hints (("Goal" :in-theory (enable fat32-in-memoryp))))
 
-(defthm
-  stobj-set-indices-in-fa-table-guard-lemma-2
-  (implies
-   (and (fat32-entry-p entry)
-        (fat32-masked-entry-p masked-entry))
-   (unsigned-byte-p 32
-                    (fat32-update-lower-28 entry masked-entry)))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (fat32-entry-p)
-         (fat32-update-lower-28-correctness-1 unsigned-byte-p))
-    :use fat32-update-lower-28-correctness-1)))
-
 (defund
   stobj-set-indices-in-fa-table
   (fat32-in-memory index-list value-list)
@@ -1345,7 +1354,7 @@
   count-of-clusters-of-stobj-set-indices-in-fa-table
   (equal
    (count-of-clusters (stobj-set-indices-in-fa-table
-                  fat32-in-memory index-list value-list))
+                       fat32-in-memory index-list value-list))
    (count-of-clusters fat32-in-memory))
   :hints
   (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
@@ -1776,24 +1785,25 @@
 
 (defthm
   natp-of-place-contents
-  (natp
-   (mv-nth 2
-           (place-contents fat32-in-memory dir-ent
-                           contents file-length first-cluster)))
-  :hints (("goal" :in-theory (enable place-contents)))
-  :rule-classes
-  (:type-prescription
-   (:rewrite
-    :corollary
-    (integerp
+  (implies
+   (not
+    (equal
      (mv-nth
       2
       (place-contents fat32-in-memory dir-ent
-                      contents file-length first-cluster))))
-   (:linear
+                      contents file-length first-cluster))
+     0))
+   (equal
+    (mv-nth 2
+            (place-contents fat32-in-memory dir-ent
+                            contents file-length first-cluster))
+    *enospc*))
+  :hints (("goal" :in-theory (enable place-contents)))
+  :rule-classes
+  (:rewrite
+   (:type-prescription
     :corollary
-    (<=
-     0
+    (natp
      (mv-nth
       2
       (place-contents fat32-in-memory dir-ent
@@ -1891,9 +1901,9 @@
        ((unless (zp errno)) (mv fat32-in-memory tail-list errno tail-index-list))
        (head (car fs))
        ;; "." and ".." entries are not even allowed to be part of an
-       ;; m1-file-alist, so perhaps we can use mbt to wipe out this clause...
-       ((when (or (equal (car head) *current-dir-fat32-name*)
-                  (equal (car head) *parent-dir-fat32-name*)))
+       ;; m1-file-alist, so we can use mbt to wipe out this clause...
+       ((unless (mbt (and (not (equal (car head) *current-dir-fat32-name*))
+                          (not (equal (car head) *parent-dir-fat32-name*)))))
         (mv fat32-in-memory tail-list errno tail-index-list))
        ;; Get the directory entry for the first file in this directory.
        (dir-ent (m1-file->dir-ent (cdr head)))
@@ -1995,26 +2005,31 @@
              fat32-in-memory fs current-dir-first-cluster)))
    (count-of-clusters fat32-in-memory)))
 
-(defthm natp-of-hifat-to-lofat-helper
-  (natp (mv-nth 2
-                (hifat-to-lofat-helper
-                 fat32-in-memory
-                 fs current-dir-first-cluster)))
+(defthm
+  natp-of-hifat-to-lofat-helper
+  (implies
+   (not
+    (equal
+     (mv-nth
+      2
+      (hifat-to-lofat-helper fat32-in-memory
+                             fs current-dir-first-cluster))
+     0))
+   (equal
+    (mv-nth
+     2
+     (hifat-to-lofat-helper fat32-in-memory
+                            fs current-dir-first-cluster))
+    *enospc*))
   :rule-classes
-  (:type-prescription
-   (:rewrite
+  (:rewrite
+   (:type-prescription
     :corollary
-    (integerp (mv-nth 2
-                      (hifat-to-lofat-helper
-                       fat32-in-memory
-                       fs current-dir-first-cluster))))
-   (:linear
-    :corollary
-    (<= 0
-        (mv-nth 2
-                (hifat-to-lofat-helper
-                 fat32-in-memory
-                 fs current-dir-first-cluster))))))
+    (natp
+     (mv-nth
+      2
+      (hifat-to-lofat-helper fat32-in-memory
+                             fs current-dir-first-cluster))))))
 
 (defthm
   data-region-length-of-hifat-to-lofat-helper

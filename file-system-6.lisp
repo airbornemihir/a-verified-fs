@@ -598,13 +598,10 @@
   (boolean-listp (fa-table-to-alv-helper fa-table))
   :hints (("goal" :in-theory (enable fa-table-to-alv-helper))))
 
-(defthm
-  fa-table-to-alv-helper-correctness-3
-  (implies
-   (and (natp n) (< n (len fa-table)))
-   (equal (nth n (fa-table-to-alv-helper fa-table))
-          (not (equal (fat32-entry-mask (nth n fa-table))
-                      0))))
+(defthm fa-table-to-alv-helper-correctness-3
+  (equal (nth n (fa-table-to-alv-helper fa-table))
+         (not (equal (fat32-entry-mask (nth n fa-table))
+                     0)))
   :hints (("goal" :in-theory (enable fa-table-to-alv-helper))))
 
 ;; The reason why we're having to do this is because we want to assume
@@ -676,8 +673,7 @@
 (defun
   l6-to-l4-fs (fs fa-table)
   (declare
-   (xargs :verify-guards nil
-          :guard (and (l6-fs-p fs)
+   (xargs :guard (and (l6-fs-p fs)
                       (fat32-entry-list-p fa-table)
                       (<= (len fa-table) *ms-bad-cluster*)
                       (>= (len fa-table)
@@ -700,8 +696,6 @@
              (declare (ignore l4-fs))
              (equal (len l4-alv) (len fa-table)))))
 
-(verify-guards l6-to-l4-fs)
-
 ;; Does (L4-FS-P (MV-NTH 0 (L6-TO-L4-FS FS FA-TABLE))) actually mean much? It
 ;; just says that file lengths are found to be feasible... after we filter out
 ;; all the files where they aren't. That's meaningless.
@@ -716,8 +710,7 @@
 ;; to a boolean indicating the absence of irregular files
 (defund
   l6-list-all-ok-indices (fs fa-table)
-  (declare (xargs :verify-guards nil
-                  :guard (and (l6-fs-p fs)
+  (declare (xargs :guard (and (l6-fs-p fs)
                               (fat32-entry-list-p fa-table))))
   (if
    (atom fs)
@@ -770,8 +763,6 @@
     :in-theory (disable l6-file-index-list-correctness-2)
     :use ((:instance l6-file-index-list-correctness-2
                      (file (cdr (car fs))))))))
-
-(verify-guards l6-list-all-ok-indices)
 
 (defthm
   l6-list-all-ok-indices-correctness-4
