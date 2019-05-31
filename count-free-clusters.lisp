@@ -5,14 +5,13 @@
 (defun count-free-clusters-helper (fa-table n)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
                               (natp n)
-                              (>= (len fa-table)
-                                  (+ *ms-first-data-cluster* n)))
+                              (>= (len fa-table) n))
                   :guard-hints (("Goal" :in-theory (disable nth)) )))
   (if
       (zp n)
       0
     (if
-        (not (equal (fat32-entry-mask (nth (+ n 1) fa-table)) 0))
+        (not (equal (fat32-entry-mask (nth (- n 1) fa-table)) 0))
         (count-free-clusters-helper fa-table (- n 1))
       (+ 1 (count-free-clusters-helper fa-table (- n 1))))))
 
@@ -24,39 +23,41 @@
    (equal
     (stobj-count-free-clusters-helper
      fat32-in-memory n)
-    (count-free-clusters-helper (effective-fat fat32-in-memory) n))))
+    (count-free-clusters-helper (nthcdr 2 (effective-fat fat32-in-memory)) n))))
 
 (defthm
   update-nth-of-count-free-clusters-helper
   (implies
    (and (natp n)
-        (integerp key)
-        (>= key *ms-first-data-cluster*)
+        (natp key)
         (equal (fat32-entry-mask (nth key fa-table))
                0)
         (not (equal (fat32-entry-mask val) 0)))
    (equal
     (count-free-clusters-helper (update-nth key val fa-table)
                                 n)
-    (if (< key (+ n 2))
+    (if (< key n)
         (- (count-free-clusters-helper fa-table n)
            1)
         (count-free-clusters-helper fa-table n))))
   :hints (("goal" :in-theory (disable nth update-nth))))
 
-(defund count-free-clusters (fa-table)
-  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
-                              (>= (len fa-table)
-                                  *ms-first-data-cluster*))
-                  :guard-hints (("Goal" :in-theory (disable nth)) )))
-  (count-free-clusters-helper fa-table (- (len fa-table)
-                                          *ms-first-data-cluster*)))
+(defund
+  count-free-clusters (fa-table)
+  (declare
+   (xargs :guard (and (fat32-entry-list-p fa-table)
+                      (>= (len fa-table)
+                          *ms-first-data-cluster*))
+          :guard-hints (("goal" :in-theory (disable nth)))))
+  (count-free-clusters-helper
+   (nthcdr *ms-first-data-cluster* fa-table)
+   (- (len fa-table)
+      *ms-first-data-cluster*)))
 
 (defthm
   update-nth-of-count-free-clusters
   (implies
-   (and (integerp key)
-        (>= key *ms-first-data-cluster*)
+   (and (integerp key) (<= *ms-first-data-cluster* key)
         (equal (fat32-entry-mask (nth key fa-table))
                0)
         (not (equal (fat32-entry-mask val) 0))
