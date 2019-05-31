@@ -42,6 +42,11 @@
         (count-free-clusters-helper fa-table n))))
   :hints (("goal" :in-theory (disable nth update-nth))))
 
+(defthm count-free-clusters-helper-correctness-1
+  (<= (count-free-clusters-helper fa-table n)
+      (nfix n))
+  :rule-classes :linear)
+
 (defund
   count-free-clusters (fa-table)
   (declare
@@ -64,6 +69,16 @@
         (< key (len fa-table)))
    (equal (count-free-clusters (update-nth key val fa-table))
           (- (count-free-clusters fa-table) 1)))
+  :hints (("goal" :in-theory (enable count-free-clusters))))
+
+(defthm
+  count-free-clusters-correctness-1
+  (implies (>= (len fa-table)
+               *ms-first-data-cluster*)
+           (<= (count-free-clusters fa-table)
+               (- (len fa-table)
+                  *ms-first-data-cluster*)))
+  :rule-classes :linear
   :hints (("goal" :in-theory (enable count-free-clusters))))
 
 (defun indices-non-zero-p (index-list fa-table)
@@ -93,3 +108,99 @@
               (floor (+ (* 32 (+ 2 (len contents)))
                         cluster-size -1)
                      cluster-size))))))
+
+(defthm hifat-cluster-count-correctness-1
+  (implies (not (zp cluster-size))
+           (<= 0
+               (hifat-cluster-count fs cluster-size)))
+  :rule-classes :linear
+  :hints (("goal" :in-theory (disable floor))))
+
+(defthmd
+  hifat-to-lofat-helper-correctness-5-lemma-1
+  (implies
+   (and (consp fa-table) (natp n))
+   (equal
+    (len (find-n-free-clusters-helper fa-table n start))
+    (if
+     (and
+      (<
+       (len (find-n-free-clusters-helper (take (- (len fa-table) 1) fa-table)
+                                         n start))
+       n)
+      (equal (fat32-entry-mask (nth (- (len fa-table) 1) fa-table))
+             0))
+     (+ (len (find-n-free-clusters-helper (take (- (len fa-table) 1) fa-table)
+                                          n start))
+        1)
+     (len (find-n-free-clusters-helper (take (- (len fa-table) 1) fa-table)
+                                       n start)))))
+  :hints (("goal" :in-theory (enable find-n-free-clusters-helper)
+           :induct (find-n-free-clusters-helper fa-table n start)
+           :expand (len (cdr fa-table)))))
+
+(defthmd hifat-to-lofat-helper-correctness-5-lemma-2
+  (implies (natp n1)
+           (equal (len (find-n-free-clusters-helper (take n2 fa-table)
+                                                    n1 start))
+                  (min (count-free-clusters-helper fa-table n2)
+                       n1)))
+  :hints (("goal" :in-theory (enable find-n-free-clusters-helper
+                                     hifat-to-lofat-helper-correctness-5-lemma-1))))
+
+(defthm
+  hifat-to-lofat-helper-correctness-5-lemma-3
+  (implies (and (fat32-entry-list-p fa-table)
+                (natp n))
+           (equal (len (find-n-free-clusters fa-table n))
+                  (min (count-free-clusters fa-table) n)))
+  :hints (("goal" :in-theory (e/d (count-free-clusters find-n-free-clusters)
+                                  (nthcdr))
+           :use (:instance hifat-to-lofat-helper-correctness-5-lemma-2
+                           (n2 (len (nthcdr 2 fa-table)))
+                           (fa-table (nthcdr 2 fa-table))
+                           (n1 n)
+                           (start 2)))))
+
+(defthm
+  hifat-to-lofat-helper-correctness-5-lemma-1
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (m1-file-alist-p fs)
+        (fat32-masked-entry-p current-dir-first-cluster)
+        (equal
+         (mv-nth
+          2
+          (hifat-to-lofat-helper
+           fat32-in-memory fs current-dir-first-cluster))
+         0))
+   (equal
+    (count-free-clusters
+     (effective-fat
+      (mv-nth
+       0
+       (hifat-to-lofat-helper
+        fat32-in-memory fs current-dir-first-cluster))))
+    (-
+     (count-free-clusters
+      (effective-fat fat32-in-memory))
+     (hifat-cluster-count fs (cluster-size fat32-in-memory)))))
+  :hints (("Goal" :in-theory (e/d (len-of-make-clusters) (floor nth))) ))
+
+(defthm
+  hifat-to-lofat-helper-correctness-5
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (m1-file-alist-p fs)
+        (fat32-masked-entry-p current-dir-first-cluster))
+   (equal
+    (mv-nth
+     2
+     (hifat-to-lofat-helper
+      fat32-in-memory fs current-dir-first-cluster))
+    (if
+        (>= (count-free-clusters (effective-fat fat32-in-memory))
+            (hifat-cluster-count fs (cluster-size fat32-in-memory)))
+        0
+      *enospc*)))
+  :hints (("Goal" :in-theory (disable floor nth)) ))
