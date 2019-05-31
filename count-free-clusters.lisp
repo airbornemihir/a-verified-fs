@@ -1,6 +1,5 @@
 (in-package "ACL2")
 
-(local (include-book "file-system-6"))
 (include-book "hifat-to-lofat-inversion")
 
 (defun count-free-clusters-helper (fa-table n)
@@ -27,6 +26,45 @@
      fat32-in-memory n)
     (count-free-clusters-helper (effective-fat fat32-in-memory) n))))
 
+(defthm
+  update-nth-of-count-free-clusters-helper
+  (implies
+   (and (natp n)
+        (integerp key)
+        (>= key *ms-first-data-cluster*)
+        (equal (fat32-entry-mask (nth key fa-table))
+               0)
+        (not (equal (fat32-entry-mask val) 0)))
+   (equal
+    (count-free-clusters-helper (update-nth key val fa-table)
+                                n)
+    (if (< key (+ n 2))
+        (- (count-free-clusters-helper fa-table n)
+           1)
+        (count-free-clusters-helper fa-table n))))
+  :hints (("goal" :in-theory (disable nth update-nth))))
+
+(defund count-free-clusters (fa-table)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (>= (len fa-table)
+                                  *ms-first-data-cluster*))
+                  :guard-hints (("Goal" :in-theory (disable nth)) )))
+  (count-free-clusters-helper fa-table (- (len fa-table)
+                                          *ms-first-data-cluster*)))
+
+(defthm
+  update-nth-of-count-free-clusters
+  (implies
+   (and (integerp key)
+        (>= key *ms-first-data-cluster*)
+        (equal (fat32-entry-mask (nth key fa-table))
+               0)
+        (not (equal (fat32-entry-mask val) 0))
+        (< key (len fa-table)))
+   (equal (count-free-clusters (update-nth key val fa-table))
+          (- (count-free-clusters fa-table) 1)))
+  :hints (("goal" :in-theory (enable count-free-clusters))))
+
 (defun indices-non-zero-p (index-list fa-table)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
                               (bounded-nat-listp index-list (len fa-table)))))
@@ -37,7 +75,7 @@
 ;; In the subdirectory case, we need to place all the entries (32 bytes each)
 ;; and two entries (dot and dotdot). The space taken up for these things is
 ;; determined by the rule len-of-make-clusters, which expresses the length in
-;; terms of the greates integer function.
+;; terms of the greatest integer function.
 (defun
   hifat-cluster-count (fs cluster-size)
   (declare (xargs :guard (and (m1-file-alist-p fs)
