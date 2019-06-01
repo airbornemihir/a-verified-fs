@@ -110,19 +110,19 @@
   :rule-classes :linear
   :hints (("goal" :in-theory (enable count-free-clusters))))
 
-(defun non-free-index-listp (index-list fa-table)
+(defun non-free-cluster-listp (index-list fa-table)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
                               (bounded-nat-listp index-list (len fa-table)))))
   (or (atom index-list)
       (and (not (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0))
-           (non-free-index-listp (cdr index-list) fa-table))))
+           (non-free-cluster-listp (cdr index-list) fa-table))))
 
-(defun free-index-listp (index-list fa-table)
+(defun free-cluster-listp (index-list fa-table)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
                               (bounded-nat-listp index-list (len fa-table)))))
   (or (atom index-list)
       (and (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0)
-           (free-index-listp (cdr index-list) fa-table))))
+           (free-cluster-listp (cdr index-list) fa-table))))
 
 ;; In the subdirectory case, we need to place all the entries (32 bytes each)
 ;; and two entries (dot and dotdot). The space taken up for these things is
@@ -153,9 +153,9 @@
   :hints (("goal" :in-theory (disable floor))))
 
 (defthmd
-  hifat-to-lofat-helper-correctness-5-lemma-1
+  len-of-find-n-free-clusters-lemma-1
   (implies
-   (and (consp fa-table) (natp n))
+   (consp fa-table)
    (equal
     (len (find-n-free-clusters-helper fa-table n start))
     (if
@@ -163,7 +163,7 @@
       (<
        (len (find-n-free-clusters-helper (take (- (len fa-table) 1) fa-table)
                                          n start))
-       n)
+       (nfix n))
       (equal (fat32-entry-mask (nth (- (len fa-table) 1) fa-table))
              0))
      (+ (len (find-n-free-clusters-helper (take (- (len fa-table) 1) fa-table)
@@ -175,40 +175,48 @@
            :induct (find-n-free-clusters-helper fa-table n start)
            :expand (len (cdr fa-table)))))
 
-(defthmd hifat-to-lofat-helper-correctness-5-lemma-2
-  (implies (natp n1)
-           (equal (len (find-n-free-clusters-helper (take n2 fa-table)
-                                                    n1 start))
-                  (min (count-free-clusters-helper fa-table n2)
-                       n1)))
-  :hints (("goal" :in-theory (enable find-n-free-clusters-helper
-                                     hifat-to-lofat-helper-correctness-5-lemma-1))))
+(defthmd
+  len-of-find-n-free-clusters-lemma-2
+  (equal (len (find-n-free-clusters-helper (take n2 fa-table)
+                                           n1 start))
+         (min (count-free-clusters-helper fa-table n2)
+              (nfix n1)))
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters-helper
+                              len-of-find-n-free-clusters-lemma-1))))
 
 (defthm
-  hifat-to-lofat-helper-correctness-5-lemma-3
-  (implies (and (fat32-entry-list-p fa-table)
-                (natp n))
-           (equal (len (find-n-free-clusters fa-table n))
-                  (min (count-free-clusters fa-table) n)))
+  find-n-free-clusters-helper-of-true-list-fix
+  (equal (find-n-free-clusters-helper (true-list-fix fa-table)
+                                      n start)
+         (find-n-free-clusters-helper fa-table n start))
+  :hints
+  (("goal" :in-theory (enable find-n-free-clusters-helper))))
+
+(defthm
+  another-len-of-find-n-free-clusters
+  (equal (len (find-n-free-clusters fa-table n))
+         (min (count-free-clusters fa-table)
+              (nfix n)))
   :hints (("goal" :in-theory (e/d (count-free-clusters find-n-free-clusters)
                                   (nthcdr))
-           :use (:instance hifat-to-lofat-helper-correctness-5-lemma-2
+           :use (:instance len-of-find-n-free-clusters-lemma-2
                            (n2 (len (nthcdr 2 fa-table)))
                            (fa-table (nthcdr 2 fa-table))
                            (n1 n)
                            (start 2)))))
 
 (defthm hifat-to-lofat-helper-correctness-5-lemma-4
-  (implies (and (free-index-listp index-list fa-table)
+  (implies (and (free-cluster-listp index-list fa-table)
                 (lower-bounded-integer-listp index-list 2)
                 (not (member-equal key index-list)))
-           (free-index-listp index-list
+           (free-cluster-listp index-list
                              (update-nth key val fa-table))))
 
 (defthm
   hifat-to-lofat-helper-correctness-5-lemma-5
   (implies
-   (and (free-index-listp index-list fa-table)
+   (and (free-cluster-listp index-list fa-table)
         (bounded-nat-listp index-list (len fa-table))
         (lower-bounded-integer-listp index-list 2)
         (not (member-equal 0 value-list))
@@ -223,6 +231,20 @@
   :hints
   (("goal" :in-theory (enable set-indices-in-fa-table)
     :induct (set-indices-in-fa-table fa-table index-list value-list))))
+
+(defthm hifat-to-lofat-helper-correctness-5-lemma-6
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (<= (nfix n1) (len (find-n-free-clusters fa-table n2))))
+   (free-cluster-listp (take n1 (find-n-free-clusters fa-table n2))
+                       fa-table))
+  :hints (("Goal" :induct (take n1 (find-n-free-clusters fa-table n2)))
+          ("Subgoal *1/2" :in-theory (disable 
+                                      (:REWRITE FIND-N-FREE-CLUSTERS-CORRECTNESS-5))
+           :use
+           (:instance
+            (:REWRITE FIND-N-FREE-CLUSTERS-CORRECTNESS-5)
+            (N1 N2) (FA-TABLE FA-TABLE) (N2 0)))))
 
 (defthm hifat-to-lofat-helper-correctness-5-lemma-6
   (implies
