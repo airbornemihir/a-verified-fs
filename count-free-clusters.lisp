@@ -27,37 +27,32 @@
 
 (defthm
   update-nth-of-count-free-clusters-helper-1
-  (implies
-   (and (natp n)
-        (natp key)
-        (equal (fat32-entry-mask (nth key fa-table))
-               0)
-        (not (equal (fat32-entry-mask val) 0)))
-   (equal
-    (count-free-clusters-helper (update-nth key val fa-table)
-                                n)
-    (if (< key n)
-        (- (count-free-clusters-helper fa-table n)
-           1)
-        (count-free-clusters-helper fa-table n))))
+  (implies (and (natp n)
+                (natp key)
+                (not (equal (fat32-entry-mask val) 0)))
+           (equal (count-free-clusters-helper (update-nth key val fa-table)
+                                              n)
+                  (if (and (< key n)
+                           (equal (fat32-entry-mask (nth key fa-table))
+                                  0))
+                      (- (count-free-clusters-helper fa-table n)
+                         1)
+                      (count-free-clusters-helper fa-table n))))
   :hints (("goal" :in-theory (disable nth update-nth))))
 
 (defthm
   update-nth-of-count-free-clusters-helper-2
-  (implies
-   (and (natp n)
-        (natp key)
-        (not
-         (equal (fat32-entry-mask (nth key fa-table))
-                0))
-        (equal (fat32-entry-mask val) 0))
-   (equal
-    (count-free-clusters-helper (update-nth key val fa-table)
-                                n)
-    (if (< key n)
-        (+ (count-free-clusters-helper fa-table n)
-           1)
-        (count-free-clusters-helper fa-table n))))
+  (implies (and (natp n)
+                (natp key)
+                (equal (fat32-entry-mask val) 0))
+           (equal (count-free-clusters-helper (update-nth key val fa-table)
+                                              n)
+                  (if (and (< key n)
+                           (not (equal (fat32-entry-mask (nth key fa-table))
+                                       0)))
+                      (+ (count-free-clusters-helper fa-table n)
+                         1)
+                      (count-free-clusters-helper fa-table n))))
   :hints (("goal" :in-theory (disable nth update-nth))))
 
 (defthm count-free-clusters-helper-correctness-1
@@ -81,25 +76,28 @@
   update-nth-of-count-free-clusters-1
   (implies
    (and (integerp key) (<= *ms-first-data-cluster* key)
-        (equal (fat32-entry-mask (nth key fa-table))
-               0)
         (not (equal (fat32-entry-mask val) 0))
         (< key (len fa-table)))
    (equal (count-free-clusters (update-nth key val fa-table))
-          (- (count-free-clusters fa-table) 1)))
+          (if
+              (equal (fat32-entry-mask (nth key fa-table))
+                     0)
+              (- (count-free-clusters fa-table) 1)
+            (count-free-clusters fa-table))))
   :hints (("goal" :in-theory (enable count-free-clusters))))
 
 (defthm
   update-nth-of-count-free-clusters-2
   (implies
    (and (integerp key) (<= *ms-first-data-cluster* key)
-        (not
-         (equal (fat32-entry-mask (nth key fa-table))
-                0))
         (equal (fat32-entry-mask val) 0)
         (< key (len fa-table)))
    (equal (count-free-clusters (update-nth key val fa-table))
-          (+ (count-free-clusters fa-table) 1)))
+          (if
+              (equal (fat32-entry-mask (nth key fa-table))
+                     0)
+              (count-free-clusters fa-table)
+            (+ (count-free-clusters fa-table) 1))))
   :hints (("goal" :in-theory (enable count-free-clusters))))
 
 (defthm
