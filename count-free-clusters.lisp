@@ -110,12 +110,19 @@
   :rule-classes :linear
   :hints (("goal" :in-theory (enable count-free-clusters))))
 
-(defun indices-non-zero-p (index-list fa-table)
+(defun non-free-index-listp (index-list fa-table)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
                               (bounded-nat-listp index-list (len fa-table)))))
   (or (atom index-list)
       (and (not (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0))
-           (indices-non-zero-p (cdr index-list) fa-table))))
+           (non-free-index-listp (cdr index-list) fa-table))))
+
+(defun free-index-listp (index-list fa-table)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (bounded-nat-listp index-list (len fa-table)))))
+  (or (atom index-list)
+      (and (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0)
+           (free-index-listp (cdr index-list) fa-table))))
 
 ;; In the subdirectory case, we need to place all the entries (32 bytes each)
 ;; and two entries (dot and dotdot). The space taken up for these things is
@@ -192,6 +199,32 @@
                            (start 2)))))
 
 (defthm hifat-to-lofat-helper-correctness-5-lemma-4
+  (implies (and (free-index-listp index-list fa-table)
+                (lower-bounded-integer-listp index-list 2)
+                (not (member-equal key index-list)))
+           (free-index-listp index-list
+                             (update-nth key val fa-table))))
+
+(defthm
+  hifat-to-lofat-helper-correctness-5-lemma-5
+  (implies
+   (and (free-index-listp index-list fa-table)
+        (bounded-nat-listp index-list (len fa-table))
+        (lower-bounded-integer-listp index-list 2)
+        (not (member-equal 0 value-list))
+        (fat32-masked-entry-list-p value-list)
+        (no-duplicatesp-equal index-list)
+        (equal (len index-list)
+               (len value-list)))
+   (equal (count-free-clusters
+           (set-indices-in-fa-table fa-table index-list value-list))
+          (- (count-free-clusters fa-table)
+             (len index-list))))
+  :hints
+  (("goal" :in-theory (enable set-indices-in-fa-table)
+    :induct (set-indices-in-fa-table fa-table index-list value-list))))
+
+(defthm hifat-to-lofat-helper-correctness-5-lemma-6
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (dir-ent-p dir-ent)
@@ -214,10 +247,7 @@
        (PLACE-CONTENTS FAT32-IN-MEMORY DIR-ENT
                        CONTENTS FILE-LENGTH FIRST-CLUSTER))))
     x))
-  :hints (("Goal" :in-theory (enable PLACE-CONTENTS)
-           :expand (:free (FA-TABLE index INDEX-LIST VALUE-LIST)
-                          (SET-INDICES-IN-FA-TABLE
-                           FA-TABLE (cons index INDEX-LIST) VALUE-LIST)))
+  :hints (("Goal" :in-theory (enable PLACE-CONTENTS SET-INDICES-IN-FA-TABLE))
           ) :otf-flg t)
 
 (defthm
