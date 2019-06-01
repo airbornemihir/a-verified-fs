@@ -206,15 +206,17 @@
                            (n1 n)
                            (start 2)))))
 
-(defthm hifat-to-lofat-helper-correctness-5-lemma-4
+(defthm free-cluster-listp-of-find-n-free-clusters-helper-lemma-1
   (implies (and (free-cluster-listp index-list fa-table)
                 (lower-bounded-integer-listp index-list 2)
                 (not (member-equal key index-list)))
            (free-cluster-listp index-list
-                             (update-nth key val fa-table))))
+                               (update-nth key val fa-table)))
+  :hints (("Goal" :in-theory (disable update-nth))
+          ))
 
 (defthm
-  hifat-to-lofat-helper-correctness-5-lemma-5
+  free-cluster-listp-of-find-n-free-clusters-helper-lemma-2
   (implies
    (and (free-cluster-listp index-list fa-table)
         (bounded-nat-listp index-list (len fa-table))
@@ -232,19 +234,39 @@
   (("goal" :in-theory (enable set-indices-in-fa-table)
     :induct (set-indices-in-fa-table fa-table index-list value-list))))
 
-(defthm hifat-to-lofat-helper-correctness-5-lemma-6
-  (implies
-   (and (fat32-entry-list-p fa-table)
-        (<= (nfix n1) (len (find-n-free-clusters fa-table n2))))
-   (free-cluster-listp (take n1 (find-n-free-clusters fa-table n2))
-                       fa-table))
-  :hints (("Goal" :induct (take n1 (find-n-free-clusters fa-table n2)))
-          ("Subgoal *1/2" :in-theory (disable 
-                                      (:REWRITE FIND-N-FREE-CLUSTERS-CORRECTNESS-5))
-           :use
-           (:instance
-            (:REWRITE FIND-N-FREE-CLUSTERS-CORRECTNESS-5)
-            (N1 N2) (FA-TABLE FA-TABLE) (N2 0)))))
+(encapsulate
+  ()
+
+  (local
+   (defun induction-scheme
+       (fa-table n start)
+     (declare (xargs :measure (nfix (- (len fa-table) start))))
+     (if (or (zp n) (not (integerp start)) (<= (len fa-table) start))
+         nil
+       (if (not (equal (fat32-entry-mask (nth start fa-table))
+                       0))
+           (induction-scheme fa-table
+                             n (+ start 1))
+         (cons start
+               (induction-scheme fa-table
+                                 (- n 1)
+                                 (+ start 1)))))))
+
+  (defthm
+    free-cluster-listp-of-find-n-free-clusters-helper
+    (implies
+     (natp start)
+     (free-cluster-listp (find-n-free-clusters-helper (nthcdr start fa-table)
+                                                      n start)
+                         fa-table))
+    :hints (("goal" :induct (induction-scheme fa-table n start)
+             :in-theory (enable find-n-free-clusters-helper)
+             :expand (find-n-free-clusters-helper fa-table n start)))))
+
+(defthm free-cluster-listp-of-find-n-free-clusters
+  (free-cluster-listp (find-n-free-clusters fa-table n)
+                      fa-table)
+  :hints (("goal" :in-theory (enable find-n-free-clusters))))
 
 (defthm hifat-to-lofat-helper-correctness-5-lemma-6
   (implies
