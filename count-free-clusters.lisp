@@ -329,25 +329,22 @@
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
-        (fat32-masked-entry-p current-dir-first-cluster)
-        (equal
-         (mv-nth
-          2
-          (hifat-to-lofat-helper
-           fat32-in-memory fs current-dir-first-cluster))
-         0))
+        (equal (mv-nth 2
+                       (hifat-to-lofat-helper fat32-in-memory
+                                              fs current-dir-first-cluster))
+               0))
    (equal
     (count-free-clusters
      (effective-fat
-      (mv-nth
-       0
-       (hifat-to-lofat-helper
-        fat32-in-memory fs current-dir-first-cluster))))
-    (-
-     (count-free-clusters
-      (effective-fat fat32-in-memory))
-     (hifat-cluster-count fs (cluster-size fat32-in-memory)))))
-  :hints (("Goal" :in-theory (e/d (len-of-make-clusters) (floor nth))) ))
+      (mv-nth 0
+              (hifat-to-lofat-helper fat32-in-memory
+                                     fs current-dir-first-cluster))))
+    (- (count-free-clusters (effective-fat fat32-in-memory))
+       (hifat-cluster-count fs (cluster-size fat32-in-memory)))))
+  :hints
+  (("goal"
+    :in-theory (e/d (len-of-make-clusters hifat-to-lofat-helper-correctness-4)
+                    (floor nth)))))
 
 (defthm
   hifat-to-lofat-helper-correctness-5
