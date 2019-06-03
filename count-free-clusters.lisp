@@ -323,18 +323,7 @@
                       (len (make-clusters contents
                                           (cluster-size fat32-in-memory)))))
                 (fa-table (effective-fat fat32-in-memory))))
-    :expand (make-clusters "" (cluster-size fat32-in-memory))))
-  :otf-flg t)
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthmd
-    hifat-to-lofat-helper-correctness-5-lemma-4
-    (implies (not (zp cluster-size))
-             (equal (floor (- cluster-size 1) cluster-size) 0))))
+    :expand (make-clusters "" (cluster-size fat32-in-memory)))))
 
 (defthm
   hifat-to-lofat-helper-correctness-5-lemma-5
@@ -356,7 +345,7 @@
   :hints
   (("goal"
     :in-theory (e/d (len-of-make-clusters hifat-cluster-count
-                     hifat-to-lofat-helper-correctness-5-lemma-4)
+                     painful-debugging-lemma-14)
                     (floor nth)))))
 
 (encapsulate

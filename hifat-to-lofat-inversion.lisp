@@ -20,6 +20,21 @@
 (local
  (in-theory (disable nth update-nth floor mod true-listp)))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm painful-debugging-lemma-13
+    (implies (and (not (zp j)) (integerp i) (> i j))
+             (> (floor i j) 0))
+    :rule-classes :linear)
+
+  (defthmd
+    painful-debugging-lemma-14
+    (implies (not (zp cluster-size))
+             (equal (floor (- cluster-size 1) cluster-size) 0))))
+
 (defund
   get-clusterchain
   (fat32-in-memory masked-current-cluster length)
@@ -961,16 +976,6 @@
          (data-region-length fat32-in-memory))
   :hints
   (("goal" :in-theory (enable data-region-length update-fati))))
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthm max-entry-count-guard-lemma-1
-    (implies (and (not (zp j)) (integerp i) (> i j))
-             (> (floor i j) 0))
-    :rule-classes :linear))
 
 (defund max-entry-count (fat32-in-memory)
   (declare
@@ -2104,7 +2109,7 @@
             (* *ms-dir-ent-length* (len dir-ent-list))))
   :hints (("goal" :in-theory (enable flatten len-when-dir-ent-p))))
 
-(defthmd
+(defthm
   hifat-to-lofat-helper-correctness-4
   (implies
    (and (m1-file-alist-p fs)
@@ -3846,8 +3851,7 @@
       :induct (induction-scheme fat32-in-memory fs
                                 current-dir-first-cluster entry-limit x)
       :in-theory
-      (e/d (lofat-to-hifat-helper-exec hifat-to-lofat-helper-correctness-4
-                                       (:definition hifat-no-dups-p))
+      (e/d (lofat-to-hifat-helper-exec (:definition hifat-no-dups-p))
            ((:rewrite nth-of-nats=>chars)
             (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
             (:rewrite fati-of-hifat-to-lofat-helper-disjoint-lemma-2)
@@ -4006,7 +4010,6 @@
     :in-theory (enable lofat-to-hifat
                        hifat-to-lofat
                        root-dir-ent-list
-                       hifat-to-lofat-helper-correctness-4
                        hifat-to-lofat-inversion-lemma-10
                        hifat-to-lofat-inversion-lemma-11
                        hifat-to-lofat-inversion-lemma-13
