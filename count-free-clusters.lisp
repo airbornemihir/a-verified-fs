@@ -356,7 +356,6 @@
   :hints
   (("goal"
     :in-theory (e/d (len-of-make-clusters hifat-cluster-count
-                     hifat-to-lofat-helper-correctness-4
                      hifat-to-lofat-helper-correctness-5-lemma-4)
                     (floor nth)))))
 
@@ -364,7 +363,7 @@
   ()
 
   (local (in-theory (e/d
-                     (hifat-cluster-count hifat-to-lofat-helper-correctness-4
+                     (hifat-cluster-count
                       count-free-clusters-of-effective-fat-of-place-contents-lemma-2
                       painful-debugging-lemma-12)
                      ((:rewrite
