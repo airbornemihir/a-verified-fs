@@ -600,6 +600,13 @@
            (equal (< 0 (* x1 (len x2)))
                   (consp x2))))
 
+(defthmd
+  painful-debugging-lemma-12
+  (implies
+   (and (integerp x) (integerp y))
+   (iff (equal (+ x (- y)) 0)
+        (equal x y))))
+
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/typed-lists/integer-listp.lisp, from where it was taken with
 ;; thanks.

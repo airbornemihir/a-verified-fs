@@ -360,20 +360,13 @@
                      hifat-to-lofat-helper-correctness-5-lemma-4)
                     (floor nth)))))
 
-(defthmd
-  hifat-to-lofat-helper-correctness-5-lemma-6
-  (implies
-   (and (integerp x) (integerp y))
-   (iff (equal (+ x (- y)) 0)
-        (equal x y))))
-
 (encapsulate
   ()
 
   (local (in-theory (e/d
                      (hifat-cluster-count hifat-to-lofat-helper-correctness-4
                       count-free-clusters-of-effective-fat-of-place-contents-lemma-2
-                      hifat-to-lofat-helper-correctness-5-lemma-6)
+                      painful-debugging-lemma-12)
                      ((:rewrite
                        fati-of-hifat-to-lofat-helper-disjoint)
                       (:rewrite
