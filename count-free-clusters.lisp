@@ -322,8 +322,18 @@
     :expand (make-clusters "" (cluster-size fat32-in-memory))))
   :otf-flg t)
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthmd
+    hifat-to-lofat-helper-correctness-5-lemma-4
+    (implies (not (zp cluster-size))
+             (equal (floor (- cluster-size 1) cluster-size) 0))))
+
 (defthm
-  hifat-to-lofat-helper-correctness-5-lemma-4
+  hifat-to-lofat-helper-correctness-5-lemma-5
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (m1-file-alist-p fs)
@@ -342,11 +352,12 @@
   :hints
   (("goal"
     :in-theory (e/d (len-of-make-clusters
-                     hifat-to-lofat-helper-correctness-4)
+                     hifat-to-lofat-helper-correctness-4
+                     hifat-to-lofat-helper-correctness-5-lemma-4)
                     (floor nth)))))
 
 (defthmd
-  hifat-to-lofat-helper-correctness-5-lemma-5
+  hifat-to-lofat-helper-correctness-5-lemma-6
   (implies
    (and (integerp x) (integerp y))
    (iff (equal (+ x (- y)) 0)
@@ -358,19 +369,13 @@
   (local (in-theory (e/d
                      (hifat-to-lofat-helper-correctness-4
                       count-free-clusters-of-effective-fat-of-place-contents-lemma-2
-                      hifat-to-lofat-helper-correctness-5-lemma-5)
+                      hifat-to-lofat-helper-correctness-5-lemma-6)
                      ((:rewrite
                        fati-of-hifat-to-lofat-helper-disjoint)
                       (:rewrite
                        fati-of-hifat-to-lofat-helper-disjoint-lemma-1)
                       (:definition update-nth) floor nth))))
 
-  ;; So... this theorem can't be proved at the moment because there's a
-  ;; problem. We actually ask for one more cluster in the beginning than we
-  ;; strictly need - and when we're dealing with an empty file, we put that
-  ;; cluster back. But clearly, if we're at the absolute borderline of space
-  ;; usage, then we won't be able to allocate that one extra cluster. We need
-  ;; to fix the code for this.
   (defthm
     hifat-to-lofat-helper-correctness-5
     (implies
@@ -380,20 +385,20 @@
      (equal
       (mv-nth
        2
-       (hifat-to-lofat-helper
-        fat32-in-memory fs current-dir-first-cluster))
+       (hifat-to-lofat-helper fat32-in-memory
+                              fs current-dir-first-cluster))
       (if
-          (>= (count-free-clusters (effective-fat fat32-in-memory))
-              (hifat-cluster-count fs (cluster-size fat32-in-memory)))
-          0
-        *enospc*)))
-    :hints (("Goal" :induct (HIFAT-TO-LOFAT-HELPER FAT32-IN-MEMORY FS
-                                                   CURRENT-DIR-FIRST-CLUSTER)
-             :expand (MAKE-CLUSTERS "" (CLUSTER-SIZE FAT32-IN-MEMORY)))
-            ("Subgoal *1/7"
-             :expand
-             (hifat-cluster-count fs (cluster-size fat32-in-memory)))
-            ("Subgoal *1/3" :in-theory (enable len-of-make-clusters))
-            ("Subgoal *1/1"
-             :expand
-             (hifat-cluster-count fs (cluster-size fat32-in-memory))))))
+       (>=
+        (count-free-clusters (effective-fat fat32-in-memory))
+        (hifat-cluster-count fs (cluster-size fat32-in-memory)))
+       0 *enospc*)))
+    :hints
+    (("goal"
+      :induct
+      (hifat-to-lofat-helper fat32-in-memory
+                             fs current-dir-first-cluster)
+      :expand (make-clusters "" (cluster-size fat32-in-memory)))
+     ("subgoal *1/8"
+      :expand
+      (hifat-cluster-count fs (cluster-size fat32-in-memory)))
+     ("subgoal *1/4" :in-theory (enable len-of-make-clusters)))))

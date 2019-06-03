@@ -6762,6 +6762,8 @@ Some (rather awful) testing forms are
                     :initial-element 0)))
        (fat32-in-memory (update-fati first-cluster *ms-end-of-clusterchain*
                                      fat32-in-memory))
+       ((unless (> (length dir-contents) 0))
+        (mv fat32-in-memory 0))
        ((mv fat32-in-memory & error-code &)
         (place-contents fat32-in-memory
                         dir-ent dir-contents 0 first-cluster)))
@@ -6842,9 +6844,12 @@ Some (rather awful) testing forms are
                 (nats=>string (flatten (lofat-file->contents file)))
                 (lofat-file->contents file)))
               ((mv fat32-in-memory dir-ent & &)
-               (place-contents fat32-in-memory
-                               (lofat-file->dir-ent file)
-                               contents file-length first-cluster))
+               (if
+                   (equal (length contents) 0)
+                   (mv fat32-in-memory dir-ent nil nil)
+                 (place-contents fat32-in-memory
+                                 (lofat-file->dir-ent file)
+                                 contents file-length first-cluster)))
               (dir-ent-list (place-dir-ent dir-ent-list dir-ent)))
            (update-dir-contents
             fat32-in-memory rootclus
@@ -6865,10 +6870,13 @@ Some (rather awful) testing forms are
                (mv fat32-in-memory *enospc*))
               (first-cluster (nth 0 indices))
               ((mv fat32-in-memory dir-ent & &)
-               (place-contents fat32-in-memory
-                               (lofat-file->dir-ent file)
-                               (lofat-file->contents file)
-                               file-length first-cluster))
+               (if
+                   (equal (length (lofat-file->contents file)) 0)
+                   (mv fat32-in-memory dir-ent nil nil)
+                 (place-contents fat32-in-memory
+                                 (lofat-file->dir-ent file)
+                                 (lofat-file->contents file)
+                                 file-length first-cluster)))
               (dir-ent-list
                (place-dir-ent dir-ent-list
                               (lofat-file->dir-ent file))))
@@ -6972,6 +6980,7 @@ Some (rather awful) testing forms are
 
 (verify-guards
   lofat-place-file-by-pathname
+  :guard-debug t
   :hints
   (("goal"
     :in-theory
