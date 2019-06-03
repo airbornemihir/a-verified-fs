@@ -128,29 +128,33 @@
 ;; and two entries (dot and dotdot). The space taken up for these things is
 ;; determined by the rule len-of-make-clusters, which expresses the length in
 ;; terms of the greatest integer function.
-(defun
+(defund
   hifat-cluster-count (fs cluster-size)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (integerp cluster-size)
                               (< 0 cluster-size))))
-  (b* (((unless (consp fs)) 0)
+  (b*
+      (((unless (consp fs)) 0)
        (head (car fs))
        (contents (m1-file->contents (cdr head))))
-    (+ (hifat-cluster-count (cdr fs)
-                            cluster-size)
-       (if (m1-regular-file-p (cdr head))
-           (len (make-clusters contents cluster-size))
-           (+ (hifat-cluster-count contents cluster-size)
-              (floor (+ (* 32 (+ 2 (len contents)))
-                        cluster-size -1)
-                     cluster-size))))))
-
-(defthm hifat-cluster-count-correctness-1
-  (implies (not (zp cluster-size))
-           (<= 0
-               (hifat-cluster-count fs cluster-size)))
-  :rule-classes :linear
-  :hints (("goal" :in-theory (disable floor))))
+    (+
+     (hifat-cluster-count (cdr fs)
+                          cluster-size)
+     (if
+      (m1-regular-file-p (cdr head))
+      (len (make-clusters contents cluster-size))
+      (+ (hifat-cluster-count contents cluster-size)
+         ;; This mbe form is here to help make a good type-prescription rule,
+         ;; which identifies this thing as a natural number - not just an
+         ;; integer. As an aside, I guess the battle over whether 0 is a
+         ;; natural number has been lost for a while, since nobody seems to use
+         ;; the term "whole number" any more.
+         (mbe :exec (floor (+ (* 32 (+ 2 (len contents)))
+                              cluster-size -1)
+                           cluster-size)
+              :logic (nfix (floor (+ (* 32 (+ 2 (len contents)))
+                                     cluster-size -1)
+                                  cluster-size))))))))
 
 (defthmd
   len-of-find-n-free-clusters-lemma-1
@@ -351,7 +355,7 @@
        (hifat-cluster-count fs (cluster-size fat32-in-memory)))))
   :hints
   (("goal"
-    :in-theory (e/d (len-of-make-clusters
+    :in-theory (e/d (len-of-make-clusters hifat-cluster-count
                      hifat-to-lofat-helper-correctness-4
                      hifat-to-lofat-helper-correctness-5-lemma-4)
                     (floor nth)))))
@@ -367,7 +371,7 @@
   ()
 
   (local (in-theory (e/d
-                     (hifat-to-lofat-helper-correctness-4
+                     (hifat-cluster-count hifat-to-lofat-helper-correctness-4
                       count-free-clusters-of-effective-fat-of-place-contents-lemma-2
                       hifat-to-lofat-helper-correctness-5-lemma-6)
                      ((:rewrite
