@@ -377,25 +377,16 @@
     hifat-to-lofat-helper-correctness-5
     (implies
      (and (lofat-fs-p fat32-in-memory)
-          (m1-file-alist-p fs)
-          (fat32-masked-entry-p current-dir-first-cluster))
-     (equal
-      (mv-nth
-       2
-       (hifat-to-lofat-helper fat32-in-memory
-                              fs current-dir-first-cluster))
-      (if
-       (>=
-        (count-free-clusters (effective-fat fat32-in-memory))
-        (hifat-cluster-count fs (cluster-size fat32-in-memory)))
-       0 *enospc*)))
+          (m1-file-alist-p fs))
+     (equal (mv-nth 2
+                    (hifat-to-lofat-helper fat32-in-memory
+                                           fs current-dir-first-cluster))
+            (if (>= (count-free-clusters (effective-fat fat32-in-memory))
+                    (hifat-cluster-count fs (cluster-size fat32-in-memory)))
+                0 *enospc*)))
     :hints
-    (("goal"
-      :induct
-      (hifat-to-lofat-helper fat32-in-memory
-                             fs current-dir-first-cluster)
-      :expand (make-clusters "" (cluster-size fat32-in-memory)))
-     ("subgoal *1/8"
-      :expand
-      (hifat-cluster-count fs (cluster-size fat32-in-memory)))
+    (("goal" :induct (hifat-to-lofat-helper fat32-in-memory
+                                            fs current-dir-first-cluster)
+      :expand ((make-clusters "" (cluster-size fat32-in-memory))
+               (hifat-cluster-count fs (cluster-size fat32-in-memory))))
      ("subgoal *1/4" :in-theory (enable len-of-make-clusters)))))
