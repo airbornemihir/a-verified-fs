@@ -48,60 +48,6 @@
                                      cluster-size -1)
                                   cluster-size))))))))
 
-(defthmd
-  len-of-find-n-free-clusters-lemma-1
-  (implies
-   (consp fa-table)
-   (equal
-    (len (find-n-free-clusters-helper fa-table n start))
-    (if
-     (and
-      (<
-       (len (find-n-free-clusters-helper (take (- (len fa-table) 1) fa-table)
-                                         n start))
-       (nfix n))
-      (equal (fat32-entry-mask (nth (- (len fa-table) 1) fa-table))
-             0))
-     (+ (len (find-n-free-clusters-helper (take (- (len fa-table) 1) fa-table)
-                                          n start))
-        1)
-     (len (find-n-free-clusters-helper (take (- (len fa-table) 1) fa-table)
-                                       n start)))))
-  :hints (("goal" :in-theory (enable find-n-free-clusters-helper)
-           :induct (find-n-free-clusters-helper fa-table n start)
-           :expand (len (cdr fa-table)))))
-
-(defthmd
-  len-of-find-n-free-clusters-lemma-2
-  (equal (len (find-n-free-clusters-helper (take n2 fa-table)
-                                           n1 start))
-         (min (count-free-clusters-helper fa-table n2)
-              (nfix n1)))
-  :hints
-  (("goal" :in-theory (enable find-n-free-clusters-helper
-                              len-of-find-n-free-clusters-lemma-1))))
-
-(defthm
-  find-n-free-clusters-helper-of-true-list-fix
-  (equal (find-n-free-clusters-helper (true-list-fix fa-table)
-                                      n start)
-         (find-n-free-clusters-helper fa-table n start))
-  :hints
-  (("goal" :in-theory (enable find-n-free-clusters-helper))))
-
-(defthm
-  another-len-of-find-n-free-clusters
-  (equal (len (find-n-free-clusters fa-table n))
-         (min (count-free-clusters fa-table)
-              (nfix n)))
-  :hints (("goal" :in-theory (e/d (count-free-clusters find-n-free-clusters)
-                                  (nthcdr))
-           :use (:instance len-of-find-n-free-clusters-lemma-2
-                           (n2 (len (nthcdr 2 fa-table)))
-                           (fa-table (nthcdr 2 fa-table))
-                           (n1 n)
-                           (start 2)))))
-
 (defthm free-cluster-listp-of-find-n-free-clusters-helper-lemma-1
   (implies (and (free-cluster-listp index-list fa-table)
                 (lower-bounded-integer-listp index-list 2)
@@ -202,7 +148,7 @@
   (("goal"
     :in-theory (e/d (place-contents set-indices-in-fa-table
                                     count-free-clusters-of-effective-fat-of-place-contents-lemma-2)
-                    ((:rewrite another-len-of-find-n-free-clusters)))
+                    ((:rewrite len-of-find-n-free-clusters)))
     :use
     ((:instance find-n-free-clusters-correctness-3
                 (n (+ -1
@@ -210,7 +156,7 @@
                                           (cluster-size fat32-in-memory)))))
                 (fa-table (effective-fat fat32-in-memory))
                 (x 0))
-     (:instance (:rewrite another-len-of-find-n-free-clusters)
+     (:instance (:rewrite len-of-find-n-free-clusters)
                 (n (+ -1
                       (len (make-clusters contents
                                           (cluster-size fat32-in-memory)))))

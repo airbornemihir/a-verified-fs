@@ -1031,54 +1031,6 @@
     :corollary
     (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))))
 
-(defun count-free-clusters-helper (fa-table n)
-  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
-                              (natp n)
-                              (>= (len fa-table) n))
-                  :guard-hints (("Goal" :in-theory (disable nth)) )))
-  (if
-      (zp n)
-      0
-    (if
-        (not (equal (fat32-entry-mask (nth (- n 1) fa-table)) 0))
-        (count-free-clusters-helper fa-table (- n 1))
-      (+ 1 (count-free-clusters-helper fa-table (- n 1))))))
-
-(defthm
-  update-nth-of-count-free-clusters-helper-1
-  (implies (and (natp n)
-                (natp key)
-                (not (equal (fat32-entry-mask val) 0)))
-           (equal (count-free-clusters-helper (update-nth key val fa-table)
-                                              n)
-                  (if (and (< key n)
-                           (equal (fat32-entry-mask (nth key fa-table))
-                                  0))
-                      (- (count-free-clusters-helper fa-table n)
-                         1)
-                      (count-free-clusters-helper fa-table n))))
-  :hints (("goal" :in-theory (disable nth update-nth))))
-
-(defthm
-  update-nth-of-count-free-clusters-helper-2
-  (implies (and (natp n)
-                (natp key)
-                (equal (fat32-entry-mask val) 0))
-           (equal (count-free-clusters-helper (update-nth key val fa-table)
-                                              n)
-                  (if (and (< key n)
-                           (not (equal (fat32-entry-mask (nth key fa-table))
-                                       0)))
-                      (+ (count-free-clusters-helper fa-table n)
-                         1)
-                      (count-free-clusters-helper fa-table n))))
-  :hints (("goal" :in-theory (disable nth update-nth))))
-
-(defthm count-free-clusters-helper-correctness-1
-  (<= (count-free-clusters-helper fa-table n)
-      (nfix n))
-  :rule-classes :linear)
-
 (defun
     stobj-count-free-clusters-helper
     (fat32-in-memory n)
@@ -1112,56 +1064,6 @@
           (count-free-clusters-helper
            (nthcdr *ms-first-data-cluster* (effective-fat fat32-in-memory))
            n))))
-
-(defund
-  count-free-clusters (fa-table)
-  (declare
-   (xargs :guard (and (fat32-entry-list-p fa-table)
-                      (>= (len fa-table)
-                          *ms-first-data-cluster*))
-          :guard-hints (("goal" :in-theory (disable nth)))))
-  (count-free-clusters-helper
-   (nthcdr *ms-first-data-cluster* fa-table)
-   (- (len fa-table)
-      *ms-first-data-cluster*)))
-
-(defthm
-  update-nth-of-count-free-clusters-1
-  (implies
-   (and (integerp key) (<= *ms-first-data-cluster* key)
-        (not (equal (fat32-entry-mask val) 0))
-        (< key (len fa-table)))
-   (equal (count-free-clusters (update-nth key val fa-table))
-          (if
-              (equal (fat32-entry-mask (nth key fa-table))
-                     0)
-              (- (count-free-clusters fa-table) 1)
-            (count-free-clusters fa-table))))
-  :hints (("goal" :in-theory (enable count-free-clusters))))
-
-(defthm
-  update-nth-of-count-free-clusters-2
-  (implies
-   (and (integerp key) (<= *ms-first-data-cluster* key)
-        (equal (fat32-entry-mask val) 0)
-        (< key (len fa-table)))
-   (equal (count-free-clusters (update-nth key val fa-table))
-          (if
-              (equal (fat32-entry-mask (nth key fa-table))
-                     0)
-              (count-free-clusters fa-table)
-            (+ (count-free-clusters fa-table) 1))))
-  :hints (("goal" :in-theory (enable count-free-clusters))))
-
-(defthm
-  count-free-clusters-correctness-1
-  (implies (>= (len fa-table)
-               *ms-first-data-cluster*)
-           (<= (count-free-clusters fa-table)
-               (- (len fa-table)
-                  *ms-first-data-cluster*)))
-  :rule-classes :linear
-  :hints (("goal" :in-theory (enable count-free-clusters))))
 
 (defund stobj-count-free-clusters
   (fat32-in-memory)
@@ -3500,23 +3402,24 @@
 (defthm
   lofat-to-hifat-helper-exec-of-hifat-to-lofat-helper-disjoint-lemma-1
   (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (natp n)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper-exec
-                        fat32-in-memory
-                        dir-ent-list entry-limit))
-               0))
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (natp n)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit))
+     0))
    (not-intersectp-list
     (find-n-free-clusters (effective-fat fat32-in-memory)
                           n)
-    (mv-nth 2
-            (lofat-to-hifat-helper-exec
-             fat32-in-memory
-             dir-ent-list entry-limit))))
+    (mv-nth
+     2
+     (lofat-to-hifat-helper-exec fat32-in-memory
+                                 dir-ent-list entry-limit))))
   :hints
-  (("goal"
-    :in-theory
+  (("goal" :in-theory
     (e/d (intersectp-equal lofat-to-hifat-helper-exec)
          ((:definition fat32-build-index-list)))))
   :rule-classes
@@ -3532,11 +3435,12 @@
         (find-n-free-clusters (effective-fat fat32-in-memory)
                               n))
        1)
-      (equal (mv-nth 3
-                     (lofat-to-hifat-helper-exec
-                      fat32-in-memory
-                      dir-ent-list entry-limit))
-             0))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper-exec fat32-in-memory
+                                    dir-ent-list entry-limit))
+       0))
      (not-intersectp-list
       (cons
        (nth
@@ -3544,12 +3448,13 @@
         (find-n-free-clusters (effective-fat fat32-in-memory)
                               n))
        nil)
-      (mv-nth 2
-              (lofat-to-hifat-helper-exec
-               fat32-in-memory
-               dir-ent-list entry-limit))))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper-exec fat32-in-memory
+                                   dir-ent-list entry-limit))))
     :hints
     (("goal"
+      :in-theory (disable len-of-find-n-free-clusters)
       :expand
       ((len
         (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -3598,7 +3503,7 @@
                           (cons (nth 0 (find-n-free-clusters fa-table 1))
                                 y))))
   :hints
-  (("Goal" :in-theory (enable nth)
+  (("Goal" :in-theory (e/d (nth) (len-of-find-n-free-clusters))
     :expand
     ((len (find-n-free-clusters fa-table 1))
      (len (cdr (find-n-free-clusters fa-table 1))))
