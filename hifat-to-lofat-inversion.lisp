@@ -1031,6 +1031,54 @@
     :corollary
     (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))))
 
+(defun count-free-clusters-helper (fa-table n)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (natp n)
+                              (>= (len fa-table) n))
+                  :guard-hints (("Goal" :in-theory (disable nth)) )))
+  (if
+      (zp n)
+      0
+    (if
+        (not (equal (fat32-entry-mask (nth (- n 1) fa-table)) 0))
+        (count-free-clusters-helper fa-table (- n 1))
+      (+ 1 (count-free-clusters-helper fa-table (- n 1))))))
+
+(defthm
+  update-nth-of-count-free-clusters-helper-1
+  (implies (and (natp n)
+                (natp key)
+                (not (equal (fat32-entry-mask val) 0)))
+           (equal (count-free-clusters-helper (update-nth key val fa-table)
+                                              n)
+                  (if (and (< key n)
+                           (equal (fat32-entry-mask (nth key fa-table))
+                                  0))
+                      (- (count-free-clusters-helper fa-table n)
+                         1)
+                      (count-free-clusters-helper fa-table n))))
+  :hints (("goal" :in-theory (disable nth update-nth))))
+
+(defthm
+  update-nth-of-count-free-clusters-helper-2
+  (implies (and (natp n)
+                (natp key)
+                (equal (fat32-entry-mask val) 0))
+           (equal (count-free-clusters-helper (update-nth key val fa-table)
+                                              n)
+                  (if (and (< key n)
+                           (not (equal (fat32-entry-mask (nth key fa-table))
+                                       0)))
+                      (+ (count-free-clusters-helper fa-table n)
+                         1)
+                      (count-free-clusters-helper fa-table n))))
+  :hints (("goal" :in-theory (disable nth update-nth))))
+
+(defthm count-free-clusters-helper-correctness-1
+  (<= (count-free-clusters-helper fa-table n)
+      (nfix n))
+  :rule-classes :linear)
+
 (defun
     stobj-count-free-clusters-helper
     (fat32-in-memory n)
@@ -1053,6 +1101,86 @@
       (+ 1
          (stobj-count-free-clusters-helper
           fat32-in-memory (- n 1))))))
+
+(defthm
+  stobj-count-free-clusters-helper-correctness-1
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (>= (count-of-clusters fat32-in-memory)
+            n))
+   (equal (stobj-count-free-clusters-helper fat32-in-memory n)
+          (count-free-clusters-helper
+           (nthcdr *ms-first-data-cluster* (effective-fat fat32-in-memory))
+           n))))
+
+(defund
+  count-free-clusters (fa-table)
+  (declare
+   (xargs :guard (and (fat32-entry-list-p fa-table)
+                      (>= (len fa-table)
+                          *ms-first-data-cluster*))
+          :guard-hints (("goal" :in-theory (disable nth)))))
+  (count-free-clusters-helper
+   (nthcdr *ms-first-data-cluster* fa-table)
+   (- (len fa-table)
+      *ms-first-data-cluster*)))
+
+(defthm
+  update-nth-of-count-free-clusters-1
+  (implies
+   (and (integerp key) (<= *ms-first-data-cluster* key)
+        (not (equal (fat32-entry-mask val) 0))
+        (< key (len fa-table)))
+   (equal (count-free-clusters (update-nth key val fa-table))
+          (if
+              (equal (fat32-entry-mask (nth key fa-table))
+                     0)
+              (- (count-free-clusters fa-table) 1)
+            (count-free-clusters fa-table))))
+  :hints (("goal" :in-theory (enable count-free-clusters))))
+
+(defthm
+  update-nth-of-count-free-clusters-2
+  (implies
+   (and (integerp key) (<= *ms-first-data-cluster* key)
+        (equal (fat32-entry-mask val) 0)
+        (< key (len fa-table)))
+   (equal (count-free-clusters (update-nth key val fa-table))
+          (if
+              (equal (fat32-entry-mask (nth key fa-table))
+                     0)
+              (count-free-clusters fa-table)
+            (+ (count-free-clusters fa-table) 1))))
+  :hints (("goal" :in-theory (enable count-free-clusters))))
+
+(defthm
+  count-free-clusters-correctness-1
+  (implies (>= (len fa-table)
+               *ms-first-data-cluster*)
+           (<= (count-free-clusters fa-table)
+               (- (len fa-table)
+                  *ms-first-data-cluster*)))
+  :rule-classes :linear
+  :hints (("goal" :in-theory (enable count-free-clusters))))
+
+(defund stobj-count-free-clusters
+  (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (lofat-fs-p fat32-in-memory)))
+  (stobj-count-free-clusters-helper
+   fat32-in-memory
+   (count-of-clusters fat32-in-memory)))
+
+(defthm
+  stobj-count-free-clusters-correctness-1
+  (implies
+   (lofat-fs-p fat32-in-memory)
+   (equal
+    (stobj-count-free-clusters fat32-in-memory)
+    (count-free-clusters (effective-fat fat32-in-memory))))
+  :hints
+  (("goal" :in-theory (enable count-free-clusters
+                              stobj-count-free-clusters))))
 
 (defund
   lofat-to-hifat (fat32-in-memory)
