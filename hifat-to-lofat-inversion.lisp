@@ -3251,8 +3251,17 @@
                        dir-ent-filename dir-ent-set-filename
                        dir-ent-fix dir-ent-p))))
 
+;; I know the following two definitions should really look more alike, but they
+;; just happened to develop for different purposes.
+(defun free-cluster-listp (index-list fa-table)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (bounded-nat-listp index-list (len fa-table)))))
+  (or (atom index-list)
+      (and (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0)
+           (free-cluster-listp (cdr index-list) fa-table))))
+
 (defun
-    unmodifiable-listp (x fa-table)
+    non-free-cluster-listp (x fa-table)
   (if
       (atom x)
       (equal x nil)
@@ -3261,20 +3270,20 @@
          (< (car x) (len fa-table))
          (not (equal (fat32-entry-mask (nth (car x) fa-table))
                      0))
-         (unmodifiable-listp (cdr x)
+         (non-free-cluster-listp (cdr x)
                              fa-table))))
 
 (defthm
-  unmodifiable-listp-of-update-nth
+  non-free-cluster-listp-of-update-nth
   (implies
    (and (not (member-equal key x))
         (< key (len fa-table)))
-   (equal (unmodifiable-listp x (update-nth key val fa-table))
-          (unmodifiable-listp x fa-table))))
+   (equal (non-free-cluster-listp x (update-nth key val fa-table))
+          (non-free-cluster-listp x fa-table))))
 
 (defthm
-  unmodifiable-listp-correctness-2
-  (implies (and (unmodifiable-listp x fa-table)
+  non-free-cluster-listp-correctness-2
+  (implies (and (non-free-cluster-listp x fa-table)
                 (equal (fat32-entry-mask (nth key fa-table))
                        0))
            (not (member-equal key x)))
@@ -3283,18 +3292,18 @@
    (:rewrite
     :corollary
     (implies
-     (and (unmodifiable-listp x fa-table)
+     (and (non-free-cluster-listp x fa-table)
           (equal (fat32-entry-mask (nth key fa-table))
                  0)
           (< key (len fa-table)))
-     (unmodifiable-listp x (update-nth key val fa-table))))))
+     (non-free-cluster-listp x (update-nth key val fa-table))))))
 
 (defthm
-  unmodifiable-listp-correctness-3
+  non-free-cluster-listp-correctness-3
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (unmodifiable-listp x (effective-fat fat32-in-memory))
+    (non-free-cluster-listp x (effective-fat fat32-in-memory))
     (not (member-equal first-cluster x))
     (integerp first-cluster)
     (<= *ms-first-data-cluster* first-cluster)
@@ -3305,7 +3314,7 @@
       (place-contents fat32-in-memory dir-ent
                       contents file-length first-cluster))
      0))
-   (unmodifiable-listp
+   (non-free-cluster-listp
     x
     (effective-fat
      (mv-nth
@@ -3314,7 +3323,7 @@
                       contents file-length first-cluster))))))
 
 (defthm
-  unmodifiable-listp-correctness-4-lemma-1
+  non-free-cluster-listp-correctness-4-lemma-1
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3346,7 +3355,7 @@
                 (m n2))))))
 
 (defthm
-  unmodifiable-listp-correctness-4
+  non-free-cluster-listp-correctness-4
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (equal (mv-nth 2
@@ -3354,8 +3363,8 @@
                         fat32-in-memory
                         fs current-dir-first-cluster))
                0)
-        (unmodifiable-listp x (effective-fat fat32-in-memory)))
-   (unmodifiable-listp
+        (non-free-cluster-listp x (effective-fat fat32-in-memory)))
+   (non-free-cluster-listp
     x
     (effective-fat
      (mv-nth 0
@@ -3364,23 +3373,23 @@
               fs current-dir-first-cluster))))))
 
 (defthm
-  unmodifiable-listp-correctness-5
+  non-free-cluster-listp-correctness-5
   (implies
-   (and (unmodifiable-listp x fa-table)
+   (and (non-free-cluster-listp x fa-table)
         (natp n)
         (fat32-entry-list-p fa-table))
    (not (intersectp-equal x (find-n-free-clusters fa-table n))))
   :hints (("goal" :in-theory (enable intersectp-equal))))
 
 (defthm
-  unmodifiable-listp-of-append
-  (equal (unmodifiable-listp (append x y) fa-table)
+  non-free-cluster-listp-of-append
+  (equal (non-free-cluster-listp (append x y) fa-table)
          (and
-          (unmodifiable-listp (true-list-fix x) fa-table)
-          (unmodifiable-listp y fa-table))))
+          (non-free-cluster-listp (true-list-fix x) fa-table)
+          (non-free-cluster-listp y fa-table))))
 
 (defthm
-  unmodifiable-listp-of-fat32-build-index-list
+  non-free-cluster-listp-of-fat32-build-index-list
   (implies
    (and
     (equal
@@ -3392,7 +3401,7 @@
     (integerp masked-current-cluster)
     (<= 2 masked-current-cluster)
     (< masked-current-cluster (len fa-table)))
-   (unmodifiable-listp
+   (non-free-cluster-listp
     (mv-nth
      0
      (fat32-build-index-list fa-table masked-current-cluster
@@ -3857,7 +3866,7 @@
           (hifat-no-dups-p fs)
           (integerp entry-limit)
           (>= entry-limit (hifat-entry-count fs))
-          (unmodifiable-listp x (effective-fat fat32-in-memory)))
+          (non-free-cluster-listp x (effective-fat fat32-in-memory)))
      (b*
          (((mv fat32-in-memory dir-ent-list error-code)
            (hifat-to-lofat-helper fat32-in-memory
@@ -3908,7 +3917,7 @@
             (fat32-masked-entry-p current-dir-first-cluster)
             (integerp entry-limit)
             (>= entry-limit (hifat-entry-count fs))
-            (unmodifiable-listp x (effective-fat fat32-in-memory)))
+            (non-free-cluster-listp x (effective-fat fat32-in-memory)))
        (b*
            (((mv fat32-in-memory dir-ent-list error-code)
              (hifat-to-lofat-helper fat32-in-memory
@@ -4048,20 +4057,6 @@
                        hifat-to-lofat-inversion-lemma-13
                        painful-debugging-lemma-10
                        painful-debugging-lemma-11))))
-
-(defun non-free-cluster-listp (index-list fa-table)
-  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
-                              (bounded-nat-listp index-list (len fa-table)))))
-  (or (atom index-list)
-      (and (not (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0))
-           (non-free-cluster-listp (cdr index-list) fa-table))))
-
-(defun free-cluster-listp (index-list fa-table)
-  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
-                              (bounded-nat-listp index-list (len fa-table)))))
-  (or (atom index-list)
-      (and (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0)
-           (free-cluster-listp (cdr index-list) fa-table))))
 
 ;; In the subdirectory case, we need to place all the entries (32 bytes each)
 ;; and two entries (dot and dotdot). The space taken up for these things is
