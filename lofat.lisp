@@ -3627,9 +3627,9 @@
     :rule-classes :linear
     :hints
     (("goal"
-      :in-theory (disable max-entry-count-guard-lemma-1)
+      :in-theory (disable painful-debugging-lemma-13)
       :use
-      (:instance max-entry-count-guard-lemma-1
+      (:instance painful-debugging-lemma-13
                  (i (+ (- (bpb_rsvdseccnt fat32-in-memory))
                        (bpb_totsec32 fat32-in-memory)
                        (- (* (bpb_fatsz32 fat32-in-memory)

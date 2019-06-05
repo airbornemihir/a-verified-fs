@@ -13,6 +13,12 @@
 (include-book "file-system-4")
 (include-book "fat32")
 
+(local (in-theory (e/d
+                   ((:linear len-of-find-n-free-clusters-helper)
+                    (:linear len-of-find-n-free-clusters))
+                   ((:rewrite len-of-find-n-free-clusters-helper)
+                    (:rewrite len-of-find-n-free-clusters)))))
+
 ;; question: if fat entries are 28 bits long, then how is the maximum size
 ;; determined to be 4 GB?
 ;; also, how are we gonna do this without a feasible length restriction?
