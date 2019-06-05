@@ -764,12 +764,6 @@
      :hints
      (("goal" :in-theory (enable find-n-free-clusters-helper)))))
 
-  ;; Temporarily borrowed
-  (local
-   (defthm take-fewer-of-take-more
-     (implies (<= (nfix a) (nfix b))
-              (equal (take a (take b x)) (take a x)))))
-
   (defthm
     len-of-find-n-free-clusters-helper
     (equal (len (find-n-free-clusters-helper (take n2 fa-table)

@@ -806,3 +806,9 @@
   (implies (no-duplicatesp-equal (strip-cars alist))
            (no-duplicatesp-equal
             (strip-cars (remove-assoc-equal x alist)))))
+
+;; The following is redundant with the eponymous theorem in
+;; books/std/lists/take.lisp, from where it was taken with thanks.
+(defthm take-fewer-of-take-more
+  (implies (<= (nfix a) (nfix b))
+           (equal (take a (take b x)) (take a x))))
