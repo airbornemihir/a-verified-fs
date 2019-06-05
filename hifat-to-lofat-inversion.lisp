@@ -4286,6 +4286,58 @@
       (:definition update-nth)
       floor nth)))))
 
+(defthm len-of-remove-when-no-duplicatesp
+  (implies (no-duplicatesp-equal l)
+           (equal (len (remove-equal x l))
+                  (if (member-equal x l)
+                      (- (len l) 1)
+                      (len l)))))
+
+(defthm no-duplicatesp-of-remove
+  (implies (no-duplicatesp-equal l)
+           (no-duplicatesp-equal (remove-equal x l))))
+
+(defthm non-free-cluster-listp-correctness-6-lemma-1
+  (implies (and (bounded-nat-listp l (+ b 1))
+                (integerp b))
+           (bounded-nat-listp (remove-equal b l)
+                              b))
+  :hints (("goal" :induct (remove-assoc-equal b l))))
+
+(defthm non-free-cluster-listp-correctness-6-lemma-2
+  (implies (non-free-cluster-listp x fa-table)
+           (bounded-nat-listp x (len fa-table))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun
+       induction-scheme (x fa-table b)
+     (declare (xargs :verify-guards nil :measure (len fa-table)))
+     (if (<= (len fa-table) (nfix b))
+         (mv x fa-table b)
+         (induction-scheme (remove-equal (- (len fa-table) 1) x)
+                           (butlast fa-table 1)
+                           b))))
+
+  (defthm non-free-cluster-listp-correctness-6-lemma-3
+    (implies (and (lower-bounded-integer-listp x b)
+                  (bounded-nat-listp x (len fa-table))
+                  (no-duplicatesp-equal x)
+                  (<= b (len fa-table)))
+             (<= (+ (len x) b) (len fa-table)))
+    :hints (("goal" :induct (induction-scheme x fa-table b)))))
+
+(defthm non-free-cluster-listp-correctness-6
+  (implies (and (fat32-entry-list-p fa-table)
+                (<= *ms-first-data-cluster* (len fa-table))
+                (non-free-cluster-listp x fa-table)
+                (no-duplicatesp-equal x))
+           (<= (len x)
+               (- (len fa-table)
+                  (+ 2 (count-free-clusters fa-table))))))
+
 (defund-nx
   lofat-equiv
   (fat32-in-memory1 fat32-in-memory2)
