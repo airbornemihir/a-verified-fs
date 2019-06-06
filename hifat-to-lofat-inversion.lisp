@@ -3251,17 +3251,17 @@
                        dir-ent-filename dir-ent-set-filename
                        dir-ent-fix dir-ent-p))))
 
-;; I know the following two definitions should really look more alike, but they
+;; I know the two following definitions should really look more alike, but they
 ;; just happened to develop for different purposes.
-(defun free-cluster-listp (index-list fa-table)
+(defun free-index-listp (index-list fa-table)
   (declare (xargs :guard (and (fat32-entry-list-p fa-table)
                               (bounded-nat-listp index-list (len fa-table)))))
   (or (atom index-list)
       (and (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0)
-           (free-cluster-listp (cdr index-list) fa-table))))
+           (free-index-listp (cdr index-list) fa-table))))
 
 (defun
-    non-free-cluster-listp (x fa-table)
+    non-free-index-listp (x fa-table)
   (if
       (atom x)
       (equal x nil)
@@ -3270,20 +3270,20 @@
          (< (car x) (len fa-table))
          (not (equal (fat32-entry-mask (nth (car x) fa-table))
                      0))
-         (non-free-cluster-listp (cdr x)
+         (non-free-index-listp (cdr x)
                              fa-table))))
 
 (defthm
-  non-free-cluster-listp-of-update-nth
+  non-free-index-listp-of-update-nth
   (implies
    (and (not (member-equal key x))
         (< key (len fa-table)))
-   (equal (non-free-cluster-listp x (update-nth key val fa-table))
-          (non-free-cluster-listp x fa-table))))
+   (equal (non-free-index-listp x (update-nth key val fa-table))
+          (non-free-index-listp x fa-table))))
 
 (defthm
-  non-free-cluster-listp-correctness-2
-  (implies (and (non-free-cluster-listp x fa-table)
+  non-free-index-listp-correctness-2
+  (implies (and (non-free-index-listp x fa-table)
                 (equal (fat32-entry-mask (nth key fa-table))
                        0))
            (not (member-equal key x)))
@@ -3292,18 +3292,18 @@
    (:rewrite
     :corollary
     (implies
-     (and (non-free-cluster-listp x fa-table)
+     (and (non-free-index-listp x fa-table)
           (equal (fat32-entry-mask (nth key fa-table))
                  0)
           (< key (len fa-table)))
-     (non-free-cluster-listp x (update-nth key val fa-table))))))
+     (non-free-index-listp x (update-nth key val fa-table))))))
 
 (defthm
-  non-free-cluster-listp-correctness-3
+  non-free-index-listp-correctness-3
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (non-free-cluster-listp x (effective-fat fat32-in-memory))
+    (non-free-index-listp x (effective-fat fat32-in-memory))
     (not (member-equal first-cluster x))
     (integerp first-cluster)
     (<= *ms-first-data-cluster* first-cluster)
@@ -3314,7 +3314,7 @@
       (place-contents fat32-in-memory dir-ent
                       contents file-length first-cluster))
      0))
-   (non-free-cluster-listp
+   (non-free-index-listp
     x
     (effective-fat
      (mv-nth
@@ -3323,7 +3323,7 @@
                       contents file-length first-cluster))))))
 
 (defthm
-  non-free-cluster-listp-correctness-4-lemma-1
+  non-free-index-listp-correctness-4-lemma-1
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3355,7 +3355,7 @@
                 (m n2))))))
 
 (defthm
-  non-free-cluster-listp-correctness-4
+  non-free-index-listp-correctness-4
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (equal (mv-nth 2
@@ -3363,8 +3363,8 @@
                         fat32-in-memory
                         fs current-dir-first-cluster))
                0)
-        (non-free-cluster-listp x (effective-fat fat32-in-memory)))
-   (non-free-cluster-listp
+        (non-free-index-listp x (effective-fat fat32-in-memory)))
+   (non-free-index-listp
     x
     (effective-fat
      (mv-nth 0
@@ -3373,23 +3373,23 @@
               fs current-dir-first-cluster))))))
 
 (defthm
-  non-free-cluster-listp-correctness-5
+  non-free-index-listp-correctness-5
   (implies
-   (and (non-free-cluster-listp x fa-table)
+   (and (non-free-index-listp x fa-table)
         (natp n)
         (fat32-entry-list-p fa-table))
    (not (intersectp-equal x (find-n-free-clusters fa-table n))))
   :hints (("goal" :in-theory (enable intersectp-equal))))
 
 (defthm
-  non-free-cluster-listp-of-append
-  (equal (non-free-cluster-listp (append x y) fa-table)
+  non-free-index-listp-of-append
+  (equal (non-free-index-listp (append x y) fa-table)
          (and
-          (non-free-cluster-listp (true-list-fix x) fa-table)
-          (non-free-cluster-listp y fa-table))))
+          (non-free-index-listp (true-list-fix x) fa-table)
+          (non-free-index-listp y fa-table))))
 
 (defthm
-  non-free-cluster-listp-of-fat32-build-index-list
+  non-free-index-listp-of-fat32-build-index-list
   (implies
    (and
     (equal
@@ -3401,7 +3401,7 @@
     (integerp masked-current-cluster)
     (<= 2 masked-current-cluster)
     (< masked-current-cluster (len fa-table)))
-   (non-free-cluster-listp
+   (non-free-index-listp
     (mv-nth
      0
      (fat32-build-index-list fa-table masked-current-cluster
@@ -3866,7 +3866,7 @@
           (hifat-no-dups-p fs)
           (integerp entry-limit)
           (>= entry-limit (hifat-entry-count fs))
-          (non-free-cluster-listp x (effective-fat fat32-in-memory)))
+          (non-free-index-listp x (effective-fat fat32-in-memory)))
      (b*
          (((mv fat32-in-memory dir-ent-list error-code)
            (hifat-to-lofat-helper fat32-in-memory
@@ -3917,7 +3917,7 @@
             (fat32-masked-entry-p current-dir-first-cluster)
             (integerp entry-limit)
             (>= entry-limit (hifat-entry-count fs))
-            (non-free-cluster-listp x (effective-fat fat32-in-memory)))
+            (non-free-index-listp x (effective-fat fat32-in-memory)))
        (b*
            (((mv fat32-in-memory dir-ent-list error-code)
              (hifat-to-lofat-helper fat32-in-memory
@@ -4091,11 +4091,11 @@
                                   cluster-size))))))))
 
 (defthm
-  free-cluster-listp-of-find-n-free-clusters-helper-lemma-1
-  (implies (and (free-cluster-listp index-list fa-table)
+  free-index-listp-of-find-n-free-clusters-helper-lemma-1
+  (implies (and (free-index-listp index-list fa-table)
                 (lower-bounded-integer-listp index-list 2)
                 (not (member-equal key index-list)))
-           (free-cluster-listp index-list
+           (free-index-listp index-list
                                (update-nth key val fa-table)))
   :hints (("goal" :in-theory (disable update-nth))))
 
@@ -4118,24 +4118,24 @@
                                  (+ start 1)))))))
 
   (defthm
-    free-cluster-listp-of-find-n-free-clusters-helper
+    free-index-listp-of-find-n-free-clusters-helper
     (implies
      (natp start)
-     (free-cluster-listp (find-n-free-clusters-helper (nthcdr start fa-table)
+     (free-index-listp (find-n-free-clusters-helper (nthcdr start fa-table)
                                                       n start)
                          fa-table))
     :hints (("goal" :induct (induction-scheme fa-table n start)
              :in-theory (enable find-n-free-clusters-helper)
              :expand (find-n-free-clusters-helper fa-table n start)))))
 
-(defthm free-cluster-listp-of-find-n-free-clusters
-  (free-cluster-listp (find-n-free-clusters fa-table n)
+(defthm free-index-listp-of-find-n-free-clusters
+  (free-index-listp (find-n-free-clusters fa-table n)
                       fa-table)
   :hints (("goal" :in-theory (enable find-n-free-clusters))))
 
 (defthm count-free-clusters-of-effective-fat-of-place-contents-lemma-1
   (implies
-   (and (free-cluster-listp index-list fa-table)
+   (and (free-index-listp index-list fa-table)
         (bounded-nat-listp index-list (len fa-table))
         (lower-bounded-integer-listp index-list 2)
         (not (member-equal 0 value-list))
@@ -4286,7 +4286,7 @@
       (:definition update-nth)
       floor nth)))))
 
-(defthm non-free-cluster-listp-correctness-6-lemma-1
+(defthm non-free-index-listp-correctness-6-lemma-1
   (implies (and (bounded-nat-listp l (+ b 1))
                 (integerp b))
            (bounded-nat-listp (remove-equal b l)
@@ -4294,9 +4294,9 @@
   :hints (("goal" :induct (remove-assoc-equal b l))))
 
 (defthm
-  non-free-cluster-listp-correctness-6-lemma-2
+  non-free-index-listp-correctness-6-lemma-2
   (implies
-   (non-free-cluster-listp x fa-table)
+   (non-free-index-listp x fa-table)
    (and
     (bounded-nat-listp x (len fa-table))
     (lower-bounded-integer-listp x *ms-first-data-cluster*))))
@@ -4314,7 +4314,7 @@
                            (butlast fa-table 1)
                            b))))
 
-  (defthm non-free-cluster-listp-correctness-6-lemma-3
+  (defthm non-free-index-listp-correctness-6-lemma-3
     (implies (and (lower-bounded-integer-listp x b)
                   (bounded-nat-listp x (len fa-table))
                   (no-duplicatesp-equal x)
@@ -4324,15 +4324,15 @@
     :hints (("goal" :induct (induction-scheme x fa-table b)))))
 
 (defthm
-  non-free-cluster-listp-correctness-6
+  non-free-index-listp-correctness-6
   (implies (and (<= *ms-first-data-cluster* (len fa-table))
-                (non-free-cluster-listp x fa-table)
+                (non-free-index-listp x fa-table)
                 (no-duplicatesp-equal x))
            (<= (+ 2 (len x)) (len fa-table)))
   :hints
   (("goal"
-    :in-theory (disable non-free-cluster-listp-correctness-6-lemma-3)
-    :use (:instance non-free-cluster-listp-correctness-6-lemma-3
+    :in-theory (disable non-free-index-listp-correctness-6-lemma-3)
+    :use (:instance non-free-index-listp-correctness-6-lemma-3
                     (b *ms-first-data-cluster*)))))
 
 (defund-nx
