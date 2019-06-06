@@ -4286,17 +4286,6 @@
       (:definition update-nth)
       floor nth)))))
 
-(defthm len-of-remove-when-no-duplicatesp
-  (implies (no-duplicatesp-equal l)
-           (equal (len (remove-equal x l))
-                  (if (member-equal x l)
-                      (- (len l) 1)
-                      (len l)))))
-
-(defthm no-duplicatesp-of-remove
-  (implies (no-duplicatesp-equal l)
-           (no-duplicatesp-equal (remove-equal x l))))
-
 (defthm non-free-cluster-listp-correctness-6-lemma-1
   (implies (and (bounded-nat-listp l (+ b 1))
                 (integerp b))
@@ -4384,16 +4373,16 @@
        ;; going to involve reasoning about the number of clusters taken up by
        ;; an m1 instance, which is not really where it's at right now.
        ;;
-       ;; One reason why this clause might not be true: we aren't requiring dot
-       ;; and dotdot entries to exist (except vaguely, by making sure that we
-       ;; don't have 65535 or 65536 useful directory entries in any directory.)
-       ;; As a result, it's possible for a lofat instance to exist which
-       ;; completely fills up the available clusters on the disk, but which
-       ;; leaves out at least one dot or dotdot entry, with the result that
-       ;; attempting to remake the stobj after coverting to hifat would cause
-       ;; the directory with the missing dot/dotdot entry to cross a cluster
-       ;; boundary and therefore occupy more space than available in the
-       ;; stobj. This scenario wouldn't even need a directory with 65535 or
+       ;; One reason why this clause will not always be true: we aren't
+       ;; requiring dot and dotdot entries to exist (except vaguely, by making
+       ;; sure that we don't have 65535 or 65536 useful directory entries in
+       ;; any directory.)  As a result, it's possible for a lofat instance to
+       ;; exist which completely fills up the available clusters on the disk,
+       ;; but which leaves out at least one dot or dotdot entry, with the
+       ;; result that attempting to remake the stobj after coverting to hifat
+       ;; would cause the directory with the missing dot/dotdot entry to cross
+       ;; a cluster boundary and therefore occupy more space than available in
+       ;; the stobj. This scenario wouldn't even need a directory with 65535 or
        ;; 65536 useful directory entries. The largest possible cluster size for
        ;; FAT32 is 2^15 bytes, which is a multiple of all other possible
        ;; cluster sizes - so let's consider an example where a directory
@@ -4402,13 +4391,23 @@
        ;; write back this directory, we'll have 3 clusters occupied by this
        ;; directory, or 5 or 9 or something. The problem is clear.
        ;;
-       ;; The solution is to return a non-zero error code when a directory is
+       ;; One solution is to return a non-zero error code when a directory is
        ;; encountered without a dot or dotdot entry in it. Anything else wrecks
        ;; our guarantees that the transformation from lofat to hifat is
        ;; reversible. Then, the reasoning will involve the number of clusters
        ;; taken up for the on-disk representation of a lofat instance. That
        ;; reasoning will also involve proving that we can allocate upto
        ;; (count-of-clusters fat32-in-memory) clusters and no more.
+       ;; But, this solution is not perfect - there still remains the problem
+       ;; of clusters being shared across multiple files. So, if cluster 2
+       ;; begins the root directory's clusterchain, and cluster 3 begins a
+       ;; different clusterchain of length 1, then the rest of the clusters
+       ;; could be filled up with directory files in which all the regular
+       ;; file entries point to cluster 3. This would create a filesystem with
+       ;; a huge number of identical files, and after converting it to HiFAT we
+       ;; wouldn't be able to convert it back to LoFAT because of space
+       ;; issues. There's no simple solution to this thing other than insisting
+       ;; that all clusterchains should be disjoint from each other.
        ;;
        ;; By the way, what are our guarantees? We assure that a lofat instance
        ;; which can successfully be transformed to a hifat instance has no more
