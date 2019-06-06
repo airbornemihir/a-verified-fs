@@ -4304,9 +4304,13 @@
                               b))
   :hints (("goal" :induct (remove-assoc-equal b l))))
 
-(defthm non-free-cluster-listp-correctness-6-lemma-2
-  (implies (non-free-cluster-listp x fa-table)
-           (bounded-nat-listp x (len fa-table))))
+(defthm
+  non-free-cluster-listp-correctness-6-lemma-2
+  (implies
+   (non-free-cluster-listp x fa-table)
+   (and
+    (bounded-nat-listp x (len fa-table))
+    (lower-bounded-integer-listp x *ms-first-data-cluster*))))
 
 (encapsulate
   ()
@@ -4327,16 +4331,20 @@
                   (no-duplicatesp-equal x)
                   (<= b (len fa-table)))
              (<= (+ (len x) b) (len fa-table)))
+    :rule-classes :linear
     :hints (("goal" :induct (induction-scheme x fa-table b)))))
 
-(defthm non-free-cluster-listp-correctness-6
-  (implies (and (fat32-entry-list-p fa-table)
-                (<= *ms-first-data-cluster* (len fa-table))
+(defthm
+  non-free-cluster-listp-correctness-6
+  (implies (and (<= *ms-first-data-cluster* (len fa-table))
                 (non-free-cluster-listp x fa-table)
                 (no-duplicatesp-equal x))
-           (<= (len x)
-               (- (len fa-table)
-                  (+ 2 (count-free-clusters fa-table))))))
+           (<= (+ 2 (len x)) (len fa-table)))
+  :hints
+  (("goal"
+    :in-theory (disable non-free-cluster-listp-correctness-6-lemma-3)
+    :use (:instance non-free-cluster-listp-correctness-6-lemma-3
+                    (b *ms-first-data-cluster*)))))
 
 (defund-nx
   lofat-equiv
