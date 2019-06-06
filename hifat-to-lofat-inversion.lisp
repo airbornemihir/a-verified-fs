@@ -691,7 +691,21 @@
                   ;; to have more than (2^16 -2) useful entries in it, which
                   ;; means it's skipped either the . entry or the .. entry.
                   (and directory-p
-                       (< *ms-max-dir-ent-count* (len head-dir-ent-list)))))
+                       (< *ms-max-dir-ent-count* (len head-dir-ent-list))))
+                 ;; The three following clauses come around to the point that
+                 ;; the whole expression
+                 ;; (append (list clusterchain) head-clusterchain-list
+                 ;;         tail-clusterchain-list)
+                 ;; should satsify disjoint-list-listp and
+                 ;; no-duplicates-listp. See the flatten-disjoint-lists
+                 ;; theorem to understand what this means.
+                 (no-duplicatesp clusterchain)
+                 (not-intersectp-list
+                  clusterchain
+                  (append head-clusterchain-list
+                          tail-clusterchain-list))
+                 (not (member-intersectp-equal head-clusterchain-list
+                                               tail-clusterchain-list)))
             0
           *EIO*)))
     (if
@@ -969,6 +983,39 @@
             (dir-ent-first-cluster (car dir-ent-list))
             2097152))))
         (+ -1 entry-limit))))))))
+
+(defthm
+  no-duplicates-listp-of-lofat-to-hifat-helper-exec
+  (b* (((mv & & clusterchain-list error-code)
+        (lofat-to-hifat-helper-exec fat32-in-memory
+                                    dir-ent-list entry-limit)))
+    (implies (equal error-code 0)
+             (no-duplicates-listp clusterchain-list)))
+  :hints
+  (("goal" :in-theory (enable lofat-to-hifat-helper-exec)
+    :induct (lofat-to-hifat-helper-exec fat32-in-memory
+                                        dir-ent-list entry-limit))))
+
+(defthm
+  disjoint-list-listp-of-lofat-to-hifat-helper-exec
+  (b* (((mv & & clusterchain-list error-code)
+        (lofat-to-hifat-helper-exec fat32-in-memory
+                                    dir-ent-list entry-limit)))
+    (implies (equal error-code 0)
+             (disjoint-list-listp clusterchain-list)))
+  :hints
+  (("goal" :in-theory (enable lofat-to-hifat-helper-exec)
+    :induct (lofat-to-hifat-helper-exec fat32-in-memory
+                                        dir-ent-list entry-limit))))
+
+(defthm
+  no-duplicatesp-of-flatten-of-lofat-to-hifat-helper-exec
+  (b* (((mv & & clusterchain-list error-code)
+        (lofat-to-hifat-helper-exec fat32-in-memory
+                                    dir-ent-list entry-limit)))
+    (implies
+     (equal error-code 0)
+     (no-duplicatesp-equal (flatten clusterchain-list)))))
 
 (defthm
   data-region-length-of-update-fati
