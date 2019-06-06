@@ -23,6 +23,6 @@
       (lofat-to-disk-image
        fat32-in-memory val state)))
   (mv
-   (good-bye (if (equal retval 0) 0 1))
+   (good-bye exit-status)
    fat32-in-memory
    state))
