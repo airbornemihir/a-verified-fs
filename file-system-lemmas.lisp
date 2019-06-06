@@ -812,3 +812,14 @@
 (defthm take-fewer-of-take-more
   (implies (<= (nfix a) (nfix b))
            (equal (take a (take b x)) (take a x))))
+
+(defthm len-of-remove-when-no-duplicatesp
+  (implies (no-duplicatesp-equal l)
+           (equal (len (remove-equal x l))
+                  (if (member-equal x l)
+                      (- (len l) 1)
+                      (len l)))))
+
+(defthm no-duplicatesp-of-remove
+  (implies (no-duplicatesp-equal l)
+           (no-duplicatesp-equal (remove-equal x l))))

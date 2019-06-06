@@ -3251,8 +3251,17 @@
                        dir-ent-filename dir-ent-set-filename
                        dir-ent-fix dir-ent-p))))
 
+;; I know the following two definitions should really look more alike, but they
+;; just happened to develop for different purposes.
+(defun free-cluster-listp (index-list fa-table)
+  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
+                              (bounded-nat-listp index-list (len fa-table)))))
+  (or (atom index-list)
+      (and (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0)
+           (free-cluster-listp (cdr index-list) fa-table))))
+
 (defun
-    unmodifiable-listp (x fa-table)
+    non-free-cluster-listp (x fa-table)
   (if
       (atom x)
       (equal x nil)
@@ -3261,20 +3270,20 @@
          (< (car x) (len fa-table))
          (not (equal (fat32-entry-mask (nth (car x) fa-table))
                      0))
-         (unmodifiable-listp (cdr x)
+         (non-free-cluster-listp (cdr x)
                              fa-table))))
 
 (defthm
-  unmodifiable-listp-of-update-nth
+  non-free-cluster-listp-of-update-nth
   (implies
    (and (not (member-equal key x))
         (< key (len fa-table)))
-   (equal (unmodifiable-listp x (update-nth key val fa-table))
-          (unmodifiable-listp x fa-table))))
+   (equal (non-free-cluster-listp x (update-nth key val fa-table))
+          (non-free-cluster-listp x fa-table))))
 
 (defthm
-  unmodifiable-listp-correctness-2
-  (implies (and (unmodifiable-listp x fa-table)
+  non-free-cluster-listp-correctness-2
+  (implies (and (non-free-cluster-listp x fa-table)
                 (equal (fat32-entry-mask (nth key fa-table))
                        0))
            (not (member-equal key x)))
@@ -3283,18 +3292,18 @@
    (:rewrite
     :corollary
     (implies
-     (and (unmodifiable-listp x fa-table)
+     (and (non-free-cluster-listp x fa-table)
           (equal (fat32-entry-mask (nth key fa-table))
                  0)
           (< key (len fa-table)))
-     (unmodifiable-listp x (update-nth key val fa-table))))))
+     (non-free-cluster-listp x (update-nth key val fa-table))))))
 
 (defthm
-  unmodifiable-listp-correctness-3
+  non-free-cluster-listp-correctness-3
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (unmodifiable-listp x (effective-fat fat32-in-memory))
+    (non-free-cluster-listp x (effective-fat fat32-in-memory))
     (not (member-equal first-cluster x))
     (integerp first-cluster)
     (<= *ms-first-data-cluster* first-cluster)
@@ -3305,7 +3314,7 @@
       (place-contents fat32-in-memory dir-ent
                       contents file-length first-cluster))
      0))
-   (unmodifiable-listp
+   (non-free-cluster-listp
     x
     (effective-fat
      (mv-nth
@@ -3314,7 +3323,7 @@
                       contents file-length first-cluster))))))
 
 (defthm
-  unmodifiable-listp-correctness-4-lemma-1
+  non-free-cluster-listp-correctness-4-lemma-1
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -3346,7 +3355,7 @@
                 (m n2))))))
 
 (defthm
-  unmodifiable-listp-correctness-4
+  non-free-cluster-listp-correctness-4
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (equal (mv-nth 2
@@ -3354,8 +3363,8 @@
                         fat32-in-memory
                         fs current-dir-first-cluster))
                0)
-        (unmodifiable-listp x (effective-fat fat32-in-memory)))
-   (unmodifiable-listp
+        (non-free-cluster-listp x (effective-fat fat32-in-memory)))
+   (non-free-cluster-listp
     x
     (effective-fat
      (mv-nth 0
@@ -3364,23 +3373,23 @@
               fs current-dir-first-cluster))))))
 
 (defthm
-  unmodifiable-listp-correctness-5
+  non-free-cluster-listp-correctness-5
   (implies
-   (and (unmodifiable-listp x fa-table)
+   (and (non-free-cluster-listp x fa-table)
         (natp n)
         (fat32-entry-list-p fa-table))
    (not (intersectp-equal x (find-n-free-clusters fa-table n))))
   :hints (("goal" :in-theory (enable intersectp-equal))))
 
 (defthm
-  unmodifiable-listp-of-append
-  (equal (unmodifiable-listp (append x y) fa-table)
+  non-free-cluster-listp-of-append
+  (equal (non-free-cluster-listp (append x y) fa-table)
          (and
-          (unmodifiable-listp (true-list-fix x) fa-table)
-          (unmodifiable-listp y fa-table))))
+          (non-free-cluster-listp (true-list-fix x) fa-table)
+          (non-free-cluster-listp y fa-table))))
 
 (defthm
-  unmodifiable-listp-of-fat32-build-index-list
+  non-free-cluster-listp-of-fat32-build-index-list
   (implies
    (and
     (equal
@@ -3392,7 +3401,7 @@
     (integerp masked-current-cluster)
     (<= 2 masked-current-cluster)
     (< masked-current-cluster (len fa-table)))
-   (unmodifiable-listp
+   (non-free-cluster-listp
     (mv-nth
      0
      (fat32-build-index-list fa-table masked-current-cluster
@@ -3857,7 +3866,7 @@
           (hifat-no-dups-p fs)
           (integerp entry-limit)
           (>= entry-limit (hifat-entry-count fs))
-          (unmodifiable-listp x (effective-fat fat32-in-memory)))
+          (non-free-cluster-listp x (effective-fat fat32-in-memory)))
      (b*
          (((mv fat32-in-memory dir-ent-list error-code)
            (hifat-to-lofat-helper fat32-in-memory
@@ -3908,7 +3917,7 @@
             (fat32-masked-entry-p current-dir-first-cluster)
             (integerp entry-limit)
             (>= entry-limit (hifat-entry-count fs))
-            (unmodifiable-listp x (effective-fat fat32-in-memory)))
+            (non-free-cluster-listp x (effective-fat fat32-in-memory)))
        (b*
            (((mv fat32-in-memory dir-ent-list error-code)
              (hifat-to-lofat-helper fat32-in-memory
@@ -4048,20 +4057,6 @@
                        hifat-to-lofat-inversion-lemma-13
                        painful-debugging-lemma-10
                        painful-debugging-lemma-11))))
-
-(defun non-free-cluster-listp (index-list fa-table)
-  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
-                              (bounded-nat-listp index-list (len fa-table)))))
-  (or (atom index-list)
-      (and (not (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0))
-           (non-free-cluster-listp (cdr index-list) fa-table))))
-
-(defun free-cluster-listp (index-list fa-table)
-  (declare (xargs :guard (and (fat32-entry-list-p fa-table)
-                              (bounded-nat-listp index-list (len fa-table)))))
-  (or (atom index-list)
-      (and (equal (fat32-entry-mask (nth (car index-list) fa-table)) 0)
-           (free-cluster-listp (cdr index-list) fa-table))))
 
 ;; In the subdirectory case, we need to place all the entries (32 bytes each)
 ;; and two entries (dot and dotdot). The space taken up for these things is
@@ -4291,6 +4286,55 @@
       (:definition update-nth)
       floor nth)))))
 
+(defthm non-free-cluster-listp-correctness-6-lemma-1
+  (implies (and (bounded-nat-listp l (+ b 1))
+                (integerp b))
+           (bounded-nat-listp (remove-equal b l)
+                              b))
+  :hints (("goal" :induct (remove-assoc-equal b l))))
+
+(defthm
+  non-free-cluster-listp-correctness-6-lemma-2
+  (implies
+   (non-free-cluster-listp x fa-table)
+   (and
+    (bounded-nat-listp x (len fa-table))
+    (lower-bounded-integer-listp x *ms-first-data-cluster*))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun
+       induction-scheme (x fa-table b)
+     (declare (xargs :verify-guards nil :measure (len fa-table)))
+     (if (<= (len fa-table) (nfix b))
+         (mv x fa-table b)
+         (induction-scheme (remove-equal (- (len fa-table) 1) x)
+                           (butlast fa-table 1)
+                           b))))
+
+  (defthm non-free-cluster-listp-correctness-6-lemma-3
+    (implies (and (lower-bounded-integer-listp x b)
+                  (bounded-nat-listp x (len fa-table))
+                  (no-duplicatesp-equal x)
+                  (<= b (len fa-table)))
+             (<= (+ (len x) b) (len fa-table)))
+    :rule-classes :linear
+    :hints (("goal" :induct (induction-scheme x fa-table b)))))
+
+(defthm
+  non-free-cluster-listp-correctness-6
+  (implies (and (<= *ms-first-data-cluster* (len fa-table))
+                (non-free-cluster-listp x fa-table)
+                (no-duplicatesp-equal x))
+           (<= (+ 2 (len x)) (len fa-table)))
+  :hints
+  (("goal"
+    :in-theory (disable non-free-cluster-listp-correctness-6-lemma-3)
+    :use (:instance non-free-cluster-listp-correctness-6-lemma-3
+                    (b *ms-first-data-cluster*)))))
+
 (defund-nx
   lofat-equiv
   (fat32-in-memory1 fat32-in-memory2)
@@ -4329,16 +4373,16 @@
        ;; going to involve reasoning about the number of clusters taken up by
        ;; an m1 instance, which is not really where it's at right now.
        ;;
-       ;; One reason why this clause might not be true: we aren't requiring dot
-       ;; and dotdot entries to exist (except vaguely, by making sure that we
-       ;; don't have 65535 or 65536 useful directory entries in any directory.)
-       ;; As a result, it's possible for a lofat instance to exist which
-       ;; completely fills up the available clusters on the disk, but which
-       ;; leaves out at least one dot or dotdot entry, with the result that
-       ;; attempting to remake the stobj after coverting to hifat would cause
-       ;; the directory with the missing dot/dotdot entry to cross a cluster
-       ;; boundary and therefore occupy more space than available in the
-       ;; stobj. This scenario wouldn't even need a directory with 65535 or
+       ;; One reason why this clause will not always be true: we aren't
+       ;; requiring dot and dotdot entries to exist (except vaguely, by making
+       ;; sure that we don't have 65535 or 65536 useful directory entries in
+       ;; any directory.)  As a result, it's possible for a lofat instance to
+       ;; exist which completely fills up the available clusters on the disk,
+       ;; but which leaves out at least one dot or dotdot entry, with the
+       ;; result that attempting to remake the stobj after coverting to hifat
+       ;; would cause the directory with the missing dot/dotdot entry to cross
+       ;; a cluster boundary and therefore occupy more space than available in
+       ;; the stobj. This scenario wouldn't even need a directory with 65535 or
        ;; 65536 useful directory entries. The largest possible cluster size for
        ;; FAT32 is 2^15 bytes, which is a multiple of all other possible
        ;; cluster sizes - so let's consider an example where a directory
@@ -4347,13 +4391,23 @@
        ;; write back this directory, we'll have 3 clusters occupied by this
        ;; directory, or 5 or 9 or something. The problem is clear.
        ;;
-       ;; The solution is to return a non-zero error code when a directory is
+       ;; One solution is to return a non-zero error code when a directory is
        ;; encountered without a dot or dotdot entry in it. Anything else wrecks
        ;; our guarantees that the transformation from lofat to hifat is
        ;; reversible. Then, the reasoning will involve the number of clusters
        ;; taken up for the on-disk representation of a lofat instance. That
        ;; reasoning will also involve proving that we can allocate upto
        ;; (count-of-clusters fat32-in-memory) clusters and no more.
+       ;; But, this solution is not perfect - there still remains the problem
+       ;; of clusters being shared across multiple files. So, if cluster 2
+       ;; begins the root directory's clusterchain, and cluster 3 begins a
+       ;; different clusterchain of length 1, then the rest of the clusters
+       ;; could be filled up with directory files in which all the regular
+       ;; file entries point to cluster 3. This would create a filesystem with
+       ;; a huge number of identical files, and after converting it to HiFAT we
+       ;; wouldn't be able to convert it back to LoFAT because of space
+       ;; issues. There's no simple solution to this thing other than insisting
+       ;; that all clusterchains should be disjoint from each other.
        ;;
        ;; By the way, what are our guarantees? We assure that a lofat instance
        ;; which can successfully be transformed to a hifat instance has no more
