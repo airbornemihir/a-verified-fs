@@ -3952,6 +3952,1110 @@
                                          current-dir-first-cluster)))
          1))))))))
 
+(defthm
+  free-index-listp-of-set-indices-in-fa-table
+  (implies
+   (and (not (free-index-listp index-list1 fa-table))
+        (fat32-masked-entry-list-p value-list)
+        (lower-bounded-integer-listp value-list *ms-first-data-cluster*)
+        (equal (len index-list2)
+               (len value-list)))
+   (not (free-index-listp
+         index-list1
+         (set-indices-in-fa-table fa-table index-list2 value-list))))
+  :hints
+  (("goal"
+    :in-theory (enable set-indices-in-fa-table)
+    :induct (set-indices-in-fa-table fa-table index-list2 value-list))))
+
+(defthm
+  free-index-listp-of-effective-fat-of-place-contents
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (not (free-index-listp index-list
+                               (effective-fat fat32-in-memory)))
+        (integerp first-cluster)
+        (<= *ms-first-data-cluster* first-cluster)
+        (stringp contents))
+   (not
+    (free-index-listp
+     index-list
+     (effective-fat
+      (mv-nth 0
+              (place-contents fat32-in-memory dir-ent
+                              contents file-length first-cluster))))))
+  :hints (("goal" :in-theory (enable place-contents)
+           :do-not-induct t)))
+
+(defthm
+  free-index-listp-of-effective-fat-of-hifat-to-lofat-helper
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (not (free-index-listp index-list
+                           (effective-fat fat32-in-memory))))
+   (not
+    (free-index-listp
+     index-list
+     (effective-fat
+      (mv-nth 0
+              (hifat-to-lofat-helper
+               fat32-in-memory
+               fs current-dir-first-cluster)))))))
+
+(defthm
+  hifat-to-lofat-inversion-lemma-18
+  (implies
+   (and
+    (equal
+     (mv-nth
+      2
+      (hifat-to-lofat-helper
+       (update-fati
+        (nth
+         0
+         (find-n-free-clusters
+          (effective-fat
+           (mv-nth 0
+                   (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                          current-dir-first-cluster)))
+          1))
+        (fat32-update-lower-28
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            1))
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         268435455)
+        (mv-nth 0
+                (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                       current-dir-first-cluster)))
+       (m1-file->contents (cdr (car fs)))
+       (nth
+        0
+        (find-n-free-clusters
+         (effective-fat
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         1))))
+     0)
+    (equal (mv-nth 2
+                   (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                          current-dir-first-cluster))
+           0)
+    (<=
+     0
+     (+
+      -1
+      (len
+       (make-clusters
+        (nats=>string
+         (append
+          (dir-ent-install-directory-bit
+           (dir-ent-set-filename
+            (dir-ent-set-first-cluster-file-size
+             (m1-file->dir-ent (cdr (car fs)))
+             (nth
+              0
+              (find-n-free-clusters
+               (effective-fat
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster)))
+               1))
+             0)
+            ".          ")
+           t)
+          (dir-ent-install-directory-bit
+           (dir-ent-set-filename (dir-ent-set-first-cluster-file-size
+                                  (m1-file->dir-ent (cdr (car fs)))
+                                  current-dir-first-cluster 0)
+                                 "..         ")
+           t)
+          (flatten
+           (mv-nth
+            1
+            (hifat-to-lofat-helper
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster)))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                  current-dir-first-cluster)))
+                  1))
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster)))
+               268435455)
+              (mv-nth 0
+                      (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                             current-dir-first-cluster)))
+             (m1-file->contents (cdr (car fs)))
+             (nth
+              0
+              (find-n-free-clusters
+               (effective-fat
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster)))
+               1)))))))
+        (cluster-size fat32-in-memory)))))
+    (<=
+     (+
+      -1
+      (len
+       (make-clusters
+        (nats=>string
+         (append
+          (dir-ent-install-directory-bit
+           (dir-ent-set-filename
+            (dir-ent-set-first-cluster-file-size
+             (m1-file->dir-ent (cdr (car fs)))
+             (nth
+              0
+              (find-n-free-clusters
+               (effective-fat
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster)))
+               1))
+             0)
+            ".          ")
+           t)
+          (dir-ent-install-directory-bit
+           (dir-ent-set-filename (dir-ent-set-first-cluster-file-size
+                                  (m1-file->dir-ent (cdr (car fs)))
+                                  current-dir-first-cluster 0)
+                                 "..         ")
+           t)
+          (flatten
+           (mv-nth
+            1
+            (hifat-to-lofat-helper
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster)))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                  current-dir-first-cluster)))
+                  1))
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster)))
+               268435455)
+              (mv-nth 0
+                      (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                             current-dir-first-cluster)))
+             (m1-file->contents (cdr (car fs)))
+             (nth
+              0
+              (find-n-free-clusters
+               (effective-fat
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster)))
+               1)))))))
+        (cluster-size fat32-in-memory))))
+     (count-free-clusters
+      (effective-fat
+       (mv-nth
+        0
+        (hifat-to-lofat-helper
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              1))
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         (m1-file->contents (cdr (car fs)))
+         (nth
+          0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1)))))))
+    (consp fs)
+    (<= 1
+        (count-free-clusters
+         (effective-fat
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))))
+    (<
+     (nth 0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1))
+     (fat-entry-count fat32-in-memory))
+    (not (m1-regular-file-p (cdr (car fs))))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper-exec
+       (mv-nth 0
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster))
+       (mv-nth 1
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster))
+       (+ -1 entry-limit
+          (- (hifat-entry-count (m1-file->contents (cdr (car fs))))))))
+     0)
+    (not-intersectp-list
+     x
+     (mv-nth
+      2
+      (lofat-to-hifat-helper-exec
+       (mv-nth 0
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster))
+       (mv-nth 1
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster))
+       (+ -1 entry-limit
+          (- (hifat-entry-count (m1-file->contents (cdr (car fs)))))))))
+    (hifat-equiv
+     (mv-nth
+      0
+      (lofat-to-hifat-helper-exec
+       (mv-nth 0
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster))
+       (mv-nth 1
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster))
+       (+ -1 entry-limit
+          (- (hifat-entry-count (m1-file->contents (cdr (car fs))))))))
+     (cdr fs))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper-exec
+       (mv-nth
+        0
+        (hifat-to-lofat-helper
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              1))
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         (m1-file->contents (cdr (car fs)))
+         (nth
+          0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1))))
+       (mv-nth
+        1
+        (hifat-to-lofat-helper
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              1))
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         (m1-file->contents (cdr (car fs)))
+         (nth
+          0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1))))
+       (+ -1 entry-limit)))
+     0)
+    (not-intersectp-list
+     (cons
+      (nth
+       0
+       (find-n-free-clusters
+        (effective-fat
+         (mv-nth 0
+                 (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                        current-dir-first-cluster)))
+        1))
+      x)
+     (mv-nth
+      2
+      (lofat-to-hifat-helper-exec
+       (mv-nth
+        0
+        (hifat-to-lofat-helper
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              1))
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         (m1-file->contents (cdr (car fs)))
+         (nth
+          0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1))))
+       (mv-nth
+        1
+        (hifat-to-lofat-helper
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              1))
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         (m1-file->contents (cdr (car fs)))
+         (nth
+          0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1))))
+       (+ -1 entry-limit))))
+    (hifat-equiv
+     (mv-nth
+      0
+      (lofat-to-hifat-helper-exec
+       (mv-nth
+        0
+        (hifat-to-lofat-helper
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              1))
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         (m1-file->contents (cdr (car fs)))
+         (nth
+          0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1))))
+       (mv-nth
+        1
+        (hifat-to-lofat-helper
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              1))
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         (m1-file->contents (cdr (car fs)))
+         (nth
+          0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1))))
+       (+ -1 entry-limit)))
+     (m1-file->contents (cdr (car fs))))
+    (lofat-fs-p fat32-in-memory)
+    (m1-file-alist-p fs)
+    (hifat-bounded-file-alist-p fs)
+    (hifat-no-dups-p (cdr fs))
+    (consp (car fs))
+    (not (consp (assoc-equal (car (car fs)) (cdr fs))))
+    (hifat-no-dups-p (m1-file->contents (cdr (car fs))))
+    (integerp entry-limit)
+    (<= (hifat-entry-count fs) entry-limit)
+    (non-free-index-listp x (effective-fat fat32-in-memory))
+    (<=
+     2
+     (nth 0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1)))
+    (<
+     (nth 0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1))
+     (+ 2 (count-of-clusters fat32-in-memory)))
+    (<=
+     (*
+      (cluster-size fat32-in-memory)
+      (len
+       (make-clusters
+        (nats=>string
+         (append
+          (dir-ent-install-directory-bit
+           (dir-ent-set-filename
+            (dir-ent-set-first-cluster-file-size
+             (m1-file->dir-ent (cdr (car fs)))
+             (nth
+              0
+              (find-n-free-clusters
+               (effective-fat
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster)))
+               1))
+             0)
+            ".          ")
+           t)
+          (dir-ent-install-directory-bit
+           (dir-ent-set-filename (dir-ent-set-first-cluster-file-size
+                                  (m1-file->dir-ent (cdr (car fs)))
+                                  current-dir-first-cluster 0)
+                                 "..         ")
+           t)
+          (flatten
+           (mv-nth
+            1
+            (hifat-to-lofat-helper
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster)))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                  current-dir-first-cluster)))
+                  1))
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster)))
+               268435455)
+              (mv-nth 0
+                      (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                             current-dir-first-cluster)))
+             (m1-file->contents (cdr (car fs)))
+             (nth
+              0
+              (find-n-free-clusters
+               (effective-fat
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster)))
+               1)))))))
+        (cluster-size fat32-in-memory))))
+     2097152)
+    (<= 0
+        (+ -1 entry-limit
+           (- (hifat-entry-count (m1-file->contents (cdr (car fs))))))))
+   (not-intersectp-list
+    (cons
+     (nth 0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1))
+     (find-n-free-clusters
+      (effective-fat
+       (mv-nth
+        0
+        (hifat-to-lofat-helper
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (effective-fat
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              1))
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         (m1-file->contents (cdr (car fs)))
+         (nth
+          0
+          (find-n-free-clusters
+           (effective-fat
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           1)))))
+      (+
+       -1
+       (len
+        (make-clusters
+         (nats=>string
+          (append
+           (dir-ent-install-directory-bit
+            (dir-ent-set-filename
+             (dir-ent-set-first-cluster-file-size
+              (m1-file->dir-ent (cdr (car fs)))
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster)))
+                1))
+              0)
+             ".          ")
+            t)
+           (dir-ent-install-directory-bit
+            (dir-ent-set-filename (dir-ent-set-first-cluster-file-size
+                                   (m1-file->dir-ent (cdr (car fs)))
+                                   current-dir-first-cluster 0)
+                                  "..         ")
+            t)
+           (flatten
+            (mv-nth
+             1
+             (hifat-to-lofat-helper
+              (update-fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (effective-fat
+                  (mv-nth 0
+                          (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                 current-dir-first-cluster)))
+                 1))
+               (fat32-update-lower-28
+                (fati
+                 (nth
+                  0
+                  (find-n-free-clusters
+                   (effective-fat
+                    (mv-nth 0
+                            (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                   current-dir-first-cluster)))
+                   1))
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster)))
+                268435455)
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              (m1-file->contents (cdr (car fs)))
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster)))
+                1)))))))
+         (cluster-size fat32-in-memory))))))
+    (mv-nth
+     2
+     (lofat-to-hifat-helper-exec
+      (mv-nth 0
+              (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                     current-dir-first-cluster))
+      (mv-nth 1
+              (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                     current-dir-first-cluster))
+      (+ -1 entry-limit
+         (- (hifat-entry-count (m1-file->contents (cdr (car fs))))))))))
+  :hints
+  (("Goal" :do-not-induct t
+    :in-theory (disable (:REWRITE NOT-INTERSECTP-LIST-OF-APPEND-2)
+                        (:rewrite not-intersect-listp-of-lofat-to-hifat-helper-exec))
+    :use
+    ((:instance
+      (:rewrite not-intersectp-list-of-append-2)
+      (l
+       (mv-nth
+        2
+        (lofat-to-hifat-helper-exec
+         (mv-nth
+          0
+          (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                 current-dir-first-cluster))
+         (mv-nth
+          1
+          (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                 current-dir-first-cluster))
+         (+ -1 entry-limit
+            (- (hifat-entry-count
+                (m1-file->contents (cdr (car fs)))))))))
+      (y
+       (find-n-free-clusters
+        (effective-fat
+         (mv-nth
+          0
+          (hifat-to-lofat-helper
+           (update-fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper
+                        fat32-in-memory (cdr fs)
+                        current-dir-first-cluster)))
+              1))
+            (fat32-update-lower-28
+             (fati
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (hifat-to-lofat-helper
+                          fat32-in-memory (cdr fs)
+                          current-dir-first-cluster)))
+                1))
+              (mv-nth
+               0
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster)))
+             268435455)
+            (mv-nth
+             0
+             (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                    current-dir-first-cluster)))
+           (m1-file->contents (cdr (car fs)))
+           (nth
+            0
+            (find-n-free-clusters
+             (effective-fat
+              (mv-nth
+               0
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster)))
+             1)))))
+        (+
+         -1
+         (len
+          (make-clusters
+           (nats=>string
+            (append
+             (dir-ent-install-directory-bit
+              (dir-ent-set-filename
+               (dir-ent-set-first-cluster-file-size
+                (m1-file->dir-ent (cdr (car fs)))
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (hifat-to-lofat-helper
+                            fat32-in-memory (cdr fs)
+                            current-dir-first-cluster)))
+                  1))
+                0)
+               ".          ")
+              t)
+             (dir-ent-install-directory-bit
+              (dir-ent-set-filename
+               (dir-ent-set-first-cluster-file-size
+                (m1-file->dir-ent (cdr (car fs)))
+                current-dir-first-cluster 0)
+               "..         ")
+              t)
+             (flatten
+              (mv-nth
+               1
+               (hifat-to-lofat-helper
+                (update-fati
+                 (nth
+                  0
+                  (find-n-free-clusters
+                   (effective-fat
+                    (mv-nth 0
+                            (hifat-to-lofat-helper
+                             fat32-in-memory (cdr fs)
+                             current-dir-first-cluster)))
+                   1))
+                 (fat32-update-lower-28
+                  (fati
+                   (nth
+                    0
+                    (find-n-free-clusters
+                     (effective-fat
+                      (mv-nth 0
+                              (hifat-to-lofat-helper
+                               fat32-in-memory (cdr fs)
+                               current-dir-first-cluster)))
+                     1))
+                   (mv-nth 0
+                           (hifat-to-lofat-helper
+                            fat32-in-memory (cdr fs)
+                            current-dir-first-cluster)))
+                  268435455)
+                 (mv-nth 0
+                         (hifat-to-lofat-helper
+                          fat32-in-memory (cdr fs)
+                          current-dir-first-cluster)))
+                (m1-file->contents (cdr (car fs)))
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (hifat-to-lofat-helper
+                            fat32-in-memory (cdr fs)
+                            current-dir-first-cluster)))
+                  1)))))))
+           (cluster-size fat32-in-memory))))))
+      (x
+       (list
+        (nth
+         0
+         (find-n-free-clusters
+          (effective-fat
+           (mv-nth
+            0
+            (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                   current-dir-first-cluster)))
+          1)))))
+     (:instance
+      (:rewrite not-intersect-listp-of-lofat-to-hifat-helper-exec)
+      (entry-limit
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count (m1-file->contents (cdr (car fs)))))))
+      (dir-ent-list
+       (mv-nth 1
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster)))
+      (fat32-in-memory
+       (mv-nth 0
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster)))
+      (index-list
+       (find-n-free-clusters
+        (effective-fat
+         (mv-nth
+          0
+          (hifat-to-lofat-helper
+           (update-fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper
+                        fat32-in-memory (cdr fs)
+                        current-dir-first-cluster)))
+              1))
+            (fat32-update-lower-28
+             (fati
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (hifat-to-lofat-helper
+                          fat32-in-memory (cdr fs)
+                          current-dir-first-cluster)))
+                1))
+              (mv-nth
+               0
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster)))
+             268435455)
+            (mv-nth
+             0
+             (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                    current-dir-first-cluster)))
+           (m1-file->contents (cdr (car fs)))
+           (nth
+            0
+            (find-n-free-clusters
+             (effective-fat
+              (mv-nth
+               0
+               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                      current-dir-first-cluster)))
+             1)))))
+        (+
+         -1
+         (len
+          (make-clusters
+           (nats=>string
+            (append
+             (dir-ent-install-directory-bit
+              (dir-ent-set-filename
+               (dir-ent-set-first-cluster-file-size
+                (m1-file->dir-ent (cdr (car fs)))
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (hifat-to-lofat-helper
+                            fat32-in-memory (cdr fs)
+                            current-dir-first-cluster)))
+                  1))
+                0)
+               ".          ")
+              t)
+             (dir-ent-install-directory-bit
+              (dir-ent-set-filename
+               (dir-ent-set-first-cluster-file-size
+                (m1-file->dir-ent (cdr (car fs)))
+                current-dir-first-cluster 0)
+               "..         ")
+              t)
+             (flatten
+              (mv-nth
+               1
+               (hifat-to-lofat-helper
+                (update-fati
+                 (nth
+                  0
+                  (find-n-free-clusters
+                   (effective-fat
+                    (mv-nth 0
+                            (hifat-to-lofat-helper
+                             fat32-in-memory (cdr fs)
+                             current-dir-first-cluster)))
+                   1))
+                 (fat32-update-lower-28
+                  (fati
+                   (nth
+                    0
+                    (find-n-free-clusters
+                     (effective-fat
+                      (mv-nth 0
+                              (hifat-to-lofat-helper
+                               fat32-in-memory (cdr fs)
+                               current-dir-first-cluster)))
+                     1))
+                   (mv-nth 0
+                           (hifat-to-lofat-helper
+                            fat32-in-memory (cdr fs)
+                            current-dir-first-cluster)))
+                  268435455)
+                 (mv-nth 0
+                         (hifat-to-lofat-helper
+                          fat32-in-memory (cdr fs)
+                          current-dir-first-cluster)))
+                (m1-file->contents (cdr (car fs)))
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (hifat-to-lofat-helper
+                            fat32-in-memory (cdr fs)
+                            current-dir-first-cluster)))
+                  1)))))))
+           (cluster-size fat32-in-memory)))))))))
+   ))
+
 (encapsulate
   ()
 
@@ -4496,274 +5600,276 @@
                                                   dir-ent-list entry-limit))
               fs))))))
 
-  (skip-proofs
-   (defthmd
+  (defthmd
     hifat-to-lofat-inversion-big-induction-subgoal-1-5
-     (implies
-      (and
-       (consp fs)
-       (zp (mv-nth 2
-                   (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                          current-dir-first-cluster)))
-       (not (or (equal (car (car fs)) ".          ")
-                (equal (car (car fs)) "..         ")))
-       (not (and (m1-regular-file-p (cdr (car fs)))
-                 (equal (length (m1-file->contents (cdr (car fs))))
-                        0)))
-       (<= 1
-           (len (stobj-find-n-free-clusters
-                 (mv-nth 0
-                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster))
-                 1)))
-       (< (nth 0
-               (stobj-find-n-free-clusters
+    (implies
+     (and
+      (consp fs)
+      (zp (mv-nth 2
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+      (not (or (equal (car (car fs)) ".          ")
+               (equal (car (car fs)) "..         ")))
+      (not (and (m1-regular-file-p (cdr (car fs)))
+                (equal (length (m1-file->contents (cdr (car fs))))
+                       0)))
+      (<= 1
+          (len (stobj-find-n-free-clusters
                 (mv-nth 0
                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
                                                current-dir-first-cluster))
-                1))
-          (fat-length fat32-in-memory))
-       (not (m1-regular-file-p (cdr (car fs))))
-       (zp
-        (mv-nth
-         2
-         (hifat-to-lofat-helper
-          (update-fati
-           (nth 0
-                (stobj-find-n-free-clusters
-                 (mv-nth 0
-                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster))
-                 1))
-           (fat32-update-lower-28
-            (fati
-             (nth 0
-                  (stobj-find-n-free-clusters
-                   (mv-nth 0
-                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                  current-dir-first-cluster))
-                   1))
-             (mv-nth 0
-                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                            current-dir-first-cluster)))
-            268435455)
-           (mv-nth 0
-                   (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                          current-dir-first-cluster)))
-          (m1-file->contents (cdr (car fs)))
+                1)))
+      (< (nth 0
+              (stobj-find-n-free-clusters
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster))
+               1))
+         (fat-length fat32-in-memory))
+      (not (m1-regular-file-p (cdr (car fs))))
+      (zp
+       (mv-nth
+        2
+        (hifat-to-lofat-helper
+         (update-fati
           (nth 0
                (stobj-find-n-free-clusters
                 (mv-nth 0
                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
                                                current-dir-first-cluster))
-                1)))))
-       (implies
-        (and
-         (lofat-fs-p fat32-in-memory)
-         (m1-file-alist-p (cdr fs))
-         (hifat-bounded-file-alist-p (cdr fs))
-         (hifat-no-dups-p (cdr fs))
-         (integerp
-          (+ entry-limit
-             (- (if (m1-regular-file-p (cdr (car fs)))
-                    1
-                    (+ 1
-                       (hifat-entry-count (m1-file->contents (cdr (car fs)))))))))
-         (<=
-          (hifat-entry-count (cdr fs))
-          (+ entry-limit
-             (- (if (m1-regular-file-p (cdr (car fs)))
-                    1
-                    (+ 1
-                       (hifat-entry-count (m1-file->contents (cdr (car fs)))))))))
-         (non-free-index-listp x (effective-fat fat32-in-memory)))
-        (let
-         ((mv (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                     current-dir-first-cluster))
-          (fs (cdr fs))
-          (entry-limit
-           (+
-            entry-limit
-            (- (if (m1-regular-file-p (cdr (car fs)))
-                   1
-                   (+ 1
-                      (hifat-entry-count (m1-file->contents (cdr (car fs))))))))))
-         (let
-          ((fat32-in-memory (mv-nth 0 mv))
-           (dir-ent-list (mv-nth 1 mv))
-           (error-code (mv-nth 2 mv)))
-          (implies
-           (zp error-code)
-           (and
-            (equal (mv-nth 3
-                           (lofat-to-hifat-helper-exec fat32-in-memory
-                                                       dir-ent-list entry-limit))
-                   0)
-            (not-intersectp-list
-             x
-             (mv-nth 2
-                     (lofat-to-hifat-helper-exec fat32-in-memory
-                                                 dir-ent-list entry-limit)))
-            (hifat-equiv
-             (mv-nth 0
-                     (lofat-to-hifat-helper-exec fat32-in-memory
-                                                 dir-ent-list entry-limit))
-             fs))))))
-       (implies
-        (and
-         (lofat-fs-p
-          (update-fati
-           (nth 0
-                (stobj-find-n-free-clusters
-                 (mv-nth 0
-                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster))
-                 1))
-           (fat32-update-lower-28
-            (fati
-             (nth 0
-                  (stobj-find-n-free-clusters
-                   (mv-nth 0
-                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                  current-dir-first-cluster))
-                   1))
-             (mv-nth 0
-                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                            current-dir-first-cluster)))
-            268435455)
-           (mv-nth 0
-                   (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                          current-dir-first-cluster))))
-         (m1-file-alist-p (m1-file->contents (cdr (car fs))))
-         (hifat-bounded-file-alist-p (m1-file->contents (cdr (car fs))))
-         (hifat-no-dups-p (m1-file->contents (cdr (car fs))))
-         (integerp (+ -1 entry-limit))
-         (<= (hifat-entry-count (m1-file->contents (cdr (car fs))))
-             (+ -1 entry-limit))
-         (non-free-index-listp
-          (cons
-           (nth 0
-                (stobj-find-n-free-clusters
-                 (mv-nth 0
-                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster))
-                 1))
-           x)
-          (effective-fat
-           (update-fati
+                1))
+          (fat32-update-lower-28
+           (fati
             (nth 0
                  (stobj-find-n-free-clusters
                   (mv-nth 0
                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
                                                  current-dir-first-cluster))
                   1))
-            (fat32-update-lower-28
-             (fati
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster)))
+         (m1-file->contents (cdr (car fs)))
+         (nth 0
+              (stobj-find-n-free-clusters
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster))
+               1)))))
+      (implies
+       (and
+        (lofat-fs-p fat32-in-memory)
+        (m1-file-alist-p (cdr fs))
+        (hifat-bounded-file-alist-p (cdr fs))
+        (hifat-no-dups-p (cdr fs))
+        (integerp
+         (+ entry-limit
+            (- (if (m1-regular-file-p (cdr (car fs)))
+                   1
+                 (+ 1
+                    (hifat-entry-count (m1-file->contents (cdr (car fs)))))))))
+        (<=
+         (hifat-entry-count (cdr fs))
+         (+ entry-limit
+            (- (if (m1-regular-file-p (cdr (car fs)))
+                   1
+                 (+ 1
+                    (hifat-entry-count (m1-file->contents (cdr (car fs)))))))))
+        (non-free-index-listp x (effective-fat fat32-in-memory)))
+       (let
+           ((mv (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                       current-dir-first-cluster))
+            (fs (cdr fs))
+            (entry-limit
+             (+
+              entry-limit
+              (- (if (m1-regular-file-p (cdr (car fs)))
+                     1
+                   (+ 1
+                      (hifat-entry-count (m1-file->contents (cdr (car fs))))))))))
+         (let
+             ((fat32-in-memory (mv-nth 0 mv))
+              (dir-ent-list (mv-nth 1 mv))
+              (error-code (mv-nth 2 mv)))
+           (implies
+            (zp error-code)
+            (and
+             (equal (mv-nth 3
+                            (lofat-to-hifat-helper-exec fat32-in-memory
+                                                        dir-ent-list entry-limit))
+                    0)
+             (not-intersectp-list
+              x
+              (mv-nth 2
+                      (lofat-to-hifat-helper-exec fat32-in-memory
+                                                  dir-ent-list entry-limit)))
+             (hifat-equiv
+              (mv-nth 0
+                      (lofat-to-hifat-helper-exec fat32-in-memory
+                                                  dir-ent-list entry-limit))
+              fs))))))
+      (implies
+       (and
+        (lofat-fs-p
+         (update-fati
+          (nth 0
+               (stobj-find-n-free-clusters
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster))
+                1))
+          (fat32-update-lower-28
+           (fati
+            (nth 0
+                 (stobj-find-n-free-clusters
+                  (mv-nth 0
+                          (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                 current-dir-first-cluster))
+                  1))
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           268435455)
+          (mv-nth 0
+                  (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                         current-dir-first-cluster))))
+        (m1-file-alist-p (m1-file->contents (cdr (car fs))))
+        (hifat-bounded-file-alist-p (m1-file->contents (cdr (car fs))))
+        (hifat-no-dups-p (m1-file->contents (cdr (car fs))))
+        (integerp (+ -1 entry-limit))
+        (<= (hifat-entry-count (m1-file->contents (cdr (car fs))))
+            (+ -1 entry-limit))
+        (non-free-index-listp
+         (cons
+          (nth 0
+               (stobj-find-n-free-clusters
+                (mv-nth 0
+                        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                               current-dir-first-cluster))
+                1))
+          x)
+         (effective-fat
+          (update-fati
+           (nth 0
+                (stobj-find-n-free-clusters
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster))
+                 1))
+           (fat32-update-lower-28
+            (fati
+             (nth 0
+                  (stobj-find-n-free-clusters
+                   (mv-nth 0
+                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                  current-dir-first-cluster))
+                   1))
+             (mv-nth 0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+            268435455)
+           (mv-nth 0
+                   (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                          current-dir-first-cluster))))))
+       (let
+           ((mv
+             (hifat-to-lofat-helper
+              (update-fati
+               (nth 0
+                    (stobj-find-n-free-clusters
+                     (mv-nth 0
+                             (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                    current-dir-first-cluster))
+                     1))
+               (fat32-update-lower-28
+                (fati
+                 (nth
+                  0
+                  (stobj-find-n-free-clusters
+                   (mv-nth 0
+                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                  current-dir-first-cluster))
+                   1))
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster)))
+                268435455)
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              (m1-file->contents (cdr (car fs)))
+              (nth 0
+                   (stobj-find-n-free-clusters
+                    (mv-nth 0
+                            (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                   current-dir-first-cluster))
+                    1))))
+            (fs (m1-file->contents (cdr (car fs))))
+            (x
+             (cons
               (nth 0
                    (stobj-find-n-free-clusters
                     (mv-nth 0
                             (hifat-to-lofat-helper fat32-in-memory (cdr fs)
                                                    current-dir-first-cluster))
                     1))
-              (mv-nth 0
-                      (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                             current-dir-first-cluster)))
-             268435455)
-            (mv-nth 0
-                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                           current-dir-first-cluster))))))
-        (let
-         ((mv
-           (hifat-to-lofat-helper
-            (update-fati
-             (nth 0
-                  (stobj-find-n-free-clusters
-                   (mv-nth 0
-                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                  current-dir-first-cluster))
-                   1))
-             (fat32-update-lower-28
-              (fati
-               (nth
-                0
-                (stobj-find-n-free-clusters
-                 (mv-nth 0
-                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                current-dir-first-cluster))
-                 1))
-               (mv-nth 0
-                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                              current-dir-first-cluster)))
-              268435455)
-             (mv-nth 0
-                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                            current-dir-first-cluster)))
-            (m1-file->contents (cdr (car fs)))
-            (nth 0
-                 (stobj-find-n-free-clusters
-                  (mv-nth 0
-                          (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                 current-dir-first-cluster))
-                  1))))
-          (fs (m1-file->contents (cdr (car fs))))
-          (x
-           (cons
-            (nth 0
-                 (stobj-find-n-free-clusters
-                  (mv-nth 0
-                          (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                                 current-dir-first-cluster))
-                  1))
-            x))
-          (entry-limit (+ -1 entry-limit)))
+              x))
+            (entry-limit (+ -1 entry-limit)))
          (let
-          ((fat32-in-memory (mv-nth 0 mv))
-           (dir-ent-list (mv-nth 1 mv))
-           (error-code (mv-nth 2 mv)))
-          (implies
-           (zp error-code)
-           (and
-            (equal (mv-nth 3
-                           (lofat-to-hifat-helper-exec fat32-in-memory
-                                                       dir-ent-list entry-limit))
-                   0)
-            (not-intersectp-list
-             x
-             (mv-nth 2
-                     (lofat-to-hifat-helper-exec fat32-in-memory
-                                                 dir-ent-list entry-limit)))
-            (hifat-equiv
-             (mv-nth 0
-                     (lofat-to-hifat-helper-exec fat32-in-memory
-                                                 dir-ent-list entry-limit))
-             fs))))))
-       (lofat-fs-p fat32-in-memory)
-       (m1-file-alist-p fs)
-       (hifat-bounded-file-alist-p fs)
-       (hifat-no-dups-p fs)
-       (integerp entry-limit)
-       (<= (hifat-entry-count fs) entry-limit)
-       (non-free-index-listp x (effective-fat fat32-in-memory)))
-      (mv-let
-        (fat32-in-memory dir-ent-list error-code)
-        (hifat-to-lofat-helper fat32-in-memory
-                               fs current-dir-first-cluster)
-        (or
-         (not (zp error-code))
-         (and (equal (mv-nth 3
-                             (lofat-to-hifat-helper-exec fat32-in-memory
-                                                         dir-ent-list entry-limit))
-                     0)
-              (not-intersectp-list
-               x
-               (mv-nth 2
-                       (lofat-to-hifat-helper-exec fat32-in-memory
-                                                   dir-ent-list entry-limit)))
-              (hifat-equiv
-               (mv-nth 0
-                       (lofat-to-hifat-helper-exec fat32-in-memory
-                                                   dir-ent-list entry-limit))
-               fs)))))))
+             ((fat32-in-memory (mv-nth 0 mv))
+              (dir-ent-list (mv-nth 1 mv))
+              (error-code (mv-nth 2 mv)))
+           (implies
+            (zp error-code)
+            (and
+             (equal (mv-nth 3
+                            (lofat-to-hifat-helper-exec fat32-in-memory
+                                                        dir-ent-list entry-limit))
+                    0)
+             (not-intersectp-list
+              x
+              (mv-nth 2
+                      (lofat-to-hifat-helper-exec fat32-in-memory
+                                                  dir-ent-list entry-limit)))
+             (hifat-equiv
+              (mv-nth 0
+                      (lofat-to-hifat-helper-exec fat32-in-memory
+                                                  dir-ent-list entry-limit))
+              fs))))))
+      (lofat-fs-p fat32-in-memory)
+      (m1-file-alist-p fs)
+      (hifat-bounded-file-alist-p fs)
+      (hifat-no-dups-p fs)
+      (integerp entry-limit)
+      (<= (hifat-entry-count fs) entry-limit)
+      (non-free-index-listp x (effective-fat fat32-in-memory)))
+     (mv-let
+       (fat32-in-memory dir-ent-list error-code)
+       (hifat-to-lofat-helper fat32-in-memory
+                              fs current-dir-first-cluster)
+       (or
+        (not (zp error-code))
+        (and (equal (mv-nth 3
+                            (lofat-to-hifat-helper-exec fat32-in-memory
+                                                        dir-ent-list entry-limit))
+                    0)
+             (not-intersectp-list
+              x
+              (mv-nth 2
+                      (lofat-to-hifat-helper-exec fat32-in-memory
+                                                  dir-ent-list entry-limit)))
+             (hifat-equiv
+              (mv-nth 0
+                      (lofat-to-hifat-helper-exec fat32-in-memory
+                                                  dir-ent-list entry-limit))
+              fs)))))
+    :hints
+    (("Goal" :do-not-induct t)
+     ))
 
   ;; We tried (in commit aaf008a0e4edf4343b3d33e23d4aeff897cb1138) removing the
   ;; three place-contents-expansion rules in favour of rules which do not
