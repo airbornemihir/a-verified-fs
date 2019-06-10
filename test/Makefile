@@ -51,7 +51,7 @@ GID=$(shell id -g)
 MTOOLSRC=$(shell pwd)/.mtoolsrc
 
 clean:
-	rm *output*
+	rm -f *output*
 
 clean-mountpoint:
 	rm -rf $(MOUNTPOINT)
