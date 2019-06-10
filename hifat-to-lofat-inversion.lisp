@@ -6225,7 +6225,6 @@
           (hifat-no-dups-p fs)
           (integerp entry-limit)
           (>= entry-limit (hifat-entry-count fs))
-          (non-free-index-listp x (effective-fat fat32-in-memory))
           (zp
            (mv-nth
             2
@@ -6243,20 +6242,6 @@
                                               fs current-dir-first-cluster))
                entry-limit))
              0)
-      (not-intersectp-list
-       x
-       (mv-nth
-        2
-        (lofat-to-hifat-helper-exec
-         (mv-nth
-          0
-          (hifat-to-lofat-helper fat32-in-memory
-                                 fs current-dir-first-cluster))
-         (mv-nth
-          1
-          (hifat-to-lofat-helper fat32-in-memory
-                                 fs current-dir-first-cluster))
-         entry-limit)))
       (hifat-equiv
        (mv-nth
         0
@@ -6288,7 +6273,7 @@
       :induct (induction-scheme fat32-in-memory fs
                                 current-dir-first-cluster entry-limit x)
       :in-theory
-      (e/d (lofat-to-hifat-helper-exec (:definition hifat-no-dups-p))
+      (e/d (lofat-to-hifat-helper-exec hifat-no-dups-p)
            ((:rewrite nth-of-nats=>chars)
             (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
             (:rewrite fati-of-hifat-to-lofat-helper-disjoint-lemma-2)
@@ -6300,59 +6285,8 @@
                (:free (fat32-in-memory dir-ent dir-ent-list entry-limit)
                       (lofat-to-hifat-helper-exec fat32-in-memory
                                                   (cons dir-ent dir-ent-list)
-                                                  entry-limit)))))
-    :rule-classes
-    ((:rewrite
-      :corollary
-      (implies
-       (and (lofat-fs-p fat32-in-memory)
-            (m1-file-alist-p fs)
-            (hifat-bounded-file-alist-p fs)
-            (hifat-no-dups-p fs)
-            (fat32-masked-entry-p current-dir-first-cluster)
-            (integerp entry-limit)
-            (>= entry-limit (hifat-entry-count fs))
-            (non-free-index-listp x (effective-fat fat32-in-memory)))
-       (b*
-           (((mv fat32-in-memory dir-ent-list error-code)
-             (hifat-to-lofat-helper fat32-in-memory
-                                    fs current-dir-first-cluster)))
-         (implies
-          (zp error-code)
-          (not-intersectp-list
-           x
-           (mv-nth 2
-                   (lofat-to-hifat-helper-exec fat32-in-memory
-                                               dir-ent-list entry-limit))))))))))
-
-(defthm
-  hifat-to-lofat-inversion-big-induction-corollaries
-  (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (m1-file-alist-p fs)
-        (hifat-bounded-file-alist-p fs)
-        (hifat-no-dups-p fs)
-        (integerp entry-limit)
-        (>= entry-limit (hifat-entry-count fs)))
-   (b*
-       (((mv fat32-in-memory dir-ent-list error-code)
-         (hifat-to-lofat-helper fat32-in-memory
-                                fs current-dir-first-cluster)))
-     (implies
-      (zp error-code)
-      (and
-       (equal (mv-nth 3
-                      (lofat-to-hifat-helper-exec fat32-in-memory
-                                                  dir-ent-list entry-limit))
-              0)
-       (hifat-equiv
-        (mv-nth 0
-                (lofat-to-hifat-helper-exec fat32-in-memory
-                                            dir-ent-list entry-limit))
-        fs)))))
-  :hints (("goal" :in-theory (disable hifat-to-lofat-inversion-big-induction)
-           :use (:instance hifat-to-lofat-inversion-big-induction
-                           (x nil)))))
+                                                  entry-limit))
+               (hifat-entry-count fs))))))
 
 (defthmd hifat-to-lofat-inversion-lemma-10
   (implies
