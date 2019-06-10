@@ -167,16 +167,6 @@
                           fd-table file-table))))))
 
 (defthm
-  lofat-pread-refinement-lemma-1
-  (equal
-   (m1-regular-file-p (m1-file dir-ent contents))
-   (and
-    (stringp (m1-file-contents-fix contents))
-    (unsigned-byte-p 32
-                     (length (m1-file-contents-fix contents)))))
-  :hints (("goal" :in-theory (enable m1-regular-file-p))))
-
-(defthm
   lofat-pread-refinement-lemma-2
   (b*
       (((mv file &)
