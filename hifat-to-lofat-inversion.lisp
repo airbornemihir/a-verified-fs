@@ -565,6 +565,44 @@
            (useful-dir-ent-list-p (cdr dir-ent-list)))
   :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
 
+;; This function simply removes the directory entries corresponding to the
+;; given filename. Note, it operates on the flattened representation of the
+;; contents of the directory. This is necessary because we're trying to use the
+;; same function for two purposes - actual deletion of files (and directory
+;; entries) as well as detecting the presence of dot and dotdot entries. These
+;; entries (. and ..) simply aren't passed on by make-dir-ent-list, so we can't
+;; wait until after we've done this operation.
+(defun
+  clear-dir-ent (dir-contents filename)
+  (declare
+   (xargs :measure (len dir-contents)
+          :guard (and (fat32-filename-p filename)
+                      (unsigned-byte-listp 8 dir-contents))
+          :guard-hints (("goal" :in-theory (enable dir-ent-p)))
+          :guard-debug t))
+  (b*
+      (((when (< (len dir-contents)
+                 *ms-dir-ent-length*))
+        dir-contents)
+       (dir-ent (take *ms-dir-ent-length* dir-contents))
+       ((when (equal (char (dir-ent-filename dir-ent) 0)
+                     (code-char 0)))
+        dir-contents)
+       ((when (equal (dir-ent-filename dir-ent)
+                     filename))
+        (append
+         (dir-ent-set-filename
+          dir-ent
+          (nats=>string
+           (update-nth 0 229
+                       (string=>nats (dir-ent-filename dir-ent)))))
+         (clear-dir-ent (nthcdr *ms-dir-ent-length* dir-contents)
+                        filename))))
+    (append
+     dir-ent
+     (clear-dir-ent (nthcdr *ms-dir-ent-length* dir-contents)
+                    filename))))
+
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
 ;; / and /tmp/ were to point to the same cluster as their initial cluster.)

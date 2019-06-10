@@ -7069,41 +7069,11 @@ Some (rather awful) testing forms are
    (equal (delete-dir-ent dir-ent-list filename)
           (dir-ent-list-fix dir-ent-list))))
 
-(defun
-  clear-dir-ent (dir-contents filename)
-  (declare
-   (xargs :measure (len dir-contents)
-          :guard (and (fat32-filename-p filename)
-                      (unsigned-byte-listp 8 dir-contents))
-          :guard-hints (("goal" :in-theory (enable dir-ent-p)))
-          :guard-debug t))
-  (b*
-      (((when (< (len dir-contents)
-                 *ms-dir-ent-length*))
-        dir-contents)
-       (dir-ent (take *ms-dir-ent-length* dir-contents))
-       ((when (equal (char (dir-ent-filename dir-ent) 0)
-                     (code-char 0)))
-        dir-contents)
-       ((when (equal (dir-ent-filename dir-ent)
-                     filename))
-        (append
-         (dir-ent-set-filename
-          dir-ent
-          (nats=>string
-           (update-nth 0 229
-                       (string=>nats (dir-ent-filename dir-ent)))))
-         (clear-dir-ent (nthcdr *ms-dir-ent-length* dir-contents)
-                        filename))))
-    (append
-     dir-ent
-     (clear-dir-ent (nthcdr *ms-dir-ent-length* dir-contents)
-                    filename))))
-
 (defthm
   len-of-clear-dir-ent
-  (equal (len (clear-dir-ent dir-contents filename))
-         (len dir-contents))
+  (<= (len (clear-dir-ent dir-contents filename))
+      (len dir-contents))
+  :rule-classes :linear
   :hints (("goal" :in-theory (enable len-when-dir-ent-p))))
 
 (defthm
