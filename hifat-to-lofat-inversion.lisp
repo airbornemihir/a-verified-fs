@@ -6687,6 +6687,37 @@
     :use (:instance non-free-index-listp-correctness-6-lemma-3
                     (b *ms-first-data-cluster*)))))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    lofat-to-hifat-helper-exec-correctness-5-lemma-1
+    (implies (and (integerp cluster-size)
+                  (<= 64 cluster-size))
+             (equal (floor (+ 63 cluster-size) cluster-size)
+                    1))))
+
+(defthm
+  lofat-to-hifat-helper-exec-correctness-5
+  (b* (((mv m1-file-alist &
+            clusterchain-list error-code)
+        (lofat-to-hifat-helper-exec
+         fat32-in-memory
+         dir-ent-list entry-limit)))
+    (implies (and (lofat-fs-p fat32-in-memory) (equal error-code 0))
+             (<= (hifat-cluster-count m1-file-alist (cluster-size fat32-in-memory))
+                 (len (flatten clusterchain-list)))))
+  :hints (("Goal"
+           :in-theory (enable lofat-to-hifat-helper-exec hifat-cluster-count)
+           :induct
+           (lofat-to-hifat-helper-exec
+            fat32-in-memory
+            dir-ent-list entry-limit)
+           :expand (make-clusters "" (cluster-size fat32-in-memory)))
+          ))
+
 (defund-nx
   lofat-equiv
   (fat32-in-memory1 fat32-in-memory2)
