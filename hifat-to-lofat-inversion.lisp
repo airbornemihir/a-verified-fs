@@ -565,6 +565,40 @@
            (useful-dir-ent-list-p (cdr dir-ent-list)))
   :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
 
+;; This is deliberately different from clear-dir-ent, because it only removes
+;; the first instance of the directory entry. That's pretty much all we need,
+;; because we're only going to use this to remove dot and dotdot entries, and
+;; any extra ./.. entries will be cleared out by make-dir-ent-list.
+(defun
+  remove1-dir-ent (dir-contents filename)
+  (declare
+   (xargs :measure (len dir-contents)
+          :guard (unsigned-byte-listp 8 dir-contents)
+          :guard-hints (("goal" :in-theory (enable dir-ent-p)))
+          :guard-debug t))
+  (b*
+      (((when (< (len dir-contents)
+                 *ms-dir-ent-length*))
+        dir-contents)
+       (dir-ent (take *ms-dir-ent-length* dir-contents))
+       ((when (equal (char (dir-ent-filename dir-ent) 0)
+                     (code-char 0)))
+        dir-contents)
+       ((when (equal (dir-ent-filename dir-ent)
+                     filename))
+        (nthcdr *ms-dir-ent-length* dir-contents)))
+    (append
+     dir-ent
+     (remove1-dir-ent (nthcdr *ms-dir-ent-length* dir-contents)
+                    filename))))
+
+(defthm
+  unsigned-byte-listp-of-remove1-dir-ent
+  (implies (unsigned-byte-listp 8 dir-contents)
+           (unsigned-byte-listp
+            8
+            (remove1-dir-ent dir-contents filename))))
+
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
 ;; / and /tmp/ were to point to the same cluster as their initial cluster.)
@@ -662,9 +696,14 @@
             (get-clusterchain fat32-in-memory
                               first-cluster
                               length)))
-       (head-dir-ent-list (if directory-p
-                              (make-dir-ent-list (string=>nats contents))
-                            nil))
+       (contents-without-dot
+        (if directory-p
+            (remove1-dir-ent (string=>nats contents) *current-dir-fat32-name*)
+          nil))
+       (contents-without-dot-or-dotdot
+        (if directory-p
+            (remove1-dir-ent contents-without-dot *parent-dir-fat32-name*)
+          nil))
        ;; head-entry-count and head-clusterchain-list, here, do not include the
        ;; entry or clusterchain respectively for the head itself. Those will be
        ;; added at the end.
@@ -672,7 +711,7 @@
         (if directory-p
             (lofat-to-hifat-helper-exec
              fat32-in-memory
-             head-dir-ent-list
+             (make-dir-ent-list contents-without-dot-or-dotdot)
              (- entry-limit 1))
           (mv contents 0 nil 0)))
        ;; we want entry-limit to serve both as a measure and an upper
@@ -695,7 +734,10 @@
                   ;; to have more than (2^16 -2) useful entries in it, which
                   ;; means it's skipped either the . entry or the .. entry.
                   (and directory-p
-                       (< *ms-max-dir-ent-count* (len head-dir-ent-list))))
+                       (<= (len contents-without-dot)
+                           (- (len (string=>nats contents)) *ms-dir-ent-length*))
+                       (<= (len contents-without-dot-or-dotdot)
+                           (- (len contents-without-dot) *ms-dir-ent-length*))))
                  ;; The three following clauses come around to the point that
                  ;; the whole expression
                  ;; (append (list clusterchain) head-clusterchain-list
@@ -886,6 +928,21 @@
       (disable lofat-to-hifat-helper-exec-correctness-1)
       :use lofat-to-hifat-helper-exec-correctness-1)))))
 
+(defthm true-listp-of-lofat-to-hifat-helper-exec
+  (true-listp (mv-nth 2
+                      (lofat-to-hifat-helper-exec
+                       fat32-in-memory
+                       dir-contents entry-limit))))
+
+(verify-guards
+  lofat-to-hifat-helper-exec
+  :guard-debug t
+  :hints
+  (("goal"
+    :in-theory (disable (:e dir-ent-directory-p)
+                        (:t dir-ent-directory-p)
+                        (:definition fat32-build-index-list)))))
+
 (defthmd
   lofat-to-hifat-helper-exec-correctness-4
   (implies
@@ -929,21 +986,6 @@
             (lofat-to-hifat-helper-exec
              fat32-in-memory
              dir-ent-list entry-limit1))))))
-
-(defthm true-listp-of-lofat-to-hifat-helper-exec
-  (true-listp (mv-nth 2
-                      (lofat-to-hifat-helper-exec
-                       fat32-in-memory
-                       dir-contents entry-limit))))
-
-(verify-guards
-  lofat-to-hifat-helper-exec
-  :guard-debug t
-  :hints
-  (("goal"
-    :in-theory (disable (:e dir-ent-directory-p)
-                        (:t dir-ent-directory-p)
-                        (:definition fat32-build-index-list)))))
 
 (defthm
   hifat-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec

@@ -7069,6 +7069,9 @@ Some (rather awful) testing forms are
    (equal (delete-dir-ent dir-ent-list filename)
           (dir-ent-list-fix dir-ent-list))))
 
+;; Care should be taken before choosing to change this function's
+;; definition. It has the very useful property that the length of the directory
+;; contents remain the same, which means no reallocation is required.
 (defun
   clear-dir-ent (dir-contents filename)
   (declare
