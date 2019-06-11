@@ -33,7 +33,14 @@
   (defthmd
     painful-debugging-lemma-14
     (implies (not (zp cluster-size))
-             (equal (floor (- cluster-size 1) cluster-size) 0))))
+             (equal (floor (- cluster-size 1) cluster-size) 0)))
+
+  (defthmd painful-debugging-lemma-16
+    (implies (and (integerp i1)
+                  (integerp i2)
+                  (not (zp j))
+                  (<= i1 i2))
+             (<= (floor i1 j) (floor i2 j)))))
 
 (defthmd painful-debugging-lemma-15
   (implies (and (integerp x) (integerp y) (< x y))
@@ -1015,6 +1022,7 @@
     (<= (len (make-dir-ent-list dir-contents))
         (floor (len dir-contents)
                *ms-dir-ent-length*))
+    :rule-classes :linear
     :hints (("goal" :in-theory (enable make-dir-ent-list))))
 
   (defthm
@@ -6899,13 +6907,1041 @@
                     1))))
 
 (defthm
+  lofat-to-hifat-helper-exec-correctness-5-lemma-2
+  (implies
+   (equal
+    (len
+     (mv-nth
+      0
+      (fat32-build-index-list (effective-fat fat32-in-memory)
+                              masked-current-cluster file-size
+                              (cluster-size fat32-in-memory))))
+    0)
+   (equal
+    (len (explode$inline
+          (mv-nth '0
+                  (get-clusterchain-contents
+                   fat32-in-memory
+                   masked-current-cluster file-size))))
+    0))
+  :hints
+  (("goal" :in-theory (enable fat32-build-index-list
+                              get-clusterchain-contents))))
+
+(defthm
+  lofat-to-hifat-helper-exec-correctness-5-lemma-3
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (unsigned-byte-p 32 length))
+   (equal (m1-file-contents-fix
+           (mv-nth '0
+                   (get-clusterchain-contents
+                    fat32-in-memory
+                    masked-current-cluster length)))
+          (mv-nth '0
+                  (get-clusterchain-contents
+                   fat32-in-memory
+                   masked-current-cluster length))))
+  :hints
+  (("goal"
+    :in-theory
+    (disable
+     (:rewrite m1-file-contents-fix-when-m1-file-contents-p)
+     (:linear length-of-get-clusterchain-contents))
+    :use
+    ((:linear length-of-get-clusterchain-contents)
+     (:instance
+      (:rewrite m1-file-contents-fix-when-m1-file-contents-p)
+      (x (mv-nth 0
+                 (get-clusterchain-contents
+                  fat32-in-memory
+                  masked-current-cluster length))))))))
+
+(defthm
+  lofat-to-hifat-helper-exec-correctness-5-lemma-4
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (>= masked-current-cluster
+        *ms-first-data-cluster*)
+    (equal
+     (mv-nth 1
+             (fat32-build-index-list (effective-fat fat32-in-memory)
+                                     masked-current-cluster
+                                     length (cluster-size fat32-in-memory)))
+     0))
+   (equal
+    (len
+     (make-clusters
+      (mv-nth 0
+              (get-clusterchain-contents fat32-in-memory
+                                         masked-current-cluster length))
+      (cluster-size fat32-in-memory)))
+    (len (mv-nth 0
+                 (fat32-build-index-list (effective-fat fat32-in-memory)
+                                         masked-current-cluster length
+                                         (cluster-size fat32-in-memory))))))
+  :hints
+  (("goal"
+    :in-theory (enable get-clusterchain-contents
+                       make-clusters fat32-build-index-list)
+    :induct (get-clusterchain-contents fat32-in-memory
+                                       masked-current-cluster length)
+    :expand
+    ((make-clusters
+      (implode (take length
+                     (explode (data-regioni (+ -2 masked-current-cluster)
+                                            fat32-in-memory))))
+      (cluster-size fat32-in-memory))
+     (make-clusters (data-regioni (+ -2 masked-current-cluster)
+                                  fat32-in-memory)
+                    (cluster-size fat32-in-memory))
+     (make-clusters
+      (implode
+       (append
+        (explode (data-regioni (+ -2 masked-current-cluster)
+                               fat32-in-memory))
+        (explode
+         (mv-nth
+          0
+          (get-clusterchain-contents
+           fat32-in-memory
+           (fat32-entry-mask (fati masked-current-cluster fat32-in-memory))
+           (+ length
+              (- (cluster-size fat32-in-memory))))))))
+      (cluster-size fat32-in-memory))))))
+
+(defthm
+  lofat-to-hifat-helper-exec-correctness-5-lemma-5
+  (implies
+   (equal (mv-nth 3
+                  (lofat-to-hifat-helper-exec fat32-in-memory
+                                              dir-ent-list entry-limit))
+          0)
+   (equal (len (mv-nth 0
+                       (lofat-to-hifat-helper-exec fat32-in-memory
+                                                   dir-ent-list entry-limit)))
+          (len dir-ent-list)))
+  :hints (("goal" :in-theory (e/d (lofat-to-hifat-helper-exec)
+                                  ((:definition remove1-dir-ent)
+                                   (:rewrite take-of-len-free))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top"
+                       :dir :system))
+
+  (defthm
+    lofat-to-hifat-helper-exec-correctness-5-lemma-7
+    (implies
+     (and
+      (lofat-fs-p fat32-in-memory)
+      (equal (mod length (cluster-size fat32-in-memory))
+             0)
+      (equal (mv-nth 1
+                     (get-clusterchain-contents fat32-in-memory
+                                                masked-current-cluster length))
+             0))
+     (equal
+      (floor
+       (+
+        -1 (cluster-size fat32-in-memory)
+        (len
+         (explode
+          (mv-nth 0
+                  (get-clusterchain-contents fat32-in-memory
+                                             masked-current-cluster length)))))
+       (cluster-size fat32-in-memory))
+      (floor
+       (len
+        (explode
+         (mv-nth 0
+                 (get-clusterchain-contents fat32-in-memory
+                                            masked-current-cluster length))))
+       (cluster-size fat32-in-memory))))
+    :hints
+    (("goal"
+      :in-theory (enable get-clusterchain-contents)
+      :induct (get-clusterchain-contents fat32-in-memory
+                                         masked-current-cluster length)))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    lofat-to-hifat-helper-exec-correctness-5-lemma-6
+    (implies
+     (and
+      (consp dir-ent-list)
+      (not (zp entry-limit))
+      (dir-ent-directory-p (car dir-ent-list))
+      (<= 2
+          (dir-ent-first-cluster (car dir-ent-list)))
+      (not
+       (consp
+        (assoc-equal
+         (dir-ent-filename (car dir-ent-list))
+         (mv-nth
+          0
+          (lofat-to-hifat-helper-exec
+           fat32-in-memory (cdr dir-ent-list)
+           (+
+            -1 entry-limit
+            (-
+             (hifat-entry-count
+              (mv-nth
+               0
+               (lofat-to-hifat-helper-exec
+                fat32-in-memory
+                (make-dir-ent-list
+                 (remove1-dir-ent
+                  (remove1-dir-ent
+                   (string=>nats
+                    (mv-nth 0
+                            (get-clusterchain-contents
+                             fat32-in-memory
+                             (dir-ent-first-cluster (car dir-ent-list))
+                             2097152)))
+                   ".          ")
+                  "..         "))
+                (+ -1 entry-limit)))))))))))
+      (< (dir-ent-first-cluster (car dir-ent-list))
+         (+ 2 (count-of-clusters fat32-in-memory)))
+      (<=
+       (hifat-cluster-count
+        (mv-nth
+         0
+         (lofat-to-hifat-helper-exec
+          fat32-in-memory
+          (make-dir-ent-list
+           (remove1-dir-ent
+            (remove1-dir-ent
+             (string=>nats
+              (mv-nth 0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       (dir-ent-first-cluster (car dir-ent-list))
+                       2097152)))
+             ".          ")
+            "..         "))
+          (+ -1 entry-limit)))
+        (cluster-size fat32-in-memory))
+       (len
+        (flatten
+         (mv-nth
+          2
+          (lofat-to-hifat-helper-exec
+           fat32-in-memory
+           (make-dir-ent-list
+            (remove1-dir-ent
+             (remove1-dir-ent
+              (string=>nats
+               (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        2097152)))
+              ".          ")
+             "..         "))
+           (+ -1 entry-limit))))))
+      (<=
+       (hifat-cluster-count
+        (mv-nth
+         0
+         (lofat-to-hifat-helper-exec
+          fat32-in-memory (cdr dir-ent-list)
+          (+
+           -1 entry-limit
+           (-
+            (hifat-entry-count
+             (mv-nth
+              0
+              (lofat-to-hifat-helper-exec
+               fat32-in-memory
+               (make-dir-ent-list
+                (remove1-dir-ent
+                 (remove1-dir-ent
+                  (string=>nats
+                   (mv-nth 0
+                           (get-clusterchain-contents
+                            fat32-in-memory
+                            (dir-ent-first-cluster (car dir-ent-list))
+                            2097152)))
+                  ".          ")
+                 "..         "))
+               (+ -1 entry-limit))))))))
+        (cluster-size fat32-in-memory))
+       (len
+        (flatten
+         (mv-nth
+          2
+          (lofat-to-hifat-helper-exec
+           fat32-in-memory (cdr dir-ent-list)
+           (+
+            -1 entry-limit
+            (-
+             (hifat-entry-count
+              (mv-nth
+               0
+               (lofat-to-hifat-helper-exec
+                fat32-in-memory
+                (make-dir-ent-list
+                 (remove1-dir-ent
+                  (remove1-dir-ent
+                   (string=>nats
+                    (mv-nth 0
+                            (get-clusterchain-contents
+                             fat32-in-memory
+                             (dir-ent-first-cluster (car dir-ent-list))
+                             2097152)))
+                   ".          ")
+                  "..         "))
+                (+ -1 entry-limit)))))))))))
+      (<=
+       0
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth
+           0
+           (lofat-to-hifat-helper-exec
+            fat32-in-memory
+            (make-dir-ent-list
+             (remove1-dir-ent
+              (remove1-dir-ent
+               (string=>nats
+                (mv-nth 0
+                        (get-clusterchain-contents
+                         fat32-in-memory
+                         (dir-ent-first-cluster (car dir-ent-list))
+                         2097152)))
+               ".          ")
+              "..         "))
+            (+ -1 entry-limit)))))))
+      (equal
+       (mv-nth
+        1
+        (get-clusterchain-contents fat32-in-memory
+                                   (dir-ent-first-cluster (car dir-ent-list))
+                                   2097152))
+       0)
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper-exec
+         fat32-in-memory
+         (make-dir-ent-list
+          (remove1-dir-ent
+           (remove1-dir-ent
+            (string=>nats
+             (mv-nth 0
+                     (get-clusterchain-contents
+                      fat32-in-memory
+                      (dir-ent-first-cluster (car dir-ent-list))
+                      2097152)))
+            ".          ")
+           "..         "))
+         (+ -1 entry-limit)))
+       0)
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper-exec
+         fat32-in-memory (cdr dir-ent-list)
+         (+
+          -1 entry-limit
+          (-
+           (hifat-entry-count
+            (mv-nth
+             0
+             (lofat-to-hifat-helper-exec
+              fat32-in-memory
+              (make-dir-ent-list
+               (remove1-dir-ent
+                (remove1-dir-ent
+                 (string=>nats
+                  (mv-nth 0
+                          (get-clusterchain-contents
+                           fat32-in-memory
+                           (dir-ent-first-cluster (car dir-ent-list))
+                           2097152)))
+                 ".          ")
+                "..         "))
+              (+ -1 entry-limit))))))))
+       0)
+      (<=
+       (len (remove1-dir-ent
+             (string=>nats
+              (mv-nth 0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       (dir-ent-first-cluster (car dir-ent-list))
+                       2097152)))
+             ".          "))
+       (+
+        -32
+        (len (explode (mv-nth 0
+                              (get-clusterchain-contents
+                               fat32-in-memory
+                               (dir-ent-first-cluster (car dir-ent-list))
+                               2097152))))))
+      (<=
+       (len
+        (remove1-dir-ent
+         (remove1-dir-ent
+          (string=>nats
+           (mv-nth 0
+                   (get-clusterchain-contents
+                    fat32-in-memory
+                    (dir-ent-first-cluster (car dir-ent-list))
+                    2097152)))
+          ".          ")
+         "..         "))
+       (+
+        -32
+        (len
+         (remove1-dir-ent
+          (string=>nats
+           (mv-nth 0
+                   (get-clusterchain-contents
+                    fat32-in-memory
+                    (dir-ent-first-cluster (car dir-ent-list))
+                    2097152)))
+          ".          "))))
+      (no-duplicatesp-equal
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                (dir-ent-first-cluster (car dir-ent-list))
+                                2097152
+                                (cluster-size fat32-in-memory))))
+      (not-intersectp-list
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                (dir-ent-first-cluster (car dir-ent-list))
+                                2097152 (cluster-size fat32-in-memory)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper-exec
+         fat32-in-memory
+         (make-dir-ent-list
+          (remove1-dir-ent
+           (remove1-dir-ent
+            (string=>nats
+             (mv-nth 0
+                     (get-clusterchain-contents
+                      fat32-in-memory
+                      (dir-ent-first-cluster (car dir-ent-list))
+                      2097152)))
+            ".          ")
+           "..         "))
+         (+ -1 entry-limit))))
+      (not-intersectp-list
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                (dir-ent-first-cluster (car dir-ent-list))
+                                2097152 (cluster-size fat32-in-memory)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper-exec
+         fat32-in-memory (cdr dir-ent-list)
+         (+
+          -1 entry-limit
+          (-
+           (hifat-entry-count
+            (mv-nth
+             0
+             (lofat-to-hifat-helper-exec
+              fat32-in-memory
+              (make-dir-ent-list
+               (remove1-dir-ent
+                (remove1-dir-ent
+                 (string=>nats
+                  (mv-nth 0
+                          (get-clusterchain-contents
+                           fat32-in-memory
+                           (dir-ent-first-cluster (car dir-ent-list))
+                           2097152)))
+                 ".          ")
+                "..         "))
+              (+ -1 entry-limit)))))))))
+      (not
+       (member-intersectp-equal
+        (mv-nth
+         2
+         (lofat-to-hifat-helper-exec
+          fat32-in-memory
+          (make-dir-ent-list
+           (remove1-dir-ent
+            (remove1-dir-ent
+             (string=>nats
+              (mv-nth 0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       (dir-ent-first-cluster (car dir-ent-list))
+                       2097152)))
+             ".          ")
+            "..         "))
+          (+ -1 entry-limit)))
+        (mv-nth
+         2
+         (lofat-to-hifat-helper-exec
+          fat32-in-memory (cdr dir-ent-list)
+          (+
+           -1 entry-limit
+           (-
+            (hifat-entry-count
+             (mv-nth
+              0
+              (lofat-to-hifat-helper-exec
+               fat32-in-memory
+               (make-dir-ent-list
+                (remove1-dir-ent
+                 (remove1-dir-ent
+                  (string=>nats
+                   (mv-nth 0
+                           (get-clusterchain-contents
+                            fat32-in-memory
+                            (dir-ent-first-cluster (car dir-ent-list))
+                            2097152)))
+                  ".          ")
+                 "..         "))
+               (+ -1 entry-limit))))))))))
+      (lofat-fs-p fat32-in-memory)
+      (dir-ent-list-p dir-ent-list)
+      (<=
+       0
+       (floor
+        (+
+         63 (cluster-size fat32-in-memory)
+         (*
+          32
+          (len
+           (make-dir-ent-list
+            (remove1-dir-ent
+             (remove1-dir-ent
+              (string=>nats
+               (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        2097152)))
+              ".          ")
+             "..         ")))))
+        (cluster-size fat32-in-memory))))
+     (<=
+      (+
+       (floor
+        (+
+         63 (cluster-size fat32-in-memory)
+         (*
+          32
+          (len
+           (make-dir-ent-list
+            (remove1-dir-ent
+             (remove1-dir-ent
+              (string=>nats
+               (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        2097152)))
+              ".          ")
+             "..         ")))))
+        (cluster-size fat32-in-memory))
+       (hifat-cluster-count
+        (mv-nth
+         0
+         (lofat-to-hifat-helper-exec
+          fat32-in-memory
+          (make-dir-ent-list
+           (remove1-dir-ent
+            (remove1-dir-ent
+             (string=>nats
+              (mv-nth 0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       (dir-ent-first-cluster (car dir-ent-list))
+                       2097152)))
+             ".          ")
+            "..         "))
+          (+ -1 entry-limit)))
+        (cluster-size fat32-in-memory))
+       (hifat-cluster-count
+        (mv-nth
+         0
+         (lofat-to-hifat-helper-exec
+          fat32-in-memory (cdr dir-ent-list)
+          (+
+           -1 entry-limit
+           (-
+            (hifat-entry-count
+             (mv-nth
+              0
+              (lofat-to-hifat-helper-exec
+               fat32-in-memory
+               (make-dir-ent-list
+                (remove1-dir-ent
+                 (remove1-dir-ent
+                  (string=>nats
+                   (mv-nth 0
+                           (get-clusterchain-contents
+                            fat32-in-memory
+                            (dir-ent-first-cluster (car dir-ent-list))
+                            2097152)))
+                  ".          ")
+                 "..         "))
+               (+ -1 entry-limit))))))))
+        (cluster-size fat32-in-memory)))
+      (+
+       (len
+        (mv-nth
+         0
+         (fat32-build-index-list (effective-fat fat32-in-memory)
+                                 (dir-ent-first-cluster (car dir-ent-list))
+                                 2097152
+                                 (cluster-size fat32-in-memory))))
+       (len
+        (flatten
+         (mv-nth
+          2
+          (lofat-to-hifat-helper-exec
+           fat32-in-memory
+           (make-dir-ent-list
+            (remove1-dir-ent
+             (remove1-dir-ent
+              (string=>nats
+               (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        2097152)))
+              ".          ")
+             "..         "))
+           (+ -1 entry-limit)))))
+       (len
+        (flatten
+         (mv-nth
+          2
+          (lofat-to-hifat-helper-exec
+           fat32-in-memory (cdr dir-ent-list)
+           (+
+            -1 entry-limit
+            (-
+             (hifat-entry-count
+              (mv-nth
+               0
+               (lofat-to-hifat-helper-exec
+                fat32-in-memory
+                (make-dir-ent-list
+                 (remove1-dir-ent
+                  (remove1-dir-ent
+                   (string=>nats
+                    (mv-nth 0
+                            (get-clusterchain-contents
+                             fat32-in-memory
+                             (dir-ent-first-cluster (car dir-ent-list))
+                             2097152)))
+                   ".          ")
+                  "..         "))
+                (+ -1 entry-limit)))))))))))))
+    :instructions
+    ((:use
+      (:instance
+       (:linear len-of-make-dir-ent-list)
+       (dir-contents
+        (remove1-dir-ent
+         (remove1-dir-ent
+          (string=>nats
+           (mv-nth 0
+                   (get-clusterchain-contents
+                    fat32-in-memory
+                    (dir-ent-first-cluster (car dir-ent-list))
+                    2097152)))
+          ".          ")
+         "..         ")))
+      (:instance
+       painful-debugging-lemma-16
+       (i2
+        (- (len (string=>nats
+                 (mv-nth 0
+                         (get-clusterchain-contents
+                          fat32-in-memory
+                          (dir-ent-first-cluster (car dir-ent-list))
+                          2097152))))
+           64))
+       (i1
+        (len
+         (remove1-dir-ent
+          (remove1-dir-ent
+           (string=>nats
+            (mv-nth 0
+                    (get-clusterchain-contents
+                     fat32-in-memory
+                     (dir-ent-first-cluster (car dir-ent-list))
+                     2097152)))
+           ".          ")
+          "..         ")))
+       (j 32)))
+     :pro (:demote 2)
+     (:=
+      (and
+       (integerp
+        (len
+         (remove1-dir-ent
+          (remove1-dir-ent
+           (string=>nats
+            (mv-nth 0
+                    (get-clusterchain-contents
+                     fat32-in-memory
+                     (dir-ent-first-cluster (car dir-ent-list))
+                     2097152)))
+           ".          ")
+          "..         ")))
+       (integerp
+        (+ -64
+           (len (string=>nats
+                 (mv-nth 0
+                         (get-clusterchain-contents
+                          fat32-in-memory
+                          (dir-ent-first-cluster (car dir-ent-list))
+                          2097152))))))
+       (not (zp 32))
+       (<=
+        (len
+         (remove1-dir-ent
+          (remove1-dir-ent
+           (string=>nats
+            (mv-nth 0
+                    (get-clusterchain-contents
+                     fat32-in-memory
+                     (dir-ent-first-cluster (car dir-ent-list))
+                     2097152)))
+           ".          ")
+          "..         "))
+        (+ -64
+           (len (string=>nats
+                 (mv-nth 0
+                         (get-clusterchain-contents
+                          fat32-in-memory
+                          (dir-ent-first-cluster (car dir-ent-list))
+                          2097152)))))))
+      t)
+     (:=
+      (implies
+       t
+       (<=
+        (floor
+         (len
+          (remove1-dir-ent
+           (remove1-dir-ent
+            (string=>nats
+             (mv-nth 0
+                     (get-clusterchain-contents
+                      fat32-in-memory
+                      (dir-ent-first-cluster (car dir-ent-list))
+                      2097152)))
+            ".          ")
+           "..         "))
+         32)
+        (floor
+         (+ -64
+            (len (string=>nats
+                  (mv-nth 0
+                          (get-clusterchain-contents
+                           fat32-in-memory
+                           (dir-ent-first-cluster (car dir-ent-list))
+                           2097152)))))
+         32)))
+      (<=
+       (floor
+        (len
+         (remove1-dir-ent
+          (remove1-dir-ent
+           (string=>nats
+            (mv-nth 0
+                    (get-clusterchain-contents
+                     fat32-in-memory
+                     (dir-ent-first-cluster (car dir-ent-list))
+                     2097152)))
+           ".          ")
+          "..         "))
+        32)
+       (floor
+        (+ -64
+           (len (string=>nats
+                 (mv-nth 0
+                         (get-clusterchain-contents
+                          fat32-in-memory
+                          (dir-ent-first-cluster (car dir-ent-list))
+                          2097152)))))
+        32)))
+     :promote
+     (:claim
+      (<=
+       (floor
+        (+
+         63 (cluster-size fat32-in-memory)
+         (*
+          32
+          (len
+           (make-dir-ent-list
+            (remove1-dir-ent
+             (remove1-dir-ent
+              (string=>nats
+               (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        2097152)))
+              ".          ")
+             "..         ")))))
+        (cluster-size fat32-in-memory))
+       (len
+        (mv-nth
+         0
+         (fat32-build-index-list (effective-fat fat32-in-memory)
+                                 (dir-ent-first-cluster (car dir-ent-list))
+                                 2097152
+                                 (cluster-size fat32-in-memory)))))
+      :hints :none)
+     :bash (:demote 23)
+     (:=
+      (floor
+       (+ -64
+          (len (string=>nats
+                (mv-nth 0
+                        (get-clusterchain-contents
+                         fat32-in-memory
+                         (dir-ent-first-cluster (car dir-ent-list))
+                         2097152)))))
+       32)
+      (+
+       -2
+       (floor
+        (len (string=>nats
+              (mv-nth 0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       (dir-ent-first-cluster (car dir-ent-list))
+                       2097152))))
+        32)))
+     :promote
+     (:claim
+      (<=
+       (+
+        63 (cluster-size fat32-in-memory)
+        (*
+         32
+         (len
+          (make-dir-ent-list
+           (remove1-dir-ent
+            (remove1-dir-ent
+             (string=>nats
+              (mv-nth 0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       (dir-ent-first-cluster (car dir-ent-list))
+                       2097152)))
+             ".          ")
+            "..         ")))))
+       (+
+        -1 (cluster-size fat32-in-memory)
+        (*
+         32
+         (floor
+          (len (string=>nats
+                (mv-nth 0
+                        (get-clusterchain-contents
+                         fat32-in-memory
+                         (dir-ent-first-cluster (car dir-ent-list))
+                         2097152))))
+          32)))))
+     (:claim
+      (<=
+       (+
+        63 (cluster-size fat32-in-memory)
+        (*
+         32
+         (len
+          (make-dir-ent-list
+           (remove1-dir-ent
+            (remove1-dir-ent
+             (string=>nats
+              (mv-nth 0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       (dir-ent-first-cluster (car dir-ent-list))
+                       2097152)))
+             ".          ")
+            "..         ")))))
+       (+
+        -1 (cluster-size fat32-in-memory)
+        (len (explode (mv-nth 0
+                              (get-clusterchain-contents
+                               fat32-in-memory
+                               (dir-ent-first-cluster (car dir-ent-list))
+                               2097152)))))))
+     (:use
+      (:instance
+       painful-debugging-lemma-16
+       (i1
+        (+
+         63 (cluster-size fat32-in-memory)
+         (*
+          32
+          (len
+           (make-dir-ent-list
+            (remove1-dir-ent
+             (remove1-dir-ent
+              (string=>nats
+               (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        2097152)))
+              ".          ")
+             "..         "))))))
+       (i2
+        (+
+         -1 (cluster-size fat32-in-memory)
+         (len
+          (explode (mv-nth 0
+                           (get-clusterchain-contents
+                            fat32-in-memory
+                            (dir-ent-first-cluster (car dir-ent-list))
+                            2097152))))))
+       (j (cluster-size fat32-in-memory))))
+     :pro (:demote 1)
+     (:=
+      (implies
+       (and
+        (integerp
+         (+
+          63 (cluster-size fat32-in-memory)
+          (*
+           32
+           (len
+            (make-dir-ent-list
+             (remove1-dir-ent
+              (remove1-dir-ent
+               (string=>nats
+                (mv-nth 0
+                        (get-clusterchain-contents
+                         fat32-in-memory
+                         (dir-ent-first-cluster (car dir-ent-list))
+                         2097152)))
+               ".          ")
+              "..         "))))))
+        (integerp
+         (+
+          -1 (cluster-size fat32-in-memory)
+          (len
+           (explode (mv-nth 0
+                            (get-clusterchain-contents
+                             fat32-in-memory
+                             (dir-ent-first-cluster (car dir-ent-list))
+                             2097152))))))
+        (not (zp (cluster-size fat32-in-memory)))
+        (<=
+         (+
+          63 (cluster-size fat32-in-memory)
+          (*
+           32
+           (len
+            (make-dir-ent-list
+             (remove1-dir-ent
+              (remove1-dir-ent
+               (string=>nats
+                (mv-nth 0
+                        (get-clusterchain-contents
+                         fat32-in-memory
+                         (dir-ent-first-cluster (car dir-ent-list))
+                         2097152)))
+               ".          ")
+              "..         ")))))
+         (+
+          -1 (cluster-size fat32-in-memory)
+          (len
+           (explode (mv-nth 0
+                            (get-clusterchain-contents
+                             fat32-in-memory
+                             (dir-ent-first-cluster (car dir-ent-list))
+                             2097152)))))))
+       (<=
+        (floor
+         (+
+          63 (cluster-size fat32-in-memory)
+          (*
+           32
+           (len
+            (make-dir-ent-list
+             (remove1-dir-ent
+              (remove1-dir-ent
+               (string=>nats
+                (mv-nth 0
+                        (get-clusterchain-contents
+                         fat32-in-memory
+                         (dir-ent-first-cluster (car dir-ent-list))
+                         2097152)))
+               ".          ")
+              "..         ")))))
+         (cluster-size fat32-in-memory))
+        (floor
+         (+
+          -1 (cluster-size fat32-in-memory)
+          (len
+           (explode (mv-nth 0
+                            (get-clusterchain-contents
+                             fat32-in-memory
+                             (dir-ent-first-cluster (car dir-ent-list))
+                             2097152)))))
+         (cluster-size fat32-in-memory))))
+      (<=
+       (floor
+        (+
+         63 (cluster-size fat32-in-memory)
+         (*
+          32
+          (len
+           (make-dir-ent-list
+            (remove1-dir-ent
+             (remove1-dir-ent
+              (string=>nats
+               (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        2097152)))
+              ".          ")
+             "..         ")))))
+        (cluster-size fat32-in-memory))
+       (floor
+        (+
+         -1 (cluster-size fat32-in-memory)
+         (len
+          (explode (mv-nth 0
+                           (get-clusterchain-contents
+                            fat32-in-memory
+                            (dir-ent-first-cluster (car dir-ent-list))
+                            2097152)))))
+        (cluster-size fat32-in-memory))))
+     :promote)))
+
+(defthm
   lofat-to-hifat-helper-exec-correctness-5
   (b* (((mv m1-file-alist &
             clusterchain-list error-code)
         (lofat-to-hifat-helper-exec
          fat32-in-memory
          dir-ent-list entry-limit)))
-    (implies (and (lofat-fs-p fat32-in-memory) (equal error-code 0))
+    (implies (and (lofat-fs-p fat32-in-memory) (dir-ent-list-p dir-ent-list) (equal error-code 0))
              (<= (hifat-cluster-count m1-file-alist (cluster-size fat32-in-memory))
                  (len (flatten clusterchain-list)))))
   :hints (("Goal"
