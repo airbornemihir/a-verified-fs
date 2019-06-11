@@ -7939,6 +7939,86 @@
                                         dir-ent-list entry-limit)
     :expand (make-clusters "" (cluster-size fat32-in-memory)))))
 
+(defthm
+  lofat-to-hifat-inversion-lemma-1
+  (implies
+   (and (natp start)
+        (natp n)
+        (<= (+ start (nfix len)) (len fa-table))
+        (<= start (nfix n))
+        (< (nfix n) (+ start (nfix len))))
+   (equal
+    (fat32-entry-mask
+     (nth n
+          (set-indices-in-fa-table
+           fa-table (generate-index-list start len)
+           (make-list-ac len 0 nil))))
+    0))
+  :hints (("goal" :in-theory (e/d (set-indices-in-fa-table)
+                                  (make-list-ac))
+           :induct (generate-index-list start len))))
+
+(defthm
+  lofat-to-hifat-inversion-lemma-2
+  (implies
+   (and (natp n)
+        (<= (+ n 2) (len fa-table)))
+   (equal
+    (count-free-clusters-helper
+     (nthcdr
+      2
+      (set-indices-in-fa-table fa-table
+                               (generate-index-list 2 (+ -2 (len fa-table)))
+                               (make-list-ac (+ -2 (len fa-table))
+                                             0 nil)))
+     n)
+    n))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d nil
+         (generate-index-list make-list-ac nthcdr (:induction len)))
+    :induct
+    (count-free-clusters-helper
+     (nthcdr
+      2
+      (set-indices-in-fa-table fa-table
+                               (generate-index-list 2 (+ -2 (len fa-table)))
+                               (make-list-ac (+ -2 (len fa-table))
+                                             0 nil)))
+     n))))
+
+(defthm
+  lofat-to-hifat-inversion-lemma-3
+  (implies
+   (<= 2 (len fa-table))
+   (equal
+    (count-free-clusters
+     (set-indices-in-fa-table fa-table
+                              (generate-index-list 2 (- (len fa-table) 2))
+                              (make-list-ac (- (len fa-table) 2)
+                                            0 nil)))
+    (- (len fa-table) 2)))
+  :hints (("goal" :in-theory (e/d (count-free-clusters)
+                                  (make-list-ac)))))
+
+(thm-cp
+  (IMPLIES
+   (AND (LOFAT-FS-P FAT32-IN-MEMORY)
+        (EQUAL (MV-NTH 1 (LOFAT-TO-HIFAT FAT32-IN-MEMORY))
+               0))
+   (EQUAL
+    (MV-NTH
+     1
+     (LOFAT-TO-HIFAT
+      (MV-NTH 0
+              (HIFAT-TO-LOFAT FAT32-IN-MEMORY
+                              (MV-NTH 0 (LOFAT-TO-HIFAT FAT32-IN-MEMORY))))))
+    0))
+  :hints
+  (("Goal" :in-theory (enable lofat-to-hifat hifat-to-lofat))
+   ))
+
 (defund-nx
   lofat-equiv
   (fat32-in-memory1 fat32-in-memory2)
@@ -7958,6 +8038,69 @@
   lofat-equiv
   :hints (("goal" :in-theory (enable lofat-equiv))))
 
+;; The proof of this theorem, and the subsequent removal of its hypotheses,
+;; have significantly influenced the development of the model. We really want
+;; the number of hypotheses for lofat-equiv to be the bare minimum, because
+;; lofat-equiv is just an important predicate, around which we are building a
+;; number of proofs. The git history will show the precise details, but at
+;; various points we've removed hypotheses stating that the outcome of
+;; lofat-to-hifat satisfied hifat-bounded-file-alist-p and
+;; hifat-file-no-dups-p. The following paragraphs, written at an earlier point,
+;; describe why one of these clauses was hard to remove. We ultimately removed
+;; it by requiring all clusterchains to be distinct from each other.
+;;
+;; This clause should almost always be true (which is a difficult thing to say
+;; in a theorem-proving setting...) The argument is: The only time we get an
+;; error out of hifat-to-lofat-helper (and the wrapper) is when we run out of
+;; space. We shouldn't be able to run out of space when we just extracted an m1
+;; instance from fat32-in-memory, and we didn't change the size of
+;; fat32-in-memory at all. However, that's going to involve reasoning about the
+;; number of clusters taken up by an m1 instance, which is not really where
+;; it's at right now.
+;;
+;; One reason why this clause will not always be true: we aren't
+;; requiring dot and dotdot entries to exist (except vaguely, by making
+;; sure that we don't have 65535 or 65536 useful directory entries in
+;; any directory.)  As a result, it's possible for a lofat instance to
+;; exist which completely fills up the available clusters on the disk,
+;; but which leaves out at least one dot or dotdot entry, with the
+;; result that attempting to remake the stobj after coverting to hifat
+;; would cause the directory with the missing dot/dotdot entry to cross
+;; a cluster boundary and therefore occupy more space than available in
+;; the stobj. This scenario wouldn't even need a directory with 65535 or
+;; 65536 useful directory entries. The largest possible cluster size for
+;; FAT32 is 2^15 bytes, which is a multiple of all other possible
+;; cluster sizes - so let's consider an example where a directory
+;; contains 2^11 useful directory entries and no dot or dotdot entries,
+;; completely filling 2, 4, 8, or however many clusters. Then, when we
+;; write back this directory, we'll have 3 clusters occupied by this
+;; directory, or 5 or 9 or something. The problem is clear.
+;;
+;; One solution is to return a non-zero error code when a directory is
+;; encountered without a dot or dotdot entry in it. Anything else wrecks
+;; our guarantees that the transformation from lofat to hifat is
+;; reversible. Then, the reasoning will involve the number of clusters
+;; taken up for the on-disk representation of a lofat instance. That
+;; reasoning will also involve proving that we can allocate upto
+;; (count-of-clusters fat32-in-memory) clusters and no more.
+;; But, this solution is not perfect - there still remains the problem
+;; of clusters being shared across multiple files. So, if cluster 2
+;; begins the root directory's clusterchain, and cluster 3 begins a
+;; different clusterchain of length 1, then the rest of the clusters
+;; could be filled up with directory files in which all the regular
+;; file entries point to cluster 3. This would create a filesystem with
+;; a huge number of identical files, and after converting it to HiFAT we
+;; wouldn't be able to convert it back to LoFAT because of space
+;; issues. There's no simple solution to this thing other than insisting
+;; that all clusterchains should be disjoint from each other.
+;;
+;; By the way, what are our guarantees? We assure that a lofat instance
+;; which can successfully be transformed to a hifat instance has no more
+;; than (max-entry-count fat32-in-memory) directory entries, no
+;; duplicate entries in any directory and no directories with more than
+;; 2^16 - 2 useful entries. What about directories which blow past 2^16
+;; entries altogether? Those will be caught thanks to the error code of
+;; get-clusterchain-contents.
 (defthm
   lofat-to-hifat-inversion
   (implies
@@ -7966,67 +8109,7 @@
        (((mv fs error-code)
          (lofat-to-hifat fat32-in-memory)))
      (implies
-      (and
-       (equal error-code 0)
-       ;; This clause should almost always be true (which is a difficult thing
-       ;; to say in a theorem-proving setting...) The argument is: The only
-       ;; time we get an error out of hifat-to-lofat-helper (and the wrapper)
-       ;; is when we run out of space. We shouldn't be able to run out of space
-       ;; when we just extracted an m1 instance from fat32-in-memory, and we
-       ;; didn't change the size of fat32-in-memory at all. However, that's
-       ;; going to involve reasoning about the number of clusters taken up by
-       ;; an m1 instance, which is not really where it's at right now.
-       ;;
-       ;; One reason why this clause will not always be true: we aren't
-       ;; requiring dot and dotdot entries to exist (except vaguely, by making
-       ;; sure that we don't have 65535 or 65536 useful directory entries in
-       ;; any directory.)  As a result, it's possible for a lofat instance to
-       ;; exist which completely fills up the available clusters on the disk,
-       ;; but which leaves out at least one dot or dotdot entry, with the
-       ;; result that attempting to remake the stobj after coverting to hifat
-       ;; would cause the directory with the missing dot/dotdot entry to cross
-       ;; a cluster boundary and therefore occupy more space than available in
-       ;; the stobj. This scenario wouldn't even need a directory with 65535 or
-       ;; 65536 useful directory entries. The largest possible cluster size for
-       ;; FAT32 is 2^15 bytes, which is a multiple of all other possible
-       ;; cluster sizes - so let's consider an example where a directory
-       ;; contains 2^11 useful directory entries and no dot or dotdot entries,
-       ;; completely filling 2, 4, 8, or however many clusters. Then, when we
-       ;; write back this directory, we'll have 3 clusters occupied by this
-       ;; directory, or 5 or 9 or something. The problem is clear.
-       ;;
-       ;; One solution is to return a non-zero error code when a directory is
-       ;; encountered without a dot or dotdot entry in it. Anything else wrecks
-       ;; our guarantees that the transformation from lofat to hifat is
-       ;; reversible. Then, the reasoning will involve the number of clusters
-       ;; taken up for the on-disk representation of a lofat instance. That
-       ;; reasoning will also involve proving that we can allocate upto
-       ;; (count-of-clusters fat32-in-memory) clusters and no more.
-       ;; But, this solution is not perfect - there still remains the problem
-       ;; of clusters being shared across multiple files. So, if cluster 2
-       ;; begins the root directory's clusterchain, and cluster 3 begins a
-       ;; different clusterchain of length 1, then the rest of the clusters
-       ;; could be filled up with directory files in which all the regular
-       ;; file entries point to cluster 3. This would create a filesystem with
-       ;; a huge number of identical files, and after converting it to HiFAT we
-       ;; wouldn't be able to convert it back to LoFAT because of space
-       ;; issues. There's no simple solution to this thing other than insisting
-       ;; that all clusterchains should be disjoint from each other.
-       ;;
-       ;; By the way, what are our guarantees? We assure that a lofat instance
-       ;; which can successfully be transformed to a hifat instance has no more
-       ;; than (max-entry-count fat32-in-memory) directory entries, no
-       ;; duplicate entries in any directory and no directories with more than
-       ;; 2^16 - 2 useful entries. What about directories which blow past 2^16
-       ;; entries altogether? Those will be caught thanks to the error code of
-       ;; get-clusterchain-contents.
-       (equal
-        (mv-nth
-         1
-         (hifat-to-lofat
-          fat32-in-memory
-          fs))
-        0))
+      (equal error-code 0)
       (lofat-equiv
        (mv-nth
         0
