@@ -211,7 +211,8 @@
        (fat32-masked-entry-list-p clusterchain)
        (natp file-size)
        (bounded-nat-listp clusterchain
-                          (count-of-clusters fat32-in-memory))
+                          (+ *ms-first-data-cluster*
+                             (count-of-clusters fat32-in-memory)))
        (lower-bounded-integer-listp
         clusterchain *ms-first-data-cluster*))))
     (if
