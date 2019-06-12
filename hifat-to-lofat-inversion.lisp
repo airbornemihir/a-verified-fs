@@ -6553,7 +6553,7 @@
    (atom dir-ent-list)
    (equal
     (lofat-to-hifat-helper-exec fat32-in-memory
-                                     dir-ent-list entry-limit)
+                                dir-ent-list entry-limit)
     (mv nil 0 nil 0)))
   :hints (("goal" :in-theory (enable lofat-to-hifat-helper-exec)) ))
 
@@ -8016,22 +8016,6 @@
                                   (make-list-ac)))))
 
 (defthm
-  lofat-to-hifat-inversion-lemma-4
-  (implies
-   (not (consp (mv-nth 0 (root-dir-ent-list fat32-in-memory))))
-   (equal (lofat-to-hifat-helper-exec
-           fat32-in-memory
-           (mv-nth 0 (root-dir-ent-list fat32-in-memory))
-           (max-entry-count fat32-in-memory))
-          (mv nil 0 nil 0)))
-  :hints
-  (("goal"
-    :expand (lofat-to-hifat-helper-exec
-             fat32-in-memory
-             (mv-nth 0 (root-dir-ent-list fat32-in-memory))
-             (max-entry-count fat32-in-memory)))))
-
-(defthm
   lofat-to-hifat-inversion-lemma-5
   (implies
    (not (zp cluster-size))
@@ -8098,6 +8082,55 @@
       (mv nil 0)))
     :hints (("goal" :in-theory (enable root-dir-ent-list)))))
 
+(defthm
+  lofat-to-hifat-inversion-lemma-7
+  (implies
+   (and
+    (equal
+     (mv-nth
+      2
+      (place-contents fat32-in-memory
+                      dir-ent contents file-length
+                      (fat32-entry-mask (bpb_rootclus fat32-in-memory))))
+     0)
+    (not (zp (length contents)))
+    (stringp contents)
+    (<= (length contents) *ms-max-dir-size*)
+    (lofat-fs-p fat32-in-memory)
+    (not (equal (fat32-entry-mask
+                 (fati (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                       fat32-in-memory))
+                0)))
+   (equal
+    (root-dir-ent-list
+     (mv-nth
+      0
+      (place-contents fat32-in-memory
+                      dir-ent contents file-length
+                      (fat32-entry-mask (bpb_rootclus fat32-in-memory)))))
+    (mv
+     (make-dir-ent-list
+      (chars=>nats
+       (append
+        (explode contents)
+        (make-list
+         (+ (min *ms-max-dir-size*
+                 (* (len (make-clusters contents
+                                        (cluster-size fat32-in-memory)))
+                    (cluster-size fat32-in-memory)))
+            (- (length contents)))
+         :initial-element (code-char 0)))))
+     0)))
+  :hints
+  (("goal"
+    :in-theory (e/d (root-dir-ent-list)
+                    (get-clusterchain-contents-of-place-contents-coincident))
+    :use
+    (:instance
+     get-clusterchain-contents-of-place-contents-coincident
+     (first-cluster (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
+     (length *ms-max-dir-size*)))))
+
 (thm-cp
   (IMPLIES
    (AND (LOFAT-FS-P FAT32-IN-MEMORY)
@@ -8113,7 +8146,7 @@
     0))
   :hints
   (("Goal" :in-theory
-    (e/d (lofat-to-hifat hifat-to-lofat)
+    (e/d (lofat-to-hifat hifat-to-lofat hifat-to-lofat-inversion-lemma-10)
          (lofat-to-hifat-inversion-lemma-3 generate-index-list))
     :use (:instance 
           lofat-to-hifat-inversion-lemma-3
