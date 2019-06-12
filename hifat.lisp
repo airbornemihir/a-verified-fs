@@ -954,16 +954,15 @@
  :define t
  :forward t)
 
-(make-event
- `(defthm
-    fat32-filename-p-correctness-1
-    (implies (fat32-filename-p x)
-             (and (stringp x)
-                  (equal (len (explode x)) 11)
-                  (not (equal (nth 0 (explode x)) ,(code-char #x00)))
-                  (not (equal (nth 0 (explode x)) ,(code-char #xe5)))
-                  (not (equal x *current-dir-fat32-name*))
-                  (not (equal x *parent-dir-fat32-name*))))))
+(defthm
+  fat32-filename-p-correctness-1
+  (implies (fat32-filename-p x)
+           (and (stringp x)
+                (equal (len (explode x)) 11)
+                (not (equal (nth 0 (explode x)) (code-char #x00)))
+                (not (equal (nth 0 (explode x)) (code-char #xe5)))
+                (not (equal x *current-dir-fat32-name*))
+                (not (equal x *parent-dir-fat32-name*)))))
 
 (defthm dir-ent-set-filename-correctness-1
   (implies
