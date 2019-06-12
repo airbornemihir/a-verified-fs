@@ -6664,13 +6664,15 @@
           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
           (stobj-set-indices-in-fa-table
            fat32-in-memory
-           (generate-index-list 2 (count-of-clusters fat32-in-memory))
+           (generate-index-list
+            2 (count-of-clusters fat32-in-memory))
            (make-list-ac (count-of-clusters fat32-in-memory)
                          0 nil)))
          268435455)
         (stobj-set-indices-in-fa-table
          fat32-in-memory
-         (generate-index-list 2 (count-of-clusters fat32-in-memory))
+         (generate-index-list
+          2 (count-of-clusters fat32-in-memory))
          (make-list-ac (count-of-clusters fat32-in-memory)
                        0 nil)))
        fs
@@ -6697,45 +6699,20 @@
             (fat32-entry-mask (bpb_rootclus fat32-in-memory))
             (stobj-set-indices-in-fa-table
              fat32-in-memory
-             (generate-index-list 2 (count-of-clusters fat32-in-memory))
+             (generate-index-list
+              2 (count-of-clusters fat32-in-memory))
              (make-list-ac (count-of-clusters fat32-in-memory)
                            0 nil)))
            268435455)
           (stobj-set-indices-in-fa-table
            fat32-in-memory
-           (generate-index-list 2 (count-of-clusters fat32-in-memory))
+           (generate-index-list
+            2 (count-of-clusters fat32-in-memory))
            (make-list-ac (count-of-clusters fat32-in-memory)
                          0 nil)))
          fs
          (fat32-entry-mask (bpb_rootclus fat32-in-memory)))))
-      (+
-       -1
-       (len
-        (make-clusters
-         (nats=>string
-          (flatten
-           (mv-nth
-            1
-            (hifat-to-lofat-helper
-             (update-fati
-              (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-              (fat32-update-lower-28
-               (fati
-                (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-                (stobj-set-indices-in-fa-table
-                 fat32-in-memory
-                 (generate-index-list 2 (count-of-clusters fat32-in-memory))
-                 (make-list-ac (count-of-clusters fat32-in-memory)
-                               0 nil)))
-               268435455)
-              (stobj-set-indices-in-fa-table
-               fat32-in-memory
-               (generate-index-list 2 (count-of-clusters fat32-in-memory))
-               (make-list-ac (count-of-clusters fat32-in-memory)
-                             0 nil)))
-             fs
-             (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))
-         (cluster-size fat32-in-memory))))))
+      n))
     (mv-nth
      2
      (lofat-to-hifat-helper-exec
@@ -6749,13 +6726,15 @@
            (fat32-entry-mask (bpb_rootclus fat32-in-memory))
            (stobj-set-indices-in-fa-table
             fat32-in-memory
-            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (generate-index-list
+             2 (count-of-clusters fat32-in-memory))
             (make-list-ac (count-of-clusters fat32-in-memory)
                           0 nil)))
           268435455)
          (stobj-set-indices-in-fa-table
           fat32-in-memory
-          (generate-index-list 2 (count-of-clusters fat32-in-memory))
+          (generate-index-list
+           2 (count-of-clusters fat32-in-memory))
           (make-list-ac (count-of-clusters fat32-in-memory)
                         0 nil)))
         fs
@@ -6770,13 +6749,15 @@
            (fat32-entry-mask (bpb_rootclus fat32-in-memory))
            (stobj-set-indices-in-fa-table
             fat32-in-memory
-            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (generate-index-list
+             2 (count-of-clusters fat32-in-memory))
             (make-list-ac (count-of-clusters fat32-in-memory)
                           0 nil)))
           268435455)
          (stobj-set-indices-in-fa-table
           fat32-in-memory
-          (generate-index-list 2 (count-of-clusters fat32-in-memory))
+          (generate-index-list
+           2 (count-of-clusters fat32-in-memory))
           (make-list-ac (count-of-clusters fat32-in-memory)
                         0 nil)))
         fs
@@ -6785,7 +6766,8 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable (:rewrite not-intersectp-list-of-append-2))
+    :in-theory
+    (disable (:rewrite not-intersectp-list-of-append-2))
     :use
     (:instance
      (:rewrite not-intersectp-list-of-append-2)
@@ -6803,13 +6785,15 @@
              (fat32-entry-mask (bpb_rootclus fat32-in-memory))
              (stobj-set-indices-in-fa-table
               fat32-in-memory
-              (generate-index-list 2 (count-of-clusters fat32-in-memory))
+              (generate-index-list
+               2 (count-of-clusters fat32-in-memory))
               (make-list-ac (count-of-clusters fat32-in-memory)
                             0 nil)))
             268435455)
            (stobj-set-indices-in-fa-table
             fat32-in-memory
-            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (generate-index-list
+             2 (count-of-clusters fat32-in-memory))
             (make-list-ac (count-of-clusters fat32-in-memory)
                           0 nil)))
           fs
@@ -6824,13 +6808,15 @@
              (fat32-entry-mask (bpb_rootclus fat32-in-memory))
              (stobj-set-indices-in-fa-table
               fat32-in-memory
-              (generate-index-list 2 (count-of-clusters fat32-in-memory))
+              (generate-index-list
+               2 (count-of-clusters fat32-in-memory))
               (make-list-ac (count-of-clusters fat32-in-memory)
                             0 nil)))
             268435455)
            (stobj-set-indices-in-fa-table
             fat32-in-memory
-            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (generate-index-list
+             2 (count-of-clusters fat32-in-memory))
             (make-list-ac (count-of-clusters fat32-in-memory)
                           0 nil)))
           fs
@@ -6849,46 +6835,23 @@
              (fat32-entry-mask (bpb_rootclus fat32-in-memory))
              (stobj-set-indices-in-fa-table
               fat32-in-memory
-              (generate-index-list 2 (count-of-clusters fat32-in-memory))
+              (generate-index-list
+               2 (count-of-clusters fat32-in-memory))
               (make-list-ac (count-of-clusters fat32-in-memory)
                             0 nil)))
             268435455)
            (stobj-set-indices-in-fa-table
             fat32-in-memory
-            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (generate-index-list
+             2 (count-of-clusters fat32-in-memory))
             (make-list-ac (count-of-clusters fat32-in-memory)
                           0 nil)))
           fs
           (fat32-entry-mask (bpb_rootclus fat32-in-memory)))))
-       (+
-        -1
-        (len
-         (make-clusters
-          (nats=>string
-           (flatten
-            (mv-nth
-             1
-             (hifat-to-lofat-helper
-              (update-fati
-               (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-               (fat32-update-lower-28
-                (fati
-                 (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-                 (stobj-set-indices-in-fa-table
-                  fat32-in-memory
-                  (generate-index-list 2 (count-of-clusters fat32-in-memory))
-                  (make-list-ac (count-of-clusters fat32-in-memory)
-                                0 nil)))
-                268435455)
-               (stobj-set-indices-in-fa-table
-                fat32-in-memory
-                (generate-index-list 2 (count-of-clusters fat32-in-memory))
-                (make-list-ac (count-of-clusters fat32-in-memory)
-                              0 nil)))
-              fs
-              (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))
-          (cluster-size fat32-in-memory))))))
-     (x (list (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))))
+       n))
+     (x
+      (list
+       (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))))
 
 (defthm
   hifat-to-lofat-inversion
@@ -8485,6 +8448,61 @@
                   (floor (+ (len nats) cluster-size -1)
                          cluster-size)))
   :hints (("goal" :in-theory (enable len-of-make-clusters))))
+
+(defthm
+  lofat-to-hifat-inversion-lemma-10
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (stringp contents)
+    (fat32-masked-entry-p first-cluster)
+    (>= first-cluster *ms-first-data-cluster*)
+    (< first-cluster
+       (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory)))
+    (equal (fat32-entry-mask (fati first-cluster fat32-in-memory))
+           0)
+    (not (member-equal
+          first-cluster
+          (find-n-free-clusters
+           (effective-fat fat32-in-memory)
+           (+ -1
+              (len (make-clusters contents
+                                  (cluster-size fat32-in-memory)))))))
+    (< (+ (* -1 (cluster-size fat32-in-memory))
+          (* (cluster-size fat32-in-memory)
+             (len (make-clusters contents
+                                 (cluster-size fat32-in-memory)))))
+       2097152))
+   (free-index-listp
+    (mv-nth
+     0
+     (fat32-build-index-list
+      (effective-fat
+       (mv-nth 0
+               (place-contents fat32-in-memory dir-ent
+                               contents file-length first-cluster)))
+      first-cluster
+      2097152 (cluster-size fat32-in-memory)))
+    (effective-fat fat32-in-memory)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (place-contents)
+         ((:rewrite fat32-build-index-list-of-set-indices-in-fa-table)))
+    :use
+    (:instance
+     (:rewrite fat32-build-index-list-of-set-indices-in-fa-table)
+     (cluster-size (cluster-size fat32-in-memory))
+     (file-length 2097152)
+     (file-index-list
+      (cons first-cluster
+            (find-n-free-clusters
+             (effective-fat fat32-in-memory)
+             (+ -1
+                (len (make-clusters contents
+                                    (cluster-size fat32-in-memory)))))))
+     (fa-table (effective-fat fat32-in-memory))))))
 
 (thm-cp
   (IMPLIES
