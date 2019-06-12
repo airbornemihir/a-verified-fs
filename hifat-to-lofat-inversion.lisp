@@ -7011,7 +7011,20 @@
           (len dir-ent-list)))
   :hints (("goal" :in-theory (e/d (lofat-to-hifat-helper-exec)
                                   ((:definition remove1-dir-ent)
-                                   (:rewrite take-of-len-free))))))
+                                   (:rewrite take-of-len-free)))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (equal (mv-nth 3
+                    (lofat-to-hifat-helper-exec fat32-in-memory
+                                                dir-ent-list entry-limit))
+            0)
+     (equal (consp (mv-nth 0
+                         (lofat-to-hifat-helper-exec fat32-in-memory
+                                                     dir-ent-list entry-limit)))
+            (consp dir-ent-list))))))
 
 (encapsulate
   ()
@@ -8002,6 +8015,89 @@
   :hints (("goal" :in-theory (e/d (count-free-clusters)
                                   (make-list-ac)))))
 
+(defthm
+  lofat-to-hifat-inversion-lemma-4
+  (implies
+   (not (consp (mv-nth 0 (root-dir-ent-list fat32-in-memory))))
+   (equal (lofat-to-hifat-helper-exec
+           fat32-in-memory
+           (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+           (max-entry-count fat32-in-memory))
+          (mv nil 0 nil 0)))
+  :hints
+  (("goal"
+    :expand (lofat-to-hifat-helper-exec
+             fat32-in-memory
+             (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+             (max-entry-count fat32-in-memory)))))
+
+(defthm
+  lofat-to-hifat-inversion-lemma-5
+  (implies
+   (not (zp cluster-size))
+   (equal
+    (len
+     (make-clusters
+      (implode$inline (make-list-ac cluster-size val 'nil))
+      cluster-size))
+    1))
+  :hints
+  (("goal"
+    :in-theory (e/d (nthcdr-when->=-n-len-l)
+                    (make-list-ac))
+    :expand
+    ((make-clusters
+      (implode$inline (make-list-ac cluster-size val 'nil))
+      cluster-size)
+     (make-clusters "" cluster-size)))))
+
+;; The make-event is there to avoid writing out the value of (code-char 0),
+;; which makes git assess this file as a binary file and messes up the ability
+;; to do git diff and git merge.
+(make-event
+ `(defthm
+    lofat-to-hifat-inversion-lemma-6
+    (implies
+     (and
+      (equal
+       (count-free-clusters
+        (set-indices-in-fa-table
+         (effective-fat fat32-in-memory)
+         (generate-index-list 2 (count-of-clusters fat32-in-memory))
+         (make-list-ac (count-of-clusters fat32-in-memory)
+                       0 nil)))
+       (count-of-clusters fat32-in-memory))
+      (lofat-fs-p fat32-in-memory))
+     (equal
+      (root-dir-ent-list
+       (mv-nth
+        0
+        (place-contents
+         (update-fati
+          (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+          (fat32-update-lower-28
+           (fati
+            (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+            (stobj-set-indices-in-fa-table
+             fat32-in-memory
+             (generate-index-list 2 (count-of-clusters fat32-in-memory))
+             (make-list-ac (count-of-clusters fat32-in-memory)
+                           0 nil)))
+           268435455)
+          (stobj-set-indices-in-fa-table
+           fat32-in-memory
+           (generate-index-list 2 (count-of-clusters fat32-in-memory))
+           (make-list-ac (count-of-clusters fat32-in-memory)
+                         0 nil)))
+         '(0 0 0 0 0 0 0 0 0 0 0 0
+             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+         (implode (make-list-ac (cluster-size fat32-in-memory)
+                                ,(code-char 0) nil))
+         0
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory)))))
+      (mv nil 0)))
+    :hints (("goal" :in-theory (enable root-dir-ent-list)))))
+
 (thm-cp
   (IMPLIES
    (AND (LOFAT-FS-P FAT32-IN-MEMORY)
@@ -8016,8 +8112,14 @@
                               (MV-NTH 0 (LOFAT-TO-HIFAT FAT32-IN-MEMORY))))))
     0))
   :hints
-  (("Goal" :in-theory (enable lofat-to-hifat hifat-to-lofat))
-   ))
+  (("Goal" :in-theory
+    (e/d (lofat-to-hifat hifat-to-lofat)
+         (lofat-to-hifat-inversion-lemma-3 generate-index-list))
+    :use (:instance 
+          lofat-to-hifat-inversion-lemma-3
+          (fa-table (effective-fat fat32-in-memory)))
+    :expand (HIFAT-CLUSTER-COUNT NIL (CLUSTER-SIZE FAT32-IN-MEMORY)))
+   ) :otf-flg t)
 
 (defund-nx
   lofat-equiv
