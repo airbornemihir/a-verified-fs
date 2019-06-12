@@ -210,6 +210,9 @@
               (count-of-clusters fat32-in-memory))
        (fat32-masked-entry-list-p clusterchain)
        (natp file-size)
+       ;; A bug was here for a long time - the bound was set to
+       ;; (count-of-clusters fat32-in-memory), giving away the last two
+       ;; clusters.
        (bounded-nat-listp clusterchain
                           (+ *ms-first-data-cluster*
                              (count-of-clusters fat32-in-memory)))
@@ -1333,33 +1336,55 @@
   lofat-to-hifat (fat32-in-memory)
   (declare
    (xargs :stobjs fat32-in-memory
-          :guard (lofat-fs-p fat32-in-memory)))
+          :guard (lofat-fs-p fat32-in-memory)
+          :guard-hints (("Goal" :in-theory (enable root-dir-ent-list))
+                        ) :guard-debug t))
   (b*
       (((unless
          (mbt (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                   *ms-first-data-cluster*)))
         (mv nil *eio*))
-       ((mv root-dir-ent-list error-code)
-        (root-dir-ent-list fat32-in-memory))
-       ((unless (and (equal error-code 0)
-                     ;; This clause might be a problem, since the root
-                     ;; directory is not obliged to contain dot and dotdot
-                     ;; directory entries, which means we might be unfairly
-                     ;; constraining it to 2^16 -2 directory entries when it
-                     ;; can have 2^16.
-                     (<= (len root-dir-ent-list) *ms-max-dir-ent-count*)))
+       ((mv root-dir-clusterchain error-code)
+        (get-clusterchain
+         fat32-in-memory
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+         *ms-max-dir-size*))
         ;; We're gradually trying to have more of the pattern where we
-        ;; explicitly say what the error code is going to be. We actually
+        ;; explicitly say what the error code is going to be, rather than pass
+        ;; on the value of the error code from a function call. We actually
         ;; aren't changing what was there before! It's a nice thing about
         ;; theorem proving (and the way we've set up our functions and lemmas)
         ;; that we can actually prove that a given function, for instance, only
         ;; returns the error codes 0 and *enoent* (or more commonly, 0 and
         ;; *eio*).
+       ((unless (equal error-code 0)) (mv nil *eio*))
+       ;; If at all there are performance problems after this point, this mbe
+       ;; should be checked...
+       ((mv root-dir-ent-list error-code)
+        (mbe
+         :logic
+         (root-dir-ent-list fat32-in-memory)
+         :exec
+         (mv (make-dir-ent-list
+              (string=>nats
+               (get-contents-from-clusterchain
+                fat32-in-memory
+                root-dir-clusterchain
+                *ms-max-dir-size*)))
+             error-code)))
+       ((unless (mbt (equal error-code 0))) (mv nil *eio*))
+       ;; This clause might be a problem, since the root directory is not
+       ;; obliged to contain dot and dotdot directory entries, which means we
+       ;; might be unfairly constraining it to 2^16 -2 directory entries when
+       ;; it can have 2^16.
+       ((unless (<= (len root-dir-ent-list) *ms-max-dir-ent-count*))
         (mv nil *eio*))
-       ((mv m1-file-alist & & error-code)
+       ((mv m1-file-alist & clusterchain-list error-code)
         (lofat-to-hifat-helper-exec
          fat32-in-memory root-dir-ent-list
-         (max-entry-count fat32-in-memory))))
+         (max-entry-count fat32-in-memory)))
+       ((unless (not-intersectp-list root-dir-clusterchain clusterchain-list))
+        (mv m1-file-alist *eio*)))
     (mv m1-file-alist error-code)))
 
 (defthm
@@ -6572,7 +6597,7 @@
     (mv nil 0 nil 0)))
   :hints (("goal" :in-theory (enable lofat-to-hifat-helper-exec)) ))
 
-(defthmd
+(defthm
   hifat-to-lofat-inversion-lemma-11
   (implies
    (lofat-fs-p fat32-in-memory)
@@ -6625,6 +6650,247 @@
         (cluster-size (cluster-size fat32-in-memory))))))))
 
 (defthm
+  hifat-to-lofat-inversion-lemma-24
+  (implies
+   (and
+    (equal
+     (mv-nth
+      2
+      (hifat-to-lofat-helper
+       (update-fati
+        (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+        (fat32-update-lower-28
+         (fati
+          (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+          (stobj-set-indices-in-fa-table
+           fat32-in-memory
+           (generate-index-list 2 (count-of-clusters fat32-in-memory))
+           (make-list-ac (count-of-clusters fat32-in-memory)
+                         0 nil)))
+         268435455)
+        (stobj-set-indices-in-fa-table
+         fat32-in-memory
+         (generate-index-list 2 (count-of-clusters fat32-in-memory))
+         (make-list-ac (count-of-clusters fat32-in-memory)
+                       0 nil)))
+       fs
+       (fat32-entry-mask (bpb_rootclus fat32-in-memory))))
+     0)
+    (lofat-fs-p fat32-in-memory)
+    (m1-file-alist-p fs)
+    (hifat-bounded-file-alist-p fs)
+    (hifat-no-dups-p fs)
+    (<= (hifat-entry-count fs)
+        (max-entry-count fat32-in-memory)))
+   (not-intersectp-list
+    (cons
+     (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+     (find-n-free-clusters
+      (effective-fat
+       (mv-nth
+        0
+        (hifat-to-lofat-helper
+         (update-fati
+          (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+          (fat32-update-lower-28
+           (fati
+            (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+            (stobj-set-indices-in-fa-table
+             fat32-in-memory
+             (generate-index-list 2 (count-of-clusters fat32-in-memory))
+             (make-list-ac (count-of-clusters fat32-in-memory)
+                           0 nil)))
+           268435455)
+          (stobj-set-indices-in-fa-table
+           fat32-in-memory
+           (generate-index-list 2 (count-of-clusters fat32-in-memory))
+           (make-list-ac (count-of-clusters fat32-in-memory)
+                         0 nil)))
+         fs
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory)))))
+      (+
+       -1
+       (len
+        (make-clusters
+         (nats=>string
+          (flatten
+           (mv-nth
+            1
+            (hifat-to-lofat-helper
+             (update-fati
+              (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+              (fat32-update-lower-28
+               (fati
+                (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                (stobj-set-indices-in-fa-table
+                 fat32-in-memory
+                 (generate-index-list 2 (count-of-clusters fat32-in-memory))
+                 (make-list-ac (count-of-clusters fat32-in-memory)
+                               0 nil)))
+               268435455)
+              (stobj-set-indices-in-fa-table
+               fat32-in-memory
+               (generate-index-list 2 (count-of-clusters fat32-in-memory))
+               (make-list-ac (count-of-clusters fat32-in-memory)
+                             0 nil)))
+             fs
+             (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))
+         (cluster-size fat32-in-memory))))))
+    (mv-nth
+     2
+     (lofat-to-hifat-helper-exec
+      (mv-nth
+       0
+       (hifat-to-lofat-helper
+        (update-fati
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+         (fat32-update-lower-28
+          (fati
+           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+           (stobj-set-indices-in-fa-table
+            fat32-in-memory
+            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (make-list-ac (count-of-clusters fat32-in-memory)
+                          0 nil)))
+          268435455)
+         (stobj-set-indices-in-fa-table
+          fat32-in-memory
+          (generate-index-list 2 (count-of-clusters fat32-in-memory))
+          (make-list-ac (count-of-clusters fat32-in-memory)
+                        0 nil)))
+        fs
+        (fat32-entry-mask (bpb_rootclus fat32-in-memory))))
+      (mv-nth
+       1
+       (hifat-to-lofat-helper
+        (update-fati
+         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+         (fat32-update-lower-28
+          (fati
+           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+           (stobj-set-indices-in-fa-table
+            fat32-in-memory
+            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (make-list-ac (count-of-clusters fat32-in-memory)
+                          0 nil)))
+          268435455)
+         (stobj-set-indices-in-fa-table
+          fat32-in-memory
+          (generate-index-list 2 (count-of-clusters fat32-in-memory))
+          (make-list-ac (count-of-clusters fat32-in-memory)
+                        0 nil)))
+        fs
+        (fat32-entry-mask (bpb_rootclus fat32-in-memory))))
+      (max-entry-count fat32-in-memory)))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable (:rewrite not-intersectp-list-of-append-2))
+    :use
+    (:instance
+     (:rewrite not-intersectp-list-of-append-2)
+     (l
+      (mv-nth
+       2
+       (lofat-to-hifat-helper-exec
+        (mv-nth
+         0
+         (hifat-to-lofat-helper
+          (update-fati
+           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+           (fat32-update-lower-28
+            (fati
+             (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+             (stobj-set-indices-in-fa-table
+              fat32-in-memory
+              (generate-index-list 2 (count-of-clusters fat32-in-memory))
+              (make-list-ac (count-of-clusters fat32-in-memory)
+                            0 nil)))
+            268435455)
+           (stobj-set-indices-in-fa-table
+            fat32-in-memory
+            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (make-list-ac (count-of-clusters fat32-in-memory)
+                          0 nil)))
+          fs
+          (fat32-entry-mask (bpb_rootclus fat32-in-memory))))
+        (mv-nth
+         1
+         (hifat-to-lofat-helper
+          (update-fati
+           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+           (fat32-update-lower-28
+            (fati
+             (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+             (stobj-set-indices-in-fa-table
+              fat32-in-memory
+              (generate-index-list 2 (count-of-clusters fat32-in-memory))
+              (make-list-ac (count-of-clusters fat32-in-memory)
+                            0 nil)))
+            268435455)
+           (stobj-set-indices-in-fa-table
+            fat32-in-memory
+            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (make-list-ac (count-of-clusters fat32-in-memory)
+                          0 nil)))
+          fs
+          (fat32-entry-mask (bpb_rootclus fat32-in-memory))))
+        (max-entry-count fat32-in-memory))))
+     (y
+      (find-n-free-clusters
+       (effective-fat
+        (mv-nth
+         0
+         (hifat-to-lofat-helper
+          (update-fati
+           (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+           (fat32-update-lower-28
+            (fati
+             (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+             (stobj-set-indices-in-fa-table
+              fat32-in-memory
+              (generate-index-list 2 (count-of-clusters fat32-in-memory))
+              (make-list-ac (count-of-clusters fat32-in-memory)
+                            0 nil)))
+            268435455)
+           (stobj-set-indices-in-fa-table
+            fat32-in-memory
+            (generate-index-list 2 (count-of-clusters fat32-in-memory))
+            (make-list-ac (count-of-clusters fat32-in-memory)
+                          0 nil)))
+          fs
+          (fat32-entry-mask (bpb_rootclus fat32-in-memory)))))
+       (+
+        -1
+        (len
+         (make-clusters
+          (nats=>string
+           (flatten
+            (mv-nth
+             1
+             (hifat-to-lofat-helper
+              (update-fati
+               (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+               (fat32-update-lower-28
+                (fati
+                 (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                 (stobj-set-indices-in-fa-table
+                  fat32-in-memory
+                  (generate-index-list 2 (count-of-clusters fat32-in-memory))
+                  (make-list-ac (count-of-clusters fat32-in-memory)
+                                0 nil)))
+                268435455)
+               (stobj-set-indices-in-fa-table
+                fat32-in-memory
+                (generate-index-list 2 (count-of-clusters fat32-in-memory))
+                (make-list-ac (count-of-clusters fat32-in-memory)
+                              0 nil)))
+              fs
+              (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))
+          (cluster-size fat32-in-memory))))))
+     (x (list (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))))
+
+(defthm
   hifat-to-lofat-inversion
   (implies
    (and (lofat-fs-p fat32-in-memory)
@@ -6657,7 +6923,6 @@
                        hifat-to-lofat
                        root-dir-ent-list
                        hifat-to-lofat-inversion-lemma-10
-                       hifat-to-lofat-inversion-lemma-11
                        hifat-to-lofat-inversion-lemma-13
                        painful-debugging-lemma-10
                        painful-debugging-lemma-11))))
