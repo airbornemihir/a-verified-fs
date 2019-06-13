@@ -3056,7 +3056,7 @@
   :hints
   (("goal" :in-theory (e/d (place-contents)
                            ((:rewrite
-                             fat32-build-index-list-of-set-indices-in-fa-table)
+                             fat32-build-index-list-of-set-indices-in-fa-table-coincident)
                             (:rewrite get-clusterchain-contents-correctness-3)
                             (:rewrite get-clusterchain-contents-correctness-2)
                             (:rewrite get-clusterchain-contents-correctness-1)))
@@ -3096,7 +3096,7 @@
                                (cluster-size fat32-in-memory)))))
          '(268435455)))))
      (:instance
-      (:rewrite fat32-build-index-list-of-set-indices-in-fa-table)
+      (:rewrite fat32-build-index-list-of-set-indices-in-fa-table-coincident)
       (cluster-size (cluster-size fat32-in-memory))
       (file-length length)
       (file-index-list
@@ -3383,12 +3383,12 @@
     (e/d
      (place-contents)
      ((:rewrite
-       fat32-build-index-list-of-set-indices-in-fa-table)))
+       fat32-build-index-list-of-set-indices-in-fa-table-coincident)))
     :do-not-induct t
     :use
     ((:instance
       (:rewrite
-       fat32-build-index-list-of-set-indices-in-fa-table)
+       fat32-build-index-list-of-set-indices-in-fa-table-coincident)
       (cluster-size (cluster-size fat32-in-memory))
       (file-length length)
       (file-index-list
