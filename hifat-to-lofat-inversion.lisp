@@ -25,7 +25,7 @@
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
-  (defthm painful-debugging-lemma-13
+  (defthm painful-debugging-lemma-15
     (implies (and (not (zp j)) (integerp i) (> i j))
              (> (floor i j) 0))
     :rule-classes :linear)
@@ -41,10 +41,6 @@
                   (not (zp j))
                   (<= i1 i2))
              (<= (floor i1 j) (floor i2 j)))))
-
-(defthmd painful-debugging-lemma-15
-  (implies (and (integerp x) (integerp y) (< x y))
-           (<= (+ 1 x) y)))
 
 (defund
   get-clusterchain
@@ -4173,7 +4169,7 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (painful-debugging-lemma-15)
+    (e/d (painful-debugging-lemma-13)
          ((:linear find-n-free-clusters-correctness-7)))
     :use
     (:instance
