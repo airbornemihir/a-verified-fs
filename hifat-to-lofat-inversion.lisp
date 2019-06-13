@@ -483,11 +483,10 @@
 
 (defthm
   useless-dir-ent-p-of-dir-ent-set-filename
-  (implies (and (fat32-filename-p filename)
-                (dir-ent-p dir-ent))
-           (not (useless-dir-ent-p
-                 (dir-ent-set-filename dir-ent filename))))
-  :hints (("goal" :in-theory (enable useless-dir-ent-p))))
+  (implies (fat32-filename-p filename)
+           (not (useless-dir-ent-p (dir-ent-set-filename dir-ent filename))))
+  :hints (("goal" :in-theory (enable useless-dir-ent-p
+                                     fat32-filename-p-correctness-1))))
 
 (defund
   make-dir-ent-list (dir-contents)
@@ -2379,7 +2378,8 @@
   (useful-dir-ent-list-p
    (mv-nth 1
            (hifat-to-lofat-helper fat32-in-memory fs first-cluster)))
-  :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p
+                                     fat32-filename-p-correctness-1))))
 
 (defthm
   unsigned-byte-listp-of-flatten-when-dir-ent-list-p
@@ -2471,7 +2471,7 @@
     (("goal"
       :in-theory
       (e/d
-       (painful-debugging-lemma-9)
+       (painful-debugging-lemma-9 fat32-filename-p-correctness-1)
        (stobj-set-indices-in-fa-table))))))
 
 (defthm
@@ -6449,7 +6449,7 @@
                                 current-dir-first-cluster entry-limit x)
       :in-theory
       (e/d (lofat-to-hifat-helper-exec (:definition hifat-no-dups-p)
-                                       remove1-dir-ent)
+                                       remove1-dir-ent fat32-filename-p-correctness-1)
            ((:rewrite nth-of-nats=>chars)
             (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
             (:rewrite fati-of-hifat-to-lofat-helper-disjoint-lemma-2)

@@ -14,7 +14,8 @@
     :guard (and (m1-file-alist-p m1-file-alist1)
                 (m1-file-alist-p m1-file-alist2))
     :hints (("goal" :in-theory (enable m1-file->contents
-                                       m1-directory-file-p)))))
+                                       m1-directory-file-p)))
+    :guard-hints (("goal" :in-theory (enable fat32-filename-p-correctness-1)))))
   (b*
       (((when (atom m1-file-alist1)) t)
        ((unless (mbt (and (consp (car m1-file-alist1))
@@ -220,31 +221,25 @@
    (and (m1-file-alist-p fs)
         (hifat-no-dups-p fs)
         (m1-regular-file-p (cdar fs)))
-   (hifat-equiv
-    (cons (cons (caar fs)
-                (m1-file dir-ent (m1-file->contents (cdar fs))))
-          (cdr fs))
-    fs))
+   (hifat-equiv (cons (cons (caar fs)
+                            (m1-file dir-ent (m1-file->contents (cdar fs))))
+                      (cdr fs))
+                fs))
   :hints
   (("goal"
     :expand
-    (hifat-equiv
-     (cons
-      (cons (caar fs)
-            (m1-file dir-ent (m1-file->contents (cdar fs))))
-      (cdr fs))
-     fs)
-    :in-theory (e/d (hifat-no-dups-p)
+    (hifat-equiv (cons (cons (caar fs)
+                             (m1-file dir-ent (m1-file->contents (cdar fs))))
+                       (cdr fs))
+                 fs)
+    :in-theory (e/d (hifat-no-dups-p fat32-filename-p-correctness-1)
                     (hifat-subsetp-reflexive-lemma-4))
     :use
-    ((:instance
-      hifat-subsetp-reflexive-lemma-4
-      (x
-       (list
-        (cons (car (car fs))
-              (m1-file dir-ent
-                       (m1-file->contents (cdr (car fs)))))))
-      (y (cdr fs)))
+    ((:instance hifat-subsetp-reflexive-lemma-4
+                (x (list (cons (car (car fs))
+                               (m1-file dir-ent
+                                        (m1-file->contents (cdr (car fs)))))))
+                (y (cdr fs)))
      (:instance hifat-subsetp-reflexive-lemma-4
                 (x (list (car fs)))
                 (y (cdr fs)))))))
@@ -282,27 +277,25 @@
                         (cons head tail)))
   :hints
   (("goal"
-    :expand
-    ((hifat-equiv (cons (cons (car head)
-                              (m1-file dir-ent contents))
-                        tail)
-                  (cons head tail))
-     (hifat-equiv (m1-file->contents (cdr head))
-                  contents))
-    :in-theory (e/d (hifat-no-dups-p)
-                    (hifat-subsetp-reflexive-lemma-4
-                     m1-directory-file-p-of-m1-file))
-    :use
-    ((:instance hifat-subsetp-reflexive-lemma-4
-                (x (list head))
-                (y tail))
-     (:instance hifat-subsetp-reflexive-lemma-4
-                (x (list (cons (car head)
-                               (m1-file dir-ent contents))))
-                (y tail))
-     (:instance m1-directory-file-p-of-m1-file
-                (contents contents)
-                (dir-ent dir-ent))))))
+    :expand ((hifat-equiv (cons (cons (car head)
+                                      (m1-file dir-ent contents))
+                                tail)
+                          (cons head tail))
+             (hifat-equiv (m1-file->contents (cdr head))
+                          contents))
+    :in-theory
+    (e/d (hifat-no-dups-p fat32-filename-p-correctness-1)
+         (hifat-subsetp-reflexive-lemma-4 m1-directory-file-p-of-m1-file))
+    :use ((:instance hifat-subsetp-reflexive-lemma-4
+                     (x (list head))
+                     (y tail))
+          (:instance hifat-subsetp-reflexive-lemma-4
+                     (x (list (cons (car head)
+                                    (m1-file dir-ent contents))))
+                     (y tail))
+          (:instance m1-directory-file-p-of-m1-file
+                     (contents contents)
+                     (dir-ent dir-ent))))))
 
 (defthm hifat-equiv-of-cons-lemma-4
   (implies (and (not (assoc-equal (car head) tail1))
@@ -328,5 +321,6 @@
                                (cons head tail2))
                   t))
   :hints
-  (("goal" :in-theory (e/d (hifat-equiv hifat-no-dups-p))
+  (("goal" :in-theory (e/d (hifat-equiv hifat-no-dups-p
+                                        fat32-filename-p-correctness-1))
     :expand (hifat-file-alist-fix (cons head tail1)))))
