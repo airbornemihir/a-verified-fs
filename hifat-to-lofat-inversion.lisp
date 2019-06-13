@@ -567,7 +567,7 @@
 ;; the first instance of the directory entry. That's pretty much all we need,
 ;; because we're only going to use this to remove dot and dotdot entries, and
 ;; any extra ./.. entries will be cleared out by make-dir-ent-list.
-(defun
+(defund
   remove1-dir-ent (dir-contents filename)
   (declare
    (xargs :measure (len dir-contents)

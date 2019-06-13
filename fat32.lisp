@@ -379,7 +379,7 @@
            (not (fat32-is-eof fat-content)))
   :hints (("Goal" :in-theory (enable fat32-is-eof)) ))
 
-(defun
+(defund
   fat32-build-index-list
   (fa-table masked-current-cluster
             length cluster-size)

@@ -17,10 +17,6 @@
 (local
  (in-theory (disable nth update-nth floor mod true-listp)))
 
-;; Eventually, it might be nice to globally disable this function...
-(local
- (in-theory (disable (:definition fat32-build-index-list))))
-
 (defconst *initialbytcnt* 16)
 
 (defund get-initial-bytes (str)

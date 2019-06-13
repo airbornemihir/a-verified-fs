@@ -170,7 +170,7 @@
        (consp chars))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
-(defthm consp-of-string=>nats
+(defthmd consp-of-string=>nats
   (iff (consp (string=>nats string))
        (consp (explode string)))
   :hints (("goal" :in-theory (enable string=>nats))))
