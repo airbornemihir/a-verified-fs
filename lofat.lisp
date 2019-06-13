@@ -2280,8 +2280,7 @@
             ;; The following came from accumulated-persistence results.
             (:rewrite str::explode-when-not-stringp)
             (:definition update-fat)
-            (:rewrite nth-of-make-character-list)
-            (:rewrite fat32-filename-p-correctness-1)))))
+            (:rewrite nth-of-make-character-list)))))
     :stobjs (fat32-in-memory state)))
   ;; The idea behind this MBE is that slurping in the whole string at once is
   ;; causing inefficiencies in terms of memory allocated for all these subseq

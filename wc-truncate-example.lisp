@@ -450,7 +450,6 @@
      (lofat-truncate)
      ((:rewrite take-of-take-split)
       (:linear len-of-member-equal)
-      (:rewrite fat32-filename-p-correctness-1)
       (:rewrite fat32-filename-p-when-fat32-filename-p)
       (:rewrite str::make-character-list-when-character-listp)
       (:rewrite hifat-to-lofat-inversion-lemma-2)
@@ -794,7 +793,6 @@
   :hints (("goal" :in-theory (e/d (lofat-truncate)
                                   ((:rewrite take-of-take-split)
                                    (:linear len-of-member-equal)
-                                   (:rewrite fat32-filename-p-correctness-1)
                                    (:definition take)
                                    (:rewrite take-of-len-free))))))
 

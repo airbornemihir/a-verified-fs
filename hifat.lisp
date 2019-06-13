@@ -920,7 +920,7 @@
   (("goal" :in-theory (enable dir-ent-filename
                               dir-ent-install-directory-bit))))
 
-(defun fat32-filename-p (x)
+(defund fat32-filename-p (x)
   (declare (xargs :guard t))
   (and (stringp x)
        (equal (length x) 11)
@@ -954,7 +954,7 @@
  :define t
  :forward t)
 
-(defthm
+(defthmd
   fat32-filename-p-correctness-1
   (implies (fat32-filename-p x)
            (and (stringp x)
@@ -962,7 +962,8 @@
                 (not (equal (nth 0 (explode x)) (code-char #x00)))
                 (not (equal (nth 0 (explode x)) (code-char #xe5)))
                 (not (equal x *current-dir-fat32-name*))
-                (not (equal x *parent-dir-fat32-name*)))))
+                (not (equal x *parent-dir-fat32-name*))))
+  :hints (("Goal" :in-theory (enable fat32-filename-p))))
 
 (defthm dir-ent-set-filename-correctness-1
   (implies
@@ -971,12 +972,13 @@
    (and
     (not (equal (nth 0
                      (dir-ent-set-filename dir-ent filename))
-                0))
+                #x00))
     (not (equal (nth 0
                      (dir-ent-set-filename dir-ent filename))
-                229))))
+                #xe5))))
   :hints
-  (("goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p)
+  (("goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p
+                                                 fat32-filename-p-correctness-1)
                            (nth)))))
 
 (defthm
@@ -1465,7 +1467,8 @@
                 (m1-file-alist-p hifat-file-alist)
                 (m1-directory-file-p (cdr (car hifat-file-alist))))
            (hifat-no-dups-p (m1-file->contents (cdr (car hifat-file-alist)))))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p
+                                     fat32-filename-p-correctness-1))))
 
 (defun hifat-file-alist-fix (hifat-file-alist)
   (declare (xargs :guard (and (m1-file-alist-p hifat-file-alist)
