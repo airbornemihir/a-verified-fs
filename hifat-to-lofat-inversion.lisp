@@ -25,22 +25,23 @@
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
-  (defthm painful-debugging-lemma-15
-    (implies (and (not (zp j)) (integerp i) (> i j))
-             (> (floor i j) 0))
-    :rule-classes :linear)
-
   (defthmd
     painful-debugging-lemma-14
     (implies (not (zp cluster-size))
              (equal (floor (- cluster-size 1) cluster-size) 0)))
+
+  (defthm painful-debugging-lemma-15
+    (implies (and (not (zp j)) (integerp i) (> i j))
+             (> (floor i j) 0))
+    :rule-classes :linear)
 
   (defthmd painful-debugging-lemma-16
     (implies (and (integerp i1)
                   (integerp i2)
                   (not (zp j))
                   (<= i1 i2))
-             (<= (floor i1 j) (floor i2 j)))))
+             (<= (floor i1 j) (floor i2 j)))
+    :rule-classes :linear))
 
 (defund
   get-clusterchain
@@ -581,6 +582,14 @@
            (unsigned-byte-listp 8
                                 (remove1-dir-ent dir-contents filename)))
   :hints (("goal" :in-theory (enable remove1-dir-ent))))
+
+(defthmd
+  make-dir-ent-list-of-remove1-dir-ent
+  (implies (not (fat32-filename-p filename))
+           (equal (make-dir-ent-list (remove1-dir-ent dir-contents filename))
+                  (make-dir-ent-list dir-contents)))
+  :hints (("goal" :in-theory (enable remove1-dir-ent make-dir-ent-list
+                                     fat32-filename-p useless-dir-ent-p))))
 
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
