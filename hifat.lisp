@@ -469,10 +469,9 @@
            (unsigned-byte-listp 8 dir-ent))
   :hints (("goal" :in-theory (enable dir-ent-p))))
 
-(defthm true-list-fix-when-dir-ent-p
+(defthm true-listp-when-dir-ent-p
   (implies (dir-ent-p dir-ent)
-           (equal (true-list-fix dir-ent)
-                  dir-ent)))
+           (true-listp dir-ent)))
 
 (defthm dir-ent-p-of-update-nth
   (implies (dir-ent-p l)
