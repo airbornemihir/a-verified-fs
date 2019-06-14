@@ -553,6 +553,13 @@
  :define t
  :forward t)
 
+(defthm
+  dir-ent-p-of-take
+  (implies (and (unsigned-byte-listp 8 dir-contents)
+                (<= 32 (len dir-contents)))
+           (dir-ent-p (take 32 dir-contents)))
+  :hints (("goal" :in-theory (enable dir-ent-p))))
+
 (fty::deflist dir-ent-list
       :elt-type dir-ent
       :true-listp t

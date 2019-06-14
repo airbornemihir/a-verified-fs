@@ -964,13 +964,6 @@
             (lofat-to-hifat-helper-exec fat32-in-memory
                                         dir-ent-list entry-limit1))))))
 
-(defthm
-  hifat-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-exec-lemma-1
-  (implies (and (unsigned-byte-listp 8 dir-contents)
-                (<= 32 (len dir-contents)))
-           (dir-ent-p (take 32 dir-contents)))
-  :hints (("goal" :in-theory (enable dir-ent-p))))
-
 (encapsulate
   ()
 
