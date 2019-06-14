@@ -938,8 +938,7 @@
   :hints
   (("goal"
     :in-theory (e/d (lofat-to-hifat-helper-exec)
-                    ((:definition remove1-dir-ent)
-                     (:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)
+                    ((:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)
                      (:rewrite take-of-len-free)
                      (:definition member-equal)
                      (:rewrite subsetp-car-member)
@@ -974,7 +973,9 @@
     (<= (len (make-dir-ent-list dir-contents))
         (floor (len dir-contents)
                *ms-dir-ent-length*))
-    :rule-classes :linear
+    :rule-classes
+    ((:linear :trigger-terms ((len (make-dir-ent-list dir-contents))
+                              (floor (len dir-contents) 32))))
     :hints (("goal" :in-theory (enable make-dir-ent-list))))
 
   (defthm
