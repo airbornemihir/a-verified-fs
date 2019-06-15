@@ -35,7 +35,7 @@
                 (subsetp-equal l1 l2))
            (not-intersectp-list x l1)))
 
-(defthm flatten-subset-no-duplicatesp-lemma-1
+(defthmd flatten-subset-no-duplicatesp-lemma-1
   (implies (and (consp z)
                 (no-duplicatesp (flatten z))
                 (member-equal y z)

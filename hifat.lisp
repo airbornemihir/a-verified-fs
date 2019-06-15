@@ -170,7 +170,7 @@
        (consp chars))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
-(defthm consp-of-string=>nats
+(defthmd consp-of-string=>nats
   (iff (consp (string=>nats string))
        (consp (explode string)))
   :hints (("goal" :in-theory (enable string=>nats))))
@@ -469,10 +469,9 @@
            (unsigned-byte-listp 8 dir-ent))
   :hints (("goal" :in-theory (enable dir-ent-p))))
 
-(defthm true-list-fix-when-dir-ent-p
+(defthm true-listp-when-dir-ent-p
   (implies (dir-ent-p dir-ent)
-           (equal (true-list-fix dir-ent)
-                  dir-ent)))
+           (true-listp dir-ent)))
 
 (defthm dir-ent-p-of-update-nth
   (implies (dir-ent-p l)
@@ -553,6 +552,13 @@
  :equiv dir-ent-equiv
  :define t
  :forward t)
+
+(defthm
+  dir-ent-p-of-take
+  (implies (and (unsigned-byte-listp 8 dir-contents)
+                (<= 32 (len dir-contents)))
+           (dir-ent-p (take 32 dir-contents)))
+  :hints (("goal" :in-theory (enable dir-ent-p))))
 
 (fty::deflist dir-ent-list
       :elt-type dir-ent
@@ -1179,6 +1185,16 @@
    (m1-regular-file-p file)
    (m1-file-p file))
   :hints (("Goal" :in-theory (enable m1-regular-file-p))))
+
+(defthm
+  m1-regular-file-p-of-m1-file-p
+  (equal
+   (m1-regular-file-p (m1-file dir-ent contents))
+   (and
+    (stringp (m1-file-contents-fix contents))
+    (unsigned-byte-p 32
+                     (length (m1-file-contents-fix contents)))))
+  :hints (("goal" :in-theory (enable m1-regular-file-p))))
 
 ;; (defthm
 ;;   length-of-m1-file->contents

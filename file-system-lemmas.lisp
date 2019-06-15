@@ -607,6 +607,10 @@
    (iff (equal (+ x (- y)) 0)
         (equal x y))))
 
+(defthmd painful-debugging-lemma-13
+  (implies (and (integerp x) (integerp y) (< x y))
+           (<= (+ 1 x) y)))
+
 ;; The following is redundant with the eponymous theorem in
 ;; books/std/typed-lists/integer-listp.lisp, from where it was taken with
 ;; thanks.
