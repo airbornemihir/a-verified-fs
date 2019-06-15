@@ -170,35 +170,29 @@
   lofat-pread-refinement-lemma-1
   (implies
    (and
-    (equal (mv-nth 1
-                   (find-dir-ent dir-ent-list filename))
-           0)
-    (lofat-fs-p fat32-in-memory)
     (useful-dir-ent-list-p dir-ent-list)
     (equal (mv-nth 3
                    (lofat-to-hifat-helper-exec fat32-in-memory
                                                dir-ent-list entry-limit))
            0)
-    (<= (+ 2 (count-of-clusters fat32-in-memory))
-        (dir-ent-first-cluster
-         (mv-nth 0
-                 (find-dir-ent dir-ent-list filename)))))
-   (not
-    (dir-ent-directory-p
-     (mv-nth 0
-             (find-dir-ent dir-ent-list filename)))))
-  :hints (("goal" :in-theory
-           (e/d (lofat-to-hifat-helper-exec find-dir-ent
-                                            useful-dir-ent-list-p)
-                ((:REWRITE
-                  LOFAT-TO-HIFAT-HELPER-EXEC-CORRECTNESS-3-LEMMA-1)
-                 (:DEFINITION NO-DUPLICATESP-EQUAL)
-                 (:REWRITE USEFUL-DIR-ENT-LIST-P-OF-CDR)
-                 (:DEFINITION MEMBER-EQUAL)
-                 (:REWRITE TAKE-OF-LEN-FREE)
-                 (:DEFINITION TAKE)
-                 (:LINEAR COUNT-FREE-CLUSTERS-CORRECTNESS-1)
-                 (:DEFINITION ASSOC-EQUAL)))) ))
+    (<=
+     (+ 2 (count-of-clusters fat32-in-memory))
+     (dir-ent-first-cluster (mv-nth 0
+                                    (find-dir-ent dir-ent-list filename)))))
+   (not (dir-ent-directory-p (mv-nth 0
+                                     (find-dir-ent dir-ent-list filename)))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (lofat-to-hifat-helper-exec find-dir-ent useful-dir-ent-list-p)
+         ((:rewrite lofat-to-hifat-helper-exec-correctness-3-lemma-1)
+          (:definition no-duplicatesp-equal)
+          (:rewrite useful-dir-ent-list-p-of-cdr)
+          (:definition member-equal)
+          (:rewrite take-of-len-free)
+          (:definition take)
+          (:linear count-free-clusters-correctness-1)
+          (:definition assoc-equal))))))
 
 (defthm
   lofat-pread-refinement-lemma-2
@@ -415,7 +409,7 @@
              (hifat-find-file-by-pathname m1-file-alist2 pathname)))
     :in-theory (enable m1-file-alist-p hifat-find-file-by-pathname))))
 
-(defthmd hifat-find-file-by-pathname-correctness-3-lemma-8
+(defthm hifat-find-file-by-pathname-correctness-3-lemma-8
   (implies (and (not (consp (assoc-equal name m1-file-alist2)))
                 (m1-file-alist-p m1-file-alist1)
                 (hifat-subsetp m1-file-alist1 m1-file-alist2))
@@ -450,8 +444,7 @@
              (hifat-find-file-by-pathname m1-file-alist1 pathname))
      (mv-nth 1
              (hifat-find-file-by-pathname m1-file-alist2 pathname)))
-    :in-theory (enable m1-file-alist-p hifat-find-file-by-pathname
-                       hifat-find-file-by-pathname-correctness-3-lemma-8))))
+    :in-theory (enable m1-file-alist-p hifat-find-file-by-pathname))))
 
 (defthmd
   hifat-find-file-by-pathname-correctness-3-lemma-4
@@ -491,12 +484,10 @@
         (mv-nth 1
                 (hifat-find-file-by-pathname m1-file-alist2 pathname)))
     :in-theory (enable m1-file-alist-p
-                       hifat-find-file-by-pathname
-                       hifat-find-file-by-pathname-correctness-3-lemma-8))
+                       hifat-find-file-by-pathname))
    ("subgoal *1/2"
     :in-theory
-    (e/d (m1-file-alist-p hifat-find-file-by-pathname
-                          hifat-find-file-by-pathname-correctness-3-lemma-8)
+    (e/d (m1-file-alist-p hifat-find-file-by-pathname)
          (hifat-subsetp-transitive-lemma-1))
     :use (:instance hifat-subsetp-transitive-lemma-1
                     (y m1-file-alist1)
@@ -533,8 +524,7 @@
              (hifat-find-file-by-pathname m1-file-alist2 pathname)))
     :in-theory
     (e/d
-     (m1-file-alist-p hifat-find-file-by-pathname
-                      hifat-find-file-by-pathname-correctness-3-lemma-8)
+     (m1-file-alist-p hifat-find-file-by-pathname)
      ((:rewrite hifat-find-file-by-pathname-correctness-3-lemma-1))))
    ("subgoal *1/3"
     :use
