@@ -6940,13 +6940,6 @@
   (("goal" :in-theory (enable set-indices-in-fa-table)
     :induct (set-indices-in-fa-table fa-table index-list value-list))))
 
-(defthmd
-  count-free-clusters-of-effective-fat-of-place-contents-lemma-2
-  (implies (stringp x)
-           (iff (equal (len (explode x)) 0)
-                (equal x "")))
-  :hints (("goal" :expand (len (explode x)))))
-
 (defthm
   count-free-clusters-of-effective-fat-of-place-contents
   (implies
@@ -6989,7 +6982,7 @@
     (e/d
      (place-contents
       set-indices-in-fa-table
-      count-free-clusters-of-effective-fat-of-place-contents-lemma-2)
+      length-of-empty-list)
      ((:rewrite len-of-find-n-free-clusters)))
     :use
     ((:instance
@@ -7057,7 +7050,7 @@
     :in-theory
     (e/d
      (hifat-cluster-count
-      count-free-clusters-of-effective-fat-of-place-contents-lemma-2
+      length-of-empty-list
       painful-debugging-lemma-12)
      ((:rewrite fati-of-hifat-to-lofat-helper-disjoint)
       (:rewrite fati-of-hifat-to-lofat-helper-disjoint-lemma-1)
@@ -7067,7 +7060,7 @@
     :in-theory
     (e/d
      (hifat-cluster-count
-      count-free-clusters-of-effective-fat-of-place-contents-lemma-2
+      length-of-empty-list
       painful-debugging-lemma-12
       len-of-make-clusters)
      ((:rewrite fati-of-hifat-to-lofat-helper-disjoint)
@@ -7975,7 +7968,7 @@
                    (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
                   (length *ms-max-dir-size*))
        (:instance
-        count-free-clusters-of-effective-fat-of-place-contents-lemma-2
+        length-of-empty-list
         (x (mv-nth 0
                    (get-clusterchain-contents
                     fat32-in-memory
