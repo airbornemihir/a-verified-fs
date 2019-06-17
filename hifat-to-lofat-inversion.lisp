@@ -43,6 +43,18 @@
              (<= (floor i1 j) (floor i2 j)))
     :rule-classes :linear))
 
+(defthm
+  bounded-nat-listp-of-generate-index-list
+  (implies (natp start)
+           (bounded-nat-listp (generate-index-list start n)
+                              (+ start (nfix n))))
+  :rule-classes
+  ((:rewrite
+    :corollary (implies (and (natp start)
+                             (equal b (+ start (nfix n))))
+                        (bounded-nat-listp (generate-index-list start n)
+                                           b)))))
+
 (defund
   get-clusterchain
   (fat32-in-memory masked-current-cluster length)
@@ -3978,24 +3990,17 @@
   :hints
   (("goal" :expand (len (explode (m1-file->contents file))))))
 
-(encapsulate
-  ()
-
-  (local
-   (defthm hifat-to-lofat-inversion-lemma-4
-     (implies (and (member-equal x lst) (alistp lst))
-              (consp (assoc-equal (car x) lst)))))
-
-  (defthmd
-    hifat-to-lofat-inversion-lemma-5
-    (implies (and (hifat-subsetp m1-file-alist1 m1-file-alist2)
-                  (alistp m1-file-alist2)
-                  (consp (assoc-equal key m1-file-alist1)))
-             (consp (assoc-equal key m1-file-alist2)))))
+(defthmd
+  hifat-to-lofat-inversion-lemma-3
+  (implies (and (hifat-subsetp m1-file-alist1 m1-file-alist2)
+                (alistp m1-file-alist2)
+                (consp (assoc-equal key m1-file-alist1)))
+           (consp (assoc-equal key m1-file-alist2)))
+  :hints (("Goal" :in-theory (enable assoc-of-car-when-member))))
 
 ;; Not ideal...
 (defthm
-  hifat-to-lofat-inversion-lemma-6
+  hifat-to-lofat-inversion-lemma-4
   (implies
    (hifat-equiv m1-file-alist1 m1-file-alist2)
    (equal
@@ -4009,17 +4014,17 @@
     :expand (hifat-equiv m1-file-alist1 m1-file-alist2)
     :use
     ((:instance
-      hifat-to-lofat-inversion-lemma-5
+      hifat-to-lofat-inversion-lemma-3
       (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
       (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))
      (:instance
-      hifat-to-lofat-inversion-lemma-5
+      hifat-to-lofat-inversion-lemma-3
       (m1-file-alist1 (hifat-file-alist-fix m1-file-alist2))
       (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1))))))
   :rule-classes :congruence)
 
 (defthm
-  hifat-to-lofat-inversion-lemma-14
+  hifat-to-lofat-inversion-lemma-5
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -4066,7 +4071,7 @@
      (m 0)))))
 
 (defthm
-  hifat-to-lofat-inversion-lemma-17
+  hifat-to-lofat-inversion-lemma-6
   (implies
    (and
     (equal
@@ -4207,7 +4212,7 @@
          1))))))))
 
 (defthm
-  hifat-to-lofat-inversion-lemma-18
+  hifat-to-lofat-inversion-lemma-7
   (implies
    (and
     (<=
@@ -4981,7 +4986,7 @@
 
 ;; This is weird, but it's needed in order to discharge a subgoal.
 (defthm
-  hifat-to-lofat-inversion-lemma-3
+  hifat-to-lofat-inversion-lemma-8
   (implies
    (not-intersectp-list
     (cons
@@ -5032,7 +5037,7 @@
          1))))))))
 
 (defthm
-  hifat-to-lofat-inversion-lemma-19
+  hifat-to-lofat-inversion-lemma-9
   (implies
    (and
     (equal
@@ -5615,7 +5620,7 @@
          1))))))))
 
 (defthm
-  hifat-to-lofat-inversion-lemma-20
+  hifat-to-lofat-inversion-lemma-10
   (implies
    (and (< (nfix n) (len index-list))
         (free-index-listp index-list
@@ -5628,7 +5633,6 @@
           0))
   :hints
   (("goal"
-    :do-not-induct t
     :in-theory (disable (:rewrite nth-of-effective-fat)
                         (:rewrite nth-of-free-index-list))
     :use
@@ -5638,7 +5642,7 @@
                 (fa-table (effective-fat fat32-in-memory)))))))
 
 (defthm
-  hifat-to-lofat-inversion-lemma-21
+  hifat-to-lofat-inversion-lemma-11
   (implies
    (and
     (<=
@@ -5691,9 +5695,8 @@
                                         current-dir-first-cluster)))
         1)))))))
 
-;; Do this without the proof-builder later
 (defthm
-  hifat-to-lofat-inversion-lemma-22
+  hifat-to-lofat-inversion-lemma-12
   (implies
    (and
     (<=
@@ -6078,7 +6081,7 @@
            (cluster-size fat32-in-memory)))))))))))
 
 (defthm
-  hifat-to-lofat-inversion-lemma-23
+  hifat-to-lofat-inversion-lemma-13
   (implies
    (lofat-fs-p fat32-in-memory)
    (free-index-listp
@@ -6223,7 +6226,7 @@
   ;; can't be done until more stuff is proved.
   (local
    (defthm
-     hifat-to-lofat-inversion-lemma-7
+     hifat-to-lofat-inversion-lemma-14
      (implies
       (hifat-equiv
        (mv-nth
@@ -6258,10 +6261,10 @@
        (consp (assoc-equal key (hifat-file-alist-fix fs)))))
      :hints
      (("goal"
-       :in-theory (disable hifat-to-lofat-inversion-lemma-6)
+       :in-theory (disable hifat-to-lofat-inversion-lemma-4)
        :use
        (:instance
-        hifat-to-lofat-inversion-lemma-6
+        hifat-to-lofat-inversion-lemma-4
         (m1-file-alist1
          (mv-nth
           0
@@ -6279,14 +6282,14 @@
 
   (local
    (defthm
-     hifat-to-lofat-inversion-lemma-8
+     hifat-to-lofat-inversion-lemma-15
      (iff (equal (hifat-entry-count fs) 0) (atom fs))
      :hints
      (("goal"
        :in-theory (enable hifat-entry-count)))))
 
   (defthm
-    hifat-to-lofat-inversion-lemma-9
+    hifat-to-lofat-inversion-lemma-16
     (implies (and (stringp text)
                   (not (zp cluster-size))
                   (<= (length text) *ms-max-dir-size*)
@@ -6585,7 +6588,7 @@
            :use (:instance hifat-to-lofat-inversion-big-induction
                            (x nil)))))
 
-(defthmd hifat-to-lofat-inversion-lemma-10
+(defthmd hifat-to-lofat-inversion-lemma-17
   (implies
    (atom dir-ent-list)
    (equal
@@ -6595,7 +6598,7 @@
   :hints (("goal" :in-theory (enable lofat-to-hifat-helper-exec)) ))
 
 (defthm
-  hifat-to-lofat-inversion-lemma-11
+  hifat-to-lofat-inversion-lemma-18
   (implies
    (lofat-fs-p fat32-in-memory)
    (and
@@ -6616,7 +6619,7 @@
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
-    hifat-to-lofat-inversion-lemma-12
+    hifat-to-lofat-inversion-lemma-19
     (implies (lofat-fs-p fat32-in-memory)
              (>= *ms-max-dir-size*
                  (cluster-size fat32-in-memory)))
@@ -6627,7 +6630,7 @@
       :use lofat-fs-p-correctness-1)))
 
   (defthmd
-    hifat-to-lofat-inversion-lemma-13
+    hifat-to-lofat-inversion-lemma-20
     (implies
      (and (lofat-fs-p fat32-in-memory)
           (stringp text)
@@ -6647,7 +6650,7 @@
         (cluster-size (cluster-size fat32-in-memory))))))))
 
 (defthm
-  hifat-to-lofat-inversion-lemma-24
+  hifat-to-lofat-inversion-lemma-21
   (implies
    (and
     (equal
@@ -6851,18 +6854,6 @@
        (fat32-entry-mask (bpb_rootclus fat32-in-memory))))))))
 
 (defthm
-  bounded-nat-listp-of-generate-index-list
-  (implies (natp start)
-           (bounded-nat-listp (generate-index-list start n)
-                              (+ start (nfix n))))
-  :rule-classes
-  ((:rewrite
-    :corollary (implies (and (natp start)
-                             (equal b (+ start (nfix n))))
-                        (bounded-nat-listp (generate-index-list start n)
-                                           b)))))
-
-(defthm
   hifat-to-lofat-inversion
   (implies
    (and (lofat-fs-p fat32-in-memory)
@@ -6894,8 +6885,8 @@
     :in-theory (enable lofat-to-hifat
                        hifat-to-lofat
                        root-dir-ent-list
-                       hifat-to-lofat-inversion-lemma-10
-                       hifat-to-lofat-inversion-lemma-13
+                       hifat-to-lofat-inversion-lemma-17
+                       hifat-to-lofat-inversion-lemma-20
                        painful-debugging-lemma-10
                        painful-debugging-lemma-11))))
 
@@ -7900,7 +7891,7 @@
   :hints
   (("goal"
     :in-theory (e/d (lofat-to-hifat hifat-to-lofat
-                                    hifat-to-lofat-inversion-lemma-10)
+                                    hifat-to-lofat-inversion-lemma-17)
                     (lofat-to-hifat-inversion-lemma-3 generate-index-list)))))
 
 (defthm
@@ -8003,6 +7994,7 @@
                          (len (mv-nth 0
                                       (root-dir-ent-list fat32-in-memory)))))
                    (cluster-size fat32-in-memory)))))
+    :rule-classes :linear
     :hints
     (("goal" :expand (len (mv-nth 0
                                   (root-dir-ent-list fat32-in-memory))))))
@@ -8040,8 +8032,7 @@
                       (mv-nth 0 (root-dir-ent-list fat32-in-memory))
                       (max-entry-count fat32-in-memory)))
              0))
-     (not
-      (< (+ -1 (count-of-clusters fat32-in-memory)
+     (>= (+ -1 (count-of-clusters fat32-in-memory)
             (- (hifat-cluster-count
                 (mv-nth 0
                         (lofat-to-hifat-helper-exec
@@ -8054,7 +8045,8 @@
                       (* 32
                          (len (mv-nth 0
                                       (root-dir-ent-list fat32-in-memory)))))
-                   (cluster-size fat32-in-memory))))))
+                   (cluster-size fat32-in-memory)))))
+    :rule-classes :linear
     :hints
     (("goal"
       :in-theory (e/d (root-dir-ent-list)
@@ -8087,11 +8079,10 @@
     0))
   :hints
   (("goal"
-    :do-not-induct t
     :in-theory
     (e/d
      (lofat-to-hifat hifat-to-lofat
-                     hifat-to-lofat-inversion-lemma-10
+                     hifat-to-lofat-inversion-lemma-17
                      lofat-to-hifat-inversion-lemma-4)
      (lofat-to-hifat-inversion-lemma-3 generate-index-list
                                        non-free-index-listp-correctness-6))

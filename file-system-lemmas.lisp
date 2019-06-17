@@ -827,3 +827,7 @@
 (defthm no-duplicatesp-of-remove
   (implies (no-duplicatesp-equal l)
            (no-duplicatesp-equal (remove-equal x l))))
+
+(defthmd assoc-of-car-when-member
+     (implies (and (member-equal x lst) (alistp lst))
+              (consp (assoc-equal (car x) lst))))
