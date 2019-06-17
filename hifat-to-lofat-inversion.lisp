@@ -36,10 +36,10 @@
     :rule-classes :linear)
 
   (defthmd painful-debugging-lemma-16
-    (implies (and (integerp i1)
+    (implies (and (<= i1 i2)
+                  (integerp i1)
                   (integerp i2)
-                  (not (zp j))
-                  (<= i1 i2))
+                  (not (zp j)))
              (<= (floor i1 j) (floor i2 j)))
     :rule-classes :linear))
 

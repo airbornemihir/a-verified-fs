@@ -846,9 +846,7 @@
 
   (local
    (defthm take-of-make-list-ac-lemma-1
-     (implies (and (not (zp n1))
-                   (not (zp n2))
-                   (<= n1 n2))
+     (implies (not (zp n1))
               (equal (cons val (make-list-ac (+ -1 n1) val nil))
                      (make-list-ac n1 val nil)))
      :hints (("Goal" :in-theory (disable cons-car-cdr make-list-ac)
