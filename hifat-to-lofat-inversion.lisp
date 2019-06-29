@@ -36,10 +36,10 @@
     :rule-classes :linear)
 
   (defthmd painful-debugging-lemma-16
-    (implies (and (integerp i1)
+    (implies (and (<= i1 i2)
+                  (integerp i1)
                   (integerp i2)
-                  (not (zp j))
-                  (<= i1 i2))
+                  (not (zp j)))
              (<= (floor i1 j) (floor i2 j)))
     :rule-classes :linear))
 
@@ -3995,8 +3995,7 @@
   (implies (and (hifat-subsetp m1-file-alist1 m1-file-alist2)
                 (alistp m1-file-alist2)
                 (consp (assoc-equal key m1-file-alist1)))
-           (consp (assoc-equal key m1-file-alist2)))
-  :hints (("Goal" :in-theory (enable assoc-of-car-when-member))))
+           (consp (assoc-equal key m1-file-alist2))))
 
 ;; Not ideal...
 (defthm
