@@ -10330,6 +10330,125 @@ Some (rather awful) testing forms are
                                           (cluster-size fat32-in-memory))))
          0 nil))))))))
 
+(defthm
+  lofat-remove-file-by-pathname-correctness-1-lemma-33
+  (implies
+   (and
+    (fat32-masked-entry-p rootclus)
+    (< rootclus
+       (+ 2 (count-of-clusters fat32-in-memory)))
+    (<
+     0
+     (len
+      (explode
+       (mv-nth
+        0
+        (get-clusterchain-contents fat32-in-memory rootclus 2097152))))))
+   (equal
+    (fat32-entry-mask
+     (nth
+      rootclus
+      (set-indices-in-fa-table
+       (set-indices-in-fa-table
+        (effective-fat fat32-in-memory)
+        (mv-nth
+         0
+         (fat32-build-index-list
+          (effective-fat fat32-in-memory)
+          (dir-ent-first-cluster
+           (mv-nth
+            0
+            (find-dir-ent
+             (make-dir-ent-list
+              (string=>nats (mv-nth 0
+                                    (get-clusterchain-contents
+                                     fat32-in-memory rootclus 2097152))))
+             (fat32-filename-fix (car pathname)))))
+          2097152 (cluster-size fat32-in-memory)))
+        (make-list-ac
+         (len
+          (mv-nth
+           0
+           (fat32-build-index-list
+            (effective-fat fat32-in-memory)
+            (dir-ent-first-cluster
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (string=>nats
+                 (mv-nth 0
+                         (get-clusterchain-contents
+                          fat32-in-memory rootclus 2097152))))
+               (fat32-filename-fix (car pathname)))))
+            2097152
+            (cluster-size fat32-in-memory))))
+         0 nil))
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                rootclus
+                                2097152 (cluster-size fat32-in-memory)))
+       (make-list-ac
+        (len (mv-nth 0
+                     (fat32-build-index-list (effective-fat fat32-in-memory)
+                                             rootclus 2097152
+                                             (cluster-size fat32-in-memory))))
+        0 nil))))
+    0))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite nth-of-set-indices-in-fa-table-when-member))
+    :use
+    (:instance
+     (:rewrite nth-of-set-indices-in-fa-table-when-member)
+     (val 0)
+     (index-list
+      (mv-nth 0
+              (fat32-build-index-list (effective-fat fat32-in-memory)
+                                      rootclus 2097152
+                                      (cluster-size fat32-in-memory))))
+     (fa-table
+      (set-indices-in-fa-table
+       (effective-fat fat32-in-memory)
+       (mv-nth
+        0
+        (fat32-build-index-list
+         (effective-fat fat32-in-memory)
+         (dir-ent-first-cluster
+          (mv-nth
+           0
+           (find-dir-ent
+            (make-dir-ent-list
+             (string=>nats
+              (mv-nth
+               0
+               (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
+            (fat32-filename-fix (car pathname)))))
+         2097152 (cluster-size fat32-in-memory)))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (fat32-build-index-list
+           (effective-fat fat32-in-memory)
+           (dir-ent-first-cluster
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (string=>nats (mv-nth 0
+                                     (get-clusterchain-contents
+                                      fat32-in-memory rootclus 2097152))))
+              (fat32-filename-fix (car pathname)))))
+           2097152
+           (cluster-size fat32-in-memory))))
+        0 nil)))
+     (n rootclus))
+    :expand (fat32-build-index-list (effective-fat fat32-in-memory)
+                                    rootclus 2097152
+                                    (cluster-size fat32-in-memory)))))
+
 (thm-cp
  (b*
      (((mv fs error-code)
