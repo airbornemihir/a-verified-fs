@@ -7581,6 +7581,117 @@ Some (rather awful) testing forms are
               (get-clusterchain-contents fat32-in-memory
                                          masked-current-cluster length)))))))
 
+(defthm
+  get-clusterchain-contents-of-stobj-set-indices-in-fa-table
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (not
+     (intersectp-equal
+      (mv-nth 0
+              (fat32-build-index-list (effective-fat fat32-in-memory)
+                                      masked-current-cluster
+                                      length (cluster-size fat32-in-memory)))
+      index-list))
+    (integerp masked-current-cluster)
+    (fat32-masked-entry-list-p value-list)
+    (equal (len index-list)
+           (len value-list))
+    (nat-listp index-list))
+   (equal
+    (get-clusterchain-contents
+     (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
+     masked-current-cluster length)
+    (get-clusterchain-contents fat32-in-memory
+                               masked-current-cluster length)))
+  :hints
+  (("goal"
+    :induct (get-clusterchain-contents fat32-in-memory
+                                       masked-current-cluster length)
+    :in-theory (e/d (get-clusterchain-contents fat32-build-index-list)
+                    (intersectp-is-commutative))
+    :expand
+    ((get-clusterchain-contents
+      (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
+      masked-current-cluster length)
+     (:free (y)
+            (intersectp-equal (cons masked-current-cluster y)
+                              index-list))))))
+
+(defthm
+  get-clusterchain-contents-of-update-dir-contents
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (stringp dir-contents)
+    (fat32-masked-entry-p masked-current-cluster)
+    (not (< masked-current-cluster '2))
+    (fat32-masked-entry-p first-cluster)
+    (<= 2 first-cluster)
+    (not
+     (intersectp-equal
+      (mv-nth '0
+              (fat32-build-index-list (effective-fat fat32-in-memory)
+                                      first-cluster '2097152
+                                      (cluster-size fat32-in-memory)))
+      (mv-nth '0
+              (fat32-build-index-list (effective-fat fat32-in-memory)
+                                      masked-current-cluster length
+                                      (cluster-size fat32-in-memory)))))
+    (equal (mv-nth '1
+                   (get-clusterchain-contents fat32-in-memory
+                                              masked-current-cluster length))
+           '0))
+   (equal
+    (get-clusterchain-contents
+     (mv-nth 0
+             (update-dir-contents fat32-in-memory
+                                  first-cluster dir-contents dir-ent))
+     masked-current-cluster length)
+    (get-clusterchain-contents fat32-in-memory
+                               masked-current-cluster length)))
+  :hints
+  (("goal"
+    :in-theory (e/d (update-dir-contents)
+                    ((:rewrite intersectp-is-commutative)))
+    :expand
+    ((fat32-build-index-list (effective-fat fat32-in-memory)
+                             first-cluster '2097152
+                             (cluster-size fat32-in-memory))
+     (:free
+      (y)
+      (intersectp-equal
+       (cons first-cluster y)
+       (mv-nth 0
+               (fat32-build-index-list (effective-fat fat32-in-memory)
+                                       masked-current-cluster length
+                                       (cluster-size fat32-in-memory))))))
+    :use
+    ((:instance
+      (:rewrite intersectp-is-commutative)
+      (y
+       (cons
+        first-cluster
+        (mv-nth 0
+                (fat32-build-index-list
+                 (effective-fat fat32-in-memory)
+                 (fat32-entry-mask (fati first-cluster fat32-in-memory))
+                 (+ 2097152
+                    (- (cluster-size fat32-in-memory)))
+                 (cluster-size fat32-in-memory)))))
+      (x (mv-nth 0
+                 (fat32-build-index-list (effective-fat fat32-in-memory)
+                                         masked-current-cluster length
+                                         (cluster-size fat32-in-memory)))))
+     (:instance
+      (:rewrite intersectp-is-commutative)
+      (y (cons first-cluster nil))
+      (x
+       (mv-nth 0
+               (fat32-build-index-list (effective-fat fat32-in-memory)
+                                       masked-current-cluster length
+                                       (cluster-size fat32-in-memory)))))))))
+
 (encapsulate
   ()
 
