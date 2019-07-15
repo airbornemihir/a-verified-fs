@@ -7208,380 +7208,6 @@ Some (rather awful) testing forms are
                          dir-ent)))
 
 (defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-1
-  (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (fat32-masked-entry-p first-cluster)
-    (<= *ms-first-data-cluster* first-cluster)
-    (> (+ *ms-first-data-cluster*
-          (count-of-clusters fat32-in-memory))
-       first-cluster)
-    (equal
-     (mv-nth
-      1
-      (update-dir-contents fat32-in-memory
-                           first-cluster dir-contents dir-ent))
-     0)
-    (stringp dir-contents)
-    (< 0 (length dir-contents))
-    (<= (length dir-contents)
-        *ms-max-dir-size*))
-   (equal
-    (get-clusterchain-contents
-     (mv-nth
-      0
-      (update-dir-contents fat32-in-memory
-                           first-cluster dir-contents dir-ent))
-     first-cluster *ms-max-dir-size*)
-    (mv
-     (implode
-      (append
-       (explode dir-contents)
-       (make-list-ac
-        (+
-         (- (len (explode dir-contents)))
-         (*
-          (cluster-size fat32-in-memory)
-          (len (make-clusters dir-contents
-                              (cluster-size fat32-in-memory)))))
-        (code-char 0)
-        nil)))
-     0)))
-  :hints (("goal" :in-theory (enable update-dir-contents))))
-
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-2
-  (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (<=
-     (len
-      (remove1-dir-ent
-       (string=>nats
-        (mv-nth
-         0
-         (get-clusterchain-contents fat32-in-memory
-                                    (dir-ent-first-cluster (car dir-ent-list))
-                                    2097152)))
-       ".          "))
-     (+
-      -32
-      (len
-       (explode
-        (mv-nth
-         0
-         (get-clusterchain-contents fat32-in-memory
-                                    (dir-ent-first-cluster (car dir-ent-list))
-                                    2097152))))))
-    (<=
-     (len
-      (remove1-dir-ent
-       (remove1-dir-ent
-        (string=>nats (mv-nth 0
-                              (get-clusterchain-contents
-                               fat32-in-memory
-                               (dir-ent-first-cluster (car dir-ent-list))
-                               2097152)))
-        ".          ")
-       "..         "))
-     (+
-      -32
-      (len
-       (remove1-dir-ent
-        (string=>nats (mv-nth 0
-                              (get-clusterchain-contents
-                               fat32-in-memory
-                               (dir-ent-first-cluster (car dir-ent-list))
-                               2097152)))
-        ".          ")))))
-   (<=
-    (len
-     (make-dir-ent-list
-      (string=>nats
-       (mv-nth
-        0
-        (get-clusterchain-contents fat32-in-memory
-                                   (dir-ent-first-cluster (car dir-ent-list))
-                                   2097152)))))
-    65534))
-  :rule-classes :linear
-  :hints
-  (("goal"
-    :in-theory (e/d (make-dir-ent-list-of-remove1-dir-ent)
-                    (length-of-get-clusterchain-contents))
-    :use
-    ((:instance
-      (:linear len-of-make-dir-ent-list)
-      (dir-contents
-       (remove1-dir-ent
-        (remove1-dir-ent
-         (string=>nats (mv-nth 0
-                               (get-clusterchain-contents
-                                fat32-in-memory
-                                (dir-ent-first-cluster (car dir-ent-list))
-                                2097152)))
-         ".          ")
-        "..         ")))
-     (:instance
-      (:linear painful-debugging-lemma-16)
-      (j 32)
-      (i1
-       (len
-        (remove1-dir-ent
-         (remove1-dir-ent
-          (string=>nats
-           (mv-nth 0
-                   (get-clusterchain-contents
-                    fat32-in-memory
-                    (dir-ent-first-cluster (car dir-ent-list))
-                    2097152)))
-          ".          ")
-         "..         ")))
-      (i2
-       (+
-        -32
-        (len (remove1-dir-ent
-              (string=>nats
-               (mv-nth 0
-                       (get-clusterchain-contents
-                        fat32-in-memory
-                        (dir-ent-first-cluster (car dir-ent-list))
-                        2097152)))
-              ".          ")))))
-     (:instance
-      (:linear painful-debugging-lemma-16)
-      (j 32)
-      (i1
-       (+
-        -32
-        (len (remove1-dir-ent
-              (string=>nats
-               (mv-nth 0
-                       (get-clusterchain-contents
-                        fat32-in-memory
-                        (dir-ent-first-cluster (car dir-ent-list))
-                        2097152)))
-              ".          "))))
-      (i2
-       (+
-        -64
-        (len
-         (string=>nats (mv-nth 0
-                               (get-clusterchain-contents
-                                fat32-in-memory
-                                (dir-ent-first-cluster (car dir-ent-list))
-                                2097152)))))))
-     (:instance
-      (:linear painful-debugging-lemma-16)
-      (j 32)
-      (i1
-       (+
-        -64
-        (len (explode (mv-nth 0
-                              (get-clusterchain-contents
-                               fat32-in-memory
-                               (dir-ent-first-cluster (car dir-ent-list))
-                               2097152))))))
-      (i2 (+ -64 *ms-max-dir-size*)))
-     (:instance
-      (:linear length-of-get-clusterchain-contents)
-      (length *ms-max-dir-size*)
-      (masked-current-cluster (dir-ent-first-cluster (car dir-ent-list)))
-      (fat32-in-memory fat32-in-memory))))))
-
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-3
-  (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (dir-ent-list-p dir-ent-list)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper-exec fat32-in-memory
-                                                   dir-ent-list entry-limit))
-               0)
-        (dir-ent-directory-p (mv-nth 0
-                                     (find-dir-ent dir-ent-list filename))))
-   (>=
-    *ms-max-dir-ent-count*
-    (len
-     (make-dir-ent-list
-      (string=>nats
-       (mv-nth 0
-               (get-clusterchain-contents
-                fat32-in-memory
-                (dir-ent-first-cluster
-                 (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-                *ms-max-dir-size*)))))))
-  :rule-classes :linear
-  :hints
-  (("goal" :in-theory
-    (e/d (lofat-to-hifat-helper-exec)
-         ((:definition assoc-equal)
-          (:rewrite lofat-to-hifat-helper-exec-correctness-5-lemma-5
-                    . 2)
-          (:rewrite not-intersectp-list-of-lofat-to-hifat-helper-exec)
-          (:definition free-index-listp)
-          (:rewrite lofat-find-file-by-pathname-correctness-1-lemma-1)
-          (:definition not-intersectp-list)
-          (:rewrite nth-of-effective-fat)
-          (:definition no-duplicatesp-equal)
-          (:definition member-equal)))
-    :induct (lofat-to-hifat-helper-exec fat32-in-memory
-                                        dir-ent-list entry-limit))))
-
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-4
-  (implies (equal (len (explode str)) 0)
-           (equal (len (make-dir-ent-list (string=>nats str)))
-                  0))
-  :hints (("goal" :in-theory (enable make-dir-ent-list))))
-
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-5
-  (implies
-   (and
-    (not-intersectp-list
-     (mv-nth
-      0
-      (fat32-build-index-list fa-table masked-current-cluster
-                              length cluster-size))
-     (mv-nth
-      2
-      (lofat-to-hifat-helper-exec fat32-in-memory
-                                  dir-ent-list entry-limit)))
-    (equal
-     (mv-nth
-      3
-      (lofat-to-hifat-helper-exec fat32-in-memory
-                                  dir-ent-list entry-limit))
-     0)
-    (dir-ent-directory-p
-     (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-    (dir-ent-list-p dir-ent-list))
-   (not
-    (intersectp-equal
-     (mv-nth
-      0
-      (fat32-build-index-list fa-table masked-current-cluster
-                              length cluster-size))
-     (mv-nth
-      '0
-      (fat32-build-index-list
-       (effective-fat fat32-in-memory)
-       (dir-ent-first-cluster
-        (mv-nth '0
-                (find-dir-ent dir-ent-list filename)))
-       '2097152
-       (cluster-size fat32-in-memory))))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (lofat-to-hifat-helper-exec)
-         ((:rewrite nth-of-effective-fat)
-          (:rewrite
-           lofat-to-hifat-helper-exec-correctness-5-lemma-5
-           . 2)
-          (:definition member-equal)
-          (:rewrite not-intersectp-list-correctness-2)))
-    :expand ((:free (x) (intersectp-equal nil x))))))
-
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-6
-  (implies
-   (<
-    0
-    (len
-     (explode
-      (mv-nth 0
-              (get-clusterchain-contents fat32-in-memory rootclus 2097152)))))
-   (member-equal
-    rootclus
-    (mv-nth '0
-            (fat32-build-index-list (effective-fat fat32-in-memory)
-                                    rootclus '2097152
-                                    (cluster-size fat32-in-memory)))))
-  :hints
-  (("goal" :expand (fat32-build-index-list (effective-fat fat32-in-memory)
-                                           rootclus 2097152
-                                           (cluster-size fat32-in-memory)))))
-
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-7
-  (implies
-   (and
-    (not-intersectp-list
-     (mv-nth 0
-             (fat32-build-index-list fa-table masked-current-cluster
-                                     length cluster-size))
-     (mv-nth 2
-             (lofat-to-hifat-helper-exec fat32-in-memory
-                                         dir-ent-list entry-limit)))
-    (equal (mv-nth 3
-                   (lofat-to-hifat-helper-exec fat32-in-memory
-                                               dir-ent-list entry-limit))
-           0)
-    (not (dir-ent-directory-p (mv-nth 0
-                                      (find-dir-ent dir-ent-list filename))))
-    (dir-ent-list-p dir-ent-list)
-    (<= 2
-        (dir-ent-first-cluster (mv-nth 0
-                                       (find-dir-ent dir-ent-list filename))))
-    (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-       (+ 2 (count-of-clusters fat32-in-memory))))
-   (not
-    (intersectp-equal
-     (mv-nth 0
-             (fat32-build-index-list fa-table masked-current-cluster
-                                     length cluster-size))
-     (mv-nth
-      '0
-      (fat32-build-index-list
-       (effective-fat fat32-in-memory)
-       (dir-ent-first-cluster (mv-nth '0
-                                      (find-dir-ent dir-ent-list filename)))
-       (dir-ent-file-size (mv-nth '0
-                                  (find-dir-ent dir-ent-list filename)))
-       (cluster-size fat32-in-memory))))))
-  :hints
-  (("goal" :in-theory
-    (e/d (lofat-to-hifat-helper-exec)
-         ((:rewrite nth-of-effective-fat)
-          (:rewrite lofat-to-hifat-helper-exec-correctness-5-lemma-5
-                    . 2)
-          (:definition member-equal)
-          (:rewrite not-intersectp-list-correctness-2)))
-    :expand ((:free (x) (intersectp-equal nil x))))))
-
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-8
-  (implies
-   (<
-    0
-    (len
-     (explode (mv-nth 0
-                      (get-clusterchain-contents
-                       fat32-in-memory
-                       masked-current-cluster length)))))
-   (< '0
-      (length (mv-nth '0
-                      (get-clusterchain-contents
-                       fat32-in-memory
-                       masked-current-cluster length))))))
-
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-9
-  (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (natp length))
-   (not
-    (<
-     length
-     (length
-      (mv-nth '0
-              (get-clusterchain-contents fat32-in-memory
-                                         masked-current-cluster length)))))))
-
-(defthm
   get-clusterchain-contents-of-stobj-set-indices-in-fa-table
   (implies
    (and
@@ -8506,20 +8132,116 @@ Some (rather awful) testing forms are
                                           dir-ent-list entry-limit)))))
 
 (defthm
+  get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-11
+  (implies
+   (and
+    (not-intersectp-list
+     (mv-nth
+      0
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit)))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit))
+     0)
+    (dir-ent-directory-p
+     (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+    (dir-ent-list-p dir-ent-list))
+   (not
+    (intersectp-equal
+     (mv-nth
+      0
+      (fat32-build-index-list fa-table masked-current-cluster
+                              length cluster-size))
+     (mv-nth
+      '0
+      (fat32-build-index-list
+       (effective-fat fat32-in-memory)
+       (dir-ent-first-cluster
+        (mv-nth '0
+                (find-dir-ent dir-ent-list filename)))
+       '2097152
+       (cluster-size fat32-in-memory))))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (lofat-to-hifat-helper-exec)
+         ((:rewrite nth-of-effective-fat)
+          (:rewrite
+           lofat-to-hifat-helper-exec-correctness-5-lemma-5
+           . 2)
+          (:definition member-equal)
+          (:rewrite not-intersectp-list-correctness-2)))
+    :expand ((:free (x) (intersectp-equal nil x))))))
+
+(defthm
+  get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-12
+  (implies
+   (and
+    (not-intersectp-list
+     (mv-nth 0
+             (fat32-build-index-list fa-table masked-current-cluster
+                                     length cluster-size))
+     (mv-nth 2
+             (lofat-to-hifat-helper-exec fat32-in-memory
+                                         dir-ent-list entry-limit)))
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper-exec fat32-in-memory
+                                               dir-ent-list entry-limit))
+           0)
+    (not (dir-ent-directory-p (mv-nth 0
+                                      (find-dir-ent dir-ent-list filename))))
+    (dir-ent-list-p dir-ent-list)
+    (<= 2
+        (dir-ent-first-cluster (mv-nth 0
+                                       (find-dir-ent dir-ent-list filename))))
+    (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+       (+ 2 (count-of-clusters fat32-in-memory))))
+   (not
+    (intersectp-equal
+     (mv-nth 0
+             (fat32-build-index-list fa-table masked-current-cluster
+                                     length cluster-size))
+     (mv-nth
+      '0
+      (fat32-build-index-list
+       (effective-fat fat32-in-memory)
+       (dir-ent-first-cluster (mv-nth '0
+                                      (find-dir-ent dir-ent-list filename)))
+       (dir-ent-file-size (mv-nth '0
+                                  (find-dir-ent dir-ent-list filename)))
+       (cluster-size fat32-in-memory))))))
+  :hints
+  (("goal" :in-theory
+    (e/d (lofat-to-hifat-helper-exec)
+         ((:rewrite nth-of-effective-fat)
+          (:rewrite lofat-to-hifat-helper-exec-correctness-5-lemma-5
+                    . 2)
+          (:definition member-equal)
+          (:rewrite not-intersectp-list-correctness-2)))
+    :expand ((:free (x) (intersectp-equal nil x))))))
+
+(defthm
   get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
     (<= *ms-first-data-cluster* rootclus)
-    (<= *ms-first-data-cluster* masked-current-cluster)
+    (<= *ms-first-data-cluster*
+        masked-current-cluster)
     (fat32-masked-entry-p rootclus)
     (fat32-masked-entry-p masked-current-cluster)
     (not-intersectp-list
-     (mv-nth
-      0
-      (fat32-build-index-list (effective-fat fat32-in-memory)
-                              masked-current-cluster
-                              length (cluster-size fat32-in-memory)))
+     (mv-nth 0
+             (fat32-build-index-list (effective-fat fat32-in-memory)
+                                     masked-current-cluster
+                                     length (cluster-size fat32-in-memory)))
      (mv-nth
       2
       (lofat-to-hifat-helper-exec
@@ -8530,15 +8252,16 @@ Some (rather awful) testing forms are
           0
           (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
        entry-limit)))
-    (not (intersectp-equal
-          (mv-nth '0
-                  (fat32-build-index-list (effective-fat fat32-in-memory)
-                                          rootclus '2097152
-                                          (cluster-size fat32-in-memory)))
-          (mv-nth '0
-                  (fat32-build-index-list (effective-fat fat32-in-memory)
-                                          masked-current-cluster length
-                                          (cluster-size fat32-in-memory)))))
+    (not
+     (intersectp-equal
+      (mv-nth '0
+              (fat32-build-index-list (effective-fat fat32-in-memory)
+                                      rootclus '2097152
+                                      (cluster-size fat32-in-memory)))
+      (mv-nth '0
+              (fat32-build-index-list (effective-fat fat32-in-memory)
+                                      masked-current-cluster length
+                                      (cluster-size fat32-in-memory)))))
     (not-intersectp-list
      (mv-nth 0
              (fat32-build-index-list (effective-fat fat32-in-memory)
@@ -8550,8 +8273,9 @@ Some (rather awful) testing forms are
        fat32-in-memory
        (make-dir-ent-list
         (string=>nats
-         (mv-nth 0
-                 (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
+         (mv-nth
+          0
+          (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
        entry-limit)))
     (equal
      (mv-nth
@@ -8565,7 +8289,6 @@ Some (rather awful) testing forms are
           (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
        entry-limit))
      0)
-    (dir-ent-list-p dir-ent-list)
     (equal (mv-nth '1
                    (get-clusterchain-contents fat32-in-memory
                                               masked-current-cluster length))
@@ -8574,20 +8297,296 @@ Some (rather awful) testing forms are
     (get-clusterchain-contents
      (mv-nth
       0
-      (lofat-remove-file-by-pathname
-       fat32-in-memory rootclus pathname))
+      (lofat-remove-file-by-pathname fat32-in-memory rootclus pathname))
      masked-current-cluster length)
-    (get-clusterchain-contents
-     fat32-in-memory
-     masked-current-cluster length)))
+    (get-clusterchain-contents fat32-in-memory
+                               masked-current-cluster length)))
   :hints
   (("goal"
-    :in-theory
-    (e/d (lofat-to-hifat-helper-exec))
-    :induct (lofat-remove-file-by-pathname
-             fat32-in-memory rootclus pathname))))
+    :in-theory (e/d (lofat-to-hifat-helper-exec))
+    :induct
+    (lofat-remove-file-by-pathname fat32-in-memory rootclus pathname))))
 
-(thm-cp
+(defthm
+  lofat-remove-file-by-pathname-correctness-1-lemma-1
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (fat32-masked-entry-p first-cluster)
+    (<= *ms-first-data-cluster* first-cluster)
+    (> (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory))
+       first-cluster)
+    (equal
+     (mv-nth
+      1
+      (update-dir-contents fat32-in-memory
+                           first-cluster dir-contents dir-ent))
+     0)
+    (stringp dir-contents)
+    (< 0 (length dir-contents))
+    (<= (length dir-contents)
+        *ms-max-dir-size*))
+   (equal
+    (get-clusterchain-contents
+     (mv-nth
+      0
+      (update-dir-contents fat32-in-memory
+                           first-cluster dir-contents dir-ent))
+     first-cluster *ms-max-dir-size*)
+    (mv
+     (implode
+      (append
+       (explode dir-contents)
+       (make-list-ac
+        (+
+         (- (len (explode dir-contents)))
+         (*
+          (cluster-size fat32-in-memory)
+          (len (make-clusters dir-contents
+                              (cluster-size fat32-in-memory)))))
+        (code-char 0)
+        nil)))
+     0)))
+  :hints (("goal" :in-theory (enable update-dir-contents))))
+
+(defthm
+  lofat-remove-file-by-pathname-correctness-1-lemma-2
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (<=
+     (len
+      (remove1-dir-ent
+       (string=>nats
+        (mv-nth
+         0
+         (get-clusterchain-contents fat32-in-memory
+                                    (dir-ent-first-cluster (car dir-ent-list))
+                                    2097152)))
+       ".          "))
+     (+
+      -32
+      (len
+       (explode
+        (mv-nth
+         0
+         (get-clusterchain-contents fat32-in-memory
+                                    (dir-ent-first-cluster (car dir-ent-list))
+                                    2097152))))))
+    (<=
+     (len
+      (remove1-dir-ent
+       (remove1-dir-ent
+        (string=>nats (mv-nth 0
+                              (get-clusterchain-contents
+                               fat32-in-memory
+                               (dir-ent-first-cluster (car dir-ent-list))
+                               2097152)))
+        ".          ")
+       "..         "))
+     (+
+      -32
+      (len
+       (remove1-dir-ent
+        (string=>nats (mv-nth 0
+                              (get-clusterchain-contents
+                               fat32-in-memory
+                               (dir-ent-first-cluster (car dir-ent-list))
+                               2097152)))
+        ".          ")))))
+   (<=
+    (len
+     (make-dir-ent-list
+      (string=>nats
+       (mv-nth
+        0
+        (get-clusterchain-contents fat32-in-memory
+                                   (dir-ent-first-cluster (car dir-ent-list))
+                                   2097152)))))
+    65534))
+  :rule-classes :linear
+  :hints
+  (("goal"
+    :in-theory (e/d (make-dir-ent-list-of-remove1-dir-ent)
+                    (length-of-get-clusterchain-contents))
+    :use
+    ((:instance
+      (:linear len-of-make-dir-ent-list)
+      (dir-contents
+       (remove1-dir-ent
+        (remove1-dir-ent
+         (string=>nats (mv-nth 0
+                               (get-clusterchain-contents
+                                fat32-in-memory
+                                (dir-ent-first-cluster (car dir-ent-list))
+                                2097152)))
+         ".          ")
+        "..         ")))
+     (:instance
+      (:linear painful-debugging-lemma-16)
+      (j 32)
+      (i1
+       (len
+        (remove1-dir-ent
+         (remove1-dir-ent
+          (string=>nats
+           (mv-nth 0
+                   (get-clusterchain-contents
+                    fat32-in-memory
+                    (dir-ent-first-cluster (car dir-ent-list))
+                    2097152)))
+          ".          ")
+         "..         ")))
+      (i2
+       (+
+        -32
+        (len (remove1-dir-ent
+              (string=>nats
+               (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        2097152)))
+              ".          ")))))
+     (:instance
+      (:linear painful-debugging-lemma-16)
+      (j 32)
+      (i1
+       (+
+        -32
+        (len (remove1-dir-ent
+              (string=>nats
+               (mv-nth 0
+                       (get-clusterchain-contents
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        2097152)))
+              ".          "))))
+      (i2
+       (+
+        -64
+        (len
+         (string=>nats (mv-nth 0
+                               (get-clusterchain-contents
+                                fat32-in-memory
+                                (dir-ent-first-cluster (car dir-ent-list))
+                                2097152)))))))
+     (:instance
+      (:linear painful-debugging-lemma-16)
+      (j 32)
+      (i1
+       (+
+        -64
+        (len (explode (mv-nth 0
+                              (get-clusterchain-contents
+                               fat32-in-memory
+                               (dir-ent-first-cluster (car dir-ent-list))
+                               2097152))))))
+      (i2 (+ -64 *ms-max-dir-size*)))
+     (:instance
+      (:linear length-of-get-clusterchain-contents)
+      (length *ms-max-dir-size*)
+      (masked-current-cluster (dir-ent-first-cluster (car dir-ent-list)))
+      (fat32-in-memory fat32-in-memory))))))
+
+(defthm
+  lofat-remove-file-by-pathname-correctness-1-lemma-3
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (dir-ent-list-p dir-ent-list)
+        (equal (mv-nth 3
+                       (lofat-to-hifat-helper-exec fat32-in-memory
+                                                   dir-ent-list entry-limit))
+               0)
+        (dir-ent-directory-p (mv-nth 0
+                                     (find-dir-ent dir-ent-list filename))))
+   (>=
+    *ms-max-dir-ent-count*
+    (len
+     (make-dir-ent-list
+      (string=>nats
+       (mv-nth 0
+               (get-clusterchain-contents
+                fat32-in-memory
+                (dir-ent-first-cluster
+                 (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+                *ms-max-dir-size*)))))))
+  :rule-classes :linear
+  :hints
+  (("goal" :in-theory
+    (e/d (lofat-to-hifat-helper-exec)
+         ((:definition assoc-equal)
+          (:rewrite lofat-to-hifat-helper-exec-correctness-5-lemma-5
+                    . 2)
+          (:rewrite not-intersectp-list-of-lofat-to-hifat-helper-exec)
+          (:definition free-index-listp)
+          (:rewrite lofat-find-file-by-pathname-correctness-1-lemma-1)
+          (:definition not-intersectp-list)
+          (:rewrite nth-of-effective-fat)
+          (:definition no-duplicatesp-equal)
+          (:definition member-equal)))
+    :induct (lofat-to-hifat-helper-exec fat32-in-memory
+                                        dir-ent-list entry-limit))))
+
+(defthm
+  lofat-remove-file-by-pathname-correctness-1-lemma-4
+  (implies (equal (len (explode str)) 0)
+           (equal (len (make-dir-ent-list (string=>nats str)))
+                  0))
+  :hints (("goal" :in-theory (enable make-dir-ent-list))))
+
+(defthm
+  lofat-remove-file-by-pathname-correctness-1-lemma-6
+  (implies
+   (<
+    0
+    (len
+     (explode
+      (mv-nth 0
+              (get-clusterchain-contents fat32-in-memory rootclus 2097152)))))
+   (member-equal
+    rootclus
+    (mv-nth '0
+            (fat32-build-index-list (effective-fat fat32-in-memory)
+                                    rootclus '2097152
+                                    (cluster-size fat32-in-memory)))))
+  :hints
+  (("goal" :expand (fat32-build-index-list (effective-fat fat32-in-memory)
+                                           rootclus 2097152
+                                           (cluster-size fat32-in-memory)))))
+
+(defthm
+  lofat-remove-file-by-pathname-correctness-1-lemma-8
+  (implies
+   (<
+    0
+    (len
+     (explode (mv-nth 0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       masked-current-cluster length)))))
+   (< '0
+      (length (mv-nth '0
+                      (get-clusterchain-contents
+                       fat32-in-memory
+                       masked-current-cluster length))))))
+
+(defthm
+  lofat-remove-file-by-pathname-correctness-1-lemma-9
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (natp length))
+   (not
+    (<
+     length
+     (length
+      (mv-nth '0
+              (get-clusterchain-contents fat32-in-memory
+                                         masked-current-cluster length)))))))
+
+(defthm
+  lofat-remove-file-by-pathname-correctness-1
  (b*
      (((mv fs error-code)
        (hifat-remove-file-by-pathname
@@ -8665,7 +8664,10 @@ Some (rather awful) testing forms are
       (mv-nth
        1
        (lofat-remove-file-by-pathname fat32-in-memory rootclus pathname))
-      error-code))
+      error-code)
+     (equal (mv-nth 1
+                    (get-clusterchain-contents fat32-in-memory rootclus 2097152))
+            0))
     (equal
      (mv-nth 0
              (lofat-to-hifat-helper-exec
