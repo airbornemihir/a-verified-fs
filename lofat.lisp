@@ -9252,44 +9252,98 @@ Some (rather awful) testing forms are
 (defthm
   lofat-remove-file-by-pathname-correctness-1-lemma-23
   (implies
-   (and (natp entry-limit)
-        (useful-dir-ent-list-p dir-ent-list)
-        (lofat-fs-p fat32-in-memory)
-        (equal (mv-nth 1
-                       (find-dir-ent dir-ent-list
-                                     filename))
-               0)
-        (dir-ent-directory-p
-         (mv-nth 0
-                 (find-dir-ent dir-ent-list
-                               filename)))
-        (equal
-         (MV-NTH 3
-          (LOFAT-TO-HIFAT-HELPER-EXEC
-           FAT32-IN-MEMORY
-           dir-ent-list
-           entry-limit))
-         0))
-   (NOT-INTERSECTP-LIST
-    (MV-NTH '0
-            (FAT32-BUILD-INDEX-LIST
-             (EFFECTIVE-FAT FAT32-IN-MEMORY)
-             (DIR-ENT-FIRST-CLUSTER (MV-NTH '0
-                                            (FIND-DIR-ENT dir-ent-list
-                                                          FILENAME)))
-             *ms-max-dir-size*
-             (CLUSTER-SIZE FAT32-IN-MEMORY)))
-    (MV-NTH
-     '2
-     (LOFAT-TO-HIFAT-HELPER-EXEC
-      FAT32-IN-MEMORY
-      (DELETE-DIR-ENT dir-ent-list
-                      FILENAME)
-      entry-limit))))
-  :hints (("Goal" :in-theory
-           (e/d (lofat-to-hifat-helper-exec) ((:DEFINITION LEN)))
-           :expand (:free (y) (intersectp-equal nil y)))
-          ))
+   (and
+    (useful-dir-ent-list-p dir-ent-list)
+    (dir-ent-directory-p
+     (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit))
+     0))
+   (not-intersectp-list
+    (mv-nth
+     '0
+     (fat32-build-index-list
+      (effective-fat fat32-in-memory)
+      (dir-ent-first-cluster
+       (mv-nth '0
+               (find-dir-ent dir-ent-list filename)))
+      *ms-max-dir-size*
+      (cluster-size fat32-in-memory)))
+    (mv-nth '2
+            (lofat-to-hifat-helper-exec
+             fat32-in-memory
+             (delete-dir-ent dir-ent-list filename)
+             entry-limit))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (lofat-to-hifat-helper-exec
+      lofat-to-hifat-helper-exec-correctness-4)
+     ((:definition len)
+      (:rewrite nth-of-effective-fat)
+      (:definition member-equal)
+      (:rewrite not-intersectp-list-correctness-2)
+      (:rewrite integerp-of-car-when-integer-listp)
+      (:rewrite lofat-to-hifat-helper-exec-correctness-5-lemma-5
+                . 2)))
+    :expand (:free (y) (intersectp-equal nil y)))))
+
+(defthm
+  lofat-remove-file-by-pathname-correctness-1-lemma-26
+  (implies
+   (and
+    (useful-dir-ent-list-p dir-ent-list)
+    (not (dir-ent-directory-p
+          (mv-nth 0 (find-dir-ent dir-ent-list filename))))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit))
+     0)
+    (> (+ 2 (count-of-clusters fat32-in-memory))
+       (dir-ent-first-cluster
+        (mv-nth '0
+                (find-dir-ent dir-ent-list filename))))
+    (<= 2
+        (dir-ent-first-cluster
+         (mv-nth '0
+                 (find-dir-ent dir-ent-list filename)))))
+   (not-intersectp-list
+    (mv-nth
+     '0
+     (fat32-build-index-list
+      (effective-fat fat32-in-memory)
+      (dir-ent-first-cluster
+       (mv-nth '0
+               (find-dir-ent dir-ent-list filename)))
+      (dir-ent-file-size
+       (mv-nth '0
+               (find-dir-ent dir-ent-list filename)))
+      (cluster-size fat32-in-memory)))
+    (mv-nth '2
+            (lofat-to-hifat-helper-exec
+             fat32-in-memory
+             (delete-dir-ent dir-ent-list filename)
+             entry-limit))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (lofat-to-hifat-helper-exec
+      lofat-to-hifat-helper-exec-correctness-4)
+     ((:definition len)
+      (:rewrite nth-of-effective-fat)
+      (:definition member-equal)
+      (:rewrite not-intersectp-list-correctness-2)
+      (:rewrite integerp-of-car-when-integer-listp)
+      (:rewrite lofat-to-hifat-helper-exec-correctness-5-lemma-5
+                . 2)))
+    :expand (:free (y) (intersectp-equal nil y)))))
 
 (encapsulate
   ()
