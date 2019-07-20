@@ -9769,12 +9769,12 @@ Some (rather awful) testing forms are
      (("goal"
        :in-theory (enable (:rewrite lofat-to-hifat-helper-exec-correctness-4))))))
 
+  ;; This theorem is subject to more removal of hypotheses, but it was taking
+  ;; an excruciatingly long time.
   (defthm
     lofat-remove-file-by-pathname-correctness-1-lemma-14
     (implies
      (and
-      (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
-             0)
       (lofat-fs-p fat32-in-memory)
       (not-intersectp-list
        (mv-nth 0
@@ -9795,11 +9795,12 @@ Some (rather awful) testing forms are
       (stringp contents)
       (useful-dir-ent-list-p dir-ent-list)
       (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-      (<= *ms-first-data-cluster* (dir-ent-first-cluster
-                                   (mv-nth 0 (find-dir-ent dir-ent-list filename))))
-      (< (dir-ent-first-cluster
-          (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-         (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory))))
+      (<= *ms-first-data-cluster*
+          (dir-ent-first-cluster (mv-nth 0
+                                         (find-dir-ent dir-ent-list filename))))
+      (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+         (+ *ms-first-data-cluster*
+            (count-of-clusters fat32-in-memory))))
      (equal
       (mv-nth
        0
@@ -9812,19 +9813,22 @@ Some (rather awful) testing forms are
            (stobj-set-indices-in-fa-table
             (stobj-set-indices-in-fa-table
              fat32-in-memory
-             (mv-nth
-              0
-              (fat32-build-index-list (effective-fat fat32-in-memory)
-                                      (dir-ent-first-cluster
-                                       (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-                                      2097152 (cluster-size fat32-in-memory)))
+             (mv-nth 0
+                     (fat32-build-index-list
+                      (effective-fat fat32-in-memory)
+                      (dir-ent-first-cluster
+                       (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+                      2097152 (cluster-size fat32-in-memory)))
              (make-list-ac
               (len
-               (mv-nth 0
-                       (fat32-build-index-list (effective-fat fat32-in-memory)
-                                               (dir-ent-first-cluster
-                                                (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-                                               2097152 (cluster-size fat32-in-memory))))
+               (mv-nth
+                0
+                (fat32-build-index-list
+                 (effective-fat fat32-in-memory)
+                 (dir-ent-first-cluster
+                  (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+                 2097152
+                 (cluster-size fat32-in-memory))))
               0 nil))
             (mv-nth
              0
