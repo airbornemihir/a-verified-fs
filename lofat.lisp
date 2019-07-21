@@ -6760,6 +6760,17 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable update-dir-contents))))
 
 (defthm
+  cluster-size-of-update-dir-contents
+  (equal
+   (cluster-size
+    (mv-nth
+     0
+     (update-dir-contents fat32-in-memory
+                          first-cluster dir-contents dir-ent)))
+   (cluster-size fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-dir-contents))))
+
+(defthm
   lofat-fs-p-of-update-dir-contents
   (implies
    (and (lofat-fs-p fat32-in-memory)
@@ -8045,6 +8056,22 @@ Some (rather awful) testing forms are
       (binary-+ '-1
                 (len (make-clusters dir-contents
                                     (cluster-size fat32-in-memory)))))))))
+
+(defthm
+  count-of-clusters-of-lofat-remove-file-by-pathname
+  (equal (count-of-clusters
+          (mv-nth 0
+                  (lofat-remove-file-by-pathname
+                   fat32-in-memory rootclus pathname)))
+         (count-of-clusters fat32-in-memory)))
+
+(defthm
+  cluster-size-of-lofat-remove-file-by-pathname
+  (equal (cluster-size
+          (mv-nth 0
+                  (lofat-remove-file-by-pathname
+                   fat32-in-memory rootclus pathname)))
+         (cluster-size fat32-in-memory)))
 
 (defthm
   lofat-to-hifat-helper-exec-of-stobj-set-indices-in-fa-table
