@@ -7791,7 +7791,7 @@ Some (rather awful) testing forms are
                                     (cluster-size fat32-in-memory)))))))))
 
 (defthm
-  get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-4
+  get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-1
   (implies
    (and
     (equal
@@ -7846,7 +7846,7 @@ Some (rather awful) testing forms are
 
   (local
    (defthm
-     get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-5
+     get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-2
      (implies
       (and
        (not (zp entry-limit))
@@ -7921,7 +7921,7 @@ Some (rather awful) testing forms are
 
   (local
    (defthm
-     get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-7
+     get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-3
      (implies
       (and
        (<=
@@ -8058,7 +8058,7 @@ Some (rather awful) testing forms are
         (fat32-in-memory fat32-in-memory))))))
 
   (defthm
-    get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-8
+    get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-4
     (implies
      (and (not-intersectp-list
            (mv-nth 0
@@ -8109,7 +8109,7 @@ Some (rather awful) testing forms are
                           (find-dir-ent dir-ent-list filename))))))
 
   (defthm
-    get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-10
+    get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-5
     (implies
      (and
       (dir-ent-list-p dir-ent-list)
@@ -8165,7 +8165,7 @@ Some (rather awful) testing forms are
                                   dir-ent-list entry-limit)))))
 
 (defthm
-  get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-11
+  get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-6
   (implies
    (and
     (not-intersectp-list
@@ -8214,7 +8214,7 @@ Some (rather awful) testing forms are
     :expand ((:free (x) (intersectp-equal nil x))))))
 
 (defthm
-  get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-12
+  get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-7
   (implies
    (and
     (not-intersectp-list
