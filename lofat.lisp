@@ -6792,7 +6792,7 @@ Some (rather awful) testing forms are
 
   (local
    (defthm
-     fat32-build-index-list-of-effective-fat-of-update-dir-contents-lemma-1
+    fat32-build-index-list-of-effective-fat-of-clear-clusterchain-lemma-1
      (implies
       (and
        (<= (+ 2 (count-of-clusters fat32-in-memory))
@@ -6882,41 +6882,93 @@ Some (rather awful) testing forms are
                                 masked-current-cluster1)))
             ("subgoal 2" :in-theory (enable clear-clusterchain)))))
 
-(defthm
-  get-clusterchain-contents-of-effective-fat-of-clear-clusterchain
-  (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (natp masked-current-cluster2)
-    (fat32-masked-entry-p masked-current-cluster1)
-    (<= *ms-first-data-cluster*
-        masked-current-cluster1)
-    (< masked-current-cluster1
-       (+ *ms-first-data-cluster*
-          (count-of-clusters fat32-in-memory)))
-    (not
-     (intersectp-equal
-      (mv-nth '0
-              (fat32-build-index-list
-               (effective-fat fat32-in-memory)
-               masked-current-cluster1
-               length1 (cluster-size fat32-in-memory)))
-      (mv-nth '0
-              (fat32-build-index-list
-               (effective-fat fat32-in-memory)
-               masked-current-cluster2 length2
-               (cluster-size fat32-in-memory))))))
-   (equal
-    (get-clusterchain-contents
-     (mv-nth
-      0
-      (clear-clusterchain fat32-in-memory
-                          masked-current-cluster1 length1))
-     masked-current-cluster2 length2)
-    (get-clusterchain-contents
-     fat32-in-memory
-     masked-current-cluster2 length2)))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     get-clusterchain-contents-of-effective-fat-of-clear-clusterchain-lemma-1
+     (implies
+      (and
+       (<= (+ 2 (count-of-clusters fat32-in-memory))
+           first-cluster)
+       (lofat-fs-p fat32-in-memory)
+       (fat32-masked-entry-p first-cluster)
+       (fat32-masked-entry-p masked-current-cluster)
+       (not
+        (intersectp-equal
+         (mv-nth 0
+                 (fat32-build-index-list
+                  (effective-fat fat32-in-memory)
+                  masked-current-cluster
+                  length1 (cluster-size fat32-in-memory)))
+         (mv-nth 0
+                 (fat32-build-index-list
+                  (effective-fat fat32-in-memory)
+                  first-cluster length2 (cluster-size fat32-in-memory))))))
+      (equal
+       (get-clusterchain-contents
+        (mv-nth 0
+                (clear-clusterchain
+                 fat32-in-memory first-cluster length2))
+        masked-current-cluster length1)
+       (get-clusterchain-contents
+        fat32-in-memory masked-current-cluster length1)))
+     :hints
+     (("goal"
+       :in-theory (e/d (intersectp-equal clear-clusterchain)
+                       (intersectp-is-commutative))
+       :expand
+       ((fat32-build-index-list (effective-fat fat32-in-memory)
+                                first-cluster length2
+                                (cluster-size fat32-in-memory))
+        (get-clusterchain-contents
+         fat32-in-memory first-cluster length2))
+       :use
+       (:instance
+        (:rewrite intersectp-is-commutative)
+        (y
+         (mv-nth
+          0
+          (fat32-build-index-list (effective-fat fat32-in-memory)
+                                  first-cluster length2
+                                  (cluster-size fat32-in-memory))))
+        (x (mv-nth 0
+                   (fat32-build-index-list
+                    (effective-fat fat32-in-memory)
+                    masked-current-cluster length1
+                    (cluster-size fat32-in-memory)))))))))
+
+  (defthm
+    get-clusterchain-contents-of-effective-fat-of-clear-clusterchain
+    (implies
+     (and
+      (lofat-fs-p fat32-in-memory)
+      (fat32-masked-entry-p masked-current-cluster1)
+      (fat32-masked-entry-p masked-current-cluster2)
+      (<= *ms-first-data-cluster*
+          masked-current-cluster1)
+      (not
+       (intersectp-equal
+        (mv-nth '0
+                (fat32-build-index-list (effective-fat fat32-in-memory)
+                                        masked-current-cluster1
+                                        length1 (cluster-size fat32-in-memory)))
+        (mv-nth '0
+                (fat32-build-index-list (effective-fat fat32-in-memory)
+                                        masked-current-cluster2 length2
+                                        (cluster-size fat32-in-memory))))))
+     (equal
+      (get-clusterchain-contents
+       (mv-nth 0
+               (clear-clusterchain fat32-in-memory
+                                   masked-current-cluster1 length1))
+       masked-current-cluster2 length2)
+      (get-clusterchain-contents fat32-in-memory
+                                 masked-current-cluster2 length2)))
+    :hints (("goal" :cases ((<= (+ 2 (count-of-clusters fat32-in-memory))
+                                masked-current-cluster1)))
+            ("subgoal 2" :in-theory (enable clear-clusterchain)))))
 
 (defund
   update-dir-contents
@@ -7521,76 +7573,6 @@ Some (rather awful) testing forms are
     (update-dir-contents fat32-in-memory rootclus
                          (nats=>string (clear-dir-ent (string=>nats dir-contents) name))
                          dir-ent)))
-
-(defthm
-  get-clusterchain-contents-of-update-dir-contents-disjoint-lemma-1
-  (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (fat32-masked-entry-p masked-current-cluster)
-    (<= 2 masked-current-cluster)
-    (fat32-masked-entry-p first-cluster)
-    (<= (+ 2 (count-of-clusters fat32-in-memory))
-        first-cluster)
-    (equal (mv-nth 1
-                   (get-clusterchain-contents fat32-in-memory
-                                              masked-current-cluster length))
-           0))
-   (equal
-    (get-clusterchain-contents
-     (mv-nth 0
-             (clear-clusterchain fat32-in-memory first-cluster 2097152))
-     masked-current-cluster length)
-    (get-clusterchain-contents fat32-in-memory
-                               masked-current-cluster length)))
-  :hints
-  (("goal"
-    :in-theory (e/d (update-dir-contents clear-clusterchain)
-                    ((:rewrite intersectp-is-commutative)))
-    :expand
-    ((fat32-build-index-list (effective-fat fat32-in-memory)
-                             first-cluster '2097152
-                             (cluster-size fat32-in-memory))
-     (intersectp-equal
-      nil
-      (mv-nth 0
-              (fat32-build-index-list (effective-fat fat32-in-memory)
-                                      masked-current-cluster
-                                      length (cluster-size fat32-in-memory))))
-     (:free
-      (y)
-      (intersectp-equal
-       (cons first-cluster y)
-       (mv-nth 0
-               (fat32-build-index-list (effective-fat fat32-in-memory)
-                                       masked-current-cluster length
-                                       (cluster-size fat32-in-memory)))))
-     (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
-    :use
-    ((:instance
-      (:rewrite intersectp-is-commutative)
-      (y
-       (cons
-        first-cluster
-        (mv-nth 0
-                (fat32-build-index-list
-                 (effective-fat fat32-in-memory)
-                 (fat32-entry-mask (fati first-cluster fat32-in-memory))
-                 (+ 2097152
-                    (- (cluster-size fat32-in-memory)))
-                 (cluster-size fat32-in-memory)))))
-      (x (mv-nth 0
-                 (fat32-build-index-list (effective-fat fat32-in-memory)
-                                         masked-current-cluster length
-                                         (cluster-size fat32-in-memory)))))
-     (:instance
-      (:rewrite intersectp-is-commutative)
-      (y (cons first-cluster nil))
-      (x
-       (mv-nth 0
-               (fat32-build-index-list (effective-fat fat32-in-memory)
-                                       masked-current-cluster length
-                                       (cluster-size fat32-in-memory)))))))))
 
 (defthm
   get-clusterchain-contents-of-update-dir-contents-disjoint
