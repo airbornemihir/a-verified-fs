@@ -20,7 +20,7 @@
   (equal (intersectp-equal x (flatten l))
          (not (not-intersectp-list x l))))
 
-(defthm not-intersectp-list-correctness-2
+(defthmd not-intersectp-list-correctness-2
   (implies (and (not-intersectp-list x l)
                 (member-equal y l))
            (not (intersectp-equal x y))))

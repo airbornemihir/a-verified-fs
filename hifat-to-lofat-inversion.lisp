@@ -854,7 +854,7 @@
              fat32-in-memory
              dir-ent-list entry-limit))))
 
-(defthm
+(defthmd
   lofat-to-hifat-helper-exec-correctness-3-lemma-1
   (implies
    (and (useful-dir-ent-list-p dir-ent-list)
@@ -877,8 +877,7 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (lofat-to-hifat-helper-exec hifat-entry-count)
-         (lofat-to-hifat-helper-exec-correctness-3-lemma-1))
+    (e/d (lofat-to-hifat-helper-exec hifat-entry-count))
     :induct
     (lofat-to-hifat-helper-exec fat32-in-memory
                                 dir-ent-list entry-limit))
@@ -937,8 +936,7 @@
                     ((:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)
                      (:rewrite take-of-len-free)
                      (:definition member-equal)
-                     (:rewrite subsetp-car-member)
-                     (:rewrite not-intersectp-list-correctness-2)))))
+                     (:rewrite subsetp-car-member)))))
   :rule-classes
   ((:rewrite
     :corollary
