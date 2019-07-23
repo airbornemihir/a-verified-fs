@@ -6866,7 +6866,8 @@ Some (rather awful) testing forms are
         (mv-nth '0
                 (fat32-build-index-list (effective-fat fat32-in-memory)
                                         masked-current-cluster2 length2
-                                        (cluster-size fat32-in-memory))))))
+                                        (cluster-size fat32-in-memory)))))
+      (equal cluster-size (cluster-size fat32-in-memory)))
      (equal
       (fat32-build-index-list
        (effective-fat
@@ -6874,10 +6875,10 @@ Some (rather awful) testing forms are
                 (clear-clusterchain fat32-in-memory
                                     masked-current-cluster1 length1)))
        masked-current-cluster2
-       length2 (cluster-size fat32-in-memory))
+       length2 cluster-size)
       (fat32-build-index-list (effective-fat fat32-in-memory)
                               masked-current-cluster2 length2
-                              (cluster-size fat32-in-memory))))
+                              cluster-size)))
     :hints (("goal" :cases ((<= (+ 2 (count-of-clusters fat32-in-memory))
                                 masked-current-cluster1)))
             ("subgoal 2" :in-theory (enable clear-clusterchain)))))
@@ -8402,37 +8403,92 @@ Some (rather awful) testing forms are
 (defthm
   lofat-to-hifat-helper-exec-of-stobj-set-indices-in-fa-table
   (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (fat32-masked-entry-list-p value-list)
-        (nat-listp index-list)
-        (equal (len index-list)
-               (len value-list))
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper-exec fat32-in-memory
-                                                   dir-ent-list entry-limit))
-               0)
-        (not-intersectp-list
-         index-list
-         (mv-nth 2
-                 (lofat-to-hifat-helper-exec fat32-in-memory
-                                             dir-ent-list entry-limit))))
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (fat32-masked-entry-list-p value-list)
+    (nat-listp index-list)
+    (equal (len index-list)
+           (len value-list))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit))
+     0)
+    (not-intersectp-list
+     index-list
+     (mv-nth
+      2
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit))))
    (equal
     (lofat-to-hifat-helper-exec
-     (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
+     (stobj-set-indices-in-fa-table
+      fat32-in-memory index-list value-list)
      dir-ent-list entry-limit)
     (lofat-to-hifat-helper-exec fat32-in-memory
                                 dir-ent-list entry-limit)))
   :hints
-  (("goal" :induct (lofat-to-hifat-helper-exec fat32-in-memory
-                                               dir-ent-list entry-limit)
-    :in-theory (e/d (lofat-to-hifat-helper-exec)
-    ((:REWRITE NTH-OF-EFFECTIVE-FAT)
-     (:REWRITE MEMBER-OF-A-NAT-LIST)
-     (:DEFINITION MEMBER-EQUAL)
-     (:rewrite
-      lofat-to-hifat-helper-exec-correctness-5-lemma-5
-      . 2)
-     (:REWRITE NOT-INTERSECTP-LIST-CORRECTNESS-2))))))
+  (("goal"
+    :induct
+    (lofat-to-hifat-helper-exec fat32-in-memory
+                                dir-ent-list entry-limit)
+    :in-theory
+    (e/d (lofat-to-hifat-helper-exec)
+         ((:rewrite nth-of-effective-fat)
+          (:rewrite member-of-a-nat-list)
+          (:definition member-equal)
+          (:rewrite
+           lofat-to-hifat-helper-exec-correctness-5-lemma-5
+           . 2)
+          (:rewrite not-intersectp-list-correctness-2))))))
+
+(defthm
+  lofat-to-hifat-helper-exec-of-clear-clusterchain
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (fat32-masked-entry-p masked-current-cluster)
+    (<= *ms-first-data-cluster*
+        masked-current-cluster)
+    (< masked-current-cluster
+       (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory)))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit))
+     0)
+    (not-intersectp-list
+     (mv-nth 0
+             (fat32-build-index-list
+              (effective-fat fat32-in-memory)
+              masked-current-cluster
+              length (cluster-size fat32-in-memory)))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper-exec fat32-in-memory
+                                  dir-ent-list entry-limit))))
+   (equal
+    (lofat-to-hifat-helper-exec
+     (mv-nth 0
+             (clear-clusterchain fat32-in-memory
+                                 masked-current-cluster length))
+     dir-ent-list entry-limit)
+    (lofat-to-hifat-helper-exec fat32-in-memory
+                                dir-ent-list entry-limit)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (lofat-to-hifat-helper-exec clear-clusterchain)
+     ((:rewrite nth-of-effective-fat)
+      (:rewrite member-of-a-nat-list)
+      (:definition member-equal)
+      (:rewrite lofat-to-hifat-helper-exec-correctness-5-lemma-5
+                . 2)
+      (:rewrite not-intersectp-list-correctness-2))))))
 
 (defthmd
   lofat-to-hifat-helper-exec-of-delete-dir-ent-1-lemma-2
