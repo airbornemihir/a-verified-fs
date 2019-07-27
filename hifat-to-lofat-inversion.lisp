@@ -2825,7 +2825,7 @@
              (:free (x y)
                     (intersectp-equal (list x) y))
              (:free (y) (intersectp-equal nil y)))
-    :in-theory (e/d (lofat-to-hifat-helper-exec fat32-build-index-list-of-update-nth)
+    :in-theory (e/d (lofat-to-hifat-helper-exec)
                     ((:rewrite natp-of-cluster-size . 1))))))
 
 (encapsulate

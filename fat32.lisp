@@ -440,7 +440,7 @@
      (fat32-masked-entry-list-p index-list)))
   :hints (("Goal" :in-theory (enable fat32-build-index-list))))
 
-(defthmd
+(defthm
   fat32-build-index-list-of-update-nth
   (implies
    (and (<= *ms-first-data-cluster*
@@ -1168,12 +1168,8 @@
              file-length cluster-size)
             (mv file-index-list 0)))
     :hints
-    (("goal"
-      :in-theory
-      (e/d (set-indices-in-fa-table
-            fat32-build-index-list
-            fat32-build-index-list-of-update-nth)
-           (fat32-masked-entry-list-p-when-bounded-nat-listp))
+    (("goal" :in-theory (e/d (set-indices-in-fa-table fat32-build-index-list)
+                             (fat32-masked-entry-list-p-when-bounded-nat-listp))
       :induct (induction-scheme file-index-list
                                 file-length cluster-size)
       :expand

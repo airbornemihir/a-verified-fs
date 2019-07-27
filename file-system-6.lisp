@@ -1967,8 +1967,7 @@
         (< key (len fa-table)))
    (equal (l6-file-index-list file (update-nth key val fa-table))
           (l6-file-index-list file fa-table)))
-  :hints (("goal" :in-theory (enable l6-file-index-list
-                                     fat32-build-index-list-of-update-nth))))
+  :hints (("goal" :in-theory (enable l6-file-index-list))))
 
 (defthm
   l6-wrchs-correctness-1-lemma-37
