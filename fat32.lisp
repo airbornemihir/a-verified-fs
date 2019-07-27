@@ -1264,3 +1264,16 @@
            (mv-nth 0
                    (fat32-build-index-list fa-table masked-current-cluster
                                            length cluster-size))))))))
+
+(defthm
+  nth-of-set-indices-in-fa-table-when-member
+  (implies (and (bounded-nat-listp index-list (len fa-table))
+                (fat32-masked-entry-p val)
+                (member-equal n index-list))
+           (equal (nth n
+                       (set-indices-in-fa-table fa-table index-list
+                                                (make-list-ac (len index-list)
+                                                              val nil)))
+                  (fat32-update-lower-28 (nth n fa-table)
+                                         val)))
+  :hints (("goal" :in-theory (enable set-indices-in-fa-table))))
