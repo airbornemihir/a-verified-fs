@@ -7406,7 +7406,7 @@
              (equal (floor (+ 63 cluster-size) cluster-size)
                     1))))
 
-(defthm
+(defthmd
   lofat-to-hifat-helper-correctness-5-lemma-2
   (implies
    (equal
@@ -7920,7 +7920,9 @@
   :rule-classes :linear
   :hints
   (("goal" :in-theory (enable lofat-to-hifat-helper
-                              hifat-cluster-count)
+                              hifat-cluster-count
+                              lofat-to-hifat-helper-correctness-5-lemma-2
+                              dir-ent-clusterchain dir-ent-clusterchain-contents)
     :induct (lofat-to-hifat-helper fat32-in-memory
                                         dir-ent-list entry-limit)
     :expand (make-clusters "" (cluster-size fat32-in-memory)))))
@@ -8237,8 +8239,9 @@
                     (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                     2097152))))
          0)))
-      :in-theory (e/d (root-dir-ent-list)
-                      (lofat-to-hifat-helper-correctness-5-lemma-7))
+      :in-theory
+      (e/d (root-dir-ent-list lofat-to-hifat-helper-correctness-5-lemma-2)
+           (lofat-to-hifat-helper-correctness-5-lemma-7))
       :use
       ((:instance lofat-to-hifat-helper-correctness-5-lemma-7
                   (masked-current-cluster
