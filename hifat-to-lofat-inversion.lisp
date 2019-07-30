@@ -595,7 +595,7 @@
                                 (remove1-dir-ent dir-contents filename)))
   :hints (("goal" :in-theory (enable remove1-dir-ent))))
 
-(defthmd
+(defthm
   make-dir-ent-list-of-remove1-dir-ent
   (implies (not (fat32-filename-p filename))
            (equal (make-dir-ent-list (remove1-dir-ent dir-contents filename))
@@ -1284,7 +1284,10 @@
               m1-file-alist (len dir-ent-list))))
   :hints
   (("goal"
-    :in-theory (enable lofat-to-hifat-helper)
+    :in-theory
+    (e/d
+     (lofat-to-hifat-helper)
+     (make-dir-ent-list-of-remove1-dir-ent))
     :induct
     (lofat-to-hifat-helper fat32-in-memory
                            dir-ent-list entry-limit))))
@@ -7919,10 +7922,14 @@
                  (len (flatten clusterchain-list)))))
   :rule-classes :linear
   :hints
-  (("goal" :in-theory (enable lofat-to-hifat-helper
-                              hifat-cluster-count
-                              lofat-to-hifat-helper-correctness-5-lemma-2
-                              dir-ent-clusterchain dir-ent-clusterchain-contents)
+  (("goal" :in-theory
+    (e/d
+     (lofat-to-hifat-helper
+      hifat-cluster-count
+      lofat-to-hifat-helper-correctness-5-lemma-2
+      dir-ent-clusterchain
+      dir-ent-clusterchain-contents)
+     (make-dir-ent-list-of-remove1-dir-ent))
     :induct (lofat-to-hifat-helper fat32-in-memory
                                         dir-ent-list entry-limit)
     :expand (make-clusters "" (cluster-size fat32-in-memory)))))

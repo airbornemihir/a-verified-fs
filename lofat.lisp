@@ -6432,8 +6432,7 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory (e/d (lofat-to-hifat-helper-correctness-4
-                     lofat-to-hifat-helper
-                     make-dir-ent-list-of-remove1-dir-ent)
+                     lofat-to-hifat-helper)
                     ((:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
                      (:definition free-index-listp)
                      (:definition not-intersectp-list)
@@ -6472,8 +6471,7 @@ Some (rather awful) testing forms are
            (mv-nth 0 (find-dir-ent dir-ent-list name))))))
        entry-limit)))))
   :hints
-  (("goal" :in-theory (enable lofat-to-hifat-helper-correctness-4
-                              make-dir-ent-list-of-remove1-dir-ent)
+  (("goal" :in-theory (enable lofat-to-hifat-helper-correctness-4)
     :induct (find-dir-ent dir-ent-list name)
     :expand (lofat-to-hifat-helper fat32-in-memory
                                         dir-ent-list entry-limit))))
@@ -7578,7 +7576,6 @@ Some (rather awful) testing forms are
 ;;                                         dir-ent-list entry-limit)
 ;;     :in-theory (e/d (lofat-to-hifat-helper
 ;;                      dir-ent-list-p
-;;                      make-dir-ent-list-of-remove1-dir-ent
 ;;                      nthcdr-when->=-n-len-l len-when-dir-ent-p)
 ;;                     ((:linear lofat-to-hifat-helper-correctness-3)))
 ;;     :expand
