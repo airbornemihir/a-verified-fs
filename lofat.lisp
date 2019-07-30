@@ -6698,16 +6698,20 @@ Some (rather awful) testing forms are
                         (dir-ent-filename dir-ent))
           (mv dir-ent 0))))
 
+;; This function calls place-contents with a meaningless value of dir-ent,
+;; because we know that for a well-formed directory, the contents will be
+;; non-empty and so there's no way we're going to be returned a dir-ent with
+;; the first cluster set to 0 (with the mask, of course...) so we don't care
+;; about the value of dir-ent returned.
 (defund
   update-dir-contents
-  (fat32-in-memory first-cluster dir-contents dir-ent)
+  (fat32-in-memory first-cluster dir-contents)
   (declare
    (xargs
     :stobjs fat32-in-memory
     :guard (and (lofat-fs-p fat32-in-memory)
                 (fat32-masked-entry-p first-cluster)
                 (<= *ms-first-data-cluster* first-cluster)
-                (dir-ent-p dir-ent)
                 (> (+ *ms-first-data-cluster*
                       (count-of-clusters fat32-in-memory))
                    first-cluster)
@@ -6732,8 +6736,8 @@ Some (rather awful) testing forms are
        ((unless (> (length dir-contents) 0))
         (mv fat32-in-memory 0))
        ((mv fat32-in-memory & error-code &)
-        (place-contents fat32-in-memory
-                        dir-ent dir-contents 0 first-cluster)))
+        (place-contents fat32-in-memory (dir-ent-fix nil) dir-contents 0
+                        first-cluster)))
     (mv fat32-in-memory error-code)))
 
 (defthm
@@ -6743,7 +6747,7 @@ Some (rather awful) testing forms are
     (mv-nth
      0
      (update-dir-contents fat32-in-memory
-                          first-cluster dir-contents dir-ent)))
+                          first-cluster dir-contents)))
    (count-of-clusters fat32-in-memory))
   :hints (("goal" :in-theory (enable update-dir-contents))))
 
@@ -6760,7 +6764,7 @@ Some (rather awful) testing forms are
    (lofat-fs-p
     (mv-nth 0
             (update-dir-contents fat32-in-memory
-                                 first-cluster dir-contents dir-ent))))
+                                 first-cluster dir-contents))))
   :hints (("goal" :in-theory (enable update-dir-contents))))
 
 (defun
@@ -6810,7 +6814,9 @@ Some (rather awful) testing forms are
                 (lofat-directory-file-p file)
                 (nats=>string (flatten (lofat-file->contents file)))
                 (lofat-file->contents file)))
-              ((mv fat32-in-memory dir-ent & &)
+              ;; Should we be ignoring the dir-ent returned by place-contents?
+              ;; Probably not...
+              ((mv fat32-in-memory & & &)
                (if
                    (equal (length contents) 0)
                    (mv fat32-in-memory dir-ent nil nil)
@@ -6820,8 +6826,7 @@ Some (rather awful) testing forms are
               (dir-ent-list (place-dir-ent dir-ent-list dir-ent)))
            (update-dir-contents
             fat32-in-memory rootclus
-            (nats=>string (flatten dir-ent-list))
-            dir-ent))
+            (nats=>string (flatten dir-ent-list))))
          (mv fat32-in-memory *enotdir*)))
        ((unless (dir-ent-directory-p dir-ent))
         (if
@@ -6836,7 +6841,7 @@ Some (rather awful) testing forms are
               ((when (< (len indices) 1))
                (mv fat32-in-memory *enospc*))
               (first-cluster (nth 0 indices))
-              ((mv fat32-in-memory dir-ent & &)
+              ((mv fat32-in-memory & & &)
                (if
                    (equal (length (lofat-file->contents file)) 0)
                    (mv fat32-in-memory dir-ent nil nil)
@@ -6849,8 +6854,7 @@ Some (rather awful) testing forms are
                               (lofat-file->dir-ent file))))
            (update-dir-contents
             fat32-in-memory rootclus
-            (nats=>string (flatten dir-ent-list))
-            dir-ent))))
+            (nats=>string (flatten dir-ent-list))))))
        ;; This case should never arise - we should never legitimately find a
        ;; directory entry with a cluster index outside the allowable range.
        ((unless
@@ -7161,8 +7165,7 @@ Some (rather awful) testing forms are
             (consp (cdr pathname))
             (mv fat32-in-memory *eio*)
           (update-dir-contents fat32-in-memory rootclus
-                               (nats=>string (clear-dir-ent (string=>nats dir-contents) name))
-                               dir-ent)))
+                               (nats=>string (clear-dir-ent (string=>nats dir-contents) name)))))
        ((when (consp (cdr pathname)))
         ;; Recursion
         (lofat-remove-file-by-pathname
@@ -7190,8 +7193,7 @@ Some (rather awful) testing forms are
          clusterchain
          (make-list (len clusterchain) :initial-element 0))))
     (update-dir-contents fat32-in-memory rootclus
-                         (nats=>string (clear-dir-ent (string=>nats dir-contents) name))
-                         dir-ent)))
+                         (nats=>string (clear-dir-ent (string=>nats dir-contents) name)))))
 
 (defthm
   lofat-remove-file-by-pathname-correctness-1-lemma-1
@@ -7207,7 +7209,7 @@ Some (rather awful) testing forms are
      (mv-nth
       1
       (update-dir-contents fat32-in-memory
-                           first-cluster dir-contents dir-ent))
+                           first-cluster dir-contents))
      0)
     (stringp dir-contents)
     (< 0 (length dir-contents))
@@ -7218,7 +7220,7 @@ Some (rather awful) testing forms are
      (mv-nth
       0
       (update-dir-contents fat32-in-memory
-                           first-cluster dir-contents dir-ent))
+                           first-cluster dir-contents))
      first-cluster *ms-max-dir-size*)
     (mv
      (implode
