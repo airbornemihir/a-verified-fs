@@ -30,6 +30,9 @@
          (and (not-intersectp-list x l1)
               (not-intersectp-list x l2))))
 
+(defthm not-intersectp-list-when-atom
+  (implies (atom x) (not-intersectp-list x l)))
+
 (defthm not-intersectp-equal-if-subset
   (implies (and (not-intersectp-list x l2)
                 (subsetp-equal l1 l2))
