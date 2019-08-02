@@ -693,17 +693,32 @@
 
 (defthm
   length-of-dir-ent-clusterchain-contents
-  (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (not (dir-ent-directory-p dir-ent)))
-   (<=
-    (len
-     (explode
-      (mv-nth 0
-              (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
-    (dir-ent-file-size dir-ent)))
-  :rule-classes :linear
-  :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents))))
+  t
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (not (dir-ent-directory-p dir-ent)))
+     (<= (len (explode (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory dir-ent))))
+         (dir-ent-file-size dir-ent)))
+    :hints
+    (("goal"
+      :in-theory (enable dir-ent-clusterchain-contents))))
+   (:linear
+    :corollary
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (dir-ent-directory-p dir-ent))
+     (<= (len (explode (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory dir-ent))))
+         *ms-max-dir-size*))
+    :hints
+    (("goal"
+      :in-theory (enable dir-ent-clusterchain-contents))))))
 
 ;; After the fashion of get-clusterchain-contents-correctness-2, we're going to
 ;; rewrite instances of (mv-nth 1 (dir-ent-clusterchain ...))
