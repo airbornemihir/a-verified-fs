@@ -1389,16 +1389,10 @@
 (defthm
   integerp-of-root-dir-ent-list
   (and
-    (integerp (mv-nth 1 (root-dir-ent-list fat32-in-memory)))
-    (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))
+   (integerp (mv-nth 1 (root-dir-ent-list fat32-in-memory)))
+   (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))
   :hints (("goal" :in-theory (enable root-dir-ent-list)))
-  :rule-classes
-  ((:type-prescription
-    :corollary
-    (integerp (mv-nth 1 (root-dir-ent-list fat32-in-memory))))
-   (:linear
-    :corollary
-    (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))))
+  :rule-classes :type-prescription)
 
 (defun
     stobj-count-free-clusters-helper
