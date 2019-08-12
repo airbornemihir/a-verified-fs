@@ -530,6 +530,21 @@
            (make-dir-ent-list
             (nthcdr *ms-dir-ent-length* dir-contents)))))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthmd
+    len-of-make-dir-ent-list
+    (<= (len (make-dir-ent-list dir-contents))
+        (floor (len dir-contents)
+               *ms-dir-ent-length*))
+    :rule-classes
+    ((:linear :trigger-terms ((len (make-dir-ent-list dir-contents))
+                              (floor (len dir-contents) 32))))
+    :hints (("goal" :in-theory (enable make-dir-ent-list)))))
+
 (defund useful-dir-ent-list-p (dir-ent-list)
   (declare (xargs :guard t))
   (if (atom dir-ent-list)
@@ -734,6 +749,107 @@
           (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
   :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents
                                      dir-ent-clusterchain))))
+
+(defund
+  dir-ent-list-from-first-cluster
+  (fat32-in-memory first-cluster)
+  (declare
+   (xargs :stobjs fat32-in-memory
+          :guard (and (lofat-fs-p fat32-in-memory)
+                      (fat32-masked-entry-p first-cluster)
+                      (>= first-cluster *ms-first-data-cluster*)
+                      (< first-cluster
+                         (+ (count-of-clusters fat32-in-memory)
+                            *ms-first-data-cluster*)))))
+  (mv-let
+    (contents error-code)
+    (get-clusterchain-contents fat32-in-memory
+                               first-cluster *ms-max-dir-size*)
+    (mv (make-dir-ent-list (string=>nats contents))
+        error-code)))
+
+;; We're going to take this theorem and part of the implementation, but not
+;; more. We can't afford to get sidetracked and have to completely rethink the
+;; proof.
+(defthm
+  useful-dir-ent-list-p-of-dir-ent-list-from-first-cluster
+  (useful-dir-ent-list-p
+   (mv-nth 0
+           (dir-ent-list-from-first-cluster
+            fat32-in-memory first-cluster)))
+  :hints (("Goal" :in-theory (enable dir-ent-list-from-first-cluster)) ))
+
+(defund
+  subdir-contents-p (contents)
+  (declare (xargs :guard (stringp contents)))
+  (let*
+   ((contents (string=>nats contents))
+    (contents-without-dot
+     (remove1-dir-ent contents *current-dir-fat32-name*))
+    (contents-without-dot-or-dotdot
+     (remove1-dir-ent contents-without-dot
+                      *parent-dir-fat32-name*)))
+   (and (<= (len contents-without-dot)
+            (- (len contents) *ms-dir-ent-length*))
+        (<= (len contents-without-dot-or-dotdot)
+            (- (len contents-without-dot)
+               *ms-dir-ent-length*)))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    len-of-dir-ent-list-from-first-cluster-when-subdir-contents-p
+    (implies
+     (and
+      (lofat-fs-p fat32-in-memory)
+      (dir-ent-directory-p dir-ent)
+      (subdir-contents-p
+       (mv-nth
+        0
+        (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
+     (<= (len (mv-nth 0
+                      (dir-ent-list-from-first-cluster
+                       fat32-in-memory
+                       (dir-ent-first-cluster dir-ent))))
+         *ms-max-dir-ent-count*))
+    :hints
+    (("goal"
+      :in-theory (enable dir-ent-list-from-first-cluster
+                         subdir-contents-p
+                         dir-ent-clusterchain-contents)
+      :use
+      ((:instance
+        (:linear len-of-make-dir-ent-list)
+        (dir-contents
+         (remove1-dir-ent
+          (remove1-dir-ent
+           (string=>nats
+            (mv-nth 0
+                    (get-clusterchain-contents
+                     fat32-in-memory
+                     (dir-ent-first-cluster dir-ent)
+                     2097152)))
+           ".          ")
+          "..         ")))
+       (:instance
+        painful-debugging-lemma-16
+        (i1
+         (len
+          (remove1-dir-ent
+           (remove1-dir-ent
+            (string=>nats
+             (mv-nth 0
+                     (get-clusterchain-contents
+                      fat32-in-memory
+                      (dir-ent-first-cluster dir-ent)
+                      2097152)))
+            ".          ")
+           "..         ")))
+        (i2 (+ -64 2097152))
+        (j 32)))))))
 
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
@@ -1134,16 +1250,6 @@
   ()
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthmd
-    len-of-make-dir-ent-list
-    (<= (len (make-dir-ent-list dir-contents))
-        (floor (len dir-contents)
-               *ms-dir-ent-length*))
-    :rule-classes
-    ((:linear :trigger-terms ((len (make-dir-ent-list dir-contents))
-                              (floor (len dir-contents) 32))))
-    :hints (("goal" :in-theory (enable make-dir-ent-list))))
 
   (defthm
     hifat-bounded-file-alist-p-helper-of-lofat-to-hifat-helper-lemma-1
