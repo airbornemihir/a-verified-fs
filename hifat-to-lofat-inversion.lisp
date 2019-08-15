@@ -807,14 +807,15 @@
       (lofat-fs-p fat32-in-memory)
       (dir-ent-directory-p dir-ent)
       (subdir-contents-p
+       (mv-nth 0
+               (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
+     (<=
+      (len
        (mv-nth
         0
-        (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
-     (<= (len (mv-nth 0
-                      (dir-ent-list-from-first-cluster
-                       fat32-in-memory
-                       (dir-ent-first-cluster dir-ent))))
-         *ms-max-dir-ent-count*))
+        (dir-ent-list-from-first-cluster fat32-in-memory
+                                         (dir-ent-first-cluster dir-ent))))
+      *ms-max-dir-ent-count*))
     :hints
     (("goal"
       :in-theory (enable dir-ent-list-from-first-cluster
@@ -828,10 +829,9 @@
           (remove1-dir-ent
            (string=>nats
             (mv-nth 0
-                    (get-clusterchain-contents
-                     fat32-in-memory
-                     (dir-ent-first-cluster dir-ent)
-                     2097152)))
+                    (get-clusterchain-contents fat32-in-memory
+                                               (dir-ent-first-cluster dir-ent)
+                                               2097152)))
            ".          ")
           "..         ")))
        (:instance
@@ -842,14 +842,14 @@
            (remove1-dir-ent
             (string=>nats
              (mv-nth 0
-                     (get-clusterchain-contents
-                      fat32-in-memory
-                      (dir-ent-first-cluster dir-ent)
-                      2097152)))
+                     (get-clusterchain-contents fat32-in-memory
+                                                (dir-ent-first-cluster dir-ent)
+                                                2097152)))
             ".          ")
            "..         ")))
         (i2 (+ -64 2097152))
-        (j 32)))))))
+        (j 32)))))
+    :rule-classes :linear))
 
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
@@ -933,23 +933,24 @@
             (mv nil 0)
           (dir-ent-clusterchain
            fat32-in-memory dir-ent)))
-       (contents-without-dot
-        (if directory-p
-            (remove1-dir-ent (string=>nats contents) *current-dir-fat32-name*)
-          nil))
-       (contents-without-dot-or-dotdot
-        (if directory-p
-            (remove1-dir-ent contents-without-dot *parent-dir-fat32-name*)
-          nil))
        ;; head-entry-count and head-clusterchain-list, here, do not include the
        ;; entry or clusterchain respectively for the head itself. Those will be
        ;; added at the end.
        ((mv head head-entry-count head-clusterchain-list head-error-code)
         (if directory-p
-            (lofat-to-hifat-helper
-             fat32-in-memory
-             (make-dir-ent-list contents-without-dot-or-dotdot)
-             (- entry-limit 1))
+            (mv-let
+              (head-dir-ent-list ignore-0)
+              (dir-ent-list-from-first-cluster
+               fat32-in-memory
+               (dir-ent-first-cluster dir-ent))
+              (declare (ignore ignore-0))
+              (lofat-to-hifat-helper
+               fat32-in-memory
+               (mbe :exec
+                    (make-dir-ent-list (string=>nats contents))
+                    :logic
+                    head-dir-ent-list)
+               (- entry-limit 1)))
           (mv contents 0 nil 0)))
        ;; we want entry-limit to serve both as a measure and an upper
        ;; bound on how many entries are found.
@@ -970,12 +971,7 @@
                   ;; it's 2^21 or fewer bytes long... but somehow it's managed
                   ;; to skip either the . entry or the .. entry.
                   (and directory-p
-                       (or
-                        (> (len contents-without-dot)
-                           (- (len (string=>nats contents))
-                              *ms-dir-ent-length*))
-                        (> (len contents-without-dot-or-dotdot)
-                           (- (len contents-without-dot) *ms-dir-ent-length*)))))
+                       (not (subdir-contents-p contents))))
                  ;; The three following clauses come around to the point that
                  ;; the whole expression
                  ;; (append (list clusterchain) head-clusterchain-list
