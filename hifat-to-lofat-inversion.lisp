@@ -3821,6 +3821,18 @@
           (non-free-index-listp x fa-table))))
 
 (defthm
+  non-free-index-listp-of-set-indices-in-fa-table
+  (implies (and (non-free-index-listp x fa-table)
+                (not (intersectp-equal index-list x)))
+           (non-free-index-listp
+            x
+            (set-indices-in-fa-table fa-table index-list value-list)))
+  :hints
+  (("goal" :in-theory (enable set-indices-in-fa-table
+                              intersectp-equal)
+    :induct (set-indices-in-fa-table fa-table index-list value-list))))
+
+(defthm
   non-free-index-listp-correctness-2
   (implies (and (non-free-index-listp x fa-table)
                 (equal (fat32-entry-mask (nth key fa-table))
