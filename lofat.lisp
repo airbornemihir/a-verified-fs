@@ -15011,6 +15011,7 @@ Some (rather awful) testing forms are
     nil t)
    :bash :bash))
 
+;; remove-hyps says (for now) that these hypotheses are minimal.
 (defthm
   lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
   (implies
@@ -15046,7 +15047,70 @@ Some (rather awful) testing forms are
                             (:rewrite
                              lofat-to-hifat-helper-correctness-5-lemma-5
                              . 2)
-                            (:definition member-equal))))))
+                            (:definition member-equal)))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (useful-dir-ent-list-p dir-ent-list)
+          (equal (mv-nth 3
+                         (lofat-to-hifat-helper fat32-in-memory
+                                                dir-ent-list entry-limit))
+                 0)
+          (not (member-intersectp-equal
+                (mv-nth 2
+                        (lofat-to-hifat-helper fat32-in-memory
+                                               dir-ent-list entry-limit))
+                l))
+          (dir-ent-directory-p (mv-nth 0
+                                       (find-dir-ent dir-ent-list filename))))
+     (not-intersectp-list
+      (mv-nth
+       0
+       (fat32-build-index-list
+        (effective-fat fat32-in-memory)
+        (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+        *ms-max-dir-size*
+        (cluster-size fat32-in-memory)))
+      l))
+    :hints
+    (("goal"
+      :in-theory (e/d (dir-ent-clusterchain)))))
+   (:rewrite
+    :corollary
+    (implies
+     (and
+      (useful-dir-ent-list-p dir-ent-list)
+      (equal (mv-nth 3
+                     (lofat-to-hifat-helper fat32-in-memory
+                                            dir-ent-list entry-limit))
+             0)
+      (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+         (+ *ms-first-data-cluster*
+            (count-of-clusters fat32-in-memory)))
+      (<= *ms-first-data-cluster*
+          (dir-ent-first-cluster (mv-nth 0
+                                         (find-dir-ent dir-ent-list filename))))
+      (not (member-intersectp-equal
+            (mv-nth 2
+                    (lofat-to-hifat-helper fat32-in-memory
+                                           dir-ent-list entry-limit))
+            l))
+      (not (dir-ent-directory-p (mv-nth 0
+                                        (find-dir-ent dir-ent-list filename)))))
+     (not-intersectp-list
+      (mv-nth
+       0
+       (fat32-build-index-list
+        (effective-fat fat32-in-memory)
+        (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+        (dir-ent-file-size (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+        (cluster-size fat32-in-memory)))
+      l))
+    :hints
+    (("goal"
+      :in-theory (e/d (dir-ent-clusterchain)))))))
 
 (defthm
   lofat-to-hifat-helper-after-delete-and-clear-2-lemma-3
