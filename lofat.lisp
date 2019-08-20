@@ -15112,38 +15112,8 @@ Some (rather awful) testing forms are
     (("goal"
       :in-theory (e/d (dir-ent-clusterchain)))))))
 
-;; This is redundant, it should be removed.
 (defthm
   lofat-to-hifat-helper-after-delete-and-clear-2-lemma-3
-  (implies
-   (and (useful-dir-ent-list-p dir-ent-list)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper fat32-in-memory
-                                              dir-ent-list entry-limit))
-               0)
-        (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-        (not (member-intersectp-equal
-              (mv-nth 2
-                      (lofat-to-hifat-helper fat32-in-memory
-                                             dir-ent-list entry-limit))
-              l)))
-   (not-intersectp-list
-    (mv-nth
-     0
-     (fat32-build-index-list
-      (effective-fat fat32-in-memory)
-      (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-      *ms-max-dir-size*
-      (cluster-size fat32-in-memory)))
-    l))
-  :hints
-  (("goal"
-    :in-theory (e/d (dir-ent-clusterchain)
-                    (lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2))
-    :use lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2)))
-
-(defthm
-  lofat-to-hifat-helper-after-delete-and-clear-2-lemma-4
   (implies
    (and
     (consp dir-ent-list)
@@ -15235,33 +15205,18 @@ Some (rather awful) testing forms are
       (mv-nth 0
               (clear-clusterchain fat32-in-memory
                                   (dir-ent-first-cluster (car dir-ent-list))
-                                  2097152))
+                                  *ms-max-dir-size*))
       (cdr dir-ent-list)
       entry-limit))))
-  :instructions
-  (:promote
-   (:dive 2 2)
-   (:claim
-    (and
-     (fat32-masked-entry-p (dir-ent-first-cluster (car dir-ent-list)))
-     (equal (mv-nth 3
-                    (lofat-to-hifat-helper fat32-in-memory (cdr dir-ent-list)
-                                           entry-limit))
-            0)
-     (not-intersectp-list
-      (mv-nth
-       0
-       (fat32-build-index-list (effective-fat fat32-in-memory)
-                               (dir-ent-first-cluster (car dir-ent-list))
-                               2097152 (cluster-size fat32-in-memory)))
-      (mv-nth 2
-              (lofat-to-hifat-helper fat32-in-memory (cdr dir-ent-list)
-                                     entry-limit))))
-    :hints :none)
-   (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
-   (:rewrite
-    lofat-to-hifat-helper-correctness-4
-    ((entry-limit1
+  :hints
+  (("goal"
+    :in-theory (enable dir-ent-clusterchain)
+    :use
+    (:instance
+     (:rewrite lofat-to-hifat-helper-correctness-4)
+     (entry-limit2 entry-limit)
+     (dir-ent-list (cdr dir-ent-list))
+     (entry-limit1
       (+
        -1 entry-limit
        (-
@@ -15274,19 +15229,7 @@ Some (rather awful) testing forms are
             (string=>nats (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory (car dir-ent-list)))))
-           (+ -1 entry-limit)))))))))
-   :top :bash :bash :bash :bash (:dive 1 2)
-   (:rewrite lofat-to-hifat-helper-correctness-4
-             nil t)
-   :top :bash :bash :bash
-   (:in-theory (enable dir-ent-clusterchain))
-   (:dive 1 2)
-   (:= (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-   :top (:dive 2 2)
-   (:rewrite lofat-to-hifat-helper-correctness-4
-             nil t)
-   :top :bash
-   :bash :bash))
+           (+ -1 entry-limit)))))))))))
 
 (defthm
   lofat-to-hifat-helper-after-delete-and-clear-1-lemma-2
@@ -19495,6 +19438,9 @@ Some (rather awful) testing forms are
       (+ -1 entry-limit)))))
   :hints
   (("goal"
+    :in-theory
+    (disable (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
+                       . 2))
     :use
     ((:instance
       (:rewrite lofat-to-hifat-helper-correctness-4)
@@ -19515,7 +19461,8 @@ Some (rather awful) testing forms are
                                     fat32-in-memory (car dir-ent-list)))))
             (+ -1 entry-limit))))))))
      (:instance
-      (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-3)
+      (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
+                . 2)
       (l
        (mv-nth
         2
@@ -19659,9 +19606,13 @@ Some (rather awful) testing forms are
       (+ -1 entry-limit)))))
   :hints
   (("goal"
+    :in-theory
+    (disable (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
+                       . 2))
     :use
     ((:instance
-      (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-3)
+      (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
+                . 2)
       (l
        (mv-nth
         2
@@ -20109,32 +20060,6 @@ Some (rather awful) testing forms are
                               (dir-ent-clusterchain-contents
                                fat32-in-memory (car dir-ent-list)))))
        (+ -1 entry-limit))))
-    (<=
-     2
-     (dir-ent-first-cluster
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (string=>nats (mv-nth 0
-                               (get-clusterchain-contents
-                                fat32-in-memory
-                                (dir-ent-first-cluster (car dir-ent-list))
-                                2097152))))
-        (car pathname)))))
-    (<
-     (dir-ent-first-cluster
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (string=>nats (mv-nth 0
-                               (get-clusterchain-contents
-                                fat32-in-memory
-                                (dir-ent-first-cluster (car dir-ent-list))
-                                2097152))))
-        (car pathname))))
-     (+ 2 (count-of-clusters fat32-in-memory)))
     (dir-ent-directory-p
      (mv-nth
       0
@@ -20167,12 +20092,21 @@ Some (rather awful) testing forms are
           (car pathname))))
        '2097152
        (cluster-size fat32-in-memory))))))
-  :instructions
-  (:promote
-   (:dive 1)
-   (:claim
-    (and
-     (dir-ent-list-p
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (dir-ent-clusterchain-contents)
+     ((:rewrite
+       get-clusterchain-contents-of-lofat-remove-file-by-pathname-coincident-lemma-5
+       . 2)))
+    :use
+    (:instance
+     (:rewrite
+      get-clusterchain-contents-of-lofat-remove-file-by-pathname-coincident-lemma-5
+      . 2)
+     (filename (car pathname))
+     (dir-ent-list
       (make-dir-ent-list
        (string=>nats
         (mv-nth
@@ -20180,38 +20114,7 @@ Some (rather awful) testing forms are
          (get-clusterchain-contents fat32-in-memory
                                     (dir-ent-first-cluster (car dir-ent-list))
                                     2097152)))))
-     (equal
-      (mv-nth
-       3
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (string=>nats (mv-nth 0
-                               (get-clusterchain-contents
-                                fat32-in-memory
-                                (dir-ent-first-cluster (car dir-ent-list))
-                                2097152))))
-        (- entry-limit 1)))
-      0)
-     (not-intersectp-list
-      x
-      (mv-nth
-       2
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (string=>nats (mv-nth 0
-                               (get-clusterchain-contents
-                                fat32-in-memory
-                                (dir-ent-first-cluster (car dir-ent-list))
-                                2097152))))
-        (- entry-limit 1)))))
-    :hints :none)
-   (:rewrite
-    (:rewrite
-     get-clusterchain-contents-of-lofat-remove-file-by-pathname-coincident-lemma-5
-     . 2))
-   (:bash ("goal" :in-theory (enable dir-ent-clusterchain-contents)))))
+     (entry-limit (+ -1 entry-limit))))))
 
 ;; Hypotheses are minimal.
 (defthm
