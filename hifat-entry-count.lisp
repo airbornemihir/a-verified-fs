@@ -193,8 +193,10 @@
 
 (defthm hifat-entry-count-of-remove-assoc-equal
   (implies (and (m1-file-alist-p fs)
-                (hifat-no-dups-p fs))
-           (<= (hifat-entry-count (remove-assoc-equal x fs))
-               (hifat-entry-count fs)))
-  :hints (("goal" :in-theory (e/d (hifat-entry-count))))
+                (hifat-no-dups-p fs)
+                (consp (assoc-equal x fs)))
+           (< (hifat-entry-count (remove-assoc-equal x fs))
+              (hifat-entry-count fs)))
+  :hints (("goal" :in-theory (e/d (hifat-entry-count hifat-no-dups-p))
+           :induct (assoc-equal x fs)))
   :rule-classes :linear)
