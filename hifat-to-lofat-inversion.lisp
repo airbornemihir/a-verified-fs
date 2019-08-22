@@ -7708,7 +7708,7 @@
               (- (cluster-size fat32-in-memory))))))))
       (cluster-size fat32-in-memory))))))
 
-(defthm
+(defthmd
   lofat-to-hifat-helper-correctness-5-lemma-5
   (implies
    (equal (mv-nth 3
@@ -8061,7 +8061,8 @@
                               hifat-cluster-count
                               lofat-to-hifat-helper-correctness-5-lemma-2
                               dir-ent-clusterchain
-                              dir-ent-clusterchain-contents)
+                              dir-ent-clusterchain-contents
+                              lofat-to-hifat-helper-correctness-5-lemma-5)
     :induct (lofat-to-hifat-helper fat32-in-memory
                                    dir-ent-list entry-limit)
     :expand (make-clusters "" (cluster-size fat32-in-memory)))))
@@ -8495,7 +8496,8 @@
     (e/d
      (lofat-to-hifat hifat-to-lofat
                      hifat-to-lofat-inversion-lemma-17
-                     lofat-to-hifat-inversion-lemma-4)
+                     lofat-to-hifat-inversion-lemma-4
+                     lofat-to-hifat-helper-correctness-5-lemma-5)
      (lofat-to-hifat-inversion-lemma-3 generate-index-list
                                        non-free-index-listp-correctness-6))
     :use

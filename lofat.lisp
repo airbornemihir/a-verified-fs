@@ -7039,7 +7039,7 @@ Some (rather awful) testing forms are
 ;; Care should be taken before choosing to change this function's
 ;; definition. It has the very useful property that the length of the directory
 ;; contents remain the same, which means no reallocation is required.
-(defun
+(defund
   clear-dir-ent (dir-contents filename)
   (declare
    (xargs :measure (len dir-contents)
@@ -7074,14 +7074,15 @@ Some (rather awful) testing forms are
   len-of-clear-dir-ent
   (equal (len (clear-dir-ent dir-contents filename))
          (len dir-contents))
-  :hints (("goal" :in-theory (enable len-when-dir-ent-p))))
+  :hints (("goal" :in-theory (enable len-when-dir-ent-p clear-dir-ent))))
 
 (defthm
   unsigned-byte-listp-of-clear-dir-ent
   (implies
    (unsigned-byte-listp 8 dir-contents)
    (unsigned-byte-listp 8
-                        (clear-dir-ent dir-contents filename))))
+                        (clear-dir-ent dir-contents filename)))
+  :hints (("goal" :in-theory (enable clear-dir-ent))))
 
 (defthm
   make-dir-ent-list-of-clear-dir-ent-lemma-1
@@ -7091,11 +7092,15 @@ Some (rather awful) testing forms are
    (useless-dir-ent-p (dir-ent-set-filename dir-ent filename)))
   :hints (("goal" :in-theory (enable useless-dir-ent-p))))
 
-(defthm make-dir-ent-list-of-clear-dir-ent
-  (equal (make-dir-ent-list (clear-dir-ent dir-contents filename))
-         (delete-dir-ent (make-dir-ent-list dir-contents)
-                         filename))
-  :hints (("goal" :in-theory (enable make-dir-ent-list dir-ent-fix))))
+(defthm
+  make-dir-ent-list-of-clear-dir-ent
+  (equal
+   (make-dir-ent-list (clear-dir-ent dir-contents filename))
+   (delete-dir-ent (make-dir-ent-list dir-contents)
+                   filename))
+  :hints
+  (("goal" :in-theory (enable make-dir-ent-list
+                              dir-ent-fix clear-dir-ent))))
 
 (encapsulate
   ()
@@ -7113,7 +7118,7 @@ Some (rather awful) testing forms are
             (delete-dir-ent (make-dir-ent-list dir-contents)
                             filename)))
     :hints (("goal" :induct (clear-dir-ent dir-contents filename)
-             :in-theory (enable make-dir-ent-list dir-ent-fix)
+             :in-theory (enable make-dir-ent-list dir-ent-fix clear-dir-ent)
              :expand (len dir-contents)))))
 
 ;; We're going to have to add a weird stipulation here about the length of a
@@ -7382,8 +7387,6 @@ Some (rather awful) testing forms are
   (("goal" :in-theory
     (e/d (lofat-to-hifat-helper)
          ((:definition assoc-equal)
-          (:rewrite lofat-to-hifat-helper-correctness-5-lemma-5
-                    . 2)
           (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
           (:definition free-index-listp)
           (:rewrite lofat-find-file-by-pathname-correctness-1-lemma-1)
