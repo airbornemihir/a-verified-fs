@@ -20,7 +20,7 @@
   (equal (intersectp-equal x (flatten l))
          (not (not-intersectp-list x l))))
 
-(defthm not-intersectp-list-correctness-2
+(defthmd not-intersectp-list-correctness-2
   (implies (and (not-intersectp-list x l)
                 (member-equal y l))
            (not (intersectp-equal x y))))
@@ -29,6 +29,9 @@
   (equal (not-intersectp-list x (binary-append l1 l2))
          (and (not-intersectp-list x l1)
               (not-intersectp-list x l2))))
+
+(defthm not-intersectp-list-when-atom
+  (implies (atom x) (not-intersectp-list x l)))
 
 (defthm not-intersectp-equal-if-subset
   (implies (and (not-intersectp-list x l2)
@@ -111,29 +114,26 @@
                 (subsetp-equal x y))
            (member-intersectp-equal z y)))
 
-(defthm intersectp-member-when-not-member-intersectp
+(defthm
+  intersectp-member-when-not-member-intersectp
   (implies (and (member-equal x lst2)
                 (not (member-intersectp-equal lst1 lst2)))
-           (not-intersectp-list x lst1))
-  :hints (("Subgoal *1/4''" :use (:instance intersectp-is-commutative (y (car lst1)))) ))
+           (not-intersectp-list x lst1)))
 
-(defthm member-intersectp-binary-append
-  (equal (member-intersectp-equal e (binary-append x y))
-         (or (member-intersectp-equal e x)
-             (member-intersectp-equal e y))))
+(local
+ (defthm member-intersectp-binary-append-lemma
+   (equal (member-intersectp-equal e (binary-append x y))
+          (or (member-intersectp-equal e x)
+              (member-intersectp-equal e y)))))
 
 (defthm member-intersectp-is-commutative-lemma-1
   (implies (not (consp x))
            (not (member-intersectp-equal y x))))
 
-(defthm
-  member-intersectp-is-commutative-lemma-2
+(defthm member-intersectp-is-commutative-lemma-2
   (implies (and (consp x)
                 (not (not-intersectp-list (car x) y)))
-           (member-intersectp-equal y x))
-  :hints
-  (("Subgoal *1/2''" :use (:instance intersectp-is-commutative (x (car x))
-                                     (y (car y))))))
+           (member-intersectp-equal y x)))
 
 (defthm
   member-intersectp-is-commutative-lemma-3
@@ -164,3 +164,15 @@
   (implies (true-listp x)
            (equal (no-duplicates-listp (binary-append x y))
                   (and (no-duplicates-listp x) (no-duplicates-listp y)))))
+
+(defthm member-intersectp-binary-append
+  (equal (member-intersectp-equal e (binary-append x y))
+         (or (member-intersectp-equal e x)
+             (member-intersectp-equal e y)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (equal (member-intersectp-equal (binary-append x y) e)
+           (or (member-intersectp-equal x e)
+               (member-intersectp-equal y e))))))

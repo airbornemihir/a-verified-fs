@@ -708,17 +708,32 @@
 
 (defthm
   length-of-dir-ent-clusterchain-contents
-  (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (not (dir-ent-directory-p dir-ent)))
-   (<=
-    (len
-     (explode
-      (mv-nth 0
-              (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
-    (dir-ent-file-size dir-ent)))
-  :rule-classes :linear
-  :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents))))
+  t
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (not (dir-ent-directory-p dir-ent)))
+     (<= (len (explode (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory dir-ent))))
+         (dir-ent-file-size dir-ent)))
+    :hints
+    (("goal"
+      :in-theory (enable dir-ent-clusterchain-contents))))
+   (:linear
+    :corollary
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (dir-ent-directory-p dir-ent))
+     (<= (len (explode (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory dir-ent))))
+         *ms-max-dir-size*))
+    :hints
+    (("goal"
+      :in-theory (enable dir-ent-clusterchain-contents))))))
 
 ;; After the fashion of get-clusterchain-contents-correctness-2, we're going to
 ;; rewrite instances of (mv-nth 1 (dir-ent-clusterchain ...))
@@ -1203,8 +1218,7 @@
                     ((:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)
                      (:rewrite take-of-len-free)
                      (:definition member-equal)
-                     (:rewrite subsetp-car-member)
-                     (:rewrite not-intersectp-list-correctness-2)))))
+                     (:rewrite subsetp-car-member)))))
   :rule-classes
   ((:rewrite
     :corollary
@@ -1418,16 +1432,10 @@
 (defthm
   integerp-of-root-dir-ent-list
   (and
-    (integerp (mv-nth 1 (root-dir-ent-list fat32-in-memory)))
-    (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))
+   (integerp (mv-nth 1 (root-dir-ent-list fat32-in-memory)))
+   (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))
   :hints (("goal" :in-theory (enable root-dir-ent-list)))
-  :rule-classes
-  ((:type-prescription
-    :corollary
-    (integerp (mv-nth 1 (root-dir-ent-list fat32-in-memory))))
-   (:linear
-    :corollary
-    (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))))
+  :rule-classes :type-prescription)
 
 (defun
     stobj-count-free-clusters-helper
@@ -1954,6 +1962,43 @@
                      fat32-in-memory index-list value-list))
    (max-entry-count fat32-in-memory))
   :hints (("goal" :in-theory (enable max-entry-count))))
+
+(defthm
+  get-clusterchain-contents-of-stobj-set-indices-in-fa-table-disjoint
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (not
+     (intersectp-equal
+      (mv-nth 0
+              (fat32-build-index-list (effective-fat fat32-in-memory)
+                                      masked-current-cluster
+                                      length (cluster-size fat32-in-memory)))
+      index-list))
+    (integerp masked-current-cluster)
+    (fat32-masked-entry-list-p value-list)
+    (equal (len index-list)
+           (len value-list))
+    (nat-listp index-list))
+   (equal
+    (get-clusterchain-contents
+     (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
+     masked-current-cluster length)
+    (get-clusterchain-contents fat32-in-memory
+                               masked-current-cluster length)))
+  :hints
+  (("goal"
+    :induct (get-clusterchain-contents fat32-in-memory
+                                       masked-current-cluster length)
+    :in-theory (e/d (get-clusterchain-contents fat32-build-index-list)
+                    (intersectp-is-commutative))
+    :expand
+    ((get-clusterchain-contents
+      (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
+      masked-current-cluster length)
+     (:free (y)
+            (intersectp-equal (cons masked-current-cluster y)
+                              index-list))))))
 
 (defthm
   get-contents-from-clusterchain-of-stobj-set-indices-in-fa-table
@@ -3774,6 +3819,18 @@
         (< key (len fa-table)))
    (equal (non-free-index-listp x (update-nth key val fa-table))
           (non-free-index-listp x fa-table))))
+
+(defthm
+  non-free-index-listp-of-set-indices-in-fa-table
+  (implies (and (non-free-index-listp x fa-table)
+                (not (intersectp-equal index-list x)))
+           (non-free-index-listp
+            x
+            (set-indices-in-fa-table fa-table index-list value-list)))
+  :hints
+  (("goal" :in-theory (enable set-indices-in-fa-table
+                              intersectp-equal)
+    :induct (set-indices-in-fa-table fa-table index-list value-list))))
 
 (defthm
   non-free-index-listp-correctness-2
