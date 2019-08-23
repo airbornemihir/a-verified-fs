@@ -8114,6 +8114,37 @@ Some (rather awful) testing forms are
     :use get-clusterchain-contents-of-update-dir-contents-coincident)))
 
 (defthm
+  lofat-to-hifat-helper-of-update-dir-contents
+  (implies
+   (and (useful-dir-ent-list-p dir-ent-list)
+        (lofat-fs-p fat32-in-memory)
+        (equal (mv-nth 3
+                       (lofat-to-hifat-helper fat32-in-memory
+                                              dir-ent-list entry-limit))
+               0)
+        (fat32-masked-entry-p first-cluster)
+        (<= *ms-first-data-cluster* first-cluster)
+        (stringp dir-contents)
+        (not-intersectp-list
+         (mv-nth 0
+                 (fat32-build-index-list (effective-fat fat32-in-memory)
+                                         first-cluster *ms-max-dir-size*
+                                         (cluster-size fat32-in-memory)))
+         (mv-nth 2
+                 (lofat-to-hifat-helper fat32-in-memory
+                                        dir-ent-list entry-limit))))
+   (equal (lofat-to-hifat-helper
+           (mv-nth 0
+                   (update-dir-contents fat32-in-memory
+                                        first-cluster dir-contents))
+           dir-ent-list entry-limit)
+          (lofat-to-hifat-helper fat32-in-memory
+                                 dir-ent-list entry-limit)))
+  :hints (("goal" :in-theory (enable lofat-to-hifat-helper)
+           :induct (lofat-to-hifat-helper fat32-in-memory
+                                          dir-ent-list entry-limit))))
+
+(defthm
   get-clusterchain-contents-of-lofat-remove-file-by-pathname-disjoint-lemma-16
   (implies
    (equal
@@ -15494,37 +15525,6 @@ Some (rather awful) testing forms are
       (cdr pathname)))
     0))
   :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents))))
-
-(defthm
-  lofat-to-hifat-helper-of-update-dir-contents
-  (implies
-   (and (useful-dir-ent-list-p dir-ent-list)
-        (lofat-fs-p fat32-in-memory)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper fat32-in-memory
-                                              dir-ent-list entry-limit))
-               0)
-        (fat32-masked-entry-p first-cluster)
-        (<= *ms-first-data-cluster* first-cluster)
-        (stringp dir-contents)
-        (not-intersectp-list
-         (mv-nth 0
-                 (fat32-build-index-list (effective-fat fat32-in-memory)
-                                         first-cluster *ms-max-dir-size*
-                                         (cluster-size fat32-in-memory)))
-         (mv-nth 2
-                 (lofat-to-hifat-helper fat32-in-memory
-                                        dir-ent-list entry-limit))))
-   (equal (lofat-to-hifat-helper
-           (mv-nth 0
-                   (update-dir-contents fat32-in-memory
-                                        first-cluster dir-contents))
-           dir-ent-list entry-limit)
-          (lofat-to-hifat-helper fat32-in-memory
-                                 dir-ent-list entry-limit)))
-  :hints (("goal" :in-theory (enable lofat-to-hifat-helper)
-           :induct (lofat-to-hifat-helper fat32-in-memory
-                                          dir-ent-list entry-limit))))
 
 (defthm
   lofat-remove-file-by-pathname-correctness-1-lemma-48
