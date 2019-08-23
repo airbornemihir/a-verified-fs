@@ -2010,6 +2010,78 @@
    (get-contents-from-clusterchain fat32-in-memory
                                    clusterchain file-size)))
 
+(defthm
+  dir-ent-clusterchain-of-stobj-set-indices-in-fa-table-disjoint
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (nat-listp index-list)
+        (fat32-masked-entry-list-p value-list)
+        (equal (len index-list)
+               (len value-list))
+        (not (intersectp-equal
+              index-list
+              (mv-nth '0
+                      (dir-ent-clusterchain fat32-in-memory dir-ent)))))
+   (equal
+    (dir-ent-clusterchain
+     (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
+     dir-ent)
+    (dir-ent-clusterchain fat32-in-memory dir-ent)))
+  :hints (("goal" :in-theory (enable dir-ent-clusterchain))))
+
+(defthm
+  dir-ent-clusterchain-contents-of-stobj-set-indices-in-fa-table-disjoint
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (not
+     (intersectp-equal (mv-nth 0
+                               (dir-ent-clusterchain fat32-in-memory dir-ent))
+                       index-list))
+    (fat32-masked-entry-list-p value-list)
+    (equal (len index-list)
+           (len value-list))
+    (nat-listp index-list))
+   (equal
+    (dir-ent-clusterchain-contents
+     (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
+     dir-ent)
+    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+  :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents
+                                     dir-ent-clusterchain))))
+
+(defthmd
+  lofat-to-hifat-helper-of-stobj-set-indices-in-fa-table
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (fat32-masked-entry-list-p value-list)
+        (nat-listp index-list)
+        (equal (len index-list)
+               (len value-list))
+        (equal (mv-nth 3
+                       (lofat-to-hifat-helper fat32-in-memory
+                                              dir-ent-list entry-limit))
+               0)
+        (not-intersectp-list
+         index-list
+         (mv-nth 2
+                 (lofat-to-hifat-helper fat32-in-memory
+                                        dir-ent-list entry-limit))))
+   (equal
+    (lofat-to-hifat-helper
+     (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list)
+     dir-ent-list entry-limit)
+    (lofat-to-hifat-helper fat32-in-memory
+                           dir-ent-list entry-limit)))
+  :hints
+  (("goal"
+    :induct (lofat-to-hifat-helper fat32-in-memory
+                                   dir-ent-list entry-limit)
+    :in-theory (e/d (lofat-to-hifat-helper)
+                    ((:rewrite nth-of-effective-fat)
+                     (:rewrite member-of-a-nat-list)
+                     (:definition member-equal))))))
+
 (defun
     stobj-set-clusters
     (cluster-list index-list fat32-in-memory)
