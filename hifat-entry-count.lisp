@@ -190,3 +190,11 @@
      (:instance hifat-entry-count-when-hifat-subsetp
                 (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
                 (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))))))
+
+(defthm hifat-entry-count-of-remove-assoc-equal
+  (implies (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs))
+           (<= (hifat-entry-count (remove-assoc-equal x fs))
+               (hifat-entry-count fs)))
+  :hints (("goal" :in-theory (e/d (hifat-entry-count))))
+  :rule-classes :linear)

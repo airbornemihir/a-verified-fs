@@ -414,17 +414,35 @@
 
 (defthm
   length-of-get-clusterchain-contents
-  (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (natp length))
-   (<=
-    (len (explode (mv-nth 0
-                          (get-clusterchain-contents
-                           fat32-in-memory
-                           masked-current-cluster length))))
-    length))
-  :rule-classes :linear
-  :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
+  t
+  :rule-classes
+  ((:linear
+    :corollary
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (natp length))
+     (<=
+      (len (explode (mv-nth 0
+                            (get-clusterchain-contents
+                             fat32-in-memory
+                             masked-current-cluster length))))
+      length))
+    :hints (("Goal" :in-theory (enable get-clusterchain-contents)) ))
+   (:linear
+    :corollary
+    (implies
+     (equal (mv-nth 1
+                    (get-clusterchain-contents fat32-in-memory
+                                               masked-current-cluster length))
+            0)
+     (<
+      0
+      (len
+       (explode
+        (mv-nth 0
+                (get-clusterchain-contents fat32-in-memory
+                                           masked-current-cluster length))))))
+    :hints (("goal" :in-theory (enable get-clusterchain-contents))))))
 
 (defthm
   get-clusterchain-contents-of-update-fati
@@ -575,6 +593,14 @@
   (implies (useful-dir-ent-list-p dir-ent-list)
            (useful-dir-ent-list-p (cdr dir-ent-list)))
   :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
+
+(defthm
+  fat32-filename-p-of-dir-ent-filename-of-car-when-useful-dir-ent-list-p
+  (implies (and (useful-dir-ent-list-p dir-ent-list)
+                (consp dir-ent-list))
+           (fat32-filename-p (dir-ent-filename (car dir-ent-list))))
+  :hints (("goal" :expand (useful-dir-ent-list-p dir-ent-list)
+           :in-theory (enable fat32-filename-p useless-dir-ent-p))))
 
 ;; This is deliberately different from clear-dir-ent, because it only removes
 ;; the first instance of the directory entry. That's pretty much all we need,
@@ -7772,16 +7798,14 @@
   (("goal"
     :in-theory
     (disable
-     (:rewrite m1-file-contents-fix-when-m1-file-contents-p)
-     (:linear length-of-get-clusterchain-contents))
+     (:rewrite m1-file-contents-fix-when-m1-file-contents-p))
     :use
-    ((:linear length-of-get-clusterchain-contents)
-     (:instance
-      (:rewrite m1-file-contents-fix-when-m1-file-contents-p)
-      (x (mv-nth 0
-                 (get-clusterchain-contents
-                  fat32-in-memory
-                  masked-current-cluster length))))))))
+    (:instance
+     (:rewrite m1-file-contents-fix-when-m1-file-contents-p)
+     (x (mv-nth 0
+                (get-clusterchain-contents
+                 fat32-in-memory
+                 masked-current-cluster length)))))))
 
 (defthm
   lofat-to-hifat-helper-correctness-5-lemma-4
