@@ -9329,7 +9329,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-       (fat32-filename-fix (car pathname)))))
+       filename)))
     (<=
      2
      (dir-ent-first-cluster
@@ -9341,7 +9341,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-        (fat32-filename-fix (car pathname))))))
+        filename))))
     (equal
      (mv-nth
       3
@@ -9368,7 +9368,7 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-         (fat32-filename-fix (car pathname)))))
+         filename)))
       2097152 (cluster-size fat32-in-memory)))
     (mv-nth
      2
@@ -9385,11 +9385,10 @@ Some (rather awful) testing forms are
             0
             (find-dir-ent
              (make-dir-ent-list
-              (string=>nats
-               (mv-nth 0
-                       (get-clusterchain-contents
-                        fat32-in-memory rootclus 2097152))))
-             (fat32-filename-fix (car pathname)))))
+              (string=>nats (mv-nth 0
+                                    (get-clusterchain-contents
+                                     fat32-in-memory rootclus 2097152))))
+             filename)))
           2097152))))
       entry-limit))))
   :hints
@@ -9414,7 +9413,7 @@ Some (rather awful) testing forms are
                (string=>nats (mv-nth 0
                                      (get-clusterchain-contents
                                       fat32-in-memory rootclus 2097152))))
-              (fat32-filename-fix (car pathname)))))
+              filename)))
            2097152)))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -9436,7 +9435,7 @@ Some (rather awful) testing forms are
                (string=>nats (mv-nth 0
                                      (get-clusterchain-contents
                                       fat32-in-memory rootclus 2097152))))
-              (fat32-filename-fix (car pathname)))))
+              filename)))
            2097152)))))
       (fat32-in-memory fat32-in-memory))))))
 
@@ -9453,7 +9452,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-       (fat32-filename-fix (car pathname)))))
+       filename)))
     (<=
      2
      (dir-ent-first-cluster
@@ -9465,7 +9464,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-        (fat32-filename-fix (car pathname))))))
+        filename))))
     (equal
      (mv-nth
       3
@@ -9497,7 +9496,7 @@ Some (rather awful) testing forms are
               (string=>nats (mv-nth 0
                                     (get-clusterchain-contents
                                      fat32-in-memory rootclus 2097152))))
-             (fat32-filename-fix (car pathname)))))
+             filename)))
           2097152))))
       entry-limit))
     0))
@@ -9523,7 +9522,7 @@ Some (rather awful) testing forms are
                (string=>nats (mv-nth 0
                                      (get-clusterchain-contents
                                       fat32-in-memory rootclus 2097152))))
-              (fat32-filename-fix (car pathname)))))
+              filename)))
            2097152)))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -9545,7 +9544,7 @@ Some (rather awful) testing forms are
                (string=>nats (mv-nth 0
                                      (get-clusterchain-contents
                                       fat32-in-memory rootclus 2097152))))
-              (fat32-filename-fix (car pathname)))))
+              filename)))
            2097152)))))
       (fat32-in-memory fat32-in-memory))))))
 
@@ -9562,7 +9561,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-       (fat32-filename-fix (car pathname)))))
+       filename)))
     (<=
      2
      (dir-ent-first-cluster
@@ -9574,7 +9573,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-        (fat32-filename-fix (car pathname))))))
+        filename))))
     (not-intersectp-list
      (mv-nth 0
              (fat32-build-index-list (effective-fat fat32-in-memory)
@@ -9625,7 +9624,7 @@ Some (rather awful) testing forms are
               (string=>nats (mv-nth 0
                                     (get-clusterchain-contents
                                      fat32-in-memory rootclus 2097152))))
-             (fat32-filename-fix (car pathname)))))
+             filename)))
           2097152))))
       entry-limit))))
   :hints
@@ -9650,7 +9649,7 @@ Some (rather awful) testing forms are
                (string=>nats (mv-nth 0
                                      (get-clusterchain-contents
                                       fat32-in-memory rootclus 2097152))))
-              (fat32-filename-fix (car pathname)))))
+              filename)))
            2097152)))))
       (fat32-in-memory fat32-in-memory))
      (:instance
@@ -9672,7 +9671,7 @@ Some (rather awful) testing forms are
                (string=>nats (mv-nth 0
                                      (get-clusterchain-contents
                                       fat32-in-memory rootclus 2097152))))
-              (fat32-filename-fix (car pathname)))))
+              filename)))
            2097152)))))
       (fat32-in-memory fat32-in-memory))))))
 
@@ -21894,7 +21893,19 @@ Some (rather awful) testing forms are
                      (:definition not-intersectp-list)
                      (:definition member-equal)
                      (:rewrite subdir-contents-p-when-zero-length)
-                     (:definition len)))
+                     (:definition len)
+                     (:REWRITE
+                      M1-FILE-P-OF-CDAR-WHEN-M1-FILE-ALIST-P)
+                     (:DEFINITION BINARY-APPEND)
+                     (:REWRITE
+                      GET-CLUSTERCHAIN-CONTENTS-OF-UPDATE-DIR-CONTENTS-DISJOINT)
+                     (:REWRITE
+                      FAT32-BUILD-INDEX-LIST-OF-EFFECTIVE-FAT-OF-UPDATE-DIR-CONTENTS)
+                     (:REWRITE
+                      NOT-INTERSECTP-LIST-OF-LOFAT-TO-HIFAT-HELPER)
+                     (:REWRITE HIFAT-TO-LOFAT-INVERSION-LEMMA-2)
+                     (:REWRITE
+                                GET-CLUSTERCHAIN-CONTENTS-OF-CLEAR-CLUSTERCHAIN)))
     :induct (mv (mv-nth 0
                         (lofat-to-hifat-helper fat32-in-memory
                                                dir-ent-list entry-limit))
