@@ -1007,8 +1007,8 @@
           (mv contents 0 nil 0)))
        ;; we want entry-limit to serve both as a measure and an upper
        ;; bound on how many entries are found.
-       (tail-entry-limit (nfix (- entry-limit
-                                  (+ 1 (nfix head-entry-count)))))
+       (tail-entry-limit (- entry-limit
+                            (+ 1 (nfix head-entry-count))))
        ((mv tail tail-entry-count tail-clusterchain-list tail-error-code)
         (lofat-to-hifat-helper
          fat32-in-memory
