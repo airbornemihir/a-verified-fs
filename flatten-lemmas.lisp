@@ -4,9 +4,9 @@
 (include-book "std/lists/flatten" :dir :system)
 
 (defthm no-duplicatesp-of-member
-  (implies (and (member-equal x lst)
+  (implies (and (not (no-duplicatesp x))
                 (no-duplicatesp (flatten lst)))
-           (no-duplicatesp x)))
+           (not (member-equal x lst))))
 
 (defun not-intersectp-list (x l)
   (declare (xargs :guard (and (true-listp x) (true-list-listp l))))
@@ -37,6 +37,10 @@
   (implies (and (not-intersectp-list x l2)
                 (subsetp-equal l1 l2))
            (not-intersectp-list x l1)))
+
+(defthm not-intersectp-list-of-true-list-fix
+  (equal (not-intersectp-list x (true-list-fix l))
+         (not-intersectp-list x l)))
 
 (defthmd flatten-subset-no-duplicatesp-lemma-1
   (implies (and (consp z)
@@ -104,10 +108,10 @@
       :induct (cdr-cdr-induct x x-equiv)))))
 
 (defthm when-append-is-disjoint-list-listp
-  (implies (true-listp x)
-           (equal (disjoint-list-listp (binary-append x y))
-                  (and (disjoint-list-listp x)
-                       (disjoint-list-listp y) (not (member-intersectp-equal x y))))))
+  (equal (disjoint-list-listp (binary-append x y))
+         (and (disjoint-list-listp (true-list-fix x))
+              (disjoint-list-listp y)
+              (not (member-intersectp-equal x y)))))
 
 (defthm member-intersectp-with-subset
   (implies (and (member-intersectp-equal z x)
@@ -135,15 +139,11 @@
                 (not (not-intersectp-list (car x) y)))
            (member-intersectp-equal y x)))
 
-(defthm
-  member-intersectp-is-commutative-lemma-3
+(defthm member-intersectp-is-commutative-lemma-3
   (implies (and (consp x)
                 (not-intersectp-list (car x) y))
            (equal (member-intersectp-equal y (cdr x))
-                  (member-intersectp-equal y x)))
-  :hints
-  (("Subgoal *1/1''" :use (:instance intersectp-is-commutative (x (car x))
-                                     (y (car y))))))
+                  (member-intersectp-equal y x))))
 
 (defthm member-intersectp-is-commutative
   (equal (member-intersectp-equal x y)
@@ -161,9 +161,9 @@
               (not-intersectp-list y l))))
 
 (defthm no-duplicates-listp-of-append
-  (implies (true-listp x)
-           (equal (no-duplicates-listp (binary-append x y))
-                  (and (no-duplicates-listp x) (no-duplicates-listp y)))))
+  (equal (no-duplicates-listp (binary-append x y))
+         (and (no-duplicates-listp (true-list-fix x))
+              (no-duplicates-listp y))))
 
 (defthm member-intersectp-binary-append
   (equal (member-intersectp-equal e (binary-append x y))
