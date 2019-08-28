@@ -23042,360 +23042,6 @@ Some (rather awful) testing forms are
          (car pathname)))))
      (entry-limit (+ -1 entry-limit))))))
 
-(verify (IMPLIES
- (AND
-  (CONSP DIR-ENT-LIST)
-  (DIR-ENT-DIRECTORY-P (CAR DIR-ENT-LIST))
-  (<= 2
-      (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST)))
-  (< (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))
-     (+ 2 (COUNT-OF-CLUSTERS FAT32-IN-MEMORY)))
-  (INTEGERP (+ -1 ENTRY-LIMIT))
-  (<= 0 (+ -1 ENTRY-LIMIT))
-  (EQUAL
-   (MV-NTH
-    3
-    (LOFAT-TO-HIFAT-HELPER
-     FAT32-IN-MEMORY
-     (MAKE-DIR-ENT-LIST
-      (STRING=>NATS
-       (MV-NTH
-        0
-        (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-     (+ -1 ENTRY-LIMIT)))
-   0)
-  (EQUAL
-   (MV-NTH
-    1
-    (FIND-DIR-ENT
-     (MAKE-DIR-ENT-LIST
-      (STRING=>NATS
-       (MV-NTH
-        0
-        (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-     (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))))
-   0)
-  (EQUAL
-   (MV-NTH
-    0
-    (LOFAT-TO-HIFAT-HELPER
-     (MV-NTH
-      0
-      (LOFAT-REMOVE-FILE-BY-PATHNAME
-       FAT32-IN-MEMORY
-       (DIR-ENT-FIRST-CLUSTER
-        (MV-NTH
-         0
-         (FIND-DIR-ENT
-          (MAKE-DIR-ENT-LIST
-            (STRING=>NATS (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-          (DIR-ENT-FILENAME (CAR DIR-ENT-LIST)))))
-       PATHNAME))
-     (MAKE-DIR-ENT-LIST
-      (STRING=>NATS
-       (MV-NTH
-        0
-        (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-     (+ -1 ENTRY-LIMIT)))
-   (PUT-ASSOC-EQUAL
-    (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))
-    (M1-FILE
-     (MV-NTH
-      0
-      (FIND-DIR-ENT
-       (MAKE-DIR-ENT-LIST
-            (STRING=>NATS (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-       (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))))
-     (MV-NTH
-      0
-      (LOFAT-TO-HIFAT-HELPER
-       FAT32-IN-MEMORY
-       (MAKE-DIR-ENT-LIST
-        (STRING=>NATS
-         (MV-NTH
-          0
-          (DIR-ENT-CLUSTERCHAIN-CONTENTS
-           FAT32-IN-MEMORY
-           (MV-NTH
-            0
-            (FIND-DIR-ENT
-                (MAKE-DIR-ENT-LIST
-                     (STRING=>NATS
-                          (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-                (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))))))))
-       (+ -1 ENTRY-LIMIT))))
-    (MV-NTH
-     0
-     (LOFAT-TO-HIFAT-HELPER
-       FAT32-IN-MEMORY
-       (MAKE-DIR-ENT-LIST
-            (STRING=>NATS (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-       (+ -1 ENTRY-LIMIT)))))
-  (NOT
-   (DIR-ENT-DIRECTORY-P
-    (MV-NTH
-     0
-     (FIND-DIR-ENT
-       (MAKE-DIR-ENT-LIST
-            (STRING=>NATS (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-       (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))))))
-  (NOT (EQUAL (MV-NTH 1
-                      (FIND-DIR-ENT (CDR DIR-ENT-LIST)
-                                    (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))))
-              0))
-  (NOT
-   (EQUAL
-    (MV-NTH
-     0
-     (LOFAT-TO-HIFAT-HELPER
-      (MV-NTH
-       0
-       (LOFAT-REMOVE-FILE-BY-PATHNAME
-          FAT32-IN-MEMORY
-          (DIR-ENT-FIRST-CLUSTER
-               (MV-NTH 0
-                       (FIND-DIR-ENT (CDR DIR-ENT-LIST)
-                                     (DIR-ENT-FILENAME (CAR DIR-ENT-LIST)))))
-          PATHNAME))
-      (CDR DIR-ENT-LIST)
-      (+
-       -1 ENTRY-LIMIT
-       (-
-        (HIFAT-ENTRY-COUNT
-         (MV-NTH
-          0
-          (LOFAT-TO-HIFAT-HELPER
-           FAT32-IN-MEMORY
-           (MAKE-DIR-ENT-LIST
-            (STRING=>NATS (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-           (+ -1 ENTRY-LIMIT))))))))
-    (PUT-ASSOC-EQUAL
-     (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))
-     (M1-FILE
-      (MV-NTH 0
-              (FIND-DIR-ENT (CDR DIR-ENT-LIST)
-                            (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))))
-      (MV-NTH
-       0
-       (LOFAT-TO-HIFAT-HELPER
-        FAT32-IN-MEMORY
-        (MAKE-DIR-ENT-LIST
-         (STRING=>NATS
-          (MV-NTH
-           0
-           (DIR-ENT-CLUSTERCHAIN-CONTENTS
-            FAT32-IN-MEMORY
-            (MV-NTH 0
-                    (FIND-DIR-ENT (CDR DIR-ENT-LIST)
-                                  (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))))))))
-        (+
-         -1 ENTRY-LIMIT
-         (-
-          (HIFAT-ENTRY-COUNT
-           (MV-NTH
-            0
-            (LOFAT-TO-HIFAT-HELPER
-                FAT32-IN-MEMORY
-                (MAKE-DIR-ENT-LIST
-                     (STRING=>NATS
-                          (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-                (+ -1 ENTRY-LIMIT)))))))))
-     (MV-NTH
-      0
-      (LOFAT-TO-HIFAT-HELPER
-       FAT32-IN-MEMORY (CDR DIR-ENT-LIST)
-       (+
-        -1 ENTRY-LIMIT
-        (-
-         (HIFAT-ENTRY-COUNT
-          (MV-NTH
-           0
-           (LOFAT-TO-HIFAT-HELPER
-                FAT32-IN-MEMORY
-                (MAKE-DIR-ENT-LIST
-                     (STRING=>NATS
-                          (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-                (+ -1 ENTRY-LIMIT)))))))))))
-  (INTEGERP ENTRY-LIMIT)
-  (<= 0 ENTRY-LIMIT)
-  (USEFUL-DIR-ENT-LIST-P DIR-ENT-LIST)
-  (LOFAT-FS-P FAT32-IN-MEMORY)
-  (EQUAL
-     (MV-NTH
-          1
-          (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))
-     0)
-  (EQUAL
-   (MV-NTH
-    3
-    (LOFAT-TO-HIFAT-HELPER
-     FAT32-IN-MEMORY (CDR DIR-ENT-LIST)
-     (+
-      -1 ENTRY-LIMIT
-      (-
-       (HIFAT-ENTRY-COUNT
-        (MV-NTH
-         0
-         (LOFAT-TO-HIFAT-HELPER
-          FAT32-IN-MEMORY
-          (MAKE-DIR-ENT-LIST
-            (STRING=>NATS (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-          (+ -1 ENTRY-LIMIT))))))))
-   0)
-  (SUBDIR-CONTENTS-P
-    (MV-NTH
-         0
-         (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY (CAR DIR-ENT-LIST))))
-  (NO-DUPLICATESP-EQUAL
-       (MV-NTH 0
-               (DIR-ENT-CLUSTERCHAIN FAT32-IN-MEMORY (CAR DIR-ENT-LIST))))
-  (NOT-INTERSECTP-LIST
-   (MV-NTH 0
-           (DIR-ENT-CLUSTERCHAIN FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))
-   (MV-NTH
-    2
-    (LOFAT-TO-HIFAT-HELPER
-     FAT32-IN-MEMORY
-     (MAKE-DIR-ENT-LIST
-      (STRING=>NATS
-       (MV-NTH
-        0
-        (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-     (+ -1 ENTRY-LIMIT))))
-  (NOT-INTERSECTP-LIST
-   (MV-NTH 0
-           (DIR-ENT-CLUSTERCHAIN FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))
-   (MV-NTH
-    2
-    (LOFAT-TO-HIFAT-HELPER
-     FAT32-IN-MEMORY (CDR DIR-ENT-LIST)
-     (+
-      -1 ENTRY-LIMIT
-      (-
-       (HIFAT-ENTRY-COUNT
-        (MV-NTH
-         0
-         (LOFAT-TO-HIFAT-HELPER
-          FAT32-IN-MEMORY
-          (MAKE-DIR-ENT-LIST
-            (STRING=>NATS (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-          (+ -1 ENTRY-LIMIT)))))))))
-  (NOT
-   (MEMBER-INTERSECTP-EQUAL
-    (MV-NTH
-     2
-     (LOFAT-TO-HIFAT-HELPER
-       FAT32-IN-MEMORY
-       (MAKE-DIR-ENT-LIST
-            (STRING=>NATS (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-       (+ -1 ENTRY-LIMIT)))
-    (MV-NTH
-     2
-     (LOFAT-TO-HIFAT-HELPER
-      FAT32-IN-MEMORY (CDR DIR-ENT-LIST)
-      (+
-       -1 ENTRY-LIMIT
-       (-
-        (HIFAT-ENTRY-COUNT
-         (MV-NTH
-          0
-          (LOFAT-TO-HIFAT-HELPER
-           FAT32-IN-MEMORY
-           (MAKE-DIR-ENT-LIST
-            (STRING=>NATS (MV-NTH 0
-                                  (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                       FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-           (+ -1 ENTRY-LIMIT))))))))))
-  (NOT
-   (CONSP
-    (ASSOC-EQUAL
-     (DIR-ENT-FILENAME (CAR DIR-ENT-LIST))
-     (MV-NTH
-      0
-      (LOFAT-TO-HIFAT-HELPER
-       (MV-NTH 0
-               (LOFAT-REMOVE-FILE-BY-PATHNAME
-                    FAT32-IN-MEMORY
-                    (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))
-                    PATHNAME))
-       (CDR DIR-ENT-LIST)
-       (+
-        -1 ENTRY-LIMIT
-        (-
-         (HIFAT-ENTRY-COUNT
-          (MV-NTH
-           0
-           (LOFAT-TO-HIFAT-HELPER
-            (MV-NTH 0
-                    (LOFAT-REMOVE-FILE-BY-PATHNAME
-                         FAT32-IN-MEMORY
-                         (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))
-                         PATHNAME))
-            (MAKE-DIR-ENT-LIST
-             (STRING=>NATS
-              (MV-NTH
-                 0
-                 (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                      (MV-NTH 0
-                              (LOFAT-REMOVE-FILE-BY-PATHNAME
-                                   FAT32-IN-MEMORY
-                                   (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))
-                                   PATHNAME))
-                      (CAR DIR-ENT-LIST)))))
-            (+ -1 ENTRY-LIMIT))))))))))))
- (EQUAL
-  (MV-NTH
-   0
-   (LOFAT-TO-HIFAT-HELPER
-    FAT32-IN-MEMORY
-    (MAKE-DIR-ENT-LIST
-     (STRING=>NATS
-      (MV-NTH
-        0
-        (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY (CAR DIR-ENT-LIST)))))
-    ENTRY-LIMIT))
-  (MV-NTH
-   0
-   (LOFAT-TO-HIFAT-HELPER
-    (MV-NTH 0
-            (LOFAT-REMOVE-FILE-BY-PATHNAME
-                 FAT32-IN-MEMORY
-                 (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))
-                 PATHNAME))
-    (MAKE-DIR-ENT-LIST
-     (STRING=>NATS
-         (MV-NTH 0
-                 (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                      (MV-NTH 0
-                              (LOFAT-REMOVE-FILE-BY-PATHNAME
-                                   FAT32-IN-MEMORY
-                                   (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))
-                                   PATHNAME))
-                      (CAR DIR-ENT-LIST)))))
-    (+ -1 ENTRY-LIMIT))))))
-
 (defthm
   lofat-remove-file-by-pathname-correctness-1-lemma-37
   (IMPLIES
@@ -23491,7 +23137,7 @@ Some (rather awful) testing forms are
                    (DIR-ENT-FIRST-CLUSTER
                     (MV-NTH 0 (FIND-DIR-ENT DIR-ENT-LIST FILENAME)))
                    2097152))))
-        (+ -1 ENTRY-LIMIT))))
+        ENTRY-LIMIT)))
      (HIFAT-ENTRY-COUNT
       (MV-NTH
        0
@@ -23505,7 +23151,7 @@ Some (rather awful) testing forms are
                    (DIR-ENT-FIRST-CLUSTER
                     (MV-NTH 0 (FIND-DIR-ENT DIR-ENT-LIST FILENAME)))
                    2097152))))
-        (+ -1 ENTRY-LIMIT)))))
+        ENTRY-LIMIT))))
     (FAT32-FILENAME-LIST-P PATHNAME)
     (INTEGERP ENTRY-LIMIT)
     (<= 0 ENTRY-LIMIT)
@@ -24058,7 +23704,7 @@ Some (rather awful) testing forms are
 
   ;; Somewhat important theorem
   (defthm
-    lofat-remove-file-by-pathname-correctness-1-lemma-52
+    lofat-remove-file-by-pathname-correctness-1-lemma-50
     (implies
      (and (natp entry-limit)
           (useful-dir-ent-list-p dir-ent-list)
@@ -24136,97 +23782,73 @@ Some (rather awful) testing forms are
            (lofat-to-hifat-helper
             fat32-in-memory dir-ent-list entry-limit)))))
        0)
-      (not-intersectp-list
-       x
-       (mv-nth
-        2
-        (lofat-to-hifat-helper
-         (mv-nth 0
-                 (lofat-remove-file-by-pathname
-                  fat32-in-memory
-                  (dir-ent-first-cluster
-                   (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-                  pathname))
-         dir-ent-list
-         (hifat-entry-count
+      (and
+       (equal
+        (mv-nth
+         0
+         (LOFAT-TO-HIFAT-HELPER
           (mv-nth
            0
-           (lofat-to-hifat-helper
-            fat32-in-memory dir-ent-list entry-limit))))))))
+           (LOFAT-REMOVE-FILE-BY-PATHNAME
+            FAT32-IN-MEMORY
+            (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+            PATHNAME))
+          DIR-ENT-LIST ENTRY-LIMIT))
+        (put-assoc-equal
+         filename
+         (m1-file
+          (mv-nth 0 (find-dir-ent dir-ent-list filename))
+          (mv-nth
+           0
+           (LOFAT-TO-HIFAT-HELPER
+            FAT32-IN-MEMORY
+            (make-DIR-ENT-LIST
+             (string=>nats
+              (mv-nth
+               0
+               (dir-ent-clusterchain-contents
+                fat32-in-memory
+                (mv-nth 0 (find-dir-ent dir-ent-list filename))))))
+            ENTRY-LIMIT)))
+         (mv-nth
+          0
+          (LOFAT-TO-HIFAT-HELPER
+           FAT32-IN-MEMORY DIR-ENT-LIST ENTRY-LIMIT))))
+       (equal
+        (mv-nth
+         3
+         (LOFAT-TO-HIFAT-HELPER
+          (mv-nth
+           0
+           (LOFAT-REMOVE-FILE-BY-PATHNAME
+            FAT32-IN-MEMORY
+            (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+            PATHNAME))
+          DIR-ENT-LIST ENTRY-LIMIT))
+        0)
+       (not-intersectp-list
+        x
+        (mv-nth
+         2
+         (lofat-to-hifat-helper
+          (mv-nth 0
+                  (lofat-remove-file-by-pathname
+                   fat32-in-memory
+                   (dir-ent-first-cluster
+                    (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+                   pathname))
+          dir-ent-list
+          (hifat-entry-count
+           (mv-nth
+            0
+            (lofat-to-hifat-helper
+             fat32-in-memory dir-ent-list entry-limit)))))))))
     :hints (("goal"
              :induct
              (induction-scheme
               dir-ent-list entry-limit
               fat32-in-memory filename pathname x))
             )))
-
-;; This is also a somewhat important theorem.
-(defthm
-  lofat-remove-file-by-pathname-correctness-1-lemma-50
-  (implies
-   (and (natp entry-limit)
-        (useful-dir-ent-list-p dir-ent-list)
-        (lofat-fs-p fat32-in-memory)
-        (equal
-         (mv-nth
-          3
-          (LOFAT-TO-HIFAT-HELPER
-           FAT32-IN-MEMORY DIR-ENT-LIST ENTRY-LIMIT))
-         0)
-        (equal (mv-nth 1 (find-dir-ent dir-ent-list filename)) 0)
-        (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename))))
-   (and
-    (equal
-     (mv-nth
-      0
-      (LOFAT-TO-HIFAT-HELPER
-       (mv-nth
-        0
-        (LOFAT-REMOVE-FILE-BY-PATHNAME
-         FAT32-IN-MEMORY
-         (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-         PATHNAME))
-       DIR-ENT-LIST ENTRY-LIMIT))
-     (put-assoc-equal
-      filename
-      (m1-file
-       (mv-nth 0 (find-dir-ent dir-ent-list filename))
-       (mv-nth
-        0
-        (LOFAT-TO-HIFAT-HELPER
-         FAT32-IN-MEMORY
-         (make-DIR-ENT-LIST
-          (string=>nats
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents
-             fat32-in-memory
-             (mv-nth 0 (find-dir-ent dir-ent-list filename))))))
-         ENTRY-LIMIT)))
-      (mv-nth
-       0
-       (LOFAT-TO-HIFAT-HELPER
-        FAT32-IN-MEMORY DIR-ENT-LIST ENTRY-LIMIT))))
-    (equal
-     (mv-nth
-      3
-      (LOFAT-TO-HIFAT-HELPER
-       (mv-nth
-        0
-        (LOFAT-REMOVE-FILE-BY-PATHNAME
-         FAT32-IN-MEMORY
-         (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-         PATHNAME))
-       DIR-ENT-LIST ENTRY-LIMIT))
-     0)))
-  :hints (("Goal" :in-theory (e/d
-                              (lofat-to-hifat-helper)
-                              (lofat-remove-file-by-pathname))
-           :induct t
-           :expand (:free (fat32-in-memory entry-limit)
-                          (lofat-to-hifat-helper fat32-in-memory
-                                                 dir-ent-list
-                                                 entry-limit))) ))
 
 (defthm
   lofat-remove-file-by-pathname-correctness-1
