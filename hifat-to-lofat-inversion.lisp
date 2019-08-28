@@ -911,7 +911,32 @@
       :hints
       (("goal"
         :in-theory (enable dir-ent-list-from-first-cluster
-                           dir-ent-clusterchain-contents)))))))
+                           dir-ent-clusterchain-contents))))
+     (:linear
+      :corollary
+      (implies
+       (and (lofat-fs-p fat32-in-memory)
+            (dir-ent-directory-p dir-ent)
+            (subdir-contents-p
+             (mv-nth 0
+                     (get-clusterchain-contents
+                      fat32-in-memory
+                      (dir-ent-first-cluster dir-ent)
+                      *ms-max-dir-size*))))
+       (<=
+        (len
+         (make-dir-ent-list
+          (string=>nats (mv-nth 0
+                                (get-clusterchain-contents
+                                 fat32-in-memory
+                                 (dir-ent-first-cluster dir-ent)
+                                 *ms-max-dir-size*)))))
+        *ms-max-dir-ent-count*))
+      :hints
+      (("goal"
+        :in-theory (enable dir-ent-list-from-first-cluster
+                           dir-ent-clusterchain-contents
+                           get-clusterchain-contents)))))))
 
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
