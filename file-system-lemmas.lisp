@@ -858,3 +858,6 @@
              (equal (take n1 (make-list-ac n2 val ac))
                     (make-list-ac n1 val nil)))
     :hints (("goal" :induct (dec-dec-induct n1 n2)))))
+
+(defthm stringp-of-append
+  (equal (stringp (append x y)) (and (atom x) (stringp y))))
