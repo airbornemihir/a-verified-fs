@@ -6190,45 +6190,6 @@ Some (rather awful) testing forms are
      :f_fsid 0
      :f_namelen 72)))
 
-(defun
-  find-dir-ent (dir-ent-list filename)
-  (declare (xargs :guard (and (fat32-filename-p filename)
-                              (dir-ent-list-p dir-ent-list))))
-  (b* (((when (atom dir-ent-list))
-        (mv (dir-ent-fix nil) *enoent*))
-       (dir-ent (mbe :exec (car dir-ent-list)
-                     :logic (dir-ent-fix (car dir-ent-list))))
-       ((when (equal (dir-ent-filename dir-ent)
-                     filename))
-        (mv dir-ent 0)))
-    (find-dir-ent (cdr dir-ent-list)
-                  filename)))
-
-(defthm
-  find-dir-ent-correctness-1
-  (and
-   (dir-ent-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-   (natp (mv-nth 1
-                 (find-dir-ent dir-ent-list filename))))
-  :hints (("goal" :induct (find-dir-ent dir-ent-list filename)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (dir-ent-p (mv-nth 0
-                       (find-dir-ent dir-ent-list filename))))
-   (:type-prescription
-    :corollary
-    (natp (mv-nth 1
-                  (find-dir-ent dir-ent-list filename))))))
-
-(defthm
-  find-dir-ent-correctness-2
-  (implies
-   (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
-               0))
-   (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
-          *enoent*)))
-
 (defun lofat-find-file-by-pathname (fat32-in-memory dir-ent-list pathname)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
                               (fat32-filename-list-p pathname)
@@ -6269,30 +6230,6 @@ Some (rather awful) testing forms are
      fat32-in-memory
      (make-dir-ent-list (string=>nats contents))
      (cdr pathname))))
-
-;; The dir-ent-list-p hypothesis is only there because
-;; lofat-to-hifat-helper doesn't fix its arguments. Should it?
-(defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-1
-  (implies
-   (and (dir-ent-list-p dir-ent-list)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper
-                        fat32-in-memory
-                        dir-ent-list entry-limit))
-               0))
-   (iff
-    (consp
-     (assoc-equal name
-                  (mv-nth 0
-                          (lofat-to-hifat-helper
-                           fat32-in-memory
-                           dir-ent-list entry-limit))))
-    (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
-           0)))
-  :hints
-  (("goal"
-    :in-theory (enable lofat-to-hifat-helper))))
 
 (defthm
   lofat-find-file-by-pathname-correctness-1-lemma-2
@@ -7474,7 +7411,6 @@ Some (rather awful) testing forms are
          ((:definition assoc-equal)
           (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
           (:definition free-index-listp)
-          (:rewrite lofat-find-file-by-pathname-correctness-1-lemma-1)
           (:definition not-intersectp-list)
           (:rewrite nth-of-effective-fat)
           (:definition no-duplicatesp-equal)

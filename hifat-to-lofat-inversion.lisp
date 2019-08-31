@@ -576,6 +576,14 @@
            (useful-dir-ent-list-p (cdr dir-ent-list)))
   :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
 
+(defthm
+  useful-dir-ent-list-p-correctness-1
+  (implies (and (useful-dir-ent-list-p dir-ent-list)
+                (consp dir-ent-list))
+           (fat32-filename-p (dir-ent-filename (car dir-ent-list))))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p useless-dir-ent-p
+                                     fat32-filename-p dir-ent-filename))))
+
 ;; This is deliberately different from clear-dir-ent, because it only removes
 ;; the first instance of the directory entry. That's pretty much all we need,
 ;; because we're only going to use this to remove dot and dotdot entries, and
@@ -872,6 +880,45 @@
         :in-theory (enable dir-ent-list-from-first-cluster
                            dir-ent-clusterchain-contents)))))))
 
+(defun
+  find-dir-ent (dir-ent-list filename)
+  (declare (xargs :guard (and (fat32-filename-p filename)
+                              (dir-ent-list-p dir-ent-list))))
+  (b* (((when (atom dir-ent-list))
+        (mv (dir-ent-fix nil) *enoent*))
+       (dir-ent (mbe :exec (car dir-ent-list)
+                     :logic (dir-ent-fix (car dir-ent-list))))
+       ((when (equal (dir-ent-filename dir-ent)
+                     filename))
+        (mv dir-ent 0)))
+    (find-dir-ent (cdr dir-ent-list)
+                  filename)))
+
+(defthm
+  find-dir-ent-correctness-1
+  (and
+   (dir-ent-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+   (natp (mv-nth 1
+                 (find-dir-ent dir-ent-list filename))))
+  :hints (("goal" :induct (find-dir-ent dir-ent-list filename)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (dir-ent-p (mv-nth 0
+                       (find-dir-ent dir-ent-list filename))))
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 1
+                  (find-dir-ent dir-ent-list filename))))))
+
+(defthm
+  find-dir-ent-correctness-2
+  (implies
+   (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
+               0))
+   (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
+          *enoent*)))
+
 ;; Here's the idea behind this recursion: A loop could occur on a badly formed
 ;; FAT32 volume which has a cycle in its directory structure (for instance, if
 ;; / and /tmp/ were to point to the same cluster as their initial cluster.)
@@ -999,9 +1046,11 @@
                  (not (member-intersectp-equal head-clusterchain-list
                                                tail-clusterchain-list)))
             0
-          *EIO*)))
+          *EIO*))
+       ((mv & find-dir-ent-error-code)
+        (find-dir-ent (cdr dir-ent-list) (dir-ent-filename dir-ent))))
     (if
-        (consp (assoc-equal filename tail))
+        (equal find-dir-ent-error-code 0)
         (mv tail tail-entry-count tail-clusterchain-list *EIO*)
       ;; We add the file to this m1 instance, having made sure it isn't a
       ;; duplicate.
@@ -1102,6 +1151,22 @@
              fat32-in-memory
              dir-ent-list entry-limit))))
 
+;; This is local because hifat-to-lofat-inversion-lemma-23 is, despite stronger
+;; hypotheses, more general in what it rewrites.
+(local
+ (defthmd
+   hifat-no-dups-p-of-lofat-to-hifat-helper-lemma-1
+   (implies
+    (not (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
+                0))
+    (not
+     (consp (assoc-equal
+             name
+             (mv-nth 0
+                     (lofat-to-hifat-helper fat32-in-memory
+                                            dir-ent-list entry-limit))))))
+   :hints (("goal" :in-theory (enable lofat-to-hifat-helper)))))
+
 (defthm
   hifat-no-dups-p-of-lofat-to-hifat-helper
   (b* (((mv m1-file-alist & & &)
@@ -1114,7 +1179,8 @@
     :in-theory
     (e/d (fat32-filename-p useless-dir-ent-p
                            lofat-to-hifat-helper
-                           useful-dir-ent-list-p hifat-no-dups-p)
+                           useful-dir-ent-list-p hifat-no-dups-p
+                           hifat-no-dups-p-of-lofat-to-hifat-helper-lemma-1)
          (nth-of-string=>nats natp-of-cluster-size))
     :induct (lofat-to-hifat-helper
              fat32-in-memory
@@ -1143,7 +1209,9 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (lofat-to-hifat-helper hifat-entry-count)
+    (e/d (lofat-to-hifat-helper
+          hifat-entry-count
+          hifat-no-dups-p-of-lofat-to-hifat-helper-lemma-1)
          (lofat-to-hifat-helper-correctness-3-lemma-1))
     :induct
     (lofat-to-hifat-helper fat32-in-memory
@@ -6141,6 +6209,10 @@
     (effective-fat fat32-in-memory)))
   :hints
   (("goal"
+    :in-theory
+    (disable
+     (:rewrite free-index-listp-of-find-n-free-clusters)
+     (:rewrite free-index-listp-of-effective-fat-of-hifat-to-lofat-helper))
     :use
     ((:instance
       (:rewrite free-index-listp-of-find-n-free-clusters)
@@ -6292,6 +6364,120 @@
         (mv-nth 0
                 (hifat-to-lofat-helper fat32-in-memory (cdr fs)
                                        current-dir-first-cluster))))
+      (index-list
+       (find-n-free-clusters
+        (effective-fat
+         (mv-nth
+          0
+          (hifat-to-lofat-helper
+           (update-fati
+            (nth
+             0
+             (find-n-free-clusters
+              (effective-fat
+               (mv-nth 0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+              1))
+            (fat32-update-lower-28
+             (fati
+              (nth
+               0
+               (find-n-free-clusters
+                (effective-fat
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster)))
+                1))
+              (mv-nth 0
+                      (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                             current-dir-first-cluster)))
+             268435455)
+            (mv-nth 0
+                    (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                           current-dir-first-cluster)))
+           (m1-file->contents (cdr (car fs)))
+           (nth
+            0
+            (find-n-free-clusters
+             (effective-fat
+              (mv-nth 0
+                      (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                             current-dir-first-cluster)))
+             1)))))
+        (+
+         -1
+         (len
+          (make-clusters
+           (nats=>string
+            (append
+             (dir-ent-install-directory-bit
+              (dir-ent-set-filename
+               (dir-ent-set-first-cluster-file-size
+                (m1-file->dir-ent (cdr (car fs)))
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                  current-dir-first-cluster)))
+                  1))
+                0)
+               ".          ")
+              t)
+             (dir-ent-install-directory-bit
+              (dir-ent-set-filename (dir-ent-set-first-cluster-file-size
+                                     (m1-file->dir-ent (cdr (car fs)))
+                                     current-dir-first-cluster 0)
+                                    "..         ")
+              t)
+             (flatten
+              (mv-nth
+               1
+               (hifat-to-lofat-helper
+                (update-fati
+                 (nth
+                  0
+                  (find-n-free-clusters
+                   (effective-fat
+                    (mv-nth
+                     0
+                     (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                            current-dir-first-cluster)))
+                   1))
+                 (fat32-update-lower-28
+                  (fati
+                   (nth
+                    0
+                    (find-n-free-clusters
+                     (effective-fat
+                      (mv-nth
+                       0
+                       (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                              current-dir-first-cluster)))
+                     1))
+                   (mv-nth 0
+                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                  current-dir-first-cluster)))
+                  268435455)
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster)))
+                (m1-file->contents (cdr (car fs)))
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (effective-fat
+                   (mv-nth 0
+                           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                  current-dir-first-cluster)))
+                  1)))))))
+           (cluster-size fat32-in-memory)))))))
+     (:instance
+      (:rewrite free-index-listp-of-effective-fat-of-hifat-to-lofat-helper)
+      (fs (cdr fs))
+      (fat32-in-memory fat32-in-memory)
       (index-list
        (find-n-free-clusters
         (effective-fat
@@ -6702,6 +6888,30 @@
   (("goal"
     :in-theory (enable subdir-contents-p remove1-dir-ent))))
 
+;; The dir-ent-list-p hypothesis is only there because
+;; lofat-to-hifat-helper doesn't fix its arguments. Should it?
+(defthm
+  hifat-to-lofat-inversion-lemma-23
+  (implies
+   (and (dir-ent-list-p dir-ent-list)
+        (equal (mv-nth 3
+                       (lofat-to-hifat-helper
+                        fat32-in-memory
+                        dir-ent-list entry-limit))
+               0))
+   (iff
+    (consp
+     (assoc-equal name
+                  (mv-nth 0
+                          (lofat-to-hifat-helper
+                           fat32-in-memory
+                           dir-ent-list entry-limit))))
+    (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
+           0)))
+  :hints
+  (("goal"
+    :in-theory (enable lofat-to-hifat-helper))))
+
 (encapsulate
   ()
 
@@ -6762,6 +6972,60 @@
                                    fs current-dir-first-cluster))
            entry-limit)))
         (m1-file-alist2 fs))))))
+
+  (local
+   (defthm
+     hifat-to-lofat-inversion-lemma-24
+     (implies
+      (and
+       (equal
+        (mv-nth 3
+                (lofat-to-hifat-helper
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster))
+                 (mv-nth 1
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster))
+                 entry-limit))
+        0)
+       (hifat-equiv
+        (mv-nth 0
+                (lofat-to-hifat-helper
+                 (mv-nth 0
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster))
+                 (mv-nth 1
+                         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                current-dir-first-cluster))
+                 entry-limit))
+        (cdr fs))
+       (m1-file-alist-p fs)
+       (hifat-no-dups-p (cdr fs))
+       (not (consp (assoc-equal (car (car fs)) (cdr fs)))))
+      (not
+       (equal
+        (mv-nth
+         1
+         (find-dir-ent (mv-nth 1
+                               (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                      current-dir-first-cluster))
+                       (car (car fs))))
+        0)))
+     :hints
+     (("goal"
+       :in-theory (disable (:rewrite hifat-to-lofat-inversion-lemma-23))
+       :use
+       (:instance
+        (:rewrite hifat-to-lofat-inversion-lemma-23)
+        (dir-ent-list (mv-nth 1
+                              (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                                     current-dir-first-cluster)))
+        (fat32-in-memory
+         (mv-nth 0
+                 (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                        current-dir-first-cluster)))
+        (name (car (car fs))))))))
 
   (local
    (defthm
