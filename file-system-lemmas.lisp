@@ -859,5 +859,12 @@
                     (make-list-ac n1 val nil)))
     :hints (("goal" :induct (dec-dec-induct n1 n2)))))
 
+(defthm
+  remove-assoc-when-absent
+  (implies (and (alistp alist)
+                (atom (assoc-equal x alist)))
+           (equal (remove-assoc-equal x alist)
+                  alist)))
+
 (defthm stringp-of-append
   (equal (stringp (append x y)) (and (atom x) (stringp y))))
