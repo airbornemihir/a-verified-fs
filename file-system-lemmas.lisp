@@ -865,3 +865,6 @@
                 (atom (assoc-equal x alist)))
            (equal (remove-assoc-equal x alist)
                   alist)))
+
+(defthm stringp-of-append
+  (equal (stringp (append x y)) (and (atom x) (stringp y))))
