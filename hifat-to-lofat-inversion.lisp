@@ -769,6 +769,21 @@
          *ms-max-dir-size*))
     :hints
     (("goal"
+      :in-theory (enable dir-ent-clusterchain-contents))))
+   (:linear
+    :corollary
+    (implies
+     (equal
+      (mv-nth 1
+              (dir-ent-clusterchain-contents
+               fat32-in-memory dir-ent))
+      0)
+     (< 0
+        (len (explode (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory dir-ent))))))
+    :hints
+    (("goal"
       :in-theory (enable dir-ent-clusterchain-contents))))))
 
 ;; After the fashion of get-clusterchain-contents-correctness-2, we're going to
