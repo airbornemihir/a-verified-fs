@@ -801,6 +801,17 @@
   :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents
                                      dir-ent-clusterchain))))
 
+(defthm
+  integerp-of-dir-ent-clusterchain-contents
+  (and
+   (integerp (mv-nth 1
+                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+   (>= 0
+       (mv-nth 1
+               (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
+  :rule-classes :type-prescription
+  :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents))))
+
 (defund
   dir-ent-list-from-first-cluster
   (fat32-in-memory first-cluster)
@@ -1524,15 +1535,48 @@
    (max-entry-count fat32-in-memory))
   :hints (("Goal" :in-theory (enable max-entry-count)) ))
 
+(defund pseudo-root-dir-ent (fat32-in-memory)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (lofat-fs-p fat32-in-memory)))
+  (dir-ent-install-directory-bit
+   (dir-ent-set-first-cluster-file-size
+    (dir-ent-fix nil)
+    (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+    0)
+   t))
+
+(defthm
+  pseudo-root-dir-ent-correctness-1
+  (implies
+   (lofat-fs-p fat32-in-memory)
+   (and (<= 2
+            (dir-ent-first-cluster (pseudo-root-dir-ent fat32-in-memory)))
+        (< (dir-ent-first-cluster (pseudo-root-dir-ent fat32-in-memory))
+           (+ 2 (count-of-clusters fat32-in-memory)))
+        (dir-ent-p (pseudo-root-dir-ent fat32-in-memory))))
+  :hints (("goal" :in-theory (enable pseudo-root-dir-ent)))
+  :rule-classes
+  ((:rewrite
+    :corollary (implies (lofat-fs-p fat32-in-memory)
+                        (dir-ent-p (pseudo-root-dir-ent fat32-in-memory))))
+   (:linear
+    :corollary
+    (implies
+     (lofat-fs-p fat32-in-memory)
+     (and (<= 2
+              (dir-ent-first-cluster (pseudo-root-dir-ent fat32-in-memory)))
+          (< (dir-ent-first-cluster (pseudo-root-dir-ent fat32-in-memory))
+             (+ 2
+                (count-of-clusters fat32-in-memory))))))))
+
 (defund root-dir-ent-list (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (lofat-fs-p fat32-in-memory)))
   (mv-let
     (root-dir-contents error-code)
-    (get-clusterchain-contents
+    (dir-ent-clusterchain-contents
      fat32-in-memory
-     (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-     *ms-max-dir-size*)
+     (pseudo-root-dir-ent fat32-in-memory))
     (mv
      (make-dir-ent-list root-dir-contents)
      error-code)))
@@ -1548,7 +1592,7 @@
   (and
    (integerp (mv-nth 1 (root-dir-ent-list fat32-in-memory)))
    (>= 0 (mv-nth 1 (root-dir-ent-list fat32-in-memory))))
-  :hints (("goal" :in-theory (enable root-dir-ent-list)))
+  :hints (("goal" :in-theory (enable root-dir-ent-list pseudo-root-dir-ent)))
   :rule-classes :type-prescription)
 
 (defun
@@ -1609,8 +1653,9 @@
   (declare
    (xargs :stobjs fat32-in-memory
           :guard (lofat-fs-p fat32-in-memory)
-          :guard-hints (("Goal" :in-theory (enable root-dir-ent-list))
-                        ) :guard-debug t))
+          :guard-hints
+          (("Goal" :in-theory (enable root-dir-ent-list pseudo-root-dir-ent
+                                      dir-ent-clusterchain-contents)))))
   (b*
       (((unless
          (mbt (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
@@ -1721,7 +1766,9 @@
           nil))
   :hints (("goal" :in-theory (enable lofat-to-hifat
                                      lofat-to-hifat-helper
-                                     root-dir-ent-list))))
+                                     root-dir-ent-list
+                                     pseudo-root-dir-ent
+                                     dir-ent-clusterchain-contents))))
 
 (defthm
   hifat-entry-count-of-lofat-to-hifat
@@ -4583,7 +4630,7 @@
      0)))
   :hints
   (("goal"
-    :in-theory (e/d (root-dir-ent-list)
+    :in-theory (e/d (root-dir-ent-list pseudo-root-dir-ent dir-ent-clusterchain-contents)
                     (get-clusterchain-contents-of-place-contents-coincident))
     :use
     (:instance
@@ -7849,6 +7896,7 @@
     :in-theory (enable lofat-to-hifat
                        hifat-to-lofat
                        root-dir-ent-list
+                       pseudo-root-dir-ent
                        hifat-to-lofat-inversion-lemma-17
                        hifat-to-lofat-inversion-lemma-20
                        painful-debugging-lemma-10
@@ -8803,7 +8851,8 @@
                     2097152))))
          0)))
       :in-theory
-      (e/d (root-dir-ent-list lofat-to-hifat-helper-correctness-5-lemma-2)
+      (e/d (root-dir-ent-list lofat-to-hifat-helper-correctness-5-lemma-2
+                              pseudo-root-dir-ent dir-ent-clusterchain-contents)
            (lofat-to-hifat-helper-correctness-5-lemma-7))
       :use
       ((:instance lofat-to-hifat-helper-correctness-5-lemma-7
@@ -8887,7 +8936,7 @@
     :rule-classes :linear
     :hints
     (("goal"
-      :in-theory (e/d (root-dir-ent-list)
+      :in-theory (e/d (root-dir-ent-list pseudo-root-dir-ent dir-ent-clusterchain-contents)
                       (lofat-to-hifat-helper-correctness-5-lemma-7))
       :use
       ((:instance
