@@ -8300,34 +8300,48 @@ Some (rather awful) testing forms are
    (useless-dir-ent-p (dir-ent-set-filename dir-ent filename)))
   :hints (("goal" :in-theory (enable useless-dir-ent-p))))
 
-;; (defthm
-;;   make-dir-ent-list-of-clear-dir-ent
-;;   (equal
-;;    (make-dir-ent-list (clear-dir-ent dir-contents filename))
-;;    (delete-dir-ent (make-dir-ent-list dir-contents)
-;;                    filename))
-;;   :hints
-;;   (("goal" :in-theory (enable make-dir-ent-list
-;;                               dir-ent-fix clear-dir-ent))))
+(defthm
+  make-dir-ent-list-of-clear-dir-ent
+  (equal
+   (make-dir-ent-list (nats=>string (clear-dir-ent (string=>nats dir-contents)
+                                                   filename)))
+   (delete-dir-ent (make-dir-ent-list dir-contents)
+                   filename))
+  :hints (("goal" :in-theory (enable make-dir-ent-list dir-ent-fix
+                                     clear-dir-ent chars=>nats-of-take
+                                     len-when-dir-ent-p string=>nats
+                                     nats=>string chars=>nats-of-nthcdr)
+           :induct (make-dir-ent-list dir-contents)
+           :expand (clear-dir-ent (chars=>nats (explode dir-contents))
+                                  filename))))
 
-;; (encapsulate
-;;   ()
+(encapsulate
+  ()
 
-;;   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
-;;   (defthm
-;;     make-dir-ent-list-of-append-3
-;;     (implies
-;;      (equal (mod (len dir-contents)
-;;                  *ms-dir-ent-length*)
-;;             0)
-;;      (equal (make-dir-ent-list (append (clear-dir-ent dir-contents filename)
-;;                                        (make-list-ac n 0 nil)))
-;;             (delete-dir-ent (make-dir-ent-list dir-contents)
-;;                             filename)))
-;;     :hints (("goal" :induct (clear-dir-ent dir-contents filename)
-;;              :in-theory (enable make-dir-ent-list dir-ent-fix clear-dir-ent)
-;;              :expand (len dir-contents)))))
+  (make-event
+   `(defthm
+      make-dir-ent-list-of-append-3
+      (implies
+       (equal (mod (len (explode dir-contents))
+                   *ms-dir-ent-length*)
+              0)
+       (equal
+        (make-dir-ent-list
+         (implode (append (nats=>chars (clear-dir-ent (string=>nats dir-contents)
+                                                      filename))
+                          (make-list-ac n ,(code-char 0) nil))))
+        (delete-dir-ent (make-dir-ent-list dir-contents)
+                        filename)))
+      :hints
+      (("goal" :induct (make-dir-ent-list dir-contents)
+        :in-theory (e/d (make-dir-ent-list dir-ent-fix clear-dir-ent
+                                           string=>nats chars=>nats-of-take
+                                           chars=>nats-of-nthcdr))
+        :expand ((make-dir-ent-list dir-contents)
+                 (clear-dir-ent (chars=>nats (explode dir-contents))
+                                filename)))))))
 
 (defthm
   lofat-to-hifat-helper-of-clear-clusterchain
@@ -10981,7 +10995,54 @@ Some (rather awful) testing forms are
   :hints (("goal" :induct (lofat-remove-file fat32-in-memory
                                              root-dir-ent pathname))))
 
-;; Here we go again...
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    lofat-remove-file-correctness-1-lemma-4
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (equal (mod length (cluster-size fat32-in-memory))
+                 0)
+          (not (zp y))
+          (equal (mod (cluster-size fat32-in-memory) y)
+                 0))
+     (equal
+      (mod
+       (len
+        (explode
+         (mv-nth 0
+                 (get-clusterchain-contents fat32-in-memory
+                                            masked-current-cluster length))))
+       y)
+      0))
+    :hints
+    (("goal" :induct (get-clusterchain-contents fat32-in-memory
+                                                masked-current-cluster length)
+      :in-theory (enable get-clusterchain-contents
+                         (:rewrite mod-sum-cases))))))
+
+(defthm
+  lofat-remove-file-correctness-1-lemma-5
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (dir-ent-directory-p dir-ent)
+        (not (zp y))
+        (equal (mod (cluster-size fat32-in-memory) y)
+               0))
+   (equal
+    (mod
+     (len
+      (explode
+       (mv-nth 0
+               (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
+     y)
+    0))
+  :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents))))
+
+;; For subgoal *1/5
 (skip-proofs
  (defthmd
    lofat-remove-file-correctness-1-lemma-1
@@ -11647,7 +11708,7 @@ Some (rather awful) testing forms are
    ("subgoal *1/3" :use lofat-remove-file-correctness-1-lemma-3)))
 
 (defthm
-  lofat-remove-file-correctness-1-lemma-4
+  lofat-remove-file-correctness-1-lemma-13
   (implies (equal (len (explode str)) 0)
            (equal (len (make-dir-ent-list (string=>nats str)))
                   0))
@@ -11725,35 +11786,6 @@ Some (rather awful) testing forms are
   (("goal"
     :expand (get-clusterchain-contents fat32-in-memory rootclus '2097152)))
   :rule-classes :linear)
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthm
-    lofat-remove-file-correctness-1-lemma-13
-    (implies
-     (and (lofat-fs-p fat32-in-memory)
-          (equal (mod length (cluster-size fat32-in-memory))
-                 0)
-          (not (zp y))
-          (equal (mod (cluster-size fat32-in-memory) y)
-                 0))
-     (equal
-      (mod
-       (len
-        (explode
-         (mv-nth 0
-                 (get-clusterchain-contents fat32-in-memory
-                                            masked-current-cluster length))))
-       y)
-      0))
-    :hints
-    (("goal" :induct (get-clusterchain-contents fat32-in-memory
-                                                masked-current-cluster length)
-      :in-theory (enable get-clusterchain-contents
-                         (:rewrite mod-sum-cases))))))
 
 (local
  (defthm
