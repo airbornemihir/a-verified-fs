@@ -11875,6 +11875,7 @@ Some (rather awful) testing forms are
                                                         filename))))))
      (fat32-in-memory fat32-in-memory)))))
 
+;; These hypotheses are minimal
 (defthm
   narrow-down-lemma-8
   (implies
@@ -12108,6 +12109,14 @@ Some (rather awful) testing forms are
                  (mv-nth 0 (FIND-DIR-ENT DIR-ENT-LIST FILENAME)))))
               entry-limit))))
           (non-free-index-listp x (effective-fat fat32-in-memory2))
+          (not
+           (intersectp-equal
+            x
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory2
+              (mv-nth 0 (FIND-DIR-ENT DIR-ENT-LIST FILENAME))))))
           (not-intersectp-list
            x
            (mv-nth
@@ -12186,7 +12195,9 @@ Some (rather awful) testing forms are
          get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-17)
         (:rewrite
          lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
-         . 1)))
+         . 1)
+        (:rewrite
+         get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)))
       :induct
       (induction-scheme
        DIR-ENT-LIST ENTRY-LIMIT FAT32-IN-MEMORY1 FAT32-IN-MEMORY2 FILENAME X)
