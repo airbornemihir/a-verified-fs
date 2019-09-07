@@ -11384,14 +11384,90 @@ Some (rather awful) testing forms are
                 (dir-ent-list (cdr dir-ent-list))
                 (fat32-in-memory fat32-in-memory1))))))
 
-;; For Subgoal *1/2.172.2''
+(defthmd
+  narrow-down-lemma-2
+  (equal
+   (lofat-to-hifat-helper fat32-in-memory
+                          dir-ent-list entry-limit)
+   (mv
+    (mv-nth 0
+            (lofat-to-hifat-helper fat32-in-memory
+                                   dir-ent-list entry-limit))
+    (mv-nth 1
+            (lofat-to-hifat-helper fat32-in-memory
+                                   dir-ent-list entry-limit))
+    (mv-nth 2
+            (lofat-to-hifat-helper fat32-in-memory
+                                   dir-ent-list entry-limit))
+    (mv-nth 3
+            (lofat-to-hifat-helper fat32-in-memory
+                                   dir-ent-list entry-limit))))
+  :hints (("goal" :in-theory (enable lofat-to-hifat-helper))))
+
+(defthm
+  narrow-down-lemma-3
+  (implies
+   (and
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper fat32-in-memory1 (cdr dir-ent-list)
+                                          (+ -1 entry-limit)))
+           0)
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper fat32-in-memory2
+                                          (delete-dir-ent (cdr dir-ent-list)
+                                                          filename)
+                                          (+ -1 entry-limit)))
+           0)
+    (equal (mv-nth 2
+                   (lofat-to-hifat-helper fat32-in-memory2
+                                          (delete-dir-ent (cdr dir-ent-list)
+                                                          filename)
+                                          (+ -1 entry-limit)))
+           (mv-nth 2
+                   (lofat-to-hifat-helper fat32-in-memory1
+                                          (delete-dir-ent (cdr dir-ent-list)
+                                                          filename)
+                                          (+ -1 entry-limit))))
+    (not
+     (equal (lofat-to-hifat-helper fat32-in-memory2
+                                   (delete-dir-ent (cdr dir-ent-list)
+                                                   filename)
+                                   (+ -1 entry-limit))
+            (lofat-to-hifat-helper fat32-in-memory1
+                                   (delete-dir-ent (cdr dir-ent-list)
+                                                   filename)
+                                   (+ -1 entry-limit)))))
+   (not
+    (equal
+     (mv-nth 0
+             (lofat-to-hifat-helper fat32-in-memory2
+                                    (delete-dir-ent (cdr dir-ent-list)
+                                                    filename)
+                                    (+ -1 entry-limit)))
+     (remove-assoc-equal
+      filename
+      (mv-nth 0
+              (lofat-to-hifat-helper fat32-in-memory1 (cdr dir-ent-list)
+                                     (+ -1 entry-limit)))))))
+  :hints
+  (("goal" :use ((:instance (:rewrite narrow-down-lemma-2)
+                            (entry-limit (+ -1 entry-limit))
+                            (dir-ent-list (delete-dir-ent (cdr dir-ent-list)
+                                                          filename))
+                            (fat32-in-memory fat32-in-memory2))
+                 (:instance (:rewrite narrow-down-lemma-2)
+                            (entry-limit (+ -1 entry-limit))
+                            (dir-ent-list (delete-dir-ent (cdr dir-ent-list)
+                                                          filename))
+                            (fat32-in-memory fat32-in-memory1))))))
 
 (encapsulate
   ()
 
   (local
    (defthm
-     narrow-down-lemma-2
+     narrow-down-lemma-4
      (equal
       (make-dir-ent-list (mv-nth 0
                                  (dir-ent-clusterchain-contents
@@ -11622,11 +11698,8 @@ Some (rather awful) testing forms are
         (:rewrite
          get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-17)))
       :induct
-      (mv
-       (mv-nth 3
-               (lofat-to-hifat-helper
-                fat32-in-memory1 dir-ent-list entry-limit))
-       (delete-dir-ent dir-ent-list filename))
+      (induction-scheme
+       DIR-ENT-LIST ENTRY-LIMIT FAT32-IN-MEMORY1 FAT32-IN-MEMORY2 FILENAME X)
       :expand ((:free (fat32-in-memory entry-limit)
                       (lofat-to-hifat-helper fat32-in-memory
                                              dir-ent-list entry-limit))
