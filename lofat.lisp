@@ -11389,58 +11389,77 @@ Some (rather awful) testing forms are
 (encapsulate
   ()
 
+  (local
+   (defthm
+     narrow-down-lemma-2
+     (equal
+      (make-dir-ent-list (mv-nth 0
+                                 (dir-ent-clusterchain-contents
+                                  fat32-in-memory2
+                                  '(0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0))))
+      nil)
+     :hints (("goal" :in-theory (enable make-dir-ent-list
+                                        dir-ent-clusterchain-contents
+                                        get-clusterchain-contents)))))
+
   (defun-nx induction-scheme
     (DIR-ENT-LIST ENTRY-LIMIT FAT32-IN-MEMORY1 FAT32-IN-MEMORY2 FILENAME X)
     (cond
-     ((and
-       (not (atom dir-ent-list))
-       (not (zp entry-limit))
-       (>= (dir-ent-first-cluster (car dir-ent-list))
-           *ms-first-data-cluster*)
-       (> (+ (count-of-clusters fat32-in-memory1)
-             *ms-first-data-cluster*)
-          (dir-ent-first-cluster (car dir-ent-list))))
+     ((AND
+       (NOT (ATOM DIR-ENT-LIST))
+       (NOT (ZP ENTRY-LIMIT)))
       (induction-scheme
-       (cdr dir-ent-list)
-       (if
-           (dir-ent-directory-p (car dir-ent-list))
-           (+
-            entry-limit
-            (-
-             (+
-              1
-              (mv-nth
-               1
-               (lofat-to-hifat-helper
-                fat32-in-memory1
-                (make-dir-ent-list
-                 (mv-nth 0
-                         (dir-ent-clusterchain-contents
-                          fat32-in-memory1 (car dir-ent-list))))
-                (+ -1 entry-limit))))))
-         (+
-          entry-limit
-          -1))
-       fat32-in-memory1
-       fat32-in-memory2 filename
-       (append
-        (mv-nth 0
-                (dir-ent-clusterchain fat32-in-memory1 (car dir-ent-list)))
-        x)))
-     ((and
-       (not (atom dir-ent-list))
-       (not (zp entry-limit)))
-      (induction-scheme
-       (cdr dir-ent-list)
+       (CDR DIR-ENT-LIST)
        (+
-        entry-limit
-        -1)
-       fat32-in-memory1
-       fat32-in-memory2 filename
-       x))
+        ENTRY-LIMIT
+        (-
+         (+
+          1
+          (NFIX
+           (MV-NTH
+            1
+            (IF
+             (DIR-ENT-DIRECTORY-P (CAR DIR-ENT-LIST))
+             (LOFAT-TO-HIFAT-HELPER
+              FAT32-IN-MEMORY1
+              (MAKE-DIR-ENT-LIST
+               (MV-NTH 0
+                       (IF (OR (< (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))
+                                  2)
+                               (<= (+ (COUNT-OF-CLUSTERS FAT32-IN-MEMORY1)
+                                      2)
+                                   (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))))
+                           '("" 0)
+                           (DIR-ENT-CLUSTERCHAIN-CONTENTS
+                            FAT32-IN-MEMORY1 (CAR DIR-ENT-LIST)))))
+              (+ -1 ENTRY-LIMIT))
+             (CONS
+              (MV-NTH 0
+                      (IF (OR (< (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))
+                                 2)
+                              (<= (+ (COUNT-OF-CLUSTERS FAT32-IN-MEMORY1)
+                                     2)
+                                  (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))))
+                          '("" 0)
+                          (DIR-ENT-CLUSTERCHAIN-CONTENTS
+                           FAT32-IN-MEMORY1 (CAR DIR-ENT-LIST))))
+              '(0 NIL 0))))))))
+       FAT32-IN-MEMORY1
+       FAT32-IN-MEMORY2 FILENAME
+       (append
+        (MV-NTH 0
+                (IF (OR (< (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))
+                           2)
+                        (<= (+ (COUNT-OF-CLUSTERS FAT32-IN-MEMORY1)
+                               2)
+                            (DIR-ENT-FIRST-CLUSTER (CAR DIR-ENT-LIST))))
+                    '(nil 0)
+                    (DIR-ENT-CLUSTERCHAIN
+                     FAT32-IN-MEMORY1 (CAR DIR-ENT-LIST))))
+        X)))
      (t
-      (mv
-       DIR-ENT-LIST ENTRY-LIMIT FAT32-IN-MEMORY1 FAT32-IN-MEMORY2 FILENAME X))))
+      (mv DIR-ENT-LIST ENTRY-LIMIT FAT32-IN-MEMORY1 FAT32-IN-MEMORY2 FILENAME X))))
 
   (defthmd narrow-down
     (implies
@@ -11603,8 +11622,11 @@ Some (rather awful) testing forms are
         (:rewrite
          get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-17)))
       :induct
-      (induction-scheme
-       DIR-ENT-LIST ENTRY-LIMIT FAT32-IN-MEMORY1 FAT32-IN-MEMORY2 FILENAME X)
+      (mv
+       (mv-nth 3
+               (lofat-to-hifat-helper
+                fat32-in-memory1 dir-ent-list entry-limit))
+       (delete-dir-ent dir-ent-list filename))
       :expand ((:free (fat32-in-memory entry-limit)
                       (lofat-to-hifat-helper fat32-in-memory
                                              dir-ent-list entry-limit))
