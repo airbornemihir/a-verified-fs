@@ -11911,18 +11911,20 @@ Some (rather awful) testing forms are
           (mv-nth 0
                   (find-dir-ent dir-ent-list filename)))))
        entry-limit)))
+    (not
+     (not-intersectp-list
+      x
+      (mv-nth 2
+              (lofat-to-hifat-helper fat32-in-memory
+                                     dir-ent-list entry-limit)))))
+   (not
     (not-intersectp-list
      x
      (mv-nth 2
              (lofat-to-hifat-helper
               fat32-in-memory
               (delete-dir-ent dir-ent-list filename)
-              entry-limit))))
-   (not-intersectp-list
-    x
-    (mv-nth 2
-            (lofat-to-hifat-helper fat32-in-memory
-                                   dir-ent-list entry-limit))))
+              entry-limit)))))
   :hints
   (("goal"
     :in-theory
@@ -11930,6 +11932,61 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4)
      (nth-of-effective-fat (:definition member-equal)))
     :expand (:free (y) (intersectp-equal nil y)))))
+
+(defthm
+  narrow-down-lemma-10
+  (implies
+   (and
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper fat32-in-memory2 (cdr dir-ent-list)
+                                          (+ -1 entry-limit)))
+           0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper fat32-in-memory1 (cdr dir-ent-list)
+                                          (+ -1 entry-limit)))
+           0)
+    (not (equal (lofat-to-hifat-helper fat32-in-memory2
+                                       (delete-dir-ent (cdr dir-ent-list)
+                                                       filename)
+                                       (+ -1 entry-limit))
+                (lofat-to-hifat-helper fat32-in-memory1
+                                       (delete-dir-ent (cdr dir-ent-list)
+                                                       filename)
+                                       (+ -1 entry-limit))))
+    (equal (mv-nth 2
+                   (lofat-to-hifat-helper fat32-in-memory2
+                                          (delete-dir-ent (cdr dir-ent-list)
+                                                          filename)
+                                          (+ -1 entry-limit)))
+           (mv-nth 2
+                   (lofat-to-hifat-helper fat32-in-memory1
+                                          (delete-dir-ent (cdr dir-ent-list)
+                                                          filename)
+                                          (+ -1 entry-limit)))))
+   (not
+    (equal
+     (remove-assoc-equal
+      filename
+      (mv-nth 0
+              (lofat-to-hifat-helper fat32-in-memory2 (cdr dir-ent-list)
+                                     (+ -1 entry-limit))))
+     (remove-assoc-equal
+      filename
+      (mv-nth 0
+              (lofat-to-hifat-helper fat32-in-memory1 (cdr dir-ent-list)
+                                     (+ -1 entry-limit)))))))
+  :hints
+  (("goal" :use ((:instance (:rewrite narrow-down-lemma-2)
+                            (entry-limit (+ -1 entry-limit))
+                            (dir-ent-list (delete-dir-ent (cdr dir-ent-list)
+                                                          filename))
+                            (fat32-in-memory fat32-in-memory2))
+                 (:instance (:rewrite narrow-down-lemma-2)
+                            (entry-limit (+ -1 entry-limit))
+                            (dir-ent-list (delete-dir-ent (cdr dir-ent-list)
+                                                          filename))
+                            (fat32-in-memory fat32-in-memory1))))))
 
 (encapsulate
   ()
@@ -12036,6 +12093,8 @@ Some (rather awful) testing forms are
                  0)
           (dir-ent-directory-p
            (mv-nth 0 (FIND-DIR-ENT DIR-ENT-LIST FILENAME)))
+          (equal (count-of-clusters fat32-in-memory2)
+                 (count-of-clusters fat32-in-memory1))
           (equal (lofat-to-hifat-helper fat32-in-memory2
                                         (delete-dir-ent dir-ent-list filename)
                                         entry-limit)
