@@ -12189,18 +12189,27 @@ Some (rather awful) testing forms are
                   (dir-ent-first-cluster (car dir-ent-list)))
               (< (dir-ent-first-cluster (car dir-ent-list))
                  (+ (count-of-clusters fat32-in-memory1)
+                    2))
+              (dir-ent-directory-p (car dir-ent-list))))
+    (not (and (not (atom dir-ent-list))
+              (not (zp entry-limit))
+              (<= 2
+                  (dir-ent-first-cluster (car dir-ent-list)))
+              (< (dir-ent-first-cluster (car dir-ent-list))
+                 (+ (count-of-clusters fat32-in-memory1)
                     2))))
+    (consp dir-ent-list)
+    (not (zp entry-limit))
     (implies
      (and
       (lofat-fs-p fat32-in-memory1)
       (lofat-fs-p fat32-in-memory2)
       (natp (+ entry-limit -1))
       (useful-dir-ent-list-p (cdr dir-ent-list))
-      (equal
-       (mv-nth 3
-               (lofat-to-hifat-helper fat32-in-memory1 (cdr dir-ent-list)
-                                      (+ entry-limit -1)))
-       0)
+      (equal (mv-nth 3
+                     (lofat-to-hifat-helper fat32-in-memory1 (cdr dir-ent-list)
+                                            (+ entry-limit -1)))
+             0)
       (dir-ent-directory-p (mv-nth 0
                                    (find-dir-ent (cdr dir-ent-list)
                                                  filename)))
@@ -12229,31 +12238,29 @@ Some (rather awful) testing forms are
        0)
       (<=
        (hifat-entry-count
-        (mv-nth
-         0
-         (lofat-to-hifat-helper
-          fat32-in-memory2
-          (make-dir-ent-list
-           (mv-nth 0
-                   (dir-ent-clusterchain-contents
-                    fat32-in-memory2
-                    (mv-nth 0
-                            (find-dir-ent (cdr dir-ent-list)
-                                          filename)))))
-          (+ entry-limit -1))))
+        (mv-nth 0
+                (lofat-to-hifat-helper
+                 fat32-in-memory2
+                 (make-dir-ent-list
+                  (mv-nth 0
+                          (dir-ent-clusterchain-contents
+                           fat32-in-memory2
+                           (mv-nth 0
+                                   (find-dir-ent (cdr dir-ent-list)
+                                                 filename)))))
+                 (+ entry-limit -1))))
        (hifat-entry-count
-        (mv-nth
-         0
-         (lofat-to-hifat-helper
-          fat32-in-memory1
-          (make-dir-ent-list
-           (mv-nth 0
-                   (dir-ent-clusterchain-contents
-                    fat32-in-memory1
-                    (mv-nth 0
-                            (find-dir-ent (cdr dir-ent-list)
-                                          filename)))))
-          (+ entry-limit -1)))))
+        (mv-nth 0
+                (lofat-to-hifat-helper
+                 fat32-in-memory1
+                 (make-dir-ent-list
+                  (mv-nth 0
+                          (dir-ent-clusterchain-contents
+                           fat32-in-memory1
+                           (mv-nth 0
+                                   (find-dir-ent (cdr dir-ent-list)
+                                                 filename)))))
+                 (+ entry-limit -1)))))
       (not-intersectp-list
        (mv-nth 0
                (dir-ent-clusterchain fat32-in-memory2
@@ -12272,18 +12279,17 @@ Some (rather awful) testing forms are
                                        (delete-dir-ent (cdr dir-ent-list)
                                                        filename)
                                        (+ entry-limit -1)))
-        (mv-nth
-         2
-         (lofat-to-hifat-helper
-          fat32-in-memory2
-          (make-dir-ent-list
-           (mv-nth 0
-                   (dir-ent-clusterchain-contents
-                    fat32-in-memory2
-                    (mv-nth 0
-                            (find-dir-ent (cdr dir-ent-list)
-                                          filename)))))
-          (+ entry-limit -1)))))
+        (mv-nth 2
+                (lofat-to-hifat-helper
+                 fat32-in-memory2
+                 (make-dir-ent-list
+                  (mv-nth 0
+                          (dir-ent-clusterchain-contents
+                           fat32-in-memory2
+                           (mv-nth 0
+                                   (find-dir-ent (cdr dir-ent-list)
+                                                 filename)))))
+                 (+ entry-limit -1)))))
       (non-free-index-listp x (effective-fat fat32-in-memory2))
       (equal
        (mv-nth 1
@@ -12307,11 +12313,12 @@ Some (rather awful) testing forms are
                                              (find-dir-ent (cdr dir-ent-list)
                                                            filename)))))
       (subdir-contents-p
-       (mv-nth 0
-               (dir-ent-clusterchain fat32-in-memory2
-                                     (mv-nth 0
-                                             (find-dir-ent (cdr dir-ent-list)
-                                                           filename)))))
+       (mv-nth
+        0
+        (dir-ent-clusterchain-contents fat32-in-memory2
+                                       (mv-nth 0
+                                               (find-dir-ent (cdr dir-ent-list)
+                                                             filename)))))
       (not-intersectp-list
        x
        (mv-nth 2
@@ -12333,11 +12340,10 @@ Some (rather awful) testing forms are
                                                       filename)
                                       (+ entry-limit -1)))))
      (and
-      (equal
-       (mv-nth 3
-               (lofat-to-hifat-helper fat32-in-memory2 (cdr dir-ent-list)
-                                      (+ entry-limit -1)))
-       0)
+      (equal (mv-nth 3
+                     (lofat-to-hifat-helper fat32-in-memory2 (cdr dir-ent-list)
+                                            (+ entry-limit -1)))
+             0)
       (equal
        (mv-nth 0
                (lofat-to-hifat-helper fat32-in-memory2 (cdr dir-ent-list)
@@ -12370,6 +12376,8 @@ Some (rather awful) testing forms are
                                       (+ entry-limit -1))))))
     (lofat-fs-p fat32-in-memory1)
     (lofat-fs-p fat32-in-memory2)
+    (integerp entry-limit)
+    (<= 0 entry-limit)
     (useful-dir-ent-list-p dir-ent-list)
     (equal (mv-nth 3
                    (lofat-to-hifat-helper fat32-in-memory1
@@ -12472,11 +12480,11 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (find-dir-ent dir-ent-list filename)))))
     (subdir-contents-p
-     (mv-nth
-      0
-      (dir-ent-clusterchain fat32-in-memory2
-                            (mv-nth 0
-                                    (find-dir-ent dir-ent-list filename)))))
+     (mv-nth 0
+             (dir-ent-clusterchain-contents
+              fat32-in-memory2
+              (mv-nth 0
+                      (find-dir-ent dir-ent-list filename)))))
     (not-intersectp-list
      x
      (mv-nth
@@ -12547,7 +12555,10 @@ Some (rather awful) testing forms are
       (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
                 . 1)
       (:rewrite
-       get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)))
+       get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
+      (:rewrite
+       dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-2)
+      (:rewrite narrow-down-lemma-8)))
     :expand
     ((:free (fat32-in-memory entry-limit)
             (lofat-to-hifat-helper fat32-in-memory
@@ -12763,7 +12774,7 @@ Some (rather awful) testing forms are
           (subdir-contents-p
            (mv-nth
             0
-            (dir-ent-clusterchain
+            (dir-ent-clusterchain-contents
              fat32-in-memory2
              (mv-nth 0 (find-dir-ent dir-ent-list filename)))))
           (not-intersectp-list
@@ -12859,7 +12870,7 @@ Some (rather awful) testing forms are
                                                    (delete-dir-ent (cdr dir-ent-list)
                                                                    filename))
                                              entry-limit))))
-     ("subgoal *1/3" :use 
+     ("subgoal *1/3" :use
       narrow-down-lemma-14))))
 
 ;; For subgoal *1/4
