@@ -176,3 +176,7 @@
     (equal (member-intersectp-equal (binary-append x y) e)
            (or (member-intersectp-equal x e)
                (member-intersectp-equal y e))))))
+
+(defthm not-intersectp-list-of-flatten
+  (equal (not-intersectp-list (flatten x) y)
+         (not (member-intersectp-equal x y))))
