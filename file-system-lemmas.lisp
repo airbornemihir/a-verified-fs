@@ -868,3 +868,10 @@
 
 (defthm stringp-of-append
   (equal (stringp (append x y)) (and (atom x) (stringp y))))
+
+(defthm remove-assoc-equal-of-put-assoc-equal
+  (equal (remove-assoc key (put-assoc name val alist))
+         (if
+             (equal key name)
+             (remove-assoc key alist)
+           (put-assoc name val (remove-assoc key alist)))))
