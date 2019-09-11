@@ -1705,8 +1705,7 @@
   (hifat-place-file-by-pathname fs pathname file) 3
   :hints (("goal" :in-theory (enable hifat-place-file-by-pathname))))
 
-(defthm
-  hifat-place-file-by-pathname-correctness-3-lemma-1
+(defthm hifat-no-dups-p-of-put-assoc-equal-1
   (implies
    (and (m1-file-alist-p m1-file-alist)
         (hifat-no-dups-p m1-file-alist)
@@ -1714,7 +1713,7 @@
    (hifat-no-dups-p (put-assoc-equal key file m1-file-alist)))
   :hints (("goal" :in-theory (enable hifat-no-dups-p))))
 
-(defthm hifat-place-file-by-pathname-correctness-3-lemma-2
+(defthm hifat-no-dups-p-of-put-assoc-equal-2
   (implies (and (m1-file-alist-p m1-file-alist)
                 (hifat-no-dups-p m1-file-alist)
                 (hifat-no-dups-p (m1-file->contents file)))

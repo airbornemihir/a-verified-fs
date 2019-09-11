@@ -6411,7 +6411,6 @@ Some (rather awful) testing forms are
     (e/d (lofat-to-hifat-helper-correctness-4 lofat-to-hifat-helper)
          ((:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
           (:definition free-index-listp)
-          (:definition not-intersectp-list)
           (:rewrite nth-of-effective-fat)
           (:definition no-duplicatesp-equal)
           (:definition member-equal)))))
@@ -7973,7 +7972,6 @@ Some (rather awful) testing forms are
                                    lofat-to-hifat-helper-correctness-4)
             ((:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
              (:rewrite nth-of-effective-fat)
-             (:definition not-intersectp-list)
              (:definition assoc-equal)
              (:definition member-equal)
              (:definition hifat-file-alist-fix)
@@ -8077,7 +8075,6 @@ Some (rather awful) testing forms are
                                    lofat-to-hifat-helper-correctness-4)
             ((:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
              (:rewrite nth-of-effective-fat)
-             (:definition not-intersectp-list)
              (:definition assoc-equal)
              (:definition member-equal)
              (:definition hifat-file-alist-fix)
@@ -11150,8 +11147,7 @@ Some (rather awful) testing forms are
   :hints
   (("goal" :in-theory
     (e/d (lofat-to-hifat-helper)
-         (nth-of-effective-fat (:definition no-duplicatesp-equal)
-                               (:definition not-intersectp-list))))))
+         (nth-of-effective-fat (:definition no-duplicatesp-equal))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-6
@@ -15825,7 +15821,6 @@ Some (rather awful) testing forms are
     (e/d (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4)
          (nth-of-effective-fat
           (:definition member-equal)
-          (:definition not-intersectp-list)
           (:rewrite narrow-down-lemma-13)
           (:rewrite narrow-down-lemma-18)
           (:linear lofat-find-file-by-pathname-correctness-1-lemma-11)))
@@ -16010,7 +16005,6 @@ Some (rather awful) testing forms are
     (e/d (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4)
          (nth-of-effective-fat
           (:definition member-equal)
-          (:definition not-intersectp-list)
           (:rewrite narrow-down-lemma-13)
           (:rewrite narrow-down-lemma-18)
           (:linear lofat-find-file-by-pathname-correctness-1-lemma-11)))
@@ -16305,7 +16299,6 @@ Some (rather awful) testing forms are
     (e/d (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4)
          (nth-of-effective-fat
           (:definition member-equal)
-          (:definition not-intersectp-list)
           (:rewrite narrow-down-lemma-13)
           (:rewrite narrow-down-lemma-18)
           (:linear lofat-find-file-by-pathname-correctness-1-lemma-11)))
@@ -17139,8 +17132,7 @@ Some (rather awful) testing forms are
                                    lofat-to-hifat-helper-correctness-4)
                                   (lofat-remove-file
                                    nth-of-effective-fat
-                                   (:definition member-equal)
-                                   (:definition not-intersectp-list)))
+                                   (:definition member-equal)))
            :induct t
            :expand (:free
                     (fat32-in-memory entry-limit)
@@ -24003,7 +23995,6 @@ Some (rather awful) testing forms are
       (:rewrite
        get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
       (:rewrite nth-of-effective-fat)
-      (:definition not-intersectp-list)
       (:definition integer-listp)
       (:definition assoc-equal)
       (:definition len)))
@@ -25280,7 +25271,6 @@ Some (rather awful) testing forms are
           (:definition hifat-file-alist-fix)
           (:definition free-index-listp)
           (:rewrite nth-of-effective-fat)
-          (:definition not-intersectp-list)
           (:definition member-equal)
           (:rewrite subdir-contents-p-when-zero-length)
           (:definition len)
@@ -26158,7 +26148,6 @@ Some (rather awful) testing forms are
           (:definition hifat-file-alist-fix)
           (:definition free-index-listp)
           (:rewrite nth-of-effective-fat)
-          (:definition not-intersectp-list)
           (:definition member-equal)
           (:rewrite subdir-contents-p-when-zero-length)
           (:definition len)
@@ -28344,7 +28333,6 @@ Some (rather awful) testing forms are
       (:rewrite nth-of-effective-fat)
       (:rewrite
        get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-17)
-      (:definition not-intersectp-list)
       (:rewrite
        get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-16)
       (:definition member-equal)))
@@ -28352,7 +28340,6 @@ Some (rather awful) testing forms are
                         (lofat-to-hifat-helper fat32-in-memory
                                                dir-ent-list entry-limit))
                 (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-    :do-not-induct t
     :expand
     ((:with
       member-intersectp-is-commutative
@@ -29797,7 +29784,6 @@ Some (rather awful) testing forms are
            LOFAT-TO-HIFAT-HELPER-OF-LOFAT-REMOVE-FILE-DISJOINT-LEMMA-3)
           (:REWRITE
            FAT32-FILENAME-P-OF-CAAR-WHEN-M1-FILE-ALIST-P)
-          (:DEFINITION NOT-INTERSECTP-LIST)
           (:DEFINITION INTEGER-LISTP)
           (:DEFINITION MEMBER-EQUAL)))
            :induct
