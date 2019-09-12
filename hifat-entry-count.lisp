@@ -232,3 +232,12 @@
    ("subgoal *1/2"
     :use ((:instance (:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)
                      (hifat-file-alist (cdr fs)))))))
+
+(defthm
+  hifat-entry-count-of-hifat-remove-file
+  (implies (equal (mv-nth 1 (hifat-remove-file fs pathname))
+                  0)
+           (< (hifat-entry-count (mv-nth 0 (hifat-remove-file fs pathname)))
+              (hifat-entry-count fs)))
+  :hints (("goal" :in-theory (enable hifat-remove-file)))
+  :rule-classes :linear)

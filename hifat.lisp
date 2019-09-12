@@ -1777,9 +1777,15 @@
     (hifat-remove-file fs pathname)
     (and (m1-file-alist-p fs)
          (integerp error-code)))
-  :hints
-  (("goal" :in-theory (enable hifat-remove-file)
-    :induct (hifat-remove-file fs pathname))))
+  :hints (("goal" :in-theory (enable hifat-remove-file)
+           :induct (hifat-remove-file fs pathname)))
+  :rule-classes
+  ((:rewrite
+    :corollary (m1-file-alist-p (mv-nth 0 (hifat-remove-file fs pathname))))
+   (:type-prescription
+    :corollary (integerp (mv-nth 1 (hifat-remove-file fs pathname))))
+   (:type-prescription
+    :corollary (not (stringp (mv-nth 0 (hifat-remove-file fs pathname)))))))
 
 (defthm
   hifat-remove-file-correctness-2
