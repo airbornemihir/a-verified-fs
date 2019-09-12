@@ -1731,7 +1731,7 @@
   (("goal" :in-theory (enable hifat-place-file-by-pathname))))
 
 (defund
-  hifat-remove-file-by-pathname (fs pathname)
+  hifat-remove-file (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (hifat-no-dups-p fs)
                               (fat32-filename-list-p pathname))
@@ -1760,7 +1760,7 @@
         (mv fs *enotdir*))
        ;; Recursion
        ((mv new-contents error-code)
-        (hifat-remove-file-by-pathname
+        (hifat-remove-file
          (m1-file->contents (cdr alist-elem))
          (cdr pathname))))
     (mv
@@ -1772,24 +1772,30 @@
      error-code)))
 
 (defthm
-  hifat-remove-file-by-pathname-correctness-1
+  hifat-remove-file-correctness-1
   (mv-let (fs error-code)
-    (hifat-remove-file-by-pathname fs pathname)
+    (hifat-remove-file fs pathname)
     (and (m1-file-alist-p fs)
          (integerp error-code)))
-  :hints
-  (("goal" :in-theory (enable hifat-remove-file-by-pathname)
-    :induct (hifat-remove-file-by-pathname fs pathname))))
+  :hints (("goal" :in-theory (enable hifat-remove-file)
+           :induct (hifat-remove-file fs pathname)))
+  :rule-classes
+  ((:rewrite
+    :corollary (m1-file-alist-p (mv-nth 0 (hifat-remove-file fs pathname))))
+   (:type-prescription
+    :corollary (integerp (mv-nth 1 (hifat-remove-file fs pathname))))
+   (:type-prescription
+    :corollary (not (stringp (mv-nth 0 (hifat-remove-file fs pathname)))))))
 
 (defthm
-  hifat-remove-file-by-pathname-correctness-2
+  hifat-remove-file-correctness-2
   (equal
-   (hifat-remove-file-by-pathname (hifat-file-alist-fix fs) pathname)
-   (hifat-remove-file-by-pathname fs pathname))
-  :hints (("goal" :in-theory (enable hifat-remove-file-by-pathname))))
+   (hifat-remove-file (hifat-file-alist-fix fs) pathname)
+   (hifat-remove-file fs pathname))
+  :hints (("goal" :in-theory (enable hifat-remove-file))))
 
 (defthm
-  hifat-remove-file-by-pathname-correctness-3-lemma-1
+  hifat-remove-file-correctness-3-lemma-1
   (implies
    (and (m1-file-alist-p m1-file-alist)
         (hifat-no-dups-p m1-file-alist))
@@ -1797,9 +1803,9 @@
   :hints (("goal" :in-theory (enable hifat-no-dups-p))))
 
 (defthm
-  hifat-remove-file-by-pathname-correctness-3
-  (hifat-no-dups-p (mv-nth 0 (hifat-remove-file-by-pathname fs pathname)))
-  :hints (("goal" :in-theory (enable hifat-remove-file-by-pathname))))
+  hifat-remove-file-correctness-3
+  (hifat-no-dups-p (mv-nth 0 (hifat-remove-file fs pathname)))
+  :hints (("goal" :in-theory (enable hifat-remove-file))))
 
 ;; We decided to keep this around even though the motivation of preserving
 ;; fat32-filename-list-equiv is somewhat weak. The alternative is to use
@@ -1829,7 +1835,7 @@
 
   (local (in-theory (enable hifat-place-file-by-pathname
                             hifat-find-file-by-pathname
-                            hifat-remove-file-by-pathname)))
+                            hifat-remove-file)))
 
   (local
    (defun
@@ -1965,7 +1971,7 @@
      (b* (((mv & error-code)
            (hifat-find-file-by-pathname fs pathname1))
           ((mv new-fs &)
-           (hifat-remove-file-by-pathname fs pathname2)))
+           (hifat-remove-file fs pathname2)))
        (implies (and
                  (m1-file-alist-p fs)
                  (hifat-no-dups-p fs)
@@ -1980,7 +1986,7 @@
        ((:free (fs)
                (hifat-find-file-by-pathname fs pathname1))
         (:free (fs)
-               (hifat-remove-file-by-pathname fs pathname2)))))))
+               (hifat-remove-file fs pathname2)))))))
 
   (local
    (defthmd
@@ -1989,7 +1995,7 @@
          (((mv original-file &)
            (hifat-find-file-by-pathname fs pathname1))
           ((mv new-fs error-code)
-           (hifat-remove-file-by-pathname fs pathname2)))
+           (hifat-remove-file fs pathname2)))
        (implies
         (and
          (m1-file-alist-p fs)
@@ -2013,7 +2019,7 @@
          (((mv original-file original-error-code)
            (hifat-find-file-by-pathname fs pathname1))
           ((mv new-fs new-error-code)
-           (hifat-remove-file-by-pathname fs pathname2)))
+           (hifat-remove-file fs pathname2)))
        (implies
         (and
          (m1-file-alist-p fs)
@@ -2038,7 +2044,7 @@
         (((mv original-file original-error-code)
           (hifat-find-file-by-pathname fs pathname1))
          ((mv new-fs new-error-code)
-          (hifat-remove-file-by-pathname fs pathname2)))
+          (hifat-remove-file fs pathname2)))
       (implies
        (or (equal original-error-code *enoent*)
            (m1-regular-file-p original-file))

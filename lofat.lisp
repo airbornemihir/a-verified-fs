@@ -11205,7 +11205,7 @@ Some (rather awful) testing forms are
         (car pathname)))
       (mv-nth
        0
-       (hifat-remove-file-by-pathname
+       (hifat-remove-file
         (mv-nth
          0
          (lofat-to-hifat-helper
@@ -17509,7 +17509,7 @@ Some (rather awful) testing forms are
      (consp (cdr pathname))
      (let
       ((mv
-        (hifat-remove-file-by-pathname
+        (hifat-remove-file
          (mv-nth
           0
           (lofat-to-hifat-helper
@@ -17626,7 +17626,7 @@ Some (rather awful) testing forms are
          fs)))))
     (mv-let
       (fs error-code)
-      (hifat-remove-file-by-pathname
+      (hifat-remove-file
        (mv-nth
         0
         (lofat-to-hifat-helper
@@ -17724,7 +17724,7 @@ Some (rather awful) testing forms are
   lofat-remove-file-correctness-1
   (b*
       (((mv fs error-code)
-        (hifat-remove-file-by-pathname
+        (hifat-remove-file
          (mv-nth 0
                  (lofat-to-hifat-helper
                   fat32-in-memory
@@ -17804,7 +17804,7 @@ Some (rather awful) testing forms are
     (mv
      (mv-nth
       0
-      (hifat-remove-file-by-pathname
+      (hifat-remove-file
        (mv-nth 0
                (lofat-to-hifat-helper
                 fat32-in-memory
@@ -17817,7 +17817,7 @@ Some (rather awful) testing forms are
       (lofat-remove-file fat32-in-memory root-dir-ent pathname)))
     :expand
     (lofat-remove-file fat32-in-memory root-dir-ent pathname)
-    :in-theory (enable hifat-remove-file-by-pathname
+    :in-theory (enable hifat-remove-file
                        (:rewrite hifat-to-lofat-inversion-lemma-17)))
    ("subgoal *1/4" :use lofat-remove-file-correctness-1-lemma-2)))
 
@@ -18316,7 +18316,7 @@ Some (rather awful) testing forms are
     (equal
      (mv-nth
       1
-      (hifat-remove-file-by-pathname
+      (hifat-remove-file
        (mv-nth
         0
         (lofat-to-hifat-helper
@@ -18342,7 +18342,7 @@ Some (rather awful) testing forms are
    (equal
     (mv-nth
      1
-     (hifat-remove-file-by-pathname
+     (hifat-remove-file
       (mv-nth
        0
        (lofat-to-hifat-helper
@@ -27332,7 +27332,7 @@ Some (rather awful) testing forms are
         (car pathname)))
       (mv-nth
        0
-       (hifat-remove-file-by-pathname
+       (hifat-remove-file
         (mv-nth
          0
          (lofat-to-hifat-helper
@@ -30412,7 +30412,7 @@ Some (rather awful) testing forms are
 
 ;; This theorem is almost certainly true, but proving it is hard. The induction
 ;; is per the recursive definition of lofat-remove-file or
-;; alternatively the recursive definition of hifat-remove-file-by-pathname. We
+;; alternatively the recursive definition of hifat-remove-file. We
 ;; can think in terms of a few cases, some of which require induction
 ;; hypotheses:
 ;; - If pathname is an empty list, then there's an error no matter what. We
@@ -30431,7 +30431,7 @@ Some (rather awful) testing forms are
 ;; stretch to prove that inserting it in the current directory (in the sense of
 ;; put-assoc-equal) would give us the result we wanted, showing the shape to be
 ;; equal to that of lofat-to-hifat-helper followed by
-;; hifat-remove-file-by-pathname. The stretch is because of the value of
+;; hifat-remove-file. The stretch is because of the value of
 ;; entry-limit... if we let entry-limit be the same in all the induction
 ;; hypotheses, then we end up having a hard time saying that a subdirectory
 ;; which requires a given value of entry-limit can fit inside a directory which
