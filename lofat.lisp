@@ -16586,112 +16586,6 @@ Some (rather awful) testing forms are
                                                         filename1))))))
      (fat32-in-memory fat32-in-memory)))))
 
-;; (defthm
-;;   lofat-remove-file-correctness-1-lemma-49
-;;   (implies
-;;    (and
-;;     (not (zp entry-limit))
-;;     (useful-dir-ent-list-p dir-ent-list)
-;;     (equal
-;;      (mv-nth
-;;       3
-;;       (lofat-to-hifat-helper
-;;        fat32-in-memory
-;;        (make-dir-ent-list
-;;         (mv-nth
-;;          0
-;;          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
-;;        (+ -1 entry-limit)))
-;;      0)
-;;     (equal
-;;      (mv-nth
-;;       3
-;;       (lofat-to-hifat-helper
-;;        fat32-in-memory (cdr dir-ent-list)
-;;        (+
-;;         -1 entry-limit
-;;         (-
-;;          (hifat-entry-count
-;;           (mv-nth 0
-;;                   (lofat-to-hifat-helper
-;;                    fat32-in-memory
-;;                    (make-dir-ent-list
-;;                     (mv-nth 0
-;;                             (dir-ent-clusterchain-contents
-;;                              fat32-in-memory (car dir-ent-list))))
-;;                    (+ -1 entry-limit))))))))
-;;      0)
-;;     (not
-;;      (member-intersectp-equal
-;;       (mv-nth
-;;        2
-;;        (lofat-to-hifat-helper
-;;         fat32-in-memory
-;;         (make-dir-ent-list
-;;          (mv-nth
-;;           0
-;;           (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
-;;         (+ -1 entry-limit)))
-;;       (mv-nth
-;;        2
-;;        (lofat-to-hifat-helper
-;;         fat32-in-memory (cdr dir-ent-list)
-;;         (+
-;;          -1 entry-limit
-;;          (-
-;;           (hifat-entry-count
-;;            (mv-nth
-;;             0
-;;             (lofat-to-hifat-helper
-;;              fat32-in-memory
-;;              (make-dir-ent-list
-;;               (mv-nth 0
-;;                       (dir-ent-clusterchain-contents
-;;                        fat32-in-memory (car dir-ent-list))))
-;;              (+ -1 entry-limit))))))))))
-;;     (dir-ent-directory-p
-;;      (mv-nth
-;;       0
-;;       (find-dir-ent
-;;        (make-dir-ent-list
-;;         (mv-nth
-;;          0
-;;          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
-;;        filename2))))
-;;    (not
-;;     (member-intersectp-equal
-;;      (mv-nth
-;;       2
-;;       (lofat-to-hifat-helper
-;;        fat32-in-memory
-;;        (delete-dir-ent
-;;         (make-dir-ent-list
-;;          (mv-nth
-;;           0
-;;           (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
-;;         filename2)
-;;        (+ -1 entry-limit)))
-;;      (mv-nth
-;;       2
-;;       (lofat-to-hifat-helper
-;;        fat32-in-memory (cdr dir-ent-list)
-;;        (+
-;;         -1 entry-limit
-;;         (-
-;;          (hifat-entry-count
-;;           (remove-assoc-equal
-;;            filename2
-;;            (mv-nth
-;;             0
-;;             (lofat-to-hifat-helper
-;;              fat32-in-memory
-;;              (make-dir-ent-list
-;;               (mv-nth 0
-;;                       (dir-ent-clusterchain-contents
-;;                        fat32-in-memory (car dir-ent-list))))
-;;              (+ -1 entry-limit))))))))))))
-;;   :hints (("goal" :in-theory (enable lofat-to-hifat-helper-correctness-4))))
-
 (encapsulate
   ()
 
@@ -19168,13 +19062,1681 @@ Some (rather awful) testing forms are
                                                     filename))))))
       (fat32-in-memory fat32-in-memory))))))
 
+(defthm
+  lofat-remove-file-correctness-1-lemma-49
+  (implies
+   (and
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory
+                                  (mv-nth 0
+                                          (find-dir-ent (cdr dir-ent-list)
+                                                        filename))
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth 0
+                (dir-ent-clusterchain-contents
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent (cdr dir-ent-list)
+                                       filename)))))
+       entry-limit))
+     0)
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory
+                                   (mv-nth 0
+                                           (find-dir-ent (cdr dir-ent-list)
+                                                         filename))
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth 0
+                 (dir-ent-clusterchain-contents
+                  fat32-in-memory
+                  (mv-nth 0
+                          (find-dir-ent (cdr dir-ent-list)
+                                        filename)))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth 0
+              (lofat-to-hifat-helper
+               fat32-in-memory
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory
+                         (mv-nth 0
+                                 (find-dir-ent (cdr dir-ent-list)
+                                               filename)))))
+               entry-limit)))))
+   (equal
+    (mv-nth
+     3
+     (lofat-to-hifat-helper
+      (mv-nth 0
+              (lofat-remove-file fat32-in-memory
+                                 (mv-nth 0
+                                         (find-dir-ent (cdr dir-ent-list)
+                                                       filename))
+                                 pathname))
+      (make-dir-ent-list (mv-nth 0
+                                 (dir-ent-clusterchain-contents
+                                  fat32-in-memory
+                                  (mv-nth 0
+                                          (find-dir-ent (cdr dir-ent-list)
+                                                        filename)))))
+      (+ -1 entry-limit)))
+    0))
+  :hints
+  (("goal"
+    :use
+    (:instance
+     lofat-to-hifat-helper-correctness-4
+     (entry-limit1 entry-limit)
+     (entry-limit2 (+ -1 entry-limit))
+     (dir-ent-list
+      (make-dir-ent-list (mv-nth 0
+                                 (dir-ent-clusterchain-contents
+                                  fat32-in-memory
+                                  (mv-nth 0
+                                          (find-dir-ent (cdr dir-ent-list)
+                                                        filename))))))
+     (fat32-in-memory
+      (mv-nth 0
+              (lofat-remove-file fat32-in-memory
+                                 (mv-nth 0
+                                         (find-dir-ent (cdr dir-ent-list)
+                                                       filename))
+                                 pathname)))))))
+
+(defthm
+  lofat-remove-file-correctness-1-lemma-50
+  (implies
+   (and
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory
+                                  (mv-nth 0
+                                          (find-dir-ent (cdr dir-ent-list)
+                                                        filename))
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth 0
+                (dir-ent-clusterchain-contents
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent (cdr dir-ent-list)
+                                       filename)))))
+       entry-limit))
+     0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper fat32-in-memory (cdr dir-ent-list)
+                                          (+ -1 entry-limit)))
+           0)
+    (dir-ent-directory-p (mv-nth 0
+                                 (find-dir-ent (cdr dir-ent-list)
+                                               filename)))
+    (<= 2
+        (dir-ent-first-cluster (mv-nth 0
+                                       (find-dir-ent (cdr dir-ent-list)
+                                                     filename))))
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory
+                                   (mv-nth 0
+                                           (find-dir-ent (cdr dir-ent-list)
+                                                         filename))
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth 0
+                 (dir-ent-clusterchain-contents
+                  fat32-in-memory
+                  (mv-nth 0
+                          (find-dir-ent (cdr dir-ent-list)
+                                        filename)))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth 0
+              (lofat-to-hifat-helper
+               fat32-in-memory
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory
+                         (mv-nth 0
+                                 (find-dir-ent (cdr dir-ent-list)
+                                               filename)))))
+               entry-limit)))))
+   (>
+    (hifat-entry-count
+     (mv-nth 0
+             (lofat-to-hifat-helper
+              fat32-in-memory
+              (make-dir-ent-list
+               (mv-nth 0
+                       (dir-ent-clusterchain-contents
+                        fat32-in-memory
+                        (mv-nth 0
+                                (find-dir-ent (cdr dir-ent-list)
+                                              filename)))))
+              (+ -1 entry-limit))))
+    (hifat-entry-count
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory
+                                  (mv-nth 0
+                                          (find-dir-ent (cdr dir-ent-list)
+                                                        filename))
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth 0
+                (dir-ent-clusterchain-contents
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent (cdr dir-ent-list)
+                                       filename)))))
+       (+ -1 entry-limit))))))
+  :rule-classes :linear
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      lofat-to-hifat-helper-correctness-4
+      (entry-limit1 entry-limit)
+      (entry-limit2 (+ -1 entry-limit))
+      (dir-ent-list (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory
+                              (mv-nth 0
+                                      (find-dir-ent (cdr dir-ent-list)
+                                                    filename))))))
+      (fat32-in-memory
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory
+                                  (mv-nth 0
+                                          (find-dir-ent (cdr dir-ent-list)
+                                                        filename))
+                                  pathname))))
+     (:instance
+      lofat-to-hifat-helper-correctness-4
+      (entry-limit1 (+ -1 entry-limit))
+      (entry-limit2 entry-limit)
+      (dir-ent-list (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory
+                              (mv-nth 0
+                                      (find-dir-ent (cdr dir-ent-list)
+                                                    filename))))))
+      (fat32-in-memory fat32-in-memory))))))
+
+(defthm
+  lofat-remove-file-correctness-1-lemma-51
+  (implies
+   (and
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory
+                                  (mv-nth 0
+                                          (find-dir-ent (cdr dir-ent-list)
+                                                        filename))
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth 0
+                (dir-ent-clusterchain-contents
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent (cdr dir-ent-list)
+                                       filename)))))
+       entry-limit))
+     0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit))))))))
+     0)
+    (dir-ent-directory-p (mv-nth 0
+                                 (find-dir-ent (cdr dir-ent-list)
+                                               filename)))
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory
+                                   (mv-nth 0
+                                           (find-dir-ent (cdr dir-ent-list)
+                                                         filename))
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth 0
+                 (dir-ent-clusterchain-contents
+                  fat32-in-memory
+                  (mv-nth 0
+                          (find-dir-ent (cdr dir-ent-list)
+                                        filename)))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth 0
+              (lofat-to-hifat-helper
+               fat32-in-memory
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory
+                         (mv-nth 0
+                                 (find-dir-ent (cdr dir-ent-list)
+                                               filename)))))
+               entry-limit)))))
+   (equal
+    (mv-nth
+     3
+     (lofat-to-hifat-helper
+      (mv-nth 0
+              (lofat-remove-file fat32-in-memory
+                                 (mv-nth 0
+                                         (find-dir-ent (cdr dir-ent-list)
+                                                       filename))
+                                 pathname))
+      (make-dir-ent-list (mv-nth 0
+                                 (dir-ent-clusterchain-contents
+                                  fat32-in-memory
+                                  (mv-nth 0
+                                          (find-dir-ent (cdr dir-ent-list)
+                                                        filename)))))
+      (+
+       -1 entry-limit
+       (-
+        (hifat-entry-count
+         (mv-nth 0
+                 (lofat-to-hifat-helper
+                  fat32-in-memory
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory (car dir-ent-list))))
+                  (+ -1 entry-limit))))))))
+    0))
+  :hints
+  (("goal"
+    :in-theory (disable lofat-find-file-by-pathname-correctness-1-lemma-6)
+    :use
+    ((:instance
+      lofat-to-hifat-helper-correctness-4
+      (entry-limit1 entry-limit)
+      (entry-limit2
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (dir-ent-list (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory
+                              (mv-nth 0
+                                      (find-dir-ent (cdr dir-ent-list)
+                                                    filename))))))
+      (fat32-in-memory
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory
+                                  (mv-nth 0
+                                          (find-dir-ent (cdr dir-ent-list)
+                                                        filename))
+                                  pathname))))
+     (:instance
+      lofat-find-file-by-pathname-correctness-1-lemma-6
+      (entry-limit
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (name filename)
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite lofat-to-hifat-helper-correctness-4)
+      (entry-limit1
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (entry-limit2 entry-limit)
+      (dir-ent-list (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory
+                              (mv-nth 0
+                                      (find-dir-ent (cdr dir-ent-list)
+                                                    filename))))))
+      (fat32-in-memory fat32-in-memory))))))
+
+;; 1 of 6 lemmas with the same hints.
+(defthm
+  lofat-remove-file-correctness-1-lemma-52
+  (implies
+   (and
+    (not (zp entry-limit))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+       entry-limit))
+     0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit))))))))
+     0)
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        (+ -1 entry-limit))))))
+   (equal
+    (mv-nth
+     '3
+     (lofat-to-hifat-helper
+      fat32-in-memory (cdr dir-ent-list)
+      (binary-+
+       '-1
+       (binary-+
+        entry-limit
+        (unary--
+         (hifat-entry-count
+          (mv-nth
+           '0
+           (lofat-to-hifat-helper
+            (mv-nth '0
+                    (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                       pathname))
+            (make-dir-ent-list
+             (mv-nth '0
+                     (dir-ent-clusterchain-contents
+                      fat32-in-memory (car dir-ent-list))))
+            (binary-+ '-1 entry-limit)))))))))
+    '0))
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      (:linear lofat-to-hifat-helper-correctness-3)
+      (entry-limit
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite lofat-to-hifat-helper-correctness-4)
+      (entry-limit1
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (entry-limit2
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth
+           0
+           (lofat-to-hifat-helper
+            (mv-nth 0
+                    (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                       pathname))
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents
+                      fat32-in-memory (car dir-ent-list))))
+            (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      lofat-to-hifat-helper-correctness-4
+      (entry-limit1 entry-limit)
+      (entry-limit2 (+ -1 entry-limit))
+      (dir-ent-list
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))))
+      (fat32-in-memory
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))))))))
+
+;; 2 of 6 lemmas with the same hints.
+(defthm
+  lofat-remove-file-correctness-1-lemma-53
+  (implies
+   (and
+    (not (zp entry-limit))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+       entry-limit))
+     0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit))))))))
+     0)
+    (not-intersectp-list
+     (mv-nth 0
+             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))))
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        (+ -1 entry-limit))))))
+   (not-intersectp-list
+    (mv-nth '0
+            (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+    (mv-nth
+     '2
+     (lofat-to-hifat-helper
+      fat32-in-memory (cdr dir-ent-list)
+      (binary-+
+       '-1
+       (binary-+
+        entry-limit
+        (unary--
+         (hifat-entry-count
+          (mv-nth
+           '0
+           (lofat-to-hifat-helper
+            (mv-nth '0
+                    (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                       pathname))
+            (make-dir-ent-list
+             (mv-nth '0
+                     (dir-ent-clusterchain-contents
+                      fat32-in-memory (car dir-ent-list))))
+            (binary-+ '-1 entry-limit)))))))))))
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      (:linear lofat-to-hifat-helper-correctness-3)
+      (entry-limit
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite lofat-to-hifat-helper-correctness-4)
+      (entry-limit1
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (entry-limit2
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth
+           0
+           (lofat-to-hifat-helper
+            (mv-nth 0
+                    (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                       pathname))
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents
+                      fat32-in-memory (car dir-ent-list))))
+            (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      lofat-to-hifat-helper-correctness-4
+      (entry-limit1 entry-limit)
+      (entry-limit2 (+ -1 entry-limit))
+      (dir-ent-list
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))))
+      (fat32-in-memory
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))))))))
+
+;; 3 of 6 lemmas with the same hints.
+(defthm
+  lofat-remove-file-correctness-1-lemma-54
+  (implies
+   (and
+    (not (zp entry-limit))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+       entry-limit))
+     0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit))))))))
+     0)
+    (not
+     (member-intersectp-equal
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        (+ -1 entry-limit)))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32-in-memory (cdr dir-ent-list)
+        (+
+         -1 entry-limit
+         (-
+          (hifat-entry-count
+           (mv-nth
+            0
+            (lofat-to-hifat-helper
+             fat32-in-memory
+             (make-dir-ent-list
+              (mv-nth 0
+                      (dir-ent-clusterchain-contents
+                       fat32-in-memory (car dir-ent-list))))
+             (+ -1 entry-limit))))))))))
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        (+ -1 entry-limit))))))
+   (not
+    (member-intersectp-equal
+     (mv-nth
+      '2
+      (lofat-to-hifat-helper
+       fat32-in-memory
+       (make-dir-ent-list
+        (mv-nth
+         '0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+       (binary-+ '-1 entry-limit)))
+     (mv-nth
+      '2
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (binary-+
+        '-1
+        (binary-+
+         entry-limit
+         (unary--
+          (hifat-entry-count
+           (mv-nth
+            '0
+            (lofat-to-hifat-helper
+             (mv-nth '0
+                     (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                        pathname))
+             (make-dir-ent-list
+              (mv-nth '0
+                      (dir-ent-clusterchain-contents
+                       fat32-in-memory (car dir-ent-list))))
+             (binary-+ '-1 entry-limit))))))))))))
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      (:linear lofat-to-hifat-helper-correctness-3)
+      (entry-limit
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite lofat-to-hifat-helper-correctness-4)
+      (entry-limit1
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (entry-limit2
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth
+           0
+           (lofat-to-hifat-helper
+            (mv-nth 0
+                    (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                       pathname))
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents
+                      fat32-in-memory (car dir-ent-list))))
+            (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      lofat-to-hifat-helper-correctness-4
+      (entry-limit1 entry-limit)
+      (entry-limit2 (+ -1 entry-limit))
+      (dir-ent-list
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))))
+      (fat32-in-memory
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))))))))
+
+;; 4 of 6 lemmas with the same hints.
+(defthm
+  lofat-remove-file-correctness-1-lemma-57
+  (implies
+   (and
+    (not (zp entry-limit))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+       entry-limit))
+     0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit))))))))
+     0)
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        (+ -1 entry-limit)))))
+    (not-intersectp-list
+     x
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit))))))))))
+   (not-intersectp-list
+    x
+    (mv-nth
+     2
+     (lofat-to-hifat-helper
+      fat32-in-memory (cdr dir-ent-list)
+      (+
+       -1 entry-limit
+       (-
+        (hifat-entry-count
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           (mv-nth 0
+                   (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                      pathname))
+           (make-dir-ent-list
+            (mv-nth 0
+                    (dir-ent-clusterchain-contents
+                     fat32-in-memory (car dir-ent-list))))
+           (+ -1 entry-limit))))))))))
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      (:linear lofat-to-hifat-helper-correctness-3)
+      (entry-limit
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite lofat-to-hifat-helper-correctness-4)
+      (entry-limit1
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (entry-limit2
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth
+           0
+           (lofat-to-hifat-helper
+            (mv-nth 0
+                    (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                       pathname))
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents
+                      fat32-in-memory (car dir-ent-list))))
+            (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      lofat-to-hifat-helper-correctness-4
+      (entry-limit1 entry-limit)
+      (entry-limit2 (+ -1 entry-limit))
+      (dir-ent-list
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))))
+      (fat32-in-memory
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))))))))
+
+;; 5 of 6 lemmas with the same hints.
+(defthm
+  lofat-remove-file-correctness-1-lemma-59
+  (implies
+   (and
+    (not (zp entry-limit))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+       entry-limit))
+     0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit))))))))
+     0)
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        (+ -1 entry-limit))))))
+   (equal
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      fat32-in-memory (cdr dir-ent-list)
+      (+
+       -1 entry-limit
+       (-
+        (hifat-entry-count
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           (mv-nth 0
+                   (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                      pathname))
+           (make-dir-ent-list
+            (mv-nth 0
+                    (dir-ent-clusterchain-contents
+                     fat32-in-memory (car dir-ent-list))))
+           (+ -1 entry-limit))))))))
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      fat32-in-memory (cdr dir-ent-list)
+      (+
+       -1 entry-limit
+       (-
+        (hifat-entry-count
+         (mv-nth 0
+                 (lofat-to-hifat-helper
+                  fat32-in-memory
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory (car dir-ent-list))))
+                  (+ -1 entry-limit))))))))))
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      (:linear lofat-to-hifat-helper-correctness-3)
+      (entry-limit
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite lofat-to-hifat-helper-correctness-4)
+      (entry-limit1
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (entry-limit2
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth
+           0
+           (lofat-to-hifat-helper
+            (mv-nth 0
+                    (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                       pathname))
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents
+                      fat32-in-memory (car dir-ent-list))))
+            (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      lofat-to-hifat-helper-correctness-4
+      (entry-limit1 entry-limit)
+      (entry-limit2 (+ -1 entry-limit))
+      (dir-ent-list
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))))
+      (fat32-in-memory
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))))))))
+
+;; 6 of 6 lemmas with the same hints.
+(defthm
+  lofat-remove-file-correctness-1-lemma-60
+  (implies
+   (and
+    (not (zp entry-limit))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+       entry-limit))
+     0)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory (cdr dir-ent-list)
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit))))))))
+     0)
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        (+ -1 entry-limit))))))
+   (equal
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      fat32-in-memory (cdr dir-ent-list)
+      (+
+       -1 entry-limit
+       (-
+        (hifat-entry-count
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           (mv-nth 0
+                   (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                      pathname))
+           (make-dir-ent-list
+            (mv-nth 0
+                    (dir-ent-clusterchain-contents
+                     fat32-in-memory (car dir-ent-list))))
+           entry-limit)))))))
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      fat32-in-memory (cdr dir-ent-list)
+      (+
+       -1 entry-limit
+       (-
+        (hifat-entry-count
+         (mv-nth 0
+                 (lofat-to-hifat-helper
+                  fat32-in-memory
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory (car dir-ent-list))))
+                  (+ -1 entry-limit))))))))))
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      (:linear lofat-to-hifat-helper-correctness-3)
+      (entry-limit
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite lofat-to-hifat-helper-correctness-4)
+      (entry-limit1
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth 0
+                  (lofat-to-hifat-helper
+                   fat32-in-memory
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory (car dir-ent-list))))
+                   (+ -1 entry-limit)))))))
+      (entry-limit2
+       (+
+        -1 entry-limit
+        (-
+         (hifat-entry-count
+          (mv-nth
+           0
+           (lofat-to-hifat-helper
+            (mv-nth 0
+                    (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                       pathname))
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents
+                      fat32-in-memory (car dir-ent-list))))
+            (+ -1 entry-limit)))))))
+      (dir-ent-list (cdr dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      lofat-to-hifat-helper-correctness-4
+      (entry-limit1 entry-limit)
+      (entry-limit2 (+ -1 entry-limit))
+      (dir-ent-list
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))))
+      (fat32-in-memory
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))))))))
+
+(defthm
+  lofat-remove-file-correctness-1-lemma-55
+  (implies
+   (and
+    (syntaxp (variablep entry-limit))
+    (not (zp entry-limit))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+       entry-limit))
+     0)
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        (+ -1 entry-limit))))))
+   (equal
+    (mv-nth
+     3
+     (lofat-to-hifat-helper
+      (mv-nth 0
+              (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                 pathname))
+      (make-dir-ent-list
+       (mv-nth
+        0
+        (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+      (+ -1 entry-limit)))
+    0))
+  :hints
+  (("goal"
+    :use
+    (:instance
+     lofat-to-hifat-helper-correctness-4
+     (entry-limit1 entry-limit)
+     (entry-limit2 (+ -1 entry-limit))
+     (dir-ent-list
+      (make-dir-ent-list
+       (mv-nth
+        0
+        (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))))
+     (fat32-in-memory
+      (mv-nth 0
+              (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                 pathname)))))))
+
+;; Kinda general.
+(defthm
+  lofat-remove-file-correctness-1-lemma-56
+  (implies
+   (and
+    (consp (cdr pathname))
+    (lofat-fs-p fat32-in-memory)
+    (<= 2 (dir-ent-first-cluster dir-ent))
+    (dir-ent-p dir-ent)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents
+          fat32-in-memory
+          (mv-nth
+           0
+           (find-dir-ent
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+            (fat32-filename-fix (car pathname)))))))
+       entry-limit))
+     0)
+    (not-intersectp-list
+     (mv-nth 0
+             (dir-ent-clusterchain fat32-in-memory dir-ent))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       fat32-in-memory
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents
+          fat32-in-memory
+          (mv-nth
+           0
+           (find-dir-ent
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+            (fat32-filename-fix (car pathname)))))))
+       entry-limit)))
+    (not
+     (intersectp-equal
+      (mv-nth
+       0
+       (dir-ent-clusterchain
+        fat32-in-memory
+        (mv-nth
+         0
+         (find-dir-ent
+          (make-dir-ent-list
+           (mv-nth 0
+                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+          (fat32-filename-fix (car pathname))))))
+      (mv-nth 0
+              (dir-ent-clusterchain fat32-in-memory dir-ent))))
+    (not-intersectp-list
+     (mv-nth
+      0
+      (dir-ent-clusterchain
+       fat32-in-memory
+       (mv-nth
+        0
+        (find-dir-ent
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+         (fat32-filename-fix (car pathname))))))
+     (mv-nth
+      2
+      (lofat-to-hifat-helper
+       fat32-in-memory
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents
+          fat32-in-memory
+          (mv-nth
+           0
+           (find-dir-ent
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+            (fat32-filename-fix (car pathname)))))))
+       entry-limit)))
+    (equal (mv-nth 1
+                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
+           0))
+   (equal (dir-ent-clusterchain
+           (mv-nth 0
+                   (lofat-remove-file fat32-in-memory dir-ent pathname))
+           dir-ent)
+          (dir-ent-clusterchain fat32-in-memory dir-ent))))
+
+(defthm
+  lofat-remove-file-correctness-1-lemma-58
+  (implies
+   (and
+    (syntaxp (variablep entry-limit))
+    (not (zp entry-limit))
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       (mv-nth 0
+               (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                  pathname))
+       (make-dir-ent-list
+        (mv-nth
+         0
+         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+       entry-limit))
+     0)
+    (<
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        (mv-nth 0
+                (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                   pathname))
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        entry-limit)))
+     (hifat-entry-count
+      (mv-nth
+       0
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+        (+ -1 entry-limit))))))
+   (equal
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      (mv-nth 0
+              (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                 pathname))
+      (make-dir-ent-list
+       (mv-nth
+        0
+        (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+      (+ -1 entry-limit)))
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      (mv-nth 0
+              (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                 pathname))
+      (make-dir-ent-list
+       (mv-nth
+        0
+        (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
+      entry-limit))))
+  :hints
+  (("goal"
+    :use
+    (:instance
+     lofat-to-hifat-helper-correctness-4
+     (entry-limit1 entry-limit)
+     (entry-limit2 (+ -1 entry-limit))
+     (dir-ent-list
+      (make-dir-ent-list
+       (mv-nth
+        0
+        (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))))
+     (fat32-in-memory
+      (mv-nth 0
+              (lofat-remove-file fat32-in-memory (car dir-ent-list)
+                                 pathname)))))))
+
 (encapsulate
   ()
 
   (local
    (defun-nx
      induction-scheme
-     (dir-ent-list entry-limit fat32-in-memory pathname x)
+     (dir-ent-list entry-limit fat32-in-memory x)
      (cond
       ((and
         (not (atom dir-ent-list))
@@ -19202,29 +20764,22 @@ Some (rather awful) testing forms are
                        (dir-ent-clusterchain-contents
                         fat32-in-memory (car dir-ent-list))))
               (+ -1 entry-limit)))))))
-        fat32-in-memory pathname
+        fat32-in-memory
         (append
          (mv-nth 0
                  (dir-ent-clusterchain
                   fat32-in-memory (car dir-ent-list)))
-         (mv-nth
-          0
-          (lofat-to-hifat-helper
-           fat32-in-memory
-           (make-dir-ent-list
-            (mv-nth 0
-                    (dir-ent-clusterchain
-                     fat32-in-memory (car dir-ent-list))))
-           (+ -1 entry-limit)))
+         (flatten
+          (mv-nth
+           2
+           (lofat-to-hifat-helper
+            fat32-in-memory
+            (make-dir-ent-list
+             (mv-nth 0
+                     (dir-ent-clusterchain-contents
+                      fat32-in-memory (car dir-ent-list))))
+            (+ -1 entry-limit))))
          x)))
-      ((and
-        (not (atom dir-ent-list))
-        (not (zp entry-limit))
-        (dir-ent-directory-p (car dir-ent-list)))
-       (induction-scheme
-        (cdr dir-ent-list)
-        (- entry-limit 1)
-        fat32-in-memory pathname x))
       ((and
         (not (atom dir-ent-list))
         (not (zp entry-limit))
@@ -19237,7 +20792,7 @@ Some (rather awful) testing forms are
        (induction-scheme
         (cdr dir-ent-list)
         (- entry-limit 1)
-        fat32-in-memory pathname
+        fat32-in-memory
         (append
          (mv-nth 0
                  (dir-ent-clusterchain
@@ -19245,16 +20800,14 @@ Some (rather awful) testing forms are
          x)))
       ((and
         (not (atom dir-ent-list))
-        (not (zp entry-limit))
-        ;; (not (dir-ent-directory-p (car dir-ent-list)))
-        )
+        (not (zp entry-limit)))
        (induction-scheme
         (cdr dir-ent-list)
         (- entry-limit 1)
-        fat32-in-memory pathname
+        fat32-in-memory
         x))
       (t
-       (mv dir-ent-list entry-limit fat32-in-memory pathname x)))))
+       (mv dir-ent-list entry-limit fat32-in-memory x)))))
 
   ;; Big, if true.
   (defthm
@@ -19263,6 +20816,23 @@ Some (rather awful) testing forms are
      (and
       (consp pathname)
       (consp (cdr pathname))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         (mv-nth 0
+                 (lofat-remove-file
+                  fat32-in-memory
+                  (mv-nth 0 (find-dir-ent dir-ent-list filename))
+                  pathname))
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents
+                   fat32-in-memory
+                   (mv-nth 0
+                           (find-dir-ent dir-ent-list filename)))))
+         entry-limit))
+       0)
       (lofat-fs-p fat32-in-memory)
       (useful-dir-ent-list-p dir-ent-list)
       (equal (mv-nth 3
@@ -19335,23 +20905,6 @@ Some (rather awful) testing forms are
        0)
       (equal
        (mv-nth
-        3
-        (lofat-to-hifat-helper
-         (mv-nth 0
-                 (lofat-remove-file
-                  fat32-in-memory
-                  (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                  pathname))
-         (make-dir-ent-list
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents
-                   fat32-in-memory
-                   (mv-nth 0
-                           (find-dir-ent dir-ent-list filename)))))
-         entry-limit))
-       0)
-      (equal
-       (mv-nth
         0
         (lofat-to-hifat-helper
          (mv-nth
@@ -19392,22 +20945,68 @@ Some (rather awful) testing forms are
           (lofat-remove-file fat32-in-memory
                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
                              pathname))
-         dir-ent-list entry-limit)))))
+         dir-ent-list entry-limit)))
+      (<
+       (hifat-entry-count
+        (mv-nth
+         0
+         (lofat-to-hifat-helper
+          (mv-nth
+           0
+           (lofat-remove-file fat32-in-memory
+                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
+                              pathname))
+          dir-ent-list entry-limit)))
+       (hifat-entry-count
+        (mv-nth 0
+                (lofat-to-hifat-helper fat32-in-memory
+                                       dir-ent-list entry-limit))))))
     :hints (("goal" :in-theory (e/d (lofat-to-hifat-helper
-                                     lofat-to-hifat-helper-correctness-4)
+                                     lofat-to-hifat-helper-correctness-4
+                                     hifat-entry-count)
                                     (lofat-remove-file
                                      nth-of-effective-fat
-                                     (:definition member-equal)))
+                                     (:definition member-equal)
+                                     (:REWRITE
+                                      M1-FILE-ALIST-P-OF-CDR-WHEN-M1-FILE-ALIST-P)
+                                     (:REWRITE
+                                      HIFAT-ENTRY-COUNT-OF-PUT-ASSOC-EQUAL-LEMMA-1)
+                                     (:REWRITE NARROW-DOWN-LEMMA-13)
+                                     (:DEFINITION NO-DUPLICATESP-EQUAL)
+                                     (:REWRITE
+                                      LOFAT-TO-HIFAT-HELPER-OF-LOFAT-REMOVE-FILE-DISJOINT)
+                                     (:DEFINITION HIFAT-FILE-ALIST-FIX)
+                                     (:REWRITE
+                                      LOFAT-TO-HIFAT-HELPER-AFTER-DELETE-AND-CLEAR-2-LEMMA-2
+                                      . 1)))
              :induct
              (induction-scheme
-              dir-ent-list entry-limit fat32-in-memory pathname x)
+              dir-ent-list entry-limit fat32-in-memory x)
              :expand ((:free
                        (fat32-in-memory entry-limit)
                        (lofat-to-hifat-helper fat32-in-memory
                                               dir-ent-list entry-limit))
                       (:free (x1 x2 y)
                              (not-intersectp-list x1 (cons x2 y)))
-                      (intersectp-equal nil x))))))
+                      (intersectp-equal nil x)))
+            ("subgoal *1/1"
+             :in-theory
+             (e/d (lofat-to-hifat-helper
+                   lofat-to-hifat-helper-correctness-4
+                   hifat-entry-count)
+                  (lofat-remove-file
+                   nth-of-effective-fat
+                   (:definition member-equal)
+                   (:rewrite
+                    m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+                   (:rewrite
+                    hifat-entry-count-of-put-assoc-equal-lemma-1)
+                   (:rewrite narrow-down-lemma-13)
+                   (:definition no-duplicatesp-equal)
+                   (:definition hifat-file-alist-fix)
+                   (:rewrite
+                    lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
+                    . 1)))))))
 
 (encapsulate
   ()
