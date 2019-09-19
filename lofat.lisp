@@ -16385,6 +16385,253 @@ Some (rather awful) testing forms are
             l
             (set-indices-in-fa-table fa-table index-list value-list)))
   :hints (("goal" :in-theory (enable not-intersectp-list))))
+(defthm dir-ent-p-of-chars=>nats
+  (implies (equal (len chars) *ms-dir-ent-length*)
+           (dir-ent-p (chars=>nats chars)))
+  :hints (("goal" :in-theory (enable dir-ent-p))))
+(defthmd nats=>chars-of-nthcdr
+  (equal (nats=>chars (nthcdr n nats))
+         (nthcdr n (nats=>chars nats)))
+  :hints (("goal" :in-theory (enable nats=>chars))))
+
+(defthm
+  lofat-remove-file-correctness-1-lemma-72
+  (implies
+   (and (unsigned-byte-listp 8 dir-contents)
+        (not (equal filename1 filename2))
+        (not (equal (char-code (char filename2 0))
+                    229)))
+   (equal
+    (len
+     (explode
+      (remove1-dir-ent
+       (implode (nats=>chars (clear-dir-ent dir-contents filename1)))
+       filename2)))
+    (len (explode (remove1-dir-ent (nats=>string dir-contents)
+                                   filename2)))))
+  :hints
+  (("goal"
+    :in-theory (enable remove1-dir-ent clear-dir-ent
+                       chars=>nats-of-take len-when-dir-ent-p
+                       nats=>chars-of-nthcdr nats=>string)
+    :induct (clear-dir-ent dir-contents filename1)
+    :expand
+    ((remove1-dir-ent
+      (implode (append (nats=>chars (take 32 dir-contents))
+                       (nats=>chars (clear-dir-ent (nthcdr 32 dir-contents)
+                                                   filename1))))
+      filename2)
+     (remove1-dir-ent (nats=>string dir-contents)
+                      filename2)))
+   ("subgoal *1/3''"
+    :expand
+    (remove1-dir-ent
+     (implode
+      (append
+       (nats=>chars
+        (dir-ent-set-filename
+         (take 32 dir-contents)
+         (nats=>string
+          (update-nth
+           0 229
+           (string=>nats (dir-ent-filename (take 32 dir-contents)))))))
+       (nats=>chars
+        (clear-dir-ent (nthcdr 32 dir-contents)
+                       (dir-ent-filename (take 32 dir-contents))))))
+     filename2))))
+
+(defthm lofat-remove-file-correctness-1-lemma-73
+  (>= (len (explode (remove1-dir-ent dir-contents filename)))
+      (- (len (explode dir-contents))
+         *ms-dir-ent-length*))
+  :hints (("goal" :in-theory (enable remove1-dir-ent)))
+  :rule-classes :linear)
+
+(defthm
+  lofat-remove-file-correctness-1-lemma-74
+  (implies
+   (and (unsigned-byte-listp 8 dir-contents)
+        (not (equal filename1 filename2))
+        (not (equal filename1 filename3))
+        (not (equal (char-code (char filename2 0))
+                    229))
+        (not (equal (char-code (char filename3 0))
+                    229)))
+   (equal
+    (len
+     (explode
+      (remove1-dir-ent
+       (remove1-dir-ent
+        (implode (nats=>chars (clear-dir-ent dir-contents filename1)))
+        filename2)
+       filename3)))
+    (len
+     (explode (remove1-dir-ent (remove1-dir-ent (nats=>string dir-contents)
+                                                filename2)
+                               filename3)))))
+  :hints
+  (("goal"
+    :in-theory (enable remove1-dir-ent clear-dir-ent
+                       chars=>nats-of-take len-when-dir-ent-p
+                       nats=>chars-of-nthcdr nats=>string)
+    :induct (clear-dir-ent dir-contents filename1)
+    :expand
+    ((remove1-dir-ent
+      (implode (append (nats=>chars (take 32 dir-contents))
+                       (nats=>chars (clear-dir-ent (nthcdr 32 dir-contents)
+                                                   filename1))))
+      filename2)))))
+
+(make-event
+ `(defthm
+    lofat-remove-file-correctness-1-lemma-75
+    (implies
+     (and (unsigned-byte-listp 8 dir-contents)
+          (not (equal filename1 filename2))
+          (not (equal (char-code (char filename2 0))
+                      229)))
+     (equal
+      (len
+       (explode
+        (remove1-dir-ent
+         (implode (append (nats=>chars (clear-dir-ent dir-contents filename1))
+                          (make-list-ac n ,(code-char 0) nil)))
+         filename2)))
+      (len
+       (explode
+        (remove1-dir-ent (implode (append (nats=>chars dir-contents)
+                                          (make-list-ac n (code-char 0) nil)))
+                         filename2)))))
+    :hints
+    (("goal"
+      :in-theory (enable remove1-dir-ent clear-dir-ent
+                         chars=>nats-of-take len-when-dir-ent-p
+                         nats=>chars-of-nthcdr nats=>string)
+      :induct (clear-dir-ent dir-contents filename1)
+      :expand
+      ((remove1-dir-ent
+        (implode (append (nats=>chars (take 32 dir-contents))
+                         (nats=>chars (clear-dir-ent (nthcdr 32 dir-contents)
+                                                     filename1))))
+        filename2)
+       (remove1-dir-ent (nats=>string dir-contents)
+                        filename2))))))
+
+(make-event
+ `(defthm
+    lofat-remove-file-correctness-1-lemma-76
+    (implies
+     (and (unsigned-byte-listp 8 dir-contents)
+          (not (equal filename1 filename2))
+          (not (equal filename1 filename3))
+          (not (equal (char-code (char filename2 0))
+                      229))
+          (not (equal (char-code (char filename3 0))
+                      229)))
+     (equal
+      (len
+       (explode
+        (remove1-dir-ent
+         (remove1-dir-ent
+          (implode
+           (append
+            (nats=>chars (clear-dir-ent dir-contents filename1))
+            (make-list-ac n ,(code-char 0) nil)))
+          filename2)
+         filename3)))
+      (len
+       (explode
+        (remove1-dir-ent
+         (remove1-dir-ent
+          (implode (append (nats=>chars dir-contents)
+                           (make-list-ac n (code-char 0) nil)))
+          filename2)
+         filename3)))))
+    :hints
+    (("goal"
+      :in-theory (enable remove1-dir-ent clear-dir-ent
+                         chars=>nats-of-take len-when-dir-ent-p
+                         nats=>chars-of-nthcdr nats=>string)
+      :induct (clear-dir-ent dir-contents filename1)
+      :expand
+      ((remove1-dir-ent
+        (implode
+         (append
+          (nats=>chars (take 32 dir-contents))
+          (nats=>chars (clear-dir-ent (nthcdr 32 dir-contents)
+                                      filename1))))
+        filename2))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (make-event
+   `(defthm
+      lofat-remove-file-correctness-1-lemma-77
+      (implies
+       (and (equal (mod (len (explode dir-contents))
+                        *ms-dir-ent-length*)
+                   0)
+            (equal (mod n *ms-dir-ent-length*) 0))
+       (equal (remove1-dir-ent (implode (append (explode dir-contents)
+                                                (make-list-ac n ,(code-char 0) nil)))
+                               filename)
+              (implode (append (explode (remove1-dir-ent dir-contents filename))
+                               (make-list-ac n (code-char 0) nil)))))
+      :hints (("goal" :in-theory (enable remove1-dir-ent)
+               :induct (remove1-dir-ent dir-contents filename))
+              ("subgoal *1/1" :expand (len (explode dir-contents))))))
+
+  (make-event
+  `(defthm
+    lofat-remove-file-correctness-1-lemma-78
+    (implies
+     (and
+      (equal (mod (length dir-contents)
+                  *ms-dir-ent-length*)
+             0)
+      (equal (mod n *ms-dir-ent-length*) 0)
+      (equal
+       (len
+        (explode (remove1-dir-ent (remove1-dir-ent dir-contents ".          ")
+                                  "..         ")))
+       (+ -64 (len (explode dir-contents)))))
+     (<=
+      (len
+       (explode
+        (remove1-dir-ent
+         (remove1-dir-ent (implode (append (explode dir-contents)
+                                           (make-list-ac n ,(code-char 0) nil)))
+                          ".          ")
+         "..         ")))
+      (+
+       -32
+       (len
+        (explode (remove1-dir-ent (implode (append (explode dir-contents)
+                                                   (make-list-ac n ,(code-char 0) nil)))
+                                  ".          "))))))
+    :hints
+    (("goal" :in-theory (enable remove1-dir-ent)
+      :induct (remove1-dir-ent dir-contents ".          "))
+     ("subgoal *1/4.4''"
+      :in-theory (disable lofat-remove-file-correctness-1-lemma-77)
+      :use
+      (:instance
+       lofat-remove-file-correctness-1-lemma-77
+       (filename *parent-dir-fat32-name*)
+       (dir-contents
+        (remove1-dir-ent (implode (nthcdr 32 (explode dir-contents)))
+                         *current-dir-fat32-name*))))
+     ("subgoal *1/3.2'"
+      :in-theory (disable lofat-remove-file-correctness-1-lemma-77)
+      :use
+      (:instance (:rewrite lofat-remove-file-correctness-1-lemma-77)
+                 (filename "..         ")
+                 (n n)
+                 (dir-contents (implode (nthcdr 32 (explode dir-contents)))))))
+    :rule-classes :linear)))
 
 ;; Skipping this proof for now.
 (make-event
@@ -16392,8 +16639,11 @@ Some (rather awful) testing forms are
     lofat-remove-file-correctness-1-lemma-43
     (implies
      (and
+      (unsigned-byte-listp 8 dir-contents)
       (subdir-contents-p (nats=>string dir-contents))
-      (fat32-filename-p filename))
+      (fat32-filename-p filename)
+      (equal (mod n 32) 0)
+      (equal (mod (length dir-contents) 32) 0))
      (subdir-contents-p
       (implode
        (append
@@ -16401,7 +16651,21 @@ Some (rather awful) testing forms are
         (make-list-ac
          n
          ,(code-char 0) nil)))))
-    :hints (("goal" :in-theory (enable subdir-contents-p)))))
+    :hints (("goal" :in-theory
+             (e/d (subdir-contents-p
+                   nats=>string chars=>nats-of-take
+                   nats=>chars-of-nthcdr fat32-filename-p))
+             :do-not-induct t
+             :use
+             ((:instance
+               (:linear lofat-remove-file-correctness-1-lemma-78)
+               (dir-contents (implode (nats=>chars dir-contents))))
+              (:instance
+               (:rewrite lofat-remove-file-correctness-1-lemma-77)
+               (filename ".          ")
+               (n n)
+               (dir-contents (implode (nats=>chars dir-contents)))))))
+    :otf-flg t))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-45
