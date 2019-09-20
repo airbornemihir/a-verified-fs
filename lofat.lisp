@@ -16376,24 +16376,6 @@ Some (rather awful) testing forms are
                   (binary-+ '-1 entry-limit))))))))
     '0)))
 
-;; Move this later.
-(defthm
-  non-free-index-list-listp-of-set-indices-in-fa-table
-  (implies (and (non-free-index-list-listp l fa-table)
-                (not-intersectp-list index-list l))
-           (non-free-index-list-listp
-            l
-            (set-indices-in-fa-table fa-table index-list value-list)))
-  :hints (("goal" :in-theory (enable not-intersectp-list))))
-(defthm dir-ent-p-of-chars=>nats
-  (implies (equal (len chars) *ms-dir-ent-length*)
-           (dir-ent-p (chars=>nats chars)))
-  :hints (("goal" :in-theory (enable dir-ent-p))))
-(defthmd nats=>chars-of-nthcdr
-  (equal (nats=>chars (nthcdr n nats))
-         (nthcdr n (nats=>chars nats)))
-  :hints (("goal" :in-theory (enable nats=>chars))))
-
 (defthm
   lofat-remove-file-correctness-1-lemma-72
   (implies
