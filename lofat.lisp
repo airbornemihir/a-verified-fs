@@ -6988,6 +6988,31 @@ Some (rather awful) testing forms are
           (dir-ent-clusterchain fat32-in-memory dir-ent)))
   :hints (("goal" :in-theory (enable dir-ent-clusterchain))))
 
+(defthm
+  effective-fat-of-clear-clusterchain
+  (implies
+   (lofat-fs-p fat32-in-memory)
+   (equal
+    (effective-fat
+     (mv-nth 0
+             (clear-clusterchain fat32-in-memory
+                                 masked-current-cluster length)))
+    (set-indices-in-fa-table
+     (effective-fat fat32-in-memory)
+     (mv-nth 0
+             (fat32-build-index-list (effective-fat fat32-in-memory)
+                                     masked-current-cluster
+                                     length (cluster-size fat32-in-memory)))
+     (make-list-ac
+      (len
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                masked-current-cluster
+                                length (cluster-size fat32-in-memory))))
+      0 nil))))
+  :hints (("goal" :in-theory (enable clear-clusterchain))))
+
 (encapsulate
   ()
 
@@ -15635,6 +15660,10 @@ Some (rather awful) testing forms are
                    (+ -1 entry-limit)))))))))))
   :hints
   (("goal"
+    :in-theory
+    (disable (:linear lofat-to-hifat-helper-correctness-3)
+             (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
+                       . 1))
     :use
     ((:instance
       (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
@@ -15800,6 +15829,7 @@ Some (rather awful) testing forms are
                   (+ -1 entry-limit))))))))))
   :hints
   (("goal"
+    :in-theory (disable (:linear lofat-to-hifat-helper-correctness-3))
     :use
     ((:instance
       (:rewrite lofat-to-hifat-helper-correctness-4)
@@ -15832,8 +15862,7 @@ Some (rather awful) testing forms are
                             (dir-ent-clusterchain-contents
                              fat32-in-memory (car dir-ent-list))))
                    (+ -1 entry-limit)))))))
-      (dir-ent-list (cdr dir-ent-list))
-      (fat32-in-memory fat32-in-memory))
+      (dir-ent-list (cdr dir-ent-list)))
      (:instance
       (:linear lofat-to-hifat-helper-correctness-3)
       (entry-limit
@@ -15849,34 +15878,7 @@ Some (rather awful) testing forms are
                             (dir-ent-clusterchain-contents
                              fat32-in-memory (car dir-ent-list))))
                    (+ -1 entry-limit)))))))
-      (dir-ent-list (cdr dir-ent-list))
-      (fat32-in-memory fat32-in-memory))))))
-
-;; Move this later.
-(defthm
-  effective-fat-of-clear-clusterchain
-  (implies
-   (lofat-fs-p fat32-in-memory)
-   (equal
-    (effective-fat
-     (mv-nth 0
-             (clear-clusterchain fat32-in-memory
-                                 masked-current-cluster length)))
-    (set-indices-in-fa-table
-     (effective-fat fat32-in-memory)
-     (mv-nth 0
-             (fat32-build-index-list (effective-fat fat32-in-memory)
-                                     masked-current-cluster
-                                     length (cluster-size fat32-in-memory)))
-     (make-list-ac
-      (len
-       (mv-nth
-        0
-        (fat32-build-index-list (effective-fat fat32-in-memory)
-                                masked-current-cluster
-                                length (cluster-size fat32-in-memory))))
-      0 nil))))
-  :hints (("goal" :in-theory (enable clear-clusterchain))))
+      (dir-ent-list (cdr dir-ent-list)))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-39
@@ -15901,6 +15903,66 @@ Some (rather awful) testing forms are
                    (intersectp-equal x
                                      (cons (dir-ent-first-cluster dir-ent)
                                            y))))))))
+
+(defthm
+  lofat-remove-file-correctness-1-lemma-82
+  (implies
+   (and (< (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
+                                   fat32-in-memory))
+           (+ 2 (count-of-clusters fat32-in-memory)))
+        (< (dir-ent-first-cluster dir-ent)
+           (+ 2 (count-of-clusters fat32-in-memory))))
+   (equal
+    (fat32-entry-mask
+     (nth
+      (dir-ent-first-cluster dir-ent)
+      (set-indices-in-fa-table
+       (effective-fat fat32-in-memory)
+       (cons
+        (dir-ent-first-cluster dir-ent)
+        (mv-nth '0
+                (fat32-build-index-list
+                 (effective-fat fat32-in-memory)
+                 (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
+                                         fat32-in-memory))
+                 (binary-+ '2097152
+                           (binary-* '-1
+                                     (cluster-size fat32-in-memory)))
+                 (cluster-size fat32-in-memory))))
+       (make-list-ac
+        (len
+         (mv-nth '0
+                 (fat32-build-index-list
+                  (effective-fat fat32-in-memory)
+                  (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
+                                          fat32-in-memory))
+                  (binary-+ '2097152
+                            (binary-* '-1
+                                      (cluster-size fat32-in-memory)))
+                  (cluster-size fat32-in-memory))))
+        '0
+        '(0)))))
+    '0))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite nth-of-set-indices-in-fa-table-when-member))
+    :use
+    ((:instance
+      (:rewrite nth-of-set-indices-in-fa-table-when-member)
+      (val 0)
+      (index-list
+       (cons
+        (dir-ent-first-cluster dir-ent)
+        (mv-nth 0
+                (fat32-build-index-list
+                 (effective-fat fat32-in-memory)
+                 (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
+                                         fat32-in-memory))
+                 (+ 2097152
+                    (* -1 (cluster-size fat32-in-memory)))
+                 (cluster-size fat32-in-memory)))))
+      (fa-table (effective-fat fat32-in-memory))
+      (n (dir-ent-first-cluster dir-ent)))))))
 
 (encapsulate
   ()
@@ -16022,182 +16084,7 @@ Some (rather awful) testing forms are
                                 x))
        (fat32-build-index-list (effective-fat fat32-in-memory)
                                (dir-ent-first-cluster dir-ent)
-                               2097152 (cluster-size fat32-in-memory))
-       (:with
-        stobj-set-indices-in-fa-table-correctness-1
-        (effective-fat
-         (stobj-set-indices-in-fa-table
-          (stobj-set-clusters
-           (make-clusters dir-contents
-                          (cluster-size fat32-in-memory))
-           (cons
-            (dir-ent-first-cluster dir-ent)
-            (find-n-free-clusters
-             (update-nth
-              (dir-ent-first-cluster dir-ent)
-              '268435455
-              (set-indices-in-fa-table
-               (effective-fat fat32-in-memory)
-               (cons
-                (dir-ent-first-cluster dir-ent)
-                (mv-nth
-                 '0
-                 (fat32-build-index-list
-                  (effective-fat fat32-in-memory)
-                  (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
-                                          fat32-in-memory))
-                  (binary-+ '2097152
-                            (binary-* '-1
-                                      (cluster-size fat32-in-memory)))
-                  (cluster-size fat32-in-memory))))
-               (make-list-ac
-                (len
-                 (mv-nth
-                  '0
-                  (fat32-build-index-list
-                   (effective-fat fat32-in-memory)
-                   (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
-                                           fat32-in-memory))
-                   (binary-+ '2097152
-                             (binary-* '-1
-                                       (cluster-size fat32-in-memory)))
-                   (cluster-size fat32-in-memory))))
-                '0
-                '(0))))
-             (binary-+ '-1
-                       (len (make-clusters dir-contents
-                                           (cluster-size fat32-in-memory))))))
-           (update-fati
-            (dir-ent-first-cluster dir-ent)
-            '268435455
-            (mv-nth '0
-                    (clear-clusterchain fat32-in-memory
-                                        (dir-ent-first-cluster dir-ent)
-                                        '2097152))))
-          (cons
-           (dir-ent-first-cluster dir-ent)
-           (find-n-free-clusters
-            (update-nth
-             (dir-ent-first-cluster dir-ent)
-             '268435455
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (cons
-               (dir-ent-first-cluster dir-ent)
-               (mv-nth
-                '0
-                (fat32-build-index-list
-                 (effective-fat fat32-in-memory)
-                 (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
-                                         fat32-in-memory))
-                 (binary-+ '2097152
-                           (binary-* '-1
-                                     (cluster-size fat32-in-memory)))
-                 (cluster-size fat32-in-memory))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 '0
-                 (fat32-build-index-list
-                  (effective-fat fat32-in-memory)
-                  (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
-                                          fat32-in-memory))
-                  (binary-+ '2097152
-                            (binary-* '-1
-                                      (cluster-size fat32-in-memory)))
-                  (cluster-size fat32-in-memory))))
-               '0
-               '(0))))
-            (binary-+ '-1
-                      (len (make-clusters dir-contents
-                                          (cluster-size fat32-in-memory))))))
-          (binary-append
-           (find-n-free-clusters
-            (update-nth
-             (dir-ent-first-cluster dir-ent)
-             '268435455
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (cons
-               (dir-ent-first-cluster dir-ent)
-               (mv-nth
-                '0
-                (fat32-build-index-list
-                 (effective-fat fat32-in-memory)
-                 (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
-                                         fat32-in-memory))
-                 (binary-+ '2097152
-                           (binary-* '-1
-                                     (cluster-size fat32-in-memory)))
-                 (cluster-size fat32-in-memory))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 '0
-                 (fat32-build-index-list
-                  (effective-fat fat32-in-memory)
-                  (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
-                                          fat32-in-memory))
-                  (binary-+ '2097152
-                            (binary-* '-1
-                                      (cluster-size fat32-in-memory)))
-                  (cluster-size fat32-in-memory))))
-               '0
-               '(0))))
-            (binary-+ '-1
-                      (len (make-clusters dir-contents
-                                          (cluster-size fat32-in-memory)))))
-           '(268435455)))))
-       (:with
-        lofat-fs-p-of-stobj-set-clusters
-        (lofat-fs-p
-         (stobj-set-clusters
-          (make-clusters dir-contents
-                         (cluster-size fat32-in-memory))
-          (cons
-           (dir-ent-first-cluster dir-ent)
-           (find-n-free-clusters
-            (update-nth
-             (dir-ent-first-cluster dir-ent)
-             '268435455
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (cons
-               (dir-ent-first-cluster dir-ent)
-               (mv-nth
-                '0
-                (fat32-build-index-list
-                 (effective-fat fat32-in-memory)
-                 (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
-                                         fat32-in-memory))
-                 (binary-+ '2097152
-                           (binary-* '-1
-                                     (cluster-size fat32-in-memory)))
-                 (cluster-size fat32-in-memory))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 '0
-                 (fat32-build-index-list
-                  (effective-fat fat32-in-memory)
-                  (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
-                                          fat32-in-memory))
-                  (binary-+ '2097152
-                            (binary-* '-1
-                                      (cluster-size fat32-in-memory)))
-                  (cluster-size fat32-in-memory))))
-               '0
-               '(0))))
-            (binary-+ '-1
-                      (len (make-clusters dir-contents
-                                          (cluster-size fat32-in-memory))))))
-          (update-fati
-           (dir-ent-first-cluster dir-ent)
-           '268435455
-           (mv-nth '0
-                   (clear-clusterchain fat32-in-memory
-                                       (dir-ent-first-cluster dir-ent)
-                                       '2097152)))))))))))
+                               2097152 (cluster-size fat32-in-memory)))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-40
