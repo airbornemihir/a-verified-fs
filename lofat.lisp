@@ -9123,7 +9123,7 @@ Some (rather awful) testing forms are
     (("goal"
       :in-theory (e/d (dir-ent-clusterchain)))))))
 
-(defthm
+(defthmd
   get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8
   (implies
    (and
@@ -12333,6 +12333,7 @@ Some (rather awful) testing forms are
                                     (+ -1 entry-limit))))))
   :hints
   (("goal"
+    :in-theory (enable get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
     :use
     (:instance
      (:rewrite lofat-to-hifat-helper-correctness-4)
@@ -12411,6 +12412,7 @@ Some (rather awful) testing forms are
                                     (+ -1 entry-limit))))))
   :hints
   (("goal"
+    :in-theory (enable get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
     :use
     (:instance
      (:rewrite lofat-to-hifat-helper-correctness-4)
@@ -14942,9 +14944,7 @@ Some (rather awful) testing forms are
             (:definition member-equal)
             (:linear lofat-find-file-by-pathname-correctness-1-lemma-11)
             (:rewrite
-             lofat-to-hifat-helper-of-update-dir-contents)
-            (:rewrite
-             get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)))
+             lofat-to-hifat-helper-of-update-dir-contents)))
       :induct
       (induction-scheme
        dir-ent-list entry-limit fat32-in-memory x)
@@ -15302,9 +15302,7 @@ Some (rather awful) testing forms are
             (:definition member-equal)
             (:linear lofat-find-file-by-pathname-correctness-1-lemma-11)
             (:rewrite
-             lofat-to-hifat-helper-of-update-dir-contents)
-            (:rewrite
-             get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)))
+             lofat-to-hifat-helper-of-update-dir-contents)))
       :induct
       (induction-scheme
        dir-ent-list entry-limit fat32-in-memory x)
@@ -15696,9 +15694,7 @@ Some (rather awful) testing forms are
            (nth-of-effective-fat
             (:definition member-equal)
             (:rewrite
-             lofat-to-hifat-helper-of-update-dir-contents)
-            (:rewrite
-             get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)))
+             lofat-to-hifat-helper-of-update-dir-contents)))
       :induct
       (induction-scheme
        dir-ent-list entry-limit fat32-in-memory x)
@@ -21334,8 +21330,6 @@ Some (rather awful) testing forms are
                   . 2)
         (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
                   . 1)
-        (:rewrite
-         get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
         (:rewrite hifat-to-lofat-inversion-lemma-2)
         (:definition assoc-equal)
         (:rewrite

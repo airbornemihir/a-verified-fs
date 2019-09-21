@@ -67,13 +67,14 @@
            (not (intersectp-equal x y)))
   :hints (("Goal" :in-theory (enable not-intersectp-list))))
 
-(defthm flatten-subset-no-duplicatesp-lemma-3
-  (implies (and (member-equal z y)
-                (not (member-equal z x))
-                (subsetp-equal x y)
-                (no-duplicatesp-equal (flatten y)))
-           (not-intersectp-list z x))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+(local
+ (defthm flatten-subset-no-duplicatesp-lemma-3
+   (implies (and (member-equal z y)
+                 (not (member-equal z x))
+                 (subsetp-equal x y)
+                 (no-duplicatesp-equal (flatten y)))
+            (not-intersectp-list z x))
+   :hints (("Goal" :in-theory (enable not-intersectp-list)))))
 
 ;; This is sort of the main lemma
 (defthm flatten-subset-no-duplicatesp
@@ -141,10 +142,11 @@
           (or (member-intersectp-equal e x)
               (member-intersectp-equal e y)))))
 
-(defthm member-intersectp-is-commutative-lemma-1
-  (implies (not (consp x))
-           (not (member-intersectp-equal y x)))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+(local
+ (defthm member-intersectp-is-commutative-lemma-1
+   (implies (not (consp x))
+            (not (member-intersectp-equal y x)))
+   :hints (("Goal" :in-theory (enable not-intersectp-list)))))
 
 (defthm member-intersectp-is-commutative-lemma-2
   (implies (and (consp x)
