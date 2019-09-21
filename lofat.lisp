@@ -18864,7 +18864,7 @@ Some (rather awful) testing forms are
   lofat-remove-file-correctness-1-lemma-67
   (implies
    (and
-    (syntaxp entry-limit)
+    (syntaxp (variablep entry-limit))
     (not (zp entry-limit))
     (equal
      (mv-nth
@@ -18931,7 +18931,7 @@ Some (rather awful) testing forms are
                                       (mv-nth 0
                                               (find-dir-ent (cdr dir-ent-list)
                                                             filename)))))
-     (+ -1 entry-limit))
+     entry-limit)
     (lofat-to-hifat-helper
      (mv-nth 0
              (lofat-remove-file fat32-in-memory
@@ -18946,7 +18946,7 @@ Some (rather awful) testing forms are
                                       (mv-nth 0
                                               (find-dir-ent (cdr dir-ent-list)
                                                             filename)))))
-     entry-limit)))
+     (+ -1 entry-limit))))
   :hints
   (("goal"
     :use
@@ -21057,6 +21057,37 @@ Some (rather awful) testing forms are
       (t
        (mv dir-ent-list entry-limit fat32-in-memory x)))))
 
+  (local
+   (in-theory
+    (e/d
+     (lofat-to-hifat-helper
+      lofat-to-hifat-helper-correctness-4
+      hifat-entry-count useful-dir-ent-list-p)
+     (lofat-remove-file
+      nth-of-effective-fat
+      (:definition member-equal)
+      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+      (:rewrite hifat-entry-count-of-put-assoc-equal-lemma-1)
+      (:definition no-duplicatesp-equal)
+      (:definition hifat-file-alist-fix)
+      (:rewrite
+       lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
+       . 1)
+      (:rewrite assoc-of-car-when-member)
+      (:rewrite subsetp-car-member)
+      (:definition binary-append)
+      (:rewrite
+       dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint)
+      (:rewrite
+       dir-ent-clusterchain-of-lofat-remove-file-disjoint)
+      (:rewrite take-of-len-free)
+      (:rewrite assoc-equal-when-member-equal)
+      (:rewrite
+       dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-2)
+      (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
+      (:rewrite lofat-to-hifat-helper-of-delete-dir-ent-2
+                . 2)))))
+
   (defthm
     lofat-remove-file-correctness-1-lemma-7
     (implies
@@ -21266,29 +21297,6 @@ Some (rather awful) testing forms are
                                        dir-ent-list entry-limit))))))
     :hints
     (("goal"
-      :in-theory
-      (e/d
-       (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4
-                              hifat-entry-count
-                              lofat-remove-file-correctness-1-lemma-68
-                              lofat-remove-file-correctness-1-lemma-69
-                              useful-dir-ent-list-p)
-       (lofat-remove-file
-        nth-of-effective-fat
-        (:definition member-equal)
-        (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-        (:rewrite hifat-entry-count-of-put-assoc-equal-lemma-1)
-        (:definition no-duplicatesp-equal)
-        (:definition hifat-file-alist-fix)
-        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                  . 1)
-        (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
-        (:rewrite
-         get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
-        (:rewrite
-         dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-2)
-        (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
-                  . 1)))
       :do-not-induct t
       :induct (induction-scheme dir-ent-list
                                 entry-limit fat32-in-memory x)
@@ -21297,9 +21305,44 @@ Some (rather awful) testing forms are
                                              dir-ent-list entry-limit))
                (:free (x1 x2 y)
                       (not-intersectp-list x1 (cons x2 y)))
-               (intersectp-equal nil x)))
-     ("subgoal *1/3" :use lofat-remove-file-correctness-1-lemma-61)
-     ("subgoal *1/2" :use lofat-remove-file-correctness-1-lemma-62))
+               (intersectp-equal nil x))) ("subgoal *1/3"
+      :in-theory
+      (e/d (lofat-remove-file-correctness-1-lemma-67)
+           ((:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint)
+            (:rewrite hifat-to-lofat-inversion-lemma-2)
+            (:definition assoc-equal)
+            (:rewrite not-intersectp-list-of-append-1)
+            lofat-remove-file-correctness-1-lemma-63
+            lofat-remove-file-correctness-1-lemma-64
+            lofat-remove-file-correctness-1-lemma-65
+            lofat-remove-file-correctness-1-lemma-66
+            lofat-remove-file-correctness-1-lemma-70
+            lofat-remove-file-correctness-1-lemma-71))) ("subgoal *1/2"
+      :in-theory
+      (e/d
+       ( lofat-remove-file-correctness-1-lemma-67)
+       ((:rewrite hifat-to-lofat-inversion-lemma-2)
+        (:definition assoc-equal)
+        (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint)
+        (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
+                  . 1)
+        lofat-remove-file-correctness-1-lemma-63
+        lofat-remove-file-correctness-1-lemma-64
+        lofat-remove-file-correctness-1-lemma-65
+        lofat-remove-file-correctness-1-lemma-66
+        lofat-remove-file-correctness-1-lemma-70))) ("subgoal *1/1"
+      :in-theory
+      (e/d
+       (
+                              lofat-remove-file-correctness-1-lemma-68
+                              lofat-remove-file-correctness-1-lemma-69)
+       ((:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
+        (:rewrite
+         get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
+        (:rewrite
+         dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-2)
+        (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
+                  . 1)))))
     :rule-classes
     ((:rewrite
       :corollary
