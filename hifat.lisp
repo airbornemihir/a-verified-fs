@@ -220,6 +220,11 @@
          (revappend (nats=>chars x) (nats=>chars y)))
   :hints (("goal" :in-theory (enable nats=>chars))))
 
+(defthmd nats=>chars-of-nthcdr
+  (equal (nats=>chars (nthcdr n nats))
+         (nthcdr n (nats=>chars nats)))
+  :hints (("goal" :in-theory (enable nats=>chars))))
+
 (encapsulate
   ()
 
@@ -524,6 +529,11 @@
       :in-theory
       (e/d ()
       (unsigned-byte-p-of-nth-when-unsigned-byte-listp nth)))))))
+
+(defthm dir-ent-p-of-chars=>nats
+  (implies (equal (len chars) *ms-dir-ent-length*)
+           (dir-ent-p (chars=>nats chars)))
+  :hints (("goal" :in-theory (enable dir-ent-p))))
 
 (defund dir-ent-fix (x)
   (declare (xargs :guard t))

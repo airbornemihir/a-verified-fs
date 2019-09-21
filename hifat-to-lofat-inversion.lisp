@@ -4279,6 +4279,15 @@
                     (intersectp-equal nil (car l))))))
 
 (defthm
+  non-free-index-list-listp-of-set-indices-in-fa-table
+  (implies (and (non-free-index-list-listp l fa-table)
+                (not-intersectp-list index-list l))
+           (non-free-index-list-listp
+            l
+            (set-indices-in-fa-table fa-table index-list value-list)))
+  :hints (("goal" :in-theory (enable not-intersectp-list))))
+
+(defthm
   not-intersectp-list-of-lofat-to-hifat-helper
   (b*
       (((mv & & clusterchain-list error-code)
