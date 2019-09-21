@@ -6191,7 +6191,7 @@ Some (rather awful) testing forms are
      :f_fsid 0
      :f_namelen 72)))
 
-(defun lofat-find-file-by-pathname (fat32-in-memory dir-ent-list pathname)
+(defun lofat-find-file (fat32-in-memory dir-ent-list pathname)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
                               (fat32-filename-list-p pathname)
                               (useful-dir-ent-list-p dir-ent-list))
@@ -6226,11 +6226,11 @@ Some (rather awful) testing forms are
          (make-lofat-file :dir-ent dir-ent
                           :contents (make-dir-ent-list contents))
          0)))
-    (lofat-find-file-by-pathname
+    (lofat-find-file
      fat32-in-memory (make-dir-ent-list contents) (cdr pathname))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-2
+  lofat-find-file-correctness-1-lemma-2
   (implies
    (and
     (useful-dir-ent-list-p dir-ent-list)
@@ -6250,7 +6250,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable lofat-to-hifat-helper))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-3
+  lofat-find-file-correctness-1-lemma-3
   (implies
    (and
     (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
@@ -6283,7 +6283,7 @@ Some (rather awful) testing forms are
     :in-theory (enable lofat-to-hifat-helper))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-4
+  lofat-find-file-correctness-1-lemma-4
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (useful-dir-ent-list-p dir-ent-list)
@@ -6319,7 +6319,7 @@ Some (rather awful) testing forms are
     :in-theory (enable lofat-to-hifat-helper))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-5
+  lofat-find-file-correctness-1-lemma-5
   (implies
    (and (useful-dir-ent-list-p dir-ent-list)
         (equal (mv-nth 3
@@ -6343,7 +6343,7 @@ Some (rather awful) testing forms are
                               m1-directory-file-p))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-10
+  lofat-find-file-correctness-1-lemma-10
   (implies
    (not (zp entry-limit))
    (not
@@ -6367,7 +6367,7 @@ Some (rather awful) testing forms are
 
 ;; Also general.
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-6
+  lofat-find-file-correctness-1-lemma-6
   (implies
    (and (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name)))
         (useful-dir-ent-list-p dir-ent-list)
@@ -6490,7 +6490,7 @@ Some (rather awful) testing forms are
       entry-limit)))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-11
+  lofat-find-file-correctness-1-lemma-11
   (implies
    (and (useful-dir-ent-list-p dir-ent-list)
         (not (zp entry-limit)))
@@ -6540,7 +6540,7 @@ Some (rather awful) testing forms are
   :rule-classes :linear)
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-7
+  lofat-find-file-correctness-1-lemma-7
   (implies
    (and (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name)))
         (useful-dir-ent-list-p dir-ent-list)
@@ -6575,7 +6575,7 @@ Some (rather awful) testing forms are
                                         dir-ent-list entry-limit))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-8
+  lofat-find-file-correctness-1-lemma-8
   (implies
    (and (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name)))
         (useful-dir-ent-list-p dir-ent-list)
@@ -6598,7 +6598,7 @@ Some (rather awful) testing forms are
   :rule-classes :linear)
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1-lemma-9
+  lofat-find-file-correctness-1-lemma-9
   (implies
    (useful-dir-ent-list-p dir-ent-list)
    (iff
@@ -6620,10 +6620,10 @@ Some (rather awful) testing forms are
                               m1-regular-file-p))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-1
+  lofat-find-file-correctness-1
   (b*
       (((mv file error-code)
-        (hifat-find-file-by-pathname
+        (hifat-find-file
          (mv-nth 0
                  (lofat-to-hifat-helper
                   fat32-in-memory
@@ -6641,20 +6641,20 @@ Some (rather awful) testing forms are
       (lofat-regular-file-p
        (mv-nth
         0
-        (lofat-find-file-by-pathname fat32-in-memory
+        (lofat-find-file fat32-in-memory
                                      dir-ent-list pathname))))
-     (equal (lofat-find-file-by-pathname
+     (equal (lofat-find-file
              fat32-in-memory dir-ent-list pathname)
             (mv (make-lofat-file :contents (m1-file->contents file)
                                  :dir-ent (m1-file->dir-ent file))
                 error-code))))
-  :hints (("Goal" :in-theory (enable hifat-find-file-by-pathname)) ))
+  :hints (("Goal" :in-theory (enable hifat-find-file)) ))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-2
+  lofat-find-file-correctness-2
   (b*
       (((mv file error-code)
-        (hifat-find-file-by-pathname
+        (hifat-find-file
          (mv-nth 0
                  (lofat-to-hifat-helper
                   fat32-in-memory
@@ -6672,13 +6672,13 @@ Some (rather awful) testing forms are
       (lofat-directory-file-p
        (mv-nth
         0
-        (lofat-find-file-by-pathname fat32-in-memory
+        (lofat-find-file fat32-in-memory
                                      dir-ent-list pathname))))
      (and
       (equal
        (lofat-file->dir-ent
         (mv-nth 0
-                (lofat-find-file-by-pathname
+                (lofat-find-file
                  fat32-in-memory dir-ent-list pathname)))
        (m1-file->dir-ent file))
       (equal
@@ -6688,53 +6688,53 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (lofat-file->contents
           (mv-nth 0
-                  (lofat-find-file-by-pathname
+                  (lofat-find-file
                    fat32-in-memory dir-ent-list pathname)))
          entry-limit))
        (m1-file->contents file))
       (equal
        (mv-nth 1
-               (lofat-find-file-by-pathname
+               (lofat-find-file
                 fat32-in-memory dir-ent-list pathname))
        error-code))))
   :hints
-  (("goal" :in-theory (enable hifat-find-file-by-pathname)
+  (("goal" :in-theory (enable hifat-find-file)
     :induct
     (mv (mv-nth 0
-                (hifat-find-file-by-pathname
+                (hifat-find-file
                  (mv-nth 0
                          (lofat-to-hifat-helper
                           fat32-in-memory
                           dir-ent-list entry-limit))
                  pathname))
         (mv-nth 0
-                (lofat-find-file-by-pathname
+                (lofat-find-file
                  fat32-in-memory dir-ent-list pathname)))
     :expand (lofat-to-hifat-helper
              fat32-in-memory nil entry-limit))))
 
 (defthm
-  lofat-find-file-by-pathname-correctness-3
+  lofat-find-file-correctness-3
   (and
    (lofat-file-p
     (mv-nth
      0
-     (lofat-find-file-by-pathname fat32-in-memory dir-ent-list pathname)))
+     (lofat-find-file fat32-in-memory dir-ent-list pathname)))
    (integerp (mv-nth 1
-                     (lofat-find-file-by-pathname fat32-in-memory
+                     (lofat-find-file fat32-in-memory
                                                   dir-ent-list pathname))))
   :hints (("goal" :induct t))
   :rule-classes
   ((:type-prescription
     :corollary
     (integerp (mv-nth 1
-                      (lofat-find-file-by-pathname fat32-in-memory
+                      (lofat-find-file fat32-in-memory
                                                    dir-ent-list pathname))))
    (:rewrite
     :corollary
     (lofat-file-p
      (mv-nth 0
-             (lofat-find-file-by-pathname fat32-in-memory
+             (lofat-find-file fat32-in-memory
                                           dir-ent-list pathname))))))
 
 (defun
@@ -14943,7 +14943,7 @@ Some (rather awful) testing forms are
                                   not-intersectp-list)
            (nth-of-effective-fat
             (:definition member-equal)
-            (:linear lofat-find-file-by-pathname-correctness-1-lemma-11)
+            (:linear lofat-find-file-correctness-1-lemma-11)
             (:rewrite
              lofat-to-hifat-helper-of-update-dir-contents)))
       :induct
@@ -15301,7 +15301,7 @@ Some (rather awful) testing forms are
                                   not-intersectp-list)
            (nth-of-effective-fat
             (:definition member-equal)
-            (:linear lofat-find-file-by-pathname-correctness-1-lemma-11)
+            (:linear lofat-find-file-correctness-1-lemma-11)
             (:rewrite
              lofat-to-hifat-helper-of-update-dir-contents)))
       :induct
@@ -16406,18 +16406,18 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory
-    (disable (:rewrite lofat-find-file-by-pathname-correctness-1-lemma-6))
+    (disable (:rewrite lofat-find-file-correctness-1-lemma-6))
     :use
     ((:instance
       (:rewrite dir-ent-clusterchain-contents-of-lofat-remove-file-coincident)
       (pathname pathname)
       (dir-ent (mv-nth 0 (find-dir-ent dir-ent-list filename)))
       (fat32-in-memory fat32-in-memory))
-     (:instance (:rewrite lofat-find-file-by-pathname-correctness-1-lemma-6)
+     (:instance (:rewrite lofat-find-file-correctness-1-lemma-6)
                 (name filename)
                 (dir-ent-list dir-ent-list))
      (:instance
-      (:rewrite lofat-find-file-by-pathname-correctness-1-lemma-6)
+      (:rewrite lofat-find-file-correctness-1-lemma-6)
       (name filename)
       (fat32-in-memory
        (mv-nth
@@ -17523,7 +17523,7 @@ Some (rather awful) testing forms are
     0))
   :hints
   (("goal"
-    :in-theory (disable lofat-find-file-by-pathname-correctness-1-lemma-6)
+    :in-theory (disable lofat-find-file-correctness-1-lemma-6)
     :use
     ((:instance
       lofat-to-hifat-helper-correctness-4
@@ -17556,7 +17556,7 @@ Some (rather awful) testing forms are
                                                         filename))
                                   pathname))))
      (:instance
-      lofat-find-file-by-pathname-correctness-1-lemma-6
+      lofat-find-file-correctness-1-lemma-6
       (entry-limit
        (+
         -1 entry-limit
