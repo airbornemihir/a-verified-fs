@@ -1625,7 +1625,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable dir-ent-clusterchain))))
 
 (defun
-    lofat-place-file-by-pathname
+    lofat-place-file
     (fat32-in-memory rootclus pathname file)
   (declare
    (xargs
@@ -1722,24 +1722,24 @@ Some (rather awful) testing forms are
              (>= (dir-ent-first-cluster (lofat-file->dir-ent file))
                  *ms-first-data-cluster*)))
         (mv fat32-in-memory *eio*)))
-    (lofat-place-file-by-pathname
+    (lofat-place-file
      fat32-in-memory
      (dir-ent-first-cluster (lofat-file->dir-ent file))
      (cdr pathname)
      file)))
 
 (defthm
-  count-of-clusters-of-lofat-place-file-by-pathname
+  count-of-clusters-of-lofat-place-file
   (equal
    (count-of-clusters
     (mv-nth
      0
-     (lofat-place-file-by-pathname fat32-in-memory
+     (lofat-place-file fat32-in-memory
                                    rootclus pathname file)))
    (count-of-clusters fat32-in-memory)))
 
 (defthm
-  lofat-fs-p-of-lofat-place-file-by-pathname-lemma-1
+  lofat-fs-p-of-lofat-place-file-lemma-1
   (implies (lofat-file-p file)
            (iff (stringp (lofat-file->contents file))
                 (not (lofat-directory-file-p file))))
@@ -1749,7 +1749,7 @@ Some (rather awful) testing forms are
                               lofat-file->contents))))
 
 (defthm
-  lofat-fs-p-of-lofat-place-file-by-pathname
+  lofat-fs-p-of-lofat-place-file
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (fat32-masked-entry-p rootclus)
@@ -1761,10 +1761,10 @@ Some (rather awful) testing forms are
    (lofat-fs-p
     (mv-nth
      0
-     (lofat-place-file-by-pathname fat32-in-memory
+     (lofat-place-file fat32-in-memory
                                    rootclus pathname file))))
   :hints
-  (("goal" :induct (lofat-place-file-by-pathname
+  (("goal" :induct (lofat-place-file
                     fat32-in-memory rootclus pathname file))
    ("subgoal *1/7"
     :in-theory
@@ -1782,7 +1782,7 @@ Some (rather awful) testing forms are
                     (m 0)))))
 
 (defthm
-  lofat-place-file-by-pathname-guard-lemma-1
+  lofat-place-file-guard-lemma-1
   (implies (lofat-regular-file-p file)
            (unsigned-byte-p
             32
@@ -1790,7 +1790,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable lofat-regular-file-p))))
 
 (defthm
-  lofat-place-file-by-pathname-guard-lemma-2
+  lofat-place-file-guard-lemma-2
   (implies (and (lofat-file-p file)
                 (not (lofat-directory-file-p file)))
            (lofat-regular-file-p file))
@@ -1801,13 +1801,13 @@ Some (rather awful) testing forms are
                               lofat-file->contents))))
 
 (defthm
-  lofat-place-file-by-pathname-guard-lemma-3
+  lofat-place-file-guard-lemma-3
   (implies (lofat-directory-file-p file)
            (dir-ent-list-p (lofat-file->contents file)))
   :hints (("goal" :in-theory (enable lofat-directory-file-p))))
 
 (verify-guards
-  lofat-place-file-by-pathname
+  lofat-place-file
   :guard-debug t
   :hints
   (("goal"
