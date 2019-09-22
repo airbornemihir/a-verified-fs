@@ -416,26 +416,6 @@ Some (rather awful) testing forms are
                                      lofat-file-contents-p
                                      lofat-file->contents))))
 
-(defun lofat-statfs (fat32-in-memory)
-  (declare (xargs :stobjs (fat32-in-memory)
-                  :guard (lofat-fs-p fat32-in-memory)))
-  (b*
-      ((total_blocks (count-of-clusters fat32-in-memory))
-       (available_blocks
-        (len (stobj-find-n-free-clusters
-              fat32-in-memory
-              (count-of-clusters fat32-in-memory)))))
-    (make-struct-statfs
-     :f_type *S_MAGIC_FUSEBLK*
-     :f_bsize (cluster-size fat32-in-memory)
-     :f_blocks total_blocks
-     :f_bfree available_blocks
-     :f_bavail available_blocks
-     :f_files 0
-     :f_ffree 0
-     :f_fsid 0
-     :f_namelen 72)))
-
 (defun lofat-find-file (fat32-in-memory dir-ent-list pathname)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
                               (fat32-filename-list-p pathname)

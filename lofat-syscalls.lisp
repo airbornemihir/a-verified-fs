@@ -739,3 +739,23 @@
    (lofat-fs-p fat32-in-memory)
    (lofat-fs-p (mv-nth 0 (lofat-truncate fat32-in-memory pathname size))))
   :hints (("Goal" :in-theory (enable lofat-truncate)) ))
+
+(defun lofat-statfs (fat32-in-memory)
+  (declare (xargs :stobjs (fat32-in-memory)
+                  :guard (lofat-fs-p fat32-in-memory)))
+  (b*
+      ((total_blocks (count-of-clusters fat32-in-memory))
+       (available_blocks
+        (len (stobj-find-n-free-clusters
+              fat32-in-memory
+              (count-of-clusters fat32-in-memory)))))
+    (make-struct-statfs
+     :f_type *S_MAGIC_FUSEBLK*
+     :f_bsize (cluster-size fat32-in-memory)
+     :f_blocks total_blocks
+     :f_bfree available_blocks
+     :f_bavail available_blocks
+     :f_files 0
+     :f_ffree 0
+     :f_fsid 0
+     :f_namelen 72)))
