@@ -2762,6 +2762,23 @@ Some (rather awful) testing forms are
            '0))))
 
 (defthmd
+  get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2
+  (implies
+   (and (non-free-index-listp index-list fa-table)
+        (no-duplicatesp-equal index-list))
+   (equal
+    (count-free-clusters
+     (set-indices-in-fa-table fa-table index-list
+                              (make-list-ac (len index-list) 0 nil)))
+    (+ (count-free-clusters fa-table)
+       (len index-list))))
+  :hints
+  (("goal" :in-theory (enable set-indices-in-fa-table)
+    :induct (set-indices-in-fa-table fa-table index-list
+                                     (make-list-ac (len index-list)
+                                                   0 nil)))))
+
+(defthmd
   get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
   (implies
    (<
