@@ -1251,16 +1251,17 @@
              fat32-in-memory
              dir-ent-list entry-limit))))
 
-(defthm
-  lofat-to-hifat-helper-correctness-3-lemma-1
-  (implies
-   (and (useful-dir-ent-list-p dir-ent-list)
-        (not (fat32-filename-p (dir-ent-filename dir-ent))))
-   (not (member-equal dir-ent dir-ent-list)))
-  :hints
-  (("goal"
-    :in-theory (enable useful-dir-ent-list-p
-                       fat32-filename-p useless-dir-ent-p))))
+(local
+ (defthm
+   lofat-to-hifat-helper-correctness-3-lemma-1
+   (implies
+    (and (useful-dir-ent-list-p dir-ent-list)
+         (not (fat32-filename-p (dir-ent-filename dir-ent))))
+    (not (member-equal dir-ent dir-ent-list)))
+   :hints
+   (("goal"
+     :in-theory (enable useful-dir-ent-list-p
+                        fat32-filename-p useless-dir-ent-p)))))
 
 (defthm
   lofat-to-hifat-helper-correctness-3
@@ -5661,26 +5662,14 @@
                   1)))))))
            (cluster-size fat32-in-memory)))))))))))
 
-;; This is weird, but it's needed in order to discharge a subgoal.
-(defthm
-  hifat-to-lofat-inversion-lemma-8
-  (implies
-   (not-intersectp-list
-    (cons
-     (nth
-      0
-      (find-n-free-clusters
-       (effective-fat
-        (mv-nth
-         0
-         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                current-dir-first-cluster)))
-       1))
-     x)
-    (mv-nth 2 l))
-   (and
+;; This is weird, but it's needed in order to discharge a subgoal... Still,
+;; there's no reason for it to be non-local.
+(local
+ (defthm
+   hifat-to-lofat-inversion-lemma-8
+   (implies
     (not-intersectp-list
-     (list
+     (cons
       (nth
        0
        (find-n-free-clusters
@@ -5689,19 +5678,11 @@
           0
           (hifat-to-lofat-helper fat32-in-memory (cdr fs)
                                  current-dir-first-cluster)))
-        1)))
+        1))
+      x)
      (mv-nth 2 l))
-    (not-intersectp-list x (mv-nth 2 l))))
-  :hints
-  (("goal"
-    :in-theory
-    (disable (:rewrite not-intersectp-list-of-append-2))
-    :use
-    (:instance
-     (:rewrite not-intersectp-list-of-append-2)
-     (l (mv-nth 2 l))
-     (y x)
-     (x
+    (and
+     (not-intersectp-list
       (list
        (nth
         0
@@ -5711,7 +5692,29 @@
            0
            (hifat-to-lofat-helper fat32-in-memory (cdr fs)
                                   current-dir-first-cluster)))
-         1))))))))
+         1)))
+      (mv-nth 2 l))
+     (not-intersectp-list x (mv-nth 2 l))))
+   :hints
+   (("goal"
+     :in-theory
+     (disable (:rewrite not-intersectp-list-of-append-2))
+     :use
+     (:instance
+      (:rewrite not-intersectp-list-of-append-2)
+      (l (mv-nth 2 l))
+      (y x)
+      (x
+       (list
+        (nth
+         0
+         (find-n-free-clusters
+          (effective-fat
+           (mv-nth
+            0
+            (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                   current-dir-first-cluster)))
+          1)))))))))
 
 (defthm
   hifat-to-lofat-inversion-lemma-9

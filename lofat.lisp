@@ -16,7 +16,13 @@
                      loghead logtail)))
 
 (local
- (in-theory (disable nth update-nth floor mod true-listp)))
+ (in-theory (disable nth update-nth floor mod true-listp take member-equal)))
+
+(local
+ (in-theory (disable dir-ent-list-p-of-cdr-when-dir-ent-list-p
+                     non-free-index-list-listp-correctness-1
+                     intersectp-member-when-not-member-intersectp
+                     no-duplicatesp-of-member)))
 
 (defund-nx
   eqfat (str1 str2)
@@ -567,7 +573,7 @@ Some (rather awful) testing forms are
   (("goal" :in-theory (enable lofat-to-hifat-helper
                               m1-directory-file-p))))
 
-(defthm
+(defthmd
   lofat-find-file-correctness-1-lemma-10
   (implies
    (not (zp entry-limit))
@@ -822,7 +828,7 @@ Some (rather awful) testing forms are
                                            nil (+ -1 entry-limit)))))
   :rule-classes :linear)
 
-(defthm
+(defthmd
   lofat-find-file-correctness-1-lemma-9
   (implies
    (useful-dir-ent-list-p dir-ent-list)
@@ -2224,8 +2230,7 @@ Some (rather awful) testing forms are
              (:rewrite nth-of-effective-fat)
              (:definition assoc-equal)
              (:definition member-equal)
-             (:definition hifat-file-alist-fix)
-             (:rewrite lofat-to-hifat-helper-correctness-3-lemma-1)))))
+             (:definition hifat-file-alist-fix)))))
      :rule-classes :linear))
 
   ;; This induction proof is becoming a sort of bag to hold many things at
@@ -2327,8 +2332,7 @@ Some (rather awful) testing forms are
              (:rewrite nth-of-effective-fat)
              (:definition assoc-equal)
              (:definition member-equal)
-             (:definition hifat-file-alist-fix)
-             (:rewrite lofat-to-hifat-helper-correctness-3-lemma-1)))))))
+             (:definition hifat-file-alist-fix)))))))
 
   (defthm
     hifat-entry-count-of-lofat-to-hifat-helper-of-delete-dir-ent
@@ -2802,7 +2806,7 @@ Some (rather awful) testing forms are
                                          (cluster-size fat32-in-memory))))
            '0))))
 
-(defthm
+(defthmd
   get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2
   (implies
    (and (non-free-index-listp index-list fa-table)
@@ -2900,9 +2904,7 @@ Some (rather awful) testing forms are
     (e/d
      (update-dir-contents
       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3)
-     ((:rewrite nth-of-set-indices-in-fa-table-when-member)
-      (:rewrite
-       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)))
+     ((:rewrite nth-of-set-indices-in-fa-table-when-member)))
     :expand
     ((fat32-build-index-list (effective-fat fat32-in-memory)
                              first-cluster *ms-max-dir-size*
@@ -3045,7 +3047,7 @@ Some (rather awful) testing forms are
                                           dir-ent-list entry-limit))))
 
 ;; Not a great way to frame these hints... but OK as an experiment.
-(defthm
+(defthmd
   get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-16
   (implies
    (equal
@@ -3214,7 +3216,7 @@ Some (rather awful) testing forms are
                                                      filename)))))))
       (fat32-in-memory fat32-in-memory))))))
 
-(defthm
+(defthmd
   get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-6
   (implies
    (and (not-intersectp-list
@@ -3604,7 +3606,6 @@ Some (rather awful) testing forms are
       (:rewrite integerp-of-car-when-integer-listp)
       (:definition member-equal)
       (:definition integer-listp)
-      (:rewrite lofat-to-hifat-helper-correctness-3-lemma-1)
       (:definition len)))
     :induct t))
   :rule-classes
@@ -5322,9 +5323,7 @@ Some (rather awful) testing forms are
     (e/d
      (update-dir-contents
       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3)
-     ((:rewrite nth-of-set-indices-in-fa-table-when-member)
-      (:rewrite
-       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)))
+     ((:rewrite nth-of-set-indices-in-fa-table-when-member)))
     :expand
     ((fat32-build-index-list (effective-fat fat32-in-memory)
                              first-cluster *ms-max-dir-size*
@@ -6652,7 +6651,7 @@ Some (rather awful) testing forms are
                                                         filename1))))))
      (fat32-in-memory fat32-in-memory)))))
 
-(defthm
+(defthmd
   lofat-remove-file-correctness-1-lemma-18
   (implies
    (and
@@ -6766,7 +6765,7 @@ Some (rather awful) testing forms are
                              fat32-in-memory (car dir-ent-list))))
                    (+ -1 entry-limit))))))))))))
 
-(defthm
+(defthmd
   lofat-remove-file-correctness-1-lemma-19
   (implies
    (and
@@ -7367,7 +7366,7 @@ Some (rather awful) testing forms are
                                               (find-dir-ent (cdr dir-ent-list)
                                                             filename1)))))))))
 
-(defthm
+(defthmd
   lofat-remove-file-correctness-1-lemma-24
   (implies
    (and
@@ -8009,7 +8008,7 @@ Some (rather awful) testing forms are
                    (+ -1 entry-limit)))))))
       (dir-ent-list (cdr dir-ent-list)))))))
 
-(defthm
+(defthmd
   lofat-remove-file-correctness-1-lemma-39
   (implies
    (and (dir-ent-directory-p dir-ent)
@@ -11371,7 +11370,7 @@ Some (rather awful) testing forms are
            dir-ent)
           (dir-ent-clusterchain fat32-in-memory dir-ent))))
 
-(defthm
+(defthmd
   lofat-remove-file-correctness-1-lemma-58
   (implies
    (and
@@ -12021,11 +12020,7 @@ Some (rather awful) testing forms are
       (:rewrite nth-of-effective-fat)
       (:rewrite
        get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-17)
-      (:rewrite
-       get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-16)
       (:definition member-equal)
-      (:rewrite
-       lofat-to-hifat-helper-correctness-3-lemma-1)
       (:rewrite take-of-len-free)))
     :induct (mv (mv-nth 0
                         (lofat-to-hifat-helper fat32-in-memory
@@ -13933,7 +13928,6 @@ Some (rather awful) testing forms are
         nth-of-effective-fat
         (:definition member-equal)
         (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-        (:rewrite hifat-entry-count-of-put-assoc-equal-lemma-1)
         (:definition no-duplicatesp-equal)
         (:definition hifat-file-alist-fix)
         (:rewrite
@@ -13957,17 +13951,11 @@ Some (rather awful) testing forms are
                   . 1)
         (:rewrite hifat-to-lofat-inversion-lemma-2)
         (:definition assoc-equal)
-        (:rewrite
-         non-free-index-list-listp-correctness-1)
-        (:rewrite
-         intersectp-member-when-not-member-intersectp)
         (:rewrite not-intersectp-list-when-atom)
         (:rewrite subdir-contents-p-when-zero-length)
-        (:rewrite hifat-to-lofat-inversion-lemma-8)
         (:rewrite hifat-no-dups-p-of-cdr)
         (:rewrite free-index-list-listp-correctness-1)
         (:rewrite m1-file-alist-p-when-subsetp-equal)
-        (:rewrite hifat-equiv-of-cons-lemma-4)
         (:rewrite
          get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-11)
         (:rewrite hifat-subsetp-preserves-assoc-equal)
