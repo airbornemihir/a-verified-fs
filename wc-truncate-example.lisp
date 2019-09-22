@@ -4,8 +4,8 @@
 
 
 (defun
-  truncate-list-extra-hypothesis
-  (fat32-in-memory name-list size)
+    truncate-list-extra-hypothesis
+    (fat32-in-memory name-list size)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (and (lofat-fs-p fat32-in-memory)
                               (string-listp name-list)
@@ -116,7 +116,7 @@
      (mv-nth
       1
       (hifat-find-file (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                             (pathname-to-fat32-pathname (explode pathname))))
+                       (pathname-to-fat32-pathname (explode pathname))))
      0)
     (m1-regular-file-p
      (mv-nth 0
@@ -257,7 +257,7 @@
      (mv-nth
       1
       (hifat-find-file (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-                             (pathname-to-fat32-pathname (explode pathname))))
+                       (pathname-to-fat32-pathname (explode pathname))))
      0)
     (m1-regular-file-p
      (mv-nth 0

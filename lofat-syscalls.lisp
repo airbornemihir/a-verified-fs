@@ -173,7 +173,7 @@
     (useful-dir-ent-list-p dir-ent-list)
     (equal (mv-nth 3
                    (lofat-to-hifat-helper fat32-in-memory
-                                               dir-ent-list entry-limit))
+                                          dir-ent-list entry-limit))
            0)
     (<=
      (+ 2 (count-of-clusters fat32-in-memory))
@@ -202,7 +202,7 @@
          (mv-nth
           0
           (lofat-to-hifat-helper fat32-in-memory
-                                      dir-ent-list entry-limit))
+                                 dir-ent-list entry-limit))
          pathname)))
     (implies
      (and
@@ -212,7 +212,7 @@
        (mv-nth
         3
         (lofat-to-hifat-helper fat32-in-memory
-                                    dir-ent-list entry-limit))
+                               dir-ent-list entry-limit))
        0))
      (equal
       (m1-directory-file-p file)
@@ -220,7 +220,7 @@
        (mv-nth
         0
         (lofat-find-file fat32-in-memory
-                                     dir-ent-list pathname))))))
+                         dir-ent-list pathname))))))
   :hints
   (("Goal" :in-theory (enable hifat-find-file))))
 
@@ -313,9 +313,9 @@
                     *ms-max-dir-size*
                   (length (lofat-file->contents file)))))
     (mv
-       (make-struct-stat
-        :st_size st_size)
-       0 0)))
+     (make-struct-stat
+      :st_size st_size)
+     0 0)))
 
 (defthmd
   lofat-lstat-refinement-lemma-1
