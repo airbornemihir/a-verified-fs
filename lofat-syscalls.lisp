@@ -185,8 +185,7 @@
   (("goal"
     :in-theory
     (e/d (lofat-to-hifat-helper find-dir-ent useful-dir-ent-list-p)
-         ((:rewrite lofat-to-hifat-helper-correctness-3-lemma-1)
-          (:definition no-duplicatesp-equal)
+         ((:definition no-duplicatesp-equal)
           (:rewrite useful-dir-ent-list-p-of-cdr)
           (:definition member-equal)
           (:rewrite take-of-len-free)
