@@ -12836,7 +12836,21 @@ Some (rather awful) testing forms are
               filename2))))
           dir-ent-list entry-limit)))))))
 
-  ;; Hypotheses trimmed.
+  ;; The hypotheses for this lemma have been trimmed to the extent that
+  ;; remove-hyps can handle. Here are some if-intro rules which cause case
+  ;; splitting - these can be looked into later.
+  ;; Splitter rules (see :DOC splitter):
+  ;; if-intro: ((:definition find-dir-ent)
+  ;;            (:definition hifat-entry-count)
+  ;;            (:definition lofat-to-hifat-helper)
+  ;;            (:definition not)
+  ;;            (:definition not-intersectp-list)
+  ;;            (:definition useful-dir-ent-list-p)
+  ;;            (:meta mv-nth-cons-meta)
+  ;;            (:rewrite str::equal-of-code-code-and-constant)
+  ;;            (:rewrite not-intersectp-list-of-append-1)
+  ;;            (:rewrite not-intersectp-list-of-append-2)
+  ;;            (:rewrite zp-open))
   (defthm
     lofat-remove-file-correctness-1-lemma-7
     (implies
