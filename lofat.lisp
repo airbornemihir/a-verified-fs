@@ -14305,6 +14305,7 @@ Some (rather awful) testing forms are
       (t
        (mv entry-limit fat32-in-memory pathname root-dir-ent x)))))
 
+  ;; Hypotheses trimmed.
   (defthm
     lofat-remove-file-correctness-1-lemma-83
     (b*
@@ -14322,14 +14323,6 @@ Some (rather awful) testing forms are
         (lofat-fs-p fat32-in-memory)
         (dir-ent-p root-dir-ent)
         (dir-ent-directory-p root-dir-ent)
-        (not-intersectp-list
-         (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-         (mv-nth 2
-                 (lofat-to-hifat-helper
-                  fat32-in-memory
-                  (make-dir-ent-list
-                   (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                  entry-limit)))
         (equal (mv-nth 3
                        (lofat-to-hifat-helper
                         fat32-in-memory
@@ -14338,8 +14331,6 @@ Some (rather awful) testing forms are
                         entry-limit))
                0)
         (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
-        (< (dir-ent-first-cluster root-dir-ent)
-           (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
         (fat32-filename-list-p pathname)
         (not-intersectp-list
          (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
@@ -14349,15 +14340,6 @@ Some (rather awful) testing forms are
                   (make-dir-ent-list
                    (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                   entry-limit)))
-        (<
-         '0
-         (len
-          (make-dir-ent-list
-           (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))))
-        (>= *ms-max-dir-ent-count*
-            (len
-             (make-dir-ent-list
-              (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))))
         (equal
          (mv-nth
           1
@@ -14450,14 +14432,6 @@ Some (rather awful) testing forms are
           (lofat-fs-p fat32-in-memory)
           (dir-ent-p root-dir-ent)
           (dir-ent-directory-p root-dir-ent)
-          (not-intersectp-list
-           (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-           (mv-nth 2
-                   (lofat-to-hifat-helper
-                    fat32-in-memory
-                    (make-dir-ent-list
-                     (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                    entry-limit)))
           (equal (mv-nth 3
                          (lofat-to-hifat-helper
                           fat32-in-memory
@@ -14466,8 +14440,6 @@ Some (rather awful) testing forms are
                           entry-limit))
                  0)
           (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
-          (< (dir-ent-first-cluster root-dir-ent)
-             (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
           (fat32-filename-list-p pathname)
           (not-intersectp-list
            (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
@@ -14477,15 +14449,6 @@ Some (rather awful) testing forms are
                     (make-dir-ent-list
                      (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                     entry-limit)))
-          (<
-           '0
-           (len
-            (make-dir-ent-list
-             (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))))
-          (>= *ms-max-dir-ent-count*
-              (len
-               (make-dir-ent-list
-                (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))))
           (equal
            (mv-nth
             1
@@ -14521,6 +14484,7 @@ Some (rather awful) testing forms are
                              root-dir-ent)))
                    entry-limit)))))))))
 
+;; Hypotheses trimmed.
 (defthm
   lofat-remove-file-correctness-1
   (b*
@@ -14538,14 +14502,6 @@ Some (rather awful) testing forms are
       (lofat-fs-p fat32-in-memory)
       (dir-ent-p root-dir-ent)
       (dir-ent-directory-p root-dir-ent)
-      (not-intersectp-list
-       (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-       (mv-nth 2
-               (lofat-to-hifat-helper
-                fat32-in-memory
-                (make-dir-ent-list
-                 (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                entry-limit)))
       (equal (mv-nth 3
                      (lofat-to-hifat-helper
                       fat32-in-memory
@@ -14554,8 +14510,6 @@ Some (rather awful) testing forms are
                       entry-limit))
              0)
       (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
-      (< (dir-ent-first-cluster root-dir-ent)
-         (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
       (fat32-filename-list-p pathname)
       (not-intersectp-list
        (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
@@ -14565,15 +14519,6 @@ Some (rather awful) testing forms are
                 (make-dir-ent-list
                  (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                 entry-limit)))
-      (<
-       '0
-       (len
-        (make-dir-ent-list
-         (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))))
-      (>= *ms-max-dir-ent-count*
-          (len
-           (make-dir-ent-list
-            (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))))
       (equal
        (mv-nth
         1
