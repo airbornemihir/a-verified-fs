@@ -42,8 +42,7 @@
   (equal (integerp (nth n (get-initial-bytes str)))
          (< (nfix n)
             (len (get-initial-bytes str))))
-  :hints (("goal" :in-theory (enable get-initial-bytes
-                                     consp-of-string=>nats)))
+  :hints (("goal" :in-theory (enable get-initial-bytes)))
   :rule-classes
   (:rewrite
    (:linear :corollary (implies (< (nfix n)
@@ -3997,7 +3996,7 @@
                                                  reserved-area-chars)
                                     (unsigned-byte-p)))))
 
-  (local (in-theory (enable chars=>nats-of-take get-initial-bytes
+  (local (in-theory (enable get-initial-bytes
                             lofat-to-string)))
 
   (defthm
@@ -4027,7 +4026,7 @@
        fat32-in-memory)
       fat32-in-memory)))
 
-  (local (in-theory (enable chars=>nats-of-nthcdr get-remaining-rsvdbyts)))
+  (local (in-theory (enable get-remaining-rsvdbyts)))
 
   (defthm
     lofat-to-string-inversion-lemma-45

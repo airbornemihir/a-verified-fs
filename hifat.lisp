@@ -177,7 +177,7 @@
        (consp chars))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
-(defthmd consp-of-string=>nats
+(defthm consp-of-string=>nats
   (iff (consp (string=>nats string))
        (consp (explode string)))
   :hints (("goal" :in-theory (enable string=>nats))))
@@ -194,13 +194,13 @@
                   (chars=>nats chars)))
   :hints (("goal" :in-theory (enable string=>nats))))
 
-(defthmd chars=>nats-of-take
+(defthm chars=>nats-of-take
   (implies (<= (nfix n) (len chars))
            (equal (chars=>nats (take n chars))
                   (take n (chars=>nats chars))))
   :hints (("goal" :in-theory (enable chars=>nats))))
 
-(defthmd chars=>nats-of-nthcdr
+(defthm chars=>nats-of-nthcdr
   (equal (chars=>nats (nthcdr n chars))
          (nthcdr n (chars=>nats chars)))
   :hints (("goal" :in-theory (enable chars=>nats nthcdr-of-nil))))
@@ -220,7 +220,7 @@
          (revappend (nats=>chars x) (nats=>chars y)))
   :hints (("goal" :in-theory (enable nats=>chars))))
 
-(defthmd nats=>chars-of-nthcdr
+(defthm nats=>chars-of-nthcdr
   (equal (nats=>chars (nthcdr n nats))
          (nthcdr n (nats=>chars nats)))
   :hints (("goal" :in-theory (enable nats=>chars))))

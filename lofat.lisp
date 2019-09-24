@@ -2223,9 +2223,9 @@ Some (rather awful) testing forms are
    (delete-dir-ent (make-dir-ent-list dir-contents)
                    filename))
   :hints (("goal" :in-theory (enable make-dir-ent-list dir-ent-fix
-                                     clear-dir-ent chars=>nats-of-take
+                                     clear-dir-ent
                                      len-when-dir-ent-p string=>nats
-                                     nats=>string chars=>nats-of-nthcdr)
+                                     nats=>string)
            :induct (make-dir-ent-list dir-contents)
            :expand (clear-dir-ent (chars=>nats (explode dir-contents))
                                   filename))))
@@ -2252,8 +2252,7 @@ Some (rather awful) testing forms are
       :hints
       (("goal" :induct (make-dir-ent-list dir-contents)
         :in-theory (e/d (make-dir-ent-list dir-ent-fix clear-dir-ent
-                                           string=>nats chars=>nats-of-take
-                                           chars=>nats-of-nthcdr))
+                                           string=>nats))
         :expand ((make-dir-ent-list dir-contents)
                  (clear-dir-ent (chars=>nats (explode dir-contents))
                                 filename)))))))
@@ -7274,8 +7273,8 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory (enable remove1-dir-ent clear-dir-ent
-                       chars=>nats-of-take len-when-dir-ent-p
-                       nats=>chars-of-nthcdr nats=>string)
+                       len-when-dir-ent-p
+                       nats=>string)
     :induct (clear-dir-ent dir-contents filename1)
     :expand
     ((remove1-dir-ent
@@ -7334,8 +7333,8 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory (enable remove1-dir-ent clear-dir-ent
-                       chars=>nats-of-take len-when-dir-ent-p
-                       nats=>chars-of-nthcdr nats=>string)
+                       len-when-dir-ent-p
+                       nats=>string)
     :induct (clear-dir-ent dir-contents filename1)
     :expand
     ((remove1-dir-ent
@@ -7367,8 +7366,8 @@ Some (rather awful) testing forms are
     :hints
     (("goal"
       :in-theory (enable remove1-dir-ent clear-dir-ent
-                         chars=>nats-of-take len-when-dir-ent-p
-                         nats=>chars-of-nthcdr nats=>string)
+                         len-when-dir-ent-p
+                         nats=>string)
       :induct (clear-dir-ent dir-contents filename1)
       :expand
       ((remove1-dir-ent
@@ -7412,8 +7411,8 @@ Some (rather awful) testing forms are
     :hints
     (("goal"
       :in-theory (enable remove1-dir-ent clear-dir-ent
-                         chars=>nats-of-take len-when-dir-ent-p
-                         nats=>chars-of-nthcdr nats=>string)
+                         len-when-dir-ent-p
+                         nats=>string)
       :induct (clear-dir-ent dir-contents filename1)
       :expand
       ((remove1-dir-ent
@@ -7510,8 +7509,8 @@ Some (rather awful) testing forms are
                        (make-list-ac n ,(code-char 0) nil)))))
     :hints
     (("goal"
-      :in-theory (e/d (subdir-contents-p nats=>string chars=>nats-of-take
-                                         nats=>chars-of-nthcdr fat32-filename-p)
+      :in-theory (e/d (subdir-contents-p nats=>string
+                                         fat32-filename-p)
                       (lofat-remove-file-correctness-1-lemma-34
                        lofat-remove-file-correctness-1-lemma-35))
       :use ((:instance (:linear lofat-remove-file-correctness-1-lemma-35)
