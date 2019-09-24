@@ -42,13 +42,6 @@
   :hints (("goal" :in-theory (enable eqfat))))
 
 (defthm
-  string-to-lofat-inversion-lemma-1
-  (implies (equal (mv-nth 1 (string-to-lofat-nx str))
-                  0)
-           (lofat-fs-p (mv-nth 0 (string-to-lofat-nx str))))
-  :hints (("goal" :in-theory (enable string-to-lofat-nx))))
-
-(defthm
   string-to-lofat-inversion
   (implies
    (and (stringp str)
