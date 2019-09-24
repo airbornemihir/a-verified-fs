@@ -4415,6 +4415,13 @@
                                      painful-debugging-lemma-2
                                      painful-debugging-lemma-3))))
 
+(defthm
+  lofat-fs-p-of-string-to-lofat-nx
+  (implies (equal (mv-nth 1 (string-to-lofat-nx str))
+                  0)
+           (lofat-fs-p (mv-nth 0 (string-to-lofat-nx str))))
+  :hints (("goal" :in-theory (enable string-to-lofat-nx))))
+
 (defund
   update-fat-aux (fa-table str pos)
   (if
