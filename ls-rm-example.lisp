@@ -37,40 +37,40 @@
   (equal (mv-nth 1 (rm-list fat32-in-memory pathname-list 1))
          1))
 
-(defthm
-  rm-list-correctness-1-lemma-2
-  (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (equal (mv-nth 1
-                   (hifat-find-file
-                    (mv-nth 0
-                            (lofat-to-hifat fat32-in-memory))
-                    fat32-pathname))
-           *enoent*)
-    ;; storing some hypotheses here
-    (not (null (mv-nth 1
-                       (rm-list-extra-hypothesis
-                        fat32-in-memory pathname-list)))))
-   (equal
-    (mv-nth 1
-            (hifat-find-file
-             (mv-nth 0
-                     (lofat-to-hifat
-                      (mv-nth 0
-                              (rm-list
-                               fat32-in-memory
-                               pathname-list
-                               exit-status))))
-             fat32-pathname))
-    *enoent*))
-  :hints (("goal" :in-theory (e/d (lofat-unlink)
-                                  (hifat-find-file))
-           :induct
-           (rm-list
-            fat32-in-memory
-            pathname-list
-            exit-status))))
+;; (defthm
+;;   rm-list-correctness-1-lemma-2
+;;   (implies
+;;    (and
+;;     (lofat-fs-p fat32-in-memory)
+;;     (equal (mv-nth 1
+;;                    (hifat-find-file
+;;                     (mv-nth 0
+;;                             (lofat-to-hifat fat32-in-memory))
+;;                     fat32-pathname))
+;;            *enoent*)
+;;     ;; storing some hypotheses here
+;;     (not (null (mv-nth 1
+;;                        (rm-list-extra-hypothesis
+;;                         fat32-in-memory pathname-list)))))
+;;    (equal
+;;     (mv-nth 1
+;;             (hifat-find-file
+;;              (mv-nth 0
+;;                      (lofat-to-hifat
+;;                       (mv-nth 0
+;;                               (rm-list
+;;                                fat32-in-memory
+;;                                pathname-list
+;;                                exit-status))))
+;;              fat32-pathname))
+;;     *enoent*))
+;;   :hints (("goal" :in-theory (e/d (lofat-unlink)
+;;                                   (hifat-find-file))
+;;            :induct
+;;            (rm-list
+;;             fat32-in-memory
+;;             pathname-list
+;;             exit-status))))
 
 (defthm
   rm-list-correctness-1

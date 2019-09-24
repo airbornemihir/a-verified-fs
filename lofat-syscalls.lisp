@@ -730,11 +730,159 @@
                                (lofat-remove-file fat32-in-memory
                                                   root-dir-ent pathname)))))
 
+(defthm
+  max-entry-count-of-clear-clusterchain
+  (equal (max-entry-count
+          (mv-nth 0
+                  (clear-clusterchain fat32-in-memory
+                                      masked-current-cluster length)))
+         (max-entry-count fat32-in-memory))
+  :hints (("goal" :in-theory (enable clear-clusterchain))))
+
+(defthm
+  max-entry-count-of-update-dir-contents
+  (equal
+   (max-entry-count (mv-nth 0
+                            (update-dir-contents fat32-in-memory
+                                                 first-cluster dir-contents)))
+   (max-entry-count fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-dir-contents))))
+
+(defthm
+  max-entry-count-of-lofat-remove-file
+  (equal
+   (max-entry-count
+    (mv-nth 0
+            (lofat-remove-file fat32-in-memory root-dir-ent pathname)))
+   (max-entry-count fat32-in-memory)))
+
+(defthm pseudo-root-dir-ent-of-place-contents
+  (equal (pseudo-root-dir-ent (mv-nth
+                               0
+                               (PLACE-CONTENTS
+                                FAT32-IN-MEMORY DIR-ENT
+                                CONTENTS FILE-LENGTH FIRST-CLUSTER)))
+         (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("Goal" :in-theory (enable pseudo-root-dir-ent)) ))
+
+(defthm pseudo-root-dir-ent-of-update-fati
+  (equal (pseudo-root-dir-ent (update-fati i v fat32-in-memory))
+         (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("goal" :in-theory (enable pseudo-root-dir-ent))))
+
+(defthm
+  pseudo-root-dir-ent-of-stobj-set-indices-in-fa-table
+  (equal (pseudo-root-dir-ent
+          (stobj-set-indices-in-fa-table
+           fat32-in-memory index-list value-list))
+         (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("goal" :in-theory (enable pseudo-root-dir-ent))))
+
+(defthm
+  pseudo-root-dir-ent-of-clear-clusterchain
+  (equal
+   (pseudo-root-dir-ent
+    (mv-nth 0
+            (clear-clusterchain fat32-in-memory
+                                masked-current-cluster length)))
+   (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("goal" :in-theory (enable clear-clusterchain))))
+
+(defthm
+  pseudo-root-dir-ent-of-update-dir-contents
+  (equal
+   (pseudo-root-dir-ent
+    (mv-nth 0
+            (update-dir-contents fat32-in-memory
+                                 first-cluster dir-contents)))
+   (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-dir-contents))))
+
+(defthm
+  root-dir-ent-list-of-update-dir-contents
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (dir-ent-p dir-ent)
+    (dir-ent-directory-p dir-ent)
+    (<= *ms-first-data-cluster*
+        (dir-ent-first-cluster dir-ent))
+    (stringp dir-contents)
+    (equal (mv-nth 1 (root-dir-ent-list fat32-in-memory))
+           0)
+    (not
+     (intersectp-equal
+      (mv-nth 0
+              (dir-ent-clusterchain fat32-in-memory dir-ent))
+      (mv-nth 0
+              (dir-ent-clusterchain fat32-in-memory
+                                    (pseudo-root-dir-ent fat32-in-memory))))))
+   (equal (root-dir-ent-list
+           (mv-nth 0
+                   (update-dir-contents fat32-in-memory
+                                        (dir-ent-first-cluster dir-ent)
+                                        dir-contents)))
+          (root-dir-ent-list fat32-in-memory)))
+  :hints (("goal" :in-theory (enable root-dir-ent-list))))
+
+(defthm root-dir-ent-list-of-lofat-remove-file
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (dir-ent-p root-dir-ent)
+        (>= (dir-ent-first-cluster root-dir-ent)
+            *ms-first-data-cluster*)
+        (< (dir-ent-first-cluster root-dir-ent)
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory)))
+        (fat32-filename-list-p pathname))
+   (equal (ROOT-DIR-ENT-LIST
+           (mv-nth
+            0
+            (lofat-remove-file
+             fat32-in-memory root-dir-ent pathname)))
+          (ROOT-DIR-ENT-LIST FAT32-IN-MEMORY))))
+
 (defthm lofat-fs-p-of-lofat-unlink
   (implies (lofat-fs-p fat32-in-memory)
            (lofat-fs-p
             (mv-nth 0 (lofat-unlink fat32-in-memory pathname))))
   :hints (("Goal" :in-theory (enable lofat-unlink)) ))
+
+(defthm lofat-unlink-refinement
+  (implies (and (lofat-fs-p fat32-in-memory)
+                (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory)) 0)
+                (equal (mv-nth
+                        1
+                        (lofat-unlink
+                         FAT32-IN-MEMORY
+                         PATHNAME))
+                       0)
+                (m1-regular-file-p
+                 (mv-nth
+                  0
+                  (hifat-find-file
+                   (mv-nth
+                    0
+                    (lofat-to-hifat-helper fat32-in-memory
+                                           (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+                                           (max-entry-count fat32-in-memory)))
+                   pathname))))
+           (equal
+            (mv-nth
+             0
+             (lofat-to-hifat
+              (mv-nth
+               0
+               (lofat-unlink
+                FAT32-IN-MEMORY
+                PATHNAME))))
+            (mv-nth
+             0
+             (hifat-unlink
+              (mv-nth 0 (lofat-to-hifat fat32-in-memory))
+              PATHNAME))))
+  :hints (("Goal" :in-theory (enable lofat-unlink lofat-to-hifat)
+           :do-not-induct t) ))
 
 (defund lofat-rmdir (fat32-in-memory pathname)
   (declare (xargs :stobjs fat32-in-memory
