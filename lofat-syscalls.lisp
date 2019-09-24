@@ -693,16 +693,42 @@
              (mv-nth 0
                      (hifat-find-file m1-file-alist2 pathname)))))))
 
-(defund lofat-unlink (fat32-in-memory pathname)
-  (declare (xargs :stobjs fat32-in-memory
-                  :guard (and (lofat-fs-p fat32-in-memory)
-                              (fat32-filename-list-p pathname))))
-  (b*
-      (((mv fs error-code) (lofat-to-hifat fat32-in-memory))
-       ((unless (equal error-code 0)) (mv fat32-in-memory -1 *eio*))
-       ((mv fs retval error-code) (hifat-unlink fs pathname))
-       ((mv fat32-in-memory &) (hifat-to-lofat fat32-in-memory fs)))
-    (mv fat32-in-memory retval error-code)))
+(defund
+  lofat-unlink (fat32-in-memory pathname)
+  (declare
+   (xargs :stobjs fat32-in-memory
+          :guard (and (lofat-fs-p fat32-in-memory)
+                      (fat32-filename-list-p pathname))))
+  (b* (((mv root-dir-ent-list &)
+        (root-dir-ent-list fat32-in-memory))
+       ((mv file error-code)
+        (lofat-find-file fat32-in-memory
+                         root-dir-ent-list pathname))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory -1 *enoent*))
+       ((unless (lofat-regular-file-p file))
+        (mv fat32-in-memory -1 *eisdir*))
+       ((mv fat32-in-memory error-code)
+        (lofat-remove-file fat32-in-memory
+                           (pseudo-root-dir-ent fat32-in-memory)
+                           pathname))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory -1 error-code)))
+    (mv fat32-in-memory 0 0)))
+
+;; Move later
+(defthm
+  lofat-fs-p-of-lofat-remove-file
+  (implies (and (lofat-fs-p fat32-in-memory)
+                (dir-ent-p root-dir-ent)
+                (>= (dir-ent-first-cluster root-dir-ent)
+                    *ms-first-data-cluster*)
+                (< (dir-ent-first-cluster root-dir-ent)
+                   (+ *ms-first-data-cluster*
+                      (count-of-clusters fat32-in-memory))))
+           (lofat-fs-p (mv-nth 0
+                               (lofat-remove-file fat32-in-memory
+                                                  root-dir-ent pathname)))))
 
 (defthm lofat-fs-p-of-lofat-unlink
   (implies (lofat-fs-p fat32-in-memory)
