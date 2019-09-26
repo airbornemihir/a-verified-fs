@@ -1193,6 +1193,16 @@
                t))))
            (car pathname)))))))))))
 
+(defthm lofat-unlink-refinement-lemma-9
+  (implies (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
+                  0)
+           (equal (mv-nth '1
+                          (root-dir-ent-list fat32-in-memory))
+                  '0))
+  :hints (("goal" :in-theory (enable lofat-to-hifat root-dir-ent-list
+                                     dir-ent-clusterchain-contents
+                                     pseudo-root-dir-ent))))
+
 (encapsulate
   () ;; start lemmas for lofat-unlink-refinement
 
@@ -1618,17 +1628,69 @@
                  t))))
              (car pathname)))))))))))
 
+  (local
+   (defthm
+     lofat-unlink-refinement-lemma-8
+     (implies
+      (not-intersectp-list
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                                2097152 (cluster-size fat32-in-memory)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list (mv-nth 0
+                                    (dir-ent-clusterchain-contents
+                                     fat32-in-memory
+                                     (pseudo-root-dir-ent fat32-in-memory))))
+         (max-entry-count fat32-in-memory))))
+      (not-intersectp-list
+       (mv-nth 0
+               (dir-ent-clusterchain fat32-in-memory
+                                     (pseudo-root-dir-ent fat32-in-memory)))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list (mv-nth 0
+                                    (dir-ent-clusterchain-contents
+                                     fat32-in-memory
+                                     (pseudo-root-dir-ent fat32-in-memory))))
+         (max-entry-count fat32-in-memory)))))
+     :hints
+     (("goal" :in-theory (e/d (pseudo-root-dir-ent dir-ent-clusterchain))))))
+
+  (local
+   (defthm
+     lofat-unlink-refinement-lemma-10
+     (implies
+      (equal (mv-nth 1
+                     (get-clusterchain-contents
+                      fat32-in-memory
+                      (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                      2097152))
+             0)
+      (equal
+       (mv-nth
+        1
+        (dir-ent-clusterchain-contents fat32-in-memory
+                                       (pseudo-root-dir-ent fat32-in-memory)))
+       0))
+     :hints
+     (("goal"
+       :in-theory (e/d (dir-ent-clusterchain-contents pseudo-root-dir-ent))))))
+
   (defthm
     lofat-unlink-refinement
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
       (fat32-filename-list-p pathname)
-      (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
-             0)
-      (equal (mv-nth 1
-                     (lofat-unlink fat32-in-memory pathname))
-             0)
+      (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory)) 0)
+      (equal (mv-nth 1 (lofat-unlink fat32-in-memory pathname)) 0)
       (m1-regular-file-p
        (mv-nth
         0
@@ -1637,19 +1699,6 @@
           0
           (lofat-to-hifat fat32-in-memory))
          pathname)))
-      (equal (mv-nth '1
-                     (root-dir-ent-list fat32-in-memory))
-             '0)
-      (not-intersectp-list
-       (mv-nth '0
-               (dir-ent-clusterchain fat32-in-memory
-                                     (pseudo-root-dir-ent fat32-in-memory)))
-       (mv-nth
-        '2
-        (lofat-to-hifat-helper fat32-in-memory
-                               (mv-nth '0
-                                       (root-dir-ent-list fat32-in-memory))
-                               (max-entry-count fat32-in-memory))))
       (equal
        (mv-nth 1
                (hifat-remove-file (mv-nth 0 (lofat-to-hifat fat32-in-memory))
@@ -1660,7 +1709,7 @@
         0
         (dir-ent-clusterchain (mv-nth 0
                                       (lofat-unlink fat32-in-memory pathname))
-         (pseudo-root-dir-ent fat32-in-memory)))))
+                              (pseudo-root-dir-ent fat32-in-memory)))))
      (equal
       (mv-nth 0
               (lofat-to-hifat (mv-nth 0
