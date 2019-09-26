@@ -799,6 +799,15 @@
   :hints (("goal" :in-theory (enable update-dir-contents))))
 
 (defthm
+  pseudo-root-dir-ent-of-lofat-remove-file
+  (equal
+   (pseudo-root-dir-ent
+    (mv-nth
+     0
+     (lofat-remove-file fat32-in-memory root-dir-ent pathname)))
+   (pseudo-root-dir-ent fat32-in-memory)))
+
+(defthm
   root-dir-ent-list-of-update-dir-contents
   (implies
    (and
@@ -825,22 +834,86 @@
           (root-dir-ent-list fat32-in-memory)))
   :hints (("goal" :in-theory (enable root-dir-ent-list))))
 
-(defthm root-dir-ent-list-of-lofat-remove-file
+(defthm dir-ent-directory-p-of-pseudo-root-dir-ent
+  (dir-ent-directory-p (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("Goal" :in-theory (enable pseudo-root-dir-ent))))
+
+(defthm
+  root-dir-ent-list-of-lofat-remove-file-coincident
   (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (dir-ent-p root-dir-ent)
-        (>= (dir-ent-first-cluster root-dir-ent)
-            *ms-first-data-cluster*)
-        (< (dir-ent-first-cluster root-dir-ent)
-           (+ *ms-first-data-cluster*
-              (count-of-clusters fat32-in-memory)))
-        (fat32-filename-list-p pathname))
-   (equal (ROOT-DIR-ENT-LIST
-           (mv-nth
-            0
-            (lofat-remove-file
-             fat32-in-memory root-dir-ent pathname)))
-          (ROOT-DIR-ENT-LIST FAT32-IN-MEMORY))))
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (fat32-filename-list-p pathname)
+    (equal (mv-nth 1 (root-dir-ent-list fat32-in-memory))
+           0)
+    (equal (mv-nth 1
+                   (lofat-remove-file fat32-in-memory
+                                      (pseudo-root-dir-ent fat32-in-memory)
+                                      pathname))
+           0)
+    ;; I'm not very happy with this hypothesis. We might end up having to
+    ;; change the interface (i.e. the return values) of lofat-to-hifat-helper.
+    (not-intersectp-list
+     (mv-nth '0
+             (dir-ent-clusterchain fat32-in-memory
+                                   (pseudo-root-dir-ent fat32-in-memory)))
+     (mv-nth '2
+             (lofat-to-hifat-helper
+              fat32-in-memory
+              (make-dir-ent-list
+               (mv-nth '0
+                       (dir-ent-clusterchain-contents
+                        fat32-in-memory
+                        (pseudo-root-dir-ent fat32-in-memory))))
+              (max-entry-count fat32-in-memory))))
+    (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
+           0))
+   (equal
+    (root-dir-ent-list
+     (mv-nth 0
+             (lofat-remove-file fat32-in-memory
+                                (pseudo-root-dir-ent fat32-in-memory)
+                                pathname)))
+    (if
+        (consp (cdr pathname))
+        (root-dir-ent-list fat32-in-memory)
+      (mv
+       (make-dir-ent-list
+        (implode
+         (append
+          (nats=>chars
+           (clear-dir-ent
+            (string=>nats (mv-nth 0
+                                  (dir-ent-clusterchain-contents
+                                   fat32-in-memory
+                                   (pseudo-root-dir-ent fat32-in-memory))))
+            (car pathname)))
+          (make-list-ac
+           (+
+            (-
+             (len
+              (explode (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory
+                                (pseudo-root-dir-ent fat32-in-memory))))))
+            (*
+             (cluster-size fat32-in-memory)
+             (len
+              (make-clusters
+               (nats=>string
+                (clear-dir-ent
+                 (string=>nats
+                  (mv-nth 0
+                          (dir-ent-clusterchain-contents
+                           fat32-in-memory
+                           (pseudo-root-dir-ent fat32-in-memory))))
+                 (car pathname)))
+               (cluster-size fat32-in-memory)))))
+           (code-char 0)
+           nil))))
+       0))))
+  :hints (("goal" :in-theory (enable root-dir-ent-list lofat-to-hifat)
+           :do-not-induct t)))
 
 (defthm lofat-fs-p-of-lofat-unlink
   (implies (lofat-fs-p fat32-in-memory)
