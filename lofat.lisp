@@ -1012,6 +1012,25 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable clear-clusterchain))))
 
 (defthm
+  max-entry-count-of-clear-clusterchain
+  (equal (max-entry-count
+          (mv-nth 0
+                  (clear-clusterchain fat32-in-memory
+                                      masked-current-cluster length)))
+         (max-entry-count fat32-in-memory))
+  :hints (("goal" :in-theory (enable clear-clusterchain))))
+
+(defthm
+  pseudo-root-dir-ent-of-clear-clusterchain
+  (equal
+   (pseudo-root-dir-ent
+    (mv-nth 0
+            (clear-clusterchain fat32-in-memory
+                                masked-current-cluster length)))
+   (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("goal" :in-theory (enable clear-clusterchain))))
+
+(defthm
   clear-clusterchain-correctness-1
   (implies
    (<= 2 masked-current-cluster)
@@ -1577,6 +1596,25 @@ Some (rather awful) testing forms are
            dir-ent)
           (dir-ent-clusterchain fat32-in-memory dir-ent)))
   :hints (("goal" :in-theory (enable dir-ent-clusterchain))))
+
+(defthm
+  max-entry-count-of-update-dir-contents
+  (equal
+   (max-entry-count (mv-nth 0
+                            (update-dir-contents fat32-in-memory
+                                                 first-cluster dir-contents)))
+   (max-entry-count fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-dir-contents))))
+
+(defthm
+  pseudo-root-dir-ent-of-update-dir-contents
+  (equal
+   (pseudo-root-dir-ent
+    (mv-nth 0
+            (update-dir-contents fat32-in-memory
+                                 first-cluster dir-contents)))
+   (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-dir-contents))))
 
 (defun
     lofat-place-file
@@ -2379,6 +2417,36 @@ Some (rather awful) testing forms are
                          (nats=>string (clear-dir-ent (string=>nats dir-contents) name)))))
 
 (defthm
+  lofat-fs-p-of-lofat-remove-file
+  (implies (and (lofat-fs-p fat32-in-memory)
+                (dir-ent-p root-dir-ent)
+                (>= (dir-ent-first-cluster root-dir-ent)
+                    *ms-first-data-cluster*)
+                (< (dir-ent-first-cluster root-dir-ent)
+                   (+ *ms-first-data-cluster*
+                      (count-of-clusters fat32-in-memory))))
+           (lofat-fs-p (mv-nth 0
+                               (lofat-remove-file fat32-in-memory
+                                                  root-dir-ent pathname)))))
+
+(defthm
+  max-entry-count-of-lofat-remove-file
+  (equal
+   (max-entry-count
+    (mv-nth 0
+            (lofat-remove-file fat32-in-memory root-dir-ent pathname)))
+   (max-entry-count fat32-in-memory)))
+
+(defthm
+  pseudo-root-dir-ent-of-lofat-remove-file
+  (equal
+   (pseudo-root-dir-ent
+    (mv-nth
+     0
+     (lofat-remove-file fat32-in-memory root-dir-ent pathname)))
+   (pseudo-root-dir-ent fat32-in-memory)))
+
+(defthm
   get-clusterchain-contents-of-update-dir-contents-disjoint
   (implies
    (and
@@ -3053,6 +3121,33 @@ Some (rather awful) testing forms are
     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
   :hints (("Goal" :induct
            (lofat-remove-file fat32-in-memory root-dir-ent pathname))))
+
+(defthm
+  root-dir-ent-list-of-update-dir-contents
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (dir-ent-p dir-ent)
+    (dir-ent-directory-p dir-ent)
+    (<= *ms-first-data-cluster*
+        (dir-ent-first-cluster dir-ent))
+    (stringp dir-contents)
+    (equal (mv-nth 1 (root-dir-ent-list fat32-in-memory))
+           0)
+    (not
+     (intersectp-equal
+      (mv-nth 0
+              (dir-ent-clusterchain fat32-in-memory dir-ent))
+      (mv-nth 0
+              (dir-ent-clusterchain fat32-in-memory
+                                    (pseudo-root-dir-ent fat32-in-memory))))))
+   (equal (root-dir-ent-list
+           (mv-nth 0
+                   (update-dir-contents fat32-in-memory
+                                        (dir-ent-first-cluster dir-ent)
+                                        dir-contents)))
+          (root-dir-ent-list fat32-in-memory)))
+  :hints (("goal" :in-theory (enable root-dir-ent-list))))
 
 (defthm
   count-of-clusters-of-lofat-remove-file
@@ -3849,6 +3944,96 @@ Some (rather awful) testing forms are
           (code-char 0)
           nil)))
        0)))))
+
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    root-dir-ent-list-of-lofat-remove-file-coincident-lemma-1
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (equal (mod length (cluster-size fat32-in-memory))
+                 0)
+          (not (zp y))
+          (equal (mod (cluster-size fat32-in-memory) y)
+                 0))
+     (equal
+      (mod
+       (len
+        (explode
+         (mv-nth 0
+                 (get-clusterchain-contents fat32-in-memory
+                                            masked-current-cluster length))))
+       y)
+      0))
+    :hints
+    (("goal" :induct (get-clusterchain-contents fat32-in-memory
+                                                masked-current-cluster length)
+      :in-theory (enable get-clusterchain-contents
+                         (:rewrite mod-sum-cases))))))
+
+(defthm
+  root-dir-ent-list-of-lofat-remove-file-coincident-lemma-2
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (dir-ent-directory-p dir-ent)
+        (not (zp y))
+        (equal (mod (cluster-size fat32-in-memory) y)
+               0))
+   (equal
+    (mod
+     (len
+      (explode
+       (mv-nth 0
+               (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
+     y)
+    0))
+  :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents))))
+
+(defthm
+  root-dir-ent-list-of-lofat-remove-file-coincident
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (fat32-filename-list-p pathname)
+    (equal (mv-nth 1 (root-dir-ent-list fat32-in-memory))
+           0)
+    (equal (mv-nth 1
+                   (lofat-remove-file fat32-in-memory
+                                      (pseudo-root-dir-ent fat32-in-memory)
+                                      pathname))
+           0)
+    ;; I'm not very happy with this hypothesis. We might end up having to
+    ;; change the interface (i.e. the return values) of lofat-to-hifat-helper.
+    (not-intersectp-list
+     (mv-nth '0
+             (dir-ent-clusterchain fat32-in-memory
+                                   (pseudo-root-dir-ent fat32-in-memory)))
+     (mv-nth '2
+             (lofat-to-hifat-helper
+              fat32-in-memory
+              (mv-nth '0
+                      (root-dir-ent-list
+                       fat32-in-memory))
+              (max-entry-count fat32-in-memory))))
+    (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
+           0))
+   (equal
+    (root-dir-ent-list
+     (mv-nth 0
+             (lofat-remove-file fat32-in-memory
+                                (pseudo-root-dir-ent fat32-in-memory)
+                                pathname)))
+    (if (consp (cdr pathname))
+        (root-dir-ent-list fat32-in-memory)
+      (mv (delete-dir-ent (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+                          (car pathname))
+          0))))
+  :hints (("goal" :in-theory (e/d (root-dir-ent-list lofat-to-hifat)
+                                  ((:rewrite make-list-ac-removal)))
+           :do-not-induct t)))
 
 (defthm
   lofat-to-hifat-helper-of-delete-dir-ent-1
@@ -5159,31 +5344,7 @@ Some (rather awful) testing forms are
                                 x))
        (fat32-build-index-list (effective-fat fat32-in-memory)
                                (dir-ent-first-cluster dir-ent)
-                               2097152 (cluster-size fat32-in-memory))))))
-
-  (defthm
-    lofat-remove-file-correctness-1-lemma-3
-    (implies
-     (and (lofat-fs-p fat32-in-memory)
-          (equal (mod length (cluster-size fat32-in-memory))
-                 0)
-          (not (zp y))
-          (equal (mod (cluster-size fat32-in-memory) y)
-                 0))
-     (equal
-      (mod
-       (len
-        (explode
-         (mv-nth 0
-                 (get-clusterchain-contents fat32-in-memory
-                                            masked-current-cluster length))))
-       y)
-      0))
-    :hints
-    (("goal" :induct (get-clusterchain-contents fat32-in-memory
-                                                masked-current-cluster length)
-      :in-theory (enable get-clusterchain-contents
-                         (:rewrite mod-sum-cases))))))
+                               2097152 (cluster-size fat32-in-memory)))))))
 
 ;; Kinda general.
 (defthmd
@@ -5285,24 +5446,6 @@ Some (rather awful) testing forms are
                    (lofat-remove-file fat32-in-memory dir-ent pathname))
            dir-ent)
           (dir-ent-clusterchain fat32-in-memory dir-ent))))
-
-(defthm
-  lofat-remove-file-correctness-1-lemma-5
-  (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (dir-ent-directory-p dir-ent)
-        (not (zp y))
-        (equal (mod (cluster-size fat32-in-memory) y)
-               0))
-   (equal
-    (mod
-     (len
-      (explode
-       (mv-nth 0
-               (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
-     y)
-    0))
-  :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents))))
 
 ;; This is actually kinda general.
 (defthm
@@ -7733,10 +7876,12 @@ Some (rather awful) testing forms are
           (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))))))
     :hints (("goal" :in-theory
              (disable
-              lofat-remove-file-correctness-1-lemma-5
+              root-dir-ent-list-of-lofat-remove-file-coincident-lemma-2
               lofat-fs-p-correctness-1)
              :use (lofat-fs-p-correctness-1
-                   (:instance lofat-remove-file-correctness-1-lemma-5 (y 32)))) )))
+                   (:instance
+                    root-dir-ent-list-of-lofat-remove-file-coincident-lemma-2
+                    (y 32)))) )))
 
 (encapsulate
   ()

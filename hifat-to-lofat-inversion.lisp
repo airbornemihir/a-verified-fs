@@ -1562,6 +1562,15 @@
              (+ 2
                 (count-of-clusters fat32-in-memory))))))))
 
+(defthm pseudo-root-dir-ent-of-update-fati
+  (equal (pseudo-root-dir-ent (update-fati i v fat32-in-memory))
+         (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("goal" :in-theory (enable pseudo-root-dir-ent))))
+
+(defthm dir-ent-directory-p-of-pseudo-root-dir-ent
+  (dir-ent-directory-p (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("Goal" :in-theory (enable pseudo-root-dir-ent))))
+
 (defund root-dir-ent-list (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (lofat-fs-p fat32-in-memory)))
@@ -1648,17 +1657,17 @@
           :guard (lofat-fs-p fat32-in-memory)
           :guard-hints
           (("Goal" :in-theory (enable root-dir-ent-list pseudo-root-dir-ent
-                                      dir-ent-clusterchain-contents)))))
+                                      dir-ent-clusterchain-contents
+                                      dir-ent-clusterchain)))))
   (b*
       (((unless
             (mbt (>= (fat32-entry-mask (bpb_rootclus fat32-in-memory))
                      *ms-first-data-cluster*)))
         (mv nil *eio*))
        ((mv root-dir-clusterchain error-code)
-        (get-clusterchain
+        (dir-ent-clusterchain
          fat32-in-memory
-         (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-         *ms-max-dir-size*))
+         (pseudo-root-dir-ent fat32-in-memory)))
        ;; We're gradually trying to have more of the pattern where we
        ;; explicitly say what the error code is going to be, rather than pass
        ;; on the value of the error code from a function call. We actually
@@ -2115,6 +2124,14 @@
                      fat32-in-memory index-list value-list))
    (max-entry-count fat32-in-memory))
   :hints (("goal" :in-theory (enable max-entry-count))))
+
+(defthm
+  pseudo-root-dir-ent-of-stobj-set-indices-in-fa-table
+  (equal (pseudo-root-dir-ent
+          (stobj-set-indices-in-fa-table
+           fat32-in-memory index-list value-list))
+         (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("goal" :in-theory (enable pseudo-root-dir-ent))))
 
 (defthm
   get-clusterchain-contents-of-stobj-set-indices-in-fa-table-disjoint
@@ -2575,6 +2592,15 @@
              (place-contents fat32-in-memory
                              dir-ent contents file-length first-cluster)))
     :hints (("goal" :in-theory (enable dir-ent-p))))))
+
+(defthm pseudo-root-dir-ent-of-place-contents
+  (equal (pseudo-root-dir-ent (mv-nth
+                               0
+                               (PLACE-CONTENTS
+                                FAT32-IN-MEMORY DIR-ENT
+                                CONTENTS FILE-LENGTH FIRST-CLUSTER)))
+         (pseudo-root-dir-ent fat32-in-memory))
+  :hints (("Goal" :in-theory (enable pseudo-root-dir-ent)) ))
 
 (encapsulate
   ()
@@ -8973,7 +8999,8 @@
      (lofat-to-hifat hifat-to-lofat
                      hifat-to-lofat-inversion-lemma-17
                      lofat-to-hifat-inversion-lemma-4
-                     lofat-to-hifat-helper-correctness-5-lemma-5)
+                     lofat-to-hifat-helper-correctness-5-lemma-5
+                     dir-ent-clusterchain pseudo-root-dir-ent)
      (lofat-to-hifat-inversion-lemma-3 generate-index-list
                                        non-free-index-listp-correctness-6))
     :use
