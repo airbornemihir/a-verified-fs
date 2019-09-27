@@ -5165,7 +5165,7 @@ Some (rather awful) testing forms are
     no-duplicatesp-equal-of-fat32-build-index-list-of-effective-fat-of-update-dir-contents)))
 
 (defthm
-  lofat-remove-file-correctness-1-lemma-1
+  lofat-remove-file-correctness-1-lemma-18
   (implies
    (and (< (fat32-entry-mask (fati (dir-ent-first-cluster dir-ent)
                                    fat32-in-memory))
@@ -5231,7 +5231,7 @@ Some (rather awful) testing forms are
 
   ;; This is actually somewhat general.
   (defthm
-    lofat-remove-file-correctness-1-lemma-2
+    lofat-remove-file-correctness-1-lemma-22
     (implies
      (and (lofat-fs-p fat32-in-memory)
           (dir-ent-directory-p dir-ent)
@@ -5348,7 +5348,7 @@ Some (rather awful) testing forms are
 
 ;; Kinda general.
 (defthmd
-  lofat-remove-file-correctness-1-lemma-4
+  lofat-remove-file-correctness-1-lemma-23
   (implies
    (and
     (consp (cdr pathname))
@@ -5449,7 +5449,7 @@ Some (rather awful) testing forms are
 
 ;; This is actually kinda general.
 (defthm
-  lofat-remove-file-correctness-1-lemma-6
+  lofat-remove-file-correctness-1-lemma-60
   (implies
    (and (useful-dir-ent-list-p dir-ent-list)
         (equal (mv-nth 3
@@ -5524,7 +5524,7 @@ Some (rather awful) testing forms are
 
 ;; The hypotheses are minimal.
 (defthm
-  lofat-remove-file-correctness-1-lemma-7
+  lofat-remove-file-correctness-1-lemma-63
   (implies
    (and
     (useful-dir-ent-list-p dir-ent-list)
@@ -5564,7 +5564,7 @@ Some (rather awful) testing forms are
 
 ;; Also a general theorem.
 (defthm
-  lofat-remove-file-correctness-1-lemma-8
+  lofat-remove-file-correctness-1-lemma-68
   (implies
    (and (useful-dir-ent-list-p dir-ent-list)
         (equal (mv-nth 3
@@ -11123,7 +11123,7 @@ Some (rather awful) testing forms are
        (mv dir-ent-list entry-limit fat32-in-memory x)))))
 
   (defthm
-    lofat-remove-file-correctness-1-lemma-69
+    lofat-remove-file-correctness-1-lemma-2
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -11343,7 +11343,7 @@ Some (rather awful) testing forms are
           dir-ent-list entry-limit)))))))
 
   (defthm
-    lofat-remove-file-correctness-1-lemma-70
+    lofat-remove-file-correctness-1-lemma-3
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -11789,7 +11789,7 @@ Some (rather awful) testing forms are
           dir-ent-list entry-limit)))))))
 
   (defthm
-    lofat-remove-file-correctness-1-lemma-71
+    lofat-remove-file-correctness-1-lemma-4
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -12164,7 +12164,7 @@ Some (rather awful) testing forms are
   ;;            (:rewrite not-intersectp-list-of-append-2)
   ;;            (:rewrite zp-open))
   (defthm
-    lofat-remove-file-correctness-1-lemma-72
+    lofat-remove-file-correctness-1-lemma-5
     (implies
      (and
       (consp (cdr pathname))
@@ -12571,7 +12571,7 @@ Some (rather awful) testing forms are
           dir-ent-list entry-limit))))))))
 
 (defthm
-  lofat-remove-file-correctness-1-lemma-73
+  lofat-remove-file-correctness-1-lemma-6
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -12677,13 +12677,13 @@ Some (rather awful) testing forms are
      0)))
   :hints
   (("goal" :in-theory (disable
-                       lofat-remove-file-correctness-1-lemma-69)
+                       lofat-remove-file-correctness-1-lemma-2)
     :use (:instance
-          lofat-remove-file-correctness-1-lemma-69
+          lofat-remove-file-correctness-1-lemma-2
           (x nil)))))
 
 (defthm
-  lofat-remove-file-correctness-1-lemma-74
+  lofat-remove-file-correctness-1-lemma-7
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -12904,14 +12904,14 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory
     (disable
-     lofat-remove-file-correctness-1-lemma-70)
+     lofat-remove-file-correctness-1-lemma-3)
     :use
     (:instance
-     lofat-remove-file-correctness-1-lemma-70
+     lofat-remove-file-correctness-1-lemma-3
      (x nil)))))
 
 (defthm
-  lofat-remove-file-correctness-1-lemma-75
+  lofat-remove-file-correctness-1-lemma-8
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -13089,14 +13089,14 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory
     (disable
-     lofat-remove-file-correctness-1-lemma-71)
+     lofat-remove-file-correctness-1-lemma-4)
     :use
     (:instance
-     lofat-remove-file-correctness-1-lemma-71
+     lofat-remove-file-correctness-1-lemma-4
      (x nil)))))
 
 (defthm
-  lofat-remove-file-correctness-1-lemma-76
+  lofat-remove-file-correctness-1-lemma-9
   (implies
    (and
     (consp (cdr pathname))
@@ -13262,8 +13262,8 @@ Some (rather awful) testing forms are
      ;;          (lofat-to-hifat-helper fat32-in-memory
      ;;                                 dir-ent-list entry-limit))))
     ))
-  :hints (("goal" :in-theory (disable lofat-remove-file-correctness-1-lemma-72)
-           :use (:instance lofat-remove-file-correctness-1-lemma-72
+  :hints (("goal" :in-theory (disable lofat-remove-file-correctness-1-lemma-5)
+           :use (:instance lofat-remove-file-correctness-1-lemma-5
                            (x nil)))))
 
 (encapsulate
@@ -13357,7 +13357,7 @@ Some (rather awful) testing forms are
 
   ;; Hypotheses trimmed.
   (defthm
-    lofat-remove-file-correctness-1-lemma-77
+    lofat-remove-file-correctness-1-lemma-1
     (b*
         (((mv fs error-code)
           (hifat-remove-file
@@ -13613,8 +13613,8 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory (disable
-                lofat-remove-file-correctness-1-lemma-77)
+                lofat-remove-file-correctness-1-lemma-1)
     :use
     (:instance
-     lofat-remove-file-correctness-1-lemma-77
+     lofat-remove-file-correctness-1-lemma-1
      (x nil)))))
