@@ -1544,6 +1544,11 @@ Some (rather awful) testing forms are
                                  first-cluster dir-contents))))
   :hints (("goal" :in-theory (enable update-dir-contents))))
 
+(defthm update-fati-of-update-fati
+  (equal (update-fati i v1 (update-fati i v2 fat32-in-memory))
+         (update-fati i v1 fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-fati))))
+
 ;; (defthm
 ;;   fat32-build-index-list-of-effective-fat-of-update-dir-contents-lemma-1
 ;;   (implies
