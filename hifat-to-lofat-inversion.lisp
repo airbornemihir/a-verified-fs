@@ -2593,14 +2593,27 @@
                              dir-ent contents file-length first-cluster)))
     :hints (("goal" :in-theory (enable dir-ent-p))))))
 
-(defthm pseudo-root-dir-ent-of-place-contents
-  (equal (pseudo-root-dir-ent (mv-nth
-                               0
-                               (PLACE-CONTENTS
-                                FAT32-IN-MEMORY DIR-ENT
-                                CONTENTS FILE-LENGTH FIRST-CLUSTER)))
+(defthm
+  pseudo-root-dir-ent-of-place-contents
+  (equal (pseudo-root-dir-ent
+          (mv-nth 0
+                  (place-contents fat32-in-memory dir-ent
+                                  contents file-length first-cluster)))
          (pseudo-root-dir-ent fat32-in-memory))
-  :hints (("Goal" :in-theory (enable pseudo-root-dir-ent)) ))
+  :hints (("goal" :in-theory (enable pseudo-root-dir-ent))))
+
+(defthmd
+  place-contents-correctness-1
+  (implies
+   (not (equal (mv-nth 2
+                       (place-contents fat32-in-memory dir-ent
+                                       contents file-length first-cluster))
+               0))
+   (equal (mv-nth 0
+                  (place-contents fat32-in-memory dir-ent
+                                  contents file-length first-cluster))
+          fat32-in-memory))
+  :hints (("goal" :in-theory (enable place-contents))))
 
 (encapsulate
   ()
