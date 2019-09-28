@@ -1497,13 +1497,18 @@ Some (rather awful) testing forms are
                             first-cluster *ms-max-dir-size*))
        ((unless (equal error-code 0))
         (mv fat32-in-memory *eio*))
+       (saved-val (fati first-cluster fat32-in-memory))
        (fat32-in-memory (update-fati first-cluster *ms-end-of-clusterchain*
                                      fat32-in-memory))
        ((unless (> (length dir-contents) 0))
         (mv fat32-in-memory 0))
        ((mv fat32-in-memory & error-code &)
         (place-contents fat32-in-memory (dir-ent-fix nil) dir-contents 0
-                        first-cluster)))
+                        first-cluster))
+       ((when (equal error-code 0))
+        (mv fat32-in-memory error-code))
+       (fat32-in-memory (update-fati first-cluster saved-val
+                                     fat32-in-memory)))
     (mv fat32-in-memory error-code)))
 
 (defthm
@@ -1544,112 +1549,31 @@ Some (rather awful) testing forms are
                                  first-cluster dir-contents))))
   :hints (("goal" :in-theory (enable update-dir-contents))))
 
-;; (defthm
-;;   fat32-build-index-list-of-effective-fat-of-update-dir-contents-lemma-1
-;;   (implies
-;;    (and
-;;     (<= (+ 2 (count-of-clusters fat32-in-memory))
-;;         first-cluster)
-;;     (lofat-fs-p fat32-in-memory)
-;;     (fat32-masked-entry-p first-cluster)
-;;     (fat32-masked-entry-p masked-current-cluster)
-;;     (not
-;;      (intersectp-equal
-;;       (mv-nth 0
-;;               (fat32-build-index-list (effective-fat fat32-in-memory)
-;;                                       masked-current-cluster
-;;                                       length (cluster-size fat32-in-memory)))
-;;       (list first-cluster))))
-;;    (equal
-;;     (fat32-build-index-list
-;;      (effective-fat
-;;       (mv-nth 0
-;;               (clear-clusterchain fat32-in-memory first-cluster 2097152)))
-;;      masked-current-cluster
-;;      length (cluster-size fat32-in-memory))
-;;     (fat32-build-index-list (effective-fat fat32-in-memory)
-;;                             masked-current-cluster
-;;                             length (cluster-size fat32-in-memory))))
-;;   :hints
-;;   (("goal"
-;;     :in-theory (e/d (intersectp-equal clear-clusterchain)
-;;                     (intersectp-is-commutative))
-;;     :expand
-;;     ((fat32-build-index-list (effective-fat fat32-in-memory)
-;;                              first-cluster *ms-max-dir-size*
-;;                              (cluster-size fat32-in-memory))
-;;      (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
-;;     :use
-;;     (:instance
-;;      (:rewrite intersectp-is-commutative)
-;;      (y (mv-nth 0
-;;                 (fat32-build-index-list (effective-fat fat32-in-memory)
-;;                                         first-cluster 2097152
-;;                                         (cluster-size fat32-in-memory))))
-;;      (x (mv-nth 0
-;;                 (fat32-build-index-list (effective-fat fat32-in-memory)
-;;                                         masked-current-cluster length
-;;                                         (cluster-size fat32-in-memory))))))))
+(defthm update-fati-of-update-fati
+  (equal (update-fati i v1 (update-fati i v2 fat32-in-memory))
+         (update-fati i v1 fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-fati))))
 
-(defthm
-  fat32-build-index-list-of-effective-fat-of-update-dir-contents
-  (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (fat32-masked-entry-p first-cluster)
-    (<= *ms-first-data-cluster* first-cluster)
-    (stringp dir-contents)
-    (fat32-masked-entry-p masked-current-cluster)
-    (<= *ms-first-data-cluster*
-        masked-current-cluster)
-    (not
-     (intersectp-equal
-      (mv-nth 0
-              (fat32-build-index-list (effective-fat fat32-in-memory)
-                                      masked-current-cluster
-                                      length (cluster-size fat32-in-memory)))
-      (mv-nth 0
-              (fat32-build-index-list (effective-fat fat32-in-memory)
-                                      first-cluster *ms-max-dir-size*
-                                      (cluster-size fat32-in-memory)))))
-    (equal
-     (mv-nth 1
-             (fat32-build-index-list (effective-fat fat32-in-memory)
-                                     masked-current-cluster
-                                     length (cluster-size fat32-in-memory)))
-     0)
-    (equal cluster-size (cluster-size fat32-in-memory)))
-   (equal
-    (fat32-build-index-list
-     (effective-fat
-      (mv-nth 0
-              (update-dir-contents fat32-in-memory
-                                   first-cluster dir-contents)))
-     masked-current-cluster
-     length cluster-size)
-    (fat32-build-index-list (effective-fat fat32-in-memory)
-                            masked-current-cluster
-                            length cluster-size)))
-  :hints
-  (("goal"
-    :in-theory (e/d (update-dir-contents intersectp-equal clear-clusterchain)
-                    (intersectp-is-commutative))
-    :expand
-    ((fat32-build-index-list (effective-fat fat32-in-memory)
-                             first-cluster *ms-max-dir-size*
-                             (cluster-size fat32-in-memory))
-     (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
-    :use
-    (:instance
-     (:rewrite intersectp-is-commutative)
-     (y (mv-nth 0
-                (fat32-build-index-list (effective-fat fat32-in-memory)
-                                        first-cluster 2097152
-                                        (cluster-size fat32-in-memory))))
-     (x (mv-nth 0
-                (fat32-build-index-list (effective-fat fat32-in-memory)
-                                        masked-current-cluster length
-                                        (cluster-size fat32-in-memory))))))))
+;; Leave this for later.
+;; (defthmd
+;;   update-dir-contents-correctness-1
+;;   (implies
+;;    (not
+;;     (equal
+;;      (mv-nth
+;;       1
+;;       (update-dir-contents
+;;        fat32-in-memory first-cluster dir-contents))
+;;      0))
+;;    (equal
+;;     (mv-nth
+;;      0
+;;      (update-dir-contents
+;;       fat32-in-memory first-cluster dir-contents))
+;;     fat32-in-memory))
+;;   :hints (("Goal" :in-theory (enable update-dir-contents
+;;                                      place-contents-correctness-1
+;;                                      clear-clusterchain-correctness-3)) ))
 
 (defthm
   dir-ent-clusterchain-of-update-dir-contents
