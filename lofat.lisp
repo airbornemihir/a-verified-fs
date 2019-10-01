@@ -1571,6 +1571,46 @@ Some (rather awful) testing forms are
                (fat32-in-memory fat32-in-memory)
                (n i))))))
 
+;; Move later
+(defthm update-dir-contents-guard-lemma-1
+  (implies (and (< 0 b) (bounded-nat-listp l b))
+           (< (car (last l)) b))
+  :hints (("goal" :induct (bounded-nat-listp l b)))
+  :rule-classes :linear)
+
+(defthm
+  update-dir-contents-guard-lemma-2
+  (implies
+   (and (fat32-masked-entry-p masked-current-cluster)
+        (< masked-current-cluster (len fa-table)))
+   (<
+    (car (last (mv-nth 0
+                       (fat32-build-index-list fa-table masked-current-cluster
+                                               length cluster-size))))
+    (len fa-table)))
+  :hints
+  (("goal"
+    :in-theory (disable update-dir-contents-guard-lemma-1)
+    :use
+    (:instance
+     update-dir-contents-guard-lemma-1
+     (l (mv-nth 0
+                (fat32-build-index-list fa-table masked-current-cluster
+                                        length cluster-size)))
+     (b (len fa-table)))))
+  :rule-classes :linear)
+
+;; Move later
+(defthm integerp-of-car-of-last-when-integer-listp
+  (implies (and (integer-listp l) (consp l))
+           (integerp (car (last l)))))
+
+;; Move later
+(defthm non-negativity-of-car-of-last-when-nat-listp
+  (implies (nat-listp l)
+           (<= 0 (car (last l))))
+  :rule-classes :linear)
+
 ;; This function calls place-contents with a meaningless value of dir-ent,
 ;; because we know that for a well-formed directory, the contents will be
 ;; non-empty and so there's no way we're going to be returned a dir-ent with
@@ -1590,22 +1630,56 @@ Some (rather awful) testing forms are
                    first-cluster)
                 (stringp dir-contents))
     :guard-hints
-    (("goal" :expand (fat32-build-index-list
-                      (effective-fat fat32-in-memory)
-                      first-cluster 2097152
-                      (cluster-size fat32-in-memory))))))
-  (b* (((mv fat32-in-memory error-code)
+    (("goal"
+      :expand (fat32-build-index-list
+               (effective-fat fat32-in-memory)
+               first-cluster
+               2097152 (cluster-size fat32-in-memory))
+      :in-theory
+      (disable
+       bounded-nat-listp-correctness-1
+       (:linear non-negativity-of-car-of-last-when-nat-listp))
+      :use
+      ((:instance
+        nat-listp-forward-to-integer-listp
+        (x (mv-nth 0
+                   (fat32-build-index-list
+                    (effective-fat fat32-in-memory)
+                    first-cluster *ms-max-dir-size*
+                    (cluster-size fat32-in-memory)))))
+       (:instance
+        (:linear non-negativity-of-car-of-last-when-nat-listp)
+        (l (mv-nth 0
+                   (fat32-build-index-list
+                    (effective-fat fat32-in-memory)
+                    first-cluster *ms-max-dir-size*
+                    (cluster-size fat32-in-memory))))))))))
+  (b* (((mv clusterchain &)
+        (get-clusterchain fat32-in-memory
+                          first-cluster *ms-max-dir-size*))
+       (last-value
+        (fat32-entry-mask (fati (car (last clusterchain))
+                                fat32-in-memory)))
+       ((mv fat32-in-memory error-code)
         (clear-clusterchain fat32-in-memory
                             first-cluster *ms-max-dir-size*))
        ((unless (equal error-code 0))
         (mv fat32-in-memory *eio*))
-       (fat32-in-memory (update-fati first-cluster *ms-end-of-clusterchain*
-                                     fat32-in-memory))
+       (fat32-in-memory
+        (update-fati first-cluster *ms-end-of-clusterchain*
+                     fat32-in-memory))
        ((unless (> (length dir-contents) 0))
         (mv fat32-in-memory 0))
        ((mv fat32-in-memory & error-code &)
-        (place-contents fat32-in-memory (dir-ent-fix nil) dir-contents 0
-                        first-cluster)))
+        (place-contents fat32-in-memory (dir-ent-fix nil)
+                        dir-contents 0 first-cluster))
+       ((when (equal error-code 0))
+        (mv fat32-in-memory 0))
+       ;; Reversing the effects of clear-clusterchain
+       (fat32-in-memory (stobj-set-indices-in-fa-table
+                         fat32-in-memory clusterchain
+                         (append (cdr clusterchain)
+                                 (list last-value)))))
     (mv fat32-in-memory error-code)))
 
 (defthm
