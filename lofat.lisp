@@ -1081,6 +1081,108 @@ Some (rather awful) testing forms are
           fat32-in-memory))
   :hints (("goal" :in-theory (enable clear-clusterchain))))
 
+(defthm
+  clear-clusterchain-reversibility-lemma-1
+  (implies
+   (equal (mv-nth 1
+                  (fat32-build-index-list fa-table masked-current-cluster
+                                          length cluster-size))
+          0)
+   (consp (mv-nth 0
+                  (fat32-build-index-list fa-table masked-current-cluster
+                                          length cluster-size))))
+  :hints (("goal" :in-theory (enable fat32-build-index-list))))
+
+;; Hypotheses are minimal.
+(defthm
+  clear-clusterchain-reversibility-lemma-2
+  (implies
+   (lofat-fs-p fat32-in-memory)
+   (equal
+    (stobj-set-indices-in-fa-table
+     fat32-in-memory
+     (mv-nth 0
+             (fat32-build-index-list (effective-fat fat32-in-memory)
+                                     masked-current-cluster
+                                     length (cluster-size fat32-in-memory)))
+     (append
+      (cdr
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                masked-current-cluster
+                                length (cluster-size fat32-in-memory))))
+      (list
+       (fat32-entry-mask
+        (fati
+         (car
+          (last
+           (mv-nth 0
+                   (fat32-build-index-list (effective-fat fat32-in-memory)
+                                           masked-current-cluster length
+                                           (cluster-size fat32-in-memory)))))
+         fat32-in-memory)))))
+    fat32-in-memory))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (stobj-set-indices-in-fa-table fat32-build-index-list
+                                    fat32-update-lower-28-of-fat32-entry-mask)
+     ((:rewrite get-clusterchain-contents-correctness-2)))
+    :induct (fat32-build-index-list (effective-fat fat32-in-memory)
+                                    masked-current-cluster
+                                    length (cluster-size fat32-in-memory))
+    :expand
+    (fat32-build-index-list
+     (effective-fat fat32-in-memory)
+     (fat32-entry-mask (fati masked-current-cluster fat32-in-memory))
+     (+ length
+        (- (cluster-size fat32-in-memory)))
+     (cluster-size fat32-in-memory)))))
+
+(defthm
+  clear-clusterchain-reversibility
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (fat32-masked-entry-p masked-current-cluster)
+        (>= masked-current-cluster
+            *ms-first-data-cluster*)
+        (< masked-current-cluster
+           (+ (count-of-clusters fat32-in-memory)
+              *ms-first-data-cluster*)))
+   (equal
+    (stobj-set-indices-in-fa-table
+     (mv-nth 0
+             (clear-clusterchain fat32-in-memory
+                                 masked-current-cluster length))
+     (mv-nth 0
+             (fat32-build-index-list (effective-fat fat32-in-memory)
+                                     masked-current-cluster
+                                     length (cluster-size fat32-in-memory)))
+     (append
+      (cdr
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                masked-current-cluster
+                                length (cluster-size fat32-in-memory))))
+      (list
+       (fat32-entry-mask
+        (fati
+         (car
+          (last
+           (mv-nth 0
+                   (fat32-build-index-list (effective-fat fat32-in-memory)
+                                           masked-current-cluster length
+                                           (cluster-size fat32-in-memory)))))
+         fat32-in-memory)))))
+    fat32-in-memory))
+  :hints (("goal" :in-theory (e/d (clear-clusterchain)
+                                  (clear-clusterchain-reversibility-lemma-2))
+           :use clear-clusterchain-reversibility-lemma-2
+           :do-not-induct t)))
+
 (encapsulate
   ()
 
