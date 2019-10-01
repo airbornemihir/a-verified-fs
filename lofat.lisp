@@ -1544,58 +1544,6 @@ Some (rather awful) testing forms are
                                  first-cluster dir-contents))))
   :hints (("goal" :in-theory (enable update-dir-contents))))
 
-(defthm update-fati-of-update-fati
-  (equal (update-fati i v1 (update-fati i v2 fat32-in-memory))
-         (update-fati i v1 fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-fati))))
-
-;; (defthm
-;;   fat32-build-index-list-of-effective-fat-of-update-dir-contents-lemma-1
-;;   (implies
-;;    (and
-;;     (<= (+ 2 (count-of-clusters fat32-in-memory))
-;;         first-cluster)
-;;     (lofat-fs-p fat32-in-memory)
-;;     (fat32-masked-entry-p first-cluster)
-;;     (fat32-masked-entry-p masked-current-cluster)
-;;     (not
-;;      (intersectp-equal
-;;       (mv-nth 0
-;;               (fat32-build-index-list (effective-fat fat32-in-memory)
-;;                                       masked-current-cluster
-;;                                       length (cluster-size fat32-in-memory)))
-;;       (list first-cluster))))
-;;    (equal
-;;     (fat32-build-index-list
-;;      (effective-fat
-;;       (mv-nth 0
-;;               (clear-clusterchain fat32-in-memory first-cluster 2097152)))
-;;      masked-current-cluster
-;;      length (cluster-size fat32-in-memory))
-;;     (fat32-build-index-list (effective-fat fat32-in-memory)
-;;                             masked-current-cluster
-;;                             length (cluster-size fat32-in-memory))))
-;;   :hints
-;;   (("goal"
-;;     :in-theory (e/d (intersectp-equal clear-clusterchain)
-;;                     (intersectp-is-commutative))
-;;     :expand
-;;     ((fat32-build-index-list (effective-fat fat32-in-memory)
-;;                              first-cluster *ms-max-dir-size*
-;;                              (cluster-size fat32-in-memory))
-;;      (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
-;;     :use
-;;     (:instance
-;;      (:rewrite intersectp-is-commutative)
-;;      (y (mv-nth 0
-;;                 (fat32-build-index-list (effective-fat fat32-in-memory)
-;;                                         first-cluster 2097152
-;;                                         (cluster-size fat32-in-memory))))
-;;      (x (mv-nth 0
-;;                 (fat32-build-index-list (effective-fat fat32-in-memory)
-;;                                         masked-current-cluster length
-;;                                         (cluster-size fat32-in-memory))))))))
-
 (defthm
   fat32-build-index-list-of-effective-fat-of-update-dir-contents
   (implies
@@ -13373,6 +13321,8 @@ Some (rather awful) testing forms are
      lofat-remove-file-correctness-1-lemma-4
      (x nil)))))
 
+;; The hypotheses for this lemma have been trimmed to the extent that
+;; remove-hyps can handle.
 (defthm
   lofat-remove-file-correctness-1-lemma-9
   (implies

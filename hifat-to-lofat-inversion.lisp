@@ -2250,6 +2250,99 @@
                             (:rewrite member-of-a-nat-list)
                             (:definition member-equal))))))
 
+;; Move later
+(defthm
+  fat-entry-count-of-update-fati
+  (equal (fat-entry-count (update-fati i v fat32-in-memory))
+         (fat-entry-count fat32-in-memory))
+  :hints
+  (("goal" :in-theory (enable fat-entry-count update-fati))))
+
+;; Move later
+(defthm update-fati-of-update-fati-coincident
+  (equal (update-fati i v1 (update-fati i v2 fat32-in-memory))
+         (update-fati i v1 fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-fati))))
+
+;; Move later
+(defthm update-fati-of-update-fati-disjoint
+  (implies (not (equal (nfix i1) (nfix i2)))
+           (equal (update-fati i1 v1 (update-fati i2 v2 fat32-in-memory))
+                  (update-fati i2 v2 (update-fati i1 v1 fat32-in-memory))))
+  :hints (("goal" :in-theory (enable update-fati))))
+
+(defthm
+  stobj-set-indices-in-fa-table-of-stobj-set-indices-in-fa-table-lemma-1
+  (implies
+   (and (not (member-equal i index-list))
+        (natp i))
+   (equal
+    (fati
+     i
+     (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list))
+    (fati i fat32-in-memory)))
+  :hints (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
+
+(defthm
+  stobj-set-indices-in-fa-table-of-stobj-set-indices-in-fa-table-lemma-2
+  (implies
+   (and (not (member-equal i index-list))
+        (natp i)
+        (< i (fat-length fat32-in-memory)))
+   (equal
+    (stobj-set-indices-in-fa-table (update-fati i v fat32-in-memory)
+                                   index-list value-list)
+    (update-fati i v
+                 (stobj-set-indices-in-fa-table fat32-in-memory
+                                                index-list value-list))))
+  :hints (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun-nx
+     induction-scheme
+     (fat32-in-memory index-list value-list1 value-list2)
+     (cond
+      ((not (consp value-list2))
+       (mv fat32-in-memory
+           index-list value-list1 value-list2))
+      (t
+       (induction-scheme
+        (update-fati (car index-list)
+                     (fat32-update-lower-28
+                      (fati (car index-list) fat32-in-memory)
+                      (car value-list2))
+                     fat32-in-memory)
+        (cdr index-list)
+        (cdr value-list1)
+        (cdr value-list2))))))
+
+  (defthm
+    stobj-set-indices-in-fa-table-of-stobj-set-indices-in-fa-table
+    (implies
+     (and (fat32-masked-entry-list-p value-list1)
+          (equal (len value-list1)
+                 (len index-list))
+          (equal (len value-list2)
+                 (len index-list))
+          (no-duplicatesp-equal index-list))
+     (equal
+      (stobj-set-indices-in-fa-table
+       (stobj-set-indices-in-fa-table fat32-in-memory index-list value-list1)
+       index-list value-list2)
+      (stobj-set-indices-in-fa-table fat32-in-memory
+                                     index-list value-list2)))
+    :hints
+    (("goal"
+      :in-theory (enable stobj-set-indices-in-fa-table)
+      :induct (induction-scheme fat32-in-memory
+                                index-list value-list1 value-list2)
+      :expand (:free (fat32-in-memory value-list)
+                     (stobj-set-indices-in-fa-table fat32-in-memory
+                                                    index-list value-list))))))
+
 (defun
     stobj-set-clusters
     (cluster-list index-list fat32-in-memory)
