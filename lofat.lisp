@@ -11678,7 +11678,7 @@ Some (rather awful) testing forms are
                                   pathname))))))))
 
 (defthmd
-  lofat-remove-file-correctness-1-lemma-65
+  lofat-remove-file-correctness-1-lemma-37
   (implies
    (and
     (syntaxp (variablep entry-limit))
@@ -11756,7 +11756,7 @@ Some (rather awful) testing forms are
                                  pathname)))))))
 
 (defthmd
-  lofat-remove-file-correctness-1-lemma-66
+  lofat-remove-file-correctness-1-lemma-38
   (implies
    (and
     (equal
@@ -11984,7 +11984,7 @@ Some (rather awful) testing forms are
       (fat32-in-memory fat32-in-memory))))))
 
 (defthm
-  lofat-remove-file-correctness-1-lemma-67
+  lofat-remove-file-correctness-1-lemma-48
   (implies
    (not
     (member-intersectp-equal
@@ -13469,8 +13469,8 @@ Some (rather awful) testing forms are
        (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4
                               hifat-entry-count useful-dir-ent-list-p
                               lofat-remove-file-correctness-1-lemma-61
-                              lofat-remove-file-correctness-1-lemma-65
-                              lofat-remove-file-correctness-1-lemma-66)
+                              lofat-remove-file-correctness-1-lemma-37
+                              lofat-remove-file-correctness-1-lemma-38)
        (lofat-remove-file
         nth-of-effective-fat
         (:definition member-equal)
