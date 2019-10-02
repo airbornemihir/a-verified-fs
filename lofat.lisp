@@ -3103,6 +3103,14 @@ Some (rather awful) testing forms are
        ;; After these conditionals, the only remaining possibility is that
        ;; (cdr pathname) is an atom, which means we need to delete a file or
        ;; a(n empty) directory.
+       ((mv fat32-in-memory error-code)
+        (update-dir-contents fat32-in-memory
+                             (dir-ent-first-cluster root-dir-ent)
+                             (nats=>string (clear-dir-ent (string=>nats
+                                                           dir-contents)
+                                                          name))))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory error-code))
        (length (if (dir-ent-directory-p dir-ent)
                    *ms-max-dir-size*
                  (dir-ent-file-size dir-ent)))
@@ -3117,9 +3125,7 @@ Some (rather awful) testing forms are
            fat32-in-memory
            first-cluster
            length))))
-    (update-dir-contents fat32-in-memory
-                         (dir-ent-first-cluster root-dir-ent)
-                         (nats=>string (clear-dir-ent (string=>nats dir-contents) name)))))
+    (mv fat32-in-memory 0)))
 
 (defthm
   lofat-fs-p-of-lofat-remove-file
@@ -3150,6 +3156,27 @@ Some (rather awful) testing forms are
      0
      (lofat-remove-file fat32-in-memory root-dir-ent pathname)))
    (pseudo-root-dir-ent fat32-in-memory)))
+
+(defthm
+  lofat-remove-file-correctness-2
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (dir-ent-p root-dir-ent)
+    (>= (dir-ent-first-cluster root-dir-ent)
+        *ms-first-data-cluster*)
+    (< (dir-ent-first-cluster root-dir-ent)
+       (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory)))
+    (not
+     (equal (mv-nth 1
+                    (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+            0)))
+   (equal (mv-nth 0
+                  (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+          fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
+                                     clear-clusterchain-correctness-3))))
 
 (defthm
   get-clusterchain-contents-of-update-dir-contents-disjoint
