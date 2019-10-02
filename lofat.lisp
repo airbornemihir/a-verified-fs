@@ -6025,7 +6025,9 @@ Some (rather awful) testing forms are
        (find-n-free-clusters
         (update-nth
          (dir-ent-first-cluster dir-ent)
-         268435455
+         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
+                                      fat32-in-memory)
+                                *ms-end-of-clusterchain*)
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
@@ -6046,7 +6048,9 @@ Some (rather awful) testing forms are
        (fa-table
         (update-nth
          (dir-ent-first-cluster dir-ent)
-         268435455
+         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
+                                      fat32-in-memory)
+                                *ms-end-of-clusterchain*)
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
@@ -6059,7 +6063,9 @@ Some (rather awful) testing forms are
         (find-n-free-clusters
          (update-nth
           (dir-ent-first-cluster dir-ent)
-          268435455
+          (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
+                                       fat32-in-memory)
+                                 *ms-end-of-clusterchain*)
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
@@ -6100,7 +6106,9 @@ Some (rather awful) testing forms are
        (find-n-free-clusters
         (update-nth
          (dir-ent-first-cluster dir-ent)
-         268435455
+         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
+                                      fat32-in-memory)
+                                *ms-end-of-clusterchain*)
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
@@ -6121,7 +6129,9 @@ Some (rather awful) testing forms are
        (fa-table
         (update-nth
          (dir-ent-first-cluster dir-ent)
-         268435455
+         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
+                                      fat32-in-memory)
+                                *ms-end-of-clusterchain*)
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
@@ -6134,7 +6144,9 @@ Some (rather awful) testing forms are
         (find-n-free-clusters
          (update-nth
           (dir-ent-first-cluster dir-ent)
-          268435455
+          (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
+                                       fat32-in-memory)
+                                 *ms-end-of-clusterchain*)
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
@@ -6159,15 +6171,19 @@ Some (rather awful) testing forms are
                 x
                 (mv-nth 0
                         (dir-ent-clusterchain fat32-in-memory dir-ent)))))
-     (not (intersectp-equal
-           (find-n-free-clusters
-            (update-nth (dir-ent-first-cluster dir-ent)
-                        268435455
-                        (effective-fat fat32-in-memory))
-            (+ -1
-               (len (make-clusters dir-contents
-                                   (cluster-size fat32-in-memory)))))
-           x)))
+     (not
+      (intersectp-equal
+       (find-n-free-clusters
+        (update-nth
+         (dir-ent-first-cluster dir-ent)
+         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
+                                      fat32-in-memory)
+                                *ms-end-of-clusterchain*)
+         (effective-fat fat32-in-memory))
+        (+ -1
+           (len (make-clusters dir-contents
+                               (cluster-size fat32-in-memory)))))
+       x)))
     :hints
     (("goal"
       :use
@@ -6176,7 +6192,9 @@ Some (rather awful) testing forms are
        (fa-table
         (update-nth
          (dir-ent-first-cluster dir-ent)
-         268435455
+         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
+                                      fat32-in-memory)
+                                *ms-end-of-clusterchain*)
          (set-indices-in-fa-table
           (effective-fat fat32-in-memory)
           (mv-nth 0
@@ -6189,7 +6207,9 @@ Some (rather awful) testing forms are
         (find-n-free-clusters
          (update-nth
           (dir-ent-first-cluster dir-ent)
-          268435455
+          (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
+                                       fat32-in-memory)
+                                 *ms-end-of-clusterchain*)
           (set-indices-in-fa-table
            (effective-fat fat32-in-memory)
            (mv-nth 0
