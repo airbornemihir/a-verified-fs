@@ -5457,6 +5457,9 @@ Some (rather awful) testing forms are
         (dir-ent-first-cluster root-dir-ent))
     (<= *ms-first-data-cluster*
         (dir-ent-first-cluster dir-ent))
+    (< (dir-ent-first-cluster root-dir-ent)
+       (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory)))
     (dir-ent-p root-dir-ent)
     (dir-ent-directory-p root-dir-ent)
     (dir-ent-p dir-ent)
@@ -6270,6 +6273,9 @@ Some (rather awful) testing forms are
     (dir-ent-directory-p root-dir-ent)
     (>= (dir-ent-first-cluster root-dir-ent)
         *ms-first-data-cluster*)
+    (< (dir-ent-first-cluster root-dir-ent)
+       (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory)))
     (equal
      (mv-nth
       3
@@ -9618,7 +9624,7 @@ Some (rather awful) testing forms are
      (fat32-in-memory fat32-in-memory)))))
 
 (defthm
-  lofat-remove-file-correctness-1-lemma-48
+  lofat-remove-file-correctness-1-lemma-22
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -9626,6 +9632,9 @@ Some (rather awful) testing forms are
     (dir-ent-directory-p dir-ent)
     (>= (dir-ent-first-cluster dir-ent)
         *ms-first-data-cluster*)
+    (< (dir-ent-first-cluster dir-ent)
+       (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory)))
     (fat32-filename-list-p pathname)
     (equal (mv-nth 1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
@@ -9654,13 +9663,15 @@ Some (rather awful) testing forms are
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
        entry-limit)))
-    (no-duplicatesp-equal (mv-nth 0
-                                  (dir-ent-clusterchain fat32-in-memory dir-ent))))
-   (no-duplicatesp-equal (mv-nth 0
-                                 (dir-ent-clusterchain
-                                  (mv-nth 0
-                                          (lofat-remove-file fat32-in-memory dir-ent pathname))
-                                  dir-ent)))))
+    (no-duplicatesp-equal
+     (mv-nth 0
+             (dir-ent-clusterchain fat32-in-memory dir-ent))))
+   (no-duplicatesp-equal
+    (mv-nth 0
+            (dir-ent-clusterchain
+             (mv-nth 0
+                     (lofat-remove-file fat32-in-memory dir-ent pathname))
+             dir-ent)))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-49
