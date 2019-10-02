@@ -3512,7 +3512,7 @@ Some (rather awful) testing forms are
 ;; The (cdr dir-ent-list) stuff in this lemma isn't very nice, but the
 ;; alternative is having free variables, so...
 (defthm
-  get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-17
+  dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-6
   (implies
    (equal
     (mv-nth
@@ -3630,7 +3630,7 @@ Some (rather awful) testing forms are
       (fat32-in-memory fat32-in-memory))))))
 
 (defthm
-  get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+  dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
   (implies
    (and
     (not-intersectp-list
@@ -3737,7 +3737,7 @@ Some (rather awful) testing forms are
       :in-theory (e/d (dir-ent-clusterchain)))))))
 
 (defthmd
-  get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8
+  dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8
   (implies
    (and
     (not (natp entry-limit))
@@ -3799,7 +3799,7 @@ Some (rather awful) testing forms are
                (first-cluster (dir-ent-first-cluster root-dir-ent))))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-remove-file-coincident-lemma-3
+  dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-9
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (dir-ent-p dir-ent1)
@@ -3829,7 +3829,7 @@ Some (rather awful) testing forms are
                     (length *ms-max-dir-size*)))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-remove-file-coincident-lemma-7
+  dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-10
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (dir-ent-p dir-ent1)
@@ -3859,7 +3859,7 @@ Some (rather awful) testing forms are
                     (length (dir-ent-file-size dir-ent1))))))
 
 (defthm
-  dir-ent-clusterchain-of-lofat-remove-file-disjoint-lemma-1
+  dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-11
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
@@ -6510,7 +6510,7 @@ Some (rather awful) testing forms are
      (member-intersectp-is-commutative
       (:rewrite nth-of-effective-fat)
       (:rewrite
-       get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-17)
+       dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-6)
       (:definition member-equal)
       (:rewrite take-of-len-free)))
     :induct (mv (mv-nth 0
@@ -7501,7 +7501,7 @@ Some (rather awful) testing forms are
                                     (+ -1 entry-limit))))))
   :hints
   (("goal"
-    :in-theory (enable get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
+    :in-theory (enable dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
     :use
     (:instance
      (:rewrite lofat-to-hifat-helper-correctness-4)
@@ -7580,7 +7580,7 @@ Some (rather awful) testing forms are
                                     (+ -1 entry-limit))))))
   :hints
   (("goal"
-    :in-theory (enable get-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
+    :in-theory (enable dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-8)
     :use
     (:instance
      (:rewrite lofat-to-hifat-helper-correctness-4)
