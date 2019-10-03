@@ -13405,6 +13405,58 @@ Some (rather awful) testing forms are
            :use (:instance lofat-remove-file-correctness-1-lemma-3
                            (x nil)))))
 
+(defthm
+  lofat-remove-file-correctness-1-lemma-63
+  (b*
+      (((mv & error-code)
+        (hifat-remove-file
+         (mv-nth 0
+                 (lofat-to-hifat-helper
+                  fat32-in-memory
+                  (make-dir-ent-list
+                   (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                  entry-limit))
+         pathname)))
+    (implies
+     (and
+      (lofat-fs-p fat32-in-memory)
+      (dir-ent-p root-dir-ent)
+      (dir-ent-directory-p root-dir-ent)
+      (equal (mv-nth 3
+                     (lofat-to-hifat-helper
+                      fat32-in-memory
+                      (make-dir-ent-list
+                       (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                      entry-limit))
+             0)
+      (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
+      (< (dir-ent-first-cluster root-dir-ent)
+         (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
+      (fat32-filename-list-p pathname)
+      (not-intersectp-list
+       (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
+       (mv-nth 2
+               (lofat-to-hifat-helper
+                fat32-in-memory
+                (make-dir-ent-list
+                 (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                entry-limit)))
+      (equal
+       (mv-nth 1 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
+       0))
+      (equal
+       (mv-nth
+        1
+        (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+       error-code)))
+  :hints
+  (("goal"
+    :induct (lofat-remove-file fat32-in-memory root-dir-ent pathname)
+    :expand
+    (lofat-remove-file fat32-in-memory root-dir-ent pathname)
+    :in-theory (enable hifat-remove-file
+                       (:rewrite hifat-to-lofat-inversion-lemma-17)))))
+
 (encapsulate
   ()
 
