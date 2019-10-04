@@ -4249,46 +4249,6 @@ Some (rather awful) testing forms are
     (("goal" :in-theory (enable dir-ent-clusterchain))))))
 
 (defthm
-  get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-11
-  (implies
-   (and
-    (dir-ent-directory-p
-     (mv-nth
-      0
-      (find-dir-ent
-       (make-dir-ent-list
-        (string=>nats
-         (mv-nth
-          0
-          (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-       (car pathname))))
-    (equal
-     (mv-nth
-      3
-      (lofat-to-hifat-helper
-       fat32-in-memory
-       (make-dir-ent-list
-        (string=>nats
-         (mv-nth
-          0
-          (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-       entry-limit))
-     0))
-   (and
-    (integerp entry-limit)
-    (acl2-numberp entry-limit)))
-  :hints
-  (("goal"
-    :expand
-    (lofat-to-hifat-helper
-     fat32-in-memory
-     (make-dir-ent-list
-      (string=>nats
-       (mv-nth 0
-               (get-clusterchain-contents fat32-in-memory rootclus 2097152))))
-     entry-limit))))
-
-(defthm
   dir-ent-clusterchain-contents-of-lofat-remove-file-coincident-lemma-1
   (implies
    (and (lofat-fs-p fat32-in-memory)
@@ -8740,7 +8700,7 @@ Some (rather awful) testing forms are
       :rule-classes :linear)))
 
 (make-event
- `(defthm
+ `(defthmd
     lofat-remove-file-correctness-1-lemma-36
     (implies
      (and (unsigned-byte-listp 8 dir-contents)
@@ -8991,7 +8951,6 @@ Some (rather awful) testing forms are
            ,(code-char 0) nil)))))
       :hints
       (("goal"
-        :in-theory (disable (:rewrite lofat-remove-file-correctness-1-lemma-36))
         :use
         (:instance
          (:rewrite lofat-remove-file-correctness-1-lemma-36)
@@ -11668,134 +11627,6 @@ Some (rather awful) testing forms are
 
 ;; Hypotheses minimised.
 (defthm
-  lofat-remove-file-correctness-1-lemma-8
-  (implies
-   (and
-    (useful-dir-ent-list-p dir-ent-list)
-    (<=
-     2
-     (dir-ent-first-cluster
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent dir-ent-list filename1)))))
-        filename2))))
-    (<
-     (dir-ent-first-cluster
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent dir-ent-list filename1)))))
-        filename2)))
-     (+ 2 (count-of-clusters fat32-in-memory)))
-    (equal
-     (mv-nth
-      1
-      (update-dir-contents
-       fat32-in-memory
-       (dir-ent-first-cluster (mv-nth 0
-                                      (find-dir-ent dir-ent-list filename1)))
-       (nats=>string
-        (clear-dir-ent
-         (string=>nats
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents
-                   fat32-in-memory
-                   (mv-nth 0
-                           (find-dir-ent dir-ent-list filename1)))))
-         filename2))))
-     0)
-    (dir-ent-directory-p
-     (mv-nth
-      0
-      (find-dir-ent
-       (make-dir-ent-list
-        (mv-nth 0
-                (dir-ent-clusterchain-contents
-                 fat32-in-memory
-                 (mv-nth 0
-                         (find-dir-ent dir-ent-list filename1)))))
-       filename2)))
-    (lofat-fs-p fat32-in-memory)
-    (equal (mv-nth 3
-                   (lofat-to-hifat-helper fat32-in-memory
-                                          dir-ent-list entry-limit))
-           0)
-    (dir-ent-directory-p (mv-nth 0
-                                 (find-dir-ent dir-ent-list filename1))))
-   (not-intersectp-list
-    (mv-nth
-     0
-     (dir-ent-clusterchain
-      fat32-in-memory
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent dir-ent-list filename1)))))
-        filename2))))
-    (mv-nth
-     2
-     (lofat-to-hifat-helper
-      (mv-nth
-       0
-       (update-dir-contents
-        fat32-in-memory
-        (dir-ent-first-cluster (mv-nth 0
-                                       (find-dir-ent dir-ent-list filename1)))
-        (nats=>string
-         (clear-dir-ent
-          (string=>nats
-           (mv-nth 0
-                   (dir-ent-clusterchain-contents
-                    fat32-in-memory
-                    (mv-nth 0
-                            (find-dir-ent dir-ent-list filename1)))))
-          filename2))))
-      dir-ent-list entry-limit))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4
-                                not-intersectp-list)
-         (nth-of-effective-fat
-          (:rewrite lofat-to-hifat-helper-of-update-dir-contents)
-          (:rewrite subsetp-car-member)
-          (:definition binary-append)
-          (:rewrite not-intersectp-list-when-atom)
-          (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                    . 2)
-          (:rewrite subdir-contents-p-when-zero-length)
-          (:rewrite remove-assoc-when-absent)
-          (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
-          (:definition len)
-          (:rewrite flatten-subset-no-duplicatesp-lemma-2)
-          (:rewrite member-intersectp-is-commutative-lemma-2)
-          (:rewrite lofat-find-file-correctness-1-lemma-6)
-          (:rewrite consp-of-make-list-ac)))
-    :induct (lofat-to-hifat-helper fat32-in-memory
-                                   dir-ent-list entry-limit)
-    :expand ((:free (y) (intersectp-equal nil y))
-             (:free (fat32-in-memory entry-limit)
-                    (lofat-to-hifat-helper fat32-in-memory
-                                           dir-ent-list entry-limit))))))
-
-;; Hypotheses minimised.
-(defthm
   lofat-remove-file-correctness-1-lemma-9
   (implies
    (and
@@ -11921,8 +11752,6 @@ Some (rather awful) testing forms are
       (:rewrite
        get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
        . 2)
-      (:rewrite
-       get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-11)
       (:rewrite consp-of-make-list-ac)
       (:definition delete-dir-ent)
       (:rewrite delete-dir-ent-correctness-1)
@@ -12945,8 +12774,6 @@ Some (rather awful) testing forms are
         (:rewrite hifat-no-dups-p-of-cdr)
         (:rewrite free-index-list-listp-correctness-1)
         (:rewrite m1-file-alist-p-when-subsetp-equal)
-        (:rewrite
-         get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-11)
         (:rewrite hifat-subsetp-preserves-assoc-equal)
         (:linear hifat-entry-count-when-hifat-subsetp)
         (:rewrite lofat-remove-file-correctness-1-lemma-53)
