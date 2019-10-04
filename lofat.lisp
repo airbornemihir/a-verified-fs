@@ -1600,17 +1600,6 @@ Some (rather awful) testing forms are
      (b (len fa-table)))))
   :rule-classes :linear)
 
-;; Move later
-(defthm integerp-of-car-of-last-when-integer-listp
-  (implies (and (integer-listp l) (consp l))
-           (integerp (car (last l)))))
-
-;; Move later
-(defthm non-negativity-of-car-of-last-when-nat-listp
-  (implies (nat-listp l)
-           (<= 0 (car (last l))))
-  :rule-classes :linear)
-
 ;; This function calls place-contents with a meaningless value of dir-ent,
 ;; because we know that for a well-formed directory, the contents will be
 ;; non-empty and so there's no way we're going to be returned a dir-ent with
