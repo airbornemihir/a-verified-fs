@@ -3312,6 +3312,7 @@ Some (rather awful) testing forms are
      (len (make-clusters dir-contents
                          (cluster-size fat32-in-memory)))))))
 
+;; Hypotheses are minimal.
 (defthm
   get-clusterchain-contents-of-update-dir-contents-coincident
   (implies
@@ -3327,29 +3328,33 @@ Some (rather awful) testing forms are
      (mv-nth 1
              (get-clusterchain-contents fat32-in-memory
                                         first-cluster *ms-max-dir-size*))
-     0)
-    (equal (mv-nth 1
-                   (update-dir-contents fat32-in-memory
-                                        first-cluster dir-contents))
-           0))
+     0))
    (equal
     (get-clusterchain-contents
      (mv-nth 0
              (update-dir-contents fat32-in-memory
                                   first-cluster dir-contents))
      first-cluster *ms-max-dir-size*)
-    (mv
-     (implode
-      (append
-       (explode dir-contents)
-       (make-list-ac
-        (+ (- (len (explode dir-contents)))
-           (* (cluster-size fat32-in-memory)
-              (len (make-clusters dir-contents
-                                  (cluster-size fat32-in-memory)))))
-        (code-char 0)
-        nil)))
-     0)))
+    (if
+        (equal (mv-nth 1
+                       (update-dir-contents fat32-in-memory
+                                            first-cluster dir-contents))
+               0)
+        (mv
+         (implode
+          (append
+           (explode dir-contents)
+           (make-list-ac
+            (+ (- (len (explode dir-contents)))
+               (* (cluster-size fat32-in-memory)
+                  (len (make-clusters dir-contents
+                                      (cluster-size fat32-in-memory)))))
+            (code-char 0)
+            nil)))
+         0)
+      (get-clusterchain-contents
+       fat32-in-memory
+       first-cluster *ms-max-dir-size*))))
   :hints
   (("goal"
     :in-theory
@@ -3391,7 +3396,8 @@ Some (rather awful) testing forms are
                  (+ 2097152
                     (- (cluster-size fat32-in-memory)))
                  (cluster-size fat32-in-memory)))))
-      (fa-table (effective-fat fat32-in-memory)))))))
+      (fa-table (effective-fat fat32-in-memory)))
+     (:rewrite update-dir-contents-correctness-1)))))
 
 (defthm
   dir-ent-clusterchain-contents-of-update-dir-contents-disjoint
@@ -3423,6 +3429,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable dir-ent-clusterchain
                                      dir-ent-clusterchain-contents))))
 
+;; Hypotheses are minimal.
 (defthm
   dir-ent-clusterchain-contents-of-update-dir-contents-coincident
   (implies
@@ -3435,10 +3442,6 @@ Some (rather awful) testing forms are
     (equal (mv-nth 1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
            0)
-    (equal (mv-nth 1
-                   (update-dir-contents fat32-in-memory
-                                        first-cluster dir-contents))
-           0)
     (equal (dir-ent-first-cluster dir-ent)
            first-cluster)
     (dir-ent-directory-p dir-ent))
@@ -3448,18 +3451,26 @@ Some (rather awful) testing forms are
              (update-dir-contents fat32-in-memory
                                   first-cluster dir-contents))
      dir-ent)
-    (mv
-     (implode
-      (append
-       (explode dir-contents)
-       (make-list-ac
-        (+ (- (len (explode dir-contents)))
-           (* (cluster-size fat32-in-memory)
-              (len (make-clusters dir-contents
-                                  (cluster-size fat32-in-memory)))))
-        (code-char 0)
-        nil)))
-     0)))
+    (if
+        (equal (mv-nth 1
+                       (update-dir-contents fat32-in-memory
+                                            first-cluster dir-contents))
+               0)
+        (mv
+         (implode
+          (append
+           (explode dir-contents)
+           (make-list-ac
+            (+ (- (len (explode dir-contents)))
+               (* (cluster-size fat32-in-memory)
+                  (len (make-clusters dir-contents
+                                      (cluster-size fat32-in-memory)))))
+            (code-char 0)
+            nil)))
+         0)
+      (dir-ent-clusterchain-contents
+       fat32-in-memory
+       dir-ent))))
   :hints
   (("goal" :in-theory
     (e/d (dir-ent-clusterchain-contents)
