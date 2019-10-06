@@ -5061,65 +5061,81 @@ Some (rather awful) testing forms are
             (len (make-clusters dir-contents
                                 (cluster-size fat32-in-memory))))))))))))
 
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  ;; This is actually somewhat general.
-  (defthm
-    dir-ent-clusterchain-contents-of-lofat-remove-file-coincident-lemma-9
-    (implies
-     (and (lofat-fs-p fat32-in-memory)
-          (dir-ent-p dir-ent)
-          (dir-ent-directory-p dir-ent)
-          (<= *ms-first-data-cluster*
-              (dir-ent-first-cluster dir-ent))
-          (< (dir-ent-first-cluster dir-ent)
-             (+ *ms-first-data-cluster*
-                (count-of-clusters fat32-in-memory)))
-          (equal (mv-nth 1
-                         (update-dir-contents fat32-in-memory
-                                              (dir-ent-first-cluster dir-ent)
-                                              dir-contents))
-                 0)
-          (stringp dir-contents)
-          (< 0 (len (explode dir-contents)))
-          (<= (len (explode dir-contents))
-              *ms-max-dir-size*)
-          (non-free-index-listp x (effective-fat fat32-in-memory))
-          (not (intersectp-equal
-                x
-                (mv-nth '0
-                        (dir-ent-clusterchain fat32-in-memory dir-ent)))))
-     (not
+(defthm
+  dir-ent-clusterchain-contents-of-lofat-remove-file-coincident-lemma-9
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (dir-ent-p dir-ent)
+    (dir-ent-directory-p dir-ent)
+    (<= *ms-first-data-cluster*
+        (dir-ent-first-cluster dir-ent))
+    (< (dir-ent-first-cluster dir-ent)
+       (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory)))
+    (equal
+     (mv-nth
+      1
+      (update-dir-contents fat32-in-memory
+                           (dir-ent-first-cluster dir-ent)
+                           dir-contents))
+     0)
+    (stringp dir-contents)
+    (< 0 (len (explode dir-contents)))
+    (<= (len (explode dir-contents))
+        *ms-max-dir-size*)
+    (non-free-index-listp x (effective-fat fat32-in-memory))
+    (not
+     (intersectp-equal
+      x
+      (mv-nth '0
+              (dir-ent-clusterchain fat32-in-memory dir-ent)))))
+   (and
+    (non-free-index-listp
+     x
+     (effective-fat
+      (mv-nth
+       0
+       (update-dir-contents fat32-in-memory
+                            (dir-ent-first-cluster dir-ent)
+                            dir-contents))))
+    (not
+     (intersectp-equal
+      x
+      (mv-nth
+       0
+       (dir-ent-clusterchain
+        (mv-nth
+         0
+         (update-dir-contents fat32-in-memory
+                              (dir-ent-first-cluster dir-ent)
+                              dir-contents))
+        dir-ent))))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (update-dir-contents)
+                    (intersectp-is-commutative
+                     (:definition non-free-index-listp)
+                     (:definition stobj-set-clusters)))
+    :expand
+    ((:with
+      intersectp-is-commutative
+      (:free
+       (y)
+       (intersectp-equal x
+                         (cons (dir-ent-first-cluster dir-ent)
+                               y))))
+     (:with
+      intersectp-is-commutative
       (intersectp-equal
-       x
-       (mv-nth 0
-               (dir-ent-clusterchain
-                (mv-nth 0
-                        (update-dir-contents fat32-in-memory
-                                             (dir-ent-first-cluster dir-ent)
-                                             dir-contents))
-                dir-ent)))))
-    :hints
-    (("goal"
-      :do-not-induct t
-      :in-theory
-      (e/d
-       (update-dir-contents)
-       (intersectp-is-commutative
-        (:definition non-free-index-listp)
-        (:definition stobj-set-clusters)))
-      :expand
-      ((:with intersectp-is-commutative
-              (:free (y)
-                     (intersectp-equal x
-                                       (cons (dir-ent-first-cluster dir-ent)
-                                             y))))
-       (:free (y)
-              (intersectp-equal (cons (dir-ent-first-cluster dir-ent) y)
-                                x)))))))
+       (mv-nth '0
+               (dir-ent-clusterchain fat32-in-memory dir-ent))
+       x))
+     (:free
+      (y)
+      (intersectp-equal (cons (dir-ent-first-cluster dir-ent) y)
+                        x))))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-remove-file-coincident
@@ -8295,6 +8311,7 @@ Some (rather awful) testing forms are
                    (+ -1 entry-limit)))))))
       (dir-ent-list (cdr dir-ent-list)))))))
 
+;; Decently useful.
 (defthm
   lofat-remove-file-correctness-1-lemma-26
   (implies
