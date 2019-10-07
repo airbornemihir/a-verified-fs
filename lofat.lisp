@@ -14351,7 +14351,7 @@ Some (rather awful) testing forms are
          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))))
       (fat32-in-memory fat32-in-memory))))))
 
-(defthmd
+(defthm
   lofat-remove-file-correctness-1-lemma-71
   (implies
    (and
@@ -14374,14 +14374,6 @@ Some (rather awful) testing forms are
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
        (car pathname)))))
    (equal
-    (mv-nth
-     0
-     (lofat-to-hifat-helper
-      fat32-in-memory
-      (make-dir-ent-list
-       (mv-nth 0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-      entry-limit))
     (put-assoc-equal
      (car pathname)
      (m1-file
@@ -14418,7 +14410,15 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       entry-limit)))))
+       entry-limit)))
+    (mv-nth
+     0
+     (lofat-to-hifat-helper
+      fat32-in-memory
+      (make-dir-ent-list
+       (mv-nth 0
+               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+      entry-limit))))
   :hints
   (("goal"
     :in-theory (disable put-assoc-equal-without-change)
@@ -14633,9 +14633,7 @@ Some (rather awful) testing forms are
       (lofat-remove-file fat32-in-memory root-dir-ent pathname)
       :in-theory (enable hifat-remove-file
                          (:rewrite hifat-to-lofat-inversion-lemma-17)
-                         (:rewrite lofat-to-hifat-inversion-lemma-4)))
-  ("Subgoal *1/1.6.19'" :use
-   lofat-remove-file-correctness-1-lemma-71))
+                         (:rewrite lofat-to-hifat-inversion-lemma-4))))
     :rule-classes
     ((:rewrite
       :corollary
