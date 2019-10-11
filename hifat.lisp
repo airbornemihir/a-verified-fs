@@ -1168,7 +1168,7 @@
   :hints (("Goal" :in-theory (enable m1-regular-file-p))))
 
 (defthm
-  m1-regular-file-p-of-m1-file-p
+  m1-regular-file-p-of-m1-file
   (equal
    (m1-regular-file-p (m1-file dir-ent contents))
    (and
@@ -1176,18 +1176,6 @@
     (unsigned-byte-p 32
                      (length (m1-file-contents-fix contents)))))
   :hints (("goal" :in-theory (enable m1-regular-file-p))))
-
-;; (defthm
-;;   length-of-m1-file->contents
-;;   (implies
-;;    (m1-regular-file-p file)
-;;    (unsigned-byte-p 32 (length (m1-file->contents file))))
-;;   :hints (("goal" :in-theory (enable m1-regular-file-p)))
-;;   :rule-classes
-;;   ((:linear :corollary
-;;             (implies (m1-regular-file-p file)
-;;                      (< (len (explode (m1-file->contents file)))
-;;                         (ash 1 32))))))
 
 (defthm
   m1-directory-file-p-correctness-1
