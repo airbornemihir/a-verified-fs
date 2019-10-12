@@ -288,17 +288,22 @@
                    (abs-file-alist-p abs-file-alist1)
                    (natp x)
                    (abs-file-alist-p abs-file-alist2)
-                   (fat32-filename-list-p x-path))))
+                   (fat32-filename-list-p x-path))
+                  :verify-guards nil))
   (b*
       (((when (and (consp x-path)
-                   (consp (assoc-equal (car x-path) abs-file-alist1))))
+                   (consp (assoc (car x-path) abs-file-alist1))
+                   (abs-directory-file-p
+                    (cdr (assoc (car x-path) abs-file-alist1)))))
         (put-assoc
          (car x-path)
-         (abs-context-apply
-          (cdr (assoc-equal (car x-path) abs-file-alist1))
-          abs-file-alist2
-          x
-          (cdr x-path))
+         (abs-file
+          (abs-file->dir-ent (cdr (assoc (car x-path) abs-file-alist1)))
+          (abs-context-apply
+           (abs-file->contents (cdr (assoc (car x-path) abs-file-alist1)))
+           abs-file-alist2
+           x
+           (cdr x-path)))
          abs-file-alist1))
        ;; This is actually an error condition.
        ((when (consp x-path))
@@ -306,3 +311,65 @@
        ((when (member x abs-file-alist1))
         (append (remove x abs-file-alist1) abs-file-alist2)))
     abs-file-alist1))
+
+(defthm abs-file-alist-p-of-put-assoc-equal
+  (implies (and (fat32-filename-p name)
+                (abs-file-p val)
+                (abs-file-alist-p alist))
+           (abs-file-alist-p (put-assoc-equal name val alist)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p
+                                     abs-file-p abs-file-contents-p))))
+
+(defthm abs-file-alist-p-of-append
+  (implies (and (abs-file-alist-p x)
+                (abs-file-alist-p y))
+           (abs-file-alist-p (append x y)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
+(defthm abs-file-alist-p-of-remove-equal
+  (implies (abs-file-alist-p l)
+           (abs-file-alist-p (remove-equal x l)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
+(defthm abs-file-alist-p-of-abs-context-apply-lemma-1
+  (implies (and (abs-file-alist-p alist)
+                (not (fat32-filename-p x)))
+           (not (consp (assoc-equal x alist))))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
+(defthm
+  abs-file-alist-p-of-abs-context-apply-lemma-2
+  (implies
+   (and (abs-directory-file-p (cdr (assoc-equal (car x-path)
+                                                abs-file-alist1)))
+        (abs-file-alist-p abs-file-alist1))
+   (abs-file-alist-p
+    (put-assoc-equal
+     (car x-path)
+     (abs-file (abs-file->dir-ent (cdr (assoc-equal (car x-path)
+                                                    abs-file-alist1)))
+               (abs-context-apply
+                (abs-file->contents (cdr (assoc-equal (car x-path)
+                                                      abs-file-alist1)))
+                abs-file-alist2 x (cdr x-path)))
+     abs-file-alist1)))
+  :hints
+  (("goal" :in-theory (disable abs-file-alist-p-of-abs-context-apply-lemma-1)
+    :use (:instance abs-file-alist-p-of-abs-context-apply-lemma-1
+                    (alist abs-file-alist1)
+                    (x (car x-path))))))
+
+(defthm abs-file-alist-p-of-abs-context-apply
+  (implies
+   (and
+    (abs-file-alist-p abs-file-alist1)
+    (abs-file-alist-p abs-file-alist2))
+   (abs-file-alist-p
+    (abs-context-apply
+     abs-file-alist1 abs-file-alist2 x x-path)))
+  :hints
+  (("Goal" :in-theory (enable abs-context-apply))))
+
+(verify-guards abs-context-apply
+  :guard-debug t
+  :hints (("Goal" :in-theory (enable abs-file-alist-p)) ))
