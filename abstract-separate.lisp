@@ -296,6 +296,23 @@
   :hints (("goal" :in-theory (enable abs-assoc)))
   :rule-classes :definition)
 
+;; This is explicitly a replacement for put-assoc-equal with a vacuous guard.
+(defund abs-put-assoc (name val alist)
+  (declare (xargs :guard t))
+  (cond ((atom alist) (list (cons name val)))
+        ((if (atom (car alist))
+             (null name)
+             (equal name (caar alist)))
+         (cons (cons name val) (cdr alist)))
+        (t (cons (car alist)
+                 (abs-put-assoc name val (cdr alist))))))
+
+(defthm abs-put-assoc-definition
+  (equal (abs-put-assoc name val alist)
+         (put-assoc-equal name val alist))
+  :hints (("goal" :in-theory (enable abs-put-assoc)))
+  :rule-classes :definition)
+
 ;; Where are the numbers going to come from? It's not going to work, the idea
 ;; of letting variables be represented by their index in the list. Under such a
 ;; scheme, we'll never be able to rewrite an (append ...) term, since that
