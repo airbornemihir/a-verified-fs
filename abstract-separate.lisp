@@ -260,3 +260,49 @@
            (m1-file-alist-p x))
   :hints (("goal" :in-theory (enable abs-file-alist-p abs-complete)
            :induct (abs-complete x))))
+
+;; Where are the numbers going to come from? It's not going to work, the idea
+;; of letting variables be represented by their index in the list. Under such a
+;; scheme, we'll never be able to rewrite an (append ...) term, since that
+;; would immediately cause all the indices to become wrong. It's probably best
+;; to use the function find-new-index for this purpose.
+;;
+;; In a certain theoretical sense, we don't actually need to store abstract heap
+;; cells as pairs - keeping the address in the table along with the
+;; substructure isn't actually necessary, because we can just look in the
+;; larger structure for occurrences of the body address. However, this process
+;; would be grossly inefficient because we would have to look everywhere in the
+;; directory tree. I suspect that's why the idea of an abstract heap cell as a
+;; pair arose in the first place.
+;;
+;; One final thing: I'm not returning an error code from this function at the
+;; moment, because I can't fathom where such an error code would be useful. It
+;; would only arise from a programming error on our part, where we tried to
+;; context-apply a nonexistent variable - not from any real filesystem
+;; error. In such a case, it's OK to keep the no-change loser behaviour, even
+;; if we don't immediately formalise it.
+(defund abs-context-apply
+  (abs-file-alist1 abs-file-alist2 x x-path)
+  (declare (xargs :guard
+                  (and
+                   (abs-file-alist-p abs-file-alist1)
+                   (natp x)
+                   (abs-file-alist-p abs-file-alist2)
+                   (fat32-filename-list-p x-path))))
+  (b*
+      (((when (and (consp x-path)
+                   (consp (assoc-equal (car x-path) abs-file-alist1))))
+        (put-assoc
+         (car x-path)
+         (abs-context-apply
+          (cdr (assoc-equal (car x-path) abs-file-alist1))
+          abs-file-alist2
+          x
+          (cdr x-path))
+         abs-file-alist1))
+       ;; This is actually an error condition.
+       ((when (consp x-path))
+        abs-file-alist1)
+       ((when (member x abs-file-alist1))
+        (append (remove x abs-file-alist1) abs-file-alist2)))
+    abs-file-alist1))
