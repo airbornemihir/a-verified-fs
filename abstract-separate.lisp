@@ -196,15 +196,21 @@
 
 (defthm
   abs-file-alist-p-correctness-1-lemma-1
-  (implies (and (consp (car x))
-                (m1-file-alist-p (abs-file->contents (cdr (car x))))
+  (implies (and (or (and (consp (car x))
+                         (m1-file-alist-p (abs-file->contents (cdr (car x)))))
+                    (not
+                     (and (abs-file-alist-p (abs-file->contents (cdr (car x))))
+                          (or (abs-directory-file-p (cdr (car x)))
+                              (abs-complete (abs-file->contents (cdr (car x))))))))
                 (abs-file-alist-p x))
            (m1-file-p (cdr (car x))))
   :hints
   (("goal" :expand ((m1-file-p (cdr (car x)))
                     (abs-file-alist-p x)
                     (m1-file-alist-p (abs-file->contents (cdr (car x))))
-                    (abs-file->contents (cdr (car x)))))))
+                    (abs-file->contents (cdr (car x)))
+                    (abs-directory-file-p (cdr (car x)))
+                    (abs-file-p (cdr (car x)))))))
 
 (defthm
   abs-file-alist-p-correctness-1-lemma-2
@@ -221,7 +227,8 @@
 
 (defthm
   abs-file-alist-p-correctness-1-lemma-3
-  (implies (and (not (abs-file-alist-p (abs-file->contents (cdr (car x)))))
+  (implies (and (not (and (abs-file-alist-p (abs-file->contents (cdr (car x))))
+                          (abs-complete (abs-file->contents (cdr (car x))))))
                 (abs-file-alist-p x))
            (fat32-filename-p (car (car x))))
   :hints (("goal" :expand (abs-file-alist-p x))))
@@ -234,16 +241,9 @@
 
 (defthm
   abs-file-alist-p-correctness-1-lemma-5
-  (implies (and (not (abs-file-alist-p (abs-file->contents (cdr (car x)))))
-                (abs-file-alist-p x))
-           (m1-file-p (cdr (car x))))
-  :hints (("goal" :expand ((abs-file-alist-p x)
-                           (m1-file-p (cdr (car x)))
-                           (abs-file->contents (cdr (car x)))))))
-
-(defthm
-  abs-file-alist-p-correctness-1-lemma-6
-  (implies (and (not (abs-file-alist-p (abs-file->contents (cdr (car x)))))
+  (implies (and (not (and (abs-file-alist-p (abs-file->contents (cdr (car x))))
+                          (or (abs-directory-file-p (cdr (car x)))
+                              (abs-complete (abs-file->contents (cdr (car x)))))))
                 (m1-file-alist-p (cdr x))
                 (abs-file-alist-p x))
            (m1-file-alist-p x))
@@ -252,52 +252,6 @@
                            (x (cdr x))
                            (a (car x)))
            :expand (abs-file-alist-p x))))
-
-(defthm abs-file-alist-p-correctness-1-lemma-7
-  (implies (and (not (abs-complete (abs-file->contents (cdr (car x)))))
-                (abs-file-alist-p x))
-           (fat32-filename-p (car (car x))))
-  :hints (("goal" :expand (abs-file-alist-p x))))
-
-(defthm abs-file-alist-p-correctness-1-lemma-8
-  (implies (and (not (abs-directory-file-p (cdr (car x))))
-                (not (abs-complete (abs-file->contents (cdr (car x)))))
-                (abs-file-alist-p x))
-           (m1-file-p (cdr (car x))))
-  :hints (("goal" :expand ((abs-file-alist-p x)
-                           (m1-file-p (cdr (car x)))
-                           (abs-directory-file-p (cdr (car x)))
-                           (abs-file-p (cdr (car x)))))))
-
-(defthm
-  abs-file-alist-p-correctness-1-lemma-9
-  (implies (and (consp x)
-                (consp (car x))
-                (not (abs-directory-file-p (cdr (car x))))
-                (not (abs-complete (abs-file->contents (cdr (car x)))))
-                (m1-file-alist-p (cdr x))
-                (abs-file-alist-p x)
-                (abs-complete (cdr x)))
-           (m1-file-alist-p x))
-  :hints (("goal" :in-theory (disable (:rewrite m1-file-alist-p-of-cons))
-           :use (:instance (:rewrite m1-file-alist-p-of-cons)
-                           (x (cdr x))
-                           (a (car x)))
-           :expand
-           ((abs-file-alist-p x)
-            (not (abs-directory-file-p (cdr (car x))))))))
-
-(defthm
-  abs-file-alist-p-correctness-1-lemma-10
-  (implies (and (not (abs-directory-file-p (cdr (car x))))
-                (not (abs-complete (abs-file->contents (cdr (car x)))))
-                (m1-file-alist-p (cdr x))
-                (abs-file-alist-p x))
-           (m1-file-alist-p x))
-  :hints (("goal" :in-theory (disable (:rewrite m1-file-alist-p-of-cons))
-           :use (:instance (:rewrite m1-file-alist-p-of-cons)
-                           (x (cdr x))
-                           (a (car x))))))
 
 (defthm
   abs-file-alist-p-correctness-1
