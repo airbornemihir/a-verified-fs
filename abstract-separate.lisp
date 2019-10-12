@@ -19,9 +19,9 @@
 (defund abs-assoc (x alist)
   (declare (xargs :guard t))
   (cond ((atom alist) nil)
-        ((if (atom (car alist))
-             (null x)
-             (equal x (car (car alist))))
+        ((and (atom (car alist)) (null x))
+         (car alist))
+        ((and (consp (car alist)) (equal x (car (car alist))))
          (car alist))
         (t (abs-assoc x (cdr alist)))))
 
@@ -35,9 +35,9 @@
 (defund abs-put-assoc (name val alist)
   (declare (xargs :guard t))
   (cond ((atom alist) (list (cons name val)))
-        ((if (atom (car alist))
-             (null name)
-             (equal name (caar alist)))
+        ((and (atom (car alist)) (null name))
+         (cons (cons name val) (cdr alist)))
+        ((and (consp (car alist)) (equal name (caar alist)))
          (cons (cons name val) (cdr alist)))
         (t (cons (car alist)
                  (abs-put-assoc name val (cdr alist))))))
@@ -46,6 +46,22 @@
   (equal (abs-put-assoc name val alist)
          (put-assoc-equal name val alist))
   :hints (("goal" :in-theory (enable abs-put-assoc)))
+  :rule-classes :definition)
+
+(defund abs-remove-assoc (x alist)
+  (declare (xargs :guard t))
+  (cond ((atom alist) nil)
+        ((and (atom (car alist)) (null x))
+         (abs-remove-assoc x (cdr alist)))
+        ((and (consp (car alist)) (equal x (car (car alist))))
+         (abs-remove-assoc x (cdr alist)))
+        (t (cons (car alist)
+                 (abs-remove-assoc x (cdr alist))))))
+
+(defthm abs-remove-assoc-definition
+  (equal (abs-remove-assoc x alist)
+         (remove-assoc-equal x alist))
+  :hints (("goal" :in-theory (enable abs-remove-assoc)))
   :rule-classes :definition)
 
 ;; We need to write this whole thing out - the same way we did it for
@@ -286,6 +302,8 @@
                            (a (car x)))
            :expand (abs-file-alist-p x))))
 
+;; This theorem states that an abstract filesystem tree without any body
+;; addresses is just a HiFAT instance.
 (defthm
   abs-file-alist-p-correctness-1
   (implies (and (abs-file-alist-p x)
@@ -312,6 +330,45 @@
   (implies (abs-file-alist-p l)
            (abs-file-alist-p (remove-equal x l)))
   :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
+(defthm abs-file-alist-p-of-remove-assoc-equal
+  (implies (abs-file-alist-p alist)
+           (abs-file-alist-p (remove-assoc-equal x alist)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
+(defund
+  abs-top-addrs (abs-file-alist)
+  (declare
+   (xargs :guard (abs-file-alist-p abs-file-alist)
+          :guard-hints
+          (("goal" :in-theory (enable abs-file-alist-p)))))
+  (cond ((atom abs-file-alist) nil)
+        ((natp (car abs-file-alist))
+         (list* (car abs-file-alist)
+                (abs-top-addrs (cdr abs-file-alist))))
+        (t (abs-top-addrs (cdr abs-file-alist)))))
+
+;; For this function, it might be worth investing in the abs-file-alist-fix
+;; thing, but that function just generally seems like a placeholder fixer and
+;; I'm not going there for now. The purpose of this function is to quickly
+;; allow a given abstract variable to be found in the frame - just keep looking
+;; at the (abs-addrs ...) of all the elements in the frame.
+(defund
+  abs-addrs (abs-file-alist)
+  (declare
+   (xargs :guard (abs-file-alist-p abs-file-alist)
+          :guard-hints
+          (("goal" :in-theory (enable abs-file-alist-p)))))
+  (cond ((atom abs-file-alist) nil)
+        ((atom (car abs-file-alist))
+         (list* (mbe :logic (nfix (car abs-file-alist))
+                     :exec (car abs-file-alist))
+                (abs-addrs (cdr abs-file-alist))))
+        ((abs-directory-file-p (cdar abs-file-alist))
+         (append
+          (abs-addrs (abs-file->contents (cdar abs-file-alist)))
+          (abs-addrs (cdr abs-file-alist))))
+        (t (abs-addrs (cdr abs-file-alist)))))
 
 ;; Where are the numbers going to come from? It's not going to work, the idea
 ;; of letting variables be represented by their index in the list. Under such a
@@ -490,3 +547,68 @@
 (fty::defalist frame
                :key-type nat
                :val-type frame-pair)
+
+;; Return 4 values - the abs-file-alist, potentially changed; the list of
+;; abstract addresses to look into, the substructure we pulled out, and a
+;; boolean value indicating whether a substructure was pulled out. We'll
+;; return a default substructure if we didn't pull anything out.
+(defund
+  unlink-abs-alloc-helper
+  (abs-file-alist path)
+  (declare (xargs :guard (and (abs-file-alist-p abs-file-alist)
+                              (fat32-filename-list-p path))
+                  :measure (len path)
+                  :guard-debug t))
+  (b*
+      (((when (atom path))
+        (mv abs-file-alist nil nil nil))
+       (head (mbe :exec (car path) :logic (fat32-filename-fix (car path))))
+       ((when (atom (abs-assoc head abs-file-alist)))
+        (mv abs-file-alist
+            (abs-top-addrs abs-file-alist)
+            nil nil))
+       ((when (atom (cdr path)))
+        (mv (abs-remove-assoc head abs-file-alist)
+            nil
+            (list (abs-assoc head abs-file-alist))
+            t))
+       ((unless (abs-directory-file-p
+                 (cdr (abs-assoc head abs-file-alist))))
+        (mv abs-file-alist nil nil nil))
+       ((mv insert addr-list substructure condition)
+        (unlink-abs-alloc-helper
+         (abs-file->contents (cdr (abs-assoc head abs-file-alist)))
+         (cdr path))))
+    (mv (abs-put-assoc
+         head
+         (abs-file (abs-file->dir-ent (cdr (abs-assoc head abs-file-alist))) insert)
+         abs-file-alist)
+        addr-list substructure condition)))
+
+;; Move later
+(defthm put-assoc-dissimilarity
+  (implies (and (consp (assoc-equal name alist))
+                (not (equal (cdr (assoc-equal name alist)) val)))
+           (not (equal (put-assoc-equal name val alist) alist))))
+
+(defthm
+  unlink-abs-alloc-helper-correctness-1
+  (implies
+   (abs-file-alist-p abs-file-alist)
+   (abs-file-alist-p (mv-nth 0
+                             (unlink-abs-alloc-helper abs-file-alist path))))
+  :hints (("goal" :in-theory (enable unlink-abs-alloc-helper))))
+
+;; The effect of this theorem is to make the (mv-nth 3 ...) thing useful only
+;; for avoiding the horrendous comparison. Of course, none of this stuff needs
+;; to be executable anyway, so perhaps the whole thing is in vain. However, I
+;; suspect there will be a time for debugging before we can move into
+;; Nonexecutability Xanadu.
+(defthm
+  unlink-abs-alloc-helper-correctness-2
+  (equal (mv-nth 3
+                 (unlink-abs-alloc-helper abs-file-alist path))
+         (not (equal (mv-nth 0
+                             (unlink-abs-alloc-helper abs-file-alist path))
+                     abs-file-alist)))
+  :hints (("goal" :in-theory (enable unlink-abs-alloc-helper))))
