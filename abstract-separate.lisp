@@ -347,7 +347,7 @@
                    (consp (abs-assoc (car x-path) abs-file-alist1))
                    (abs-directory-file-p
                     (cdr (abs-assoc (car x-path) abs-file-alist1)))))
-        (put-assoc
+        (abs-put-assoc
          (car x-path)
          (abs-file
           (abs-file->dir-ent (cdr (abs-assoc (car x-path) abs-file-alist1)))
