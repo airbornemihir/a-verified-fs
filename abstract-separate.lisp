@@ -261,6 +261,41 @@
   :hints (("goal" :in-theory (enable abs-file-alist-p abs-complete)
            :induct (abs-complete x))))
 
+(defthm abs-file-alist-p-of-put-assoc-equal
+  (implies (and (fat32-filename-p name)
+                (abs-file-p val)
+                (abs-file-alist-p alist))
+           (abs-file-alist-p (put-assoc-equal name val alist)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p
+                                     abs-file-p abs-file-contents-p))))
+
+(defthm abs-file-alist-p-of-append
+  (implies (and (abs-file-alist-p x)
+                (abs-file-alist-p y))
+           (abs-file-alist-p (append x y)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
+(defthm abs-file-alist-p-of-remove-equal
+  (implies (abs-file-alist-p l)
+           (abs-file-alist-p (remove-equal x l)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
+;; This is explicitly a replacement for assoc-equal with a vacuous guard.
+(defund abs-assoc (x alist)
+  (declare (xargs :guard t))
+  (cond ((atom alist) nil)
+        ((if (atom (car alist))
+             (null x)
+             (equal x (car (car alist))))
+         (car alist))
+        (t (abs-assoc x (cdr alist)))))
+
+(defthm abs-assoc-definition
+  (equal (abs-assoc x alist)
+         (assoc-equal x alist))
+  :hints (("goal" :in-theory (enable abs-assoc)))
+  :rule-classes :definition)
+
 ;; Where are the numbers going to come from? It's not going to work, the idea
 ;; of letting variables be represented by their index in the list. Under such a
 ;; scheme, we'll never be able to rewrite an (append ...) term, since that
@@ -292,15 +327,15 @@
                   :verify-guards nil))
   (b*
       (((when (and (consp x-path)
-                   (consp (assoc (car x-path) abs-file-alist1))
+                   (consp (abs-assoc (car x-path) abs-file-alist1))
                    (abs-directory-file-p
-                    (cdr (assoc (car x-path) abs-file-alist1)))))
+                    (cdr (abs-assoc (car x-path) abs-file-alist1)))))
         (put-assoc
          (car x-path)
          (abs-file
-          (abs-file->dir-ent (cdr (assoc (car x-path) abs-file-alist1)))
+          (abs-file->dir-ent (cdr (abs-assoc (car x-path) abs-file-alist1)))
           (abs-context-apply
-           (abs-file->contents (cdr (assoc (car x-path) abs-file-alist1)))
+           (abs-file->contents (cdr (abs-assoc (car x-path) abs-file-alist1)))
            abs-file-alist2
            x
            (cdr x-path)))
@@ -311,25 +346,6 @@
        ((when (member x abs-file-alist1))
         (append (remove x abs-file-alist1) abs-file-alist2)))
     abs-file-alist1))
-
-(defthm abs-file-alist-p-of-put-assoc-equal
-  (implies (and (fat32-filename-p name)
-                (abs-file-p val)
-                (abs-file-alist-p alist))
-           (abs-file-alist-p (put-assoc-equal name val alist)))
-  :hints (("goal" :in-theory (enable abs-file-alist-p
-                                     abs-file-p abs-file-contents-p))))
-
-(defthm abs-file-alist-p-of-append
-  (implies (and (abs-file-alist-p x)
-                (abs-file-alist-p y))
-           (abs-file-alist-p (append x y)))
-  :hints (("goal" :in-theory (enable abs-file-alist-p))))
-
-(defthm abs-file-alist-p-of-remove-equal
-  (implies (abs-file-alist-p l)
-           (abs-file-alist-p (remove-equal x l)))
-  :hints (("goal" :in-theory (enable abs-file-alist-p))))
 
 (defthm abs-file-alist-p-of-abs-context-apply-lemma-1
   (implies (and (abs-file-alist-p alist)
