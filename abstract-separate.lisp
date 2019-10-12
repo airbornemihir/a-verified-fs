@@ -406,3 +406,67 @@
 (verify-guards abs-context-apply
   :guard-debug t
   :hints (("Goal" :in-theory (enable abs-file-alist-p)) ))
+
+(defund
+  abs-file-alist-fix (x)
+  (declare
+   (xargs
+    :guard (abs-file-alist-p x)
+    :guard-hints (("goal" :expand (abs-file-alist-p x)
+                   :in-theory (enable abs-file-p)))))
+  (b* (((when (atom x)) nil)
+       (head (car x))
+       ((when (natp head))
+        (cons head (abs-file-alist-fix (cdr x))))
+       ((unless (consp head))
+        (abs-file-alist-fix (cdr x))))
+    (cons (cons (fat32-filename-fix (car head))
+                (abs-file-fix (cdr head)))
+          (abs-file-alist-fix (cdr x)))))
+
+(encapsulate
+  () ;; start lemmas for abs-file-alist-fix-when-abs-file-alist-p
+
+  (local
+   (defthm abs-file-alist-fix-when-abs-file-alist-p-lemma-1
+     (implies (and (alistp (cddr (car x)))
+                   (equal (car (cadr (car x))) 'dir-ent)
+                   (equal (strip-cars (cddr (car x)))
+                          '(contents))
+                   (dir-ent-p (cdr (cadr (car x))))
+                   (stringp (cdr (caddr (car x))))
+                   (< (len (explode (cdr (caddr (car x)))))
+                      4294967296))
+              (abs-file-p (cdr (car x))))
+     :hints (("goal" :in-theory (enable abs-file-p)))))
+
+  (local
+   (defthm abs-file-alist-fix-when-abs-file-alist-p-lemma-2
+     (implies (and (alistp (cddr (car x)))
+                   (equal (car (cadr (car x))) 'dir-ent)
+                   (equal (strip-cars (cddr (car x)))
+                          '(contents))
+                   (dir-ent-p (cdr (cadr (car x))))
+                   (abs-file-alist-p (cdr (caddr (car x)))))
+              (abs-file-p (cdr (car x))))
+     :hints (("goal" :in-theory (enable abs-file-p)))))
+
+  (defthm
+    abs-file-alist-fix-when-abs-file-alist-p
+    (implies (abs-file-alist-p x)
+             (equal (abs-file-alist-fix x) x))
+    :hints (("goal" :in-theory (enable abs-file-alist-fix abs-file-alist-p)))))
+
+(defthm
+  abs-file-alist-p-of-abs-file-alist-fix
+  (abs-file-alist-p (abs-file-alist-fix x))
+  :hints (("goal" :in-theory (enable abs-file-alist-fix abs-file-alist-p
+                                     abs-file-fix abs-file-contents-fix
+                                     abs-file-contents-p))))
+
+(fty::deffixtype abs-file-alist
+                 :pred abs-file-alist-p
+                 :fix abs-file-alist-fix
+                 :equiv abs-file-alist-equiv
+                 :define t
+                 :forward t)
