@@ -470,3 +470,14 @@
                  :equiv abs-file-alist-equiv
                  :define t
                  :forward t)
+
+;; Both these names, below, merit some thought later...
+(fty::defprod frame-pair
+              ((relpath
+                fat32-filename-list-p)
+               (partdir
+                abs-file-alist-p)))
+
+(fty::defalist frame
+               :key-type nat
+               :val-type frame-pair)
