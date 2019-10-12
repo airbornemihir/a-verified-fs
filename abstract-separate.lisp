@@ -15,6 +15,39 @@
 (local
  (in-theory (disable nth update-nth floor mod true-listp take member-equal)))
 
+;; This is explicitly a replacement for assoc-equal with a vacuous guard.
+(defund abs-assoc (x alist)
+  (declare (xargs :guard t))
+  (cond ((atom alist) nil)
+        ((if (atom (car alist))
+             (null x)
+             (equal x (car (car alist))))
+         (car alist))
+        (t (abs-assoc x (cdr alist)))))
+
+(defthm abs-assoc-definition
+  (equal (abs-assoc x alist)
+         (assoc-equal x alist))
+  :hints (("goal" :in-theory (enable abs-assoc)))
+  :rule-classes :definition)
+
+;; This is explicitly a replacement for put-assoc-equal with a vacuous guard.
+(defund abs-put-assoc (name val alist)
+  (declare (xargs :guard t))
+  (cond ((atom alist) (list (cons name val)))
+        ((if (atom (car alist))
+             (null name)
+             (equal name (caar alist)))
+         (cons (cons name val) (cdr alist)))
+        (t (cons (car alist)
+                 (abs-put-assoc name val (cdr alist))))))
+
+(defthm abs-put-assoc-definition
+  (equal (abs-put-assoc name val alist)
+         (put-assoc-equal name val alist))
+  :hints (("goal" :in-theory (enable abs-put-assoc)))
+  :rule-classes :definition)
+
 ;; We need to write this whole thing out - the same way we did it for
 ;; m1-file-alist-p - because the induction scheme has to be created by us,
 ;; without assistance from fty, just this once.
@@ -280,39 +313,6 @@
            (abs-file-alist-p (remove-equal x l)))
   :hints (("goal" :in-theory (enable abs-file-alist-p))))
 
-;; This is explicitly a replacement for assoc-equal with a vacuous guard.
-(defund abs-assoc (x alist)
-  (declare (xargs :guard t))
-  (cond ((atom alist) nil)
-        ((if (atom (car alist))
-             (null x)
-             (equal x (car (car alist))))
-         (car alist))
-        (t (abs-assoc x (cdr alist)))))
-
-(defthm abs-assoc-definition
-  (equal (abs-assoc x alist)
-         (assoc-equal x alist))
-  :hints (("goal" :in-theory (enable abs-assoc)))
-  :rule-classes :definition)
-
-;; This is explicitly a replacement for put-assoc-equal with a vacuous guard.
-(defund abs-put-assoc (name val alist)
-  (declare (xargs :guard t))
-  (cond ((atom alist) (list (cons name val)))
-        ((if (atom (car alist))
-             (null name)
-             (equal name (caar alist)))
-         (cons (cons name val) (cdr alist)))
-        (t (cons (car alist)
-                 (abs-put-assoc name val (cdr alist))))))
-
-(defthm abs-put-assoc-definition
-  (equal (abs-put-assoc name val alist)
-         (put-assoc-equal name val alist))
-  :hints (("goal" :in-theory (enable abs-put-assoc)))
-  :rule-classes :definition)
-
 ;; Where are the numbers going to come from? It's not going to work, the idea
 ;; of letting variables be represented by their index in the list. Under such a
 ;; scheme, we'll never be able to rewrite an (append ...) term, since that
@@ -327,12 +327,22 @@
 ;; directory tree. I suspect that's why the idea of an abstract heap cell as a
 ;; pair arose in the first place.
 ;;
-;; One final thing: I'm not returning an error code from this function at the
+;; One more thing: I'm not returning an error code from this function at the
 ;; moment, because I can't fathom where such an error code would be useful. It
 ;; would only arise from a programming error on our part, where we tried to
 ;; context-apply a nonexistent variable - not from any real filesystem
 ;; error. In such a case, it's OK to keep the no-change loser behaviour, even
 ;; if we don't immediately formalise it.
+;;
+;; Another thing: this function only works if there are no body addresses in
+;; the way down the path... otherwise, we'd have to look up those body
+;; addresses and look inside them. In terms of recursion, we'd have to recur as
+;; many times as body addresses occur along the path. Also, each time we were
+;; looking for something and failed to find a directory entry at a certain
+;; level - but found at least one body address - we'd have to iterate over all
+;; body addresses at that level.
+;;
+;; <sigh>
 (defund abs-context-apply
   (abs-file-alist1 abs-file-alist2 x x-path)
   (declare (xargs :guard
