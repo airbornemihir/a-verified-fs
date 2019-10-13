@@ -636,11 +636,16 @@
      nil
      (list
       (cons
-       "TMP        "
-       (abs-file (dir-ent-fix nil) ()))
-      (cons
        "INITRD  IMG"
        (abs-file (dir-ent-fix nil) ""))
+      (cons
+       "RUN        "
+       (abs-file
+        (dir-ent-fix nil)
+        (list
+         (cons
+          "RSYSLOGDPID"
+          (abs-file (dir-ent-fix nil) "")))))
       (cons
        "USR        "
        (abs-file (dir-ent-fix nil)
@@ -686,11 +691,16 @@
    (unlink-abs-alloc-helper
     (list
      (cons
-      "TMP        "
-      (abs-file (dir-ent-fix nil) ()))
-     (cons
       "INITRD  IMG"
       (abs-file (dir-ent-fix nil) ""))
+     (cons
+      "RUN        "
+      (abs-file
+       (dir-ent-fix nil)
+       (list
+        (cons
+         "RSYSLOGDPID"
+         (abs-file (dir-ent-fix nil) "")))))
      (cons
       "USR        "
       (abs-file (dir-ent-fix nil)
@@ -710,8 +720,13 @@
      (list
       3
       (cons
-       "TMP        "
-       (abs-file (dir-ent-fix nil) ()))
+       "RUN        "
+       (abs-file
+        (dir-ent-fix nil)
+        (list
+         (cons
+          "RSYSLOGDPID"
+          (abs-file (dir-ent-fix nil) "")))))
       (cons
        "USR        "
        (abs-file (dir-ent-fix nil)
