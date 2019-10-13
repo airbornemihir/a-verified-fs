@@ -612,3 +612,46 @@
                              (unlink-abs-alloc-helper abs-file-alist path))
                      abs-file-alist)))
   :hints (("goal" :in-theory (enable unlink-abs-alloc-helper))))
+
+(assert-event
+ (and
+  (abs-file-alist-p
+   (list
+    (cons
+     "TMP        "
+     (abs-file (dir-ent-fix nil) ()))
+    (cons
+     "INITRD  IMG"
+     (abs-file (dir-ent-fix nil) ""))
+    (cons
+     "USR        "
+     (abs-file (dir-ent-fix nil)
+               (list
+                (cons
+                 "LOCAL      "
+                 (abs-file (dir-ent-fix nil) ()))
+                (cons
+                 "LIB        "
+                 (abs-file (dir-ent-fix nil) ()))
+                1)))))
+  (abs-file-alist-p
+   (list
+    (cons
+     "SHARE      "
+     (abs-file (dir-ent-fix nil) ()))
+    (cons
+     "BIN        "
+     (abs-file (dir-ent-fix nil)
+               (list
+                (cons
+                 "CAT        "
+                 (abs-file (dir-ent-fix nil) ""))
+                2
+                (cons
+                 "TAC        "
+                 (abs-file (dir-ent-fix nil) "")))))))
+  (abs-file-alist-p
+   (list
+    (cons
+     "COL        "
+     (abs-file (dir-ent-fix nil) ""))))))

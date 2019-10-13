@@ -455,8 +455,6 @@
                     new-disk)))
             ))))))
 
-; Mihir, run some example and provide some ASSERT$ events.
-
 (defthm l3-wrchs-returns-fs-lemma-1
   (implies (l3-fs-p fs)
            (l3-fs-p (remove1-assoc-equal s fs))))
