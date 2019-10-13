@@ -549,41 +549,41 @@
                :val-type frame-pair)
 
 ;; Return 4 values - the abs-file-alist, potentially changed; the list of
-;; abstract addresses to look into, the substructure we pulled out, and a
-;; boolean value indicating whether a substructure was pulled out. We'll
-;; return a default substructure if we didn't pull anything out.
+;; abstract addresses to look into, potentially empty; the substructure we
+;; pulled out, potentially the default abs-file-alist; and the path from where
+;; the substructure was pulled out, potentially empty.
 (defund
   unlink-abs-alloc-helper
-  (abs-file-alist path)
-  (declare (xargs :guard (and (abs-file-alist-p abs-file-alist)
+  (fs path)
+  (declare (xargs :guard (and (abs-file-alist-p fs)
                               (fat32-filename-list-p path))
                   :measure (len path)
                   :guard-debug t))
   (b*
       (((when (atom path))
-        (mv abs-file-alist nil nil nil))
+        (mv fs nil nil nil))
        (head (mbe :exec (car path) :logic (fat32-filename-fix (car path))))
-       ((when (atom (abs-assoc head abs-file-alist)))
-        (mv abs-file-alist
-            (abs-top-addrs abs-file-alist)
-            nil nil))
+       ((when (atom (abs-assoc head fs)))
+        (mv fs
+            (abs-top-addrs fs)
+            nil path))
        ((when (atom (cdr path)))
-        (mv (abs-remove-assoc head abs-file-alist)
+        (mv (abs-remove-assoc head fs)
             nil
-            (list (abs-assoc head abs-file-alist))
-            t))
+            (list (abs-assoc head fs))
+            nil))
        ((unless (abs-directory-file-p
-                 (cdr (abs-assoc head abs-file-alist))))
-        (mv abs-file-alist nil nil nil))
-       ((mv insert addr-list substructure condition)
+                 (cdr (abs-assoc head fs))))
+        (mv fs nil nil nil))
+       ((mv insert addr-list sub-fs sub-path)
         (unlink-abs-alloc-helper
-         (abs-file->contents (cdr (abs-assoc head abs-file-alist)))
+         (abs-file->contents (cdr (abs-assoc head fs)))
          (cdr path))))
     (mv (abs-put-assoc
          head
-         (abs-file (abs-file->dir-ent (cdr (abs-assoc head abs-file-alist))) insert)
-         abs-file-alist)
-        addr-list substructure condition)))
+         (abs-file (abs-file->dir-ent (cdr (abs-assoc head fs))) insert)
+         fs)
+        addr-list sub-fs sub-path)))
 
 ;; Move later
 (defthm put-assoc-dissimilarity
@@ -597,20 +597,6 @@
    (abs-file-alist-p abs-file-alist)
    (abs-file-alist-p (mv-nth 0
                              (unlink-abs-alloc-helper abs-file-alist path))))
-  :hints (("goal" :in-theory (enable unlink-abs-alloc-helper))))
-
-;; The effect of this theorem is to make the (mv-nth 3 ...) thing useful only
-;; for avoiding the horrendous comparison. Of course, none of this stuff needs
-;; to be executable anyway, so perhaps the whole thing is in vain. However, I
-;; suspect there will be a time for debugging before we can move into
-;; Nonexecutability Xanadu.
-(defthm
-  unlink-abs-alloc-helper-correctness-2
-  (equal (mv-nth 3
-                 (unlink-abs-alloc-helper abs-file-alist path))
-         (not (equal (mv-nth 0
-                             (unlink-abs-alloc-helper abs-file-alist path))
-                     abs-file-alist)))
   :hints (("goal" :in-theory (enable unlink-abs-alloc-helper))))
 
 (assert-event
