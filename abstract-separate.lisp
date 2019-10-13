@@ -576,19 +576,21 @@
                   :measure (len path)
                   :guard-debug t))
   (b*
-      (((when (atom path)) (mv fs nil nil nil))
+      (;; This is an error condition.
+       ((when (atom path)) (mv fs nil nil *empty-fat32-name*))
        (head (mbe :exec (car path)
                   :logic (fat32-filename-fix (car path))))
        ((when (atom (abs-assoc head fs)))
-        (mv fs (abs-top-addrs fs) nil path))
+        (mv fs (abs-top-addrs fs) nil head))
        ((when (atom (cdr path)))
         (mv (list* (mbe :exec index :logic (nfix index))
                    (abs-remove-assoc head fs))
             nil (list (abs-assoc head fs))
-            nil))
+            head))
+       ;; This is an error condition.
        ((unless (abs-directory-file-p (cdr (abs-assoc head fs))))
-        (mv fs nil nil nil))
-       ((mv insert addr-list sub-fs sub-path)
+        (mv fs nil nil *empty-fat32-name*))
+       ((mv insert addr-list sub-fs final-head)
         (unlink-abs-alloc-helper
          (abs-file->contents (cdr (abs-assoc head fs)))
          (cdr path)
@@ -599,7 +601,7 @@
       (abs-file (abs-file->dir-ent (cdr (abs-assoc head fs)))
                 insert)
       fs)
-     addr-list sub-fs sub-path)))
+     addr-list sub-fs final-head)))
 
 ;; Move later
 (defthm put-assoc-dissimilarity
@@ -687,7 +689,7 @@
 
 (assert-event
  (mv-let
-   (fs addr-list sub-fs sub-path)
+   (fs addr-list sub-fs final-head)
    (unlink-abs-alloc-helper
     (list
      (cons
@@ -748,5 +750,136 @@
        "INITRD  IMG"
        (abs-file (dir-ent-fix nil) ""))))
     (equal
-     sub-path
-     nil))))
+     final-head
+     "INITRD  IMG"))))
+
+(assert-event
+ (mv-let
+   (fs addr-list sub-fs final-head)
+   (unlink-abs-alloc-helper
+    (list
+     (cons
+      "INITRD  IMG"
+      (abs-file (dir-ent-fix nil) ""))
+     (cons
+      "RUN        "
+      (abs-file
+       (dir-ent-fix nil)
+       (list
+        (cons
+         "RSYSLOGDPID"
+         (abs-file (dir-ent-fix nil) "")))))
+     (cons
+      "USR        "
+      (abs-file (dir-ent-fix nil)
+                (list
+                 (cons
+                  "LOCAL      "
+                  (abs-file (dir-ent-fix nil) ()))
+                 (cons
+                  "LIB        "
+                  (abs-file (dir-ent-fix nil) ()))
+                 1))))
+    (list "RUN        " "RSYSLOGDPID")
+    3)
+   (and
+    (equal
+     fs
+     (list
+      (cons
+       "INITRD  IMG"
+       (abs-file (dir-ent-fix nil) ""))
+      (cons
+       "RUN        "
+       (abs-file
+        (dir-ent-fix nil)
+        (list
+         3)))
+      (cons
+       "USR        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "LOCAL      "
+                   (abs-file (dir-ent-fix nil) ()))
+                  (cons
+                   "LIB        "
+                   (abs-file (dir-ent-fix nil) ()))
+                  1)))))
+    (equal
+     addr-list
+     nil)
+    (equal
+     sub-fs
+     (list
+      (cons
+       "RSYSLOGDPID"
+       (abs-file (dir-ent-fix nil) ""))))
+    (equal
+     final-head
+     "RSYSLOGDPID"))))
+
+(assert-event
+ (mv-let
+   (fs addr-list sub-fs final-head)
+   (unlink-abs-alloc-helper
+    (list
+     (cons
+      "INITRD  IMG"
+      (abs-file (dir-ent-fix nil) ""))
+     (cons
+      "RUN        "
+      (abs-file
+       (dir-ent-fix nil)
+       (list
+        (cons
+         "RSYSLOGDPID"
+         (abs-file (dir-ent-fix nil) "")))))
+     (cons
+      "USR        "
+      (abs-file (dir-ent-fix nil)
+                (list
+                 (cons
+                  "LOCAL      "
+                  (abs-file (dir-ent-fix nil) ()))
+                 (cons
+                  "LIB        "
+                  (abs-file (dir-ent-fix nil) ()))
+                 1))))
+    (list "USR        " "BIN        " "COL        ")
+    3)
+   (and
+    (equal
+     fs
+     (list
+      (cons
+       "INITRD  IMG"
+       (abs-file (dir-ent-fix nil) ""))
+      (cons
+       "RUN        "
+       (abs-file
+        (dir-ent-fix nil)
+        (list
+         (cons
+          "RSYSLOGDPID"
+          (abs-file (dir-ent-fix nil) "")))))
+      (cons
+       "USR        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "LOCAL      "
+                   (abs-file (dir-ent-fix nil) ()))
+                  (cons
+                   "LIB        "
+                   (abs-file (dir-ent-fix nil) ()))
+                  1)))))
+    (equal
+     addr-list
+     (list 1))
+    (equal
+     sub-fs
+     nil)
+    (equal
+     final-head
+     "BIN        "))))
