@@ -548,42 +548,58 @@
                :key-type nat
                :val-type frame-pair)
 
+;; That this lemma is needed is a reminder to get some list macros around
+;; abs-file-alist-p...
+(defthm
+  unlink-abs-alloc-helper-guard-lemma-1
+  (implies
+   (and (integerp index)
+        (<= 0 index)
+        (abs-directory-file-p (cdr (assoc-equal path1 fs))))
+   (abs-file-contents-p
+    (cons
+     index
+     (remove-assoc-equal (car path2)
+                         (abs-file->contents (cdr (assoc-equal path1 fs)))))))
+  :hints (("goal" :in-theory (enable abs-file-contents-p abs-file-alist-p)
+           :do-not-induct t)))
+
 ;; Return 4 values - the abs-file-alist, potentially changed; the list of
 ;; abstract addresses to look into, potentially empty; the substructure we
 ;; pulled out, potentially the default abs-file-alist; and the path from where
 ;; the substructure was pulled out, potentially empty.
 (defund
-  unlink-abs-alloc-helper
-  (fs path)
+  unlink-abs-alloc-helper (fs path index)
   (declare (xargs :guard (and (abs-file-alist-p fs)
-                              (fat32-filename-list-p path))
+                              (fat32-filename-list-p path)
+                              (natp index))
                   :measure (len path)
                   :guard-debug t))
   (b*
-      (((when (atom path))
-        (mv fs nil nil nil))
-       (head (mbe :exec (car path) :logic (fat32-filename-fix (car path))))
+      (((when (atom path)) (mv fs nil nil nil))
+       (head (mbe :exec (car path)
+                  :logic (fat32-filename-fix (car path))))
        ((when (atom (abs-assoc head fs)))
-        (mv fs
-            (abs-top-addrs fs)
-            nil path))
+        (mv fs (abs-top-addrs fs) nil path))
        ((when (atom (cdr path)))
-        (mv (abs-remove-assoc head fs)
-            nil
-            (list (abs-assoc head fs))
+        (mv (list* (mbe :exec index :logic (nfix index))
+                   (abs-remove-assoc head fs))
+            nil (list (abs-assoc head fs))
             nil))
-       ((unless (abs-directory-file-p
-                 (cdr (abs-assoc head fs))))
+       ((unless (abs-directory-file-p (cdr (abs-assoc head fs))))
         (mv fs nil nil nil))
        ((mv insert addr-list sub-fs sub-path)
         (unlink-abs-alloc-helper
          (abs-file->contents (cdr (abs-assoc head fs)))
-         (cdr path))))
-    (mv (abs-put-assoc
-         head
-         (abs-file (abs-file->dir-ent (cdr (abs-assoc head fs))) insert)
-         fs)
-        addr-list sub-fs sub-path)))
+         (cdr path)
+         index)))
+    (mv
+     (abs-put-assoc
+      head
+      (abs-file (abs-file->dir-ent (cdr (abs-assoc head fs)))
+                insert)
+      fs)
+     addr-list sub-fs sub-path)))
 
 ;; Move later
 (defthm put-assoc-dissimilarity
@@ -592,52 +608,130 @@
            (not (equal (put-assoc-equal name val alist) alist))))
 
 (defthm
-  unlink-abs-alloc-helper-correctness-1
+  unlink-abs-alloc-helper-correctness-1-lemma-1
   (implies
-   (abs-file-alist-p abs-file-alist)
-   (abs-file-alist-p (mv-nth 0
-                             (unlink-abs-alloc-helper abs-file-alist path))))
+   (and (abs-file-alist-p abs-file-alist)
+        (integerp index)
+        (<= 0 index))
+   (abs-file-alist-p (cons index
+                           (remove-assoc-equal (fat32-filename-fix (car path))
+                                               abs-file-alist))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-file-alist-p))))
+
+(defthm
+  unlink-abs-alloc-helper-correctness-1
+  (implies (abs-file-alist-p abs-file-alist)
+           (abs-file-alist-p
+            (mv-nth 0
+                    (unlink-abs-alloc-helper abs-file-alist path index))))
   :hints (("goal" :in-theory (enable unlink-abs-alloc-helper))))
 
 (assert-event
- (and
-  (abs-file-alist-p
-   (list
-    (cons
-     "TMP        "
-     (abs-file (dir-ent-fix nil) ()))
-    (cons
-     "INITRD  IMG"
-     (abs-file (dir-ent-fix nil) ""))
-    (cons
-     "USR        "
-     (abs-file (dir-ent-fix nil)
-               (list
-                (cons
-                 "LOCAL      "
-                 (abs-file (dir-ent-fix nil) ()))
-                (cons
-                 "LIB        "
-                 (abs-file (dir-ent-fix nil) ()))
-                1)))))
-  (abs-file-alist-p
-   (list
-    (cons
-     "SHARE      "
-     (abs-file (dir-ent-fix nil) ()))
-    (cons
-     "BIN        "
-     (abs-file (dir-ent-fix nil)
-               (list
-                (cons
-                 "CAT        "
-                 (abs-file (dir-ent-fix nil) ""))
-                2
-                (cons
-                 "TAC        "
-                 (abs-file (dir-ent-fix nil) "")))))))
-  (abs-file-alist-p
-   (list
-    (cons
-     "COL        "
-     (abs-file (dir-ent-fix nil) ""))))))
+ (frame-p
+  (list
+   (cons
+    0
+    (frame-pair
+     nil
+     (list
+      (cons
+       "TMP        "
+       (abs-file (dir-ent-fix nil) ()))
+      (cons
+       "INITRD  IMG"
+       (abs-file (dir-ent-fix nil) ""))
+      (cons
+       "USR        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "LOCAL      "
+                   (abs-file (dir-ent-fix nil) ()))
+                  (cons
+                   "LIB        "
+                   (abs-file (dir-ent-fix nil) ()))
+                  1))))))
+   (cons
+    1
+    (frame-pair
+     (list "USR        ")
+     (list
+      (cons
+       "SHARE      "
+       (abs-file (dir-ent-fix nil) ()))
+      (cons
+       "BIN        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "CAT        "
+                   (abs-file (dir-ent-fix nil) ""))
+                  2
+                  (cons
+                   "TAC        "
+                   (abs-file (dir-ent-fix nil) ""))))))))
+   (cons
+    2
+    (frame-pair
+     (list "USR        " "BIN        ")
+     (list
+      (cons
+       "COL        "
+       (abs-file (dir-ent-fix nil) ""))))))))
+
+(assert-event
+ (mv-let
+   (fs addr-list sub-fs sub-path)
+   (unlink-abs-alloc-helper
+    (list
+     (cons
+      "TMP        "
+      (abs-file (dir-ent-fix nil) ()))
+     (cons
+      "INITRD  IMG"
+      (abs-file (dir-ent-fix nil) ""))
+     (cons
+      "USR        "
+      (abs-file (dir-ent-fix nil)
+                (list
+                 (cons
+                  "LOCAL      "
+                  (abs-file (dir-ent-fix nil) ()))
+                 (cons
+                  "LIB        "
+                  (abs-file (dir-ent-fix nil) ()))
+                 1))))
+    (list "INITRD  IMG")
+    3)
+   (and
+    (equal
+     fs
+     (list
+      3
+      (cons
+       "TMP        "
+       (abs-file (dir-ent-fix nil) ()))
+      (cons
+       "USR        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "LOCAL      "
+                   (abs-file (dir-ent-fix nil) ()))
+                  (cons
+                   "LIB        "
+                   (abs-file (dir-ent-fix nil) ()))
+                  1)))))
+    (equal
+     addr-list
+     nil)
+    (equal
+     sub-fs
+     (list
+      (cons
+       "INITRD  IMG"
+       (abs-file (dir-ent-fix nil) ""))))
+    (equal
+     sub-path
+     nil))))
