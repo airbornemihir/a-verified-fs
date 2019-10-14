@@ -603,12 +603,6 @@
       fs)
      addr-list sub-fs final-head)))
 
-;; Move later
-(defthm put-assoc-dissimilarity
-  (implies (and (consp (assoc-equal name alist))
-                (not (equal (cdr (assoc-equal name alist)) val)))
-           (not (equal (put-assoc-equal name val alist) alist))))
-
 (defthm
   unlink-abs-alloc-helper-correctness-1-lemma-1
   (implies
