@@ -15,6 +15,55 @@
 (local
  (in-theory (disable nth update-nth floor mod true-listp take member-equal)))
 
+;; This is explicitly a replacement for assoc-equal with a vacuous guard.
+(defund abs-assoc (x alist)
+  (declare (xargs :guard t))
+  (cond ((atom alist) nil)
+        ((and (atom (car alist)) (null x))
+         (car alist))
+        ((and (consp (car alist)) (equal x (car (car alist))))
+         (car alist))
+        (t (abs-assoc x (cdr alist)))))
+
+(defthm abs-assoc-definition
+  (equal (abs-assoc x alist)
+         (assoc-equal x alist))
+  :hints (("goal" :in-theory (enable abs-assoc)))
+  :rule-classes :definition)
+
+;; This is explicitly a replacement for put-assoc-equal with a vacuous guard.
+(defund abs-put-assoc (name val alist)
+  (declare (xargs :guard t))
+  (cond ((atom alist) (list (cons name val)))
+        ((and (atom (car alist)) (null name))
+         (cons (cons name val) (cdr alist)))
+        ((and (consp (car alist)) (equal name (caar alist)))
+         (cons (cons name val) (cdr alist)))
+        (t (cons (car alist)
+                 (abs-put-assoc name val (cdr alist))))))
+
+(defthm abs-put-assoc-definition
+  (equal (abs-put-assoc name val alist)
+         (put-assoc-equal name val alist))
+  :hints (("goal" :in-theory (enable abs-put-assoc)))
+  :rule-classes :definition)
+
+(defund abs-remove-assoc (x alist)
+  (declare (xargs :guard t))
+  (cond ((atom alist) nil)
+        ((and (atom (car alist)) (null x))
+         (abs-remove-assoc x (cdr alist)))
+        ((and (consp (car alist)) (equal x (car (car alist))))
+         (abs-remove-assoc x (cdr alist)))
+        (t (cons (car alist)
+                 (abs-remove-assoc x (cdr alist))))))
+
+(defthm abs-remove-assoc-definition
+  (equal (abs-remove-assoc x alist)
+         (remove-assoc-equal x alist))
+  :hints (("goal" :in-theory (enable abs-remove-assoc)))
+  :rule-classes :definition)
+
 ;; We need to write this whole thing out - the same way we did it for
 ;; m1-file-alist-p - because the induction scheme has to be created by us,
 ;; without assistance from fty, just this once.
@@ -253,6 +302,8 @@
                            (a (car x)))
            :expand (abs-file-alist-p x))))
 
+;; This theorem states that an abstract filesystem tree without any body
+;; addresses is just a HiFAT instance.
 (defthm
   abs-file-alist-p-correctness-1
   (implies (and (abs-file-alist-p x)
@@ -280,38 +331,44 @@
            (abs-file-alist-p (remove-equal x l)))
   :hints (("goal" :in-theory (enable abs-file-alist-p))))
 
-;; This is explicitly a replacement for assoc-equal with a vacuous guard.
-(defund abs-assoc (x alist)
-  (declare (xargs :guard t))
-  (cond ((atom alist) nil)
-        ((if (atom (car alist))
-             (null x)
-             (equal x (car (car alist))))
-         (car alist))
-        (t (abs-assoc x (cdr alist)))))
+(defthm abs-file-alist-p-of-remove-assoc-equal
+  (implies (abs-file-alist-p alist)
+           (abs-file-alist-p (remove-assoc-equal x alist)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
 
-(defthm abs-assoc-definition
-  (equal (abs-assoc x alist)
-         (assoc-equal x alist))
-  :hints (("goal" :in-theory (enable abs-assoc)))
-  :rule-classes :definition)
+(defund
+  abs-top-addrs (abs-file-alist)
+  (declare
+   (xargs :guard (abs-file-alist-p abs-file-alist)
+          :guard-hints
+          (("goal" :in-theory (enable abs-file-alist-p)))))
+  (cond ((atom abs-file-alist) nil)
+        ((natp (car abs-file-alist))
+         (list* (car abs-file-alist)
+                (abs-top-addrs (cdr abs-file-alist))))
+        (t (abs-top-addrs (cdr abs-file-alist)))))
 
-;; This is explicitly a replacement for put-assoc-equal with a vacuous guard.
-(defund abs-put-assoc (name val alist)
-  (declare (xargs :guard t))
-  (cond ((atom alist) (list (cons name val)))
-        ((if (atom (car alist))
-             (null name)
-             (equal name (caar alist)))
-         (cons (cons name val) (cdr alist)))
-        (t (cons (car alist)
-                 (abs-put-assoc name val (cdr alist))))))
-
-(defthm abs-put-assoc-definition
-  (equal (abs-put-assoc name val alist)
-         (put-assoc-equal name val alist))
-  :hints (("goal" :in-theory (enable abs-put-assoc)))
-  :rule-classes :definition)
+;; For this function, it might be worth investing in the abs-file-alist-fix
+;; thing, but that function just generally seems like a placeholder fixer and
+;; I'm not going there for now. The purpose of this function is to quickly
+;; allow a given abstract variable to be found in the frame - just keep looking
+;; at the (abs-addrs ...) of all the elements in the frame.
+(defund
+  abs-addrs (abs-file-alist)
+  (declare
+   (xargs :guard (abs-file-alist-p abs-file-alist)
+          :guard-hints
+          (("goal" :in-theory (enable abs-file-alist-p)))))
+  (cond ((atom abs-file-alist) nil)
+        ((atom (car abs-file-alist))
+         (list* (mbe :logic (nfix (car abs-file-alist))
+                     :exec (car abs-file-alist))
+                (abs-addrs (cdr abs-file-alist))))
+        ((abs-directory-file-p (cdar abs-file-alist))
+         (append
+          (abs-addrs (abs-file->contents (cdar abs-file-alist)))
+          (abs-addrs (cdr abs-file-alist))))
+        (t (abs-addrs (cdr abs-file-alist)))))
 
 ;; Where are the numbers going to come from? It's not going to work, the idea
 ;; of letting variables be represented by their index in the list. Under such a
@@ -327,12 +384,22 @@
 ;; directory tree. I suspect that's why the idea of an abstract heap cell as a
 ;; pair arose in the first place.
 ;;
-;; One final thing: I'm not returning an error code from this function at the
+;; One more thing: I'm not returning an error code from this function at the
 ;; moment, because I can't fathom where such an error code would be useful. It
 ;; would only arise from a programming error on our part, where we tried to
 ;; context-apply a nonexistent variable - not from any real filesystem
 ;; error. In such a case, it's OK to keep the no-change loser behaviour, even
 ;; if we don't immediately formalise it.
+;;
+;; Another thing: this function only works if there are no body addresses in
+;; the way down the path... otherwise, we'd have to look up those body
+;; addresses and look inside them. In terms of recursion, we'd have to recur as
+;; many times as body addresses occur along the path. Also, each time we were
+;; looking for something and failed to find a directory entry at a certain
+;; level - but found at least one body address - we'd have to iterate over all
+;; body addresses at that level.
+;;
+;; <sigh>
 (defund abs-context-apply
   (abs-file-alist1 abs-file-alist2 x x-path)
   (declare (xargs :guard
@@ -406,3 +473,413 @@
 (verify-guards abs-context-apply
   :guard-debug t
   :hints (("Goal" :in-theory (enable abs-file-alist-p)) ))
+
+(defund
+  abs-file-alist-fix (x)
+  (declare
+   (xargs
+    :guard (abs-file-alist-p x)
+    :guard-hints (("goal" :expand (abs-file-alist-p x)
+                   :in-theory (enable abs-file-p)))))
+  (b* (((when (atom x)) nil)
+       (head (car x))
+       ((when (atom head))
+        (cons (nfix head)
+              (abs-file-alist-fix (cdr x)))))
+    (cons (cons (fat32-filename-fix (car head))
+                (abs-file-fix (cdr head)))
+          (abs-file-alist-fix (cdr x)))))
+
+(encapsulate
+  () ;; start lemmas for abs-file-alist-fix-when-abs-file-alist-p
+
+  (local
+   (defthm abs-file-alist-fix-when-abs-file-alist-p-lemma-1
+     (implies (and (alistp (cddr (car x)))
+                   (equal (car (cadr (car x))) 'dir-ent)
+                   (equal (strip-cars (cddr (car x)))
+                          '(contents))
+                   (dir-ent-p (cdr (cadr (car x))))
+                   (stringp (cdr (caddr (car x))))
+                   (< (len (explode (cdr (caddr (car x)))))
+                      4294967296))
+              (abs-file-p (cdr (car x))))
+     :hints (("goal" :in-theory (enable abs-file-p)))))
+
+  (local
+   (defthm abs-file-alist-fix-when-abs-file-alist-p-lemma-2
+     (implies (and (alistp (cddr (car x)))
+                   (equal (car (cadr (car x))) 'dir-ent)
+                   (equal (strip-cars (cddr (car x)))
+                          '(contents))
+                   (dir-ent-p (cdr (cadr (car x))))
+                   (abs-file-alist-p (cdr (caddr (car x)))))
+              (abs-file-p (cdr (car x))))
+     :hints (("goal" :in-theory (enable abs-file-p)))))
+
+  (defthm
+    abs-file-alist-fix-when-abs-file-alist-p
+    (implies (abs-file-alist-p x)
+             (equal (abs-file-alist-fix x) x))
+    :hints (("goal" :in-theory (enable abs-file-alist-fix abs-file-alist-p)))))
+
+(defthm
+  abs-file-alist-p-of-abs-file-alist-fix
+  (abs-file-alist-p (abs-file-alist-fix x))
+  :hints (("goal" :in-theory (enable abs-file-alist-fix abs-file-alist-p
+                                     abs-file-fix abs-file-contents-fix
+                                     abs-file-contents-p))))
+
+(fty::deffixtype abs-file-alist
+                 :pred abs-file-alist-p
+                 :fix abs-file-alist-fix
+                 :equiv abs-file-alist-equiv
+                 :define t
+                 :forward t)
+
+;; Both these names, below, merit some thought later...
+(fty::defprod frame-pair
+              ((relpath
+                fat32-filename-list-p)
+               (partdir
+                abs-file-alist-p)))
+
+(fty::defalist frame
+               :key-type nat
+               :val-type frame-pair)
+
+;; That this lemma is needed is a reminder to get some list macros around
+;; abs-file-alist-p...
+(defthm
+  unlink-abs-alloc-helper-guard-lemma-1
+  (implies
+   (and (integerp index)
+        (<= 0 index)
+        (abs-directory-file-p (cdr (assoc-equal path1 fs))))
+   (abs-file-contents-p
+    (cons
+     index
+     (remove-assoc-equal (car path2)
+                         (abs-file->contents (cdr (assoc-equal path1 fs)))))))
+  :hints (("goal" :in-theory (enable abs-file-contents-p abs-file-alist-p)
+           :do-not-induct t)))
+
+;; Return 4 values - the abs-file-alist, potentially changed; the list of
+;; abstract addresses to look into, potentially empty; the substructure we
+;; pulled out, potentially the default abs-file-alist; and the path from where
+;; the substructure was pulled out, potentially empty.
+(defund
+  unlink-abs-alloc-helper (fs path index)
+  (declare (xargs :guard (and (abs-file-alist-p fs)
+                              (fat32-filename-list-p path)
+                              (natp index))
+                  :measure (len path)
+                  :guard-debug t))
+  (b*
+      (;; This is an error condition.
+       ((when (atom path)) (mv fs nil nil *empty-fat32-name*))
+       (head (mbe :exec (car path)
+                  :logic (fat32-filename-fix (car path))))
+       ((when (atom (abs-assoc head fs)))
+        (mv fs (abs-top-addrs fs) nil head))
+       ((when (atom (cdr path)))
+        (mv (list* (mbe :exec index :logic (nfix index))
+                   (abs-remove-assoc head fs))
+            nil (list (abs-assoc head fs))
+            head))
+       ;; This is an error condition.
+       ((unless (abs-directory-file-p (cdr (abs-assoc head fs))))
+        (mv fs nil nil *empty-fat32-name*))
+       ((mv insert addr-list sub-fs final-head)
+        (unlink-abs-alloc-helper
+         (abs-file->contents (cdr (abs-assoc head fs)))
+         (cdr path)
+         index)))
+    (mv
+     (abs-put-assoc
+      head
+      (abs-file (abs-file->dir-ent (cdr (abs-assoc head fs)))
+                insert)
+      fs)
+     addr-list sub-fs final-head)))
+
+;; Move later
+(defthm put-assoc-dissimilarity
+  (implies (and (consp (assoc-equal name alist))
+                (not (equal (cdr (assoc-equal name alist)) val)))
+           (not (equal (put-assoc-equal name val alist) alist))))
+
+(defthm
+  unlink-abs-alloc-helper-correctness-1-lemma-1
+  (implies
+   (and (abs-file-alist-p abs-file-alist)
+        (integerp index)
+        (<= 0 index))
+   (abs-file-alist-p (cons index
+                           (remove-assoc-equal (fat32-filename-fix (car path))
+                                               abs-file-alist))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-file-alist-p))))
+
+(defthm
+  unlink-abs-alloc-helper-correctness-1
+  (implies (abs-file-alist-p abs-file-alist)
+           (abs-file-alist-p
+            (mv-nth 0
+                    (unlink-abs-alloc-helper abs-file-alist path index))))
+  :hints (("goal" :in-theory (enable unlink-abs-alloc-helper))))
+
+(assert-event
+ (frame-p
+  (list
+   (cons
+    0
+    (frame-pair
+     nil
+     (list
+      (cons
+       "INITRD  IMG"
+       (abs-file (dir-ent-fix nil) ""))
+      (cons
+       "RUN        "
+       (abs-file
+        (dir-ent-fix nil)
+        (list
+         (cons
+          "RSYSLOGDPID"
+          (abs-file (dir-ent-fix nil) "")))))
+      (cons
+       "USR        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "LOCAL      "
+                   (abs-file (dir-ent-fix nil) ()))
+                  (cons
+                   "LIB        "
+                   (abs-file (dir-ent-fix nil) ()))
+                  1))))))
+   (cons
+    1
+    (frame-pair
+     (list "USR        ")
+     (list
+      (cons
+       "SHARE      "
+       (abs-file (dir-ent-fix nil) ()))
+      (cons
+       "BIN        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "CAT        "
+                   (abs-file (dir-ent-fix nil) ""))
+                  2
+                  (cons
+                   "TAC        "
+                   (abs-file (dir-ent-fix nil) ""))))))))
+   (cons
+    2
+    (frame-pair
+     (list "USR        " "BIN        ")
+     (list
+      (cons
+       "COL        "
+       (abs-file (dir-ent-fix nil) ""))))))))
+
+(assert-event
+ (mv-let
+   (fs addr-list sub-fs final-head)
+   (unlink-abs-alloc-helper
+    (list
+     (cons
+      "INITRD  IMG"
+      (abs-file (dir-ent-fix nil) ""))
+     (cons
+      "RUN        "
+      (abs-file
+       (dir-ent-fix nil)
+       (list
+        (cons
+         "RSYSLOGDPID"
+         (abs-file (dir-ent-fix nil) "")))))
+     (cons
+      "USR        "
+      (abs-file (dir-ent-fix nil)
+                (list
+                 (cons
+                  "LOCAL      "
+                  (abs-file (dir-ent-fix nil) ()))
+                 (cons
+                  "LIB        "
+                  (abs-file (dir-ent-fix nil) ()))
+                 1))))
+    (list "INITRD  IMG")
+    3)
+   (and
+    (equal
+     fs
+     (list
+      3
+      (cons
+       "RUN        "
+       (abs-file
+        (dir-ent-fix nil)
+        (list
+         (cons
+          "RSYSLOGDPID"
+          (abs-file (dir-ent-fix nil) "")))))
+      (cons
+       "USR        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "LOCAL      "
+                   (abs-file (dir-ent-fix nil) ()))
+                  (cons
+                   "LIB        "
+                   (abs-file (dir-ent-fix nil) ()))
+                  1)))))
+    (equal
+     addr-list
+     nil)
+    (equal
+     sub-fs
+     (list
+      (cons
+       "INITRD  IMG"
+       (abs-file (dir-ent-fix nil) ""))))
+    (equal
+     final-head
+     "INITRD  IMG"))))
+
+(assert-event
+ (mv-let
+   (fs addr-list sub-fs final-head)
+   (unlink-abs-alloc-helper
+    (list
+     (cons
+      "INITRD  IMG"
+      (abs-file (dir-ent-fix nil) ""))
+     (cons
+      "RUN        "
+      (abs-file
+       (dir-ent-fix nil)
+       (list
+        (cons
+         "RSYSLOGDPID"
+         (abs-file (dir-ent-fix nil) "")))))
+     (cons
+      "USR        "
+      (abs-file (dir-ent-fix nil)
+                (list
+                 (cons
+                  "LOCAL      "
+                  (abs-file (dir-ent-fix nil) ()))
+                 (cons
+                  "LIB        "
+                  (abs-file (dir-ent-fix nil) ()))
+                 1))))
+    (list "RUN        " "RSYSLOGDPID")
+    3)
+   (and
+    (equal
+     fs
+     (list
+      (cons
+       "INITRD  IMG"
+       (abs-file (dir-ent-fix nil) ""))
+      (cons
+       "RUN        "
+       (abs-file
+        (dir-ent-fix nil)
+        (list
+         3)))
+      (cons
+       "USR        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "LOCAL      "
+                   (abs-file (dir-ent-fix nil) ()))
+                  (cons
+                   "LIB        "
+                   (abs-file (dir-ent-fix nil) ()))
+                  1)))))
+    (equal
+     addr-list
+     nil)
+    (equal
+     sub-fs
+     (list
+      (cons
+       "RSYSLOGDPID"
+       (abs-file (dir-ent-fix nil) ""))))
+    (equal
+     final-head
+     "RSYSLOGDPID"))))
+
+(assert-event
+ (mv-let
+   (fs addr-list sub-fs final-head)
+   (unlink-abs-alloc-helper
+    (list
+     (cons
+      "INITRD  IMG"
+      (abs-file (dir-ent-fix nil) ""))
+     (cons
+      "RUN        "
+      (abs-file
+       (dir-ent-fix nil)
+       (list
+        (cons
+         "RSYSLOGDPID"
+         (abs-file (dir-ent-fix nil) "")))))
+     (cons
+      "USR        "
+      (abs-file (dir-ent-fix nil)
+                (list
+                 (cons
+                  "LOCAL      "
+                  (abs-file (dir-ent-fix nil) ()))
+                 (cons
+                  "LIB        "
+                  (abs-file (dir-ent-fix nil) ()))
+                 1))))
+    (list "USR        " "BIN        " "COL        ")
+    3)
+   (and
+    (equal
+     fs
+     (list
+      (cons
+       "INITRD  IMG"
+       (abs-file (dir-ent-fix nil) ""))
+      (cons
+       "RUN        "
+       (abs-file
+        (dir-ent-fix nil)
+        (list
+         (cons
+          "RSYSLOGDPID"
+          (abs-file (dir-ent-fix nil) "")))))
+      (cons
+       "USR        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "LOCAL      "
+                   (abs-file (dir-ent-fix nil) ()))
+                  (cons
+                   "LIB        "
+                   (abs-file (dir-ent-fix nil) ()))
+                  1)))))
+    (equal
+     addr-list
+     (list 1))
+    (equal
+     sub-fs
+     nil)
+    (equal
+     final-head
+     "BIN        "))))
