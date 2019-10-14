@@ -14196,18 +14196,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (car pathname))))
-    (<
-     (dir-ent-first-cluster
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth
-          0
-          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname))))
-     (+ 2 (count-of-clusters fat32-in-memory))))
+       (car pathname)))))
    (equal
     (mv-nth
      0
@@ -14295,25 +14284,11 @@ Some (rather awful) testing forms are
           entry-limit))
         (cdr pathname)))
       0))
-    :in-theory (disable put-assoc-equal-without-change
-                        (:rewrite lofat-remove-file-correctness-2)
+    :in-theory (disable (:rewrite lofat-remove-file-correctness-2)
                         (:rewrite lofat-remove-file-correctness-1-lemma-66)
                         (:rewrite lofat-remove-file-correctness-1-lemma-5))
     :use
     ((:instance
-      put-assoc-equal-without-change
-      (x (car pathname))
-      (alist
-       (mv-nth
-        0
-        (lofat-to-hifat-helper
-         fat32-in-memory
-         (make-dir-ent-list
-          (mv-nth
-           0
-           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         entry-limit))))
-     (:instance
       (:rewrite lofat-remove-file-correctness-2)
       (pathname (cdr pathname))
       (root-dir-ent
@@ -14350,92 +14325,6 @@ Some (rather awful) testing forms are
          0
          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))))
       (fat32-in-memory fat32-in-memory))))))
-
-(defthm
-  lofat-remove-file-correctness-1-lemma-71
-  (implies
-   (and
-    (equal
-     (mv-nth
-      3
-      (lofat-to-hifat-helper
-       fat32-in-memory
-       (make-dir-ent-list
-        (mv-nth 0
-                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       entry-limit))
-     0)
-    (dir-ent-directory-p
-     (mv-nth
-      0
-      (find-dir-ent
-       (make-dir-ent-list
-        (mv-nth 0
-                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (car pathname)))))
-   (equal
-    (put-assoc-equal
-     (car pathname)
-     (m1-file
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth
-          0
-          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname)))
-      (mv-nth
-       0
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth
-          0
-          (dir-ent-clusterchain-contents
-           fat32-in-memory
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname))))))
-        entry-limit)))
-     (mv-nth
-      0
-      (lofat-to-hifat-helper
-       fat32-in-memory
-       (make-dir-ent-list
-        (mv-nth 0
-                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       entry-limit)))
-    (mv-nth
-     0
-     (lofat-to-hifat-helper
-      fat32-in-memory
-      (make-dir-ent-list
-       (mv-nth 0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-      entry-limit))))
-  :hints
-  (("goal"
-    :in-theory (disable put-assoc-equal-without-change)
-    :use
-    ((:instance
-      put-assoc-equal-without-change
-      (x (car pathname))
-      (alist
-       (mv-nth
-        0
-        (lofat-to-hifat-helper
-         fat32-in-memory
-         (make-dir-ent-list
-          (mv-nth
-           0
-           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         entry-limit))))))))
 
 (encapsulate
   ()
