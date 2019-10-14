@@ -551,7 +551,7 @@
 ;; That this lemma is needed is a reminder to get some list macros around
 ;; abs-file-alist-p...
 (defthm
-  unlink-abs-alloc-helper-guard-lemma-1
+  unlink-abs-alloc-helper-1-guard-lemma-1
   (implies
    (and (integerp index)
         (<= 0 index)
@@ -564,12 +564,27 @@
   :hints (("goal" :in-theory (enable abs-file-contents-p abs-file-alist-p)
            :do-not-induct t)))
 
+;; It's going to be incredibly hard to implement the thing which this helper
+;; function is a part of, because in general when we're looking up a file we'll
+;; have to go down many, many rabbit holes. We might want to look up
+;; /usr/bin/busybox in an instrumented filesystem where /usr has 4 abstract
+;; addresses in it, and one of them has /usr/bin, and that one has 8 abstract
+;; addresses in it, and finally it turns out none of the 8 has busybox in
+;; it. We'd have to process abstract addresses through a queue into which we
+;; keep adding them, accompanied by relative paths, as we find ourselves
+;; stymied and over and over again while looking for a file. It pretty much
+;; goes without saying that reasoning about abstract allocations and
+;; deallocations would get very hard. It might be possible to reason about
+;; single steps of allocation and deallocation - respectively taking a
+;; substructure out of a directory we know to exist and putting it back where
+;; we know no duplicates to exist - but it's still going to be hard.
+;;
 ;; Return 4 values - the abs-file-alist, potentially changed; the list of
 ;; abstract addresses to look into, potentially empty; the substructure we
 ;; pulled out, potentially the default abs-file-alist; and the path from where
 ;; the substructure was pulled out, potentially empty.
 (defund
-  unlink-abs-alloc-helper (fs path index)
+  unlink-abs-alloc-helper-1 (fs path index)
   (declare (xargs :guard (and (abs-file-alist-p fs)
                               (fat32-filename-list-p path)
                               (natp index))
@@ -591,7 +606,7 @@
        ((unless (abs-directory-file-p (cdr (abs-assoc head fs))))
         (mv fs nil nil *empty-fat32-name*))
        ((mv insert addr-list sub-fs final-head)
-        (unlink-abs-alloc-helper
+        (unlink-abs-alloc-helper-1
          (abs-file->contents (cdr (abs-assoc head fs)))
          (cdr path)
          index)))
@@ -604,7 +619,7 @@
      addr-list sub-fs final-head)))
 
 (defthm
-  unlink-abs-alloc-helper-correctness-1-lemma-1
+  unlink-abs-alloc-helper-1-correctness-1-lemma-1
   (implies
    (and (abs-file-alist-p abs-file-alist)
         (integerp index)
@@ -616,12 +631,12 @@
            :in-theory (enable abs-file-alist-p))))
 
 (defthm
-  unlink-abs-alloc-helper-correctness-1
+  unlink-abs-alloc-helper-1-correctness-1
   (implies (abs-file-alist-p abs-file-alist)
            (abs-file-alist-p
             (mv-nth 0
-                    (unlink-abs-alloc-helper abs-file-alist path index))))
-  :hints (("goal" :in-theory (enable unlink-abs-alloc-helper))))
+                    (unlink-abs-alloc-helper-1 abs-file-alist path index))))
+  :hints (("goal" :in-theory (enable unlink-abs-alloc-helper-1))))
 
 (assert-event
  (frame-p
@@ -684,7 +699,7 @@
 (assert-event
  (mv-let
    (fs addr-list sub-fs final-head)
-   (unlink-abs-alloc-helper
+   (unlink-abs-alloc-helper-1
     (list
      (cons
       "INITRD  IMG"
@@ -750,7 +765,7 @@
 (assert-event
  (mv-let
    (fs addr-list sub-fs final-head)
-   (unlink-abs-alloc-helper
+   (unlink-abs-alloc-helper-1
     (list
      (cons
       "INITRD  IMG"
@@ -816,7 +831,7 @@
 (assert-event
  (mv-let
    (fs addr-list sub-fs final-head)
-   (unlink-abs-alloc-helper
+   (unlink-abs-alloc-helper-1
     (list
      (cons
       "INITRD  IMG"

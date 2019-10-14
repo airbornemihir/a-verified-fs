@@ -13993,16 +13993,8 @@ Some (rather awful) testing forms are
               (car pathname))))))
          entry-limit))))))))
 
-;; Move later.
-(defthm lofat-remove-file-correctness-1-lemma-69
-  (implies (not (equal (mv-nth 1 (hifat-remove-file fs pathname))
-                       0))
-           (equal (mv-nth 0 (hifat-remove-file fs pathname))
-                  (hifat-file-alist-fix fs)))
-  :hints (("goal" :in-theory (enable hifat-remove-file))))
-
 (defthm
-  lofat-remove-file-correctness-1-lemma-70
+  lofat-remove-file-correctness-1-lemma-69
   (implies
    (and
     (consp (cddr pathname))
