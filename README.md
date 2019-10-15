@@ -49,7 +49,7 @@ implementation (SBCL) causes some tests to fail, on account of
 inconsistent handling of command line arguments by
 [oslib::argv](http://www.cs.utexas.edu/users/moore/acl2/manuals/current/manual/?topic=OSLIB____ARGV). The
 ACL2 installation page points to instructions for
-[obtaining](http://www.cs.utexas.edu/users/moore/acl2/v8-1/HTML/installation/requirements.html#Obtaining-CCL)
+[obtaining](http://www.cs.utexas.edu/users/moore/acl2/v8-2/HTML/installation/requirements.html#Obtaining-CCL)
 and
-[installing](http://www.cs.utexas.edu/users/moore/acl2/v8-1/HTML/installation/ccl.html)
+[installing](http://www.cs.utexas.edu/users/moore/acl2/v8-2/HTML/installation/ccl.html)
 CCL.
