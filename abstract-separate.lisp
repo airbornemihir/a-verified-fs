@@ -907,12 +907,12 @@
                   :guard-debug t))
   (b*
       (;; Not finding a problematic frame is the desired result.
-       ((when (atom frame)) t)
+       ((when (atom frame)) nil)
        (head-frame-pair (cdr (car frame)))
        ;; Finding a problematic frame is an undesired result.
        ((when (and (equal (frame-pair->relpath head-frame-pair) (butlast path 1))
                    (consp (abs-assoc (car (last path)) (frame-pair->partdir head-frame-pair)))))
-        nil))
+        t))
     (stat-abs-lookup (cdr frame) path)))
 
 (assert-event
@@ -974,7 +974,7 @@
         "COL        "
         (abs-file (dir-ent-fix nil) ""))))))
    (list "INITRD  IMG"))
-  nil))
+  t))
 
 (assert-event
  (equal
@@ -1035,4 +1035,65 @@
         "COL        "
         (abs-file (dir-ent-fix nil) ""))))))
    (list "USR        " "BIN        " "COL        "))
+  t))
+
+(assert-event
+ (equal
+  (stat-abs-lookup
+   (list
+    (cons
+     0
+     (frame-pair
+      nil
+      (list
+       (cons
+        "INITRD  IMG"
+        (abs-file (dir-ent-fix nil) ""))
+       (cons
+        "RUN        "
+        (abs-file
+         (dir-ent-fix nil)
+         (list
+          (cons
+           "RSYSLOGDPID"
+           (abs-file (dir-ent-fix nil) "")))))
+       (cons
+        "USR        "
+        (abs-file (dir-ent-fix nil)
+                  (list
+                   (cons
+                    "LOCAL      "
+                    (abs-file (dir-ent-fix nil) ()))
+                   (cons
+                    "LIB        "
+                    (abs-file (dir-ent-fix nil) ()))
+                   1))))))
+    (cons
+     1
+     (frame-pair
+      (list "USR        ")
+      (list
+       (cons
+        "SHARE      "
+        (abs-file (dir-ent-fix nil) ()))
+       (cons
+        "BIN        "
+        (abs-file (dir-ent-fix nil)
+                  (list
+                   (cons
+                    "CAT        "
+                    (abs-file (dir-ent-fix nil) ""))
+                   2
+                   (cons
+                    "TAC        "
+                    (abs-file (dir-ent-fix nil) ""))))))))
+    (cons
+     2
+     (frame-pair
+      (list "USR        " "BIN        ")
+      (list
+       (cons
+        "COL        "
+        (abs-file (dir-ent-fix nil) ""))))))
+   (list "USR        " "BIN        " "FIREFOX    "))
   nil))
