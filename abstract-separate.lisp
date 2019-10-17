@@ -1169,3 +1169,84 @@
                     (frame-val->src (cdr (abs-assoc src frame))))
                    (cdr frame))))
         (abs-collapse root frame)))))
+
+(assert-event
+ (b*
+     (((mv root result)
+       (abs-collapse
+        (list
+         (cons
+          "INITRD  IMG"
+          (abs-file (dir-ent-fix nil) ""))
+         (cons
+          "RUN        "
+          (abs-file
+           (dir-ent-fix nil)
+           (list
+            (cons
+             "RSYSLOGDPID"
+             (abs-file (dir-ent-fix nil) "")))))
+         (cons
+          "USR        "
+          (abs-file (dir-ent-fix nil)
+                    (list
+                     (cons
+                      "LOCAL      "
+                      (abs-file (dir-ent-fix nil) ()))
+                     (cons
+                      "LIB        "
+                      (abs-file (dir-ent-fix nil) ()))
+                     1))))
+        (list
+         (cons
+          1
+          (frame-val
+           (list "USR        ")
+           (list
+            (cons
+             "SHARE      "
+             (abs-file (dir-ent-fix nil) ()))
+            (cons
+             "BIN        "
+             (abs-file (dir-ent-fix nil)
+                       (list
+                        (cons
+                         "CAT        "
+                         (abs-file (dir-ent-fix nil) ""))
+                        2
+                        (cons
+                         "TAC        "
+                         (abs-file (dir-ent-fix nil) ""))))))
+           0))
+         (cons
+          2
+          (frame-val
+           (list "USR        " "BIN        ")
+           (list
+            (cons
+             "COL        "
+             (abs-file (dir-ent-fix nil) "")))
+           1))))))
+   (and
+    (equal
+     root
+     '(("INITRD  IMG" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+        (CONTENTS . ""))
+       ("RUN        "
+        (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+        (CONTENTS ("RSYSLOGDPID" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                   (CONTENTS . ""))))
+       ("USR        "
+        (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+        (CONTENTS ("LOCAL      " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                   (CONTENTS))
+                  ("LIB        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                   (CONTENTS))
+                  1))))
+    (equal result nil))))
