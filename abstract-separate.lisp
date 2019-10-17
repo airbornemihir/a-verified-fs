@@ -1297,3 +1297,88 @@
                                "COL        "
                                (abs-file (dir-ent-fix nil) ""))))))))))
     (equal result t))))
+
+;; This is part of how we're going to ensure no duplication in the root
+;; directory once collapsed. The only place duplication can arise, if it
+;; doesn't already exist, is when (i) two abstract variables with the same path
+;; promise are (indirectly) joined together, and (ii) an abstract variable with
+;; path promise x is joined with another abstract variable with a different
+;; path promise y where (prefixp x y). Note, for case (ii) there can only be
+;; one variable with path promise x which can be joined with the given variable
+;; - else, we'd have duplication of the part of y which is not in x.
+(defund
+  path-promises (frame)
+  (declare (xargs :guard (frame-p frame)))
+  (b*
+      (((when (atom frame)) nil)
+       (head-path-promise (frame-val->path (cdar frame)))
+       (tail-path-promises (path-promises (cdr frame)))
+       ((when (member-equal head-path-promise tail-path-promises))
+        tail-path-promises))
+    (cons head-path-promise tail-path-promises)))
+
+(defthm no-duplicatesp-of-path-promises
+  (no-duplicatesp-equal (path-promises frame))
+  :hints (("goal" :in-theory (enable path-promises))))
+
+(defund abs-top-names (x)
+  (declare (xargs :guard t))
+  (cond ((atom x) nil)
+        ((atom (car x)) (abs-top-names (cdr x)))
+        ((equal (caar x) nil) (abs-top-names (cdr x)))
+        (t (cons (car (car x))
+                 (abs-top-names (cdr x))))))
+
+(defthm abs-top-names-definition
+  (equal (abs-top-names x)
+         (remove nil (strip-cars x)))
+  :rule-classes :definition
+  :hints (("goal" :in-theory (enable abs-top-names))))
+
+(defund
+  names-at-relpath (fs relpath)
+  (declare (xargs :guard (and (abs-file-alist-p fs)
+                              (fat32-filename-list-p relpath))
+                  :guard-debug t))
+  (b*
+      (((when (atom relpath))
+        (abs-top-names fs))
+       (head (car relpath))
+       ((unless
+         (and (consp (abs-assoc head fs))
+              (abs-directory-file-p (cdr (abs-assoc head fs)))))
+        nil))
+    (names-at-relpath
+     (abs-file->contents (cdr (abs-assoc head fs)))
+     (cdr relpath))))
+
+(defund
+  names-at-relpath-across-frame
+  (frame relpath)
+  (declare (xargs :guard (and (frame-p frame)
+                              (fat32-filename-list-p relpath))))
+  (b*
+      (((when (atom frame)) nil)
+       (head-frame-val (cdar frame))
+       ((unless (prefixp (frame-val->path head-frame-val)
+                         relpath))
+        (names-at-relpath-across-frame (cdr frame)
+                                       relpath)))
+    (append (names-at-relpath
+             (frame-val->dir head-frame-val)
+             (nthcdr (len (frame-val->path head-frame-val))
+                     relpath))
+            (names-at-relpath-across-frame (cdr frame)
+                                           relpath))))
+
+(defund
+  abs-separate-helper (frame relpaths)
+  (or
+   (atom relpaths)
+   (and
+    (no-duplicatesp-equal
+     (names-at-relpath-across-frame frame (car relpaths)))
+    (abs-separate-helper frame (cdr relpaths)))))
+
+(defund abs-separate (frame)
+  (abs-separate-helper frame (path-promises frame)))
