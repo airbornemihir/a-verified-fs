@@ -1153,14 +1153,6 @@
            (frame-p (remove-assoc-equal x alist)))
   :hints (("goal" :in-theory (enable frame-p))))
 
-;; This is problematic because it sometimes consumes those abstract variables
-;; whose subdirectories still contain pointers to other abstract
-;; variables...
-;;
-;; I'm not sure how this can be logically surmounted. Perhaps we can update
-;; (gulp) all the elements which pointed to this one, as their source, once it
-;; gets folded into something else. That would kinda make a mess of the intent
-;; of path promises, though.
 (defund abs-collapse (root frame)
   (declare (xargs :guard (and (abs-file-alist-p root) (frame-p frame))
                   :guard-debug t :measure (len frame)))
@@ -1206,100 +1198,6 @@
                     (frame-val->src (cdr (abs-assoc src frame))))
                    frame)))
         (abs-collapse root frame)))))
-
-;; Awful testing form
-
-;; (b*
-;;     (((mv & frame)
-;;       (mv
-;;        (list
-;;         (cons
-;;          "INITRD  IMG"
-;;          (abs-file (dir-ent-fix nil) ""))
-;;         (cons
-;;          "RUN        "
-;;          (abs-file
-;;           (dir-ent-fix nil)
-;;           (list
-;;            (cons
-;;             "RSYSLOGDPID"
-;;             (abs-file (dir-ent-fix nil) "")))))
-;;         (cons
-;;          "USR        "
-;;          (abs-file (dir-ent-fix nil)
-;;                    (list
-;;                     (cons
-;;                      "LOCAL      "
-;;                      (abs-file (dir-ent-fix nil) ()))
-;;                     (cons
-;;                      "LIB        "
-;;                      (abs-file (dir-ent-fix nil) ()))
-;;                     1))))
-;;        (list
-;;         (cons
-;;          1
-;;          (frame-val
-;;           (list "USR        ")
-;;           (list
-;;            (cons
-;;             "SHARE      "
-;;             (abs-file (dir-ent-fix nil) ()))
-;;            (cons
-;;             "BIN        "
-;;             (abs-file (dir-ent-fix nil)
-;;                       (list
-;;                        (cons
-;;                         "CAT        "
-;;                         (abs-file (dir-ent-fix nil) ""))
-;;                        2
-;;                        (cons
-;;                         "TAC        "
-;;                         (abs-file (dir-ent-fix nil) ""))))))
-;;           0))
-;;         (cons
-;;          2
-;;          (frame-val
-;;           (list "USR        " "BIN        ")
-;;           (list
-;;            (cons
-;;             "COL        "
-;;             (abs-file (dir-ent-fix nil) "")))
-;;           1)))))
-;;      ((when (atom frame))
-;;       (list :atom-frame t))
-;;      (head-index (abs-find-first-complete frame))
-;;      ((when (zp head-index))
-;;       (list :head-index head-index))
-;;      (head-frame-val (cdr (abs-assoc head-index frame)))
-;;      (frame (abs-remove-assoc head-index frame))
-;;      (src (frame-val->src head-frame-val)))
-;;   (if
-;;       (zp src)
-;;       (list :head-index head-index :head-frame-val head-frame-val :src src)
-;;     (b*
-;;         ((path (frame-val->path head-frame-val))
-;;          ((when (or (equal src head-index) (atom (abs-assoc src frame))))
-;;           (list :head-index head-index :head-frame-val head-frame-val :src src t))
-;;          (src-path (frame-val->path (cdr (abs-assoc src frame))))
-;;          ((when (not (prefixp src-path path)))
-;;           (list :head-index head-index :head-frame-val head-frame-val :src src :path path :src-path src-path))
-;;          (src-dir (frame-val->dir (cdr (abs-assoc src frame))))
-;;          (src-dir-after-context-apply
-;;           (abs-context-apply
-;;            src-dir
-;;            (frame-val->dir head-frame-val)
-;;            head-index
-;;            (nthcdr (len src-path) path)))
-;;          ((when (equal src-dir-after-context-apply src-dir))
-;;           (list :head-index head-index :head-frame-val head-frame-val :src src :path path :src-path src-path :src-dir src-dir :src-dir-after-context-apply src-dir-after-context-apply))
-;;          (frame (abs-put-assoc
-;;                  src
-;;                  (frame-val
-;;                   (frame-val->path (cdr (abs-assoc src frame)))
-;;                   src-dir-after-context-apply
-;;                   (frame-val->src (cdr (abs-assoc src frame))))
-;;                  frame)))
-;;       (list :head-index head-index :head-frame-val head-frame-val :src src :path path :src-path src-path :src-dir src-dir :src-dir-after-context-apply src-dir-after-context-apply :frame frame))))
 
 (assert-event
  (b*
