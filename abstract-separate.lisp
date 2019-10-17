@@ -1201,9 +1201,14 @@
                head-index
                (frame-val->path head-frame-val)))
              ((when (equal root-after-context-apply root)) (mv root nil)))
-          (abs-collapse root frame))
+          (abs-collapse root-after-context-apply frame))
       (b*
-          (((when (or (equal src head-index) (atom (abs-assoc src frame))))
+          ((path (frame-val->path head-frame-val))
+           ((when (or (equal src head-index)
+                      (atom (abs-assoc src frame))))
+            (mv root nil))
+           (src-path (frame-val->path (cdr (abs-assoc src frame))))
+           ((when (not (prefixp src-path path)))
             (mv root nil))
            (src-dir (frame-val->dir (cdr (abs-assoc src frame))))
            (src-dir-after-context-apply
@@ -1211,7 +1216,7 @@
              src-dir
              (frame-val->dir head-frame-val)
              head-index
-             (frame-val->path head-frame-val)))
+             (nthcdr (len src-path) path)))
            ((when (equal src-dir-after-context-apply src-dir)) (mv root nil))
            (frame (abs-put-assoc
                    src
@@ -1221,6 +1226,100 @@
                     (frame-val->src (cdr (abs-assoc src frame))))
                    frame)))
         (abs-collapse root frame)))))
+
+;; Awful testing form
+
+;; (b*
+;;     (((mv & frame)
+;;       (mv
+;;        (list
+;;         (cons
+;;          "INITRD  IMG"
+;;          (abs-file (dir-ent-fix nil) ""))
+;;         (cons
+;;          "RUN        "
+;;          (abs-file
+;;           (dir-ent-fix nil)
+;;           (list
+;;            (cons
+;;             "RSYSLOGDPID"
+;;             (abs-file (dir-ent-fix nil) "")))))
+;;         (cons
+;;          "USR        "
+;;          (abs-file (dir-ent-fix nil)
+;;                    (list
+;;                     (cons
+;;                      "LOCAL      "
+;;                      (abs-file (dir-ent-fix nil) ()))
+;;                     (cons
+;;                      "LIB        "
+;;                      (abs-file (dir-ent-fix nil) ()))
+;;                     1))))
+;;        (list
+;;         (cons
+;;          1
+;;          (frame-val
+;;           (list "USR        ")
+;;           (list
+;;            (cons
+;;             "SHARE      "
+;;             (abs-file (dir-ent-fix nil) ()))
+;;            (cons
+;;             "BIN        "
+;;             (abs-file (dir-ent-fix nil)
+;;                       (list
+;;                        (cons
+;;                         "CAT        "
+;;                         (abs-file (dir-ent-fix nil) ""))
+;;                        2
+;;                        (cons
+;;                         "TAC        "
+;;                         (abs-file (dir-ent-fix nil) ""))))))
+;;           0))
+;;         (cons
+;;          2
+;;          (frame-val
+;;           (list "USR        " "BIN        ")
+;;           (list
+;;            (cons
+;;             "COL        "
+;;             (abs-file (dir-ent-fix nil) "")))
+;;           1)))))
+;;      ((when (atom frame))
+;;       (list :atom-frame t))
+;;      (head-index (abs-find-first-complete frame))
+;;      ((when (zp head-index))
+;;       (list :head-index head-index))
+;;      (head-frame-val (cdr (abs-assoc head-index frame)))
+;;      (frame (abs-remove-assoc head-index frame))
+;;      (src (frame-val->src head-frame-val)))
+;;   (if
+;;       (zp src)
+;;       (list :head-index head-index :head-frame-val head-frame-val :src src)
+;;     (b*
+;;         ((path (frame-val->path head-frame-val))
+;;          ((when (or (equal src head-index) (atom (abs-assoc src frame))))
+;;           (list :head-index head-index :head-frame-val head-frame-val :src src t))
+;;          (src-path (frame-val->path (cdr (abs-assoc src frame))))
+;;          ((when (not (prefixp src-path path)))
+;;           (list :head-index head-index :head-frame-val head-frame-val :src src :path path :src-path src-path))
+;;          (src-dir (frame-val->dir (cdr (abs-assoc src frame))))
+;;          (src-dir-after-context-apply
+;;           (abs-context-apply
+;;            src-dir
+;;            (frame-val->dir head-frame-val)
+;;            head-index
+;;            (nthcdr (len src-path) path)))
+;;          ((when (equal src-dir-after-context-apply src-dir))
+;;           (list :head-index head-index :head-frame-val head-frame-val :src src :path path :src-path src-path :src-dir src-dir :src-dir-after-context-apply src-dir-after-context-apply))
+;;          (frame (abs-put-assoc
+;;                  src
+;;                  (frame-val
+;;                   (frame-val->path (cdr (abs-assoc src frame)))
+;;                   src-dir-after-context-apply
+;;                   (frame-val->src (cdr (abs-assoc src frame))))
+;;                  frame)))
+;;       (list :head-index head-index :head-frame-val head-frame-val :src src :path path :src-path src-path :src-dir src-dir :src-dir-after-context-apply src-dir-after-context-apply :frame frame))))
 
 (assert-event
  (b*
@@ -1282,23 +1381,41 @@
    (and
     (equal
      root
-     '(("INITRD  IMG" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-        (CONTENTS . ""))
-       ("RUN        "
-        (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-        (CONTENTS ("RSYSLOGDPID" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                   (CONTENTS . ""))))
-       ("USR        "
-        (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-        (CONTENTS ("LOCAL      " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                   (CONTENTS))
-                  ("LIB        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                   (CONTENTS))
-                  1))))
-    (equal result nil))))
+     (list
+      (cons
+       "INITRD  IMG"
+       (abs-file (dir-ent-fix nil) ""))
+      (cons
+       "RUN        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "RSYSLOGDPID"
+                   (abs-file (dir-ent-fix nil) "")))))
+      (cons
+       "USR        "
+       (abs-file (dir-ent-fix nil)
+                 (list
+                  (cons
+                   "LOCAL      "
+                   (abs-file (dir-ent-fix nil) nil))
+                  (cons
+                   "LIB        "
+                   (abs-file (dir-ent-fix nil) nil))
+                  (cons
+                   "SHARE      "
+                   (abs-file (dir-ent-fix nil) nil))
+                  (cons
+                   "BIN        "
+                   (abs-file (dir-ent-fix nil)
+                             (list
+                              (cons
+                               "CAT        "
+                               (abs-file (dir-ent-fix nil) ""))
+                              (cons
+                               "TAC        "
+                               (abs-file (dir-ent-fix nil) ""))
+                              (cons
+                               "COL        "
+                               (abs-file (dir-ent-fix nil) ""))))))))))
+    (equal result t))))
