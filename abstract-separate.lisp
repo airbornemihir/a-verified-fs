@@ -540,10 +540,9 @@
 
 ;; Both these names, below, merit some thought later...
 (fty::defprod frame-val
-              ((path
-                fat32-filename-list-p)
-               (dir
-                abs-file-alist-p)))
+              ((path fat32-filename-list-p)
+               (dir abs-file-alist-p)
+               (src natp)))
 
 (fty::defalist frame
                :key-type nat
@@ -668,7 +667,8 @@
                   (cons
                    "LIB        "
                    (abs-file (dir-ent-fix nil) ()))
-                  1))))))
+                  1))))
+     0))
    (cons
     1
     (frame-val
@@ -687,7 +687,8 @@
                   2
                   (cons
                    "TAC        "
-                   (abs-file (dir-ent-fix nil) ""))))))))
+                   (abs-file (dir-ent-fix nil) ""))))))
+     0))
    (cons
     2
     (frame-val
@@ -695,7 +696,8 @@
      (list
       (cons
        "COL        "
-       (abs-file (dir-ent-fix nil) ""))))))))
+       (abs-file (dir-ent-fix nil) "")))
+     1)))))
 
 (assert-event
  (mv-let
@@ -949,7 +951,8 @@
                    (cons
                     "LIB        "
                     (abs-file (dir-ent-fix nil) ()))
-                   1))))))
+                   1))))
+      0))
     (cons
      1
      (frame-val
@@ -968,7 +971,8 @@
                    2
                    (cons
                     "TAC        "
-                    (abs-file (dir-ent-fix nil) ""))))))))
+                    (abs-file (dir-ent-fix nil) ""))))))
+      0))
     (cons
      2
      (frame-val
@@ -976,7 +980,8 @@
       (list
        (cons
         "COL        "
-        (abs-file (dir-ent-fix nil) ""))))))
+        (abs-file (dir-ent-fix nil) "")))
+      1)))
    (list "INITRD  IMG"))
   t))
 
@@ -1010,7 +1015,8 @@
                    (cons
                     "LIB        "
                     (abs-file (dir-ent-fix nil) ()))
-                   1))))))
+                   1))))
+      0))
     (cons
      1
      (frame-val
@@ -1029,7 +1035,8 @@
                    2
                    (cons
                     "TAC        "
-                    (abs-file (dir-ent-fix nil) ""))))))))
+                    (abs-file (dir-ent-fix nil) ""))))))
+      0))
     (cons
      2
      (frame-val
@@ -1037,7 +1044,8 @@
       (list
        (cons
         "COL        "
-        (abs-file (dir-ent-fix nil) ""))))))
+        (abs-file (dir-ent-fix nil) "")))
+      1)))
    (list "USR        " "BIN        " "COL        "))
   t))
 
@@ -1071,7 +1079,8 @@
                    (cons
                     "LIB        "
                     (abs-file (dir-ent-fix nil) ()))
-                   1))))))
+                   1))))
+      0))
     (cons
      1
      (frame-val
@@ -1090,7 +1099,8 @@
                    2
                    (cons
                     "TAC        "
-                    (abs-file (dir-ent-fix nil) ""))))))))
+                    (abs-file (dir-ent-fix nil) ""))))))
+      0))
     (cons
      2
      (frame-val
@@ -1098,7 +1108,8 @@
       (list
        (cons
         "COL        "
-        (abs-file (dir-ent-fix nil) ""))))))
+        (abs-file (dir-ent-fix nil) "")))
+      1)))
    (list "USR        " "BIN        " "FIREFOX    "))
   nil))
 
