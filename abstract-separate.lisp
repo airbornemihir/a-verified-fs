@@ -1131,29 +1131,9 @@
   :rule-classes :type-prescription)
 
 (defthm natp-of-abs-find-first-complete
-  (implies t
-           (natp (abs-find-first-complete frame) ))
+  (natp (abs-find-first-complete frame))
   :hints (("goal" :in-theory (enable abs-find-first-complete)))
   :rule-classes :type-prescription)
-
-;; Move later
-(defthm len-of-put-assoc-equal
-  (implies (not (null name))
-           (equal (len (put-assoc-equal name val alist))
-                  (if (consp (assoc-equal name alist))
-                      (len alist)
-                      (+ 1 (len alist))))))
-(defthm len-of-remove-assoc-equal-2
-  (implies (and (not (null x))
-                (atom (assoc-equal x alist)))
-           (equal (remove-assoc-equal x alist)
-                  (true-list-fix alist))))
-(defthm len-of-remove-assoc-equal-1
-  (implies (and (not (null x))
-                (consp (assoc-equal x alist)))
-           (< (len (remove-assoc-equal x alist))
-              (len alist)))
-  :rule-classes :linear)
 
 (defthm frame-val-p-of-cdr-of-assoc-equal-when-frame-p
   (implies (frame-p x)
