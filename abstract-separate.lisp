@@ -1121,3 +1121,51 @@
 ;;        (head (car frame))
 ;;        ((when (member index (abs-addrs (frame-val->dir (cdr head))))) ()))
 ;;     ()))
+
+;; This is problematic because it sometimes consumes those abstract variables
+;; whose subdirectories still contain pointers to other abstract
+;; variables...
+;;
+;; I'm not sure how this can be logically surmounted. Perhaps we can update
+;; (gulp) all the elements which pointed to this one, as their source, once it
+;; gets folded into something else. That would kinda make a mess of the intent
+;; of path promises, though.
+(defund abs-collapse (root frame)
+  (declare (xargs :guard (and (abs-file-alist-p root) (frame-p frame))
+                  :guard-debug t :measure (len frame)))
+  (b*
+      (((when (atom frame)) (mv root t))
+       (head-index (caar frame))
+       (head-frame-val (cdar frame))
+       (src (frame-val->src head-frame-val)))
+    (if
+        (zp src)
+        (b*
+            ((root-after-context-apply
+              (abs-context-apply
+               root
+               (frame-val->dir head-frame-val)
+               head-index
+               (frame-val->path head-frame-val)))
+             ((when (equal root-after-context-apply root)) (mv root nil))
+             (frame (cdr frame)))
+          (abs-collapse root frame))
+      (b*
+          (((when (or (equal src head-index) (atom (abs-assoc src frame))))
+            (mv root nil))
+           (src-dir (frame-val->dir (cdr (abs-assoc src frame))))
+           (src-dir-after-context-apply
+            (abs-context-apply
+             src-dir
+             (frame-val->dir head-frame-val)
+             head-index
+             (frame-val->path head-frame-val)))
+           ((when (equal src-dir-after-context-apply src-dir)) (mv root nil))
+           (frame (abs-put-assoc
+                   src
+                   (frame-val
+                    (frame-val->path (cdr (abs-assoc src frame)))
+                    src-dir-after-context-apply
+                    (frame-val->src (cdr (abs-assoc src frame))))
+                   (cdr frame))))
+        (abs-collapse root frame)))))
