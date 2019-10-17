@@ -48,6 +48,7 @@
   :hints (("goal" :in-theory (enable abs-put-assoc)))
   :rule-classes :definition)
 
+;; This is explicitly a replacement for remove-assoc-equal with a vacuous guard.
 (defund abs-remove-assoc (x alist)
   (declare (xargs :guard t))
   (cond ((atom alist) nil)
@@ -72,7 +73,7 @@
   (declare (xargs :guard t))
   (b* (((when (atom x)) (equal x nil))
        (head (car x))
-       ;; The presence of abstract variable makes this data structure not
+       ;; The presence of abstract variables makes this data structure not
        ;; strictly an alist - because they have no names and therefore they
        ;; don't need a cons pair with the car for the name.
        ((when (atom head))
@@ -538,15 +539,15 @@
                  :forward t)
 
 ;; Both these names, below, merit some thought later...
-(fty::defprod frame-pair
-              ((relpath
+(fty::defprod frame-val
+              ((path
                 fat32-filename-list-p)
-               (partdir
+               (dir
                 abs-file-alist-p)))
 
 (fty::defalist frame
                :key-type nat
-               :val-type frame-pair)
+               :val-type frame-val)
 
 ;; That this lemma is needed is a reminder to get some list macros around
 ;; abs-file-alist-p...
@@ -643,7 +644,7 @@
   (list
    (cons
     0
-    (frame-pair
+    (frame-val
      nil
      (list
       (cons
@@ -670,7 +671,7 @@
                   1))))))
    (cons
     1
-    (frame-pair
+    (frame-val
      (list "USR        ")
      (list
       (cons
@@ -689,7 +690,7 @@
                    (abs-file (dir-ent-fix nil) ""))))))))
    (cons
     2
-    (frame-pair
+    (frame-val
      (list "USR        " "BIN        ")
      (list
       (cons
@@ -900,18 +901,21 @@
 ;; require a queue, which is messy... Instead, we're going to look through
 ;; all the elements in the frame until we have ruled out the existence of an
 ;; abstract variable which has this file in it.
-(defund stat-abs-lookup
-  (frame path)
+(defund
+  stat-abs-lookup (frame path)
   (declare (xargs :guard (and (frame-p frame)
                               (fat32-filename-list-p path))
                   :guard-debug t))
   (b*
-      (;; Not finding a problematic frame is the desired result.
-       ((when (atom frame)) nil)
-       (head-frame-pair (cdr (car frame)))
-       ;; Finding a problematic frame is an undesired result.
-       ((when (and (equal (frame-pair->relpath head-frame-pair) (butlast path 1))
-                   (consp (abs-assoc (car (last path)) (frame-pair->partdir head-frame-pair)))))
+      (((when (atom frame)) nil)
+       (head-frame-val (cdr (car frame)))
+       ((when
+         (and
+          (equal (frame-val->path head-frame-val)
+                 (butlast path 1))
+          (consp
+           (abs-assoc (car (last path))
+                      (frame-val->dir head-frame-val)))))
         t))
     (stat-abs-lookup (cdr frame) path)))
 
@@ -921,7 +925,7 @@
    (list
     (cons
      0
-     (frame-pair
+     (frame-val
       nil
       (list
        (cons
@@ -948,7 +952,7 @@
                    1))))))
     (cons
      1
-     (frame-pair
+     (frame-val
       (list "USR        ")
       (list
        (cons
@@ -967,7 +971,7 @@
                     (abs-file (dir-ent-fix nil) ""))))))))
     (cons
      2
-     (frame-pair
+     (frame-val
       (list "USR        " "BIN        ")
       (list
        (cons
@@ -982,7 +986,7 @@
    (list
     (cons
      0
-     (frame-pair
+     (frame-val
       nil
       (list
        (cons
@@ -1009,7 +1013,7 @@
                    1))))))
     (cons
      1
-     (frame-pair
+     (frame-val
       (list "USR        ")
       (list
        (cons
@@ -1028,7 +1032,7 @@
                     (abs-file (dir-ent-fix nil) ""))))))))
     (cons
      2
-     (frame-pair
+     (frame-val
       (list "USR        " "BIN        ")
       (list
        (cons
@@ -1043,7 +1047,7 @@
    (list
     (cons
      0
-     (frame-pair
+     (frame-val
       nil
       (list
        (cons
@@ -1070,7 +1074,7 @@
                    1))))))
     (cons
      1
-     (frame-pair
+     (frame-val
       (list "USR        ")
       (list
        (cons
@@ -1089,7 +1093,7 @@
                     (abs-file (dir-ent-fix nil) ""))))))))
     (cons
      2
-     (frame-pair
+     (frame-val
       (list "USR        " "BIN        ")
       (list
        (cons
@@ -1097,3 +1101,12 @@
         (abs-file (dir-ent-fix nil) ""))))))
    (list "USR        " "BIN        " "FIREFOX    "))
   nil))
+
+;; ;; Not exactly how we're doing this...
+;; (defund abs-dealloc-find-body-address (frame index)
+;;   (declare (xargs :guard (frame-p frame)))
+;;   (b*
+;;       (((when (atom frame)) nil)
+;;        (head (car frame))
+;;        ((when (member index (abs-addrs (frame-val->dir (cdr head))))) ()))
+;;     ()))
