@@ -1398,3 +1398,123 @@
   (equal (frame-p (pseudo-frame root frame))
          (frame-p frame))
   :hints (("goal" :in-theory (enable pseudo-frame))))
+
+(defthm true-listp-when-abs-file-alist-p
+  (implies (abs-file-alist-p fs)
+           (true-listp fs))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
+(defund
+  abs-no-dups-p (fs)
+  (declare
+   (xargs
+    :guard (abs-file-alist-p fs)
+    :guard-hints (("goal" :expand (abs-file-alist-p fs)))))
+  (cond ((atom fs) t)
+        ((not (abs-no-dups-p (cdr fs))) nil)
+        ((not (and (consp (car fs))
+                   (mbt (stringp (car (car fs))))))
+         (not (member-equal (car fs) (cdr fs))))
+        ((consp (abs-assoc (caar fs) (cdr fs)))
+         nil)
+        ((abs-directory-file-p (cdar fs))
+         (abs-no-dups-p (abs-file->contents (cdar fs))))
+        (t t)))
+
+;; ;; This is... good, but also merits more tests.
+;; (defthm abs-no-dups-p-definition
+;;   (equal (abs-no-dups-p fs)
+;;          (hifat-no-dups-p fs))
+;;   :hints (("goal" :in-theory (enable hifat-no-dups-p abs-no-dups-p)))
+;;   :rule-classes :definition)
+
+(assert-event
+ (equal
+  (abs-no-dups-p
+   (list
+    (cons
+     "INITRD  IMG"
+     (abs-file (dir-ent-fix nil) ""))
+    (cons
+     "RUN        "
+     (abs-file
+      (dir-ent-fix nil)
+      (list
+       (cons
+        "RSYSLOGDPID"
+        (abs-file (dir-ent-fix nil) "")))))
+    (cons
+     "USR        "
+     (abs-file (dir-ent-fix nil)
+               (list
+                1
+                (cons
+                 "LIB        "
+                 (abs-file (dir-ent-fix nil) ()))
+                1)))))
+  nil))
+
+(assert-event
+ (equal
+  (abs-no-dups-p
+   (list
+    (cons
+     "INITRD  IMG"
+     (abs-file (dir-ent-fix nil) ""))
+    (cons
+     "RUN        "
+     (abs-file
+      (dir-ent-fix nil)
+      (list
+       (cons
+        "RSYSLOGDPID"
+        (abs-file (dir-ent-fix nil) "")))))
+    (cons
+     "USR        "
+     (abs-file (dir-ent-fix nil)
+               (list
+                (cons
+                 "LIB        "
+                 (abs-file (dir-ent-fix nil) ()))
+                1
+                (cons
+                 "LIB        "
+                 (abs-file (dir-ent-fix nil) ())))))))
+  nil))
+
+(assert-event
+ (equal
+  (abs-no-dups-p
+   (list
+    (cons
+     "INITRD  IMG"
+     (abs-file (dir-ent-fix nil) ""))
+    (cons
+     "RUN        "
+     (abs-file
+      (dir-ent-fix nil)
+      (list
+       (cons
+        "RSYSLOGDPID"
+        (abs-file (dir-ent-fix nil) "")))))
+    (cons
+     "USR        "
+     (abs-file (dir-ent-fix nil)
+               (list
+                (cons
+                 "LIB        "
+                 (abs-file (dir-ent-fix nil) ()))
+                1)))))
+  t))
+
+(defthm abs-separate-correctness-1
+  (implies (and (frame-p frame) (abs-file-alist-p root)
+                (abs-separate (pseudo-frame root frame)))
+           (mv-let
+             (m1-file-alist result)
+             (abs-collapse root frame)
+             (implies (equal result t)
+                      (and
+                       (m1-file-alist-p m1-file-alist)
+                       (hifat-no-dups-p m1-file-alist)))))
+  :hints (("Goal" :in-theory (enable abs-collapse)) ))
