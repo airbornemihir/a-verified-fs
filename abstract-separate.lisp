@@ -1204,23 +1204,6 @@
                    frame)))
         (abs-collapse root frame)))))
 
-(defund
-  abs-no-dups-p (fs)
-  (declare
-   (xargs
-    :guard (abs-file-alist-p fs)
-    :guard-hints (("goal" :expand (abs-file-alist-p fs)))))
-  (cond ((atom fs) t)
-        ((not (abs-no-dups-p (cdr fs))) nil)
-        ((not (and (consp (car fs))
-                   (mbt (stringp (car (car fs))))))
-         (not (member-equal (car fs) (cdr fs))))
-        ((consp (abs-assoc (caar fs) (cdr fs)))
-         nil)
-        ((abs-directory-file-p (cdar fs))
-         (abs-no-dups-p (abs-file->contents (cdar fs))))
-        (t t)))
-
 (assert-event
  (b*
      (((mv root result)
@@ -1320,6 +1303,23 @@
                                (abs-file (dir-ent-fix nil) ""))))))))))
     (equal result t))))
 
+(defund
+  abs-no-dups-p (fs)
+  (declare
+   (xargs
+    :guard (abs-file-alist-p fs)
+    :guard-hints (("goal" :expand (abs-file-alist-p fs)))))
+  (cond ((atom fs) t)
+        ((not (abs-no-dups-p (cdr fs))) nil)
+        ((not (and (consp (car fs))
+                   (mbt (stringp (car (car fs))))))
+         (not (member-equal (car fs) (cdr fs))))
+        ((consp (abs-assoc (caar fs) (cdr fs)))
+         nil)
+        ((abs-directory-file-p (cdar fs))
+         (abs-no-dups-p (abs-file->contents (cdar fs))))
+        (t t)))
+
 (assert-event
  (equal
   (abs-no-dups-p
@@ -1398,6 +1398,18 @@
                  (abs-file (dir-ent-fix nil) ()))
                 1)))))
   t))
+
+(defthm
+  abs-no-dups-p-when-m1-file-alist-p
+  (implies (m1-file-alist-p fs)
+           (equal (abs-no-dups-p fs)
+                  (hifat-no-dups-p fs)))
+  :hints (("goal" :induct (abs-no-dups-p fs)
+           :in-theory (enable abs-no-dups-p abs-directory-file-p
+                              m1-directory-file-p abs-file->contents
+                              m1-file->contents abs-file-p)
+           :expand ((hifat-no-dups-p fs)
+                    (m1-file-alist-p fs)))))
 
 ;; This is part of how we're going to ensure no duplication in the root
 ;; directory once collapsed. The only place duplication can arise, if it
