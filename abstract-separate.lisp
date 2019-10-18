@@ -1421,13 +1421,6 @@
          (abs-no-dups-p (abs-file->contents (cdar fs))))
         (t t)))
 
-;; ;; This is... good, but also merits more tests.
-;; (defthm abs-no-dups-p-definition
-;;   (equal (abs-no-dups-p fs)
-;;          (hifat-no-dups-p fs))
-;;   :hints (("goal" :in-theory (enable hifat-no-dups-p abs-no-dups-p)))
-;;   :rule-classes :definition)
-
 (assert-event
  (equal
   (abs-no-dups-p
