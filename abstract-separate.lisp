@@ -337,6 +337,11 @@
            (abs-file-alist-p (remove-assoc-equal x alist)))
   :hints (("goal" :in-theory (enable abs-file-alist-p))))
 
+(defthm true-listp-when-abs-file-alist-p
+  (implies (abs-file-alist-p fs)
+           (true-listp fs))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
 (defund
   abs-top-addrs (abs-file-alist)
   (declare
@@ -1199,6 +1204,23 @@
                    frame)))
         (abs-collapse root frame)))))
 
+(defund
+  abs-no-dups-p (fs)
+  (declare
+   (xargs
+    :guard (abs-file-alist-p fs)
+    :guard-hints (("goal" :expand (abs-file-alist-p fs)))))
+  (cond ((atom fs) t)
+        ((not (abs-no-dups-p (cdr fs))) nil)
+        ((not (and (consp (car fs))
+                   (mbt (stringp (car (car fs))))))
+         (not (member-equal (car fs) (cdr fs))))
+        ((consp (abs-assoc (caar fs) (cdr fs)))
+         nil)
+        ((abs-directory-file-p (cdar fs))
+         (abs-no-dups-p (abs-file->contents (cdar fs))))
+        (t t)))
+
 (assert-event
  (b*
      (((mv root result)
@@ -1298,129 +1320,6 @@
                                (abs-file (dir-ent-fix nil) ""))))))))))
     (equal result t))))
 
-;; This is part of how we're going to ensure no duplication in the root
-;; directory once collapsed. The only place duplication can arise, if it
-;; doesn't already exist, is when (i) two abstract variables with the same path
-;; promise are (indirectly) joined together, and (ii) an abstract variable with
-;; path promise x is joined with another abstract variable with a different
-;; path promise y where (prefixp x y). Note, for case (ii) there can only be
-;; one variable with path promise x which can be joined with the given variable
-;; - else, we'd have duplication of the part of y which is not in x.
-(defund
-  path-promises (frame)
-  (declare (xargs :guard (frame-p frame)))
-  (b*
-      (((when (atom frame)) nil)
-       (head-path-promise (frame-val->path (cdar frame)))
-       (tail-path-promises (path-promises (cdr frame)))
-       ((when (member-equal head-path-promise tail-path-promises))
-        tail-path-promises))
-    (cons head-path-promise tail-path-promises)))
-
-(defthm no-duplicatesp-of-path-promises
-  (no-duplicatesp-equal (path-promises frame))
-  :hints (("goal" :in-theory (enable path-promises))))
-
-(defund abs-top-names (x)
-  (declare (xargs :guard t))
-  (cond ((atom x) nil)
-        ((atom (car x)) (abs-top-names (cdr x)))
-        ((equal (caar x) nil) (abs-top-names (cdr x)))
-        (t (cons (car (car x))
-                 (abs-top-names (cdr x))))))
-
-(defthm abs-top-names-definition
-  (equal (abs-top-names x)
-         (remove nil (strip-cars x)))
-  :rule-classes :definition
-  :hints (("goal" :in-theory (enable abs-top-names))))
-
-(defund
-  names-at-relpath (fs relpath)
-  (declare (xargs :guard (and (abs-file-alist-p fs)
-                              (fat32-filename-list-p relpath))
-                  :guard-debug t))
-  (b*
-      (((when (atom relpath))
-        (abs-top-names fs))
-       (head (car relpath))
-       ((unless
-         (and (consp (abs-assoc head fs))
-              (abs-directory-file-p (cdr (abs-assoc head fs)))))
-        nil))
-    (names-at-relpath
-     (abs-file->contents (cdr (abs-assoc head fs)))
-     (cdr relpath))))
-
-(defund
-  names-at-relpath-across-frame
-  (frame relpath)
-  (declare (xargs :guard (and (frame-p frame)
-                              (fat32-filename-list-p relpath))))
-  (b*
-      (((when (atom frame)) nil)
-       (head-frame-val (cdar frame))
-       ((unless (prefixp (frame-val->path head-frame-val)
-                         relpath))
-        (names-at-relpath-across-frame (cdr frame)
-                                       relpath)))
-    (append (names-at-relpath
-             (frame-val->dir head-frame-val)
-             (nthcdr (len (frame-val->path head-frame-val))
-                     relpath))
-            (names-at-relpath-across-frame (cdr frame)
-                                           relpath))))
-
-(defund
-  abs-separate-helper (frame relpaths)
-  (or
-   (atom relpaths)
-   (and
-    (no-duplicatesp-equal
-     (names-at-relpath-across-frame frame (car relpaths)))
-    (abs-separate-helper frame (cdr relpaths)))))
-
-(defund abs-separate (frame)
-  (abs-separate-helper frame (path-promises frame)))
-
-;; This is a "false" frame because the src value given to the root is 0, same
-;; as its abstract variable. This is one of a few compromises in elegance
-;; required for distinguishing the root, which is necessary to properly define
-;; the collapse relation.
-(defund pseudo-frame (root frame)
-  (declare (xargs :guard (and (abs-file-alist-p root)
-                              (frame-p frame))))
-  (list* (cons 0 (frame-val nil root 0))
-         frame))
-
-;; This is because of fixing.
-(defthm frame-p-of-pseudo-frame
-  (equal (frame-p (pseudo-frame root frame))
-         (frame-p frame))
-  :hints (("goal" :in-theory (enable pseudo-frame))))
-
-(defthm true-listp-when-abs-file-alist-p
-  (implies (abs-file-alist-p fs)
-           (true-listp fs))
-  :hints (("goal" :in-theory (enable abs-file-alist-p))))
-
-(defund
-  abs-no-dups-p (fs)
-  (declare
-   (xargs
-    :guard (abs-file-alist-p fs)
-    :guard-hints (("goal" :expand (abs-file-alist-p fs)))))
-  (cond ((atom fs) t)
-        ((not (abs-no-dups-p (cdr fs))) nil)
-        ((not (and (consp (car fs))
-                   (mbt (stringp (car (car fs))))))
-         (not (member-equal (car fs) (cdr fs))))
-        ((consp (abs-assoc (caar fs) (cdr fs)))
-         nil)
-        ((abs-directory-file-p (cdar fs))
-         (abs-no-dups-p (abs-file->contents (cdar fs))))
-        (t t)))
-
 (assert-event
  (equal
   (abs-no-dups-p
@@ -1499,6 +1398,106 @@
                  (abs-file (dir-ent-fix nil) ()))
                 1)))))
   t))
+
+;; This is part of how we're going to ensure no duplication in the root
+;; directory once collapsed. The only place duplication can arise, if it
+;; doesn't already exist, is when (i) two abstract variables with the same path
+;; promise are (indirectly) joined together, and (ii) an abstract variable with
+;; path promise x is joined with another abstract variable with a different
+;; path promise y where (prefixp x y). Note, for case (ii) there can only be
+;; one variable with path promise x which can be joined with the given variable
+;; - else, we'd have duplication of the part of y which is not in x.
+(defund
+  path-promises (frame)
+  (declare (xargs :guard (frame-p frame)))
+  (b*
+      (((when (atom frame)) nil)
+       (head-path-promise (frame-val->path (cdar frame)))
+       (tail-path-promises (path-promises (cdr frame)))
+       ((when (member-equal head-path-promise tail-path-promises))
+        tail-path-promises))
+    (cons head-path-promise tail-path-promises)))
+
+(defthm no-duplicatesp-of-path-promises
+  (no-duplicatesp-equal (path-promises frame))
+  :hints (("goal" :in-theory (enable path-promises))))
+
+(defund abs-top-names (x)
+  (declare (xargs :guard t))
+  (cond ((atom x) nil)
+        ((atom (car x)) (abs-top-names (cdr x)))
+        ((equal (caar x) nil) (abs-top-names (cdr x)))
+        (t (cons (car (car x))
+                 (abs-top-names (cdr x))))))
+
+(defthm abs-top-names-definition
+  (equal (abs-top-names x)
+         (remove nil (strip-cars x)))
+  :rule-classes :definition
+  :hints (("goal" :in-theory (enable abs-top-names))))
+
+(defund
+  names-at-relpath (fs relpath)
+  (declare (xargs :guard (and (abs-file-alist-p fs)
+                              (fat32-filename-list-p relpath))
+                  :guard-debug t))
+  (b*
+      (((when (atom relpath))
+        (abs-top-names fs))
+       (head (car relpath))
+       ((unless
+         (and (consp (abs-assoc head fs))
+              (abs-directory-file-p (cdr (abs-assoc head fs)))))
+        nil))
+    (names-at-relpath
+     (abs-file->contents (cdr (abs-assoc head fs)))
+     (cdr relpath))))
+
+(defund
+  names-at-relpath-across-frame
+  (frame relpath)
+  (declare (xargs :guard (and (frame-p frame)
+                              (fat32-filename-list-p relpath))))
+  (b*
+      (((when (atom frame)) nil)
+       (head-frame-val (cdar frame))
+       ((unless (prefixp (frame-val->path head-frame-val)
+                         relpath))
+        (names-at-relpath-across-frame (cdr frame)
+                                       relpath)))
+    (append (names-at-relpath
+             (frame-val->dir head-frame-val)
+             (nthcdr (len (frame-val->path head-frame-val))
+                     relpath))
+            (names-at-relpath-across-frame (cdr frame)
+                                           relpath))))
+
+(defund
+  abs-separate (frame)
+  (declare (xargs :guard (frame-p frame)))
+  (or
+   (atom frame)
+   (and
+    (abs-no-dups-p (frame-val->dir (cdar frame)))
+    (no-duplicatesp-equal
+     (names-at-relpath-across-frame (cdr frame) (frame-val->path (cdar frame))))
+    (abs-separate (cdr frame)))))
+
+;; This is a "false" frame because the src value given to the root is 0, same
+;; as its abstract variable. This is one of a few compromises in elegance
+;; required for distinguishing the root, which is necessary to properly define
+;; the collapse relation.
+(defund pseudo-frame (root frame)
+  (declare (xargs :guard (and (abs-file-alist-p root)
+                              (frame-p frame))))
+  (list* (cons 0 (frame-val nil root 0))
+         frame))
+
+;; This is because of fixing.
+(defthm frame-p-of-pseudo-frame
+  (equal (frame-p (pseudo-frame root frame))
+         (frame-p frame))
+  :hints (("goal" :in-theory (enable pseudo-frame))))
 
 (defthm abs-separate-correctness-1
   (implies (and (frame-p frame) (abs-file-alist-p root)
