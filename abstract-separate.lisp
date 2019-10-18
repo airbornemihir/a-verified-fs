@@ -1824,8 +1824,59 @@
   :hints (("goal" :in-theory (enable pseudo-frame abs-separate
                                      names-at-relpath-across-frame))))
 
+;; Move later
+(defthm strip-cars-of-remove-assoc
+  (equal (strip-cars (remove-assoc-equal x alist))
+         (remove-equal x (strip-cars alist))))
+(defthm strip-cars-of-put-assoc
+  (implies (consp (assoc-equal name alist))
+           (equal (strip-cars (put-assoc-equal name val alist))
+                  (strip-cars alist))))
+
+(defthm
+  abs-separate-correctness-1-lemma-2
+  (implies
+   (and
+    (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
+    (abs-file-alist-p abs-file-alist2)
+    (subsetp-equal
+     (abs-addrs abs-file-alist2)
+     (abs-addrs
+      (abs-file->contents (cdr (assoc-equal name abs-file-alist1))))))
+   (subsetp-equal
+    (abs-addrs (put-assoc-equal name (abs-file dir-ent abs-file-alist2)
+                                abs-file-alist1))
+    (abs-addrs abs-file-alist1)))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm
+  abs-separate-correctness-1-lemma-3
+  (implies
+   (and (abs-file-alist-p abs-file-alist2)
+        (atom (abs-addrs abs-file-alist2)))
+   (subsetp-equal (abs-addrs (abs-context-apply abs-file-alist1
+                                                abs-file-alist2 x x-path))
+                  (abs-addrs abs-file-alist1)))
+  :hints (("goal" :in-theory (enable abs-context-apply))))
+
+;; Move later
+(defthm member-of-strip-cars
+  (implies (consp (assoc-equal x alist))
+           (member-equal x (strip-cars alist))))
+
+(defthm abs-separate-correctness-1-lemma-4
+  (implies (and (frame-p frame)
+                (not (zp (abs-find-first-complete frame)))
+                (no-duplicatesp-equal (strip-cars frame)))
+           (equal (abs-addrs (frame-val->dir (cdr (assoc-equal
+                                                   (abs-find-first-complete frame) frame))))
+                  nil))
+  :hints (("Goal" :in-theory (enable abs-find-first-complete)) ))
+
 (defthm abs-separate-correctness-1
-  (implies (and (frame-p frame) (abs-file-alist-p root)
+  (implies (and (frame-p frame)
+                (no-duplicatesp-equal (strip-cars frame))
+                (abs-file-alist-p root)
                 (subsetp (abs-addrs root) (strip-cars frame))
                 (abs-separate (pseudo-frame root frame)))
            (mv-let
