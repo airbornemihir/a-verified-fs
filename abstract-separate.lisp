@@ -1382,3 +1382,19 @@
 
 (defund abs-separate (frame)
   (abs-separate-helper frame (path-promises frame)))
+
+;; This is a "false" frame because the src value given to the root is 0, same
+;; as its abstract variable. This is one of a few compromises in elegance
+;; required for distinguishing the root, which is necessary to properly define
+;; the collapse relation.
+(defund pseudo-frame (root frame)
+  (declare (xargs :guard (and (abs-file-alist-p root)
+                              (frame-p frame))))
+  (list* (cons 0 (frame-val nil root 0))
+         frame))
+
+;; This is because of fixing.
+(defthm frame-p-of-pseudo-frame
+  (equal (frame-p (pseudo-frame root frame))
+         (frame-p frame))
+  :hints (("goal" :in-theory (enable pseudo-frame))))
