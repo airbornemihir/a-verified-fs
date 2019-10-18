@@ -376,6 +376,12 @@
           (abs-addrs (cdr abs-file-alist))))
         (t (abs-addrs (cdr abs-file-alist)))))
 
+(defthm abs-complete-definition
+  (equal (abs-complete x)
+         (atom (abs-addrs x)))
+  :rule-classes :definition
+  :hints (("goal" :in-theory (enable abs-complete abs-addrs))))
+
 ;; Where are the numbers going to come from? It's not going to work, the idea
 ;; of letting variables be represented by their index in the list. Under such a
 ;; scheme, we'll never be able to rewrite an (append ...) term, since that
