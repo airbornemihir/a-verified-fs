@@ -2093,14 +2093,47 @@
      (cdr relpath))))
 
 (defund
+  distinguish-names (dir relpath frame)
+  (declare (xargs :guard (and (abs-file-alist-p dir)
+                              (fat32-filename-list-p relpath)
+                              (frame-p frame))))
+  (b*
+      (((when (atom frame)) t)
+       (head-frame-val (cdar frame))
+       ((when (prefixp relpath
+                       (frame-val->path head-frame-val)))
+        (and
+         (not
+          (intersectp-equal
+           (names-at-relpath
+            dir
+            (nthcdr (len (frame-val->path head-frame-val))
+                    relpath))
+           (abs-top-addrs (frame-val->dir head-frame-val))))
+         (distinguish-names dir relpath (cdr frame))))
+       ((when (prefixp (frame-val->path head-frame-val)
+                       relpath))
+        (and
+         (not (intersectp-equal
+               (names-at-relpath
+                (frame-val->dir head-frame-val)
+                (nthcdr (len relpath)
+                        (frame-val->path head-frame-val)))
+               (abs-top-addrs dir)))
+         (distinguish-names dir relpath (cdr frame)))))
+    (distinguish-names dir relpath (cdr frame))))
+
+(defund
   abs-separate (frame)
   (declare (xargs :guard (frame-p frame)))
   (or
    (atom frame)
    (and
     (abs-no-dups-p (frame-val->dir (cdar frame)))
-    (no-duplicatesp-equal
-     (names-at-relpath-across-frame (cdr frame) (frame-val->path (cdar frame))))
+    (distinguish-names
+     (frame-val->dir (cdar frame))
+     (frame-val->path (cdar frame))
+     (cdr frame))
     (abs-separate (cdr frame)))))
 
 ;; This is a "false" frame because the src value given to the root is 0, same
@@ -2119,13 +2152,13 @@
          (frame-p frame))
   :hints (("goal" :in-theory (enable pseudo-frame))))
 
+;; This has a free variable.
 (defthm abs-separate-correctness-1-lemma-1
   (implies (and (abs-file-alist-p root)
                 (not (consp (abs-addrs root)))
                 (abs-separate (pseudo-frame root frame)))
            (hifat-no-dups-p root))
-  :hints (("goal" :in-theory (enable pseudo-frame abs-separate
-                                     names-at-relpath-across-frame))))
+  :hints (("goal" :in-theory (enable pseudo-frame abs-separate))))
 
 ;; Move later
 (defthm strip-cars-of-remove-assoc
