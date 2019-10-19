@@ -505,12 +505,11 @@
     :guard-hints (("goal" :expand (abs-file-alist-p fs)))))
   (cond ((atom fs) t)
         ((not (abs-no-dups-p (cdr fs))) nil)
-        ((not (and (consp (car fs))
-                   (mbt (stringp (car (car fs))))))
-         (not (member-equal (car fs) (cdr fs))))
-        ((consp (abs-assoc (caar fs) (cdr fs)))
+        ((and (consp (car fs))
+              (consp (abs-assoc (caar fs) (cdr fs))))
          nil)
-        ((abs-directory-file-p (cdar fs))
+        ((and (consp (car fs))
+              (abs-directory-file-p (cdar fs)))
          (abs-no-dups-p (abs-file->contents (cdar fs))))
         (t t)))
 
@@ -662,8 +661,19 @@
                       (abs-addrs (remove-assoc-equal name abs-file-alist1)))))
   :hints (("goal" :in-theory (enable abs-addrs))))
 
+(defthm abs-addrs-of-abs-context-apply-1-lemma-12
+  (implies (and (fat32-filename-p (car (car abs-file-alist1)))
+                (abs-file-alist-p (cdr abs-file-alist1))
+                (not (consp (assoc-equal (car (car abs-file-alist1))
+                                         (cdr abs-file-alist1)))))
+           (equal (remove-assoc-equal (car (car abs-file-alist1))
+                                      (cdr abs-file-alist1))
+                  (cdr abs-file-alist1)))
+  :hints (("goal" :cases ((equal (car (car abs-file-alist1))
+                                 nil)))))
+
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-12
+  abs-addrs-of-abs-context-apply-1-lemma-13
   (implies
    (and
     (not (member-equal x
@@ -697,7 +707,7 @@
      abs-file-alist1))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-13
+  abs-addrs-of-abs-context-apply-1-lemma-14
   (implies
    (and
     (abs-directory-file-p (cdr (assoc-equal (car x-path)
@@ -771,7 +781,7 @@
                 (x x)))
     :do-not-induct t)))
 
-;; There's a form of saying the same thing:
+;; There's a way of saying the same thing...
 ;; (implies (not (equal
 ;;                (abs-context-apply
 ;;                 abs-file-alist1 abs-file-alist2 x x-path)
@@ -780,7 +790,7 @@
 ;;                  (abs-context-apply
 ;;                   abs-file-alist1 abs-file-alist2 x x-path))
 ;;                 (remove x (abs-addrs abs-file-alist1))))
-;; that's very likely going to be tough to prove, so... let's leave it alone.
+;; ...that's very likely going to be tough to prove, so, let's leave it alone.
 (defthm
   abs-addrs-of-abs-context-apply-1
   (implies
@@ -1970,6 +1980,10 @@
                                (abs-file (dir-ent-fix nil) ""))))))))))
     (equal result t))))
 
+;; This example used to behave differently earlier, before abs-no-dups-p was
+;; changed to reflect that it's pointless to worry about the same variable
+;; occurring twice in a directory when we really need it not to occur twice
+;; anywhere.
 (assert-event
  (equal
   (abs-no-dups-p
@@ -1994,7 +2008,7 @@
                  "LIB        "
                  (abs-file (dir-ent-fix nil) ()))
                 1)))))
-  nil))
+  t))
 
 (assert-event
  (equal
