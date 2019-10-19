@@ -2210,9 +2210,17 @@
   :hints (("goal" :in-theory (enable abs-context-apply))))
 
 ;; Move later
-(defthm member-of-strip-cars
-  (implies (consp (assoc-equal x alist))
-           (member-equal x (strip-cars alist))))
+(defthm
+  member-of-strip-cars t
+  :rule-classes
+  ((:type-prescription
+    :corollary (implies (consp (assoc-equal x alist))
+                        (member-equal x (strip-cars alist))))
+   (:type-prescription
+    :corollary
+    (implies (and (not (null x))
+                  (not (consp (assoc-equal x alist))))
+             (not (member-equal x (strip-cars alist)))))))
 
 (defthm abs-separate-correctness-1-lemma-4
   (implies (and (frame-p frame)
@@ -2441,6 +2449,72 @@
                 abs-file-alist2)
       abs-file-alist1))
     :expand (abs-file-alist-p abs-file-alist1))))
+
+;; Move later
+(defthm consp-of-assoc-equal-of-append
+  (implies (not (null name))
+           (equal (consp (assoc-equal name (append x y)))
+                  (or (consp (assoc-equal name x))
+                      (consp (assoc-equal name y))))))
+
+(defthm abs-no-dups-p-of-append-lemma-1
+  (implies (and (abs-file-alist-p x)
+                (consp (assoc-equal (car (car x)) (cdr x))))
+           (consp (assoc-equal (car (car x))
+                               (append (cdr x) y))))
+  :hints (("goal" :cases ((equal (car (car x)) nil)))))
+
+(defthm abs-no-dups-p-of-append-lemma-2
+  (implies (and (abs-no-dups-p x)
+                (abs-file-alist-p x)
+                (abs-file-alist-p y)
+                (consp (assoc-equal (car (car x))
+                                    (append (cdr x) y))))
+           (member-equal (car (car x))
+                         (strip-cars y)))
+  :hints (("goal" :do-not-induct t
+           :expand (abs-no-dups-p x)
+           :cases ((equal (car (car x)) nil)))))
+
+;; It would be nice to have fewer hypotheses and more terms in the RHS, but...
+(defthm
+  abs-no-dups-p-of-append
+  (implies (and (abs-no-dups-p x)
+                (abs-no-dups-p y)
+                (abs-file-alist-p x)
+                (abs-file-alist-p y))
+           (equal (abs-no-dups-p (append x y))
+                  (not (intersectp-equal (remove-equal nil (strip-cars x))
+                                         (remove-equal nil (strip-cars y))))))
+  :hints (("goal" :in-theory (e/d (abs-no-dups-p intersectp-equal)
+                                  (intersectp-is-commutative))
+           :induct (append x y)
+           :do-not-induct t)))
+
+;; Move later
+(defthm consp-of-assoc-of-remove
+  (implies (and (not (null x1))
+                (not (consp (assoc-equal x1 l))))
+           (not (consp (assoc-equal x1 (remove-equal x2 l)))))
+  :rule-classes (:rewrite :type-prescription))
+
+(defthm abs-no-dups-p-of-remove-lemma-1
+  (implies (and (not (consp (assoc-equal (car (car abs-file-alist))
+                                         (cdr abs-file-alist))))
+                (abs-file-alist-p (cdr abs-file-alist)))
+           (not (consp (assoc-equal (car (car abs-file-alist))
+                                    (remove-equal x (cdr abs-file-alist))))))
+  :hints (("goal" :cases ((equal (car (car abs-file-alist))
+                                 nil)))))
+
+(defthm abs-no-dups-p-of-remove
+  (implies (and (abs-file-alist-p abs-file-alist)
+                (abs-no-dups-p abs-file-alist))
+           (abs-no-dups-p (remove-equal x abs-file-alist)))
+  :hints (("goal" :in-theory (enable abs-no-dups-p)
+           :expand (abs-file-alist-p abs-file-alist)
+           :induct (mv (abs-no-dups-p abs-file-alist)
+                       (remove-equal x abs-file-alist)))))
 
 (thm
  (implies
