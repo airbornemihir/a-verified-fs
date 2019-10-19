@@ -2061,29 +2061,6 @@
            :expand ((hifat-no-dups-p fs)
                     (m1-file-alist-p fs)))))
 
-;; This is part of how we're going to ensure no duplication in the root
-;; directory once collapsed. The only place duplication can arise, if it
-;; doesn't already exist, is when (i) two abstract variables with the same path
-;; promise are (indirectly) joined together, and (ii) an abstract variable with
-;; path promise x is joined with another abstract variable with a different
-;; path promise y where (prefixp x y). Note, for case (ii) there can only be
-;; one variable with path promise x which can be joined with the given variable
-;; - else, we'd have duplication of the part of y which is not in x.
-(defund
-  path-promises (frame)
-  (declare (xargs :guard (frame-p frame)))
-  (b*
-      (((when (atom frame)) nil)
-       (head-path-promise (frame-val->path (cdar frame)))
-       (tail-path-promises (path-promises (cdr frame)))
-       ((when (member-equal head-path-promise tail-path-promises))
-        tail-path-promises))
-    (cons head-path-promise tail-path-promises)))
-
-(defthm no-duplicatesp-of-path-promises
-  (no-duplicatesp-equal (path-promises frame))
-  :hints (("goal" :in-theory (enable path-promises))))
-
 (defund abs-top-names (x)
   (declare (xargs :guard t))
   (cond ((atom x) nil)
@@ -2114,25 +2091,6 @@
     (names-at-relpath
      (abs-file->contents (cdr (abs-assoc head fs)))
      (cdr relpath))))
-
-(defund
-  names-at-relpath-across-frame
-  (frame relpath)
-  (declare (xargs :guard (and (frame-p frame)
-                              (fat32-filename-list-p relpath))))
-  (b*
-      (((when (atom frame)) nil)
-       (head-frame-val (cdar frame))
-       ((unless (prefixp (frame-val->path head-frame-val)
-                         relpath))
-        (names-at-relpath-across-frame (cdr frame)
-                                       relpath)))
-    (append (names-at-relpath
-             (frame-val->dir head-frame-val)
-             (nthcdr (len (frame-val->path head-frame-val))
-                     relpath))
-            (names-at-relpath-across-frame (cdr frame)
-                                           relpath))))
 
 (defund
   abs-separate (frame)
@@ -2392,26 +2350,6 @@
                 (abs-separate (pseudo-frame root frame)))
            (abs-no-dups-p root))
   :hints (("goal" :in-theory (enable abs-separate pseudo-frame))))
-
-(defthm
-  intersectp-equal-of-names-at-relpath-across-frame-of-remove-assoc-equal
-  (implies
-   (not (intersectp-equal (names-at-relpath-across-frame frame relpath)
-                          y))
-   (not (intersectp-equal
-         (names-at-relpath-across-frame (remove-assoc-equal x frame)
-                                        relpath)
-         y)))
-  :hints (("goal" :in-theory (enable names-at-relpath-across-frame))))
-
-(defthm
-  no-duplicatesp-equal-of-names-at-relpath-across-frame-of-remove-assoc-equal
-  (implies
-   (no-duplicatesp-equal (names-at-relpath-across-frame frame relpath))
-   (no-duplicatesp-equal
-    (names-at-relpath-across-frame (remove-assoc-equal x frame)
-                                   relpath)))
-  :hints (("goal" :in-theory (enable names-at-relpath-across-frame))))
 
 (thm
  (IMPLIES
