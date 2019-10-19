@@ -2516,22 +2516,37 @@
            :induct (mv (abs-no-dups-p abs-file-alist)
                        (remove-equal x abs-file-alist)))))
 
-(thm
- (implies
-  (and
-   (abs-file-alist-p abs-file-alist1)
-   (abs-no-dups-p abs-file-alist1)
-   (natp x)
-   (abs-file-alist-p abs-file-alist2)
-   (abs-no-dups-p abs-file-alist2)
-   (fat32-filename-list-p x-path)
+(defthm member-equal-of-strip-cars-of-remove-equal
+  (implies (not (member-equal x1 (strip-cars alist)))
+           (not (member-equal x1
+                              (strip-cars (remove-equal x2 alist)))))
+  :rule-classes (:type-prescription :rewrite))
+
+(defthm
+  intersectp-equal-of-strip-cars-of-remove-equal
+  (implies
+   (not (intersectp-equal x1
+                          (remove-equal nil (strip-cars abs-file-alist1))))
    (not (intersectp-equal
-         (abs-top-addrs abs-file-alist2)
-         (names-at-relpath fs x-path))))
-  (abs-no-dups-p
-   (abs-context-apply
-    abs-file-alist1 abs-file-alist2 x x-path)))
- :hints (("goal" :in-theory (enable names-at-relpath abs-context-apply)) ))
+         x1
+         (remove-equal nil
+                       (strip-cars (remove-equal x2 abs-file-alist1))))))
+  :hints (("goal" :in-theory (e/d (intersectp-equal)
+                                  (intersectp-is-commutative))))
+  :rule-classes (:rewrite :type-prescription))
+
+(defthm
+  abs-no-dups-p-of-abs-context-apply
+  (implies
+   (and (abs-file-alist-p abs-file-alist1)
+        (abs-no-dups-p abs-file-alist1)
+        (abs-file-alist-p abs-file-alist2)
+        (abs-no-dups-p abs-file-alist2)
+        (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist2))
+                               (names-at-relpath abs-file-alist1 x-path))))
+   (abs-no-dups-p (abs-context-apply abs-file-alist1
+                                     abs-file-alist2 x x-path)))
+  :hints (("goal" :in-theory (enable names-at-relpath abs-context-apply))))
 
 (thm
  (IMPLIES
