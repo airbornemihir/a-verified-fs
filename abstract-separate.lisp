@@ -2121,9 +2121,9 @@
           (intersectp-equal
            (names-at-relpath
             dir
-            (nthcdr (len (frame-val->path head-frame-val))
-                    relpath))
-           (abs-top-addrs (frame-val->dir head-frame-val))))
+            (nthcdr (len relpath)
+                    (frame-val->path head-frame-val)))
+           (abs-top-names (frame-val->dir head-frame-val))))
          (distinguish-names dir relpath (cdr frame))))
        ((when (prefixp (frame-val->path head-frame-val)
                        relpath))
@@ -2131,9 +2131,9 @@
          (not (intersectp-equal
                (names-at-relpath
                 (frame-val->dir head-frame-val)
-                (nthcdr (len relpath)
-                        (frame-val->path head-frame-val)))
-               (abs-top-addrs dir)))
+                (nthcdr (len (frame-val->path head-frame-val))
+                        relpath))
+               (abs-top-names dir)))
          (distinguish-names dir relpath (cdr frame)))))
     (distinguish-names dir relpath (cdr frame))))
 
@@ -2547,6 +2547,91 @@
    (abs-no-dups-p (abs-context-apply abs-file-alist1
                                      abs-file-alist2 x x-path)))
   :hints (("goal" :in-theory (enable names-at-relpath abs-context-apply))))
+
+(defthm
+  abs-separate-correctness-1-lemma-11
+  (implies
+   (abs-separate frame)
+   (abs-no-dups-p (frame-val->dir$inline (cdr (assoc-equal x frame)))))
+  :hints (("goal" :in-theory (enable abs-separate)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (abs-separate frame)
+          (abs-complete (frame-val->dir$inline (cdr (assoc-equal x frame)))))
+     (hifat-no-dups-p (frame-val->dir$inline (cdr (assoc-equal x frame))))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-12
+  (implies
+   (distinguish-names root nil frame)
+   (not
+    (intersectp-equal
+     (remove-equal
+      'nil
+      (strip-cars (frame-val->dir$inline (cdr (assoc-equal x frame)))))
+     (names-at-relpath
+      root
+      (frame-val->path$inline (cdr (assoc-equal x frame)))))))
+  :hints (("goal" :in-theory (enable distinguish-names prefixp
+                                     intersectp-equal names-at-relpath))))
+
+(thm
+ (implies
+  (and
+   (equal
+    (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                      frame)))
+    0)
+   (consp frame)
+   (< 0 (abs-find-first-complete frame))
+   (not
+    (equal
+     (abs-context-apply
+      root
+      (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame)))
+      (abs-find-first-complete frame)
+      (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame))))
+     root))
+   (frame-p frame)
+   (no-duplicatesp-equal (strip-cars frame))
+   (abs-file-alist-p root)
+   (no-duplicatesp-equal (abs-addrs root))
+   (subsetp-equal (abs-addrs root)
+                  (strip-cars frame))
+   (abs-no-dups-p root)
+   (distinguish-names root nil frame)
+   (abs-separate frame)
+   (equal
+    (mv-nth
+     1
+     (abs-collapse
+      (abs-context-apply
+       root
+       (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame)))
+       (abs-find-first-complete frame)
+       (frame-val->path
+        (cdr (assoc-equal (abs-find-first-complete frame)
+                          frame))))
+      (remove-assoc-equal (abs-find-first-complete frame)
+                          frame)))
+    t))
+  (distinguish-names
+   (abs-context-apply
+    root
+    (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                      frame)))
+    (abs-find-first-complete frame)
+    (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                       frame))))
+   nil
+   (remove-assoc-equal (abs-find-first-complete frame)
+                       frame))))
 
 (thm
  (IMPLIES
