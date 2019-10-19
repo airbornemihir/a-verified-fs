@@ -920,11 +920,11 @@
                                    abs-context-apply)
                                   (intersectp-is-commutative)))))
 
+;; Move later
 (defthm abs-addrs-of-abs-context-apply-2-lemma-9
   (implies (abs-no-dups-p abs-file-alist1)
            (abs-no-dups-p (cdr abs-file-alist1)))
   :hints (("goal" :in-theory (enable abs-no-dups-p))))
-
 (defthm abs-addrs-of-abs-context-apply-2-lemma-10
   (implies (abs-file-alist-p abs-file-alist1)
            (abs-file-alist-p (cdr abs-file-alist1)))
@@ -1032,24 +1032,116 @@
   :hints (("goal" :in-theory (e/d ((:definition abs-addrs)
                                    intersectp-equal)
                                   (intersectp-is-commutative)))))
+(defthm
+  abs-addrs-of-abs-context-apply-2-lemma-13
+  (implies
+   (and
+    (not
+     (intersectp-equal
+      (abs-addrs (remove-assoc-equal name (cdr abs-file-alist1)))
+      (abs-addrs
+       (abs-file->contents (cdr (assoc-equal name (cdr abs-file-alist1)))))))
+    (abs-directory-file-p (cdr (assoc-equal name (cdr abs-file-alist1))))
+    (not (member-equal (car abs-file-alist1)
+                       (abs-addrs (cdr abs-file-alist1)))))
+   (not
+    (intersectp-equal
+     (abs-addrs
+      (abs-file->contents (cdr (assoc-equal name (cdr abs-file-alist1)))))
+     (cons (car abs-file-alist1)
+           (abs-addrs (remove-assoc-equal name (cdr abs-file-alist1)))))))
+  :hints
+  (("goal"
+    :in-theory (e/d (intersectp-equal)
+                    (intersectp-is-commutative))
+    :expand
+    (:with
+     intersectp-is-commutative
+     (intersectp-equal
+      (abs-addrs
+       (abs-file->contents (cdr (assoc-equal name (cdr abs-file-alist1)))))
+      (cons (car abs-file-alist1)
+            (abs-addrs (remove-assoc-equal name (cdr abs-file-alist1)))))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2
+  abs-addrs-of-abs-context-apply-2-lemma-14
   (implies
-   (and (natp x)
+   (and (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
         (no-duplicatesp-equal (abs-addrs abs-file-alist1))
-        (not (equal (abs-context-apply abs-file-alist1
-                                       abs-file-alist2 x x-path)
-                    abs-file-alist1))
+        (abs-no-dups-p abs-file-alist1)
+        (abs-file-alist-p abs-file-alist1))
+   (not
+    (intersectp-equal
+     (abs-addrs
+      (abs-file->contents$inline (cdr (assoc-equal name abs-file-alist1))))
+     (abs-addrs (remove-assoc-equal name abs-file-alist1)))))
+  :hints (("goal" :in-theory (e/d (abs-addrs) nil)
+           :expand ((abs-no-dups-p abs-file-alist1)
+                    (abs-file-alist-p abs-file-alist1)))))
+
+(defthm
+  abs-addrs-of-abs-context-apply-2-lemma-15
+  (implies
+   (not (intersectp-equal (abs-addrs abs-file-alist1)
+                          (abs-addrs abs-file-alist2)))
+   (not
+    (intersectp-equal (abs-addrs abs-file-alist2)
+                      (abs-addrs (remove-assoc-equal name abs-file-alist1)))))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite intersect-with-subset)
+                    (z (abs-addrs abs-file-alist2))
+                    (x (abs-addrs (remove-assoc-equal name abs-file-alist1)))
+                    (y (abs-addrs abs-file-alist1))))))
+
+(defthm
+  abs-addrs-of-abs-context-apply-2-lemma-16
+  (implies
+   (and (abs-directory-file-p (cdr (assoc-equal (car x-path)
+                                                abs-file-alist1)))
+        (no-duplicatesp-equal (abs-addrs abs-file-alist1))
         (not (intersectp-equal (abs-addrs abs-file-alist1)
                                (abs-addrs abs-file-alist2)))
         (abs-no-dups-p abs-file-alist1)
         (abs-file-alist-p abs-file-alist1)
-        (abs-file-alist-p abs-file-alist2)
-        (no-duplicatesp-equal (abs-addrs abs-file-alist2)))
-   (no-duplicatesp-equal
-    (abs-addrs (abs-context-apply abs-file-alist1
-                                  abs-file-alist2 x x-path))))
+        (abs-file-alist-p abs-file-alist2))
+   (not
+    (intersectp-equal
+     (abs-addrs (remove-assoc-equal (car x-path)
+                                    abs-file-alist1))
+     (abs-addrs
+      (abs-context-apply
+       (abs-file->contents$inline (cdr (assoc-equal (car x-path)
+                                                    abs-file-alist1)))
+       abs-file-alist2 x (cdr x-path))))))
+  :hints
+  (("goal"
+    :in-theory (disable intersectp-is-commutative)
+    :do-not-induct t
+    :expand
+    (:with
+     intersectp-is-commutative
+     (intersectp-equal
+      (abs-addrs (remove-assoc-equal (car x-path)
+                                     abs-file-alist1))
+      (abs-addrs
+       (abs-context-apply
+        (abs-file->contents$inline (cdr (assoc-equal (car x-path)
+                                                     abs-file-alist1)))
+        abs-file-alist2 x (cdr x-path))))))))
+
+(defthm
+  abs-addrs-of-abs-context-apply-2
+  (implies (and (no-duplicatesp-equal (abs-addrs abs-file-alist1))
+                (not (intersectp-equal (abs-addrs abs-file-alist1)
+                                       (abs-addrs abs-file-alist2)))
+                (abs-no-dups-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (no-duplicatesp-equal (abs-addrs abs-file-alist2)))
+           (no-duplicatesp-equal
+            (abs-addrs (abs-context-apply abs-file-alist1
+                                          abs-file-alist2 x x-path))))
   :hints (("goal" :in-theory (enable abs-addrs abs-context-apply)
            :induct (abs-context-apply abs-file-alist1
                                       abs-file-alist2 x x-path))))
