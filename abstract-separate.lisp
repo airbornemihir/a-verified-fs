@@ -2578,24 +2578,54 @@
   :hints (("goal" :in-theory (enable distinguish-names prefixp
                                      intersectp-equal names-at-relpath))))
 
+(defthm abs-separate-correctness-1-lemma-13
+  (implies (not (equal (abs-context-apply abs-file-alist1 nil x nil)
+                       abs-file-alist1))
+           (equal (abs-context-apply abs-file-alist1 nil x nil)
+                  (remove-equal x abs-file-alist1)))
+  :hints (("goal" :in-theory (enable abs-context-apply))))
+
+;; Move later
+(defthm assoc-of-remove
+  (implies (and (atom x1) (not (null x2)))
+           (equal (assoc-equal x2 (remove-equal x1 l))
+                  (assoc-equal x2 l))))
+
+(defthm abs-separate-correctness-1-lemma-14
+  (implies (and (not (consp x))
+                (fat32-filename-p (car relpath)))
+           (equal (assoc-equal (car relpath)
+                               (remove-equal x fs))
+                  (assoc-equal (car relpath) fs)))
+  :hints (("goal" :cases ((null (car relpath))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-15
+  (implies (and (atom x)
+                (fat32-filename-list-p relpath))
+           (equal (names-at-relpath (remove-equal x fs)
+                                    relpath)
+                  (names-at-relpath fs relpath)))
+  :hints (("goal" :in-theory (enable names-at-relpath fat32-filename-list-p)
+           :induct (names-at-relpath fs relpath)
+           :expand (names-at-relpath (remove-equal x fs)
+                                     relpath))))
+
+;; Obtained by replacing (abs-find-first-complete frame) with x in the proof-builder.
 (thm
  (implies
   (and
-   (equal
-    (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
-                                      frame)))
-    0)
+   (equal (frame-val->src (cdr (assoc-equal x frame)))
+          0)
    (consp frame)
-   (< 0 (abs-find-first-complete frame))
+   (integerp x)
+   (< 0 x)
    (not
     (equal
-     (abs-context-apply
-      root
-      (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
-                                        frame)))
-      (abs-find-first-complete frame)
-      (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
-                                         frame))))
+     (abs-context-apply root
+                        (frame-val->dir (cdr (assoc-equal x frame)))
+                        x
+                        (frame-val->path (cdr (assoc-equal x frame))))
      root))
    (frame-p frame)
    (no-duplicatesp-equal (strip-cars frame))
@@ -2610,28 +2640,21 @@
     (mv-nth
      1
      (abs-collapse
-      (abs-context-apply
-       root
-       (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
-                                         frame)))
-       (abs-find-first-complete frame)
-       (frame-val->path
-        (cdr (assoc-equal (abs-find-first-complete frame)
-                          frame))))
-      (remove-assoc-equal (abs-find-first-complete frame)
-                          frame)))
-    t))
+      (abs-context-apply root
+                         (frame-val->dir (cdr (assoc-equal x frame)))
+                         x
+                         (frame-val->path (cdr (assoc-equal x frame))))
+      (remove-assoc-equal x frame)))
+    t)
+   (not
+    (consp (abs-addrs (frame-val->dir (cdr (assoc-equal x frame)))))))
   (distinguish-names
-   (abs-context-apply
-    root
-    (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
-                                      frame)))
-    (abs-find-first-complete frame)
-    (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
-                                       frame))))
-   nil
-   (remove-assoc-equal (abs-find-first-complete frame)
-                       frame))))
+   (abs-context-apply root
+                      (frame-val->dir (cdr (assoc-equal x frame)))
+                      x
+                      (frame-val->path (cdr (assoc-equal x frame))))
+   nil (remove-assoc-equal x frame)))
+ :hints (("Goal" :in-theory (enable distinguish-names prefixp)) ))
 
 (thm
  (IMPLIES
