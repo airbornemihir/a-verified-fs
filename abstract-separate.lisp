@@ -1228,7 +1228,8 @@
 
 (fty::defalist frame
                :key-type nat
-               :val-type frame-val)
+               :val-type frame-val
+               :true-listp t)
 
 ;; That this lemma is needed is a reminder to get some list macros around
 ;; abs-file-alist-p...
@@ -2610,6 +2611,139 @@
            :induct (names-at-relpath fs relpath)
            :expand (names-at-relpath (remove-equal x fs)
                                      relpath))))
+
+(defthm
+  abs-separate-correctness-1-lemma-16
+  (implies (and (frame-p frame)
+                (not (member-equal (car (car frame))
+                                   (strip-cars (cdr frame)))))
+           (equal (remove-assoc-equal (car (car frame))
+                                      (cdr frame))
+                  (cdr frame)))
+  :hints (("goal" :in-theory (disable (:rewrite len-of-remove-assoc-equal-2))
+           :use (:instance (:rewrite len-of-remove-assoc-equal-2)
+                           (alist (cdr frame))
+                           (x (car (car frame)))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-17
+  (implies
+   (and (abs-file-alist-p abs-file-alist)
+        (not (prefixp x-path relpath)))
+   (equal (names-at-relpath (abs-context-apply root abs-file-alist x x-path)
+                            relpath)
+          (names-at-relpath root relpath)))
+  :hints
+  (("goal"
+    :in-theory (enable prefixp
+                       abs-context-apply names-at-relpath)
+    :induct t
+    :expand
+    (names-at-relpath
+     (put-assoc-equal
+      (car x-path)
+      (abs-file
+       (abs-file->dir-ent (cdr (assoc-equal (car x-path) root)))
+       (abs-context-apply
+        (abs-file->contents (cdr (assoc-equal (car x-path) root)))
+        abs-file-alist x (cdr x-path)))
+      root)
+     relpath))))
+
+;; Move later
+(defthm strip-cars-of-append
+  (equal (strip-cars (append x y))
+         (append (strip-cars x) (strip-cars y))))
+
+;; Move later
+(defthm remove-of-append
+  (equal (remove-equal x1 (append x2 y))
+         (append (remove-equal x1 x2)
+                 (remove-equal x1 y))))
+
+;; Move later
+(defthm
+  remove-of-strip-cars-of-remove
+  (implies (atom x)
+           (equal (remove-equal nil (strip-cars (remove-equal x alist)))
+                  (remove-equal nil (strip-cars alist)))))
+
+;; Move later
+(defthm assoc-equal-of-append-1
+  (implies (not (null x1))
+           (equal (assoc-equal x1 (append x2 y))
+                  (if (consp (assoc-equal x1 x2))
+                      (assoc-equal x1 x2)
+                      (assoc-equal x1 y)))))
+
+(defthm
+  abs-separate-correctness-1-lemma-18
+  (implies (and (abs-file-alist-p abs-file-alist)
+                (fat32-filename-list-p relpath)
+                (consp relpath))
+           (equal (assoc-equal (car relpath)
+                               (append (remove-equal x root)
+                                       abs-file-alist))
+                  (if (consp (assoc-equal (car relpath)
+                                          (remove-equal x root)))
+                      (assoc-equal (car relpath)
+                                   (remove-equal x root))
+                      (assoc-equal (car relpath)
+                                   abs-file-alist))))
+  :hints (("goal" :do-not-induct t
+           :cases ((null (car relpath))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-19
+  (implies (and (abs-file-alist-p abs-file-alist)
+                (consp (assoc-equal (car relpath) root))
+                (consp (assoc-equal (car relpath)
+                                    abs-file-alist)))
+           (intersectp-equal (remove-equal nil (strip-cars abs-file-alist))
+                             (remove-equal nil (strip-cars root))))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite intersectp-member)
+                    (a (car relpath))
+                    (y (remove-equal nil (strip-cars root)))
+                    (x (remove-equal nil (strip-cars abs-file-alist)))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-20
+  (implies
+   (and
+    (abs-file-alist-p abs-file-alist)
+    (fat32-filename-list-p relpath)
+    (natp x)
+    (prefixp x-path relpath)
+    (not (intersectp-equal y
+                           (names-at-relpath abs-file-alist
+                                             (nthcdr (len x-path) relpath))))
+    (not (intersectp-equal y (names-at-relpath root relpath))))
+   (not
+    (intersectp-equal
+     y
+     (names-at-relpath (abs-context-apply root abs-file-alist x x-path)
+                       relpath))))
+  :hints (("goal" :in-theory (e/d ((:definition intersectp-equal)
+                                   prefixp
+                                   abs-context-apply names-at-relpath)
+                                  (intersectp-is-commutative))
+           :induct t
+           :expand ((names-at-relpath (append (remove-equal x root)
+                                              abs-file-alist)
+                                      relpath)
+                    (names-at-relpath abs-file-alist relpath)))))
+
+(defthm
+  abs-separate-correctness-1-lemma-21
+  (implies (and (natp x)
+                (abs-file-alist-p abs-file-alist)
+                (distinguish-names root nil frame)
+                (distinguish-names abs-file-alist x-path frame))
+           (distinguish-names (abs-context-apply root abs-file-alist x x-path)
+                              nil frame))
+  :hints (("goal" :in-theory (enable distinguish-names prefixp))))
 
 ;; Obtained by replacing (abs-find-first-complete frame) with x in the proof-builder.
 (thm
