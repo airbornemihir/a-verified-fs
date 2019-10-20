@@ -2745,6 +2745,83 @@
                               nil frame))
   :hints (("goal" :in-theory (enable distinguish-names prefixp))))
 
+(defthm
+  abs-separate-correctness-1-lemma-22
+  (implies
+   (and (distinguish-names dir relpath frame)
+        (not (prefixp (frame-val->path (cdr (assoc-equal x frame)))
+                      relpath))
+        (prefixp relpath
+                 (frame-val->path (cdr (assoc-equal x frame)))))
+   (not
+    (intersectp-equal
+     (remove-equal nil
+                   (strip-cars (frame-val->dir (cdr (assoc-equal x frame)))))
+     (names-at-relpath
+      dir
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal x frame))))))))
+  :hints (("goal" :in-theory (enable distinguish-names prefixp))))
+
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/prefixp" :dir :system))
+
+  (defthm
+    abs-separate-correctness-1-lemma-23
+    (implies
+     (and
+      (prefixp relpath
+               (frame-val->path (cdr (car frame))))
+      (not
+       (intersectp-equal
+        (remove-equal nil
+                      (strip-cars (frame-val->dir (cdr (car frame)))))
+        (names-at-relpath dir
+                          (nthcdr (len relpath)
+                                  (frame-val->path (cdr (car frame)))))))
+      (prefixp (frame-val->path (cdr (car frame)))
+               relpath))
+     (not
+      (intersectp-equal
+       (remove-equal nil (strip-cars dir))
+       (names-at-relpath (frame-val->dir (cdr (car frame)))
+                         (nthcdr (len (frame-val->path (cdr (car frame))))
+                                 relpath)))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory (e/d (list-equiv nthcdr-when->=-n-len-l names-at-relpath)
+                      ((:rewrite prefixp-when-equal-lengths)))
+      :use (:instance (:rewrite prefixp-when-equal-lengths)
+                      (y relpath)
+                      (x (frame-val->path (cdr (car frame)))))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-24
+  (implies
+   (and (consp (assoc-equal x frame))
+        (distinguish-names dir relpath frame)
+        (prefixp (frame-val->path (cdr (assoc-equal x frame)))
+                 relpath))
+   (not (intersectp-equal
+         (remove-equal nil (strip-cars dir))
+         (names-at-relpath
+          (frame-val->dir (cdr (assoc-equal x frame)))
+          (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+                  relpath)))))
+  :hints (("goal" :in-theory (enable distinguish-names))))
+
+(defthm
+  abs-separate-correctness-1-lemma-25
+  (implies (and (consp (assoc-equal x frame))
+                (abs-separate frame))
+           (distinguish-names (frame-val->dir (cdr (assoc-equal x frame)))
+                              (frame-val->path (cdr (assoc-equal x frame)))
+                              (remove-assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable abs-separate distinguish-names))))
+
 ;; Obtained by replacing (abs-find-first-complete frame) with x in the proof-builder.
 (thm
  (implies
@@ -2788,7 +2865,9 @@
                       x
                       (frame-val->path (cdr (assoc-equal x frame))))
    nil (remove-assoc-equal x frame)))
- :hints (("Goal" :in-theory (enable distinguish-names prefixp)) ))
+ :hints (("Goal" :in-theory (enable distinguish-names prefixp abs-separate)
+          ;; Are we sure we shouldn't induct?
+          :do-not-induct t) ))
 
 (thm
  (IMPLIES
