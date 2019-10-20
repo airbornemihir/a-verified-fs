@@ -2823,105 +2823,42 @@
   :hints (("goal" :in-theory (enable abs-separate distinguish-names))))
 
 ;; Obtained by replacing (abs-find-first-complete frame) with x in the proof-builder.
-(thm
- (implies
-  (and
-   (equal (frame-val->src (cdr (assoc-equal x frame)))
-          0)
-   (consp frame)
-   (integerp x)
-   (< 0 x)
-   (not
-    (equal
-     (abs-context-apply root
-                        (frame-val->dir (cdr (assoc-equal x frame)))
-                        x
-                        (frame-val->path (cdr (assoc-equal x frame))))
-     root))
-   (frame-p frame)
-   (no-duplicatesp-equal (strip-cars frame))
-   (abs-file-alist-p root)
-   (no-duplicatesp-equal (abs-addrs root))
-   (subsetp-equal (abs-addrs root)
-                  (strip-cars frame))
-   (abs-no-dups-p root)
-   (distinguish-names root nil frame)
-   (abs-separate frame)
-   (equal
-    (mv-nth
-     1
-     (abs-collapse
-      (abs-context-apply root
-                         (frame-val->dir (cdr (assoc-equal x frame)))
-                         x
-                         (frame-val->path (cdr (assoc-equal x frame))))
-      (remove-assoc-equal x frame)))
-    t)
-   (not
-    (consp (abs-addrs (frame-val->dir (cdr (assoc-equal x frame)))))))
-  (distinguish-names
-   (abs-context-apply root
-                      (frame-val->dir (cdr (assoc-equal x frame)))
-                      x
-                      (frame-val->path (cdr (assoc-equal x frame))))
-   nil (remove-assoc-equal x frame)))
- :hints (("Goal" :in-theory (enable distinguish-names prefixp abs-separate)
-          ;; Are we sure we shouldn't induct?
-          :do-not-induct t) ))
+(defthm
+  abs-separate-correctness-1-lemma-26
+  (implies
+   (and (consp (assoc-equal x frame))
+        (integerp x)
+        (< 0 x)
+        (distinguish-names root nil frame)
+        (abs-separate frame))
+   (distinguish-names
+    (abs-context-apply root
+                       (frame-val->dir (cdr (assoc-equal x frame)))
+                       x
+                       (frame-val->path (cdr (assoc-equal x frame))))
+    nil (remove-assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable distinguish-names prefixp abs-separate)
+           :do-not-induct t)))
 
-(thm
- (IMPLIES
-  (AND
-   (EQUAL (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                            FRAME)))
-          0)
-   (CONSP FRAME)
-   (< 0 (ABS-FIND-FIRST-COMPLETE FRAME))
-   (NOT
-    (EQUAL
-     (ABS-CONTEXT-APPLY
-      ROOT
-      (FRAME-VAL->DIR (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                        FRAME)))
-      (ABS-FIND-FIRST-COMPLETE FRAME)
-      (FRAME-VAL->PATH (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                         FRAME))))
-     ROOT))
-   (FRAME-P FRAME)
-   (NO-DUPLICATESP-EQUAL (STRIP-CARS FRAME))
-   (ABS-FILE-ALIST-P ROOT)
-   (NO-DUPLICATESP-EQUAL (ABS-ADDRS ROOT))
-   (SUBSETP-EQUAL (ABS-ADDRS ROOT)
-                  (STRIP-CARS FRAME))
-   (ABS-SEPARATE (PSEUDO-FRAME ROOT FRAME))
-   (EQUAL
-    (MV-NTH
-     1
-     (ABS-COLLAPSE
-      (ABS-CONTEXT-APPLY
-       ROOT
-       (FRAME-VAL->DIR (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                         FRAME)))
-       (ABS-FIND-FIRST-COMPLETE FRAME)
-       (FRAME-VAL->PATH (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                          FRAME))))
-      (REMOVE-ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                          FRAME)))
-    T))
-  (ABS-SEPARATE
-   (PSEUDO-FRAME
-    (ABS-CONTEXT-APPLY
-     ROOT
-     (FRAME-VAL->DIR (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                       FRAME)))
-     (ABS-FIND-FIRST-COMPLETE FRAME)
-     (FRAME-VAL->PATH (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                        FRAME))))
-    (REMOVE-ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                        FRAME))))
- :hints (("Goal"
-          :do-not-induct t
-          :in-theory (enable PSEUDO-FRAME abs-separate)) ))
+(defthm
+  abs-separate-correctness-1-lemma-27
+  (implies
+   (and (< 0 (abs-find-first-complete frame))
+        (abs-file-alist-p root)
+        (abs-separate (pseudo-frame root frame)))
+   (abs-separate
+    (pseudo-frame
+     (abs-context-apply
+      root
+      (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame)))
+      (abs-find-first-complete frame)
+      (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame))))
+     (remove-assoc-equal (abs-find-first-complete frame)
+                         frame))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable pseudo-frame abs-separate))))
 
 (defthm abs-separate-correctness-1
   (implies (and (frame-p frame)
