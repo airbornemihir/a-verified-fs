@@ -3636,154 +3636,162 @@
                     (relpath (frame-val->path (cdr (assoc-equal x frame))))
                     (frame (remove-assoc-equal x frame))))))
 
+(defthm
+  abs-separate-correctness-1-lemma-46
+  (implies
+   (and
+    (< 0 (abs-find-first-complete frame))
+    (not
+     (equal (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                              frame)))
+            (abs-find-first-complete frame)))
+    (consp
+     (assoc-equal
+      (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame)))
+      frame))
+    (prefixp
+     (frame-val->path
+      (cdr
+       (assoc-equal
+        (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                          frame)))
+        frame)))
+     (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame))))
+    (not
+     (equal
+      (abs-context-apply
+       (frame-val->dir
+        (cdr
+         (assoc-equal
+          (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                            frame)))
+          frame)))
+       (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame)))
+       (abs-find-first-complete frame)
+       (nthcdr
+        (len
+         (frame-val->path
+          (cdr
+           (assoc-equal
+            (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                              frame)))
+            frame))))
+        (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame)))))
+      (frame-val->dir
+       (cdr
+        (assoc-equal
+         (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame)))
+         frame)))))
+    (frame-p frame)
+    (abs-separate (pseudo-frame root frame)))
+   (abs-separate
+    (pseudo-frame
+     root
+     (put-assoc-equal
+      (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame)))
+      (frame-val
+       (frame-val->path
+        (cdr
+         (assoc-equal
+          (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                            frame)))
+          frame)))
+       (abs-context-apply
+        (frame-val->dir
+         (cdr
+          (assoc-equal
+           (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                             frame)))
+           frame)))
+        (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                          frame)))
+        (abs-find-first-complete frame)
+        (nthcdr
+         (len
+          (frame-val->path
+           (cdr
+            (assoc-equal
+             (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                               frame)))
+             frame))))
+         (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                            frame)))))
+       (frame-val->src
+        (cdr
+         (assoc-equal
+          (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                            frame)))
+          frame))))
+      (remove-assoc-equal (abs-find-first-complete frame)
+                          frame)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable pseudo-frame abs-separate))))
+
+(defthm
+  abs-separate-correctness-1-lemma-47
+  (implies
+   (and (abs-separate frame)
+        (< 0 (abs-find-first-complete frame))
+        (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame)))
+   (hifat-no-dups-p
+    (frame-val->dir$inline (cdr (assoc-equal (abs-find-first-complete frame)
+                                             frame)))))
+  :hints (("goal" :do-not-induct t)))
+
+(defund frame-addrs-root (frame)
+  (declare (xargs :guard (frame-p frame)))
+  (cond ((atom frame) nil)
+        ((zp (frame-val->src (cdar frame)))
+         (cons (caar frame) (frame-addrs-root (cdr frame))))
+        (t (frame-addrs-root (cdr frame)))))
+
+(defthm
+  frame-addrs-root-correctness-1
+  (implies (and (consp (assoc-equal name frame))
+                (equal (frame-val->src frame-val)
+                       (frame-val->src (cdr (assoc-equal name frame)))))
+           (equal (frame-addrs-root (put-assoc-equal name frame-val frame))
+                  (frame-addrs-root frame)))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+(defthm frame-addrs-root-correctness-2
+  (implies (not (member-equal x (strip-cars frame)))
+           (not (member-equal x (frame-addrs-root frame))))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+(defthm frame-addrs-root-correctness-3
+  (implies (frame-p frame)
+           (equal (frame-addrs-root (remove-assoc-equal name frame))
+                  (remove-equal name (frame-addrs-root frame))))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+;; Perhaps (abs-separate (pseudo-frame root frame)) later...
 (thm
- (IMPLIES
-  (AND
-   (CONSP FRAME)
-   (< 0 (ABS-FIND-FIRST-COMPLETE FRAME))
-   (< 0
-      (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                        FRAME))))
-   (NOT
-    (EQUAL (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                             FRAME)))
-           (ABS-FIND-FIRST-COMPLETE FRAME)))
-   (CONSP
-    (ASSOC-EQUAL
-     (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                       FRAME)))
-     FRAME))
-   (PREFIXP
-    (FRAME-VAL->PATH
-     (CDR
-      (ASSOC-EQUAL
-       (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                         FRAME)))
-       FRAME)))
-    (FRAME-VAL->PATH (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                       FRAME))))
-   (NOT
-    (EQUAL
-     (ABS-CONTEXT-APPLY
-      (FRAME-VAL->DIR
-       (CDR
-        (ASSOC-EQUAL
-         (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                           FRAME)))
-         FRAME)))
-      (FRAME-VAL->DIR (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                        FRAME)))
-      (ABS-FIND-FIRST-COMPLETE FRAME)
-      (NTHCDR
-       (LEN
-        (FRAME-VAL->PATH
-         (CDR
-          (ASSOC-EQUAL
-           (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                             FRAME)))
-           FRAME))))
-       (FRAME-VAL->PATH (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                          FRAME)))))
-     (FRAME-VAL->DIR
-      (CDR
-       (ASSOC-EQUAL
-        (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                          FRAME)))
-        FRAME)))))
-   (FRAME-P FRAME)
-   (NO-DUPLICATESP-EQUAL (STRIP-CARS FRAME))
-   (ABS-FILE-ALIST-P ROOT)
+ (implies
+  (and
+   (abs-file-alist-p root)
+   (frame-p frame)
+   (abs-separate frame)
+   (ABS-NO-DUPS-P ROOT)
    (NO-DUPLICATESP-EQUAL (ABS-ADDRS ROOT))
-   (SUBSETP-EQUAL (ABS-ADDRS ROOT)
-                  (STRIP-CARS FRAME))
-   (ABS-SEPARATE (PSEUDO-FRAME ROOT FRAME))
-   (EQUAL
+   (NO-DUPLICATESP-EQUAL (STRIP-CARS FRAME))
+   (equal (mv-nth 1 (abs-collapse root frame)) t)
+   (DISTINGUISH-NAMES ROOT NIL FRAME)
+   (subsetp (abs-addrs root) (frame-addrs-root frame)))
+  (equal
+   (ABS-ADDRS
     (MV-NTH
-     1
-     (ABS-COLLAPSE
-      ROOT
-      (PUT-ASSOC-EQUAL
-       (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                         FRAME)))
-       (FRAME-VAL
-        (FRAME-VAL->PATH
-         (CDR
-          (ASSOC-EQUAL
-           (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                             FRAME)))
-           FRAME)))
-        (ABS-CONTEXT-APPLY
-         (FRAME-VAL->DIR
-          (CDR
-           (ASSOC-EQUAL
-            (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                              FRAME)))
-            FRAME)))
-         (FRAME-VAL->DIR (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                           FRAME)))
-         (ABS-FIND-FIRST-COMPLETE FRAME)
-         (NTHCDR
-          (LEN
-           (FRAME-VAL->PATH
-            (CDR (ASSOC-EQUAL
-                  (FRAME-VAL->SRC
-                   (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                     FRAME)))
-                  FRAME))))
-          (FRAME-VAL->PATH (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                             FRAME)))))
-        (FRAME-VAL->SRC
-         (CDR
-          (ASSOC-EQUAL
-           (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                             FRAME)))
-           FRAME))))
-       (REMOVE-ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                           FRAME))))
-    T))
-  (ABS-SEPARATE
-   (PSEUDO-FRAME
-    ROOT
-    (PUT-ASSOC-EQUAL
-     (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                       FRAME)))
-     (FRAME-VAL
-      (FRAME-VAL->PATH
-       (CDR
-        (ASSOC-EQUAL
-         (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                           FRAME)))
-         FRAME)))
-      (ABS-CONTEXT-APPLY
-       (FRAME-VAL->DIR
-        (CDR
-         (ASSOC-EQUAL
-          (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                            FRAME)))
-          FRAME)))
-       (FRAME-VAL->DIR (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                         FRAME)))
-       (ABS-FIND-FIRST-COMPLETE FRAME)
-       (NTHCDR
-        (LEN
-         (FRAME-VAL->PATH
-          (CDR (ASSOC-EQUAL
-                (FRAME-VAL->SRC
-                 (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                   FRAME)))
-                FRAME))))
-        (FRAME-VAL->PATH (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                           FRAME)))))
-      (FRAME-VAL->SRC
-       (CDR
-        (ASSOC-EQUAL
-         (FRAME-VAL->SRC (CDR (ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                                           FRAME)))
-         FRAME))))
-     (REMOVE-ASSOC-EQUAL (ABS-FIND-FIRST-COMPLETE FRAME)
-                         FRAME)))))
- :hints (("goal" :do-not-induct t
-          :in-theory (enable pseudo-frame abs-separate))))
+     0
+     (abs-collapse root frame)))
+   nil))
+ :hints (("Goal" :in-theory (enable abs-collapse intersectp-equal)) ))
 
 (defthm abs-separate-correctness-1
   (implies (and (frame-p frame)
