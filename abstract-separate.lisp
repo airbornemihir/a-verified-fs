@@ -412,7 +412,7 @@
 ;; body addresses at that level.
 ;;
 ;; <sigh>
-(defund abs-context-apply
+(defund context-apply
   (abs-file-alist1 abs-file-alist2 x x-path)
   (declare (xargs :guard
                   (and
@@ -430,7 +430,7 @@
          (car x-path)
          (abs-file
           (abs-file->dir-ent (cdr (abs-assoc (car x-path) abs-file-alist1)))
-          (abs-context-apply
+          (context-apply
            (abs-file->contents (cdr (abs-assoc (car x-path) abs-file-alist1)))
            abs-file-alist2
            x
@@ -443,14 +443,14 @@
         (append (remove x abs-file-alist1) abs-file-alist2)))
     abs-file-alist1))
 
-(defthm abs-file-alist-p-of-abs-context-apply-lemma-1
+(defthm abs-file-alist-p-of-context-apply-lemma-1
   (implies (and (abs-file-alist-p alist)
                 (not (fat32-filename-p x)))
            (not (consp (assoc-equal x alist))))
   :hints (("goal" :in-theory (enable abs-file-alist-p))))
 
 (defthm
-  abs-file-alist-p-of-abs-context-apply-lemma-2
+  abs-file-alist-p-of-context-apply-lemma-2
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal (car x-path)
                                                 abs-file-alist1)))
@@ -460,29 +460,29 @@
      (car x-path)
      (abs-file (abs-file->dir-ent (cdr (assoc-equal (car x-path)
                                                     abs-file-alist1)))
-               (abs-context-apply
+               (context-apply
                 (abs-file->contents (cdr (assoc-equal (car x-path)
                                                       abs-file-alist1)))
                 abs-file-alist2 x (cdr x-path)))
      abs-file-alist1)))
   :hints
-  (("goal" :in-theory (disable abs-file-alist-p-of-abs-context-apply-lemma-1)
-    :use (:instance abs-file-alist-p-of-abs-context-apply-lemma-1
+  (("goal" :in-theory (disable abs-file-alist-p-of-context-apply-lemma-1)
+    :use (:instance abs-file-alist-p-of-context-apply-lemma-1
                     (alist abs-file-alist1)
                     (x (car x-path))))))
 
-(defthm abs-file-alist-p-of-abs-context-apply
+(defthm abs-file-alist-p-of-context-apply
   (implies
    (and
     (abs-file-alist-p abs-file-alist1)
     (abs-file-alist-p abs-file-alist2))
    (abs-file-alist-p
-    (abs-context-apply
+    (context-apply
      abs-file-alist1 abs-file-alist2 x x-path)))
   :hints
-  (("Goal" :in-theory (enable abs-context-apply))))
+  (("Goal" :in-theory (enable context-apply))))
 
-(verify-guards abs-context-apply
+(verify-guards context-apply
   :guard-debug t
   :hints (("Goal" :in-theory (enable abs-file-alist-p)) ))
 
@@ -522,7 +522,7 @@
   :hints (("goal" :in-theory (enable abs-no-dups-p)
            :expand (abs-file-alist-p fs))))
 
-(defthm abs-addrs-of-abs-context-apply-1-lemma-1
+(defthm abs-addrs-of-context-apply-1-lemma-1
   (implies (and (member-equal x abs-file-alist1)
                 (integerp x)
                 (<= 0 x)
@@ -534,13 +534,13 @@
                                   (y (abs-addrs abs-file-alist2))
                                   (x (abs-addrs abs-file-alist1))))))
 
-(defthm abs-addrs-of-abs-context-apply-1-lemma-2
+(defthm abs-addrs-of-context-apply-1-lemma-2
   (subsetp-equal (abs-addrs (remove-equal x abs-file-alist))
                  (abs-addrs abs-file-alist))
   :hints (("goal" :in-theory (enable abs-addrs))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-3
+  abs-addrs-of-context-apply-1-lemma-3
   (implies (and (member-equal x abs-file-alist1)
                 (integerp x)
                 (<= 0 x)
@@ -550,7 +550,7 @@
   :hints (("goal" :in-theory (enable abs-addrs))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-4
+  abs-addrs-of-context-apply-1-lemma-4
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
         (no-duplicatesp-equal (abs-addrs abs-file-alist1)))
@@ -560,7 +560,7 @@
   :hints (("goal" :in-theory (enable abs-addrs))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-5
+  abs-addrs-of-context-apply-1-lemma-5
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
         (not (intersectp-equal (abs-addrs abs-file-alist1)
@@ -573,7 +573,7 @@
                                   (intersectp-is-commutative)))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-6
+  abs-addrs-of-context-apply-1-lemma-6
   (implies
    (and
     (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
@@ -584,19 +584,19 @@
    (member-equal x (abs-addrs abs-file-alist1)))
   :hints (("goal" :in-theory (enable abs-addrs))))
 
-(defthm abs-addrs-of-abs-context-apply-1-lemma-7
+(defthm abs-addrs-of-context-apply-1-lemma-7
   (implies (and (natp x)
                 (not (member-equal x (abs-addrs abs-file-alist1))))
-           (equal (abs-context-apply abs-file-alist1
+           (equal (context-apply abs-file-alist1
                                      abs-file-alist2 x x-path)
                   abs-file-alist1))
-  :hints (("goal" :in-theory (enable abs-addrs abs-context-apply)
-           :induct (abs-context-apply abs-file-alist1
+  :hints (("goal" :in-theory (enable abs-addrs context-apply)
+           :induct (context-apply abs-file-alist1
                                       abs-file-alist2 x x-path)
            :do-not-induct t)))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-8
+  abs-addrs-of-context-apply-1-lemma-8
   (implies
    (and
     (abs-directory-file-p (cdr (assoc-equal name (cdr abs-file-alist1))))
@@ -619,7 +619,7 @@
           (x (abs-addrs (cdr abs-file-alist1)))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-9
+  abs-addrs-of-context-apply-1-lemma-9
   (implies
    (not (member-equal x (abs-addrs abs-file-alist)))
    (not (member-equal x
@@ -627,7 +627,7 @@
   :hints (("goal" :in-theory (enable abs-addrs))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-10
+  abs-addrs-of-context-apply-1-lemma-10
   (implies
    (and
     (member-equal
@@ -648,7 +648,7 @@
           (x (abs-addrs (cdr abs-file-alist1)))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-11
+  abs-addrs-of-context-apply-1-lemma-11
   (implies
    (and
     (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
@@ -661,7 +661,7 @@
                       (abs-addrs (remove-assoc-equal name abs-file-alist1)))))
   :hints (("goal" :in-theory (enable abs-addrs))))
 
-(defthm abs-addrs-of-abs-context-apply-1-lemma-12
+(defthm abs-addrs-of-context-apply-1-lemma-12
   (implies (and (fat32-filename-p (car (car abs-file-alist1)))
                 (abs-file-alist-p (cdr abs-file-alist1))
                 (not (consp (assoc-equal (car (car abs-file-alist1))
@@ -673,7 +673,7 @@
                                  nil)))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-13
+  abs-addrs-of-context-apply-1-lemma-13
   (implies
    (and
     (not (member-equal x
@@ -707,7 +707,7 @@
      abs-file-alist1))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-1-lemma-14
+  abs-addrs-of-context-apply-1-lemma-14
   (implies
    (and
     (abs-directory-file-p (cdr (assoc-equal (car x-path)
@@ -715,7 +715,7 @@
     (not
      (member-equal
       x
-      (abs-addrs (abs-context-apply
+      (abs-addrs (context-apply
                   (abs-file->contents (cdr (assoc-equal (car x-path)
                                                         abs-file-alist1)))
                   abs-file-alist2 x (cdr x-path)))))
@@ -728,7 +728,7 @@
        (car x-path)
        (abs-file (abs-file->dir-ent (cdr (assoc-equal (car x-path)
                                                       abs-file-alist1)))
-                 (abs-context-apply
+                 (context-apply
                   (abs-file->contents (cdr (assoc-equal (car x-path)
                                                         abs-file-alist1)))
                   abs-file-alist2 x (cdr x-path)))
@@ -745,7 +745,7 @@
        (car x-path)
        (abs-file (abs-file->dir-ent (cdr (assoc-equal (car x-path)
                                                       abs-file-alist1)))
-                 (abs-context-apply
+                 (context-apply
                   (abs-file->contents (cdr (assoc-equal (car x-path)
                                                         abs-file-alist1)))
                   abs-file-alist2 x (cdr x-path)))
@@ -753,8 +753,8 @@
   :hints
   (("goal"
     :in-theory (disable put-assoc-equal-without-change
-                        (:rewrite abs-addrs-of-abs-context-apply-1-lemma-7)
-                        (:rewrite abs-addrs-of-abs-context-apply-1-lemma-11))
+                        (:rewrite abs-addrs-of-context-apply-1-lemma-7)
+                        (:rewrite abs-addrs-of-context-apply-1-lemma-11))
     :use
     ((:instance
       put-assoc-equal-without-change
@@ -762,20 +762,20 @@
       (val
        (abs-file (abs-file->dir-ent (cdr (assoc-equal (car x-path)
                                                       abs-file-alist1)))
-                 (abs-context-apply
+                 (context-apply
                   (abs-file->contents (cdr (assoc-equal (car x-path)
                                                         abs-file-alist1)))
                   abs-file-alist2 x (cdr x-path))))
       (name (car x-path)))
      (:instance
-      (:rewrite abs-addrs-of-abs-context-apply-1-lemma-7)
+      (:rewrite abs-addrs-of-context-apply-1-lemma-7)
       (x-path (cdr x-path))
       (x x)
       (abs-file-alist2 abs-file-alist2)
       (abs-file-alist1
        (abs-file->contents (cdr (assoc-equal (car x-path)
                                              abs-file-alist1)))))
-     (:instance (:rewrite abs-addrs-of-abs-context-apply-1-lemma-11)
+     (:instance (:rewrite abs-addrs-of-context-apply-1-lemma-11)
                 (abs-file-alist1 abs-file-alist1)
                 (name (car x-path))
                 (x x)))
@@ -783,20 +783,20 @@
 
 ;; There's a way of saying the same thing...
 ;; (implies (not (equal
-;;                (abs-context-apply
+;;                (context-apply
 ;;                 abs-file-alist1 abs-file-alist2 x x-path)
 ;;                abs-file-alist1))
 ;;          (equal (abs-addrs
-;;                  (abs-context-apply
+;;                  (context-apply
 ;;                   abs-file-alist1 abs-file-alist2 x x-path))
 ;;                 (remove x (abs-addrs abs-file-alist1))))
 ;; ...that's very likely going to be tough to prove, so, let's leave it alone.
 (defthm
-  abs-addrs-of-abs-context-apply-1
+  abs-addrs-of-context-apply-1
   (implies
    (and (natp x)
         (no-duplicatesp-equal (abs-addrs abs-file-alist1))
-        (not (equal (abs-context-apply abs-file-alist1
+        (not (equal (context-apply abs-file-alist1
                                        abs-file-alist2 x x-path)
                     abs-file-alist1))
         (not (intersectp-equal (abs-addrs abs-file-alist1)
@@ -806,15 +806,15 @@
         (abs-file-alist-p abs-file-alist2))
    (not
     (member-equal x
-                  (abs-addrs (abs-context-apply abs-file-alist1
+                  (abs-addrs (context-apply abs-file-alist1
                                                 abs-file-alist2 x x-path)))))
-  :hints (("goal" :in-theory (enable abs-addrs abs-context-apply)
-           :induct (abs-context-apply abs-file-alist1
+  :hints (("goal" :in-theory (enable abs-addrs context-apply)
+           :induct (context-apply abs-file-alist1
                                       abs-file-alist2 x x-path))))
 
 ;; This just might be made obsolete soon...
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-1
+  abs-addrs-of-context-apply-2-lemma-1
   (implies (not (intersectp-equal (abs-addrs abs-file-alist1)
                                   y))
            (not (intersectp-equal (abs-addrs (remove-equal x abs-file-alist1))
@@ -823,7 +823,7 @@
                                   (intersectp-is-commutative)))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-2
+  abs-addrs-of-context-apply-2-lemma-2
   (implies
    (no-duplicatesp-equal (abs-addrs abs-file-alist1))
    (no-duplicatesp-equal (abs-addrs (remove-equal x abs-file-alist1))))
@@ -842,7 +842,7 @@
              (abs-addrs (cdr abs-file-alist1))))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-3
+  abs-addrs-of-context-apply-2-lemma-3
   (implies
    (and
     (abs-no-dups-p abs-file-alist1)
@@ -869,20 +869,20 @@
            :expand (abs-no-dups-p abs-file-alist1))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-6
+  abs-addrs-of-context-apply-2-lemma-6
   (subsetp-equal (abs-addrs (remove-assoc-equal name abs-file-alist))
                  (abs-addrs abs-file-alist))
   :hints (("goal" :in-theory (enable abs-addrs))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-4
+  abs-addrs-of-context-apply-2-lemma-4
   (implies
    (and
     (abs-directory-file-p (cdr (assoc-equal (car x-path)
                                             abs-file-alist1)))
     (not
      (intersectp-equal
-      (abs-addrs (abs-context-apply
+      (abs-addrs (context-apply
                   (abs-file->contents (cdr (assoc-equal (car x-path)
                                                         abs-file-alist1)))
                   abs-file-alist2 x (cdr x-path)))
@@ -899,7 +899,7 @@
        (car x-path)
        (abs-file (abs-file->dir-ent (cdr (assoc-equal (car x-path)
                                                       abs-file-alist1)))
-                 (abs-context-apply
+                 (context-apply
                   (abs-file->contents (cdr (assoc-equal (car x-path)
                                                         abs-file-alist1)))
                   abs-file-alist2 x (cdr x-path)))
@@ -914,7 +914,7 @@
                                                       abs-file-alist1)))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-7
+  abs-addrs-of-context-apply-2-lemma-7
   (implies
    (and (abs-file-alist-p abs-file-alist2)
         (not (intersectp-equal (abs-addrs abs-file-alist1)
@@ -924,25 +924,25 @@
         (abs-file-alist-p abs-file-alist1)
         (abs-no-dups-p abs-file-alist1))
    (not
-    (intersectp-equal (abs-addrs (abs-context-apply abs-file-alist1
+    (intersectp-equal (abs-addrs (context-apply abs-file-alist1
                                                     abs-file-alist2 x x-path))
                       y)))
   :hints (("goal" :in-theory (e/d ((:definition abs-addrs)
-                                   abs-context-apply)
+                                   context-apply)
                                   (intersectp-is-commutative)))))
 
 ;; Move later
-(defthm abs-addrs-of-abs-context-apply-2-lemma-9
+(defthm abs-addrs-of-context-apply-2-lemma-9
   (implies (abs-no-dups-p abs-file-alist1)
            (abs-no-dups-p (cdr abs-file-alist1)))
   :hints (("goal" :in-theory (enable abs-no-dups-p))))
-(defthm abs-addrs-of-abs-context-apply-2-lemma-10
+(defthm abs-addrs-of-context-apply-2-lemma-10
   (implies (abs-file-alist-p abs-file-alist1)
            (abs-file-alist-p (cdr abs-file-alist1)))
   :hints (("goal" :in-theory (enable abs-file-alist-p))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-11
+  abs-addrs-of-context-apply-2-lemma-11
   (implies
    (not (intersectp-equal
          (abs-addrs (abs-file->contents (cdr (car abs-file-alist1))))
@@ -961,7 +961,7 @@
       (y (abs-addrs (cdr abs-file-alist1))))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-8
+  abs-addrs-of-context-apply-2-lemma-8
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal name (cdr abs-file-alist1))))
         (not (intersectp-equal
@@ -1006,7 +1006,7 @@
         (abs-file->contents$inline (cdr (car abs-file-alist1))))))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-12
+  abs-addrs-of-context-apply-2-lemma-12
   (implies
    (and (abs-directory-file-p (cdr (car abs-file-alist1)))
         (not (intersectp-equal
@@ -1021,7 +1021,7 @@
                            (abs-file-alist-p abs-file-alist1)))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-5
+  abs-addrs-of-context-apply-2-lemma-5
   (implies
    (and
     (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
@@ -1044,7 +1044,7 @@
                                    intersectp-equal)
                                   (intersectp-is-commutative)))))
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-13
+  abs-addrs-of-context-apply-2-lemma-13
   (implies
    (and
     (not
@@ -1075,7 +1075,7 @@
             (abs-addrs (remove-assoc-equal name (cdr abs-file-alist1)))))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-14
+  abs-addrs-of-context-apply-2-lemma-14
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
         (no-duplicatesp-equal (abs-addrs abs-file-alist1))
@@ -1091,7 +1091,7 @@
                     (abs-file-alist-p abs-file-alist1)))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-15
+  abs-addrs-of-context-apply-2-lemma-15
   (implies
    (not (intersectp-equal (abs-addrs abs-file-alist1)
                           (abs-addrs abs-file-alist2)))
@@ -1106,7 +1106,7 @@
                     (y (abs-addrs abs-file-alist1))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2-lemma-16
+  abs-addrs-of-context-apply-2-lemma-16
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal (car x-path)
                                                 abs-file-alist1)))
@@ -1121,7 +1121,7 @@
      (abs-addrs (remove-assoc-equal (car x-path)
                                     abs-file-alist1))
      (abs-addrs
-      (abs-context-apply
+      (context-apply
        (abs-file->contents$inline (cdr (assoc-equal (car x-path)
                                                     abs-file-alist1)))
        abs-file-alist2 x (cdr x-path))))))
@@ -1136,13 +1136,13 @@
       (abs-addrs (remove-assoc-equal (car x-path)
                                      abs-file-alist1))
       (abs-addrs
-       (abs-context-apply
+       (context-apply
         (abs-file->contents$inline (cdr (assoc-equal (car x-path)
                                                      abs-file-alist1)))
         abs-file-alist2 x (cdr x-path))))))))
 
 (defthm
-  abs-addrs-of-abs-context-apply-2
+  abs-addrs-of-context-apply-2
   (implies (and (no-duplicatesp-equal (abs-addrs abs-file-alist1))
                 (not (intersectp-equal (abs-addrs abs-file-alist1)
                                        (abs-addrs abs-file-alist2)))
@@ -1151,10 +1151,10 @@
                 (abs-file-alist-p abs-file-alist2)
                 (no-duplicatesp-equal (abs-addrs abs-file-alist2)))
            (no-duplicatesp-equal
-            (abs-addrs (abs-context-apply abs-file-alist1
+            (abs-addrs (context-apply abs-file-alist1
                                           abs-file-alist2 x x-path))))
-  :hints (("goal" :in-theory (enable abs-addrs abs-context-apply)
-           :induct (abs-context-apply abs-file-alist1
+  :hints (("goal" :in-theory (enable abs-addrs context-apply)
+           :induct (context-apply abs-file-alist1
                                       abs-file-alist2 x x-path))))
 
 (defund
@@ -1836,7 +1836,7 @@
            (frame-p (remove-assoc-equal x alist)))
   :hints (("goal" :in-theory (enable frame-p))))
 
-(defund abs-collapse (root frame)
+(defund collapse (root frame)
   (declare (xargs :guard (and (abs-file-alist-p root) (frame-p frame))
                   :guard-debug t :measure (len frame)))
   (b*
@@ -1850,13 +1850,13 @@
         (zp src)
         (b*
             ((root-after-context-apply
-              (abs-context-apply
+              (context-apply
                root
                (frame-val->dir head-frame-val)
                head-index
                (frame-val->path head-frame-val)))
              ((when (equal root-after-context-apply root)) (mv root nil)))
-          (abs-collapse root-after-context-apply frame))
+          (collapse root-after-context-apply frame))
       (b*
           ((path (frame-val->path head-frame-val))
            ((when (or (equal src head-index)
@@ -1867,7 +1867,7 @@
             (mv root nil))
            (src-dir (frame-val->dir (cdr (abs-assoc src frame))))
            (src-dir-after-context-apply
-            (abs-context-apply
+            (context-apply
              src-dir
              (frame-val->dir head-frame-val)
              head-index
@@ -1880,12 +1880,12 @@
                     src-dir-after-context-apply
                     (frame-val->src (cdr (abs-assoc src frame))))
                    frame)))
-        (abs-collapse root frame)))))
+        (collapse root frame)))))
 
 (assert-event
  (b*
      (((mv root result)
-       (abs-collapse
+       (collapse
         (list
          (cons
           "INITRD  IMG"
@@ -2064,6 +2064,11 @@
                 1)))))
   t))
 
+(defthm abs-file-alist-p-of-collapse
+  (implies (abs-file-alist-p root)
+           (abs-file-alist-p (mv-nth 0 (collapse root frame))))
+  :hints (("goal" :in-theory (enable collapse))))
+
 (defthm
   abs-no-dups-p-when-m1-file-alist-p
   (implies (m1-file-alist-p fs)
@@ -2167,6 +2172,42 @@
          (frame-p frame))
   :hints (("goal" :in-theory (enable pseudo-frame))))
 
+(defund frame-addrs-root (frame)
+  (declare (xargs :guard (frame-p frame)))
+  (cond ((atom frame) nil)
+        ((zp (frame-val->src (cdar frame)))
+         (cons (caar frame) (frame-addrs-root (cdr frame))))
+        (t (frame-addrs-root (cdr frame)))))
+
+(defthm
+  frame-addrs-root-correctness-1
+  (implies (and (consp (assoc-equal name frame))
+                (equal (frame-val->src frame-val)
+                       (frame-val->src (cdr (assoc-equal name frame)))))
+           (equal (frame-addrs-root (put-assoc-equal name frame-val frame))
+                  (frame-addrs-root frame)))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+(defthm frame-addrs-root-correctness-2
+  (implies (not (member-equal x (strip-cars frame)))
+           (not (member-equal x (frame-addrs-root frame))))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+(defthm frame-addrs-root-correctness-3
+  (implies (frame-p frame)
+           (equal (frame-addrs-root (remove-assoc-equal name frame))
+                  (remove-equal name (frame-addrs-root frame))))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+(defthm
+  frame-addrs-root-correctness-4
+  (implies (and (not (null x))
+                (no-duplicatesp-equal (strip-cars frame)))
+           (iff (member-equal x (frame-addrs-root frame))
+                (and (consp (assoc-equal x frame))
+                     (zp (frame-val->src (cdr (assoc-equal x frame)))))))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
 ;; This has a free variable.
 (defthm abs-separate-correctness-1-lemma-1
   (implies (and (abs-file-alist-p root)
@@ -2205,10 +2246,10 @@
   (implies
    (and (abs-file-alist-p abs-file-alist2)
         (atom (abs-addrs abs-file-alist2)))
-   (subsetp-equal (abs-addrs (abs-context-apply abs-file-alist1
+   (subsetp-equal (abs-addrs (context-apply abs-file-alist1
                                                 abs-file-alist2 x x-path))
                   (abs-addrs abs-file-alist1)))
-  :hints (("goal" :in-theory (enable abs-context-apply))))
+  :hints (("goal" :in-theory (enable context-apply))))
 
 ;; Move later
 (defthm
@@ -2236,9 +2277,9 @@
   abs-separate-correctness-1-lemma-5
   (implies (and (no-duplicatesp-equal (strip-cars frame))
                 (frame-p frame))
-           (subsetp-equal (abs-addrs (mv-nth 0 (abs-collapse root frame)))
+           (subsetp-equal (abs-addrs (mv-nth 0 (collapse root frame)))
                           (abs-addrs root)))
-  :hints (("goal" :in-theory (enable abs-collapse))))
+  :hints (("goal" :in-theory (enable collapse))))
 
 ;; Move later
 (defthm remove-when-absent
@@ -2262,7 +2303,7 @@
     (< 0 (abs-find-first-complete frame))
     (not
      (equal
-      (abs-context-apply
+      (context-apply
        root
        (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
                                          frame)))
@@ -2281,8 +2322,8 @@
      (abs-addrs
       (mv-nth
        0
-       (abs-collapse
-        (abs-context-apply
+       (collapse
+        (context-apply
          root
          (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
                                            frame)))
@@ -2301,7 +2342,7 @@
      (:rewrite subsetp-member . 4)
      (y
       (abs-addrs
-       (abs-context-apply
+       (context-apply
         root
         (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
                                           frame)))
@@ -2312,8 +2353,8 @@
       (abs-addrs
        (mv-nth
         0
-        (abs-collapse
-         (abs-context-apply
+        (collapse
+         (context-apply
           root
           (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
                                             frame)))
@@ -2331,7 +2372,7 @@
     (< 0 (abs-find-first-complete frame))
     (not
      (equal
-      (abs-context-apply
+      (context-apply
        root
        (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
                                          frame)))
@@ -2346,8 +2387,8 @@
       (abs-addrs
        (mv-nth
         0
-        (abs-collapse
-         (abs-context-apply
+        (collapse
+         (context-apply
           root
           (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
                                             frame)))
@@ -2367,8 +2408,8 @@
      (abs-addrs
       (mv-nth
        0
-       (abs-collapse
-        (abs-context-apply
+       (collapse
+        (context-apply
          root
          (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
                                            frame)))
@@ -2388,8 +2429,8 @@
       (abs-addrs
        (mv-nth
         0
-        (abs-collapse
-         (abs-context-apply
+        (collapse
+         (context-apply
           root
           (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
                                             frame)))
@@ -2537,7 +2578,7 @@
   :rule-classes (:rewrite :type-prescription))
 
 (defthm
-  abs-no-dups-p-of-abs-context-apply
+  abs-no-dups-p-of-context-apply
   (implies
    (and (abs-file-alist-p abs-file-alist1)
         (abs-no-dups-p abs-file-alist1)
@@ -2545,9 +2586,9 @@
         (abs-no-dups-p abs-file-alist2)
         (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist2))
                                (names-at-relpath abs-file-alist1 x-path))))
-   (abs-no-dups-p (abs-context-apply abs-file-alist1
+   (abs-no-dups-p (context-apply abs-file-alist1
                                      abs-file-alist2 x x-path)))
-  :hints (("goal" :in-theory (enable names-at-relpath abs-context-apply))))
+  :hints (("goal" :in-theory (enable names-at-relpath context-apply))))
 
 (defthm
   abs-separate-correctness-1-lemma-11
@@ -2580,11 +2621,11 @@
                                      intersectp-equal names-at-relpath))))
 
 (defthm abs-separate-correctness-1-lemma-13
-  (implies (not (equal (abs-context-apply abs-file-alist1 nil x nil)
+  (implies (not (equal (context-apply abs-file-alist1 nil x nil)
                        abs-file-alist1))
-           (equal (abs-context-apply abs-file-alist1 nil x nil)
+           (equal (context-apply abs-file-alist1 nil x nil)
                   (remove-equal x abs-file-alist1)))
-  :hints (("goal" :in-theory (enable abs-context-apply))))
+  :hints (("goal" :in-theory (enable context-apply))))
 
 ;; Move later
 (defthm assoc-of-remove
@@ -2630,13 +2671,13 @@
   (implies
    (and (abs-file-alist-p abs-file-alist)
         (not (prefixp x-path relpath)))
-   (equal (names-at-relpath (abs-context-apply root abs-file-alist x x-path)
+   (equal (names-at-relpath (context-apply root abs-file-alist x x-path)
                             relpath)
           (names-at-relpath root relpath)))
   :hints
   (("goal"
     :in-theory (enable prefixp
-                       abs-context-apply names-at-relpath)
+                       context-apply names-at-relpath)
     :induct t
     :expand
     (names-at-relpath
@@ -2644,7 +2685,7 @@
       (car x-path)
       (abs-file
        (abs-file->dir-ent (cdr (assoc-equal (car x-path) root)))
-       (abs-context-apply
+       (context-apply
         (abs-file->contents (cdr (assoc-equal (car x-path) root)))
         abs-file-alist x (cdr x-path)))
       root)
@@ -2723,11 +2764,11 @@
    (not
     (intersectp-equal
      y
-     (names-at-relpath (abs-context-apply root abs-file-alist x x-path)
+     (names-at-relpath (context-apply root abs-file-alist x x-path)
                        relpath))))
   :hints (("goal" :in-theory (e/d ((:definition intersectp-equal)
                                    prefixp
-                                   abs-context-apply names-at-relpath)
+                                   context-apply names-at-relpath)
                                   (intersectp-is-commutative))
            :induct t
            :expand ((names-at-relpath (append (remove-equal x root)
@@ -2741,7 +2782,7 @@
                 (abs-file-alist-p abs-file-alist)
                 (distinguish-names root nil frame)
                 (distinguish-names abs-file-alist x-path frame))
-           (distinguish-names (abs-context-apply root abs-file-alist x x-path)
+           (distinguish-names (context-apply root abs-file-alist x x-path)
                               nil frame))
   :hints (("goal" :in-theory (enable distinguish-names prefixp))))
 
@@ -2853,7 +2894,7 @@
         (distinguish-names root nil frame)
         (abs-separate frame))
    (distinguish-names
-    (abs-context-apply root
+    (context-apply root
                        (frame-val->dir (cdr (assoc-equal x frame)))
                        x
                        (frame-val->path (cdr (assoc-equal x frame))))
@@ -2869,7 +2910,7 @@
         (abs-separate (pseudo-frame root frame)))
    (abs-separate
     (pseudo-frame
-     (abs-context-apply
+     (context-apply
       root
       (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
                                         frame)))
@@ -2883,16 +2924,16 @@
 
 (defthm
   abs-separate-correctness-1-lemma-28
-  (implies (not (equal (abs-context-apply abs-file-alist1
+  (implies (not (equal (context-apply abs-file-alist1
                                           abs-file-alist2 x x-path)
                        abs-file-alist1))
-           (equal (strip-cars (abs-context-apply abs-file-alist1
+           (equal (strip-cars (context-apply abs-file-alist1
                                                  abs-file-alist2 x x-path))
                   (if (consp x-path)
                       (strip-cars abs-file-alist1)
                       (append (strip-cars (remove-equal x abs-file-alist1))
                               (strip-cars abs-file-alist2)))))
-  :hints (("goal" :in-theory (enable abs-context-apply))))
+  :hints (("goal" :in-theory (enable context-apply))))
 
 (defthm
   abs-separate-correctness-1-lemma-30
@@ -2904,7 +2945,7 @@
     (prefixp (frame-val->path (cdr (assoc-equal src frame)))
              relpath)
     (not
-     (equal (abs-context-apply
+     (equal (context-apply
              (frame-val->dir (cdr (assoc-equal src frame)))
              dir x
              (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -2919,7 +2960,7 @@
      src
      (frame-val
       (frame-val->path (cdr (assoc-equal src frame)))
-      (abs-context-apply
+      (context-apply
        (frame-val->dir (cdr (assoc-equal src frame)))
        dir x
        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -2951,7 +2992,7 @@
       (frame-val->path
        (cdr (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
                          frame)))
-      (abs-context-apply
+      (context-apply
        (frame-val->dir
         (cdr (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
                           frame)))
@@ -3003,7 +3044,7 @@
      (and
       (prefixp relpath
                (frame-val->path (cdr (car frame))))
-      (not (equal (abs-context-apply abs-file-alist1
+      (not (equal (context-apply abs-file-alist1
                                      abs-file-alist2 x x-path)
                   abs-file-alist1))
       (not
@@ -3026,7 +3067,7 @@
       (intersectp-equal
        (remove-equal nil
                      (strip-cars (frame-val->dir (cdr (car frame)))))
-       (names-at-relpath (abs-context-apply abs-file-alist1
+       (names-at-relpath (context-apply abs-file-alist1
                                             abs-file-alist2 x x-path)
                          (nthcdr (len relpath)
                                  (frame-val->path (cdr (car frame))))))))
@@ -3076,13 +3117,13 @@
                   (fat32-filename-list-p relpath)
                   (abs-file-alist-p abs-file-alist2)
                   (natp x)
-                  (not (equal (abs-context-apply abs-file-alist1
+                  (not (equal (context-apply abs-file-alist1
                                                  abs-file-alist2 x x-path)
                               abs-file-alist1))
                   (distinguish-names abs-file-alist1 relpath frame)
                   (distinguish-names abs-file-alist2 (append relpath x-path)
                                      frame))
-             (distinguish-names (abs-context-apply abs-file-alist1
+             (distinguish-names (context-apply abs-file-alist1
                                                    abs-file-alist2 x x-path)
                                 relpath frame))
     :hints (("goal" :in-theory (enable distinguish-names))))
@@ -3099,7 +3140,7 @@
                relpath)
       (not
        (equal
-        (abs-context-apply (frame-val->dir (cdr (car frame)))
+        (context-apply (frame-val->dir (cdr (car frame)))
                            dir x
                            (nthcdr (len (frame-val->path (cdr (car frame))))
                                    relpath))
@@ -3109,7 +3150,7 @@
                          (cdr frame))
       (integerp x))
      (distinguish-names
-      (abs-context-apply (frame-val->dir (cdr (car frame)))
+      (context-apply (frame-val->dir (cdr (car frame)))
                          dir x
                          (nthcdr (len (frame-val->path (cdr (car frame))))
                                  relpath))
@@ -3141,7 +3182,7 @@
       (intersectp-equal
        (remove-equal nil (strip-cars dir1))
        (names-at-relpath
-        (abs-context-apply (frame-val->dir (cdr (car frame)))
+        (context-apply (frame-val->dir (cdr (car frame)))
                            dir2 x2
                            (nthcdr (len (frame-val->path (cdr (car frame))))
                                    relpath2))
@@ -3209,7 +3250,7 @@
      src
      (frame-val
       (frame-val->path (cdr (assoc-equal src frame)))
-      (abs-context-apply
+      (context-apply
        (frame-val->dir (cdr (assoc-equal src frame)))
        dir2 x2
        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3230,7 +3271,7 @@
     (prefixp (frame-val->path (cdr (assoc-equal src frame)))
              relpath2)
     (not
-     (equal (abs-context-apply
+     (equal (context-apply
              (frame-val->dir (cdr (assoc-equal src frame)))
              dir2 x2
              (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3246,7 +3287,7 @@
      src
      (frame-val
       (frame-val->path (cdr (assoc-equal src frame)))
-      (abs-context-apply
+      (context-apply
        (frame-val->dir (cdr (assoc-equal src frame)))
        dir2 x2
        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3271,7 +3312,7 @@
      (intersectp-equal
       (remove-equal nil (strip-cars dir1))
       (names-at-relpath
-       (abs-context-apply
+       (context-apply
         (frame-val->dir (cdr (assoc-equal src frame)))
         dir2 x2
         (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3284,7 +3325,7 @@
      src
      (frame-val
       (frame-val->path (cdr (assoc-equal src frame)))
-      (abs-context-apply
+      (context-apply
        (frame-val->dir (cdr (assoc-equal src frame)))
        dir2 x2
        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3305,7 +3346,7 @@
     (prefixp (frame-val->path (cdr (assoc-equal src frame)))
              relpath2)
     (not
-     (equal (abs-context-apply
+     (equal (context-apply
              (frame-val->dir (cdr (assoc-equal src frame)))
              dir2 x2
              (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3318,7 +3359,7 @@
      (intersectp-equal
       (remove-equal nil (strip-cars dir1))
       (names-at-relpath
-       (abs-context-apply
+       (context-apply
         (frame-val->dir (cdr (assoc-equal src frame)))
         dir2 x2
         (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3331,7 +3372,7 @@
      src
      (frame-val
       (frame-val->path (cdr (assoc-equal src frame)))
-      (abs-context-apply
+      (context-apply
        (frame-val->dir (cdr (assoc-equal src frame)))
        dir2 x2
        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3372,7 +3413,7 @@
                relpath)
       (not
        (equal
-        (abs-context-apply
+        (context-apply
          (frame-val->dir (cdr (assoc-equal src (cdr frame))))
          dir x
          (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
@@ -3386,7 +3427,7 @@
        src
        (frame-val
         (frame-val->path (cdr (assoc-equal src (cdr frame))))
-        (abs-context-apply
+        (context-apply
          (frame-val->dir (cdr (assoc-equal src (cdr frame))))
          dir x
          (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
@@ -3420,7 +3461,7 @@
          (remove-equal nil
                        (strip-cars (frame-val->dir (cdr (car frame)))))
          (names-at-relpath
-          (abs-context-apply
+          (context-apply
            (frame-val->dir (cdr (assoc-equal src (cdr frame))))
            dir x
            (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
@@ -3470,7 +3511,7 @@
          (remove-equal nil
                        (strip-cars (frame-val->dir (cdr (car frame)))))
          (names-at-relpath
-          (abs-context-apply
+          (context-apply
            (frame-val->dir (cdr (assoc-equal src (cdr frame))))
            dir x
            (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
@@ -3548,7 +3589,7 @@
     (prefixp (frame-val->path (cdr (assoc-equal src frame)))
              relpath)
     (not
-     (equal (abs-context-apply
+     (equal (context-apply
              (frame-val->dir (cdr (assoc-equal src frame)))
              dir x
              (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3561,7 +3602,7 @@
      src
      (frame-val
       (frame-val->path (cdr (assoc-equal src frame)))
-      (abs-context-apply
+      (context-apply
        (frame-val->dir (cdr (assoc-equal src frame)))
        dir x
        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
@@ -3585,7 +3626,7 @@
      (frame-val->path (cdr (assoc-equal x frame))))
     (not
      (equal
-      (abs-context-apply
+      (context-apply
        (frame-val->dir
         (cdr (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
                           frame)))
@@ -3610,7 +3651,7 @@
       (frame-val->path
        (cdr (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
                          frame)))
-      (abs-context-apply
+      (context-apply
        (frame-val->dir
         (cdr (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
                           frame)))
@@ -3661,7 +3702,7 @@
                                         frame))))
     (not
      (equal
-      (abs-context-apply
+      (context-apply
        (frame-val->dir
         (cdr
          (assoc-equal
@@ -3702,7 +3743,7 @@
           (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
                                             frame)))
           frame)))
-       (abs-context-apply
+       (context-apply
         (frame-val->dir
          (cdr
           (assoc-equal
@@ -3745,42 +3786,6 @@
                                              frame)))))
   :hints (("goal" :do-not-induct t)))
 
-(defund frame-addrs-root (frame)
-  (declare (xargs :guard (frame-p frame)))
-  (cond ((atom frame) nil)
-        ((zp (frame-val->src (cdar frame)))
-         (cons (caar frame) (frame-addrs-root (cdr frame))))
-        (t (frame-addrs-root (cdr frame)))))
-
-(defthm
-  frame-addrs-root-correctness-1
-  (implies (and (consp (assoc-equal name frame))
-                (equal (frame-val->src frame-val)
-                       (frame-val->src (cdr (assoc-equal name frame)))))
-           (equal (frame-addrs-root (put-assoc-equal name frame-val frame))
-                  (frame-addrs-root frame)))
-  :hints (("goal" :in-theory (enable frame-addrs-root))))
-
-(defthm frame-addrs-root-correctness-2
-  (implies (not (member-equal x (strip-cars frame)))
-           (not (member-equal x (frame-addrs-root frame))))
-  :hints (("goal" :in-theory (enable frame-addrs-root))))
-
-(defthm frame-addrs-root-correctness-3
-  (implies (frame-p frame)
-           (equal (frame-addrs-root (remove-assoc-equal name frame))
-                  (remove-equal name (frame-addrs-root frame))))
-  :hints (("goal" :in-theory (enable frame-addrs-root))))
-
-(defthm
-  frame-addrs-root-correctness-4
-  (implies (and (not (null x))
-                (no-duplicatesp-equal (strip-cars frame)))
-           (iff (member-equal x (frame-addrs-root frame))
-                (and (consp (assoc-equal x frame))
-                     (zp (frame-val->src (cdr (assoc-equal x frame)))))))
-  :hints (("goal" :in-theory (enable frame-addrs-root))))
-
 ;; This one was tough...
 (defthm abs-separate-correctness-1-lemma-48
   (implies (and (abs-file-alist-p root)
@@ -3789,19 +3794,14 @@
                 (abs-no-dups-p root)
                 (no-duplicatesp-equal (abs-addrs root))
                 (no-duplicatesp-equal (strip-cars frame))
-                (equal (mv-nth 1 (abs-collapse root frame))
+                (equal (mv-nth 1 (collapse root frame))
                        t)
                 (distinguish-names root nil frame)
                 (subsetp (abs-addrs root)
                          (frame-addrs-root frame)))
-           (equal (abs-addrs (mv-nth 0 (abs-collapse root frame)))
+           (equal (abs-addrs (mv-nth 0 (collapse root frame)))
                   nil))
-  :hints (("goal" :in-theory (enable abs-collapse intersectp-equal))))
-
-(defthm abs-file-alist-p-of-abs-collapse
-  (implies (abs-file-alist-p root)
-           (abs-file-alist-p (mv-nth 0 (abs-collapse root frame))))
-  :hints (("goal" :in-theory (enable abs-collapse))))
+  :hints (("goal" :in-theory (enable collapse intersectp-equal))))
 
 (defthm abs-separate-correctness-1
   (implies (and (frame-p frame)
@@ -3812,9 +3812,9 @@
                          (frame-addrs-root frame))
                 (abs-separate (pseudo-frame root frame)))
            (mv-let (m1-file-alist result)
-             (abs-collapse root frame)
+             (collapse root frame)
              (implies (equal result t)
                       (and (m1-file-alist-p m1-file-alist)
                            (hifat-no-dups-p m1-file-alist)))))
-  :hints (("goal" :in-theory (enable abs-collapse)
+  :hints (("goal" :in-theory (enable collapse)
            :expand (:free (y) (intersectp-equal nil y)))))
