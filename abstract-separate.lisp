@@ -3798,21 +3798,23 @@
                   nil))
   :hints (("goal" :in-theory (enable abs-collapse intersectp-equal))))
 
+(defthm abs-file-alist-p-of-abs-collapse
+  (implies (abs-file-alist-p root)
+           (abs-file-alist-p (mv-nth 0 (abs-collapse root frame))))
+  :hints (("goal" :in-theory (enable abs-collapse))))
+
 (defthm abs-separate-correctness-1
   (implies (and (frame-p frame)
                 (no-duplicatesp-equal (strip-cars frame))
                 (abs-file-alist-p root)
-                ;; This next hypothesis is possibly a consequence of
-                ;; (equal result t) below.
                 (no-duplicatesp-equal (abs-addrs root))
-                (subsetp (abs-addrs root) (strip-cars frame))
+                (subsetp (abs-addrs root)
+                         (frame-addrs-root frame))
                 (abs-separate (pseudo-frame root frame)))
-           (mv-let
-             (m1-file-alist result)
+           (mv-let (m1-file-alist result)
              (abs-collapse root frame)
              (implies (equal result t)
-                      (and
-                       (m1-file-alist-p m1-file-alist)
-                       (hifat-no-dups-p m1-file-alist)))))
-  :hints (("Goal" :in-theory (enable abs-collapse)
-           :expand (:free (y) (intersectp-equal nil y))) ))
+                      (and (m1-file-alist-p m1-file-alist)
+                           (hifat-no-dups-p m1-file-alist)))))
+  :hints (("goal" :in-theory (enable abs-collapse)
+           :expand (:free (y) (intersectp-equal nil y)))))
