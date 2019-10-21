@@ -917,3 +917,49 @@
            (< (len (remove-assoc-equal x alist))
               (len alist)))
   :rule-classes :linear)
+
+(defthm strip-cars-of-remove-assoc
+  (equal (strip-cars (remove-assoc-equal x alist))
+         (remove-equal x (strip-cars alist))))
+
+(defthm strip-cars-of-put-assoc
+  (implies (consp (assoc-equal name alist))
+           (equal (strip-cars (put-assoc-equal name val alist))
+                  (strip-cars alist))))
+
+(defthm
+  member-of-strip-cars t
+  :rule-classes
+  ((:type-prescription
+    :corollary (implies (consp (assoc-equal x alist))
+                        (member-equal x (strip-cars alist))))
+   (:type-prescription
+    :corollary
+    (implies (and (not (null x))
+                  (not (consp (assoc-equal x alist))))
+             (not (member-equal x (strip-cars alist)))))))
+
+(defthm remove-when-absent
+  (implies (not (member-equal x l))
+           (equal (remove-equal x l)
+                  (true-list-fix l))))
+
+(defthmd intersectp-when-member
+  (implies (member-equal x l)
+           (iff (intersectp-equal l y)
+                (or (intersectp-equal (remove-equal x l) y)
+                    (member-equal x y))))
+  :hints (("goal" :in-theory (e/d (intersectp-equal)
+                                  (intersectp-is-commutative)))))
+
+(defthm consp-of-assoc-equal-of-append
+  (implies (not (null name))
+           (equal (consp (assoc-equal name (append x y)))
+                  (or (consp (assoc-equal name x))
+                      (consp (assoc-equal name y))))))
+
+(defthm consp-of-assoc-of-remove
+  (implies (and (not (null x1))
+                (not (consp (assoc-equal x1 l))))
+           (not (consp (assoc-equal x1 (remove-equal x2 l)))))
+  :rule-classes :type-prescription)
