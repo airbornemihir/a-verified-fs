@@ -963,3 +963,25 @@
                 (not (consp (assoc-equal x1 l))))
            (not (consp (assoc-equal x1 (remove-equal x2 l)))))
   :rule-classes :type-prescription)
+
+(defthm strip-cars-of-append
+  (equal (strip-cars (append x y))
+         (append (strip-cars x) (strip-cars y))))
+
+(defthm remove-of-append
+  (equal (remove-equal x1 (append x2 y))
+         (append (remove-equal x1 x2)
+                 (remove-equal x1 y))))
+
+(defthm
+  remove-of-strip-cars-of-remove
+  (implies (atom x)
+           (equal (remove-equal nil (strip-cars (remove-equal x alist)))
+                  (remove-equal nil (strip-cars alist)))))
+
+(defthm assoc-equal-of-append-1
+  (implies (not (null x1))
+           (equal (assoc-equal x1 (append x2 y))
+                  (if (consp (assoc-equal x1 x2))
+                      (assoc-equal x1 x2)
+                      (assoc-equal x1 y)))))

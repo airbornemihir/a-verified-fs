@@ -2640,32 +2640,6 @@
       root)
      relpath))))
 
-;; Move later
-(defthm strip-cars-of-append
-  (equal (strip-cars (append x y))
-         (append (strip-cars x) (strip-cars y))))
-
-;; Move later
-(defthm remove-of-append
-  (equal (remove-equal x1 (append x2 y))
-         (append (remove-equal x1 x2)
-                 (remove-equal x1 y))))
-
-;; Move later
-(defthm
-  remove-of-strip-cars-of-remove
-  (implies (atom x)
-           (equal (remove-equal nil (strip-cars (remove-equal x alist)))
-                  (remove-equal nil (strip-cars alist)))))
-
-;; Move later
-(defthm assoc-equal-of-append-1
-  (implies (not (null x1))
-           (equal (assoc-equal x1 (append x2 y))
-                  (if (consp (assoc-equal x1 x2))
-                      (assoc-equal x1 x2)
-                      (assoc-equal x1 y)))))
-
 (defthm
   abs-separate-correctness-1-lemma-18
   (implies (and (abs-file-alist-p abs-file-alist)
