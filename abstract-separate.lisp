@@ -3772,26 +3772,31 @@
                   (remove-equal name (frame-addrs-root frame))))
   :hints (("goal" :in-theory (enable frame-addrs-root))))
 
-;; Perhaps (abs-separate (pseudo-frame root frame)) later...
-(thm
- (implies
-  (and
-   (abs-file-alist-p root)
-   (frame-p frame)
-   (abs-separate frame)
-   (ABS-NO-DUPS-P ROOT)
-   (NO-DUPLICATESP-EQUAL (ABS-ADDRS ROOT))
-   (NO-DUPLICATESP-EQUAL (STRIP-CARS FRAME))
-   (equal (mv-nth 1 (abs-collapse root frame)) t)
-   (DISTINGUISH-NAMES ROOT NIL FRAME)
-   (subsetp (abs-addrs root) (frame-addrs-root frame)))
-  (equal
-   (ABS-ADDRS
-    (MV-NTH
-     0
-     (abs-collapse root frame)))
-   nil))
- :hints (("Goal" :in-theory (enable abs-collapse intersectp-equal)) ))
+(defthm
+  frame-addrs-root-correctness-4
+  (implies (and (not (null x))
+                (no-duplicatesp-equal (strip-cars frame)))
+           (iff (member-equal x (frame-addrs-root frame))
+                (and (consp (assoc-equal x frame))
+                     (zp (frame-val->src (cdr (assoc-equal x frame)))))))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+;; This one was tough...
+(defthm abs-separate-correctness-1-lemma-48
+  (implies (and (abs-file-alist-p root)
+                (frame-p frame)
+                (abs-separate frame)
+                (abs-no-dups-p root)
+                (no-duplicatesp-equal (abs-addrs root))
+                (no-duplicatesp-equal (strip-cars frame))
+                (equal (mv-nth 1 (abs-collapse root frame))
+                       t)
+                (distinguish-names root nil frame)
+                (subsetp (abs-addrs root)
+                         (frame-addrs-root frame)))
+           (equal (abs-addrs (mv-nth 0 (abs-collapse root frame)))
+                  nil))
+  :hints (("goal" :in-theory (enable abs-collapse intersectp-equal))))
 
 (defthm abs-separate-correctness-1
   (implies (and (frame-p frame)
