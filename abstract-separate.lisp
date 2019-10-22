@@ -3740,3 +3740,28 @@
                            (hifat-no-dups-p fs)))))
   :hints (("goal" :in-theory (enable collapse)
            :expand (:free (y) (intersectp-equal nil y)))))
+
+(defthm distinguish-names-of-append
+  (equal (distinguish-names dir relpath (append frame1 frame2))
+         (and (distinguish-names dir relpath frame1)
+              (distinguish-names dir relpath frame2)))
+  :hints (("goal" :in-theory (enable distinguish-names))))
+
+(defund
+  mutual-distinguish-names (frame1 frame2)
+  (declare (xargs :guard (and (frame-p frame1)
+                              (frame-p frame2))))
+  (or (atom frame1)
+      (and (distinguish-names (frame-val->dir (cdar frame1))
+                              (frame-val->path (cdar frame1))
+                              frame2)
+           (mutual-distinguish-names (cdr frame1)
+                                     frame2))))
+
+(defthm abs-separate-of-append
+  (equal (abs-separate (append frame1 frame2))
+         (and (abs-separate frame1)
+              (abs-separate frame2)
+              (mutual-distinguish-names frame1 frame2)))
+  :hints (("goal" :in-theory (enable abs-separate
+                                     mutual-distinguish-names))))
