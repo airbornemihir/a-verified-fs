@@ -1900,6 +1900,65 @@ Some (rather awful) testing forms are
                                     (cluster-size fat32-in-memory)))))
 
 (defthm
+  update-dir-contents-correctness-1-lemma-4
+  (implies
+   (and (fat32-masked-entry-p first-cluster)
+        (< first-cluster
+           (+ 2 (count-of-clusters fat32-in-memory))))
+   (equal
+    (fati
+     first-cluster
+     (stobj-set-indices-in-fa-table
+      fat32-in-memory
+      (mv-nth 0
+              (fat32-build-index-list (effective-fat fat32-in-memory)
+                                      first-cluster
+                                      2097152 (cluster-size fat32-in-memory)))
+      (make-list-ac
+       (len (mv-nth 0
+                    (fat32-build-index-list (effective-fat fat32-in-memory)
+                                            first-cluster 2097152
+                                            (cluster-size fat32-in-memory))))
+       0 nil)))
+    (nth
+     first-cluster
+     (effective-fat
+      (stobj-set-indices-in-fa-table
+       fat32-in-memory
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                first-cluster
+                                2097152 (cluster-size fat32-in-memory)))
+       (make-list-ac
+        (len (mv-nth 0
+                     (fat32-build-index-list (effective-fat fat32-in-memory)
+                                             first-cluster 2097152
+                                             (cluster-size fat32-in-memory))))
+        0 nil))))))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite nth-of-effective-fat))
+    :use
+    (:instance
+     (:rewrite nth-of-effective-fat)
+     (fat32-in-memory
+      (stobj-set-indices-in-fa-table
+       fat32-in-memory
+       (mv-nth
+        0
+        (fat32-build-index-list (effective-fat fat32-in-memory)
+                                first-cluster
+                                2097152 (cluster-size fat32-in-memory)))
+       (make-list-ac
+        (len (mv-nth 0
+                     (fat32-build-index-list (effective-fat fat32-in-memory)
+                                             first-cluster 2097152
+                                             (cluster-size fat32-in-memory))))
+        0 nil)))
+     (n first-cluster)))))
+
+(defthm
   update-dir-contents-correctness-1-lemma-2
   (implies
    (and
@@ -1990,12 +2049,6 @@ Some (rather awful) testing forms are
     (fat32-masked-entry-p first-cluster)
     (< first-cluster
        (+ 2 (count-of-clusters fat32-in-memory)))
-    (equal
-     (mv-nth 1
-             (fat32-build-index-list (effective-fat fat32-in-memory)
-                                     first-cluster
-                                     2097152 (cluster-size fat32-in-memory)))
-     0)
     (consp
      (cdr (mv-nth 0
                   (fat32-build-index-list (effective-fat fat32-in-memory)
@@ -2044,145 +2097,48 @@ Some (rather awful) testing forms are
                                      (cluster-size fat32-in-memory))))))
          fat32-in-memory)))))
     fat32-in-memory))
-  :instructions
-  (:promote
-   (:contrapose 1)
-   (:=
-    (make-list-ac
-     (len
-      (cdr (mv-nth 0
-                   (fat32-build-index-list (effective-fat fat32-in-memory)
-                                           first-cluster 2097152
-                                           (cluster-size fat32-in-memory)))))
-     0 '(0))
-    (make-list-ac
-     (len (mv-nth 0
-                  (fat32-build-index-list (effective-fat fat32-in-memory)
-                                          first-cluster 2097152
-                                          (cluster-size fat32-in-memory))))
-     0 nil))
-   (:dive 1 1 1 2)
-   (:dive 1)
-   (:claim
-    (equal
-     (fati
-      first-cluster
-      (stobj-set-indices-in-fa-table
-       fat32-in-memory
-       (mv-nth
-        0
-        (fat32-build-index-list (effective-fat fat32-in-memory)
-                                first-cluster
-                                2097152 (cluster-size fat32-in-memory)))
+  :hints
+  (("goal"
+    :in-theory
+    (disable (:rewrite fat32-update-lower-28-of-fat32-update-lower-28)
+             (:rewrite clear-clusterchain-reversibility-lemma-2)
+             nth-of-set-indices-in-fa-table-when-member
+             (:rewrite stobj-set-indices-in-fa-table-correctness-1))
+    :use
+    ((:instance
+      (:rewrite nth-of-set-indices-in-fa-table-when-member)
+      (val 0)
+      (index-list
+       (mv-nth 0
+               (fat32-build-index-list (effective-fat fat32-in-memory)
+                                       first-cluster 2097152
+                                       (cluster-size fat32-in-memory))))
+      (fa-table (effective-fat fat32-in-memory))
+      (n first-cluster))
+     (:instance (:rewrite fat32-update-lower-28-of-fat32-update-lower-28)
+                (masked-entry2 268435455)
+                (masked-entry1 0)
+                (entry (nth first-cluster
+                            (effective-fat fat32-in-memory))))
+     (:instance (:rewrite clear-clusterchain-reversibility-lemma-2)
+                (length 2097152)
+                (masked-current-cluster first-cluster)
+                (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite stobj-set-indices-in-fa-table-correctness-1)
+      (value-list
        (make-list-ac
         (len (mv-nth 0
                      (fat32-build-index-list (effective-fat fat32-in-memory)
                                              first-cluster 2097152
                                              (cluster-size fat32-in-memory))))
-        0 nil)))
-     (nth
-      first-cluster
-      (effective-fat
-       (stobj-set-indices-in-fa-table
-        fat32-in-memory
-        (mv-nth
-         0
-         (fat32-build-index-list (effective-fat fat32-in-memory)
-                                 first-cluster
-                                 2097152 (cluster-size fat32-in-memory)))
-        (make-list-ac
-         (len
-          (mv-nth 0
-                  (fat32-build-index-list (effective-fat fat32-in-memory)
-                                          first-cluster 2097152
-                                          (cluster-size fat32-in-memory))))
-         0 nil)))))
-    :hints :none)
-   (:change-goal (main . 2) t)
-   (:dive 2)
-   (:rewrite nth-of-effective-fat)
-   :top :bash
-   (:=
-    (fati
-     first-cluster
-     (stobj-set-indices-in-fa-table
-      fat32-in-memory
-      (mv-nth 0
-              (fat32-build-index-list (effective-fat fat32-in-memory)
-                                      first-cluster
-                                      2097152 (cluster-size fat32-in-memory)))
-      (make-list-ac
-       (len (mv-nth 0
-                    (fat32-build-index-list (effective-fat fat32-in-memory)
-                                            first-cluster 2097152
-                                            (cluster-size fat32-in-memory))))
-       0 nil)))
-    (nth
-     first-cluster
-     (effective-fat
-      (stobj-set-indices-in-fa-table
-       fat32-in-memory
-       (mv-nth
-        0
-        (fat32-build-index-list (effective-fat fat32-in-memory)
-                                first-cluster
-                                2097152 (cluster-size fat32-in-memory)))
-       (make-list-ac
-        (len (mv-nth 0
-                     (fat32-build-index-list (effective-fat fat32-in-memory)
-                                             first-cluster 2097152
-                                             (cluster-size fat32-in-memory))))
-        0 nil)))))
-   (:dive 2)
-   (:claim
-    (and
-     (fat32-masked-entry-list-p
-      (make-list-ac
-       (len (mv-nth 0
-                    (fat32-build-index-list (effective-fat fat32-in-memory)
-                                            first-cluster 2097152
-                                            (cluster-size fat32-in-memory))))
-       0 nil))
-     (equal
-      (len (mv-nth 0
-                   (fat32-build-index-list (effective-fat fat32-in-memory)
-                                           first-cluster 2097152
-                                           (cluster-size fat32-in-memory))))
-      (len
-       (make-list-ac
-        (len (mv-nth 0
-                     (fat32-build-index-list (effective-fat fat32-in-memory)
-                                             first-cluster 2097152
-                                             (cluster-size fat32-in-memory))))
-        0 nil)))))
-   (:rewrite stobj-set-indices-in-fa-table-correctness-1)
-   :up
-   (:claim
-    (and
-     (bounded-nat-listp
-      (mv-nth 0
-              (fat32-build-index-list (effective-fat fat32-in-memory)
-                                      first-cluster
-                                      2097152 (cluster-size fat32-in-memory)))
-      (len (effective-fat fat32-in-memory)))
-     (fat32-masked-entry-p 0)
-     (member-equal
-      first-cluster
-      (mv-nth 0
-              (fat32-build-index-list (effective-fat fat32-in-memory)
-                                      first-cluster 2097152
-                                      (cluster-size fat32-in-memory))))))
-   (:rewrite nth-of-set-indices-in-fa-table-when-member)
-   :up
-   (:rewrite fat32-update-lower-28-of-fat32-update-lower-28)
-   :top (:contrapose 1)
-   :bash
-   (:in-theory (disable (:rewrite clear-clusterchain-reversibility-lemma-2)))
-   (:use (:instance (:rewrite clear-clusterchain-reversibility-lemma-2)
-                    (length 2097152)
-                    (masked-current-cluster first-cluster)
-                    (fat32-in-memory fat32-in-memory)))
-   :bash))
+        0 nil))
+      (index-list
+       (mv-nth 0
+               (fat32-build-index-list (effective-fat fat32-in-memory)
+                                       first-cluster 2097152
+                                       (cluster-size fat32-in-memory))))
+      (fat32-in-memory fat32-in-memory))))))
 
 (defthm
   update-dir-contents-correctness-1-lemma-3
