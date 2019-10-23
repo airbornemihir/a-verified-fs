@@ -3360,7 +3360,8 @@ Some (rather awful) testing forms are
     :in-theory
     (e/d
      (update-dir-contents
-      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3)
+      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
+      (:linear hifat-to-lofat-inversion-lemma-16))
      ((:rewrite nth-of-set-indices-in-fa-table-when-member)))
     :expand
     ((fat32-build-index-list (effective-fat fat32-in-memory)
@@ -11447,7 +11448,6 @@ Some (rather awful) testing forms are
       (:linear lofat-find-file-correctness-1-lemma-11)
       (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
                 . 2)
-      (:rewrite subsetp-is-transitive)
       (:rewrite member-intersectp-binary-append . 1)
       (:rewrite subdir-contents-p-when-zero-length)
       (:rewrite flatten-subset-no-duplicatesp-lemma-2)
@@ -11468,7 +11468,6 @@ Some (rather awful) testing forms are
       (:rewrite clear-clusterchain-reversibility-lemma-1)
       (:linear non-free-index-listp-correctness-6-lemma-3)
       (:rewrite len-of-effective-fat)
-      (:linear hifat-to-lofat-inversion-lemma-16)
       (:definition make-list-ac)))
     :induct (lofat-to-hifat-helper fat32-in-memory
                                    dir-ent-list entry-limit)
