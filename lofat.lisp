@@ -2266,15 +2266,18 @@ Some (rather awful) testing forms are
     :in-theory (e/d (update-dir-contents clear-clusterchain-correctness-3
                                          place-contents-correctness-1)))))
 
+;; For one thing, we have to merge the two cases - the one where the
+;; clusterchain is empty, and the one where it is not. This will be done by
+;; moving the whole logic to a separate function, I think.
 (defun
     lofat-place-file
-    (fat32-in-memory rootclus pathname file)
+    (fat32-in-memory root-dir-ent pathname file)
   (declare
    (xargs
     :guard (and (lofat-fs-p fat32-in-memory)
-                (fat32-masked-entry-p rootclus)
-                (>= rootclus *ms-first-data-cluster*)
-                (< rootclus
+                (dir-ent-p root-dir-ent)
+                (>= (dir-ent-first-cluster root-dir-ent) *ms-first-data-cluster*)
+                (< (dir-ent-first-cluster root-dir-ent)
                    (+ *ms-first-data-cluster*
                       (count-of-clusters fat32-in-memory)))
                 (fat32-filename-list-p pathname)
@@ -2283,92 +2286,91 @@ Some (rather awful) testing forms are
     :stobjs fat32-in-memory
     :verify-guards nil))
   (b*
-      (;; Pathnames aren't going to be empty lists. Even the emptiest of
-       ;; empty pathnames has to have at least a slash in it, because we are
-       ;; absolutely dealing in absolute pathnames.
-       ((unless (consp pathname))
+      (((unless (consp pathname))
         (mv fat32-in-memory *enoent*))
+       ;; Design choice - calls which ask for the entire root directory to be
+       ;; affected will fail.
        (name (mbe :logic (fat32-filename-fix (car pathname))
                   :exec (car pathname)))
        ((mv dir-contents &)
-        (get-clusterchain-contents fat32-in-memory
-                                   rootclus *ms-max-dir-size*))
+        (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
        (dir-ent-list
         (make-dir-ent-list dir-contents))
        ((mv dir-ent error-code)
         (find-dir-ent dir-ent-list name))
-       ((unless (equal error-code 0))
-        (if
-            (atom (cdr pathname))
-            (b*
-                ((file-length
-                  (if (lofat-directory-file-p file)
-                      0 (length (lofat-file->contents file))))
-                 (indices (stobj-find-n-free-clusters fat32-in-memory 1))
-                 ((when (< (len indices) 1))
-                  (mv fat32-in-memory *enospc*))
-                 (first-cluster (nth 0 indices))
-                 (contents
-                  (if
-                      (lofat-directory-file-p file)
-                      (nats=>string (flatten (lofat-file->contents file)))
-                    (lofat-file->contents file)))
-                 ;; Should we be ignoring the dir-ent returned by place-contents?
-                 ;; Probably not...
-                 ((mv fat32-in-memory & & &)
-                  (if
-                      (equal (length contents) 0)
-                      (mv fat32-in-memory dir-ent nil nil)
-                    (place-contents fat32-in-memory
-                                    (lofat-file->dir-ent file)
-                                    contents file-length first-cluster)))
-                 (dir-ent-list (place-dir-ent dir-ent-list dir-ent)))
-              (update-dir-contents
-               fat32-in-memory rootclus
-               (nats=>string (flatten dir-ent-list))))
-          (mv fat32-in-memory *enotdir*)))
-       ((unless (dir-ent-directory-p dir-ent))
-        (if
-            (or (consp (cdr pathname))
-                ;; This is the case where a regular file could get replaced by a
-                ;; directory, which is a bad idea.
-                (lofat-directory-file-p file))
-            (mv fat32-in-memory *enotdir*)
-          (b*
-              ((file-length (length (lofat-file->contents file)))
-               (indices (stobj-find-n-free-clusters fat32-in-memory 1))
-               ((when (< (len indices) 1))
-                (mv fat32-in-memory *enospc*))
-               (first-cluster (nth 0 indices))
-               ((mv fat32-in-memory & & &)
-                (if
-                    (equal (length (lofat-file->contents file)) 0)
-                    (mv fat32-in-memory dir-ent nil nil)
-                  (place-contents fat32-in-memory
-                                  (lofat-file->dir-ent file)
-                                  (lofat-file->contents file)
-                                  file-length first-cluster)))
-               (dir-ent-list
-                (place-dir-ent dir-ent-list
-                               (lofat-file->dir-ent file))))
-            (update-dir-contents
-             fat32-in-memory rootclus
-             (nats=>string (flatten dir-ent-list))))))
-       ;; This case should never arise - we should never legitimately find a
-       ;; directory entry with a cluster index outside the allowable range.
-       ((unless
+       ;; If it's not there, it's a new file.
+       (dir-ent (if (equal error-code 0)
+                    dir-ent
+                  (dir-ent-set-filename
+                   (dir-ent-fix nil)
+                   (dir-ent-filename (m1-file->dir-ent file)))))
+       ;; ENOTDIR - can't act on anything that supposedly exists inside a
+       ;; regular file.
+       ((when (and (consp (cdr pathname)) (not (dir-ent-directory-p dir-ent))))
+        (mv fat32-in-memory *enotdir*))
+       (first-cluster (dir-ent-first-cluster dir-ent))
+       ((when
             (and
-             (< (dir-ent-first-cluster (lofat-file->dir-ent file))
-                (+ *ms-first-data-cluster*
-                   (count-of-clusters fat32-in-memory)))
-             (>= (dir-ent-first-cluster (lofat-file->dir-ent file))
-                 *ms-first-data-cluster*)))
-        (mv fat32-in-memory *eio*)))
-    (lofat-place-file
+             (or (< first-cluster *ms-first-data-cluster*)
+                 (<= (+ *ms-first-data-cluster*
+                        (count-of-clusters fat32-in-memory))
+                     first-cluster))
+             (consp (cdr pathname))))
+        (mv fat32-in-memory *eio*))
+       ((when (consp (cdr pathname)))
+        ;; Recursion
+        (lofat-place-file fat32-in-memory dir-ent (cdr pathname) file))
+       ;; After these conditionals, the only remaining possibility is that
+       ;; (cdr pathname) is an atom, which means we need to place a regular
+       ;; file or an empty directory, which we have hopefully ensured in the
+       ;; guard or something.
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory error-code))
+       (length (if (dir-ent-directory-p dir-ent)
+                   *ms-max-dir-size*
+                 (dir-ent-file-size dir-ent)))
+       ((mv fat32-in-memory &)
+        (if
+            (or (< first-cluster *ms-first-data-cluster*)
+                (<= (+ *ms-first-data-cluster*
+                       (count-of-clusters fat32-in-memory))
+                    first-cluster))
+            (mv fat32-in-memory 0)
+          (clear-clusterchain
+           fat32-in-memory
+           first-cluster
+           length)))
+       (dir-ent (if (and (lofat-regular-file-p file)
+                         (equal (lofat-file->contents file) ""))
+                    (dir-ent-set-first-cluster-file-size
+                     dir-ent 0 0)
+                  dir-ent))
+       ((when (and (lofat-regular-file-p file)
+                   (equal (lofat-file->contents file) "")))
+        (update-dir-contents
+         fat32-in-memory
+         (dir-ent-first-cluster root-dir-ent)
+         (nats=>string (place-dir-ent (string=>nats dir-contents) dir-ent))))
+       (indices (stobj-find-n-free-clusters fat32-in-memory 1))
+       ((when (< (len indices) 1))
+        (mv fat32-in-memory *enospc*))
+       (contents
+        (if (lofat-regular-file-p file)
+            (lofat-file->contents file)
+          (make-dir-ent-list (lofat-file->contents file))))
+       (file-length (length contents))
+       ((mv fat32-in-memory dir-ent error-code &)
+        (place-contents
+         fat32-in-memory
+         dir-ent
+         contents
+         file-length
+         (nth 0 indices)))
+       ((unless (zp error-code)) (mv fat32-in-memory error-code)))
+    (update-dir-contents
      fat32-in-memory
-     (dir-ent-first-cluster (lofat-file->dir-ent file))
-     (cdr pathname)
-     file)))
+     (dir-ent-first-cluster root-dir-ent)
+     (nats=>string (place-dir-ent (string=>nats dir-contents) dir-ent)))))
 
 (defthm
   count-of-clusters-of-lofat-place-file
