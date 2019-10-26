@@ -3029,16 +3029,13 @@ Some (rather awful) testing forms are
         (mv fat32-in-memory *enotdir*))
        (first-cluster (dir-ent-first-cluster dir-ent))
        ((when
-            (or (< first-cluster *ms-first-data-cluster*)
-                (<= (+ *ms-first-data-cluster*
-                       (count-of-clusters fat32-in-memory))
-                    first-cluster)))
-        (if
-            (consp (cdr pathname))
-            (mv fat32-in-memory *eio*)
-          (update-dir-contents fat32-in-memory
-                               (dir-ent-first-cluster root-dir-ent)
-                               (nats=>string (clear-dir-ent (string=>nats dir-contents) name)))))
+            (and
+             (or (< first-cluster *ms-first-data-cluster*)
+                 (<= (+ *ms-first-data-cluster*
+                        (count-of-clusters fat32-in-memory))
+                     first-cluster))
+             (consp (cdr pathname))))
+            (mv fat32-in-memory *eio*))
        ((when (consp (cdr pathname)))
         ;; Recursion
         (lofat-remove-file
