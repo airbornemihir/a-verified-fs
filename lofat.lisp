@@ -613,8 +613,7 @@ Some (rather awful) testing forms are
          ((:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
           (:definition free-index-listp)
           (:rewrite nth-of-effective-fat)
-          (:definition no-duplicatesp-equal)
-          (:definition member-equal)))))
+          (:definition no-duplicatesp-equal)))))
   :rule-classes
   ((:rewrite
     :corollary
@@ -2659,90 +2658,6 @@ Some (rather awful) testing forms are
       1)))))
 
 (defthm
-  lofat-place-file-guard-lemma-5
-  (implies
-   (and
-    (<
-     (dir-ent-first-cluster
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth
-          0
-          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname))))
-     (+ 2 (count-of-clusters fat32-in-memory)))
-    (<=
-     1
-     (count-free-clusters
-      (set-indices-in-fa-table
-       (effective-fat fat32-in-memory)
-       (mv-nth
-        0
-        (dir-ent-clusterchain
-         fat32-in-memory
-         (mv-nth
-          0
-          (find-dir-ent
-           (make-dir-ent-list
-            (mv-nth
-             0
-             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))))
-       (make-list-ac
-        (len
-         (mv-nth
-          0
-          (dir-ent-clusterchain
-           fat32-in-memory
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname))))))
-        0 nil)))))
-   (<
-    (nth
-     0
-     (find-n-free-clusters
-      (set-indices-in-fa-table
-       (effective-fat fat32-in-memory)
-       (mv-nth
-        0
-        (dir-ent-clusterchain
-         fat32-in-memory
-         (mv-nth
-          0
-          (find-dir-ent
-           (make-dir-ent-list
-            (mv-nth
-             0
-             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))))
-       (make-list-ac
-        (len
-         (mv-nth
-          0
-          (dir-ent-clusterchain
-           fat32-in-memory
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname))))))
-        0 nil))
-      1))
-    (+ 2
-       (count-of-clusters fat32-in-memory)))))
-
-(defthm
   lofat-place-file-guard-lemma-6
   (implies
    (and (dir-ent-p dir-ent)
@@ -2878,7 +2793,6 @@ Some (rather awful) testing forms are
             ((:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
              (:rewrite nth-of-effective-fat)
              (:definition assoc-equal)
-             (:definition member-equal)
              (:definition hifat-file-alist-fix)))))
      :rule-classes :linear))
 
@@ -2980,7 +2894,6 @@ Some (rather awful) testing forms are
             ((:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
              (:rewrite nth-of-effective-fat)
              (:definition assoc-equal)
-             (:definition member-equal)
              (:definition hifat-file-alist-fix)))))))
 
   (defthm
@@ -3284,8 +3197,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper clear-clusterchain
                             lofat-to-hifat-helper-of-stobj-set-indices-in-fa-table)
      ((:rewrite nth-of-effective-fat)
-      (:rewrite member-of-a-nat-list)
-      (:definition member-equal))))))
+      (:rewrite member-of-a-nat-list))))))
 
 ;; We're going to have to add a weird stipulation here about the length of a
 ;; directory file's contents being more than 0 (which is true, because dot and
@@ -3910,8 +3822,7 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory (e/d (lofat-to-hifat-helper not-intersectp-list)
-                    ((:rewrite nth-of-effective-fat)
-                     (:definition member-equal)))
+                    ((:rewrite nth-of-effective-fat)))
     :expand ((:free (x) (intersectp-equal nil x)))))
   :rule-classes
   (:rewrite
@@ -4426,7 +4337,6 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper not-intersectp-list)
      ((:rewrite nth-of-effective-fat)
       (:rewrite integerp-of-car-when-integer-listp)
-      (:definition member-equal)
       (:definition integer-listp)
       (:definition len)))
     :induct t))
@@ -5587,8 +5497,7 @@ Some (rather awful) testing forms are
      (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4
                             not-intersectp-list)
      ((:rewrite nth-of-effective-fat)
-      (:definition assoc-equal)
-      (:definition member-equal)))
+      (:definition assoc-equal)))
     :induct (lofat-to-hifat-helper fat32-in-memory
                                    dir-ent-list entry-limit))))
 
@@ -5890,8 +5799,7 @@ Some (rather awful) testing forms are
                                                  dir-ent-list entry-limit)
            :in-theory (e/d (lofat-to-hifat-helper)
                            (member-intersectp-is-commutative
-                            (:rewrite nth-of-effective-fat)
-                            (:definition member-equal)))))
+                            (:rewrite nth-of-effective-fat)))))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -6698,7 +6606,6 @@ Some (rather awful) testing forms are
       (:rewrite nth-of-effective-fat)
       (:rewrite
        dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-6)
-      (:definition member-equal)
       (:rewrite take-of-len-free)))
     :do-not-induct t
     :induct (mv (mv-nth 0
@@ -6931,8 +6838,7 @@ Some (rather awful) testing forms are
       not-intersectp-list)
      ((:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
       (:definition free-index-listp)
-      (:rewrite nth-of-effective-fat)
-      (:definition member-equal)))
+      (:rewrite nth-of-effective-fat)))
     :induct t
     :expand (:free (y) (intersectp-equal nil y)))))
 
@@ -12387,7 +12293,6 @@ Some (rather awful) testing forms are
       (e/d (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4
                                   not-intersectp-list)
            (nth-of-effective-fat
-            (:definition member-equal)
             (:linear lofat-find-file-correctness-1-lemma-11)
             (:rewrite
              lofat-to-hifat-helper-of-update-dir-contents)))
@@ -12700,7 +12605,6 @@ Some (rather awful) testing forms are
                               lofat-remove-file-correctness-1-lemma-38)
        (lofat-remove-file
         nth-of-effective-fat
-        (:definition member-equal)
         (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
         (:definition no-duplicatesp-equal)
         (:definition hifat-file-alist-fix)
