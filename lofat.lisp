@@ -14486,6 +14486,71 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable hifat-place-file))))
 
 (defthm
+  hifat-cluster-count-of-put-assoc
+  (implies
+   (m1-file-alist-p fs)
+   (equal (hifat-cluster-count (put-assoc-equal name file fs)
+                               cluster-size)
+          (b* ((new-contents (m1-file->contents file))
+               ((when (and (atom (assoc-equal name fs))
+                           (m1-regular-file-p file)))
+                (+ (hifat-cluster-count fs cluster-size)
+                   (len (make-clusters new-contents cluster-size))))
+               ((when (atom (assoc-equal name fs)))
+                (+ (hifat-cluster-count fs cluster-size)
+                   (+ (hifat-cluster-count new-contents cluster-size)
+                      (nfix (floor (+ (* 32 (+ 2 (len new-contents)))
+                                      cluster-size -1)
+                                   cluster-size)))))
+               (old-contents (m1-file->contents (cdr (assoc-equal name fs))))
+               ((when (and (m1-directory-file-p (cdr (assoc-equal name fs)))
+                           (m1-regular-file-p file)))
+                (+ (hifat-cluster-count fs cluster-size)
+                   (len (make-clusters new-contents cluster-size))
+                   (- (hifat-cluster-count old-contents cluster-size))
+                   (- (nfix (floor (+ (* 32 (+ 2 (len old-contents)))
+                                      cluster-size -1)
+                                   cluster-size)))))
+               ((when (m1-directory-file-p (cdr (assoc-equal name fs))))
+                (+ (hifat-cluster-count fs cluster-size)
+                   (hifat-cluster-count new-contents cluster-size)
+                   (nfix (floor (+ (* 32 (+ 2 (len new-contents)))
+                                   cluster-size -1)
+                                cluster-size))
+                   (- (hifat-cluster-count old-contents cluster-size))
+                   (- (nfix (floor (+ (* 32 (+ 2 (len old-contents)))
+                                      cluster-size -1)
+                                   cluster-size)))))
+               ((when (m1-regular-file-p file))
+                (+ (hifat-cluster-count fs cluster-size)
+                   (len (make-clusters new-contents cluster-size))
+                   (- (len (make-clusters old-contents cluster-size))))))
+            (+ (hifat-cluster-count fs cluster-size)
+               (hifat-cluster-count new-contents cluster-size)
+               (nfix (floor (+ (* 32 (+ 2 (len new-contents)))
+                               cluster-size -1)
+                            cluster-size))
+               (- (len (make-clusters old-contents cluster-size)))))))
+  :hints (("goal" :in-theory (enable hifat-cluster-count)
+           :induct (put-assoc-equal name file fs))))
+
+(defthm lofat-place-file-correctness-1-lemma-3
+  (implies
+   (and (m1-file-alist-p fs)
+        (hifat-no-dups-p fs)
+        (fat32-filename-list-p pathname)
+        (m1-file-p file))
+   (equal (hifat-cluster-count
+           (mv-nth 0 (HIFAT-PLACE-FILE FS PATHNAME FILE))
+           cluster-size)
+          (cond
+           ((not (zp (mv-nth 1 (HIFAT-PLACE-FILE FS PATHNAME FILE))))
+            (hifat-cluster-count (hifat-file-alist-fix FS) cluster-size))
+           ((zp (mv-nth 1 (HIFAT-find-FILE FS PATHNAME))) x)
+           (t y))))
+  :hints (("Goal" :in-theory (enable HIFAT-PLACE-FILE)) ))
+
+(defthm
   lofat-place-file-correctness-1-lemma-1
   (b*
       (((mv fs &)
