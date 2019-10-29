@@ -9210,7 +9210,7 @@
 ;; any directory.)  As a result, it's possible for a lofat instance to
 ;; exist which completely fills up the available clusters on the disk,
 ;; but which leaves out at least one dot or dotdot entry, with the
-;; result that attempting to remake the stobj after coverting to hifat
+;; result that attempting to remake the stobj after converting to hifat
 ;; would cause the directory with the missing dot/dotdot entry to cross
 ;; a cluster boundary and therefore occupy more space than available in
 ;; the stobj. This scenario wouldn't even need a directory with 65535 or
