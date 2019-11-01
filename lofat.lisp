@@ -14574,8 +14574,7 @@ Some (rather awful) testing forms are
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top"
-                       :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthmd painful-debugging-lemma-17
     (implies (and (integerp i) (not (zp j)))
@@ -15180,6 +15179,123 @@ Some (rather awful) testing forms are
             (pathname (fat32-filename-list-fix pathname))
             (file (m1-file-fix file)))))))
 
+(defthm lofat-place-file-correctness-1-lemma-5
+  (implies (lofat-regular-file-p file)
+           (> 4294967296
+              (len (explode (lofat-file->contents file)))))
+  :hints (("goal" :in-theory (enable lofat-regular-file-p
+                                     lofat-file->contents)))
+  :rule-classes :linear)
+
+(defthm
+  lofat-place-file-correctness-1-lemma-6
+  (implies
+   (and
+    (equal
+     (mv-nth
+      1
+      (hifat-find-file
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth
+           0
+           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))
+       pathname))
+     0)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory
+       (make-dir-ent-list
+        (mv-nth 0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+       entry-limit))
+     0)
+    (fat32-filename-list-p pathname))
+   (equal
+    (mv-nth
+     1
+     (find-dir-ent
+      (make-dir-ent-list
+       (mv-nth 0
+               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+      (car pathname)))
+    0))
+  :hints
+  (("goal"
+    :expand
+    (hifat-find-file
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       fat32-in-memory
+       (make-dir-ent-list
+        (mv-nth 0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+       entry-limit))
+     pathname))))
+
+(defthm
+  lofat-place-file-correctness-1-lemma-7
+  (implies
+   (and
+    (equal
+     (mv-nth
+      1
+      (hifat-place-file
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth
+           0
+           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))
+       pathname
+       (m1-file dir-ent (lofat-file->contents file))))
+     0)
+    (equal
+     (mv-nth
+      3
+      (lofat-to-hifat-helper
+       fat32-in-memory
+       (make-dir-ent-list
+        (mv-nth 0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+       entry-limit))
+     0)
+    (fat32-filename-list-p pathname)
+    (< 1 (+ 1 (len (cdr pathname)))))
+   (equal
+    (mv-nth
+     1
+     (find-dir-ent
+      (make-dir-ent-list
+       (mv-nth 0
+               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+      (car pathname)))
+    0))
+  :hints
+  (("goal"
+    :expand
+    (hifat-place-file
+     (mv-nth
+      0
+      (lofat-to-hifat-helper
+       fat32-in-memory
+       (make-dir-ent-list
+        (mv-nth 0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+       entry-limit))
+     pathname
+     (m1-file dir-ent (lofat-file->contents file))))))
+
 (defthm
   lofat-place-file-correctness-1-lemma-1
   (b*
@@ -15229,6 +15345,7 @@ Some (rather awful) testing forms are
           (count-of-clusters fat32-in-memory))
       ;; This one should go, eventually...
       (lofat-regular-file-p file)
+      (fat32-filename-p (dir-ent-filename (lofat-file->dir-ent$inline file)))
       (non-free-index-listp x (effective-fat fat32-in-memory))
       (not-intersectp-list
        x
@@ -15289,7 +15406,7 @@ Some (rather awful) testing forms are
     :induct (lofat-place-file fat32-in-memory root-dir-ent pathname file)
     :expand
     (lofat-place-file fat32-in-memory root-dir-ent pathname file)
-    :in-theory (enable hifat-remove-file
+    :in-theory (enable hifat-place-file
                        (:rewrite hifat-to-lofat-inversion-lemma-17)
                        (:rewrite lofat-to-hifat-inversion-lemma-4))))
   :rule-classes
