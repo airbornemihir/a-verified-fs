@@ -14158,29 +14158,6 @@ Some (rather awful) testing forms are
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
            (fat32-filename-fix (car pathname)))))
-        (and
-         (>=
-          (dir-ent-first-cluster
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car pathname)))))
-          2)
-         (>
-          (+ 2 (count-of-clusters fat32-in-memory))
-          (dir-ent-first-cluster
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car pathname)))))))
         (consp (cdr pathname)))
        (induction-scheme
         entry-limit
