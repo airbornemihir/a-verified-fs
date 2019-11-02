@@ -2318,7 +2318,7 @@ Some (rather awful) testing forms are
         (mv fat32-in-memory *eio*))
        ((when (consp (cdr pathname)))
         ;; Recursion
-        (lofat-place-file fat32-in-memory root-dir-ent (cdr pathname) file))
+        (lofat-place-file fat32-in-memory dir-ent (cdr pathname) file))
        ;; After these conditionals, the only remaining possibility is that
        ;; (cdr pathname) is an atom, which means we need to place a regular
        ;; file or an empty directory, which we have hopefully ensured in the
