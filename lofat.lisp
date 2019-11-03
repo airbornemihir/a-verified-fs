@@ -4111,6 +4111,27 @@ Some (rather awful) testing forms are
          (nth-of-effective-fat (:definition no-duplicatesp-equal))))))
 
 (defthm
+  dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-12
+  (implies
+   (equal (mv-nth 1
+                  (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
+          0)
+   (and (<= *ms-first-data-cluster*
+            (dir-ent-first-cluster dir-ent))
+        (< (dir-ent-first-cluster dir-ent)
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory)))))
+  :hints
+  (("goal" :in-theory (enable dir-ent-clusterchain-contents)
+    :expand ((get-clusterchain-contents fat32-in-memory
+                                        (dir-ent-first-cluster dir-ent)
+                                        (dir-ent-file-size dir-ent))
+             (get-clusterchain-contents fat32-in-memory
+                                        (dir-ent-first-cluster dir-ent)
+                                        2097152))))
+  :rule-classes :linear)
+
+(defthm
   dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint
   (implies
    (and
@@ -4120,8 +4141,6 @@ Some (rather awful) testing forms are
     (< (dir-ent-first-cluster root-dir-ent)
        (+ *ms-first-data-cluster*
           (count-of-clusters fat32-in-memory)))
-    (<= *ms-first-data-cluster*
-        (dir-ent-first-cluster dir-ent))
     (dir-ent-p root-dir-ent)
     (dir-ent-directory-p root-dir-ent)
     (dir-ent-p dir-ent)
@@ -15883,16 +15902,6 @@ Some (rather awful) testing forms are
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (<= *ms-first-data-cluster*
-        (dir-ent-first-cluster root-dir-ent))
-    (< (dir-ent-first-cluster root-dir-ent)
-       (+ *ms-first-data-cluster*
-          (count-of-clusters fat32-in-memory)))
-    (<= *ms-first-data-cluster*
-        (dir-ent-first-cluster dir-ent))
-    (< (dir-ent-first-cluster dir-ent)
-       (+ *ms-first-data-cluster*
-          (count-of-clusters fat32-in-memory)))
     (dir-ent-p root-dir-ent)
     (dir-ent-directory-p root-dir-ent)
     (dir-ent-p dir-ent)
