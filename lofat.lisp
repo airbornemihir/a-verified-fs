@@ -14066,6 +14066,67 @@ Some (rather awful) testing forms are
      lofat-remove-file-correctness-1-lemma-1
      (x nil)))))
 
+(defund
+  insert-dir-ent (dir-contents dir-ent)
+  (declare
+   (xargs :measure (len dir-contents)
+          :guard (and (dir-ent-p dir-ent)
+                      (unsigned-byte-listp 8 dir-contents))
+          :guard-hints (("goal" :in-theory (enable dir-ent-p)))
+          :guard-debug t))
+  (b*
+      (((when (< (len dir-contents)
+                 *ms-dir-ent-length*))
+        dir-contents)
+       (head-dir-ent (take *ms-dir-ent-length* dir-contents))
+       ((when (equal (char (dir-ent-filename dir-ent) 0)
+                     (code-char 0)))
+        dir-contents)
+       ((when (equal (dir-ent-filename head-dir-ent)
+                     (dir-ent-filename dir-ent)))
+        (append
+         (mbe :logic (dir-ent-fix dir-ent) :exec dir-ent)
+         (nthcdr *ms-dir-ent-length* dir-contents))))
+    (append
+     head-dir-ent
+     (insert-dir-ent (nthcdr *ms-dir-ent-length* dir-contents)
+                     dir-ent))))
+
+(defthm
+  unsigned-byte-listp-of-insert-dir-ent
+  (implies
+   (unsigned-byte-listp 8 dir-contents)
+   (unsigned-byte-listp 8
+                        (insert-dir-ent dir-contents dir-ent)))
+  :hints (("goal" :in-theory (enable insert-dir-ent))))
+
+(defthm
+  place-dir-ent-of-dir-ent-fix
+  (equal (place-dir-ent dir-ent-list (dir-ent-fix dir-ent))
+         (place-dir-ent dir-ent-list dir-ent))
+  :hints (("goal" :in-theory (enable place-dir-ent))))
+
+(defcong dir-ent-equiv equal
+  (place-dir-ent dir-ent-list dir-ent)
+  2)
+
+(defthm
+  make-dir-ent-list-of-insert-dir-ent
+  (implies
+   (and (not (EQUAL (NTH 0 (DIR-ENT-FIX DIR-ENT)) 0))
+        (not (USELESS-DIR-ENT-P (DIR-ENT-FIX DIR-ENT))))
+   (equal
+    (make-dir-ent-list (nats=>string (insert-dir-ent (string=>nats dir-contents)
+                                                     dir-ent)))
+    (place-dir-ent (make-dir-ent-list dir-contents)
+                   dir-ent)))
+  :hints (("goal" :in-theory (enable make-dir-ent-list
+                                     insert-dir-ent
+                                     string=>nats nats=>string)
+           :induct (make-dir-ent-list dir-contents)
+           :expand (insert-dir-ent (chars=>nats (explode dir-contents))
+                                   dir-ent))))
+
 (defun
     lofat-place-file
     (fat32-in-memory root-dir-ent pathname file)
@@ -14146,6 +14207,11 @@ Some (rather awful) testing forms are
        ((when (zp file-length)) (update-dir-contents
                                  fat32-in-memory
                                  (dir-ent-first-cluster root-dir-ent)
+                                 ;; This is problematic, because when we
+                                 ;; created dir-ent-list by means of
+                                 ;; make-dir-ent-list, we erased the dot and
+                                 ;; dotdot entries, which do need to go back
+                                 ;; into the contents of the directory.
                                  (nats=>string
                                   (flatten
                                    (place-dir-ent
@@ -17569,7 +17635,7 @@ Some (rather awful) testing forms are
      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident
+  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1
   (b*
       (((mv clusterchain-contents error-code) (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
        (new-dir-ent-list
@@ -17628,6 +17694,112 @@ Some (rather awful) testing forms are
               (make-dir-ent-list
                clusterchain-contents))))))
        *ms-max-dir-size*)
+      (equal (mv-nth 1
+                     (lofat-place-file fat32-in-memory dir-ent pathname file))
+             0)
+      (atom (cdr pathname))
+      ;; This assumption makes our theorem less general, but I don't see it
+      ;; being proved otherwise.
+      (>= (count-free-clusters (effective-fat fat32-in-memory))
+          1))
+     (equal
+      (dir-ent-clusterchain-contents
+       (mv-nth 0
+               (lofat-place-file fat32-in-memory dir-ent pathname file))
+       dir-ent)
+      (mv
+       (implode
+        (append
+         (nats=>chars
+          (flatten new-dir-ent-list))
+         (make-list-ac
+          (+
+           (-
+            (* *ms-dir-ent-length*
+               (make-dir-ent-list
+                clusterchain-contents)))
+           (*
+            (cluster-size fat32-in-memory)
+            (len
+             (make-clusters
+              (nats=>string
+               (flatten new-dir-ent-list))
+              (cluster-size fat32-in-memory)))))
+          (code-char 0)
+          nil)))
+       0))))
+  :hints (("Goal" :induct
+           (LOFAT-PLACE-FILE FAT32-IN-MEMORY DIR-ENT PATHNAME FILE)
+           :in-theory (e/d (UPDATE-DIR-CONTENTS-CORRECTNESS-1) (
+                       ;; These rules are disabled because it causes the
+                       ;; dir-ent-clusterchain/dir-ent-clusterchain-contents
+                       ;; abstraction to be broken.
+                       clear-clusterchain-correctness-1
+                       effective-fat-of-clear-clusterchain))) ))
+
+(defthm
+  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-2
+  (b*
+      (((mv clusterchain-contents error-code) (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
+       (new-dir-ent-list
+        (place-dir-ent
+         (make-dir-ent-list
+          clusterchain-contents)
+         (dir-ent-set-first-cluster-file-size
+          (dir-ent-set-first-cluster-file-size
+           (mv-nth
+            0
+            (find-dir-ent
+             (make-dir-ent-list
+              clusterchain-contents)
+             (car pathname)))
+           (nth 0
+                (find-n-free-clusters (effective-fat fat32-in-memory)
+                                      1))
+           (len (explode (lofat-file->contents file))))
+          0 0))))
+    (implies
+     (and
+      (lofat-fs-p fat32-in-memory)
+      (dir-ent-p dir-ent)
+      (dir-ent-directory-p dir-ent)
+      (>= (dir-ent-first-cluster dir-ent)
+          *ms-first-data-cluster*)
+      (< (dir-ent-first-cluster dir-ent)
+         (+ *ms-first-data-cluster*
+            (count-of-clusters fat32-in-memory)))
+      (fat32-filename-list-p pathname)
+      (equal error-code 0)
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          clusterchain-contents)
+         entry-limit))
+       0)
+      (not-intersectp-list
+       (mv-nth 0 (dir-ent-clusterchain fat32-in-memory dir-ent))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          clusterchain-contents)
+         entry-limit)))
+      (<=
+       (+ *ms-dir-ent-length*
+          (len
+           (explode
+            (nats=>string
+             (flatten
+              (make-dir-ent-list
+               clusterchain-contents))))))
+       *ms-max-dir-size*)
+      (equal (mv-nth 1
+                     (lofat-place-file fat32-in-memory dir-ent pathname file))
+             0)
       ;; This assumption makes our theorem less general, but I don't see it
       ;; being proved otherwise.
       (>= (count-free-clusters (effective-fat fat32-in-memory))
@@ -17638,12 +17810,7 @@ Some (rather awful) testing forms are
                (lofat-place-file fat32-in-memory dir-ent pathname file))
        dir-ent)
       (if
-          (or
-           (not
-            (equal (mv-nth 1
-                           (lofat-place-file fat32-in-memory dir-ent pathname file))
-                   0))
-           (consp (cdr pathname)))
+          (consp (cdr pathname))
           (dir-ent-clusterchain-contents fat32-in-memory dir-ent)
         (mv
          (implode
