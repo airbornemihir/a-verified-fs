@@ -14159,12 +14159,25 @@ Some (rather awful) testing forms are
          (insert-dir-ent dir-contents dir-ent))
   :hints (("goal" :in-theory (enable insert-dir-ent))))
 
+(defcong
+  dir-ent-equiv equal
+  (insert-dir-ent dir-contents dir-ent)
+  2
+  :hints
+  (("goal"
+    :in-theory
+    (disable (:rewrite insert-dir-ent-of-dir-ent-fix))
+    :use ((:rewrite insert-dir-ent-of-dir-ent-fix)
+          (:instance (:rewrite insert-dir-ent-of-dir-ent-fix)
+                     (dir-ent dir-ent-equiv))))))
+
+;; Hypotheses are minimal
 (defthm
   make-dir-ent-list-of-insert-dir-ent
   (implies
-   (and (not (EQUAL (NTH 0 (DIR-ENT-FIX DIR-ENT)) 0))
-        (not (USELESS-DIR-ENT-P (DIR-ENT-FIX DIR-ENT)))
-        (STRINGP DIR-CONTENTS))
+   (and (not (equal (nth 0 (dir-ent-fix dir-ent)) 0))
+        (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
+        (stringp dir-contents))
    (equal
     (make-dir-ent-list (nats=>string (insert-dir-ent (string=>nats dir-contents)
                                                      dir-ent)))
