@@ -14075,17 +14075,18 @@ Some (rather awful) testing forms are
           :guard-hints (("goal" :in-theory (enable dir-ent-p)))
           :guard-debug t))
   (b*
-      (((when (< (len dir-contents)
+      ((dir-ent (mbe :logic (dir-ent-fix dir-ent) :exec dir-ent))
+       ((when (< (len dir-contents)
                  *ms-dir-ent-length*))
-        dir-contents)
+        (append dir-ent dir-contents))
        (head-dir-ent (take *ms-dir-ent-length* dir-contents))
-       ((when (equal (char (dir-ent-filename dir-ent) 0)
+       ((when (equal (char (dir-ent-filename head-dir-ent) 0)
                      (code-char 0)))
-        dir-contents)
+        (append dir-ent dir-contents))
        ((when (equal (dir-ent-filename head-dir-ent)
                      (dir-ent-filename dir-ent)))
         (append
-         (mbe :logic (dir-ent-fix dir-ent) :exec dir-ent)
+         dir-ent
          (nthcdr *ms-dir-ent-length* dir-contents))))
     (append
      head-dir-ent
@@ -14111,10 +14112,59 @@ Some (rather awful) testing forms are
   2)
 
 (defthm
+  make-dir-ent-list-of-insert-dir-ent-lemma-1
+  (implies
+   (and (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
+        (equal (dir-ent-filename (take 32
+                                       (chars=>nats (explode dir-contents))))
+               (dir-ent-filename dir-ent)))
+   (not (useless-dir-ent-p (take 32
+                                 (chars=>nats (explode dir-contents))))))
+  :hints (("goal" :in-theory (enable useless-dir-ent-p))))
+
+;; Move later
+(defthm nats=>chars-of-take
+  (implies (<= (nfix n) (len nats))
+           (equal (nats=>chars (take n nats))
+                  (take n (nats=>chars nats))))
+  :hints (("goal" :in-theory (enable nats=>chars take))))
+
+(defthm
+  make-dir-ent-list-of-insert-dir-ent-lemma-2
+  (implies
+   (and (<= 32 (len (explode dir-contents)))
+        (equal (nth 0 (explode dir-contents))
+               #\ )
+        (< 0 (nth 0 (dir-ent-fix dir-ent)))
+        (equal (dir-ent-filename (take 32
+                                       (chars=>nats (explode dir-contents))))
+               (dir-ent-filename dir-ent)))
+   (useless-dir-ent-p (dir-ent-fix dir-ent)))
+  :hints
+  (("goal" :in-theory (e/d (useless-dir-ent-p dir-ent-filename
+                                              nats=>string len-when-dir-ent-p)
+                           ((:rewrite nth-of-take)))
+    :use ((:instance (:rewrite nth-of-take)
+                     (l (nats=>chars (dir-ent-fix dir-ent)))
+                     (n 11)
+                     (i 0))
+          (:instance (:rewrite nth-of-take)
+                     (l (explode dir-contents))
+                     (n 11)
+                     (i 0))))))
+
+;; Move later
+(defthm insert-dir-ent-of-dir-ent-fix
+  (equal (insert-dir-ent dir-contents (dir-ent-fix dir-ent))
+         (insert-dir-ent dir-contents dir-ent))
+  :hints (("goal" :in-theory (enable insert-dir-ent))))
+
+(defthm
   make-dir-ent-list-of-insert-dir-ent
   (implies
    (and (not (EQUAL (NTH 0 (DIR-ENT-FIX DIR-ENT)) 0))
-        (not (USELESS-DIR-ENT-P (DIR-ENT-FIX DIR-ENT))))
+        (not (USELESS-DIR-ENT-P (DIR-ENT-FIX DIR-ENT)))
+        (STRINGP DIR-CONTENTS))
    (equal
     (make-dir-ent-list (nats=>string (insert-dir-ent (string=>nats dir-contents)
                                                      dir-ent)))
