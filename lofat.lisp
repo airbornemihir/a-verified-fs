@@ -1570,35 +1570,6 @@ Some (rather awful) testing forms are
                (fat32-in-memory fat32-in-memory)
                (n i))))))
 
-;; Move later
-(defthm update-dir-contents-guard-lemma-1
-  (implies (and (< 0 b) (bounded-nat-listp l b))
-           (< (car (last l)) b))
-  :hints (("goal" :induct (bounded-nat-listp l b)))
-  :rule-classes :linear)
-
-(defthm
-  update-dir-contents-guard-lemma-2
-  (implies
-   (and (fat32-masked-entry-p masked-current-cluster)
-        (< masked-current-cluster (len fa-table)))
-   (<
-    (car (last (mv-nth 0
-                       (fat32-build-index-list fa-table masked-current-cluster
-                                               length cluster-size))))
-    (len fa-table)))
-  :hints
-  (("goal"
-    :in-theory (disable update-dir-contents-guard-lemma-1)
-    :use
-    (:instance
-     update-dir-contents-guard-lemma-1
-     (l (mv-nth 0
-                (fat32-build-index-list fa-table masked-current-cluster
-                                        length cluster-size)))
-     (b (len fa-table)))))
-  :rule-classes :linear)
-
 ;; This function calls place-contents with a meaningless value of dir-ent,
 ;; because we know that for a well-formed directory, the contents will be
 ;; non-empty and so there's no way we're going to be returned a dir-ent with
