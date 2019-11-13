@@ -14125,34 +14125,49 @@ Some (rather awful) testing forms are
                   (take n (nats=>chars nats))))
   :hints (("goal" :in-theory (enable nats=>chars take))))
 
+(defthm make-dir-ent-list-of-insert-dir-ent-lemma-4
+  (implies (< (nfix n) *ms-dir-ent-length*)
+           (natp (nth n (dir-ent-fix dir-ent))))
+  :hints (("goal" :in-theory (disable (:linear nth-when-dir-ent-p))
+           :use (:instance (:linear nth-when-dir-ent-p)
+                           (dir-ent (dir-ent-fix dir-ent)))))
+  :rule-classes :type-prescription)
+
 (defthm
   make-dir-ent-list-of-insert-dir-ent-lemma-2
   (implies
    (and (<= 32 (len (explode dir-contents)))
         (equal (nth 0 (explode dir-contents))
                (code-char 0))
-        (< 0 (nth 0 (dir-ent-fix dir-ent)))
-        (equal (dir-ent-filename (take 32
+        (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
+                    (code-char 0))))
+   (not (equal (dir-ent-filename (take 32
                                        (chars=>nats (explode dir-contents))))
-               (dir-ent-filename dir-ent)))
-   (useless-dir-ent-p (dir-ent-fix dir-ent)))
-  :hints
-  (("goal" :in-theory (e/d (useless-dir-ent-p dir-ent-filename
-                                              nats=>string len-when-dir-ent-p)
-                           ((:rewrite nth-of-take)))
-    :use ((:instance (:rewrite nth-of-take)
-                     (l (nats=>chars (dir-ent-fix dir-ent)))
-                     (n 11)
-                     (i 0))
-          (:instance (:rewrite nth-of-take)
-                     (l (explode dir-contents))
-                     (n 11)
-                     (i 0))))))
+               (dir-ent-filename dir-ent))))
+  :instructions
+  ((:bash
+    ("goal"
+     :in-theory (e/d (useless-dir-ent-p dir-ent-filename
+                                        nats=>string len-when-dir-ent-p)
+                     ((:rewrite nth-of-take)))
+     :use ((:instance (:rewrite nth-of-take)
+                      (l (nats=>chars (dir-ent-fix dir-ent)))
+                      (n 11)
+                      (i 0))
+           (:instance (:rewrite nth-of-take)
+                      (l (explode dir-contents))
+                      (n 11)
+                      (i 0)))))
+   (:claim (not (equal (nth 0
+                            (take 11 (nats=>chars (dir-ent-fix dir-ent))))
+                       (code-char 0))))
+   :bash))
 
 (defthm
   make-dir-ent-list-of-insert-dir-ent-lemma-3
   (implies
-   (and (not (equal (nth 0 (dir-ent-fix dir-ent)) 0))
+   (and (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
+                    (code-char 0)))
         (not (useless-dir-ent-p (dir-ent-fix dir-ent))))
    (equal (make-dir-ent-list (implode (nats=>chars (dir-ent-fix dir-ent))))
           (list (dir-ent-fix dir-ent))))
@@ -14170,7 +14185,8 @@ Some (rather awful) testing forms are
 (defthm
   make-dir-ent-list-of-insert-dir-ent
   (implies
-   (and (not (equal (nth 0 (dir-ent-fix dir-ent)) 0))
+   (and (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
+                    (code-char 0)))
         (not (useless-dir-ent-p (dir-ent-fix dir-ent))))
    (equal (make-dir-ent-list
            (nats=>string (insert-dir-ent (string=>nats dir-contents)
@@ -17726,6 +17742,23 @@ Some (rather awful) testing forms are
   (("goal" :in-theory (e/d (insert-dir-ent len-when-dir-ent-p
                                            make-dir-ent-list nats=>string))
     :induct (insert-dir-ent dir-contents dir-ent))))
+
+;; Move later
+(defthm
+  useless-dir-ent-p-of-find-dir-ent
+  (implies
+   (useful-dir-ent-list-p dir-ent-list)
+   (not (useless-dir-ent-p (mv-nth 0
+                                   (find-dir-ent dir-ent-list filename)))))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
+
+(defthm
+  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1-lemma-1
+  (implies
+   (useful-dir-ent-list-p dir-ent-list)
+   (equal (useless-dir-ent-p (mv-nth 0
+                                   (find-dir-ent dir-ent-list filename)))))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1
