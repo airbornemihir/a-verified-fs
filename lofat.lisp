@@ -947,6 +947,16 @@ Some (rather awful) testing forms are
                         (dir-ent-filename dir-ent))
           (mv dir-ent 0))))
 
+(defthm
+  place-dir-ent-of-dir-ent-fix
+  (equal (place-dir-ent dir-ent-list (dir-ent-fix dir-ent))
+         (place-dir-ent dir-ent-list dir-ent))
+  :hints (("goal" :in-theory (enable place-dir-ent))))
+
+(defcong dir-ent-equiv equal
+  (place-dir-ent dir-ent-list dir-ent)
+  2)
+
 (defund clear-clusterchain
   (fat32-in-memory masked-current-cluster length)
   (declare
@@ -12675,6 +12685,18 @@ Some (rather awful) testing forms are
                                      dir-ent-clusterchain-contents))))
 
 (defthm
+  lofat-remove-file-correctness-1-lemma-60
+  (implies
+   (and (dir-ent-p dir-ent)
+        (< (dir-ent-first-cluster dir-ent)
+           (len (effective-fat fat32-in-memory))))
+   (bounded-nat-listp (mv-nth '0
+                              (dir-ent-clusterchain fat32-in-memory dir-ent))
+                      (binary-+ '2
+                                (count-of-clusters fat32-in-memory))))
+  :hints (("goal" :in-theory (enable dir-ent-clusterchain))))
+
+(defthm
   lofat-remove-file-correctness-1-lemma-64
   (implies
    (and
@@ -13388,7 +13410,7 @@ Some (rather awful) testing forms are
          entry-limit))))))))
 
 (defthm
-  lofat-remove-file-correctness-1-lemma-60
+  lofat-remove-file-correctness-1-lemma-69
   (implies
    (and
     (consp (cddr pathname))
@@ -14072,15 +14094,11 @@ Some (rather awful) testing forms are
                         (insert-dir-ent dir-contents dir-ent)))
   :hints (("goal" :in-theory (enable insert-dir-ent))))
 
-(defthm
-  place-dir-ent-of-dir-ent-fix
-  (equal (place-dir-ent dir-ent-list (dir-ent-fix dir-ent))
-         (place-dir-ent dir-ent-list dir-ent))
-  :hints (("goal" :in-theory (enable place-dir-ent))))
-
-(defcong dir-ent-equiv equal
-  (place-dir-ent dir-ent-list dir-ent)
-  2)
+;; Move later
+(defthm insert-dir-ent-of-dir-ent-fix
+  (equal (insert-dir-ent dir-contents (dir-ent-fix dir-ent))
+         (insert-dir-ent dir-contents dir-ent))
+  :hints (("goal" :in-theory (enable insert-dir-ent))))
 
 (defthm
   make-dir-ent-list-of-insert-dir-ent-lemma-1
@@ -14123,12 +14141,6 @@ Some (rather awful) testing forms are
                      (l (explode dir-contents))
                      (n 11)
                      (i 0))))))
-
-;; Move later
-(defthm insert-dir-ent-of-dir-ent-fix
-  (equal (insert-dir-ent dir-contents (dir-ent-fix dir-ent))
-         (insert-dir-ent dir-contents dir-ent))
-  :hints (("goal" :in-theory (enable insert-dir-ent))))
 
 (defcong
   dir-ent-equiv equal
@@ -14256,10 +14268,11 @@ Some (rather awful) testing forms are
        ((when (zp file-length)) (update-dir-contents
                                  fat32-in-memory
                                  (dir-ent-first-cluster root-dir-ent)
-                                 (insert-dir-ent
-                                  dir-contents
-                                  (dir-ent-set-first-cluster-file-size
-                                   dir-ent 0 0))))
+                                 (nats=>string
+                                  (insert-dir-ent
+                                   (string=>nats dir-contents)
+                                   (dir-ent-set-first-cluster-file-size
+                                    dir-ent 0 0)))))
        (indices (stobj-find-n-free-clusters fat32-in-memory 1))
        ((when (< (len indices) 1))
         (mv fat32-in-memory *enospc*))
@@ -14274,10 +14287,11 @@ Some (rather awful) testing forms are
     (update-dir-contents
      fat32-in-memory
      (dir-ent-first-cluster root-dir-ent)
-     (insert-dir-ent
-      dir-contents
-      (dir-ent-set-first-cluster-file-size
-       dir-ent 0 0)))))
+     (nats=>string
+      (insert-dir-ent
+       (string=>nats dir-contents)
+       (dir-ent-set-first-cluster-file-size
+        dir-ent 0 0))))))
 
 (defthm
   count-of-clusters-of-lofat-place-file
@@ -14450,6 +14464,12 @@ Some (rather awful) testing forms are
        '1))
      '2))))
 
+(defthm stringp-of-insert-dir-ent
+  (implies (unsigned-byte-listp 8 dir-contents)
+           (unsigned-byte-listp 8
+                                (insert-dir-ent dir-contents dir-ent)))
+  :hints (("goal" :in-theory (enable insert-dir-ent))))
+
 (defthm
   lofat-fs-p-of-lofat-place-file
   (implies
@@ -14562,21 +14582,10 @@ Some (rather awful) testing forms are
         0 nil))
       1)))))
 
-(defthm
-  lofat-place-file-guard-lemma-6
-  (implies
-   (and (dir-ent-p dir-ent)
-        (< (dir-ent-first-cluster dir-ent)
-           (len (effective-fat fat32-in-memory))))
-   (bounded-nat-listp (mv-nth '0
-                              (dir-ent-clusterchain fat32-in-memory dir-ent))
-                      (binary-+ '2
-                                (count-of-clusters fat32-in-memory))))
-  :hints (("goal" :in-theory (enable dir-ent-clusterchain))))
-
 (verify-guards
   lofat-place-file
-  :hints (("goal" :in-theory (disable unsigned-byte-p))))
+  :hints (("goal" :in-theory (disable unsigned-byte-p)))
+  :guard-debug t)
 
 ;; Kinda general
 (defthm lofat-place-file-correctness-1-lemma-2
@@ -17187,6 +17196,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
                                   (logapp)))))
 
+;; Move later
 (encapsulate
   ()
 
