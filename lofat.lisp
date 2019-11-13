@@ -17703,7 +17703,8 @@ Some (rather awful) testing forms are
                (dir-ent-filename dir-ent))
         (unsigned-byte-listp 8 dir-contents)
         (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-        (not (equal (nth 0 (dir-ent-fix dir-ent)) 0))
+        (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
+                    (code-char 0)))
         (<= 0 (+ -32 (len dir-contents))))
    (equal
     (mv-nth
@@ -17727,17 +17728,17 @@ Some (rather awful) testing forms are
   (implies
    (and (unsigned-byte-listp 8 dir-contents)
         (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-        (not (equal (nth 0 (dir-ent-fix dir-ent))
-                    0)))
+        (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
+                    (code-char 0))))
    (equal
     (len (insert-dir-ent dir-contents dir-ent))
     (if
-        (zp (mv-nth 1
-                    (find-dir-ent (make-dir-ent-list (nats=>string dir-contents))
-                                  (dir-ent-filename dir-ent))))
-        (len dir-contents)
-      (+ *ms-dir-ent-length*
-         (len dir-contents)))))
+     (zp (mv-nth 1
+                 (find-dir-ent (make-dir-ent-list (nats=>string dir-contents))
+                               (dir-ent-filename dir-ent))))
+     (len dir-contents)
+     (+ *ms-dir-ent-length*
+        (len dir-contents)))))
   :hints
   (("goal" :in-theory (e/d (insert-dir-ent len-when-dir-ent-p
                                            make-dir-ent-list nats=>string))
@@ -17752,23 +17753,85 @@ Some (rather awful) testing forms are
                                    (find-dir-ent dir-ent-list filename)))))
   :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
 
+(make-event
+ `(defthm
+    dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1-lemma-1
+    (implies (and (equal (nth 0 (explode filename))
+                         (code-char 0))
+                  (useful-dir-ent-list-p dir-ent-list))
+             (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
+                    *enoent*))
+    :hints (("goal" :in-theory (enable useful-dir-ent-list-p)))
+    :rule-classes
+    (:rewrite
+     (:rewrite
+      :corollary
+      (implies (and (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
+                           0)
+                    (useful-dir-ent-list-p dir-ent-list))
+               (not (equal (nth 0 (explode filename))
+                           ,(code-char 0))))))))
+
+;; Move later - and disable any time it starts creating trouble.
+(defthmd implode-of-nats=>chars
+  (equal (implode (nats=>chars nats))
+         (nats=>string nats))
+  :hints (("goal" :in-theory (enable nats=>string))))
+
+;; The unsigned-byte-listp 8 hypothesis can go, maybe...
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1-lemma-1
+  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1-lemma-2
   (implies
-   (useful-dir-ent-list-p dir-ent-list)
-   (equal (useless-dir-ent-p (mv-nth 0
-                                   (find-dir-ent dir-ent-list filename)))))
-  :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
+   (and
+    (unsigned-byte-listp 8 dir-contents)
+    (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
+    (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
+                (code-char 0)))
+    (equal
+     (mv-nth 1
+             (find-dir-ent (make-dir-ent-list (nats=>string dir-contents))
+                           (dir-ent-filename dir-ent)))
+     0)
+    (not (zp cluster-size)))
+   (equal
+    (len (make-clusters (implode (nats=>chars (insert-dir-ent dir-contents dir-ent)))
+                        cluster-size))
+    (len (make-clusters (nats=>string dir-contents)
+                        cluster-size))))
+  :hints (("goal" :in-theory (enable len-of-make-clusters nats=>string)
+           :do-not-induct t))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and
+      (unsigned-byte-listp 8 dir-contents)
+      (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
+      (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
+                  (code-char 0)))
+      (equal
+       (mv-nth 1
+               (find-dir-ent (make-dir-ent-list (nats=>string dir-contents))
+                             (dir-ent-filename dir-ent)))
+       0)
+      (not (zp cluster-size)))
+     (equal
+      (len (make-clusters (nats=>string (insert-dir-ent dir-contents dir-ent))
+                          cluster-size))
+      (len (make-clusters (nats=>string dir-contents)
+                          cluster-size))))
+    :hints (("Goal" :in-theory (enable nats=>string)) ))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1
   (b*
       (((mv clusterchain-contents error-code) (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
-       (new-dir-ent-list
-        (place-dir-ent
-         (make-dir-ent-list
-          clusterchain-contents)
-         (dir-ent-set-first-cluster-file-size
+       (new-contents
+        (nats=>chars
+         (insert-dir-ent
+          (string=>nats
+           clusterchain-contents)
           (dir-ent-set-first-cluster-file-size
            (mv-nth
             0
@@ -17776,11 +17839,7 @@ Some (rather awful) testing forms are
              (make-dir-ent-list
               clusterchain-contents)
              (car pathname)))
-           (nth 0
-                (find-n-free-clusters (effective-fat fat32-in-memory)
-                                      1))
-           (len (explode (lofat-file->contents file))))
-          0 0))))
+           0 0)))))
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -17836,20 +17895,18 @@ Some (rather awful) testing forms are
       (mv
        (implode
         (append
-         (nats=>chars
-          (flatten new-dir-ent-list))
+         new-contents
          (make-list-ac
           (+
            (-
-            (* *ms-dir-ent-length*
-               (make-dir-ent-list
-                clusterchain-contents)))
+            (len
+             (implode
+              new-contents)))
            (*
             (cluster-size fat32-in-memory)
             (len
              (make-clusters
-              (nats=>string
-               (flatten new-dir-ent-list))
+              (implode new-contents)
               (cluster-size fat32-in-memory)))))
           (code-char 0)
           nil)))
