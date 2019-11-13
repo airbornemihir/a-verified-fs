@@ -14171,20 +14171,35 @@ Some (rather awful) testing forms are
           (:instance (:rewrite insert-dir-ent-of-dir-ent-fix)
                      (dir-ent dir-ent-equiv))))))
 
+(defthm
+  make-dir-ent-list-of-insert-dir-ent-lemma-3
+  (implies
+   (and (not (equal (nth 0 (dir-ent-fix dir-ent)) 0))
+        (not (useless-dir-ent-p (dir-ent-fix dir-ent))))
+   (equal (make-dir-ent-list (implode (nats=>chars (dir-ent-fix dir-ent))))
+          (list (dir-ent-fix dir-ent))))
+  :hints
+  (("goal"
+    :in-theory (enable make-dir-ent-list
+                       insert-dir-ent string=>nats
+                       nats=>string nthcdr-when->=-n-len-l
+                       len-when-dir-ent-p)
+    :do-not-induct t
+    :expand
+    (make-dir-ent-list (implode (nats=>chars (dir-ent-fix dir-ent)))))))
+
 ;; Hypotheses are minimal
 (defthm
   make-dir-ent-list-of-insert-dir-ent
   (implies
    (and (not (equal (nth 0 (dir-ent-fix dir-ent)) 0))
-        (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-        (stringp dir-contents))
-   (equal
-    (make-dir-ent-list (nats=>string (insert-dir-ent (string=>nats dir-contents)
-                                                     dir-ent)))
-    (place-dir-ent (make-dir-ent-list dir-contents)
-                   dir-ent)))
-  :hints (("goal" :in-theory (enable make-dir-ent-list
-                                     insert-dir-ent
+        (not (useless-dir-ent-p (dir-ent-fix dir-ent))))
+   (equal (make-dir-ent-list
+           (nats=>string (insert-dir-ent (string=>nats dir-contents)
+                                         dir-ent)))
+          (place-dir-ent (make-dir-ent-list dir-contents)
+                         dir-ent)))
+  :hints (("goal" :in-theory (enable make-dir-ent-list insert-dir-ent
                                      string=>nats nats=>string)
            :induct (make-dir-ent-list dir-contents)
            :expand (insert-dir-ent (chars=>nats (explode dir-contents))
@@ -14270,17 +14285,10 @@ Some (rather awful) testing forms are
        ((when (zp file-length)) (update-dir-contents
                                  fat32-in-memory
                                  (dir-ent-first-cluster root-dir-ent)
-                                 ;; This is problematic, because when we
-                                 ;; created dir-ent-list by means of
-                                 ;; make-dir-ent-list, we erased the dot and
-                                 ;; dotdot entries, which do need to go back
-                                 ;; into the contents of the directory.
-                                 (nats=>string
-                                  (flatten
-                                   (place-dir-ent
-                                    dir-ent-list
-                                    (dir-ent-set-first-cluster-file-size
-                                     dir-ent 0 0))))))
+                                 (insert-dir-ent
+                                  dir-contents
+                                  (dir-ent-set-first-cluster-file-size
+                                   dir-ent 0 0))))
        (indices (stobj-find-n-free-clusters fat32-in-memory 1))
        ((when (< (len indices) 1))
         (mv fat32-in-memory *enospc*))
@@ -14295,12 +14303,10 @@ Some (rather awful) testing forms are
     (update-dir-contents
      fat32-in-memory
      (dir-ent-first-cluster root-dir-ent)
-     (nats=>string
-      (flatten
-       (place-dir-ent
-        dir-ent-list
-        (dir-ent-set-first-cluster-file-size
-         dir-ent 0 0)))))))
+     (insert-dir-ent
+      dir-contents
+      (dir-ent-set-first-cluster-file-size
+       dir-ent 0 0)))))
 
 (defthm
   count-of-clusters-of-lofat-place-file
