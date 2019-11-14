@@ -14199,6 +14199,12 @@ Some (rather awful) testing forms are
            :expand (insert-dir-ent (chars=>nats (explode dir-contents))
                                    dir-ent))))
 
+(defthm stringp-of-insert-dir-ent
+  (implies (unsigned-byte-listp 8 dir-contents)
+           (unsigned-byte-listp 8
+                                (insert-dir-ent dir-contents dir-ent)))
+  :hints (("goal" :in-theory (enable insert-dir-ent))))
+
 (defun
     lofat-place-file
     (fat32-in-memory root-dir-ent pathname file)
@@ -14231,12 +14237,15 @@ Some (rather awful) testing forms are
         (make-dir-ent-list dir-contents))
        ((mv dir-ent error-code)
         (find-dir-ent dir-ent-list name))
-       ;; If it's not there, it's a new file.
+       ;; If it's not there, it's a new file. In either case, though, we
+       ;; shouldn't give it the name of the old file, that is, we shouldn't be
+       ;; inserting a directory entry with the name of the old file. We may be
+       ;; moving a file and changing its name in the process.
        (dir-ent (if (equal error-code 0)
                     dir-ent
                   (dir-ent-set-filename
                    (dir-ent-fix nil)
-                   (dir-ent-filename (lofat-file->dir-ent file)))))
+                   name)))
        ;; ENOTDIR - can't act on anything that supposedly exists inside a
        ;; regular file.
        ((when (and (consp (cdr pathname)) (not (dir-ent-directory-p dir-ent))))
@@ -14475,11 +14484,181 @@ Some (rather awful) testing forms are
        '1))
      '2))))
 
-(defthm stringp-of-insert-dir-ent
-  (implies (unsigned-byte-listp 8 dir-contents)
-           (unsigned-byte-listp 8
-                                (insert-dir-ent dir-contents dir-ent)))
-  :hints (("goal" :in-theory (enable insert-dir-ent))))
+(defthm
+  lofat-fs-p-of-lofat-place-file-lemma-5
+  (implies
+   (<=
+    1
+    (count-free-clusters
+     (set-indices-in-fa-table
+      (effective-fat fat32-in-memory)
+      (mv-nth
+       0
+       (dir-ent-clusterchain
+        fat32-in-memory
+        (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                              (fat32-filename-fix (car pathname)))))
+      (make-list-ac
+       (len
+        (mv-nth
+         0
+         (dir-ent-clusterchain
+          fat32-in-memory
+          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                (fat32-filename-fix (car pathname))))))
+       0 nil))))
+   (<=
+    *ms-first-data-cluster*
+    (nth
+     '0
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       (effective-fat fat32-in-memory)
+       (mv-nth
+        '0
+        (dir-ent-clusterchain
+         fat32-in-memory
+         (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                               (fat32-filename-fix (car pathname)))))
+       (make-list-ac
+        (len
+         (mv-nth
+          '0
+          (dir-ent-clusterchain
+           fat32-in-memory
+           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                 (fat32-filename-fix (car pathname))))))
+        '0
+        'nil))
+      '1))))
+  :hints
+  (("goal"
+    :in-theory (disable (:linear find-n-free-clusters-correctness-7))
+    :use
+    (:instance
+     (:linear find-n-free-clusters-correctness-7)
+     (n 1)
+     (fa-table
+      (set-indices-in-fa-table
+       (effective-fat fat32-in-memory)
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         fat32-in-memory
+         (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                               (fat32-filename-fix (car pathname)))))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (dir-ent-clusterchain
+           fat32-in-memory
+           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                 (fat32-filename-fix (car pathname))))))
+        0 nil)))
+     (m 0))))
+  :rule-classes :linear)
+
+(defthm
+  lofat-fs-p-of-lofat-place-file-lemma-6
+  (implies
+   (<=
+    1
+    (count-free-clusters
+     (set-indices-in-fa-table
+      (effective-fat fat32-in-memory)
+      (mv-nth
+       0
+       (fat32-build-index-list
+        (effective-fat fat32-in-memory)
+        (dir-ent-first-cluster
+         (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                               (fat32-filename-fix (car pathname))))
+        0 (cluster-size fat32-in-memory)))
+      (make-list-ac
+       (len
+        (mv-nth
+         0
+         (fat32-build-index-list
+          (effective-fat fat32-in-memory)
+          (dir-ent-first-cluster
+           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                 (fat32-filename-fix (car pathname))))
+          0 (cluster-size fat32-in-memory))))
+       0 nil))))
+   (<=
+    *ms-first-data-cluster*
+    (nth
+     '0
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       (effective-fat fat32-in-memory)
+       (mv-nth
+        '0
+        (fat32-build-index-list
+         (effective-fat fat32-in-memory)
+         (dir-ent-first-cluster
+          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                (fat32-filename-fix (car pathname))))
+         '0
+         (cluster-size fat32-in-memory)))
+       (make-list-ac
+        (len
+         (mv-nth
+          '0
+          (fat32-build-index-list
+           (effective-fat fat32-in-memory)
+           (dir-ent-first-cluster
+            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                  (fat32-filename-fix (car pathname))))
+           '0
+           (cluster-size fat32-in-memory))))
+        '0
+        'nil))
+      '1))))
+  :hints
+  (("goal"
+    :in-theory (enable (:linear find-n-free-clusters-correctness-7))
+    :use
+    (:instance
+     (:linear find-n-free-clusters-correctness-7)
+     (n 1)
+     (fa-table
+      (set-indices-in-fa-table
+       (effective-fat fat32-in-memory)
+       (mv-nth
+        0
+        (fat32-build-index-list
+         (effective-fat fat32-in-memory)
+         (dir-ent-first-cluster
+          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                (fat32-filename-fix (car pathname))))
+         0 (cluster-size fat32-in-memory)))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (fat32-build-index-list
+           (effective-fat fat32-in-memory)
+           (dir-ent-first-cluster
+            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                  (fat32-filename-fix (car pathname))))
+           0 (cluster-size fat32-in-memory))))
+        0 nil)))
+     (m 0))))
+  :rule-classes :linear)
 
 (defthm
   lofat-fs-p-of-lofat-place-file
@@ -14593,10 +14772,106 @@ Some (rather awful) testing forms are
         0 nil))
       1)))))
 
+(defthm
+  lofat-place-file-guard-lemma-5
+  (implies
+   (<=
+    1
+    (count-free-clusters
+     (set-indices-in-fa-table
+      (effective-fat fat32-in-memory)
+      (mv-nth
+       0
+       (fat32-build-index-list
+        (effective-fat fat32-in-memory)
+        (dir-ent-first-cluster
+         (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                               (car pathname)))
+        0 (cluster-size fat32-in-memory)))
+      (make-list-ac
+       (len
+        (mv-nth
+         0
+         (fat32-build-index-list
+          (effective-fat fat32-in-memory)
+          (dir-ent-first-cluster
+           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                 (car pathname)))
+          0 (cluster-size fat32-in-memory))))
+       0 nil))))
+   (<=
+    *ms-first-data-cluster*
+    (nth
+     '0
+     (find-n-free-clusters
+      (set-indices-in-fa-table
+       (effective-fat fat32-in-memory)
+       (mv-nth
+        '0
+        (fat32-build-index-list
+         (effective-fat fat32-in-memory)
+         (dir-ent-first-cluster
+          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                (car pathname)))
+         '0
+         (cluster-size fat32-in-memory)))
+       (make-list-ac
+        (len
+         (mv-nth
+          '0
+          (fat32-build-index-list
+           (effective-fat fat32-in-memory)
+           (dir-ent-first-cluster
+            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                  (car pathname)))
+           '0
+           (cluster-size fat32-in-memory))))
+        '0
+        'nil))
+      '1))))
+  :rule-classes :linear
+  :hints
+  (("goal"
+    :in-theory (disable (:linear find-n-free-clusters-correctness-7))
+    :use
+    (:instance
+     (:linear find-n-free-clusters-correctness-7)
+     (n 1)
+     (fa-table
+      (set-indices-in-fa-table
+       (effective-fat fat32-in-memory)
+       (mv-nth
+        0
+        (fat32-build-index-list
+         (effective-fat fat32-in-memory)
+         (dir-ent-first-cluster
+          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                (car pathname)))
+         0 (cluster-size fat32-in-memory)))
+       (make-list-ac
+        (len
+         (mv-nth
+          0
+          (fat32-build-index-list
+           (effective-fat fat32-in-memory)
+           (dir-ent-first-cluster
+            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                                  (car pathname)))
+           0 (cluster-size fat32-in-memory))))
+        0 nil)))
+     (m 0)))))
+
 (verify-guards
   lofat-place-file
-  :hints (("goal" :in-theory (disable unsigned-byte-p)))
-  :guard-debug t)
+  :hints
+  (("goal" :in-theory (e/d (fat32-filename-p-correctness-1)
+                           (unsigned-byte-p)))))
 
 ;; Kinda general
 (defthm lofat-place-file-correctness-1-lemma-2
