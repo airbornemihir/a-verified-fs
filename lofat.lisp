@@ -14109,8 +14109,15 @@ Some (rather awful) testing forms are
           (:instance (:rewrite insert-dir-ent-of-dir-ent-fix)
                      (dir-ent dir-ent-equiv))))))
 
+(defthm len-of-insert-dir-ent-lemma-1
+  (implies (and (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
+                (useless-dir-ent-p (take 32 dir-contents)))
+           (not (equal (dir-ent-filename (take 32 dir-contents))
+                       (dir-ent-filename dir-ent))))
+  :hints (("goal" :in-theory (enable useless-dir-ent-p))))
+
 (defthm
-  len-of-insert-dir-ent-lemma-1
+  len-of-insert-dir-ent-lemma-2
   (implies
    (and (equal (dir-ent-filename (take 32 dir-contents))
                (dir-ent-filename dir-ent))
@@ -14157,13 +14164,6 @@ Some (rather awful) testing forms are
                                            make-dir-ent-list nats=>string))
     :induct (insert-dir-ent dir-contents dir-ent))))
 
-(defthm make-dir-ent-list-of-insert-dir-ent-lemma-1
-  (implies (and (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-                (useless-dir-ent-p (take 32 dir-contents)))
-           (not (equal (dir-ent-filename (take 32 dir-contents))
-                       (dir-ent-filename dir-ent))))
-  :hints (("goal" :in-theory (enable useless-dir-ent-p))))
-
 ;; Move later
 (defthm nats=>chars-of-take
   (implies (<= (nfix n) (len nats))
@@ -14171,7 +14171,7 @@ Some (rather awful) testing forms are
                   (take n (nats=>chars nats))))
   :hints (("goal" :in-theory (enable nats=>chars take))))
 
-(defthm make-dir-ent-list-of-insert-dir-ent-lemma-4
+(defthm make-dir-ent-list-of-insert-dir-ent-lemma-1
   (implies (< (nfix n) *ms-dir-ent-length*)
            (natp (nth n (dir-ent-fix dir-ent))))
   :hints (("goal" :in-theory (disable (:linear nth-when-dir-ent-p))
@@ -14331,14 +14331,18 @@ Some (rather awful) testing forms are
             (lofat-file->contents file)
           (nats=>string (flatten (lofat-file->contents file)))))
        (file-length (length contents))
-       ((when (zp file-length)) (update-dir-contents
-                                 fat32-in-memory
-                                 (dir-ent-first-cluster root-dir-ent)
-                                 (nats=>string
-                                  (insert-dir-ent
-                                   (string=>nats dir-contents)
-                                   (dir-ent-set-first-cluster-file-size
-                                    dir-ent 0 0)))))
+       (new-dir-contents (nats=>string
+                          (insert-dir-ent
+                           (string=>nats dir-contents)
+                           (dir-ent-set-first-cluster-file-size
+                            dir-ent 0 0))))
+       ((when (and (zp file-length) (<= (len new-dir-contents) *ms-max-dir-size*)))
+        (update-dir-contents
+         fat32-in-memory
+         (dir-ent-first-cluster root-dir-ent)
+         new-dir-contents))
+       ((when (zp file-length))
+        (mv fat32-in-memory *enospc*))
        (indices (stobj-find-n-free-clusters fat32-in-memory 1))
        ((when (< (len indices) 1))
         (mv fat32-in-memory *enospc*))
@@ -14349,15 +14353,19 @@ Some (rather awful) testing forms are
          contents
          file-length
          (nth 0 indices)))
-       ((unless (zp error-code)) (mv fat32-in-memory error-code)))
+       ((unless (zp error-code)) (mv fat32-in-memory error-code))
+       (new-dir-contents
+        (nats=>string
+         (insert-dir-ent
+          (string=>nats dir-contents)
+          (dir-ent-set-first-cluster-file-size
+           dir-ent 0 0))))
+       ((unless (<= (len new-dir-contents) *ms-max-dir-size*))
+        (mv fat32-in-memory *enospc*)))
     (update-dir-contents
      fat32-in-memory
      (dir-ent-first-cluster root-dir-ent)
-     (nats=>string
-      (insert-dir-ent
-       (string=>nats dir-contents)
-       (dir-ent-set-first-cluster-file-size
-        dir-ent 0 0))))))
+     new-dir-contents)))
 
 (defthm
   count-of-clusters-of-lofat-place-file
@@ -18144,15 +18152,15 @@ Some (rather awful) testing forms are
          (make-dir-ent-list
           clusterchain-contents)
          entry-limit)))
-      (<=
-       (+ *ms-dir-ent-length*
-          (len
-           (explode
-            (nats=>string
-             (flatten
-              (make-dir-ent-list
-               clusterchain-contents))))))
-       *ms-max-dir-size*)
+      (not
+       (<
+        '2097152
+        (binary-+
+         '32
+         (len
+          (explode$inline
+           (mv-nth '0
+                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))))))
       (equal (mv-nth 1
                      (lofat-place-file fat32-in-memory dir-ent pathname file))
              0)
@@ -18160,7 +18168,9 @@ Some (rather awful) testing forms are
       ;; This assumption makes our theorem less general, but I don't see it
       ;; being proved otherwise.
       (>= (count-free-clusters (effective-fat fat32-in-memory))
-          1))
+          1)
+      ;; I really don't like this.
+      (lofat-regular-file-p file))
      (equal
       (dir-ent-clusterchain-contents
        (mv-nth 0
@@ -18171,23 +18181,22 @@ Some (rather awful) testing forms are
         (append
          new-contents
          (make-list-ac
-          (+
-           (-
-            (len
-             (implode
-              new-contents)))
+          (-
            (*
             (cluster-size fat32-in-memory)
             (len
              (make-clusters
               (implode new-contents)
-              (cluster-size fat32-in-memory)))))
+              (cluster-size fat32-in-memory))))
+           (len
+            new-contents))
           (code-char 0)
           nil)))
        0))))
   :hints (("Goal" :induct
            (LOFAT-PLACE-FILE FAT32-IN-MEMORY DIR-ENT PATHNAME FILE)
-           :in-theory (e/d (UPDATE-DIR-CONTENTS-CORRECTNESS-1) (
+           :in-theory (e/d (UPDATE-DIR-CONTENTS-CORRECTNESS-1
+                            (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1)) (
                        ;; These rules are disabled because it causes the
                        ;; dir-ent-clusterchain/dir-ent-clusterchain-contents
                        ;; abstraction to be broken.
