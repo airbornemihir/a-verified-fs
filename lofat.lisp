@@ -18193,8 +18193,7 @@ Some (rather awful) testing forms are
           (code-char 0)
           nil)))
        0))))
-  :hints (("Goal" :induct
-           (LOFAT-PLACE-FILE FAT32-IN-MEMORY DIR-ENT PATHNAME FILE)
+  :hints (("Goal" :do-not-induct t
            :in-theory (e/d (UPDATE-DIR-CONTENTS-CORRECTNESS-1
                             (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1)) (
                        ;; These rules are disabled because it causes the
