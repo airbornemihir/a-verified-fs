@@ -4897,11 +4897,6 @@ Some (rather awful) testing forms are
     (lofat-fs-p fat32-in-memory)
     (dir-ent-p dir-ent)
     (dir-ent-directory-p dir-ent)
-    (>= (dir-ent-first-cluster dir-ent)
-        *ms-first-data-cluster*)
-    (< (dir-ent-first-cluster dir-ent)
-       (+ *ms-first-data-cluster*
-          (count-of-clusters fat32-in-memory)))
     (fat32-filename-list-p pathname)
     (equal (mv-nth 1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
@@ -4971,7 +4966,10 @@ Some (rather awful) testing forms are
               (cluster-size fat32-in-memory)))))
           (code-char 0)
           nil)))
-       0)))))
+       0))))
+  :hints
+  (("goal" :do-not-induct t
+    :expand (lofat-remove-file fat32-in-memory dir-ent pathname))))
 
 (encapsulate
   ()
