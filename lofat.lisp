@@ -14181,102 +14181,57 @@ Some (rather awful) testing forms are
     :measure (acl2-count pathname)
     :stobjs fat32-in-memory
     :verify-guards nil))
-  (b*
-      (((unless (consp pathname))
-        (mv fat32-in-memory *enoent*))
-       ;; Design choice - calls which ask for the entire root directory to be
-       ;; affected will fail.
-       (name (mbe :logic (fat32-filename-fix (car pathname))
-                  :exec (car pathname)))
-       ((mv dir-contents &)
-        (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
-       (dir-ent-list
-        (make-dir-ent-list dir-contents))
-       ((mv dir-ent error-code)
-        (find-dir-ent dir-ent-list name))
-       ;; If it's not there, it's a new file. In either case, though, we
-       ;; shouldn't give it the name of the old file, that is, we shouldn't be
-       ;; inserting a directory entry with the name of the old file. We may be
-       ;; moving a file and changing its name in the process.
-       (dir-ent (if (equal error-code 0)
-                    dir-ent
-                  (dir-ent-set-filename
-                   (dir-ent-fix nil)
-                   name)))
-       ;; ENOTDIR - can't act on anything that supposedly exists inside a
-       ;; regular file.
+  (b* (((unless (consp pathname)) (mv fat32-in-memory *enoent*))
+       ;; Design choice - calls which ask for the entire root directory to be affected will fail.
+       (name (mbe :logic (fat32-filename-fix (car pathname)) :exec (car pathname)))
+       ((mv dir-contents &) (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
+       (dir-ent-list (make-dir-ent-list dir-contents))
+       ((mv dir-ent error-code) (find-dir-ent dir-ent-list name))
+       ;; If it's not there, it's a new file. In either case, though, we shouldn't give it the name
+       ;; of the old file, that is, we shouldn't be inserting a directory entry with the name of
+       ;; the old file. We may be moving a file and changing its name in the process.
+       (dir-ent (if (equal error-code 0) dir-ent (dir-ent-set-filename (dir-ent-fix nil) name)))
+       ;; ENOTDIR - can't act on anything that supposedly exists inside a regular file.
        ((when (and (consp (cdr pathname)) (not (dir-ent-directory-p dir-ent))))
         (mv fat32-in-memory *enotdir*))
        (first-cluster (dir-ent-first-cluster dir-ent))
-       ((when
-            (and
-             (or (< first-cluster *ms-first-data-cluster*)
-                 (<= (+ *ms-first-data-cluster*
-                        (count-of-clusters fat32-in-memory))
-                     first-cluster))
-             (consp (cdr pathname))))
+       ((when (and (or (< first-cluster *ms-first-data-cluster*)
+                       (<= (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory))
+                           first-cluster))
+                   (consp (cdr pathname))))
         (mv fat32-in-memory *eio*))
-       ((when (consp (cdr pathname)))
         ;; Recursion
-        (lofat-place-file fat32-in-memory dir-ent (cdr pathname) file))
-       ;; After these conditionals, the only remaining possibility is that
-       ;; (cdr pathname) is an atom, which means we need to place a regular
-       ;; file or an empty directory, which we have hopefully ensured in the
-       ;; guard or something.
-       (length (if (dir-ent-directory-p dir-ent)
-                   *ms-max-dir-size*
-                 (dir-ent-file-size dir-ent)))
+       ((when(consp (cdr pathname)))(lofat-place-file fat32-in-memory dir-ent (cdr pathname) file))
+       ;; After these conditionals, the only remaining possibility is that (cdr pathname)
+       ;; is an atom, which means we need to place a regular file or an empty directory, which
+       ;; we have hopefully ensured in the guard or something.
+       (length (if (dir-ent-directory-p dir-ent) *ms-max-dir-size* (dir-ent-file-size dir-ent)))
        ((mv fat32-in-memory &)
-        (if
-            (or (< first-cluster *ms-first-data-cluster*)
-                (<= (+ *ms-first-data-cluster*
-                       (count-of-clusters fat32-in-memory))
-                    first-cluster))
+        (if (or (< first-cluster *ms-first-data-cluster*)
+                (<= (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)) first-cluster))
             (mv fat32-in-memory 0)
-          (clear-clusterchain
-           fat32-in-memory
-           first-cluster
-           length)))
-       (contents
-        (if (lofat-regular-file-p file)
-            (lofat-file->contents file)
-          (nats=>string (flatten (lofat-file->contents file)))))
+          (clear-clusterchain fat32-in-memory first-cluster length)))
+       (contents (if (lofat-regular-file-p file)
+                     (lofat-file->contents file)
+                     (nats=>string (flatten (lofat-file->contents file)))))
        (file-length (length contents))
-       (new-dir-contents (nats=>string
-                          (insert-dir-ent
-                           (string=>nats dir-contents)
-                           (dir-ent-set-first-cluster-file-size
-                            dir-ent 0 0))))
+       (new-dir-contents (nats=>string (insert-dir-ent
+                                        (string=>nats dir-contents)
+                                        (dir-ent-set-first-cluster-file-size dir-ent 0 0))))
        ((when (and (zp file-length) (<= (len new-dir-contents) *ms-max-dir-size*)))
-        (update-dir-contents
-         fat32-in-memory
-         (dir-ent-first-cluster root-dir-ent)
-         new-dir-contents))
-       ((when (zp file-length))
-        (mv fat32-in-memory *enospc*))
+        (update-dir-contents fat32-in-memory (dir-ent-first-cluster root-dir-ent)new-dir-contents))
+       ((when (zp file-length)) (mv fat32-in-memory *enospc*))
        (indices (stobj-find-n-free-clusters fat32-in-memory 1))
-       ((when (< (len indices) 1))
-        (mv fat32-in-memory *enospc*))
+       ((when (< (len indices) 1)) (mv fat32-in-memory *enospc*))
        ((mv fat32-in-memory dir-ent error-code &)
-        (place-contents
-         fat32-in-memory
-         dir-ent
-         contents
-         file-length
-         (nth 0 indices)))
+        (place-contents fat32-in-memory dir-ent contents file-length (nth 0 indices)))
        ((unless (zp error-code)) (mv fat32-in-memory error-code))
-       (new-dir-contents
-        (nats=>string
-         (insert-dir-ent
-          (string=>nats dir-contents)
-          (dir-ent-set-first-cluster-file-size
-           dir-ent 0 0))))
-       ((unless (<= (len new-dir-contents) *ms-max-dir-size*))
-        (mv fat32-in-memory *enospc*)))
-    (update-dir-contents
-     fat32-in-memory
-     (dir-ent-first-cluster root-dir-ent)
-     new-dir-contents)))
+       (new-dir-contents (nats=>string (insert-dir-ent
+                                        (string=>nats dir-contents)
+                                        (dir-ent-set-first-cluster-file-size
+                                         dir-ent (nth 0 indices) file-length))))
+       ((unless (<= (len new-dir-contents) *ms-max-dir-size*)) (mv fat32-in-memory *enospc*)))
+    (update-dir-contents fat32-in-memory (dir-ent-first-cluster root-dir-ent) new-dir-contents)))
 
 (defthm
   count-of-clusters-of-lofat-place-file
@@ -18029,10 +17984,136 @@ Some (rather awful) testing forms are
       (((mv clusterchain-contents error-code)
         (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
        (new-dir-ent
-        (dir-ent-set-first-cluster-file-size
-         (dir-ent-set-filename (dir-ent-fix nil)
-                               (car pathname))
-         0 0))
+        (if
+            (< 0
+               (len (explode (lofat-file->contents file))))
+            (if
+                (<=
+                 2
+                 (dir-ent-first-cluster
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                    (car pathname)))))
+                (if
+                    (<
+                     (dir-ent-first-cluster
+                      (mv-nth
+                       0
+                       (find-dir-ent
+                        (make-dir-ent-list
+                         (mv-nth 0
+                                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                        (car pathname))))
+                     (+ 2 (count-of-clusters fat32-in-memory)))
+                    (dir-ent-set-first-cluster-file-size
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                       (car pathname)))
+                     (nth
+                      0
+                      (find-n-free-clusters
+                       (set-indices-in-fa-table
+                        (effective-fat fat32-in-memory)
+                        (mv-nth
+                         0
+                         (dir-ent-clusterchain
+                          fat32-in-memory
+                          (mv-nth
+                           0
+                           (find-dir-ent
+                            (make-dir-ent-list
+                             (mv-nth
+                              0
+                              (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                            (car pathname)))))
+                        (make-list-ac
+                         (len
+                          (mv-nth
+                           0
+                           (dir-ent-clusterchain
+                            fat32-in-memory
+                            (mv-nth
+                             0
+                             (find-dir-ent
+                              (make-dir-ent-list
+                               (mv-nth
+                                0
+                                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                              (car pathname))))))
+                         0 nil))
+                       1))
+                     (len (explode (lofat-file->contents file))))
+                  (dir-ent-set-first-cluster-file-size
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                     (car pathname)))
+                   (nth 0
+                        (find-n-free-clusters (effective-fat fat32-in-memory)
+                                              1))
+                   (len (explode (lofat-file->contents file)))))
+              (if
+                  (EQUAL
+                   (MV-NTH
+                    1
+                    (FIND-DIR-ENT
+                     (MAKE-DIR-ENT-LIST
+                      (MV-NTH 0
+                              (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY DIR-ENT)))
+                     (CAR PATHNAME)))
+                   0)
+                  (dir-ent-set-first-cluster-file-size
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                     (car pathname)))
+                   (nth 0
+                        (find-n-free-clusters (effective-fat fat32-in-memory)
+                                              1))
+                   (len (explode (lofat-file->contents file))))
+                (dir-ent-set-first-cluster-file-size
+                 (dir-ent-set-filename (dir-ent-fix nil) (car pathname))
+                 (nth 0
+                      (find-n-free-clusters (effective-fat fat32-in-memory)
+                                            1))
+                 (len (explode (lofat-file->contents file))))))
+          (if
+              (equal
+               (mv-nth
+                1
+                (find-dir-ent
+                 (make-dir-ent-list
+                  (mv-nth 0
+                          (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                 (car pathname)))
+               0)
+              (dir-ent-set-first-cluster-file-size
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list
+                  (mv-nth 0
+                          (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
+                 (car pathname)))
+               0 0)
+            (dir-ent-set-first-cluster-file-size
+             (dir-ent-set-filename (dir-ent-fix nil)
+                                   (car pathname))
+             0 0))))
        (new-contents
         (nats=>chars
          (insert-dir-ent
@@ -18218,7 +18299,7 @@ Some (rather awful) testing forms are
             nil)))
          0)))))
   :hints (("Goal" :induct
-           (LOFAT-PLACE-FILE FAT32-IN-MEMORY DIR-ENT PATHNAME FILE)
+           (lofat-place-file fat32-in-memory dir-ent pathname file)
            :in-theory (e/d (UPDATE-DIR-CONTENTS-CORRECTNESS-1) (
                        ;; These rules are disabled because it causes the
                        ;; dir-ent-clusterchain/dir-ent-clusterchain-contents
