@@ -11941,21 +11941,6 @@ Some (rather awful) testing forms are
               filename2))))
           dir-ent-list entry-limit)))))))
 
-  ;; The hypotheses for this lemma have been trimmed to the extent that
-  ;; remove-hyps can handle. Here are some if-intro rules which cause case
-  ;; splitting - these can be looked into later.
-  ;; Splitter rules (see :DOC splitter):
-  ;; if-intro: ((:definition find-dir-ent)
-  ;;            (:definition hifat-entry-count)
-  ;;            (:definition lofat-to-hifat-helper)
-  ;;            (:definition not)
-  ;;            (:definition not-intersectp-list)
-  ;;            (:definition useful-dir-ent-list-p)
-  ;;            (:meta mv-nth-cons-meta)
-  ;;            (:rewrite str::equal-of-code-code-and-constant)
-  ;;            (:rewrite not-intersectp-list-of-append-1)
-  ;;            (:rewrite not-intersectp-list-of-append-2)
-  ;;            (:rewrite zp-open))
   (defthm
     lofat-remove-file-correctness-1-lemma-3
     (implies
@@ -12047,13 +12032,6 @@ Some (rather awful) testing forms are
       (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
       (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
          (+ 2 (count-of-clusters fat32-in-memory)))
-      (equal
-       (mv-nth
-        1
-        (lofat-remove-file fat32-in-memory
-                           (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                           pathname))
-       0)
       (not-intersectp-list
        x
        (mv-nth 2
@@ -12142,22 +12120,7 @@ Some (rather awful) testing forms are
           (lofat-remove-file fat32-in-memory
                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
                              pathname))
-         dir-ent-list entry-limit)));; (<
-       ;; (hifat-entry-count
-       ;;  (mv-nth
-       ;;   0
-       ;;   (lofat-to-hifat-helper
-       ;;    (mv-nth
-       ;;     0
-       ;;     (lofat-remove-file fat32-in-memory
-       ;;                        (mv-nth 0 (find-dir-ent dir-ent-list filename))
-       ;;                        pathname))
-       ;;    dir-ent-list entry-limit)))
-       ;; (hifat-entry-count
-       ;;  (mv-nth 0
-       ;;          (lofat-to-hifat-helper fat32-in-memory
-       ;;                                 dir-ent-list entry-limit))))
-      ))
+         dir-ent-list entry-limit)))))
     :hints
     (("goal"
       :do-not-induct t
@@ -12307,13 +12270,6 @@ Some (rather awful) testing forms are
         (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
         (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
            (+ 2 (count-of-clusters fat32-in-memory)))
-        (equal
-         (mv-nth
-          1
-          (lofat-remove-file fat32-in-memory
-                             (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                             pathname))
-         0)
         (not-intersectp-list
          x
          (mv-nth 2
@@ -12546,13 +12502,6 @@ Some (rather awful) testing forms are
            0)
     (fat32-filename-list-p pathname)
     (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-    (equal
-     (mv-nth
-      1
-      (lofat-remove-file fat32-in-memory
-                         (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                         pathname))
-     0)
     (<
      (hifat-entry-count
       (mv-nth
@@ -12625,22 +12574,7 @@ Some (rather awful) testing forms are
          entry-limit)))
       (mv-nth 0
               (lofat-to-hifat-helper fat32-in-memory
-                                     dir-ent-list entry-limit))));; (<
-     ;; (hifat-entry-count
-     ;;  (mv-nth
-     ;;   0
-     ;;   (lofat-to-hifat-helper
-     ;;    (mv-nth
-     ;;     0
-     ;;     (lofat-remove-file fat32-in-memory
-     ;;                        (mv-nth 0 (find-dir-ent dir-ent-list filename))
-     ;;                        pathname))
-     ;;    dir-ent-list entry-limit)))
-     ;; (hifat-entry-count
-     ;;  (mv-nth 0
-     ;;          (lofat-to-hifat-helper fat32-in-memory
-     ;;                                 dir-ent-list entry-limit))))
-    ))
+                                     dir-ent-list entry-limit))))))
   :hints (("goal" :in-theory (disable lofat-remove-file-correctness-1-lemma-3)
            :use (:instance lofat-remove-file-correctness-1-lemma-3
                            (x nil)))))
