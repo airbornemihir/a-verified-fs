@@ -5024,26 +5024,11 @@ Some (rather awful) testing forms are
    (and
     (lofat-fs-p fat32-in-memory)
     (fat32-filename-list-p pathname)
-    (equal (mv-nth 1 (root-dir-ent-list fat32-in-memory))
-           0)
     (equal (mv-nth 1
                    (lofat-remove-file fat32-in-memory
                                       (pseudo-root-dir-ent fat32-in-memory)
                                       pathname))
            0)
-    ;; I'm not very happy with this hypothesis. We might end up having to
-    ;; change the interface (i.e. the return values) of lofat-to-hifat-helper.
-    (not-intersectp-list
-     (mv-nth '0
-             (dir-ent-clusterchain fat32-in-memory
-                                   (pseudo-root-dir-ent fat32-in-memory)))
-     (mv-nth '2
-             (lofat-to-hifat-helper
-              fat32-in-memory
-              (mv-nth '0
-                      (root-dir-ent-list
-                       fat32-in-memory))
-              (max-entry-count fat32-in-memory))))
     (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
            0))
    (equal
@@ -5054,9 +5039,9 @@ Some (rather awful) testing forms are
                                 pathname)))
     (if (consp (cdr pathname))
         (root-dir-ent-list fat32-in-memory)
-      (mv (delete-dir-ent (mv-nth 0 (root-dir-ent-list fat32-in-memory))
-                          (car pathname))
-          0))))
+        (mv (delete-dir-ent (mv-nth 0 (root-dir-ent-list fat32-in-memory))
+                            (car pathname))
+            0))))
   :hints (("goal" :in-theory (e/d (root-dir-ent-list lofat-to-hifat)
                                   ((:rewrite make-list-ac-removal)))
            :do-not-induct t)))
@@ -8779,14 +8764,7 @@ Some (rather awful) testing forms are
     (consp (cdr pathname))
     (lofat-fs-p fat32-in-memory)
     (useful-dir-ent-list-p dir-ent-list)
-    (fat32-filename-list-p pathname)
-    (equal
-     (mv-nth
-      1
-      (lofat-remove-file fat32-in-memory
-                         (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                         pathname))
-     0))
+    (fat32-filename-list-p pathname))
    (equal
     (mv-nth
      3
@@ -8806,8 +8784,7 @@ Some (rather awful) testing forms are
     0))
   :hints
   (("goal"
-    :in-theory
-    (disable (:rewrite lofat-find-file-correctness-1-lemma-6))
+    :in-theory (disable (:rewrite lofat-find-file-correctness-1-lemma-6))
     :use
     ((:instance
       (:rewrite dir-ent-clusterchain-contents-of-lofat-remove-file-coincident)
