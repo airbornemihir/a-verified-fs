@@ -18014,7 +18014,7 @@ Some (rather awful) testing forms are
 
 (make-event
  `(defthm
-    dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1-lemma-1
+    dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
     (implies (and (equal (nth 0 (explode filename))
                          (code-char 0))
                   (useful-dir-ent-list-p dir-ent-list))
@@ -18039,7 +18039,7 @@ Some (rather awful) testing forms are
 
 ;; The unsigned-byte-listp 8 hypothesis can go, maybe...
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1-lemma-2
+  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-14
   (implies
    (and
     (unsigned-byte-listp 8 dir-contents)
@@ -18081,6 +18081,13 @@ Some (rather awful) testing forms are
       (len (make-clusters (nats=>string dir-contents)
                           cluster-size))))
     :hints (("Goal" :in-theory (enable nats=>string)) ))))
+
+;; Not really this theorem's lemma, to be honest.
+(defthm dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-15
+  (implies (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
+                       0))
+           (equal (mv-nth 0 (find-dir-ent dir-ent-list filename))
+                  (dir-ent-fix nil))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1
@@ -18172,12 +18179,13 @@ Some (rather awful) testing forms are
        0))))
   :hints (("Goal" :do-not-induct t
            :in-theory (e/d (UPDATE-DIR-CONTENTS-CORRECTNESS-1
-                            (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1)) (
-                       ;; These rules are disabled because it causes the
-                       ;; dir-ent-clusterchain/dir-ent-clusterchain-contents
-                       ;; abstraction to be broken.
-                       clear-clusterchain-correctness-1
-                       effective-fat-of-clear-clusterchain))) ))
+                            (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1))
+                           (EXPLODE-OF-DIR-ENT-FILENAME
+                            ;; These rules are disabled because it causes the
+                            ;; dir-ent-clusterchain/dir-ent-clusterchain-contents
+                            ;; abstraction to be broken.
+                            clear-clusterchain-correctness-1
+                            effective-fat-of-clear-clusterchain))) ))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-2
