@@ -18026,20 +18026,19 @@ Some (rather awful) testing forms are
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-1
   (b*
-      (((mv clusterchain-contents error-code) (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
+      (((mv clusterchain-contents error-code)
+        (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
+       (new-dir-ent
+        (dir-ent-set-first-cluster-file-size
+         (dir-ent-set-filename (dir-ent-fix nil)
+                               (car pathname))
+         0 0))
        (new-contents
         (nats=>chars
          (insert-dir-ent
           (string=>nats
            clusterchain-contents)
-          (dir-ent-set-first-cluster-file-size
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              clusterchain-contents)
-             (car pathname)))
-           0 0)))))
+          new-dir-ent))))
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -18113,7 +18112,8 @@ Some (rather awful) testing forms are
        0))))
   :hints (("Goal" :do-not-induct t
            :in-theory (e/d (UPDATE-DIR-CONTENTS-CORRECTNESS-1
-                            (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1))
+                            (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1)
+                            nats=>string)
                            (EXPLODE-OF-DIR-ENT-FILENAME
                             ;; These rules are disabled because it causes the
                             ;; dir-ent-clusterchain/dir-ent-clusterchain-contents
