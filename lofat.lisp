@@ -18125,11 +18125,6 @@ Some (rather awful) testing forms are
       (lofat-fs-p fat32-in-memory)
       (dir-ent-p dir-ent)
       (dir-ent-directory-p dir-ent)
-      (>= (dir-ent-first-cluster dir-ent)
-          *ms-first-data-cluster*)
-      (< (dir-ent-first-cluster dir-ent)
-         (+ *ms-first-data-cluster*
-            (count-of-clusters fat32-in-memory)))
       (fat32-filename-list-p pathname)
       (equal error-code 0)
       (equal
@@ -18163,10 +18158,6 @@ Some (rather awful) testing forms are
                      (lofat-place-file fat32-in-memory dir-ent pathname file))
              0)
       (atom (cdr pathname))
-      ;; This assumption makes our theorem less general, but I don't see it
-      ;; being proved otherwise.
-      (>= (count-free-clusters (effective-fat fat32-in-memory))
-          1)
       ;; I really don't like this.
       (lofat-regular-file-p file))
      (equal
@@ -18191,16 +18182,15 @@ Some (rather awful) testing forms are
           (code-char 0)
           nil)))
        0))))
-  :hints (("Goal" :do-not-induct t
-           :in-theory (e/d (UPDATE-DIR-CONTENTS-CORRECTNESS-1
-                            (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1)
-                            nats=>string)
-                           (EXPLODE-OF-DIR-ENT-FILENAME
-                            ;; These rules are disabled because it causes the
-                            ;; dir-ent-clusterchain/dir-ent-clusterchain-contents
-                            ;; abstraction to be broken.
-                            clear-clusterchain-correctness-1
-                            effective-fat-of-clear-clusterchain))) ))
+ :hints
+ (("goal"
+   :do-not-induct t
+   :in-theory
+   (e/d (update-dir-contents-correctness-1
+             (:rewrite fat32-filename-p-correctness-1)
+             nats=>string)
+        (explode-of-dir-ent-filename clear-clusterchain-correctness-1
+                                     effective-fat-of-clear-clusterchain)))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-2
