@@ -18157,7 +18157,6 @@ Some (rather awful) testing forms are
       (equal (mv-nth 1
                      (lofat-place-file fat32-in-memory dir-ent pathname file))
              0)
-      (atom (cdr pathname))
       ;; I really don't like this.
       (lofat-regular-file-p file))
      (equal
@@ -18165,25 +18164,31 @@ Some (rather awful) testing forms are
        (mv-nth 0
                (lofat-place-file fat32-in-memory dir-ent pathname file))
        dir-ent)
-      (mv
-       (implode
-        (append
-         new-contents
-         (make-list-ac
-          (-
-           (*
-            (cluster-size fat32-in-memory)
-            (len
-             (make-clusters
-              (implode new-contents)
-              (cluster-size fat32-in-memory))))
-           (len
-            new-contents))
-          (code-char 0)
-          nil)))
-       0))))
+      (if
+          (atom (cdr pathname))
+          (mv
+           (implode
+            (append
+             new-contents
+             (make-list-ac
+              (-
+               (*
+                (cluster-size fat32-in-memory)
+                (len
+                 (make-clusters
+                  (implode new-contents)
+                  (cluster-size fat32-in-memory))))
+               (len
+                new-contents))
+              (code-char 0)
+              nil)))
+           0)
+        (dir-ent-clusterchain-contents
+         fat32-in-memory
+         dir-ent)))))
  :hints
- (("goal"
+ (("goal" :expand
+   (lofat-place-file fat32-in-memory dir-ent pathname file)
    :do-not-induct t
    :in-theory
    (e/d (update-dir-contents-correctness-1
