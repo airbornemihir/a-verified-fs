@@ -14218,7 +14218,7 @@ Some (rather awful) testing forms are
        (new-dir-contents (nats=>string (insert-dir-ent
                                         (string=>nats dir-contents)
                                         (dir-ent-set-first-cluster-file-size dir-ent 0 0))))
-       ((when (and (zp file-length) (<= (len new-dir-contents) *ms-max-dir-size*)))
+       ((when (and (zp file-length) (<= (length new-dir-contents) *ms-max-dir-size*)))
         (update-dir-contents fat32-in-memory (dir-ent-first-cluster root-dir-ent)new-dir-contents))
        ((when (zp file-length)) (mv fat32-in-memory *enospc*))
        (indices (stobj-find-n-free-clusters fat32-in-memory 1))
@@ -14230,7 +14230,7 @@ Some (rather awful) testing forms are
                                         (string=>nats dir-contents)
                                         (dir-ent-set-first-cluster-file-size
                                          dir-ent (nth 0 indices) file-length))))
-       ((unless (<= (len new-dir-contents) *ms-max-dir-size*)) (mv fat32-in-memory *enospc*)))
+       ((unless (<= (length new-dir-contents) *ms-max-dir-size*)) (mv fat32-in-memory *enospc*)))
     (update-dir-contents fat32-in-memory (dir-ent-first-cluster root-dir-ent) new-dir-contents)))
 
 (defthm
