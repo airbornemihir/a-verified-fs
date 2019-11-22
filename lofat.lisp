@@ -18229,45 +18229,31 @@ Some (rather awful) testing forms are
    `(defthm
       make-dir-ent-list-of-append-4
       (implies
-       (and
-        (dir-ent-p dir-ent)
-        (not (useless-dir-ent-p dir-ent))
-        (not (equal (nth 0 dir-ent) 0))
-        (equal (mod (len (explode dir-contents))
-                    *ms-dir-ent-length*)
-               0))
+       (and (dir-ent-p dir-ent)
+            (not (useless-dir-ent-p dir-ent))
+            (not (equal (char (dir-ent-filename dir-ent) 0)
+                        (code-char 0)))
+            (equal (mod (len (explode dir-contents))
+                        *ms-dir-ent-length*)
+                   0))
        (equal
         (make-dir-ent-list
-         (implode (append (nats=>chars (insert-dir-ent (string=>nats dir-contents)
-                                                       dir-ent))
-                          (make-list-ac n ,(code-char 0) nil))))
+         (implode
+          (append
+           (nats=>chars (insert-dir-ent (string=>nats dir-contents)
+                                        dir-ent))
+           (make-list-ac n ,(code-char 0) nil))))
         (place-dir-ent (make-dir-ent-list dir-contents)
                        dir-ent)))
       :hints
-      (("goal" :induct (make-dir-ent-list dir-contents)
-        :in-theory (e/d (make-dir-ent-list dir-ent-fix insert-dir-ent                                            string=>nats))
+      (("goal"
+        :induct (make-dir-ent-list dir-contents)
+        :in-theory
+        (e/d (make-dir-ent-list dir-ent-fix
+                                insert-dir-ent string=>nats))
         :expand ((make-dir-ent-list dir-contents)
                  (insert-dir-ent (string=>nats dir-contents)
-                                 dir-ent))))
-      :rule-classes
-      ((:rewrite
-        :corollary
-        (implies
-         (and
-          (dir-ent-p dir-ent)
-          (not (useless-dir-ent-p dir-ent))
-          (not (equal (char (dir-ent-filename dir-ent) 0) (code-char 0)))
-          (equal (mod (len (explode dir-contents))
-                      *ms-dir-ent-length*)
-                 0))
-         (equal
-          (make-dir-ent-list
-           (implode (append (nats=>chars (insert-dir-ent (string=>nats dir-contents)
-                                                         dir-ent))
-                            (make-list-ac n ,(code-char 0) nil))))
-          (place-dir-ent (make-dir-ent-list dir-contents)
-                         dir-ent)))
-        :hints (("Goal" :do-not-induct t :in-theory (enable dir-ent-filename)) ))))))
+                                 dir-ent)))))))
 
 ;; (defthm
 ;;   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-2
