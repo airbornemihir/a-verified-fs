@@ -18255,6 +18255,16 @@ Some (rather awful) testing forms are
                  (insert-dir-ent (string=>nats dir-contents)
                                  dir-ent)))))))
 
+;; Move later.
+(defthm
+  useful-dir-ent-list-p-of-place-dir-ent
+  (implies (and (useful-dir-ent-list-p dir-ent-list)
+                (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
+                (not (equal (char (dir-ent-filename dir-ent) 0)
+                            (code-char 0))))
+           (useful-dir-ent-list-p (place-dir-ent dir-ent-list dir-ent)))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
+
 ;; (defthm
 ;;   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-2
 ;;   (b*
