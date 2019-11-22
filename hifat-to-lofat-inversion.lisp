@@ -4133,19 +4133,40 @@
                            (dir-ent (chars=>nats x)))
            :expand (make-dir-ent-list (implode (append x y))))))
 
-(defthm
-  make-dir-ent-list-of-append-2
-  (implies
-   (and (dir-ent-list-p dir-ent-list)
-        (character-listp y)
-        (or (< (len y) *ms-dir-ent-length*)
-            (equal (nth 0 y) (code-char 0))))
-   (equal
-    (make-dir-ent-list (implode (append (nats=>chars (flatten dir-ent-list))
-                                        y)))
-    (make-dir-ent-list (implode (nats=>chars (flatten dir-ent-list))))))
-  :hints (("goal" :in-theory (enable make-dir-ent-list flatten dir-ent-p)
-           :induct (flatten dir-ent-list))))
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (local
+   (defthmd
+     make-dir-ent-list-of-append-2-lemma-1
+     (implies (and (character-listp y)
+                   (or (< (len y) *ms-dir-ent-length*)
+                       (equal (nth 0 y) (code-char 0)))
+                   (equal (mod (len (explode x))
+                               *ms-dir-ent-length*)
+                          0))
+              (equal (make-dir-ent-list (implode (append (explode x) y)))
+                     (make-dir-ent-list x)))
+     :hints (("goal" :in-theory (enable make-dir-ent-list flatten dir-ent-p)
+              :induct (make-dir-ent-list x)))))
+
+  (defthm
+    make-dir-ent-list-of-append-2
+    (implies (and (character-listp y)
+                  (or (< (len y) *ms-dir-ent-length*)
+                      (equal (nth 0 y) (code-char 0)))
+                  (equal (mod (len x)
+                              *ms-dir-ent-length*)
+                         0)
+                  (character-listp x))
+             (equal (make-dir-ent-list (implode (append x y)))
+                    (make-dir-ent-list (implode x))))
+    :hints (("goal" :do-not-induct t
+             :use (:instance
+                   make-dir-ent-list-of-append-2-lemma-1
+                   (x (implode x)))))))
 
 (defthm
   make-dir-ent-list-of-implode-of-make-list-ac-1
