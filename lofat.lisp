@@ -18265,6 +18265,55 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable useful-dir-ent-list-p
                                      fat32-filename-p))))
 
+(defthm dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-16
+  (implies (and
+            (lofat-fs-p fat32-in-memory)
+            (useful-dir-ent-list-p dir-ent-list)
+            (not  (DIR-ENT-DIRECTORY-P (DIR-ENT-FIX DIR-ENT)))
+            (zp
+             (mv-nth 3
+                     (LOFAT-TO-HIFAT-HELPER FAT32-IN-MEMORY
+                                            DIR-ENT-LIST ENTRY-LIMIT)))
+            (>
+             (nfix entry-limit)
+             (hifat-entry-count
+              (mv-nth 0
+                      (LOFAT-TO-HIFAT-HELPER FAT32-IN-MEMORY
+                                             DIR-ENT-LIST ENTRY-LIMIT)))))
+           (equal
+            (mv-nth
+             0
+             (LOFAT-TO-HIFAT-HELPER FAT32-IN-MEMORY
+                                    (PLACE-DIR-ENT DIR-ENT-LIST DIR-ENT)
+                                    ENTRY-LIMIT))
+            (put-assoc-equal
+             (dir-ent-filename dir-ent)
+             (m1-file
+              dir-ent
+              (if
+                  (or
+                   (< (dir-ent-first-cluster (dir-ent-fix dir-ent))
+                      2)
+                   (<= (+ 2 (count-of-clusters fat32-in-memory))
+                       (dir-ent-first-cluster (dir-ent-fix dir-ent))))
+                  ""
+                (m1-file-contents-fix
+                 (mv-nth 0
+                         (dir-ent-clusterchain-contents fat32-in-memory
+                                                        (dir-ent-fix dir-ent))))))
+             (mv-nth
+              0
+              (LOFAT-TO-HIFAT-HELPER FAT32-IN-MEMORY
+                                     (PLACE-DIR-ENT DIR-ENT-LIST DIR-ENT)
+                                     ENTRY-LIMIT)))))
+  :hints (("Goal" :in-theory (enable LOFAT-TO-HIFAT-HELPER hifat-entry-count)
+           :induct (LOFAT-TO-HIFAT-HELPER FAT32-IN-MEMORY
+                                          DIR-ENT-LIST ENTRY-LIMIT)
+           :expand (:free (FAT32-IN-MEMORY dir-ent
+                                                DIR-ENT-LIST ENTRY-LIMIT)
+                         (LOFAT-TO-HIFAT-HELPER FAT32-IN-MEMORY
+                                                (cons DIR-ENT DIR-ENT-LIST) ENTRY-LIMIT))) ))
+
 ;; (defthm
 ;;   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-2
 ;;   (b*
