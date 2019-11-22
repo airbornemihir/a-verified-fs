@@ -18297,7 +18297,7 @@ Some (rather awful) testing forms are
                                                  (dir-ent-fix dir-ent)))))
      (mv-nth 0
              (lofat-to-hifat-helper fat32-in-memory
-                                    (place-dir-ent dir-ent-list dir-ent)
+                                    dir-ent-list
                                     entry-limit)))))
   :hints
   (("goal" :in-theory (enable lofat-to-hifat-helper hifat-entry-count)
