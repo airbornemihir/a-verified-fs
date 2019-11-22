@@ -7395,13 +7395,6 @@
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthm painful-debugging-lemma-17 (equal (mod (* y (len x)) y) 0)))
-
-(encapsulate
-  ()
-
   ;; This rule is weaker than it could be, but proving the stronger version
   ;; can't be done until more stuff is proved.
   (local

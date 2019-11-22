@@ -403,7 +403,9 @@
                   (integerp i2)
                   (not (zp j)))
              (<= (floor i1 j) (floor i2 j)))
-    :rule-classes :linear))
+    :rule-classes :linear)
+
+  (defthm painful-debugging-lemma-17 (equal (mod (* y (len x)) y) 0)))
 
 (defund dir-ent-p (x)
   (declare (xargs :guard t))
