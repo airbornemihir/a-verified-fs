@@ -18231,8 +18231,7 @@ Some (rather awful) testing forms are
       (implies
        (and (dir-ent-p dir-ent)
             (not (useless-dir-ent-p dir-ent))
-            (not (equal (char (dir-ent-filename dir-ent) 0)
-                        (code-char 0)))
+            (fat32-filename-p (dir-ent-filename dir-ent))
             (equal (mod (len (explode dir-contents))
                         *ms-dir-ent-length*)
                    0))
@@ -18250,7 +18249,7 @@ Some (rather awful) testing forms are
         :induct (make-dir-ent-list dir-contents)
         :in-theory
         (e/d (make-dir-ent-list dir-ent-fix
-                                insert-dir-ent string=>nats))
+                                insert-dir-ent string=>nats fat32-filename-p))
         :expand ((make-dir-ent-list dir-contents)
                  (insert-dir-ent (string=>nats dir-contents)
                                  dir-ent)))))))
@@ -18258,12 +18257,13 @@ Some (rather awful) testing forms are
 ;; Move later.
 (defthm
   useful-dir-ent-list-p-of-place-dir-ent
-  (implies (and (useful-dir-ent-list-p dir-ent-list)
-                (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-                (not (equal (char (dir-ent-filename dir-ent) 0)
-                            (code-char 0))))
-           (useful-dir-ent-list-p (place-dir-ent dir-ent-list dir-ent)))
-  :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
+  (implies
+   (and (useful-dir-ent-list-p dir-ent-list)
+        (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
+        (fat32-filename-p (dir-ent-filename dir-ent)))
+   (useful-dir-ent-list-p (place-dir-ent dir-ent-list dir-ent)))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p
+                                     fat32-filename-p))))
 
 ;; (defthm
 ;;   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-2
