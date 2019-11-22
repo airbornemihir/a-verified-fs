@@ -14793,6 +14793,20 @@ Some (rather awful) testing forms are
   (("goal" :in-theory (e/d (fat32-filename-p-correctness-1)
                            (unsigned-byte-p)))))
 
+;; Move later
+(defthm natp-of-update-dir-contents
+  (natp (mv-nth 1
+                (update-dir-contents fat32-in-memory
+                                     first-cluster dir-contents)))
+  :rule-classes :type-prescription
+  :hints (("goal" :in-theory (enable update-dir-contents))))
+
+(defthm natp-of-lofat-place-file
+  (natp (mv-nth 1
+                (lofat-place-file fat32-in-memory
+                                  root-dir-ent pathname file)))
+  :rule-classes :type-prescription)
+
 ;; Kinda general
 (defthm lofat-place-file-correctness-1-lemma-2
   (implies (not (zp (mv-nth 1 (hifat-place-file fs pathname file))))
@@ -14892,7 +14906,7 @@ Some (rather awful) testing forms are
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
-  (defthmd painful-debugging-lemma-17
+  (defthmd painful-debugging-lemma-18
     (implies (and (integerp i) (not (zp j)))
              (equal (floor i j)
                     (+ (floor (- i j) j) 1)))))
@@ -18210,6 +18224,7 @@ Some (rather awful) testing forms are
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
+  ;; Hypotheses are minimal.
   (make-event
    `(defthm
       make-dir-ent-list-of-append-4
@@ -18230,11 +18245,29 @@ Some (rather awful) testing forms are
                        dir-ent)))
       :hints
       (("goal" :induct (make-dir-ent-list dir-contents)
-        :in-theory (e/d (make-dir-ent-list dir-ent-fix insert-dir-ent
-                                           string=>nats))
+        :in-theory (e/d (make-dir-ent-list dir-ent-fix insert-dir-ent                                            string=>nats))
         :expand ((make-dir-ent-list dir-contents)
                  (insert-dir-ent (string=>nats dir-contents)
-                                 dir-ent)))))))
+                                 dir-ent))))
+      :rule-classes
+      ((:rewrite
+        :corollary
+        (implies
+         (and
+          (dir-ent-p dir-ent)
+          (not (useless-dir-ent-p dir-ent))
+          (not (equal (char (dir-ent-filename dir-ent) 0) (code-char 0)))
+          (equal (mod (len (explode dir-contents))
+                      *ms-dir-ent-length*)
+                 0))
+         (equal
+          (make-dir-ent-list
+           (implode (append (nats=>chars (insert-dir-ent (string=>nats dir-contents)
+                                                         dir-ent))
+                            (make-list-ac n ,(code-char 0) nil))))
+          (place-dir-ent (make-dir-ent-list dir-contents)
+                         dir-ent)))
+        :hints (("Goal" :do-not-induct t :in-theory (enable dir-ent-filename)) ))))))
 
 ;; (defthm
 ;;   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-2
