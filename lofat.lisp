@@ -19059,6 +19059,31 @@ Some (rather awful) testing forms are
                                           (cons dir-ent dir-ent-list)
                                           entry-limit)))))
 
+(defthm
+  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-24
+  (implies
+   (and (< (dir-ent-first-cluster root-dir-ent)
+           (+ 2 (count-of-clusters fat32-in-memory)))
+        (<= 1
+            (count-free-clusters (effective-fat fat32-in-memory))))
+   (not
+    (< (binary-+ '2
+                 (count-of-clusters fat32-in-memory))
+       (binary-+ '1
+                 (nth '0
+                      (find-n-free-clusters (effective-fat fat32-in-memory)
+                                            '1))))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :use
+    (:instance (:rewrite painful-debugging-lemma-13)
+               (x (nth 0
+                       (find-n-free-clusters (effective-fat fat32-in-memory)
+                                             1)))
+               (y (+ 2
+                     (count-of-clusters fat32-in-memory)))))))
+
 ;; (defthm
 ;;   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-2
 ;;   (b*
