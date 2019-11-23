@@ -18889,16 +18889,17 @@ Some (rather awful) testing forms are
         2)
      (<= (+ 2 (count-of-clusters fat32-in-memory))
          (dir-ent-first-cluster (dir-ent-fix dir-ent)))
-     (equal
-      (mv-nth
-       1
-       (dir-ent-clusterchain-contents fat32-in-memory (dir-ent-fix dir-ent)))
-      0))
-    (not
-     (intersectp-equal x
-                       (mv-nth 0
-                               (dir-ent-clusterchain fat32-in-memory
-                                                     (dir-ent-fix dir-ent)))))
+     (and
+      (equal
+       (mv-nth
+        1
+        (dir-ent-clusterchain-contents fat32-in-memory (dir-ent-fix dir-ent)))
+       0)
+      (not
+       (intersectp-equal x
+                         (mv-nth 0
+                                 (dir-ent-clusterchain fat32-in-memory
+                                                       (dir-ent-fix dir-ent)))))))
     (not-intersectp-list
      x
      (mv-nth 2
@@ -18960,15 +18961,16 @@ Some (rather awful) testing forms are
         2)
      (<= (+ 2 (count-of-clusters fat32-in-memory))
          (dir-ent-first-cluster (dir-ent-fix dir-ent)))
-     (equal
-      (mv-nth
-       1
-       (dir-ent-clusterchain-contents fat32-in-memory (dir-ent-fix dir-ent)))
-      0))
-    (not-intersectp-list
-     (mv-nth 0
-             (dir-ent-clusterchain fat32-in-memory (dir-ent-fix dir-ent)))
-     x)
+     (and
+      (equal
+       (mv-nth
+        1
+        (dir-ent-clusterchain-contents fat32-in-memory (dir-ent-fix dir-ent)))
+       0)
+      (not-intersectp-list
+       (mv-nth 0
+               (dir-ent-clusterchain fat32-in-memory (dir-ent-fix dir-ent)))
+       x)))
     (not (member-intersectp-equal
           x
           (mv-nth 2
@@ -19011,20 +19013,21 @@ Some (rather awful) testing forms are
         2)
      (<= (+ 2 (count-of-clusters fat32-in-memory))
          (dir-ent-first-cluster (dir-ent-fix dir-ent)))
-     (equal
-      (mv-nth
-       1
-       (dir-ent-clusterchain-contents fat32-in-memory (dir-ent-fix dir-ent)))
-      0))
-    (no-duplicatesp-equal
-     (mv-nth 0
-             (dir-ent-clusterchain fat32-in-memory (dir-ent-fix dir-ent))))
-    (not-intersectp-list
-     (mv-nth 0
-             (dir-ent-clusterchain fat32-in-memory (dir-ent-fix dir-ent)))
-     (mv-nth 2
-             (lofat-to-hifat-helper fat32-in-memory
-                                    dir-ent-list entry-limit))))
+     (and
+      (equal
+       (mv-nth
+        1
+        (dir-ent-clusterchain-contents fat32-in-memory (dir-ent-fix dir-ent)))
+       0)
+      (no-duplicatesp-equal
+       (mv-nth 0
+               (dir-ent-clusterchain fat32-in-memory (dir-ent-fix dir-ent))))
+      (not-intersectp-list
+       (mv-nth 0
+               (dir-ent-clusterchain fat32-in-memory (dir-ent-fix dir-ent)))
+       (mv-nth 2
+               (lofat-to-hifat-helper fat32-in-memory
+                                      dir-ent-list entry-limit))))))
    (equal (mv-nth 3
                   (lofat-to-hifat-helper fat32-in-memory
                                          (place-dir-ent dir-ent-list dir-ent)
@@ -19245,7 +19248,18 @@ Some (rather awful) testing forms are
   (defthm
     lofat-place-file-correctness-1-lemma-1
     (b*
-        (((mv fs &)
+        (;; I'm not very happy with this assigned value of dir-ent... and I'm
+         ;; going to be even less happy when case splits arise. It's, however,
+         ;; the price to be paid for equality instead of hifat-equiv.
+         (dir-ent
+          (dir-ent-set-first-cluster-file-size
+           (dir-ent-set-filename (dir-ent-fix nil)
+                                 (car pathname))
+           (nth 0
+                (find-n-free-clusters (effective-fat fat32-in-memory)
+                                      1))
+           (len (explode (lofat-file->contents file)))))
+         ((mv fs &)
           (hifat-place-file
            (mv-nth 0
                    (lofat-to-hifat-helper
