@@ -14223,6 +14223,15 @@ Some (rather awful) testing forms are
        ((when (zp file-length)) (mv fat32-in-memory *enospc*))
        (indices (stobj-find-n-free-clusters fat32-in-memory 1))
        ((when (< (len indices) 1)) (mv fat32-in-memory *enospc*))
+       (first-cluster (nth 0 indices))
+       ;; Mark this cluster as used, without possibly interfering with any
+       ;; existing clusterchains.
+       (fat32-in-memory
+        (update-fati
+         first-cluster
+         (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
+                                *ms-end-of-clusterchain*)
+         fat32-in-memory))
        ((mv fat32-in-memory dir-ent error-code &)
         (place-contents fat32-in-memory dir-ent contents file-length (nth 0 indices)))
        ((unless (zp error-code)) (mv fat32-in-memory error-code))
