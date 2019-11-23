@@ -40,7 +40,6 @@
   (implies (and (bounded-nat-listp ac b) (natp val) (< val b))
            (bounded-nat-listp (make-list-ac n val ac) b)))
 
-;; Move later
 (defthm car-of-last-when-bounded-nat-listp
   (implies (and (< 0 b) (bounded-nat-listp l b))
            (< (car (last l)) b))

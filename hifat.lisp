@@ -943,7 +943,7 @@
  :define t
  :forward t)
 
-(defthmd
+(defthm
   fat32-filename-p-correctness-1
   (implies (fat32-filename-p x)
            (and (stringp x)
@@ -966,8 +966,7 @@
                      (dir-ent-set-filename dir-ent filename))
                 #xe5))))
   :hints
-  (("goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p
-                                                 fat32-filename-p-correctness-1)
+  (("goal" :in-theory (e/d (dir-ent-set-filename dir-ent-p)
                            (nth)))))
 
 (defthm
@@ -1454,8 +1453,7 @@
                 (m1-file-alist-p hifat-file-alist)
                 (m1-directory-file-p (cdr (car hifat-file-alist))))
            (hifat-no-dups-p (m1-file->contents (cdr (car hifat-file-alist)))))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p
-                                     fat32-filename-p-correctness-1))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
 
 (defun hifat-file-alist-fix (hifat-file-alist)
   (declare (xargs :guard (and (m1-file-alist-p hifat-file-alist)

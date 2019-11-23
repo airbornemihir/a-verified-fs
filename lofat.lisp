@@ -14790,8 +14790,7 @@ Some (rather awful) testing forms are
 (verify-guards
   lofat-place-file
   :hints
-  (("goal" :in-theory (e/d (fat32-filename-p-correctness-1)
-                           (unsigned-byte-p)))))
+  (("goal" :in-theory (disable unsigned-byte-p))))
 
 ;; Move later
 (defthm natp-of-update-dir-contents
@@ -16290,8 +16289,7 @@ Some (rather awful) testing forms are
            dir-ent)
           (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
   :hints (("goal" :induct (lofat-place-file fat32-in-memory
-                                            root-dir-ent pathname file)
-           :in-theory (enable (:rewrite fat32-filename-p-correctness-1)))))
+                                            root-dir-ent pathname file))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-8
@@ -18213,7 +18211,6 @@ Some (rather awful) testing forms are
     :do-not-induct t
     :in-theory
     (e/d (update-dir-contents-correctness-1
-          (:rewrite fat32-filename-p-correctness-1)
           nats=>string)
          (explode-of-dir-ent-filename
           clear-clusterchain-correctness-1
@@ -19192,8 +19189,7 @@ Some (rather awful) testing forms are
       :in-theory
       (e/d (hifat-place-file
             (:rewrite hifat-to-lofat-inversion-lemma-17)
-            (:rewrite lofat-to-hifat-inversion-lemma-4)
-            (:rewrite fat32-filename-p-correctness-1))
+            (:rewrite lofat-to-hifat-inversion-lemma-4))
            ((:DEFINITION FIND-DIR-ENT)
             (:DEFINITION PLACE-DIR-ENT)
             (:REWRITE
