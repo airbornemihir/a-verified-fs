@@ -18710,11 +18710,12 @@ Some (rather awful) testing forms are
     (zp (mv-nth 3
                 (lofat-to-hifat-helper fat32-in-memory
                                        dir-ent-list entry-limit)))
-    (> (nfix entry-limit)
-       (hifat-entry-count
-        (mv-nth 0
-                (lofat-to-hifat-helper fat32-in-memory
-                                       dir-ent-list entry-limit))))
+    (force
+     (> (nfix entry-limit)
+        (hifat-entry-count
+         (mv-nth 0
+                 (lofat-to-hifat-helper fat32-in-memory
+                                        dir-ent-list entry-limit)))))
     (equal
      (mv-nth
       1
@@ -18775,11 +18776,12 @@ Some (rather awful) testing forms are
     (zp (mv-nth 3
                 (lofat-to-hifat-helper fat32-in-memory
                                        dir-ent-list entry-limit)))
-    (> (nfix entry-limit)
-       (hifat-entry-count
-        (mv-nth 0
-                (lofat-to-hifat-helper fat32-in-memory
-                                       dir-ent-list entry-limit))))
+    (force
+     (> (nfix entry-limit)
+        (hifat-entry-count
+         (mv-nth 0
+                 (lofat-to-hifat-helper fat32-in-memory
+                                        dir-ent-list entry-limit)))))
     (equal
      (mv-nth
       1
@@ -18820,11 +18822,12 @@ Some (rather awful) testing forms are
     (zp (mv-nth 3
                 (lofat-to-hifat-helper fat32-in-memory
                                        dir-ent-list entry-limit)))
-    (> (nfix entry-limit)
-       (hifat-entry-count
-        (mv-nth 0
-                (lofat-to-hifat-helper fat32-in-memory
-                                       dir-ent-list entry-limit))))
+    (force
+     (> (nfix entry-limit)
+        (hifat-entry-count
+         (mv-nth 0
+                 (lofat-to-hifat-helper fat32-in-memory
+                                        dir-ent-list entry-limit)))))
     (equal
      (mv-nth
       1
