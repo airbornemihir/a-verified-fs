@@ -493,8 +493,7 @@
   useless-dir-ent-p-of-dir-ent-set-filename
   (implies (fat32-filename-p filename)
            (not (useless-dir-ent-p (dir-ent-set-filename dir-ent filename))))
-  :hints (("goal" :in-theory (enable useless-dir-ent-p
-                                     fat32-filename-p-correctness-1))))
+  :hints (("goal" :in-theory (enable useless-dir-ent-p))))
 
 (defund
   make-dir-ent-list (dir-contents)
@@ -1149,7 +1148,6 @@
   (("goal" :in-theory
     (e/d (fat32-filename-p lofat-to-hifat-helper)
          (nth-of-string=>nats natp-of-cluster-size
-                              (:rewrite fat32-filename-p-correctness-1)
                               (:definition fat32-filename-p)))
     :induct (lofat-to-hifat-helper fat32-in-memory
                                    dir-ent-list entry-limit)))
@@ -3699,8 +3697,7 @@
   (useful-dir-ent-list-p
    (mv-nth 1
            (hifat-to-lofat-helper fat32-in-memory fs first-cluster)))
-  :hints (("goal" :in-theory (enable useful-dir-ent-list-p
-                                     fat32-filename-p-correctness-1))))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p))))
 
 (defthm
   unsigned-byte-listp-of-flatten-when-dir-ent-list-p
@@ -3792,7 +3789,7 @@
     (("goal"
       :in-theory
       (e/d
-       (painful-debugging-lemma-9 fat32-filename-p-correctness-1)
+       (painful-debugging-lemma-9)
        (stobj-set-indices-in-fa-table))))))
 
 (defthm
@@ -7750,8 +7747,7 @@
       :in-theory
       (e/d (lofat-to-hifat-helper
             (:definition hifat-no-dups-p)
-            remove1-dir-ent fat32-filename-p-correctness-1
-            not-intersectp-list
+            remove1-dir-ent not-intersectp-list
             (:linear hifat-to-lofat-inversion-lemma-16))
            ((:rewrite nth-of-nats=>chars)
             (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
