@@ -1061,7 +1061,9 @@ Some (rather awful) testing forms are
    (pseudo-root-dir-ent fat32-in-memory))
   :hints (("goal" :in-theory (enable clear-clusterchain))))
 
-(defthm
+;; This has to be disabled because it's causing fat32-build-index-list to
+;; appear where it isn't wanted.
+(defthmd
   clear-clusterchain-correctness-1
   (implies
    (<= 2 masked-current-cluster)
@@ -1711,7 +1713,8 @@ Some (rather awful) testing forms are
     (mv-nth 0
             (update-dir-contents fat32-in-memory
                                  first-cluster dir-contents))))
-  :hints (("goal" :in-theory (enable update-dir-contents))))
+  :hints (("goal" :in-theory (enable update-dir-contents
+                                     clear-clusterchain-correctness-1))))
 
 (defthm
   fat32-build-index-list-of-effective-fat-of-update-dir-contents
@@ -2264,7 +2267,8 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory (e/d (update-dir-contents clear-clusterchain-correctness-3
-                                         place-contents-correctness-1)))))
+                                         place-contents-correctness-1
+                                         clear-clusterchain-correctness-1)))))
 
 (defun
     delete-dir-ent (dir-ent-list filename)
@@ -2956,7 +2960,7 @@ Some (rather awful) testing forms are
                                masked-current-cluster length)))
   :hints
   (("goal"
-    :in-theory (e/d (update-dir-contents)
+    :in-theory (e/d (update-dir-contents clear-clusterchain-correctness-1)
                     ((:rewrite intersectp-is-commutative)))
     :expand
     ((fat32-build-index-list (effective-fat fat32-in-memory)
@@ -17321,32 +17325,27 @@ Some (rather awful) testing forms are
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-6
-  t
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and (dir-ent-directory-p dir-ent)
-          (<= 2 (dir-ent-first-cluster dir-ent)))
-     (equal (mv-nth 1
-                    (clear-clusterchain fat32-in-memory
-                                        (dir-ent-first-cluster dir-ent)
-                                        *ms-max-dir-size*))
-            (mv-nth 1
-                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
-    :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents))))
-   (:rewrite
-    :corollary
-    (implies
-     (and (not (dir-ent-directory-p dir-ent))
-          (<= 2 (dir-ent-first-cluster dir-ent)))
-     (equal (mv-nth 1
-                    (clear-clusterchain fat32-in-memory
-                                        (dir-ent-first-cluster dir-ent)
-                                        (dir-ent-file-size dir-ent)))
-            (mv-nth 1
-                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
-    :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents))))))
+  (and
+   (implies
+    (and (dir-ent-directory-p dir-ent)
+         (<= 2 (dir-ent-first-cluster dir-ent)))
+    (equal (mv-nth 1
+                   (clear-clusterchain fat32-in-memory
+                                       (dir-ent-first-cluster dir-ent)
+                                       *ms-max-dir-size*))
+           (mv-nth 1
+                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
+   (implies
+    (and (not (dir-ent-directory-p dir-ent))
+         (<= 2 (dir-ent-first-cluster dir-ent)))
+    (equal (mv-nth 1
+                   (clear-clusterchain fat32-in-memory
+                                       (dir-ent-first-cluster dir-ent)
+                                       (dir-ent-file-size dir-ent)))
+           (mv-nth 1
+                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))))
+  :hints (("goal" :in-theory (enable dir-ent-clusterchain-contents
+                                     clear-clusterchain-correctness-1))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-7
