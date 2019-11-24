@@ -296,12 +296,20 @@
   :hints (("goal" :in-theory (enable fat32-entry-p)))
   :rule-classes :forward-chaining)
 
-;; There's an obvious generalisation of this theorem, but it requires a silly
-;; arithmetic subgoal to be resolved.
-(defthm fat32-entry-p-of-nth
-  (implies (and (fat32-entry-list-p l)
-                (< (nfix n) (len l)))
-           (fat32-entry-p (nth n l))))
+(encapsulate
+  ()
+
+  (local (include-book "arithmetic-5/top" :dir :system))
+
+  (local
+   (defthm fat32-entry-p-of-nth-lemma-1
+     (equal (< (+ -1 n) (len (cdr l)))
+            (< n (+ 1 (len (cdr l)))))))
+
+  (defthm fat32-entry-p-of-nth
+    (implies (fat32-entry-list-p l)
+             (equal (fat32-entry-p (nth n l))
+                    (< (nfix n) (len l))))))
 
 (defund
   fat32-update-lower-28
@@ -918,8 +926,8 @@
   (integer-listp (find-n-free-clusters fa-table n)))
 
 (defthm find-n-free-clusters-correctness-7
-  (implies (< (nfix m)
-              (len (find-n-free-clusters fa-table n)))
+  (implies (force (< (nfix m)
+                     (len (find-n-free-clusters fa-table n))))
            (and (<= *ms-first-data-cluster*
                     (nth m (find-n-free-clusters fa-table n)))
                 (< (nth m (find-n-free-clusters fa-table n))
