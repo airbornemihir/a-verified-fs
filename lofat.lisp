@@ -14172,6 +14172,41 @@ Some (rather awful) testing forms are
                                 (insert-dir-ent dir-contents dir-ent)))
   :hints (("goal" :in-theory (enable insert-dir-ent))))
 
+(encapsulate
+  ()
+
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  ;; Hypotheses are minimal.
+  (make-event
+   `(defthm
+      make-dir-ent-list-of-append-4
+      (implies
+       (and (dir-ent-p dir-ent)
+            (not (useless-dir-ent-p dir-ent))
+            (fat32-filename-p (dir-ent-filename dir-ent))
+            (equal (mod (len (explode dir-contents))
+                        *ms-dir-ent-length*)
+                   0))
+       (equal
+        (make-dir-ent-list
+         (implode
+          (append
+           (nats=>chars (insert-dir-ent (string=>nats dir-contents)
+                                        dir-ent))
+           (make-list-ac n ,(code-char 0) nil))))
+        (place-dir-ent (make-dir-ent-list dir-contents)
+                       dir-ent)))
+      :hints
+      (("goal"
+        :induct (make-dir-ent-list dir-contents)
+        :in-theory
+        (e/d (make-dir-ent-list dir-ent-fix
+                                insert-dir-ent string=>nats fat32-filename-p))
+        :expand ((make-dir-ent-list dir-contents)
+                 (insert-dir-ent (string=>nats dir-contents)
+                                 dir-ent)))))))
+
 (defun
     lofat-place-file
     (fat32-in-memory root-dir-ent pathname file)
@@ -18381,41 +18416,6 @@ Some (rather awful) testing forms are
          (explode-of-dir-ent-filename
           clear-clusterchain-correctness-1
           effective-fat-of-clear-clusterchain)))))
-
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  ;; Hypotheses are minimal.
-  (make-event
-   `(defthm
-      make-dir-ent-list-of-append-4
-      (implies
-       (and (dir-ent-p dir-ent)
-            (not (useless-dir-ent-p dir-ent))
-            (fat32-filename-p (dir-ent-filename dir-ent))
-            (equal (mod (len (explode dir-contents))
-                        *ms-dir-ent-length*)
-                   0))
-       (equal
-        (make-dir-ent-list
-         (implode
-          (append
-           (nats=>chars (insert-dir-ent (string=>nats dir-contents)
-                                        dir-ent))
-           (make-list-ac n ,(code-char 0) nil))))
-        (place-dir-ent (make-dir-ent-list dir-contents)
-                       dir-ent)))
-      :hints
-      (("goal"
-        :induct (make-dir-ent-list dir-contents)
-        :in-theory
-        (e/d (make-dir-ent-list dir-ent-fix
-                                insert-dir-ent string=>nats fat32-filename-p))
-        :expand ((make-dir-ent-list dir-contents)
-                 (insert-dir-ent (string=>nats dir-contents)
-                                 dir-ent)))))))
 
 ;; Move later.
 (defthm
