@@ -957,6 +957,16 @@ Some (rather awful) testing forms are
   (place-dir-ent dir-ent-list dir-ent)
   2)
 
+(defthm
+  len-of-place-dir-ent
+  (equal
+   (len (place-dir-ent dir-ent-list dir-ent))
+   (if (zp (mv-nth 1
+                   (find-dir-ent dir-ent-list
+                                 (dir-ent-filename dir-ent))))
+       (len dir-ent-list)
+       (+ 1 (len dir-ent-list)))))
+
 (defund clear-clusterchain
   (fat32-in-memory masked-current-cluster length)
   (declare
@@ -14052,8 +14062,8 @@ Some (rather awful) testing forms are
                    (dir-ent-filename dir-ent))
      (make-dir-ent-list (implode (nats=>chars dir-contents)))))))
 
-;; Move later... and also consider removing the unsigned-byte-listp hypothesis,
-;; it's not there in the other one.
+;; Consider removing the unsigned-byte-listp hypothesis, it's not there in the
+;; other one.
 (defthm
   len-of-insert-dir-ent
   (implies
@@ -16734,17 +16744,6 @@ Some (rather awful) testing forms are
               (car pathname))))))
          0 nil))))))))
 
-;; Move later
-(defthm
-  len-of-place-contents
-  (equal
-   (len (place-dir-ent dir-ent-list dir-ent))
-   (if (zp (mv-nth 1
-                   (find-dir-ent dir-ent-list
-                                 (dir-ent-filename dir-ent))))
-       (len dir-ent-list)
-       (+ 1 (len dir-ent-list)))))
-
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-2
   (implies
@@ -18150,7 +18149,7 @@ Some (rather awful) testing forms are
                           cluster-size))))
     :hints (("Goal" :in-theory (enable nats=>string)) ))))
 
-;; Not really this theorem's lemma, to be honest.
+;; Move later and rename.
 (defthm dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-15
   (implies (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
                        0))
