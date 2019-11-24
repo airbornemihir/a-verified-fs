@@ -1542,69 +1542,159 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable dir-ent-clusterchain
                                      dir-ent-clusterchain-contents))))
 
+;; Free variables, are they necessary?
 (defthm
- fati-of-clear-clusterchain
- (implies
-  (and (lofat-fs-p fat32-in-memory)
-       (natp i)
-       (fat32-masked-entry-p masked-current-cluster)
-       (<= *ms-first-data-cluster*
-           masked-current-cluster)
-       (< masked-current-cluster
-          (+ *ms-first-data-cluster*
-             (count-of-clusters fat32-in-memory)))
-       (< i
-          (+ *ms-first-data-cluster*
-             (count-of-clusters fat32-in-memory))))
-  (equal
-   (fati i
-         (mv-nth 0
-                 (clear-clusterchain fat32-in-memory
-                                     masked-current-cluster length)))
-   (if
-    (and
-     (equal
-      (mv-nth 1
-              (fat32-build-index-list (effective-fat fat32-in-memory)
-                                      masked-current-cluster
-                                      length (cluster-size fat32-in-memory)))
-      0)
-     (member-equal
-          i
+  fati-of-clear-clusterchain
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (natp i)
+        (fat32-masked-entry-p masked-current-cluster)
+        (<= *ms-first-data-cluster*
+            masked-current-cluster)
+        (< masked-current-cluster
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory)))
+        (< i
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory))))
+   (equal
+    (fati
+     i
+     (mv-nth
+      0
+      (clear-clusterchain fat32-in-memory
+                          masked-current-cluster length)))
+    (if
+     (and
+      (equal
+       (mv-nth 1
+               (fat32-build-index-list
+                (effective-fat fat32-in-memory)
+                masked-current-cluster
+                length (cluster-size fat32-in-memory)))
+       0)
+      (member-equal
+       i
+       (mv-nth 0
+               (fat32-build-index-list
+                (effective-fat fat32-in-memory)
+                masked-current-cluster length
+                (cluster-size fat32-in-memory)))))
+     (fat32-update-lower-28 (fati i fat32-in-memory)
+                            0)
+     (fati i fat32-in-memory))))
+  :hints
+  (("goal"
+    :in-theory (e/d (clear-clusterchain)
+                    ((:rewrite nth-of-effective-fat)))
+    :use
+    ((:instance
+      (:rewrite nth-of-effective-fat)
+      (fat32-in-memory
+       (stobj-set-indices-in-fa-table
+        fat32-in-memory
+        (mv-nth 0
+                (fat32-build-index-list
+                 (effective-fat fat32-in-memory)
+                 masked-current-cluster
+                 length (cluster-size fat32-in-memory)))
+        (make-list-ac
+         (len
           (mv-nth 0
-                  (fat32-build-index-list (effective-fat fat32-in-memory)
-                                          masked-current-cluster length
-                                          (cluster-size fat32-in-memory)))))
-    (fat32-update-lower-28 (fati i fat32-in-memory)
-                           0)
-    (fati i fat32-in-memory))))
- :hints
- (("goal"
-   :in-theory (e/d (clear-clusterchain)
-                   ((:rewrite nth-of-effective-fat)))
-   :use
-   ((:instance
-     (:rewrite nth-of-effective-fat)
-     (fat32-in-memory
-      (stobj-set-indices-in-fa-table
-       fat32-in-memory
+                  (fat32-build-index-list
+                   (effective-fat fat32-in-memory)
+                   masked-current-cluster
+                   length (cluster-size fat32-in-memory))))
+         0 nil)))
+      (n i))
+     (:instance (:rewrite nth-of-effective-fat)
+                (fat32-in-memory fat32-in-memory)
+                (n i)))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (natp i)
+          (fat32-masked-entry-p masked-current-cluster)
+          (<= *ms-first-data-cluster*
+              masked-current-cluster)
+          (< masked-current-cluster
+             (+ *ms-first-data-cluster*
+                (count-of-clusters fat32-in-memory)))
+          (< i
+             (+ *ms-first-data-cluster*
+                (count-of-clusters fat32-in-memory)))
+          (not (dir-ent-directory-p dir-ent))
+          (equal masked-current-cluster
+                 (dir-ent-first-cluster dir-ent))
+          (equal length (dir-ent-file-size dir-ent)))
+     (equal
+      (fati
+       i
        (mv-nth
-            0
-            (fat32-build-index-list (effective-fat fat32-in-memory)
-                                    masked-current-cluster
-                                    length (cluster-size fat32-in-memory)))
-       (make-list-ac
-        (len
+        0
+        (clear-clusterchain fat32-in-memory
+                            masked-current-cluster length)))
+      (if
+       (and
+        (equal
+         (mv-nth 1
+                 (dir-ent-clusterchain fat32-in-memory dir-ent))
+         0)
+        (member-equal
+         i
          (mv-nth
-             0
-             (fat32-build-index-list (effective-fat fat32-in-memory)
-                                     masked-current-cluster
-                                     length (cluster-size fat32-in-memory))))
-        0 nil)))
-     (n i))
-    (:instance (:rewrite nth-of-effective-fat)
-               (fat32-in-memory fat32-in-memory)
-               (n i))))))
+          0
+          (dir-ent-clusterchain fat32-in-memory dir-ent))))
+       (fat32-update-lower-28 (fati i fat32-in-memory)
+                              0)
+       (fati i fat32-in-memory))))
+    :hints (("goal" :in-theory (enable dir-ent-clusterchain))))
+   (:rewrite
+    :corollary
+    (implies
+     (and (lofat-fs-p fat32-in-memory)
+          (natp i)
+          (fat32-masked-entry-p masked-current-cluster)
+          (<= *ms-first-data-cluster*
+              masked-current-cluster)
+          (< masked-current-cluster
+             (+ *ms-first-data-cluster*
+                (count-of-clusters fat32-in-memory)))
+          (< i
+             (+ *ms-first-data-cluster*
+                (count-of-clusters fat32-in-memory)))
+          (dir-ent-directory-p dir-ent)
+          (equal masked-current-cluster
+                 (dir-ent-first-cluster dir-ent))
+          (equal length *ms-max-dir-size*))
+     (equal
+      (fati
+       i
+       (mv-nth
+        0
+        (clear-clusterchain fat32-in-memory
+                            masked-current-cluster length)))
+      (if
+       (and
+        (equal
+         (mv-nth 1
+                 (dir-ent-clusterchain fat32-in-memory dir-ent))
+         0)
+        (member-equal
+         i
+         (mv-nth
+          0
+          (dir-ent-clusterchain fat32-in-memory dir-ent))))
+       (fat32-update-lower-28 (fati i fat32-in-memory)
+                              0)
+       (fati i fat32-in-memory))))
+    :hints
+    (("goal" :in-theory (enable dir-ent-clusterchain))))))
+
+(in-theory (disable (:REWRITE FATI-OF-CLEAR-CLUSTERCHAIN . 1)))
 
 ;; This function calls place-contents with a meaningless value of dir-ent,
 ;; because we know that for a well-formed directory, the contents will be
@@ -2273,7 +2363,8 @@ Some (rather awful) testing forms are
     :in-theory (enable update-dir-contents clear-clusterchain-correctness-3
                        place-contents-correctness-1
                        clear-clusterchain-correctness-1
-                       (:rewrite effective-fat-of-clear-clusterchain . 1)))))
+                       (:rewrite effective-fat-of-clear-clusterchain . 1)
+                       (:rewrite fati-of-clear-clusterchain . 1)))))
 
 (defun
     delete-dir-ent (dir-ent-list filename)
@@ -12673,7 +12764,8 @@ Some (rather awful) testing forms are
      update-dir-contents
      dir-ent-clusterchain-contents
      (:rewrite
-      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)))))
+      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)
+     clear-clusterchain-correctness-1))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-65
