@@ -18422,7 +18422,7 @@ Some (rather awful) testing forms are
           effective-fat-of-clear-clusterchain)))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-18
+  lofat-place-file-correctness-1-lemma-10
   (implies
    (and
     (syntaxp (variablep entry-limit))
@@ -18518,7 +18518,7 @@ Some (rather awful) testing forms are
                   (+ -1 entry-limit)))))))))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-16
+  lofat-place-file-correctness-1-lemma-11
   (implies
    (and (useful-dir-ent-list-p dir-ent-list)
         (not (dir-ent-directory-p (dir-ent-fix dir-ent)))
@@ -18577,7 +18577,7 @@ Some (rather awful) testing forms are
                                           entry-limit)))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-19
+  lofat-place-file-correctness-1-lemma-12
   (implies
    (and
     (syntaxp (variablep entry-limit))
@@ -18683,7 +18683,7 @@ Some (rather awful) testing forms are
      (fat32-in-memory fat32-in-memory)))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-20
+  lofat-place-file-correctness-1-lemma-13
   (implies
    (and
     (equal
@@ -18763,7 +18763,7 @@ Some (rather awful) testing forms are
      (fat32-in-memory fat32-in-memory)))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-22
+  lofat-place-file-correctness-1-lemma-14
   (implies
    (and
     (equal
@@ -18862,7 +18862,7 @@ Some (rather awful) testing forms are
 
 ;; Hypotheses are minimal.
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-17
+  lofat-place-file-correctness-1-lemma-15
   (implies
    (and
     (useful-dir-ent-list-p dir-ent-list)
@@ -18921,9 +18921,7 @@ Some (rather awful) testing forms are
       (:linear count-free-clusters-correctness-1)
       (:rewrite put-assoc-equal-without-change . 2)
       (:rewrite nats=>chars-of-take)
-      (:rewrite hifat-to-lofat-inversion-lemma-2)
-      (:rewrite
-       dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-19)))
+      (:rewrite hifat-to-lofat-inversion-lemma-2)))
     :induct (lofat-to-hifat-helper fat32-in-memory
                                    dir-ent-list entry-limit)
     :expand ((:free (fat32-in-memory dir-ent dir-ent-list entry-limit)
@@ -18934,7 +18932,7 @@ Some (rather awful) testing forms are
 
 ;; Hypotheses are minimal.
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-21
+  lofat-place-file-correctness-1-lemma-16
   (implies
    (and
     (useful-dir-ent-list-p dir-ent-list)
@@ -18986,7 +18984,7 @@ Some (rather awful) testing forms are
 
 ;; Hypotheses are minimal.
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-23
+  lofat-place-file-correctness-1-lemma-17
   (implies
    (and
     (useful-dir-ent-list-p dir-ent-list)
@@ -19044,9 +19042,7 @@ Some (rather awful) testing forms are
       (:rewrite put-assoc-equal-without-change . 2)
       (:rewrite nats=>chars-of-take)
       (:definition hifat-file-alist-fix)
-      (:rewrite hifat-subsetp-reflexive-lemma-3)
-      (:rewrite
-       dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-19)))
+      (:rewrite hifat-subsetp-reflexive-lemma-3)))
     :induct (lofat-to-hifat-helper fat32-in-memory
                                    dir-ent-list entry-limit)
     :do-not-induct t
@@ -19056,7 +19052,7 @@ Some (rather awful) testing forms are
                                           entry-limit)))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-24
+  lofat-place-file-correctness-1-lemma-18
   (implies
    (and (< (dir-ent-first-cluster root-dir-ent)
            (+ 2 (count-of-clusters fat32-in-memory)))
@@ -20147,7 +20143,7 @@ Some (rather awful) testing forms are
 ;;   :hints (("goal" :in-theory (enable len-of-make-clusters))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-28
+  lofat-place-file-correctness-1-lemma-19
   (implies
    (and
     (<= (+ -1
@@ -20176,7 +20172,7 @@ Some (rather awful) testing forms are
 
 ;; Introduce a rewrite rule gingerly...
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-29
+  lofat-place-file-correctness-1-lemma-20
   (implies (lofat-regular-file-p file)
            (iff (equal (len (explode (lofat-file->contents file)))
                        0)
@@ -20184,7 +20180,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :expand (len (explode (lofat-file->contents file))))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-30
+  lofat-place-file-correctness-1-lemma-21
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
