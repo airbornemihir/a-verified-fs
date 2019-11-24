@@ -18133,12 +18133,6 @@ Some (rather awful) testing forms are
                (not (equal (nth 0 (explode filename))
                            ,(code-char 0))))))))
 
-;; Move later - and disable any time it starts creating trouble.
-(defthmd implode-of-nats=>chars
-  (equal (implode (nats=>chars nats))
-         (nats=>string nats))
-  :hints (("goal" :in-theory (enable nats=>string))))
-
 ;; The unsigned-byte-listp 8 hypothesis can go, maybe...
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-14
