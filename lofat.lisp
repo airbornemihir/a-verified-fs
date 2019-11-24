@@ -967,6 +967,16 @@ Some (rather awful) testing forms are
        (len dir-ent-list)
        (+ 1 (len dir-ent-list)))))
 
+(defthm
+  useful-dir-ent-list-p-of-place-dir-ent
+  (implies
+   (and (useful-dir-ent-list-p dir-ent-list)
+        (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
+        (fat32-filename-p (dir-ent-filename dir-ent)))
+   (useful-dir-ent-list-p (place-dir-ent dir-ent-list dir-ent)))
+  :hints (("goal" :in-theory (enable useful-dir-ent-list-p
+                                     fat32-filename-p))))
+
 (defund clear-clusterchain
   (fat32-in-memory masked-current-cluster length)
   (declare
@@ -18410,17 +18420,6 @@ Some (rather awful) testing forms are
          (explode-of-dir-ent-filename
           clear-clusterchain-correctness-1
           effective-fat-of-clear-clusterchain)))))
-
-;; Move later.
-(defthm
-  useful-dir-ent-list-p-of-place-dir-ent
-  (implies
-   (and (useful-dir-ent-list-p dir-ent-list)
-        (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-        (fat32-filename-p (dir-ent-filename dir-ent)))
-   (useful-dir-ent-list-p (place-dir-ent dir-ent-list dir-ent)))
-  :hints (("goal" :in-theory (enable useful-dir-ent-list-p
-                                     fat32-filename-p))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-18
