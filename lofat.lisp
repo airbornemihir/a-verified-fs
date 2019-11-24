@@ -1424,6 +1424,10 @@ Some (rather awful) testing forms are
     :hints (("goal" :in-theory (enable dir-ent-clusterchain
                                        clear-clusterchain))))))
 
+;; This is needed, to avoid introducing unwanted fat32-build-index-list terms
+;; into proofs.
+(in-theory (disable (:rewrite effective-fat-of-clear-clusterchain . 1)))
+
 (encapsulate
   ()
 
@@ -2266,9 +2270,10 @@ Some (rather awful) testing forms are
           fat32-in-memory))
   :hints
   (("goal"
-    :in-theory (e/d (update-dir-contents clear-clusterchain-correctness-3
-                                         place-contents-correctness-1
-                                         clear-clusterchain-correctness-1)))))
+    :in-theory (enable update-dir-contents clear-clusterchain-correctness-3
+                       place-contents-correctness-1
+                       clear-clusterchain-correctness-1
+                       (:rewrite effective-fat-of-clear-clusterchain . 1)))))
 
 (defun
     delete-dir-ent (dir-ent-list filename)
