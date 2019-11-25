@@ -20855,6 +20855,78 @@ Some (rather awful) testing forms are
                     (dir-ent (car dir-ent-list))
                     (fat32-in-memory fat32-in-memory)))))
 
+(defthm
+  lofat-place-file-correctness-1-lemma-29
+  (implies
+   (and
+    (equal
+     (mv-nth
+      1
+      (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))
+     0)
+    (no-duplicatesp-equal
+     (mv-nth 0
+             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+    (<
+     (nth
+      0
+      (find-n-free-clusters
+       (set-indices-in-fa-table
+        (effective-fat fat32-in-memory)
+        (mv-nth 0
+                (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+        (make-list-ac
+         (len
+          (mv-nth 0
+                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+         0 nil))
+       1))
+     (+ 2 (count-of-clusters fat32-in-memory))))
+   (not
+    (<
+     (binary-+ '2
+               (count-of-clusters fat32-in-memory))
+     (binary-+
+      '1
+      (nth
+       '0
+       (find-n-free-clusters
+        (set-indices-in-fa-table
+         (effective-fat fat32-in-memory)
+         (mv-nth '0
+                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+         (make-list-ac
+          (len
+           (mv-nth '0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+          '0
+          'nil))
+        '1))))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable (:linear find-n-free-clusters-correctness-7))
+    :use
+    ((:instance
+      (:rewrite painful-debugging-lemma-13)
+      (x
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth 0
+                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+           0 nil))
+         1)))
+      (y (+ 2
+            (count-of-clusters fat32-in-memory))))))))
+
 ;; This is derived from a subgoal of lofat-place-file-correctness-1-lemma-1, by
 ;; means of the following proof-builder instructions.
 ;; ((:in-theory (enable fat32-filename-list-p))
