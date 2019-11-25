@@ -20525,8 +20525,9 @@ Some (rather awful) testing forms are
   (implies (equal (mv-nth 1
                           (dir-ent-clusterchain fat32-in-memory dir-ent))
                   0)
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory dir-ent)))
+           (consp
+            (mv-nth 0
+                    (dir-ent-clusterchain fat32-in-memory dir-ent))))
   :hints
   (("goal"
     :in-theory (enable dir-ent-clusterchain
@@ -20538,7 +20539,8 @@ Some (rather awful) testing forms are
              (fat32-build-index-list (effective-fat fat32-in-memory)
                                      (dir-ent-first-cluster dir-ent)
                                      2097152
-                                     (cluster-size fat32-in-memory))))))
+                                     (cluster-size fat32-in-memory)))))
+  :rule-classes :type-prescription)
 
 (defthm
   lofat-place-file-correctness-1-lemma-26
@@ -20796,11 +20798,7 @@ Some (rather awful) testing forms are
            (clear-clusterchain fat32-in-memory
                                (dir-ent-first-cluster (car dir-ent-list))
                                (dir-ent-file-size (car dir-ent-list)))))))))
-     0 *enospc*)))
-  :hints
-  (("goal" :in-theory (disable lofat-place-file-correctness-1-lemma-25)
-    :use ((:instance (:rewrite lofat-place-file-correctness-1-lemma-25)
-                     (dir-ent (car dir-ent-list)))))))
+     0 *enospc*))))
 
 ;; I don't see why this subgoal hint was necessary.
 (defthm
