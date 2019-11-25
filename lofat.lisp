@@ -8666,9 +8666,10 @@ Some (rather awful) testing forms are
                                    filename2)))))
   :hints
   (("goal"
-    :in-theory (enable remove1-dir-ent clear-dir-ent
-                       len-when-dir-ent-p
-                       nats=>string)
+    :in-theory (e/d (remove1-dir-ent clear-dir-ent
+                                     len-when-dir-ent-p
+                                     nats=>string)
+                    (nats=>chars-of-take))
     :induct (clear-dir-ent dir-contents filename1)
     :expand
     ((remove1-dir-ent
@@ -8726,9 +8727,10 @@ Some (rather awful) testing forms are
                                filename3)))))
   :hints
   (("goal"
-    :in-theory (enable remove1-dir-ent clear-dir-ent
-                       len-when-dir-ent-p
-                       nats=>string)
+    :in-theory (e/d (remove1-dir-ent clear-dir-ent
+                                     len-when-dir-ent-p
+                                     nats=>string)
+                    (nats=>chars-of-take))
     :induct (clear-dir-ent dir-contents filename1)
     :expand
     ((remove1-dir-ent
