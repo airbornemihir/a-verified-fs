@@ -2366,6 +2366,13 @@ Some (rather awful) testing forms are
                        (:rewrite effective-fat-of-clear-clusterchain . 1)
                        (:rewrite fati-of-clear-clusterchain . 1)))))
 
+(defthm natp-of-update-dir-contents
+  (natp (mv-nth 1
+                (update-dir-contents fat32-in-memory
+                                     first-cluster dir-contents)))
+  :rule-classes :type-prescription
+  :hints (("goal" :in-theory (enable update-dir-contents))))
+
 (defun
     delete-dir-ent (dir-ent-list filename)
   (declare (xargs :guard (and (fat32-filename-p filename)
@@ -15107,14 +15114,6 @@ Some (rather awful) testing forms are
   lofat-place-file
   :hints
   (("goal" :in-theory (disable unsigned-byte-p))))
-
-;; Move later
-(defthm natp-of-update-dir-contents
-  (natp (mv-nth 1
-                (update-dir-contents fat32-in-memory
-                                     first-cluster dir-contents)))
-  :rule-classes :type-prescription
-  :hints (("goal" :in-theory (enable update-dir-contents))))
 
 (defthm natp-of-lofat-place-file
   (natp (mv-nth 1
