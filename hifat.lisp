@@ -184,6 +184,12 @@
     (("goal" :in-theory (enable chars=>nats)
       :induct (cdr-cdr-induct x x-equiv)))))
 
+(defthm nats=>chars-of-take
+  (implies (<= (nfix n) (len nats))
+           (equal (nats=>chars (take n nats))
+                  (take n (nats=>chars nats))))
+  :hints (("goal" :in-theory (enable nats=>chars take))))
+
 (defthm
   consecutive-read-file-into-string-1
   (implies

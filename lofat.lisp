@@ -14196,13 +14196,6 @@ Some (rather awful) testing forms are
                                            make-dir-ent-list nats=>string))
     :induct (insert-dir-ent dir-contents dir-ent))))
 
-;; Move later
-(defthm nats=>chars-of-take
-  (implies (<= (nfix n) (len nats))
-           (equal (nats=>chars (take n nats))
-                  (take n (nats=>chars nats))))
-  :hints (("goal" :in-theory (enable nats=>chars take))))
-
 (defthm make-dir-ent-list-of-insert-dir-ent-lemma-1
   (implies (< (nfix n) *ms-dir-ent-length*)
            (natp (nth n (dir-ent-fix dir-ent))))
