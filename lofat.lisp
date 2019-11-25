@@ -20798,9 +20798,67 @@ Some (rather awful) testing forms are
                                (dir-ent-file-size (car dir-ent-list)))))))))
      0 *enospc*)))
   :hints
-  (("goal" :in-theory (disable lofat-place-file-correctness-1-lemma-25)
-    :use ((:instance (:rewrite lofat-place-file-correctness-1-lemma-25)
-                     (dir-ent (car dir-ent-list)))))))
+  (("goal"
+    :in-theory (disable (:rewrite place-contents-expansion-2))
+    :use
+    (:instance
+     (:rewrite place-contents-expansion-2)
+     (first-cluster
+      (nth
+       0
+       (find-n-free-clusters
+        (set-indices-in-fa-table
+         (effective-fat fat32-in-memory)
+         (mv-nth 0
+                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+         (make-list-ac
+          (len
+           (mv-nth 0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+          0 nil))
+        1)))
+     (file-length (len (explode (lofat-file->contents file))))
+     (contents (lofat-file->contents file))
+     (dir-ent (car dir-ent-list))
+     (fat32-in-memory
+      (update-fati
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth 0
+                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+           0 nil))
+         1))
+       (fat32-update-lower-28
+        (fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth 0
+                    (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+             0 nil))
+           1))
+         fat32-in-memory)
+        268435455)
+       (mv-nth
+        0
+        (clear-clusterchain fat32-in-memory
+                            (dir-ent-first-cluster (car dir-ent-list))
+                            (dir-ent-file-size (car dir-ent-list))))))))))
 
 ;; I don't see why this subgoal hint was necessary.
 (defthm
@@ -20851,10 +20909,28 @@ Some (rather awful) testing forms are
       1))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite lofat-place-file-correctness-1-lemma-25))
-    :use (:instance (:rewrite lofat-place-file-correctness-1-lemma-25)
-                    (dir-ent (car dir-ent-list))
-                    (fat32-in-memory fat32-in-memory)))))
+    :in-theory
+    (disable
+     (:rewrite dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size))
+    :use
+    (:instance
+     (:rewrite dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size)
+     (file-size (len (explode (lofat-file->contents file))))
+     (first-cluster
+      (nth
+       0
+       (find-n-free-clusters
+        (set-indices-in-fa-table
+         (effective-fat fat32-in-memory)
+         (mv-nth 0
+                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+         (make-list-ac
+          (len
+           (mv-nth 0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+          0 nil))
+        1)))
+     (dir-ent (car dir-ent-list))))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-29
@@ -20905,8 +20981,6 @@ Some (rather awful) testing forms are
         '1))))))
   :hints
   (("goal"
-    :do-not-induct t
-    :in-theory (disable (:linear find-n-free-clusters-correctness-7))
     :use
     ((:instance
       (:rewrite painful-debugging-lemma-13)
@@ -21076,10 +21150,28 @@ Some (rather awful) testing forms are
     (len (explode (lofat-file->contents file)))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite lofat-place-file-correctness-1-lemma-25))
-    :use (:instance (:rewrite lofat-place-file-correctness-1-lemma-25)
-                    (dir-ent (car dir-ent-list))
-                    (fat32-in-memory fat32-in-memory)))))
+    :in-theory
+    (disable
+     (:rewrite dir-ent-file-size-of-dir-ent-set-first-cluster-file-size))
+    :use
+    (:instance
+     (:rewrite dir-ent-file-size-of-dir-ent-set-first-cluster-file-size)
+     (file-size (len (explode (lofat-file->contents file))))
+     (first-cluster
+      (nth
+       0
+       (find-n-free-clusters
+        (set-indices-in-fa-table
+         (effective-fat fat32-in-memory)
+         (mv-nth 0
+                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+         (make-list-ac
+          (len
+           (mv-nth 0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+          0 nil))
+        1)))
+     (dir-ent (car dir-ent-list))))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-32
