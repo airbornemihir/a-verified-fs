@@ -20610,6 +20610,10 @@ Some (rather awful) testing forms are
       (y (+ 2
             (count-of-clusters fat32-in-memory))))))))
 
+;; I'm going to let this lemma be because it turns on
+;; dir-ent-clusterchain-of-place-contents-coincident-2, which has a free
+;; variable. I can't be sure, but forcing its hypotheses may cause things to
+;; break in wild ways.
 (defthm
   lofat-place-file-correctness-1-lemma-32
   (implies
@@ -20826,6 +20830,10 @@ Some (rather awful) testing forms are
                     (dir-ent (car dir-ent-list))
                     (fat32-in-memory fat32-in-memory)))))
 
+;; I'm going to let this lemma be because it turns on
+;; dir-ent-clusterchain-of-place-contents-coincident-2, which has a free
+;; variable. I can't be sure, but forcing its hypotheses may cause things to
+;; break in wild ways.
 (defthm
   lofat-place-file-correctness-1-lemma-33
   (implies
@@ -21525,14 +21533,6 @@ Some (rather awful) testing forms are
               (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
             0 nil))
           1)))))))))
-
-;; Move later.
-(defthm
-  lofat-place-file-correctness-1-lemma-37
-  (implies (and (free-index-listp x fa-table)
-                (not (equal (fat32-entry-mask (nth key fa-table))
-                            0)))
-           (not (member-equal key x))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-38
