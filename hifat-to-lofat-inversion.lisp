@@ -3295,7 +3295,7 @@
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (stringp contents)
-        (integerp first-cluster)
+        (force (integerp first-cluster))
         (>= first-cluster *ms-first-data-cluster*)
         (equal (mv-nth 3
                        (lofat-to-hifat-helper fat32-in-memory
