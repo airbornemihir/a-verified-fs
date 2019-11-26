@@ -326,7 +326,7 @@
 (defthm
   fat32-update-lower-28-correctness-1
   (implies
-   (and (fat32-entry-p entry)
+   (and (force (fat32-entry-p entry))
         (fat32-masked-entry-p masked-entry))
    (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
   :hints
@@ -563,7 +563,8 @@
 (defthm
   count-free-clusters-of-update-nth-1
   (implies
-   (and (integerp key) (<= *ms-first-data-cluster* key)
+   (and (force (integerp key))
+        (<= *ms-first-data-cluster* key)
         (not (equal (fat32-entry-mask val) 0))
         (< key (len fa-table)))
    (equal (count-free-clusters (update-nth key val fa-table))
@@ -1300,3 +1301,25 @@
                                     length cluster-size))))
   :hints
   (("goal" :in-theory (enable fat32-build-index-list))))
+
+(defthm
+  car-of-last-of-fat32-build-index-list
+  (implies
+   (and (fat32-masked-entry-p masked-current-cluster)
+        (< masked-current-cluster (len fa-table)))
+   (<
+    (car (last (mv-nth 0
+                       (fat32-build-index-list fa-table masked-current-cluster
+                                               length cluster-size))))
+    (len fa-table)))
+  :hints
+  (("goal"
+    :in-theory (disable car-of-last-when-bounded-nat-listp)
+    :use
+    (:instance
+     car-of-last-when-bounded-nat-listp
+     (l (mv-nth 0
+                (fat32-build-index-list fa-table masked-current-cluster
+                                        length cluster-size)))
+     (b (len fa-table)))))
+  :rule-classes :linear)
