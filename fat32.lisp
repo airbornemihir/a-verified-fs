@@ -165,8 +165,16 @@
 (defthm
   fat32-entry-fix-correctness-1
   (and (<= 0 (fat32-entry-fix x))
-       (< (fat32-entry-fix x) (ash 1 32)))
-  :rule-classes :linear
+       (< (fat32-entry-fix x) (ash 1 32))
+       (integerp (fat32-entry-fix x)))
+  :rule-classes
+  ((:linear
+    :corollary
+    (and (<= 0 (fat32-entry-fix x))
+         (< (fat32-entry-fix x) (ash 1 32))))
+   (:type-prescription
+    :corollary
+    (integerp (fat32-entry-fix x))))
   :hints
   (("goal" :in-theory (enable fat32-entry-fix fat32-entry-p))))
 
@@ -188,16 +196,14 @@
                  :fix    fat32-entry-fix
                  :equiv  fat32-entry-equiv
                  :define t
-                 :forward t
-                 )
+                 :forward t)
 
 (fty::deffixtype fat32-masked-entry
                  :pred   fat32-masked-entry-p
                  :fix    fat32-masked-entry-fix
                  :equiv  fat32-masked-entry-equiv
                  :define t
-                 :forward t
-                 )
+                 :forward t)
 
 (fty::deflist fat32-entry-list :elt-type fat32-entry-p :true-listp t)
 
@@ -321,27 +327,24 @@
       :in-theory (enable fat32-entry-p fat32-masked-entry-p)))
     :guard (and (fat32-entry-p entry)
                 (fat32-masked-entry-p masked-entry))))
-  (logapp 28 masked-entry (logtail 28 entry)))
+  (logapp 28 masked-entry
+          (logtail 28
+                   (mbe :exec entry
+                        :logic (fat32-entry-fix entry)))))
 
 (defthm
   fat32-update-lower-28-correctness-1
-  (implies
-   (and (force (fat32-entry-p entry))
-        (fat32-masked-entry-p masked-entry))
-   (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
-  :hints
-  (("goal"
-    :in-theory (e/d (fat32-update-lower-28 fat32-entry-p)
-                    (unsigned-byte-p logapp logtail))))
+  (implies (fat32-masked-entry-p masked-entry)
+           (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
+  :hints (("goal" :in-theory (e/d (fat32-update-lower-28 fat32-entry-p)
+                                  (logapp logtail))))
   :rule-classes
   (:rewrite
    (:rewrite
     :corollary
-    (implies (and (fat32-entry-p entry)
-                  (fat32-masked-entry-p masked-entry))
-             (unsigned-byte-p
-              32
-              (fat32-update-lower-28 entry masked-entry)))
+    (implies (fat32-masked-entry-p masked-entry)
+             (unsigned-byte-p 32
+                              (fat32-update-lower-28 entry masked-entry)))
     :hints (("goal" :in-theory (enable fat32-entry-p))))))
 
 (defthm
@@ -362,8 +365,15 @@
    (equal (fat32-update-lower-28 (fat32-update-lower-28 entry masked-entry1)
                                  masked-entry2)
           (fat32-update-lower-28 entry masked-entry2)))
-  :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
-                                  (logapp logtail)))))
+  :hints
+  (("goal"
+    :in-theory (e/d (fat32-update-lower-28)
+                    (logapp logtail
+                            (:rewrite fat32-update-lower-28-correctness-1
+                                      . 1)))
+    :use (:instance (:rewrite fat32-update-lower-28-correctness-1 . 1)
+                    (masked-entry masked-entry1)
+                    (entry entry)))))
 
 (defthmd
   fat32-update-lower-28-of-fat32-entry-mask
