@@ -2275,6 +2275,11 @@
   :hints (("goal" :in-theory (enable stobj-set-indices-in-fa-table))))
 
 (defthm
+  stobj-set-indices-in-fa-table-of-stobj-set-indices-in-fa-table-lemma-4
+  (implies (and (member-equal x l) (>= x b))
+           (not (bounded-nat-listp l b))))
+
+(defthm
   stobj-set-indices-in-fa-table-of-stobj-set-indices-in-fa-table-lemma-3
   (implies
    (and (lofat-fs-p fat32-in-memory)
@@ -4263,6 +4268,13 @@
                  0)
           (< key (len fa-table)))
      (non-free-index-listp x (update-nth key val fa-table))))))
+
+(defthm
+  free-index-listp-correctness-1
+  (implies (and (free-index-listp x fa-table)
+                (not (equal (fat32-entry-mask (nth key fa-table))
+                            0)))
+           (not (member-equal key x))))
 
 (defthm
   non-free-index-listp-correctness-3

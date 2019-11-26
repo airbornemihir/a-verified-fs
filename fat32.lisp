@@ -326,7 +326,7 @@
 (defthm
   fat32-update-lower-28-correctness-1
   (implies
-   (and (fat32-entry-p entry)
+   (and (force (fat32-entry-p entry))
         (fat32-masked-entry-p masked-entry))
    (fat32-entry-p (fat32-update-lower-28 entry masked-entry)))
   :hints
@@ -563,7 +563,8 @@
 (defthm
   count-free-clusters-of-update-nth-1
   (implies
-   (and (integerp key) (<= *ms-first-data-cluster* key)
+   (and (force (integerp key))
+        (<= *ms-first-data-cluster* key)
         (not (equal (fat32-entry-mask val) 0))
         (< key (len fa-table)))
    (equal (count-free-clusters (update-nth key val fa-table))

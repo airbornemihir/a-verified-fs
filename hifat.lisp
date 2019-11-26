@@ -644,7 +644,7 @@
 (defthm
   dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size
   (implies (and (dir-ent-p dir-ent)
-                (fat32-masked-entry-p first-cluster)
+                (force (fat32-masked-entry-p first-cluster))
                 (natp file-size))
            (equal (dir-ent-first-cluster
                    (dir-ent-set-first-cluster-file-size
@@ -668,7 +668,7 @@
   dir-ent-file-size-of-dir-ent-set-first-cluster-file-size
   (implies (and (dir-ent-p dir-ent)
                 (unsigned-byte-p 32 file-size)
-                (natp first-cluster))
+                (force (natp first-cluster)))
            (equal (dir-ent-file-size
                    (dir-ent-set-first-cluster-file-size
                     dir-ent first-cluster file-size))
