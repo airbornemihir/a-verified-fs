@@ -4747,7 +4747,7 @@
 (defthm
   nth-of-free-index-list
   (implies
-   (and (< (nfix n) (len index-list))
+   (and (force (< (nfix n) (len index-list)))
         (free-index-listp index-list fa-table))
    (equal (fat32-entry-mask (nth (nth n index-list) fa-table))
           0))
