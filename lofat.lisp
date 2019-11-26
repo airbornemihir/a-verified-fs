@@ -22546,6 +22546,374 @@ Some (rather awful) testing forms are
           0 nil))
         1)))))))
 
+(defthm
+  lofat-place-file-correctness-1-lemma-28
+  (implies
+   (and
+    (equal
+     (mv-nth
+      2
+      (place-contents
+       (update-fati
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32-in-memory)
+           (mv-nth 0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+            0 nil))
+          1))
+        (fat32-update-lower-28
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32-in-memory)
+             (mv-nth
+              0
+              (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+              0 nil))
+            1))
+          fat32-in-memory)
+         268435455)
+        (mv-nth 0
+                (clear-clusterchain fat32-in-memory
+                                    (dir-ent-first-cluster (car dir-ent-list))
+                                    (dir-ent-file-size (car dir-ent-list)))))
+       (car dir-ent-list)
+       (lofat-file->contents file)
+       (len (explode (lofat-file->contents file)))
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth 0
+                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+           0 nil))
+         1))))
+     0)
+    (consp dir-ent-list)
+    (not (dir-ent-directory-p (car dir-ent-list)))
+    (< 0
+       (len (explode (lofat-file->contents file))))
+    (lofat-fs-p fat32-in-memory)
+    (useful-dir-ent-list-p dir-ent-list)
+    (equal
+     (mv-nth
+      1
+      (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))
+     0)
+    (no-duplicatesp-equal
+     (mv-nth 0
+             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+    (lofat-regular-file-p file))
+   (equal
+    (dir-ent-clusterchain-contents
+     (mv-nth
+      0
+      (place-contents
+       (update-fati
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32-in-memory)
+           (mv-nth 0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+            0 nil))
+          1))
+        (fat32-update-lower-28
+         (fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32-in-memory)
+             (mv-nth
+              0
+              (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+              0 nil))
+            1))
+          fat32-in-memory)
+         268435455)
+        (mv-nth 0
+                (clear-clusterchain fat32-in-memory
+                                    (dir-ent-first-cluster (car dir-ent-list))
+                                    (dir-ent-file-size (car dir-ent-list)))))
+       (car dir-ent-list)
+       (lofat-file->contents file)
+       (len (explode (lofat-file->contents file)))
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth 0
+                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+           0 nil))
+         1))))
+     (dir-ent-set-first-cluster-file-size
+      (car dir-ent-list)
+      (nth
+       0
+       (find-n-free-clusters
+        (set-indices-in-fa-table
+         (effective-fat fat32-in-memory)
+         (mv-nth 0
+                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+         (make-list-ac
+          (len
+           (mv-nth 0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+          0 nil))
+        1))
+      (len (explode (lofat-file->contents file)))))
+    (mv
+     (implode
+      (append
+       (explode (lofat-file->contents file))
+       (make-list-ac
+        (+
+         (min
+          (dir-ent-file-size
+           (dir-ent-set-first-cluster-file-size
+            (car dir-ent-list)
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32-in-memory)
+               (mv-nth
+                0
+                (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+                0 nil))
+              1))
+            (len (explode (lofat-file->contents file)))))
+          (*
+           (len
+            (make-clusters
+             (lofat-file->contents file)
+             (cluster-size
+              (update-fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32-in-memory)
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+                  (make-list-ac
+                   (len (mv-nth 0
+                                (dir-ent-clusterchain
+                                 fat32-in-memory (car dir-ent-list))))
+                   0 nil))
+                 1))
+               (fat32-update-lower-28
+                (fati
+                 (nth
+                  0
+                  (find-n-free-clusters
+                   (set-indices-in-fa-table
+                    (effective-fat fat32-in-memory)
+                    (mv-nth 0
+                            (dir-ent-clusterchain
+                             fat32-in-memory (car dir-ent-list)))
+                    (make-list-ac
+                     (len (mv-nth 0
+                                  (dir-ent-clusterchain
+                                   fat32-in-memory (car dir-ent-list))))
+                     0 nil))
+                   1))
+                 fat32-in-memory)
+                268435455)
+               (mv-nth 0
+                       (clear-clusterchain
+                        fat32-in-memory
+                        (dir-ent-first-cluster (car dir-ent-list))
+                        (dir-ent-file-size (car dir-ent-list))))))))
+           (cluster-size
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32-in-memory)
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+                  (make-list-ac
+                   (len (mv-nth 0
+                                (dir-ent-clusterchain
+                                 fat32-in-memory (car dir-ent-list))))
+                   0 nil))
+                 1))
+               fat32-in-memory)
+              268435455)
+             (mv-nth
+              0
+              (clear-clusterchain fat32-in-memory
+                                  (dir-ent-first-cluster (car dir-ent-list))
+                                  (dir-ent-file-size (car dir-ent-list))))))))
+         (- (length (lofat-file->contents file))))
+        (code-char 0)
+        nil)))
+     0)))
+  :hints
+  (("goal"
+    :in-theory
+    (disable dir-ent-clusterchain-contents-of-place-contents-coincident-2)
+    :use
+    (:instance
+     dir-ent-clusterchain-contents-of-place-contents-coincident-2
+     (dir-ent2
+      (dir-ent-set-first-cluster-file-size
+       (car dir-ent-list)
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth 0
+                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+           0 nil))
+         1))
+       (len (explode (lofat-file->contents file)))))
+     (first-cluster
+      (nth
+       0
+       (find-n-free-clusters
+        (set-indices-in-fa-table
+         (effective-fat fat32-in-memory)
+         (mv-nth 0
+                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+         (make-list-ac
+          (len
+           (mv-nth 0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+          0 nil))
+        1)))
+     (file-length (len (explode (lofat-file->contents file))))
+     (contents (lofat-file->contents file))
+     (dir-ent1 (car dir-ent-list))
+     (fat32-in-memory
+      (update-fati
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth 0
+                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+           0 nil))
+         1))
+       (fat32-update-lower-28
+        (fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth 0
+                    (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+             0 nil))
+           1))
+         fat32-in-memory)
+        268435455)
+       (mv-nth 0
+               (clear-clusterchain fat32-in-memory
+                                   (dir-ent-first-cluster (car dir-ent-list))
+                                   (dir-ent-file-size (car dir-ent-list))))))
+     (length
+      (dir-ent-file-size
+       (dir-ent-set-first-cluster-file-size
+        (car dir-ent-list)
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32-in-memory)
+           (mv-nth 0
+                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
+            0 nil))
+          1))
+        (len (explode (lofat-file->contents file))))))))))
+
 ;; This is derived from a subgoal of lofat-place-file-correctness-1-lemma-1, by
 ;; means of the following proof-builder instructions.
 ;; ((:in-theory (enable fat32-filename-list-p))
