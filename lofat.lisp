@@ -21598,10 +21598,10 @@ Some (rather awful) testing forms are
                             (cluster-size fat32-in-memory)))))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite lofat-place-file-correctness-1-lemma-37))
+    :in-theory (disable (:rewrite free-index-listp-correctness-1))
     :use
     ((:instance
-      (:rewrite lofat-place-file-correctness-1-lemma-37)
+      (:rewrite free-index-listp-correctness-1)
       (x
        (find-n-free-clusters
         (update-nth
@@ -21710,119 +21710,6 @@ Some (rather awful) testing forms are
            (mv-nth 0
                    (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
           0 nil)))))))))
-
-(defthm
-  lofat-place-file-correctness-1-lemma-39
-  (implies
-   (and
-    (consp dir-ent-list)
-    (< 0
-       (len (explode (lofat-file->contents file))))
-    (lofat-fs-p fat32-in-memory)
-    (useful-dir-ent-list-p dir-ent-list)
-    (equal
-     (mv-nth
-      1
-      (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))
-     0))
-   (no-duplicatesp-equal
-    (find-n-free-clusters
-     (update-nth
-      (nth
-       0
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32-in-memory)
-         (mv-nth 0
-                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-         (make-list-ac
-          (len
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-          0 nil))
-        1))
-      (fat32-update-lower-28
-       (fati
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-            0 nil))
-          1))
-        fat32-in-memory)
-       268435455)
-      (set-indices-in-fa-table
-       (effective-fat fat32-in-memory)
-       (mv-nth 0
-               (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-       (make-list-ac
-        (len
-         (mv-nth 0
-                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-        0 nil)))
-     (+ -1
-        (len (make-clusters (lofat-file->contents file)
-                            (cluster-size fat32-in-memory)))))))
-  :hints
-  (("goal"
-    :in-theory (disable (:rewrite find-n-free-clusters-correctness-6))
-    :use
-    (:instance
-     (:rewrite find-n-free-clusters-correctness-6)
-     (n (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32-in-memory)))))
-     (fa-table
-      (update-nth
-       (nth
-        0
-        (find-n-free-clusters
-         (set-indices-in-fa-table
-          (effective-fat fat32-in-memory)
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-          (make-list-ac
-           (len
-            (mv-nth
-             0
-             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-           0 nil))
-         1))
-       (fat32-update-lower-28
-        (fati
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth 0
-                    (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-             0 nil))
-           1))
-         fat32-in-memory)
-        268435455)
-       (set-indices-in-fa-table
-        (effective-fat fat32-in-memory)
-        (mv-nth 0
-                (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-        (make-list-ac
-         (len
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-         0 nil))))))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-40

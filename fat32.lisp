@@ -915,9 +915,9 @@
 (defthm
   find-n-free-clusters-correctness-6
   (implies
-   (and (fat32-entry-list-p fa-table)
-        (>= (len fa-table)
-            *ms-first-data-cluster*)
+   (and (force (fat32-entry-list-p fa-table))
+        (force (>= (len fa-table)
+                   *ms-first-data-cluster*))
         (natp n))
    (no-duplicatesp-equal (find-n-free-clusters fa-table n)))
   :hints (("goal" :in-theory (enable find-n-free-clusters))))
