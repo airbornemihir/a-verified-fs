@@ -3270,7 +3270,7 @@
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (integerp first-cluster)
+    (force (integerp first-cluster))
     (>= first-cluster *ms-first-data-cluster*)
     (stringp contents)
     (dir-ent-p dir-ent1)
