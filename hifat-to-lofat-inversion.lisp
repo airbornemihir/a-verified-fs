@@ -4091,7 +4091,7 @@
    (and (lofat-fs-p fat32-in-memory)
         (not (zp (cluster-size fat32-in-memory)))
         (dir-ent-p dir-ent)
-        (fat32-masked-entry-p first-cluster)
+        (force (fat32-masked-entry-p first-cluster))
         (< first-cluster
            (+ *ms-first-data-cluster*
               (count-of-clusters fat32-in-memory))))
