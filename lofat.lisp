@@ -21116,91 +21116,51 @@ Some (rather awful) testing forms are
     (mv-nth 2
             (lofat-to-hifat-helper fat32-in-memory (cdr dir-ent-list)
                                    (+ -1 entry-limit)))))
-  :instructions
-  (:promote
-   (:claim
-    (and
-     (free-index-listp
-      (list
-       (nth
-        0
-        (find-n-free-clusters
-         (set-indices-in-fa-table
-          (effective-fat fat32-in-memory)
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-          (make-list-ac
-           (len
-            (mv-nth
-             0
-             (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-           0 nil))
-         1)))
-      (set-indices-in-fa-table
-       (effective-fat fat32-in-memory)
-       (mv-nth 0
-               (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-       (make-list-ac
-        (len
-         (mv-nth 0
-                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-        0 nil)))
-     (non-free-index-list-listp
-      (mv-nth 2
-              (lofat-to-hifat-helper fat32-in-memory (cdr dir-ent-list)
-                                     (+ -1 entry-limit)))
-      (set-indices-in-fa-table
-       (effective-fat fat32-in-memory)
-       (mv-nth 0
-               (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-       (make-list-ac
-        (len
-         (mv-nth 0
-                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-        0 nil))))
-    :hints :none)
-   (:rewrite non-free-index-list-listp-correctness-1)
-   :bash (:dive 1)
-   (:claim
-    (and
-     (<
-      (nfix 0)
-      (len
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32-in-memory)
-         (mv-nth 0
-                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-         (make-list-ac
-          (len
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      (:rewrite lofat-place-file-correctness-1-lemma-25)
+      (dir-ent (car dir-ent-list))
+      (fat32-in-memory fat32-in-memory))
+     (:instance
+      (:rewrite non-free-index-list-listp-correctness-1)
+      (l (mv-nth 2
+                 (lofat-to-hifat-helper
+                  fat32-in-memory (cdr dir-ent-list)
+                  (+ -1 entry-limit))))
+      (index-list
+       (list
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32-in-memory)
            (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-          0 nil))
-        1)))
-     (free-index-listp
-      (find-n-free-clusters
+                   (dir-ent-clusterchain
+                    fat32-in-memory (car dir-ent-list)))
+           (make-list-ac
+            (len
+             (mv-nth 0
+                     (dir-ent-clusterchain
+                      fat32-in-memory (car dir-ent-list))))
+            0 nil))
+          1))))
+      (fa-table
        (set-indices-in-fa-table
         (effective-fat fat32-in-memory)
         (mv-nth 0
-                (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
+                (dir-ent-clusterchain
+                 fat32-in-memory (car dir-ent-list)))
         (make-list-ac
          (len
           (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-         0 nil))
-       1)
-      (set-indices-in-fa-table
-       (effective-fat fat32-in-memory)
-       (mv-nth 0
-               (dir-ent-clusterchain fat32-in-memory (car dir-ent-list)))
-       (make-list-ac
-        (len
-         (mv-nth 0
-                 (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-        0 nil))))
-    :hints :none)
-   (:rewrite nth-of-free-index-list)
-   :bash))
+                  (dir-ent-clusterchain
+                   fat32-in-memory (car dir-ent-list))))
+         0 nil)))))
+    :in-theory
+    (disable
+     (:rewrite lofat-place-file-correctness-1-lemma-25)))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-35
