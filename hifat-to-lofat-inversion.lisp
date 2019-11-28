@@ -4303,34 +4303,22 @@
 (defthm
   non-free-index-listp-correctness-4-lemma-1
   (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (natp n1)
-    (<
-     (nfix n2)
-     (len (find-n-free-clusters (effective-fat fat32-in-memory)
-                                n1))))
+   (and (lofat-fs-p fat32-in-memory)
+        (< (nfix n2)
+           (len (find-n-free-clusters (effective-fat fat32-in-memory)
+                                      n1))))
    (equal
     (fat32-entry-mask
-     (fati
-      (nth n2
-           (find-n-free-clusters (effective-fat fat32-in-memory)
-                                 n1))
-      fat32-in-memory))
+     (fati (nth n2
+                (find-n-free-clusters (effective-fat fat32-in-memory)
+                                      n1))
+           fat32-in-memory))
     0))
   :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (disable find-n-free-clusters-correctness-5
-             (:linear find-n-free-clusters-correctness-7))
-    :use
-    ((:instance find-n-free-clusters-correctness-5
-                (fa-table (effective-fat fat32-in-memory)))
-     (:instance (:linear find-n-free-clusters-correctness-7)
-                (n n1)
-                (fa-table (effective-fat fat32-in-memory))
-                (m n2))))))
+  (("goal" :do-not-induct t
+    :in-theory (disable find-n-free-clusters-correctness-5)
+    :use ((:instance find-n-free-clusters-correctness-5
+                     (fa-table (effective-fat fat32-in-memory)))))))
 
 (defthm
   non-free-index-listp-correctness-4
@@ -4911,10 +4899,9 @@
      (len
       (find-n-free-clusters
        (effective-fat
-        (mv-nth
-         '0
-         (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                current-dir-first-cluster)))
+        (mv-nth '0
+                (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                       current-dir-first-cluster)))
        '1))))
    (not
     (<
@@ -4926,27 +4913,11 @@
        '0
        (find-n-free-clusters
         (effective-fat
-         (mv-nth
-          '0
-          (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                                 current-dir-first-cluster)))
+         (mv-nth '0
+                 (hifat-to-lofat-helper fat32-in-memory (cdr fs)
+                                        current-dir-first-cluster)))
         '1))))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (painful-debugging-lemma-13)
-         ((:linear find-n-free-clusters-correctness-7)))
-    :use
-    (:instance
-     (:linear find-n-free-clusters-correctness-7)
-     (n 1)
-     (fa-table
-      (effective-fat
-       (mv-nth
-        0
-        (hifat-to-lofat-helper fat32-in-memory (cdr fs)
-                               current-dir-first-cluster))))
-     (m 0)))))
+  :hints (("goal" :in-theory (enable painful-debugging-lemma-13))))
 
 (defthm
   hifat-to-lofat-inversion-lemma-6
