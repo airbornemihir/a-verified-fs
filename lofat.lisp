@@ -14363,7 +14363,11 @@ Some (rather awful) testing forms are
        ;; After these conditionals, the only remaining possibility is that (cdr pathname)
        ;; is an atom, which means we need to place a regular file or an empty directory, which
        ;; we have hopefully ensured in the guard or something.
-       (length (if (dir-ent-directory-p dir-ent) *ms-max-dir-size* (dir-ent-file-size dir-ent)))
+       (length (if (dir-ent-directory-p dir-ent) *ms-max-dir-size*
+                 (dir-ent-file-size dir-ent)))
+       ;; Replacing a directory with a regular file is not permitted.
+       ((when (and (dir-ent-directory-p dir-ent) (lofat-regular-file-p file)))
+        (mv fat32-in-memory *enoent*))
        ((mv fat32-in-memory &)
         (if (or (< first-cluster *ms-first-data-cluster*)
                 (<= (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)) first-cluster))
