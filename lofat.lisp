@@ -24916,7 +24916,11 @@ Some (rather awful) testing forms are
             (:REWRITE
              LOFAT-FS-P-OF-LOFAT-PLACE-FILE-LEMMA-1)
             (:REWRITE
-             CLEAR-CLUSTERCHAIN-REVERSIBILITY-LEMMA-1)))))
+             CLEAR-CLUSTERCHAIN-REVERSIBILITY-LEMMA-1)
+            (:DEFINITION BUTLAST)
+            (:DEFINITION NFIX)
+            (:DEFINITION LENGTH)
+            (:DEFINITION MIN)))))
     :rule-classes
     ((:rewrite
       :corollary
