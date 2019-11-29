@@ -17684,7 +17684,7 @@ Some (rather awful) testing forms are
            (equal (logtail 16
                            (fat32-update-lower-28 entry masked-entry))
                   (logapp 12 (logtail 16 masked-entry)
-                          (logtail 28 entry))))
+                          (logtail 28 (fat32-entry-fix entry)))))
   :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
                                   (logapp)))))
 
@@ -17694,7 +17694,7 @@ Some (rather awful) testing forms are
            (equal (logtail 24
                            (fat32-update-lower-28 entry masked-entry))
                   (logapp 4 (logtail 24 masked-entry)
-                          (logtail 28 entry))))
+                          (logtail 28 (fat32-entry-fix entry)))))
   :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
                                   (logapp)))))
 
@@ -17704,7 +17704,7 @@ Some (rather awful) testing forms are
            (equal (logtail 8
                            (fat32-update-lower-28 entry masked-entry))
                   (logapp 20 (logtail 8 masked-entry)
-                          (logtail 28 entry))))
+                          (logtail 28 (fat32-entry-fix entry)))))
   :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
                                   (logapp)))))
 
