@@ -1594,7 +1594,7 @@
                               (m1-file-p file))
                   :measure (acl2-count pathname)))
   (b*
-      ((fs (hifat-file-alist-fix fs))
+      ((fs (mbe :logic (hifat-file-alist-fix fs) :exec fs))
        (file (mbe :logic (m1-file-fix file)
                   :exec file))
        ;; Pathnames aren't going to be empty lists. Even the emptiest of
@@ -1700,7 +1700,7 @@
                               (fat32-filename-list-p pathname))
                   :measure (acl2-count pathname)))
   (b*
-      ((fs (hifat-file-alist-fix fs))
+      ((fs (mbe :logic (hifat-file-alist-fix fs) :exec fs))
        ((unless (consp pathname))
         (mv fs *enoent*))
        ;; Design choice - calls which ask for the entire root directory to be
