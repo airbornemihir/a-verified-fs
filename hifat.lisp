@@ -614,18 +614,13 @@
     :guard-hints
     (("goal" :in-theory (enable dir-ent-p)))))
   (let*
-      ((dir-ent (dir-ent-fix dir-ent))
+      ((dir-ent (mbe :logic (dir-ent-fix dir-ent) :exec dir-ent))
        (old-first-cluster (combine32u (nth 21 dir-ent)
                                       (nth 20 dir-ent)
                                       (nth 27 dir-ent)
                                       (nth 26 dir-ent)))
-       (new-first-cluster
-        (mbe
-         :logic
-         (fat32-entry-fix
-          (fat32-update-lower-28 old-first-cluster first-cluster))
-         :exec
-         (fat32-update-lower-28 old-first-cluster first-cluster)))
+       (first-cluster (mbe :exec first-cluster :logic (fat32-masked-entry-fix first-cluster)))
+       (new-first-cluster (fat32-update-lower-28 old-first-cluster first-cluster))
        (file-size (if (not (unsigned-byte-p 32 file-size))
                       0 file-size)))
     (append
@@ -641,28 +636,185 @@
                     (logtail 16 (loghead 24 file-size))
                     (logtail 24 file-size)))))))
 
+;; Move later
+(defthm not-stringp-of-dir-ent-fix
+  (not (stringp (dir-ent-fix dir-ent)))
+  :hints (("goal" :in-theory (enable dir-ent-p dir-ent-fix)))
+  :rule-classes :type-prescription)
+
 (defthm
-  dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size
-  (implies (and (dir-ent-p dir-ent)
-                (force (fat32-masked-entry-p first-cluster))
-                (natp file-size))
-           (equal (dir-ent-first-cluster
+  dir-ent-set-first-cluster-file-size-of-dir-ent-set-first-cluster-file-size-lemma-1
+  (implies (fat32-masked-entry-p masked-entry)
+           (equal (logtail 16
+                           (fat32-update-lower-28 entry masked-entry))
+                  (logapp 12 (logtail 16 masked-entry)
+                          (logtail 28 (fat32-entry-fix entry)))))
+  :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
+                                  (logapp loghead logtail)))))
+
+(defthm
+  dir-ent-set-first-cluster-file-size-of-dir-ent-set-first-cluster-file-size-lemma-2
+  (implies (fat32-masked-entry-p masked-entry)
+           (equal (logtail 24
+                           (fat32-update-lower-28 entry masked-entry))
+                  (logapp 4 (logtail 24 masked-entry)
+                          (logtail 28 (fat32-entry-fix entry)))))
+  :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
+                                  (logapp loghead logtail)))))
+
+(defthm
+  dir-ent-set-first-cluster-file-size-of-dir-ent-set-first-cluster-file-size-lemma-3
+  (implies (fat32-masked-entry-p masked-entry)
+           (equal (logtail 8
+                           (fat32-update-lower-28 entry masked-entry))
+                  (logapp 20 (logtail 8 masked-entry)
+                          (logtail 28 (fat32-entry-fix entry)))))
+  :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
+                                  (logapp loghead logtail)))))
+
+(defthm
+  dir-ent-set-first-cluster-file-size-of-dir-ent-set-first-cluster-file-size-lemma-4
+  (implies (fat32-masked-entry-p masked-entry)
+           (equal (loghead 8
+                           (fat32-update-lower-28 entry masked-entry))
+                  (loghead 8 masked-entry)))
+  :hints (("goal" :in-theory (e/d (fat32-update-lower-28)
+                                  (logapp loghead logtail)))))
+
+(encapsulate
+  ()
+
+  (local (include-book "centaur/bitops/ihsext-basics" :dir :system))
+
+  (defthm logtail-of-logior
+    (equal (logtail pos (logior i j))
+           (logior (logtail pos i)
+                   (logtail pos j)))
+    :hints (("goal" :in-theory (enable* ihsext-recursive-redefs
+                                        ihsext-inductions))))
+
+  (defthm loghead-of-logior
+    (equal (loghead pos (logior i j))
+           (logior (loghead pos i)
+                   (loghead pos j)))
+    :hints (("goal" :in-theory (enable* ihsext-recursive-redefs
+                                        ihsext-inductions))))
+
+  (defthm logtail-of-ash
+    (implies (and (natp pos)
+                  (integerp c))
+             (equal (logtail pos (ash i c))
+                    (if (>= pos c)
+                        (logtail (- pos c) i)
+                      (ash i (- c pos)))))
+    :hints (("goal" :in-theory (enable* ihsext-recursive-redefs
+                                        ihsext-inductions))))
+
+  ;; Taken with thanks from the included book.
+  (defthm bitops::loghead-of-ash
+    (equal (loghead n (ash x m))
+           (ash (loghead (nfix (- (nfix n) (ifix m))) x) m))))
+
+;; The hypotheses are somewhat weaker than this, but getting to them needs the
+;; unsigned-byte-p terms to be expanded...
+(defthm
+  dir-ent-set-first-cluster-file-size-of-dir-ent-set-first-cluster-file-size-lemma-5
+  (implies (and (unsigned-byte-p 8 a3)
+                (unsigned-byte-p 8 a2)
+                (unsigned-byte-p 8 a1)
+                (unsigned-byte-p 8 a0))
+           (equal (logtail 28 (combine32u a3 a2 a1 a0))
+                  (logtail 4 a3)))
+  :hints (("goal" :in-theory (e/d (combine32u) (logior ash loghead logtail)))))
+
+(defthm
+  dir-ent-set-first-cluster-file-size-of-dir-ent-set-first-cluster-file-size
+  (implies (and (fat32-masked-entry-p first-cluster1)
+                (fat32-masked-entry-p first-cluster2))
+           (equal (dir-ent-set-first-cluster-file-size
                    (dir-ent-set-first-cluster-file-size
-                    dir-ent first-cluster file-size))
-                  first-cluster))
+                    dir-ent first-cluster1 file-size1)
+                   first-cluster2 file-size2)
+                  (dir-ent-set-first-cluster-file-size
+                   dir-ent first-cluster2 file-size2)))
+  :hints
+  (("goal" :in-theory
+    (e/d (dir-ent-set-first-cluster-file-size
+          dir-ent-p-of-append len-when-dir-ent-p)
+         (logapp loghead logtail)))))
+
+(defthm fat32-masked-entry-p-of-fat32-masked-entry-fix
+  (fat32-masked-entry-p (fat32-masked-entry-fix x))
+  :hints (("goal" :in-theory (enable fat32-masked-entry-fix))))
+
+(defthm
+  dir-ent-set-first-cluster-file-size-of-fat32-masked-entry-fix
+  (equal (dir-ent-set-first-cluster-file-size
+          dir-ent
+          (fat32-masked-entry-fix first-cluster)
+          file-size)
+         (dir-ent-set-first-cluster-file-size
+          dir-ent first-cluster file-size))
   :hints
   (("goal"
-    :in-theory
-    (e/d (dir-ent-set-first-cluster-file-size
-          dir-ent-first-cluster dir-ent-p)
-         (loghead logtail
-                  fat32-update-lower-28-correctness-1))
-    :use (:instance fat32-update-lower-28-correctness-1
-                    (masked-entry first-cluster)
-                    (entry (combine32u (nth 21 dir-ent)
-                                       (nth 20 dir-ent)
-                                       (nth 27 dir-ent)
-                                       (nth 26 dir-ent)))))))
+    :in-theory (enable dir-ent-set-first-cluster-file-size))))
+
+;; Maybe rephrase this in terms of combine32u later.
+(defthm
+  dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size-lemma-1
+  (implies (and (unsigned-byte-p 8 a3)
+                (unsigned-byte-p 8 a2)
+                (unsigned-byte-p 8 a1)
+                (unsigned-byte-p 8 a0))
+           (equal (loghead 28 (combine32u a3 a2 a1 a0))
+                  (combine32u (loghead 4 a3) a2 a1 a0)))
+  :hints (("goal" :in-theory (e/d (combine32u) (logior ash loghead logtail)))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size-lemma-2
+     (implies (and (force (fat32-masked-entry-p first-cluster)))
+              (equal (dir-ent-first-cluster
+                      (dir-ent-set-first-cluster-file-size
+                       dir-ent first-cluster file-size))
+                     first-cluster))
+     :hints
+     (("goal"
+       :in-theory
+       (e/d (dir-ent-set-first-cluster-file-size
+             dir-ent-first-cluster dir-ent-p fat32-entry-mask fat32-masked-entry-p)
+            (loghead logtail
+                     fat32-update-lower-28-correctness-1 logapp ash
+                     (:REWRITE LOGHEAD-IDENTITY)
+                     unsigned-byte-p))
+       :use
+       ((:instance fat32-update-lower-28-correctness-1
+                   (masked-entry first-cluster)
+                   (entry (combine32u (nth 21 dir-ent)
+                                      (nth 20 dir-ent)
+                                      (nth 27 dir-ent)
+                                      (nth 26 dir-ent))))
+        (:instance
+         (:REWRITE LOGHEAD-IDENTITY)
+         (I (LOGTAIL 24 FIRST-CLUSTER))
+         (SIZE 4)))))))
+
+  (defthm
+    dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size
+    (equal (dir-ent-first-cluster
+            (dir-ent-set-first-cluster-file-size
+             dir-ent first-cluster file-size))
+           (fat32-masked-entry-fix first-cluster))
+    :hints
+    (("goal"
+      :in-theory (disable
+                  dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size-lemma-2)
+      :use (:instance
+            dir-ent-first-cluster-of-dir-ent-set-first-cluster-file-size-lemma-2
+            (first-cluster (fat32-masked-entry-fix first-cluster)))))))
 
 (defthm
   dir-ent-file-size-of-dir-ent-set-first-cluster-file-size
@@ -710,6 +862,35 @@
              (dir-ent-p (dir-ent-set-first-cluster-file-size
                          dir-ent first-cluster file-size)))
     :hints (("goal" :in-theory (enable dir-ent-p))))))
+
+(defthm
+  dir-ent-set-first-cluster-file-size-of-dir-ent-fix
+  (equal
+   (dir-ent-set-first-cluster-file-size
+    (dir-ent-fix dir-ent) first-cluster file-size)
+   (dir-ent-set-first-cluster-file-size
+    dir-ent first-cluster file-size))
+  :hints (("goal" :in-theory (enable dir-ent-set-first-cluster-file-size))))
+
+(defcong
+  dir-ent-equiv equal
+  (dir-ent-set-first-cluster-file-size
+   dir-ent first-cluster file-size)
+  1
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (dir-ent-equiv)
+     ((:rewrite
+       dir-ent-set-first-cluster-file-size-of-dir-ent-fix)))
+    :use
+    ((:rewrite
+      dir-ent-set-first-cluster-file-size-of-dir-ent-fix)
+     (:instance
+      (:rewrite
+       dir-ent-set-first-cluster-file-size-of-dir-ent-fix)
+      (dir-ent dir-ent-equiv))))))
 
 (defund
   dir-ent-filename (dir-ent)
