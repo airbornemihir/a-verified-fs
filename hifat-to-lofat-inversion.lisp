@@ -3037,20 +3037,14 @@
     (fati x fat32-in-memory)))
   :hints
   (("goal" :in-theory (enable place-contents))))
+
 (defthm
   useless-dir-ent-p-of-dir-ent-set-first-cluster-file-size
-  (implies
-   (dir-ent-p dir-ent)
-   (equal
-    (useless-dir-ent-p (dir-ent-set-first-cluster-file-size
-                        dir-ent first-cluster file-size))
-    (useless-dir-ent-p dir-ent)))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (useless-dir-ent-p dir-ent-p dir-ent-filename
-                            dir-ent-set-first-cluster-file-size)
-         ((:rewrite logtail-loghead))))))
+  (equal
+   (useless-dir-ent-p
+    (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-size))
+   (useless-dir-ent-p dir-ent))
+  :hints (("goal" :in-theory (enable useless-dir-ent-p))))
 
 (defthm
   useless-dir-ent-p-of-place-contents

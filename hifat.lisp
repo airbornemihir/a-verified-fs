@@ -818,16 +818,16 @@
 
 (defthm
   dir-ent-file-size-of-dir-ent-set-first-cluster-file-size
-  (implies (and (dir-ent-p dir-ent)
-                (unsigned-byte-p 32 file-size)
-                (force (natp first-cluster)))
-           (equal (dir-ent-file-size
-                   (dir-ent-set-first-cluster-file-size
-                    dir-ent first-cluster file-size))
-                  file-size))
+  (implies
+   (unsigned-byte-p 32 file-size)
+   (equal
+    (dir-ent-file-size
+     (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-size))
+    file-size))
   :hints
-  (("goal" :in-theory (e/d (dir-ent-set-first-cluster-file-size dir-ent-file-size)
-                           (loghead logtail)))))
+  (("goal"
+    :in-theory (e/d (dir-ent-set-first-cluster-file-size dir-ent-file-size)
+                    (loghead logtail)))))
 
 (defthm
   dir-ent-p-of-dir-ent-set-first-cluster-file-size
@@ -847,12 +847,14 @@
     (e/d (dir-ent-p dir-ent-set-first-cluster-file-size
                     fat32-masked-entry-p fat32-entry-p)
          (fat32-update-lower-28-correctness-1))
-    :use (:instance fat32-update-lower-28-correctness-1
-                    (masked-entry first-cluster)
-                    (entry (combine32u (nth 21 dir-ent)
-                                       (nth 20 dir-ent)
-                                       (nth 27 dir-ent)
-                                       (nth 26 dir-ent))))))
+    :use
+    (:instance
+     fat32-update-lower-28-correctness-1
+     (masked-entry first-cluster)
+     (entry (combine32u (nth 21 (dir-ent-fix dir-ent))
+                        (nth 20 (dir-ent-fix dir-ent))
+                        (nth 27 (dir-ent-fix dir-ent))
+                        (nth 26 (dir-ent-fix dir-ent)))))))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -907,6 +909,41 @@
          (dir-ent-filename dir-ent))
   :hints (("goal" :in-theory (enable dir-ent-filename))))
 
+(defthm
+  dir-ent-filename-of-dir-ent-set-first-cluster-file-size-lemma-1
+  (implies (and (unsigned-byte-listp 8 dir-ent)
+                (equal (len dir-ent) 32))
+           (not (< (logtail 4 (nth 21 dir-ent)) 0)))
+  :hints (("goal" :in-theory (disable (:rewrite logtail-unsigned-byte-p))
+           :use ((:instance (:rewrite logtail-unsigned-byte-p)
+                            (i (nth 21 dir-ent))
+                            (size 4)
+                            (size1 4))))))
+
+(defthm
+  dir-ent-filename-of-dir-ent-set-first-cluster-file-size-lemma-2
+  (implies (and (unsigned-byte-listp 8 dir-ent)
+                (equal (len dir-ent) 32))
+           (< (logapp '4
+                      (logtail$inline '24
+                                      (fat32-masked-entry-fix first-cluster))
+                      (logtail$inline '4 (nth '21 dir-ent)))
+              '256))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite logtail-unsigned-byte-p)
+                        (:rewrite unsigned-byte-p-logapp))
+    :use ((:instance (:rewrite logtail-unsigned-byte-p)
+                     (i (nth 21 dir-ent))
+                     (size 4)
+                     (size1 4))
+          (:instance (:rewrite unsigned-byte-p-logapp)
+                     (j (logtail 4 (nth 21 dir-ent)))
+                     (i (logtail 24
+                                 (fat32-masked-entry-fix first-cluster)))
+                     (size1 4)
+                     (size 8))))))
+
 ;; This had a dir-ent-p hypothesis before, which interestingly enough
 ;; remove-hyps failed to remove. It did cause more subgoals, from what I saw on
 ;; the screen.
@@ -917,10 +954,75 @@
                       dir-ent first-cluster file-size))
    (dir-ent-filename dir-ent))
   :hints
-  (("goal" :in-theory
-    (e/d (dir-ent-set-first-cluster-file-size
-          dir-ent-filename dir-ent-fix dir-ent-p)
-         (loghead logtail (:rewrite logtail-loghead))))))
+  (("goal"
+    :in-theory (e/d (dir-ent-set-first-cluster-file-size
+                     dir-ent-filename dir-ent-fix dir-ent-p)
+                    (loghead logtail (:rewrite logtail-loghead)
+                             logapp)))
+   ("[1]subgoal 4"
+    :in-theory
+    (e/d
+     (dir-ent-set-first-cluster-file-size
+      dir-ent-filename dir-ent-fix dir-ent-p)
+     (loghead
+      logtail (:rewrite logtail-loghead)
+      logapp
+      (:rewrite
+       unsigned-byte-p-of-nth-when-unsigned-byte-listp)))
+    :use
+    (:instance
+     (:rewrite unsigned-byte-p-of-nth-when-unsigned-byte-listp)
+     (l dir-ent)
+     (n 21)
+     (bits 8)))
+   ("[1]subgoal 3"
+    :in-theory
+    (e/d
+     (dir-ent-set-first-cluster-file-size
+      dir-ent-filename dir-ent-fix dir-ent-p)
+     (loghead
+      logtail (:rewrite logtail-loghead)
+      logapp
+      (:rewrite
+       unsigned-byte-p-of-nth-when-unsigned-byte-listp)))
+    :use
+    (:instance
+     (:rewrite unsigned-byte-p-of-nth-when-unsigned-byte-listp)
+     (l dir-ent)
+     (n 21)
+     (bits 8)))
+   ("[1]subgoal 2"
+    :in-theory
+    (e/d
+     (dir-ent-set-first-cluster-file-size
+      dir-ent-filename dir-ent-fix dir-ent-p)
+     (loghead
+      logtail (:rewrite logtail-loghead)
+      logapp
+      (:rewrite
+       unsigned-byte-p-of-nth-when-unsigned-byte-listp)))
+    :use
+    (:instance
+     (:rewrite unsigned-byte-p-of-nth-when-unsigned-byte-listp)
+     (l dir-ent)
+     (n 21)
+     (bits 8)))
+   ("[1]subgoal 1"
+    :in-theory
+    (e/d
+     (dir-ent-set-first-cluster-file-size
+      dir-ent-filename dir-ent-fix dir-ent-p)
+     (loghead
+      logtail (:rewrite logtail-loghead)
+      logapp
+      (:rewrite
+       unsigned-byte-p-of-nth-when-unsigned-byte-listp)))
+    :use
+    (:instance
+     (:rewrite unsigned-byte-p-of-nth-when-unsigned-byte-listp)
+     (l dir-ent)
+     (n 21)
+     (bits 8)))))
 
 (defthm explode-of-dir-ent-filename
   (equal (explode (dir-ent-filename dir-ent))
@@ -981,12 +1083,23 @@
 
   (local (include-book "ihs/logops-lemmas" :dir :system))
 
-  (defthm dir-ent-p-of-set-first-cluster-file-size
-    (dir-ent-p (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-size))
-    :hints (("goal" :in-theory (e/d (dir-ent-p
-                                     dir-ent-set-first-cluster-file-size
-                                     fat32-masked-entry-fix fat32-masked-entry-p)
-                                    (loghead logtail))))))
+  (local
+   (defthm
+     dir-ent-p-of-set-first-cluster-file-size-lemma-1
+     (< (* 16
+           (logtail 4 (nth 21 (dir-ent-fix dir-ent))))
+        256)))
+
+  (defthm
+    dir-ent-p-of-set-first-cluster-file-size
+    (dir-ent-p (dir-ent-set-first-cluster-file-size
+                dir-ent first-cluster file-size))
+    :hints
+    (("goal" :in-theory
+      (e/d (dir-ent-p dir-ent-set-first-cluster-file-size
+                      fat32-masked-entry-fix
+                      fat32-masked-entry-p)
+           (loghead logtail logapp ash))))))
 
 ;; per table on page 24 of the spec.
 (defund
