@@ -4045,72 +4045,46 @@
 
 (defthm
   place-contents-expansion-1
-  (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (not (zp (cluster-size fat32-in-memory)))
-        (dir-ent-p dir-ent)
-        (fat32-masked-entry-p first-cluster)
-        (< first-cluster
-           (+ *ms-first-data-cluster*
-              (count-of-clusters fat32-in-memory))))
-   (equal
-    (mv-nth 1
-            (place-contents fat32-in-memory dir-ent
-                            contents file-length first-cluster))
-    (if
-        (equal
-         (+
-          1
-          (len
-           (stobj-find-n-free-clusters
-            fat32-in-memory
-            (+
-             -1
-             (len
-              (make-clusters contents
-                             (cluster-size fat32-in-memory)))))))
-         (len (make-clusters contents
-                             (cluster-size fat32-in-memory))))
-        (dir-ent-set-first-cluster-file-size
-         dir-ent first-cluster file-length)
-      dir-ent)))
+  (equal
+   (mv-nth 1
+           (place-contents fat32-in-memory dir-ent
+                           contents file-length first-cluster))
+   (if
+       (equal
+        (+ 1
+           (len (stobj-find-n-free-clusters
+                 fat32-in-memory
+                 (+ -1
+                    (len (make-clusters contents
+                                        (cluster-size fat32-in-memory)))))))
+        (len (make-clusters contents
+                            (cluster-size fat32-in-memory))))
+       (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-length)
+     (dir-ent-fix dir-ent)))
   :hints
-  (("goal"
-    :in-theory
-    (enable place-contents
-            (:rewrite make-clusters-correctness-1 . 1)))))
+  (("goal" :in-theory (enable place-contents
+                              (:rewrite make-clusters-correctness-1 . 1)))))
 
-(defthm place-contents-expansion-2
-  (implies
-   (and (lofat-fs-p fat32-in-memory)
-        (not (zp (cluster-size fat32-in-memory)))
-        (dir-ent-p dir-ent)
-        (force (fat32-masked-entry-p first-cluster))
-        (< first-cluster
-           (+ *ms-first-data-cluster*
-              (count-of-clusters fat32-in-memory))))
-   (equal
-    (mv-nth 2
-            (place-contents fat32-in-memory dir-ent
-                            contents file-length first-cluster))
-    (if
-        (equal
-         (+
-          1
-          (len (stobj-find-n-free-clusters
-                fat32-in-memory
-                (+ -1
-                   (len (make-clusters contents
-                                       (cluster-size fat32-in-memory)))))))
-         (len (make-clusters contents
-                             (cluster-size fat32-in-memory))))
-        0
-      *enospc*)))
+(defthm
+  place-contents-expansion-2
+  (equal
+   (mv-nth 2
+           (place-contents fat32-in-memory dir-ent
+                           contents file-length first-cluster))
+   (if
+       (equal
+        (+ 1
+           (len (stobj-find-n-free-clusters
+                 fat32-in-memory
+                 (+ -1
+                    (len (make-clusters contents
+                                        (cluster-size fat32-in-memory)))))))
+        (len (make-clusters contents
+                            (cluster-size fat32-in-memory))))
+       0 *enospc*))
   :hints
-  (("goal"
-    :in-theory
-    (enable place-contents
-            (:rewrite make-clusters-correctness-1 . 1)))))
+  (("goal" :in-theory (enable place-contents
+                              (:rewrite make-clusters-correctness-1 . 1)))))
 
 (defthm
   make-dir-ent-list-of-append-1
