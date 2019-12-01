@@ -24651,38 +24651,131 @@ Some (rather awful) testing forms are
         (;; I'm not very happy with this assigned value of dir-ent... and I'm
          ;; going to be even less happy when case splits arise. It's, however,
          ;; the price to be paid for equality instead of hifat-equiv.
+         (dir-ent-exists
+          (zp
+           (mv-nth
+            1
+            (find-dir-ent
+             (make-dir-ent-list
+              (mv-nth 0
+                      (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+             (car pathname)))))
+         (dir-ent-clusterchain-exists
+          (and
+           (<=
+            *ms-first-data-cluster*
+            (dir-ent-first-cluster
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (car pathname)))))
+           (<
+            (dir-ent-first-cluster
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (car pathname))))
+            (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))))
          (dir-ent
-          (if
-              (zp
-               (mv-nth
-                1
-                (find-dir-ent
-                 (make-dir-ent-list
-                  (mv-nth 0
-                          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                 (car pathname))))
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (car pathname)))
-            (dir-ent-set-filename (dir-ent-fix nil)
-                                  (car pathname))))
-         (dir-ent
-          (if
-              (zp (len (explode (lofat-file->contents file))))
-              (dir-ent-set-first-cluster-file-size
-               dir-ent
-               0 0)
+          (cond
+           ((and dir-ent-exists dir-ent-clusterchain-exists
+                 (zp (len (explode (lofat-file->contents file)))))
             (dir-ent-set-first-cluster-file-size
-             dir-ent
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (car pathname)))
+             0 0))
+           ((and dir-ent-exists dir-ent-clusterchain-exists)
+            (dir-ent-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (car pathname)))
+             (nth 0
+                  (find-n-free-clusters
+                   (set-indices-in-fa-table
+                    (effective-fat fat32-in-memory)
+                    (mv-nth
+                     0
+                     (dir-ent-clusterchain
+                      fat32-in-memory
+                      (mv-nth
+                       0
+                       (find-dir-ent
+                        (make-dir-ent-list
+                         (mv-nth 0
+                                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                        (car pathname)))))
+                    (make-list-ac
+                     (len
+                      (mv-nth
+                       0
+                       (dir-ent-clusterchain
+                        fat32-in-memory
+                        (mv-nth
+                         0
+                         (find-dir-ent
+                          (make-dir-ent-list (mv-nth 0
+                                                     (dir-ent-clusterchain-contents
+                                                      fat32-in-memory root-dir-ent)))
+                          (car pathname))))))
+                     0 nil))
+                   1))
+             (len (explode (lofat-file->contents file)))))
+           ((and dir-ent-exists (zp (len (explode (lofat-file->contents file)))))
+            (dir-ent-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (car pathname)))
+             0 0))
+           (dir-ent-exists
+            (dir-ent-set-first-cluster-file-size
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (car pathname)))
+             (nth 0
+                  (find-n-free-clusters
+                   (effective-fat fat32-in-memory)
+                   1))
+             (len (explode (lofat-file->contents file)))))
+           ((zp (len (explode (lofat-file->contents file))))
+            (dir-ent-set-first-cluster-file-size
+             (dir-ent-set-filename (dir-ent-fix nil)
+                                   (car pathname))
+             0 0))
+           (t
+            (dir-ent-set-first-cluster-file-size
+             (dir-ent-set-filename (dir-ent-fix nil)
+                                   (car pathname))
              (nth 0
                   (find-n-free-clusters (effective-fat fat32-in-memory)
                                         1))
-             (len (explode (lofat-file->contents file))))))
+             (len (explode (lofat-file->contents file)))))))
          ((mv fs &)
           (hifat-place-file
            (mv-nth 0
