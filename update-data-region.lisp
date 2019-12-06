@@ -741,27 +741,27 @@
 (encapsulate
   ()
 
-  ;; The two lemmas inside this encapsulation require this particular
-  ;; arithmetic book, and cannot be made to work with the RTL arithmetic
-  ;; libraries even though that would make this whole thing a lot simpler.
-  (local (include-book "arithmetic-3/top" :dir :system))
+  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
-  (set-default-hints
-   '((nonlinearp-default-hint stable-under-simplificationp
-                              hist pspv)))
-
-  (defthm update-data-region-alt-lemma-4
+  (defthm
+    update-data-region-correctness-1-lemma-1
     (implies (and (not (zp len))
-                  (< (len (explode str))
+                  (<= (* (cluster-size fat32-in-memory)
+                         data-region-length)
+                      (+ length-str
+                         (* len (cluster-size fat32-in-memory))))
+                  (< (+ length-str
+                        (* len (cluster-size fat32-in-memory)))
                      (+ (cluster-size fat32-in-memory)
-                        (* -1 len (cluster-size fat32-in-memory))
                         (* (cluster-size fat32-in-memory)
-                           (len (nth *data-regioni* fat32-in-memory)))))
-                  (< 0 (cluster-size fat32-in-memory)))
-             (< (len (explode str))
+                           data-region-length))))
+             (< length-str
                 (* (cluster-size fat32-in-memory)
-                   (len (nth *data-regioni* fat32-in-memory)))))
-    :rule-classes :linear)
+                   data-region-length)))
+    :hints (("goal" :in-theory (disable (:rewrite product-less-than-zero))
+             :use ((:instance (:rewrite product-less-than-zero)
+                              (y (cluster-size fat32-in-memory))
+                              (x (+ -1 len)))))))
 
   ;; It would be nice to make this a rule that just rewrites the inner (mv-nth
   ;; 1 ...) subexpression rather than the (equal (mv-nth 1 ...) ...)
@@ -819,6 +819,22 @@
      :hints (("goal" :in-theory (enable update-data-regioni)) )))
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
+  (defthm
+    update-data-region-alt-lemma-4
+    (implies (and (not (zp len))
+                  (< (len (explode str))
+                     (+ (cluster-size fat32-in-memory)
+                        (* -1 len (cluster-size fat32-in-memory))
+                        (* (cluster-size fat32-in-memory)
+                           (len (nth *data-regioni* fat32-in-memory)))))
+                  (fat32-in-memoryp fat32-in-memory))
+             (< (len (explode str))
+                (* (cluster-size fat32-in-memory)
+                   (len (nth *data-regioni* fat32-in-memory)))))
+    :hints (("goal" :cases ((<= (+ (cluster-size fat32-in-memory)
+                                   (* -1 len (cluster-size fat32-in-memory)))
+                                0)))))
 
   (defthmd
     update-data-region-alt
