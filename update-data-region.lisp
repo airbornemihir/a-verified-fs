@@ -26,8 +26,10 @@
   cluster-size (fat32-in-memory)
   (declare (xargs :stobjs fat32-in-memory
                   :guard (fat32-in-memoryp fat32-in-memory)))
-  (* (bpb_secperclus fat32-in-memory)
-     (bpb_bytspersec fat32-in-memory)))
+  (mbe :exec (* (bpb_secperclus fat32-in-memory)
+                (bpb_bytspersec fat32-in-memory))
+       :logic (nfix (* (bpb_secperclus fat32-in-memory)
+                       (bpb_bytspersec fat32-in-memory)))))
 
 (defthm natp-of-cluster-size
   (implies (fat32-in-memoryp fat32-in-memory)
@@ -903,25 +905,26 @@
        (mv-nth 1
                (update-data-region fat32-in-memory str len)))))
 
-(defthm
-  update-data-region-correctness-1-lemma-1
-  (implies (and (not (zp len))
-                (<= (* (cluster-size fat32-in-memory)
-                       data-region-length)
-                    (+ length-str
-                       (* len (cluster-size fat32-in-memory))))
-                (< (+ length-str
-                      (* len (cluster-size fat32-in-memory)))
-                   (+ (cluster-size fat32-in-memory)
-                      (* (cluster-size fat32-in-memory)
-                         data-region-length))))
-           (< length-str
-              (* (cluster-size fat32-in-memory)
-                 data-region-length)))
-  :hints (("goal" :in-theory (disable (:rewrite product-less-than-zero))
-           :use ((:instance (:rewrite product-less-than-zero)
-                            (y (cluster-size fat32-in-memory))
-                            (x (+ -1 len)))))))
+(local
+ (defthm
+   update-data-region-correctness-1-lemma-1
+   (implies (and (not (zp len))
+                 (<= (* cluster-size
+                        data-region-length)
+                     (+ length-str
+                        (* len cluster-size)))
+                 (< (+ length-str
+                       (* len cluster-size))
+                    (+ cluster-size
+                       (* cluster-size
+                          data-region-length))))
+            (< length-str
+               (* cluster-size
+                  data-region-length)))
+   :hints (("goal" :in-theory (disable (:rewrite product-less-than-zero))
+            :use ((:instance (:rewrite product-less-than-zero)
+                             (y cluster-size)
+                             (x (+ -1 len))))))))
 
 ;; It would be nice to make this a rule that just rewrites the inner (mv-nth
 ;; 1 ...) subexpression rather than the (equal (mv-nth 1 ...) ...)
