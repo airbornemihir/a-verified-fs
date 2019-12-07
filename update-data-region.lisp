@@ -573,74 +573,108 @@
 
 (defthm
   lofat-fs-p-of-update-data-regioni
-  (implies (and (lofat-fs-p fat32-in-memory)
-                (< i (data-region-length fat32-in-memory)))
-           (equal
-            (lofat-fs-p
-             (update-data-regioni i v fat32-in-memory))
-            (cluster-p v (cluster-size fat32-in-memory))))
+  (implies
+   (and (lofat-fs-p fat32-in-memory)
+        (< i (data-region-length fat32-in-memory)))
+   (equal (lofat-fs-p (update-data-regioni i v fat32-in-memory))
+          (cluster-p v (cluster-size fat32-in-memory))))
   :hints
-  (("goal" :do-not-induct t
-    :in-theory (e/d (lofat-fs-p
-                     fat32-in-memoryp
-                     update-data-regioni
-                     data-region-length count-of-clusters
-                     fat-length)
-                    (cluster-size-of-update-data-regioni
-                     (:rewrite a1)
-                     (:rewrite a2)
-                     (:rewrite a3)
-                     (:rewrite a4)
-                     (:rewrite a5)
-                     (:rewrite a9)
-                     (:rewrite a10)
-                     (:rewrite rationalp-prod)
-                     (:linear fl-def-linear-part-2)
-                     (:linear fl-def-linear-part-1)
-                     (:rewrite fl-of-non-rational)
-                     (:rewrite fl-<-integer)
-                     (:rewrite fl->-integer)
-                     (:rewrite rationalp-product)
-                     (:linear fl-non-negative-linear)
-                     (:rewrite integerp-minus)
-                     (:rewrite fl-plus-integer-eric)
-                     (:rewrite
-                      less-than-multiply-through-by-inverted-factor-from-left-hand-side)
-                     (:rewrite fl-int)
-                     (:rewrite
-                      less-than-multiply-through-by-inverted-factor-from-right-hand-side)
-                     (:rewrite integerp-sum-take-out-known-integer)
-                     (:rewrite fl-<=-y)
-                     (:rewrite mod-does-nothing)
-                     (:rewrite fl+int-rewrite)
-                     (:rewrite mod-when-y-is-an-inverse)
-                     (:rewrite
-                      this-needs-to-be-added-to-quotient-remainder-lemmas)
-                     (:linear
-                      *-weakly-monotonic-negative-multiplier
-                      . 2)
-                     (:rewrite expt-compare)
-                     (:rewrite cancel-common-factors-in-<)
-                     (:rewrite fold-consts-in-+)
-                     (:linear
-                      *-weakly-monotonic-negative-multiplier
-                      . 1)
-                     (:linear
-                      *-strongly-monotonic-negative-multiplier
-                      . 1)
-                     (:rewrite non-integerp-<-integerp)
-                     (:rewrite integerp-<-non-integerp)
-                     (:rewrite fl-weak-monotone)
-                     (:rewrite fl-strong-monotone)
-                     (:linear
-                                    *-strongly-monotonic-negative-multiplier
-                                    . 2)
-                     (:linear fl-weakly-monotonic . 2)
-                     (:linear fl-weakly-monotonic . 1)
-                     (:linear fl-monotone-linear)
-                     (:rewrite mod-minus-alt)))
-    :use
-    cluster-size-of-update-data-regioni)))
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    '((:compound-recognizer natp-compound-recognizer)
+      (:compound-recognizer true-listp-when-fat32-entry-list-p)
+      (:definition bpb_bkbootsecp)
+      (:definition bpb_bytspersecp)
+      (:definition bpb_extflagsp)
+      (:definition bpb_fatsz16p)
+      (:definition bpb_fatsz32p)
+      (:definition bpb_fsinfop)
+      (:definition bpb_fsver_majorp)
+      (:definition bpb_fsver_minorp)
+      (:definition bpb_hiddsecp)
+      (:definition bpb_mediap)
+      (:definition bpb_numfatsp)
+      (:definition bpb_numheadsp)
+      (:definition bpb_reservedp-alt)
+      (:definition bpb_rootclusp)
+      (:definition bpb_rootentcntp)
+      (:definition bpb_rsvdseccntp)
+      (:definition bpb_secperclusp)
+      (:definition bpb_secpertrkp)
+      (:definition bpb_totsec16p)
+      (:definition bpb_totsec32p)
+      (:definition bs_bootsigp)
+      (:definition bs_drvnump)
+      (:definition bs_filsystypep-alt)
+      (:definition bs_jmpbootp-alt)
+      (:definition bs_oemnamep-alt)
+      (:definition bs_reserved1p)
+      (:definition bs_volidp)
+      (:definition bs_vollabp-alt)
+      (:definition count-of-clusters)
+      (:definition data-region-length)
+      (:definition data-regionp-alt)
+      (:definition fat-length)
+      (:definition fat32-in-memoryp)
+      (:definition fatp-alt)
+      (:definition fix)
+      (:definition integer-range-p)
+      (:definition length)
+      (:definition lofat-fs-p)
+      (:definition max)
+      (:definition nfix)
+      (:definition not)
+      (:definition nthcdr)
+      (:definition unsigned-byte-p)
+      (:definition update-data-regioni)
+      (:definition update-nth-array)
+      (:executable-counterpart binary-+)
+      (:executable-counterpart equal)
+      (:executable-counterpart expt)
+      (:executable-counterpart integerp)
+      (:executable-counterpart max)
+      (:executable-counterpart member-equal)
+      (:executable-counterpart nfix)
+      (:executable-counterpart not)
+      (:executable-counterpart unary--)
+      (:executable-counterpart zp)
+      (:rewrite bpb_bytspersec-of-update-nth . 23)
+      (:rewrite bpb_fatsz32-of-update-nth . 23)
+      (:rewrite bpb_numfats-of-update-nth . 23)
+      (:rewrite bpb_rootclus-of-update-nth . 23)
+      (:rewrite bpb_rsvdseccnt-of-update-nth . 23)
+      (:rewrite bpb_secperclus-of-update-nth . 23)
+      (:rewrite cluster-listp-of-update-nth)
+      (:rewrite cluster-p-correctness-1)
+      (:rewrite cluster-size-of-update-nth)
+      (:rewrite commutativity-2-of-+)
+      (:rewrite commutativity-of-*)
+      (:rewrite commutativity-of-+)
+      (:rewrite count-of-clusters-of-update-nth)
+      (:rewrite distributivity-of-minus-over-+)
+      (:rewrite fat-entry-count-of-update-nth)
+      (:rewrite fat-length-of-update-nth)
+      (:rewrite inverse-of-+)
+      (:rewrite len-update-nth)
+      (:rewrite nth-update-nth)
+      (:rewrite nthcdr-of-update-nth)
+      (:rewrite stobj-cluster-listp-helper-correctness-1)
+      (:rewrite string-listp-of-update-nth)
+      (:rewrite unicity-of-0)
+      (:type-prescription cluster-listp)
+      (:type-prescription cluster-p)
+      (:type-prescription count-of-clusters)
+      (:type-prescription fat-entry-count)
+      (:type-prescription fat32-entry-mask)
+      (:type-prescription floor)
+      (:type-prescription len)
+      (:type-prescription max)
+      (:type-prescription string-listp)
+      (:type-prescription true-listp-update-nth)
+      (:type-prescription unsigned-byte-listp)
+      (:type-prescription update-nth))
+    :use cluster-size-of-update-data-regioni)))
 
 (defun
     update-data-region
@@ -1053,6 +1087,14 @@
     :hints
     (("goal"
       :in-theory (e/d (fat32-in-memoryp)
-                      (fat32-in-memoryp-of-update-data-region))
+                      (fat32-in-memoryp-of-update-data-region
+                       (:definition update-data-region)
+                       (:rewrite
+                        update-data-region-correctness-1-lemma-1)
+                       (:definition nthcdr)
+                       (:rewrite cancel-common-factors-in-<)
+                       (:rewrite rationalp-prod)
+                       (:rewrite rationalp-sum)
+                       (:rewrite integerp-prod)))
       :use fat32-in-memoryp-of-update-data-region
       :do-not-induct t)))))
