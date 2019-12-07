@@ -247,7 +247,7 @@
   (implies
    (and (m1-file-alist-p fs)
         (hifat-no-dups-p fs)
-        (m1-directory-file-p val)
+        (m1-file-p val)
         (hifat-no-dups-p (m1-file->contents val))
         (fat32-filename-p name))
    (equal
@@ -261,7 +261,9 @@
        (m1-directory-file-p (cdr (assoc-equal name fs)))
        (- (hifat-entry-count (m1-file->contents (cdr (assoc-equal name fs)))))
        0))
-     (hifat-entry-count (m1-file->contents val)))))
+     (if (m1-directory-file-p val)
+         (hifat-entry-count (m1-file->contents val))
+         0))))
   :hints (("goal" :in-theory (enable hifat-entry-count hifat-no-dups-p)
            :induct (assoc-equal name fs))))
 
