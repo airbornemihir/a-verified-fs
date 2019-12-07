@@ -9,6 +9,8 @@
 (include-book "cluster-listp")
 (include-book "flatten-lemmas")
 
+(local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+
 ;; These are some rules from other books which are either interacting badly
 ;; with the theory I've built up so far, or else causing a lot of unnecessary
 ;; frames and tries.
@@ -150,8 +152,13 @@
      (cluster-size fat32-in-memory))))
   :hints
   (("goal"
-    :in-theory (enable data-regioni data-region-length
-                       nth nthcdr-when->=-n-len-l)
+    :in-theory (e/d (data-regioni data-region-length
+                                  nth nthcdr-when->=-n-len-l)
+                    ;; Try disabling rules until the proof works again...
+                    ((:rewrite a1)
+                     (:rewrite a2)
+                     (:rewrite a4)
+                     (:rewrite a9)))
     :induct (stobj-cluster-listp-helper fat32-in-memory n)
     :expand
     ((true-list-fix (nth *data-regioni* fat32-in-memory))
@@ -282,8 +289,6 @@
          (equal (* 4 (fat-length fat32-in-memory))
                 (* (bpb_fatsz32 fat32-in-memory)
                    (bpb_bytspersec fat32-in-memory)))))
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (local
    (defthm
@@ -439,17 +444,63 @@
   lofat-fs-p-of-update-fati
   (implies (and (lofat-fs-p fat32-in-memory)
                 (force (< i (fat-length fat32-in-memory))))
-           (equal
-            (lofat-fs-p
-             (update-fati i v fat32-in-memory))
-            (fat32-entry-p v)))
+           (equal (lofat-fs-p (update-fati i v fat32-in-memory))
+                  (fat32-entry-p v)))
   :hints
   (("goal"
-    :in-theory (e/d (lofat-fs-p
-                     fat32-in-memoryp
-                     update-fati fat-length count-of-clusters
-                     data-region-length)
-                    (cluster-size-of-update-fati))
+    :in-theory
+    (e/d
+     (lofat-fs-p fat32-in-memoryp update-fati fat-length
+                 count-of-clusters data-region-length)
+     (cluster-size-of-update-fati
+      (:linear fl-non-negative-linear)
+      (:rewrite integerp-implies-not-complex-rationalp)
+      (:linear *-weakly-monotonic . 2)
+      (:linear *-weakly-monotonic-negative-multiplier
+               . 2)
+      (:linear /-weakly-monotonic)
+      (:rewrite collect-constants-in-<-of-sums)
+      (:rewrite rationalp-prod)
+      (:rewrite product-less-than-zero)
+      (:rewrite unary-divide-less-than-zero)
+      (:rewrite rearr-negative-coeffs-<-sums-blah)
+      (:rewrite complex-rationalp-prod)
+      (:rewrite rationalp-unary-divide)
+      (:linear fl-def-linear-part-2)
+      (:linear fl-def-linear-part-1)
+      (:rewrite rationalp-sum)
+      (:rewrite cancel-common-factors-in-<)
+      (:rewrite fl-of-non-rational)
+      (:rewrite
+       less-than-multiply-through-by-inverted-factor-from-right-hand-side)
+      (:rewrite
+       less-than-multiply-through-by-inverted-factor-from-left-hand-side)
+      (:rewrite
+       complex-rationalp-+-when-first-term-is-not-complex)
+      (:rewrite
+       complex-rationalp-+-when-second-term-is-not-complex)
+      (:rewrite rationalp-product)
+      (:rewrite fl-plus-integer-eric)
+      (:rewrite integerp-minus)
+      (:rewrite a10)
+      (:rewrite integerp-sum-take-out-known-integer)
+      (:rewrite integerp-prod-of-3-first-two)
+      (:rewrite integerp-prod)
+      (:rewrite integerp-+)
+      (:rewrite rationalp-product-when-one-arg-is-rational)
+      (:rewrite mod-does-nothing)
+      (:rewrite mod-when-y-is-an-inverse)
+      (:rewrite
+       this-needs-to-be-added-to-quotient-remainder-lemmas)
+      (:rewrite fl-int)
+      (:rewrite integerp-sum-take-out-known-integer-3)
+      (:rewrite fl+int-rewrite)
+      (:rewrite integerp-prod-of-3-first-and-last)
+      (:rewrite integerp-prod-of-3-last-two)
+      (:rewrite a1)
+      (:rewrite a2)
+      (:rewrite a3)
+      (:rewrite a9)))
     :use cluster-size-of-update-fati)))
 
 (defthm
@@ -506,123 +557,118 @@
     :use
     cluster-size-of-update-data-regioni)))
 
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defun
+(defun
     update-data-region
     (fat32-in-memory str len)
-    (declare
-     (xargs
-      :guard (and (stringp str)
-                  (natp len)
-                  (<= len
-                      (data-region-length fat32-in-memory))
-                  (>= (length str)
-                      (* (- (data-region-length fat32-in-memory)
-                            len)
-                         (cluster-size fat32-in-memory)))
-                  (<= len
-                      (- *ms-bad-cluster*
-                         *ms-first-data-cluster*)))
-      :stobjs fat32-in-memory
-      :measure (nfix len)))
-    (b*
-        ((len (the (unsigned-byte 28) len))
-         ((when (zp len)) (mv fat32-in-memory 0))
-         (cluster-size (cluster-size fat32-in-memory))
-         (index (- (data-region-length fat32-in-memory)
-                   len)))
-      (if
-       (<= (* (+ index 1) cluster-size)
-           (length str))
-       (b*
-           ((current-cluster (subseq str (* index cluster-size)
-                                     (* (+ index 1) cluster-size)))
-            (fat32-in-memory
-             (update-data-regioni
-              index current-cluster fat32-in-memory)))
-         (update-data-region
-          fat32-in-memory
-          str (the (unsigned-byte 28) (- len 1))))
-       (b*
-           ((current-cluster (subseq str (* index cluster-size) nil))
-            (fat32-in-memory
-             (update-data-regioni
-              index current-cluster fat32-in-memory)))
-         (mv fat32-in-memory *eio*)))))
-
-  (defun
-      update-data-region-from-disk-image
-      (fat32-in-memory len state tmp_init image-path)
-    (declare
-     (xargs
-      :guard
-      (and (natp tmp_init)
-           (stringp image-path)
-           (stringp (read-file-into-string image-path))
-           (natp len)
-           (<= len
-               (data-region-length fat32-in-memory))
-           (>= (length (read-file-into-string image-path))
-               (+ tmp_init
-                  (* (- (data-region-length fat32-in-memory)
-                        len)
-                     (cluster-size fat32-in-memory))))
-           (<= len
-               (- *ms-bad-cluster*
-                  *ms-first-data-cluster*)))
-      :stobjs (fat32-in-memory state)
-      :measure (nfix len)))
-    (b*
-        ((len (the (unsigned-byte 28) len))
-         ((when (zp len)) (mv fat32-in-memory 0))
-         (cluster-size (cluster-size fat32-in-memory))
-         (index (- (data-region-length fat32-in-memory)
-                   len))
-         (fat32-in-memory
-          (update-data-regioni
-           index
-           (read-file-into-string
-            image-path
-            :start (+ tmp_init (* index cluster-size))
-            :bytes cluster-size)
-           fat32-in-memory)))
-      (if (equal (length (data-regioni index fat32-in-memory))
-                 cluster-size)
-          (update-data-region-from-disk-image
+  (declare
+   (xargs
+    :guard (and (stringp str)
+                (natp len)
+                (<= len
+                    (data-region-length fat32-in-memory))
+                (>= (length str)
+                    (* (- (data-region-length fat32-in-memory)
+                          len)
+                       (cluster-size fat32-in-memory)))
+                (<= len
+                    (- *ms-bad-cluster*
+                       *ms-first-data-cluster*)))
+    :stobjs fat32-in-memory
+    :measure (nfix len)))
+  (b*
+      ((len (the (unsigned-byte 28) len))
+       ((when (zp len)) (mv fat32-in-memory 0))
+       (cluster-size (cluster-size fat32-in-memory))
+       (index (- (data-region-length fat32-in-memory)
+                 len)))
+    (if
+        (<= (* (+ index 1) cluster-size)
+            (length str))
+        (b*
+            ((current-cluster (subseq str (* index cluster-size)
+                                      (* (+ index 1) cluster-size)))
+             (fat32-in-memory
+              (update-data-regioni
+               index current-cluster fat32-in-memory)))
+          (update-data-region
            fat32-in-memory
-           (the (unsigned-byte 28) (- len 1))
-           state tmp_init image-path)
-        (mv fat32-in-memory *eio*))))
+           str (the (unsigned-byte 28) (- len 1))))
+      (b*
+          ((current-cluster (subseq str (* index cluster-size) nil))
+           (fat32-in-memory
+            (update-data-regioni
+             index current-cluster fat32-in-memory)))
+        (mv fat32-in-memory *eio*)))))
 
-  (defthm
-    update-data-region-from-disk-image-correctness-1
-    (implies
-     (and (natp tmp_init)
-          (<= len
-              (data-region-length fat32-in-memory))
-          (>= (length (read-file-into-string image-path))
-              (+ tmp_init
-                 (* (- (data-region-length fat32-in-memory)
-                       len)
-                    (cluster-size fat32-in-memory))))
-          (not (zp (cluster-size fat32-in-memory))))
-     (equal (update-data-region-from-disk-image fat32-in-memory
+(defun
+    update-data-region-from-disk-image
+    (fat32-in-memory len state tmp_init image-path)
+  (declare
+   (xargs
+    :guard
+    (and (natp tmp_init)
+         (stringp image-path)
+         (stringp (read-file-into-string image-path))
+         (natp len)
+         (<= len
+             (data-region-length fat32-in-memory))
+         (>= (length (read-file-into-string image-path))
+             (+ tmp_init
+                (* (- (data-region-length fat32-in-memory)
+                      len)
+                   (cluster-size fat32-in-memory))))
+         (<= len
+             (- *ms-bad-cluster*
+                *ms-first-data-cluster*)))
+    :stobjs (fat32-in-memory state)
+    :measure (nfix len)))
+  (b*
+      ((len (the (unsigned-byte 28) len))
+       ((when (zp len)) (mv fat32-in-memory 0))
+       (cluster-size (cluster-size fat32-in-memory))
+       (index (- (data-region-length fat32-in-memory)
+                 len))
+       (fat32-in-memory
+        (update-data-regioni
+         index
+         (read-file-into-string
+          image-path
+          :start (+ tmp_init (* index cluster-size))
+          :bytes cluster-size)
+         fat32-in-memory)))
+    (if (equal (length (data-regioni index fat32-in-memory))
+               cluster-size)
+        (update-data-region-from-disk-image
+         fat32-in-memory
+         (the (unsigned-byte 28) (- len 1))
+         state tmp_init image-path)
+      (mv fat32-in-memory *eio*))))
+
+(defthm
+  update-data-region-from-disk-image-correctness-1
+  (implies
+   (and (natp tmp_init)
+        (<= len
+            (data-region-length fat32-in-memory))
+        (>= (length (read-file-into-string image-path))
+            (+ tmp_init
+               (* (- (data-region-length fat32-in-memory)
+                     len)
+                  (cluster-size fat32-in-memory))))
+        (not (zp (cluster-size fat32-in-memory))))
+   (equal (update-data-region-from-disk-image fat32-in-memory
+                                              len state tmp_init image-path)
+          (update-data-region fat32-in-memory
+                              (subseq (read-file-into-string image-path)
+                                      tmp_init nil)
+                              len)))
+  :hints
+  (("goal"
+    :induct (update-data-region-from-disk-image fat32-in-memory
                                                 len state tmp_init image-path)
-            (update-data-region fat32-in-memory
-                                (subseq (read-file-into-string image-path)
-                                        tmp_init nil)
-                                len)))
-    :hints
-    (("goal"
-      :induct (update-data-region-from-disk-image fat32-in-memory
-                                                  len state tmp_init image-path)
-      :in-theory (enable take-of-nthcdr nthcdr-when->=-n-len-l)
-      :expand (:free (fat32-in-memory str)
-                     (update-data-region fat32-in-memory str len))))))
+    :in-theory (enable take-of-nthcdr nthcdr-when->=-n-len-l)
+    :expand (:free (fat32-in-memory str)
+                   (update-data-region fat32-in-memory str len)))))
 
 (defthm
   fat32-in-memoryp-of-update-data-regioni
@@ -738,51 +784,46 @@
        (mv-nth 1
                (update-data-region fat32-in-memory str len)))))
 
-(encapsulate
-  ()
+(defthm
+  update-data-region-correctness-1-lemma-1
+  (implies (and (not (zp len))
+                (<= (* (cluster-size fat32-in-memory)
+                       data-region-length)
+                    (+ length-str
+                       (* len (cluster-size fat32-in-memory))))
+                (< (+ length-str
+                      (* len (cluster-size fat32-in-memory)))
+                   (+ (cluster-size fat32-in-memory)
+                      (* (cluster-size fat32-in-memory)
+                         data-region-length))))
+           (< length-str
+              (* (cluster-size fat32-in-memory)
+                 data-region-length)))
+  :hints (("goal" :in-theory (disable (:rewrite product-less-than-zero))
+           :use ((:instance (:rewrite product-less-than-zero)
+                            (y (cluster-size fat32-in-memory))
+                            (x (+ -1 len)))))))
 
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthm
-    update-data-region-correctness-1-lemma-1
-    (implies (and (not (zp len))
-                  (<= (* (cluster-size fat32-in-memory)
-                         data-region-length)
-                      (+ length-str
-                         (* len (cluster-size fat32-in-memory))))
-                  (< (+ length-str
-                        (* len (cluster-size fat32-in-memory)))
-                     (+ (cluster-size fat32-in-memory)
-                        (* (cluster-size fat32-in-memory)
-                           data-region-length))))
-             (< length-str
-                (* (cluster-size fat32-in-memory)
-                   data-region-length)))
-    :hints (("goal" :in-theory (disable (:rewrite product-less-than-zero))
-             :use ((:instance (:rewrite product-less-than-zero)
-                              (y (cluster-size fat32-in-memory))
-                              (x (+ -1 len)))))))
-
-  ;; It would be nice to make this a rule that just rewrites the inner (mv-nth
-  ;; 1 ...) subexpression rather than the (equal (mv-nth 1 ...) ...)
-  ;; expression, but that causes trouble with
-  ;; string-to-lofat-ignore-lemma-14 in another book.
-  (defthm
-    update-data-region-correctness-1
-    (implies (and (natp len)
-                  (<= len
-                      (data-region-length fat32-in-memory))
-                  (>= (length str)
-                      (* (- (data-region-length fat32-in-memory)
-                            len)
-                         (cluster-size fat32-in-memory))))
-             (iff
-              (equal (mv-nth 1
-                             (update-data-region fat32-in-memory str len))
-                     0)
-              (>= (length str)
-                  (* (data-region-length fat32-in-memory)
-                     (cluster-size fat32-in-memory)))))))
+;; It would be nice to make this a rule that just rewrites the inner (mv-nth
+;; 1 ...) subexpression rather than the (equal (mv-nth 1 ...) ...)
+;; expression, but that causes trouble with
+;; string-to-lofat-ignore-lemma-14 in another book.
+(defthm
+  update-data-region-correctness-1
+  (implies (and (natp len)
+                (<= len
+                    (data-region-length fat32-in-memory))
+                (>= (length str)
+                    (* (- (data-region-length fat32-in-memory)
+                          len)
+                       (cluster-size fat32-in-memory))))
+           (iff
+            (equal (mv-nth 1
+                           (update-data-region fat32-in-memory str len))
+                   0)
+            (>= (length str)
+                (* (data-region-length fat32-in-memory)
+                   (cluster-size fat32-in-memory))))))
 
 (encapsulate
   ()
@@ -817,8 +858,6 @@
       (update-nth i v
                   (nth *data-regioni* fat32-in-memory)))
      :hints (("goal" :in-theory (enable update-data-regioni)) )))
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
   (defthm
     update-data-region-alt-lemma-4
