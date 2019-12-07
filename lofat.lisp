@@ -12833,11 +12833,11 @@ Some (rather awful) testing forms are
       (no-duplicatesp-equal
        (mv-nth '0
                (dir-ent-clusterchain fat32-in-memory root-dir-ent))))
-      (equal
-       (mv-nth
-        1
-        (lofat-remove-file fat32-in-memory root-dir-ent pathname))
-       error-code)))
+     (equal
+      (mv-nth
+       1
+       (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+      error-code)))
   :hints
   (("goal"
     :induct (lofat-remove-file fat32-in-memory root-dir-ent pathname)
@@ -24509,11 +24509,7 @@ Some (rather awful) testing forms are
 (encapsulate
   ()
 
-  (local (include-book "arithmetic-3/top" :dir :system))
-
-  (set-default-hints
-   '((nonlinearp-default-hint stable-under-simplificationp
-                              hist pspv)))
+  (local (include-book "arithmetic-5/top" :dir :system))
 
   (defthm
     lofat-place-file-correctness-1-lemma-80
@@ -24843,15 +24839,69 @@ Some (rather awful) testing forms are
             (cluster-size fat32-in-memory)))
           1))))))))
 
-;; (defthm
-;;   lofat-place-file-correctness-1-lemma-81
-;;   (implies
-;;    (and (lofat-fs-p fat32-in-memory)
-;;         (zp (count-free-clusters fat32-in-memory)))
-;;    (not (equal (mv-nth 1 (LOFAT-PLACE-FILE FAT32-IN-MEMORY
-;;                                            ROOT-DIR-ENT PATHNAME FILE))
-;;                0)))
-;;   :hints (("Goal" :in-theory (enable LOFAT-PLACE-FILE)) ))
+(defthm
+  lofat-place-file-correctness-1-lemma-81
+  (b*
+      (((mv fs error-code)
+        (hifat-place-file
+         (mv-nth 0
+                 (lofat-to-hifat-helper
+                  fat32-in-memory
+                  (make-dir-ent-list
+                   (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                  entry-limit))
+         pathname file1)))
+    (implies
+     (and
+      (lofat-fs-p fat32-in-memory)
+      (dir-ent-p root-dir-ent)
+      (dir-ent-directory-p root-dir-ent)
+      (equal (mv-nth 3
+                     (lofat-to-hifat-helper
+                      fat32-in-memory
+                      (make-dir-ent-list
+                       (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                      entry-limit))
+             0)
+      (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
+      (< (dir-ent-first-cluster root-dir-ent)
+         (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
+      (equal
+       (mv-nth 1 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
+       0)
+      (no-duplicatesp-equal
+       (mv-nth '0
+               (dir-ent-clusterchain fat32-in-memory root-dir-ent)))
+      (m1-regular-file-p file1)
+      (lofat-regular-file-p file2)
+      (equal (m1-file->contents file1) (lofat-file->contents file2))
+      (<= (hifat-entry-count fs) entry-limit)
+      (fat32-filename-list-p pathname)
+      (<=
+       (-
+        (hifat-cluster-count fs (cluster-size fat32-in-memory))
+        (hifat-cluster-count
+         (mv-nth 0
+                 (lofat-to-hifat-helper
+                  fat32-in-memory
+                  (make-dir-ent-list
+                   (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                  entry-limit))
+         (cluster-size fat32-in-memory)))
+       (count-free-clusters fat32-in-memory)))
+     (equal
+      (mv-nth
+       1
+       (lofat-place-file fat32-in-memory root-dir-ent pathname file2))
+      error-code)))
+  :hints
+  (("goal"
+    :induct (lofat-place-file fat32-in-memory root-dir-ent pathname file2)
+    :expand
+    (lofat-place-file fat32-in-memory root-dir-ent pathname file2)
+    :in-theory (enable hifat-place-file
+                       (:rewrite hifat-to-lofat-inversion-lemma-17)
+                       (:rewrite lofat-to-hifat-inversion-lemma-4)))))
 
 (encapsulate
   ()
