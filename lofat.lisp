@@ -15186,16 +15186,6 @@ Some (rather awful) testing forms are
              (len (hifat-file-alist-fix fs))))
   :hints (("goal" :in-theory (enable hifat-place-file))))
 
-(encapsulate
-  ()
-
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
-
-  (defthmd painful-debugging-lemma-18
-    (implies (and (integerp i) (not (zp j)))
-             (equal (floor i j)
-                    (+ (floor (- i j) j) 1)))))
-
 (defthm
   hifat-cluster-count-of-hifat-place-file-lemma-1
   (implies
@@ -15518,17 +15508,437 @@ Some (rather awful) testing forms are
 (encapsulate
   ()
 
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+  (local (include-book "arithmetic-3/top" :dir :system))
 
   (defthm
     hifat-cluster-count-of-hifat-place-file-lemma-6
     (implies (and (integerp cluster-size)
                   (<= 512 cluster-size))
              (and
-              (equal (floor (+ 63 cluster-size) cluster-size)
+              (equal (ceiling 64 cluster-size)
                      1)
-              (equal (floor (+ 95 cluster-size) cluster-size)
+              (equal (ceiling 96 cluster-size)
                      1)))))
+
+(defthm
+  hifat-cluster-count-of-hifat-place-file-lemma-8
+  (implies
+   (and
+    (consp pathname)
+    (m1-directory-file-p (cdr (assoc-equal (car pathname) fs)))
+    (< 1 (+ 1 (len (cddr pathname))))
+    (equal
+     (hifat-cluster-count
+      (mv-nth 0
+              (hifat-place-file
+               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+               (cdr pathname)
+               file))
+      cluster-size)
+     (+
+      (len (make-clusters (m1-file->contents file)
+                          cluster-size))
+      (hifat-cluster-count
+       (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+       cluster-size)
+      (-
+       (ceiling
+        (+
+         64
+         (*
+          32
+          (len
+           (m1-file->contents
+            (mv-nth
+             0
+             (hifat-find-file
+              (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+              (take (len (cddr pathname))
+                    (cdr pathname))))))))
+        cluster-size))
+      (ceiling
+       (+
+        96
+        (*
+         32
+         (len
+          (m1-file->contents
+           (mv-nth
+            0
+            (hifat-find-file
+             (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+             (take (len (cddr pathname))
+                   (cdr pathname))))))))
+       cluster-size)))
+    (m1-file-alist-p fs)
+    (hifat-no-dups-p fs)
+    (fat32-filename-list-p pathname))
+   (equal
+    (+
+     (hifat-cluster-count fs cluster-size)
+     (- (hifat-cluster-count
+         (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+         cluster-size))
+     (hifat-cluster-count
+      (mv-nth 0
+              (hifat-place-file
+               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+               (cdr pathname)
+               file))
+      cluster-size))
+    (+
+     (hifat-cluster-count fs cluster-size)
+     (len (make-clusters (m1-file->contents file)
+                         cluster-size))
+     (-
+      (ceiling
+       (+
+        64
+        (*
+         32
+         (len (m1-file->contents
+               (mv-nth 0
+                       (hifat-find-file fs
+                                        (take (+ 1 (len (cddr pathname)))
+                                              pathname)))))))
+       cluster-size))
+     (ceiling
+      (+
+       96
+       (* 32
+          (len (m1-file->contents
+                (mv-nth 0
+                        (hifat-find-file fs
+                                         (take (+ 1 (len (cddr pathname)))
+                                               pathname)))))))
+      cluster-size))))
+  :hints (("goal" :expand ((hifat-find-file fs
+                                            (cons (car pathname)
+                                                  (take (len (cddr pathname))
+                                                        (cdr pathname))))
+                           (take (+ 1 (len (cddr pathname)))
+                                 pathname))
+           :cases ((equal (consp (cdr (take (+ 1 (len (cddr pathname)))
+                                            pathname)))
+                          (< 1
+                             (len (take (+ 1 (len (cddr pathname)))
+                                        pathname))))))))
+
+(defthm
+  hifat-cluster-count-of-hifat-place-file-lemma-9
+  (implies
+   (and
+    (consp pathname)
+    (m1-directory-file-p (cdr (assoc-equal (car pathname) fs)))
+    (< 1 (len (cdr pathname)))
+    (equal
+     (hifat-cluster-count
+      (mv-nth 0
+              (hifat-place-file
+               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+               (cdr pathname)
+               file))
+      cluster-size)
+     (+
+      (len (make-clusters (m1-file->contents file)
+                          cluster-size))
+      (hifat-cluster-count
+       (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+       cluster-size)
+      (-
+       (ceiling
+        (+
+         64
+         (*
+          32
+          (len
+           (m1-file->contents
+            (mv-nth
+             0
+             (hifat-find-file
+              (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+              (take (+ -1 (len (cdr pathname)))
+                    (cdr pathname))))))))
+        cluster-size))
+      (ceiling
+       (+
+        96
+        (*
+         32
+         (len
+          (m1-file->contents
+           (mv-nth
+            0
+            (hifat-find-file
+             (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+             (take (+ -1 (len (cdr pathname)))
+                   (cdr pathname))))))))
+       cluster-size)))
+    (m1-file-alist-p fs)
+    (hifat-no-dups-p fs)
+    (fat32-filename-list-p pathname))
+   (equal
+    (+
+     (hifat-cluster-count fs cluster-size)
+     (- (hifat-cluster-count
+         (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+         cluster-size))
+     (hifat-cluster-count
+      (mv-nth 0
+              (hifat-place-file
+               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+               (cdr pathname)
+               file))
+      cluster-size))
+    (+
+     (hifat-cluster-count fs cluster-size)
+     (len (make-clusters (m1-file->contents file)
+                         cluster-size))
+     (-
+      (ceiling
+       (+ 64
+          (* 32
+             (len (m1-file->contents
+                   (mv-nth 0
+                           (hifat-find-file fs
+                                            (take (len (cdr pathname))
+                                                  pathname)))))))
+       cluster-size))
+     (ceiling
+      (+ 96
+         (* 32
+            (len (m1-file->contents
+                  (mv-nth 0
+                          (hifat-find-file fs
+                                           (take (len (cdr pathname))
+                                                 pathname)))))))
+      cluster-size))))
+  :hints (("goal" :expand ((hifat-find-file fs
+                                            (cons (car pathname)
+                                                  (take (len (cddr pathname))
+                                                        (cdr pathname))))
+                           (take (+ 1 (len (cddr pathname)))
+                                 pathname))
+           :cases ((equal (consp (cdr (take (+ 1 (len (cddr pathname)))
+                                            pathname)))
+                          (< 1
+                             (len (take (+ 1 (len (cddr pathname)))
+                                        pathname))))))))
+
+(defthm
+  hifat-cluster-count-of-hifat-place-file-lemma-10
+  (implies
+   (and
+    (m1-directory-file-p (cdr (assoc-equal (car pathname) fs)))
+    (< 1 (+ 1 (len (cddr pathname))))
+    (equal
+     (hifat-cluster-count
+      (mv-nth 0
+              (hifat-place-file
+               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+               (cdr pathname)
+               file))
+      cluster-size)
+     (+
+      (hifat-cluster-count (m1-file->contents file)
+                           cluster-size)
+      (ceiling (+ 64
+                  (* 32 (len (m1-file->contents file))))
+               cluster-size)
+      (hifat-cluster-count
+       (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+       cluster-size)
+      (-
+       (ceiling
+        (+
+         64
+         (*
+          32
+          (len
+           (m1-file->contents
+            (mv-nth
+             0
+             (hifat-find-file
+              (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+              (take (len (cddr pathname))
+                    (cdr pathname))))))))
+        cluster-size))
+      (ceiling
+       (+
+        96
+        (*
+         32
+         (len
+          (m1-file->contents
+           (mv-nth
+            0
+            (hifat-find-file
+             (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+             (take (len (cddr pathname))
+                   (cdr pathname))))))))
+       cluster-size)))
+    (m1-file-alist-p fs)
+    (hifat-no-dups-p fs)
+    (fat32-filename-list-p pathname))
+   (equal
+    (+
+     (hifat-cluster-count fs cluster-size)
+     (- (hifat-cluster-count
+         (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+         cluster-size))
+     (hifat-cluster-count
+      (mv-nth 0
+              (hifat-place-file
+               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+               (cdr pathname)
+               file))
+      cluster-size))
+    (+
+     (hifat-cluster-count fs cluster-size)
+     (hifat-cluster-count (m1-file->contents file)
+                          cluster-size)
+     (ceiling (+ 64
+                 (* 32 (len (m1-file->contents file))))
+              cluster-size)
+     (-
+      (ceiling
+       (+
+        64
+        (*
+         32
+         (len (m1-file->contents
+               (mv-nth 0
+                       (hifat-find-file fs
+                                        (take (+ 1 (len (cddr pathname)))
+                                              pathname)))))))
+       cluster-size))
+     (ceiling
+      (+
+       96
+       (* 32
+          (len (m1-file->contents
+                (mv-nth 0
+                        (hifat-find-file fs
+                                         (take (+ 1 (len (cddr pathname)))
+                                               pathname)))))))
+      cluster-size))))
+  :hints (("goal" :expand ((hifat-find-file fs
+                                            (cons (car pathname)
+                                                  (take (len (cddr pathname))
+                                                        (cdr pathname))))
+                           (take (+ 1 (len (cddr pathname)))
+                                 pathname))
+           :cases ((equal (consp (cdr (take (+ 1 (len (cddr pathname)))
+                                            pathname)))
+                          (< 1
+                             (len (take (+ 1 (len (cddr pathname)))
+                                        pathname))))))))
+
+(defthm
+  hifat-cluster-count-of-hifat-place-file-lemma-11
+  (implies
+   (and
+    (m1-directory-file-p (cdr (assoc-equal (car pathname) fs)))
+    (< 1 (len (cdr pathname)))
+    (equal
+     (hifat-cluster-count
+      (mv-nth 0
+              (hifat-place-file
+               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+               (cdr pathname)
+               file))
+      cluster-size)
+     (+
+      (hifat-cluster-count (m1-file->contents file)
+                           cluster-size)
+      (ceiling (+ 64
+                  (* 32 (len (m1-file->contents file))))
+               cluster-size)
+      (hifat-cluster-count
+       (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+       cluster-size)
+      (-
+       (ceiling
+        (+
+         64
+         (*
+          32
+          (len
+           (m1-file->contents
+            (mv-nth
+             0
+             (hifat-find-file
+              (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+              (take (+ -1 (len (cdr pathname)))
+                    (cdr pathname))))))))
+        cluster-size))
+      (ceiling
+       (+
+        96
+        (*
+         32
+         (len
+          (m1-file->contents
+           (mv-nth
+            0
+            (hifat-find-file
+             (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+             (take (+ -1 (len (cdr pathname)))
+                   (cdr pathname))))))))
+       cluster-size)))
+    (m1-file-alist-p fs)
+    (hifat-no-dups-p fs)
+    (fat32-filename-list-p pathname))
+   (equal
+    (+
+     (hifat-cluster-count fs cluster-size)
+     (- (hifat-cluster-count
+         (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+         cluster-size))
+     (hifat-cluster-count
+      (mv-nth 0
+              (hifat-place-file
+               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+               (cdr pathname)
+               file))
+      cluster-size))
+    (+
+     (hifat-cluster-count fs cluster-size)
+     (hifat-cluster-count (m1-file->contents file)
+                          cluster-size)
+     (ceiling (+ 64
+                 (* 32 (len (m1-file->contents file))))
+              cluster-size)
+     (-
+      (ceiling
+       (+ 64
+          (* 32
+             (len (m1-file->contents
+                   (mv-nth 0
+                           (hifat-find-file fs
+                                            (take (len (cdr pathname))
+                                                  pathname)))))))
+       cluster-size))
+     (ceiling
+      (+ 96
+         (* 32
+            (len (m1-file->contents
+                  (mv-nth 0
+                          (hifat-find-file fs
+                                           (take (len (cdr pathname))
+                                                 pathname)))))))
+      cluster-size))))
+  :hints (("goal" :expand ((hifat-find-file fs
+                                            (cons (car pathname)
+                                                  (take (len (cddr pathname))
+                                                        (cdr pathname))))
+                           (take (+ 1 (len (cddr pathname)))
+                                 pathname))
+           :cases ((equal (consp (cdr (take (+ 1 (len (cddr pathname)))
+                                            pathname)))
+                          (< 1
+                             (len (take (+ 1 (len (cddr pathname)))
+                                        pathname))))))))
 
 (encapsulate
   ()
@@ -15562,33 +15972,29 @@ Some (rather awful) testing forms are
               (hifat-cluster-count fs cluster-size)
               (len (make-clusters new-contents cluster-size))
               (nfix
-               (floor
-                (+
+               (ceiling
+                (*
+                 32
+                 (+
+                  3
+                  (len
+                   (m1-file->contents
+                    (mv-nth
+                     0
+                     (hifat-find-file fs (butlast pathname 1)))))))
+                cluster-size))
+              (-
+               (nfix
+                (ceiling
                  (*
                   32
                   (+
-                   3
+                   2
                    (len
                     (m1-file->contents
                      (mv-nth
                       0
                       (hifat-find-file fs (butlast pathname 1)))))))
-                 cluster-size -1)
-                cluster-size))
-              (-
-               (nfix
-                (floor
-                 (+
-                  (*
-                   32
-                   (+
-                    2
-                    (len
-                     (m1-file->contents
-                      (mv-nth
-                       0
-                       (hifat-find-file fs (butlast pathname 1)))))))
-                  cluster-size -1)
                  cluster-size)))))
             ;; This may be inaccurate because the parent directory's length
             ;; will change.
@@ -15596,37 +16002,32 @@ Some (rather awful) testing forms are
                  (not (zp (mv-nth 1 (hifat-find-file fs pathname)))))
              (+ (hifat-cluster-count fs cluster-size)
                 (hifat-cluster-count new-contents cluster-size)
-                (nfix (floor (+ (* 32 (+ 2 (len new-contents)))
-                                cluster-size -1)
-                             cluster-size))
+                (nfix (ceiling (* 32 (+ 2 (len new-contents)))
+                               cluster-size))
                 (nfix
-                 (floor
-                  (+
+                 (ceiling
+                  (*
+                   32
+                   (+
+                    3
+                    (len
+                     (m1-file->contents
+                      (mv-nth
+                       0
+                       (hifat-find-file fs (butlast pathname 1)))))))
+                  cluster-size))
+                (-
+                 (nfix
+                  (ceiling
                    (*
                     32
                     (+
-                     3
+                     2
                      (len
                       (m1-file->contents
                        (mv-nth
                         0
                         (hifat-find-file fs (butlast pathname 1)))))))
-                   cluster-size -1)
-                  cluster-size))
-                (-
-                 (nfix
-                  (floor
-                   (+
-                    (*
-                     32
-                     (+
-                      2
-                      (len
-                       (m1-file->contents
-                        (mv-nth
-                         0
-                         (hifat-find-file fs (butlast pathname 1)))))))
-                    cluster-size -1)
                    cluster-size)))))
             (old-file (mv-nth 0 (hifat-find-file fs pathname)))
             (old-contents (m1-file->contents old-file))
@@ -15639,25 +16040,21 @@ Some (rather awful) testing forms are
              (+ (hifat-cluster-count fs cluster-size)
                 (len (make-clusters new-contents cluster-size))
                 (- (hifat-cluster-count old-contents cluster-size))
-                (- (nfix (floor (+ (* 32 (+ 2 (len old-contents)))
-                                   cluster-size -1)
-                                cluster-size)))))
+                (- (nfix (ceiling (* 32 (+ 2 (len old-contents)))
+                                  cluster-size)))))
             ((when (m1-regular-file-p old-file))
              (+ (hifat-cluster-count fs cluster-size)
                 (hifat-cluster-count new-contents cluster-size)
-                (nfix (floor (+ (* 32 (+ 2 (len new-contents)))
-                                cluster-size -1)
-                             cluster-size))
+                (nfix (ceiling (* 32 (+ 2 (len new-contents)))
+                               cluster-size))
                 (- (len (make-clusters old-contents cluster-size))))))
          (+ (hifat-cluster-count fs cluster-size)
             (hifat-cluster-count new-contents cluster-size)
-            (nfix (floor (+ (* 32 (+ 2 (len new-contents)))
-                            cluster-size -1)
-                         cluster-size))
+            (nfix (ceiling (* 32 (+ 2 (len new-contents)))
+                           cluster-size))
             (- (hifat-cluster-count old-contents cluster-size))
-            (- (nfix (floor (+ (* 32 (+ 2 (len old-contents)))
-                               cluster-size -1)
-                            cluster-size)))))))
+            (- (nfix (ceiling (* 32 (+ 2 (len old-contents)))
+                              cluster-size)))))))
      :hints
      (("goal" :in-theory (enable hifat-place-file hifat-find-file
                                  hifat-cluster-count-of-hifat-place-file-lemma-3)
@@ -15690,33 +16087,29 @@ Some (rather awful) testing forms are
              (hifat-cluster-count fs cluster-size)
              (len (make-clusters new-contents cluster-size))
              (nfix
-              (floor
-               (+
+              (ceiling
+               (*
+                32
+                (+
+                 3
+                 (len
+                  (m1-file->contents
+                   (mv-nth
+                    0
+                    (hifat-find-file fs (butlast pathname 1)))))))
+               cluster-size))
+             (-
+              (nfix
+               (ceiling
                 (*
                  32
                  (+
-                  3
+                  2
                   (len
                    (m1-file->contents
                     (mv-nth
                      0
                      (hifat-find-file fs (butlast pathname 1)))))))
-                cluster-size -1)
-               cluster-size))
-             (-
-              (nfix
-               (floor
-                (+
-                 (*
-                  32
-                  (+
-                   2
-                   (len
-                    (m1-file->contents
-                     (mv-nth
-                      0
-                      (hifat-find-file fs (butlast pathname 1)))))))
-                 cluster-size -1)
                 cluster-size)))))
            ;; This may be inaccurate because the parent directory's length
            ;; will change.
@@ -15724,37 +16117,32 @@ Some (rather awful) testing forms are
                 (not (zp (mv-nth 1 (hifat-find-file fs pathname)))))
             (+ (hifat-cluster-count fs cluster-size)
                (hifat-cluster-count new-contents cluster-size)
-               (nfix (floor (+ (* 32 (+ 2 (len new-contents)))
-                               cluster-size -1)
-                            cluster-size))
+               (nfix (ceiling (* 32 (+ 2 (len new-contents)))
+                              cluster-size))
                (nfix
-                (floor
-                 (+
+                (ceiling
+                 (*
+                  32
+                  (+
+                   3
+                   (len
+                    (m1-file->contents
+                     (mv-nth
+                      0
+                      (hifat-find-file fs (butlast pathname 1)))))))
+                 cluster-size))
+               (-
+                (nfix
+                 (ceiling
                   (*
                    32
                    (+
-                    3
+                    2
                     (len
                      (m1-file->contents
                       (mv-nth
                        0
                        (hifat-find-file fs (butlast pathname 1)))))))
-                  cluster-size -1)
-                 cluster-size))
-               (-
-                (nfix
-                 (floor
-                  (+
-                   (*
-                    32
-                    (+
-                     2
-                     (len
-                      (m1-file->contents
-                       (mv-nth
-                        0
-                        (hifat-find-file fs (butlast pathname 1)))))))
-                   cluster-size -1)
                   cluster-size)))))
            (old-file (mv-nth 0 (hifat-find-file fs pathname)))
            (old-contents (m1-file->contents old-file))
@@ -15767,25 +16155,21 @@ Some (rather awful) testing forms are
             (+ (hifat-cluster-count fs cluster-size)
                (len (make-clusters new-contents cluster-size))
                (- (hifat-cluster-count old-contents cluster-size))
-               (- (nfix (floor (+ (* 32 (+ 2 (len old-contents)))
-                                  cluster-size -1)
-                               cluster-size)))))
+               (- (nfix (ceiling (* 32 (+ 2 (len old-contents)))
+                                 cluster-size)))))
            ((when (m1-regular-file-p old-file))
             (+ (hifat-cluster-count fs cluster-size)
                (hifat-cluster-count new-contents cluster-size)
-               (nfix (floor (+ (* 32 (+ 2 (len new-contents)))
-                               cluster-size -1)
-                            cluster-size))
+               (nfix (ceiling (* 32 (+ 2 (len new-contents)))
+                              cluster-size))
                (- (len (make-clusters old-contents cluster-size))))))
         (+ (hifat-cluster-count fs cluster-size)
            (hifat-cluster-count new-contents cluster-size)
-           (nfix (floor (+ (* 32 (+ 2 (len new-contents)))
-                           cluster-size -1)
-                        cluster-size))
+           (nfix (ceiling (* 32 (+ 2 (len new-contents)))
+                          cluster-size))
            (- (hifat-cluster-count old-contents cluster-size))
-           (- (nfix (floor (+ (* 32 (+ 2 (len old-contents)))
-                              cluster-size -1)
-                           cluster-size)))))))
+           (- (nfix (ceiling (* 32 (+ 2 (len old-contents)))
+                             cluster-size)))))))
     :hints
     (("goal"
       :use (:instance
