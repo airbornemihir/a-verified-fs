@@ -8433,14 +8433,12 @@
                    (fat32-build-index-list (effective-fat fat32-in-memory)
                                            masked-current-cluster length
                                            (cluster-size fat32-in-memory))))
-      (floor
-       (+
-        -1 (cluster-size fat32-in-memory)
-        (len
-         (explode
-          (mv-nth 0
-                  (get-clusterchain-contents fat32-in-memory
-                                             masked-current-cluster length)))))
+      (ceiling
+       (len
+        (explode
+         (mv-nth 0
+                 (get-clusterchain-contents fat32-in-memory
+                                            masked-current-cluster length))))
        (cluster-size fat32-in-memory))))
     :hints
     (("goal"
@@ -8953,6 +8951,28 @@
     :use
     (:instance lofat-to-hifat-inversion-lemma-3
                (fa-table (effective-fat fat32-in-memory))))))
+
+(defthmd
+  lofat-to-hifat-inversion-lemma-15
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (equal (mv-nth 1
+                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
+           0))
+   (equal
+    (len (mv-nth 0
+                 (dir-ent-clusterchain fat32-in-memory dir-ent)))
+    (ceiling
+     (len
+      (explode
+       (mv-nth 0
+               (dir-ent-clusterchain-contents fat32-in-memory dir-ent))))
+     (cluster-size fat32-in-memory))))
+  :hints
+  (("goal"
+    :in-theory (enable dir-ent-clusterchain-contents dir-ent-clusterchain
+                       lofat-to-hifat-helper-correctness-5-lemma-7))))
 
 (encapsulate
   ()

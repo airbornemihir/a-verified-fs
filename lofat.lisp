@@ -13135,30 +13135,6 @@ Some (rather awful) testing forms are
      (:rewrite
       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)))))
 
-(defthmd
-  lofat-remove-file-correctness-1-lemma-65
-  (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (equal (mv-nth 1
-                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
-           0))
-   (equal
-    (len (mv-nth 0
-                 (dir-ent-clusterchain fat32-in-memory dir-ent)))
-    (floor
-     (+
-      -1 (cluster-size fat32-in-memory)
-      (len
-       (explode
-        (mv-nth 0
-                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))))
-     (cluster-size fat32-in-memory))))
-  :hints
-  (("goal"
-    :in-theory (enable dir-ent-clusterchain-contents dir-ent-clusterchain
-                       lofat-to-hifat-helper-correctness-5-lemma-7))))
-
 ;; Hypotheses minimised.
 (defthm
   lofat-remove-file-correctness-1-lemma-66
@@ -13206,7 +13182,7 @@ Some (rather awful) testing forms are
     :in-theory (enable hifat-remove-file
                        (:rewrite hifat-to-lofat-inversion-lemma-17)
                        (:rewrite lofat-to-hifat-inversion-lemma-4)
-                       lofat-remove-file-correctness-1-lemma-65))))
+                       lofat-to-hifat-inversion-lemma-15))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-67
@@ -14308,7 +14284,7 @@ Some (rather awful) testing forms are
       :in-theory (enable hifat-remove-file
                          (:rewrite hifat-to-lofat-inversion-lemma-17)
                          (:rewrite lofat-to-hifat-inversion-lemma-4)
-                         lofat-remove-file-correctness-1-lemma-65)))
+                         lofat-to-hifat-inversion-lemma-15)))
     :rule-classes
     ((:rewrite
       :corollary
