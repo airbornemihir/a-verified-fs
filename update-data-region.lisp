@@ -19,8 +19,8 @@
                      revappend-removal)))
 
 (local
- (in-theory (disable read-file-into-string1 nth update-nth floor mod
-                     true-listp)))
+ (in-theory (disable read-file-into-string1 nth update-nth ceiling floor
+                     mod true-listp)))
 
 (defund
   cluster-size (fat32-in-memory)

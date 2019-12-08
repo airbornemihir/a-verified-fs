@@ -396,7 +396,9 @@
   (defthmd
     painful-debugging-lemma-14
     (implies (not (zp cluster-size))
-             (equal (floor (- cluster-size 1) cluster-size) 0)))
+             (and
+              (equal (ceiling cluster-size cluster-size) 1)
+              (equal (ceiling 0 cluster-size) 0))))
 
   (defthm painful-debugging-lemma-15
     (implies (and (not (zp j)) (integerp i) (> i j))
@@ -408,10 +410,17 @@
                   (integerp i1)
                   (integerp i2)
                   (not (zp j)))
-             (<= (floor i1 j) (floor i2 j)))
+             (and
+              (<= (floor i1 j) (floor i2 j))
+              (<= (ceiling i1 j) (ceiling i2 j))))
     :rule-classes :linear)
 
-  (defthm painful-debugging-lemma-17 (equal (mod (* y (len x)) y) 0)))
+  (defthm painful-debugging-lemma-17 (equal (mod (* y (len x)) y) 0))
+
+  (defthm painful-debugging-lemma-19
+    (implies (and (not (zp j)) (integerp i) (>= i 0))
+             (>= (ceiling i j) 0))
+    :rule-classes :linear))
 
 (defund dir-ent-p (x)
   (declare (xargs :guard t))

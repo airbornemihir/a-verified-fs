@@ -16,7 +16,7 @@
                      loghead logtail)))
 
 (local
- (in-theory (disable nth update-nth floor mod true-listp take member-equal)))
+ (in-theory (disable nth update-nth ceiling floor mod true-listp take member-equal)))
 
 (local
  (in-theory (disable non-free-index-list-listp-correctness-1
