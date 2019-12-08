@@ -420,6 +420,11 @@
   (defthm painful-debugging-lemma-19
     (implies (and (not (zp j)) (integerp i) (>= i 0))
              (>= (ceiling i j) 0))
+    :rule-classes :linear)
+
+  (defthm painful-debugging-lemma-20
+    (implies (and (not (zp j)) (integerp i) (> i 0))
+             (> (ceiling i j) 0))
     :rule-classes :linear))
 
 (defund dir-ent-p (x)
