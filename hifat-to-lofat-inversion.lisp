@@ -8419,7 +8419,7 @@
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
-  (defthm
+  (defthmd
     lofat-to-hifat-helper-correctness-5-lemma-7
     (implies
      (and
@@ -8429,6 +8429,10 @@
                                                 masked-current-cluster length))
              0))
      (equal
+      (len (mv-nth 0
+                   (fat32-build-index-list (effective-fat fat32-in-memory)
+                                           masked-current-cluster length
+                                           (cluster-size fat32-in-memory))))
       (floor
        (+
         -1 (cluster-size fat32-in-memory)
@@ -8437,11 +8441,7 @@
           (mv-nth 0
                   (get-clusterchain-contents fat32-in-memory
                                              masked-current-cluster length)))))
-       (cluster-size fat32-in-memory))
-      (len (mv-nth 0
-                   (fat32-build-index-list (effective-fat fat32-in-memory)
-                                           masked-current-cluster length
-                                           (cluster-size fat32-in-memory))))))
+       (cluster-size fat32-in-memory))))
     :hints
     (("goal"
       :in-theory (enable get-clusterchain-contents
@@ -8639,8 +8639,7 @@
                 (+ -1 entry-limit)))))))))))))
     :hints
     (("goal"
-      :in-theory (e/d (subdir-contents-p)
-                      ((:rewrite lofat-to-hifat-helper-correctness-5-lemma-7)))
+      :in-theory (e/d (subdir-contents-p))
       :use
       ((:instance
         (:linear len-of-make-dir-ent-list)
@@ -8994,20 +8993,16 @@
          0)))
       :in-theory
       (e/d (root-dir-ent-list lofat-to-hifat-helper-correctness-5-lemma-2
-                              pseudo-root-dir-ent dir-ent-clusterchain-contents)
-           (lofat-to-hifat-helper-correctness-5-lemma-7))
+                              pseudo-root-dir-ent dir-ent-clusterchain-contents
+                              lofat-to-hifat-helper-correctness-5-lemma-7))
       :use
-      ((:instance lofat-to-hifat-helper-correctness-5-lemma-7
-                  (masked-current-cluster
-                   (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
-                  (length *ms-max-dir-size*))
-       (:instance
-        length-of-empty-list
-        (x (mv-nth 0
-                   (get-clusterchain-contents
-                    fat32-in-memory
-                    (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-                    2097152))))))))
+      (:instance
+       length-of-empty-list
+       (x (mv-nth 0
+                  (get-clusterchain-contents
+                   fat32-in-memory
+                   (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                   2097152)))))))
 
   (defthm
     lofat-to-hifat-inversion-lemma-12
@@ -9078,21 +9073,18 @@
     :rule-classes :linear
     :hints
     (("goal"
-      :in-theory (e/d (root-dir-ent-list pseudo-root-dir-ent dir-ent-clusterchain-contents)
-                      (lofat-to-hifat-helper-correctness-5-lemma-7))
+      :in-theory (e/d (root-dir-ent-list pseudo-root-dir-ent
+                                         dir-ent-clusterchain-contents
+                                         lofat-to-hifat-helper-correctness-5-lemma-7))
       :use
-      ((:instance
-        len-of-make-dir-ent-list
-        (dir-contents
-         (mv-nth 0
-                 (get-clusterchain-contents
-                  fat32-in-memory
-                  (fat32-entry-mask (bpb_rootclus fat32-in-memory))
-                  *ms-max-dir-size*))))
-       (:instance lofat-to-hifat-helper-correctness-5-lemma-7
-                  (masked-current-cluster
-                   (fat32-entry-mask (bpb_rootclus fat32-in-memory)))
-                  (length *ms-max-dir-size*)))))))
+      (:instance
+       len-of-make-dir-ent-list
+       (dir-contents
+        (mv-nth 0
+                (get-clusterchain-contents
+                 fat32-in-memory
+                 (fat32-entry-mask (bpb_rootclus fat32-in-memory))
+                 *ms-max-dir-size*))))))))
 
 (defthm
   lofat-to-hifat-inversion-lemma-14

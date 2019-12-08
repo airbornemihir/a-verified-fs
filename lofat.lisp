@@ -13135,7 +13135,7 @@ Some (rather awful) testing forms are
      (:rewrite
       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)))))
 
-(defthm
+(defthmd
   lofat-remove-file-correctness-1-lemma-65
   (implies
    (and
@@ -13144,6 +13144,8 @@ Some (rather awful) testing forms are
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
            0))
    (equal
+    (len (mv-nth 0
+                 (dir-ent-clusterchain fat32-in-memory dir-ent)))
     (floor
      (+
       -1 (cluster-size fat32-in-memory)
@@ -13151,12 +13153,11 @@ Some (rather awful) testing forms are
        (explode
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))))
-     (cluster-size fat32-in-memory))
-    (len (mv-nth 0
-                 (dir-ent-clusterchain fat32-in-memory dir-ent)))))
+     (cluster-size fat32-in-memory))))
   :hints
   (("goal"
-    :in-theory (enable dir-ent-clusterchain-contents dir-ent-clusterchain))))
+    :in-theory (enable dir-ent-clusterchain-contents dir-ent-clusterchain
+                       lofat-to-hifat-helper-correctness-5-lemma-7))))
 
 ;; Hypotheses minimised.
 (defthm
@@ -13204,7 +13205,8 @@ Some (rather awful) testing forms are
     (lofat-remove-file fat32-in-memory root-dir-ent pathname)
     :in-theory (enable hifat-remove-file
                        (:rewrite hifat-to-lofat-inversion-lemma-17)
-                       (:rewrite lofat-to-hifat-inversion-lemma-4)))))
+                       (:rewrite lofat-to-hifat-inversion-lemma-4)
+                       lofat-remove-file-correctness-1-lemma-65))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-67
@@ -14305,7 +14307,8 @@ Some (rather awful) testing forms are
       (lofat-remove-file fat32-in-memory root-dir-ent pathname)
       :in-theory (enable hifat-remove-file
                          (:rewrite hifat-to-lofat-inversion-lemma-17)
-                         (:rewrite lofat-to-hifat-inversion-lemma-4))))
+                         (:rewrite lofat-to-hifat-inversion-lemma-4)
+                         lofat-remove-file-correctness-1-lemma-65)))
     :rule-classes
     ((:rewrite
       :corollary
