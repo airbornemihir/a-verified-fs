@@ -3421,23 +3421,6 @@ Some (rather awful) testing forms are
            '0))))
 
 (defthmd
-  get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2
-  (implies
-   (and (non-free-index-listp index-list fa-table)
-        (no-duplicatesp-equal index-list))
-   (equal
-    (count-free-clusters
-     (set-indices-in-fa-table fa-table index-list
-                              (make-list-ac (len index-list) 0 nil)))
-    (+ (count-free-clusters fa-table)
-       (len index-list))))
-  :hints
-  (("goal" :in-theory (enable set-indices-in-fa-table)
-    :induct (set-indices-in-fa-table fa-table index-list
-                                     (make-list-ac (len index-list)
-                                                   0 nil)))))
-
-(defthmd
   get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
   (implies
    (<
@@ -3546,20 +3529,6 @@ Some (rather awful) testing forms are
                  (cluster-size fat32-in-memory)))))
       (fa-table (effective-fat fat32-in-memory))
       (n first-cluster))
-     (:instance
-      (:rewrite
-       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)
-      (index-list
-       (cons
-        first-cluster
-        (mv-nth 0
-                (fat32-build-index-list
-                 (effective-fat fat32-in-memory)
-                 (fat32-entry-mask (fati first-cluster fat32-in-memory))
-                 (+ 2097152
-                    (- (cluster-size fat32-in-memory)))
-                 (cluster-size fat32-in-memory)))))
-      (fa-table (effective-fat fat32-in-memory)))
      (:rewrite update-dir-contents-correctness-1)))))
 
 (defthm
@@ -6520,21 +6489,7 @@ Some (rather awful) testing forms are
                     (- (cluster-size fat32-in-memory)))
                  (cluster-size fat32-in-memory)))))
       (fa-table (effective-fat fat32-in-memory))
-      (n first-cluster))
-     (:instance
-      (:rewrite
-       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)
-      (index-list
-       (cons
-        first-cluster
-        (mv-nth 0
-                (fat32-build-index-list
-                 (effective-fat fat32-in-memory)
-                 (fat32-entry-mask (fati first-cluster fat32-in-memory))
-                 (+ 2097152
-                    (- (cluster-size fat32-in-memory)))
-                 (cluster-size fat32-in-memory)))))
-      (fa-table (effective-fat fat32-in-memory)))))))
+      (n first-cluster))))))
 
 (defthm
   no-duplicatesp-equal-of-dir-ent-clusterchain-of-update-dir-contents-coincident
@@ -13131,9 +13086,7 @@ Some (rather awful) testing forms are
     :in-theory
     (enable
      update-dir-contents
-     dir-ent-clusterchain-contents
-     (:rewrite
-      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)))))
+     dir-ent-clusterchain-contents))))
 
 ;; Hypotheses minimised.
 (defthm
