@@ -4339,6 +4339,71 @@
     fa-table))
   :hints (("goal" :in-theory (enable fat32-build-index-list))))
 
+(defthm
+  free-index-listp-of-update-nth
+  (implies
+   (and (not (free-index-listp index-list fa-table))
+        (not (equal (fat32-entry-mask val) 0)))
+   (not (free-index-listp index-list
+                          (update-nth key val fa-table)))))
+
+(defthm
+  count-free-clusters-of-set-indices-in-fa-table-lemma-1
+  (implies (and (free-index-listp index-list fa-table)
+                (lower-bounded-integer-listp index-list 2)
+                (not (member-equal key index-list)))
+           (free-index-listp index-list
+                             (update-nth key val fa-table)))
+  :hints (("goal" :in-theory (disable update-nth))))
+
+;; It would be nice to move this, along with several other things...
+(defthm
+  count-free-clusters-of-set-indices-in-fa-table-1
+  (implies
+   (and (non-free-index-listp index-list fa-table)
+        (no-duplicatesp-equal index-list))
+   (equal
+    (count-free-clusters
+     (set-indices-in-fa-table fa-table index-list
+                              (make-list-ac (len index-list) 0 nil)))
+    (+ (count-free-clusters fa-table)
+       (len index-list))))
+  :hints
+  (("goal" :in-theory (enable set-indices-in-fa-table)
+    :induct (set-indices-in-fa-table fa-table index-list
+                                     (make-list-ac (len index-list)
+                                                   0 nil))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (non-free-index-listp index-list fa-table)
+          (no-duplicatesp-equal index-list)
+          (equal n (len index-list)))
+     (equal
+      (count-free-clusters
+       (set-indices-in-fa-table fa-table index-list
+                                (make-list-ac n 0 nil)))
+      (+ (count-free-clusters fa-table)
+         (len index-list)))))))
+(defthm count-free-clusters-of-set-indices-in-fa-table-2
+  (implies
+   (and (free-index-listp index-list fa-table)
+        (bounded-nat-listp index-list (len fa-table))
+        (lower-bounded-integer-listp index-list 2)
+        (not (member-equal 0 value-list))
+        (fat32-masked-entry-list-p value-list)
+        (no-duplicatesp-equal index-list)
+        (equal (len index-list)
+               (len value-list)))
+   (equal (count-free-clusters
+           (set-indices-in-fa-table fa-table index-list value-list))
+          (- (count-free-clusters fa-table)
+             (len index-list))))
+  :hints
+  (("goal" :in-theory (enable set-indices-in-fa-table)
+    :induct (set-indices-in-fa-table fa-table index-list value-list))))
+
 (defun
     non-free-index-list-listp (l fa-table)
   (or (atom l)
@@ -4496,15 +4561,6 @@
            :expand ((intersectp-equal (list key) (car l))
                     (intersectp-equal nil (car l))))))
 
-(defthm
-  free-index-listp-of-find-n-free-clusters-helper-lemma-1
-  (implies (and (free-index-listp index-list fa-table)
-                (lower-bounded-integer-listp index-list 2)
-                (not (member-equal key index-list)))
-           (free-index-listp index-list
-                             (update-nth key val fa-table)))
-  :hints (("goal" :in-theory (disable update-nth))))
-
 (encapsulate
   ()
 
@@ -4621,14 +4677,6 @@
     :in-theory
     (disable (:rewrite not-intersectp-list-of-lofat-to-hifat-helper)
              (:rewrite fati-of-hifat-to-lofat-helper-disjoint-lemma-1)))))
-
-(defthm
-  free-index-listp-of-update-nth
-  (implies
-   (and (not (free-index-listp index-list fa-table))
-        (not (equal (fat32-entry-mask val) 0)))
-   (not (free-index-listp index-list
-                          (update-nth key val fa-table)))))
 
 (defthm
   free-index-listp-of-set-indices-in-fa-table-lemma-1
@@ -8073,24 +8121,6 @@
                               cluster-size)
                :logic (nfix (ceiling (* 32 (+ 2 (len contents)))
                                      cluster-size))))))))
-
-(defthm count-free-clusters-of-effective-fat-of-place-contents-lemma-1
-  (implies
-   (and (free-index-listp index-list fa-table)
-        (bounded-nat-listp index-list (len fa-table))
-        (lower-bounded-integer-listp index-list 2)
-        (not (member-equal 0 value-list))
-        (fat32-masked-entry-list-p value-list)
-        (no-duplicatesp-equal index-list)
-        (equal (len index-list)
-               (len value-list)))
-   (equal (count-free-clusters
-           (set-indices-in-fa-table fa-table index-list value-list))
-          (- (count-free-clusters fa-table)
-             (len index-list))))
-  :hints
-  (("goal" :in-theory (enable set-indices-in-fa-table)
-    :induct (set-indices-in-fa-table fa-table index-list value-list))))
 
 (defthm
   count-free-clusters-of-effective-fat-of-place-contents

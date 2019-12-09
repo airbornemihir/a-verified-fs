@@ -3121,23 +3121,6 @@ Some (rather awful) testing forms are
            '0))))
 
 (defthmd
-  get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2
-  (implies
-   (and (non-free-index-listp index-list fa-table)
-        (no-duplicatesp-equal index-list))
-   (equal
-    (count-free-clusters
-     (set-indices-in-fa-table fa-table index-list
-                              (make-list-ac (len index-list) 0 nil)))
-    (+ (count-free-clusters fa-table)
-       (len index-list))))
-  :hints
-  (("goal" :in-theory (enable set-indices-in-fa-table)
-    :induct (set-indices-in-fa-table fa-table index-list
-                                     (make-list-ac (len index-list)
-                                                   0 nil)))))
-
-(defthmd
   get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
   (implies
    (<
@@ -3182,7 +3165,6 @@ Some (rather awful) testing forms are
     (lofat-fs-p fat32-in-memory)
     (fat32-masked-entry-p first-cluster)
     (stringp dir-contents)
-    ;; Are we sure about the next hypothesis?
     (< 0 (len (explode dir-contents)))
     (<= (len (explode dir-contents))
         *ms-max-dir-size*)
@@ -3198,32 +3180,32 @@ Some (rather awful) testing forms are
                                   first-cluster dir-contents))
      first-cluster *ms-max-dir-size*)
     (if
-        (equal (mv-nth 1
-                       (update-dir-contents fat32-in-memory
-                                            first-cluster dir-contents))
-               0)
-        (mv
-         (implode
-          (append
-           (explode dir-contents)
-           (make-list-ac
-            (+ (- (len (explode dir-contents)))
-               (* (cluster-size fat32-in-memory)
-                  (len (make-clusters dir-contents
-                                      (cluster-size fat32-in-memory)))))
-            (code-char 0)
-            nil)))
-         0)
-      (get-clusterchain-contents
-       fat32-in-memory
-       first-cluster *ms-max-dir-size*))))
+     (equal (mv-nth 1
+                    (update-dir-contents fat32-in-memory
+                                         first-cluster dir-contents))
+            0)
+     (mv
+      (implode
+       (append
+        (explode dir-contents)
+        (make-list-ac
+         (+ (- (len (explode dir-contents)))
+            (* (cluster-size fat32-in-memory)
+               (len (make-clusters dir-contents
+                                   (cluster-size fat32-in-memory)))))
+         (code-char 0)
+         nil)))
+      0)
+     (get-clusterchain-contents fat32-in-memory
+                                first-cluster *ms-max-dir-size*))))
   :hints
   (("goal"
     :in-theory
     (e/d
      (update-dir-contents
       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
-      (:linear hifat-to-lofat-inversion-lemma-16))
+      (:linear hifat-to-lofat-inversion-lemma-16)
+      (:rewrite fati-of-clear-clusterchain . 1))
      ((:rewrite nth-of-set-indices-in-fa-table-when-member)))
     :expand
     ((fat32-build-index-list (effective-fat fat32-in-memory)
@@ -3246,20 +3228,6 @@ Some (rather awful) testing forms are
                  (cluster-size fat32-in-memory)))))
       (fa-table (effective-fat fat32-in-memory))
       (n first-cluster))
-     (:instance
-      (:rewrite
-       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)
-      (index-list
-       (cons
-        first-cluster
-        (mv-nth 0
-                (fat32-build-index-list
-                 (effective-fat fat32-in-memory)
-                 (fat32-entry-mask (fati first-cluster fat32-in-memory))
-                 (+ 2097152
-                    (- (cluster-size fat32-in-memory)))
-                 (cluster-size fat32-in-memory)))))
-      (fa-table (effective-fat fat32-in-memory)))
      (:rewrite update-dir-contents-correctness-1)))))
 
 (defthm
@@ -6222,21 +6190,7 @@ Some (rather awful) testing forms are
                     (- (cluster-size fat32-in-memory)))
                  (cluster-size fat32-in-memory)))))
       (fa-table (effective-fat fat32-in-memory))
-      (n first-cluster))
-     (:instance
-      (:rewrite
-       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)
-      (index-list
-       (cons
-        first-cluster
-        (mv-nth 0
-                (fat32-build-index-list
-                 (effective-fat fat32-in-memory)
-                 (fat32-entry-mask (fati first-cluster fat32-in-memory))
-                 (+ 2097152
-                    (- (cluster-size fat32-in-memory)))
-                 (cluster-size fat32-in-memory)))))
-      (fa-table (effective-fat fat32-in-memory)))))))
+      (n first-cluster))))))
 
 (defthm
   no-duplicatesp-equal-of-dir-ent-clusterchain-of-update-dir-contents-coincident
@@ -12766,15 +12720,9 @@ Some (rather awful) testing forms are
              (len (make-clusters dir-contents
                                  (cluster-size fat32-in-memory)))))
      *enospc* 0)))
-  :hints
-  (("goal"
-    :in-theory
-    (enable
-     update-dir-contents
-     dir-ent-clusterchain-contents
-     (:rewrite
-      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2)
-     clear-clusterchain-correctness-1))))
+  :hints (("goal" :in-theory (enable update-dir-contents
+                                     dir-ent-clusterchain-contents
+                                     clear-clusterchain-correctness-1))))
 
 ;; Hypotheses minimised.
 (defthm
@@ -17256,15 +17204,7 @@ Some (rather awful) testing forms are
        0 nil)))
     (+ (count-free-clusters (effective-fat fat32-in-memory))
        (len (mv-nth 0
-                    (dir-ent-clusterchain fat32-in-memory dir-ent))))))
-  :hints
-  (("goal"
-    :use
-    (:instance
-     get-clusterchain-contents-of-update-dir-contents-coincident-lemma-2
-     (fa-table (effective-fat fat32-in-memory))
-     (index-list (mv-nth 0
-                         (dir-ent-clusterchain fat32-in-memory dir-ent)))))))
+                    (dir-ent-clusterchain fat32-in-memory dir-ent)))))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-6
