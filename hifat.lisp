@@ -1797,13 +1797,21 @@
         (if (atom (cdr pathname))
             (mv (put-assoc-equal name file fs) 0)
           (mv fs *enotdir*)))
-       ((unless (m1-directory-file-p (cdr alist-elem)))
-        (if (or (consp (cdr pathname))
-                ;; This is the case where a regular file could get replaced by
-                ;; a directory, which is a bad idea.
-                (m1-directory-file-p file))
-            (mv fs *enotdir*)
-          (mv (put-assoc-equal name file fs) 0)))
+       ((when (and (not (m1-directory-file-p (cdr alist-elem)))
+                   (or (consp (cdr pathname))
+                       ;; This is the case where a regular file could get replaced by
+                       ;; a directory, which is a bad idea.
+                       (m1-directory-file-p file))))
+        (mv fs *enotdir*))
+       ((when (not (or (m1-directory-file-p (cdr alist-elem))
+                       (consp (cdr pathname))
+                       (m1-directory-file-p file)
+                       (and
+                        (atom (assoc-equal name fs))
+                        (>= (len fs) *ms-max-dir-ent-count*)))))
+        (mv (put-assoc-equal name file fs) 0))
+       ((when (and (atom (assoc-equal name fs)) (>= (len fs) *ms-max-dir-ent-count*)))
+        (mv fs *enospc*))
        ((mv new-contents error-code)
         (hifat-place-file
          (m1-file->contents (cdr alist-elem))
