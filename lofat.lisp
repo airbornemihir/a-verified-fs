@@ -19989,11 +19989,10 @@ Some (rather awful) testing forms are
   lofat-place-file-correctness-1-lemma-19
   (implies
    (and
-    (<= (+ -1
-           (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32-in-memory))))
-        (+ -1
-           (count-free-clusters (effective-fat fat32-in-memory))))
+    (<=
+     (len (make-clusters (lofat-file->contents file)
+                         (cluster-size fat32-in-memory)))
+     (count-free-clusters (effective-fat fat32-in-memory)))
     (lofat-fs-p fat32-in-memory)
     (equal
      (mv-nth 1
@@ -20011,7 +20010,8 @@ Some (rather awful) testing forms are
        (mv-nth 0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
        (cluster-size fat32-in-memory))))))
-  :hints (("goal" :in-theory (enable len-of-make-clusters))))
+  :hints (("goal" :in-theory (enable len-of-make-clusters
+                                     (:REWRITE LOFAT-TO-HIFAT-INVERSION-LEMMA-15)))))
 
 ;; Introduce a rewrite rule gingerly...
 (defthm
@@ -20133,7 +20133,8 @@ Some (rather awful) testing forms are
        (mv-nth 0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
        (cluster-size fat32-in-memory))))))
-  :hints (("goal" :in-theory (enable len-of-make-clusters))))
+  :hints (("goal" :in-theory (enable len-of-make-clusters
+                                     (:rewrite lofat-to-hifat-inversion-lemma-15)))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-22
@@ -20247,7 +20248,8 @@ Some (rather awful) testing forms are
        (mv-nth 0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
        (cluster-size fat32-in-memory))))))
-  :hints (("goal" :in-theory (enable len-of-make-clusters))))
+  :hints (("goal" :in-theory (enable len-of-make-clusters
+                                     (:REWRITE LOFAT-TO-HIFAT-INVERSION-LEMMA-15)))))
 
 ;; I don't like this...
 (defthm
@@ -24803,7 +24805,8 @@ Some (rather awful) testing forms are
         (len (make-clusters (lofat-file->contents file)
                             (cluster-size fat32-in-memory)))))))
   :rule-classes (:rewrite :linear)
-  :hints (("goal" :in-theory (enable len-of-make-clusters))))
+  :hints (("goal" :in-theory (enable len-of-make-clusters
+                                     lofat-to-hifat-inversion-lemma-15))))
 
 (defthmd
   lofat-place-file-correctness-1-lemma-83
@@ -24823,7 +24826,8 @@ Some (rather awful) testing forms are
     (len (mv-nth 0
                  (dir-ent-clusterchain fat32-in-memory root-dir-ent)))))
   :rule-classes (:rewrite :linear)
-  :hints (("goal" :in-theory (enable len-of-make-clusters))))
+  :hints (("goal" :in-theory (enable len-of-make-clusters
+                                     lofat-to-hifat-inversion-lemma-15))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-81
