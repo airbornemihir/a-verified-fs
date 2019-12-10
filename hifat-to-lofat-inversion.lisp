@@ -4618,6 +4618,19 @@
 
 (defthm
   lofat-to-hifat-helper-of-hifat-to-lofat-helper-disjoint-lemma-1
+  (implies (non-free-index-listp x fa-table)
+           (and
+            (not (intersectp-equal (find-n-free-clusters fa-table n)
+                                   x))
+            (not (intersectp-equal x
+                                   (find-n-free-clusters fa-table n)))))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite non-free-index-list-listp-correctness-1-lemma-1)
+                    (index-list (find-n-free-clusters fa-table n))))))
+
+(defthm
+  lofat-to-hifat-helper-of-hifat-to-lofat-helper-disjoint-lemma-2
   (implies (equal (mv-nth 3
                           (lofat-to-hifat-helper fat32-in-memory
                                                  dir-ent-list entry-limit))
@@ -4632,16 +4645,7 @@
   (("goal" :in-theory (enable intersectp-equal lofat-to-hifat-helper
                               not-intersectp-list)
     :induct (lofat-to-hifat-helper fat32-in-memory
-                                   dir-ent-list entry-limit))
-   ("subgoal *1/4"
-    :use
-    (:instance
-     (:rewrite non-free-index-list-listp-correctness-1-lemma-1)
-     (x (mv-nth 0
-                (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
-     (index-list (find-n-free-clusters (effective-fat fat32-in-memory)
-                                       n))
-     (fa-table (effective-fat fat32-in-memory)))))
+                                   dir-ent-list entry-limit)))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -7408,6 +7412,16 @@
   :hints
   (("goal"
     :in-theory (enable lofat-to-hifat-helper))))
+
+(defthm
+  hifat-to-lofat-inversion-lemma-18
+  (implies (not (equal (fat32-entry-mask (nth key fa-table))
+                       0))
+           (not (member-equal key (find-n-free-clusters fa-table n))))
+  :hints
+  (("goal" :in-theory (disable (:rewrite free-index-listp-correctness-1))
+    :use (:instance (:rewrite free-index-listp-correctness-1)
+                    (x (find-n-free-clusters fa-table n))))))
 
 (encapsulate
   ()
