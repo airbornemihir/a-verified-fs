@@ -4045,33 +4045,34 @@
 
 (defthm
   place-contents-expansion-1
-  (equal
-   (mv-nth 1
-           (place-contents fat32-in-memory dir-ent
-                           contents file-length first-cluster))
-   (if
+  (and
+   (implies
+    (zp (mv-nth 2
+                (place-contents fat32-in-memory dir-ent
+                                contents file-length first-cluster)))
     (equal
-     (+ 1
-        (len (stobj-find-n-free-clusters
-              fat32-in-memory
-              (+ -1
-                 (len (make-clusters contents
-                                     (cluster-size fat32-in-memory)))))))
-     (len (make-clusters contents
-                         (cluster-size fat32-in-memory))))
-    (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-length)
-    (dir-ent-fix dir-ent)))
+     (mv-nth 1
+             (place-contents fat32-in-memory dir-ent
+                             contents file-length first-cluster))
+     (dir-ent-set-first-cluster-file-size dir-ent first-cluster file-length)))
+   (implies
+    (not
+     (zp (mv-nth 2
+                 (place-contents fat32-in-memory dir-ent
+                                 contents file-length first-cluster))))
+    (equal
+     (mv-nth 1
+             (place-contents fat32-in-memory dir-ent
+                             contents file-length first-cluster))
+     (dir-ent-fix dir-ent))))
   :hints
   (("goal" :in-theory (enable place-contents
                               (:rewrite make-clusters-correctness-1 . 1)))))
 
 (defthm
   place-contents-expansion-2
-  (equal
-   (mv-nth 2
-           (place-contents fat32-in-memory dir-ent
-                           contents file-length first-cluster))
-   (if
+  (and
+   (implies
     (equal
      (+ 1
         (len (stobj-find-n-free-clusters
@@ -4081,7 +4082,27 @@
                                      (cluster-size fat32-in-memory)))))))
      (len (make-clusters contents
                          (cluster-size fat32-in-memory))))
-    0 *enospc*))
+    (equal
+     (mv-nth 2
+             (place-contents fat32-in-memory dir-ent
+                             contents file-length first-cluster))
+     0))
+   (implies
+    (not
+     (equal
+      (+ 1
+         (len (stobj-find-n-free-clusters
+               fat32-in-memory
+               (+ -1
+                  (len (make-clusters contents
+                                      (cluster-size fat32-in-memory)))))))
+      (len (make-clusters contents
+                          (cluster-size fat32-in-memory)))))
+    (equal
+     (mv-nth 2
+             (place-contents fat32-in-memory dir-ent
+                             contents file-length first-cluster))
+     *enospc*)))
   :hints
   (("goal" :in-theory (enable place-contents
                               (:rewrite make-clusters-correctness-1 . 1)))))
