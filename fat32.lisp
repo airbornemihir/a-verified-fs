@@ -670,21 +670,18 @@
 
 (defthm
   find-n-free-clusters-helper-correctness-6
-  (implies (and (fat32-entry-list-p fa-table)
-                (natp n)
-                (natp start))
-           (no-duplicatesp-equal
-            (find-n-free-clusters-helper fa-table n start)))
+  (implies
+   (and (fat32-entry-list-p fa-table)
+        (natp start))
+   (no-duplicatesp-equal (find-n-free-clusters-helper fa-table n start)))
   :hints
   (("goal" :in-theory (enable find-n-free-clusters-helper))
-   ("goal'"
-    :induct (find-n-free-clusters-helper fa-table n start))
-   ("subgoal *1/11"
-    :use (:instance find-n-free-clusters-helper-correctness-3
-                    (x start)
-                    (fa-table (cdr fa-table))
-                    (n (- n 1))
-                    (start (+ 1 start))))))
+   ("goal'" :induct (find-n-free-clusters-helper fa-table n start))
+   ("subgoal *1/9" :use (:instance find-n-free-clusters-helper-correctness-3
+                                   (x start)
+                                   (fa-table (cdr fa-table))
+                                   (n (- n 1))
+                                   (start (+ 1 start))))))
 
 (defthm
   find-n-free-clusters-helper-correctness-7
@@ -911,14 +908,9 @@
            (x (nth n2
                    (find-n-free-clusters fa-table n1))))))))
 
-(defthm
-  find-n-free-clusters-correctness-6
-  (implies
-   (and (fat32-entry-list-p fa-table)
-        (>= (len fa-table)
-            *ms-first-data-cluster*)
-        (natp n))
-   (no-duplicatesp-equal (find-n-free-clusters fa-table n)))
+(defthm find-n-free-clusters-correctness-6
+  (implies (fat32-entry-list-p fa-table)
+           (no-duplicatesp-equal (find-n-free-clusters fa-table n)))
   :hints (("goal" :in-theory (enable find-n-free-clusters))))
 
 (defthm
