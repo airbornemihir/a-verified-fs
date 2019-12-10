@@ -2262,8 +2262,12 @@ Some (rather awful) testing forms are
           fat32-in-memory))
   :hints
   (("goal"
-    :in-theory (e/d (update-dir-contents clear-clusterchain-correctness-3
-                                         place-contents-correctness-1)))))
+    :in-theory
+    (e/d (update-dir-contents clear-clusterchain-correctness-3
+                              place-contents-correctness-1
+                              fat32-build-index-list
+                              stobj-set-indices-in-fa-table
+                              place-contents)))))
 
 (defun
     lofat-place-file
@@ -3457,6 +3461,103 @@ Some (rather awful) testing forms are
      (len (make-clusters dir-contents
                          (cluster-size fat32-in-memory)))))))
 
+(defthmd
+  get-clusterchain-contents-of-update-dir-contents-coincident-lemma-4
+  (implies
+   (and
+    (integerp first-cluster)
+    (or (< first-cluster 2)
+     (>= first-cluster
+        (+ 2 (count-of-clusters fat32-in-memory)))))
+   (not
+    (equal
+     (mv-nth
+      1
+      (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
+     0)))
+  :hints (("goal" :expand (get-clusterchain-contents fat32-in-memory
+                                                     first-cluster 2097152))))
+
+(defthm
+  get-clusterchain-contents-of-update-dir-contents-coincident-lemma-5
+  (implies
+   (and
+    (equal
+     (mv-nth
+      0
+      (place-contents
+       (update-fati
+        first-cluster
+        (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
+                               268435455)
+        (mv-nth 0
+                (clear-clusterchain fat32-in-memory first-cluster 2097152)))
+       '(0 0 0 0 0 0 0 0 0 0 0 0
+           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+       dir-contents 0 first-cluster))
+     fat32-in-memory)
+    (<= 2 first-cluster)
+    (< first-cluster
+       (+ 2 (count-of-clusters fat32-in-memory)))
+    (lofat-fs-p fat32-in-memory)
+    (fat32-masked-entry-p first-cluster)
+    (stringp dir-contents)
+    (< 0 (len (explode dir-contents)))
+    (<= (len (explode dir-contents))
+        2097152)
+    (equal
+     (mv-nth
+      2
+      (place-contents
+       (update-fati
+        first-cluster
+        (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
+                               268435455)
+        (mv-nth 0
+                (clear-clusterchain fat32-in-memory first-cluster 2097152)))
+       '(0 0 0 0 0 0 0 0 0 0 0 0
+           0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+       dir-contents 0 first-cluster))
+     0))
+   (equal
+    (get-clusterchain-contents fat32-in-memory first-cluster 2097152)
+    (mv
+     (implode
+      (append
+       (explode dir-contents)
+       (make-list-ac
+        (+ (- (len (explode dir-contents)))
+           (* (cluster-size fat32-in-memory)
+              (len (make-clusters dir-contents
+                                  (cluster-size fat32-in-memory)))))
+        (code-char 0)
+        nil)))
+     0)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (update-dir-contents
+      get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
+      (:linear hifat-to-lofat-inversion-lemma-16))
+     ((:rewrite nth-of-set-indices-in-fa-table-when-member)
+      (:rewrite get-clusterchain-contents-of-place-contents-coincident)))
+    :use
+    ((:instance
+      (:rewrite get-clusterchain-contents-of-place-contents-coincident)
+      (length *ms-max-dir-size*)
+      (file-length 0)
+      (contents dir-contents)
+      (dir-ent (dir-ent-fix nil))
+      (fat32-in-memory
+       (update-fati
+        first-cluster
+        (fat32-update-lower-28 (fati first-cluster fat32-in-memory)
+                               268435455)
+        (mv-nth 0
+                (clear-clusterchain fat32-in-memory
+                                    first-cluster *ms-max-dir-size*)))))))))
+
 ;; Hypotheses are minimal.
 (defthm
   get-clusterchain-contents-of-update-dir-contents-coincident
@@ -3465,7 +3566,6 @@ Some (rather awful) testing forms are
     (lofat-fs-p fat32-in-memory)
     (fat32-masked-entry-p first-cluster)
     (stringp dir-contents)
-    ;; Are we sure about the next hypothesis?
     (< 0 (len (explode dir-contents)))
     (<= (len (explode dir-contents))
         *ms-max-dir-size*)
@@ -3481,25 +3581,24 @@ Some (rather awful) testing forms are
                                   first-cluster dir-contents))
      first-cluster *ms-max-dir-size*)
     (if
-        (equal (mv-nth 1
-                       (update-dir-contents fat32-in-memory
-                                            first-cluster dir-contents))
-               0)
-        (mv
-         (implode
-          (append
-           (explode dir-contents)
-           (make-list-ac
-            (+ (- (len (explode dir-contents)))
-               (* (cluster-size fat32-in-memory)
-                  (len (make-clusters dir-contents
-                                      (cluster-size fat32-in-memory)))))
-            (code-char 0)
-            nil)))
-         0)
-      (get-clusterchain-contents
-       fat32-in-memory
-       first-cluster *ms-max-dir-size*))))
+     (equal (mv-nth 1
+                    (update-dir-contents fat32-in-memory
+                                         first-cluster dir-contents))
+            0)
+     (mv
+      (implode
+       (append
+        (explode dir-contents)
+        (make-list-ac
+         (+ (- (len (explode dir-contents)))
+            (* (cluster-size fat32-in-memory)
+               (len (make-clusters dir-contents
+                                   (cluster-size fat32-in-memory)))))
+         (code-char 0)
+         nil)))
+      0)
+     (get-clusterchain-contents fat32-in-memory
+                                first-cluster *ms-max-dir-size*))))
   :hints
   (("goal"
     :in-theory
@@ -3508,11 +3607,6 @@ Some (rather awful) testing forms are
       get-clusterchain-contents-of-update-dir-contents-coincident-lemma-3
       (:linear hifat-to-lofat-inversion-lemma-16))
      ((:rewrite nth-of-set-indices-in-fa-table-when-member)))
-    :expand
-    ((fat32-build-index-list (effective-fat fat32-in-memory)
-                             first-cluster *ms-max-dir-size*
-                             (cluster-size fat32-in-memory))
-     (get-clusterchain-contents fat32-in-memory first-cluster 2097152))
     :use
     ((:instance
       (:rewrite nth-of-set-indices-in-fa-table-when-member)
@@ -3529,7 +3623,8 @@ Some (rather awful) testing forms are
                  (cluster-size fat32-in-memory)))))
       (fa-table (effective-fat fat32-in-memory))
       (n first-cluster))
-     (:rewrite update-dir-contents-correctness-1)))))
+     (:rewrite update-dir-contents-correctness-1)
+     get-clusterchain-contents-of-update-dir-contents-coincident-lemma-4))))
 
 (defthm
   dir-ent-clusterchain-contents-of-update-dir-contents-disjoint
@@ -4974,298 +5069,74 @@ Some (rather awful) testing forms are
                                 x))))))))
 
 (defthm
-  dir-ent-clusterchain-contents-of-lofat-remove-file-coincident-lemma-8
-  t
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and (lofat-fs-p fat32-in-memory)
-          (dir-ent-directory-p dir-ent)
-          (< (dir-ent-first-cluster dir-ent)
-             (+ 2 (count-of-clusters fat32-in-memory)))
-          (non-free-index-listp x (effective-fat fat32-in-memory))
-          (not (intersectp-equal
-                x
-                (mv-nth 0
-                        (dir-ent-clusterchain fat32-in-memory dir-ent)))))
-     (not
-      (intersectp-equal
-       (find-n-free-clusters
-        (update-nth
-         (dir-ent-first-cluster dir-ent)
-         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
-                                      fat32-in-memory)
-                                *ms-end-of-clusterchain*)
-         (set-indices-in-fa-table
-          (effective-fat fat32-in-memory)
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory dir-ent))
-          (make-list-ac
-           (len (mv-nth 0
-                        (dir-ent-clusterchain fat32-in-memory dir-ent)))
-           0 nil)))
-        (+ -1
-           (len (make-clusters dir-contents
-                               (cluster-size fat32-in-memory)))))
-       x)))
-    :hints
-    (("goal"
-      :use
-      (:instance
-       (:rewrite non-free-index-list-listp-correctness-1-lemma-1)
-       (fa-table
-        (update-nth
-         (dir-ent-first-cluster dir-ent)
-         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
-                                      fat32-in-memory)
-                                *ms-end-of-clusterchain*)
-         (set-indices-in-fa-table
-          (effective-fat fat32-in-memory)
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory dir-ent))
-          (make-list-ac
-           (len (mv-nth 0
-                        (dir-ent-clusterchain fat32-in-memory dir-ent)))
-           0 nil))))
-       (index-list
-        (find-n-free-clusters
-         (update-nth
-          (dir-ent-first-cluster dir-ent)
-          (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
-                                       fat32-in-memory)
-                                 *ms-end-of-clusterchain*)
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory dir-ent))
-           (make-list-ac
-            (len (mv-nth 0
-                         (dir-ent-clusterchain fat32-in-memory dir-ent)))
-            0 nil)))
-         (+ -1
-            (len (make-clusters dir-contents
-                                (cluster-size fat32-in-memory))))))))))
-   (:rewrite
-    :corollary
-    (implies
-     (and
-      (< (dir-ent-first-cluster dir-ent)
-         (+ 2 (count-of-clusters fat32-in-memory)))
-      (equal
-       (fat32-entry-mask
-        (nth
-         (dir-ent-first-cluster dir-ent)
-         (set-indices-in-fa-table
-          (effective-fat fat32-in-memory)
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory dir-ent))
-          (make-list-ac
-           (len (mv-nth 0
-                        (dir-ent-clusterchain fat32-in-memory dir-ent)))
-           0 nil))))
-       0)
-      (non-free-index-listp x (effective-fat fat32-in-memory))
-      (not (intersectp-equal
-            x
-            (mv-nth 0
-                    (dir-ent-clusterchain fat32-in-memory dir-ent)))))
-     (not
-      (intersectp-equal
-       (find-n-free-clusters
-        (update-nth
-         (dir-ent-first-cluster dir-ent)
-         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
-                                      fat32-in-memory)
-                                *ms-end-of-clusterchain*)
-         (set-indices-in-fa-table
-          (effective-fat fat32-in-memory)
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory dir-ent))
-          (make-list-ac
-           (len (mv-nth 0
-                        (dir-ent-clusterchain fat32-in-memory dir-ent)))
-           0 nil)))
-        (+ -1
-           (len (make-clusters dir-contents
-                               (cluster-size fat32-in-memory)))))
-       x)))
-    :hints
-    (("goal"
-      :use
-      (:instance
-       (:rewrite non-free-index-list-listp-correctness-1-lemma-1)
-       (fa-table
-        (update-nth
-         (dir-ent-first-cluster dir-ent)
-         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
-                                      fat32-in-memory)
-                                *ms-end-of-clusterchain*)
-         (set-indices-in-fa-table
-          (effective-fat fat32-in-memory)
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory dir-ent))
-          (make-list-ac
-           (len (mv-nth 0
-                        (dir-ent-clusterchain fat32-in-memory dir-ent)))
-           0 nil))))
-       (index-list
-        (find-n-free-clusters
-         (update-nth
-          (dir-ent-first-cluster dir-ent)
-          (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
-                                       fat32-in-memory)
-                                 *ms-end-of-clusterchain*)
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory dir-ent))
-           (make-list-ac
-            (len (mv-nth 0
-                         (dir-ent-clusterchain fat32-in-memory dir-ent)))
-            0 nil)))
-         (+ -1
-            (len (make-clusters dir-contents
-                                (cluster-size fat32-in-memory))))))))))
-   (:rewrite
-    :corollary
-    (implies
-     (and (lofat-fs-p fat32-in-memory)
-          (dir-ent-directory-p dir-ent)
-          (< (dir-ent-first-cluster dir-ent)
-             (+ 2 (count-of-clusters fat32-in-memory)))
-          (< 0 (len (explode dir-contents)))
-          (non-free-index-listp x (effective-fat fat32-in-memory))
-          (not (intersectp-equal
-                x
-                (mv-nth 0
-                        (dir-ent-clusterchain fat32-in-memory dir-ent)))))
-     (not
-      (intersectp-equal
-       (find-n-free-clusters
-        (update-nth
-         (dir-ent-first-cluster dir-ent)
-         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
-                                      fat32-in-memory)
-                                *ms-end-of-clusterchain*)
-         (effective-fat fat32-in-memory))
-        (+ -1
-           (len (make-clusters dir-contents
-                               (cluster-size fat32-in-memory)))))
-       x)))
-    :hints
-    (("goal"
-      :use
-      (:instance
-       (:rewrite non-free-index-list-listp-correctness-1-lemma-1)
-       (fa-table
-        (update-nth
-         (dir-ent-first-cluster dir-ent)
-         (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
-                                      fat32-in-memory)
-                                *ms-end-of-clusterchain*)
-         (set-indices-in-fa-table
-          (effective-fat fat32-in-memory)
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory dir-ent))
-          (make-list-ac
-           (len (mv-nth 0
-                        (dir-ent-clusterchain fat32-in-memory dir-ent)))
-           0 nil))))
-       (index-list
-        (find-n-free-clusters
-         (update-nth
-          (dir-ent-first-cluster dir-ent)
-          (fat32-update-lower-28 (fati (dir-ent-first-cluster dir-ent)
-                                       fat32-in-memory)
-                                 *ms-end-of-clusterchain*)
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory dir-ent))
-           (make-list-ac
-            (len (mv-nth 0
-                         (dir-ent-clusterchain fat32-in-memory dir-ent)))
-            0 nil)))
-         (+ -1
-            (len (make-clusters dir-contents
-                                (cluster-size fat32-in-memory))))))))))))
-
-(defthm
   dir-ent-clusterchain-contents-of-lofat-remove-file-coincident-lemma-9
   (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (dir-ent-p dir-ent)
-    (dir-ent-directory-p dir-ent)
-    (<= *ms-first-data-cluster*
-        (dir-ent-first-cluster dir-ent))
-    (< (dir-ent-first-cluster dir-ent)
-       (+ *ms-first-data-cluster*
-          (count-of-clusters fat32-in-memory)))
-    (equal
-     (mv-nth
-      1
-      (update-dir-contents fat32-in-memory
-                           (dir-ent-first-cluster dir-ent)
-                           dir-contents))
-     0)
-    (stringp dir-contents)
-    (< 0 (len (explode dir-contents)))
-    (<= (len (explode dir-contents))
-        *ms-max-dir-size*)
-    (non-free-index-listp x (effective-fat fat32-in-memory))
-    (not
-     (intersectp-equal
-      x
-      (mv-nth '0
-              (dir-ent-clusterchain fat32-in-memory dir-ent)))))
+   (and (lofat-fs-p fat32-in-memory)
+        (dir-ent-p dir-ent)
+        (dir-ent-directory-p dir-ent)
+        (<= *ms-first-data-cluster*
+            (dir-ent-first-cluster dir-ent))
+        (< (dir-ent-first-cluster dir-ent)
+           (+ *ms-first-data-cluster*
+              (count-of-clusters fat32-in-memory)))
+        (equal (mv-nth 1
+                       (update-dir-contents fat32-in-memory
+                                            (dir-ent-first-cluster dir-ent)
+                                            dir-contents))
+               0)
+        (stringp dir-contents)
+        (< 0 (len (explode dir-contents)))
+        (<= (len (explode dir-contents))
+            *ms-max-dir-size*)
+        (non-free-index-listp x (effective-fat fat32-in-memory))
+        (not (intersectp-equal
+              x
+              (mv-nth '0
+                      (dir-ent-clusterchain fat32-in-memory dir-ent)))))
    (and
     (non-free-index-listp
      x
      (effective-fat
-      (mv-nth
-       0
-       (update-dir-contents fat32-in-memory
-                            (dir-ent-first-cluster dir-ent)
-                            dir-contents))))
+      (mv-nth 0
+              (update-dir-contents fat32-in-memory
+                                   (dir-ent-first-cluster dir-ent)
+                                   dir-contents))))
     (not
      (intersectp-equal
       x
       (mv-nth
        0
        (dir-ent-clusterchain
-        (mv-nth
-         0
-         (update-dir-contents fat32-in-memory
-                              (dir-ent-first-cluster dir-ent)
-                              dir-contents))
+        (mv-nth 0
+                (update-dir-contents fat32-in-memory
+                                     (dir-ent-first-cluster dir-ent)
+                                     dir-contents))
         dir-ent))))))
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (update-dir-contents)
-                    (intersectp-is-commutative
-                     (:definition non-free-index-listp)
-                     (:definition stobj-set-clusters)))
+    :in-theory
+    (e/d (update-dir-contents)
+         (intersectp-is-commutative (:definition non-free-index-listp)
+                                    (:definition stobj-set-clusters)))
     :expand
-    ((:with
-      intersectp-is-commutative
-      (:free
-       (y)
-       (intersectp-equal x
-                         (cons (dir-ent-first-cluster dir-ent)
-                               y))))
-     (:with
-      intersectp-is-commutative
-      (intersectp-equal
-       (mv-nth '0
-               (dir-ent-clusterchain fat32-in-memory dir-ent))
-       x))
-     (:free
-      (y)
-      (intersectp-equal (cons (dir-ent-first-cluster dir-ent) y)
-                        x))))))
+    ((:with intersectp-is-commutative
+            (:free (y)
+                   (intersectp-equal x
+                                     (cons (dir-ent-first-cluster dir-ent)
+                                           y))))
+     (:with intersectp-is-commutative
+            (intersectp-equal
+             (mv-nth '0
+                     (dir-ent-clusterchain fat32-in-memory dir-ent))
+             x))
+     (:free (y)
+            (intersectp-equal (cons (dir-ent-first-cluster dir-ent) y)
+                              x)))
+    :cases
+    ((equal (mv-nth '1
+                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
+            '0)))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-remove-file-coincident
