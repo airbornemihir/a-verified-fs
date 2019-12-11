@@ -946,8 +946,7 @@
 
 (defun
     find-dir-ent (dir-ent-list filename)
-  (declare (xargs :guard (and (fat32-filename-p filename)
-                              (dir-ent-list-p dir-ent-list))))
+  (declare (xargs :guard (dir-ent-list-p dir-ent-list)))
   (b* (((when (atom dir-ent-list))
         (mv (dir-ent-fix nil) *enoent*))
        (dir-ent (mbe :exec (car dir-ent-list)
@@ -960,20 +959,17 @@
 
 (defthm
   find-dir-ent-correctness-1
-  (and
-   (dir-ent-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
-   (natp (mv-nth 1
-                 (find-dir-ent dir-ent-list filename))))
+  (and (dir-ent-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+       (natp (mv-nth 1
+                     (find-dir-ent dir-ent-list filename))))
   :hints (("goal" :induct (find-dir-ent dir-ent-list filename)))
   :rule-classes
   ((:rewrite
-    :corollary
-    (dir-ent-p (mv-nth 0
-                       (find-dir-ent dir-ent-list filename))))
+    :corollary (dir-ent-p (mv-nth 0
+                                  (find-dir-ent dir-ent-list filename))))
    (:type-prescription
-    :corollary
-    (natp (mv-nth 1
-                  (find-dir-ent dir-ent-list filename))))))
+    :corollary (natp (mv-nth 1
+                             (find-dir-ent dir-ent-list filename))))))
 
 (defthm
   find-dir-ent-correctness-2
