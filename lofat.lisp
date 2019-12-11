@@ -13897,32 +13897,74 @@ Some (rather awful) testing forms are
      lofat-remove-file-correctness-1-lemma-1
      (x nil)))))
 
+(defun
+  insert-dir-ent-helper
+  (dir-contents ac parent-dir-ent current-dir-ent)
+  (declare
+   (xargs
+    :guard (and (stringp dir-contents)
+                (dir-ent-list-p ac))
+    :measure (length dir-contents)
+    :guard-hints (("goal" :in-theory (enable dir-ent-p)))))
+  (b*
+      (((when (< (length dir-contents)
+                 *ms-dir-ent-length*))
+        (mv (revappend ac nil)
+            parent-dir-ent current-dir-ent))
+       (dir-ent
+        (mbe
+         :exec
+         (string=>nats (subseq dir-contents 0 *ms-dir-ent-length*))
+         :logic (dir-ent-fix
+                 (chars=>nats (take *ms-dir-ent-length*
+                                    (explode dir-contents))))))
+       ((when (equal (char (dir-ent-filename dir-ent) 0)
+                     (code-char 0)))
+        (mv (revappend ac nil)
+            parent-dir-ent current-dir-ent))
+       ((when (equal (dir-ent-filename dir-ent)
+                     *parent-dir-fat32-name*))
+        (insert-dir-ent-helper
+         (subseq dir-contents *ms-dir-ent-length* nil)
+         ac dir-ent current-dir-ent))
+       ((when (equal (dir-ent-filename dir-ent)
+                     *current-dir-fat32-name*))
+        (insert-dir-ent-helper
+         (subseq dir-contents *ms-dir-ent-length* nil)
+         ac parent-dir-ent dir-ent))
+       ((when (useless-dir-ent-p dir-ent))
+        (insert-dir-ent-helper
+         (subseq dir-contents *ms-dir-ent-length* nil)
+         ac parent-dir-ent current-dir-ent)))
+    (insert-dir-ent-helper
+     (subseq dir-contents *ms-dir-ent-length* nil)
+     (list* dir-ent ac)
+     parent-dir-ent current-dir-ent)))
+
+(defthm
+  insert-dir-ent-helper-correctness-1
+  (equal (mv-nth 0
+                 (insert-dir-ent-helper
+                  dir-contents
+                  ac parent-dir-ent current-dir-ent))
+         (revappend ac (make-dir-ent-list dir-contents)))
+  :hints
+  (("goal"
+    :in-theory (enable make-dir-ent-list useless-dir-ent-p))))
+
 (defund
   insert-dir-ent (dir-contents dir-ent)
   (declare
-   (xargs :measure (len dir-contents)
-          :guard (and (dir-ent-p dir-ent)
+   (xargs :guard (and (dir-ent-p dir-ent)
                       (unsigned-byte-listp 8 dir-contents))
-          :guard-hints (("goal" :in-theory (enable dir-ent-p)))
-          :guard-debug t))
+          :guard-hints (("goal" :in-theory (enable dir-ent-p)))))
   (b*
-      ((dir-ent (mbe :logic (dir-ent-fix dir-ent) :exec dir-ent))
-       ((when (< (len dir-contents)
-                 *ms-dir-ent-length*))
-        (append dir-ent dir-contents))
-       (head-dir-ent (take *ms-dir-ent-length* dir-contents))
-       ((when (equal (dir-ent-filename head-dir-ent)
-                     (dir-ent-filename dir-ent)))
-        (append
-         dir-ent
-         (nthcdr *ms-dir-ent-length* dir-contents)))
-       ((when (equal (char (dir-ent-filename head-dir-ent) 0)
-                     (code-char 0)))
-        (append dir-ent dir-contents)))
+      (((mv dir-ent-list parent-dir-ent current-dir-ent)
+        (insert-dir-ent-helper (nats=>string dir-contents) nil nil nil)))
     (append
-     head-dir-ent
-     (insert-dir-ent (nthcdr *ms-dir-ent-length* dir-contents)
-                     dir-ent))))
+     (dir-ent-set-filename (dir-ent-fix current-dir-ent) *current-dir-fat32-name*)
+     (dir-ent-set-filename (dir-ent-fix parent-dir-ent) *parent-dir-fat32-name*)
+     (flatten (place-dir-ent dir-ent-list dir-ent)))))
 
 (defthm
   unsigned-byte-listp-of-insert-dir-ent
@@ -13949,60 +13991,15 @@ Some (rather awful) testing forms are
           (:instance (:rewrite insert-dir-ent-of-dir-ent-fix)
                      (dir-ent dir-ent-equiv))))))
 
-(defthm len-of-insert-dir-ent-lemma-1
-  (implies (and (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-                (useless-dir-ent-p (take 32 dir-contents)))
-           (not (equal (dir-ent-filename (take 32 dir-contents))
-                       (dir-ent-filename dir-ent))))
-  :hints (("goal" :in-theory (enable useless-dir-ent-p))))
-
-(defthm
-  len-of-insert-dir-ent-lemma-2
-  (implies
-   (and (equal (dir-ent-filename (take 32 dir-contents))
-               (dir-ent-filename dir-ent))
-        (unsigned-byte-listp 8 dir-contents)
-        (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-        (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
-                    (code-char 0)))
-        (<= 0 (+ -32 (len dir-contents))))
-   (equal
-    (mv-nth
-     1
-     (find-dir-ent (make-dir-ent-list (implode (nats=>chars dir-contents)))
-                   (dir-ent-filename dir-ent)))
-    0))
-  :hints
-  (("goal"
-    :in-theory (e/d (insert-dir-ent len-when-dir-ent-p
-                                    make-dir-ent-list nats=>string))
-    :expand
-    ((find-dir-ent (make-dir-ent-list (implode (nats=>chars dir-contents)))
-                   (dir-ent-filename dir-ent))
-     (make-dir-ent-list (implode (nats=>chars dir-contents)))))))
-
-;; Consider removing the unsigned-byte-listp hypothesis, it's not there in the
-;; other one.
 (defthm
   len-of-insert-dir-ent
-  (implies
-   (and (unsigned-byte-listp 8 dir-contents)
-        (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-        (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
-                    (code-char 0))))
-   (equal
-    (len (insert-dir-ent dir-contents dir-ent))
-    (if
-     (zp (mv-nth 1
-                 (find-dir-ent (make-dir-ent-list (nats=>string dir-contents))
-                               (dir-ent-filename dir-ent))))
-     (len dir-contents)
-     (+ *ms-dir-ent-length*
-        (len dir-contents)))))
-  :hints
-  (("goal" :in-theory (e/d (insert-dir-ent len-when-dir-ent-p
-                                           make-dir-ent-list nats=>string))
-    :induct (insert-dir-ent dir-contents dir-ent))))
+  (equal
+   (len (insert-dir-ent dir-contents dir-ent))
+   (* 32
+      (+ 2
+         (len (place-dir-ent (make-dir-ent-list (nats=>string dir-contents))
+                             dir-ent)))))
+  :hints (("goal" :in-theory (e/d (insert-dir-ent len-when-dir-ent-p)))))
 
 (defthm make-dir-ent-list-of-insert-dir-ent-lemma-1
   (implies (< (nfix n) *ms-dir-ent-length*)
@@ -14073,10 +14070,7 @@ Some (rather awful) testing forms are
           (place-dir-ent (make-dir-ent-list dir-contents)
                          dir-ent)))
   :hints (("goal" :in-theory (enable make-dir-ent-list insert-dir-ent
-                                     string=>nats nats=>string)
-           :induct (make-dir-ent-list dir-contents)
-           :expand (insert-dir-ent (chars=>nats (explode dir-contents))
-                                   dir-ent))))
+                                     string=>nats nats=>string))))
 
 (defthm stringp-of-insert-dir-ent
   (implies (unsigned-byte-listp 8 dir-contents)
@@ -14110,14 +14104,10 @@ Some (rather awful) testing forms are
         (place-dir-ent (make-dir-ent-list dir-contents)
                        dir-ent)))
       :hints
-      (("goal"
-        :induct (make-dir-ent-list dir-contents)
+      (("goal" :do-not-induct t
         :in-theory
-        (e/d (make-dir-ent-list dir-ent-fix
-                                insert-dir-ent string=>nats fat32-filename-p))
-        :expand ((make-dir-ent-list dir-contents)
-                 (insert-dir-ent (string=>nats dir-contents)
-                                 dir-ent)))))))
+        (e/d (make-dir-ent-list dir-ent-fix insert-dir-ent string=>nats
+                                nats=>string fat32-filename-p)))))))
 
 (defun
     lofat-place-file
