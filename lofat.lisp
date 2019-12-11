@@ -17788,51 +17788,6 @@ Some (rather awful) testing forms are
                (not (equal (nth 0 (explode filename))
                            ,(code-char 0))))))))
 
-;; The unsigned-byte-listp 8 hypothesis can go, maybe...
-(defthm
-  dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-14
-  (implies
-   (and
-    (unsigned-byte-listp 8 dir-contents)
-    (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-    (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
-                (code-char 0)))
-    (equal
-     (mv-nth 1
-             (find-dir-ent (make-dir-ent-list (nats=>string dir-contents))
-                           (dir-ent-filename dir-ent)))
-     0)
-    (not (zp cluster-size)))
-   (equal
-    (len (make-clusters (implode (nats=>chars (insert-dir-ent dir-contents dir-ent)))
-                        cluster-size))
-    (len (make-clusters (nats=>string dir-contents)
-                        cluster-size))))
-  :hints (("goal" :in-theory (enable len-of-make-clusters nats=>string)
-           :do-not-induct t))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (and
-      (unsigned-byte-listp 8 dir-contents)
-      (not (useless-dir-ent-p (dir-ent-fix dir-ent)))
-      (not (equal (nth 0 (explode (dir-ent-filename dir-ent)))
-                  (code-char 0)))
-      (equal
-       (mv-nth 1
-               (find-dir-ent (make-dir-ent-list (nats=>string dir-contents))
-                             (dir-ent-filename dir-ent)))
-       0)
-      (not (zp cluster-size)))
-     (equal
-      (len (make-clusters (nats=>string (insert-dir-ent dir-contents dir-ent))
-                          cluster-size))
-      (len (make-clusters (nats=>string dir-contents)
-                          cluster-size))))
-    :hints (("Goal" :in-theory (enable nats=>string)) ))))
-
 ;; Move later and rename.
 (defthm dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-15
   (implies (not (equal (mv-nth 1 (find-dir-ent dir-ent-list filename))
@@ -25017,6 +24972,60 @@ Some (rather awful) testing forms are
                                    (cluster-size fat32-in-memory))))))))
 
 (defthm
+  lofat-place-file-correctness-1-lemma-41
+  (implies (and (< (dir-ent-first-cluster root-dir-ent)
+                   (+ 2 (count-of-clusters fat32-in-memory)))
+                (<= 1
+                    (count-free-clusters (effective-fat fat32-in-memory))))
+           (< (nth '0
+                   (find-n-free-clusters (effective-fat fat32-in-memory)
+                                         '1))
+              (binary-+ '2
+                        (count-of-clusters fat32-in-memory))))
+  :rule-classes (:rewrite :linear))
+
+;; We've actually gotten pretty close to precisely specifying when there
+;; can be a space error and when there can't.
+;; - We started off thinking that every directory tree with
+;; (hifat-cluster-count ...) evaluating to a number less than the number of
+;; available clusters would work, but we realised that would be false given the
+;; recursive nature and the fact that other directory trees would, in general,
+;; exist.
+;;  - We then thought incrementally: the difference between clusters needed by
+;; the new tree and the clusters needed by the old tree would be the number of
+;; free clusters needed. This is surprisingly close to being true! However,
+;; there are issues. Even in the case where we're inserting just one regular
+;; file, we're going to have to update its parent directory, potentially
+;; increasing its length. That gives us a correctness issue, in that we might
+;; be making the directory contents longer than *ms-max-dir-size*. So... we
+;; decide that inserting a new directory entry is a good time to pluck out the
+;; parent and current directory entries, and discard all other useless entries
+;; (i.e. entries for deleted files.) That resolves the correctness issue,
+;; because it means that any directory tree which continues to satisfy
+;; hifat-bounded-file-alist-p will be fine. However, that also immediately
+;; raises the spectre of special treatment for the root directory, which does
+;; not have parent and current directory entries. Moreover, since we're
+;; changing the number of clusters in the root directory, we'll need to account
+;; for those in addition to the hifat-cluster-count of the new tree... and so
+;; the number of new clusters needed becomes the difference between the new
+;; tree and the old tree in terms of the sum of clusters needed for the root
+;; directory and clusters needed for the tree (awkward, I know, but unavoidable
+;; given the definition of hifat-cluster-count.) This gives rise to a weird
+;; situation where we might need, say, two free clusters for placing the
+;; regular file, and we will have exactly two clusters freed up by removing
+;; deleted directory entries from the root directories. We should be able to do
+;; it, but we can't without entering a domain of utter madness where we
+;; free all possible clusters first and then use them as needed, and the
+;; atomicity of the various operations recedes far into the distance.
+;; - We conclude thinking it's probably best for the *ENOSPC* error condition
+;; not to be formally specified at all. We would be hamstringing ourselves
+;; pretty severely if we tried to break atomicity and then (likely) had to
+;; reimplement a bunch of things. We can still do some obvious things
+;; though... we shouldn't be hanging on to useless directory entries when we're
+;; adding new ones, and we shouldn't subject ourselves to clusters full of
+;; zeroes, both of which point to sticking with the new implementation of
+;; insert-dir-ent.
+(defthm
   lofat-place-file-correctness-1-lemma-81
   (b*
       (((mv fs error-code)
@@ -25058,14 +25067,17 @@ Some (rather awful) testing forms are
       (no-duplicatesp-equal
        (mv-nth '0
                (dir-ent-clusterchain fat32-in-memory root-dir-ent)))
-      (<=
-       (+ *ms-dir-ent-length*
-          (len
-           (explode
-            (mv-nth
-             0
-             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))))
-       *ms-max-dir-size*)
+      (>=
+       *ms-max-dir-size*
+       (+
+        64
+        (*
+         *ms-dir-ent-length*
+         (len
+          (make-dir-ent-list
+           (mv-nth
+            0
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))))))
       (lofat-regular-file-p file)
       (<= (hifat-entry-count fs) entry-limit)
       (fat32-filename-list-p pathname)
