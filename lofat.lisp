@@ -31002,6 +31002,24 @@ Some (rather awful) testing forms are
      :rule-classes (:linear :rewrite)))
 
   (defthm
+    lofat-place-file-correctness-1-lemma-44
+    (implies (and (< (dir-ent-first-cluster root-dir-ent)
+                     (+ 2 (count-of-clusters fat32-in-memory)))
+                  (<= 1
+                      (min (count-free-clusters (effective-fat fat32-in-memory))
+                           1)))
+             (< (nth '0
+                     (find-n-free-clusters (effective-fat fat32-in-memory)
+                                           '1))
+                (binary-+ '2
+                          (count-of-clusters fat32-in-memory))))
+    :hints (("goal" :in-theory (enable (:definition butlast)
+                                       (:definition nfix)
+                                       (:definition length)
+                                       (:definition min))))
+    :rule-classes (:linear :rewrite))
+
+  (defthm
     lofat-place-file-correctness-1-lemma-1
     (b*
         (;; I'm not very happy with this assigned value of dir-ent... and I'm
@@ -31172,20 +31190,6 @@ Some (rather awful) testing forms are
         (no-duplicatesp-equal
          (mv-nth '0
                  (dir-ent-clusterchain fat32-in-memory root-dir-ent)))
-        ;; This hypothesis says we should be able to fit this LoFAT instance in
-        ;; the stobj, without disturbing any other directory trees on the disk.
-        (<= (-
-             (hifat-cluster-count fs (cluster-size fat32-in-memory))
-             (hifat-cluster-count
-              (mv-nth 0
-                      (lofat-to-hifat-helper
-                       fat32-in-memory
-                       (make-dir-ent-list
-                        (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                       entry-limit))
-              (cluster-size fat32-in-memory)))
-            (count-free-clusters (effective-fat fat32-in-memory)))
-        ;; This one should go, eventually...
         (lofat-regular-file-p file)
         (fat32-filename-p (dir-ent-filename (lofat-file->dir-ent$inline file)))
         (non-free-index-listp x (effective-fat fat32-in-memory))
@@ -31197,10 +31201,12 @@ Some (rather awful) testing forms are
                   (make-dir-ent-list
                    (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                   entry-limit)))
-        (zp
-         (mv-nth
-          1
-          (lofat-place-file fat32-in-memory root-dir-ent pathname file))))
+        (not
+         (equal
+          (mv-nth
+           1
+           (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+          *ENOSPC*)))
        (and
         (equal
          (mv-nth 3
