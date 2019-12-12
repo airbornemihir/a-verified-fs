@@ -25025,10 +25025,15 @@ Some (rather awful) testing forms are
 ;; adding new ones, and we shouldn't subject ourselves to clusters full of
 ;; zeroes, both of which point to sticking with the new implementation of
 ;; insert-dir-ent.
+
+;; After trimming hypotheses, the theorem has basically stopped making
+;; reference to the directory tree returned by hifat-place-file. I'm not
+;; completely sure if that's how it should work, but the theorem prover seems
+;; to indicate that the hypotheses are consistent and don't imply falsity.
 (defthm
   lofat-place-file-correctness-1-lemma-81
   (b*
-      (((mv fs error-code)
+      (((mv & error-code)
         (hifat-place-file
          (mv-nth 0
                  (lofat-to-hifat-helper
@@ -25050,65 +25055,30 @@ Some (rather awful) testing forms are
                       entry-limit))
              0)
       (not-intersectp-list
-       (MV-NTH '0
-               (DIR-ENT-CLUSTERCHAIN FAT32-IN-MEMORY ROOT-DIR-ENT))
+       (mv-nth '0
+               (dir-ent-clusterchain fat32-in-memory root-dir-ent))
        (mv-nth 2
                (lofat-to-hifat-helper
                 fat32-in-memory
                 (make-dir-ent-list
                  (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                 entry-limit)))
-      (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
-      (< (dir-ent-first-cluster root-dir-ent)
-         (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
       (equal
        (mv-nth 1 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
        0)
       (no-duplicatesp-equal
        (mv-nth '0
                (dir-ent-clusterchain fat32-in-memory root-dir-ent)))
-      (>=
-       *ms-max-dir-size*
-       (+
-        64
-        (*
-         *ms-dir-ent-length*
-         (len
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))))))
       (lofat-regular-file-p file)
-      (<= (hifat-entry-count fs) entry-limit)
       (fat32-filename-list-p pathname)
-      (<=
-       (-
-        (+ (hifat-cluster-count fs (cluster-size fat32-in-memory))
-           (len
-            (make-clusters
-             (nats=>string
-              (INSERT-DIR-ENT
-               (STRING=>NATS (mv-nth 0 (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                        FAT32-IN-MEMORY ROOT-DIR-ENT)))
-               ;; I don't actually expect such a directory entry to be created;
-               ;; I'm just trying to account for the possible expansion of the
-               ;; root directory.
-               (dir-ent-set-filename (DIR-ENT-fix nil) (car pathname))))
-             (cluster-size fat32-in-memory))))
-        (+
-         (hifat-cluster-count
-          (mv-nth 0
-                  (lofat-to-hifat-helper
-                   fat32-in-memory
-                   (make-dir-ent-list
-                    (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                   entry-limit))
-          (cluster-size fat32-in-memory))
-           (len
-            (make-clusters (mv-nth 0 (DIR-ENT-CLUSTERCHAIN-CONTENTS
-                                      FAT32-IN-MEMORY ROOT-DIR-ENT))
-                           (cluster-size fat32-in-memory)))))
-       (count-free-clusters (effective-fat fat32-in-memory))))
+      ;; we really can't deal with enospc, for reasons explained in a comment
+      ;; above.
+      (not
+       (equal
+        (mv-nth
+         1
+         (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+        *enospc*)))
      (equal
       (mv-nth
        1
@@ -25125,8 +25095,8 @@ Some (rather awful) testing forms are
                        lofat-place-file-correctness-1-lemma-83
                        lofat-to-hifat-inversion-lemma-15
                        len-of-make-clusters
-                       LOFAT-TO-HIFAT-HELPER-CORRECTNESS-5-LEMMA-5
-                       PAINFUL-DEBUGGING-LEMMA-14))))
+                       lofat-to-hifat-helper-correctness-5-lemma-5
+                       painful-debugging-lemma-14))))
 
 (encapsulate
   ()
