@@ -14172,9 +14172,9 @@ Some (rather awful) testing forms are
        (val (fati first-cluster fat32-in-memory))
        ;; Mark this cluster as used, without possibly interfering with any
        ;; existing clusterchains.
-       (fat32-in-memory (update-fati first-cluster (fat32-update-lower-28
-                                                    val
-                                                    *ms-end-of-clusterchain*) fat32-in-memory))
+       (fat32-in-memory (update-fati
+                         first-cluster (fat32-update-lower-28 val *ms-end-of-clusterchain*)
+                         fat32-in-memory))
        ((mv fat32-in-memory dir-ent error-code &)
         (place-contents fat32-in-memory dir-ent contents file-length (nth 0 indices)))
        (new-dir-contents (nats=>string (insert-dir-ent (string=>nats dir-contents) dir-ent)))
@@ -14897,16 +14897,43 @@ Some (rather awful) testing forms are
        '1))
      '0))))
 
-(verify-guards
-  lofat-place-file
-  :hints
-  (("goal" :in-theory (disable unsigned-byte-p))))
+(verify-guards lofat-place-file
+  :guard-debug t)
 
 (defthm natp-of-lofat-place-file
   (natp (mv-nth 1
                 (lofat-place-file fat32-in-memory
                                   root-dir-ent pathname file)))
   :rule-classes :type-prescription)
+
+(defthm
+  lofat-place-file-correctness-2
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (dir-ent-p root-dir-ent)
+    (>= (dir-ent-first-cluster root-dir-ent)
+        *ms-first-data-cluster*)
+    (< (dir-ent-first-cluster root-dir-ent)
+       (+ *ms-first-data-cluster*
+          (count-of-clusters fat32-in-memory)))
+    (fat32-filename-list-p pathname)
+    (lofat-file-p file)
+    (implies (not (lofat-regular-file-p file))
+             (unsigned-byte-p
+              32
+              (* 32 (len (lofat-file->contents file)))))
+    (not
+     (zp (mv-nth 1
+                 (lofat-place-file
+                  fat32-in-memory root-dir-ent pathname file)))))
+   (equal (mv-nth 0
+                  (lofat-place-file
+                   fat32-in-memory root-dir-ent pathname file))
+          fat32-in-memory))
+  :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
+                                     clear-clusterchain-correctness-3
+                                     place-contents-correctness-1))))
 
 ;; Kinda general
 (defthm lofat-place-file-correctness-1-lemma-2
@@ -22533,6 +22560,7 @@ Some (rather awful) testing forms are
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))))))))))
 
+;; Move later.
 (defthm
   hifat-entry-count-of-hifat-place-file
   (implies
