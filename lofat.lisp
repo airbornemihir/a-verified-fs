@@ -12920,7 +12920,7 @@ Some (rather awful) testing forms are
   :hints (("goal" :in-theory (enable dir-ent-clusterchain
                                      dir-ent-clusterchain-contents))))
 
-(defthm
+(defthmd
   lofat-remove-file-correctness-1-lemma-64
   (implies
    (and
@@ -13006,7 +13006,8 @@ Some (rather awful) testing forms are
     :in-theory (enable hifat-remove-file
                        (:rewrite hifat-to-lofat-inversion-lemma-17)
                        (:rewrite lofat-to-hifat-inversion-lemma-4)
-                       lofat-to-hifat-inversion-lemma-15))))
+                       lofat-to-hifat-inversion-lemma-15
+                       lofat-remove-file-correctness-1-lemma-64))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-67
@@ -14108,7 +14109,8 @@ Some (rather awful) testing forms are
       :in-theory (enable hifat-remove-file
                          (:rewrite hifat-to-lofat-inversion-lemma-17)
                          (:rewrite lofat-to-hifat-inversion-lemma-4)
-                         lofat-to-hifat-inversion-lemma-15)))
+                         lofat-to-hifat-inversion-lemma-15
+                         lofat-remove-file-correctness-1-lemma-64)))
     :rule-classes
     ((:rewrite
       :corollary
