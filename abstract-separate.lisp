@@ -1820,9 +1820,11 @@
            (frame-p (remove-assoc-equal x alist)))
   :hints (("goal" :in-theory (enable frame-p))))
 
-(defund collapse (root frame)
-  (declare (xargs :guard (and (abs-file-alist-p root) (frame-p frame))
-                  :guard-debug t :measure (len frame)))
+(defund
+  collapse (root frame)
+  (declare (xargs :guard (and (abs-file-alist-p root)
+                              (frame-p frame))
+                  :measure (len frame)))
   (b*
       (((when (atom frame)) (mv root t))
        (head-index (abs-find-first-complete frame))
@@ -1831,40 +1833,38 @@
        (frame (abs-remove-assoc head-index frame))
        (src (frame-val->src head-frame-val)))
     (if
-        (zp src)
-        (b*
-            ((root-after-context-apply
-              (context-apply
-               root
-               (frame-val->dir head-frame-val)
-               head-index
-               (frame-val->path head-frame-val)))
-             ((when (equal root-after-context-apply root)) (mv root nil)))
-          (collapse root-after-context-apply frame))
-      (b*
-          ((path (frame-val->path head-frame-val))
-           ((when (or (equal src head-index)
-                      (atom (abs-assoc src frame))))
-            (mv root nil))
-           (src-path (frame-val->path (cdr (abs-assoc src frame))))
-           ((when (not (prefixp src-path path)))
-            (mv root nil))
-           (src-dir (frame-val->dir (cdr (abs-assoc src frame))))
-           (src-dir-after-context-apply
-            (context-apply
-             src-dir
-             (frame-val->dir head-frame-val)
-             head-index
-             (nthcdr (len src-path) path)))
-           ((when (equal src-dir-after-context-apply src-dir)) (mv root nil))
-           (frame (abs-put-assoc
-                   src
-                   (frame-val
-                    (frame-val->path (cdr (abs-assoc src frame)))
-                    src-dir-after-context-apply
-                    (frame-val->src (cdr (abs-assoc src frame))))
-                   frame)))
-        (collapse root frame)))))
+     (zp src)
+     (b*
+         ((root-after-context-apply
+           (context-apply root (frame-val->dir head-frame-val)
+                          head-index
+                          (frame-val->path head-frame-val)))
+          ((when (equal root-after-context-apply root))
+           (mv root nil)))
+       (collapse root-after-context-apply frame))
+     (b*
+         ((path (frame-val->path head-frame-val))
+          ((when (or (equal src head-index)
+                     (atom (abs-assoc src frame))))
+           (mv root nil))
+          (src-path (frame-val->path (cdr (abs-assoc src frame))))
+          ((unless (prefixp src-path path))
+           (mv root nil))
+          (src-dir (frame-val->dir (cdr (abs-assoc src frame))))
+          (src-dir-after-context-apply
+           (context-apply src-dir (frame-val->dir head-frame-val)
+                          head-index
+                          (nthcdr (len src-path) path)))
+          ((when (equal src-dir-after-context-apply src-dir))
+           (mv root nil))
+          (frame
+           (abs-put-assoc
+            src
+            (frame-val (frame-val->path (cdr (abs-assoc src frame)))
+                       src-dir-after-context-apply
+                       (frame-val->src (cdr (abs-assoc src frame))))
+            frame)))
+       (collapse root frame)))))
 
 (assert-event
  (b*
@@ -3668,3 +3668,39 @@
               (mutual-distinguish-names frame1 frame2)))
   :hints (("goal" :in-theory (enable abs-separate
                                      mutual-distinguish-names))))
+
+(defund abs-find-file-helper (fs pathname)
+  (declare (xargs :guard (and (abs-file-alist-p fs)
+                              (fat32-filename-list-p pathname))
+                  :measure (acl2-count pathname)))
+  (b*
+      ((fs (abs-file-alist-fix fs))
+       ((unless (consp pathname))
+        (mv (make-abs-file) *enoent*))
+       (name (mbe :logic (fat32-filename-fix (car pathname))
+                  :exec (car pathname)))
+       (alist-elem (abs-assoc name fs))
+       ((unless (consp alist-elem))
+        (mv (make-abs-file) *enoent*))
+       ((when (abs-directory-file-p (cdr alist-elem)))
+        (if (atom (cdr pathname))
+            (mv (cdr alist-elem) 0)
+            (abs-find-file-helper (abs-file->contents (cdr alist-elem))
+                                  (cdr pathname))))
+       ((unless (atom (cdr pathname)))
+        (mv (make-abs-file) *enotdir*)))
+    (mv (cdr alist-elem) 0)))
+
+(defund abs-find-file (frame pathname)
+  (declare (xargs :guard (and (frame-p frame)
+                              (fat32-filename-list-p pathname))))
+  (b*
+      (((when (atom frame)) (mv (make-abs-file) *enoent*))
+       ((unless (prefixp (frame-val->path (cdar frame)) pathname))
+        (abs-find-file (cdr frame) pathname))
+       ((mv file error-code)
+        (abs-find-file-helper (frame-val->dir (cdar frame))
+                              (nthcdr (len (frame-val->path (cdar frame)))
+                                      pathname)))
+       ((when (not (equal error-code *ENOENT*))) (mv file error-code)))
+    (abs-find-file (cdr frame) pathname)))
