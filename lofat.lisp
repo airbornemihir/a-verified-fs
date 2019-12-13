@@ -14167,23 +14167,18 @@ Some (rather awful) testing forms are
         (update-dir-contents fat32-in-memory (dir-ent-first-cluster root-dir-ent)new-dir-contents))
        ((when (zp file-length)) (mv fat32-in-memory *enospc*))
        (indices (stobj-find-n-free-clusters fat32-in-memory 1))
-       ((when (< (len indices) 1)) (mv fat32-in-memory *enospc*))
-       (first-cluster (nth 0 indices))
-       (val (fati first-cluster fat32-in-memory))
+       ((when (< (len indices) 1)) (mv fat32-in-memory *enospc*)) (first-cluster (nth 0 indices))
        ;; Mark this cluster as used, without possibly interfering with any
        ;; existing clusterchains.
-       (fat32-in-memory (update-fati
-                         first-cluster (fat32-update-lower-28 val *ms-end-of-clusterchain*)
-                         fat32-in-memory))
+       (fat32-in-memory (update-fati first-cluster (fat32-update-lower-28
+                                                    (fati first-cluster fat32-in-memory)
+                                                    *ms-end-of-clusterchain*) fat32-in-memory))
        ((mv fat32-in-memory dir-ent error-code &)
         (place-contents fat32-in-memory dir-ent contents file-length (nth 0 indices)))
+       ((unless (zp error-code)) (mv fat32-in-memory error-code))
        (new-dir-contents (nats=>string (insert-dir-ent (string=>nats dir-contents) dir-ent)))
-       ((when (and (zp error-code) (<= (length new-dir-contents) *ms-max-dir-size*)))
-        (update-dir-contents fat32-in-memory
-                             (dir-ent-first-cluster root-dir-ent)
-                             new-dir-contents))
-       (fat32-in-memory (update-fati first-cluster val fat32-in-memory)))
-    (mv fat32-in-memory error-code)))
+       ((unless (<= (length new-dir-contents) *ms-max-dir-size*)) (mv fat32-in-memory *enospc*)))
+    (update-dir-contents fat32-in-memory (dir-ent-first-cluster root-dir-ent) new-dir-contents)))
 
 (defthm
   count-of-clusters-of-lofat-place-file
@@ -14897,8 +14892,10 @@ Some (rather awful) testing forms are
        '1))
      '0))))
 
-(verify-guards lofat-place-file
-  :guard-debug t)
+(verify-guards
+  lofat-place-file
+  :hints
+  (("goal" :in-theory (disable unsigned-byte-p))))
 
 (defthm natp-of-lofat-place-file
   (natp (mv-nth 1
@@ -14906,34 +14903,44 @@ Some (rather awful) testing forms are
                                   root-dir-ent pathname file)))
   :rule-classes :type-prescription)
 
-(defthm
-  lofat-place-file-correctness-2
-  (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (dir-ent-p root-dir-ent)
-    (>= (dir-ent-first-cluster root-dir-ent)
-        *ms-first-data-cluster*)
-    (< (dir-ent-first-cluster root-dir-ent)
-       (+ *ms-first-data-cluster*
-          (count-of-clusters fat32-in-memory)))
-    (fat32-filename-list-p pathname)
-    (lofat-file-p file)
-    (implies (not (lofat-regular-file-p file))
-             (unsigned-byte-p
-              32
-              (* 32 (len (lofat-file->contents file)))))
-    (not
-     (zp (mv-nth 1
-                 (lofat-place-file
-                  fat32-in-memory root-dir-ent pathname file)))))
-   (equal (mv-nth 0
-                  (lofat-place-file
-                   fat32-in-memory root-dir-ent pathname file))
-          fat32-in-memory))
-  :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
-                                     clear-clusterchain-correctness-3
-                                     place-contents-correctness-1))))
+;; So this is going to be harder than the same lemma for lofat-remove-file
+;; because of two reasons: we're actually placing file contents here (at least
+;; some of the time) which requires longer sequences of operations, and we're
+;; (potentially) overwriting the contents of one file with the contents of
+;; another. The longer sequences mean more things have to be saved with the
+;; intention of restoring them once something fails further down the pipeline,
+;; and the potential overwriting in the data region means we need to be
+;; prepared to reason about reversing the effects of stobj-set-clusters, which
+;; is called as part of place-contents.
+
+;; (defthm
+;;   lofat-place-file-correctness-2
+;;   (implies
+;;    (and
+;;     (lofat-fs-p fat32-in-memory)
+;;     (dir-ent-p root-dir-ent)
+;;     (>= (dir-ent-first-cluster root-dir-ent)
+;;         *ms-first-data-cluster*)
+;;     (< (dir-ent-first-cluster root-dir-ent)
+;;        (+ *ms-first-data-cluster*
+;;           (count-of-clusters fat32-in-memory)))
+;;     (fat32-filename-list-p pathname)
+;;     (lofat-file-p file)
+;;     (implies (not (lofat-regular-file-p file))
+;;              (unsigned-byte-p
+;;               32
+;;               (* 32 (len (lofat-file->contents file)))))
+;;     (not
+;;      (zp (mv-nth 1
+;;                  (lofat-place-file
+;;                   fat32-in-memory root-dir-ent pathname file)))))
+;;    (equal (mv-nth 0
+;;                   (lofat-place-file
+;;                    fat32-in-memory root-dir-ent pathname file))
+;;           fat32-in-memory))
+;;   :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
+;;                                      clear-clusterchain-correctness-3
+;;                                      place-contents-correctness-1))))
 
 ;; Kinda general
 (defthm lofat-place-file-correctness-1-lemma-2
