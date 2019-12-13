@@ -3264,7 +3264,7 @@
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (integerp first-cluster)
+    (force (integerp first-cluster))
     (>= first-cluster *ms-first-data-cluster*)
     (stringp contents)
     (dir-ent-p dir-ent1)
@@ -3289,7 +3289,7 @@
   (implies
    (and (lofat-fs-p fat32-in-memory)
         (stringp contents)
-        (integerp first-cluster)
+        (force (integerp first-cluster))
         (>= first-cluster *ms-first-data-cluster*)
         (equal (mv-nth 3
                        (lofat-to-hifat-helper fat32-in-memory
@@ -4776,7 +4776,7 @@
 (defthm
   nth-of-free-index-list
   (implies
-   (and (< (nfix n) (len index-list))
+   (and (force (< (nfix n) (len index-list)))
         (free-index-listp index-list fa-table))
    (equal (fat32-entry-mask (nth (nth n index-list) fa-table))
           0))
