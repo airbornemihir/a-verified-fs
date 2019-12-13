@@ -7,14 +7,6 @@
 ; This is a model of the FAT32 filesystem, related to HiFAT but with abstract
 ; variables.
 
-(local
- (in-theory (disable take-of-too-many make-list-ac-removal
-                     revappend-removal str::hex-digit-listp-of-cons
-                     loghead logtail)))
-
-(local
- (in-theory (disable nth update-nth ceiling floor mod true-listp take member-equal)))
-
 ;; This is explicitly a replacement for assoc-equal with a vacuous guard.
 (defund abs-assoc (x alist)
   (declare (xargs :guard t))
@@ -278,20 +270,6 @@
 (defthm
   abs-file-alist-p-correctness-1-lemma-3
   (implies (and (not (and (abs-file-alist-p (abs-file->contents (cdr (car x))))
-                          (abs-complete (abs-file->contents (cdr (car x))))))
-                (abs-file-alist-p x))
-           (fat32-filename-p (car (car x))))
-  :hints (("goal" :expand (abs-file-alist-p x))))
-
-(defthm abs-file-alist-p-correctness-1-lemma-4
-  (implies (stringp x)
-           (not (abs-file-alist-p x)))
-  :hints (("goal" :in-theory (enable abs-file-alist-p)))
-  :rule-classes :type-prescription)
-
-(defthm
-  abs-file-alist-p-correctness-1-lemma-5
-  (implies (and (not (and (abs-file-alist-p (abs-file->contents (cdr (car x))))
                           (or (abs-directory-file-p (cdr (car x)))
                               (abs-complete (abs-file->contents (cdr (car x)))))))
                 (m1-file-alist-p (cdr x))
@@ -302,6 +280,12 @@
                            (x (cdr x))
                            (a (car x)))
            :expand (abs-file-alist-p x))))
+
+(defthm abs-file-alist-p-correctness-1-lemma-4
+  (implies (stringp x)
+           (not (abs-file-alist-p x)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p)))
+  :rule-classes :type-prescription)
 
 ;; This theorem states that an abstract filesystem tree without any body
 ;; addresses is just a HiFAT instance.
