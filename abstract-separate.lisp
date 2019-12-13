@@ -3089,33 +3089,27 @@
        (remove-equal nil (strip-cars dir1))
        (names-at-relpath
         (context-apply (frame-val->dir (cdr (car frame)))
-                           dir2 x2
-                           (nthcdr (len (frame-val->path (cdr (car frame))))
-                                   relpath2))
+                       dir2 x2
+                       (nthcdr (len (frame-val->path (cdr (car frame))))
+                               relpath2))
         (nthcdr (len (frame-val->path (cdr (car frame))))
                 relpath1)))))
-    :instructions
-    (:promote
-     (:dive 1 2)
-     (:rewrite abs-separate-correctness-1-lemma-17)
-     :top :bash (:dive 1)
-     (:= (prefixp (append (take (len (frame-val->path (cdr (car frame))))
-                                relpath2)
-                          (nthcdr (len (frame-val->path (cdr (car frame))))
-                                  relpath2))
-                  (append (take (len (frame-val->path (cdr (car frame))))
-                                relpath1)
-                          (nthcdr (len (frame-val->path (cdr (car frame))))
-                                  relpath1))))
-     (:in-theory (disable (:rewrite binary-append-take-nthcdr)))
-     :top
-     (:use (:instance (:rewrite binary-append-take-nthcdr)
-                      (l relpath2)
-                      (i (len (frame-val->path (cdr (car frame))))))
-           (:instance (:rewrite binary-append-take-nthcdr)
-                      (l relpath1)
-                      (i (len (frame-val->path (cdr (car frame)))))))
-     :bash))
+    :hints
+    (("goal"
+      :in-theory (disable (:rewrite prefixp-append-append)
+                          (:rewrite binary-append-take-nthcdr))
+      :use ((:instance (:rewrite prefixp-append-append)
+                       (y (nthcdr (len (frame-val->path (cdr (car frame))))
+                                  relpath1))
+                       (x2 (nthcdr (len (frame-val->path (cdr (car frame))))
+                                   relpath2))
+                       (x1 (frame-val->path (cdr (car frame)))))
+            (:instance (:rewrite binary-append-take-nthcdr)
+                       (l relpath2)
+                       (i (len (frame-val->path (cdr (car frame))))))
+            (:instance (:rewrite binary-append-take-nthcdr)
+                       (l relpath1)
+                       (i (len (frame-val->path (cdr (car frame))))))))))
 
   (defthm
     abs-separate-correctness-1-lemma-39
@@ -3472,15 +3466,17 @@
               (frame-val->path (cdr (car frame))))
         (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
                 (frame-val->path (cdr (car frame)))))))
-     (:dive 1)
-     (:claim (<= (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-                 (len relpath)))
-     (:rewrite binary-append-take-nthcdr)
-     :nx
-     (:claim (<= (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-                 (len (frame-val->path (cdr (car frame))))))
-     (:rewrite binary-append-take-nthcdr)
-     :top :bash)))
+     (:in-theory (disable (:rewrite binary-append-take-nthcdr)))
+     (:use
+      (:instance
+       (:rewrite binary-append-take-nthcdr)
+       (l relpath)
+       (i (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))))
+      (:instance
+       (:rewrite binary-append-take-nthcdr)
+       (l (frame-val->path (cdr (car frame))))
+       (i (len (frame-val->path (cdr (assoc-equal src (cdr frame))))))))
+     :bash)))
 
 (defthm
   abs-separate-correctness-1-lemma-44
