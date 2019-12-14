@@ -84,6 +84,11 @@
              (abs-file-alist-p contents))
          (abs-file-alist-p (cdr x)))))
 
+(defthm abs-file-alist-p-of-cdr
+  (implies (abs-file-alist-p abs-file-alist1)
+           (abs-file-alist-p (cdr abs-file-alist1)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p))))
+
 (defund abs-file-contents-p (contents)
   (declare (xargs :guard t))
   (or (and (stringp contents)
@@ -496,6 +501,11 @@
               (abs-directory-file-p (cdar fs)))
          (abs-no-dups-p (abs-file->contents (cdar fs))))
         (t t)))
+
+(defthm abs-no-dups-p-of-cdr
+  (implies (abs-no-dups-p abs-file-alist1)
+           (abs-no-dups-p (cdr abs-file-alist1)))
+  :hints (("goal" :in-theory (enable abs-no-dups-p))))
 
 (defthm
   abs-no-dups-p-of-cdr-of-assoc
@@ -915,18 +925,8 @@
                                    context-apply)
                                   (intersectp-is-commutative)))))
 
-;; Move later
-(defthm abs-addrs-of-context-apply-2-lemma-9
-  (implies (abs-no-dups-p abs-file-alist1)
-           (abs-no-dups-p (cdr abs-file-alist1)))
-  :hints (("goal" :in-theory (enable abs-no-dups-p))))
-(defthm abs-addrs-of-context-apply-2-lemma-10
-  (implies (abs-file-alist-p abs-file-alist1)
-           (abs-file-alist-p (cdr abs-file-alist1)))
-  :hints (("goal" :in-theory (enable abs-file-alist-p))))
-
 (defthm
-  abs-addrs-of-context-apply-2-lemma-11
+  abs-addrs-of-context-apply-2-lemma-8
   (implies
    (not (intersectp-equal
          (abs-addrs (abs-file->contents (cdr (car abs-file-alist1))))
@@ -945,7 +945,7 @@
       (y (abs-addrs (cdr abs-file-alist1))))))))
 
 (defthm
-  abs-addrs-of-context-apply-2-lemma-8
+  abs-addrs-of-context-apply-2-lemma-9
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal name (cdr abs-file-alist1))))
         (not (intersectp-equal
