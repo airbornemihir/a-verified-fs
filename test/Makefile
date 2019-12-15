@@ -738,16 +738,17 @@ debug-create-dir-and-file-mv: $(MOUNTPOINT)
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-tar-1: $(MOUNTPOINT)
+create-tar-1: $(MOUNTPOINT)
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	mkdir -p $(MOUNTPOINT)/tmp/tickets
 	cp input-4623-bytes.txt $(MOUNTPOINT)/tmp/tickets/ticket1.txt
 	cp input-4623-bytes.txt $(MOUNTPOINT)/tmp/tickets/ticket2.txt
-	tar --create --file $(MOUNTPOINT)/tmp/tickets.tar --verbose $(MOUNTPOINT)/tmp/tickets
+	cd $(MOUNTPOINT)/tmp; tar --create --file tickets.tar --verbose tickets
 	sleep 1
 	sudo umount $(MOUNTPOINT)
+	env DISK=disk1.raw TAR_INPUT="/tmp/tickets.tar" saved_acl2 < tar-reader.lisp
 	true
 
 # The following test creates a 128 MB disk image, copies a file to the
