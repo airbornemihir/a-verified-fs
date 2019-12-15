@@ -738,6 +738,17 @@ debug-create-dir-and-file-mv: $(MOUNTPOINT) cp-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
+debug-create-tar-1: $(MOUNTPOINT) cp-replicant.lisp
+	rm -f $(DISK)
+	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
+	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
+	mkdir $(MOUNTPOINT)/tmp
+	cp input-4623-bytes.txt $(MOUNTPOINT)/tmp/ticket1.txt
+	tar --create --file $(MOUNTPOINT)/tmp.tar --verbose $(MOUNTPOINT)/tmp
+	sleep 1
+	sudo umount $(MOUNTPOINT)
+	true
+
 # The following test creates a 128 MB disk image, copies a file to the
 # root directory, reads it in ACL2, then writes it back without change.
 mtools-read-write-test-128MB: read-disk-image-write-disk-image.lisp
