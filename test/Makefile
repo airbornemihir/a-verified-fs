@@ -693,7 +693,7 @@ debug-create-dir: $(MOUNTPOINT) cp-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-and-file: $(MOUNTPOINT) cp-replicant.lisp
+debug-create-dir-and-file: $(MOUNTPOINT)
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -703,7 +703,7 @@ debug-create-dir-and-file: $(MOUNTPOINT) cp-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-copy-file: $(MOUNTPOINT) cp-replicant.lisp
+debug-create-dir-copy-file: $(MOUNTPOINT)
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -714,7 +714,7 @@ debug-create-dir-copy-file: $(MOUNTPOINT) cp-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-and-file-rm: $(MOUNTPOINT) cp-replicant.lisp
+debug-create-dir-and-file-rm: $(MOUNTPOINT)
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -726,7 +726,7 @@ debug-create-dir-and-file-rm: $(MOUNTPOINT) cp-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-dir-and-file-mv: $(MOUNTPOINT) cp-replicant.lisp
+debug-create-dir-and-file-mv: $(MOUNTPOINT)
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
@@ -738,14 +738,14 @@ debug-create-dir-and-file-mv: $(MOUNTPOINT) cp-replicant.lisp
 	sudo umount $(MOUNTPOINT)
 	true
 
-debug-create-tar-1: $(MOUNTPOINT) cp-replicant.lisp
+debug-create-tar-1: $(MOUNTPOINT)
 	rm -f $(DISK)
 	mkfs.fat -C -v -F 32 -s 2 $(DISK) $(SIZE)
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
-	mkdir $(MOUNTPOINT)/tmp
-	cp input-4623-bytes.txt $(MOUNTPOINT)/tmp/ticket1.txt
-	cp input-4623-bytes.txt $(MOUNTPOINT)/tmp/ticket2.txt
-	tar --create --file $(MOUNTPOINT)/tmp.tar --verbose $(MOUNTPOINT)/tmp
+	mkdir -p $(MOUNTPOINT)/tmp/tickets
+	cp input-4623-bytes.txt $(MOUNTPOINT)/tmp/tickets/ticket1.txt
+	cp input-4623-bytes.txt $(MOUNTPOINT)/tmp/tickets/ticket2.txt
+	tar --create --file $(MOUNTPOINT)/tmp/tickets.tar --verbose $(MOUNTPOINT)/tmp/tickets
 	sleep 1
 	sudo umount $(MOUNTPOINT)
 	true

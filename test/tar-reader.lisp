@@ -39,19 +39,24 @@
         (process-block-sequence
          (subseq file-text 512 nil) state))
        (first-block-name (subseq first-block 0 100))
-       (state (princ$ "File with name: " *standard-co* state))
+       (state (princ$ "File with name " *standard-co* state))
        (state (princ$ first-block-name *standard-co* state))
        (first-block-typeflag (char first-block 156))
        (state (princ$
                (cond ((equal first-block-typeflag *REGTYPE*)
-                      ", is a regular file")
+                      " is a regular file")
                      ((equal first-block-typeflag *DIRTYPE*)
-                      ", is a directory file")
-                     (t ", is other than a regular or directory file"))
+                      " is a directory file")
+                     (t " is other than a regular or directory file"))
                *standard-co* state))
        (state (princ$ ", has length " *standard-co* state))
        (first-block-length (tar-len-decode (subseq first-block 124 135)))
        (state (princ$ first-block-length *standard-co* state))
+       (state (princ$ ", has contents:" *standard-co* state))
+       (state (newline *standard-co* state))
+       (state (princ$ (subseq file-text 512
+                              (min (+ 512 first-block-length) (length file-text)))
+                      *standard-co* state))
        (state (newline *standard-co* state)))
     (process-block-sequence
      (subseq file-text (min (+ 512
@@ -81,5 +86,5 @@
        fd file-length 0 fat32-in-memory fd-table file-table))
      ((unless (equal file-read-length file-length))
       (mv fat32-in-memory state))
-     )
+     (state (process-block-sequence file-text state)))
   (mv fat32-in-memory state))
