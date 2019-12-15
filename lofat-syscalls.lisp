@@ -1140,3 +1140,47 @@
      :f_ffree 0
      :f_fsid 0
      :f_namelen 72)))
+
+(defund lofat-pwrite (fd buf offset fat32-in-memory fd-table file-table)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (lofat-fs-p fat32-in-memory)
+                              (natp fd)
+                              (stringp buf)
+                              (natp offset)
+                              (fd-table-p fd-table)
+                              (file-table-p file-table))))
+  (b*
+      (((mv fs error-code) (lofat-to-hifat fat32-in-memory))
+       ((unless (equal error-code 0)) (mv fat32-in-memory -1 *eio*))
+       ((mv fs retval error-code)
+        (hifat-pwrite fd buf offset fs fd-table file-table))
+       ((mv fat32-in-memory &) (hifat-to-lofat fat32-in-memory fs)))
+    (mv fat32-in-memory retval error-code)))
+
+(defund lofat-close (fd fd-table file-table)
+  (declare (xargs :guard (and (fd-table-p fd-table)
+                              (file-table-p file-table))))
+  (hifat-close fd fd-table file-table))
+
+(defund lofat-truncate (fat32-in-memory pathname size)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (lofat-fs-p fat32-in-memory)
+                              (fat32-filename-list-p pathname)
+                              (natp size))))
+  (b*
+      (((mv fs error-code) (lofat-to-hifat fat32-in-memory))
+       ((unless (equal error-code 0)) (mv fat32-in-memory -1 *eio*))
+       ((mv fs retval error-code) (hifat-truncate fs pathname size))
+       ((mv fat32-in-memory &) (hifat-to-lofat fat32-in-memory fs)))
+    (mv fat32-in-memory retval error-code)))
+
+(defund lofat-mkdir (fat32-in-memory pathname)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (lofat-fs-p fat32-in-memory)
+                              (fat32-filename-list-p pathname))))
+  (b*
+      (((mv fs error-code) (lofat-to-hifat fat32-in-memory))
+       ((unless (equal error-code 0)) (mv fat32-in-memory -1 *eio*))
+       ((mv fs retval error-code) (hifat-mkdir fs pathname))
+       ((mv fat32-in-memory &) (hifat-to-lofat fat32-in-memory fs)))
+    (mv fat32-in-memory retval error-code)))

@@ -15,6 +15,6 @@
 /Makefile-tmp
 **/*.lsp~
 **/*.bib~
-/temp-emacs-file.lsp
+**/temp-emacs-file.lsp
 **/workxxx.*
 **/*.sh~
