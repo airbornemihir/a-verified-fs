@@ -744,6 +744,7 @@ debug-create-tar-1: $(MOUNTPOINT) cp-replicant.lisp
 	sudo mount -o loop,uid=$(UID),gid=$(GID) -t msdos $(DISK) $(MOUNTPOINT)
 	mkdir $(MOUNTPOINT)/tmp
 	cp input-4623-bytes.txt $(MOUNTPOINT)/tmp/ticket1.txt
+	cp input-4623-bytes.txt $(MOUNTPOINT)/tmp/ticket2.txt
 	tar --create --file $(MOUNTPOINT)/tmp.tar --verbose $(MOUNTPOINT)/tmp
 	sleep 1
 	sudo umount $(MOUNTPOINT)
