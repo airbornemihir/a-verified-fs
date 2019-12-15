@@ -1,4 +1,17 @@
 (include-book "../test-stuff")
+(local (defconst *REGTYPE* #\0))
+(local (defconst *DIRTYPE* #\5))
+
+(defund tar-len-decode-helper (rev-char-list)
+  (if (atom rev-char-list)
+      0
+      (+ (- (char-code (car rev-char-list))
+            (char-code #\0))
+         (* 8
+            (tar-len-decode-helper (cdr rev-char-list))))))
+
+(defund tar-len-decode (string)
+  (tar-len-decode-helper (reverse (coerce string 'list))))
 
 (b*
     (((mv & val state)
@@ -23,7 +36,18 @@
       (mv fat32-in-memory state))
      (first-block (subseq file-text 0 512))
      (first-block-name (subseq first-block 0 100))
-     (state (princ$ "name: " *standard-co* state))
+     (state (princ$ "File with name: " *standard-co* state))
      (state (princ$ first-block-name *standard-co* state))
+     (first-block-typeflag (char first-block 156))
+     (state (princ$
+             (cond ((equal first-block-typeflag *REGTYPE*)
+                    ", is a regular file")
+                   ((equal first-block-typeflag *DIRTYPE*)
+                    ", is a directory file")
+                   (t ", is other than a regular or directory file"))
+             *standard-co* state))
+     (state (princ$ ", has length " *standard-co* state))
+     (first-block-length (subseq first-block 124 135))
+     (state (princ$ (tar-len-decode first-block-length) *standard-co* state))
      (state (newline *standard-co* state)))
   (mv fat32-in-memory state))
