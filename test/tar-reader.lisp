@@ -22,32 +22,50 @@
           (("goal" :in-theory (disable reverse-removal)))))
   (tar-len-decode-helper (reverse (coerce string 'list))))
 
+(defund tar-name-decode (string)
+  (declare (xargs :guard (stringp string) :measure (length string)))
+  (if
+      (mbe :logic (or (not (stringp string)) (zp (length string))
+                      (not (equal (char string (- (length string) 1))
+                                  (code-char 0))))
+           :exec (or (zp (length string))
+                     (not (equal (char string (- (length string) 1))
+                                 (code-char 0)))))
+      string
+    (tar-name-decode (subseq string 0 (- (length string) 1)))))
+
 (defund
   process-dir-file
-  (fat32-in-memory pathname)
+  (fat32-in-memory pathname state)
   (declare
    (xargs
-    :stobjs fat32-in-memory
+    :stobjs (fat32-in-memory state)
     :guard (and (lofat-fs-p fat32-in-memory)
-                (fat32-filename-list-p pathname))))
-  (b* (((mv fat32-in-memory & &)
-        (lofat-mkdir fat32-in-memory pathname)))
-    fat32-in-memory))
+                (fat32-filename-list-p pathname))
+    :verify-guards nil))
+  (b* (((mv fat32-in-memory retval &)
+        (lofat-mkdir fat32-in-memory pathname))
+       (state (princ$ retval *standard-co* state))
+       (state (princ$ ": value of retval, from lofat-mkdir" *standard-co* state)))
+    (mv fat32-in-memory state)))
 
 (defund process-reg-file (fat32-in-memory pathname file-text file-table
-                                          fd-table)
-  (declare (xargs :stobjs fat32-in-memory
+                                          fd-table state)
+  (declare (xargs :stobjs (fat32-in-memory state)
                   :guard (and (lofat-fs-p fat32-in-memory)
                               (fd-table-p fd-table)
                               (file-table-p file-table)
                               (stringp file-text)
                               (fat32-filename-list-p pathname))
-                  :guard-debug t))
+                  :guard-debug t
+                  :verify-guards nil))
   (b*
       (((mv fd-table file-table fd &)
-        (lofat-open pathname fat32-in-memory fd-table file-table))
+        (lofat-open pathname fd-table file-table))
+       (state (princ$ fd *standard-co* state))
+       (state (princ$ ": value of fd, from lofat-open" *standard-co* state))
        ((unless (natp fd))
-        (mv fat32-in-memory fd-table file-table))
+        (mv fat32-in-memory fd-table file-table state))
        ((mv fat32-in-memory & &) (lofat-pwrite fd
                                                file-text
                                                0
@@ -55,14 +73,14 @@
                                                fd-table
                                                file-table))
        ((mv fd-table file-table &) (lofat-close fd fd-table file-table)))
-    (mv fat32-in-memory fd-table file-table)))
+    (mv fat32-in-memory fd-table file-table state)))
 
 (defthm
   fd-table-p-of-process-reg-file
   (fd-table-p
    (mv-nth 1
            (process-reg-file fat32-in-memory pathname
-                             file-text file-table fd-table)))
+                             file-text file-table fd-table state)))
   :hints
   (("goal" :in-theory (enable process-reg-file lofat-close))))
 
@@ -71,7 +89,7 @@
   (file-table-p
    (mv-nth 2
            (process-reg-file fat32-in-memory pathname
-                             file-text file-table fd-table)))
+                             file-text file-table fd-table state)))
   :hints
   (("goal" :in-theory (enable process-reg-file lofat-close))))
 
@@ -82,7 +100,7 @@
    (lofat-fs-p
     (mv-nth 0
             (process-reg-file fat32-in-memory pathname
-                              file-text file-table fd-table))))
+                              file-text file-table fd-table state))))
   :hints
   (("goal" :in-theory (enable process-reg-file
                               lofat-close lofat-pwrite))))
@@ -91,7 +109,7 @@
   lofat-fs-p-of-process-dir-file
   (implies
    (lofat-fs-p fat32-in-memory)
-   (lofat-fs-p (process-dir-file fat32-in-memory pathname)))
+   (lofat-fs-p (mv-nth 0 (process-dir-file fat32-in-memory pathname state))))
   :hints
   (("goal" :in-theory (enable process-dir-file lofat-mkdir))))
 
@@ -106,7 +124,7 @@
                               (open-output-channel-p *standard-co* :character
                                                      state)
                               (fat32-filename-list-p output-pathname))
-                  :guard-debug t))
+                  :verify-guards nil))
   (b*
       (((unless (mbe :exec (>= (length file-text) 512)
                      :logic (and (stringp file-text) (>= (length file-text) 512))))
@@ -117,7 +135,7 @@
         (process-block-sequence
          (subseq file-text 512 nil) state fat32-in-memory fd-table file-table
          output-pathname))
-       (first-block-name (subseq first-block 0 100))
+       (first-block-name (tar-name-decode (subseq first-block 0 100)))
        (state (princ$ "File with name " *standard-co* state))
        (state (princ$ first-block-name *standard-co* state))
        (first-block-typeflag (char first-block 156))
@@ -144,18 +162,18 @@
                    "pathname is fine" "pathname is problematic")
                *standard-co* state))
        (state (newline *standard-co* state))
-       ((mv fat32-in-memory fd-table file-table)
+       ((mv fat32-in-memory fd-table file-table state)
         (cond ((not (fat32-filename-list-p pathname))
-               (mv fat32-in-memory fd-table file-table))
+               (mv fat32-in-memory fd-table file-table state))
               ((equal first-block-typeflag *REGTYPE*)
                (process-reg-file fat32-in-memory pathname file-text file-table
-                                 fd-table))
+                                 fd-table state))
               ((equal first-block-typeflag *DIRTYPE*)
-               (let
-                   ((fat32-in-memory
-                     (process-dir-file fat32-in-memory pathname)))
-                 (mv fat32-in-memory fd-table file-table)))
-              (t (mv fat32-in-memory fd-table file-table)))))
+               (mv-let
+                   (fat32-in-memory state)
+                   (process-dir-file fat32-in-memory pathname state)
+                   (mv fat32-in-memory fd-table file-table state)))
+              (t (mv fat32-in-memory fd-table file-table state)))))
     (process-block-sequence
      (subseq file-text (min (+ 512
                                (* 512 (ceiling first-block-length 512)))
@@ -182,7 +200,7 @@
       (mv fat32-in-memory state))
      (file-length (struct-stat->st_size val))
      ((mv fd-table file-table fd &)
-      (lofat-open input-pathname fat32-in-memory nil nil))
+      (lofat-open input-pathname nil nil))
      ((mv file-text file-read-length &)
       (lofat-pread
        fd file-length 0 fat32-in-memory fd-table file-table))
