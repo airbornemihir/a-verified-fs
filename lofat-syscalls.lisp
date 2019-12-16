@@ -45,6 +45,11 @@
                         (lofat-open pathname fd-table file-table)))
   :hints (("goal" :in-theory (enable lofat-open))))
 
+(defthm integerp-of-lofat-open
+  (integerp (mv-nth 2
+                    (lofat-open pathname fd-table file-table)))
+  :hints (("goal" :in-theory (enable lofat-open))))
+
 (defund
   lofat-pread
   (fd count offset fat32-in-memory fd-table file-table)
@@ -1125,6 +1130,19 @@
        ((mv fat32-in-memory &) (hifat-to-lofat fat32-in-memory fs)))
     (mv fat32-in-memory retval error-code)))
 
+(defthm integerp-of-lofat-pwrite
+  (integerp (mv-nth 1 (lofat-pwrite fd buf offset fat32-in-memory fd-table
+                                    file-table)))
+  :hints (("Goal" :in-theory (enable lofat-pwrite)) )
+  :rule-classes :type-prescription)
+
+(defthm lofat-fs-p-of-lofat-pwrite
+  (implies
+   (lofat-fs-p fat32-in-memory)
+   (lofat-fs-p (mv-nth 0 (lofat-pwrite fd buf offset fat32-in-memory fd-table
+                                       file-table))))
+  :hints (("Goal" :in-theory (enable lofat-pwrite)) ))
+
 (defund lofat-close (fd fd-table file-table)
   (declare (xargs :guard (and (fd-table-p fd-table)
                               (file-table-p file-table))))
@@ -1155,4 +1173,10 @@
 
 (defthm integerp-of-lofat-mkdir
   (integerp (mv-nth 1 (lofat-mkdir fat32-in-memory pathname)))
+  :hints (("Goal" :in-theory (enable lofat-mkdir)) ))
+
+(defthm lofat-fs-p-of-lofat-mkdir
+  (implies
+   (lofat-fs-p fat32-in-memory)
+   (lofat-fs-p (mv-nth 0 (lofat-mkdir fat32-in-memory pathname))))
   :hints (("Goal" :in-theory (enable lofat-mkdir)) ))

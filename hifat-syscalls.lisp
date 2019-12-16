@@ -122,10 +122,24 @@
 
 (defthm hifat-open-correctness-1
   (b*
-      (((mv fd-table file-table & &) (hifat-open pathname fd-table file-table)))
+      (((mv fd-table file-table fd &) (hifat-open pathname fd-table file-table)))
     (and
      (fd-table-p fd-table)
-     (file-table-p file-table))))
+     (file-table-p file-table)
+     (integerp fd)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (b*
+        (((mv fd-table file-table & &) (hifat-open pathname fd-table file-table)))
+      (and
+       (fd-table-p fd-table)
+       (file-table-p file-table))))
+   (:type-prescription
+    :corollary
+    (b*
+        (((mv & & fd &) (hifat-open pathname fd-table file-table)))
+      (integerp fd)))))
 
 (defthm
   hifat-open-correctness-2
