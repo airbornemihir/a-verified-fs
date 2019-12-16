@@ -751,7 +751,7 @@ create-tar-1: $(MOUNTPOINT)
 	sleep 1
 	sudo umount $(MOUNTPOINT)
 	env DISK=disk1.raw TAR_INPUT="/tmp/tickets1.tar" \
-	TAR_OUTPUT="/tmp/tickets1.tar" saved_acl2 < tar-reader.lisp
+	TAR_OUTPUT="/tmp" saved_acl2 < tar-reader.lisp
 	true
 
 # The following test creates a 128 MB disk image, copies a file to the

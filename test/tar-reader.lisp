@@ -112,9 +112,8 @@
                      :logic (and (stringp file-text) (>= (length file-text) 512))))
         (mv state fat32-in-memory fd-table file-table))
        (first-block (subseq file-text 0 512))
-       ((when (equal first-block
-                     (coerce (make-list 512 :initial-element (code-char 0))
-                             'string)))
+       ((when (equal first-block (coerce
+                                  (make-list 512 :initial-element (code-char 0)) 'string)))
         (process-block-sequence
          (subseq file-text 512 nil) state fat32-in-memory fd-table file-table
          output-pathname))
@@ -140,6 +139,11 @@
        (state (newline *standard-co* state))
        (pathname (append output-pathname (pathname-to-fat32-pathname
                                           (coerce first-block-name 'list))))
+       (state (princ$
+               (if (fat32-filename-list-p pathname)
+                   "pathname is fine" "pathname is problematic")
+               *standard-co* state))
+       (state (newline *standard-co* state))
        ((mv fat32-in-memory fd-table file-table)
         (cond ((not (fat32-filename-list-p pathname))
                (mv fat32-in-memory fd-table file-table))
@@ -184,7 +188,12 @@
        fd file-length 0 fat32-in-memory fd-table file-table))
      ((unless (equal file-read-length file-length))
       (mv fat32-in-memory state))
-     ((mv state fat32-in-memory & &)
+     ((mv state fat32-in-memory fd-table file-table)
       (process-block-sequence file-text state fat32-in-memory fd-table
-                              file-table output-pathname)))
+                              file-table output-pathname))
+     ((mv channel state) (open-output-channel :string :object state))
+     (state (print-object$-ser fd-table nil channel state))
+     (state (print-object$-ser file-table nil channel state))
+     ((mv & str2 state) (get-output-stream-string$ channel state))
+     (state (princ$ str2 *standard-co* state)))
   (mv fat32-in-memory state))
