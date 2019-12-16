@@ -77,6 +77,20 @@
       (fat32-in-memory fat32-in-memory)
       (entry-limit (max-entry-count fat32-in-memory)))))))
 
+(defthm
+  fd-table-p-of-lofat-open
+  (fd-table-p (mv-nth 0
+                      (lofat-open pathname
+                                  fat32-in-memory fd-table file-table)))
+  :hints (("goal" :in-theory (enable lofat-open))))
+
+(defthm
+  file-table-p-of-lofat-open
+  (file-table-p (mv-nth 1
+                        (lofat-open pathname
+                                    fat32-in-memory fd-table file-table)))
+  :hints (("goal" :in-theory (enable lofat-open))))
+
 (defund
   lofat-pread
   (fd count offset fat32-in-memory fd-table file-table)
