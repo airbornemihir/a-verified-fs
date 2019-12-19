@@ -294,6 +294,14 @@
    (equal (lofat-file-contents-fix x) x)))
 
 (defthm
+  struct-stat-p-of-lofat-lstat
+  (struct-stat-p
+   (mv-nth 0
+           (lofat-lstat fat32-in-memory
+                        (pathname-to-fat32-pathname (explode pathname)))))
+  :hints (("goal" :in-theory (enable lofat-lstat))))
+
+(defthm
   lofat-lstat-refinement
   (implies
    (and (lofat-fs-p fat32-in-memory)
