@@ -487,11 +487,17 @@
          (append (abs-addrs x) (abs-addrs y)))
   :hints (("goal" :in-theory (enable abs-addrs))))
 
-(defthm member-of-abs-addrs-when-natp
+(defthm
+  member-of-abs-addrs-when-natp
   (implies (and (natp x)
                 (member-equal x abs-file-alist))
            (member-equal x (abs-addrs abs-file-alist)))
-  :hints (("goal" :in-theory (enable abs-addrs abs-file-alist-p))))
+  :hints (("goal" :in-theory (enable abs-addrs abs-file-alist-p)))
+  :rule-classes
+  (:rewrite
+   (:rewrite :corollary (implies (and (natp x)
+                                      (equal (abs-addrs abs-file-alist) nil))
+                                 (not (member-equal x abs-file-alist))))))
 
 (defund
   abs-no-dups-p (fs)
@@ -3688,24 +3694,104 @@
                                      hifat-find-file m1-file-alist-p)
            :induct t)))
 
+(defthm
+  abs-find-file-correctness-1-lemma-1
+  (implies
+   (and (abs-file-alist-p root)
+        (not (consp (abs-addrs root)))
+        (abs-separate (frame-with-root root nil))
+        (m1-regular-file-p (mv-nth 0
+                                   (abs-find-file (frame-with-root root nil)
+                                                  pathname))))
+   (equal (mv-nth 0
+                  (abs-find-file (frame-with-root root nil)
+                                 pathname))
+          (mv-nth 0 (hifat-find-file root pathname))))
+  :hints (("goal" :in-theory (enable frame-with-root
+                                     abs-find-file abs-separate))))
 
-(thm
- (IMPLIES
-  (AND (EQUAL (MV-NTH 1
-                      (ABS-FIND-FILE (FRAME-WITH-ROOT ROOT NIL)
-                                     PATHNAME))
-              0)
-       (ABS-FILE-ALIST-P ROOT)
-       (NOT (CONSP (ABS-ADDRS ROOT)))
-       (ABS-SEPARATE (FRAME-WITH-ROOT ROOT NIL))
-       (M1-REGULAR-FILE-P (MV-NTH 0
-                                  (ABS-FIND-FILE (FRAME-WITH-ROOT ROOT NIL)
-                                                 PATHNAME))))
-  (EQUAL (MV-NTH 0
-                 (ABS-FIND-FILE (FRAME-WITH-ROOT ROOT NIL)
-                                PATHNAME))
-         (MV-NTH 0 (HIFAT-FIND-FILE ROOT PATHNAME))))
- :hints (("Goal" :in-theory (enable frame-with-root abs-find-file)) ))
+(defthm abs-find-file-correctness-1-lemma-2
+  (implies
+   (and (atom x) (fat32-filename-p name))
+   (iff (member-equal x (put-assoc-equal name val alist))
+        (member-equal x alist))))
+
+(defthm abs-addrs-of-true-list-fix
+  (equal (abs-addrs (true-list-fix abs-file-alist))
+         (abs-addrs abs-file-alist))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm
+  abs-addrs-of-remove-lemma-1
+  (implies
+   (and
+    (integerp x)
+    (<= 0 x)
+    (member-equal x (cdr abs-file-alist))
+    (not (intersectp-equal
+          (abs-addrs (cdr abs-file-alist))
+          (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))))
+   (not (member-equal x
+                      (abs-file->contents (cdr (car abs-file-alist))))))
+  :hints
+  (("goal"
+    :use
+    (:instance (:rewrite intersectp-member)
+               (y (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))
+               (x (abs-addrs (cdr abs-file-alist)))
+               (a x)))))
+
+(defthm
+  abs-addrs-of-remove-lemma-2
+  (implies
+   (and
+    (integerp x)
+    (<= 0 x)
+    (member-equal x (cdr abs-file-alist))
+    (not (intersectp-equal
+          (abs-addrs (cdr abs-file-alist))
+          (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))))
+   (equal
+    (remove-equal x
+                  (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))
+    (abs-addrs (abs-file->contents (cdr (car abs-file-alist))))))
+  :instructions
+  (:promote
+   (:dive 1)
+   (:rewrite remove-when-absent)
+   :top :bash
+   (:use
+    (:instance (:rewrite intersectp-member)
+               (a x)
+               (y (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))
+               (x (abs-addrs (cdr abs-file-alist)))))
+   :bash))
+
+(defthm abs-addrs-of-remove
+  (implies (and (natp x)
+                (member-equal x abs-file-alist)
+                (no-duplicatesp-equal (abs-addrs abs-file-alist)))
+           (equal (abs-addrs (remove-equal x abs-file-alist))
+                  (remove-equal x (abs-addrs abs-file-alist))))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm
+  abs-find-file-correctness-1-lemma-3
+  (implies (and (equal
+                 (abs-addrs
+                  abs-file-alist2)
+                 nil)
+                (not
+                 (equal
+                  (context-apply abs-file-alist1
+                                 abs-file-alist2 x x-path)
+                  abs-file-alist1))
+                (no-duplicatesp-equal (abs-addrs abs-file-alist1)))
+           (not (member-equal x
+                              (abs-addrs
+                               (context-apply abs-file-alist1
+                                              abs-file-alist2 x x-path)))))
+  :hints (("goal" :in-theory (enable context-apply))))
 
 (defthm abs-find-file-correctness-1
   (implies
