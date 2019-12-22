@@ -8,6 +8,12 @@
 ; This is a model of the FAT32 filesystem, related to HiFAT but with abstract
 ; variables.
 
+;; This is general, but in a weird way...
+(defthm abs-separate-correctness-1-lemma-9
+  (implies (and (atom x) (not (null name)))
+           (iff (member-equal x (put-assoc-equal name val alist))
+                (member-equal x alist))))
+
 ;; This is explicitly a replacement for assoc-equal with a vacuous guard.
 (defund abs-assoc (x alist)
   (declare (xargs :guard t))
@@ -2127,6 +2133,12 @@
          (distinguish-names dir relpath (cdr frame)))))
     (distinguish-names dir relpath (cdr frame))))
 
+(defthm distinguish-names-of-remove-assoc
+  (implies (distinguish-names dir relpath frame)
+           (distinguish-names dir
+                              relpath (remove-assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable distinguish-names))))
+
 (defund
   abs-separate (frame)
   (declare (xargs :guard (frame-p frame)))
@@ -2139,6 +2151,11 @@
      (frame-val->path (cdar frame))
      (cdr frame))
     (abs-separate (cdr frame)))))
+
+(defthm abs-separate-of-remove-assoc
+  (implies (abs-separate frame)
+           (abs-separate (remove-assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable abs-separate))))
 
 ;; This is a "false" frame because the src value given to the root is 0, same
 ;; as its abstract variable. This is one of a few compromises in elegance
@@ -2196,8 +2213,8 @@
 (defthm abs-separate-correctness-1-lemma-1
   (implies (and (abs-file-alist-p root)
                 (not (consp (abs-addrs root)))
-                (abs-separate (frame-with-root root frame)))
-           (hifat-no-dups-p root))
+                (not (hifat-no-dups-p root)))
+           (not (abs-separate (frame-with-root root frame))))
   :hints (("goal" :in-theory (enable frame-with-root abs-separate))))
 
 (defthm
@@ -2394,23 +2411,6 @@
                 (abs-separate (frame-with-root root frame)))
            (abs-no-dups-p root))
   :hints (("goal" :in-theory (enable abs-separate frame-with-root))))
-
-(defthm distinguish-names-of-remove-assoc
-  (implies (distinguish-names dir relpath frame)
-           (distinguish-names dir
-                              relpath (remove-assoc-equal x frame)))
-  :hints (("goal" :in-theory (enable distinguish-names))))
-
-(defthm abs-separate-of-remove-assoc
-  (implies (abs-separate frame)
-           (abs-separate (remove-assoc-equal x frame)))
-  :hints (("goal" :in-theory (enable abs-separate))))
-
-;; This is general, but in a weird way...
-(defthm abs-separate-correctness-1-lemma-9
-  (implies (and (atom x) (not (null name)))
-           (iff (member-equal x (put-assoc-equal name val alist))
-                (member-equal x alist))))
 
 (defthm
   abs-separate-correctness-1-lemma-10
@@ -3635,6 +3635,12 @@
         (mv (make-abs-file) *enotdir*)))
     (mv (cdr alist-elem) 0)))
 
+(defthm
+  natp-of-abs-find-file-helper
+  (natp (mv-nth 1 (abs-find-file-helper fs pathname)))
+  :hints (("goal" :in-theory (enable abs-find-file-helper)))
+  :rule-classes :type-prescription)
+
 (defund abs-find-file (frame pathname)
   (declare (xargs :guard (and (frame-p frame)
                               (fat32-filename-list-p pathname))))
@@ -3648,3 +3654,75 @@
                                       pathname)))
        ((when (not (equal error-code *ENOENT*))) (mv file error-code)))
     (abs-find-file (cdr frame) pathname)))
+
+(defthm natp-of-abs-find-file
+  (natp (mv-nth 1 (abs-find-file frame pathname)))
+  :hints (("goal" :in-theory (enable abs-find-file)))
+  :rule-classes :type-prescription)
+
+(defthm
+  abs-directory-file-p-when-m1-file-p
+  (implies (m1-file-p file)
+           (equal (abs-directory-file-p file)
+                  (m1-directory-file-p file)))
+  :hints (("goal" :in-theory (enable m1-file-p abs-file-p
+                                     abs-directory-file-p m1-directory-file-p
+                                     m1-file->contents abs-file->contents
+                                     m1-file-contents-p))))
+
+(defthm
+  abs-file->contents-when-m1-file-p
+  (implies (m1-file-p file)
+           (equal (abs-file->contents file)
+                  (m1-file->contents file)))
+  :hints
+  (("goal" :in-theory (enable m1-file->contents
+                              abs-file->contents m1-file-p))))
+
+(defthm abs-find-file-helper-when-m1-file-alist-p
+  (implies (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs))
+           (equal (abs-find-file-helper fs pathname)
+                  (hifat-find-file fs pathname)))
+  :hints (("goal" :in-theory (enable abs-find-file-helper
+                                     hifat-find-file m1-file-alist-p)
+           :induct t)))
+
+
+(thm
+ (IMPLIES
+  (AND (EQUAL (MV-NTH 1
+                      (ABS-FIND-FILE (FRAME-WITH-ROOT ROOT NIL)
+                                     PATHNAME))
+              0)
+       (ABS-FILE-ALIST-P ROOT)
+       (NOT (CONSP (ABS-ADDRS ROOT)))
+       (ABS-SEPARATE (FRAME-WITH-ROOT ROOT NIL))
+       (M1-REGULAR-FILE-P (MV-NTH 0
+                                  (ABS-FIND-FILE (FRAME-WITH-ROOT ROOT NIL)
+                                                 PATHNAME))))
+  (EQUAL (MV-NTH 0
+                 (ABS-FIND-FILE (FRAME-WITH-ROOT ROOT NIL)
+                                PATHNAME))
+         (MV-NTH 0 (HIFAT-FIND-FILE ROOT PATHNAME))))
+ :hints (("Goal" :in-theory (enable frame-with-root abs-find-file)) ))
+
+(defthm abs-find-file-correctness-1
+  (implies
+   (and
+    (frame-p frame)
+    (no-duplicatesp-equal (strip-cars frame))
+    (abs-file-alist-p root)
+    (no-duplicatesp-equal (abs-addrs root))
+    (subsetp (abs-addrs root)
+             (frame-addrs-root frame))
+    (abs-separate (frame-with-root root frame))
+    (equal (mv-nth 1 (collapse root frame)) t)
+    (zp (mv-nth 1 (abs-find-file (frame-with-root root frame) pathname)))
+    (m1-regular-file-p (mv-nth 0 (abs-find-file (frame-with-root root frame) pathname))))
+   (equal (mv-nth 0 (abs-find-file (frame-with-root root frame) pathname))
+          (mv-nth 0 (hifat-find-file (mv-nth 0 (collapse root frame))
+                                     pathname))))
+  :hints (("Goal"
+           :in-theory (enable collapse)
+           :induct (collapse root frame)) ))
