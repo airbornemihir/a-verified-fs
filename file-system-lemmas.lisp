@@ -439,7 +439,7 @@
 
 (defthm nthcdr-of-nil (equal (nthcdr n nil) nil))
 
-(defthmd nthcdr-when->=-n-len-l
+(defthm nthcdr-when->=-n-len-l
   (implies (and (true-listp l)
                 (>= (nfix n) (len l)))
            (equal (nthcdr n l) nil)))

@@ -2734,7 +2734,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (list-equiv nthcdr-when->=-n-len-l names-at-relpath)
+    :in-theory (e/d (list-equiv names-at-relpath)
                     ((:rewrite prefixp-when-equal-lengths)))
     :use (:instance (:rewrite prefixp-when-equal-lengths)
                     (y relpath)
@@ -2959,7 +2959,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (list-equiv names-at-relpath nthcdr-when->=-n-len-l)
+    :in-theory (e/d (list-equiv names-at-relpath)
                     ((:rewrite prefixp-when-equal-lengths)))
     :use (:instance (:rewrite prefixp-when-equal-lengths)
                     (y (frame-val->path (cdr (car frame))))
@@ -3109,7 +3109,7 @@
                relpath2))
       (frame-val->src (cdr (assoc-equal src frame))))
      frame)))
-  :hints (("goal" :in-theory (enable distinguish-names nthcdr-when->=-n-len-l
+  :hints (("goal" :in-theory (enable distinguish-names
                                      names-at-relpath intersectp-equal))))
 
 (defthm
@@ -3148,7 +3148,7 @@
      frame)))
   :hints
   (("goal"
-    :in-theory (e/d (distinguish-names nthcdr-when->=-n-len-l names-at-relpath
+    :in-theory (e/d (distinguish-names names-at-relpath
                                        intersectp-equal prefixp)))))
 
 (defthm
@@ -3185,7 +3185,7 @@
       (frame-val->src (cdr (assoc-equal src frame))))
      frame)))
   :hints (("goal" :in-theory (enable distinguish-names
-                                     nthcdr-when->=-n-len-l names-at-relpath
+                                     names-at-relpath
                                      intersectp-equal prefixp))))
 
 (defthm
@@ -3233,7 +3233,7 @@
      frame)))
   :hints
   (("goal"
-    :in-theory (e/d (distinguish-names nthcdr-when->=-n-len-l names-at-relpath
+    :in-theory (e/d (distinguish-names names-at-relpath
                                        intersectp-equal prefixp)))))
 
 (defthm
@@ -3342,7 +3342,8 @@
         (frame-val->src (cdr (assoc-equal src (cdr frame)))))
        (cdr frame))))
     :hints (("goal" :in-theory (e/d (list-equiv)
-                                    ((:rewrite prefixp-when-equal-lengths)))
+                                    (nthcdr-when->=-n-len-l
+                                     (:rewrite prefixp-when-equal-lengths)))
              :use ((:instance (:rewrite prefixp-when-equal-lengths)
                               (y relpath)
                               (x (frame-val->path (cdr (car frame))))))
@@ -3382,8 +3383,8 @@
                relpath))
       (frame-val->src (cdr (assoc-equal src frame))))
      frame)))
-  :hints (("goal" :in-theory (enable abs-separate distinguish-names
-                                     prefixp names-at-relpath))))
+  :hints (("goal" :in-theory (e/d (abs-separate distinguish-names prefixp names-at-relpath)
+                                  (nthcdr-when->=-n-len-l)))))
 
 (defthm
   abs-separate-correctness-1-lemma-45

@@ -14041,7 +14041,7 @@ Some (rather awful) testing forms are
   (("goal"
     :in-theory (enable make-dir-ent-list
                        insert-dir-ent string=>nats
-                       nats=>string nthcdr-when->=-n-len-l
+                       nats=>string
                        len-when-dir-ent-p)
     :do-not-induct t
     :expand
