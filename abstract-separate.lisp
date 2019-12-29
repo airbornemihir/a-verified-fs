@@ -1893,10 +1893,8 @@
           (src-path (collapse-src-path frame))
           (src-dir (collapse-src-dir frame))
           (frame (abs-remove-assoc head-index frame))
-          (src-path (mbe :exec src-path :logic (frame-val->path (cdr (abs-assoc src frame)))))
           ((unless (prefixp src-path path))
            (mv root nil))
-          (src-dir (mbe :exec src-dir :logic (frame-val->dir (cdr (abs-assoc src frame)))))
           (src-dir-after-context-apply
            (context-apply src-dir (frame-val->dir head-frame-val)
                           head-index
@@ -3602,7 +3600,8 @@
   :hints (("goal" :do-not-induct t)))
 
 ;; This one was tough...
-(defthm abs-separate-correctness-1-lemma-48
+(defthm
+  abs-separate-correctness-1-lemma-48
   (implies (and (abs-file-alist-p root)
                 (frame-p frame)
                 (abs-separate frame)
@@ -3616,9 +3615,11 @@
                          (frame-addrs-root frame)))
            (equal (abs-addrs (mv-nth 0 (collapse root frame)))
                   nil))
-  :hints (("goal" :in-theory (enable collapse intersectp-equal))))
+  :hints (("goal" :in-theory (enable collapse intersectp-equal
+                                     collapse-src-dir collapse-src-path))))
 
-(defthm abs-separate-correctness-1
+(defthm
+  abs-separate-correctness-1
   (implies (and (frame-p frame)
                 (no-duplicatesp-equal (strip-cars frame))
                 (abs-file-alist-p root)
@@ -3631,8 +3632,8 @@
              (implies (equal result t)
                       (and (m1-file-alist-p fs)
                            (hifat-no-dups-p fs)))))
-  :hints (("goal" :in-theory (enable collapse)
-           :expand (:free (y) (intersectp-equal nil y)))))
+  :hints (("goal" :in-theory (enable collapse intersectp-equal
+                                     collapse-src-dir collapse-src-path))))
 
 (defthm distinguish-names-of-append
   (equal (distinguish-names dir relpath (append frame1 frame2))
