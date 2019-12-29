@@ -1822,21 +1822,63 @@
   :hints (("goal" :in-theory (enable frame-p))))
 
 (defund
+  collapse-src-path (frame)
+  (declare
+   (xargs
+    :guard
+    (and
+     (frame-p frame)
+     (not (zp (abs-find-first-complete frame)))
+     (consp
+      (abs-assoc
+       (frame-val->src (cdr (abs-assoc (abs-find-first-complete frame)
+                                       frame)))
+       frame)))))
+  (frame-val->path
+   (cdr
+    (abs-assoc
+     (frame-val->src (cdr (abs-assoc (abs-find-first-complete frame)
+                                       frame)))
+     frame))))
+
+(defund
+  collapse-src-dir (frame)
+  (declare
+   (xargs
+    :guard
+    (and
+     (frame-p frame)
+     (not (zp (abs-find-first-complete frame)))
+     (consp
+      (abs-assoc
+       (frame-val->src (cdr (abs-assoc (abs-find-first-complete frame)
+                                       frame)))
+       frame)))))
+  (frame-val->dir
+   (cdr
+    (abs-assoc
+     (frame-val->src (cdr (abs-assoc (abs-find-first-complete frame)
+                                       frame)))
+     frame))))
+
+(defund
   collapse (root frame)
   (declare (xargs :guard (and (abs-file-alist-p root)
                               (frame-p frame))
-                  :measure (len frame)))
+                  :measure (len frame)
+                  :guard-hints (("Goal" :in-theory (enable collapse-src-path collapse-src-dir)))
+                  :guard-debug t))
   (b*
       (((when (atom frame)) (mv root t))
        (head-index (abs-find-first-complete frame))
        ((when (zp head-index)) (mv root nil))
        (head-frame-val (cdr (abs-assoc head-index frame)))
-       (frame (abs-remove-assoc head-index frame))
        (src (frame-val->src head-frame-val)))
     (if
      (zp src)
      (b*
-         ((root-after-context-apply
+         ((frame (abs-remove-assoc head-index frame))
+          (root-after-context-apply
            (context-apply root (frame-val->dir head-frame-val)
                           head-index
                           (frame-val->path head-frame-val)))
@@ -1846,12 +1888,15 @@
      (b*
          ((path (frame-val->path head-frame-val))
           ((when (or (equal src head-index)
-                     (atom (abs-assoc src frame))))
+                     (atom (abs-assoc src (abs-remove-assoc head-index frame)))))
            (mv root nil))
-          (src-path (frame-val->path (cdr (abs-assoc src frame))))
+          (src-path (collapse-src-path frame))
+          (src-dir (collapse-src-dir frame))
+          (frame (abs-remove-assoc head-index frame))
+          (src-path (mbe :exec src-path :logic (frame-val->path (cdr (abs-assoc src frame)))))
           ((unless (prefixp src-path path))
            (mv root nil))
-          (src-dir (frame-val->dir (cdr (abs-assoc src frame))))
+          (src-dir (mbe :exec src-dir :logic (frame-val->dir (cdr (abs-assoc src frame)))))
           (src-dir-after-context-apply
            (context-apply src-dir (frame-val->dir head-frame-val)
                           head-index
