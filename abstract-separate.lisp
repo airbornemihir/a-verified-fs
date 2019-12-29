@@ -5519,6 +5519,27 @@
                                   nil)
            :do-not-induct t)))
 
+(defthm
+  abs-find-file-helper-of-collapse
+  (implies
+   (and (frame-p frame)
+        (abs-file-alist-p root)
+        (fat32-filename-list-p pathname)
+        (abs-separate frame)
+        (distinguish-names root nil frame)
+        (m1-regular-file-p (mv-nth 0
+                                   (abs-find-file-helper root pathname))))
+   (equal (abs-find-file-helper (mv-nth 0 (collapse root frame))
+                                pathname)
+          (abs-find-file-helper root pathname)))
+  :hints
+  (("goal" :in-theory (enable collapse distinguish-names
+                              collapse-src-dir collapse-src-path)
+    :induct (collapse root frame))
+   ("subgoal *1/4"
+    :use (:instance (:rewrite abs-find-file-helper-of-context-apply-lemma-5)
+                    (fs root)))))
+
 ;; Derived through the following proof-builder instructions:
 ;; (:promote
 ;;  (:claim
