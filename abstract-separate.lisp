@@ -5633,6 +5633,59 @@
   :hints (("goal" :in-theory (enable abs-enotdir-witness
                                      abs-find-file-helper))))
 
+(defthm
+  abs-enotdir-witness-correctness-2-lemma-1
+  (implies (and (abs-file-alist-p fs)
+                (consp (assoc-equal name fs))
+                (not (abs-directory-file-p (cdr (assoc-equal name fs)))))
+           (m1-regular-file-p (cdr (assoc-equal name fs))))
+  :hints (("goal" :in-theory (e/d
+                              (abs-file-alist-p abs-directory-file-p
+                                                m1-regular-file-p m1-file-p abs-file-p
+                                                abs-file->contents m1-file->contents)
+                              (abs-file-alist-p-when-m1-file-alist-p
+                               abs-file-alist-p-correctness-1-lemma-3)))))
+
+(defthm
+ abs-enotdir-witness-correctness-2-lemma-2
+ (implies
+  (and
+   (not
+    (equal
+        (mv-nth 1
+                (abs-find-file-helper fs
+                                      (take (+ -1 (len pathname)) pathname)))
+        *enotdir*))
+   (equal (mv-nth 1 (abs-find-file-helper fs pathname))
+          *enotdir*))
+  (and
+   (m1-regular-file-p
+       (mv-nth 0
+               (abs-find-file-helper fs
+                                     (take (+ -1 (len pathname)) pathname))))
+   (equal
+        (mv-nth 1
+                (abs-find-file-helper fs
+                                      (take (+ -1 (len pathname)) pathname)))
+        0)))
+ :hints (("goal" :in-theory (enable abs-find-file-helper))))
+
+(defthm
+  abs-enotdir-witness-correctness-2
+  (implies
+   (equal (mv-nth 1 (abs-find-file-helper fs pathname))
+          *enotdir*)
+   (and
+    (m1-regular-file-p
+     (mv-nth 0
+             (abs-find-file-helper fs (abs-enotdir-witness fs pathname))))
+    (equal
+     (mv-nth 1
+             (abs-find-file-helper fs (abs-enotdir-witness fs pathname)))
+     0)))
+  :hints (("goal" :in-theory (enable abs-enotdir-witness
+                                     abs-find-file-helper))))
+
 ;; Derived through the following proof-builder instructions:
 ;; (:promote
 ;;  (:claim
