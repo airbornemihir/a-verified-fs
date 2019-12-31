@@ -5735,7 +5735,12 @@
                     *enoent*)))
    (equal (mv-nth 1 (hifat-find-file fs pathname))
           *enotdir*))
-  :hints (("goal" :in-theory (enable hifat-find-file))))
+  :hints (("goal" :in-theory (enable hifat-find-file)))
+  :rule-classes
+  (:rewrite
+   (:type-prescription
+    :corollary
+    (natp (mv-nth 1 (hifat-find-file fs pathname))))))
 
 ;; Kinda general
 (defthm
@@ -6084,15 +6089,88 @@
           (distinguish-names root nil frame)
           (abs-separate frame))
      (equal
-      (mv-nth 1
               (abs-find-file-helper
                (frame-val->dir (cdr (assoc-equal x frame)))
                (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
-                       pathname)))
-      *enoent*))
+                       pathname))
+      (mv (abs-file-fix nil) *enoent*)))
     :hints (("goal" :induct (induction-scheme frame pathname root x)
              :in-theory (enable collapse
                                 collapse-src-path collapse-src-dir)))))
+
+(defthm
+  abs-find-file-correctness-1-lemma-44
+  (implies
+   (and (consp (assoc-equal x frame))
+        (equal (mv-nth 1
+                       (abs-find-file (remove-assoc-equal x frame)
+                                      pathname))
+               *enoent*)
+        (no-duplicatesp-equal (strip-cars frame))
+        (frame-p frame))
+   (equal (abs-find-file frame pathname)
+          (if (prefixp (frame-val->path (cdr (assoc-equal x frame)))
+                       pathname)
+              (abs-find-file-helper
+               (frame-val->dir (cdr (assoc-equal x frame)))
+               (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+                       pathname))
+              (mv (abs-file-fix nil) *enoent*))))
+  :hints (("goal" :in-theory (enable abs-find-file))))
+
+(defthm
+  abs-find-file-correctness-1-lemma-45
+  (implies
+   (and
+    (not (zp (abs-find-first-complete frame)))
+    (equal
+     (mv-nth
+      1
+      (abs-find-file (remove-assoc-equal (abs-find-first-complete frame)
+                                         frame)
+                     pathname))
+     2)
+    (no-duplicatesp-equal (strip-cars frame))
+    (frame-p frame))
+   (equal
+    (abs-find-file frame pathname)
+    (if
+     (prefixp
+      (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame)))
+      pathname)
+     (abs-find-file-helper
+      (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame)))
+      (nthcdr
+       (len (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                               frame))))
+       pathname))
+     (cons (abs-file-fix nil) '(2)))))
+  :hints (("goal" :in-theory (disable abs-find-file-correctness-1-lemma-44)
+           :use (:instance abs-find-file-correctness-1-lemma-44
+                           (x (abs-find-first-complete frame))))))
+
+(thm
+ (implies
+  (and (fat32-filename-list-p pathname)
+       (abs-file-alist-p root)
+       (frame-p frame)
+       (equal (mv-nth 1 (collapse root frame))
+              t)
+       (equal (mv-nth 1 (abs-find-file-helper root pathname))
+              0)
+       (distinguish-names root nil frame)
+       (abs-separate frame)
+       (NO-DUPLICATESP-EQUAL (STRIP-CARS FRAME)))
+  (equal
+   (abs-find-file
+    frame
+    pathname)
+   (mv (abs-file-fix nil) *enoent*)))
+ :hints (("goal" :induct (collapse root frame)
+          :in-theory (enable collapse
+                             collapse-src-path collapse-src-dir abs-find-file))))
 
 (verify
  (implies
@@ -6875,5 +6953,7 @@
            (mv-nth 0 (hifat-find-file (mv-nth 0 (collapse root frame))
                                       pathname)))))
   :hints (("Goal"
-           :in-theory (enable collapse)
+           :in-theory  (e/d (abs-find-file collapse
+                                           frame-with-root abs-separate intersectp-equal)
+                            ((:REWRITE ABS-FIND-FILE-CORRECTNESS-1-LEMMA-17 . 2)))
            :induct (collapse root frame)) ))
