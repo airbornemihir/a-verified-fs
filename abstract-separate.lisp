@@ -2737,23 +2737,6 @@
   :hints (("goal" :in-theory (enable distinguish-names prefixp))))
 
 (defthm
-  abs-separate-correctness-1-lemma-22
-  (implies
-   (and (distinguish-names dir relpath frame)
-        (prefixp relpath
-                 (frame-val->path (cdr (assoc-equal x frame)))))
-   (not
-    (intersectp-equal
-     (remove-equal nil
-                   (strip-cars (frame-val->dir (cdr (assoc-equal x frame)))))
-     (names-at-relpath
-      dir
-      (nthcdr (len relpath)
-              (frame-val->path (cdr (assoc-equal x frame))))))))
-  :hints (("goal" :in-theory (enable distinguish-names
-                                     prefixp intersectp-equal))))
-
-(defthm
   abs-separate-correctness-1-lemma-23
   (implies
    (and
@@ -2802,6 +2785,23 @@
            :use (:instance (:rewrite prefixp-when-equal-lengths)
                            (y relpath)
                            (x (frame-val->path (cdr (car frame))))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-22
+  (implies
+   (and (distinguish-names dir relpath frame)
+        (prefixp relpath
+                 (frame-val->path (cdr (assoc-equal x frame)))))
+   (not
+    (intersectp-equal
+     (remove-equal nil
+                   (strip-cars (frame-val->dir (cdr (assoc-equal x frame)))))
+     (names-at-relpath
+      dir
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal x frame))))))))
+  :hints (("goal" :in-theory (enable distinguish-names
+                                     prefixp intersectp-equal))))
 
 (defthm
   abs-separate-correctness-1-lemma-24
@@ -6484,6 +6484,54 @@
           frame)))))
      (frame (remove-assoc-equal (abs-find-first-complete frame)
                                 frame))))))
+
+(defthm abs-find-file-correctness-1-lemma-51
+  (IMPLIES
+   (AND
+    (not
+     (EQUAL (MV-NTH 1 (ABS-FIND-FILE FRAME PATHNAME))
+            *enoent*))
+    (CONSP FRAME)
+    (< 0 x)
+    (consp (ASSOC-EQUAL x FRAME))
+    (PREFIXP (FRAME-VAL->PATH (CDR (ASSOC-EQUAL x
+                                                FRAME)))
+             PATHNAME)
+    (NOT
+     (EQUAL
+      (MV-NTH
+       1
+       (HIFAT-FIND-FILE
+        (FRAME-VAL->DIR (CDR (ASSOC-EQUAL x
+                                          FRAME)))
+        (NTHCDR
+         (LEN
+          (FRAME-VAL->PATH (CDR (ASSOC-EQUAL x
+                                             FRAME))))
+         PATHNAME)))
+      *enoent*))
+    (FRAME-P FRAME)
+    (NO-DUPLICATESP-EQUAL (STRIP-CARS FRAME))
+    (ABS-SEPARATE FRAME)
+    (FAT32-FILENAME-LIST-P PATHNAME)
+    (m1-file-alist-p
+     (FRAME-VAL->DIR (CDR (ASSOC-EQUAL x
+                                       FRAME))))
+    (hifat-no-dups-p
+     (FRAME-VAL->DIR (CDR (ASSOC-EQUAL x
+                                       FRAME)))))
+   (equal
+    (MV-NTH
+     1
+     (HIFAT-FIND-FILE
+      (FRAME-VAL->DIR (CDR (ASSOC-EQUAL x
+                                        FRAME)))
+      (NTHCDR
+       (LEN (FRAME-VAL->PATH (CDR (ASSOC-EQUAL x
+                                               FRAME))))
+       PATHNAME)))
+    (MV-NTH 1 (ABS-FIND-FILE FRAME PATHNAME))))
+  :hints (("Goal" :in-theory (enable abs-find-file abs-separate)) ))
 
 (defthm abs-find-file-correctness-1
   (implies
