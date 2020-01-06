@@ -15,6 +15,16 @@
            (prefixp y x))
   :hints (("goal" :in-theory (enable prefixp))))
 
+(defthm
+  nth-when-prefixp
+  (implies (and (prefixp x y) (< (nfix n) (len x)))
+           (equal (nth n y) (nth n x)))
+  :hints (("goal" :in-theory (enable prefixp)))
+  :rule-classes ((:rewrite :corollary (implies (and (prefixp x y)
+                                                    (not (list-equiv x y))
+                                                    (< (nfix n) (len x)))
+                                               (equal (nth n y) (nth n x))))))
+
 ;; This is general, but in a weird way...
 (defthm abs-separate-correctness-1-lemma-9
   (implies (and (atom x) (not (null name)))
@@ -4923,24 +4933,53 @@
 
 ;; Important theorem about prefixp and abs-find-file.
 (defthm
-  abs-find-file-correctness-1-lemma-38
-  (implies
-   (and (consp pathname)
-        (prefixp pathname x-path)
-        (zp (mv-nth 1 (abs-find-file-helper fs x-path)))
-        (fat32-filename-list-p x-path)
-        (true-listp pathname))
-   (and (equal (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs
-                                                                     pathname)))
-               (or
-                (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs
-                                                                      x-path)))
-                (not (equal pathname x-path))))
-        (equal (mv-nth 1 (abs-find-file-helper fs pathname))
-               0)))
-  :hints (("goal" :in-theory (enable abs-find-file-helper prefixp)
-           :induct t
-           :expand (abs-find-file-helper fs x-path))))
+  prefixp-of-fat32-filename-list-fix
+  (implies (prefixp x y)
+           (prefixp (fat32-filename-list-fix x)
+                    (fat32-filename-list-fix y)))
+  :hints (("goal" :in-theory (enable prefixp fat32-filename-list-fix))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     abs-find-file-correctness-1-lemma-58
+     (implies
+      (and (consp pathname)
+           (prefixp pathname x-path)
+           (zp (mv-nth 1 (abs-find-file-helper fs x-path)))
+           (fat32-filename-list-p x-path)
+           (true-listp pathname))
+      (and (equal (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs
+                                                                        pathname)))
+                  (or
+                   (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs
+                                                                         x-path)))
+                   (not (equal pathname x-path))))
+           (equal (mv-nth 1 (abs-find-file-helper fs pathname))
+                  0)))
+     :hints (("goal" :in-theory (enable abs-find-file-helper prefixp)
+              :induct t
+              :expand (abs-find-file-helper fs x-path)))))
+
+  (defthmd
+    abs-find-file-correctness-1-lemma-38
+    (implies
+     (and (consp pathname)
+          (prefixp pathname x-path)
+          (zp (mv-nth 1 (abs-find-file-helper fs x-path))))
+     (and
+      (equal
+       (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs pathname)))
+       (or (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs x-path)))
+           (not (fat32-filename-list-equiv pathname x-path))))
+      (equal (mv-nth 1 (abs-find-file-helper fs pathname))
+             0)))
+    :hints
+    (("goal" :use (:instance abs-find-file-correctness-1-lemma-58
+                             (x-path (fat32-filename-list-fix x-path))
+                             (pathname (fat32-filename-list-fix pathname)))))))
 
 (defthm
   abs-find-file-correctness-1-lemma-39
@@ -4995,6 +5034,7 @@
       (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
                                          frame))))))
    (:in-theory (enable abs-find-file-helper))
+   :bash
    :bash
    (:rewrite
     abs-find-file-correctness-1-lemma-30
@@ -5753,6 +5793,12 @@
      0)))
   :hints (("goal" :in-theory (enable abs-enotdir-witness
                                      abs-find-file-helper))))
+
+(defthm fat32-filename-list-p-of-abs-enotdir-witness
+  (implies
+   (fat32-filename-list-p pathname)
+   (fat32-filename-list-p (abs-enotdir-witness fs pathname)))
+  :hints (("goal" :in-theory (enable abs-enotdir-witness))))
 
 ;; Kinda general
 (defthm
@@ -7160,6 +7206,280 @@
                        pathname))
               (mv (abs-file-fix nil) *enoent*))))
   :hints (("goal" :in-theory (enable abs-find-file))))
+
+(verify
+ (implies
+  (and
+   (consp frame)
+   (< 0 (abs-find-first-complete frame))
+   (< 0
+      (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame))))
+   (not
+    (equal
+     (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                       frame)))
+     (abs-find-first-complete frame)))
+   (consp
+    (assoc-equal
+     (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                       frame)))
+     frame))
+   (prefixp
+    (collapse-src-path frame)
+    (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                       frame))))
+   (not
+    (equal
+     (context-apply
+      (collapse-src-dir frame)
+      (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame)))
+      (abs-find-first-complete frame)
+      (nthcdr
+       (len (collapse-src-path frame))
+       (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                          frame)))))
+     (collapse-src-dir frame)))
+   (equal
+    (mv-nth
+     1
+     (abs-find-file
+      (put-assoc-equal
+       (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame)))
+       (frame-val
+        (frame-val->path
+         (cdr (assoc-equal
+               (frame-val->src
+                (cdr (assoc-equal (abs-find-first-complete frame)
+                                  frame)))
+               frame)))
+        (context-apply
+         (collapse-src-dir frame)
+         (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame)))
+         (abs-find-first-complete frame)
+         (nthcdr (len (collapse-src-path frame))
+                 (frame-val->path
+                  (cdr (assoc-equal (abs-find-first-complete frame)
+                                    frame)))))
+        (frame-val->src
+         (cdr (assoc-equal
+               (frame-val->src
+                (cdr (assoc-equal (abs-find-first-complete frame)
+                                  frame)))
+               frame))))
+       (remove-assoc-equal (abs-find-first-complete frame)
+                           frame))
+      pathname))
+    2)
+   (abs-file-alist-p root)
+   (equal
+    (mv-nth
+     1
+     (collapse
+      root
+      (put-assoc-equal
+       (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame)))
+       (frame-val
+        (frame-val->path
+         (cdr (assoc-equal
+               (frame-val->src
+                (cdr (assoc-equal (abs-find-first-complete frame)
+                                  frame)))
+               frame)))
+        (context-apply
+         (collapse-src-dir frame)
+         (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame)))
+         (abs-find-first-complete frame)
+         (nthcdr (len (collapse-src-path frame))
+                 (frame-val->path
+                  (cdr (assoc-equal (abs-find-first-complete frame)
+                                    frame)))))
+        (frame-val->src
+         (cdr (assoc-equal
+               (frame-val->src
+                (cdr (assoc-equal (abs-find-first-complete frame)
+                                  frame)))
+               frame))))
+       (remove-assoc-equal (abs-find-first-complete frame)
+                           frame))))
+    t)
+   (fat32-filename-list-p pathname)
+   (distinguish-names root nil frame)
+   (abs-separate frame)
+   (equal (mv-nth 1 (abs-find-file-helper root pathname))
+          20)
+   (frame-p frame)
+   (no-duplicatesp-equal (strip-cars frame)))
+  (equal (mv-nth 1 (abs-find-file frame pathname))
+         2))
+ :instructions
+ (:promote
+  (:dive 1 2)
+  (:rewrite abs-find-file-correctness-1-lemma-57
+            ((x (abs-find-first-complete frame))))
+  :top :bash (:change-goal nil t)
+  (:dive 1 2)
+  (:claim
+   (consp
+    (assoc-equal
+     (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                       frame)))
+     (remove-assoc-equal (abs-find-first-complete frame)
+                         frame))))
+  (:rewrite
+   abs-find-file-correctness-1-lemma-46
+   ((val
+     (frame-val
+      (frame-val->path
+       (cdr
+        (assoc-equal
+         (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame)))
+         frame)))
+      (context-apply
+       (collapse-src-dir frame)
+       (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame)))
+       (abs-find-first-complete frame)
+       (nthcdr
+        (len (collapse-src-path frame))
+        (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame)))))
+      (frame-val->src
+       (cdr
+        (assoc-equal
+         (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame)))
+         frame)))))
+    (name
+     (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                       frame))))))
+  :top :bash
+  (:claim
+   (not
+    (intersectp-equal
+     (remove-equal
+      'nil
+      (strip-cars
+       (frame-val->dir
+        (cdr (assoc-equal
+              (frame-val->src
+               (cdr (assoc-equal (abs-find-first-complete frame)
+                                 frame)))
+              frame)))))
+     (names-at-relpath
+      root
+      (frame-val->path
+       (cdr
+        (assoc-equal
+         (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame)))
+         frame)))))))
+  (:contrapose 18)
+  (:claim
+   (member-equal
+    (car
+     (nthcdr
+      (len
+       (frame-val->path
+        (cdr (assoc-equal
+              (frame-val->src
+               (cdr (assoc-equal (abs-find-first-complete frame)
+                                 frame)))
+              frame))))
+      pathname))
+    (remove-equal
+     nil
+     (strip-cars
+      (frame-val->dir
+       (cdr
+        (assoc-equal
+         (frame-val->src (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame)))
+         frame)))))))
+  (:rewrite
+   intersectp-member
+   ((a
+     (car
+      (nthcdr
+       (len
+        (frame-val->path
+         (cdr (assoc-equal
+               (frame-val->src
+                (cdr (assoc-equal (abs-find-first-complete frame)
+                                  frame)))
+               frame))))
+       pathname)))))
+  (:change-goal nil t)
+  (:claim
+   (not
+    (intersectp-equal
+     (remove-equal
+      'nil
+      (strip-cars (frame-val->dir$inline
+                   (cdr (assoc-equal (abs-find-first-complete frame)
+                                     frame)))))
+     (names-at-relpath
+      root
+      (frame-val->path$inline
+       (cdr (assoc-equal (abs-find-first-complete frame)
+                         frame)))))))
+  (:contrapose 18)
+  (:claim
+   (member-equal
+    (car
+     (nthcdr
+      (len
+       (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                          frame))))
+      pathname))
+    (remove-equal
+     nil
+     (strip-cars
+      (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame))))))
+   :hints :none)
+  (:change-goal nil t)
+  (:claim
+   (and
+    (fat32-filename-list-p
+     (nthcdr
+      (len
+       (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                          frame))))
+      pathname))
+    (not
+     (equal
+      (mv-nth
+       1
+       (abs-find-file-helper
+        (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                          frame)))
+        (nthcdr
+         (len (frame-val->path
+               (cdr (assoc-equal (abs-find-first-complete frame)
+                                 frame))))
+         pathname)))
+      2))
+    (abs-file-alist-p
+     (frame-val->dir (cdr (assoc-equal (abs-find-first-complete frame)
+                                       frame))))))
+  (:rewrite abs-find-file-correctness-1-lemma-33)
+  (:change-goal nil t)
+  (:rewrite
+   intersectp-member
+   ((a
+     (car
+      (nthcdr
+       (len
+        (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame))))
+       pathname)))))))
 
 (thm
  (implies (and  (abs-file-alist-p root)
