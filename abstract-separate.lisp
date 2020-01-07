@@ -7161,6 +7161,32 @@
         x))
       (t (mv frame pathname root x)))))
 
+  (local
+   (defthmd
+     abs-find-file-correctness-1-lemma-59
+     (implies
+      (and
+       (frame-p frame)
+       (abs-file-alist-p root)
+       (distinguish-names root nil frame)
+       (abs-separate frame)
+       (equal (mv-nth 1 (collapse root frame))
+              t)
+       (zp
+        (mv-nth
+         1
+         (abs-find-file-helper root
+                               (frame-val->path (cdr (assoc-equal x frame)))))))
+      (abs-directory-file-p
+       (mv-nth
+        0
+        (abs-find-file-helper root
+                              (frame-val->path (cdr (assoc-equal x frame)))))))
+     :hints (("goal" :in-theory (enable collapse intersectp-equal
+                                        collapse-src-dir collapse-src-path
+                                        hifat-find-file abs-find-file-helper)
+              :induct (induction-scheme frame pathname root x)))))
+
   (defthm
     abs-find-file-correctness-1-lemma-56
     (implies
@@ -7170,21 +7196,18 @@
       (distinguish-names root nil frame)
       (abs-separate frame)
       (equal (mv-nth 1 (collapse root frame))
-             t)
-      (zp
-       (mv-nth
-        1
-        (abs-find-file-helper root
-                              (frame-val->path (cdr (assoc-equal x frame)))))))
+             t))
      (abs-directory-file-p
       (mv-nth
        0
        (abs-find-file-helper root
                              (frame-val->path (cdr (assoc-equal x frame)))))))
-    :hints (("goal" :in-theory (enable collapse intersectp-equal
-                                       collapse-src-dir collapse-src-path
-                                       hifat-find-file abs-find-file-helper)
-             :induct (induction-scheme frame pathname root x)))))
+    :hints (("goal" :use
+             (abs-find-file-correctness-1-lemma-59
+              (:instance
+               (:rewrite abs-find-file-helper-of-context-apply-lemma-5)
+               (pathname (frame-val->path (cdr (assoc-equal x frame))))
+               (fs root)))))))
 
 ;; Could be important...
 (defthm
