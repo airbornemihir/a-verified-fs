@@ -4930,8 +4930,6 @@
   (equal (abs-find-file-helper fs (fat32-filename-list-fix pathname))
          (abs-find-file-helper fs pathname))
   :hints (("goal" :in-theory (enable abs-find-file-helper))))
-
-;; Important theorem about prefixp and abs-find-file.
 (defthm
   prefixp-of-fat32-filename-list-fix
   (implies (prefixp x y)
@@ -4963,6 +4961,7 @@
               :induct t
               :expand (abs-find-file-helper fs x-path)))))
 
+  ;; Important theorem about prefixp and abs-find-file.
   (defthmd
     abs-find-file-correctness-1-lemma-38
     (implies
@@ -5710,6 +5709,12 @@
        ((when (and (zp errno) (m1-regular-file-p file))) pathname))
     (abs-enotdir-witness fs (butlast pathname 1))))
 
+(defthm true-listp-of-abs-enotdir-witness
+  (implies (true-listp pathname)
+           (true-listp (abs-enotdir-witness fs pathname)))
+  :hints (("Goal" :in-theory (enable abs-enotdir-witness)))
+  :rule-classes :type-prescription)
+
 (defthm prefixp-of-abs-enotdir-witness
   (prefixp (abs-enotdir-witness fs pathname)
            pathname)
@@ -5790,7 +5795,8 @@
     (equal
      (mv-nth 1
              (abs-find-file-helper fs (abs-enotdir-witness fs pathname)))
-     0)))
+     0)
+    (consp (abs-enotdir-witness fs pathname))))
   :hints (("goal" :in-theory (enable abs-enotdir-witness
                                      abs-find-file-helper))))
 
@@ -7230,6 +7236,44 @@
               (mv (abs-file-fix nil) *enoent*))))
   :hints (("goal" :in-theory (enable abs-find-file))))
 
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     abs-find-file-correctness-1-lemma-59
+     (implies
+      (and (prefixp pathname x-path)
+           (m1-regular-file-p (mv-nth 0 (abs-find-file-helper fs pathname)))
+           (fat32-filename-list-p pathname)
+           (fat32-filename-list-p x-path))
+      (equal
+       (abs-find-file-helper fs x-path)
+       (if
+           (equal pathname x-path)
+           (abs-find-file-helper fs pathname)
+         (mv (abs-file-fix nil) *enotdir*))))
+     :hints
+     (("goal" :in-theory (enable abs-find-file-helper prefixp)))))
+
+  (defthm
+    abs-find-file-correctness-1-lemma-60
+    (implies
+     (and (prefixp pathname x-path)
+          (m1-regular-file-p (mv-nth 0 (abs-find-file-helper fs pathname)))
+          (not
+           (fat32-filename-list-equiv pathname x-path)))
+     (equal
+      (abs-find-file-helper fs x-path)
+      (mv (abs-file-fix nil) *enotdir*)))
+    :hints
+    (("goal"
+      :use
+      (:instance
+       abs-find-file-correctness-1-lemma-59
+       (pathname (fat32-filename-list-fix pathname))
+       (x-path (fat32-filename-list-fix x-path)))))))
+
 (verify
  (implies
   (and
@@ -7502,7 +7546,149 @@
        (len
         (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
                                            frame))))
-       pathname)))))))
+       pathname)))))
+  (:claim
+   (and
+    (m1-regular-file-p
+     (mv-nth 0
+             (abs-find-file-helper root
+                                   (abs-enotdir-witness root pathname))))
+    (equal
+     (mv-nth 1
+             (abs-find-file-helper root
+                                   (abs-enotdir-witness root pathname)))
+     0)))
+  (:claim (prefixp (abs-enotdir-witness root pathname)
+                   pathname))
+  (:dive 1)
+  (:rewrite car-of-nthcdr)
+  (:casesplit
+   (and
+    (not (list-equiv (abs-enotdir-witness root pathname)
+                     pathname))
+    (<
+     (nfix
+      (len
+       (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                          frame)))))
+     (len (abs-enotdir-witness root pathname)))
+    (prefixp
+     (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame)))
+     (abs-enotdir-witness root pathname))))
+  (:rewrite nth-when-prefixp
+            ((x (abs-enotdir-witness root pathname))))
+  :top (:dive 2 2)
+  (:=
+   (take
+    (len
+     (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame))))
+    (abs-enotdir-witness root pathname)))
+  :top
+  (:claim
+   (and
+    (fat32-filename-list-p (abs-enotdir-witness root pathname))
+    (<
+     (len
+      (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame))))
+     (len (abs-enotdir-witness root pathname)))))
+  (:rewrite abs-find-file-helper-of-context-apply-lemma-4)
+  :top
+  (:bash
+   ("goal"
+    :in-theory (e/d (list-equiv abs-find-file-helper)
+                    ((:rewrite prefixp-one-way-or-another)))
+    :use
+    (:instance
+     (:rewrite prefixp-one-way-or-another)
+     (x (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                           frame))))
+     (y (abs-enotdir-witness root pathname))
+     (z pathname))))
+  (:claim
+   (abs-directory-file-p
+    (mv-nth
+     0
+     (abs-find-file-helper
+      root
+      (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame))))))
+   :hints :none)
+  (:change-goal nil t)
+  (:rewrite abs-find-file-correctness-1-lemma-56)
+  (:bash ("goal" :expand (collapse root frame)))
+  (:change-goal nil t)
+  (:change-goal nil t)
+  (:claim
+   (m1-regular-file-p
+    (mv-nth 0
+            (abs-find-file-helper root
+                                  (abs-enotdir-witness root pathname)))))
+  :bash
+  (:claim
+   (m1-regular-file-p
+    (mv-nth 0
+            (abs-find-file-helper root
+                                  (abs-enotdir-witness root pathname)))))
+  (:contrapose 22)
+  (:=
+   (abs-directory-file-p
+    (mv-nth 0
+            (abs-find-file-helper root
+                                  (abs-enotdir-witness root pathname)))))
+  (:claim
+   (and
+    (consp (abs-enotdir-witness root pathname))
+    (zp
+     (mv-nth
+      1
+      (abs-find-file-helper
+       root
+       (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                          frame)))))))
+   :hints :none)
+  (:rewrite
+   abs-find-file-correctness-1-lemma-38
+   ((x-path
+     (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                        frame))))))
+  :bash
+  (:claim
+   (m1-regular-file-p
+    (mv-nth 0
+            (abs-find-file-helper root
+                                  (abs-enotdir-witness root pathname)))))
+  (:bash ("goal" :expand (collapse root frame)))
+  (:claim
+   (abs-directory-file-p
+    (mv-nth
+     0
+     (abs-find-file-helper
+      root
+      (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame))))))
+   :hints :none)
+  (:claim
+   (m1-regular-file-p
+    (mv-nth 0
+            (abs-find-file-helper root
+                                  (abs-enotdir-witness root pathname)))))
+  (:claim
+   (abs-directory-file-p
+    (mv-nth
+     0
+     (abs-find-file-helper
+      root
+      (frame-val->path (cdr (assoc-equal (abs-find-first-complete frame)
+                                         frame)))))))
+  :bash
+  (:rewrite abs-find-file-correctness-1-lemma-56)
+  (:dive 1 2)
+  :x :up :s (:dive 2 3)
+  (:change-goal nil t)
+  :bash))
 
 (thm
  (implies (and  (abs-file-alist-p root)
