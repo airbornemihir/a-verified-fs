@@ -4837,10 +4837,7 @@
     :in-theory
     (disable
      abs-separate-correctness-1-lemma-22
-     abs-separate-correctness-1-lemma-24
-     (:rewrite abs-find-file-correctness-1-lemma-20)
-     (:rewrite abs-find-file-correctness-1-lemma-9)
-     (:rewrite remove-equal-of-strip-cars-when-m1-file-alist-p))
+     abs-separate-correctness-1-lemma-24)
     :use
     ((:instance abs-separate-correctness-1-lemma-22
                 (dir (frame-val->dir (cdr (car frame))))
@@ -4849,13 +4846,7 @@
      (:instance abs-separate-correctness-1-lemma-24
                 (dir (frame-val->dir (cdr (car frame))))
                 (relpath (frame-val->path (cdr (car frame))))
-                (frame (cdr frame)))
-     (:rewrite abs-find-file-correctness-1-lemma-20)
-     (:rewrite abs-find-file-correctness-1-lemma-9)
-     (:instance
-      (:rewrite remove-equal-of-strip-cars-when-m1-file-alist-p)
-      (fs (frame-val->dir (cdr (assoc-equal x (cdr frame)))))
-      (x nil)))))
+                (frame (cdr frame))))))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -4896,8 +4887,35 @@
           pathname)))
        0))))))
 
-(defthmd
+(defthm
   abs-find-file-correctness-1-lemma-24
+  (implies
+   (equal
+    (mv-nth
+     1
+     (abs-find-file-helper (frame-val->dir (cdr (car frame)))
+                           (nthcdr (len (frame-val->path (cdr (car frame))))
+                                   pathname)))
+    0)
+   (equal
+    (cons
+     (mv-nth
+      0
+      (abs-find-file-helper (frame-val->dir (cdr (car frame)))
+                            (nthcdr (len (frame-val->path (cdr (car frame))))
+                                    pathname)))
+     '(0))
+    (abs-find-file-helper (frame-val->dir (cdr (car frame)))
+                          (nthcdr (len (frame-val->path (cdr (car frame))))
+                                  pathname))))
+  :instructions (:promote (:dive 2)
+                          (:rewrite abs-find-file-of-put-assoc-lemma-1)
+                          :top (:dive 2 2 1)
+                          :=
+                          :top :s))
+
+(defthmd
+  abs-find-file-correctness-1-lemma-59
   (implies
    (and
     (consp (assoc-equal x frame))
@@ -4915,14 +4933,19 @@
     (prefixp (frame-val->path (cdr (assoc-equal x frame)))
              pathname))
    (equal
-    (mv-nth 0
-            (abs-find-file-helper
-             (frame-val->dir (cdr (assoc-equal x frame)))
-             (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
-                     pathname)))
-    (mv-nth 0 (abs-find-file frame pathname))))
+    (abs-find-file-helper
+     (frame-val->dir (cdr (assoc-equal x frame)))
+     (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+             pathname))
+    (abs-find-file frame pathname)))
   :hints (("goal" :induct t
-           :in-theory (enable abs-find-file abs-separate)))
+           :in-theory (enable abs-find-file abs-separate))
+          ("subgoal *1/2.7'"
+           :use (:instance
+                 (:rewrite abs-find-file-of-put-assoc-lemma-1)
+                 (pathname (nthcdr (len (frame-val->path (cdr (car frame))))
+                                   pathname))
+                 (fs (frame-val->dir (cdr (car frame)))))))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -4947,13 +4970,11 @@
       (m1-file-alist-p (frame-val->dir (cdr (assoc-equal x frame))))
       (hifat-no-dups-p (frame-val->dir (cdr (assoc-equal x frame)))))
      (equal
-      (mv-nth 0
-              (hifat-find-file
-               (frame-val->dir (cdr (assoc-equal x frame)))
-               (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
-                       pathname)))
-      (mv-nth 0 (abs-find-file frame pathname)))))))
-
+      (hifat-find-file
+       (frame-val->dir (cdr (assoc-equal x frame)))
+       (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+               pathname))
+      (abs-find-file frame pathname))))))
 
 (defthm
   abs-find-file-correctness-1-lemma-25
@@ -5653,7 +5674,7 @@
                            frame))
       pathname))))
   :hints (("goal" :in-theory (enable abs-find-file frame-with-root abs-separate
-                                     abs-find-file-correctness-1-lemma-24)
+                                     abs-find-file-correctness-1-lemma-59)
            :do-not-induct t)))
 
 (defthm
