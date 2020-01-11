@@ -4806,13 +4806,18 @@
           nil
           (strip-cars (frame-val->dir (cdr (assoc-equal x frame)))))))))))
 
+;; This theorem is kinda inadequate. It would be better to prove that the
+;; subterm of the LHS, which is proved to be non-zero, is actually
+;; *enoent*. But that's not possible, because proving that it cannot be
+;; *ENOTDIR* (necessary) can't be done without the additional knowledge of
+;; collapsibility...
 (defthm
   abs-find-file-correctness-1-lemma-22
   (implies
    (and
+    (distinguish-names dir relpath frame)
     (abs-file-alist-p dir)
     (true-listp relpath)
-    (distinguish-names dir relpath frame)
     (consp (assoc-equal x frame))
     (fat32-filename-list-p pathname)
     (prefixp relpath pathname)
@@ -4832,23 +4837,17 @@
   :hints (("goal" :do-not-induct t
            :in-theory (disable abs-separate-correctness-1-lemma-22
                                abs-separate-correctness-1-lemma-24)
-           :use ((:instance abs-separate-correctness-1-lemma-22
-                            (dir dir)
-                            (relpath relpath)
-                            (frame frame))
-                 (:instance abs-separate-correctness-1-lemma-24
-                            (dir dir)
-                            (relpath relpath)
-                            (frame frame)))))
+           :use (abs-separate-correctness-1-lemma-22
+                 abs-separate-correctness-1-lemma-24)))
   :rule-classes
   (:rewrite
    (:rewrite
     :corollary
     (implies
      (and
+      (distinguish-names dir relpath frame)
       (abs-file-alist-p dir)
       (true-listp relpath)
-      (distinguish-names dir relpath frame)
       (consp (assoc-equal x frame))
       (fat32-filename-list-p pathname)
       (prefixp relpath pathname)
@@ -4922,13 +4921,7 @@
              pathname))
     (abs-find-file frame pathname)))
   :hints (("goal" :induct t
-           :in-theory (enable abs-find-file abs-separate))
-          ("subgoal *1/2.7'"
-           :use (:instance
-                 (:rewrite abs-find-file-of-put-assoc-lemma-1)
-                 (pathname (nthcdr (len (frame-val->path (cdr (car frame))))
-                                   pathname))
-                 (fs (frame-val->dir (cdr (car frame)))))))
+           :in-theory (enable abs-find-file abs-separate)))
   :rule-classes
   (:rewrite
    (:rewrite
