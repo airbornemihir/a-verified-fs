@@ -9117,36 +9117,47 @@
       :in-theory (enable collapse
                          collapse-src-path collapse-src-dir)))))
 
-(thm
- (implies
-  (and (frame-p frame)
-       (equal (mv-nth 1 (collapse root frame)) t)
-       (distinguish-names root nil frame)
-       (abs-separate frame)
-       (consp (assoc-equal x frame))
-       (consp (assoc-equal y frame))
-       (prefixp (frame-val->path (cdr (assoc-equal x frame))) pathname)
-       (prefixp (frame-val->path (cdr (assoc-equal y frame))) pathname)
-       (not (equal x y))
-       (not (equal (mv-nth 1
-                           (hifat-find-file
-                            (frame-val->dir (cdr (assoc-equal x frame)))
-                            (nthcdr
-                             (len
-                              (frame-val->path (cdr (assoc-equal x frame))))
-                             pathname)))
-                   *enoent*))
-       (not (equal (mv-nth 1
-                           (hifat-find-file
-                            (frame-val->dir (cdr (assoc-equal y frame)))
-                            (nthcdr
-                             (len
-                              (frame-val->path (cdr (assoc-equal y frame))))
-                             pathname)))
-                   *enoent*)))
-  nil)
- :hints (("Goal" :in-theory (enable collapse collapse-src-dir collapse-src-path)
-          :induct (collapse root frame)) ))
+(defund abs-find-file-alt
+  (frame indices pathname)
+  (b* (((when (atom indices))
+        (mv (make-abs-file) *enoent*))
+       ((unless (prefixp (frame-val->path (cdr (assoc-equal (car indices) frame)))
+                         pathname))
+        (abs-find-file-alt frame (cdr indices) pathname))
+       ((mv file error-code)
+        (abs-find-file-helper
+         (frame-val->dir (cdr (assoc-equal (car indices) frame)))
+         (nthcdr (len (frame-val->path (cdr (assoc-equal (car indices) frame))))
+                 pathname)))
+       ((when (not (equal error-code *enoent*)))
+        (mv file error-code)))
+    (abs-find-file-alt frame (cdr indices) pathname)))
+
+(defthm abs-find-file-alt-correctness-1-lemma-1
+  (implies (not (member-equal (caar frame) indices))
+           (equal (abs-find-file-alt (cdr frame)
+                                     indices pathname)
+                  (abs-find-file-alt frame indices pathname)))
+  :hints (("goal" :in-theory (enable abs-find-file-alt))))
+
+(defthm
+  abs-find-file-alt-correctness-1
+  (implies (no-duplicatesp-equal (strip-cars frame))
+           (equal (abs-find-file-alt frame (strip-cars frame)
+                                     pathname)
+                  (abs-find-file frame pathname)))
+  :hints (("goal" :in-theory (enable abs-find-file-alt abs-find-file))))
+
+(defthm
+  abs-find-file-alt-correctness-2
+  (implies (no-duplicatesp-equal (strip-cars frame))
+           (equal (abs-find-file-alt frame
+                                     (remove-equal x (strip-cars frame))
+                                     pathname)
+                  (abs-find-file (remove-assoc-equal x frame)
+                                 pathname)))
+  :hints (("goal" :in-theory (enable abs-find-file-alt abs-find-file))))
+
 
 (thm
  (implies
