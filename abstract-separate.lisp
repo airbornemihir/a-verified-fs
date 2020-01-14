@@ -8314,7 +8314,7 @@
                      frame))))))))
 
 (defthm
-  abs-find-file-correctness-1-lemma-77
+  abs-find-file-correctness-1-lemma-78
   (implies
    (and
     (consp frame)
@@ -8520,7 +8520,7 @@
           frame))))))))
 
 (defthm
-  abs-find-file-correctness-1-lemma-78
+  abs-find-file-correctness-1-lemma-79
   (implies
    (and
     (not (equal (frame-val->src (cdr (assoc-equal (1st-complete frame)
