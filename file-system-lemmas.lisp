@@ -1027,3 +1027,39 @@
   (implies (and (atom x1) (not (null x2)))
            (equal (assoc-equal x2 (remove-equal x1 l))
                   (assoc-equal x2 l))))
+
+(defthm member-of-car-of-nth-in-strip-cars
+  (implies (< (nfix n) (len l))
+           (member-equal (car (nth n l))
+                         (strip-cars l))))
+
+(defthm
+  assoc-of-car-of-nth
+  (implies (and (no-duplicatesp-equal (strip-cars l))
+                (< (nfix n) (len l)))
+           (equal (assoc-equal (car (nth n l)) l)
+                  (nth n l)))
+  :hints
+  (("goal" :induct (mv (assoc-equal (car (nth n l)) l)
+                       (len l)
+                       (nth n l)))
+   ("subgoal *1/1"
+    :in-theory (disable (:rewrite member-of-car-of-nth-in-strip-cars))
+    :use (:instance (:rewrite member-of-car-of-nth-in-strip-cars)
+                    (l (cdr l))
+                    (n (+ -1 n))))))
+
+(defthm consp-of-nth-when-alistp
+  (implies (and (alistp l) (< (nfix n) (len l)))
+           (consp (nth n l))))
+
+(defthm member-equal-of-strip-cars-of-put-assoc
+  (iff (member-equal x
+                     (strip-cars (put-assoc-equal name val alist)))
+       (or (equal x name)
+           (member-equal x (strip-cars alist)))))
+
+(defthm
+  no-duplicatesp-of-strip-cars-of-put-assoc
+  (equal (no-duplicatesp-equal (strip-cars (put-assoc-equal name val alist)))
+         (no-duplicatesp-equal (strip-cars alist))))

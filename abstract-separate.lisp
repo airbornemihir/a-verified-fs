@@ -4173,6 +4173,40 @@
                            (frame (put-assoc-equal name val frame))
                            (x name)))))
 
+(defthm
+  abs-find-file-of-put-assoc-2
+  (implies
+   (and
+    (frame-p (put-assoc-equal name val frame))
+    (no-duplicatesp-equal
+     (strip-cars (put-assoc-equal name val frame)))
+    (not
+     (equal
+      (mv-nth 1
+              (abs-find-file (remove-assoc-equal name frame)
+                             pathname))
+      2))
+    (or
+     (not (prefixp (frame-val->path val)
+                   pathname))
+     (equal
+      (abs-find-file-helper (frame-val->dir val)
+                            (nthcdr (len (frame-val->path val))
+                                    pathname))
+      *enoent*)))
+   (equal (abs-find-file (put-assoc-equal name val frame)
+                         pathname)
+          (abs-find-file (remove-assoc-equal name frame)
+                         pathname)))
+  :hints
+  (("goal" :in-theory (enable abs-find-file))
+   ("goal''" :induct t)
+   ("subgoal *1/5''"
+    :in-theory (disable (:rewrite remove-assoc-when-absent))
+    :use (:instance (:rewrite remove-assoc-when-absent)
+                    (alist (cdr frame))
+                    (x (car (car frame)))))))
+
 (defund abs-find-file-alt
   (frame indices pathname)
   (b* (((when (atom indices))
@@ -7308,34 +7342,6 @@
   :hints (("goal" :in-theory (e/d (collapse-src-path collapse-src-dir)
                                   ((:rewrite nth-when-prefixp))))))
 
-;; Move later.
-(defthm member-of-car-of-nth-in-strip-cars
-  (implies (< (nfix n) (len l))
-           (member-equal (car (nth n l))
-                         (strip-cars l))))
-
-;; Move later.
-(defthm
-  assoc-of-car-of-nth
-  (implies (and (no-duplicatesp-equal (strip-cars l))
-                (< (nfix n) (len l)))
-           (equal (assoc-equal (car (nth n l)) l)
-                  (nth n l)))
-  :hints
-  (("goal" :induct (mv (assoc-equal (car (nth n l)) l)
-                       (len l)
-                       (nth n l)))
-   ("subgoal *1/1"
-    :in-theory (disable (:rewrite member-of-car-of-nth-in-strip-cars))
-    :use (:instance (:rewrite member-of-car-of-nth-in-strip-cars)
-                    (l (cdr l))
-                    (n (+ -1 n))))))
-
-;; Move later.
-(defthm consp-of-nth-when-alistp
-  (implies (and (alistp l) (< (nfix n) (len l)))
-           (consp (nth n l))))
-
 (encapsulate
   ()
 
@@ -9233,53 +9239,6 @@
   (("goal" :in-theory (disable abs-find-file-correctness-1-lemma-84)
     :use (:instance abs-find-file-correctness-1-lemma-84
                     (indices (remove-equal x (strip-cars frame)))))))
-
-;; Move later.
-(defthm member-equal-of-strip-cars-of-put-assoc
-  (iff (member-equal x
-                     (strip-cars (put-assoc-equal name val alist)))
-       (or (equal x name)
-           (member-equal x (strip-cars alist)))))
-
-;; Move later.
-(defthm
-  no-duplicatesp-of-strip-cars-of-put-assoc
-  (equal (no-duplicatesp-equal (strip-cars (put-assoc-equal name val alist)))
-         (no-duplicatesp-equal (strip-cars alist))))
-
-(defthm
-  abs-find-file-of-put-assoc-2
-  (implies
-   (and
-    (frame-p (put-assoc-equal name val frame))
-    (no-duplicatesp-equal
-     (strip-cars (put-assoc-equal name val frame)))
-    (not
-     (equal
-      (mv-nth 1
-              (abs-find-file (remove-assoc-equal name frame)
-                             pathname))
-      2))
-    (or
-     (not (prefixp (frame-val->path val)
-                   pathname))
-     (equal
-      (abs-find-file-helper (frame-val->dir val)
-                            (nthcdr (len (frame-val->path val))
-                                    pathname))
-      *enoent*)))
-   (equal (abs-find-file (put-assoc-equal name val frame)
-                         pathname)
-          (abs-find-file (remove-assoc-equal name frame)
-                         pathname)))
-  :hints
-  (("goal" :in-theory (enable abs-find-file))
-   ("goal''" :induct t)
-   ("subgoal *1/5''"
-    :in-theory (disable (:rewrite remove-assoc-when-absent))
-    :use (:instance (:rewrite remove-assoc-when-absent)
-                    (alist (cdr frame))
-                    (x (car (car frame)))))))
 
 (thm
  (implies
