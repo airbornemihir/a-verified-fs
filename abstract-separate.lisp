@@ -4043,7 +4043,34 @@
    (equal (abs-find-file (remove-assoc-equal x frame)
                          pathname)
           (abs-find-file frame pathname)))
-  :hints (("goal" :in-theory (enable abs-find-file))))
+  :hints (("goal" :in-theory (enable abs-find-file)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (and
+     (implies
+      (and
+       (frame-p frame)
+       (no-duplicatesp-equal (strip-cars frame))
+       (not (prefixp (frame-val->path (cdr (assoc-equal x frame)))
+                     pathname)))
+      (equal (abs-find-file (remove-assoc-equal x frame)
+                            pathname)
+             (abs-find-file frame pathname)))
+     (implies
+      (and
+       (frame-p frame)
+       (no-duplicatesp-equal (strip-cars frame))
+       (equal
+        (mv-nth 1
+                (abs-find-file-helper
+                 (frame-val->dir (cdr (assoc-equal x frame)))
+                 (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+                         pathname)))
+        *enoent*))
+      (equal (abs-find-file (remove-assoc-equal x frame)
+                            pathname)
+             (abs-find-file frame pathname)))))))
 
 (defthm
   abs-find-file-of-put-assoc-lemma-2
@@ -9407,6 +9434,8 @@
       (name (frame-val->src (cdr (assoc-equal (1st-complete frame)
                                               frame)))))))))
 
+;; Because of remove-assoc-of-remove-assoc... the term is getting standardised
+;; and so the use hint is needed.
 (defthm
   abs-find-file-correctness-1-lemma-87
   (implies
@@ -10476,15 +10505,13 @@
                                                            frame)))
                          frame)))
           nil))))
-      :hints :none)
-     (:change-goal nil t)
-     (:bash
-      ("goal"
-       :in-theory (disable abs-find-file-correctness-1-lemma-34)
-       :use (:instance abs-find-file-correctness-1-lemma-34
-                       (x (1st-complete frame))
-                       (y (frame-val->src (cdr (assoc-equal (1st-complete frame)
-                                                            frame)))))))
+      :hints
+      (("goal"
+        :in-theory (disable abs-find-file-correctness-1-lemma-34)
+        :use (:instance abs-find-file-correctness-1-lemma-34
+                        (x (1st-complete frame))
+                        (y (frame-val->src (cdr (assoc-equal (1st-complete frame)
+                                                             frame))))))))
      (:rewrite abs-find-file-helper-of-context-apply)
      :top
      (:bash ("goal" :in-theory (enable context-apply abs-find-file-helper))))))
