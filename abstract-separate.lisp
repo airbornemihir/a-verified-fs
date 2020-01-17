@@ -6392,63 +6392,63 @@
         *enoent*)))
   :hints (("goal" :in-theory (enable abs-find-file))))
 
-(encapsulate
-  ()
+;; (encapsulate
+;;   ()
 
-  (local
-   (include-book "std/basic/inductions" :dir :system))
+;;   (local
+;;    (include-book "std/basic/inductions" :dir :system))
 
-  ;; Use abs-find-file-correctness-1-lemma-50 for this one.
-  (defthm
-    abs-find-file-correctness-1-lemma-64
-    (implies (and (fat32-filename-list-p pathname)
-                  (abs-file-alist-p root)
-                  (frame-p frame)
-                  (equal (mv-nth 1 (collapse root frame))
-                         t)
-                  (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
-                              *enoent*))
-                  (distinguish-names root nil frame)
-                  (abs-separate frame)
-                  (natp n)
-                  (no-duplicatesp-equal (strip-cars frame)))
-             (equal (abs-find-file (nthcdr (- (len frame) n) frame)
-                                   pathname)
-                    (mv (abs-file-fix nil) *enoent*)))
-    :hints
-    (("goal" :induct (dec-induct n)
-      :in-theory (enable abs-find-file))
-     ("subgoal *1/2''"
-      :in-theory (disable (:rewrite consp-of-nth-when-alistp))
-      :use ((:instance (:rewrite abs-find-file-correctness-1-lemma-50)
-                       (pathname pathname)
-                       (frame frame)
-                       (x (car (nth (+ (- n) (len frame)) frame))))
-            (:instance (:rewrite consp-of-nth-when-alistp)
-                       (l frame)
-                       (n (+ (- n) (len frame)))))))))
+;;   ;; Use abs-find-file-correctness-1-lemma-50 for this one.
+;;   (defthm
+;;     abs-find-file-correctness-1-lemma-64
+;;     (implies (and (fat32-filename-list-p pathname)
+;;                   (abs-file-alist-p root)
+;;                   (frame-p frame)
+;;                   (equal (mv-nth 1 (collapse root frame))
+;;                          t)
+;;                   (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
+;;                               *enoent*))
+;;                   (distinguish-names root nil frame)
+;;                   (abs-separate frame)
+;;                   (natp n)
+;;                   (no-duplicatesp-equal (strip-cars frame)))
+;;              (equal (abs-find-file (nthcdr (- (len frame) n) frame)
+;;                                    pathname)
+;;                     (mv (abs-file-fix nil) *enoent*)))
+;;     :hints
+;;     (("goal" :induct (dec-induct n)
+;;       :in-theory (enable abs-find-file))
+;;      ("subgoal *1/2''"
+;;       :in-theory (disable (:rewrite consp-of-nth-when-alistp))
+;;       :use ((:instance (:rewrite abs-find-file-correctness-1-lemma-50)
+;;                        (pathname pathname)
+;;                        (frame frame)
+;;                        (x (car (nth (+ (- n) (len frame)) frame))))
+;;             (:instance (:rewrite consp-of-nth-when-alistp)
+;;                        (l frame)
+;;                        (n (+ (- n) (len frame)))))))))
 
-;; Nifty use hint! But also, it seems like this theorem is useless...
+;; ;; Nifty use hint! But also, it seems like this theorem is useless...
+;; (defthm
+;;   abs-find-file-correctness-1-lemma-66
+;;   (implies (and (fat32-filename-list-p pathname)
+;;                 (abs-file-alist-p root)
+;;                 (frame-p frame)
+;;                 (equal (mv-nth 1 (collapse root frame))
+;;                        t)
+;;                 (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
+;;                             *enoent*))
+;;                 (distinguish-names root nil frame)
+;;                 (abs-separate frame)
+;;                 (no-duplicatesp-equal (strip-cars frame)))
+;;            (equal (abs-find-file frame pathname)
+;;                   (mv (abs-file-fix nil) *enoent*)))
+;;   :hints (("goal" :in-theory (disable abs-find-file-correctness-1-lemma-64)
+;;            :use (:instance abs-find-file-correctness-1-lemma-64
+;;                            (n (len frame))))))
+
 (defthm
-  abs-find-file-correctness-1-lemma-66
-  (implies (and (fat32-filename-list-p pathname)
-                (abs-file-alist-p root)
-                (frame-p frame)
-                (equal (mv-nth 1 (collapse root frame))
-                       t)
-                (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
-                            *enoent*))
-                (distinguish-names root nil frame)
-                (abs-separate frame)
-                (no-duplicatesp-equal (strip-cars frame)))
-           (equal (abs-find-file frame pathname)
-                  (mv (abs-file-fix nil) *enoent*)))
-  :hints (("goal" :in-theory (disable abs-find-file-correctness-1-lemma-64)
-           :use (:instance abs-find-file-correctness-1-lemma-64
-                           (n (len frame))))))
-
-(defthm
-  abs-find-file-correctness-1-lemma-65
+  abs-find-file-correctness-1-lemma-3
   (implies
    (and
     (frame-p frame)
@@ -8446,7 +8446,6 @@
      (:rewrite abs-file-alist-p-of-context-apply-lemma-1)
      (:rewrite abs-file-alist-p-when-m1-file-alist-p)
      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-     (:rewrite abs-find-file-correctness-1-lemma-64)
      (:rewrite abs-find-file-correctness-1-lemma-77)
      (:rewrite abs-find-file-correctness-1-lemma-76)
      (:rewrite abs-find-file-correctness-1-lemma-20))))
