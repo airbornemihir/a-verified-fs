@@ -13,7 +13,12 @@
                 (prefixp y z)
                 (not (prefixp x y)))
            (prefixp y x))
-  :hints (("goal" :in-theory (enable prefixp))))
+  :hints (("goal" :in-theory (enable prefixp)))
+  :rule-classes
+  (:rewrite (:rewrite :corollary (implies (and (prefixp y z)
+                                               (prefixp x z)
+                                               (not (prefixp x y)))
+                                          (prefixp y x)))))
 
 (defthm
   nth-when-prefixp
@@ -6875,7 +6880,7 @@
     (disable nth-when-prefixp
              (:rewrite abs-find-file-helper-of-context-apply-lemma-4)
              (:rewrite take-when-prefixp)
-             (:rewrite prefixp-one-way-or-another)
+             prefixp-one-way-or-another
              (:rewrite abs-find-file-correctness-1-lemma-75))
     :use
     ((:instance
@@ -6977,7 +6982,7 @@
         (frame-val->path (cdr (assoc-equal (1st-complete frame)
                                            frame))))))
      (:instance
-      (:rewrite prefixp-one-way-or-another)
+      prefixp-one-way-or-another
       (z
        (nthcdr
         (len
