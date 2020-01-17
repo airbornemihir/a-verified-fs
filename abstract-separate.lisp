@@ -8,28 +8,6 @@
 ; This is a model of the FAT32 filesystem, related to HiFAT but with abstract
 ; variables.
 
-(defthm prefixp-one-way-or-another
-  (implies (and (prefixp x z)
-                (prefixp y z)
-                (not (prefixp x y)))
-           (prefixp y x))
-  :hints (("goal" :in-theory (enable prefixp)))
-  :rule-classes
-  (:rewrite (:rewrite :corollary (implies (and (prefixp y z)
-                                               (prefixp x z)
-                                               (not (prefixp x y)))
-                                          (prefixp y x)))))
-
-(defthm
-  nth-when-prefixp
-  (implies (and (prefixp x y) (< (nfix n) (len x)))
-           (equal (nth n y) (nth n x)))
-  :hints (("goal" :in-theory (enable prefixp)))
-  :rule-classes ((:rewrite :corollary (implies (and (prefixp x y)
-                                                    (not (list-equiv x y))
-                                                    (< (nfix n) (len x)))
-                                               (equal (nth n y) (nth n x))))))
-
 (defthm
   prefixp-of-fat32-filename-list-fix
   (implies (prefixp x y)
