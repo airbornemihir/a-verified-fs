@@ -25,6 +25,13 @@
                                                     (< (nfix n) (len x)))
                                                (equal (nth n y) (nth n x))))))
 
+(defthm
+  prefixp-of-fat32-filename-list-fix
+  (implies (prefixp x y)
+           (prefixp (fat32-filename-list-fix x)
+                    (fat32-filename-list-fix y)))
+  :hints (("goal" :in-theory (enable prefixp fat32-filename-list-fix))))
+
 ;; This is explicitly a replacement for assoc-equal with a vacuous guard.
 (defund abs-assoc (x alist)
   (declare (xargs :guard t))
@@ -3603,6 +3610,11 @@
   :hints (("goal" :in-theory (enable abs-find-file-helper)))
   :rule-classes :type-prescription)
 
+(defthm abs-find-file-helper-of-fat32-filename-list-fix
+  (equal (abs-find-file-helper fs (fat32-filename-list-fix pathname))
+         (abs-find-file-helper fs pathname))
+  :hints (("goal" :in-theory (enable abs-find-file-helper))))
+
 (defund abs-find-file (frame pathname)
   (declare (xargs :guard (and (frame-p frame)
                               (fat32-filename-list-p pathname))))
@@ -5059,24 +5071,12 @@
                          (abs-find-file-helper abs-file-alist1 x-path)))))
   :hints (("goal" :in-theory (enable abs-find-file-helper context-apply))))
 
-;; Move later.
-(defthm abs-find-file-helper-of-fat32-filename-list-fix
-  (equal (abs-find-file-helper fs (fat32-filename-list-fix pathname))
-         (abs-find-file-helper fs pathname))
-  :hints (("goal" :in-theory (enable abs-find-file-helper))))
-(defthm
-  prefixp-of-fat32-filename-list-fix
-  (implies (prefixp x y)
-           (prefixp (fat32-filename-list-fix x)
-                    (fat32-filename-list-fix y)))
-  :hints (("goal" :in-theory (enable prefixp fat32-filename-list-fix))))
-
 (encapsulate
   ()
 
   (local
    (defthmd
-     abs-find-file-correctness-1-lemma-58
+     abs-find-file-correctness-1-lemma-53
      (implies
       (and (consp pathname)
            (prefixp pathname x-path)
@@ -5110,7 +5110,7 @@
       (equal (mv-nth 1 (abs-find-file-helper fs pathname))
              0)))
     :hints
-    (("goal" :use (:instance abs-find-file-correctness-1-lemma-58
+    (("goal" :use (:instance abs-find-file-correctness-1-lemma-53
                              (x-path (fat32-filename-list-fix x-path))
                              (pathname (fat32-filename-list-fix pathname)))))))
 
