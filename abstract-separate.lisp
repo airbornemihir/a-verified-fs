@@ -2283,7 +2283,8 @@
                      (zp (frame-val->src (cdr (assoc-equal x frame)))))))
   :hints (("goal" :in-theory (enable frame-addrs-root))))
 
-;; This has a free variable.
+;; This has a free variable. Also, accumulated-persistence may call it useless,
+;; but it is very much needed.
 (defthm abs-separate-correctness-1-lemma-1
   (implies (and (abs-file-alist-p root)
                 (not (consp (abs-addrs root)))
@@ -3049,33 +3050,6 @@
 
 (defthm
   abs-separate-correctness-1-lemma-35
-  (implies
-   (and
-    (not
-     (intersectp-equal
-      (remove-equal nil (strip-cars dir1))
-      (names-at-relpath (frame-val->dir (cdr (car frame)))
-                        (nthcdr (len (frame-val->path (cdr (car frame))))
-                                relpath1))))
-    (abs-file-alist-p dir2)
-    (not (prefixp relpath2 relpath1))
-    (prefixp (frame-val->path (cdr (car frame)))
-             relpath2)
-    (prefixp (frame-val->path (cdr (car frame)))
-             relpath1))
-   (not
-    (intersectp-equal
-     (remove-equal nil (strip-cars dir1))
-     (names-at-relpath
-      (context-apply (frame-val->dir (cdr (car frame)))
-                     dir2 x2
-                     (nthcdr (len (frame-val->path (cdr (car frame))))
-                             relpath2))
-      (nthcdr (len (frame-val->path (cdr (car frame))))
-              relpath1))))))
-
-(defthm
-  abs-separate-correctness-1-lemma-39
   (implies
    (and (fat32-filename-list-p relpath2)
         (prefixp (frame-val->path (cdr (car frame)))
