@@ -1063,3 +1063,13 @@
   no-duplicatesp-of-strip-cars-of-put-assoc
   (equal (no-duplicatesp-equal (strip-cars (put-assoc-equal name val alist)))
          (no-duplicatesp-equal (strip-cars alist))))
+
+(defthm nth-when->=-n-len-l
+  (implies (and (true-listp l)
+                (>= (nfix n) (len l)))
+           (equal (nth n l) nil)))
+
+(defthm
+  remove-assoc-of-remove-assoc
+  (equal (remove-assoc x1 (remove-assoc x2 alist))
+         (remove-assoc x2 (remove-assoc x1 alist))))
