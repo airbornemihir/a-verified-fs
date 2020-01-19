@@ -1,6 +1,6 @@
 (in-package "ACL2")
 
-(include-book "hifat")
+(include-book "hifat-equiv")
 (local (include-book "std/lists/prefixp" :dir :system))
 
 ;  abstract-separate.lisp                               Mihir Mehta
@@ -9149,3 +9149,14 @@
               (frame-val->src (cdr (assoc-equal src frame))))
              frame)))
         (partial-collapse root frame pathname)))))
+
+(defthm partial-collapse-correctness-1
+  (implies
+   (mv-nth 1 (collapse root frame))
+   (hifat-equiv
+    (mv-let
+      (root frame)
+      (partial-collapse root frame pathname)
+      (collapse root frame))
+    (collapse root frame)))
+  :hints (("Goal" :in-theory (enable partial-collapse)) ))
