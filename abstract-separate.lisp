@@ -9030,3 +9030,122 @@
           (:rewrite remove-assoc-equal-of-put-assoc-equal)
           (:rewrite abs-file-alist-p-correctness-1-lemma-3)))
     :induct (collapse root frame))))
+
+(defund 1st-complete-under-pathname (frame pathname)
+  (declare (xargs :guard (frame-p frame)))
+  (b* (((when (atom frame)) 0)
+       (head-index (caar frame))
+       (head-frame-val (cdar frame)))
+    (if (and (abs-complete (frame-val->dir head-frame-val))
+             (prefixp pathname (frame-val->path head-frame-val)))
+        (mbe :exec head-index :logic (nfix head-index))
+        (1st-complete-under-pathname (cdr frame) pathname))))
+
+(defund 1st-complete-under-pathname-src (frame pathname)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal (1st-complete-under-pathname
+                                                   frame pathname)
+                                                  frame)))))
+  (frame-val->src (cdr (assoc-equal (1st-complete-under-pathname frame pathname) frame))))
+
+(defund
+  1st-complete-under-pathname-src
+  (frame pathname)
+  (declare
+   (xargs
+    :guard
+    (and
+     (frame-p frame)
+     (consp
+      (assoc-equal (1st-complete-under-pathname frame pathname)
+                   frame)))))
+  (frame-val->src
+   (cdr
+    (assoc-equal (1st-complete-under-pathname frame pathname)
+                 frame))))
+
+(defthm
+  1st-complete-under-pathname-correctness-1
+  (implies (not (zp (1st-complete-under-pathname frame pathname)))
+           (consp (assoc-equal (1st-complete-under-pathname frame pathname)
+                               frame)))
+  :hints (("goal" :in-theory (enable 1st-complete-under-pathname)))
+  :rule-classes :type-prescription)
+
+(defund
+  partial-collapse (root frame pathname)
+  (declare
+   (xargs :guard (and (abs-file-alist-p root)
+                      (frame-p frame))
+          :measure (len frame)
+          :guard-hints
+          (("goal" :in-theory (enable context-apply-ok)))))
+  (b*
+      (((when (atom frame)) (mv root frame))
+       (head-index (1st-complete-under-pathname frame pathname))
+       ((when (zp head-index)) (mv root frame))
+       (head-frame-val (cdr (assoc-equal head-index frame)))
+       (src (1st-complete-under-pathname-src frame pathname)))
+    (if
+        (zp src)
+        (b*
+            ((frame (remove-assoc-equal head-index frame))
+             (root-after-context-apply
+              (context-apply root (frame-val->dir head-frame-val)
+                             head-index
+                             (frame-val->path head-frame-val)))
+             ;; This mbe ensures that no matter how we spin the induction scheme,
+             ;; the actual execution doesn't end up doing the context-apply twice.
+             ((when
+                  (mbe
+                   :exec (equal root-after-context-apply root)
+                   :logic
+                   (not
+                    (context-apply-ok root (frame-val->dir head-frame-val)
+                                      head-index
+                                      (frame-val->path head-frame-val)))))
+              (mv root frame)))
+          (partial-collapse root-after-context-apply frame pathname))
+      (b*
+          ((path (frame-val->path head-frame-val))
+           ((when
+                (or
+                 (equal src head-index)
+                 (atom
+                  (assoc-equal src
+                               (remove-assoc-equal head-index frame)))))
+            (mv root frame))
+           (src-path
+            (frame-val->path
+             (cdr
+              (assoc-equal src
+                           (remove-assoc-equal head-index frame)))))
+           (src-dir
+            (frame-val->dir
+             (cdr
+              (assoc-equal src
+                           (remove-assoc-equal head-index frame)))))
+           (frame (remove-assoc-equal head-index frame))
+           ((unless (prefixp src-path path))
+            (mv root nil))
+           (src-dir-after-context-apply
+            (context-apply src-dir (frame-val->dir head-frame-val)
+                           head-index
+                           (nthcdr (len src-path) path)))
+           ((when
+                (mbe :exec (equal src-dir-after-context-apply src-dir)
+                     :logic
+                     (not (context-apply-ok
+                           src-dir (frame-val->dir head-frame-val)
+                           head-index
+                           (nthcdr (len src-path) path)))))
+            (mv root nil))
+           (frame
+            (put-assoc-equal
+             src
+             (frame-val
+              (frame-val->path (cdr (assoc-equal src frame)))
+              src-dir-after-context-apply
+              (frame-val->src (cdr (assoc-equal src frame))))
+             frame)))
+        (partial-collapse root frame pathname)))))
