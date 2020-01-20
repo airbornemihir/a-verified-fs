@@ -6152,43 +6152,23 @@
        (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                          frame)))))))))
 
-(encapsulate
-  ()
-
-  (local
-   (defthmd
-     abs-find-file-correctness-1-lemma-60
-     (implies
-      (and (prefixp pathname x-path)
-           (m1-regular-file-p (mv-nth 0 (abs-find-file-helper fs pathname)))
-           (fat32-filename-list-p pathname)
-           (fat32-filename-list-p x-path))
-      (equal
-       (abs-find-file-helper fs x-path)
-       (if
-           (equal pathname x-path)
-           (abs-find-file-helper fs pathname)
-         (mv (abs-file-fix nil) *enotdir*))))
-     :hints
-     (("goal" :in-theory (enable abs-find-file-helper prefixp)))))
-
-  (defthmd
-    abs-find-file-correctness-1-lemma-61
-    (implies
-     (and (prefixp pathname x-path)
-          (m1-regular-file-p (mv-nth 0 (abs-find-file-helper fs pathname)))
-          (not
-           (fat32-filename-list-equiv pathname x-path)))
-     (equal
-      (abs-find-file-helper fs x-path)
-      (mv (abs-file-fix nil) *enotdir*)))
-    :hints
-    (("goal"
-      :use
-      (:instance
-       abs-find-file-correctness-1-lemma-60
-       (pathname (fat32-filename-list-fix pathname))
-       (x-path (fat32-filename-list-fix x-path)))))))
+(defthmd
+  abs-find-file-correctness-1-lemma-11
+  (implies
+   (and (prefixp pathname x-path)
+        (m1-regular-file-p (mv-nth 0 (abs-find-file-helper fs pathname)))
+        (not
+         (fat32-filename-list-equiv pathname x-path)))
+   (equal
+    (abs-find-file-helper fs x-path)
+    (mv (abs-file-fix nil) *enotdir*)))
+  :hints
+  (("goal"
+    :in-theory (enable fat32-filename-list-equiv abs-find-file-helper prefixp
+                       fat32-filename-list-fix)
+    :induct (mv (mv-nth 0
+                        (abs-find-file-helper fs pathname))
+                (prefixp pathname x-path)))))
 
 (defthm
   abs-find-file-correctness-1-lemma-12
@@ -8238,7 +8218,7 @@
           (frame-val->path (cdr (assoc-equal (1st-complete frame)
                                              frame))))))
        (:instance
-        abs-find-file-correctness-1-lemma-61
+        abs-find-file-correctness-1-lemma-11
         (fs (frame-val->dir
              (cdr (assoc-equal (1st-complete-src frame)
                                frame))))
@@ -8844,7 +8824,7 @@
          (frame-val->path (cdr (assoc-equal (1st-complete frame)
                                             frame))))))
       (:instance
-       abs-find-file-correctness-1-lemma-61
+       abs-find-file-correctness-1-lemma-11
        (fs (frame-val->dir (cdr (assoc-equal (1st-complete-src frame)
                                              frame))))
        (pathname
@@ -8895,7 +8875,7 @@
          (frame-val->path (cdr (assoc-equal (1st-complete frame)
                                             frame))))))
       (:instance
-       abs-find-file-correctness-1-lemma-61
+       abs-find-file-correctness-1-lemma-11
        (fs (frame-val->dir (cdr (assoc-equal (1st-complete-src frame)
                                              frame))))
        (pathname
