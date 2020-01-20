@@ -9130,9 +9130,94 @@
              frame)))
         (partial-collapse root frame pathname)))))
 
+(local
+ (defun
+   induction-scheme
+   (abs-file-alist1 abs-file-alist2
+                    abs-file-alist3 x2 x2-path x3 x3-path)
+   (cond
+    ((and
+      (consp x2-path)
+      (consp (abs-assoc (car x2-path)
+                        abs-file-alist1))
+      (abs-directory-file-p (cdr (abs-assoc (car x2-path)
+                                            abs-file-alist1)))
+      (equal (car x3-path) (car x2-path)))
+     (induction-scheme
+      (abs-file->contents (cdr (abs-assoc (car x2-path)
+                                          abs-file-alist1)))
+      abs-file-alist2
+      abs-file-alist3 x2 (cdr x2-path)
+      x3 (cdr x3-path)))
+    (t (mv abs-file-alist1
+           abs-file-alist2 abs-file-alist3
+           x2 x2-path x3 x3-path)))))
+
+(thm
+ (implies
+  (and
+   (ABS-FILE-ALIST-P ABS-FILE-ALIST1)
+   (abs-complete abs-file-alist2)
+   (NOT
+    (EQUAL
+     (CONTEXT-APPLY
+      ABS-FILE-ALIST1 ABS-FILE-ALIST2 X2 X2-PATH)
+     ABS-FILE-ALIST1))
+   (natp x3)
+   (NOT
+    (EQUAL
+     (CONTEXT-APPLY
+      (CONTEXT-APPLY
+       ABS-FILE-ALIST1 ABS-FILE-ALIST2 X2 X2-PATH)
+      ABS-FILE-ALIST3 X3 X3-PATH)
+     (CONTEXT-APPLY
+      ABS-FILE-ALIST1 ABS-FILE-ALIST2 X2 X2-PATH))))
+  (NOT
+   (EQUAL
+    (CONTEXT-APPLY
+     ABS-FILE-ALIST1 ABS-FILE-ALIST3 X3 X3-PATH)
+    ABS-FILE-ALIST1)))
+ :hints (("Goal" :in-theory (enable context-apply)
+          :induct
+          (induction-scheme
+           abs-file-alist1 abs-file-alist2
+           abs-file-alist3 x2 x2-path x3 x3-path))
+         ("subgoal *1/3''" :expand (CONTEXT-APPLY ABS-FILE-ALIST1
+                                                  ABS-FILE-ALIST3 X3 X3-PATH))))
+
+(defthm partial-collapse-correctness-lemma-1
+  (implies
+   (and
+    (consp (assoc-equal x frame))
+    (equal (frame-val->src
+            (cdr
+             (assoc-equal x
+                          frame)))
+           0)
+    (abs-complete (frame-val->dir
+                   (cdr
+                    (assoc-equal x
+                                 frame))))
+    (< 0 x)
+    (mv-nth 1 (collapse root frame)))
+   (context-apply-ok
+    root
+    (frame-val->dir
+     (cdr (assoc-equal x
+                       frame)))
+    x
+    (frame-val->path
+     (cdr (assoc-equal x
+                       frame)))))
+  :hints (("Goal" :in-theory (enable collapse)
+           :induct (collapse root frame))
+          ("Subgoal *1/7.1'" :in-theory (enable collapse 1st-complete-src))
+          ("Subgoal *1/4" :in-theory (enable collapse context-apply-ok))))
+
 (defthm partial-collapse-correctness-1
   (implies
-   (mv-nth 1 (collapse root frame))
+   (and
+    (mv-nth 1 (collapse root frame)))
    (hifat-equiv
     (mv-let
       (root frame)
