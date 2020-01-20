@@ -751,15 +751,15 @@
 
 (defthm
   put-assoc-equal-without-change
-  (implies (consp (assoc-equal name alist))
-           (iff (equal (put-assoc-equal name val alist)
-                       alist)
-                (equal (cdr (assoc-equal name alist))
-                       val)))
+  (iff (equal (put-assoc-equal name val alist)
+              alist)
+       (and (consp (assoc-equal name alist))
+            (equal (cdr (assoc-equal name alist))
+                   val)))
   :rule-classes
   ((:rewrite
-    :corollary (implies (and (consp (assoc-equal name alist))
-                             (not (equal (cdr (assoc-equal name alist))
+    :corollary (implies (not (and (consp (assoc-equal name alist))
+                                  (equal (cdr (assoc-equal name alist))
                                          val)))
                         (not (equal (put-assoc-equal name val alist)
                                     alist))))
