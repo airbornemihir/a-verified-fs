@@ -988,6 +988,12 @@
                       (assoc-equal x1 x2)
                       (assoc-equal x1 y)))))
 
+(defthm assoc-equal-of-append-2
+  (implies (and (atom (assoc-equal nil x))
+                (atom (assoc-equal nil y)))
+           (atom (assoc-equal nil (append x y))))
+  :rule-classes :type-prescription)
+
 (encapsulate
   ()
 
