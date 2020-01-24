@@ -4340,68 +4340,36 @@
   abs-find-file-helper-of-collapse-lemma-5
   (implies
    (and
-    (equal (mv-nth 1 (abs-find-file-helper root pathname))
-           0)
-    (context-apply-ok
-     root
-     (frame-val->dir (cdr (assoc-equal (1st-complete frame)
-                                       frame)))
-     (1st-complete frame)
-     (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                        frame))))
+    (context-apply-ok root
+                      (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                        frame)))
+                      (1st-complete frame)
+                      (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                         frame))))
     (abs-file-alist-p root)
-    (prefixp
-     pathname
-     (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                        frame)))))
+    (prefixp pathname
+             (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                frame)))))
    (not (m1-regular-file-p (mv-nth 0
                                    (abs-find-file-helper root pathname)))))
-  :instructions
-  (:promote
-   (:claim
-    (abs-directory-file-p (mv-nth 0 (abs-find-file-helper root pathname)))
-    :hints :none)
-   :bash
-   (:claim
-    (and
-     (consp pathname)
-     (zp
-      (mv-nth
-       1
-       (abs-find-file-helper
-        root
-        (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                           frame))))))
-     (abs-directory-file-p
-      (mv-nth
-       0
-       (abs-find-file-helper
-        root
-        (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                           frame)))))))
-    :hints :none)
-   (:rewrite
-    abs-find-file-helper-of-collapse-lemma-4
-    ((x-path
-      (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                         frame))))))
-   (:in-theory (enable abs-find-file-helper))
-   :bash
-   :bash
-   (:rewrite
-    abs-find-file-helper-of-collapse-lemma-2
-    ((x (1st-complete frame))
-     (abs-file-alist2
-      (frame-val->dir (cdr (assoc-equal (1st-complete frame)
-                                        frame))))))
-   :bash :bash (:dive 1 2)
-   (:rewrite
-    abs-find-file-helper-of-collapse-lemma-2
-    ((x (1st-complete frame))
-     (abs-file-alist2
-      (frame-val->dir (cdr (assoc-equal (1st-complete frame)
-                                        frame))))))
-   :bash :bash))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-find-file-helper)
+                    ((:rewrite abs-find-file-helper-of-collapse-lemma-2)))
+    :use
+    ((:instance
+      (:rewrite abs-find-file-helper-of-collapse-lemma-2)
+      (x (1st-complete frame))
+      (abs-file-alist2 (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                         frame))))
+      (x-path (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                 frame))))
+      (abs-file-alist1 root))
+     (:instance
+      (:rewrite abs-find-file-helper-of-collapse-lemma-4)
+      (x-path (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                 frame))))
+      (fs root))))))
 
 (defthm
   abs-find-file-helper-of-collapse-lemma-6
