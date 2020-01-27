@@ -3476,12 +3476,9 @@
      (nthcdr-when->=-n-len-l (:rewrite prefixp-when-equal-lengths)
                              (:rewrite abs-separate-correctness-1-lemma-66)
                              (:rewrite abs-separate-correctness-1-lemma-23)
-                             (:rewrite abs-separate-correctness-1-lemma-34)
                              (:rewrite abs-separate-correctness-1-lemma-16)
                              (:rewrite abs-separate-correctness-1-lemma-38)
-                             (:rewrite abs-separate-correctness-1-lemma-39)
-                             (:rewrite abs-separate-correctness-1-lemma-40)
-                             abs-separate-correctness-1-lemma-41))
+                             (:rewrite abs-separate-correctness-1-lemma-40)))
     :use
     ((:instance (:rewrite prefixp-when-equal-lengths)
                 (y (fat32-filename-list-fix relpath))
@@ -3511,35 +3508,24 @@
                 (dir2 dir)
                 (frame (cdr frame))
                 (relpath1 (frame-val->path (cdr (car frame))))
-                (dir1 (frame-val->dir (cdr (car frame)))))
-     (:instance (:rewrite abs-separate-correctness-1-lemma-39)
-                (relpath2 (frame-val->path (cdr (car frame))))
-                (x2 x)
-                (dir2 dir)
-                (frame (cdr frame))
-                (relpath1 (frame-val->path (cdr (car frame))))
                 (dir1 (frame-val->dir (cdr (car frame)))))))))
-
 
 (defthmd
   abs-separate-correctness-1-lemma-44
   (implies
-   (and
-    (< 0 x)
-    (consp (assoc-equal src frame))
-    (abs-file-alist-p dir)
-    (abs-no-dups-p dir)
-    (fat32-filename-list-p relpath)
-    (distinguish-names dir relpath frame)
-    (prefixp (frame-val->path (cdr (assoc-equal src frame)))
-             relpath)
-    (context-apply-ok
-     (frame-val->dir (cdr (assoc-equal src frame)))
-     dir x
-     (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-             relpath))
-    (abs-separate frame)
-    (integerp x))
+   (and (< 0 x)
+        (abs-file-alist-p dir)
+        (abs-no-dups-p dir)
+        (distinguish-names dir relpath frame)
+        (prefixp (frame-val->path (cdr (assoc-equal src frame)))
+                 (fat32-filename-list-fix relpath))
+        (context-apply-ok
+         (frame-val->dir (cdr (assoc-equal src frame)))
+         dir x
+         (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+                 relpath))
+        (abs-separate frame)
+        (integerp x))
    (abs-separate
     (put-assoc-equal
      src
@@ -3552,8 +3538,11 @@
                relpath))
       (frame-val->src (cdr (assoc-equal src frame))))
      frame)))
-  :hints (("goal" :in-theory (e/d (abs-separate distinguish-names prefixp names-at-relpath)
-                                  (nthcdr-when->=-n-len-l)))))
+  :hints
+  (("goal" :in-theory (e/d (abs-separate distinguish-names
+                                         prefixp names-at-relpath
+                                         nthcdr-of-fat32-filename-list-fix)
+                           (nthcdr-when->=-n-len-l)))))
 
 (defthm
   abs-separate-correctness-1-lemma-45
