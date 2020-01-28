@@ -5455,7 +5455,6 @@
   (implies
    (and
     (abs-file-alist-p dir)
-    (true-listp relpath)
     (not
      (intersectp-equal
       (remove-equal nil
@@ -5464,8 +5463,7 @@
        dir
        (nthcdr (len relpath)
                (frame-val->path (cdr (assoc-equal x frame)))))))
-    (fat32-filename-list-p pathname)
-    (prefixp relpath pathname)
+    (prefixp (fat32-filename-list-fix relpath) (fat32-filename-list-fix pathname))
     (equal (mv-nth 1
                    (abs-find-file-helper dir (nthcdr (len relpath) pathname)))
            0)
@@ -5477,7 +5475,7 @@
                       pathname)))
      0)
     (prefixp (frame-val->path (cdr (assoc-equal x frame)))
-             pathname))
+             (fat32-filename-list-fix pathname)))
    (intersectp-equal
     (remove-equal nil (strip-cars dir))
     (names-at-relpath
@@ -5488,27 +5486,28 @@
   (("goal"
     :do-not-induct t
     :cases ((and (prefixp (frame-val->path (cdr (assoc-equal x frame)))
-                          relpath)
-                 (prefixp relpath
+                          (fat32-filename-list-fix relpath))
+                 (prefixp (fat32-filename-list-fix relpath)
                           (frame-val->path (cdr (assoc-equal x frame))))))
-    :in-theory (e/d (list-equiv nthcdr-when->=-n-len-l names-at-relpath)
+    :in-theory (e/d (list-equiv nthcdr-when->=-n-len-l names-at-relpath nthcdr-of-fat32-filename-list-fix)
                     ((:rewrite prefixp-when-equal-lengths)
                      member-of-remove))
     :use
     ((:instance (:rewrite prefixp-when-equal-lengths)
                 (y (frame-val->path (cdr (assoc-equal x frame))))
-                (x relpath))
+                (x (fat32-filename-list-fix relpath)))
      (:instance
       (:rewrite intersectp-member)
       (a (nth (len (frame-val->path (cdr (assoc-equal x frame))))
-              pathname))
+              (fat32-filename-list-fix pathname)))
       (y (names-at-relpath
           dir
           (nthcdr (len relpath)
                   (frame-val->path (cdr (assoc-equal x frame))))))
       (x (remove-equal
           nil
-          (strip-cars (frame-val->dir (cdr (assoc-equal x frame)))))))))))
+          (strip-cars (frame-val->dir (cdr (assoc-equal x frame))))))))))
+  :otf-flg t)
 
 ;; This theorem is kinda inadequate. It would be better to prove that the
 ;; subterm of the LHS, which is proved to be non-zero, is actually
