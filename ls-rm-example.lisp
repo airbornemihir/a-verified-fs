@@ -1,20 +1,37 @@
 (in-package "ACL2")
 
 (include-book "test-stuff")
-(include-book "abstract-separate")
 
 (defun
-    rm-list-extra-hypothesis
-    (name-list)
-  (declare (xargs :guard (string-listp name-list)))
+  rm-list-extra-hypothesis
+  (fat32-in-memory name-list)
+  (declare (xargs :stobjs fat32-in-memory
+                  :guard (and (lofat-fs-p fat32-in-memory)
+                              (string-listp name-list))
+                  :measure (len name-list)))
   (b*
       (((when (atom name-list))
-        t)
+        (mv fat32-in-memory t))
        (fat32-pathname (pathname-to-fat32-pathname
                         (coerce (car name-list) 'list)))
        ((unless (fat32-filename-list-p fat32-pathname))
-        nil))
-    (rm-list-extra-hypothesis (cdr name-list))))
+        (mv fat32-in-memory nil))
+       ((mv fs error-code)
+        (lofat-to-hifat fat32-in-memory))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory nil))
+       ((mv fs & error-code)
+        (hifat-unlink fs fat32-pathname))
+       ((unless (and (equal error-code 0)
+                     (hifat-bounded-file-alist-p fs)
+                     (<= (hifat-entry-count fs)
+                         (max-entry-count fat32-in-memory))))
+        (mv fat32-in-memory nil))
+       ((mv fat32-in-memory error-code)
+        (hifat-to-lofat fat32-in-memory fs))
+       ((unless (equal error-code 0))
+        (mv fat32-in-memory nil)))
+    (rm-list-extra-hypothesis fat32-in-memory (cdr name-list))))
 
 (defthm rm-list-correctness-1-lemma-1
   (equal (mv-nth 1 (rm-list fat32-in-memory pathname-list 1))
@@ -25,29 +42,35 @@
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (equal
-     (mv-nth 1
-             (hifat-find-file
-              (mv-nth 0 (lofat-to-hifat fat32-in-memory))
-              fat32-pathname))
-     *enoent*)
-    (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
-           0))
+    (equal (mv-nth 1
+                   (hifat-find-file-by-pathname
+                    (mv-nth 0
+                            (lofat-to-hifat fat32-in-memory))
+                    fat32-pathname))
+           *enoent*)
+    ;; storing some hypotheses here
+    (not (null (mv-nth 1
+                       (rm-list-extra-hypothesis
+                        fat32-in-memory pathname-list)))))
    (equal
-    (mv-nth
-     1
-     (hifat-find-file
-      (mv-nth
-       0
-       (lofat-to-hifat
-        (mv-nth 0
-                (rm-list fat32-in-memory
-                         pathname-list exit-status))))
-      fat32-pathname))
+    (mv-nth 1
+            (hifat-find-file-by-pathname
+             (mv-nth 0
+                     (lofat-to-hifat
+                      (mv-nth 0
+                              (rm-list
+                               fat32-in-memory
+                               pathname-list
+                               exit-status))))
+             fat32-pathname))
     *enoent*))
-  :hints (("goal" :in-theory (e/d nil (hifat-find-file))
-           :induct (rm-list fat32-in-memory
-                            pathname-list exit-status))))
+  :hints (("goal" :in-theory (e/d (lofat-unlink)
+                                  (hifat-find-file-by-pathname))
+           :induct
+           (rm-list
+            fat32-in-memory
+            pathname-list
+            exit-status))))
 
 (defthm
   rm-list-correctness-1
@@ -59,11 +82,9 @@
                    (rm-list fat32-in-memory
                             pathname-list exit-status))
            0)
-    (rm-list-extra-hypothesis pathname-list)
-    (equal
-     (mv-nth '1
-             (lofat-to-hifat fat32-in-memory))
-     '0)
+    (not (null (mv-nth 1
+                       (rm-list-extra-hypothesis
+                        fat32-in-memory pathname-list))))
     (equal
      (mv-nth '1
              (lofat-to-hifat
@@ -83,7 +104,7 @@
      0)))
   :hints
   (("goal"
-    :in-theory (e/d ()
+    :in-theory (e/d (lofat-unlink)
                     ((:rewrite take-of-take-split)
                      (:linear len-of-member-equal))))))
 
@@ -133,18 +154,45 @@
        (pathname-to-fat32-pathname (explode pathname))))
      0))))
 
-(defthm lstat-after-unlink-1
-  (implies (and (lofat-fs-p fat32-in-memory)
-                (fat32-filename-list-p pathname)
-                (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
-                       0))
-           (b* (((mv fat32-in-memory unlink-errno)
-                 (lofat-unlink fat32-in-memory pathname))
-                ((mv & lstat-errno)
-                 (lofat-lstat fat32-in-memory pathname)))
-             (implies (equal unlink-errno 0)
-                      (equal lstat-errno -1))))
-  :hints (("goal" :do-not-induct t)))
+(defthm
+  lstat-after-unlink-1
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (hifat-bounded-file-alist-p
+     (mv-nth
+      '0
+      (hifat-remove-file-by-pathname (mv-nth '0
+                                       (lofat-to-hifat fat32-in-memory))
+                               pathname)))
+    (not
+     (<
+      (max-entry-count fat32-in-memory)
+      (hifat-entry-count
+       (mv-nth
+        '0
+        (hifat-remove-file-by-pathname (mv-nth '0
+                                         (lofat-to-hifat fat32-in-memory))
+                                 pathname)))))
+    (equal
+     (mv-nth
+      '1
+      (hifat-to-lofat
+       fat32-in-memory
+       (mv-nth
+        '0
+        (hifat-remove-file-by-pathname (mv-nth '0
+                                         (lofat-to-hifat fat32-in-memory))
+                                 pathname))))
+     0))
+   (b* (((mv fat32-in-memory unlink-errno)
+         (lofat-unlink fat32-in-memory pathname))
+        ((mv & lstat-errno)
+         (lofat-lstat fat32-in-memory pathname)))
+     (implies (equal unlink-errno 0)
+              (equal lstat-errno -1))))
+  :hints (("goal"
+           :in-theory (enable lofat-unlink))))
 
 (defthm
   ls-1-after-rm-1
@@ -153,8 +201,15 @@
     (lofat-fs-p fat32-in-memory)
     (< 0
        (len (intersection-equal ls-pathnames rm-pathnames)))
-    (rm-list-extra-hypothesis
-     rm-pathnames)
+    (not
+     (null
+      (mv-nth
+       1
+       (rm-list-extra-hypothesis
+        (mv-nth
+         0
+         (string-to-lofat fat32-in-memory disk-image-string))
+        rm-pathnames))))
     (equal
      (mv-nth
       '1
@@ -166,14 +221,7 @@
           '0
           (string-to-lofat fat32-in-memory disk-image-string))
          rm-pathnames '0))))
-     '0)
-    (equal
-     (mv-nth
-      1
-      (lofat-to-hifat
-       (mv-nth 0
-               (string-to-lofat fat32-in-memory disk-image-string))))
-     0))
+     '0))
    (b* (((mv fat32-in-memory
              disk-image-string rm-exit-status)
          (rm-1 fat32-in-memory
@@ -217,76 +265,3 @@
           0
           (string-to-lofat fat32-in-memory disk-image-string))
          rm-pathnames 0))))))))
-
-;; This guard conjecture takes 12 seconds...
-(defund
-  absfat-find-file-helper (fs relpath)
-  (declare
-   (xargs
-    :guard (and (abs-file-alist-p fs)
-                (fat32-filename-list-p relpath))
-    :guard-hints
-    (("goal" :in-theory (enable abs-file-alist-p
-                                abs-file-p abs-file-fix)))))
-  (b*
-      (((when (atom relpath))
-        (mv (make-abs-file) *enoent*))
-       (head (car relpath))
-       ((unless (consp (abs-assoc head fs)))
-        (mv (make-abs-file) *enoent*))
-       ((when (atom (cdr relpath)))
-        (mv (mbe :exec (cdr (abs-assoc head fs))
-                 :logic (abs-file-fix (cdr (abs-assoc head fs))))
-            0))
-       ((unless (abs-directory-file-p (cdr (abs-assoc head fs))))
-        (mv (make-abs-file) *enotdir*)))
-    (absfat-find-file-helper
-     (abs-file->contents (cdr (abs-assoc head fs)))
-     (cdr relpath))))
-
-(defthm absfat-find-file-helper-correctness-1
-  (mv-let
-    (file retval)
-    (absfat-find-file-helper fs relpath)
-    (and (abs-file-p file) (natp retval)))
-  :hints (("Goal" :in-theory (enable absfat-find-file-helper)) ))
-
-(defund absfat-find-file (frame path)
-  (declare (xargs :guard (and (fat32-filename-list-p path)
-                              (frame-p frame))))
-  (b*
-      (((when (atom frame)) (mv (make-abs-file) *enoent*))
-       (head-frame-val (cdar frame))
-       ((mv file retval)
-        (absfat-find-file-helper
-         (frame-val->dir head-frame-val)
-         (nthcdr (len (frame-val->path head-frame-val)) path)))
-       ((unless (equal retval *enoent*)) (mv file retval)))
-    (absfat-find-file (cdr frame) path)))
-
-;; This theorem is important, but not yet proved...
-#|
-(defthm
-  hifat-find-file-of-abs-collapse-1
-  (implies
-   (and (frame-p frame)
-        (no-duplicatesp-equal (strip-cars frame))
-        (abs-file-alist-p root)
-        (no-duplicatesp-equal (abs-addrs root))
-        (subsetp (abs-addrs root)
-                 (frame-addrs-root frame))
-        (abs-separate (frame-with-root root frame)))
-   (b*
-       (((mv fs result) (collapse root frame))
-        ((mv file error-code)
-         (absfat-find-file (frame-with-root root frame)
-                           path)))
-     (implies
-      (equal result t)
-      (and
-       (equal error-code
-              (mv-nth 1 (hifat-find-file fs path)))
-       (equal (abs-directory-file-p file)
-              (m1-directory-file-p
-               (mv-nth 1 (hifat-find-file fs path)))))))))
-|#

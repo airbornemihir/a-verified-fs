@@ -88,25 +88,30 @@
                               (fat32-filename-list-p pathname))))
   (b*
       (((mv file errno)
-        (hifat-find-file fs pathname))
+        (hifat-find-file-by-pathname fs pathname))
        ((when (not (equal errno 0)))
         (mv (make-struct-stat) -1 errno))
        (st_size (if (m1-directory-file-p file)
                     *ms-max-dir-size*
                   (length (m1-file->contents file)))))
     (mv
-     (make-struct-stat
-      :st_size st_size)
-     0 0)))
+       (make-struct-stat
+        :st_size st_size)
+       0 0)))
 
-;; By default, we aren't going to check whether the file exists.
-(defun hifat-open (pathname fd-table file-table)
-  (declare (xargs :guard (and (fat32-filename-list-p pathname)
+(defun hifat-open (pathname fs fd-table file-table)
+  (declare (xargs :guard (and (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs)
+                              (fat32-filename-list-p pathname)
                               (fd-table-p fd-table)
                               (file-table-p file-table))))
   (b*
       ((fd-table (fd-table-fix fd-table))
        (file-table (file-table-fix file-table))
+       ((mv & errno)
+        (hifat-find-file-by-pathname fs pathname))
+       ((unless (equal errno 0))
+        (mv fd-table file-table -1 errno))
        (file-table-index
         (find-new-index (strip-cars file-table)))
        (fd-table-index
@@ -122,30 +127,16 @@
 
 (defthm hifat-open-correctness-1
   (b*
-      (((mv fd-table file-table fd &) (hifat-open pathname fd-table file-table)))
+      (((mv fd-table file-table & &) (hifat-open pathname fs fd-table file-table)))
     (and
      (fd-table-p fd-table)
-     (file-table-p file-table)
-     (integerp fd)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (b*
-        (((mv fd-table file-table & &) (hifat-open pathname fd-table file-table)))
-      (and
-       (fd-table-p fd-table)
-       (file-table-p file-table))))
-   (:type-prescription
-    :corollary
-    (b*
-        (((mv & & fd &) (hifat-open pathname fd-table file-table)))
-      (integerp fd)))))
+     (file-table-p file-table))))
 
 (defthm
   hifat-open-correctness-2
   (implies (no-duplicatesp (strip-cars (fd-table-fix fd-table)))
            (b* (((mv fd-table & & &)
-                 (hifat-open pathname fd-table file-table)))
+                 (hifat-open pathname fs fd-table file-table)))
              (no-duplicatesp (strip-cars fd-table)))))
 
 (defthm
@@ -153,15 +144,15 @@
   (implies
    (no-duplicatesp (strip-cars (file-table-fix file-table)))
    (b* (((mv & file-table & &)
-         (hifat-open pathname fd-table file-table)))
+         (hifat-open pathname fs fd-table file-table)))
      (no-duplicatesp (strip-cars file-table)))))
 
 ;; Per the man page pread(2), this should not change the offset of the file
 ;; descriptor in the file table. Thus, there's no need for the file table to be
 ;; an argument.
 (defun
-    hifat-pread
-    (fd count offset fs fd-table file-table)
+  hifat-pread
+  (fd count offset fs fd-table file-table)
   (declare (xargs :guard (and (natp fd)
                               (natp count)
                               (natp offset)
@@ -179,7 +170,7 @@
         (mv "" -1 *ebadf*))
        (pathname (file-table-element->fid (cdr file-table-entry)))
        ((mv file error-code)
-        (hifat-find-file fs pathname))
+        (hifat-find-file-by-pathname fs pathname))
        ((unless (and (equal error-code 0)
                      (m1-regular-file-p file)))
         (mv "" -1 error-code))
@@ -202,8 +193,8 @@
                   (equal (length buf) ret)))))
 
 (defun
-    hifat-pwrite
-    (fd buf offset fs fd-table file-table)
+  hifat-pwrite
+  (fd buf offset fs fd-table file-table)
   (declare (xargs :guard (and (natp fd)
                               (stringp buf)
                               (natp offset)
@@ -229,13 +220,13 @@
         (mv fs -1 *ebadf*))
        (pathname (file-table-element->fid (cdr file-table-entry)))
        ((mv file error-code)
-        (hifat-find-file fs pathname))
+        (hifat-find-file-by-pathname fs pathname))
        ((mv oldtext dir-ent)
         (if (and (equal error-code 0)
                  (m1-regular-file-p file))
             (mv (coerce (m1-file->contents file) 'list)
                 (m1-file->dir-ent file))
-          (mv nil (dir-ent-fix nil))))
+            (mv nil (dir-ent-fix nil))))
        ((unless (unsigned-byte-p 32 (+ OFFSET (length BUF))))
         (mv fs -1 *enospc*))
        (file
@@ -244,7 +235,7 @@
          :contents (coerce (insert-text oldtext offset buf)
                            'string)))
        ((mv fs error-code)
-        (hifat-place-file fs pathname file)))
+        (hifat-place-file-by-pathname fs pathname file)))
     (mv fs (if (equal error-code 0) 0 -1)
         error-code)))
 
@@ -268,13 +259,13 @@
        ;; Never pass relative pathnames to syscalls - make them always begin
        ;; with "/".
        ((mv parent-dir errno)
-        (hifat-find-file fs dirname))
+        (hifat-find-file-by-pathname fs dirname))
        ((unless (or (atom dirname)
                     (and (equal errno 0)
                          (m1-directory-file-p parent-dir))))
         (mv fs -1 *enoent*))
        ((mv & errno)
-        (hifat-find-file fs pathname))
+        (hifat-find-file-by-pathname fs pathname))
        ((unless (not (equal errno 0)))
         (mv fs -1 *eexist*))
        (basename (hifat-basename pathname))
@@ -287,26 +278,26 @@
        (file (make-m1-file :dir-ent dir-ent
                            :contents nil))
        ((mv fs error-code)
-        (hifat-place-file fs pathname file))
+        (hifat-place-file-by-pathname fs pathname file))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
 
 (defun
-    hifat-mknod (fs pathname)
+  hifat-mknod (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (hifat-no-dups-p fs)
                               (fat32-filename-list-p pathname))))
   (b* ((dirname (hifat-dirname pathname))
        (basename (hifat-basename pathname))
        ((mv parent-dir errno)
-        (hifat-find-file fs dirname))
+        (hifat-find-file-by-pathname fs dirname))
        ((unless (or (atom dirname)
                     (and (equal errno 0)
                          (m1-directory-file-p parent-dir))))
         (mv fs -1 *enoent*))
        ((mv & errno)
-        (hifat-find-file fs pathname))
+        (hifat-find-file-by-pathname fs pathname))
        ((unless (not (equal errno 0)))
         (mv fs -1 *eexist*))
        ((unless (equal (length basename) 11))
@@ -316,7 +307,7 @@
        (file (make-m1-file :dir-ent dir-ent
                            :contents nil))
        ((mv fs error-code)
-        (hifat-place-file fs pathname file))
+        (hifat-place-file-by-pathname fs pathname file))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
@@ -357,11 +348,11 @@
                 (hifat-no-dups-p fs)
                 (fat32-filename-list-p pathname))))
   (b* (((mv file error-code)
-        (hifat-find-file fs pathname))
+        (hifat-find-file-by-pathname fs pathname))
        ((unless (equal error-code 0)) (mv fs -1 *ENOENT*))
        ((unless (m1-regular-file-p file)) (mv fs -1 *EISDIR*))
        ((mv fs error-code)
-        (hifat-remove-file fs pathname))
+        (hifat-remove-file-by-pathname fs pathname))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
@@ -384,11 +375,11 @@
                 (hifat-no-dups-p fs)
                 (fat32-filename-list-p pathname))))
   (b* (((mv file error-code)
-        (hifat-find-file fs pathname))
+        (hifat-find-file-by-pathname fs pathname))
        ((unless (equal error-code 0)) (mv fs -1 *ENOENT*))
        ((unless (m1-directory-file-p file)) (mv fs -1 *ENOTDIR*))
        ((mv fs error-code)
-        (hifat-remove-file fs pathname))
+        (hifat-remove-file-by-pathname fs pathname))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
@@ -407,12 +398,12 @@
                 (hifat-no-dups-p fs)
                 (fat32-filename-list-p pathname))))
   (b* (((mv file error-code)
-        (hifat-find-file fs pathname))
+        (hifat-find-file-by-pathname fs pathname))
        ((unless (equal error-code 0)) (mv fs -1 *ENOENT*))
        ((unless (m1-directory-file-p file)) (mv fs -1 *ENOTDIR*))
        ((unless (atom (m1-file->contents file))) (mv fs -1 *EEXIST*))
        ((mv fs error-code)
-        (hifat-remove-file fs pathname))
+        (hifat-remove-file-by-pathname fs pathname))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
@@ -426,19 +417,19 @@
                 (fat32-filename-list-p oldpathname)
                 (fat32-filename-list-p newpathname))))
   (b* (((mv file error-code)
-        (hifat-find-file fs oldpathname))
+        (hifat-find-file-by-pathname fs oldpathname))
        ((unless (equal error-code 0)) (mv fs -1 *ENOENT*))
        ((mv fs error-code)
-        (hifat-remove-file fs oldpathname))
+        (hifat-remove-file-by-pathname fs oldpathname))
        ((unless (equal error-code 0))
         (mv fs -1 error-code))
        (dirname (hifat-dirname newpathname))
        ((mv dir error-code)
-        (hifat-find-file fs dirname))
+        (hifat-find-file-by-pathname fs dirname))
        ((unless (and (equal error-code 0) (m1-directory-file-p dir)))
         (mv fs -1 error-code))
        ((mv fs error-code)
-        (hifat-place-file fs newpathname file))
+        (hifat-place-file-by-pathname fs newpathname file))
        ((unless (equal error-code 0))
         (mv fs -1 error-code)))
     (mv fs 0 0)))
@@ -492,8 +483,8 @@
              (no-duplicatesp (strip-cars file-table)))))
 
 (defun
-    hifat-truncate
-    (fs pathname size)
+  hifat-truncate
+  (fs pathname size)
   (declare (xargs :guard (and (natp size)
                               (m1-file-alist-p fs)
                               (hifat-no-dups-p fs)
@@ -510,7 +501,7 @@
       (((unless (unsigned-byte-p 32 size))
         (mv fs -1 *enospc*))
        ((mv file error-code)
-        (hifat-find-file fs pathname))
+        (hifat-find-file-by-pathname fs pathname))
        ((when (and (equal error-code 0)
                    (m1-directory-file-p file)))
         ;; Can't truncate a directory file.
@@ -529,6 +520,6 @@
                             (take size oldtext))
                            'string)))
        ((mv fs error-code)
-        (hifat-place-file fs pathname file)))
+        (hifat-place-file-by-pathname fs pathname file)))
     (mv fs (if (equal error-code 0) 0 -1)
         error-code)))

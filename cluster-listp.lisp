@@ -141,7 +141,8 @@
   len-of-make-clusters
   (implies (not (zp cluster-size))
            (equal (len (make-clusters text cluster-size))
-                  (ceiling (length text) cluster-size)))
+                  (floor (+ (length text) cluster-size -1)
+                         cluster-size)))
   :hints (("goal" :in-theory (enable make-clusters))))
 
 (defthm

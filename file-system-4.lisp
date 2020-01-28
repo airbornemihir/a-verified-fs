@@ -322,9 +322,7 @@
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-4
   (implies (member-intersectp-equal l b)
-           (member-intersectp-equal l (cons a b)))
-  :hints (("Goal" :in-theory (enable not-intersectp-list
-                                     member-intersectp-is-commutative-lemma-3))))
+           (member-intersectp-equal l (cons a b))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-5
@@ -334,8 +332,7 @@
                                       l)))
    (not (member-intersectp-equal
          l
-         (l4-collect-all-index-lists (remove1-assoc-equal name fs)))))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+         (l4-collect-all-index-lists (remove1-assoc-equal name fs))))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-6
@@ -343,8 +340,7 @@
                 (not-intersectp-list l (l4-collect-all-index-lists fs)))
            (not-intersectp-list
             l
-            (l4-collect-all-index-lists (remove1-assoc-equal name fs))))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+            (l4-collect-all-index-lists (remove1-assoc-equal name fs)))))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-7
   (implies
@@ -390,8 +386,7 @@
   (implies (and (l3-regular-file-entry-p (cdr (assoc-equal name fs)))
                 (l3-fs-p fs)
                 (not-intersectp-list l (l4-collect-all-index-lists fs)))
-           (not (intersectp-equal l (cadr (assoc-equal name fs)))))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+           (not (intersectp-equal l (cadr (assoc-equal name fs))))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-13
@@ -409,8 +404,7 @@
                 (disjoint-list-listp (l4-collect-all-index-lists fs)))
            (not-intersectp-list
             (cadr (assoc-equal name fs))
-            (l4-collect-all-index-lists (remove1-assoc-equal name fs))))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+            (l4-collect-all-index-lists (remove1-assoc-equal name fs)))))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-15
   (implies (and (boolean-listp alv)
@@ -425,8 +419,7 @@
                 (indices-marked-listp (l4-collect-all-index-lists fs)
                                       alv))
            (not-intersectp-list (find-n-free-blocks alv n)
-                                (l4-collect-all-index-lists fs)))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+                                (l4-collect-all-index-lists fs))))
 
 (encapsulate ()
   (local (include-book "std/basic/inductions" :dir :system))
@@ -479,8 +472,7 @@
                                       alv)
                 (not-intersectp-list l (l4-collect-all-index-lists fs)))
            (indices-marked-listp (l4-collect-all-index-lists fs)
-                                 (set-indices-in-alv alv l nil)))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+                                 (set-indices-in-alv alv l nil))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-19
@@ -508,8 +500,7 @@
                 (boolean-listp alv)
                 (indices-marked-listp l alv))
            (not-intersectp-list (find-n-free-blocks alv n)
-                                l))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+                                l)))
 
 (defcong list-equiv equal (INDICES-MARKED-LISTP L ALV) 2)
 
@@ -524,8 +515,7 @@
                 (not-intersectp-list index-list l))
            (indices-marked-listp l
                                  (set-indices-in-alv alv index-list nil)))
-  :hints (("Goal" :in-theory (enable not-intersectp-list)
-           :expand (flatten l))))
+  :hints (("Subgoal *1/6" :expand (flatten l))))
 
 (defthm l4-wrchs-returns-stricter-fs-lemma-23
   (implies (and (true-list-listp l)
@@ -563,8 +553,7 @@
                 (not-intersectp-list l (l4-collect-all-index-lists fs)))
            (not-intersectp-list
             l
-            (l4-collect-all-index-lists (cdr (assoc-equal name fs)))))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+            (l4-collect-all-index-lists (cdr (assoc-equal name fs))))))
 
 (defthmd
   l4-wrchs-returns-stricter-fs-lemma-27
@@ -806,8 +795,7 @@
    (not-intersectp-list l
                         (l4-collect-all-index-lists
                          (mv-nth 0
-                                 (l4-wrchs hns fs disk alv start text)))))
-  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+                                 (l4-wrchs hns fs disk alv start text))))))
 
 (defthm
   l4-wrchs-returns-stricter-fs-lemma-34
@@ -972,7 +960,7 @@
                 (nat-listp (cdr index-list)))
            (not (not-intersectp-list index-list
                                      (l4-collect-all-index-lists fs))))
-  :hints (("goal" :in-theory (enable l4-list-all-indices not-intersectp-list))))
+  :hints (("goal" :in-theory (enable l4-list-all-indices))))
 
 (defthm
   l4-wrchs-correctness-1-lemma-7
@@ -982,7 +970,7 @@
                 (l3-fs-p fs))
            (not (not-intersectp-list index-list
                                      (l4-collect-all-index-lists fs))))
-  :hints (("goal" :in-theory (enable l4-collect-all-index-lists not-intersectp-list))))
+  :hints (("goal" :in-theory (enable l4-collect-all-index-lists))))
 
 (defthm l4-wrchs-correctness-1-lemma-8
   (implies (and (block-listp disk)

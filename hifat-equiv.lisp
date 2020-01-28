@@ -14,7 +14,8 @@
     :guard (and (m1-file-alist-p m1-file-alist1)
                 (m1-file-alist-p m1-file-alist2))
     :hints (("goal" :in-theory (enable m1-file->contents
-                                       m1-directory-file-p)))))
+                                       m1-directory-file-p)))
+    :guard-hints (("goal" :in-theory (enable fat32-filename-p-correctness-1)))))
   (b*
       (((when (atom m1-file-alist1)) t)
        ((unless (mbt (and (consp (car m1-file-alist1))
@@ -78,16 +79,13 @@
           (m1-directory-file-p (cdr (assoc-equal key y))))
      (m1-directory-file-p (cdr (assoc-equal key z)))))))
 
-(local
- (defthm
-   hifat-subsetp-transitive-lemma-2
-   (implies
-    (and (m1-file-alist-p y)
-         (consp (assoc-equal key y))
-         (not (m1-directory-file-p (cdr (assoc-equal key y))))
-         (hifat-subsetp y z))
-    (equal (m1-file->contents (cdr (assoc-equal key y)))
-           (m1-file->contents (cdr (assoc-equal key z)))))))
+(defthm
+  hifat-subsetp-transitive-lemma-2
+  (implies (and (m1-file-alist-p z)
+                (hifat-no-dups-p z)
+                (m1-directory-file-p (cdr (assoc-equal key z))))
+           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key z)))))
+  :hints (("Goal" :in-theory (enable hifat-no-dups-p)) ))
 
 (defthm
   hifat-subsetp-transitive-lemma-3
@@ -97,47 +95,34 @@
            (hifat-subsetp (m1-file->contents (cdr (assoc-equal key y)))
                           (m1-file->contents (cdr (assoc-equal key z))))))
 
-(encapsulate
-  () ;; start lemmas for hifat-subsetp-transitive
+(local
+ (defthm
+   hifat-subsetp-transitive-lemma-4
+   (implies
+    (and (m1-file-alist-p y)
+         (consp (assoc-equal key y))
+         (not (m1-directory-file-p (cdr (assoc-equal key y))))
+         (hifat-subsetp y z))
+    (equal (m1-file->contents (cdr (assoc-equal key y)))
+           (m1-file->contents (cdr (assoc-equal key z)))))))
 
-  (local
-   (defthm
-     hifat-subsetp-transitive-lemma-4
-     (implies
-      (and (not (m1-directory-file-p (cdr (assoc-equal (car (car x)) y))))
-           (consp (assoc-equal (car (car x)) y))
-           (hifat-subsetp y z)
-           (m1-file-alist-p y))
-      (not (m1-directory-file-p (cdr (assoc-equal (car (car x)) z)))))
-     :hints (("goal" :in-theory (disable hifat-subsetp-transitive-lemma-1)
-              :use (:instance hifat-subsetp-transitive-lemma-1
-                              (key (car (car x))))))))
-
-  (local
-   (defthm
-     hifat-subsetp-transitive-lemma-5
-     (implies (and (m1-directory-file-p (cdr (assoc-equal (car (car x)) y)))
-                   (hifat-subsetp y z)
-                   (m1-file-alist-p y))
-              (m1-directory-file-p (cdr (assoc-equal (car (car x)) z))))
-     :hints (("goal" :in-theory (disable hifat-subsetp-transitive-lemma-1)
-              :use (:instance hifat-subsetp-transitive-lemma-1
-                              (key (car (car x))))))))
-
-  (local
-   (defthm
-     hifat-subsetp-transitive-lemma-6
-     (implies (and (not (stringp (car (car x))))
-                   (m1-file-alist-p y))
-              (not
-               (member-equal (car x) y)))
-     :hints (("goal" :in-theory (enable m1-file-alist-p)))))
-
- (defthm hifat-subsetp-transitive
-   (implies (and (hifat-subsetp x y)
-                 (hifat-subsetp y z)
-                 (m1-file-alist-p y))
-            (hifat-subsetp x z))))
+(defthm
+  hifat-subsetp-transitive
+  (implies (and (hifat-subsetp x y)
+                (hifat-subsetp y z)
+                (m1-file-alist-p x)
+                (m1-file-alist-p y))
+           (hifat-subsetp x z))
+  :hints
+  (("goal" :induct (mv (hifat-subsetp x z)
+                       (hifat-subsetp x y))
+    :in-theory (disable hifat-subsetp-transitive-lemma-1))
+   ("subgoal *1/5"
+    :use (:instance hifat-subsetp-transitive-lemma-1
+                    (key (car (car x)))))
+   ("subgoal *1/2"
+    :use (:instance hifat-subsetp-transitive-lemma-1
+                    (key (car (car x)))))))
 
 (defthm
   hifat-subsetp-when-atom
@@ -247,7 +232,7 @@
                              (m1-file dir-ent (m1-file->contents (cdar fs))))
                        (cdr fs))
                  fs)
-    :in-theory (e/d (hifat-no-dups-p)
+    :in-theory (e/d (hifat-no-dups-p fat32-filename-p-correctness-1)
                     (hifat-subsetp-reflexive-lemma-4))
     :use
     ((:instance hifat-subsetp-reflexive-lemma-4
@@ -299,7 +284,7 @@
              (hifat-equiv (m1-file->contents (cdr head))
                           contents))
     :in-theory
-    (e/d (hifat-no-dups-p)
+    (e/d (hifat-no-dups-p fat32-filename-p-correctness-1)
          (hifat-subsetp-reflexive-lemma-4 m1-directory-file-p-of-m1-file))
     :use ((:instance hifat-subsetp-reflexive-lemma-4
                      (x (list head))
@@ -312,12 +297,11 @@
                      (contents contents)
                      (dir-ent dir-ent))))))
 
-(local
- (defthm hifat-equiv-of-cons-lemma-4
-   (implies (and (not (assoc-equal (car head) tail1))
-                 (hifat-subsetp tail2 tail1)
-                 (fat32-filename-p (car head)))
-            (not (assoc-equal (car head) tail2)))))
+(defthm hifat-equiv-of-cons-lemma-4
+  (implies (and (not (assoc-equal (car head) tail1))
+                (hifat-subsetp tail2 tail1)
+                (fat32-filename-p (car head)))
+           (not (assoc-equal (car head) tail2))))
 
 (defthm hifat-equiv-of-cons-lemma-5
   (implies (and (hifat-no-dups-p (cons head tail1))
@@ -337,5 +321,6 @@
                                (cons head tail2))
                   t))
   :hints
-  (("goal" :in-theory (e/d (hifat-equiv hifat-no-dups-p))
+  (("goal" :in-theory (e/d (hifat-equiv hifat-no-dups-p
+                                        fat32-filename-p-correctness-1))
     :expand (hifat-file-alist-fix (cons head tail1)))))
