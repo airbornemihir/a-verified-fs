@@ -2766,27 +2766,12 @@
                       (assoc-equal name (remove-equal x root))
                       (assoc-equal name abs-file-alist)))))
 
-(defthm
-  abs-separate-correctness-1-lemma-20
-  (implies (and (abs-file-alist-p abs-file-alist)
-                (consp (assoc-equal (car relpath) root))
-                (consp (assoc-equal (car relpath)
-                                    abs-file-alist)))
-           (intersectp-equal (remove-equal nil (strip-cars abs-file-alist))
-                             (remove-equal nil (strip-cars root))))
-  :hints
-  (("goal"
-    :use (:instance (:rewrite intersectp-member)
-                    (a (car relpath))
-                    (y (remove-equal nil (strip-cars root)))
-                    (x (remove-equal nil (strip-cars abs-file-alist)))))))
-
 (encapsulate
   ()
 
   (local
    (defthmd
-     abs-separate-correctness-1-lemma-21
+     abs-separate-correctness-1-lemma-20
      (implies
       (and
        (abs-file-alist-p abs-file-alist)
@@ -2828,12 +2813,12 @@
                              relpath))))
     :hints
     (("goal"
-      :use (:instance abs-separate-correctness-1-lemma-21
+      :use (:instance abs-separate-correctness-1-lemma-20
                       (x-path (fat32-filename-list-fix x-path))
                       (relpath (fat32-filename-list-fix relpath)))))))
 
 (defthm
-  abs-separate-correctness-1-lemma-67
+  abs-separate-correctness-1-lemma-21
   (implies (and (natp x)
                 (abs-file-alist-p abs-file-alist)
                 (distinguish-names root nil frame)
@@ -3340,51 +3325,6 @@
 
 (defthm
   abs-separate-correctness-1-lemma-40
-  (implies
-   (and
-    (< 0 x)
-    (abs-file-alist-p dir)
-    (integerp x)
-    (prefixp
-     (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-             (fat32-filename-list-fix relpath))
-     (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-             (frame-val->path (cdr (car frame)))))
-    (not
-     (intersectp-equal
-      (remove-equal nil
-                    (strip-cars (frame-val->dir (cdr (car frame)))))
-      (names-at-relpath
-       dir
-       (nthcdr
-        (len
-         (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-                 relpath))
-        (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-                (frame-val->path (cdr (car frame))))))))
-    (not
-     (intersectp-equal
-      (remove-equal nil
-                    (strip-cars (frame-val->dir (cdr (car frame)))))
-      (names-at-relpath
-       (frame-val->dir (cdr (assoc-equal src (cdr frame))))
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-               (frame-val->path (cdr (car frame))))))))
-   (not
-    (intersectp-equal
-     (remove-equal nil
-                   (strip-cars (frame-val->dir (cdr (car frame)))))
-     (names-at-relpath
-      (context-apply
-       (frame-val->dir (cdr (assoc-equal src (cdr frame))))
-       dir x
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-               relpath))
-      (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-              (frame-val->path (cdr (car frame)))))))))
-
-(defthm
-  abs-separate-correctness-1-lemma-41
   (implies
    (prefixp (frame-val->path (cdr (assoc-equal src frame)))
             relpath)
@@ -5226,7 +5166,7 @@
     :do-not-induct t
     :in-theory (e/d (names-at-relpath abs-find-file-helper take-of-nthcdr)
                     (abs-find-file-helper-of-context-apply-lemma-4
-                     (:rewrite abs-separate-correctness-1-lemma-41)
+                     (:rewrite abs-separate-correctness-1-lemma-40)
                      (:rewrite member-of-remove)
                      (:rewrite car-of-nthcdr)
                      (:rewrite nth-of-nthcdr)
@@ -5253,7 +5193,7 @@
                         (fat32-filename-list-fix pathname)))
       (n (+ (len relpath)
             (- (len (frame-val->path (cdr (assoc-equal x frame))))))))
-     (:instance (:rewrite abs-separate-correctness-1-lemma-41)
+     (:instance (:rewrite abs-separate-correctness-1-lemma-40)
                 (src x)
                 (relpath (fat32-filename-list-fix relpath)))
      (:instance (:rewrite car-of-nthcdr)
@@ -6859,8 +6799,8 @@
                                                        frame)))
                      frame))))))))
 
-(defthm
-  abs-find-file-correctness-1-lemma-58
+(defthmd
+  abs-separate-correctness-1-lemma-41
   (implies
    (and
     (fat32-filename-list-p pathname)
@@ -7188,8 +7128,7 @@
                     (nthcdr-of-fat32-filename-list-fix
                      abs-find-file-correctness-1-lemma-34
                      (:rewrite abs-find-file-correctness-1-lemma-18)
-                     (:rewrite abs-find-file-correctness-1-lemma-57)
-                     (:rewrite abs-find-file-correctness-1-lemma-58)))
+                     (:rewrite abs-find-file-correctness-1-lemma-57)))
     :use
     ((:instance
       (:rewrite abs-find-file-correctness-1-lemma-18)
@@ -7208,7 +7147,7 @@
          (assoc-equal (frame-val->src (cdr (assoc-equal (1st-complete frame)
                                                         frame)))
                       frame)))))
-     (:instance (:rewrite abs-find-file-correctness-1-lemma-58)
+     (:instance (:rewrite abs-separate-correctness-1-lemma-41)
                 (pathname (fat32-filename-list-fix pathname)))
      (:instance (:rewrite abs-find-file-correctness-1-lemma-57)
                 (pathname (fat32-filename-list-fix pathname))))
@@ -8309,7 +8248,6 @@
      (:rewrite abs-file-alist-p-when-m1-file-alist-p)
      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
      (:rewrite abs-find-file-correctness-1-lemma-62)
-     (:rewrite abs-find-file-correctness-1-lemma-58)
      (:rewrite abs-find-file-correctness-1-lemma-20))))
 
   (defthm
