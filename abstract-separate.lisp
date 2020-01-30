@@ -2781,13 +2781,6 @@
                     (y (remove-equal nil (strip-cars root)))
                     (x (remove-equal nil (strip-cars abs-file-alist)))))))
 
-;; Move later
-(defthmd nthcdr-of-fat32-filename-list-fix
-  (equal (nthcdr n
-                 (fat32-filename-list-fix relpath))
-         (fat32-filename-list-fix (nthcdr n relpath)))
-  :hints (("goal" :in-theory (enable fat32-filename-list-fix))))
-
 (encapsulate
   ()
 
@@ -2834,7 +2827,7 @@
            (names-at-relpath (context-apply root abs-file-alist x x-path)
                              relpath))))
     :hints
-    (("goal" :in-theory (enable nthcdr-of-fat32-filename-list-fix)
+    (("goal"
       :use (:instance abs-separate-correctness-1-lemma-21
                       (x-path (fat32-filename-list-fix x-path))
                       (relpath (fat32-filename-list-fix relpath)))))))
@@ -3125,7 +3118,6 @@
                                              abs-file-alist2 x x-path)
                               relpath frame))
   :hints (("goal" :in-theory (enable distinguish-names
-                                     nthcdr-of-fat32-filename-list-fix
                                      names-at-relpath))))
 
 (defthm
@@ -3174,8 +3166,7 @@
                        (nthcdr (len relpath1)
                                (frame-val->path (cdr (car frame))))))))
   :hints
-  (("goal" :in-theory (e/d (list-equiv nthcdr-of-fat32-filename-list-fix)
-                           ((:rewrite prefixp-when-equal-lengths)))
+  (("goal" :in-theory (disable (:rewrite prefixp-when-equal-lengths))
     :use (:instance (:rewrite prefixp-when-equal-lengths)
                     (y (fat32-filename-list-fix relpath2))
                     (x (frame-val->path (cdr (car frame)))))
@@ -3205,9 +3196,8 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (nthcdr-of-fat32-filename-list-fix)
-                    ((:rewrite prefixp-nthcdr-nthcdr)
-                     (:rewrite abs-separate-correctness-1-lemma-18)))
+    :in-theory (disable (:rewrite prefixp-nthcdr-nthcdr)
+                        (:rewrite abs-separate-correctness-1-lemma-18))
     :use
     ((:instance (:rewrite prefixp-nthcdr-nthcdr)
                 (l2 (fat32-filename-list-fix relpath1))
@@ -3248,8 +3238,7 @@
      frame)))
   :hints
   (("goal" :in-theory (enable distinguish-names
-                              names-at-relpath intersectp-equal
-                              nthcdr-of-fat32-filename-list-fix))))
+                              names-at-relpath intersectp-equal))))
 
 (defthm
   abs-separate-correctness-1-lemma-37
@@ -3286,8 +3275,7 @@
   :hints
   (("goal"
     :in-theory (e/d (distinguish-names names-at-relpath
-                                       intersectp-equal prefixp
-                                       nthcdr-of-fat32-filename-list-fix)))))
+                                       intersectp-equal prefixp)))))
 
 (defthm
   abs-separate-correctness-1-lemma-38
@@ -3324,8 +3312,7 @@
       (frame-val->src (cdr (assoc-equal src frame))))
      frame)))
   :hints (("goal" :in-theory (enable distinguish-names names-at-relpath
-                                     intersectp-equal prefixp
-                                     nthcdr-of-fat32-filename-list-fix))))
+                                     intersectp-equal prefixp))))
 
 (defthm
   abs-separate-correctness-1-lemma-39
@@ -3370,8 +3357,7 @@
   :hints
   (("goal"
     :in-theory (e/d (distinguish-names names-at-relpath
-                                       intersectp-equal prefixp
-                                       nthcdr-of-fat32-filename-list-fix)))))
+                                       intersectp-equal prefixp)))))
 
 (defthm
   abs-separate-correctness-1-lemma-40
@@ -3494,7 +3480,7 @@
     :do-not-induct t
     :in-theory
     (e/d
-     (list-equiv nthcdr-of-fat32-filename-list-fix)
+     (list-equiv)
      (nthcdr-when->=-n-len-l (:rewrite prefixp-when-equal-lengths)
                              (:rewrite abs-separate-correctness-1-lemma-23)))
     :use
@@ -3542,8 +3528,7 @@
      frame)))
   :hints
   (("goal" :in-theory (e/d (abs-separate distinguish-names
-                                         prefixp names-at-relpath
-                                         nthcdr-of-fat32-filename-list-fix)
+                                         prefixp names-at-relpath)
                            (nthcdr-when->=-n-len-l)))))
 
 (defthm
@@ -4258,7 +4243,6 @@
        (t (abs-find-file-helper abs-file-alist1 pathname)))))
     :hints
     (("goal" :do-not-induct t
-      :in-theory (enable nthcdr-of-fat32-filename-list-fix)
       :use (:instance lemma
                       (pathname (fat32-filename-list-fix pathname)))))))
 
@@ -4287,8 +4271,7 @@
    (equal (abs-find-file (remove-assoc-equal x frame)
                          pathname)
           (abs-find-file frame pathname)))
-  :hints (("goal" :in-theory (enable abs-find-file
-                                     nthcdr-of-fat32-filename-list-fix))))
+  :hints (("goal" :in-theory (enable abs-find-file))))
 
 (defthm
   abs-find-file-of-put-assoc-lemma-2
@@ -4344,7 +4327,7 @@
                   (mv (abs-file-fix nil)
                       (mv-nth 1 (abs-find-file frame pathname)))))
   :hints
-  (("goal" :in-theory (enable abs-find-file nthcdr-of-fat32-filename-list-fix))
+  (("goal" :in-theory (enable abs-find-file))
    ("subgoal *1/2"
     :use
     (:instance (:rewrite abs-find-file-helper-of-context-apply-lemma-5)
@@ -4383,8 +4366,7 @@
                (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
                        pathname))
               (mv (abs-file-fix nil) *enoent*))))
-  :hints (("goal" :in-theory (enable abs-find-file
-                                     nthcdr-of-fat32-filename-list-fix))))
+  :hints (("goal" :in-theory (enable abs-find-file))))
 
 (defthm
   abs-find-file-of-put-assoc-1
@@ -4448,7 +4430,7 @@
           (abs-find-file (remove-assoc-equal name frame)
                          pathname)))
   :hints
-  (("goal" :in-theory (enable abs-find-file nthcdr-of-fat32-filename-list-fix))))
+  (("goal" :in-theory (enable abs-find-file))))
 
 (defund abs-find-file-alt
   (frame indices pathname)
@@ -4499,8 +4481,7 @@
            (equal (abs-find-file-alt frame (strip-cars frame)
                                      pathname)
                   (abs-find-file frame pathname)))
-  :hints (("goal" :in-theory (enable abs-find-file-alt abs-find-file
-                                     nthcdr-of-fat32-filename-list-fix))))
+  :hints (("goal" :in-theory (enable abs-find-file-alt abs-find-file))))
 
 (defthm
   abs-find-file-alt-correctness-2
@@ -5275,7 +5256,6 @@
   (("goal"
     :do-not-induct t
     :in-theory (e/d (names-at-relpath abs-find-file-helper take-of-nthcdr
-                                      nthcdr-of-fat32-filename-list-fix
                                       take-of-fat32-filename-list-fix)
                     (abs-find-file-helper-of-context-apply-lemma-4
                      (:rewrite abs-separate-correctness-1-lemma-41)
@@ -5403,7 +5383,6 @@
     :do-not-induct t
     :in-theory
     (e/d (names-at-relpath take-of-nthcdr abs-find-file-helper
-                           nthcdr-of-fat32-filename-list-fix
                            take-of-fat32-filename-list-fix)
          (abs-find-file-helper-of-context-apply-lemma-4 member-of-remove
                                                         (:rewrite take-when-prefixp)
@@ -5484,7 +5463,7 @@
                           (fat32-filename-list-fix relpath))
                  (prefixp (fat32-filename-list-fix relpath)
                           (frame-val->path (cdr (assoc-equal x frame))))))
-    :in-theory (e/d (list-equiv nthcdr-when->=-n-len-l names-at-relpath nthcdr-of-fat32-filename-list-fix)
+    :in-theory (e/d (list-equiv nthcdr-when->=-n-len-l names-at-relpath)
                     ((:rewrite prefixp-when-equal-lengths)
                      member-of-remove))
     :use
@@ -6129,8 +6108,10 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (abs-find-file-helper)
-                    ((:rewrite abs-find-file-correctness-1-lemma-33)))
+    :in-theory
+    (e/d (abs-find-file-helper)
+         (nthcdr-of-fat32-filename-list-fix
+          (:rewrite abs-find-file-correctness-1-lemma-33)))
     :use
     ((:instance
       (:rewrite abs-find-file-correctness-1-lemma-33)
@@ -6146,11 +6127,10 @@
       (:rewrite intersectp-member)
       (a
        (car
-        (nthcdr
-         (len
-          (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                             frame))))
-         (fat32-filename-list-fix pathname))))
+        (nthcdr (len (frame-val->path
+                      (cdr (assoc-equal (1st-complete frame)
+                                        frame))))
+                (fat32-filename-list-fix pathname))))
       (y
        (names-at-relpath
         root
@@ -6172,9 +6152,9 @@
           (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                             frame)))
           (nthcdr
-           (len
-            (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                               frame))))
+           (len (frame-val->path
+                 (cdr (assoc-equal (1st-complete frame)
+                                   frame))))
            pathname)))
         2))
       (abs-file-alist-p
@@ -6191,21 +6171,24 @@
           (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                             frame)))
           (nthcdr
-           (len
-            (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                               frame))))
+           (len (frame-val->path
+                 (cdr (assoc-equal (1st-complete frame)
+                                   frame))))
            pathname)))
         2))
       (abs-file-alist-p
        (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                          frame))))
-      (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
-                  0)))))
+      (not
+       (equal (mv-nth 1 (abs-find-file-helper root pathname))
+              0)))))
    ("subgoal 1''"
-    :in-theory (enable names-at-relpath abs-find-file-helper)
+    :in-theory (e/d (names-at-relpath abs-find-file-helper)
+                    (nthcdr-of-fat32-filename-list-fix))
     :cases
-    ((consp (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                               frame))))))))
+    ((consp
+      (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                         frame))))))))
 
 (defthm
   abs-find-file-correctness-1-lemma-7
@@ -6446,8 +6429,7 @@
     :hints (("goal" :induct (induction-scheme frame pathname root x)
              :in-theory (enable collapse))
             ("subgoal *1/1.2.1"
-             :in-theory (e/d (nthcdr-of-fat32-filename-list-fix)
-                             (prefixp-nthcdr-nthcdr))
+             :in-theory (disable prefixp-nthcdr-nthcdr)
              :use
              (:instance
               (:rewrite prefixp-nthcdr-nthcdr)
@@ -7244,7 +7226,8 @@
     :do-not-induct t
     :in-theory (e/d (take-of-nthcdr abs-find-file-helper
                                     nth-of-fat32-filename-list-fix)
-                    (abs-find-file-correctness-1-lemma-34
+                    (nthcdr-of-fat32-filename-list-fix
+                     abs-find-file-correctness-1-lemma-34
                      (:rewrite abs-find-file-correctness-1-lemma-18)
                      (:rewrite abs-find-file-correctness-1-lemma-57)
                      (:rewrite abs-find-file-correctness-1-lemma-58)))
@@ -7342,7 +7325,8 @@
     :in-theory
     (e/d (take-of-nthcdr abs-find-file-helper
                          nth-of-fat32-filename-list-fix)
-         (abs-find-file-correctness-1-lemma-34
+         (nthcdr-of-fat32-filename-list-fix
+          abs-find-file-correctness-1-lemma-34
           (:rewrite abs-find-file-helper-of-context-apply-lemma-4)
           (:rewrite abs-find-file-correctness-1-lemma-62)
           (:rewrite abs-find-file-correctness-1-lemma-37)))
@@ -7685,8 +7669,7 @@
                   (prefixp (fat32-filename-list-fix l1)
                            l2)))
   :hints (("goal" :do-not-induct t
-           :in-theory (e/d (nthcdr-of-fat32-filename-list-fix)
-                           (prefixp-nthcdr-nthcdr))
+           :in-theory (disable prefixp-nthcdr-nthcdr)
            :use (:instance prefixp-nthcdr-nthcdr
                            (l1 (fat32-filename-list-fix l1))))))
 (defthm prefixp-nthcdr-nthcdr-when-fat32-filename-list-p-2
@@ -7698,8 +7681,7 @@
                   (prefixp l1
                            (fat32-filename-list-fix l2))))
   :hints (("goal" :do-not-induct t
-           :in-theory (e/d (nthcdr-of-fat32-filename-list-fix)
-                           (prefixp-nthcdr-nthcdr))
+           :in-theory (disable prefixp-nthcdr-nthcdr)
            :use (:instance prefixp-nthcdr-nthcdr
                            (l2 (fat32-filename-list-fix l2))))))
 
