@@ -5349,11 +5349,12 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory
-    (e/d (names-at-relpath take-of-nthcdr abs-find-file-helper)
-         (abs-find-file-helper-of-context-apply-lemma-4 member-of-remove
-                                                        (:rewrite take-when-prefixp)
-                                                        (:rewrite nth-of-nthcdr)))
+    :in-theory (e/d (names-at-relpath take-of-nthcdr abs-find-file-helper)
+                    (abs-find-file-helper-of-context-apply-lemma-4
+                     member-of-remove
+                     (:rewrite nth-of-fat32-filename-list-fix)
+                     (:rewrite take-when-prefixp)
+                     (:rewrite nth-of-nthcdr)))
     :use
     ((:instance
       abs-find-file-helper-of-context-apply-lemma-4
@@ -5871,13 +5872,6 @@
           *enotdir*))
   :hints (("goal" :in-theory (enable abs-find-file-helper))))
 
-;; Move later
-(defthmd nth-of-fat32-filename-list-fix
-  (implies (< (nfix n) (len x))
-           (equal (nth n (fat32-filename-list-fix x))
-                  (fat32-filename-fix (nth n x))))
-  :hints (("goal" :in-theory (enable fat32-filename-list-fix))))
-
 (defthm
   abs-find-file-correctness-1-lemma-23
   (implies
@@ -5900,7 +5894,7 @@
     *enoent*))
   :hints
   (("goal"
-    :in-theory (e/d (abs-find-file-helper nth-of-fat32-filename-list-fix)
+    :in-theory (e/d (abs-find-file-helper)
                     ((:rewrite abs-separate-correctness-1-lemma-12)
                      abs-find-file-helper-of-context-apply-lemma-4
                      (:rewrite abs-find-file-correctness-1-lemma-18)))
@@ -6961,12 +6955,11 @@
   (("goal"
     :do-not-induct t
     :in-theory
-    (e/d (nth-of-fat32-filename-list-fix)
-         (nth-when-prefixp
-          (:rewrite abs-find-file-helper-of-context-apply-lemma-4)
-          (:rewrite take-when-prefixp)
-          prefixp-one-way-or-another
-          (:rewrite abs-find-file-correctness-1-lemma-57)))
+    (disable nth-when-prefixp
+             (:rewrite abs-find-file-helper-of-context-apply-lemma-4)
+             (:rewrite take-when-prefixp)
+             prefixp-one-way-or-another
+             (:rewrite abs-find-file-correctness-1-lemma-57))
     :use
     ((:instance
       nth-when-prefixp
@@ -7191,8 +7184,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (take-of-nthcdr abs-find-file-helper
-                                    nth-of-fat32-filename-list-fix)
+    :in-theory (e/d (take-of-nthcdr abs-find-file-helper)
                     (nthcdr-of-fat32-filename-list-fix
                      abs-find-file-correctness-1-lemma-34
                      (:rewrite abs-find-file-correctness-1-lemma-18)
@@ -7290,8 +7282,7 @@
   (("goal"
     :do-not-induct t
     :in-theory
-    (e/d (take-of-nthcdr abs-find-file-helper
-                         nth-of-fat32-filename-list-fix)
+    (e/d (take-of-nthcdr abs-find-file-helper)
          (nthcdr-of-fat32-filename-list-fix
           abs-find-file-correctness-1-lemma-34
           (:rewrite abs-find-file-helper-of-context-apply-lemma-4)
