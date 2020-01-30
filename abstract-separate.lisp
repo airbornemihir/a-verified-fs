@@ -2870,13 +2870,6 @@
                            (y (fat32-filename-list-fix relpath))
                            (x (frame-val->path (cdr (car frame))))))))
 
-;; Move later.
-(defrefinement
-  list-equiv fat32-filename-list-equiv
-  :hints
-  (("goal" :in-theory (enable fat32-filename-list-fix prefixp)
-    :induct (prefixp x y))))
-
 (defthm
   abs-separate-correctness-1-lemma-15
   (implies (and (not (intersectp-equal (remove-equal nil (strip-cars dir))
@@ -2912,13 +2905,6 @@
               (frame-val->path (cdr (assoc-equal x frame))))))))
   :hints (("goal" :in-theory (enable distinguish-names
                                      prefixp intersectp-equal))))
-
-;; Move later
-(defcong
-  fat32-filename-list-equiv
-  fat32-filename-list-equiv
-  (nthcdr n l)
-  2)
 
 (defthm
   abs-separate-correctness-1-lemma-16
@@ -3097,13 +3083,6 @@
                  (:instance (:rewrite take-when-prefixp)
                             (y (frame-val->path (cdr (car frame))))
                             (x relpath))))))
-
-;; Move later
-(defcong fat32-filename-list-equiv fat32-filename-list-equiv
-  (append x y) 1)
-
-(defcong fat32-filename-list-equiv fat32-filename-list-equiv
-  (append x y) 2)
 
 (defthm
   abs-separate-correctness-1-lemma-29
@@ -4008,16 +3987,6 @@
                                            abs-file-alist2)
                                    pathname))
     :cases ((null (car pathname))))))
-
-;; Move later
-(defthmd
-  take-of-fat32-filename-list-fix
-  (implies (< (nfix n) (len x))
-           (equal (take n (fat32-filename-list-fix x))
-                  (fat32-filename-list-fix (take n x))))
-  :hints
-  (("goal" :in-theory (e/d (fat32-filename-list-fix)
-                           (take-of-too-many take-when-atom take-of-cons)))))
 
 (defthm
   abs-find-file-helper-of-context-apply-lemma-4
@@ -5255,8 +5224,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (names-at-relpath abs-find-file-helper take-of-nthcdr
-                                      take-of-fat32-filename-list-fix)
+    :in-theory (e/d (names-at-relpath abs-find-file-helper take-of-nthcdr)
                     (abs-find-file-helper-of-context-apply-lemma-4
                      (:rewrite abs-separate-correctness-1-lemma-41)
                      (:rewrite member-of-remove)
@@ -5382,8 +5350,7 @@
   (("goal"
     :do-not-induct t
     :in-theory
-    (e/d (names-at-relpath take-of-nthcdr abs-find-file-helper
-                           take-of-fat32-filename-list-fix)
+    (e/d (names-at-relpath take-of-nthcdr abs-find-file-helper)
          (abs-find-file-helper-of-context-apply-lemma-4 member-of-remove
                                                         (:rewrite take-when-prefixp)
                                                         (:rewrite nth-of-nthcdr)))
