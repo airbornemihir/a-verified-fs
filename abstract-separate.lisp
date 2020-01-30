@@ -507,6 +507,10 @@
 
 (defund context-apply-ok
   (abs-file-alist1 abs-file-alist2 x x-path)
+  (declare (xargs :guard (and (abs-file-alist-p abs-file-alist1)
+                              (natp x)
+                              (abs-file-alist-p abs-file-alist2)
+                              (fat32-filename-list-p x-path))))
   (not
    (equal
     (context-apply
@@ -1871,83 +1875,135 @@
                                                   frame)))))
   (frame-val->src (cdr (assoc-equal (1st-complete frame) frame))))
 
+;; This is a "false" frame because the src value given to the root is 0, same
+;; as its abstract variable. This is one of a few compromises in elegance
+;; required for distinguishing the root, which is necessary to properly define
+;; the collapse relation.
+(defund frame-with-root (root frame)
+  (declare (xargs :guard (and (abs-file-alist-p root)
+                              (frame-p frame))))
+  (list* (cons 0 (frame-val nil root 0))
+         frame))
+
+(defund frame->root (frame)
+  (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame)))))
+  (frame-val->dir (cdr (assoc-equal 0 frame))))
+
+(defund frame->frame (frame)
+  (declare (xargs :guard (frame-p frame)))
+  (remove1-assoc-equal 0 frame))
+
+(defthm frame->root-of-frame-with-root
+  (equal (frame->root (frame-with-root root frame))
+         (abs-file-alist-fix root))
+  :hints (("Goal" :in-theory (enable frame-with-root frame->root)) ))
+
+(defthm frame->frame-of-frame-with-root
+  (equal (frame->frame (frame-with-root root frame))
+         frame)
+  :hints (("goal" :in-theory (enable frame-with-root frame->frame))))
+
+(defthm frame-p-of-frame->frame
+  (implies (frame-p frame)
+           (frame-p (frame->frame frame)))
+  :hints (("goal" :in-theory (enable frame->frame))))
+
+(defthm abs-file-alist-p-of-frame->root
+  (abs-file-alist-p (frame->root frame))
+  :hints (("goal" :in-theory (enable frame->root))))
+
+(defthm frame-with-root-correctness-1
+  (consp (assoc-equal 0 (frame-with-root root frame)))
+  :hints (("Goal" :in-theory (enable frame-with-root)))
+  :rule-classes :type-prescription)
+
+;; This is because of fixing.
+(defthm frame-p-of-frame-with-root
+  (equal (frame-p (frame-with-root root frame))
+         (frame-p frame))
+  :hints (("goal" :in-theory (enable frame-with-root))))
+
 (defund
-  collapse (root frame)
-  (declare
-   (xargs :guard (and (abs-file-alist-p root)
-                      (frame-p frame))
-          :measure (len frame)
-          :guard-hints
-          (("goal" :in-theory (enable context-apply-ok)))))
+  collapse (frame)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame)))
+                  :measure (len (frame->frame frame))))
   (b*
-      (((when (atom frame)) (mv root t))
-       (head-index (1st-complete frame))
-       ((when (zp head-index)) (mv root nil))
-       (head-frame-val (cdr (assoc-equal head-index frame)))
-       (src (1st-complete-src frame)))
+      (((when (atom (frame->frame frame)))
+        (mv (frame->root frame) t))
+       (head-index (1st-complete (frame->frame frame)))
+       ((when (zp head-index))
+        (mv (frame->root frame) nil))
+       (head-frame-val
+        (cdr (assoc-equal head-index (frame->frame frame))))
+       (src (1st-complete-src (frame->frame frame))))
     (if
-        (zp src)
-        (b*
-            ((frame (remove-assoc-equal head-index frame))
-             (root-after-context-apply
-              (context-apply root (frame-val->dir head-frame-val)
-                             head-index
-                             (frame-val->path head-frame-val)))
-             ;; This mbe ensures that no matter how we spin the induction scheme,
-             ;; the actual execution doesn't end up doing the context-apply twice.
-             ((when
-                  (mbe
-                   :exec (equal root-after-context-apply root)
-                   :logic
-                   (not
-                    (context-apply-ok root (frame-val->dir head-frame-val)
-                                      head-index
-                                      (frame-val->path head-frame-val)))))
-              (mv root nil)))
-          (collapse root-after-context-apply frame))
-      (b*
-          ((path (frame-val->path head-frame-val))
-           ((when
-                (or
-                 (equal src head-index)
-                 (atom
-                  (assoc-equal src
-                               (remove-assoc-equal head-index frame)))))
-            (mv root nil))
-           (src-path
-            (frame-val->path
-             (cdr
+     (zp src)
+     (b*
+         ((root-after-context-apply
+           (context-apply (frame->root frame)
+                          (frame-val->dir head-frame-val)
+                          head-index
+                          (frame-val->path head-frame-val)))
+          ((when
+            (not
+             (context-apply-ok (frame->root frame)
+                               (frame-val->dir head-frame-val)
+                               head-index
+                               (frame-val->path head-frame-val))))
+           (mv (frame->root frame) nil))
+          (frame
+           (frame-with-root
+            root-after-context-apply
+            (remove-assoc-equal head-index (frame->frame frame)))))
+       (collapse frame))
+     (b*
+         ((path (frame-val->path head-frame-val))
+          ((when
+            (or
+             (equal src head-index)
+             (atom
               (assoc-equal src
-                           (remove-assoc-equal head-index frame)))))
-           (src-dir
-            (frame-val->dir
-             (cdr
-              (assoc-equal src
-                           (remove-assoc-equal head-index frame)))))
-           (frame (remove-assoc-equal head-index frame))
-           ((unless (prefixp src-path path))
-            (mv root nil))
-           (src-dir-after-context-apply
-            (context-apply src-dir (frame-val->dir head-frame-val)
-                           head-index
-                           (nthcdr (len src-path) path)))
-           ((when
-                (mbe :exec (equal src-dir-after-context-apply src-dir)
-                     :logic
-                     (not (context-apply-ok
-                           src-dir (frame-val->dir head-frame-val)
-                           head-index
-                           (nthcdr (len src-path) path)))))
-            (mv root nil))
-           (frame
+                           (remove-assoc-equal
+                            head-index (frame->frame frame))))))
+           (mv (frame->root frame) nil))
+          (src-path
+           (frame-val->path
+            (cdr
+             (assoc-equal src
+                          (remove-assoc-equal
+                           head-index (frame->frame frame))))))
+          (src-dir
+           (frame-val->dir
+            (cdr
+             (assoc-equal src
+                          (remove-assoc-equal
+                           head-index (frame->frame frame))))))
+          ((unless (prefixp src-path path))
+           (mv (frame->root frame) nil))
+          (src-dir-after-context-apply
+           (context-apply src-dir (frame-val->dir head-frame-val)
+                          head-index
+                          (nthcdr (len src-path) path)))
+          ((when (not (context-apply-ok
+                       src-dir (frame-val->dir head-frame-val)
+                       head-index
+                       (nthcdr (len src-path) path))))
+           (mv (frame->root frame) nil))
+          (frame
+           (frame-with-root
+            (frame->root frame)
             (put-assoc-equal
              src
              (frame-val
-              (frame-val->path (cdr (assoc-equal src frame)))
+              (frame-val->path
+               (cdr (assoc-equal src (frame->frame frame))))
               src-dir-after-context-apply
-              (frame-val->src (cdr (assoc-equal src frame))))
-             frame)))
-        (collapse root frame)))))
+              (frame-val->src
+               (cdr (assoc-equal src (frame->frame frame)))))
+             (remove-assoc-equal
+              head-index (frame->frame frame))))))
+       (collapse frame)))))
 
 (assert-event
  (b*
@@ -2295,22 +2351,6 @@
            (abs-separate (remove-assoc-equal x frame)))
   :hints (("goal" :in-theory (enable abs-separate))))
 
-;; This is a "false" frame because the src value given to the root is 0, same
-;; as its abstract variable. This is one of a few compromises in elegance
-;; required for distinguishing the root, which is necessary to properly define
-;; the collapse relation.
-(defund frame-with-root (root frame)
-  (declare (xargs :guard (and (abs-file-alist-p root)
-                              (frame-p frame))))
-  (list* (cons 0 (frame-val nil root 0))
-         frame))
-
-;; This is because of fixing.
-(defthm frame-p-of-frame-with-root
-  (equal (frame-p (frame-with-root root frame))
-         (frame-p frame))
-  :hints (("goal" :in-theory (enable frame-with-root))))
-
 (defund frame-addrs-root (frame)
   (declare (xargs :guard (frame-p frame)))
   (cond ((atom frame) nil)
@@ -2538,7 +2578,8 @@
                              frame)))))
      (l (strip-cars frame))))))
 
-;; This has a free variable... which merits examination later.
+;; This has a free variable, and it only works this way. Contraposition causes
+;; proofs to fail.
 (defthm abs-separate-correctness-1-lemma-8
   (implies (and (abs-file-alist-p root)
                 (abs-separate (frame-with-root root frame)))
