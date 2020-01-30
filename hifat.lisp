@@ -1248,9 +1248,10 @@
                            (take-of-too-many take-when-atom take-of-cons)))))
 
 (defthm nth-of-fat32-filename-list-fix
-  (implies (< (nfix n) (len x))
-           (equal (nth n (fat32-filename-list-fix x))
-                  (fat32-filename-fix (nth n x))))
+  (equal (nth n (fat32-filename-list-fix x))
+         (if (< (nfix n) (len x))
+             (fat32-filename-fix (nth n x))
+             nil))
   :hints (("goal" :in-theory (enable fat32-filename-list-fix))))
 
 (defrefinement

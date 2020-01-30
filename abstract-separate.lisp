@@ -5166,6 +5166,7 @@
     :do-not-induct t
     :in-theory (e/d (names-at-relpath abs-find-file-helper take-of-nthcdr)
                     (abs-find-file-helper-of-context-apply-lemma-4
+                     nth-of-fat32-filename-list-fix
                      (:rewrite abs-separate-correctness-1-lemma-40)
                      (:rewrite member-of-remove)
                      (:rewrite car-of-nthcdr)
@@ -5333,7 +5334,7 @@
                 (x (frame-val->path (cdr (assoc-equal x frame)))))))))
 
 (defthm
-  abs-find-file-correctness-1-lemma-70
+  abs-find-file-correctness-1-lemma-58
   (implies
    (and
     (abs-file-alist-p dir)
@@ -5372,7 +5373,8 @@
                  (prefixp (fat32-filename-list-fix relpath)
                           (frame-val->path (cdr (assoc-equal x frame))))))
     :in-theory (e/d (list-equiv nthcdr-when->=-n-len-l names-at-relpath)
-                    ((:rewrite prefixp-when-equal-lengths)
+                    (nth-of-fat32-filename-list-fix
+                     (:rewrite prefixp-when-equal-lengths)
                      member-of-remove))
     :use
     ((:instance (:rewrite prefixp-when-equal-lengths)
@@ -5893,32 +5895,14 @@
                                                        frame))))
                pathname))
       (fs (frame-val->dir (cdr (assoc-equal (1st-complete frame)
-                                            frame)))))))
-   ("subgoal 2.2"
+                                            frame))))))
     :expand
     (abs-find-file-helper
      (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                        frame)))
      (nthcdr (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
                                                      frame))))
-             pathname)))
-   ("subgoal 2.1"
-    :cases
-    ((< (len (frame-val->path$inline (cdr (assoc-equal (1st-complete frame)
-                                                       frame))))
-        (len pathname))))
-   ("subgoal 1.2"
-    :expand
-    (abs-find-file-helper
-     (frame-val->dir (cdr (assoc-equal (1st-complete frame)
-                                       frame)))
-     (nthcdr (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                                     frame))))
-             pathname)))
-   ("subgoal 1.1"
-    :cases ((< (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                                       frame))))
-               (len pathname))))))
+             pathname)))))
 
 ;; This is interesting because it talks about two arbitrarily chosen abstract
 ;; variables.
@@ -6012,6 +5996,7 @@
     :in-theory
     (e/d (abs-find-file-helper)
          (nthcdr-of-fat32-filename-list-fix
+          nth-of-fat32-filename-list-fix
           (:rewrite abs-find-file-correctness-1-lemma-33)))
     :use
     ((:instance
@@ -6085,7 +6070,8 @@
               0)))))
    ("subgoal 1''"
     :in-theory (e/d (names-at-relpath abs-find-file-helper)
-                    (nthcdr-of-fat32-filename-list-fix))
+                    (nthcdr-of-fat32-filename-list-fix
+                     nth-of-fat32-filename-list-fix))
     :cases
     ((consp
       (frame-val->path (cdr (assoc-equal (1st-complete frame)
@@ -7150,11 +7136,7 @@
      (:instance (:rewrite abs-separate-correctness-1-lemma-41)
                 (pathname (fat32-filename-list-fix pathname)))
      (:instance (:rewrite abs-find-file-correctness-1-lemma-57)
-                (pathname (fat32-filename-list-fix pathname))))
-    :cases
-    ((< (nfix (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                                      frame)))))
-        (len pathname))))))
+                (pathname (fat32-filename-list-fix pathname)))))))
 
 (defthm
   abs-find-file-correctness-1-lemma-27
@@ -7296,11 +7278,7 @@
       (n (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
                                                  frame))))))
      (:instance (:rewrite abs-find-file-correctness-1-lemma-62)
-                (pathname (fat32-filename-list-fix pathname))))
-    :cases
-    ((< (nfix (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                                      frame)))))
-        (len pathname))))))
+                (pathname (fat32-filename-list-fix pathname)))))))
 
 (defthm
   abs-find-file-correctness-1-lemma-46
