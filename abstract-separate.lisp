@@ -2009,59 +2009,60 @@
  (b*
      (((mv root result)
        (collapse
-        (list
-         (cons
-          "INITRD  IMG"
-          (abs-file (dir-ent-fix nil) ""))
-         (cons
-          "RUN        "
-          (abs-file
-           (dir-ent-fix nil)
-           (list
-            (cons
-             "RSYSLOGDPID"
-             (abs-file (dir-ent-fix nil) "")))))
-         (cons
-          "USR        "
-          (abs-file (dir-ent-fix nil)
-                    (list
-                     (cons
-                      "LOCAL      "
-                      (abs-file (dir-ent-fix nil) ()))
-                     (cons
-                      "LIB        "
-                      (abs-file (dir-ent-fix nil) ()))
-                     1))))
-        (list
-         (cons
-          1
-          (frame-val
-           (list "USR        ")
-           (list
-            (cons
-             "SHARE      "
-             (abs-file (dir-ent-fix nil) ()))
-            (cons
-             "BIN        "
-             (abs-file (dir-ent-fix nil)
-                       (list
-                        (cons
-                         "CAT        "
-                         (abs-file (dir-ent-fix nil) ""))
-                        2
-                        (cons
-                         "TAC        "
-                         (abs-file (dir-ent-fix nil) ""))))))
-           0))
-         (cons
-          2
-          (frame-val
-           (list "USR        " "BIN        ")
-           (list
-            (cons
-             "COL        "
-             (abs-file (dir-ent-fix nil) "")))
-           1))))))
+        (frame-with-root
+         (list
+          (cons
+           "INITRD  IMG"
+           (abs-file (dir-ent-fix nil) ""))
+          (cons
+           "RUN        "
+           (abs-file
+            (dir-ent-fix nil)
+            (list
+             (cons
+              "RSYSLOGDPID"
+              (abs-file (dir-ent-fix nil) "")))))
+          (cons
+           "USR        "
+           (abs-file (dir-ent-fix nil)
+                     (list
+                      (cons
+                       "LOCAL      "
+                       (abs-file (dir-ent-fix nil) ()))
+                      (cons
+                       "LIB        "
+                       (abs-file (dir-ent-fix nil) ()))
+                      1))))
+         (list
+          (cons
+           1
+           (frame-val
+            (list "USR        ")
+            (list
+             (cons
+              "SHARE      "
+              (abs-file (dir-ent-fix nil) ()))
+             (cons
+              "BIN        "
+              (abs-file (dir-ent-fix nil)
+                        (list
+                         (cons
+                          "CAT        "
+                          (abs-file (dir-ent-fix nil) ""))
+                         2
+                         (cons
+                          "TAC        "
+                          (abs-file (dir-ent-fix nil) ""))))))
+            0))
+          (cons
+           2
+           (frame-val
+            (list "USR        " "BIN        ")
+            (list
+             (cons
+              "COL        "
+              (abs-file (dir-ent-fix nil) "")))
+            1)))))))
    (and
     (equal
      root
@@ -2188,12 +2189,11 @@
   t))
 
 (defthm abs-file-alist-p-of-collapse
-  (implies (abs-file-alist-p root)
-           (abs-file-alist-p (mv-nth 0 (collapse root frame))))
+  (abs-file-alist-p (mv-nth 0 (collapse frame)))
   :hints (("goal" :in-theory (enable collapse))))
 
 (defthm booleanp-of-collapse
-  (booleanp (mv-nth 1 (collapse root frame)))
+  (booleanp (mv-nth 1 (collapse frame)))
   :hints (("goal" :in-theory (enable collapse)))
   :rule-classes :type-prescription)
 
