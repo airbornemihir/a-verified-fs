@@ -4766,106 +4766,124 @@
 (defthm
   abs-find-file-helper-of-collapse-1
   (implies
-   (and (frame-p frame)
-        (abs-file-alist-p root)
-        (abs-separate frame)
-        (distinguish-names root nil frame)
+   (and (frame-p (frame->frame frame))
+        (abs-separate (frame->frame frame))
+        (distinguish-names (frame->root frame)
+                           nil (frame->frame frame))
         (m1-regular-file-p (mv-nth 0
-                                   (abs-find-file-helper root pathname))))
-   (equal (abs-find-file-helper (mv-nth 0 (collapse root frame))
+                                   (abs-find-file-helper (frame->root frame)
+                                                         pathname))))
+   (equal (abs-find-file-helper (mv-nth 0 (collapse frame))
                                 pathname)
-          (abs-find-file-helper root pathname)))
+          (abs-find-file-helper (frame->root frame)
+                                pathname)))
   :hints
   (("goal" :in-theory (enable collapse distinguish-names)
-    :induct (collapse root frame))
+    :induct (collapse frame))
    ("subgoal *1/4"
     :use (:instance (:rewrite abs-find-file-helper-of-context-apply-lemma-5)
-                    (fs root))))
+                    (fs (frame->root frame)))))
   :rule-classes
   (:rewrite
    (:rewrite
     :corollary
     (implies
-     (and (frame-p frame)
-          (abs-file-alist-p root)
-          (abs-separate frame)
-          (distinguish-names root nil frame)
-          (m1-regular-file-p (mv-nth 0 (abs-find-file-helper root pathname)))
-          (m1-file-alist-p (mv-nth 0 (collapse root frame)))
-          (hifat-no-dups-p (mv-nth 0 (collapse root frame))))
-     (equal (hifat-find-file (mv-nth 0 (collapse root frame))
+     (and (frame-p (frame->frame frame))
+          (abs-separate (frame->frame frame))
+          (distinguish-names (frame->root frame)
+                             nil (frame->frame frame))
+          (m1-regular-file-p (mv-nth 0
+                                     (abs-find-file-helper (frame->root frame)
+                                                           pathname)))
+          (m1-file-alist-p (mv-nth 0 (collapse frame)))
+          (hifat-no-dups-p (mv-nth 0 (collapse frame))))
+     (equal (hifat-find-file (mv-nth 0 (collapse frame))
                              pathname)
-            (abs-find-file-helper root pathname))))))
+            (abs-find-file-helper (frame->root frame)
+                                  pathname))))))
 
 (defthm
   abs-find-file-helper-of-collapse-2
-  (implies (and (frame-p frame)
-                (abs-file-alist-p root)
-                (abs-separate frame)
-                (distinguish-names root nil frame)
-                (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
+  (implies (and (frame-p (frame->frame frame))
+                (abs-separate (frame->frame frame))
+                (distinguish-names (frame->root frame)
+                                   nil (frame->frame frame))
+                (not (equal (mv-nth 1
+                                    (abs-find-file-helper (frame->root frame)
+                                                          pathname))
                             0))
-                (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
+                (not (equal (mv-nth 1
+                                    (abs-find-file-helper (frame->root frame)
+                                                          pathname))
                             *enoent*)))
-           (equal (abs-find-file-helper (mv-nth 0 (collapse root frame))
+           (equal (abs-find-file-helper (mv-nth 0 (collapse frame))
                                         pathname)
-                  (abs-find-file-helper root pathname)))
+                  (abs-find-file-helper (frame->root frame)
+                                        pathname)))
   :hints (("goal" :in-theory (enable collapse distinguish-names)
-           :induct (collapse root frame)))
+           :induct (collapse frame)))
   :rule-classes
   (:rewrite
    (:rewrite
     :corollary
-    (implies (and (frame-p frame)
-                  (abs-file-alist-p root)
-                  (abs-separate frame)
-                  (distinguish-names root nil frame)
-                  (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
+    (implies (and (frame-p (frame->frame frame))
+                  (abs-separate (frame->frame frame))
+                  (distinguish-names (frame->root frame)
+                                     nil (frame->frame frame))
+                  (not (equal (mv-nth 1
+                                      (abs-find-file-helper (frame->root frame)
+                                                            pathname))
                               0))
-                  (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
-                              *enoent*))
-                  (m1-file-alist-p (mv-nth 0 (collapse root frame)))
-                  (hifat-no-dups-p (mv-nth 0 (collapse root frame))))
-             (equal (hifat-find-file (mv-nth 0 (collapse root frame))
-                                     pathname)
-                    (abs-find-file-helper root pathname))))))
+                  (not (equal (mv-nth 1
+                                      (abs-find-file-helper (frame->root frame)
+                                                            pathname))
+                              *enoent*)))
+             (equal (abs-find-file-helper (mv-nth 0 (collapse frame))
+                                          pathname)
+                    (abs-find-file-helper (frame->root frame)
+                                          pathname))))))
 
 ;; The somewhat weaker conclusion, in terms of (mv-nth 1 (abs-find-file ...))
 ;; rather than (abs-find-file ...), is because of the possibility that the file
 ;; returned is a directory with holes, which gets filled in during collapse.
 (defthm
   abs-find-file-helper-of-collapse-3
-  (implies
-   (and (frame-p frame)
-        (abs-file-alist-p root)
-        (abs-separate frame)
-        (distinguish-names root nil frame)
-        (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
-                    *enoent*)))
-   (equal (mv-nth 1
-                  (abs-find-file-helper (mv-nth 0 (collapse root frame))
-                                        pathname))
-          (mv-nth 1
-                  (abs-find-file-helper root pathname))))
+  (implies (and (frame-p (frame->frame frame))
+                (abs-separate (frame->frame frame))
+                (distinguish-names (frame->root frame)
+                                   nil (frame->frame frame))
+                (not (equal (mv-nth 1
+                                    (abs-find-file-helper (frame->root frame)
+                                                          pathname))
+                            *enoent*)))
+           (equal (mv-nth 1
+                          (abs-find-file-helper (mv-nth 0 (collapse frame))
+                                                pathname))
+                  (mv-nth 1
+                          (abs-find-file-helper (frame->root frame)
+                                                pathname))))
   :hints (("goal" :in-theory (enable collapse distinguish-names)
-           :induct (collapse root frame)))
+           :induct (collapse frame)))
   :rule-classes
   (:rewrite
    (:rewrite
     :corollary
-    (implies (and (frame-p frame)
-                  (abs-file-alist-p root)
-                  (abs-separate frame)
-                  (distinguish-names root nil frame)
-                  (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
+    (implies (and (frame-p (frame->frame frame))
+                  (abs-separate (frame->frame frame))
+                  (distinguish-names (frame->root frame)
+                                     nil (frame->frame frame))
+                  (not (equal (mv-nth 1
+                                      (abs-find-file-helper (frame->root frame)
+                                                            pathname))
                               *enoent*))
-                  (m1-file-alist-p (mv-nth 0 (collapse root frame)))
-                  (hifat-no-dups-p (mv-nth 0 (collapse root frame))))
+                  (m1-file-alist-p (mv-nth 0 (collapse frame)))
+                  (hifat-no-dups-p (mv-nth 0 (collapse frame))))
              (equal (mv-nth 1
-                            (hifat-find-file (mv-nth 0 (collapse root frame))
+                            (hifat-find-file (mv-nth 0 (collapse frame))
                                              pathname))
                     (mv-nth 1
-                            (abs-find-file-helper root pathname)))))))
+                            (abs-find-file-helper (frame->root frame)
+                                                  pathname)))))))
 
 (defthm
   abs-find-file-correctness-1-lemma-1
