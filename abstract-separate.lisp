@@ -2681,25 +2681,6 @@
            :induct (mv (abs-no-dups-p abs-file-alist)
                        (remove-equal x abs-file-alist)))))
 
-(defthm member-equal-of-strip-cars-of-remove-equal
-  (implies (not (member-equal x1 (strip-cars alist)))
-           (not (member-equal x1
-                              (strip-cars (remove-equal x2 alist)))))
-  :rule-classes (:type-prescription :rewrite))
-
-(defthm
-  intersectp-equal-of-strip-cars-of-remove-equal
-  (implies
-   (not (intersectp-equal x1
-                          (remove-equal nil (strip-cars abs-file-alist1))))
-   (not (intersectp-equal
-         x1
-         (remove-equal nil
-                       (strip-cars (remove-equal x2 abs-file-alist1))))))
-  :hints (("goal" :in-theory (e/d (intersectp-equal)
-                                  (intersectp-is-commutative))))
-  :rule-classes (:rewrite :type-prescription))
-
 (defthm
   abs-no-dups-p-of-context-apply
   (implies
@@ -3783,23 +3764,25 @@
   :hints (("goal" :in-theory (enable abs-find-file)))
   :rule-classes :type-prescription)
 
-(defthm abs-find-file-of-fat32-filename-list-fix
-  (equal (abs-find-file frame
-                        (fat32-filename-list-fix pathname))
-         (abs-find-file frame pathname))
-  :hints (("goal" :in-theory (enable abs-find-file))))
+(encapsulate
+  ()
 
-(defcong
-  fat32-filename-list-equiv
-  equal (abs-find-file frame pathname)
-  2
-  :hints
-  (("goal"
-    :in-theory
-    (disable abs-find-file-of-fat32-filename-list-fix)
-    :use ((:instance abs-find-file-of-fat32-filename-list-fix
-                     (pathname pathname-equiv))
-          abs-find-file-of-fat32-filename-list-fix))))
+  (local
+   (defthmd abs-find-file-of-fat32-filename-list-fix
+     (equal (abs-find-file frame
+                           (fat32-filename-list-fix pathname))
+            (abs-find-file frame pathname))
+     :hints (("goal" :in-theory (enable abs-find-file)))))
+
+  (defcong
+    fat32-filename-list-equiv
+    equal (abs-find-file frame pathname)
+    2
+    :hints
+    (("goal"
+      :use ((:instance abs-find-file-of-fat32-filename-list-fix
+                       (pathname pathname-equiv))
+            abs-find-file-of-fat32-filename-list-fix)))))
 
 (defthm
   abs-directory-file-p-when-m1-file-p
@@ -5111,8 +5094,7 @@
                          (append (remove-equal x abs-file-alist1)
                                  abs-file-alist2))))))
   :rule-classes
-  (:rewrite
-   (:rewrite
+  ((:rewrite
     :corollary
     (implies
      (and
@@ -5426,34 +5408,7 @@
            :in-theory (disable abs-separate-correctness-1-lemma-26
                                abs-separate-correctness-1-lemma-16)
            :use (abs-separate-correctness-1-lemma-26
-                 abs-separate-correctness-1-lemma-16)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (and
-      (distinguish-names dir relpath frame)
-      (abs-file-alist-p dir)
-      (consp (assoc-equal x frame))
-      (prefixp (fat32-filename-list-fix relpath) (fat32-filename-list-fix pathname))
-      (equal
-       (mv-nth 1
-               (abs-find-file-helper dir (nthcdr (len relpath) pathname)))
-       0)
-      (prefixp (frame-val->path (cdr (assoc-equal x frame)))
-               (fat32-filename-list-fix pathname))
-      (m1-file-alist-p (frame-val->dir (cdr (assoc-equal x frame))))
-      (hifat-no-dups-p (frame-val->dir (cdr (assoc-equal x frame)))))
-     (not
-      (equal
-       (mv-nth
-        1
-        (hifat-find-file
-         (frame-val->dir (cdr (assoc-equal x frame)))
-         (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
-                 pathname)))
-       0))))))
+                 abs-separate-correctness-1-lemma-16))))
 
 (defthm
   abs-find-file-correctness-1-lemma-24
@@ -7916,7 +7871,7 @@
       (t (mv frame x y)))))
 
   ;; This is important, but the induction scheme and subgoals were a drag.
-  (defthm
+  (defthmd
     abs-find-file-correctness-1-lemma-41
     (implies
      (and
@@ -7984,8 +7939,7 @@
     :in-theory
     (e/d
      (abs-find-file-alt)
-     (member-of-a-nat-list (:type-prescription member-of-strip-cars . 2)
-                           (:rewrite abs-find-file-correctness-1-lemma-41))))
+     (member-of-a-nat-list (:type-prescription member-of-strip-cars . 2))))
    ("subgoal *1/2"
     :expand (subsetp-equal indices (strip-cars frame))
     :use ((:instance (:type-prescription member-of-strip-cars . 2)
@@ -9547,16 +9501,13 @@
   :hints
   (("goal"
     :in-theory (e/d (abs-find-file collapse abs-separate intersectp-equal)
-                    ((:rewrite abs-find-file-correctness-1-lemma-17
-                               . 2)
-                     (:rewrite nthcdr-when->=-n-len-l)
+                    ((:rewrite nthcdr-when->=-n-len-l)
                      (:rewrite len-when-prefixp)
                      (:definition remove-assoc-equal)
                      (:rewrite remove-assoc-of-remove-assoc)
                      (:rewrite len-of-remove-assoc-equal-2)
                      (:rewrite abs-file-alist-p-of-context-apply-lemma-1)
                      (:rewrite abs-file-alist-p-when-m1-file-alist-p)
-                     (:rewrite abs-find-file-correctness-1-lemma-41)
                      (:rewrite remove-assoc-equal-of-put-assoc-equal)
                      (:rewrite abs-file-alist-p-correctness-1-lemma-3)))
     :induct (collapse frame))))
