@@ -8917,7 +8917,7 @@
                                            frame)))))))
 
 (defthm
-  abs-find-file-correctness-1-lemma-55
+  abs-find-file-correctness-1-lemma-45
   (implies
    (and
     (prefixp (frame-val->path (cdr (assoc-equal (1st-complete frame)
@@ -8965,15 +8965,13 @@
        pathname))
      2))
    (equal
-    (mv-nth 0 (abs-find-file frame pathname))
-    (mv-nth
-     0
-     (hifat-find-file
-      (frame-val->dir (cdr (assoc-equal (1st-complete frame)
-                                        frame)))
-      (nthcdr (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                                      frame))))
-              pathname)))))
+    (hifat-find-file
+     (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                       frame)))
+     (nthcdr (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                     frame))))
+             pathname))
+    (abs-find-file frame pathname)))
   :hints
   (("goal"
     :do-not-induct t
