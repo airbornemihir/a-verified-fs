@@ -5731,7 +5731,7 @@
                     (x (remove-equal nil (strip-cars abs-file-alist1)))))))
 
 (defthm
-  abs-find-file-correctness-1-lemma-40
+  abs-find-file-correctness-1-lemma-14
   (implies
    (and
     (equal (mv-nth 1
@@ -5768,9 +5768,6 @@
                                (abs-find-file (frame-with-root root frame)
                                               pathname))))
    (equal
-    (mv-nth 0
-            (abs-find-file (frame-with-root root frame)
-                           pathname))
     (mv-nth
      0
      (abs-find-file
@@ -5783,7 +5780,10 @@
                                                          frame))))
        (remove-assoc-equal (1st-complete frame)
                            frame))
-      pathname))))
+      pathname))
+    (mv-nth 0
+            (abs-find-file (frame-with-root root frame)
+                           pathname))))
   :hints (("goal" :in-theory (enable abs-find-file
                                      frame-with-root abs-separate
                                      abs-find-file-correctness-1-lemma-59)
@@ -5791,7 +5791,7 @@
 
 ;; Kinda general
 (defthm
-  abs-find-file-correctness-1-lemma-14
+  abs-find-file-correctness-1-lemma-40
   (implies
    (and (not (equal (mv-nth 1 (hifat-find-file fs pathname))
                     0))
