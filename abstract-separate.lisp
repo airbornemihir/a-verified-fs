@@ -8,39 +8,6 @@
 ; This is a model of the FAT32 filesystem, related to HiFAT but with abstract
 ; variables.
 
-(defthm
-  prefixp-of-fat32-filename-list-fix
-  (implies (prefixp x y)
-           (prefixp (fat32-filename-list-fix x)
-                    (fat32-filename-list-fix y)))
-  :hints (("goal" :in-theory (enable prefixp fat32-filename-list-fix))))
-
-;; Move later.
-(defthm prefixp-nthcdr-nthcdr-when-fat32-filename-list-p-1
-  (implies (and (>= (len l2) n)
-                (equal (take n (fat32-filename-list-fix l1))
-                       (take n l2)))
-           (equal (prefixp (fat32-filename-list-fix (nthcdr n l1))
-                           (nthcdr n l2))
-                  (prefixp (fat32-filename-list-fix l1)
-                           l2)))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable prefixp-nthcdr-nthcdr)
-           :use (:instance prefixp-nthcdr-nthcdr
-                           (l1 (fat32-filename-list-fix l1))))))
-(defthm prefixp-nthcdr-nthcdr-when-fat32-filename-list-p-2
-  (implies (and (>= (len l2) n)
-                (equal (take n l1)
-                       (take n (fat32-filename-list-fix l2))))
-           (equal (prefixp (nthcdr n l1)
-                           (fat32-filename-list-fix (nthcdr n l2)))
-                  (prefixp l1
-                           (fat32-filename-list-fix l2))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable prefixp-nthcdr-nthcdr)
-           :use (:instance prefixp-nthcdr-nthcdr
-                           (l2 (fat32-filename-list-fix l2))))))
-
 ;; This is explicitly a replacement for assoc-equal with a vacuous guard.
 (defund abs-assoc (x alist)
   (declare (xargs :guard t))
@@ -1890,9 +1857,14 @@
                   (and (natp name) (frame-val-p val))))
   :hints (("goal" :in-theory (enable frame-p))))
 
-(defthm frame-p-of-remove-assoc-equal
+(defthm frame-p-of-remove-assoc
   (implies (frame-p alist)
            (frame-p (remove-assoc-equal x alist)))
+  :hints (("goal" :in-theory (enable frame-p))))
+
+(defthm frame-p-of-remove1-assoc
+  (implies (frame-p alist)
+           (frame-p (remove1-assoc-equal x alist)))
   :hints (("goal" :in-theory (enable frame-p))))
 
 (defund 1st-complete-src (frame)
