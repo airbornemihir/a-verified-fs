@@ -2391,6 +2391,91 @@
                      (zp (frame-val->src (cdr (assoc-equal x frame)))))))
   :hints (("goal" :in-theory (enable frame-addrs-root))))
 
+(defthm abs-no-dups-p-of-append-lemma-2
+  (implies (and (abs-no-dups-p x)
+                (abs-file-alist-p x)
+                (abs-file-alist-p y)
+                (consp (assoc-equal (car (car x))
+                                    (append (cdr x) y))))
+           (member-equal (car (car x))
+                         (strip-cars y)))
+  :hints (("goal" :do-not-induct t
+           :expand (abs-no-dups-p x)
+           :cases ((equal (car (car x)) nil)))))
+
+;; It would be nice to have fewer hypotheses and more terms in the RHS, but...
+(defthm
+  abs-no-dups-p-of-append
+  (implies (and (abs-no-dups-p x)
+                (abs-no-dups-p y)
+                (abs-file-alist-p x)
+                (abs-file-alist-p y))
+           (equal (abs-no-dups-p (append x y))
+                  (not (intersectp-equal (remove-equal nil (strip-cars x))
+                                         (remove-equal nil (strip-cars y))))))
+  :hints (("goal" :in-theory (e/d (abs-no-dups-p intersectp-equal)
+                                  (intersectp-is-commutative))
+           :induct (append x y)
+           :do-not-induct t)))
+
+(defthm abs-no-dups-p-of-remove-lemma-1
+  (implies (and (not (consp (assoc-equal (car (car abs-file-alist))
+                                         (cdr abs-file-alist))))
+                (abs-file-alist-p (cdr abs-file-alist)))
+           (not (consp (assoc-equal (car (car abs-file-alist))
+                                    (remove-equal x (cdr abs-file-alist))))))
+  :hints (("goal" :cases ((equal (car (car abs-file-alist))
+                                 nil)))))
+
+(defthm abs-no-dups-p-of-remove
+  (implies (and (abs-file-alist-p abs-file-alist)
+                (abs-no-dups-p abs-file-alist))
+           (abs-no-dups-p (remove-equal x abs-file-alist)))
+  :hints (("goal" :in-theory (enable abs-no-dups-p)
+           :expand (abs-file-alist-p abs-file-alist)
+           :induct (mv (abs-no-dups-p abs-file-alist)
+                       (remove-equal x abs-file-alist)))))
+
+(defthm
+  abs-no-dups-p-of-context-apply-lemma-1
+  (implies
+   (and (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
+        (abs-no-dups-p abs-file-alist2)
+        (abs-file-alist-p abs-file-alist1)
+        (abs-no-dups-p abs-file-alist1)
+        (abs-file-alist-p abs-file-alist2))
+   (abs-no-dups-p
+    (put-assoc-equal
+     name
+     (abs-file (abs-file->dir-ent (cdr (assoc-equal name abs-file-alist1)))
+               abs-file-alist2)
+     abs-file-alist1)))
+  :hints
+  (("goal"
+    :in-theory (enable abs-no-dups-p)
+    :induct
+    (mv
+     (abs-no-dups-p abs-file-alist1)
+     (put-assoc-equal
+      name
+      (abs-file (abs-file->dir-ent (cdr (assoc-equal name abs-file-alist1)))
+                abs-file-alist2)
+      abs-file-alist1))
+    :expand (abs-file-alist-p abs-file-alist1))))
+
+(defthm
+  abs-no-dups-p-of-context-apply
+  (implies
+   (and (abs-file-alist-p abs-file-alist1)
+        (abs-no-dups-p abs-file-alist1)
+        (abs-file-alist-p abs-file-alist2)
+        (abs-no-dups-p abs-file-alist2)
+        (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist2))
+                               (names-at-relpath abs-file-alist1 x-path))))
+   (abs-no-dups-p (context-apply abs-file-alist1
+                                     abs-file-alist2 x x-path)))
+  :hints (("goal" :in-theory (enable names-at-relpath context-apply))))
+
 ;; This has a free variable. Also, accumulated-persistence may call it useless,
 ;; but it is very much needed.
 (defthm abs-separate-correctness-1-lemma-1
@@ -2611,91 +2696,6 @@
 
 (defthm
   abs-separate-correctness-1-lemma-10
-  (implies
-   (and (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
-        (abs-no-dups-p abs-file-alist2)
-        (abs-file-alist-p abs-file-alist1)
-        (abs-no-dups-p abs-file-alist1)
-        (abs-file-alist-p abs-file-alist2))
-   (abs-no-dups-p
-    (put-assoc-equal
-     name
-     (abs-file (abs-file->dir-ent (cdr (assoc-equal name abs-file-alist1)))
-               abs-file-alist2)
-     abs-file-alist1)))
-  :hints
-  (("goal"
-    :in-theory (enable abs-no-dups-p)
-    :induct
-    (mv
-     (abs-no-dups-p abs-file-alist1)
-     (put-assoc-equal
-      name
-      (abs-file (abs-file->dir-ent (cdr (assoc-equal name abs-file-alist1)))
-                abs-file-alist2)
-      abs-file-alist1))
-    :expand (abs-file-alist-p abs-file-alist1))))
-
-(defthm abs-no-dups-p-of-append-lemma-2
-  (implies (and (abs-no-dups-p x)
-                (abs-file-alist-p x)
-                (abs-file-alist-p y)
-                (consp (assoc-equal (car (car x))
-                                    (append (cdr x) y))))
-           (member-equal (car (car x))
-                         (strip-cars y)))
-  :hints (("goal" :do-not-induct t
-           :expand (abs-no-dups-p x)
-           :cases ((equal (car (car x)) nil)))))
-
-;; It would be nice to have fewer hypotheses and more terms in the RHS, but...
-(defthm
-  abs-no-dups-p-of-append
-  (implies (and (abs-no-dups-p x)
-                (abs-no-dups-p y)
-                (abs-file-alist-p x)
-                (abs-file-alist-p y))
-           (equal (abs-no-dups-p (append x y))
-                  (not (intersectp-equal (remove-equal nil (strip-cars x))
-                                         (remove-equal nil (strip-cars y))))))
-  :hints (("goal" :in-theory (e/d (abs-no-dups-p intersectp-equal)
-                                  (intersectp-is-commutative))
-           :induct (append x y)
-           :do-not-induct t)))
-
-(defthm abs-no-dups-p-of-remove-lemma-1
-  (implies (and (not (consp (assoc-equal (car (car abs-file-alist))
-                                         (cdr abs-file-alist))))
-                (abs-file-alist-p (cdr abs-file-alist)))
-           (not (consp (assoc-equal (car (car abs-file-alist))
-                                    (remove-equal x (cdr abs-file-alist))))))
-  :hints (("goal" :cases ((equal (car (car abs-file-alist))
-                                 nil)))))
-
-(defthm abs-no-dups-p-of-remove
-  (implies (and (abs-file-alist-p abs-file-alist)
-                (abs-no-dups-p abs-file-alist))
-           (abs-no-dups-p (remove-equal x abs-file-alist)))
-  :hints (("goal" :in-theory (enable abs-no-dups-p)
-           :expand (abs-file-alist-p abs-file-alist)
-           :induct (mv (abs-no-dups-p abs-file-alist)
-                       (remove-equal x abs-file-alist)))))
-
-(defthm
-  abs-no-dups-p-of-context-apply
-  (implies
-   (and (abs-file-alist-p abs-file-alist1)
-        (abs-no-dups-p abs-file-alist1)
-        (abs-file-alist-p abs-file-alist2)
-        (abs-no-dups-p abs-file-alist2)
-        (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist2))
-                               (names-at-relpath abs-file-alist1 x-path))))
-   (abs-no-dups-p (context-apply abs-file-alist1
-                                     abs-file-alist2 x x-path)))
-  :hints (("goal" :in-theory (enable names-at-relpath context-apply))))
-
-(defthm
-  abs-separate-correctness-1-lemma-11
   (implies
    (abs-separate frame)
    (abs-no-dups-p (frame-val->dir$inline (cdr (assoc-equal x frame)))))
