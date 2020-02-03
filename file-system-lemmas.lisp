@@ -1073,3 +1073,7 @@
   remove-assoc-of-remove-assoc
   (equal (remove-assoc x1 (remove-assoc x2 alist))
          (remove-assoc x2 (remove-assoc x1 alist))))
+
+(defthm strip-cars-of-remove1-assoc
+  (equal (strip-cars (remove1-assoc-equal key alist))
+         (remove1-equal key (strip-cars alist))))

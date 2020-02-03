@@ -1915,6 +1915,12 @@
   :hints (("Goal" :in-theory (enable frame-with-root)))
   :rule-classes :type-prescription)
 
+(defthm no-duplicatesp-of-strip-cars-of-frame->frame
+ (implies
+        (no-duplicatesp-equal (strip-cars frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+ :hints (("goal" :in-theory (enable frame->frame))))
+
 ;; This is because of fixing.
 (defthm frame-p-of-frame-with-root
   (equal (frame-p (frame-with-root root frame))
