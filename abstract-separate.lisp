@@ -1906,6 +1906,18 @@
            (frame-p (frame->frame frame)))
   :hints (("goal" :in-theory (enable frame->frame))))
 
+(defthm frame->frame-of-put-assoc
+  (equal (frame->frame (put-assoc-equal name val frame))
+         (if (equal name 0)
+             (frame->frame frame)
+             (put-assoc-equal name val (frame->frame frame))))
+  :hints (("goal" :in-theory (enable frame->frame))))
+
+(defthm frame->frame-of-remove-assoc
+  (equal (frame->frame (remove-assoc-equal x frame))
+         (remove-assoc-equal x (frame->frame frame)))
+  :hints (("goal" :in-theory (enable frame->frame))))
+
 (defthm abs-file-alist-p-of-frame->root
   (abs-file-alist-p (frame->root frame))
   :hints (("goal" :in-theory (enable frame->root))))
@@ -1927,11 +1939,17 @@
          (frame-p frame))
   :hints (("goal" :in-theory (enable frame-with-root))))
 
+(defthm collapse-guard-lemma-1
+  (implies (consp (assoc-equal x (frame->frame frame)))
+           (consp (assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable frame->frame))))
+
 (defund
   collapse (frame)
   (declare (xargs :guard (and (frame-p frame)
                               (consp (assoc-equal 0 frame)))
-                  :measure (len (frame->frame frame))))
+                  :measure (len (frame->frame frame))
+                  :hints (("Goal" :in-theory (disable put-assoc-equal)))))
   (b*
       (((when (atom (frame->frame frame)))
         (mv (frame->root frame) t))
@@ -1939,75 +1957,51 @@
        ((when (zp head-index))
         (mv (frame->root frame) nil))
        (head-frame-val
-        (cdr (assoc-equal head-index (frame->frame frame))))
-       (src (1st-complete-src (frame->frame frame))))
-    (if
-     (zp src)
-     (b*
-         ((root-after-context-apply
-           (context-apply (frame->root frame)
-                          (frame-val->dir head-frame-val)
-                          head-index
-                          (frame-val->path head-frame-val)))
-          ((when
-            (not
-             (context-apply-ok (frame->root frame)
-                               (frame-val->dir head-frame-val)
-                               head-index
-                               (frame-val->path head-frame-val))))
-           (mv (frame->root frame) nil))
-          (frame
-           (frame-with-root
-            root-after-context-apply
-            (remove-assoc-equal head-index (frame->frame frame)))))
-       (collapse frame))
-     (b*
-         ((path (frame-val->path head-frame-val))
-          ((when
+        (cdr (assoc-equal head-index frame)))
+       (src (frame-val->src head-frame-val))
+       (path (frame-val->path head-frame-val))
+       ((when
             (or
              (equal src head-index)
              (atom
               (assoc-equal src
                            (remove-assoc-equal
-                            head-index (frame->frame frame))))))
-           (mv (frame->root frame) nil))
-          (src-path
-           (frame-val->path
-            (cdr
-             (assoc-equal src
-                          (remove-assoc-equal
-                           head-index (frame->frame frame))))))
-          (src-dir
-           (frame-val->dir
-            (cdr
-             (assoc-equal src
-                          (remove-assoc-equal
-                           head-index (frame->frame frame))))))
-          ((unless (prefixp src-path path))
-           (mv (frame->root frame) nil))
-          (src-dir-after-context-apply
-           (context-apply src-dir (frame-val->dir head-frame-val)
-                          head-index
-                          (nthcdr (len src-path) path)))
-          ((when (not (context-apply-ok
-                       src-dir (frame-val->dir head-frame-val)
+                            head-index frame)))))
+        (mv (frame->root frame) nil))
+       (src-path
+        (frame-val->path
+         (cdr
+          (assoc-equal src
+                       (remove-assoc-equal
+                        head-index frame)))))
+       (src-dir
+        (frame-val->dir
+         (cdr
+          (assoc-equal src
+                       (remove-assoc-equal
+                        head-index frame)))))
+       ((unless (prefixp src-path path))
+        (mv (frame->root frame) nil))
+       (src-dir-after-context-apply
+        (context-apply src-dir (frame-val->dir head-frame-val)
                        head-index
-                       (nthcdr (len src-path) path))))
-           (mv (frame->root frame) nil))
-          (frame
-           (frame-with-root
-            (frame->root frame)
-            (put-assoc-equal
-             src
-             (frame-val
-              (frame-val->path
-               (cdr (assoc-equal src (frame->frame frame))))
-              src-dir-after-context-apply
-              (frame-val->src
-               (cdr (assoc-equal src (frame->frame frame)))))
-             (remove-assoc-equal
-              head-index (frame->frame frame))))))
-       (collapse frame)))))
+                       (nthcdr (len src-path) path)))
+       ((when (not (context-apply-ok
+                    src-dir (frame-val->dir head-frame-val)
+                    head-index
+                    (nthcdr (len src-path) path))))
+        (mv (frame->root frame) nil)))
+    (collapse
+     (put-assoc-equal
+      src
+      (frame-val
+       (frame-val->path
+        (cdr (assoc-equal src frame)))
+       src-dir-after-context-apply
+       (frame-val->src
+        (cdr (assoc-equal src frame))))
+      (remove-assoc-equal
+       head-index frame)))))
 
 (assert-event
  (b*

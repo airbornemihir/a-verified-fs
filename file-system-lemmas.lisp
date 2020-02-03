@@ -1085,7 +1085,7 @@
          (remove1-equal key (strip-cars alist))))
 
 (defthm
-  intersectp-equal-of-strip-cars-of-remove-equal
+  intersectp-of-remove-of-strip-cars-of-remove
   (implies
    (not (intersectp-equal x1 (remove-equal nil (strip-cars lst))))
    (not (intersectp-equal
@@ -1094,3 +1094,8 @@
                        (strip-cars (remove-equal x2 lst))))))
   :hints (("goal" :in-theory (e/d (intersectp-equal)
                                   (intersectp-is-commutative)))))
+
+(defthm remove1-assoc-when-absent
+  (implies (and (not (null key)) (atom (assoc-equal key alist)))
+           (equal (remove1-assoc-equal key alist)
+                  (true-list-fix alist))))
