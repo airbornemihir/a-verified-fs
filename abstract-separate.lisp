@@ -9635,13 +9635,280 @@
                head-index (frame->frame frame))))))
         (partial-collapse frame pathname)))))
 
+;; Move later.
+(defthm
+  consp-of-remove-assoc-1
+  (implies (and (not (equal x1 x2))
+                (consp (assoc-equal x1 alist)))
+           (consp (remove-assoc-equal x2 alist)))
+  :rule-classes
+  (:rewrite
+   (:rewrite :corollary (implies (and (not (equal x2 x1))
+                                      (consp (assoc-equal x1 alist)))
+                                 (consp (remove-assoc-equal x2 alist))))))
+
+(defthm partial-collapse-correctness-lemma-1
+  (implies (and (< 0 (1st-complete frame))
+                (not (equal x (1st-complete frame))))
+           (equal
+            (1st-complete (remove-assoc-equal x frame))
+            (1st-complete frame)))
+  :hints (("goal" :in-theory (enable 1st-complete))))
+
+(defthm partial-collapse-correctness-lemma-2
+  (implies (and (< 0 (1st-complete frame))
+                (not (equal x (1st-complete frame))))
+           (equal
+            (1st-complete-src (remove-assoc-equal x frame))
+            (1st-complete-src frame)))
+  :hints (("goal" :in-theory (enable 1st-complete-src)))
+  :rule-classes :linear)
+
+(defthm
+  partial-collapse-correctness-lemma-3
+  (implies
+   (and
+    (not
+     (equal
+      (context-apply
+       (context-apply
+        (abs-file->contents
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        abs-file-alist3 x3 (cdr x3-path))
+       abs-file-alist2 x2 (cdr x2-path))
+      (context-apply (abs-file->contents
+                      (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                        abs-file-alist1)))
+                     abs-file-alist3 x3 (cdr x3-path))))
+    (abs-file-alist-p abs-file-alist2)
+    (abs-file-alist-p abs-file-alist3)
+    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1))))
+   (not
+    (equal
+     (put-assoc-equal
+      (fat32-filename-fix (car x2-path))
+      (abs-file
+       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1)))
+       (context-apply
+        (context-apply
+         (abs-file->contents
+          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                            abs-file-alist1)))
+         abs-file-alist3 x3 (cdr x3-path))
+        abs-file-alist2 x2 (cdr x2-path)))
+      (put-assoc-equal
+       (fat32-filename-fix (car x2-path))
+       (abs-file
+        (abs-file->dir-ent
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        (context-apply
+         (abs-file->contents
+          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                            abs-file-alist1)))
+         abs-file-alist3 x3 (cdr x3-path)))
+       abs-file-alist1))
+     (put-assoc-equal
+      (fat32-filename-fix (car x2-path))
+      (abs-file
+       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1)))
+       (context-apply
+        (abs-file->contents
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        abs-file-alist3 x3 (cdr x3-path)))
+      abs-file-alist1))))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite put-assoc-equal-without-change . 1))
+    :use
+    (:instance
+     (:rewrite put-assoc-equal-without-change . 1)
+     (alist abs-file-alist1)
+     (val
+      (abs-file
+       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1)))
+       (context-apply
+        (abs-file->contents
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        abs-file-alist2 x2 (cdr x2-path))))
+     (name (fat32-filename-fix (car x2-path)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-4
+  (implies
+   (and
+    (consp (assoc-equal (fat32-filename-fix (car x2-path))
+                        abs-file-alist1))
+    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1)))
+    (not
+     (equal
+      (put-assoc-equal
+       (fat32-filename-fix (car x2-path))
+       (abs-file
+        (abs-file->dir-ent
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        (context-apply
+         (abs-file->contents
+          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                            abs-file-alist1)))
+         abs-file-alist2 x2 (cdr x2-path)))
+       abs-file-alist1)
+      abs-file-alist1)))
+   (not
+    (equal
+     (abs-file->contents$inline
+      (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                        abs-file-alist1)))
+     (context-apply (abs-file->contents$inline
+                     (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                       abs-file-alist1)))
+                    abs-file-alist2 x2 (cdr x2-path))))))
+
+(thm
+ (implies
+  (and
+   (ABS-FILE-ALIST-P ABS-FILE-ALIST2)
+   (ABS-FILE-ALIST-P ABS-FILE-ALIST3)
+   (context-apply-ok abs-file-alist1 abs-file-alist2 x2 x2-path)
+   (context-apply-ok abs-file-alist1 abs-file-alist3 x3 x3-path))
+  (context-apply-ok
+   (context-apply abs-file-alist1 abs-file-alist3 x3 x3-path)
+   abs-file-alist2 x2 x2-path))
+ :hints (("Goal" :in-theory (enable context-apply-ok context-apply)
+          :induct (mv (context-apply abs-file-alist1 abs-file-alist2 x2
+                                     x2-path)
+                      (fat32-filename-list-prefixp x2-path x3-path)))
+         ("subgoal *1/2"
+          :expand (:free (ABS-FILE-ALIST1
+                          ABS-FILE-ALIST3 X3)
+                         (CONTEXT-APPLY ABS-FILE-ALIST1
+                                        ABS-FILE-ALIST3 X3 X3-PATH)))))
+
+(verify
+ (implies
+  (and
+   (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+          0)
+   (equal (1st-complete-src (frame->frame frame))
+          0)
+   (consp (frame->frame frame))
+   (context-apply-ok
+    (frame->root frame)
+    (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                      (frame->frame frame))))
+    (1st-complete (frame->frame frame))
+    (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                       (frame->frame frame)))))
+   (mv-nth
+    1
+    (collapse
+     (frame-with-root
+      (context-apply
+       (context-apply
+        (frame->root frame)
+        (frame-val->dir
+         (cdr (assoc-equal (1st-complete (frame->frame frame))
+                           (frame->frame frame))))
+        (1st-complete (frame->frame frame))
+        (frame-val->path
+         (cdr (assoc-equal (1st-complete (frame->frame frame))
+                           (frame->frame frame)))))
+       (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+       x
+       (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+      (remove-assoc-equal
+       x
+       (remove-assoc-equal (1st-complete (frame->frame frame))
+                           (frame->frame frame))))))
+   (consp (assoc-equal x (frame->frame frame)))
+   (not (consp (assoc-equal 0 (frame->frame frame))))
+   (< 0 (1st-complete (frame->frame frame)))
+   (mv-nth
+    1
+    (collapse
+     (frame-with-root
+      (context-apply
+       (frame->root frame)
+       (frame-val->dir
+        (cdr (assoc-equal (1st-complete (frame->frame frame))
+                          (frame->frame frame))))
+       (1st-complete (frame->frame frame))
+       (frame-val->path
+        (cdr (assoc-equal (1st-complete (frame->frame frame))
+                          (frame->frame frame)))))
+      (remove-assoc-equal (1st-complete (frame->frame frame))
+                          (frame->frame frame))))))
+  (mv-nth
+   1
+   (collapse
+    (frame-with-root
+     (context-apply
+      (frame->root frame)
+      (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+      x
+      (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+     (remove-assoc-equal x (frame->frame frame))))))
+ :instructions
+ ((:bash ("goal" :cases ((equal x
+                                (1st-complete (frame->frame frame))))))
+  (:dive 2)
+  (:claim (< 0
+             (1st-complete (remove-assoc-equal x (frame->frame frame)))))
+  (:claim
+   (equal (1st-complete (remove-assoc-equal x (frame->frame frame)))
+          (1st-complete (frame->frame frame))))
+  (:claim
+   (equal (1st-complete-src (remove-assoc-equal x (frame->frame frame)))
+          (1st-complete-src (frame->frame frame))))
+  (:claim
+   (and
+    (abs-file-alist-p
+     (context-apply
+      (frame->root frame)
+      (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+      x
+      (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
+  :x))
+
+(thm
+ (implies
+  (and
+   (consp (assoc-equal x (frame->frame frame)))
+   (atom (assoc-equal 0 (frame->frame frame)))
+   (zp (frame-val->src
+        (cdr (assoc-equal x (frame->frame frame)))))
+   (mv-nth 1 (collapse frame)))
+  (mv-nth
+   1
+   (COLLAPSE
+    (FRAME-WITH-ROOT
+     (CONTEXT-APPLY
+      (FRAME->ROOT FRAME)
+      (FRAME-VAL->DIR
+       (CDR (ASSOC-EQUAL x (FRAME->FRAME FRAME))))
+      x
+      (FRAME-VAL->PATH
+       (CDR (ASSOC-EQUAL x (FRAME->FRAME FRAME)))))
+     (REMOVE-ASSOC-EQUAL x (FRAME->FRAME FRAME))))))
+ :hints (("Goal" :in-theory (enable collapse)
+          :induct (COLLAPSE FRAME)) ))
+
 (defthm partial-collapse-correctness-1
   (implies
    (and
-    (mv-nth 1 (collapse root frame)))
+    (mv-nth 1 (collapse frame)))
    (hifat-equiv
     (b*
-        ((root (partial-collapse root frame pathname)))
-      (collapse root ))
-    (mv-nth 0 (collapse root frame))))
+        ((frame (partial-collapse frame pathname)))
+      (collapse frame))
+    (collapse frame)))
   :hints (("Goal" :in-theory (enable partial-collapse)) ))
