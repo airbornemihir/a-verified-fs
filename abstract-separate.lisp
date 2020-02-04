@@ -9554,39 +9554,39 @@
   :rule-classes :type-prescription)
 
 (defund
-  partial-collapse (root frame pathname)
-  (declare
-   (xargs :guard (and (abs-file-alist-p root)
-                      (frame-p frame))
-          :measure (len frame)
-          :guard-hints
-          (("goal" :in-theory (enable context-apply-ok)))))
+  partial-collapse (frame pathname)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame)))
+                  :measure (len (frame->frame frame))))
   (b*
-      (((when (atom frame)) (mv root frame))
-       (head-index (1st-complete-under-pathname frame pathname))
-       ((when (zp head-index)) (mv root frame))
-       (head-frame-val (cdr (assoc-equal head-index frame)))
-       (src (1st-complete-under-pathname-src frame pathname)))
+      (((when (atom (frame->frame frame)))
+        frame)
+       (head-index (1st-complete-under-pathname (frame->frame frame) pathname))
+       ((when (zp head-index))
+        frame)
+       (head-frame-val
+        (cdr (assoc-equal head-index (frame->frame frame))))
+       (src (1st-complete-under-pathname-src (frame->frame frame) pathname)))
     (if
         (zp src)
         (b*
-            ((frame (remove-assoc-equal head-index frame))
-             (root-after-context-apply
-              (context-apply root (frame-val->dir head-frame-val)
+            ((root-after-context-apply
+              (context-apply (frame->root frame)
+                             (frame-val->dir head-frame-val)
                              head-index
                              (frame-val->path head-frame-val)))
-             ;; This mbe ensures that no matter how we spin the induction scheme,
-             ;; the actual execution doesn't end up doing the context-apply twice.
              ((when
-                  (mbe
-                   :exec (equal root-after-context-apply root)
-                   :logic
-                   (not
-                    (context-apply-ok root (frame-val->dir head-frame-val)
-                                      head-index
-                                      (frame-val->path head-frame-val)))))
-              (mv root frame)))
-          (partial-collapse root-after-context-apply frame pathname))
+                  (not
+                   (context-apply-ok (frame->root frame)
+                                     (frame-val->dir head-frame-val)
+                                     head-index
+                                     (frame-val->path head-frame-val))))
+              frame)
+             (frame
+              (frame-with-root
+               root-after-context-apply
+               (remove-assoc-equal head-index (frame->frame frame)))))
+          (partial-collapse frame pathname))
       (b*
           ((path (frame-val->path head-frame-val))
            ((when
@@ -9594,172 +9594,54 @@
                  (equal src head-index)
                  (atom
                   (assoc-equal src
-                               (remove-assoc-equal head-index frame)))))
-            (mv root frame))
+                               (remove-assoc-equal
+                                head-index (frame->frame frame))))))
+            frame)
            (src-path
             (frame-val->path
              (cdr
               (assoc-equal src
-                           (remove-assoc-equal head-index frame)))))
+                           (remove-assoc-equal
+                            head-index (frame->frame frame))))))
            (src-dir
             (frame-val->dir
              (cdr
               (assoc-equal src
-                           (remove-assoc-equal head-index frame)))))
-           (frame (remove-assoc-equal head-index frame))
+                           (remove-assoc-equal
+                            head-index (frame->frame frame))))))
            ((unless (prefixp src-path path))
-            (mv root nil))
+            frame)
            (src-dir-after-context-apply
             (context-apply src-dir (frame-val->dir head-frame-val)
                            head-index
                            (nthcdr (len src-path) path)))
-           ((when
-                (mbe :exec (equal src-dir-after-context-apply src-dir)
-                     :logic
-                     (not (context-apply-ok
-                           src-dir (frame-val->dir head-frame-val)
-                           head-index
-                           (nthcdr (len src-path) path)))))
-            (mv root nil))
+           ((when (not (context-apply-ok
+                        src-dir (frame-val->dir head-frame-val)
+                        head-index
+                        (nthcdr (len src-path) path))))
+            frame)
            (frame
-            (put-assoc-equal
-             src
-             (frame-val
-              (frame-val->path (cdr (assoc-equal src frame)))
-              src-dir-after-context-apply
-              (frame-val->src (cdr (assoc-equal src frame))))
-             frame)))
-        (partial-collapse root frame pathname)))))
-
-(local
- (defun
-   induction-scheme
-   (abs-file-alist1 abs-file-alist2
-                    abs-file-alist3 x2 x2-path x3 x3-path)
-   (cond
-    ((and
-      (consp x2-path)
-      (consp (abs-assoc (car x2-path)
-                        abs-file-alist1))
-      (abs-directory-file-p (cdr (abs-assoc (car x2-path)
-                                            abs-file-alist1)))
-      (equal (car x3-path) (car x2-path)))
-     (induction-scheme
-      (abs-file->contents (cdr (abs-assoc (car x2-path)
-                                          abs-file-alist1)))
-      abs-file-alist2
-      abs-file-alist3 x2 (cdr x2-path)
-      x3 (cdr x3-path)))
-    (t (mv abs-file-alist1
-           abs-file-alist2 abs-file-alist3
-           x2 x2-path x3 x3-path)))))
-
-(defthm
-  partial-collapse-correctness-lemma-1
-  (implies
-   (and (not (equal (car x3-path) (car x2-path)))
-        (not (equal (context-apply (context-apply abs-file-alist1
-                                                  abs-file-alist2 x2 x2-path)
-                                   abs-file-alist3 x3 x3-path)
-                    (context-apply abs-file-alist1
-                                   abs-file-alist2 x2 x2-path)))
-        (not (prefixp x2-path x3-path))
-        (not (prefixp x3-path x2-path)))
-   (not (equal (context-apply abs-file-alist1
-                              abs-file-alist3 x3 x3-path)
-               abs-file-alist1)))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :expand ((:free (abs-file-alist1 abs-file-alist3 x3)
-                    (context-apply abs-file-alist1
-                                   abs-file-alist3 x3 x3-path))
-             (context-apply abs-file-alist1
-                            abs-file-alist2 x2 x2-path))
-    :in-theory (disable (:rewrite put-assoc-equal-without-change . 1))
-    :use
-    (:instance
-     (:rewrite put-assoc-equal-without-change . 1)
-     (alist abs-file-alist1)
-     (val
-      (abs-file
-       (abs-file->dir-ent (cdr (assoc-equal (car x3-path)
-                                            abs-file-alist1)))
-       (context-apply (abs-file->contents (cdr (assoc-equal (car x3-path)
-                                                            abs-file-alist1)))
-                      abs-file-alist3 x3 (cdr x3-path))))
-     (name (car x3-path))))))
-
-(defthm
-  partial-collapse-correctness-lemma-2
-  (implies
-   (and (not (equal (context-apply (context-apply abs-file-alist1
-                                                  abs-file-alist2 x2 x2-path)
-                                   abs-file-alist3 x3 x3-path)
-                    (context-apply abs-file-alist1
-                                   abs-file-alist2 x2 x2-path)))
-        (abs-file-alist-p abs-file-alist2)
-        (abs-file-alist-p abs-file-alist3)
-        (not (prefixp x2-path x3-path))
-        (not (prefixp x3-path x2-path)))
-   (not (equal (context-apply abs-file-alist1
-                              abs-file-alist3 x3 x3-path)
-               abs-file-alist1)))
-  :hints (("goal" :in-theory (enable context-apply)
-           :induct (induction-scheme abs-file-alist1
-                                     abs-file-alist2 abs-file-alist3
-                                     x2 x2-path x3 x3-path))))
-
-(defthm partial-collapse-correctness-lemma-3
-  (implies
-   (and
-    (consp (assoc-equal x frame))
-    (equal (frame-val->src
-            (cdr
-             (assoc-equal x
-                          frame)))
-           0)
-    (abs-complete (frame-val->dir
-                   (cdr
-                    (assoc-equal x
-                                 frame))))
-    (< 0 x)
-    (mv-nth 1 (collapse root frame)))
-   (context-apply-ok
-    root
-    (frame-val->dir
-     (cdr (assoc-equal x
-                       frame)))
-    x
-    (frame-val->path
-     (cdr (assoc-equal x
-                       frame)))))
-  :hints (("Goal" :in-theory (enable collapse)
-           :induct (collapse root frame))
-          ("Subgoal *1/7.1'" :in-theory (enable collapse 1st-complete-src))
-          ("subgoal *1/4" :in-theory (e/d (collapse context-apply-ok)
-                                          ((:REWRITE PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-2)))
-           :use
-           (:instance
-            (:rewrite partial-collapse-correctness-lemma-2)
-            (x3-path (frame-val->path (cdr (assoc-equal x frame))))
-            (x3 x)
-            (abs-file-alist3 (frame-val->dir (cdr (assoc-equal x frame))))
-            (abs-file-alist1 root)
-            (x2-path (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                                        frame))))
-            (x2 (1st-complete frame))
-            (abs-file-alist2 (frame-val->dir (cdr (assoc-equal (1st-complete frame)
-                                                               frame))))))))
+            (frame-with-root
+             (frame->root frame)
+             (put-assoc-equal
+              src
+              (frame-val
+               (frame-val->path
+                (cdr (assoc-equal src (frame->frame frame))))
+               src-dir-after-context-apply
+               (frame-val->src
+                (cdr (assoc-equal src (frame->frame frame)))))
+              (remove-assoc-equal
+               head-index (frame->frame frame))))))
+        (partial-collapse frame pathname)))))
 
 (defthm partial-collapse-correctness-1
   (implies
    (and
     (mv-nth 1 (collapse root frame)))
    (hifat-equiv
-    (mv-let
-      (root frame)
-      (partial-collapse root frame pathname)
-      (collapse root frame))
-    (collapse root frame)))
+    (b*
+        ((root (partial-collapse root frame pathname)))
+      (collapse root ))
+    (mv-nth 0 (collapse root frame))))
   :hints (("Goal" :in-theory (enable partial-collapse)) ))
