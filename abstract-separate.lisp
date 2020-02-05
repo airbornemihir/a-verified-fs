@@ -1839,11 +1839,6 @@
   :hints (("goal" :in-theory (enable 1st-complete)))
   :rule-classes :type-prescription)
 
-(defthm natp-of-1st-complete
-  (natp (1st-complete frame))
-  :hints (("goal" :in-theory (enable 1st-complete)))
-  :rule-classes :type-prescription)
-
 (defthm frame-val-p-of-cdr-of-assoc-equal-when-frame-p
   (implies (frame-p x)
            (iff (frame-val-p (cdr (assoc-equal k x)))
