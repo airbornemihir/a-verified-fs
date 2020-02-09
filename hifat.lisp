@@ -172,17 +172,12 @@
          (and (unsigned-byte-listp n1 ac)
               (or (zp n2) (unsigned-byte-p n1 val)))))
 
-(encapsulate
-  ()
-
-  (local (include-book "std/basic/inductions" :dir :system))
-
-  (defcong
-    str::charlisteqv equal (chars=>nats x)
-    1
-    :hints
-    (("goal" :in-theory (enable chars=>nats)
-      :induct (cdr-cdr-induct x x-equiv)))))
+(defcong
+  str::charlisteqv equal (chars=>nats x)
+  1
+  :hints
+  (("goal" :in-theory (enable chars=>nats fast-list-equiv)
+    :induct (fast-list-equiv x x-equiv))))
 
 (defthm nats=>chars-of-take
   (implies (<= (nfix n) (len nats))
