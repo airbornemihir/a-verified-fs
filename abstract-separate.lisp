@@ -9984,6 +9984,33 @@
                              abs-file-alist2)
              (absfat-subsetp (m1-file->contents file1)
                              (m1-file->contents file2))))))
+
+(defthm
+  absfat-subsetp-correctness-1
+  (implies
+   (and (m1-file-alist-p abs-file-alist1)
+        (m1-file-alist-p abs-file-alist2))
+   (equal (absfat-subsetp abs-file-alist1 abs-file-alist2)
+          (hifat-subsetp abs-file-alist1 abs-file-alist2)))
+  :hints
+  (("goal" :in-theory (enable absfat-subsetp hifat-subsetp))))
+
+(defund
+  absfat-equiv
+  (abs-file-alist1 abs-file-alist2)
+  (declare
+   (xargs :guard (and (abs-file-alist-p abs-file-alist1)
+                      (abs-file-alist-p abs-file-alist2))))
+  (b* ((abs-file-alist1 (abs-file-alist-fix abs-file-alist1))
+       (abs-file-alist2 (abs-file-alist-fix abs-file-alist2)))
+    (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+         (absfat-subsetp abs-file-alist2 abs-file-alist1))))
+
+(defequiv
+  absfat-equiv
+  :hints (("Goal" :in-theory (enable
+                              absfat-equiv)) ))
+
 (thm
  (implies
   (and
