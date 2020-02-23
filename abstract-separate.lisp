@@ -9939,6 +9939,51 @@
                    (context-apply abs-file-alist1
                                   abs-file-alist3 x3 x3-path))))))
 
+(defthm
+  absfat-subsetp-guard-lemma-1
+  (implies (and (abs-file-alist-p abs-file-alist)
+                (consp (assoc-equal name abs-file-alist)))
+           (abs-file-p (cdr (assoc-equal name abs-file-alist))))
+  :hints
+  (("goal" :induct (assoc-equal name abs-file-alist))
+   ("subgoal *1/2''" :expand ((abs-file-alist-p abs-file-alist)
+                              (abs-file-p (cdr (car abs-file-alist)))))))
+
+(defund
+  absfat-subsetp
+  (abs-file-alist1 abs-file-alist2)
+  (declare
+   (xargs
+    :guard (and (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2))
+    :guard-hints
+    (("goal''"
+      :expand ((abs-file-alist-p abs-file-alist1)
+               (abs-file-p (cdr (car abs-file-alist1))))))
+    :guard-debug t))
+  (b* (((when (atom abs-file-alist1)) t)
+       ((unless (and (consp (car abs-file-alist1))
+                     (stringp (car (car abs-file-alist1)))))
+        (and (member-equal (car abs-file-alist1)
+                           abs-file-alist2)
+             (absfat-subsetp (cdr abs-file-alist1)
+                             abs-file-alist2)))
+       (name (caar abs-file-alist1))
+       (file1 (cdar abs-file-alist1))
+       ((unless (consp (abs-assoc name abs-file-alist2)))
+        nil)
+       (file2 (cdr (abs-assoc name abs-file-alist2))))
+    (if (not (m1-directory-file-p file1))
+        (and (not (m1-directory-file-p file2))
+             (absfat-subsetp (cdr abs-file-alist1)
+                             abs-file-alist2)
+             (equal (abs-file->contents file1)
+                    (abs-file->contents file2)))
+        (and (m1-directory-file-p file2)
+             (absfat-subsetp (cdr abs-file-alist1)
+                             abs-file-alist2)
+             (absfat-subsetp (m1-file->contents file1)
+                             (m1-file->contents file2))))))
 (thm
  (implies
   (and
