@@ -9995,15 +9995,40 @@
   :hints
   (("goal" :in-theory (enable absfat-subsetp hifat-subsetp))))
 
-(defthm absfat-subsetp-reflexivity-lemma-1
-  (implies (and
-            (abs-file-alist-p x)
-            (abs-file-alist-p y)
-            (abs-file-alist-p z)
-            (absfat-subsetp z y)
-            (abs-no-dups-p (append x y)))
+(defthm
+  absfat-subsetp-reflexivity-lemma-1
+  (implies (and (abs-file-alist-p x)
+                (consp (assoc-equal (car (car x)) y))
+                (not (abs-file-alist-p (abs-file->contents (cdr (car x))))))
+           (consp (assoc-equal (car (car x))
+                               (append (cdr x) y))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-file->contents abs-file-alist-p)
+           :cases ((null (car (car x)))))))
+
+(defthm absfat-subsetp-reflexivity-lemma-2
+  (implies (and (abs-file-alist-p x)
+                (consp (car x))
+                (consp (assoc-equal (car (car x)) y)))
+           (consp (assoc-equal (car (car x))
+                               (append (cdr x) y))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-file-p abs-file-alist-p)
+           :cases ((null (car (car x)))))))
+
+(defthm absfat-subsetp-reflexivity-lemma-3
+  (implies (and (abs-file-alist-p x)
+                (consp (assoc-equal name x))
+                (consp (assoc-equal name y)))
+           (not (abs-no-dups-p (append x y))))
+  :hints (("goal" :in-theory (enable abs-no-dups-p))))
+
+(defthm absfat-subsetp-reflexivity-lemma-4
+  (implies (and (abs-file-alist-p x)
+                (absfat-subsetp z y)
+                (abs-no-dups-p (append x y)))
            (absfat-subsetp z (append x y)))
-  :hints (("Goal" :in-theory (enable absfat-subsetp)) ))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
 
 (defthm absfat-subsetp-reflexivity-lemma-1
   (implies (abs-file-alist-p x)
