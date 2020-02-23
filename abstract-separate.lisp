@@ -9973,17 +9973,17 @@
        ((unless (consp (abs-assoc name abs-file-alist2)))
         nil)
        (file2 (cdr (abs-assoc name abs-file-alist2))))
-    (if (not (m1-directory-file-p file1))
-        (and (not (m1-directory-file-p file2))
+    (if (not (abs-directory-file-p file1))
+        (and (not (abs-directory-file-p file2))
              (absfat-subsetp (cdr abs-file-alist1)
                              abs-file-alist2)
              (equal (abs-file->contents file1)
                     (abs-file->contents file2)))
-        (and (m1-directory-file-p file2)
+        (and (abs-directory-file-p file2)
              (absfat-subsetp (cdr abs-file-alist1)
                              abs-file-alist2)
-             (absfat-subsetp (m1-file->contents file1)
-                             (m1-file->contents file2))))))
+             (absfat-subsetp (abs-file->contents file1)
+                             (abs-file->contents file2))))))
 
 (defthm
   absfat-subsetp-correctness-1
@@ -9994,6 +9994,25 @@
           (hifat-subsetp abs-file-alist1 abs-file-alist2)))
   :hints
   (("goal" :in-theory (enable absfat-subsetp hifat-subsetp))))
+
+(defthm absfat-subsetp-reflexivity-lemma-1
+  (implies (and
+            (abs-file-alist-p x)
+            (abs-file-alist-p y)
+            (abs-file-alist-p z)
+            (absfat-subsetp z y)
+            (abs-no-dups-p (append x y)))
+           (absfat-subsetp z (append x y)))
+  :hints (("Goal" :in-theory (enable absfat-subsetp)) ))
+
+(defthm absfat-subsetp-reflexivity-lemma-1
+  (implies (abs-file-alist-p x)
+           (absfat-subsetp x (append x y)))
+  :hints (("Goal" :in-theory (enable absfat-subsetp)) ))
+
+(defthm absfat-subsetp-reflexivity
+  (implies (abs-file-alist-p x)
+           (absfat-subsetp x x)))
 
 (defund
   absfat-equiv
