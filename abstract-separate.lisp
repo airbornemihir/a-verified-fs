@@ -10226,13 +10226,8 @@
                       (abs-file-alist-p abs-file-alist2))))
   (b* ((abs-file-alist1 (abs-file-alist-fix abs-file-alist1))
        (abs-file-alist2 (abs-file-alist-fix abs-file-alist2)))
-    (if
-        (and (abs-no-dups-p abs-file-alist1)
-             (abs-no-dups-p abs-file-alist2))
-        (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
-             (absfat-subsetp abs-file-alist2 abs-file-alist1))
-      (and (not (abs-no-dups-p abs-file-alist1))
-           (not (abs-no-dups-p abs-file-alist2))))))
+    (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+         (absfat-subsetp abs-file-alist2 abs-file-alist1))))
 
 (defequiv
   absfat-equiv
