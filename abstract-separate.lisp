@@ -10102,9 +10102,57 @@
     (("goal" :in-theory (enable absfat-subsetp abs-no-dups-p)
       :induct (induction-scheme x y)))))
 
-(defthm absfat-subsetp-reflexivity
-  (implies (abs-file-alist-p x)
-           (absfat-subsetp x x)))
+(defthm
+  absfat-subsetp-reflexivity
+  (implies (and (abs-file-alist-p x)
+                (abs-no-dups-p x))
+           (absfat-subsetp x x))
+  :hints (("goal" :in-theory (disable absfat-subsetp-reflexivity-lemma-7)
+           :use (:instance absfat-subsetp-reflexivity-lemma-7
+                           (y nil)))))
+
+(defthm absfat-subsetp-transitivity-lemma-1
+  (implies (and (abs-file-alist-p y)
+                (consp (car y)))
+           (stringp (car (car y))))
+  :hints (("goal" :expand (abs-file-alist-p y))))
+
+(defthm absfat-subsetp-transitivity-lemma-2
+  (implies (and (abs-file-alist-p y)
+                (not (consp (assoc-equal (car (car x)) z)))
+                (consp (assoc-equal (car (car x)) y)))
+           (not (absfat-subsetp y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp)
+           :induct (absfat-subsetp y z))))
+
+(defthm absfat-subsetp-transitivity-lemma-3
+  (implies (and (abs-file-alist-p y)
+                (not (abs-directory-file-p (cdr (assoc-equal name z))))
+                (abs-directory-file-p (cdr (assoc-equal name y))))
+           (not (absfat-subsetp y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm
+  absfat-subsetp-transitivity-lemma-4
+  (implies (and (abs-file-alist-p y)
+                (abs-directory-file-p (cdr (assoc-equal name y)))
+                (absfat-subsetp y z))
+           (absfat-subsetp (abs-file->contents (cdr (assoc-equal name y)))
+                           (abs-file->contents (cdr (assoc-equal name z)))))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm
+  absfat-subsetp-transitivity
+  (implies (and (abs-file-alist-p x)
+                (abs-file-alist-p y)
+                (abs-file-alist-p z)
+                (abs-no-dups-p x)
+                (abs-no-dups-p y)
+                (abs-no-dups-p z)
+                (absfat-subsetp x y)
+                (absfat-subsetp y z))
+           (absfat-subsetp x z))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
 
 (defund
   absfat-equiv
@@ -10114,8 +10162,13 @@
                       (abs-file-alist-p abs-file-alist2))))
   (b* ((abs-file-alist1 (abs-file-alist-fix abs-file-alist1))
        (abs-file-alist2 (abs-file-alist-fix abs-file-alist2)))
-    (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
-         (absfat-subsetp abs-file-alist2 abs-file-alist1))))
+    (if
+        (and (abs-no-dups-p abs-file-alist1)
+             (abs-no-dups-p abs-file-alist2))
+        (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+             (absfat-subsetp abs-file-alist2 abs-file-alist1))
+      (and (not (abs-no-dups-p abs-file-alist1))
+           (not (abs-no-dups-p abs-file-alist2))))))
 
 (defequiv
   absfat-equiv
