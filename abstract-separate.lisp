@@ -10030,10 +10030,77 @@
            (absfat-subsetp z (append x y)))
   :hints (("goal" :in-theory (enable absfat-subsetp))))
 
-(defthm absfat-subsetp-reflexivity-lemma-1
-  (implies (abs-file-alist-p x)
-           (absfat-subsetp x (append x y)))
-  :hints (("Goal" :in-theory (enable absfat-subsetp)) ))
+(defthm
+  absfat-subsetp-reflexivity-lemma-5
+  (implies (and (absfat-subsetp (cdr x)
+                                (append (cdr x) y))
+                (abs-file-alist-p x)
+                (abs-no-dups-p (append (cdr x) y))
+                (or
+                 (not (abs-directory-file-p (cdr (car x))))
+                 (abs-no-dups-p (abs-file->contents (cdr (car x)))))
+                (or (and (stringp (car (car x)))
+                         (not (consp (assoc-equal (car (car x)) (cdr x))))
+                         (not (consp (assoc-equal (car (car x)) y))))
+                    (and (consp x)
+                         (or
+                          (not (consp (car x)))
+                          (not (consp (assoc-equal (car (car x))
+                                                   (append (cdr x) y))))))))
+           (absfat-subsetp (cdr x)
+                           (cons (car x) (append (cdr x) y))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (abs-no-dups-p abs-file-alist-p)
+                    ((:rewrite absfat-subsetp-reflexivity-lemma-4)))
+    :use (:instance (:rewrite absfat-subsetp-reflexivity-lemma-4)
+                    (y (append (cdr x) y))
+                    (x (list (car x)))
+                    (z (cdr x)))
+    :expand (abs-file-alist-p (list (car x))))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun induction-scheme (x y)
+     (cond
+      ((and (not (atom x))
+            (and (consp (car x))
+                 (stringp (car (car x))))
+            (consp (abs-assoc (car (car x)) (append x y)))
+            (abs-directory-file-p (cdr (car x)))
+            (abs-directory-file-p (cdr (abs-assoc (car (car x)) (append x y))))
+            (absfat-subsetp (cdr x) (append x y)))
+       (append
+        (induction-scheme (cdr x) y)
+        (induction-scheme (abs-file->contents (cdr (car x))) nil)))
+      ((and (not (atom x))
+            (if
+                (and (consp (car x))
+                     (stringp (car (car x))))
+                (and(consp (abs-assoc (car (car x)) (append x y)))
+                    (or
+                     (and
+                      (abs-directory-file-p (cdr (car x)))
+                      (abs-directory-file-p (cdr (abs-assoc (car (car x)) (append x y))))
+                      (not (absfat-subsetp (cdr x) (append x y))))
+                     (and
+                      (not (abs-directory-file-p (cdr (car x))))
+                      (not (abs-directory-file-p (cdr (abs-assoc (car (car x))
+                                                                 (append x y))))))))
+              (member-equal (car x) (append x y))))
+       (induction-scheme (cdr x) y))
+      (t (append x y)))))
+
+  (defthm
+    absfat-subsetp-reflexivity-lemma-7
+    (implies (and (abs-file-alist-p x)
+                  (abs-no-dups-p (append x y)))
+             (absfat-subsetp x (append x y)))
+    :hints
+    (("goal" :in-theory (enable absfat-subsetp abs-no-dups-p)
+      :induct (induction-scheme x y)))))
 
 (defthm absfat-subsetp-reflexivity
   (implies (abs-file-alist-p x)
