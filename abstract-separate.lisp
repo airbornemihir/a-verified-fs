@@ -10142,17 +10142,82 @@
   :hints (("goal" :in-theory (enable absfat-subsetp))))
 
 (defthm
-  absfat-subsetp-transitivity
-  (implies (and (abs-file-alist-p x)
-                (abs-file-alist-p y)
+  absfat-subsetp-transitivity-lemma-5
+  (implies (and (abs-directory-file-p (cdr (assoc-equal name z)))
                 (abs-file-alist-p z)
-                (abs-no-dups-p x)
-                (abs-no-dups-p y)
-                (abs-no-dups-p z)
-                (absfat-subsetp x y)
-                (absfat-subsetp y z))
-           (absfat-subsetp x z))
+                (consp (assoc-equal name y))
+                (not (abs-directory-file-p (cdr (assoc-equal name y)))))
+           (not (absfat-subsetp y z)))
   :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm absfat-subsetp-transitivity-lemma-6
+  (implies (and (not (consp (car x)))
+                (not (member-equal (car x) z))
+                (member-equal (car x) y))
+           (not (absfat-subsetp y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm absfat-subsetp-transitivity-lemma-7
+  (implies (and (abs-directory-file-p (cdr (car x)))
+                (abs-file-alist-p y)
+                (abs-no-dups-p x))
+           (abs-no-dups-p (abs-file->contents (cdr (car x)))))
+  :hints (("goal" :in-theory (enable abs-no-dups-p))))
+
+(defthm
+  absfat-subsetp-transitivity-lemma-8
+  (implies
+   (and (equal (m1-file->contents (cdr (assoc-equal (car (car y)) (cdr y))))
+               (abs-file->contents (cdr (car y))))
+        (consp (assoc-equal (car (car y)) z))
+        (not (abs-directory-file-p (cdr (assoc-equal (car (car y)) z))))
+        (abs-file-alist-p y)
+        (abs-file-alist-p z)
+        (equal (abs-file->contents (cdr (car y)))
+               (m1-file->contents (cdr (assoc-equal (car (car y)) z)))))
+   (m1-file-p (cdr (car y))))
+  :hints (("goal" :in-theory (enable abs-file-alist-p
+                                     abs-file-p m1-file-p abs-file->contents
+                                     m1-file-contents-p abs-directory-file-p)
+           :do-not-induct t)))
+
+(defthm
+  absfat-subsetp-transitivity-lemma-9
+  (implies
+   (and (not (consp (assoc-equal (car (car y)) (cdr y))))
+        (consp (assoc-equal (car (car y)) z))
+        (abs-file-alist-p y)
+        (abs-file-alist-p z)
+        (equal (abs-file->contents (cdr (car y)))
+               (m1-file->contents (cdr (assoc-equal (car (car y)) z)))))
+   (m1-file-p (cdr (car y))))
+  :hints (("goal" :in-theory (enable abs-file->contents
+                                     m1-file-p abs-file-alist-p)
+           :do-not-induct t)))
+
+(defthmd absfat-subsetp-transitivity-lemma-10
+  (implies (and (abs-file-alist-p y)
+                (abs-file-alist-p z)
+                (consp (assoc-equal name y))
+                (not (abs-directory-file-p (cdr (assoc-equal name y))))
+                (absfat-subsetp y z))
+           (equal (m1-file->contents (cdr (assoc-equal name y)))
+                  (m1-file->contents (cdr (assoc-equal name z)))))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm
+  absfat-subsetp-transitivity
+  (implies (and (absfat-subsetp x y)
+                (absfat-subsetp y z)
+                (abs-file-alist-p x)
+                (abs-file-alist-p y)
+                (abs-file-alist-p z))
+           (absfat-subsetp x z))
+  :hints
+  (("goal" :in-theory (enable absfat-subsetp)
+    :induct t)
+   ("subgoal *1/2''" :use (:instance absfat-subsetp-transitivity-lemma-10
+                                     (name (car (car x)))))))
 
 (defund
   absfat-equiv
