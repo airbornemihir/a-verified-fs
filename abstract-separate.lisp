@@ -1184,56 +1184,55 @@
   (declare
    (xargs
     :guard (abs-file-alist-p x)
-    :guard-hints (("goal" :expand (abs-file-alist-p x)
-                   :in-theory (enable abs-file-p)))))
+    :verify-guards nil))
   (b* (((when (atom x)) nil)
        (head (car x))
+       (tail (abs-file-alist-fix (cdr x)))
        ((when (atom head))
-        (cons (nfix head)
-              (abs-file-alist-fix (cdr x)))))
-    (cons (cons (fat32-filename-fix (car head))
-                (abs-file-fix (cdr head)))
-          (abs-file-alist-fix (cdr x)))))
+        (cons (nfix head) tail))
+       (head (cons
+              (fat32-filename-fix (car head))
+              (abs-file-fix (cdr head))))
+       ((when (consp (abs-assoc (car head) tail)))
+        tail))
+    (if
+        (abs-directory-file-p (cdr head))
+        (cons (cons (car head)
+                    (make-abs-file
+                     :dir-ent (abs-file->dir-ent (cdr head))
+                     :contents (abs-file-alist-fix (abs-file->contents (cdr head)))))
+              (abs-file-alist-fix (cdr x)))
+      (cons head
+            (abs-file-alist-fix (cdr x))))))
 
-(encapsulate
-  () ;; start lemmas for abs-file-alist-fix-when-abs-file-alist-p
-
-  (local
-   (defthm abs-file-alist-fix-when-abs-file-alist-p-lemma-1
-     (implies (and (alistp (cddr (car x)))
-                   (equal (car (cadr (car x))) 'dir-ent)
-                   (equal (strip-cars (cddr (car x)))
-                          '(contents))
-                   (dir-ent-p (cdr (cadr (car x))))
-                   (stringp (cdr (caddr (car x))))
-                   (< (len (explode (cdr (caddr (car x)))))
-                      4294967296))
-              (abs-file-p (cdr (car x))))
-     :hints (("goal" :in-theory (enable abs-file-p)))))
-
-  (local
-   (defthm abs-file-alist-fix-when-abs-file-alist-p-lemma-2
-     (implies (and (alistp (cddr (car x)))
-                   (equal (car (cadr (car x))) 'dir-ent)
-                   (equal (strip-cars (cddr (car x)))
-                          '(contents))
-                   (dir-ent-p (cdr (cadr (car x))))
-                   (abs-file-alist-p (cdr (caddr (car x)))))
-              (abs-file-p (cdr (car x))))
-     :hints (("goal" :in-theory (enable abs-file-p)))))
-
-  (defthm
-    abs-file-alist-fix-when-abs-file-alist-p
-    (implies (abs-file-alist-p x)
-             (equal (abs-file-alist-fix x) x))
-    :hints (("goal" :in-theory (enable abs-file-alist-fix abs-file-alist-p)))))
+(defthm
+  abs-file-alist-fix-when-abs-file-alist-p
+  (implies (and (abs-file-alist-p x)
+                (abs-no-dups-p x))
+           (equal (abs-file-alist-fix x) x))
+  :hints (("goal" :in-theory (enable abs-file-alist-fix abs-file-alist-p
+                                     abs-file-p abs-no-dups-p
+                                     abs-file->contents abs-directory-file-p)
+           :induct (abs-file-alist-p x))))
 
 (defthm
   abs-file-alist-p-of-abs-file-alist-fix
   (abs-file-alist-p (abs-file-alist-fix x))
   :hints (("goal" :in-theory (enable abs-file-alist-fix abs-file-alist-p
                                      abs-file-fix abs-file-contents-fix
-                                     abs-file-contents-p))))
+                                     abs-file-contents-p
+                                     abs-file))))
+
+(verify-guards
+  abs-file-alist-fix
+  :guard-debug t
+  :hints (("goal" :expand (abs-file-alist-p x)
+                 :in-theory (enable abs-file-p))))
+
+(defthm
+  abs-no-dups-p-of-abs-file-alist-fix
+  (abs-no-dups-p (abs-file-alist-fix x))
+  :hints (("goal" :in-theory (enable abs-file-alist-fix abs-no-dups-p))))
 
 (fty::deffixtype abs-file-alist
                  :pred abs-file-alist-p
