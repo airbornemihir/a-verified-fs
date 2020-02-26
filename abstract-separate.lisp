@@ -2466,9 +2466,8 @@
   :hints (("goal" :in-theory (enable abs-no-dups-p))
           ("subgoal *1/3" :cases ((equal name (car (car fs)))))))
 
-;; Rename later
 (defthm
-  abs-enotdir-witness-correctness-2-lemma-1
+  abs-no-dups-p-of-context-apply-lemma-1
   (implies (and (abs-file-alist-p fs)
                 (consp (assoc-equal name fs))
                 (not (abs-directory-file-p (cdr (assoc-equal name fs)))))
@@ -2480,9 +2479,8 @@
                               (abs-file-alist-p-when-m1-file-alist-p
                                abs-file-alist-p-correctness-1-lemma-3)))))
 
-;; Rename later
 (defthm
-  abs-find-file-helper-of-context-apply-lemma-1
+  abs-no-dups-p-of-context-apply-lemma-2
   (implies
    (and (abs-file-alist-p abs-file-alist1)
         (abs-file-alist-p abs-file-alist2))
@@ -2497,7 +2495,7 @@
                                       abs-file-alist2 x x-path))))))
 
 (defthm
-  abs-no-dups-p-of-context-apply-lemma-1
+  abs-no-dups-p-of-context-apply-lemma-3
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
         (abs-no-dups-p abs-file-alist2)
@@ -2524,7 +2522,7 @@
     :expand (abs-file-alist-p abs-file-alist1))))
 
 (defthm
-  abs-no-dups-p-of-context-apply-lemma-2
+  abs-no-dups-p-of-context-apply-lemma-4
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal (car x-path)
                                                 abs-file-alist1)))
@@ -2541,7 +2539,7 @@
      abs-file-alist2 x (cdr x-path)))))
 
 (defthm
-  abs-no-dups-p-of-context-apply-lemma-3
+  abs-no-dups-p-of-context-apply-lemma-5
   (implies (and (abs-no-dups-p abs-file-alist)
                 (fat32-filename-p name))
            (atom (assoc-equal name
@@ -2555,20 +2553,35 @@
    (and (abs-file-alist-p abs-file-alist1)
         (natp x)
         (abs-file-alist-p abs-file-alist2)
-        (fat32-filename-list-p x-path)
-        (context-apply-ok
-         abs-file-alist1 abs-file-alist2 x x-path))
+        (context-apply-ok abs-file-alist1
+                          abs-file-alist2 x x-path))
    (equal
-    (abs-no-dups-p
-     (context-apply
-      abs-file-alist1 abs-file-alist2 x x-path))
-    (and (abs-no-dups-p
-          abs-file-alist1)
+    (abs-no-dups-p (context-apply abs-file-alist1
+                                  abs-file-alist2 x x-path))
+    (and (abs-no-dups-p abs-file-alist1)
          (abs-no-dups-p abs-file-alist2)
          (not (intersectp-equal (names-at-relpath abs-file-alist1 x-path)
                                 (abs-top-names abs-file-alist2))))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (abs-file-alist-p abs-file-alist1)
+          (natp x)
+          (abs-file-alist-p abs-file-alist2))
+     (equal
+      (abs-no-dups-p (context-apply abs-file-alist1
+                                    abs-file-alist2 x x-path))
+      (and
+       (abs-no-dups-p abs-file-alist1)
+       (or
+        (not (context-apply-ok abs-file-alist1
+                               abs-file-alist2 x x-path))
+        (and (abs-no-dups-p abs-file-alist2)
+             (not (intersectp-equal (names-at-relpath abs-file-alist1 x-path)
+                                    (abs-top-names abs-file-alist2))))))))))
   :hints (("goal" :in-theory (enable context-apply context-apply-ok
-                                     names-at-relpath abs-no-dups-p)) ))
+                                     names-at-relpath abs-no-dups-p))))
 
 ;; This has a free variable. Also, accumulated-persistence may call it useless,
 ;; but it is very much needed.
@@ -3564,7 +3577,19 @@
   :hints
   (("goal" :in-theory (e/d (abs-separate distinguish-names
                                          prefixp names-at-relpath)
-                           (nthcdr-when->=-n-len-l)))))
+                           (nthcdr-when->=-n-len-l))
+    :induct (mv (abs-separate frame)
+                (put-assoc-equal
+                 src
+                 (frame-val
+                  (frame-val->path (cdr (assoc-equal src frame)))
+                  (context-apply
+                   (frame-val->dir (cdr (assoc-equal src frame)))
+                   dir x
+                   (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+                           relpath))
+                  (frame-val->src (cdr (assoc-equal src frame))))
+                 frame)))))
 
 (defthm
   abs-separate-correctness-1-lemma-45
@@ -3956,7 +3981,7 @@
            (not (member-equal x (strip-cars fs)))))
 
 (defthm
-  abs-find-file-helper-of-context-apply-lemma-2
+  abs-find-file-helper-of-context-apply-lemma-1
   (implies
    (and (abs-file-alist-p abs-file-alist1)
         (abs-file-alist-p abs-file-alist2)
@@ -4516,7 +4541,7 @@
                                      abs-find-file-helper))))
 
 (defthm
- abs-enotdir-witness-correctness-2-lemma-2
+ abs-enotdir-witness-correctness-2-lemma-1
  (implies
   (and
    (not
