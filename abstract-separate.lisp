@@ -2538,14 +2538,15 @@
                                                   abs-file-alist1)))
      abs-file-alist2 x (cdr x-path)))))
 
+;; This doesn't work all the time as a type prescription rule, because
+;; rewriting is sometimes needed to establish the hypotheses.
 (defthm
   abs-no-dups-p-of-context-apply-lemma-5
   (implies (and (abs-no-dups-p abs-file-alist)
                 (fat32-filename-p name))
            (atom (assoc-equal name
                               (remove1-assoc-equal name abs-file-alist))))
-  :hints (("goal" :in-theory (enable abs-no-dups-p)))
-  :rule-classes :type-prescription)
+  :hints (("goal" :in-theory (enable abs-no-dups-p))))
 
 (defthm
   abs-no-dups-p-of-context-apply
@@ -2582,6 +2583,20 @@
                                     (abs-top-names abs-file-alist2))))))))))
   :hints (("goal" :in-theory (enable context-apply context-apply-ok
                                      names-at-relpath abs-no-dups-p))))
+
+(defthm
+  names-at-relpath-of-context-apply
+  (implies
+   (and (abs-file-alist-p abs-file-alist)
+        (not (prefixp (fat32-filename-list-fix x-path)
+                      (fat32-filename-list-fix relpath))))
+   (equal (names-at-relpath (context-apply root abs-file-alist x x-path)
+                            relpath)
+          (names-at-relpath root relpath)))
+  :hints (("goal" :induct (mv (context-apply root abs-file-alist x x-path)
+                              (fat32-filename-list-prefixp x-path relpath))
+           :in-theory (enable prefixp
+                              context-apply names-at-relpath))))
 
 ;; This has a free variable. Also, accumulated-persistence may call it useless,
 ;; but it is very much needed.
@@ -2865,51 +2880,7 @@
                            (alist (cdr frame))
                            (x (car (car frame)))))))
 
-(encapsulate
-  ()
-
-  (local
-   (defthmd
-     abs-separate-correctness-1-lemma-17
-     (implies
-      (and (abs-file-alist-p abs-file-alist)
-           (fat32-filename-list-p x-path)
-           (fat32-filename-list-p relpath)
-           (not (prefixp x-path relpath)))
-      (equal (names-at-relpath (context-apply root abs-file-alist x x-path)
-                               relpath)
-             (names-at-relpath root relpath)))
-     :hints
-     (("goal"
-       :in-theory (enable prefixp context-apply names-at-relpath)
-       :induct t
-       :expand
-       (names-at-relpath
-        (put-assoc-equal
-         (car x-path)
-         (abs-file
-          (abs-file->dir-ent (cdr (assoc-equal (car x-path) root)))
-          (context-apply
-           (abs-file->contents (cdr (assoc-equal (car x-path) root)))
-           abs-file-alist x (cdr x-path)))
-         root)
-        relpath)))))
-
-  (defthm
-    abs-separate-correctness-1-lemma-18
-    (implies
-     (and (abs-file-alist-p abs-file-alist)
-          (not (prefixp (fat32-filename-list-fix x-path)
-                        (fat32-filename-list-fix relpath))))
-     (equal (names-at-relpath (context-apply root abs-file-alist x x-path)
-                              relpath)
-            (names-at-relpath root relpath)))
-    :hints
-    (("goal" :use (:instance abs-separate-correctness-1-lemma-17
-                             (x-path (fat32-filename-list-fix x-path))
-                             (relpath (fat32-filename-list-fix relpath)))))))
-
-(defthm abs-separate-correctness-1-lemma-19
+(defthm abs-separate-correctness-1-lemma-11
   (implies (not (null name))
            (equal (assoc-equal name
                                (append (remove-equal x root)
@@ -3290,13 +3261,13 @@
   (("goal"
     :do-not-induct t
     :in-theory (disable (:rewrite prefixp-nthcdr-nthcdr)
-                        (:rewrite abs-separate-correctness-1-lemma-18))
+                        (:rewrite names-at-relpath-of-context-apply))
     :use
     ((:instance (:rewrite prefixp-nthcdr-nthcdr)
                 (l2 (fat32-filename-list-fix relpath1))
                 (l1 (fat32-filename-list-fix relpath2))
                 (n (len (frame-val->path (cdr (car frame))))))
-     (:instance (:rewrite abs-separate-correctness-1-lemma-18)
+     (:instance (:rewrite names-at-relpath-of-context-apply)
                 (relpath (nthcdr (len (frame-val->path (cdr (car frame))))
                                  relpath1))
                 (x-path (nthcdr (len (frame-val->path (cdr (car frame))))
@@ -10341,30 +10312,56 @@
 (defthm remove-of-remove
   (equal (remove-equal x1 (remove-equal x2 l))
 	 (remove-equal x2 (remove-equal x1 l))))
-
-(thm
- (implies (and (abs-file-alist-p x)
-	       (abs-file-alist-p y)
-	       (abs-file-alist-p z)
-	       (abs-no-dups-p x)
-	       (abs-no-dups-p y)
-	       (abs-no-dups-p z)
-	       (context-apply-ok x y y-var y-path)
-	       (context-apply-ok x z z-var z-path)
-	       (not (equal y-var z-var))
-	       (abs-no-dups-p (context-apply (context-apply x z z-var z-path)
-					     y y-var y-path))
-	       (not (member-equal z-var y))
-	       (not (member-equal y-var z)))
-	  (abs-no-dups-p (context-apply (context-apply x y y-var y-path)
-					z z-var z-path)))
- :hints (("goal" :in-theory (enable context-apply context-apply-ok
- prefixp) :induct (prefixp y-path z-path) :expand (:free (X Z Z-VAR)
-							 (CONTEXT-APPLY X Z Z-VAR Z-PATH)))
-	 ("subgoal *1/4" :cases ((NULL (FAT32-FILENAME-FIX (CAR Z-PATH)))))))
+(defthm remove1-assoc-of-binary-append
+  (equal (remove1-assoc key (append x y))
+         (if (equal (remove1-assoc key x)
+                    (true-list-fix x))
+             (append x (remove1-assoc key y))
+             (append (remove1-assoc key x) y))))
+(defthm remove1-assoc-when-absent
+  (implies (not (null key))
+           (iff
+            (equal (remove1-assoc key alist) (true-list-fix alist))
+            (atom (assoc key alist))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies (and
+              (not (null key))
+              (atom (assoc key alist)))
+             (equal (remove1-assoc key alist) (true-list-fix alist))))
+   (:rewrite
+    :corollary
+    (implies (and
+              (not (null key))
+              (consp (assoc key alist)))
+             (not
+              (equal (remove1-assoc key alist) (true-list-fix alist)))))
+   (:rewrite
+    :corollary
+    (implies (and
+              (not (null key))
+              (consp (assoc key alist))
+              (true-listp alist))
+             (not
+              (equal (remove1-assoc key alist) alist))))))
 
 (defthm
   partial-collapse-correctness-lemma-8
+  (implies (and (abs-file-alist-p y)
+                (consp (assoc-equal (fat32-filename-fix (car z-path))
+                                    x))
+                (consp (assoc-equal (fat32-filename-fix (car z-path))
+                                    y)))
+           (intersectp-equal (remove-equal nil (strip-cars x))
+                             (remove-equal nil (strip-cars y))))
+  :hints (("goal" :use (:instance (:rewrite intersectp-member)
+                                  (a (fat32-filename-fix (car z-path)))
+                                  (y (remove-equal nil (strip-cars y)))
+                                  (x (remove-equal nil (strip-cars x)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-9
   (implies
    (and
     (abs-file-alist-p x)
@@ -10377,13 +10374,20 @@
     (context-apply-ok x z z-var z-path)
     (not (equal y-var z-var))
     (abs-no-dups-p (context-apply (context-apply x z z-var z-path)
-				  y y-var y-path)))
+				  y y-var y-path))
+    (natp y-var)
+    (natp Z-VAR)
+    (not
+     (intersectp-equal (remove-equal nil (strip-cars y))
+                       (names-at-relpath x y-path)))
+    (abs-complete y))
    (absfat-equiv
     (context-apply
      (context-apply x z z-var z-path) y y-var y-path)
     (context-apply
      (context-apply x y y-var y-path) z z-var z-path) ))
-  :hints (("Goal" :in-theory (enable absfat-equiv)) ))
+  :hints (("Goal" :in-theory (enable absfat-equiv) :do-not-induct t))
+  :otf-flg t)
 
 (thm
  (implies
