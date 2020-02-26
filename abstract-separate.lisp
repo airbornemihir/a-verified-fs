@@ -2401,17 +2401,18 @@
 ;; It would be nice to have fewer hypotheses and more terms in the RHS, but...
 (defthm
   abs-no-dups-p-of-append
-  (implies (and (abs-no-dups-p x)
-                (abs-no-dups-p y)
-                (abs-file-alist-p x)
-                (abs-file-alist-p y))
-           (equal (abs-no-dups-p (append x y))
-                  (not (intersectp-equal (remove-equal nil (strip-cars x))
-                                         (remove-equal nil (strip-cars y))))))
+  (implies
+   (and (abs-file-alist-p x)
+	(abs-file-alist-p y))
+   (equal (abs-no-dups-p (append x y))
+	  (and (abs-no-dups-p x)
+	       (abs-no-dups-p y)
+	       (not (intersectp-equal (remove-equal nil (strip-cars x))
+				      (remove-equal nil (strip-cars y)))))))
   :hints (("goal" :in-theory (e/d (abs-no-dups-p intersectp-equal)
-                                  (intersectp-is-commutative))
-           :induct (append x y)
-           :do-not-induct t)))
+				  (intersectp-is-commutative))
+	   :induct (append x y))
+	  ("subgoal *1/2" :cases ((null (car (car x)))))))
 
 (defthm abs-no-dups-p-of-remove-lemma-1
   (implies (and (not (consp (assoc-equal (car (car abs-file-alist))
@@ -10237,8 +10238,74 @@
 
 (defequiv
   absfat-equiv
-  :hints (("Goal" :in-theory (enable
-                              absfat-equiv)) ))
+  :hints (("Goal" :in-theory (enable absfat-equiv))))
+
+;; Move later
+(defthm intersectp-of-remove-1
+  (implies (not (intersectp-equal l1 l2))
+	   (not (intersectp-equal (remove-equal x l1)
+				  l2)))
+  :hints (("goal" :in-theory (enable intersectp-equal)))
+  :rule-classes :type-prescription)
+(defthm intersectp-of-remove-2
+  (implies (not (intersectp-equal l1 l2))
+	   (not (intersectp-equal l1
+				  (remove-equal x l2))))
+  :hints (("goal" :in-theory (enable intersectp-equal)))
+  :rule-classes :type-prescription)
+
+;; Move later
+(defthm abs-no-dups-p-of-put-assoc-equal
+  (implies (and (abs-no-dups-p x)
+		(fat32-filename-p key))
+	   (equal (abs-no-dups-p (put-assoc-equal key val x))
+		  (or (not (abs-directory-file-p val))
+		      (abs-no-dups-p (abs-file->contents val)))))
+  :hints (("goal" :in-theory (enable abs-no-dups-p))))
+
+(defthm remove-of-remove
+  (equal (remove-equal x1 (remove-equal x2 l))
+	 (remove-equal x2 (remove-equal x1 l))))
+
+(thm
+ (implies (and (abs-file-alist-p x)
+	       (abs-file-alist-p y)
+	       (abs-file-alist-p z)
+	       (abs-no-dups-p x)
+	       (abs-no-dups-p y)
+	       (abs-no-dups-p z)
+	       (context-apply-ok x y y-var y-path)
+	       (context-apply-ok x z z-var z-path)
+	       (not (equal y-var z-var))
+	       (abs-no-dups-p (context-apply (context-apply x z z-var z-path)
+					     y y-var y-path))
+	       (not (member-equal z-var y))
+	       (not (member-equal y-var z)))
+	  (abs-no-dups-p (context-apply (context-apply x y y-var y-path)
+					z z-var z-path)))
+ :hints (("goal" :in-theory (enable context-apply context-apply-ok prefixp) :induct (prefixp y-path z-path) :expand (:free (X Z Z-VAR) (CONTEXT-APPLY X Z Z-VAR Z-PATH)))))
+
+(defthm
+  partial-collapse-correctness-lemma-8
+  (implies
+   (and
+    (abs-file-alist-p x)
+    (abs-file-alist-p y)
+    (abs-file-alist-p z)
+    (abs-no-dups-p x)
+    (abs-no-dups-p y)
+    (abs-no-dups-p z)
+    (context-apply-ok x y y-var y-path)
+    (context-apply-ok x z z-var z-path)
+    (not (equal y-var z-var))
+    (abs-no-dups-p (context-apply (context-apply x z z-var z-path)
+				  y y-var y-path)))
+   (absfat-equiv
+    (context-apply
+     (context-apply x z z-var z-path) y y-var y-path)
+    (context-apply
+     (context-apply x y y-var y-path) z z-var z-path) ))
+  :hints (("Goal" :in-theory (enable absfat-equiv)) ))
 
 (thm
  (implies
@@ -10266,7 +10333,19 @@
      (REMOVE-ASSOC-EQUAL x (FRAME->FRAME FRAME))))))
  :hints (("Goal" :in-theory (enable collapse)
           :induct (COLLAPSE FRAME))
-         ("subgoal *1/7.3''" :in-theory (enable collapse 1st-complete-src))))
+         ("subgoal *1/7.3''" :in-theory (enable collapse 1st-complete-src))
+	 ("subgoal *1/4"
+	  :expand
+	  (collapse
+	   (frame-with-root
+	    (context-apply
+	     (frame->root frame)
+	     (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+	     x
+	     (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+	    (remove-assoc-equal x (frame->frame frame))))
+	  :cases ((equal x
+			 (1st-complete (frame->frame frame)))))))
 
 (defthm partial-collapse-correctness-1
   (implies
