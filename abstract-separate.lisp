@@ -2424,13 +2424,14 @@
                                  nil)))))
 
 (defthm abs-no-dups-p-of-remove
-  (implies (and (abs-file-alist-p abs-file-alist)
-                (abs-no-dups-p abs-file-alist))
-           (abs-no-dups-p (remove-equal x abs-file-alist)))
+  (implies (and (atom x)
+                (abs-file-alist-p abs-file-alist))
+           (equal (abs-no-dups-p (remove-equal x abs-file-alist))
+                  (abs-no-dups-p abs-file-alist)))
   :hints (("goal" :in-theory (enable abs-no-dups-p)
-           :expand (abs-file-alist-p abs-file-alist)
            :induct (mv (abs-no-dups-p abs-file-alist)
-                       (remove-equal x abs-file-alist)))))
+                       (remove-equal x abs-file-alist)))
+          ("subgoal *1/3" :cases ((null (car (car abs-file-alist)))))))
 
 (defthm
   abs-no-dups-p-of-context-apply-lemma-1
@@ -2462,14 +2463,15 @@
 (defthm
   abs-no-dups-p-of-context-apply
   (implies
-   (and (abs-file-alist-p abs-file-alist1)
+   (and (natp x)
+        (abs-file-alist-p abs-file-alist1)
         (abs-no-dups-p abs-file-alist1)
         (abs-file-alist-p abs-file-alist2)
         (abs-no-dups-p abs-file-alist2)
         (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist2))
                                (names-at-relpath abs-file-alist1 x-path))))
    (abs-no-dups-p (context-apply abs-file-alist1
-                                     abs-file-alist2 x x-path)))
+                                 abs-file-alist2 x x-path)))
   :hints (("goal" :in-theory (enable names-at-relpath context-apply))))
 
 ;; This has a free variable. Also, accumulated-persistence may call it useless,
@@ -10256,16 +10258,77 @@
 
 ;; Move later
 (defthm abs-no-dups-p-of-put-assoc-equal
-  (implies (and (abs-no-dups-p x)
-		(fat32-filename-p key))
-	   (equal (abs-no-dups-p (put-assoc-equal key val x))
-		  (or (not (abs-directory-file-p val))
-		      (abs-no-dups-p (abs-file->contents val)))))
+  (equal (abs-no-dups-p (put-assoc-equal key val x))
+         (and (atom (assoc-equal key (remove1-assoc-equal key x)))
+              (abs-no-dups-p (remove1-assoc-equal key x))
+              (or (not (abs-directory-file-p val))
+                  (abs-no-dups-p (abs-file->contents val)))))
   :hints (("goal" :in-theory (enable abs-no-dups-p))))
 
 (defthm remove-of-remove
   (equal (remove-equal x1 (remove-equal x2 l))
 	 (remove-equal x2 (remove-equal x1 l))))
+
+(defthm
+  abs-no-dups-p-of-context-apply-lemma-2
+  (implies
+   (and (abs-directory-file-p (cdr (assoc-equal (car x-path)
+                                                abs-file-alist1)))
+        (abs-file-alist-p abs-file-alist2))
+   (equal
+    (abs-file-contents-fix
+     (context-apply
+      (abs-file->contents$inline (cdr (assoc-equal (car x-path)
+                                                   abs-file-alist1)))
+      abs-file-alist2 x (cdr x-path)))
+    (context-apply
+     (abs-file->contents$inline (cdr (assoc-equal (car x-path)
+                                                  abs-file-alist1)))
+     abs-file-alist2 x (cdr x-path)))))
+
+(defthm
+  abs-no-dups-p-of-context-apply-lemma-3
+  (implies (and (abs-no-dups-p abs-file-alist)
+                (fat32-filename-p name))
+           (atom (assoc-equal name
+                              (remove1-assoc-equal name abs-file-alist))))
+  :hints (("goal" :in-theory (enable abs-no-dups-p)))
+  :rule-classes :type-prescription)
+
+(defthm
+  abs-no-dups-p-of-remove1-assoc
+  (implies
+   (or
+    (atom (assoc-equal name fs))
+    (and
+     (atom (assoc-equal name (remove1-assoc-equal name fs)))
+     (or (not (abs-directory-file-p (cdr (assoc-equal name fs))))
+         (abs-no-dups-p (abs-file->contents (cdr (assoc-equal name fs)))))))
+   (equal (abs-no-dups-p (remove1-assoc-equal name fs))
+          (abs-no-dups-p fs)))
+  :hints (("goal" :in-theory (enable abs-no-dups-p))
+          ("subgoal *1/3" :cases ((equal name (car (car fs)))))))
+
+(defthm
+  abs-no-dups-p-of-context-apply-alt
+  (implies
+   (and (abs-file-alist-p abs-file-alist1)
+        (natp x)
+        (abs-file-alist-p abs-file-alist2)
+        (fat32-filename-list-p x-path)
+        (context-apply-ok
+         abs-file-alist1 abs-file-alist2 x x-path))
+   (equal
+    (abs-no-dups-p
+     (context-apply
+      abs-file-alist1 abs-file-alist2 x x-path))
+    (and (abs-no-dups-p
+          abs-file-alist1)
+         (abs-no-dups-p abs-file-alist2)
+         (not (intersectp-equal (names-at-relpath abs-file-alist1 x-path)
+                                (abs-top-names abs-file-alist2))))))
+  :hints (("goal" :in-theory (enable context-apply context-apply-ok
+                                     names-at-relpath abs-no-dups-p)) ))
 
 (thm
  (implies (and (abs-file-alist-p x)
@@ -10283,7 +10346,10 @@
 	       (not (member-equal y-var z)))
 	  (abs-no-dups-p (context-apply (context-apply x y y-var y-path)
 					z z-var z-path)))
- :hints (("goal" :in-theory (enable context-apply context-apply-ok prefixp) :induct (prefixp y-path z-path) :expand (:free (X Z Z-VAR) (CONTEXT-APPLY X Z Z-VAR Z-PATH)))))
+ :hints (("goal" :in-theory (enable context-apply context-apply-ok
+ prefixp) :induct (prefixp y-path z-path) :expand (:free (X Z Z-VAR)
+							 (CONTEXT-APPLY X Z Z-VAR Z-PATH)))
+	 ("subgoal *1/4" :cases ((NULL (FAT32-FILENAME-FIX (CAR Z-PATH)))))))
 
 (defthm
   partial-collapse-correctness-lemma-8
