@@ -10457,6 +10457,9 @@
               (true-listp alist))
              (not
               (equal (remove1-assoc key alist) alist))))))
+(defthm put-assoc-of-put-assoc
+  (equal (put-assoc-equal name val2 (put-assoc-equal name val1 alist))
+         (put-assoc-equal name val2 alist)))
 
 (defthm
   partial-collapse-correctness-lemma-8
@@ -10471,6 +10474,41 @@
                                   (a (fat32-filename-fix (car z-path)))
                                   (y (remove-equal nil (strip-cars y)))
                                   (x (remove-equal nil (strip-cars x)))))))
+
+(defthm
+  absfat-subsetp-of-put-assoc-1
+  (implies
+   (and (abs-file-alist-p abs-file-alist1)
+        (abs-no-dups-p abs-file-alist1)
+        (absfat-subsetp (remove-assoc name abs-file-alist1)
+                        abs-file-alist2)
+        (abs-directory-file-p (cdr (assoc-equal name abs-file-alist2)))
+        (fat32-filename-p name)
+        (abs-directory-file-p val)
+        (absfat-subsetp
+         (abs-file->contents val)
+         (abs-file->contents (cdr (assoc-equal name abs-file-alist2)))))
+   (absfat-subsetp (put-assoc-equal name val abs-file-alist1)
+                   abs-file-alist2))
+  :hints (("goal" :in-theory (e/d (absfat-subsetp abs-no-dups-p) nil)
+           :induct (put-assoc-equal name val abs-file-alist1))
+          ("subgoal *1/2" :expand (abs-no-dups-p abs-file-alist1))))
+
+(thm
+ (IMPLIES (AND (ABS-FILE-ALIST-P X)
+               (ABS-FILE-ALIST-P Y)
+               (ABS-FILE-ALIST-P Z)
+               (ABS-NO-DUPS-P X)
+               (HIFAT-NO-DUPS-P Y)
+               (ABS-NO-DUPS-P Z)
+               (CONTEXT-APPLY-OK X Y Y-VAR Y-PATH)
+               (CONTEXT-APPLY-OK X Z Z-VAR Y-PATH))
+          (ABSFAT-SUBSETP (CONTEXT-APPLY (CONTEXT-APPLY X Y Y-VAR Y-PATH)
+                                         Z Z-VAR Y-PATH)
+                          (CONTEXT-APPLY (CONTEXT-APPLY X Z Z-VAR Y-PATH)
+                                         Y Y-VAR Y-PATH)))
+ :hints (("Goal" :in-theory (enable context-apply context-apply-ok)
+          :induct t)))
 
 (defthm
   partial-collapse-correctness-lemma-9
@@ -10498,8 +10536,7 @@
      (context-apply x z z-var z-path) y y-var y-path)
     (context-apply
      (context-apply x y y-var y-path) z z-var z-path) ))
-  :hints (("Goal" :in-theory (enable absfat-equiv) :do-not-induct t))
-  :otf-flg t)
+  :hints (("Goal" :in-theory (enable absfat-equiv) :do-not-induct t)))
 
 (thm
  (implies
