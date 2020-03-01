@@ -10494,24 +10494,151 @@
            :induct (put-assoc-equal name val abs-file-alist1))
           ("subgoal *1/2" :expand (abs-no-dups-p abs-file-alist1))))
 
-(thm
- (IMPLIES (AND (ABS-FILE-ALIST-P X)
-               (ABS-FILE-ALIST-P Y)
-               (ABS-FILE-ALIST-P Z)
-               (ABS-NO-DUPS-P X)
-               (HIFAT-NO-DUPS-P Y)
-               (ABS-NO-DUPS-P Z)
-               (CONTEXT-APPLY-OK X Y Y-VAR Y-PATH)
-               (CONTEXT-APPLY-OK X Z Z-VAR Y-PATH))
-          (ABSFAT-SUBSETP (CONTEXT-APPLY (CONTEXT-APPLY X Y Y-VAR Y-PATH)
-                                         Z Z-VAR Y-PATH)
-                          (CONTEXT-APPLY (CONTEXT-APPLY X Z Z-VAR Y-PATH)
-                                         Y Y-VAR Y-PATH)))
- :hints (("Goal" :in-theory (enable context-apply context-apply-ok)
-          :induct t)))
+(defthm absfat-subsetp-of-put-assoc-2
+  (implies (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (fat32-filename-p name)
+                (atom (assoc-equal name abs-file-alist1)))
+           (absfat-subsetp abs-file-alist1
+                           (put-assoc-equal name val abs-file-alist2)))
+  :hints (("goal" :in-theory (e/d (absfat-subsetp) nil))))
+
+(defthm absfat-subsetp-of-remove-assoc-1
+  (implies (absfat-subsetp abs-file-alist1 abs-file-alist2)
+           (absfat-subsetp (remove-assoc-equal name abs-file-alist1)
+                           abs-file-alist2))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm absfat-subsetp-of-append-1
+  (equal (absfat-subsetp (append x y) z)
+         (and (absfat-subsetp x z)
+              (absfat-subsetp y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm absfat-subsetp-of-append-2
+  (implies (and (abs-file-alist-p y)
+                (abs-no-dups-p (append y z))
+                (or (absfat-subsetp x y)
+                    (absfat-subsetp x z)))
+           (absfat-subsetp x (append y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
 
 (defthm
   partial-collapse-correctness-lemma-9
+  (implies
+   (and
+    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                            x)))
+    (absfat-subsetp
+     (context-apply
+      (context-apply
+       (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                             x)))
+       y y-var (cdr y-path))
+      z z-var (cdr y-path))
+     (context-apply
+      (context-apply
+       (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                             x)))
+       z z-var (cdr y-path))
+      y y-var (cdr y-path)))
+    (abs-file-alist-p x)
+    (abs-file-alist-p y)
+    (abs-file-alist-p z)
+    (abs-no-dups-p x))
+   (absfat-subsetp
+    (put-assoc-equal
+     (fat32-filename-fix (car y-path))
+     (abs-file
+      (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                           x)))
+      (context-apply
+       (context-apply (abs-file->contents
+                       (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                         x)))
+                      y y-var (cdr y-path))
+       z z-var (cdr y-path)))
+     x)
+    (put-assoc-equal
+     (fat32-filename-fix (car y-path))
+     (abs-file
+      (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                           x)))
+      (context-apply
+       (context-apply (abs-file->contents
+                       (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                         x)))
+                      z z-var (cdr y-path))
+       y y-var (cdr y-path)))
+     x)))
+  :hints
+  (("goal"
+    :in-theory (e/d (context-apply context-apply-ok)
+                    ((:rewrite absfat-subsetp-of-put-assoc-1)))
+    :use
+    ((:instance
+      (:rewrite absfat-subsetp-of-put-assoc-1)
+      (abs-file-alist2
+       (put-assoc-equal
+        (fat32-filename-fix (car y-path))
+        (abs-file
+         (abs-file->dir-ent
+          (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                            x)))
+         (context-apply
+          (context-apply
+           (abs-file->contents
+            (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                              x)))
+           z z-var (cdr y-path))
+          y y-var (cdr y-path)))
+        x))
+      (abs-file-alist1 x)
+      (val
+       (abs-file
+        (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                             x)))
+        (context-apply
+         (context-apply
+          (abs-file->contents
+           (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                             x)))
+          y y-var (cdr y-path))
+         z z-var (cdr y-path))))
+      (name (fat32-filename-fix (car y-path))))))))
+
+;; Move later.
+(defthm abs-addrs-when-m1-file-alist-p
+  (implies (m1-file-alist-p x)
+           (equal (abs-addrs x) nil))
+  :hints (("goal" :in-theory (enable abs-addrs)))
+  :rule-classes :type-prescription)
+
+(defthm
+  partial-collapse-correctness-lemma-10
+  (implies (and (abs-file-alist-p x)
+                (m1-file-alist-p y)
+                (m1-file-alist-p z)
+                (abs-no-dups-p x)
+                (hifat-no-dups-p y)
+                (hifat-no-dups-p z)
+                (natp y-var)
+                (natp z-var)
+                (not (equal y-var z-var))
+                (not (intersectp-equal (strip-cars y)
+                                       (strip-cars z)))
+                (not (intersectp-equal (strip-cars y)
+                                       (names-at-relpath x y-path)))
+                (not (intersectp-equal (strip-cars z)
+                                       (names-at-relpath x y-path))))
+           (absfat-subsetp (context-apply (context-apply x y y-var y-path)
+                                          z z-var y-path)
+                           (context-apply (context-apply x z z-var y-path)
+                                          y y-var y-path)))
+  :hints (("goal" :in-theory (enable context-apply
+                                     context-apply-ok names-at-relpath))))
+
+(defthm
+  partial-collapse-correctness-lemma-11
   (implies
    (and
     (abs-file-alist-p x)
