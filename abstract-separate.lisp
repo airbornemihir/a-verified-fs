@@ -10788,32 +10788,114 @@
            :cases ((null (fat32-filename-fix (car z-path)))))))
 
 (defthm
-  partial-collapse-correctness-lemma-11
+  partial-collapse-correctness-lemma-15
+  (implies
+   (and
+    (absfat-subsetp
+     (context-apply
+      (context-apply
+       (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                             x)))
+       y y-var (cdr y-path))
+      z z-var (cdr z-path))
+     (context-apply
+      (context-apply
+       (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                             x)))
+       z z-var (cdr z-path))
+      y y-var (cdr y-path)))
+    (m1-file-alist-p y)
+    (m1-file-alist-p z)
+    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                            x))))
+   (absfat-subsetp
+    (abs-file-contents-fix
+     (context-apply
+      (context-apply (abs-file->contents$inline
+                      (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                        x)))
+                     y y-var (cdr y-path))
+      z z-var (cdr z-path)))
+    (abs-file-contents-fix
+     (context-apply
+      (context-apply (abs-file->contents$inline
+                      (cdr (assoc-equal (fat32-filename-fix (car y-path))
+                                        x)))
+                     z z-var (cdr z-path))
+      y y-var (cdr y-path))))))
+
+(defthm
+  partial-collapse-correctness-lemma-16
+  (implies (and (abs-file-alist-p x)
+                (m1-file-alist-p y)
+                (m1-file-alist-p z)
+                (abs-no-dups-p x)
+                (hifat-no-dups-p y)
+                (hifat-no-dups-p z)
+                (context-apply-ok x z z-var z-path)
+                (not (intersectp-equal (strip-cars z)
+                                       (names-at-relpath x z-path)))
+                (not (prefixp (fat32-filename-list-fix z-path)
+                              (fat32-filename-list-fix y-path)))
+                (not (intersectp-equal (strip-cars y)
+                                       (names-at-relpath x y-path)))
+                (natp y-var)
+                (natp z-var))
+           (absfat-subsetp (context-apply (context-apply x y y-var y-path)
+                                          z z-var z-path)
+                           (context-apply (context-apply x z z-var z-path)
+                                          y y-var y-path)))
+  :hints (("goal" :in-theory (enable context-apply context-apply-ok
+                                     names-at-relpath put-assoc-of-remove)
+           :induct (mv (fat32-filename-list-prefixp z-path y-path)
+                       (context-apply x z z-var z-path)
+                       (context-apply x y y-var y-path))
+           :do-not-induct t)
+          ("subgoal *1/3" :expand ((:free (x y y-var)
+                                          (context-apply x y y-var y-path))
+                                   (:free (x z z-var)
+                                          (context-apply x z z-var z-path)))
+           :cases ((null (fat32-filename-fix (car z-path)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-17
   (implies
    (and
     (abs-file-alist-p x)
     (m1-file-alist-p y)
     (m1-file-alist-p z)
-    (abs-no-dups-p x)
-    (abs-no-dups-p y)
-    (abs-no-dups-p z)
     (context-apply-ok x y y-var y-path)
     (context-apply-ok x z z-var z-path)
     (not (equal y-var z-var))
     (abs-no-dups-p (context-apply (context-apply x z z-var z-path)
-				  y y-var y-path))
+                                  y y-var y-path))
     (natp y-var)
-    (natp Z-VAR)
-    (not
-     (intersectp-equal (remove-equal nil (strip-cars y))
-                       (names-at-relpath x y-path)))
-    (abs-complete y))
-   (absfat-equiv
-    (context-apply
-     (context-apply x z z-var z-path) y y-var y-path)
-    (context-apply
-     (context-apply x y y-var y-path) z z-var z-path) ))
-  :hints (("Goal" :in-theory (enable absfat-equiv) :do-not-induct t)))
+    (natp z-var)
+    (not (intersectp-equal (remove-equal nil (strip-cars y))
+                           (names-at-relpath x y-path)))
+    (or
+     (not (prefixp (fat32-filename-list-fix y-path)
+                   (fat32-filename-list-fix z-path)))
+     (not
+      (intersectp-equal (strip-cars z)
+                        (names-at-relpath y (nthcdr (len y-path) z-path))))))
+   (absfat-equiv (context-apply (context-apply x z z-var z-path)
+                                y y-var y-path)
+                 (context-apply (context-apply x y y-var y-path)
+                                z z-var z-path)))
+  :hints (("goal" :in-theory (e/d (list-equiv absfat-equiv)
+                                  ((:rewrite prefixp-when-equal-lengths)
+                                   len-when-prefixp))
+           :use ((:instance (:rewrite prefixp-when-equal-lengths)
+                            (y (fat32-filename-list-fix z-path))
+                            (x (fat32-filename-list-fix y-path)))
+                 (:instance len-when-prefixp
+                            (x (fat32-filename-list-fix y-path))
+                            (y (fat32-filename-list-fix z-path)))
+                 (:instance len-when-prefixp
+                            (x (fat32-filename-list-fix z-path))
+                            (y (fat32-filename-list-fix y-path))))
+           :do-not-induct t)))
 
 (thm
  (implies
