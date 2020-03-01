@@ -10897,6 +10897,332 @@
                             (y (fat32-filename-list-fix y-path))))
            :do-not-induct t)))
 
+(defthm context-apply-ok-when-absfat-equiv-lemma-1
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (consp (assoc-equal x abs-file-alist1)))
+           (consp (assoc-equal x abs-file-alist2)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthmd
+  context-apply-ok-when-absfat-equiv-lemma-2
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (abs-no-dups-p abs-file-alist2))
+           (equal (consp (assoc-equal x abs-file-alist1))
+                  (consp (assoc-equal x abs-file-alist2))))
+  :hints
+  (("goal" :in-theory (e/d (absfat-equiv)
+                           (context-apply-ok-when-absfat-equiv-lemma-1))
+    :do-not-induct t
+    :use ((:instance context-apply-ok-when-absfat-equiv-lemma-1
+                     (abs-file-alist2 abs-file-alist1)
+                     (abs-file-alist1 abs-file-alist2))
+          context-apply-ok-when-absfat-equiv-lemma-1))))
+
+;; This is disabled because without a proper fixing function, it is screwing
+;; things up.
+(defthmd
+  context-apply-ok-when-absfat-equiv-lemma-3
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (or (abs-no-dups-p abs-file-alist1)
+                    (abs-no-dups-p abs-file-alist2)))
+           (equal (consp (assoc-equal x abs-file-alist1))
+                  (consp (assoc-equal x abs-file-alist2))))
+  :hints (("goal" :do-not-induct t
+           :use ((:instance context-apply-ok-when-absfat-equiv-lemma-2
+                            (abs-file-alist2 abs-file-alist1)
+                            (abs-file-alist1 abs-file-alist2))
+                 context-apply-ok-when-absfat-equiv-lemma-2))))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-4
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (abs-no-dups-p abs-file-alist2)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (consp (assoc-equal (fat32-filename-fix (car x-path))
+                                    abs-file-alist1)))
+           (consp (assoc-equal (fat32-filename-fix (car x-path))
+                               abs-file-alist2)))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-3)
+                    (abs-file-alist2 abs-file-alist1)
+                    (abs-file-alist1 abs-file-alist2)
+                    (x (fat32-filename-fix (car x-path)))))))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-5
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1))))
+           (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2))))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthmd
+  context-apply-ok-when-absfat-equiv-lemma-6
+  (implies
+   (and (abs-file-alist-p abs-file-alist1)
+        (abs-file-alist-p abs-file-alist2)
+        (absfat-equiv abs-file-alist1 abs-file-alist2)
+        (abs-no-dups-p abs-file-alist1))
+   (equal (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2)))
+          (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1)))))
+  :hints
+  (("goal" :in-theory (e/d (absfat-equiv)
+                           (context-apply-ok-when-absfat-equiv-lemma-5))
+    :use (context-apply-ok-when-absfat-equiv-lemma-5
+          (:instance context-apply-ok-when-absfat-equiv-lemma-5
+                     (abs-file-alist2 abs-file-alist1)
+                     (abs-file-alist1 abs-file-alist2)))
+    :do-not-induct t)))
+
+;; Again, disabled because it leads to infinite rewriting.
+(defthmd
+  context-apply-ok-when-absfat-equiv-lemma-7
+  (implies
+   (and (abs-file-alist-p abs-file-alist1)
+        (abs-file-alist-p abs-file-alist2)
+        (absfat-equiv abs-file-alist1 abs-file-alist2)
+        (or (abs-no-dups-p abs-file-alist1)
+            (abs-no-dups-p abs-file-alist2)))
+   (equal (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2)))
+          (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1)))))
+  :hints
+  (("goal" :use (context-apply-ok-when-absfat-equiv-lemma-6
+                 (:instance context-apply-ok-when-absfat-equiv-lemma-6
+                            (abs-file-alist2 abs-file-alist1)
+                            (abs-file-alist1 abs-file-alist2)))
+    :do-not-induct t)))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-8
+  (implies
+   (and
+    (abs-file-alist-p abs-file-alist1)
+    (abs-file-alist-p abs-file-alist2)
+    (abs-no-dups-p abs-file-alist2)
+    (absfat-equiv abs-file-alist1 abs-file-alist2)
+    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
+                                            abs-file-alist1))))
+   (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
+                                           abs-file-alist2))))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-7)
+                    (x (fat32-filename-fix (car x-path)))))))
+
+(defthm context-apply-ok-when-absfat-equiv-lemma-9
+  (implies (and (natp x)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (member-equal x abs-file-alist1))
+           (member-equal x abs-file-alist2))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-10
+  (implies (and (member-equal x abs-file-alist2)
+                (natp x)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (absfat-subsetp abs-file-alist2 abs-file-alist1)
+                (not (member-equal x (abs-addrs abs-file-alist3))))
+           (not (equal (append (remove-equal x abs-file-alist1)
+                               abs-file-alist3)
+                       abs-file-alist1)))
+  :instructions
+  (:promote
+   (:claim (not (member-equal x
+                              (append (remove-equal x abs-file-alist1)
+                                      abs-file-alist3))))
+   (:claim (member-equal x abs-file-alist1))
+   (:= t)))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-1
+  (implies (and (natp x)
+                (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (abs-file-alist-p abs-file-alist3)
+                (abs-no-dups-p abs-file-alist2)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (not (member-equal x (abs-addrs abs-file-alist3))))
+           (equal (context-apply-ok abs-file-alist1
+                                    abs-file-alist3 x x-path)
+                  (context-apply-ok abs-file-alist2
+                                    abs-file-alist3 x x-path)))
+  :hints
+  (("goal" :in-theory (e/d (context-apply-ok context-apply absfat-equiv)
+                           (abs-file-alist-p-correctness-1-lemma-3
+                            absfat-subsetp-correctness-1
+                            absfat-subsetp-transitivity-lemma-9
+                            abs-file->contents-when-m1-file-p))
+    :induct (mv (context-apply abs-file-alist1
+                               abs-file-alist3 x x-path)
+                (context-apply abs-file-alist2
+                               abs-file-alist3 x x-path)))))
+
+(local
+ (defun
+     induction-scheme (frame1 frame2)
+   (declare (xargs :verify-guards nil
+                   :measure (len (frame->frame frame1))))
+   (cond
+    ((and
+      (not (atom (frame->frame frame1)))
+      (not (zp (1st-complete (frame->frame frame1))))
+      (not (zp (1st-complete-src (frame->frame frame1))))
+      (not
+       (or
+        (equal (1st-complete-src (frame->frame frame1))
+               (1st-complete (frame->frame frame1)))
+        (atom
+         (assoc-equal (1st-complete-src (frame->frame frame1))
+                      (remove-assoc-equal (1st-complete (frame->frame frame1))
+                                          (frame->frame frame1))))))
+      (prefixp
+       (frame-val->path
+        (cdr
+         (assoc-equal (1st-complete-src (frame->frame frame1))
+                      (remove-assoc-equal (1st-complete (frame->frame frame1))
+                                          (frame->frame frame1)))))
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                          (frame->frame frame1)))))
+      (context-apply-ok
+       (frame-val->dir
+        (cdr
+         (assoc-equal (1st-complete-src (frame->frame frame1))
+                      (remove-assoc-equal (1st-complete (frame->frame frame1))
+                                          (frame->frame frame1)))))
+       (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                         (frame->frame frame1))))
+       (1st-complete (frame->frame frame1))
+       (nthcdr
+        (len
+         (frame-val->path
+          (cdr
+           (assoc-equal (1st-complete-src (frame->frame frame1))
+                        (remove-assoc-equal (1st-complete (frame->frame frame1))
+                                            (frame->frame frame1))))))
+        (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                           (frame->frame frame1)))))))
+     (induction-scheme
+      (frame-with-root
+       (frame->root frame1)
+       (put-assoc-equal
+        (1st-complete-src (frame->frame frame1))
+        (frame-val
+         (frame-val->path
+          (cdr (assoc-equal (1st-complete-src (frame->frame frame1))
+                            (frame->frame frame1))))
+         (context-apply
+          (frame-val->dir
+           (cdr (assoc-equal
+                 (1st-complete-src (frame->frame frame1))
+                 (remove-assoc-equal (1st-complete (frame->frame frame1))
+                                     (frame->frame frame1)))))
+          (frame-val->dir
+           (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                             (frame->frame frame1))))
+          (1st-complete (frame->frame frame1))
+          (nthcdr
+           (len
+            (frame-val->path
+             (cdr (assoc-equal
+                   (1st-complete-src (frame->frame frame1))
+                   (remove-assoc-equal (1st-complete (frame->frame frame1))
+                                       (frame->frame frame1))))))
+           (frame-val->path
+            (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                              (frame->frame frame1))))))
+         (frame-val->src
+          (cdr (assoc-equal (1st-complete-src (frame->frame frame1))
+                            (frame->frame frame1)))))
+        (remove-assoc-equal (1st-complete (frame->frame frame1))
+                            (frame->frame frame1))))
+      (frame-with-root
+       (frame->root frame2)
+       (put-assoc-equal
+        (1st-complete-src (frame->frame frame2))
+        (frame-val
+         (frame-val->path
+          (cdr (assoc-equal (1st-complete-src (frame->frame frame2))
+                            (frame->frame frame2))))
+         (context-apply
+          (frame-val->dir
+           (cdr (assoc-equal
+                 (1st-complete-src (frame->frame frame2))
+                 (remove-assoc-equal (1st-complete (frame->frame frame2))
+                                     (frame->frame frame2)))))
+          (frame-val->dir
+           (cdr (assoc-equal (1st-complete (frame->frame frame2))
+                             (frame->frame frame2))))
+          (1st-complete (frame->frame frame2))
+          (nthcdr
+           (len
+            (frame-val->path
+             (cdr (assoc-equal
+                   (1st-complete-src (frame->frame frame2))
+                   (remove-assoc-equal (1st-complete (frame->frame frame2))
+                                       (frame->frame frame2))))))
+           (frame-val->path
+            (cdr (assoc-equal (1st-complete (frame->frame frame2))
+                              (frame->frame frame2))))))
+         (frame-val->src
+          (cdr (assoc-equal (1st-complete-src (frame->frame frame2))
+                            (frame->frame frame2)))))
+        (remove-assoc-equal (1st-complete (frame->frame frame2))
+                            (frame->frame frame2))))))
+    ((and
+      (not (atom (frame->frame frame1)))
+      (not (zp (1st-complete (frame->frame frame1))))
+      (zp (1st-complete-src (frame->frame frame1)))
+      (context-apply-ok
+       (frame->root frame1)
+       (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                         (frame->frame frame1))))
+       (1st-complete (frame->frame frame1))
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                          (frame->frame frame1))))))
+     (induction-scheme
+      (frame-with-root
+       (context-apply
+        (frame->root frame1)
+        (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                          (frame->frame frame1))))
+        (1st-complete (frame->frame frame1))
+        (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                           (frame->frame frame1)))))
+       (remove-assoc-equal (1st-complete (frame->frame frame1))
+                           (frame->frame frame1)))
+      (frame-with-root
+       (context-apply
+        (frame->root frame2)
+        (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame2))
+                                          (frame->frame frame2))))
+        (1st-complete (frame->frame frame2))
+        (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame2))
+                                           (frame->frame frame2)))))
+       (remove-assoc-equal (1st-complete (frame->frame frame2))
+                           (frame->frame frame2)))))
+    (t
+     (mv frame1 frame2)))))
+
+(thm
+ (implies
+  (and (equal (frame->frame frame1) (frame->frame frame2))
+       (absfat-equiv (frame->root frame1) (frame->root frame2)))
+  (equal
+   (mv-nth 1 (collapse frame1))
+   (mv-nth 1 (collapse frame2))))
+ :hints (("Goal" :in-theory (enable collapse)
+          :induct
+          (induction-scheme frame1 frame2))
+         ("Subgoal *1/3.4'" :expand (COLLAPSE FRAME2))))
+
 (thm
  (implies
   (and
