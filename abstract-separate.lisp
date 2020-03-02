@@ -10013,6 +10013,7 @@
   (implies (and (natp x2)
                 (natp x3)
                 (not (equal x2 x3))
+                (abs-file-alist-p abs-file-alist1)
                 (abs-file-alist-p abs-file-alist2)
                 (abs-file-alist-p abs-file-alist3)
                 (context-apply-ok abs-file-alist1
@@ -10022,7 +10023,9 @@
                                             abs-file-alist3 x3 x3-path)
                              abs-file-alist2 x2 x2-path))
   :hints
-  (("goal" :in-theory (enable context-apply-ok context-apply)
+  (("goal"
+    :in-theory (enable context-apply-ok
+                       context-apply put-assoc-equal-match)
     :do-not-induct t
     :induct (mv (context-apply abs-file-alist1
                                abs-file-alist2 x2 x2-path)
@@ -10037,8 +10040,8 @@
              (context-apply abs-file-alist1
                             abs-file-alist3 x3 x3-path)
              (:free (abs-file-alist1 abs-file-alist3 x3)
-                   (context-apply abs-file-alist1
-                                  abs-file-alist3 x3 x3-path))))))
+                    (context-apply abs-file-alist1
+                                   abs-file-alist3 x3 x3-path))))))
 
 (defthm
   absfat-subsetp-guard-lemma-1
@@ -10320,71 +10323,6 @@
 (defequiv
   absfat-equiv
   :hints (("Goal" :in-theory (enable absfat-equiv))))
-
-;; Move later
-(defthm intersectp-of-remove-1
-  (implies (not (intersectp-equal l1 l2))
-	   (not (intersectp-equal (remove-equal x l1)
-				  l2)))
-  :hints (("goal" :in-theory (enable intersectp-equal)))
-  :rule-classes :type-prescription)
-(defthm intersectp-of-remove-2
-  (implies (not (intersectp-equal l1 l2))
-	   (not (intersectp-equal l1
-				  (remove-equal x l2))))
-  :hints (("goal" :in-theory (enable intersectp-equal)))
-  :rule-classes :type-prescription)
-(defthm remove-of-remove
-  (equal (remove-equal x1 (remove-equal x2 l))
-	 (remove-equal x2 (remove-equal x1 l))))
-(defthm remove1-assoc-of-append
-  (equal (remove1-assoc key (append x y))
-         (if (equal (remove1-assoc key x)
-                    (true-list-fix x))
-             (append x (remove1-assoc key y))
-             (append (remove1-assoc key x) y))))
-(defthm remove1-assoc-when-absent
-  (implies (not (null key))
-           (iff
-            (equal (remove1-assoc key alist) (true-list-fix alist))
-            (atom (assoc key alist))))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies (and
-              (not (null key))
-              (atom (assoc key alist)))
-             (equal (remove1-assoc key alist) (true-list-fix alist))))
-   (:rewrite
-    :corollary
-    (implies (and
-              (not (null key))
-              (consp (assoc key alist)))
-             (not
-              (equal (remove1-assoc key alist) (true-list-fix alist)))))
-   (:rewrite
-    :corollary
-    (implies (and
-              (not (null key))
-              (consp (assoc key alist))
-              (true-listp alist))
-             (not
-              (equal (remove1-assoc key alist) alist))))))
-(defthm put-assoc-of-put-assoc
-  (equal (put-assoc-equal name val2 (put-assoc-equal name val1 alist))
-         (put-assoc-equal name val2 alist)))
-(defthm put-assoc-of-append
-  (implies (not (null name))
-           (equal (put-assoc-equal name val (append x y))
-                  (if (atom (assoc-equal name x))
-                      (append x (put-assoc-equal name val y))
-                      (append (put-assoc-equal name val x)
-                              y)))))
-;; This is disabled because I cannot decide on a normal form.
-(defthmd put-assoc-of-remove
-  (implies (and (not (null name)) (atom x))
-           (equal (remove-equal x (put-assoc-equal name val alist))
-                  (put-assoc-equal name val (remove-equal x alist)))))
 
 (defthm
   partial-collapse-correctness-lemma-8
