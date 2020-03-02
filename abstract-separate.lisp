@@ -577,18 +577,21 @@
   :hints (("goal" :in-theory (enable abs-no-dups-p)
            :expand (abs-file-alist-p fs))))
 
-(defthm abs-no-dups-p-of-append-lemma-1
-  (implies (and (abs-no-dups-p x)
-                (abs-file-alist-p x)
-                (abs-file-alist-p y)
-                (consp (assoc-equal (car (car x))
-                                    (append (cdr x) y))))
-           (member-equal (car (car x))
-                         (strip-cars y)))
-  :hints (("goal" :do-not-induct t
-           :expand (abs-no-dups-p x)
-           :cases ((equal (car (car x)) nil)))))
+(defthm
+  abs-no-dups-p-when-m1-file-alist-p
+  (implies (m1-file-alist-p fs)
+           (equal (abs-no-dups-p fs)
+                  (hifat-no-dups-p fs)))
+  :hints (("goal" :induct (abs-no-dups-p fs)
+           :in-theory (enable abs-no-dups-p abs-directory-file-p
+                              m1-directory-file-p abs-file->contents
+                              m1-file->contents abs-file-p)
+           :expand ((hifat-no-dups-p fs)
+                    (m1-file-alist-p fs)))))
 
+;; I'm choosing to include a corollary which really is about hifat-no-dups-p,
+;; because moving it to hifat.lisp would introduce a bunch of intersectp
+;; forms which I don't know if I want in that file.
 (defthm
   abs-no-dups-p-of-append
   (implies
@@ -602,7 +605,19 @@
   :hints (("goal" :in-theory (e/d (abs-no-dups-p intersectp-equal)
 				  (intersectp-is-commutative))
 	   :induct (append x y))
-	  ("subgoal *1/2" :cases ((null (car (car x)))))))
+	  ("subgoal *1/2" :cases ((null (car (car x))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (m1-file-alist-p x)
+	  (m1-file-alist-p y))
+     (equal (hifat-no-dups-p (append x y))
+	    (and (hifat-no-dups-p x)
+	         (hifat-no-dups-p y)
+	         (not (intersectp-equal (remove-equal nil (strip-cars x))
+				        (remove-equal nil (strip-cars y))))))))))
 
 (defthm abs-no-dups-p-of-remove-lemma-1
   (implies (and (not (consp (assoc-equal (car (car abs-file-alist))
@@ -2247,18 +2262,6 @@
   (booleanp (mv-nth 1 (collapse frame)))
   :hints (("goal" :in-theory (enable collapse)))
   :rule-classes :type-prescription)
-
-(defthm
-  abs-no-dups-p-when-m1-file-alist-p
-  (implies (m1-file-alist-p fs)
-           (equal (abs-no-dups-p fs)
-                  (hifat-no-dups-p fs)))
-  :hints (("goal" :induct (abs-no-dups-p fs)
-           :in-theory (enable abs-no-dups-p abs-directory-file-p
-                              m1-directory-file-p abs-file->contents
-                              m1-file->contents abs-file-p)
-           :expand ((hifat-no-dups-p fs)
-                    (m1-file-alist-p fs)))))
 
 (defund abs-top-names (x)
   (declare (xargs :guard t))
@@ -10458,7 +10461,7 @@
                            (remove-equal x abs-file-alist2)))
   :hints (("goal" :in-theory (enable absfat-subsetp))))
 
-(defthm absfat-no-dups-p-of-remove-assoc
+(defthm abs-no-dups-p-of-remove-assoc
   (implies (abs-no-dups-p fs)
            (abs-no-dups-p (remove-assoc-equal x fs)))
   :hints (("goal" :in-theory (enable abs-no-dups-p))))
