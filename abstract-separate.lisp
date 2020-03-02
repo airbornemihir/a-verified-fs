@@ -90,6 +90,13 @@
            (abs-file-alist-p (cdr abs-file-alist1)))
   :hints (("goal" :in-theory (enable abs-file-alist-p))))
 
+(defthm
+  abs-file-alist-p-when-m1-file-alist-p
+  (implies (m1-file-alist-p x)
+           (abs-file-alist-p x))
+  :hints (("goal" :in-theory (enable abs-file-alist-p
+                                     m1-file-alist-p))))
+
 (defund abs-file-contents-p (contents)
   (declare (xargs :guard t))
   (or (and (stringp contents)
@@ -136,6 +143,13 @@
                  :equiv abs-file-contents-equiv
                  :define t)
 
+(defthm
+  abs-file-contents-p-when-m1-file-contents-p
+  (implies (m1-file-contents-p contents)
+           (abs-file-contents-p contents))
+  :hints (("goal" :in-theory (enable m1-file-contents-p
+                                     abs-file-contents-p))))
+
 (fty::defprod
  abs-file
  ((dir-ent dir-ent-p :default (dir-ent-fix nil))
@@ -161,24 +175,19 @@
       :in-theory
       (enable abs-file-p abs-file->contents abs-file-contents-fix))))))
 
+(defthm
+  abs-file->contents-when-m1-file-p
+  (implies (m1-file-p file)
+           (equal (abs-file->contents file)
+                  (m1-file->contents file)))
+  :hints
+  (("goal" :in-theory (enable m1-file->contents
+                              abs-file->contents m1-file-p))))
+
 (defund abs-directory-file-p (file)
   (declare (xargs :guard t))
   (and (abs-file-p file)
        (abs-file-alist-p (abs-file->contents file))))
-
-(defthm
-  abs-file-alist-p-when-m1-file-alist-p
-  (implies (m1-file-alist-p x)
-           (abs-file-alist-p x))
-  :hints (("goal" :in-theory (enable abs-file-alist-p
-                                     m1-file-alist-p))))
-
-(defthm
-  abs-file-contents-p-when-m1-file-contents-p
-  (implies (m1-file-contents-p contents)
-           (abs-file-contents-p contents))
-  :hints (("goal" :in-theory (enable m1-file-contents-p
-                                     abs-file-contents-p))))
 
 (defthm
   abs-file-p-when-m1-regular-file-p
@@ -376,6 +385,12 @@
           (abs-addrs (abs-file->contents (cdar abs-file-alist)))
           (abs-addrs (cdr abs-file-alist))))
         (t (abs-addrs (cdr abs-file-alist)))))
+
+(defthm abs-addrs-when-m1-file-alist-p
+  (implies (m1-file-alist-p x)
+           (equal (abs-addrs x) nil))
+  :hints (("goal" :in-theory (enable abs-addrs)))
+  :rule-classes :type-prescription)
 
 (defthm abs-complete-definition
   (equal (abs-complete x)
@@ -3956,15 +3971,6 @@
       :use ((:instance abs-find-file-of-fat32-filename-list-fix
                        (pathname pathname-equiv))
             abs-find-file-of-fat32-filename-list-fix)))))
-
-(defthm
-  abs-file->contents-when-m1-file-p
-  (implies (m1-file-p file)
-           (equal (abs-file->contents file)
-                  (m1-file->contents file)))
-  :hints
-  (("goal" :in-theory (enable m1-file->contents
-                              abs-file->contents m1-file-p))))
 
 (defthm abs-find-file-helper-when-m1-file-alist-p
   (implies (and (m1-file-alist-p fs)
@@ -9743,305 +9749,11 @@
                                       (consp (assoc-equal x1 alist)))
                                  (consp (remove-assoc-equal x2 alist))))))
 
-(defthm partial-collapse-correctness-lemma-1
-  (implies (and (< 0 (1st-complete frame))
-                (not (equal x (1st-complete frame))))
-           (equal
-            (1st-complete (remove-assoc-equal x frame))
-            (1st-complete frame)))
-  :hints (("goal" :in-theory (enable 1st-complete))))
-
-(defthm partial-collapse-correctness-lemma-2
-  (implies (and (< 0 (1st-complete frame))
-                (not (equal x (1st-complete frame))))
-           (equal
-            (1st-complete-src (remove-assoc-equal x frame))
-            (1st-complete-src frame)))
-  :hints (("goal" :in-theory (enable 1st-complete-src)))
-  :rule-classes :linear)
-
-(defthm
-  partial-collapse-correctness-lemma-3
-  (implies
-   (and
-    (not
-     (equal
-      (context-apply
-       (context-apply
-        (abs-file->contents
-         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                           abs-file-alist1)))
-        abs-file-alist3 x3 (cdr x3-path))
-       abs-file-alist2 x2 (cdr x2-path))
-      (context-apply (abs-file->contents
-                      (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                                        abs-file-alist1)))
-                     abs-file-alist3 x3 (cdr x3-path))))
-    (abs-file-alist-p abs-file-alist2)
-    (abs-file-alist-p abs-file-alist3)
-    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                                            abs-file-alist1))))
-   (not
-    (equal
-     (put-assoc-equal
-      (fat32-filename-fix (car x2-path))
-      (abs-file
-       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                                            abs-file-alist1)))
-       (context-apply
-        (context-apply
-         (abs-file->contents
-          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                            abs-file-alist1)))
-         abs-file-alist3 x3 (cdr x3-path))
-        abs-file-alist2 x2 (cdr x2-path)))
-      (put-assoc-equal
-       (fat32-filename-fix (car x2-path))
-       (abs-file
-        (abs-file->dir-ent
-         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                           abs-file-alist1)))
-        (context-apply
-         (abs-file->contents
-          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                            abs-file-alist1)))
-         abs-file-alist3 x3 (cdr x3-path)))
-       abs-file-alist1))
-     (put-assoc-equal
-      (fat32-filename-fix (car x2-path))
-      (abs-file
-       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                                            abs-file-alist1)))
-       (context-apply
-        (abs-file->contents
-         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                           abs-file-alist1)))
-        abs-file-alist3 x3 (cdr x3-path)))
-      abs-file-alist1))))
-  :hints
-  (("goal"
-    :in-theory (disable (:rewrite put-assoc-equal-without-change . 1))
-    :use
-    (:instance
-     (:rewrite put-assoc-equal-without-change . 1)
-     (alist abs-file-alist1)
-     (val
-      (abs-file
-       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                                            abs-file-alist1)))
-       (context-apply
-        (abs-file->contents
-         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                           abs-file-alist1)))
-        abs-file-alist2 x2 (cdr x2-path))))
-     (name (fat32-filename-fix (car x2-path)))))))
-
-(defthm
-  partial-collapse-correctness-lemma-4
-  (implies
-   (and
-    (consp (assoc-equal (fat32-filename-fix (car x2-path))
-                        abs-file-alist1))
-    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                                            abs-file-alist1)))
-    (not
-     (equal
-      (put-assoc-equal
-       (fat32-filename-fix (car x2-path))
-       (abs-file
-        (abs-file->dir-ent
-         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                           abs-file-alist1)))
-        (context-apply
-         (abs-file->contents
-          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                            abs-file-alist1)))
-         abs-file-alist2 x2 (cdr x2-path)))
-       abs-file-alist1)
-      abs-file-alist1)))
-   (not
-    (equal
-     (abs-file->contents$inline
-      (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                        abs-file-alist1)))
-     (context-apply (abs-file->contents$inline
-                     (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                                       abs-file-alist1)))
-                    abs-file-alist2 x2 (cdr x2-path))))))
-
 ;; Move later
 (defthm member-of-put-assoc
   (implies (and (atom x) (force (not (null name))))
            (iff (member x (put-assoc-equal name val alist))
                 (member x alist))))
-
-(defthm
-  partial-collapse-correctness-lemma-5
-  (implies
-   (and (equal (append (remove-equal x2 (remove-equal x3 abs-file-alist1))
-                       (remove-equal x2 abs-file-alist3)
-                       abs-file-alist2)
-               (append (remove-equal x3 abs-file-alist1)
-                       abs-file-alist3))
-        (member-equal x2
-                      (append (remove-equal x3 abs-file-alist1)
-                              abs-file-alist3)))
-   (member-equal x2
-                 (append (remove-equal x2 (remove-equal x3 abs-file-alist1))
-                         (remove-equal x2 abs-file-alist3)
-                         abs-file-alist2)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and (integerp x2)
-          (<= 0 x2)
-          (not (equal x2 x3))
-          (member-equal x2 abs-file-alist1)
-          (not (member-equal x2 (abs-addrs abs-file-alist2))))
-     (not (equal (append (remove-equal x2 (remove-equal x3 abs-file-alist1))
-                         (remove-equal x2 abs-file-alist3)
-                         abs-file-alist2)
-                 (append (remove-equal x3 abs-file-alist1)
-                         abs-file-alist3)))))))
-
-(defthm
-  partial-collapse-correctness-lemma-6
-  (implies
-   (and
-    (equal
-     (append
-      (remove-equal
-       x2
-       (put-assoc-equal
-        (fat32-filename-fix (car x3-path))
-        (abs-file
-         (abs-file->dir-ent
-          (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                            abs-file-alist1)))
-         (context-apply
-          (abs-file->contents
-           (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                             abs-file-alist1)))
-          abs-file-alist3 x3 (cdr x3-path)))
-        abs-file-alist1))
-      abs-file-alist2)
-     (put-assoc-equal
-      (fat32-filename-fix (car x3-path))
-      (abs-file
-       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                                            abs-file-alist1)))
-       (context-apply
-        (abs-file->contents
-         (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                           abs-file-alist1)))
-        abs-file-alist3 x3 (cdr x3-path)))
-      abs-file-alist1))
-    (member-equal
-     x2
-     (put-assoc-equal
-      (fat32-filename-fix (car x3-path))
-      (abs-file
-       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                                            abs-file-alist1)))
-       (context-apply
-        (abs-file->contents
-         (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                           abs-file-alist1)))
-        abs-file-alist3 x3 (cdr x3-path)))
-      abs-file-alist1)))
-   (member-equal
-    x2
-    (append
-     (remove-equal
-      x2
-      (put-assoc-equal
-       (fat32-filename-fix (car x3-path))
-       (abs-file
-        (abs-file->dir-ent
-         (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                           abs-file-alist1)))
-        (context-apply
-         (abs-file->contents
-          (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                            abs-file-alist1)))
-         abs-file-alist3 x3 (cdr x3-path)))
-       abs-file-alist1))
-     abs-file-alist2)))
-  :instructions (:promote (:dive 2) := :top :bash)
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and (integerp x2)
-          (<= 0 x2)
-          (member-equal x2 abs-file-alist1)
-          (not (member-equal x2 (abs-addrs abs-file-alist2))))
-     (not
-      (equal
-       (append
-        (remove-equal
-         x2
-         (put-assoc-equal
-          (fat32-filename-fix (car x3-path))
-          (abs-file
-           (abs-file->dir-ent
-            (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                              abs-file-alist1)))
-           (context-apply
-            (abs-file->contents
-             (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                               abs-file-alist1)))
-            abs-file-alist3 x3 (cdr x3-path)))
-          abs-file-alist1))
-        abs-file-alist2)
-       (put-assoc-equal
-        (fat32-filename-fix (car x3-path))
-        (abs-file
-         (abs-file->dir-ent
-          (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                            abs-file-alist1)))
-         (context-apply
-          (abs-file->contents
-           (cdr (assoc-equal (fat32-filename-fix (car x3-path))
-                             abs-file-alist1)))
-          abs-file-alist3 x3 (cdr x3-path)))
-        abs-file-alist1)))))))
-
-(defthm
-  partial-collapse-correctness-lemma-7
-  (implies (and (natp x2)
-                (natp x3)
-                (not (equal x2 x3))
-                (abs-file-alist-p abs-file-alist1)
-                (abs-file-alist-p abs-file-alist2)
-                (abs-file-alist-p abs-file-alist3)
-                (context-apply-ok abs-file-alist1
-                                  abs-file-alist2 x2 x2-path)
-                (not (member-equal x2 (abs-addrs abs-file-alist2))))
-           (context-apply-ok (context-apply abs-file-alist1
-                                            abs-file-alist3 x3 x3-path)
-                             abs-file-alist2 x2 x2-path))
-  :hints
-  (("goal"
-    :in-theory (enable context-apply-ok
-                       context-apply put-assoc-equal-match)
-    :do-not-induct t
-    :induct (mv (context-apply abs-file-alist1
-                               abs-file-alist2 x2 x2-path)
-                (fat32-filename-list-prefixp x2-path x3-path))
-    :expand ((:free (abs-file-alist1 abs-file-alist2 x2)
-                    (context-apply abs-file-alist1
-                                   abs-file-alist2 x2 x2-path))
-             (:with (:rewrite assoc-equal-of-append-1)
-                    (assoc-equal (fat32-filename-fix (car x2-path))
-                                 (append (remove-equal x3 abs-file-alist1)
-                                         abs-file-alist3)))
-             (context-apply abs-file-alist1
-                            abs-file-alist3 x3 x3-path)
-             (:free (abs-file-alist1 abs-file-alist3 x3)
-                    (context-apply abs-file-alist1
-                                   abs-file-alist3 x3 x3-path))))))
 
 (defthm
   absfat-subsetp-guard-lemma-1
@@ -10304,40 +10016,6 @@
    ("subgoal *1/2''" :use (:instance absfat-subsetp-transitivity-lemma-10
                                      (name (car (car x)))))))
 
-(defund
-  absfat-equiv
-  (abs-file-alist1 abs-file-alist2)
-  (declare
-   (xargs :guard (and (abs-file-alist-p abs-file-alist1)
-                      (abs-file-alist-p abs-file-alist2))))
-  (b* ((abs-file-alist1 (abs-file-alist-fix abs-file-alist1))
-       (abs-file-alist2 (abs-file-alist-fix abs-file-alist2)))
-    (if
-        (and (abs-no-dups-p abs-file-alist1)
-             (abs-no-dups-p abs-file-alist2))
-        (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
-             (absfat-subsetp abs-file-alist2 abs-file-alist1))
-      (and (not (abs-no-dups-p abs-file-alist1))
-           (not (abs-no-dups-p abs-file-alist2))))))
-
-(defequiv
-  absfat-equiv
-  :hints (("Goal" :in-theory (enable absfat-equiv))))
-
-(defthm
-  partial-collapse-correctness-lemma-8
-  (implies (and (abs-file-alist-p y)
-                (consp (assoc-equal (fat32-filename-fix (car z-path))
-                                    x))
-                (consp (assoc-equal (fat32-filename-fix (car z-path))
-                                    y)))
-           (intersectp-equal (remove-equal nil (strip-cars x))
-                             (remove-equal nil (strip-cars y))))
-  :hints (("goal" :use (:instance (:rewrite intersectp-member)
-                                  (a (fat32-filename-fix (car z-path)))
-                                  (y (remove-equal nil (strip-cars y)))
-                                  (x (remove-equal nil (strip-cars x)))))))
-
 (defthm
   absfat-subsetp-of-put-assoc-1
   (implies
@@ -10403,6 +10081,530 @@
   (implies (abs-no-dups-p fs)
            (abs-no-dups-p (remove-assoc-equal x fs)))
   :hints (("goal" :in-theory (enable abs-no-dups-p))))
+
+(defund
+  absfat-equiv
+  (abs-file-alist1 abs-file-alist2)
+  (declare
+   (xargs :guard (and (abs-file-alist-p abs-file-alist1)
+                      (abs-file-alist-p abs-file-alist2))))
+  (b* ((abs-file-alist1 (abs-file-alist-fix abs-file-alist1))
+       (abs-file-alist2 (abs-file-alist-fix abs-file-alist2)))
+    (if
+        (and (abs-no-dups-p abs-file-alist1)
+             (abs-no-dups-p abs-file-alist2))
+        (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+             (absfat-subsetp abs-file-alist2 abs-file-alist1))
+      (and (not (abs-no-dups-p abs-file-alist1))
+           (not (abs-no-dups-p abs-file-alist2))))))
+
+(defequiv
+  absfat-equiv
+  :hints (("Goal" :in-theory (enable absfat-equiv))))
+
+(defthm context-apply-ok-when-absfat-equiv-lemma-1
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (consp (assoc-equal x abs-file-alist1)))
+           (consp (assoc-equal x abs-file-alist2)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthmd
+  context-apply-ok-when-absfat-equiv-lemma-2
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (abs-no-dups-p abs-file-alist2))
+           (equal (consp (assoc-equal x abs-file-alist1))
+                  (consp (assoc-equal x abs-file-alist2))))
+  :hints
+  (("goal" :in-theory (e/d (absfat-equiv)
+                           (context-apply-ok-when-absfat-equiv-lemma-1))
+    :do-not-induct t
+    :use ((:instance context-apply-ok-when-absfat-equiv-lemma-1
+                     (abs-file-alist2 abs-file-alist1)
+                     (abs-file-alist1 abs-file-alist2))
+          context-apply-ok-when-absfat-equiv-lemma-1))))
+
+;; This is disabled because without a proper fixing function, it is screwing
+;; things up.
+(defthmd
+  context-apply-ok-when-absfat-equiv-lemma-3
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (or (abs-no-dups-p abs-file-alist1)
+                    (abs-no-dups-p abs-file-alist2)))
+           (equal (consp (assoc-equal x abs-file-alist1))
+                  (consp (assoc-equal x abs-file-alist2))))
+  :hints (("goal" :do-not-induct t
+           :use ((:instance context-apply-ok-when-absfat-equiv-lemma-2
+                            (abs-file-alist2 abs-file-alist1)
+                            (abs-file-alist1 abs-file-alist2))
+                 context-apply-ok-when-absfat-equiv-lemma-2))))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-4
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (abs-no-dups-p abs-file-alist2)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (consp (assoc-equal (fat32-filename-fix (car x-path))
+                                    abs-file-alist1)))
+           (consp (assoc-equal (fat32-filename-fix (car x-path))
+                               abs-file-alist2)))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-3)
+                    (abs-file-alist2 abs-file-alist1)
+                    (abs-file-alist1 abs-file-alist2)
+                    (x (fat32-filename-fix (car x-path)))))))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-5
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1))))
+           (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2))))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     context-apply-ok-when-absfat-equiv-lemma-6
+     (implies
+      (and (abs-file-alist-p abs-file-alist1)
+           (abs-file-alist-p abs-file-alist2)
+           (absfat-equiv abs-file-alist1 abs-file-alist2)
+           (abs-no-dups-p abs-file-alist1))
+      (equal (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2)))
+             (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1)))))
+     :hints
+     (("goal" :in-theory (e/d (absfat-equiv)
+                              (context-apply-ok-when-absfat-equiv-lemma-5))
+       :use (context-apply-ok-when-absfat-equiv-lemma-5
+             (:instance context-apply-ok-when-absfat-equiv-lemma-5
+                        (abs-file-alist2 abs-file-alist1)
+                        (abs-file-alist1 abs-file-alist2)))
+       :do-not-induct t))))
+
+  ;; Again, disabled because it leads to infinite rewriting.
+  (defthmd
+    context-apply-ok-when-absfat-equiv-lemma-7
+    (implies
+     (and (abs-file-alist-p abs-file-alist1)
+          (abs-file-alist-p abs-file-alist2)
+          (absfat-equiv abs-file-alist1 abs-file-alist2)
+          (or (abs-no-dups-p abs-file-alist1)
+              (abs-no-dups-p abs-file-alist2)))
+     (equal (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2)))
+            (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1)))))
+    :hints
+    (("goal" :use (context-apply-ok-when-absfat-equiv-lemma-6
+                   (:instance context-apply-ok-when-absfat-equiv-lemma-6
+                              (abs-file-alist2 abs-file-alist1)
+                              (abs-file-alist1 abs-file-alist2)))
+      :do-not-induct t))))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-8
+  (implies
+   (and
+    (abs-file-alist-p abs-file-alist1)
+    (abs-file-alist-p abs-file-alist2)
+    (abs-no-dups-p abs-file-alist2)
+    (absfat-equiv abs-file-alist1 abs-file-alist2)
+    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
+                                            abs-file-alist1))))
+   (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
+                                           abs-file-alist2))))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-7)
+                    (x (fat32-filename-fix (car x-path)))))))
+
+(defthm context-apply-ok-when-absfat-equiv-lemma-9
+  (implies (and (natp x)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (member-equal x abs-file-alist1))
+           (member-equal x abs-file-alist2))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-10
+  (implies (and (member-equal x abs-file-alist2)
+                (natp x)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (absfat-subsetp abs-file-alist2 abs-file-alist1)
+                (not (member-equal x (abs-addrs abs-file-alist3))))
+           (not (equal (append (remove-equal x abs-file-alist1)
+                               abs-file-alist3)
+                       abs-file-alist1)))
+  :instructions
+  (:promote
+   (:claim (not (member-equal x
+                              (append (remove-equal x abs-file-alist1)
+                                      abs-file-alist3))))
+   (:claim (member-equal x abs-file-alist1))
+   (:= t)))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     context-apply-ok-when-absfat-equiv-lemma-11
+     (implies (and (natp x)
+                   (absfat-equiv abs-file-alist1 abs-file-alist2)
+                   (abs-file-alist-p abs-file-alist1)
+                   (abs-file-alist-p abs-file-alist2)
+                   (abs-file-alist-p abs-file-alist3)
+                   (abs-no-dups-p abs-file-alist2)
+                   (not (member-equal x (abs-addrs abs-file-alist3))))
+              (equal (context-apply-ok abs-file-alist1
+                                       abs-file-alist3 x x-path)
+                     (context-apply-ok abs-file-alist2
+                                       abs-file-alist3 x x-path)))
+     :hints
+     (("goal" :in-theory (e/d (context-apply-ok context-apply absfat-equiv)
+                              (abs-file-alist-p-correctness-1-lemma-3
+                               absfat-subsetp-correctness-1
+                               absfat-subsetp-transitivity-lemma-9
+                               abs-file->contents-when-m1-file-p))
+       :induct (mv (context-apply abs-file-alist1
+                                  abs-file-alist3 x x-path)
+                   (context-apply abs-file-alist2
+                                  abs-file-alist3 x x-path))))))
+
+  (defthmd
+    context-apply-ok-when-absfat-equiv-1
+    (implies (and (natp x)
+                  (absfat-equiv abs-file-alist1 abs-file-alist2)
+                  (abs-file-alist-p abs-file-alist1)
+                  (abs-file-alist-p abs-file-alist2)
+                  (abs-file-alist-p abs-file-alist3)
+                  (or (abs-no-dups-p abs-file-alist1)
+                      (abs-no-dups-p abs-file-alist2))
+                  (not (member-equal x (abs-addrs abs-file-alist3))))
+             (equal (context-apply-ok abs-file-alist1
+                                      abs-file-alist3 x x-path)
+                    (context-apply-ok abs-file-alist2
+                                      abs-file-alist3 x x-path)))
+    :hints
+    (("goal" :use (context-apply-ok-when-absfat-equiv-lemma-11
+                   (:instance context-apply-ok-when-absfat-equiv-lemma-11
+                              (abs-file-alist2 abs-file-alist1)
+                              (abs-file-alist1 abs-file-alist2)))))))
+
+(defthm partial-collapse-correctness-lemma-1
+  (implies (and (< 0 (1st-complete frame))
+                (not (equal x (1st-complete frame))))
+           (equal
+            (1st-complete (remove-assoc-equal x frame))
+            (1st-complete frame)))
+  :hints (("goal" :in-theory (enable 1st-complete))))
+
+(defthm partial-collapse-correctness-lemma-2
+  (implies (and (< 0 (1st-complete frame))
+                (not (equal x (1st-complete frame))))
+           (equal
+            (1st-complete-src (remove-assoc-equal x frame))
+            (1st-complete-src frame)))
+  :hints (("goal" :in-theory (enable 1st-complete-src)))
+  :rule-classes :linear)
+
+(defthm
+  partial-collapse-correctness-lemma-3
+  (implies
+   (and
+    (not
+     (equal
+      (context-apply
+       (context-apply
+        (abs-file->contents
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        abs-file-alist3 x3 (cdr x3-path))
+       abs-file-alist2 x2 (cdr x2-path))
+      (context-apply (abs-file->contents
+                      (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                        abs-file-alist1)))
+                     abs-file-alist3 x3 (cdr x3-path))))
+    (abs-file-alist-p abs-file-alist2)
+    (abs-file-alist-p abs-file-alist3)
+    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1))))
+   (not
+    (equal
+     (put-assoc-equal
+      (fat32-filename-fix (car x2-path))
+      (abs-file
+       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1)))
+       (context-apply
+        (context-apply
+         (abs-file->contents
+          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                            abs-file-alist1)))
+         abs-file-alist3 x3 (cdr x3-path))
+        abs-file-alist2 x2 (cdr x2-path)))
+      (put-assoc-equal
+       (fat32-filename-fix (car x2-path))
+       (abs-file
+        (abs-file->dir-ent
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        (context-apply
+         (abs-file->contents
+          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                            abs-file-alist1)))
+         abs-file-alist3 x3 (cdr x3-path)))
+       abs-file-alist1))
+     (put-assoc-equal
+      (fat32-filename-fix (car x2-path))
+      (abs-file
+       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1)))
+       (context-apply
+        (abs-file->contents
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        abs-file-alist3 x3 (cdr x3-path)))
+      abs-file-alist1))))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite put-assoc-equal-without-change . 1))
+    :use
+    (:instance
+     (:rewrite put-assoc-equal-without-change . 1)
+     (alist abs-file-alist1)
+     (val
+      (abs-file
+       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1)))
+       (context-apply
+        (abs-file->contents
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        abs-file-alist2 x2 (cdr x2-path))))
+     (name (fat32-filename-fix (car x2-path)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-4
+  (implies
+   (and
+    (consp (assoc-equal (fat32-filename-fix (car x2-path))
+                        abs-file-alist1))
+    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                            abs-file-alist1)))
+    (not
+     (equal
+      (put-assoc-equal
+       (fat32-filename-fix (car x2-path))
+       (abs-file
+        (abs-file->dir-ent
+         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                           abs-file-alist1)))
+        (context-apply
+         (abs-file->contents
+          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                            abs-file-alist1)))
+         abs-file-alist2 x2 (cdr x2-path)))
+       abs-file-alist1)
+      abs-file-alist1)))
+   (not
+    (equal
+     (abs-file->contents$inline
+      (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                        abs-file-alist1)))
+     (context-apply (abs-file->contents$inline
+                     (cdr (assoc-equal (fat32-filename-fix (car x2-path))
+                                       abs-file-alist1)))
+                    abs-file-alist2 x2 (cdr x2-path))))))
+
+(defthm
+  partial-collapse-correctness-lemma-5
+  (implies
+   (and (equal (append (remove-equal x2 (remove-equal x3 abs-file-alist1))
+                       (remove-equal x2 abs-file-alist3)
+                       abs-file-alist2)
+               (append (remove-equal x3 abs-file-alist1)
+                       abs-file-alist3))
+        (member-equal x2
+                      (append (remove-equal x3 abs-file-alist1)
+                              abs-file-alist3)))
+   (member-equal x2
+                 (append (remove-equal x2 (remove-equal x3 abs-file-alist1))
+                         (remove-equal x2 abs-file-alist3)
+                         abs-file-alist2)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (integerp x2)
+          (<= 0 x2)
+          (not (equal x2 x3))
+          (member-equal x2 abs-file-alist1)
+          (not (member-equal x2 (abs-addrs abs-file-alist2))))
+     (not (equal (append (remove-equal x2 (remove-equal x3 abs-file-alist1))
+                         (remove-equal x2 abs-file-alist3)
+                         abs-file-alist2)
+                 (append (remove-equal x3 abs-file-alist1)
+                         abs-file-alist3)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-6
+  (implies
+   (and
+    (equal
+     (append
+      (remove-equal
+       x2
+       (put-assoc-equal
+        (fat32-filename-fix (car x3-path))
+        (abs-file
+         (abs-file->dir-ent
+          (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                            abs-file-alist1)))
+         (context-apply
+          (abs-file->contents
+           (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                             abs-file-alist1)))
+          abs-file-alist3 x3 (cdr x3-path)))
+        abs-file-alist1))
+      abs-file-alist2)
+     (put-assoc-equal
+      (fat32-filename-fix (car x3-path))
+      (abs-file
+       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                                            abs-file-alist1)))
+       (context-apply
+        (abs-file->contents
+         (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                           abs-file-alist1)))
+        abs-file-alist3 x3 (cdr x3-path)))
+      abs-file-alist1))
+    (member-equal
+     x2
+     (put-assoc-equal
+      (fat32-filename-fix (car x3-path))
+      (abs-file
+       (abs-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                                            abs-file-alist1)))
+       (context-apply
+        (abs-file->contents
+         (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                           abs-file-alist1)))
+        abs-file-alist3 x3 (cdr x3-path)))
+      abs-file-alist1)))
+   (member-equal
+    x2
+    (append
+     (remove-equal
+      x2
+      (put-assoc-equal
+       (fat32-filename-fix (car x3-path))
+       (abs-file
+        (abs-file->dir-ent
+         (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                           abs-file-alist1)))
+        (context-apply
+         (abs-file->contents
+          (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                            abs-file-alist1)))
+         abs-file-alist3 x3 (cdr x3-path)))
+       abs-file-alist1))
+     abs-file-alist2)))
+  :instructions (:promote (:dive 2) := :top :bash)
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (integerp x2)
+          (<= 0 x2)
+          (member-equal x2 abs-file-alist1)
+          (not (member-equal x2 (abs-addrs abs-file-alist2))))
+     (not
+      (equal
+       (append
+        (remove-equal
+         x2
+         (put-assoc-equal
+          (fat32-filename-fix (car x3-path))
+          (abs-file
+           (abs-file->dir-ent
+            (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                              abs-file-alist1)))
+           (context-apply
+            (abs-file->contents
+             (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                               abs-file-alist1)))
+            abs-file-alist3 x3 (cdr x3-path)))
+          abs-file-alist1))
+        abs-file-alist2)
+       (put-assoc-equal
+        (fat32-filename-fix (car x3-path))
+        (abs-file
+         (abs-file->dir-ent
+          (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                            abs-file-alist1)))
+         (context-apply
+          (abs-file->contents
+           (cdr (assoc-equal (fat32-filename-fix (car x3-path))
+                             abs-file-alist1)))
+          abs-file-alist3 x3 (cdr x3-path)))
+        abs-file-alist1)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-7
+  (implies (and (natp x2)
+                (natp x3)
+                (not (equal x2 x3))
+                (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (abs-file-alist-p abs-file-alist3)
+                (context-apply-ok abs-file-alist1
+                                  abs-file-alist2 x2 x2-path)
+                (not (member-equal x2 (abs-addrs abs-file-alist2))))
+           (context-apply-ok (context-apply abs-file-alist1
+                                            abs-file-alist3 x3 x3-path)
+                             abs-file-alist2 x2 x2-path))
+  :hints
+  (("goal"
+    :in-theory (enable context-apply-ok
+                       context-apply put-assoc-equal-match)
+    :do-not-induct t
+    :induct (mv (context-apply abs-file-alist1
+                               abs-file-alist2 x2 x2-path)
+                (fat32-filename-list-prefixp x2-path x3-path))
+    :expand ((:free (abs-file-alist1 abs-file-alist2 x2)
+                    (context-apply abs-file-alist1
+                                   abs-file-alist2 x2 x2-path))
+             (:with (:rewrite assoc-equal-of-append-1)
+                    (assoc-equal (fat32-filename-fix (car x2-path))
+                                 (append (remove-equal x3 abs-file-alist1)
+                                         abs-file-alist3)))
+             (context-apply abs-file-alist1
+                            abs-file-alist3 x3 x3-path)
+             (:free (abs-file-alist1 abs-file-alist3 x3)
+                    (context-apply abs-file-alist1
+                                   abs-file-alist3 x3 x3-path))))))
+
+(defthm
+  partial-collapse-correctness-lemma-8
+  (implies (and (abs-file-alist-p y)
+                (consp (assoc-equal (fat32-filename-fix (car z-path))
+                                    x))
+                (consp (assoc-equal (fat32-filename-fix (car z-path))
+                                    y)))
+           (intersectp-equal (remove-equal nil (strip-cars x))
+                             (remove-equal nil (strip-cars y))))
+  :hints (("goal" :use (:instance (:rewrite intersectp-member)
+                                  (a (fat32-filename-fix (car z-path)))
+                                  (y (remove-equal nil (strip-cars y)))
+                                  (x (remove-equal nil (strip-cars x)))))))
 
 (defthm
   partial-collapse-correctness-lemma-9
@@ -10487,13 +10689,6 @@
           y y-var (cdr y-path))
          z z-var (cdr y-path))))
       (name (fat32-filename-fix (car y-path))))))))
-
-;; Move later.
-(defthm abs-addrs-when-m1-file-alist-p
-  (implies (m1-file-alist-p x)
-           (equal (abs-addrs x) nil))
-  :hints (("goal" :in-theory (enable abs-addrs)))
-  :rule-classes :type-prescription)
 
 (defthm
   partial-collapse-correctness-lemma-10
@@ -10755,202 +10950,6 @@
                             (x (fat32-filename-list-fix z-path))
                             (y (fat32-filename-list-fix y-path))))
            :do-not-induct t)))
-
-(defthm context-apply-ok-when-absfat-equiv-lemma-1
-  (implies (and (abs-file-alist-p abs-file-alist1)
-                (absfat-subsetp abs-file-alist1 abs-file-alist2)
-                (consp (assoc-equal x abs-file-alist1)))
-           (consp (assoc-equal x abs-file-alist2)))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthmd
-  context-apply-ok-when-absfat-equiv-lemma-2
-  (implies (and (abs-file-alist-p abs-file-alist1)
-                (abs-file-alist-p abs-file-alist2)
-                (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (abs-no-dups-p abs-file-alist2))
-           (equal (consp (assoc-equal x abs-file-alist1))
-                  (consp (assoc-equal x abs-file-alist2))))
-  :hints
-  (("goal" :in-theory (e/d (absfat-equiv)
-                           (context-apply-ok-when-absfat-equiv-lemma-1))
-    :do-not-induct t
-    :use ((:instance context-apply-ok-when-absfat-equiv-lemma-1
-                     (abs-file-alist2 abs-file-alist1)
-                     (abs-file-alist1 abs-file-alist2))
-          context-apply-ok-when-absfat-equiv-lemma-1))))
-
-;; This is disabled because without a proper fixing function, it is screwing
-;; things up.
-(defthmd
-  context-apply-ok-when-absfat-equiv-lemma-3
-  (implies (and (abs-file-alist-p abs-file-alist1)
-                (abs-file-alist-p abs-file-alist2)
-                (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (or (abs-no-dups-p abs-file-alist1)
-                    (abs-no-dups-p abs-file-alist2)))
-           (equal (consp (assoc-equal x abs-file-alist1))
-                  (consp (assoc-equal x abs-file-alist2))))
-  :hints (("goal" :do-not-induct t
-           :use ((:instance context-apply-ok-when-absfat-equiv-lemma-2
-                            (abs-file-alist2 abs-file-alist1)
-                            (abs-file-alist1 abs-file-alist2))
-                 context-apply-ok-when-absfat-equiv-lemma-2))))
-
-(defthm
-  context-apply-ok-when-absfat-equiv-lemma-4
-  (implies (and (abs-file-alist-p abs-file-alist1)
-                (abs-file-alist-p abs-file-alist2)
-                (abs-no-dups-p abs-file-alist2)
-                (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (consp (assoc-equal (fat32-filename-fix (car x-path))
-                                    abs-file-alist1)))
-           (consp (assoc-equal (fat32-filename-fix (car x-path))
-                               abs-file-alist2)))
-  :hints
-  (("goal"
-    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-3)
-                    (abs-file-alist2 abs-file-alist1)
-                    (abs-file-alist1 abs-file-alist2)
-                    (x (fat32-filename-fix (car x-path)))))))
-
-(defthm
-  context-apply-ok-when-absfat-equiv-lemma-5
-  (implies (and (abs-file-alist-p abs-file-alist1)
-                (absfat-subsetp abs-file-alist1 abs-file-alist2)
-                (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1))))
-           (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2))))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(encapsulate
-  ()
-
-  (local
-   (defthmd
-     context-apply-ok-when-absfat-equiv-lemma-6
-     (implies
-      (and (abs-file-alist-p abs-file-alist1)
-           (abs-file-alist-p abs-file-alist2)
-           (absfat-equiv abs-file-alist1 abs-file-alist2)
-           (abs-no-dups-p abs-file-alist1))
-      (equal (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2)))
-             (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1)))))
-     :hints
-     (("goal" :in-theory (e/d (absfat-equiv)
-                              (context-apply-ok-when-absfat-equiv-lemma-5))
-       :use (context-apply-ok-when-absfat-equiv-lemma-5
-             (:instance context-apply-ok-when-absfat-equiv-lemma-5
-                        (abs-file-alist2 abs-file-alist1)
-                        (abs-file-alist1 abs-file-alist2)))
-       :do-not-induct t))))
-
-  ;; Again, disabled because it leads to infinite rewriting.
-  (defthmd
-    context-apply-ok-when-absfat-equiv-lemma-7
-    (implies
-     (and (abs-file-alist-p abs-file-alist1)
-          (abs-file-alist-p abs-file-alist2)
-          (absfat-equiv abs-file-alist1 abs-file-alist2)
-          (or (abs-no-dups-p abs-file-alist1)
-              (abs-no-dups-p abs-file-alist2)))
-     (equal (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2)))
-            (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1)))))
-    :hints
-    (("goal" :use (context-apply-ok-when-absfat-equiv-lemma-6
-                   (:instance context-apply-ok-when-absfat-equiv-lemma-6
-                              (abs-file-alist2 abs-file-alist1)
-                              (abs-file-alist1 abs-file-alist2)))
-      :do-not-induct t))))
-
-(defthm
-  context-apply-ok-when-absfat-equiv-lemma-8
-  (implies
-   (and
-    (abs-file-alist-p abs-file-alist1)
-    (abs-file-alist-p abs-file-alist2)
-    (abs-no-dups-p abs-file-alist2)
-    (absfat-equiv abs-file-alist1 abs-file-alist2)
-    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
-                                            abs-file-alist1))))
-   (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
-                                           abs-file-alist2))))
-  :hints
-  (("goal"
-    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-7)
-                    (x (fat32-filename-fix (car x-path)))))))
-
-(defthm context-apply-ok-when-absfat-equiv-lemma-9
-  (implies (and (natp x)
-                (absfat-subsetp abs-file-alist1 abs-file-alist2)
-                (member-equal x abs-file-alist1))
-           (member-equal x abs-file-alist2))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm
-  context-apply-ok-when-absfat-equiv-lemma-10
-  (implies (and (member-equal x abs-file-alist2)
-                (natp x)
-                (absfat-subsetp abs-file-alist1 abs-file-alist2)
-                (absfat-subsetp abs-file-alist2 abs-file-alist1)
-                (not (member-equal x (abs-addrs abs-file-alist3))))
-           (not (equal (append (remove-equal x abs-file-alist1)
-                               abs-file-alist3)
-                       abs-file-alist1)))
-  :instructions
-  (:promote
-   (:claim (not (member-equal x
-                              (append (remove-equal x abs-file-alist1)
-                                      abs-file-alist3))))
-   (:claim (member-equal x abs-file-alist1))
-   (:= t)))
-
-(encapsulate
-  ()
-
-  (local
-   (defthmd
-     context-apply-ok-when-absfat-equiv-lemma-11
-     (implies (and (natp x)
-                   (absfat-equiv abs-file-alist1 abs-file-alist2)
-                   (abs-file-alist-p abs-file-alist1)
-                   (abs-file-alist-p abs-file-alist2)
-                   (abs-file-alist-p abs-file-alist3)
-                   (abs-no-dups-p abs-file-alist2)
-                   (not (member-equal x (abs-addrs abs-file-alist3))))
-              (equal (context-apply-ok abs-file-alist1
-                                       abs-file-alist3 x x-path)
-                     (context-apply-ok abs-file-alist2
-                                       abs-file-alist3 x x-path)))
-     :hints
-     (("goal" :in-theory (e/d (context-apply-ok context-apply absfat-equiv)
-                              (abs-file-alist-p-correctness-1-lemma-3
-                               absfat-subsetp-correctness-1
-                               absfat-subsetp-transitivity-lemma-9
-                               abs-file->contents-when-m1-file-p))
-       :induct (mv (context-apply abs-file-alist1
-                                  abs-file-alist3 x x-path)
-                   (context-apply abs-file-alist2
-                                  abs-file-alist3 x x-path))))))
-
-  (defthmd
-    context-apply-ok-when-absfat-equiv-1
-    (implies (and (natp x)
-                  (absfat-equiv abs-file-alist1 abs-file-alist2)
-                  (abs-file-alist-p abs-file-alist1)
-                  (abs-file-alist-p abs-file-alist2)
-                  (abs-file-alist-p abs-file-alist3)
-                  (or (abs-no-dups-p abs-file-alist1)
-                      (abs-no-dups-p abs-file-alist2))
-                  (not (member-equal x (abs-addrs abs-file-alist3))))
-             (equal (context-apply-ok abs-file-alist1
-                                      abs-file-alist3 x x-path)
-                    (context-apply-ok abs-file-alist2
-                                      abs-file-alist3 x x-path)))
-    :hints
-    (("goal" :use (context-apply-ok-when-absfat-equiv-lemma-11
-                   (:instance context-apply-ok-when-absfat-equiv-lemma-11
-                              (abs-file-alist2 abs-file-alist1)
-                              (abs-file-alist1 abs-file-alist2)))))))
 
 (defthm
   partial-collapse-correctness-lemma-18
