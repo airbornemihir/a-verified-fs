@@ -1158,3 +1158,8 @@
   (implies (and (not (null name)) (atom x))
            (equal (remove-equal x (put-assoc-equal name val alist))
                   (put-assoc-equal name val (remove-equal x alist)))))
+
+(defthm member-of-put-assoc
+  (implies (and (atom x) (force (not (null name))))
+           (iff (member x (put-assoc-equal name val alist))
+                (member x alist))))

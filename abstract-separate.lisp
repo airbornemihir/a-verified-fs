@@ -9737,24 +9737,6 @@
                head-index (frame->frame frame))))))
         (partial-collapse frame pathname)))))
 
-;; Move later.
-(defthm
-  consp-of-remove-assoc-1
-  (implies (and (not (equal x1 x2))
-                (consp (assoc-equal x1 alist)))
-           (consp (remove-assoc-equal x2 alist)))
-  :rule-classes
-  (:rewrite
-   (:rewrite :corollary (implies (and (not (equal x2 x1))
-                                      (consp (assoc-equal x1 alist)))
-                                 (consp (remove-assoc-equal x2 alist))))))
-
-;; Move later
-(defthm member-of-put-assoc
-  (implies (and (atom x) (force (not (null name))))
-           (iff (member x (put-assoc-equal name val alist))
-                (member x alist))))
-
 (defthm
   absfat-subsetp-guard-lemma-1
   (implies (and (abs-file-alist-p abs-file-alist)
@@ -11319,6 +11301,42 @@
                    (:instance partial-collapse-correctness-lemma-24
                               (frame1 frame2)
                               (frame2 frame1)))))))
+
+(thm
+ (implies (and (natp x2)
+               (natp x3)
+               (not (equal x2 x3))
+               (abs-file-alist-p abs-file-alist1)
+               (abs-file-alist-p abs-file-alist2)
+               (abs-file-alist-p abs-file-alist3)
+               (not
+                (context-apply-ok abs-file-alist1
+                                  abs-file-alist2 x2 x2-path))
+               (not (member-equal x2 (abs-addrs abs-file-alist2)))
+               (not (member-equal x2 (abs-addrs abs-file-alist3))))
+          (not
+           (context-apply-ok (context-apply abs-file-alist1
+                                            abs-file-alist3 x3 x3-path)
+                             abs-file-alist2 x2 x2-path)))
+ :hints
+ (("goal"
+   :in-theory (enable context-apply-ok
+                      context-apply put-assoc-equal-match)
+   :induct (mv (context-apply abs-file-alist1
+                              abs-file-alist2 x2 x2-path)
+               (fat32-filename-list-prefixp x2-path x3-path))
+   :expand ((:free (abs-file-alist1 abs-file-alist2 x2)
+                   (context-apply abs-file-alist1
+                                  abs-file-alist2 x2 x2-path))
+            (:with (:rewrite assoc-equal-of-append-1)
+                   (assoc-equal (fat32-filename-fix (car x2-path))
+                                (append (remove-equal x3 abs-file-alist1)
+                                        abs-file-alist3)))
+            (context-apply abs-file-alist1
+                           abs-file-alist3 x3 x3-path)
+            (:free (abs-file-alist1 abs-file-alist3 x3)
+                   (context-apply abs-file-alist1
+                                  abs-file-alist3 x3 x3-path))))))
 
 (thm (implies
       (and
