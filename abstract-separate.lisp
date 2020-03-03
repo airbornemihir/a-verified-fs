@@ -728,14 +728,15 @@
 (defthm
   abs-addrs-of-context-apply-1-lemma-6
   (implies
-   (and
-    (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
+   (and (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
+        (not (member-equal x (abs-addrs abs-file-alist1))))
+   (not
     (member-equal
      x
      (abs-addrs
-      (abs-file->contents (cdr (assoc-equal name abs-file-alist1))))))
-   (member-equal x (abs-addrs abs-file-alist1)))
-  :hints (("goal" :in-theory (enable abs-addrs))))
+      (abs-file->contents (cdr (assoc-equal name abs-file-alist1)))))))
+  :hints (("goal" :in-theory (enable abs-addrs)))
+  :rule-classes :type-prescription)
 
 (defthm abs-addrs-of-context-apply-1-lemma-7
   (implies (and (natp x)
