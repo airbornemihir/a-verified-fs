@@ -12339,9 +12339,9 @@
   (implies (and (frame-p frame)
                 (no-duplicatesp-equal (strip-cars frame))
                 (not (equal (1st-complete (put-assoc-equal name val frame))
-                            (1st-complete (remove-assoc-equal name frame)))))
+                            name)))
            (equal (1st-complete (put-assoc-equal name val frame))
-                  name))
+                  (1st-complete (remove-assoc-equal name frame))))
   :hints (("goal" :in-theory (enable 1st-complete))))
 
 (defthm
@@ -12505,6 +12505,59 @@
            (no-duplicatesp-equal
             (abs-addrs (frame-val->dir (cdr (assoc-equal x frame))))))
   :hints (("goal" :in-theory (enable abs-separate))))
+
+(defthm
+  partial-collapse-correctness-lemma-53
+  (implies
+   (not
+    (consp
+     (abs-addrs (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+   (m1-file-alist-p
+    (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-54
+  (implies
+   (and
+    (not (equal x (1st-complete (frame->frame frame))))
+    (context-apply-ok
+     (frame-val->dir
+      (cdr (assoc-equal
+            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+            (frame->frame frame))))
+     (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                       (frame->frame frame))))
+     (1st-complete (frame->frame frame))
+     (nthcdr
+      (len
+       (frame-val->path
+        (cdr (assoc-equal
+              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+              (frame->frame frame)))))
+      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                         (frame->frame frame)))))))
+   (consp
+    (remove-equal
+     x
+     (abs-addrs
+      (frame-val->dir
+       (cdr (assoc-equal
+             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+             (frame->frame frame))))))))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite member-of-remove))
+    :use
+    (:instance
+     (:rewrite member-of-remove)
+     (x
+      (abs-addrs
+       (frame-val->dir
+        (cdr (assoc-equal
+              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+              (frame->frame frame))))))
+     (b x)
+     (a (1st-complete (frame->frame frame)))))))
 
 (thm
  (implies
