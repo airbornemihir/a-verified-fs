@@ -1163,3 +1163,10 @@
   (implies (and (atom x) (force (not (null name))))
            (iff (member x (put-assoc-equal name val alist))
                 (member x alist))))
+
+;; Move later.
+(defthm
+  consp-of-remove-assoc-1
+  (implies (and (not (equal x2 x1))
+                (consp (assoc-equal x1 alist)))
+           (consp (remove-assoc-equal x2 alist))))
