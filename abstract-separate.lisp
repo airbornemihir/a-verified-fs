@@ -10380,6 +10380,91 @@
                               (abs-file-alist2 abs-file-alist1)
                               (abs-file-alist1 abs-file-alist2)))))))
 
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-12
+  (implies (and (natp x)
+                (not (member-equal x (abs-addrs abs-file-alist1)))
+                (member-equal x abs-file-alist3))
+           (not (equal (append (remove-equal x abs-file-alist3)
+                               abs-file-alist1)
+                       abs-file-alist3)))
+  :hints
+  (("goal" :cases ((member-equal x
+                                 (append (remove-equal x abs-file-alist3)
+                                         abs-file-alist1))))))
+
+;; This is kinda general.
+(defthmd context-apply-ok-when-absfat-equiv-lemma-13
+  (implies (and (natp x)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (or (abs-no-dups-p abs-file-alist1)
+                    (abs-no-dups-p abs-file-alist2))
+                (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2))
+           (iff (member-equal x abs-file-alist1)
+                (member-equal x abs-file-alist2)))
+  :hints (("goal" :in-theory (enable absfat-equiv)
+           :do-not-induct t)))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-14
+  (implies (and (natp x)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (abs-no-dups-p abs-file-alist2)
+                (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (not (member-equal x (abs-addrs abs-file-alist1))))
+           (not (member-equal x abs-file-alist2)))
+  :hints
+  (("goal" :use (:rewrite context-apply-ok-when-absfat-equiv-lemma-13))))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-lemma-15
+  (implies (and (member-equal x abs-file-alist3)
+                (natp x)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (abs-no-dups-p abs-file-alist2)
+                (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (not (member-equal x (abs-addrs abs-file-alist2))))
+           (not (equal (append (remove-equal x abs-file-alist3)
+                               abs-file-alist1)
+                       abs-file-alist3)))
+  :instructions
+  (:promote
+   (:claim (not (member-equal x
+                              (append (remove-equal x abs-file-alist3)
+                                      abs-file-alist1)))
+           :hints :none)
+   :bash (:dive 1)
+   (:rewrite member-of-append)
+   :top :bash
+   (:use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-13)
+                    (abs-file-alist1 abs-file-alist1)
+                    (x x)))
+   :bash))
+
+(defthmd
+  context-apply-ok-when-absfat-equiv-2
+  (implies (and (natp x)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (or
+                 (abs-no-dups-p abs-file-alist1)
+                 (abs-no-dups-p abs-file-alist2))
+                (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (not (and (member-equal x (abs-addrs abs-file-alist1))
+                          (member-equal x (abs-addrs abs-file-alist2)))))
+           (equal (context-apply-ok abs-file-alist3
+                                    abs-file-alist1 x x-path)
+                  (context-apply-ok abs-file-alist3
+                                    abs-file-alist2 x x-path)))
+  :hints (("goal" :in-theory (enable context-apply-ok context-apply)
+           :induct (mv (context-apply abs-file-alist3
+                                      abs-file-alist1 x x-path)
+                       (context-apply abs-file-alist3
+                                      abs-file-alist2 x x-path)))))
+
 (defthm partial-collapse-correctness-lemma-1
   (implies (and (< 0 (1st-complete frame))
                 (not (equal x (1st-complete frame))))
@@ -12353,94 +12438,69 @@
   :hints (("goal" :in-theory (enable 1st-complete))))
 
 (defthm
-  context-apply-ok-when-absfat-equiv-lemma-12
-  (implies (and (natp x)
-                (not (member-equal x (abs-addrs abs-file-alist1)))
-                (member-equal x abs-file-alist3))
-           (not (equal (append (remove-equal x abs-file-alist3)
-                               abs-file-alist1)
-                       abs-file-alist3)))
-  :hints
-  (("goal" :cases ((member-equal x
-                                 (append (remove-equal x abs-file-alist3)
-                                         abs-file-alist1))))))
-
-;; This is kinda general.
-(defthmd context-apply-ok-when-absfat-equiv-lemma-13
-  (implies (and (natp x)
-                (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (or (abs-no-dups-p abs-file-alist1)
-                    (abs-no-dups-p abs-file-alist2))
-                (abs-file-alist-p abs-file-alist1)
-                (abs-file-alist-p abs-file-alist2))
-           (iff (member-equal x abs-file-alist1)
-                (member-equal x abs-file-alist2)))
-  :hints (("goal" :in-theory (enable absfat-equiv)
-           :do-not-induct t)))
-
-(defthm
-  context-apply-ok-when-absfat-equiv-lemma-14
-  (implies (and (natp x)
-                (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (abs-no-dups-p abs-file-alist2)
-                (abs-file-alist-p abs-file-alist1)
-                (abs-file-alist-p abs-file-alist2)
-                (not (member-equal x (abs-addrs abs-file-alist1))))
-           (not (member-equal x abs-file-alist2)))
-  :hints
-  (("goal" :use (:rewrite context-apply-ok-when-absfat-equiv-lemma-13))))
+  partial-collapse-correctness-lemma-59
+  (implies
+   (and
+    (absfat-equiv
+     (frame-val->dir
+      (cdr
+       (assoc-equal
+        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          (frame->frame frame))))
+        (frame->frame frame))))
+     dir)
+    (abs-file-alist-p dir)
+    (abs-no-dups-p dir))
+   (subsetp-equal
+    (abs-addrs dir)
+    (abs-addrs
+     (frame-val->dir
+      (cdr
+       (assoc-equal
+        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          (frame->frame frame))))
+        (frame->frame frame)))))))
+  :hints (("goal" :in-theory (enable absfat-equiv))))
 
 (defthm
-  context-apply-ok-when-absfat-equiv-lemma-15
-  (implies (and (member-equal x abs-file-alist3)
-                (natp x)
-                (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (abs-no-dups-p abs-file-alist2)
-                (abs-file-alist-p abs-file-alist1)
-                (abs-file-alist-p abs-file-alist2)
-                (not (member-equal x (abs-addrs abs-file-alist2))))
-           (not (equal (append (remove-equal x abs-file-alist3)
-                               abs-file-alist1)
-                       abs-file-alist3)))
-  :instructions
-  (:promote
-   (:claim (not (member-equal x
-                              (append (remove-equal x abs-file-alist3)
-                                      abs-file-alist1)))
-           :hints :none)
-   :bash (:dive 1)
-   (:rewrite member-of-append)
-   :top :bash
-   (:use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-13)
-                    (abs-file-alist1 abs-file-alist1)
-                    (x x)))
-   :bash))
-
-(defthm
-  context-apply-ok-when-absfat-equiv-2
-  (implies (and (natp x)
-                (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (or
-                 (abs-no-dups-p abs-file-alist1)
-                 (abs-no-dups-p abs-file-alist2))
-                (abs-file-alist-p abs-file-alist1)
-                (abs-file-alist-p abs-file-alist2)
-                (not (and (member-equal x (abs-addrs abs-file-alist1))
-                          (member-equal x (abs-addrs abs-file-alist2)))))
-           (equal (context-apply-ok abs-file-alist3
-                                    abs-file-alist1 x x-path)
-                  (context-apply-ok abs-file-alist3
-                                    abs-file-alist2 x x-path)))
-  :hints (("goal" :in-theory (enable context-apply-ok context-apply)
-           :induct (mv (context-apply abs-file-alist3
-                                      abs-file-alist1 x x-path)
-                       (context-apply abs-file-alist3
-                                      abs-file-alist2 x x-path)))))
+  partial-collapse-correctness-lemma-60
+  (implies
+   (and
+    (mv-nth 1 (collapse frame))
+    (not (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))))
+   (and
+    (consp
+     (abs-addrs
+      (frame-val->dir
+       (cdr (assoc-equal
+             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+             (frame->frame frame))))))
+    (prefixp
+     (frame-val->path
+      (cdr (assoc-equal
+            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+            (frame->frame frame))))
+     (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
+  :hints (("goal" :in-theory (e/d (collapse 1st-complete-src)
+                                  ((:rewrite
+                                    remove-assoc-equal-of-put-assoc-equal)
+                                   (:rewrite remove-assoc-of-remove-assoc)
+                                   (:rewrite
+                                    partial-collapse-correctness-lemma-45)
+                                   (:type-prescription
+                                    partial-collapse-correctness-lemma-48)
+                                   (:rewrite
+                                    abs-file-alist-p-of-context-apply-lemma-1)
+                                   (:rewrite
+                                    abs-file-alist-p-when-m1-file-alist-p)
+                                   (:linear abs-find-file-correctness-1-lemma-56)))
+           :induct (collapse frame))))
 
 (thm
  (implies
   (and
    (frame-p (frame->frame frame))
+   (abs-separate (frame->frame frame))
    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
    (mv-nth 1 (collapse frame))
    (consp (assoc-equal x (frame->frame frame)))
