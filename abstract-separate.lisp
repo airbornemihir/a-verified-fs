@@ -12391,13 +12391,42 @@
   (("goal" :use (:rewrite context-apply-ok-when-absfat-equiv-lemma-13))))
 
 (defthm
-  context-apply-ok-when-absfat-equiv-2
-  (implies (and (natp x)
+  context-apply-ok-when-absfat-equiv-lemma-15
+  (implies (and (member-equal x abs-file-alist3)
+                (natp x)
                 (absfat-equiv abs-file-alist1 abs-file-alist2)
                 (abs-no-dups-p abs-file-alist2)
                 (abs-file-alist-p abs-file-alist1)
                 (abs-file-alist-p abs-file-alist2)
-                (not (member-equal x (abs-addrs abs-file-alist1))))
+                (not (member-equal x (abs-addrs abs-file-alist2))))
+           (not (equal (append (remove-equal x abs-file-alist3)
+                               abs-file-alist1)
+                       abs-file-alist3)))
+  :instructions
+  (:promote
+   (:claim (not (member-equal x
+                              (append (remove-equal x abs-file-alist3)
+                                      abs-file-alist1)))
+           :hints :none)
+   :bash (:dive 1)
+   (:rewrite member-of-append)
+   :top :bash
+   (:use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-13)
+                    (abs-file-alist1 abs-file-alist1)
+                    (x x)))
+   :bash))
+
+(defthm
+  context-apply-ok-when-absfat-equiv-2
+  (implies (and (natp x)
+                (absfat-equiv abs-file-alist1 abs-file-alist2)
+                (or
+                 (abs-no-dups-p abs-file-alist1)
+                 (abs-no-dups-p abs-file-alist2))
+                (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2)
+                (not (and (member-equal x (abs-addrs abs-file-alist1))
+                          (member-equal x (abs-addrs abs-file-alist2)))))
            (equal (context-apply-ok abs-file-alist3
                                     abs-file-alist1 x x-path)
                   (context-apply-ok abs-file-alist3
