@@ -11330,15 +11330,29 @@
                                   (intersectp-is-commutative)))))
 
 (defthm
+  partial-collapse-correctness-lemma-5
+  (implies (and (consp (assoc-equal (car (car abs-file-alist2))
+                                    abs-file-alist1))
+                (abs-file-alist-p abs-file-alist1)
+                (member-equal (car (car abs-file-alist2))
+                              y))
+           (intersectp-equal (remove-equal nil (strip-cars abs-file-alist1))
+                             y))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite intersectp-member)
+                    (a (car (car abs-file-alist2)))
+                    (x (remove-equal nil (strip-cars abs-file-alist1)))))))
+
+(defthm
   partial-collapse-correctness-lemma-21
   (implies
-   (and
-    (abs-file-alist-p abs-file-alist2)
-    (absfat-subsetp abs-file-alist2 abs-file-alist1)
-    (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist1))
-                           (remove-equal nil (strip-cars abs-file-alist3)))))
+   (and (absfat-subsetp abs-file-alist2 abs-file-alist1)
+        (abs-file-alist-p abs-file-alist1)
+        (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist1))
+                               y)))
    (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist2))
-                          (remove-equal nil (strip-cars abs-file-alist3)))))
+                          y)))
   :hints
   (("goal"
     :in-theory
