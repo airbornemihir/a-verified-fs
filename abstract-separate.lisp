@@ -13025,6 +13025,25 @@
       (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
                                         (frame->frame frame)))))))))
 
+(defthm
+  partial-collapse-correctness-lemma-75
+  (implies
+       (and (absfat-equiv abs-file-alist1 abs-file-alist2)
+            (abs-file-alist-p abs-file-alist1)
+            (abs-file-alist-p abs-file-alist2)
+            (or (abs-no-dups-p abs-file-alist2)
+                (abs-no-dups-p abs-file-alist1)))
+       (iff (intersectp-equal (remove-equal nil (strip-cars abs-file-alist1))
+                              y)
+            (intersectp-equal (remove-equal nil (strip-cars abs-file-alist2))
+                              y)))
+  :hints (("goal" :in-theory (e/d (absfat-equiv)
+                                  (partial-collapse-correctness-lemma-21))
+                  :use (partial-collapse-correctness-lemma-21
+                            (:instance partial-collapse-correctness-lemma-21
+                                       (abs-file-alist1 abs-file-alist2)
+                                       (abs-file-alist2 abs-file-alist1))))))
+
 (encapsulate
   ()
 
