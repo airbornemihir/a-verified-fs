@@ -2768,61 +2768,6 @@
                               relpath (remove-assoc-equal x frame)))
   :hints (("goal" :in-theory (enable distinguish-names))))
 
-(defund
-  abs-separate (frame)
-  (declare (xargs :guard (frame-p frame)))
-  (or
-   (atom frame)
-   (and
-    (abs-no-dups-p (frame-val->dir (cdar frame)))
-    (no-duplicatesp-equal (abs-addrs (frame-val->dir (cdar frame))))
-    (distinguish-names
-     (frame-val->dir (cdar frame))
-     (frame-val->path (cdar frame))
-     (cdr frame))
-    (abs-separate (cdr frame)))))
-
-(defthm abs-separate-of-remove-assoc
-  (implies (abs-separate frame)
-           (abs-separate (remove-assoc-equal x frame)))
-  :hints (("goal" :in-theory (enable abs-separate))))
-
-(defund frame-addrs-root (frame)
-  (declare (xargs :guard (frame-p frame)))
-  (cond ((atom frame) nil)
-        ((zp (frame-val->src (cdar frame)))
-         (cons (caar frame) (frame-addrs-root (cdr frame))))
-        (t (frame-addrs-root (cdr frame)))))
-
-(defthm
-  frame-addrs-root-correctness-1
-  (implies (and (consp (assoc-equal name frame))
-                (equal (frame-val->src frame-val)
-                       (frame-val->src (cdr (assoc-equal name frame)))))
-           (equal (frame-addrs-root (put-assoc-equal name frame-val frame))
-                  (frame-addrs-root frame)))
-  :hints (("goal" :in-theory (enable frame-addrs-root))))
-
-(defthm frame-addrs-root-correctness-2
-  (implies (not (member-equal x (strip-cars frame)))
-           (not (member-equal x (frame-addrs-root frame))))
-  :hints (("goal" :in-theory (enable frame-addrs-root))))
-
-(defthm frame-addrs-root-correctness-3
-  (implies (frame-p frame)
-           (equal (frame-addrs-root (remove-assoc-equal name frame))
-                  (remove-equal name (frame-addrs-root frame))))
-  :hints (("goal" :in-theory (enable frame-addrs-root))))
-
-(defthm
-  frame-addrs-root-correctness-4
-  (implies (and (not (null x))
-                (no-duplicatesp-equal (strip-cars frame)))
-           (iff (member-equal x (frame-addrs-root frame))
-                (and (consp (assoc-equal x frame))
-                     (zp (frame-val->src (cdr (assoc-equal x frame)))))))
-  :hints (("goal" :in-theory (enable frame-addrs-root))))
-
 (defthm
   names-at-relpath-of-context-apply-lemma-1
   (implies (and (consp (assoc-equal (fat32-filename-fix (car relpath))
@@ -2872,6 +2817,609 @@
    ("subgoal *1/4" :expand (:free (abs-file-alist)
                                   (names-at-relpath abs-file-alist relpath))
     :cases ((null (fat32-filename-fix (car relpath)))))))
+
+(defund
+  abs-separate (frame)
+  (declare (xargs :guard (frame-p frame)))
+  (or
+   (atom frame)
+   (and
+    (abs-no-dups-p (frame-val->dir (cdar frame)))
+    (no-duplicatesp-equal (abs-addrs (frame-val->dir (cdar frame))))
+    (distinguish-names
+     (frame-val->dir (cdar frame))
+     (frame-val->path (cdar frame))
+     (cdr frame))
+    (abs-separate (cdr frame)))))
+
+(defthm abs-separate-of-remove-assoc
+  (implies (abs-separate frame)
+           (abs-separate (remove-assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable abs-separate))))
+
+(defthm
+  abs-separate-correctness-1-lemma-21
+  (implies
+   (and
+    (prefixp (fat32-filename-list-fix relpath)
+             (frame-val->path (cdr (car frame))))
+    (not
+     (intersectp-equal
+      (remove-equal nil
+                    (strip-cars (frame-val->dir (cdr (car frame)))))
+      (names-at-relpath dir
+                        (nthcdr (len relpath)
+                                (frame-val->path (cdr (car frame)))))))
+    (prefixp (frame-val->path (cdr (car frame)))
+             (fat32-filename-list-fix relpath)))
+   (not
+    (intersectp-equal
+     (remove-equal nil (strip-cars dir))
+     (names-at-relpath (frame-val->dir (cdr (car frame)))
+                       (nthcdr (len (frame-val->path (cdr (car frame))))
+                               relpath)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (list-equiv names-at-relpath)
+                           ((:rewrite prefixp-when-equal-lengths)))
+           :use (:instance (:rewrite prefixp-when-equal-lengths)
+                           (y (fat32-filename-list-fix relpath))
+                           (x (frame-val->path (cdr (car frame))))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-40
+  (implies
+   (prefixp (frame-val->path (cdr (assoc-equal src frame)))
+            relpath)
+   (not (< (+ (len relpath)
+              (- (len (frame-val->path (cdr (assoc-equal src frame))))))
+           0)))
+  :rule-classes (:rewrite :linear))
+
+(defthm
+  abs-separate-correctness-1-lemma-16
+  (implies
+   (and (consp (assoc-equal x frame))
+        (distinguish-names dir relpath frame)
+        (prefixp (frame-val->path (cdr (assoc-equal x frame)))
+                 (fat32-filename-list-fix relpath)))
+   (not (intersectp-equal
+         (remove-equal nil (strip-cars dir))
+         (names-at-relpath
+          (frame-val->dir (cdr (assoc-equal x frame)))
+          (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+                  relpath)))))
+  :hints (("goal" :in-theory (enable distinguish-names names-at-relpath))))
+
+(defthmd
+  abs-separate-correctness-1-lemma-38
+  (implies
+   (and
+    (distinguish-names dir1 relpath1 frame)
+    (abs-file-alist-p dir2)
+    (not (prefixp (fat32-filename-list-fix relpath1)
+                  (fat32-filename-list-fix relpath2)))
+    (prefixp (frame-val->path (cdr (assoc-equal src frame)))
+             (fat32-filename-list-fix relpath2))
+    (not
+     (intersectp-equal
+      (remove-equal nil (strip-cars dir1))
+      (names-at-relpath
+       (context-apply
+        (frame-val->dir (cdr (assoc-equal src frame)))
+        dir2 x2
+        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+                relpath2))
+       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+               relpath1)))))
+   (distinguish-names
+    dir1 relpath1
+    (put-assoc-equal
+     src
+     (frame-val
+      (frame-val->path (cdr (assoc-equal src frame)))
+      (context-apply
+       (frame-val->dir (cdr (assoc-equal src frame)))
+       dir2 x2
+       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+               relpath2))
+      (frame-val->src (cdr (assoc-equal src frame))))
+     frame)))
+  :hints (("goal" :in-theory (enable distinguish-names names-at-relpath
+                                     intersectp-equal prefixp))))
+
+(defthm
+  abs-separate-correctness-1-lemma-42
+  (implies
+   (and
+    (< 0 x)
+    (context-apply-ok
+     (frame-val->dir (cdr (assoc-equal src (cdr frame))))
+     dir x
+     (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
+             relpath))
+    (integerp x))
+   (consp (assoc-equal src (cdr frame)))))
+
+(defthm
+  abs-separate-correctness-1-lemma-17
+  (implies
+   (and
+    (not (prefixp (frame-val->path (cdr (car frame)))
+                  (fat32-filename-list-fix relpath)))
+    (<= 0
+        (+ (len relpath)
+           (- (len (frame-val->path (cdr (assoc-equal src (cdr frame))))))))
+    (distinguish-names (frame-val->dir (cdr (car frame)))
+                       (frame-val->path (cdr (car frame)))
+                       (cdr frame))
+    (< 0 x)
+    (abs-file-alist-p dir)
+    (prefixp (fat32-filename-list-fix relpath)
+             (frame-val->path (cdr (car frame))))
+    (not
+     (intersectp-equal
+      (remove-equal nil
+                    (strip-cars (frame-val->dir (cdr (car frame)))))
+      (names-at-relpath dir
+                        (nthcdr (len relpath)
+                                (frame-val->path (cdr (car frame)))))))
+    (prefixp (frame-val->path (cdr (assoc-equal src (cdr frame))))
+             (fat32-filename-list-fix relpath))
+    (context-apply-ok
+     (frame-val->dir (cdr (assoc-equal src (cdr frame))))
+     dir x
+     (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
+             relpath))
+    (integerp x))
+   (distinguish-names
+    (frame-val->dir (cdr (car frame)))
+    (frame-val->path (cdr (car frame)))
+    (put-assoc-equal
+     src
+     (frame-val
+      (frame-val->path (cdr (assoc-equal src (cdr frame))))
+      (context-apply
+       (frame-val->dir (cdr (assoc-equal src (cdr frame))))
+       dir x
+       (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
+               relpath))
+      (frame-val->src (cdr (assoc-equal src (cdr frame)))))
+     (cdr frame))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable (:rewrite prefixp-nthcdr-nthcdr))
+    :use
+    ((:instance (:rewrite abs-separate-correctness-1-lemma-38)
+                (relpath2 relpath)
+                (x2 x)
+                (dir2 dir)
+                (frame (cdr frame))
+                (src src)
+                (relpath1 (frame-val->path (cdr (car frame))))
+                (dir1 (frame-val->dir (cdr (car frame)))))
+     (:instance
+      (:rewrite prefixp-nthcdr-nthcdr)
+      (l2 (fat32-filename-list-fix relpath))
+      (l1 (frame-val->path (cdr (car frame))))
+      (n (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-28
+  (implies (context-apply-ok abs-file-alist1
+                             abs-file-alist2 x x-path)
+           (equal (strip-cars (context-apply abs-file-alist1
+                                                 abs-file-alist2 x x-path))
+                  (if (consp x-path)
+                      (strip-cars abs-file-alist1)
+                      (append (strip-cars (remove-equal x abs-file-alist1))
+                              (strip-cars abs-file-alist2)))))
+  :hints (("goal" :in-theory (enable context-apply context-apply-ok))))
+
+(defthm
+  abs-separate-correctness-1-lemma-39
+  (implies
+   (and
+    (distinguish-names dir1 relpath1 frame)
+    (abs-file-alist-p dir2)
+    (prefixp (frame-val->path (cdr (assoc-equal src frame)))
+             (fat32-filename-list-fix relpath2))
+    (context-apply-ok
+     (frame-val->dir (cdr (assoc-equal src frame)))
+     dir2 x2
+     (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+             relpath2))
+    (not (intersectp-equal
+          (remove-equal nil (strip-cars dir2))
+          (names-at-relpath dir1 (nthcdr (len relpath1) relpath2))))
+    (not
+     (intersectp-equal
+      (remove-equal nil (strip-cars dir1))
+      (names-at-relpath
+       (context-apply
+        (frame-val->dir (cdr (assoc-equal src frame)))
+        dir2 x2
+        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+                relpath2))
+       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+               relpath1)))))
+   (distinguish-names
+    dir1 relpath1
+    (put-assoc-equal
+     src
+     (frame-val
+      (frame-val->path (cdr (assoc-equal src frame)))
+      (context-apply
+       (frame-val->dir (cdr (assoc-equal src frame)))
+       dir2 x2
+       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+               relpath2))
+      (frame-val->src (cdr (assoc-equal src frame))))
+     frame)))
+  :hints
+  (("goal"
+    :in-theory (e/d (distinguish-names names-at-relpath
+                                       intersectp-equal prefixp)))))
+
+(defthm abs-separate-correctness-1-lemma-43
+  (implies (and (not (equal (len (frame-val->path (cdr (car frame))))
+                            (len relpath)))
+                (prefixp (fat32-filename-list-fix relpath)
+                         (frame-val->path (cdr (car frame)))))
+           (not (prefixp (frame-val->path$inline (cdr (car frame)))
+                         (fat32-filename-list-fix$inline relpath)))))
+
+(defthm
+  abs-separate-correctness-1-lemma-18
+  (implies
+   (and
+    (distinguish-names (frame-val->dir (cdr (car frame)))
+                       (frame-val->path (cdr (car frame)))
+                       (cdr frame))
+    (< 0 x)
+    (abs-file-alist-p dir)
+    (prefixp (fat32-filename-list-fix relpath)
+             (frame-val->path (cdr (car frame))))
+    (not
+     (intersectp-equal
+      (remove-equal nil
+                    (strip-cars (frame-val->dir (cdr (car frame)))))
+      (names-at-relpath dir
+                        (nthcdr (len relpath)
+                                (frame-val->path (cdr (car frame)))))))
+    (prefixp (frame-val->path (cdr (assoc-equal src (cdr frame))))
+             (fat32-filename-list-fix relpath))
+    (context-apply-ok
+     (frame-val->dir (cdr (assoc-equal src (cdr frame))))
+     dir x
+     (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
+             relpath))
+    (integerp x))
+   (distinguish-names
+    (frame-val->dir (cdr (car frame)))
+    (frame-val->path (cdr (car frame)))
+    (put-assoc-equal
+     src
+     (frame-val
+      (frame-val->path (cdr (assoc-equal src (cdr frame))))
+      (context-apply
+       (frame-val->dir (cdr (assoc-equal src (cdr frame))))
+       dir x
+       (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
+               relpath))
+      (frame-val->src (cdr (assoc-equal src (cdr frame)))))
+     (cdr frame))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d
+     (list-equiv names-at-relpath)
+     (nthcdr-when->=-n-len-l (:rewrite prefixp-when-equal-lengths)
+                             (:rewrite abs-separate-correctness-1-lemma-21)))
+    :use ((:instance (:rewrite prefixp-when-equal-lengths)
+                     (y (fat32-filename-list-fix relpath))
+                     (x (frame-val->path (cdr (car frame)))))
+          (:instance (:rewrite abs-separate-correctness-1-lemma-21)
+                     (relpath (frame-val->path (cdr (car frame))))))
+    :cases
+    ((<
+      (binary-+
+       (len relpath)
+       (unary--
+        (len (frame-val->path$inline (cdr (assoc-equal src (cdr frame)))))))
+      '0)))))
+
+(defthm
+  abs-separate-correctness-1-lemma-23
+  (implies
+   (and
+    (equal (fat32-filename-list-fix x-path)
+           (nthcdr (len relpath)
+                   (frame-val->path (cdr (car frame)))))
+    (not
+     (intersectp-equal
+      (remove-equal nil
+                    (strip-cars (frame-val->dir (cdr (car frame)))))
+      (names-at-relpath abs-file-alist2
+                        (nthcdr (+ (len relpath) (len x-path))
+                                (frame-val->path (cdr (car frame))))))))
+   (not (intersectp-equal
+         (remove-equal nil (strip-cars abs-file-alist2))
+         (remove-equal nil
+                       (strip-cars (frame-val->dir (cdr (car frame))))))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (names-at-relpath)
+                    ((:rewrite len-of-nthcdr)
+                     (:rewrite len-of-fat32-filename-list-fix)
+                     len-when-prefixp))
+    :use ((:instance (:rewrite len-of-fat32-filename-list-fix)
+                     (x x-path))
+          (:instance (:rewrite len-of-fat32-filename-list-fix)
+                     (x relpath))
+          (:instance (:rewrite len-of-nthcdr)
+                     (l (frame-val->path (cdr (car frame))))
+                     (n (len relpath)))
+          (:instance len-when-prefixp
+                     (x (fat32-filename-list-fix relpath))
+                     (y (frame-val->path (cdr (car frame)))))))))
+
+(defthm abs-separate-correctness-1-lemma-32
+  (implies (prefixp (frame-val->path (cdr (car frame)))
+                    relpath)
+           (prefixp (frame-val->path (cdr (car frame)))
+                    (append relpath x-path))))
+
+(defthm
+  abs-separate-correctness-1-lemma-33
+  (implies
+   (prefixp relpath
+            (frame-val->path (cdr (car frame))))
+   (equal (prefixp (append relpath x-path)
+                   (frame-val->path (cdr (car frame))))
+          (prefixp x-path
+                   (nthcdr (len relpath)
+                           (frame-val->path$inline (cdr (car frame)))))))
+  :hints (("goal" :in-theory (disable (:rewrite binary-append-take-nthcdr)
+                                      (:rewrite take-when-prefixp))
+           :use ((:instance (:rewrite binary-append-take-nthcdr)
+                            (l (frame-val->path (cdr (car frame))))
+                            (i (len relpath)))
+                 (:instance (:rewrite take-when-prefixp)
+                            (y (frame-val->path (cdr (car frame))))
+                            (x relpath))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-29
+  (implies (and (abs-file-alist-p abs-file-alist2)
+                (natp x)
+                (context-apply-ok abs-file-alist1
+                                  abs-file-alist2 x x-path)
+                (distinguish-names abs-file-alist1 relpath frame)
+                (distinguish-names abs-file-alist2 (append relpath x-path)
+                                   frame))
+           (distinguish-names (context-apply abs-file-alist1
+                                             abs-file-alist2 x x-path)
+                              relpath frame))
+  :hints (("goal" :in-theory (enable distinguish-names
+                                     names-at-relpath))))
+
+(defthm
+  abs-separate-correctness-1-lemma-30
+  (implies
+   (and (< 0 x)
+        (abs-file-alist-p dir)
+        (distinguish-names dir relpath (cdr frame))
+        (prefixp (frame-val->path (cdr (car frame)))
+                 (fat32-filename-list-fix relpath))
+        (context-apply-ok (frame-val->dir (cdr (car frame)))
+                          dir x
+                          (nthcdr (len (frame-val->path (cdr (car frame))))
+                                  relpath))
+        (distinguish-names (frame-val->dir (cdr (car frame)))
+                           (frame-val->path (cdr (car frame)))
+                           (cdr frame))
+        (integerp x))
+   (distinguish-names
+    (context-apply (frame-val->dir (cdr (car frame)))
+                   dir x
+                   (nthcdr (len (frame-val->path (cdr (car frame))))
+                           relpath))
+    (frame-val->path (cdr (car frame)))
+    (cdr frame)))
+  :hints
+  (("goal" :in-theory (disable (:rewrite binary-append-take-nthcdr))
+    :use ((:instance (:rewrite binary-append-take-nthcdr)
+                     (l relpath)
+                     (i (len (frame-val->path (cdr (car frame))))))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-35
+  (implies
+   (and (natp x2)
+        (abs-file-alist-p dir2)
+        (not (prefixp (fat32-filename-list-fix relpath2)
+                      (fat32-filename-list-fix relpath1)))
+        (prefixp (frame-val->path (cdr (car frame)))
+                 (fat32-filename-list-fix relpath2))
+        (prefixp (frame-val->path (cdr (car frame)))
+                 (fat32-filename-list-fix relpath1)))
+   (equal
+    (names-at-relpath
+     (context-apply (frame-val->dir (cdr (car frame)))
+                    dir2 x2
+                    (nthcdr (len (frame-val->path (cdr (car frame))))
+                            relpath2))
+     (nthcdr (len (frame-val->path (cdr (car frame))))
+             relpath1))
+    (names-at-relpath (frame-val->dir (cdr (car frame)))
+                      (nthcdr (len (frame-val->path (cdr (car frame))))
+                              relpath1))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable (:rewrite prefixp-nthcdr-nthcdr)
+                        (:rewrite names-at-relpath-of-context-apply))
+    :use
+    ((:instance (:rewrite prefixp-nthcdr-nthcdr)
+                (l2 (fat32-filename-list-fix relpath1))
+                (l1 (fat32-filename-list-fix relpath2))
+                (n (len (frame-val->path (cdr (car frame))))))
+     (:instance (:rewrite names-at-relpath-of-context-apply)
+                (relpath (nthcdr (len (frame-val->path (cdr (car frame))))
+                                 relpath1))
+                (x-path (nthcdr (len (frame-val->path (cdr (car frame))))
+                                relpath2))
+                (x x2)
+                (abs-file-alist dir2)
+                (root (frame-val->dir (cdr (car frame)))))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-36
+  (implies
+   (and (natp x2)
+        (distinguish-names dir1 relpath1 frame)
+        (abs-file-alist-p dir2)
+        (not (prefixp (fat32-filename-list-fix relpath1)
+                      (fat32-filename-list-fix relpath2)))
+        (not (prefixp (fat32-filename-list-fix relpath2)
+                      (fat32-filename-list-fix relpath1)))
+        (prefixp (frame-val->path (cdr (assoc-equal src frame)))
+                 (fat32-filename-list-fix relpath2)))
+   (distinguish-names
+    dir1 relpath1
+    (put-assoc-equal
+     src
+     (frame-val
+      (frame-val->path (cdr (assoc-equal src frame)))
+      (context-apply
+       (frame-val->dir (cdr (assoc-equal src frame)))
+       dir2 x2
+       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+               relpath2))
+      (frame-val->src (cdr (assoc-equal src frame))))
+     frame)))
+  :hints (("goal" :in-theory (enable distinguish-names
+                                     names-at-relpath intersectp-equal))))
+
+(defthm
+  abs-separate-correctness-1-lemma-37
+  (implies
+   (and
+    (natp x2)
+    (distinguish-names dir1 relpath1 frame)
+    (abs-file-alist-p dir2)
+    (not (prefixp (fat32-filename-list-fix relpath2)
+                  (fat32-filename-list-fix relpath1)))
+    (prefixp (frame-val->path (cdr (assoc-equal src frame)))
+             (fat32-filename-list-fix relpath2))
+    (context-apply-ok
+     (frame-val->dir (cdr (assoc-equal src frame)))
+     dir2 x2
+     (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+             relpath2))
+    (not
+     (intersectp-equal (remove-equal nil (strip-cars dir2))
+                       (names-at-relpath dir1
+                                         (nthcdr (len relpath1) relpath2)))))
+   (distinguish-names
+    dir1 relpath1
+    (put-assoc-equal
+     src
+     (frame-val
+      (frame-val->path (cdr (assoc-equal src frame)))
+      (context-apply
+       (frame-val->dir (cdr (assoc-equal src frame)))
+       dir2 x2
+       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+               relpath2))
+      (frame-val->src (cdr (assoc-equal src frame))))
+     frame)))
+  :hints
+  (("goal" :in-theory (e/d (distinguish-names names-at-relpath
+                                              intersectp-equal prefixp)))))
+
+(defthmd
+  abs-separate-correctness-1-lemma-48
+  (implies
+   (and (< 0 x)
+        (m1-file-alist-p dir)
+        (hifat-no-dups-p dir)
+        (distinguish-names dir relpath frame)
+        (prefixp (frame-val->path (cdr (assoc-equal src frame)))
+                 (fat32-filename-list-fix relpath))
+        (context-apply-ok
+         (frame-val->dir (cdr (assoc-equal src frame)))
+         dir x
+         (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+                 relpath))
+        (abs-separate frame)
+        (integerp x))
+   (abs-separate
+    (put-assoc-equal
+     src
+     (frame-val
+      (frame-val->path (cdr (assoc-equal src frame)))
+      (context-apply
+       (frame-val->dir (cdr (assoc-equal src frame)))
+       dir x
+       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+               relpath))
+      (frame-val->src (cdr (assoc-equal src frame))))
+     frame)))
+  :hints
+  (("goal" :in-theory (e/d (abs-separate distinguish-names
+                                         prefixp names-at-relpath)
+                           (nthcdr-when->=-n-len-l))
+    :induct (mv (abs-separate frame)
+                (put-assoc-equal
+                 src
+                 (frame-val
+                  (frame-val->path (cdr (assoc-equal src frame)))
+                  (context-apply
+                   (frame-val->dir (cdr (assoc-equal src frame)))
+                   dir x
+                   (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
+                           relpath))
+                  (frame-val->src (cdr (assoc-equal src frame))))
+                 frame)))))
+
+(defund frame-addrs-root (frame)
+  (declare (xargs :guard (frame-p frame)))
+  (cond ((atom frame) nil)
+        ((zp (frame-val->src (cdar frame)))
+         (cons (caar frame) (frame-addrs-root (cdr frame))))
+        (t (frame-addrs-root (cdr frame)))))
+
+(defthm
+  frame-addrs-root-correctness-1
+  (implies (and (consp (assoc-equal name frame))
+                (equal (frame-val->src frame-val)
+                       (frame-val->src (cdr (assoc-equal name frame)))))
+           (equal (frame-addrs-root (put-assoc-equal name frame-val frame))
+                  (frame-addrs-root frame)))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+(defthm frame-addrs-root-correctness-2
+  (implies (not (member-equal x (strip-cars frame)))
+           (not (member-equal x (frame-addrs-root frame))))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+(defthm frame-addrs-root-correctness-3
+  (implies (frame-p frame)
+           (equal (frame-addrs-root (remove-assoc-equal name frame))
+                  (remove-equal name (frame-addrs-root frame))))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
+
+(defthm
+  frame-addrs-root-correctness-4
+  (implies (and (not (null x))
+                (no-duplicatesp-equal (strip-cars frame)))
+           (iff (member-equal x (frame-addrs-root frame))
+                (and (consp (assoc-equal x frame))
+                     (zp (frame-val->src (cdr (assoc-equal x frame)))))))
+  :hints (("goal" :in-theory (enable frame-addrs-root))))
 
 ;; This has a free variable. Also, accumulated-persistence may call it useless,
 ;; but it is very much needed.
@@ -3195,34 +3743,6 @@
                                      prefixp names-at-relpath))))
 
 (defthm
-  abs-separate-correctness-1-lemma-21
-  (implies
-   (and
-    (prefixp (fat32-filename-list-fix relpath)
-             (frame-val->path (cdr (car frame))))
-    (not
-     (intersectp-equal
-      (remove-equal nil
-                    (strip-cars (frame-val->dir (cdr (car frame)))))
-      (names-at-relpath dir
-                        (nthcdr (len relpath)
-                                (frame-val->path (cdr (car frame)))))))
-    (prefixp (frame-val->path (cdr (car frame)))
-             (fat32-filename-list-fix relpath)))
-   (not
-    (intersectp-equal
-     (remove-equal nil (strip-cars dir))
-     (names-at-relpath (frame-val->dir (cdr (car frame)))
-                       (nthcdr (len (frame-val->path (cdr (car frame))))
-                               relpath)))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (e/d (list-equiv names-at-relpath)
-                           ((:rewrite prefixp-when-equal-lengths)))
-           :use (:instance (:rewrite prefixp-when-equal-lengths)
-                           (y (fat32-filename-list-fix relpath))
-                           (x (frame-val->path (cdr (car frame))))))))
-
-(defthm
   abs-separate-correctness-1-lemma-15
   (implies (and (not (intersectp-equal (remove-equal nil (strip-cars dir))
                                        (names-at-relpath root relpath)))
@@ -3257,21 +3777,6 @@
               (frame-val->path (cdr (assoc-equal x frame))))))))
   :hints (("goal" :in-theory (enable distinguish-names
                                      prefixp intersectp-equal))))
-
-(defthm
-  abs-separate-correctness-1-lemma-16
-  (implies
-   (and (consp (assoc-equal x frame))
-        (distinguish-names dir relpath frame)
-        (prefixp (frame-val->path (cdr (assoc-equal x frame)))
-                 (fat32-filename-list-fix relpath)))
-   (not (intersectp-equal
-         (remove-equal nil (strip-cars dir))
-         (names-at-relpath
-          (frame-val->dir (cdr (assoc-equal x frame)))
-          (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
-                  relpath)))))
-  :hints (("goal" :in-theory (enable distinguish-names names-at-relpath))))
 
 (defthm
   abs-separate-correctness-1-lemma-22
@@ -3333,18 +3838,6 @@
      (abs-file-alist2 (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                                         frame))))
      (abs-file-alist1 root)))))
-
-(defthm
-  abs-separate-correctness-1-lemma-28
-  (implies (context-apply-ok abs-file-alist1
-                             abs-file-alist2 x x-path)
-           (equal (strip-cars (context-apply abs-file-alist1
-                                                 abs-file-alist2 x x-path))
-                  (if (consp x-path)
-                      (strip-cars abs-file-alist1)
-                      (append (strip-cars (remove-equal x abs-file-alist1))
-                              (strip-cars abs-file-alist2)))))
-  :hints (("goal" :in-theory (enable context-apply context-apply-ok))))
 
 (defthmd
   abs-separate-correctness-1-lemma-25
@@ -3424,454 +3917,6 @@
                     (relpath (frame-val->path (cdr (assoc-equal x frame))))
                     (frame (remove-assoc-equal x frame))))))
 
-(defthm abs-separate-correctness-1-lemma-32
-  (implies (prefixp (frame-val->path (cdr (car frame)))
-                    relpath)
-           (prefixp (frame-val->path (cdr (car frame)))
-                    (append relpath x-path))))
-
-(defthm
-  abs-separate-correctness-1-lemma-33
-  (implies
-   (prefixp relpath
-            (frame-val->path (cdr (car frame))))
-   (equal (prefixp (append relpath x-path)
-                   (frame-val->path (cdr (car frame))))
-          (prefixp x-path
-                   (nthcdr (len relpath)
-                           (frame-val->path$inline (cdr (car frame)))))))
-  :hints (("goal" :in-theory (disable (:rewrite binary-append-take-nthcdr)
-                                      (:rewrite take-when-prefixp))
-           :use ((:instance (:rewrite binary-append-take-nthcdr)
-                            (l (frame-val->path (cdr (car frame))))
-                            (i (len relpath)))
-                 (:instance (:rewrite take-when-prefixp)
-                            (y (frame-val->path (cdr (car frame))))
-                            (x relpath))))))
-
-(defthm
-  abs-separate-correctness-1-lemma-23
-  (implies
-   (and
-    (equal (fat32-filename-list-fix x-path)
-           (nthcdr (len relpath)
-                   (frame-val->path (cdr (car frame)))))
-    (not
-     (intersectp-equal
-      (remove-equal nil
-                    (strip-cars (frame-val->dir (cdr (car frame)))))
-      (names-at-relpath abs-file-alist2
-                        (nthcdr (+ (len relpath) (len x-path))
-                                (frame-val->path (cdr (car frame))))))))
-   (not (intersectp-equal
-         (remove-equal nil (strip-cars abs-file-alist2))
-         (remove-equal nil
-                       (strip-cars (frame-val->dir (cdr (car frame))))))))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (e/d (names-at-relpath)
-                    ((:rewrite len-of-nthcdr)
-                     (:rewrite len-of-fat32-filename-list-fix)
-                     len-when-prefixp))
-    :use ((:instance (:rewrite len-of-fat32-filename-list-fix)
-                     (x x-path))
-          (:instance (:rewrite len-of-fat32-filename-list-fix)
-                     (x relpath))
-          (:instance (:rewrite len-of-nthcdr)
-                     (l (frame-val->path (cdr (car frame))))
-                     (n (len relpath)))
-          (:instance len-when-prefixp
-                     (x (fat32-filename-list-fix relpath))
-                     (y (frame-val->path (cdr (car frame)))))))))
-
-(defthm
-  abs-separate-correctness-1-lemma-29
-  (implies (and (abs-file-alist-p abs-file-alist2)
-                (natp x)
-                (context-apply-ok abs-file-alist1
-                                  abs-file-alist2 x x-path)
-                (distinguish-names abs-file-alist1 relpath frame)
-                (distinguish-names abs-file-alist2 (append relpath x-path)
-                                   frame))
-           (distinguish-names (context-apply abs-file-alist1
-                                             abs-file-alist2 x x-path)
-                              relpath frame))
-  :hints (("goal" :in-theory (enable distinguish-names
-                                     names-at-relpath))))
-
-(defthm
-  abs-separate-correctness-1-lemma-30
-  (implies
-   (and (< 0 x)
-        (abs-file-alist-p dir)
-        (distinguish-names dir relpath (cdr frame))
-        (prefixp (frame-val->path (cdr (car frame)))
-                 (fat32-filename-list-fix relpath))
-        (context-apply-ok (frame-val->dir (cdr (car frame)))
-                          dir x
-                          (nthcdr (len (frame-val->path (cdr (car frame))))
-                                  relpath))
-        (distinguish-names (frame-val->dir (cdr (car frame)))
-                           (frame-val->path (cdr (car frame)))
-                           (cdr frame))
-        (integerp x))
-   (distinguish-names
-    (context-apply (frame-val->dir (cdr (car frame)))
-                   dir x
-                   (nthcdr (len (frame-val->path (cdr (car frame))))
-                           relpath))
-    (frame-val->path (cdr (car frame)))
-    (cdr frame)))
-  :hints
-  (("goal" :in-theory (disable (:rewrite binary-append-take-nthcdr))
-    :use ((:instance (:rewrite binary-append-take-nthcdr)
-                     (l relpath)
-                     (i (len (frame-val->path (cdr (car frame))))))))))
-
-(defthm
-  abs-separate-correctness-1-lemma-35
-  (implies
-   (and (natp x2)
-        (abs-file-alist-p dir2)
-        (not (prefixp (fat32-filename-list-fix relpath2)
-                      (fat32-filename-list-fix relpath1)))
-        (prefixp (frame-val->path (cdr (car frame)))
-                 (fat32-filename-list-fix relpath2))
-        (prefixp (frame-val->path (cdr (car frame)))
-                 (fat32-filename-list-fix relpath1)))
-   (equal
-    (names-at-relpath
-     (context-apply (frame-val->dir (cdr (car frame)))
-                    dir2 x2
-                    (nthcdr (len (frame-val->path (cdr (car frame))))
-                            relpath2))
-     (nthcdr (len (frame-val->path (cdr (car frame))))
-             relpath1))
-    (names-at-relpath (frame-val->dir (cdr (car frame)))
-                      (nthcdr (len (frame-val->path (cdr (car frame))))
-                              relpath1))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (disable (:rewrite prefixp-nthcdr-nthcdr)
-                        (:rewrite names-at-relpath-of-context-apply))
-    :use
-    ((:instance (:rewrite prefixp-nthcdr-nthcdr)
-                (l2 (fat32-filename-list-fix relpath1))
-                (l1 (fat32-filename-list-fix relpath2))
-                (n (len (frame-val->path (cdr (car frame))))))
-     (:instance (:rewrite names-at-relpath-of-context-apply)
-                (relpath (nthcdr (len (frame-val->path (cdr (car frame))))
-                                 relpath1))
-                (x-path (nthcdr (len (frame-val->path (cdr (car frame))))
-                                relpath2))
-                (x x2)
-                (abs-file-alist dir2)
-                (root (frame-val->dir (cdr (car frame)))))))))
-
-(defthm
-  abs-separate-correctness-1-lemma-36
-  (implies
-   (and (natp x2)
-        (distinguish-names dir1 relpath1 frame)
-        (abs-file-alist-p dir2)
-        (not (prefixp (fat32-filename-list-fix relpath1)
-                      (fat32-filename-list-fix relpath2)))
-        (not (prefixp (fat32-filename-list-fix relpath2)
-                      (fat32-filename-list-fix relpath1)))
-        (prefixp (frame-val->path (cdr (assoc-equal src frame)))
-                 (fat32-filename-list-fix relpath2)))
-   (distinguish-names
-    dir1 relpath1
-    (put-assoc-equal
-     src
-     (frame-val
-      (frame-val->path (cdr (assoc-equal src frame)))
-      (context-apply
-       (frame-val->dir (cdr (assoc-equal src frame)))
-       dir2 x2
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-               relpath2))
-      (frame-val->src (cdr (assoc-equal src frame))))
-     frame)))
-  :hints (("goal" :in-theory (enable distinguish-names
-                                     names-at-relpath intersectp-equal))))
-
-(defthm
-  abs-separate-correctness-1-lemma-37
-  (implies
-   (and
-    (natp x2)
-    (distinguish-names dir1 relpath1 frame)
-    (abs-file-alist-p dir2)
-    (not (prefixp (fat32-filename-list-fix relpath2)
-                  (fat32-filename-list-fix relpath1)))
-    (prefixp (frame-val->path (cdr (assoc-equal src frame)))
-             (fat32-filename-list-fix relpath2))
-    (context-apply-ok
-     (frame-val->dir (cdr (assoc-equal src frame)))
-     dir2 x2
-     (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-             relpath2))
-    (not
-     (intersectp-equal (remove-equal nil (strip-cars dir2))
-                       (names-at-relpath dir1
-                                         (nthcdr (len relpath1) relpath2)))))
-   (distinguish-names
-    dir1 relpath1
-    (put-assoc-equal
-     src
-     (frame-val
-      (frame-val->path (cdr (assoc-equal src frame)))
-      (context-apply
-       (frame-val->dir (cdr (assoc-equal src frame)))
-       dir2 x2
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-               relpath2))
-      (frame-val->src (cdr (assoc-equal src frame))))
-     frame)))
-  :hints
-  (("goal" :in-theory (e/d (distinguish-names names-at-relpath
-                                              intersectp-equal prefixp)))))
-
-(defthmd
-  abs-separate-correctness-1-lemma-38
-  (implies
-   (and
-    (distinguish-names dir1 relpath1 frame)
-    (abs-file-alist-p dir2)
-    (not (prefixp (fat32-filename-list-fix relpath1)
-                  (fat32-filename-list-fix relpath2)))
-    (prefixp (frame-val->path (cdr (assoc-equal src frame)))
-             (fat32-filename-list-fix relpath2))
-    (not
-     (intersectp-equal
-      (remove-equal nil (strip-cars dir1))
-      (names-at-relpath
-       (context-apply
-        (frame-val->dir (cdr (assoc-equal src frame)))
-        dir2 x2
-        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-                relpath2))
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-               relpath1)))))
-   (distinguish-names
-    dir1 relpath1
-    (put-assoc-equal
-     src
-     (frame-val
-      (frame-val->path (cdr (assoc-equal src frame)))
-      (context-apply
-       (frame-val->dir (cdr (assoc-equal src frame)))
-       dir2 x2
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-               relpath2))
-      (frame-val->src (cdr (assoc-equal src frame))))
-     frame)))
-  :hints (("goal" :in-theory (enable distinguish-names names-at-relpath
-                                     intersectp-equal prefixp))))
-
-(defthm
-  abs-separate-correctness-1-lemma-39
-  (implies
-   (and
-    (distinguish-names dir1 relpath1 frame)
-    (abs-file-alist-p dir2)
-    (prefixp (frame-val->path (cdr (assoc-equal src frame)))
-             (fat32-filename-list-fix relpath2))
-    (context-apply-ok
-     (frame-val->dir (cdr (assoc-equal src frame)))
-     dir2 x2
-     (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-             relpath2))
-    (not (intersectp-equal
-          (remove-equal nil (strip-cars dir2))
-          (names-at-relpath dir1 (nthcdr (len relpath1) relpath2))))
-    (not
-     (intersectp-equal
-      (remove-equal nil (strip-cars dir1))
-      (names-at-relpath
-       (context-apply
-        (frame-val->dir (cdr (assoc-equal src frame)))
-        dir2 x2
-        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-                relpath2))
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-               relpath1)))))
-   (distinguish-names
-    dir1 relpath1
-    (put-assoc-equal
-     src
-     (frame-val
-      (frame-val->path (cdr (assoc-equal src frame)))
-      (context-apply
-       (frame-val->dir (cdr (assoc-equal src frame)))
-       dir2 x2
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-               relpath2))
-      (frame-val->src (cdr (assoc-equal src frame))))
-     frame)))
-  :hints
-  (("goal"
-    :in-theory (e/d (distinguish-names names-at-relpath
-                                       intersectp-equal prefixp)))))
-
-(defthm
-  abs-separate-correctness-1-lemma-40
-  (implies
-   (prefixp (frame-val->path (cdr (assoc-equal src frame)))
-            relpath)
-   (not (< (+ (len relpath)
-              (- (len (frame-val->path (cdr (assoc-equal src frame))))))
-           0)))
-  :rule-classes (:rewrite :linear))
-
-(defthm
-  abs-separate-correctness-1-lemma-42
-  (implies
-   (and
-    (< 0 x)
-    (context-apply-ok
-     (frame-val->dir (cdr (assoc-equal src (cdr frame))))
-     dir x
-     (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-             relpath))
-    (integerp x))
-   (consp (assoc-equal src (cdr frame)))))
-
-(defthm abs-separate-correctness-1-lemma-43
-  (implies (and (not (equal (len (frame-val->path (cdr (car frame))))
-                            (len relpath)))
-                (prefixp (fat32-filename-list-fix relpath)
-                         (frame-val->path (cdr (car frame)))))
-           (not (prefixp (frame-val->path$inline (cdr (car frame)))
-                         (fat32-filename-list-fix$inline relpath)))))
-
-(defthm
-  abs-separate-correctness-1-lemma-17
-  (implies
-   (and
-    (not (prefixp (frame-val->path (cdr (car frame)))
-                  (fat32-filename-list-fix relpath)))
-    (<= 0
-        (+ (len relpath)
-           (- (len (frame-val->path (cdr (assoc-equal src (cdr frame))))))))
-    (distinguish-names (frame-val->dir (cdr (car frame)))
-                       (frame-val->path (cdr (car frame)))
-                       (cdr frame))
-    (< 0 x)
-    (abs-file-alist-p dir)
-    (prefixp (fat32-filename-list-fix relpath)
-             (frame-val->path (cdr (car frame))))
-    (not
-     (intersectp-equal
-      (remove-equal nil
-                    (strip-cars (frame-val->dir (cdr (car frame)))))
-      (names-at-relpath dir
-                        (nthcdr (len relpath)
-                                (frame-val->path (cdr (car frame)))))))
-    (prefixp (frame-val->path (cdr (assoc-equal src (cdr frame))))
-             (fat32-filename-list-fix relpath))
-    (context-apply-ok
-     (frame-val->dir (cdr (assoc-equal src (cdr frame))))
-     dir x
-     (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-             relpath))
-    (integerp x))
-   (distinguish-names
-    (frame-val->dir (cdr (car frame)))
-    (frame-val->path (cdr (car frame)))
-    (put-assoc-equal
-     src
-     (frame-val
-      (frame-val->path (cdr (assoc-equal src (cdr frame))))
-      (context-apply
-       (frame-val->dir (cdr (assoc-equal src (cdr frame))))
-       dir x
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-               relpath))
-      (frame-val->src (cdr (assoc-equal src (cdr frame)))))
-     (cdr frame))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (disable (:rewrite prefixp-nthcdr-nthcdr))
-    :use
-    ((:instance (:rewrite abs-separate-correctness-1-lemma-38)
-                (relpath2 relpath)
-                (x2 x)
-                (dir2 dir)
-                (frame (cdr frame))
-                (src src)
-                (relpath1 (frame-val->path (cdr (car frame))))
-                (dir1 (frame-val->dir (cdr (car frame)))))
-     (:instance
-      (:rewrite prefixp-nthcdr-nthcdr)
-      (l2 (fat32-filename-list-fix relpath))
-      (l1 (frame-val->path (cdr (car frame))))
-      (n (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))))))))
-
-(defthm
-  abs-separate-correctness-1-lemma-18
-  (implies
-   (and
-    (distinguish-names (frame-val->dir (cdr (car frame)))
-                       (frame-val->path (cdr (car frame)))
-                       (cdr frame))
-    (< 0 x)
-    (abs-file-alist-p dir)
-    (prefixp (fat32-filename-list-fix relpath)
-             (frame-val->path (cdr (car frame))))
-    (not
-     (intersectp-equal
-      (remove-equal nil
-                    (strip-cars (frame-val->dir (cdr (car frame)))))
-      (names-at-relpath dir
-                        (nthcdr (len relpath)
-                                (frame-val->path (cdr (car frame)))))))
-    (prefixp (frame-val->path (cdr (assoc-equal src (cdr frame))))
-             (fat32-filename-list-fix relpath))
-    (context-apply-ok
-     (frame-val->dir (cdr (assoc-equal src (cdr frame))))
-     dir x
-     (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-             relpath))
-    (integerp x))
-   (distinguish-names
-    (frame-val->dir (cdr (car frame)))
-    (frame-val->path (cdr (car frame)))
-    (put-assoc-equal
-     src
-     (frame-val
-      (frame-val->path (cdr (assoc-equal src (cdr frame))))
-      (context-apply
-       (frame-val->dir (cdr (assoc-equal src (cdr frame))))
-       dir x
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))
-               relpath))
-      (frame-val->src (cdr (assoc-equal src (cdr frame)))))
-     (cdr frame))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (e/d
-     (list-equiv names-at-relpath)
-     (nthcdr-when->=-n-len-l (:rewrite prefixp-when-equal-lengths)
-                             (:rewrite abs-separate-correctness-1-lemma-21)))
-    :use ((:instance (:rewrite prefixp-when-equal-lengths)
-                     (y (fat32-filename-list-fix relpath))
-                     (x (frame-val->path (cdr (car frame)))))
-          (:instance (:rewrite abs-separate-correctness-1-lemma-21)
-                     (relpath (frame-val->path (cdr (car frame))))))
-    :cases
-    ((<
-      (binary-+
-       (len relpath)
-       (unary--
-        (len (frame-val->path$inline (cdr (assoc-equal src (cdr frame)))))))
-      '0)))))
-
 (defthm
   abs-separate-correctness-1-lemma-27
   (implies
@@ -3894,51 +3939,6 @@
                      (x x)
                      (abs-file-alist2 dir)
                      (abs-file-alist1 (frame-val->dir (cdr (car frame)))))))))
-
-(defthmd
-  abs-separate-correctness-1-lemma-48
-  (implies
-   (and (< 0 x)
-        (m1-file-alist-p dir)
-        (hifat-no-dups-p dir)
-        (distinguish-names dir relpath frame)
-        (prefixp (frame-val->path (cdr (assoc-equal src frame)))
-                 (fat32-filename-list-fix relpath))
-        (context-apply-ok
-         (frame-val->dir (cdr (assoc-equal src frame)))
-         dir x
-         (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-                 relpath))
-        (abs-separate frame)
-        (integerp x))
-   (abs-separate
-    (put-assoc-equal
-     src
-     (frame-val
-      (frame-val->path (cdr (assoc-equal src frame)))
-      (context-apply
-       (frame-val->dir (cdr (assoc-equal src frame)))
-       dir x
-       (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-               relpath))
-      (frame-val->src (cdr (assoc-equal src frame))))
-     frame)))
-  :hints
-  (("goal" :in-theory (e/d (abs-separate distinguish-names
-                                         prefixp names-at-relpath)
-                           (nthcdr-when->=-n-len-l))
-    :induct (mv (abs-separate frame)
-                (put-assoc-equal
-                 src
-                 (frame-val
-                  (frame-val->path (cdr (assoc-equal src frame)))
-                  (context-apply
-                   (frame-val->dir (cdr (assoc-equal src frame)))
-                   dir x
-                   (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
-                           relpath))
-                  (frame-val->src (cdr (assoc-equal src frame))))
-                 frame)))))
 
 (defthm
   abs-separate-correctness-1-lemma-44
