@@ -2838,7 +2838,7 @@
   :hints (("goal" :in-theory (enable abs-separate))))
 
 (defthm
-  abs-separate-correctness-1-lemma-21
+  abs-separate-of-put-assoc-lemma-1
   (implies
    (and
     (prefixp (fat32-filename-list-fix relpath)
@@ -2866,7 +2866,7 @@
                            (x (frame-val->path (cdr (car frame))))))))
 
 (defthm
-  abs-separate-correctness-1-lemma-40
+  abs-separate-of-put-assoc-lemma-2
   (implies
    (prefixp (frame-val->path (cdr (assoc-equal src frame)))
             relpath)
@@ -2876,7 +2876,7 @@
   :rule-classes (:rewrite :linear))
 
 (defthm
-  abs-separate-correctness-1-lemma-16
+  abs-separate-of-put-assoc-lemma-3
   (implies
    (and (consp (assoc-equal x frame))
         (distinguish-names dir relpath frame)
@@ -2891,7 +2891,7 @@
   :hints (("goal" :in-theory (enable distinguish-names names-at-relpath))))
 
 (defthmd
-  abs-separate-correctness-1-lemma-38
+  abs-separate-of-put-assoc-lemma-4
   (implies
    (and
     (distinguish-names dir1 relpath1 frame)
@@ -2928,7 +2928,7 @@
                                      intersectp-equal prefixp))))
 
 (defthm
-  abs-separate-correctness-1-lemma-42
+  abs-separate-of-put-assoc-lemma-5
   (implies
    (and
     (< 0 x)
@@ -2941,7 +2941,7 @@
    (consp (assoc-equal src (cdr frame)))))
 
 (defthm
-  abs-separate-correctness-1-lemma-17
+  abs-separate-of-put-assoc-lemma-6
   (implies
    (and
     (not (prefixp (frame-val->path (cdr (car frame)))
@@ -2990,7 +2990,7 @@
     :do-not-induct t
     :in-theory (disable (:rewrite prefixp-nthcdr-nthcdr))
     :use
-    ((:instance (:rewrite abs-separate-correctness-1-lemma-38)
+    ((:instance (:rewrite abs-separate-of-put-assoc-lemma-4)
                 (relpath2 relpath)
                 (x2 x)
                 (dir2 dir)
@@ -3005,7 +3005,7 @@
       (n (len (frame-val->path (cdr (assoc-equal src (cdr frame)))))))))))
 
 (defthm
-  abs-separate-correctness-1-lemma-28
+  abs-separate-of-put-assoc-lemma-7
   (implies (context-apply-ok abs-file-alist1
                              abs-file-alist2 x x-path)
            (equal (strip-cars (context-apply abs-file-alist1
@@ -3017,7 +3017,7 @@
   :hints (("goal" :in-theory (enable context-apply context-apply-ok))))
 
 (defthm
-  abs-separate-correctness-1-lemma-39
+  abs-separate-of-put-assoc-lemma-8
   (implies
    (and
     (distinguish-names dir1 relpath1 frame)
@@ -3061,7 +3061,7 @@
     :in-theory (e/d (distinguish-names names-at-relpath
                                        intersectp-equal prefixp)))))
 
-(defthm abs-separate-correctness-1-lemma-43
+(defthm abs-separate-of-put-assoc-lemma-9
   (implies (and (not (equal (len (frame-val->path (cdr (car frame))))
                             (len relpath)))
                 (prefixp (fat32-filename-list-fix relpath)
@@ -3070,7 +3070,7 @@
                          (fat32-filename-list-fix$inline relpath)))))
 
 (defthm
-  abs-separate-correctness-1-lemma-18
+  abs-separate-of-put-assoc-lemma-10
   (implies
    (and
     (distinguish-names (frame-val->dir (cdr (car frame)))
@@ -3116,11 +3116,11 @@
     (e/d
      (list-equiv names-at-relpath)
      (nthcdr-when->=-n-len-l (:rewrite prefixp-when-equal-lengths)
-                             (:rewrite abs-separate-correctness-1-lemma-21)))
+                             (:rewrite abs-separate-of-put-assoc-lemma-1)))
     :use ((:instance (:rewrite prefixp-when-equal-lengths)
                      (y (fat32-filename-list-fix relpath))
                      (x (frame-val->path (cdr (car frame)))))
-          (:instance (:rewrite abs-separate-correctness-1-lemma-21)
+          (:instance (:rewrite abs-separate-of-put-assoc-lemma-1)
                      (relpath (frame-val->path (cdr (car frame))))))
     :cases
     ((<
@@ -3131,7 +3131,7 @@
       '0)))))
 
 (defthm
-  abs-separate-correctness-1-lemma-23
+  abs-separate-of-put-assoc-lemma-11
   (implies
    (and
     (equal (fat32-filename-list-fix x-path)
@@ -3165,14 +3165,14 @@
                      (x (fat32-filename-list-fix relpath))
                      (y (frame-val->path (cdr (car frame)))))))))
 
-(defthm abs-separate-correctness-1-lemma-32
+(defthm abs-separate-of-put-assoc-lemma-12
   (implies (prefixp (frame-val->path (cdr (car frame)))
                     relpath)
            (prefixp (frame-val->path (cdr (car frame)))
                     (append relpath x-path))))
 
 (defthm
-  abs-separate-correctness-1-lemma-33
+  abs-separate-of-put-assoc-lemma-13
   (implies
    (prefixp relpath
             (frame-val->path (cdr (car frame))))
@@ -3191,7 +3191,7 @@
                             (x relpath))))))
 
 (defthm
-  abs-separate-correctness-1-lemma-29
+  abs-separate-of-put-assoc-lemma-14
   (implies (and (abs-file-alist-p abs-file-alist2)
                 (natp x)
                 (context-apply-ok abs-file-alist1
@@ -3206,7 +3206,7 @@
                                      names-at-relpath))))
 
 (defthm
-  abs-separate-correctness-1-lemma-30
+  abs-separate-of-put-assoc-lemma-15
   (implies
    (and (< 0 x)
         (abs-file-alist-p dir)
@@ -3235,7 +3235,7 @@
                      (i (len (frame-val->path (cdr (car frame))))))))))
 
 (defthm
-  abs-separate-correctness-1-lemma-35
+  abs-separate-of-put-assoc-lemma-16
   (implies
    (and (natp x2)
         (abs-file-alist-p dir2)
@@ -3276,7 +3276,7 @@
                 (root (frame-val->dir (cdr (car frame)))))))))
 
 (defthm
-  abs-separate-correctness-1-lemma-36
+  abs-separate-of-put-assoc-lemma-17
   (implies
    (and (natp x2)
         (distinguish-names dir1 relpath1 frame)
@@ -3304,7 +3304,7 @@
                                      names-at-relpath intersectp-equal))))
 
 (defthm
-  abs-separate-correctness-1-lemma-37
+  abs-separate-of-put-assoc-lemma-18
   (implies
    (and
     (natp x2)
@@ -3341,7 +3341,7 @@
                                               intersectp-equal prefixp)))))
 
 (defthmd
-  abs-separate-correctness-1-lemma-48
+  abs-separate-of-put-assoc-1
   (implies
    (and (< 0 x)
         (m1-file-alist-p dir)
@@ -3632,16 +3632,8 @@
                               frame))))))
      (l (strip-cars frame))))))
 
-;; This has a free variable, and it only works this way. Contraposition causes
-;; proofs to fail.
-(defthm abs-separate-correctness-1-lemma-8
-  (implies (and (abs-file-alist-p root)
-                (abs-separate (frame-with-root root frame)))
-           (abs-no-dups-p root))
-  :hints (("goal" :in-theory (enable abs-separate frame-with-root))))
-
 (defthm
-  abs-separate-correctness-1-lemma-10
+  abs-separate-correctness-1-lemma-8
   (implies
    (abs-separate frame)
    (abs-no-dups-p (frame-val->dir$inline (cdr (assoc-equal x frame)))))
@@ -3790,7 +3782,7 @@
 
 ;; Obtained by replacing (1st-complete frame) with x in the proof-builder.
 (defthm
-  abs-separate-correctness-1-lemma-24
+  abs-separate-correctness-1-lemma-10
   (implies
    (and (consp (assoc-equal x frame))
         (integerp x)
@@ -3807,7 +3799,7 @@
            :do-not-induct t)))
 
 (defthm
-  abs-separate-correctness-1-lemma-20
+  abs-separate-correctness-1-lemma-16
   (implies
    (and (< 0 (1st-complete frame))
         (abs-file-alist-p root)
@@ -3840,7 +3832,7 @@
      (abs-file-alist1 root)))))
 
 (defthmd
-  abs-separate-correctness-1-lemma-25
+  abs-separate-correctness-1-lemma-17
   (implies
    (and
     (abs-file-alist-p dir)
@@ -3871,7 +3863,7 @@
   :hints (("goal" :in-theory (enable distinguish-names prefixp))))
 
 (defthm
-  abs-separate-correctness-1-lemma-31
+  abs-separate-correctness-1-lemma-18
   (implies
    (and
     (not (equal (frame-val->src (cdr (assoc-equal x frame)))
@@ -3911,14 +3903,14 @@
      (remove-assoc-equal x frame))))
   :hints
   (("goal"
-    :use (:instance abs-separate-correctness-1-lemma-25
+    :use (:instance abs-separate-correctness-1-lemma-17
                     (src (frame-val->src (cdr (assoc-equal x frame))))
                     (dir (frame-val->dir (cdr (assoc-equal x frame))))
                     (relpath (frame-val->path (cdr (assoc-equal x frame))))
                     (frame (remove-assoc-equal x frame))))))
 
 (defthm
-  abs-separate-correctness-1-lemma-27
+  abs-separate-correctness-1-lemma-20
   (implies
    (and (< 0 x)
         (m1-file-alist-p dir)
@@ -3941,7 +3933,7 @@
                      (abs-file-alist1 (frame-val->dir (cdr (car frame)))))))))
 
 (defthm
-  abs-separate-correctness-1-lemma-44
+  abs-separate-correctness-1-lemma-21
   (implies
    (and
     (< 0 x)
@@ -3991,14 +3983,14 @@
   :hints
   (("goal"
     :do-not-induct t
-    :use (:instance abs-separate-correctness-1-lemma-48
+    :use (:instance abs-separate-of-put-assoc-1
                     (src (frame-val->src (cdr (assoc-equal x frame))))
                     (dir (frame-val->dir (cdr (assoc-equal x frame))))
                     (relpath (frame-val->path (cdr (assoc-equal x frame))))
                     (frame (remove-assoc-equal x frame))))))
 
 (defthm
-  abs-separate-correctness-1-lemma-45
+  abs-separate-correctness-1-lemma-23
   (implies
    (and
     (no-duplicatesp-equal (strip-cars frame))
@@ -5015,8 +5007,8 @@
                          frame))))
   :hints
   (("goal" :in-theory (e/d (1st-complete-src)
-                           ((:rewrite abs-separate-correctness-1-lemma-31)))
-    :use (:instance (:rewrite abs-separate-correctness-1-lemma-31)
+                           ((:rewrite abs-separate-correctness-1-lemma-18)))
+    :use (:instance (:rewrite abs-separate-correctness-1-lemma-18)
                     (x (1st-complete frame))))))
 
 (defthm
@@ -5065,8 +5057,8 @@
   :hints
   (("goal" :do-not-induct t
     :in-theory (e/d (1st-complete-src)
-                    ((:rewrite abs-separate-correctness-1-lemma-44)))
-    :use (:instance (:rewrite abs-separate-correctness-1-lemma-44)
+                    ((:rewrite abs-separate-correctness-1-lemma-21)))
+    :use (:instance (:rewrite abs-separate-correctness-1-lemma-21)
                     (x (1st-complete frame))))))
 
 (defthm
@@ -5481,7 +5473,7 @@
     :in-theory (e/d (names-at-relpath abs-find-file-helper take-of-nthcdr)
                     (abs-find-file-helper-of-context-apply-lemma-2
                      nth-of-fat32-filename-list-fix
-                     (:rewrite abs-separate-correctness-1-lemma-40)
+                     (:rewrite abs-separate-of-put-assoc-lemma-2)
                      (:rewrite member-of-remove)
                      (:rewrite car-of-nthcdr)
                      (:rewrite nth-of-nthcdr)
@@ -5508,7 +5500,7 @@
                         (fat32-filename-list-fix pathname)))
       (n (+ (len relpath)
             (- (len (frame-val->path (cdr (assoc-equal x frame))))))))
-     (:instance (:rewrite abs-separate-correctness-1-lemma-40)
+     (:instance (:rewrite abs-separate-of-put-assoc-lemma-2)
                 (src x)
                 (relpath (fat32-filename-list-fix relpath)))
      (:instance (:rewrite car-of-nthcdr)
@@ -5734,9 +5726,9 @@
      0)))
   :hints (("goal" :do-not-induct t
            :in-theory (disable abs-separate-correctness-1-lemma-26
-                               abs-separate-correctness-1-lemma-16)
+                               abs-separate-of-put-assoc-lemma-3)
            :use (abs-separate-correctness-1-lemma-26
-                 abs-separate-correctness-1-lemma-16))))
+                 abs-separate-of-put-assoc-lemma-3))))
 
 (defthm
   abs-find-file-correctness-1-lemma-24
@@ -11199,7 +11191,7 @@
                                           (context-apply x z z-var z-path)))
            :cases ((null (fat32-filename-fix (car z-path)))))))
 
-(defthm
+(defthmd
   partial-collapse-correctness-lemma-17
   (implies
    (and
@@ -11397,8 +11389,7 @@
                      (:rewrite abs-no-dups-p-when-m1-file-alist-p)
                      (:rewrite put-assoc-equal-without-change . 2)
                      (:definition put-assoc-equal)
-                     (:rewrite abs-file-alist-p-correctness-1)
-                     (:rewrite abs-separate-correctness-1-lemma-8)))
+                     (:rewrite abs-file-alist-p-correctness-1)))
     :induct (mv (context-apply abs-file-alist1
                                abs-file-alist3 x x-path)
                 (context-apply abs-file-alist2
@@ -11905,8 +11896,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable (:rewrite partial-collapse-correctness-lemma-25)
-                        (:rewrite partial-collapse-correctness-lemma-17))
+    :in-theory (disable (:rewrite partial-collapse-correctness-lemma-25))
     :use
     ((:instance
       (:rewrite partial-collapse-correctness-lemma-25)
@@ -12224,6 +12214,7 @@
                        name)))
   :hints (("goal" :in-theory (enable 1st-complete))))
 
+;; Seems useless; can perhaps be removed later.
 (defthm
   partial-collapse-correctness-lemma-44
   (implies
@@ -13831,7 +13822,7 @@
                                   (:rewrite len-of-remove-assoc-equal-2)
                                   (:definition member-equal)
                                   (:definition len)
-                                  (:LINEAR ABS-SEPARATE-CORRECTNESS-1-LEMMA-40)
+                                  (:LINEAR ABS-SEPARATE-OF-PUT-ASSOC-LEMMA-2)
                                   (:TYPE-PRESCRIPTION
                                    PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-48)
                                   (:REWRITE
@@ -13847,7 +13838,7 @@
                                           (:definition member-equal)
                                           (:definition len)
                                           (:LINEAR
-                                           ABS-SEPARATE-CORRECTNESS-1-LEMMA-40)
+                                           ABS-SEPARATE-OF-PUT-ASSOC-LEMMA-2)
                                           (:TYPE-PRESCRIPTION
                                            PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-48)
                                           (:REWRITE
@@ -13895,7 +13886,7 @@
                                           (:definition member-equal)
                                           (:definition len)
                                           (:LINEAR
-                                           ABS-SEPARATE-CORRECTNESS-1-LEMMA-40)
+                                           ABS-SEPARATE-OF-PUT-ASSOC-LEMMA-2)
                                           (:TYPE-PRESCRIPTION
                                            PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-48)
                                           (:REWRITE
