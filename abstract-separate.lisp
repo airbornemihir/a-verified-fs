@@ -13007,17 +13007,6 @@
                                            (frame->frame frame))))
          (frame->frame frame)))))))))
 
-;; Move later, and rename the almost identically named theorem.
-(defthm
-  put-assoc-of-put-assoc-2
-  (implies (and (or (consp (assoc-equal name1 alist))
-                    (consp (assoc-equal name2 alist)))
-                (not (equal name1 name2)))
-           (equal (put-assoc-equal name1
-                                   val1 (put-assoc-equal name2 val2 alist))
-                  (put-assoc-equal name2 val2
-                                   (put-assoc-equal name1 val1 alist)))))
-
 (defthm
   partial-collapse-correctness-lemma-77
   (implies

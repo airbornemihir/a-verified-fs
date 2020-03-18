@@ -1095,12 +1095,18 @@
   :hints (("goal" :in-theory (e/d (intersectp-equal)
                                   (intersectp-is-commutative)))))
 
-(defthm intersectp-of-remove-1
+(defthm intersectp-of-remove
   (implies (not (intersectp-equal l1 l2))
 	   (not (intersectp-equal (remove-equal x l1)
 				  l2)))
   :hints (("goal" :in-theory (enable intersectp-equal)))
-  :rule-classes :type-prescription)
+  :rule-classes
+  (:type-prescription
+   (:type-prescription
+    :corollary
+    (implies (not (intersectp-equal l1 l2))
+	     (not (intersectp-equal l2
+				    (remove-equal x l1)))))))
 
 (defthm remove-of-remove
   (equal (remove-equal x1 (remove-equal x2 l))
@@ -1141,9 +1147,19 @@
              (not
               (equal (remove1-assoc key alist) alist))))))
 
-(defthm put-assoc-of-put-assoc
+(defthm put-assoc-of-put-assoc-1
   (equal (put-assoc-equal name val2 (put-assoc-equal name val1 alist))
          (put-assoc-equal name val2 alist)))
+
+(defthm
+  put-assoc-of-put-assoc-2
+  (implies (and (or (consp (assoc-equal name1 alist))
+                    (consp (assoc-equal name2 alist)))
+                (not (equal name1 name2)))
+           (equal (put-assoc-equal name1
+                                   val1 (put-assoc-equal name2 val2 alist))
+                  (put-assoc-equal name2 val2
+                                   (put-assoc-equal name1 val1 alist)))))
 
 (defthm put-assoc-of-append
   (implies (not (null name))
