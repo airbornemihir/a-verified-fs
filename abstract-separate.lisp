@@ -3710,16 +3710,257 @@
                   nil))
   :hints (("Goal" :in-theory (enable 1st-complete)) ))
 
-(defthm abs-separate-correctness-1-lemma-24
+;; Move later.
+(defthm abs-fs-p-of-collapse
   (abs-fs-p (mv-nth 0 (collapse frame)))
   :hints (("goal" :in-theory (enable collapse))))
+
+;; This is a hack...
+(defthm
+  abs-separate-correctness-1-lemma-24
+  (implies (abs-file-alist-p abs-file-alist)
+           (subsetp-equal (abs-addrs (abs-fs-fix abs-file-alist))
+                          (abs-addrs abs-file-alist)))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-addrs abs-fs-fix abs-file-alist-p
+                               abs-file-fix abs-file->contents)
+                    ((:rewrite abs-file-alist-p-correctness-1-lemma-1)
+                     (:rewrite abs-file-alist-p-correctness-1)
+                     (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+                     (:rewrite abs-file->contents-when-m1-file-p)
+                     (:rewrite m1-file-contents-p-correctness-1)
+                     (:rewrite abs-directory-file-p-when-m1-file-p)
+                     (:rewrite abs-file-alist-p-when-m1-file-alist-p)
+                     (:rewrite abs-file-alist-p-of-cdr)
+                     (:rewrite abs-file-alist-p-correctness-1-lemma-2))))
+   ("subgoal *1/5''" :expand (abs-addrs abs-file-alist))))
+
+(defthm
+  abs-separate-correctness-1-lemma-25
+  (implies
+   (and
+    (< 0 (1st-complete (frame->frame frame)))
+    (subsetp-equal
+     (abs-addrs
+      (mv-nth
+       0
+       (collapse
+        (frame-with-root
+         (context-apply
+          (frame->root frame)
+          (frame-val->dir
+           (cdr (assoc-equal (1st-complete (frame->frame frame))
+                             (frame->frame frame))))
+          (1st-complete (frame->frame frame))
+          (frame-val->path
+           (cdr (assoc-equal (1st-complete (frame->frame frame))
+                             (frame->frame frame)))))
+         (remove-assoc-equal (1st-complete (frame->frame frame))
+                             (frame->frame frame))))))
+     (abs-addrs
+      (abs-fs-fix
+       (context-apply
+        (frame->root frame)
+        (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          (frame->frame frame))))
+        (1st-complete (frame->frame frame))
+        (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           (frame->frame frame))))))))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (frame-p (frame->frame frame)))
+   (subsetp-equal
+    (abs-addrs
+     (mv-nth
+      0
+      (collapse
+       (frame-with-root
+        (context-apply
+         (frame->root frame)
+         (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           (frame->frame frame))))
+         (1st-complete (frame->frame frame))
+         (frame-val->path
+          (cdr (assoc-equal (1st-complete (frame->frame frame))
+                            (frame->frame frame)))))
+        (remove-assoc-equal (1st-complete (frame->frame frame))
+                            (frame->frame frame))))))
+    (abs-addrs (frame->root frame))))
+  :hints
+  (("goal"
+    :in-theory (disable subsetp-trans)
+    :use
+    ((:instance
+      (:rewrite subsetp-trans)
+      (z (abs-addrs (frame->root frame)))
+      (y
+       (abs-addrs
+        (abs-fs-fix
+         (context-apply
+          (frame->root frame)
+          (frame-val->dir
+           (cdr (assoc-equal (1st-complete (frame->frame frame))
+                             (frame->frame frame))))
+          (1st-complete (frame->frame frame))
+          (frame-val->path
+           (cdr (assoc-equal (1st-complete (frame->frame frame))
+                             (frame->frame frame))))))))
+      (x
+       (abs-addrs
+        (mv-nth
+         0
+         (collapse
+          (frame-with-root
+           (context-apply
+            (frame->root frame)
+            (frame-val->dir
+             (cdr (assoc-equal (1st-complete (frame->frame frame))
+                               (frame->frame frame))))
+            (1st-complete (frame->frame frame))
+            (frame-val->path
+             (cdr (assoc-equal (1st-complete (frame->frame frame))
+                               (frame->frame frame)))))
+           (remove-assoc-equal (1st-complete (frame->frame frame))
+                               (frame->frame frame))))))))
+     (:instance
+      subsetp-trans
+      (z (abs-addrs (frame->root frame)))
+      (x
+       (abs-addrs
+        (abs-fs-fix
+         (context-apply
+          (frame->root frame)
+          (frame-val->dir
+           (cdr (assoc-equal (1st-complete (frame->frame frame))
+                             (frame->frame frame))))
+          (1st-complete (frame->frame frame))
+          (frame-val->path
+           (cdr (assoc-equal (1st-complete (frame->frame frame))
+                             (frame->frame frame))))))))
+      (y
+       (abs-addrs
+        (context-apply
+         (frame->root frame)
+         (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           (frame->frame frame))))
+         (1st-complete (frame->frame frame))
+         (frame-val->path
+          (cdr (assoc-equal (1st-complete (frame->frame frame))
+                            (frame->frame frame))))))))))))
+
+(defthm
+  abs-separate-correctness-1-lemma-27
+  (implies
+   (and
+    (member-equal
+     (1st-complete frame)
+     (abs-addrs
+      (context-apply root
+                     (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                       frame)))
+                     (1st-complete frame)
+                     (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                        frame))))))
+    (subsetp-equal
+     (abs-addrs
+      (mv-nth
+       0
+       (collapse
+        (frame-with-root
+         (context-apply
+          root
+          (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                            frame)))
+          (1st-complete frame)
+          (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                             frame))))
+         (remove-assoc-equal (1st-complete frame)
+                             frame)))))
+     (abs-addrs
+      (abs-fs-fix
+       (context-apply root
+                      (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                        frame)))
+                      (1st-complete frame)
+                      (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                         frame)))))))
+    (< 0 (1st-complete frame))
+    (context-apply-ok root
+                      (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                        frame)))
+                      (1st-complete frame)
+                      (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                         frame))))
+    (abs-file-alist-p root)
+    (abs-no-dups-p root)
+    (frame-p frame)
+    (no-duplicatesp-equal (abs-addrs root))
+    (no-duplicatesp-equal (strip-cars frame)))
+   (not
+    (member-equal
+     (1st-complete frame)
+     (abs-addrs
+      (mv-nth
+       0
+       (collapse
+        (frame-with-root
+         (context-apply
+          root
+          (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                            frame)))
+          (1st-complete frame)
+          (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                             frame))))
+         (remove-assoc-equal (1st-complete frame)
+                             frame))))))))
+  :instructions
+  (:promote
+   (:dive 1)
+   (:rewrite
+    (:rewrite subsetp-member . 4)
+    ((y
+      (abs-addrs
+       (abs-fs-fix
+        (context-apply root
+                       (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                         frame)))
+                       (1st-complete frame)
+                       (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                          frame)))))))))
+   (:dive 1)
+   (:rewrite
+    (:rewrite subsetp-member . 4)
+    ((y
+      (abs-addrs
+       (context-apply
+        root
+        (frame-val->dir$inline (cdr (assoc-equal (1st-complete frame)
+                                                 frame)))
+        (1st-complete frame)
+        (frame-val->path$inline (cdr (assoc-equal (1st-complete frame)
+                                                  frame))))))))
+   :bash (:dive 1)
+   (:claim
+    (and
+     (not
+      (intersectp-equal
+       (abs-addrs root)
+       (abs-addrs
+        (abs-fs-fix (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                      frame)))))))
+     (abs-fs-p root)
+     (abs-file-alist-p (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                         frame)))))
+    :hints :none)
+   (:rewrite abs-addrs-of-context-apply-1)
+   (:bash ("goal" :in-theory (enable intersectp-equal)))))
 
 (defthm
   abs-separate-correctness-1-lemma-5
   (implies
    (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
         (frame-p (frame->frame frame)))
-   (subsetp-equal (abs-addrs (abs-fs-fix (mv-nth 0 (collapse frame))))
+   (subsetp-equal (abs-addrs (mv-nth 0 (collapse frame)))
                   (abs-addrs (frame->root frame))))
   :hints (("goal" :in-theory (enable collapse)))
   :rule-classes
