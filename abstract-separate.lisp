@@ -5854,11 +5854,58 @@
                     (abs-find-file-helper (frame->root frame)
                                           pathname)))))))
 
+(accumulated-persistence nil)
+(accumulated-persistence t)
+(remove-hyps
+(defthm
+   abs-fs-fix-when-abs-complete-lemma-1
+ (implies
+  (and t (abs-complete (abs-fs-fix x)))
+  (equal (abs-file-alist-p x)
+         (M1-FILE-ALIST-P x)))
+     :hints (("Goal" :in-theory (enable abs-fs-fix hifat-file-alist-fix
+                                        abs-addrs m1-file-fix ABS-FILE->DIR-ENT
+                                        abs-file->contents
+                                        abs-file-p m1-file-p M1-FILE->CONTENTS
+                                        M1-FILE M1-FILE->DIR-ENT
+                                        ABS-FILE-FIX
+                                        M1-FILE-CONTENTS-FIX
+                                        ABS-FILE-CONTENTS-FIX
+                                        m1-directory-file-p
+                                        abs-directory-file-p
+                                        m1-file-contents-p
+                                        abs-file-contents-p)
+              :induct (ABS-FS-FIX X)
+              :expand ((ABS-FILE-ALIST-P X)
+                       (M1-FILE-ALIST-P X)))))
+t)
+
+(remove-hyps
+ (defthm
+   abs-fs-fix-when-abs-complete
+  (implies (and t (abs-complete (abs-fs-fix fs)))
+           (equal (abs-fs-fix fs)
+                  (hifat-file-alist-fix fs)))
+     :hints (("Goal" :in-theory (enable abs-fs-fix hifat-file-alist-fix
+                                        abs-addrs m1-file-fix ABS-FILE->DIR-ENT
+                                        abs-file->contents
+                                        abs-file-p m1-file-p M1-FILE->CONTENTS
+                                        M1-FILE M1-FILE->DIR-ENT
+                                        ABS-FILE-FIX
+                                        M1-FILE-CONTENTS-FIX
+                                        ABS-FILE-CONTENTS-FIX
+                                        m1-directory-file-p
+                                        abs-directory-file-p
+                                        m1-file-contents-p
+                                        abs-file-contents-p)
+              :induct (ABS-FS-FIX FS)
+              :expand (HIFAT-FILE-ALIST-FIX FS)))))
+
 (defthm
   abs-find-file-correctness-1-lemma-1
   (implies
    (and (abs-file-alist-p root)
-        (not (consp (abs-addrs root)))
+        (atom (abs-addrs (abs-fs-fix root)))
         (abs-separate (frame-with-root root nil))
         (m1-regular-file-p (mv-nth 0
                                    (abs-find-file (frame-with-root root nil)
