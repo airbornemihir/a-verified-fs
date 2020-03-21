@@ -6174,6 +6174,57 @@
                                      names-at-relpath prefixp))))
 
 (defthm
+  abs-find-file-correctness-1-lemma-71
+  (implies
+   (and
+    (member-equal (car (fat32-filename-list-fix pathname))
+                  (strip-cars root))
+    (car (fat32-filename-list-fix pathname))
+    (not
+     (member-equal
+      (nth (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                   frame))))
+           (fat32-filename-list-fix pathname))
+      (names-at-relpath
+       root
+       (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                          frame))))))
+    (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
+                0))
+    (context-apply-ok root
+                      (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                        frame)))
+                      (1st-complete frame)
+                      (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                         frame))))
+    (abs-file-alist-p root)
+    (prefixp (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                frame)))
+             (fat32-filename-list-fix pathname))
+    (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
+                2)))
+   (equal
+    (abs-find-file-helper
+     (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                       frame)))
+     (nthcdr (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                     frame))))
+             pathname))
+    '(((dir-ent 0 0 0 0 0 0 0 0 0 0 0 0
+                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+       (contents))
+      2)))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (names-at-relpath abs-find-file-helper)
+                    (nthcdr-of-fat32-filename-list-fix
+                     nth-of-fat32-filename-list-fix
+                     (:rewrite abs-find-file-correctness-1-lemma-33)))
+    :cases ((consp (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                      frame))))))))
+
+(defthm
   abs-find-file-correctness-1-lemma-7
   (implies
    (and
@@ -6204,11 +6255,10 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory
-    (e/d (abs-find-file-helper)
-         (nthcdr-of-fat32-filename-list-fix
-          nth-of-fat32-filename-list-fix
-          (:rewrite abs-find-file-correctness-1-lemma-33)))
+    :in-theory (e/d (names-at-relpath abs-find-file-helper)
+                    (nthcdr-of-fat32-filename-list-fix
+                     nth-of-fat32-filename-list-fix
+                     (:rewrite abs-find-file-correctness-1-lemma-33)))
     :use
     ((:instance
       (:rewrite abs-find-file-correctness-1-lemma-33)
@@ -6220,6 +6270,10 @@
          (frame-val->path (cdr (assoc-equal (1st-complete frame)
                                             frame))))
         (fat32-filename-list-fix pathname))))
+     (:instance
+      (:REWRITE ABS-FIND-FILE-CORRECTNESS-1-LEMMA-33)
+      (FS ROOT)
+      (PATHNAME (FAT32-FILENAME-LIST-FIX PATHNAME)))
      (:instance
       (:rewrite intersectp-member)
       (a
@@ -6278,15 +6332,7 @@
                                          frame))))
       (not
        (equal (mv-nth 1 (abs-find-file-helper root pathname))
-              0)))))
-   ("subgoal 1''"
-    :in-theory (e/d (names-at-relpath abs-find-file-helper)
-                    (nthcdr-of-fat32-filename-list-fix
-                     nth-of-fat32-filename-list-fix))
-    :cases
-    ((consp
-      (frame-val->path (cdr (assoc-equal (1st-complete frame)
-                                         frame))))))))
+              0)))))))
 
 (defthm
   abs-find-file-correctness-1-lemma-49
