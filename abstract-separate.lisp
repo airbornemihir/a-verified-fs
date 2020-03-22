@@ -10121,8 +10121,8 @@
                                                 frame)))))
     (frame-p frame)
     (no-duplicatesp-equal (strip-cars frame))
-    (abs-file-alist-p root)
-    (distinguish-names root nil frame)
+    (distinguish-names (abs-fs-fix root)
+                       nil frame)
     (abs-separate frame)
     (mv-nth
      1
@@ -10208,8 +10208,8 @@
                                                 frame)))))
     (frame-p frame)
     (no-duplicatesp-equal (strip-cars frame))
-    (abs-file-alist-p root)
-    (distinguish-names root nil frame)
+    (distinguish-names (abs-fs-fix root)
+                       nil frame)
     (abs-separate frame)
     (mv-nth
      1
@@ -10314,7 +10314,6 @@
                                                 frame)))))
     (frame-p frame)
     (no-duplicatesp-equal (strip-cars frame))
-    (distinguish-names root nil frame)
     (abs-separate frame)
     (mv-nth
      1
@@ -10341,8 +10340,9 @@
                                            frame))))
         (remove-assoc-equal (1st-complete frame)
                             frame)))))
-    (m1-regular-file-p (mv-nth 0 (abs-find-file frame pathname)))
-    (abs-file-alist-p root))
+    (distinguish-names (abs-fs-fix root)
+                       nil frame)
+    (m1-regular-file-p (mv-nth 0 (abs-find-file frame pathname))))
    (equal
     (abs-find-file
      (put-assoc-equal
@@ -10581,7 +10581,6 @@
    (and (mv-nth 1 (collapse frame))
         (frame-p (frame->frame frame))
         (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-        (no-duplicatesp-equal (abs-addrs (frame->root frame)))
         (subsetp-equal (abs-addrs (frame->root frame))
                        (frame-addrs-root (frame->frame frame)))
         (abs-separate (frame-with-root (frame->root frame)
