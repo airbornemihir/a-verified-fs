@@ -13924,8 +13924,6 @@
       (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
                                         (frame->frame frame)))))))))
 
-;; The rewrite rule here is a ticking time bomb, because it has no loop
-;; stopper!
 (defthm
   partial-collapse-correctness-lemma-75
   (implies
@@ -13953,20 +13951,7 @@
                 . 2)
       (abs-file-alist1 (abs-fs-fix abs-file-alist2))
       (abs-file-alist2 (abs-fs-fix abs-file-alist1))))))
-  :rule-classes
-  (:congruence
-   (:rewrite
-    :corollary
-    (implies
-     (and (absfat-equiv abs-file-alist1 abs-file-alist2)
-          (abs-fs-p abs-file-alist1)
-          (abs-fs-p abs-file-alist2))
-     (iff (intersectp-equal
-           (remove-equal nil (strip-cars abs-file-alist1))
-           y)
-          (intersectp-equal
-           (remove-equal nil (strip-cars abs-file-alist2))
-           y))))))
+  :rule-classes :congruence)
 
 (defthm
   partial-collapse-correctness-lemma-52
@@ -14294,34 +14279,45 @@
                (frame->frame frame)))))
        (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
                                           (frame->frame frame)))))))))
-  :instructions
-  (:promote
-   (:dive 1)
-   (:rewrite
-    partial-collapse-correctness-lemma-75
-    ((abs-file-alist2
-      (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                        (frame->frame frame)))))))
-   (:change-goal nil t)
-   :bash :bash :bash
-   (:claim
-    (and
-     (not
-      (equal
-       (1st-complete (frame->frame frame))
-       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+  :hints
+  (("goal"
+    :in-theory (disable partial-collapse-correctness-lemma-75
+                        (:rewrite abs-find-file-correctness-1-lemma-34
+                                  . 1))
+    :use
+    ((:instance
+      partial-collapse-correctness-lemma-75
+      (y
+       (names-at-relpath
+        (frame-val->dir
+         (cdr (assoc-equal
+               (frame-val->src
+                (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                  (frame->frame frame))))
+               (frame->frame frame))))
+        (nthcdr
+         (len
+          (frame-val->path
+           (cdr
+            (assoc-equal
+             (frame-val->src
+              (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                (frame->frame frame))))
+             (frame->frame frame)))))
+         (frame-val->path
+          (cdr (assoc-equal (1st-complete (frame->frame frame))
+                            (frame->frame frame)))))))
+      (abs-file-alist1 (abs-fs-fix dir))
+      (abs-file-alist2
+       (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
                                          (frame->frame frame))))))
-     (prefixp
-      (frame-val->path
-       (cdr
-        (assoc-equal
-         (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                           (frame->frame frame))))
-         (frame->frame frame))))
-      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         (frame->frame frame)))))))
-   (:rewrite (:rewrite abs-find-file-correctness-1-lemma-34
-                       . 1))))
+     (:instance
+      (:rewrite abs-find-file-correctness-1-lemma-34
+                . 1)
+      (y (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           (frame->frame frame)))))
+      (frame (frame->frame frame))
+      (x (1st-complete (frame->frame frame))))))))
 
 (encapsulate
   ()
