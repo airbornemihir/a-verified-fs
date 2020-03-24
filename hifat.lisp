@@ -2032,13 +2032,14 @@
   (hifat-no-dups-p (mv-nth 0 (hifat-remove-file fs pathname)))
   :hints (("goal" :in-theory (enable hifat-remove-file))))
 
-(defthm
-  hifat-remove-file-correctness-4-lemma-1
-  (implies (and (m1-file-alist-p z)
-                (hifat-no-dups-p z)
-                (m1-directory-file-p (cdr (assoc-equal key z))))
-           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key z)))))
-  :hints (("Goal" :in-theory (enable hifat-no-dups-p)) ))
+(local
+ (defthm
+   hifat-remove-file-correctness-4-lemma-1
+   (implies (and (m1-file-alist-p z)
+                 (hifat-no-dups-p z)
+                 (m1-directory-file-p (cdr (assoc-equal key z))))
+            (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key z)))))
+   :hints (("Goal" :in-theory (enable hifat-no-dups-p)) )))
 
 (defthm hifat-remove-file-correctness-4
   (implies (not (equal (mv-nth 1 (hifat-remove-file fs pathname))
