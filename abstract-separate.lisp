@@ -10957,6 +10957,16 @@
    (:claim (member-equal x abs-file-alist1))
    (:= t)))
 
+;; OK, it would definitely be nice to make context-apply-ok-when-absfat-equiv-1
+;; a congruence by removing the member-equal hypothesis. Here's the thing
+;; though, it can't be done, because it's totally possible to context apply
+;; something and end up with the same thing. Vacuous example: apply a tree
+;; consisting only of the top-level variable x to a tree consisting only of the
+;; top-level variable x (cue Spider-men pointing at each other...) This,
+;; obviously, is not possible when we stipulate that only complete trees can be
+;; applied any place, and in fact we have a really great fixing function for
+;; that purpose - hifat-file-alist-fix. However, I'm going to spare myself that
+;; bit of pain for now.
 (encapsulate
   ()
 
@@ -13676,8 +13686,6 @@
                                            (frame->frame frame)))))
        (remove-assoc-equal (1st-complete (frame->frame frame))
                            (frame->frame frame)))))
-    (abs-file-alist-p dir)
-    (abs-no-dups-p (frame->root frame))
     (absfat-equiv
      (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
                                        (frame->frame frame))))
@@ -13723,7 +13731,6 @@
   (implies
    (and
     (frame-p (frame->frame frame))
-    (abs-separate (frame->frame frame))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (< 0 (1st-complete (frame->frame frame)))
     (context-apply-ok
@@ -13733,7 +13740,6 @@
      (1st-complete (frame->frame frame))
      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
                                         (frame->frame frame)))))
-    (abs-file-alist-p dir)
     (absfat-equiv
      (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
                                        (frame->frame frame))))
@@ -13845,7 +13851,6 @@
   (implies
    (and
     (frame-p (frame->frame frame))
-    (abs-separate (frame->frame frame))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (< 0 (1st-complete (frame->frame frame)))
     (context-apply-ok
@@ -13868,7 +13873,6 @@
               (frame->frame frame)))))
       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
                                          (frame->frame frame))))))
-    (abs-file-alist-p dir)
     (absfat-equiv
      (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
                                        (frame->frame frame))))
@@ -14607,8 +14611,6 @@
         x))
       (t (mv dir frame x)))))
 
-  ;; This theorem has more hypotheses than it needs to, because
-  ;; PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-51 has more hypotheses than it needs to.
   (defthm
     partial-collapse-correctness-lemma-82
     (implies
@@ -14619,7 +14621,6 @@
       (mv-nth 1 (collapse frame))
       (consp (assoc-equal x (frame->frame frame)))
       (atom (assoc-equal 0 (frame->frame frame)))
-      (abs-file-alist-p dir)
       (absfat-equiv (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
                     dir)
       (distinguish-names (frame->root frame)
@@ -14943,6 +14944,18 @@
              (remove-assoc-equal (1st-complete (frame->frame frame))
                                  (frame->frame frame))))
      (src (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))))))
+
+(defthm
+  partial-collapse-correctness-lemma-43
+  (implies
+   (and
+    (no-duplicatesp-equal (strip-cars frame))
+    (frame-p frame)
+    (< 0 x)
+    (not (and (consp (assoc-equal x frame))
+              (abs-complete (frame-val->dir (cdr (assoc-equal x frame)))))))
+   (not (equal (1st-complete frame) x)))
+  :hints (("goal" :in-theory (enable 1st-complete))))
 
 (thm
  (implies
