@@ -1,3 +1,5 @@
+(in-package "ACL2")
+
 (include-book "std/lists/repeat" :dir :system)
 (include-book "std/lists/sets" :dir :system)
 
