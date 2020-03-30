@@ -12,8 +12,8 @@
   :hints (("goal" :in-theory (enable true-list-fix repeat)
            :induct t)))
 
-(defthmd
-  what-that-thing-with-remove-means
+(thm
+  ;; what-that-thing-with-remove-means
   (implies
    (and
     (true-listp l)
