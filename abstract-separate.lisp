@@ -2438,6 +2438,26 @@
                   (1st-complete (remove-assoc-equal name frame))))
   :hints (("goal" :in-theory (enable 1st-complete))))
 
+(defthm 1st-complete-of-remove-assoc-1
+  (implies (and (not (zp x))
+                (not (equal x (1st-complete frame))))
+           (equal (1st-complete (remove-assoc-equal x frame))
+                  (1st-complete frame)))
+  :hints (("goal" :in-theory (enable 1st-complete))))
+
+(defthm
+  1st-complete-of-remove-assoc-2
+  (implies
+   (and (not (zp y))
+        (not (equal y
+                    (1st-complete (remove-assoc-equal x frame)))))
+   (equal (1st-complete (remove-assoc-equal x (remove-assoc-equal y frame)))
+          (1st-complete (remove-assoc-equal x frame))))
+  :hints (("goal" :in-theory (disable 1st-complete-of-remove-assoc-1)
+           :use (:instance 1st-complete-of-remove-assoc-1
+                           (frame (remove-assoc-equal x frame))
+                           (x y)))))
+
 (defthm frame-val-p-of-cdr-of-assoc-equal-when-frame-p
   (implies (frame-p x)
            (iff (frame-val-p (cdr (assoc-equal k x)))
@@ -2466,6 +2486,13 @@
                               (consp (assoc-equal (1st-complete frame)
                                                   frame)))))
   (frame-val->src (cdr (assoc-equal (1st-complete frame) frame))))
+
+(defthm 1st-complete-src-of-remove-assoc-1
+  (implies (and (not (zp x))
+                (not (equal x (1st-complete frame))))
+           (equal (1st-complete-src (remove-assoc-equal x frame))
+                  (1st-complete-src frame)))
+  :hints (("goal" :in-theory (enable 1st-complete-src))))
 
 ;; This is a "false" frame because the src value given to the root is 0, same
 ;; as its abstract variable. This is one of a few compromises in elegance
@@ -11327,23 +11354,6 @@
                       (abs-file-alist2 (abs-fs-fix abs-file-alist2)))))
     :rule-classes :congruence))
 
-(defthm partial-collapse-correctness-lemma-1
-  (implies (and (< 0 (1st-complete frame))
-                (not (equal x (1st-complete frame))))
-           (equal
-            (1st-complete (remove-assoc-equal x frame))
-            (1st-complete frame)))
-  :hints (("goal" :in-theory (enable 1st-complete))))
-
-(defthm partial-collapse-correctness-lemma-2
-  (implies (and (< 0 (1st-complete frame))
-                (not (equal x (1st-complete frame))))
-           (equal
-            (1st-complete-src (remove-assoc-equal x frame))
-            (1st-complete-src frame)))
-  :hints (("goal" :in-theory (enable 1st-complete-src)))
-  :rule-classes :linear)
-
 (defthm
   partial-collapse-correctness-lemma-3
   (implies
@@ -12922,9 +12932,10 @@
       (x (frame->root frame)))))))
 
 (defthm
-  partial-collapse-correctness-lemma-35
+  partial-collapse-correctness-lemma-1
   (implies
    (and
+    (not (zp x))
     (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
            0)
     (< 0
@@ -13039,10 +13050,10 @@
            :do-not-induct t)))
 
 (defthm
-  partial-collapse-correctness-lemma-37
+  partial-collapse-correctness-lemma-2
   (implies
    (and
-    (natp x)
+    (not (zp x))
     (consp (assoc-equal x (frame->frame frame)))
     (abs-complete (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
@@ -13063,15 +13074,13 @@
        (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
       (remove-assoc-equal x (frame->frame frame))))))
   :hints
-  (("goal"
-    :in-theory
-    (e/d
-     (collapse abs-separate 1st-complete-src)
-     ((:definition remove-assoc-equal)
-      (:rewrite abs-no-dups-p-of-append-lemma-1)
-      (:rewrite abs-file-alist-p-when-m1-file-alist-p)
-      (:type-prescription member-of-abs-fs-fix-when-natp-lemma-1)
-      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)))
+  (("goal" :in-theory
+    (e/d (collapse abs-separate 1st-complete-src)
+         ((:definition remove-assoc-equal)
+          (:rewrite abs-no-dups-p-of-append-lemma-1)
+          (:rewrite abs-file-alist-p-when-m1-file-alist-p)
+          (:type-prescription member-of-abs-fs-fix-when-natp-lemma-1)
+          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)))
     :induct (collapse frame)
     :do-not-induct t)
    ("subgoal *1/4"
@@ -14645,20 +14654,7 @@
        (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))))
 
 (defthm
-  partial-collapse-correctness-lemma-64
-  (implies
-   (and (< 0
-           (1st-complete (remove-assoc-equal y frame)))
-        (not (equal x
-                    (1st-complete (remove-assoc-equal y frame)))))
-   (equal (1st-complete (remove-assoc-equal y (remove-assoc-equal x frame)))
-          (1st-complete (remove-assoc-equal y frame))))
-  :hints (("goal" :in-theory (disable partial-collapse-correctness-lemma-1)
-           :use ((:instance partial-collapse-correctness-lemma-1
-                            (frame (remove-assoc-equal y frame)))))))
-
-(defthm
-  partial-collapse-correctness-lemma-67
+  partial-collapse-correctness-lemma-35
   (implies
    (and (force (consp (assoc-equal x frame)))
         (abs-separate frame)
