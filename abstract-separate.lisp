@@ -2555,6 +2555,37 @@
   :hints (("goal" :in-theory (enable frame-with-root))))
 
 (defund
+  frame->src (frame x)
+  (declare
+   (xargs
+    :guard (and (frame-p frame)
+                (consp (assoc-equal x (frame->frame frame))))))
+  (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+
+(defund
+  frame->path (frame x)
+  (declare
+   (xargs
+    :guard (and (frame-p frame)
+                (consp (assoc-equal x (frame->frame frame))))))
+  (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+
+(defund
+  frame->dir (frame x)
+  (declare
+   (xargs
+    :guard (and (frame-p frame)
+                (consp (assoc-equal x (frame->frame frame))))))
+  (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
+
+(defthm abs-fs-p-of-frame->dir (abs-fs-p (frame->dir frame x))
+  :hints (("Goal" :in-theory (enable frame->dir)) ))
+
+(defthm fat32-filename-list-p-of-frame->dir
+  (fat32-filename-list-p (frame->path frame x))
+  :hints (("Goal" :in-theory (enable frame->path)) ))
+
+(defund
   collapse (frame)
   (declare (xargs :guard (and (frame-p frame)
                               (consp (assoc-equal 0 frame)))
@@ -2642,6 +2673,87 @@
               (remove-assoc-equal
                head-index (frame->frame frame))))))
         (collapse frame)))))
+
+(defund
+  alt-collapse (frame)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame)))
+                  :measure (len (frame->frame frame))))
+  (b*
+      (((when (atom (frame->frame frame)))
+        (mv (frame->root frame) t))
+       (head-index (1st-complete (frame->frame frame)))
+       ((when (zp head-index))
+        (mv (frame->root frame) nil))
+       (src (frame->src frame head-index)))
+    (if
+        (zp src)
+        (b*
+            ((root-after-context-apply
+              (context-apply (frame->root frame)
+                             (frame->dir frame head-index)
+                             head-index
+                             (frame->path frame head-index)))
+             ((when
+                  (not
+                   (context-apply-ok (frame->root frame)
+                                     (frame->dir frame head-index)
+                                     head-index
+                                     (frame->path frame head-index))))
+              (mv (frame->root frame) nil))
+             (frame
+              (frame-with-root
+               root-after-context-apply
+               (remove-assoc-equal head-index (frame->frame frame)))))
+          (alt-collapse frame))
+      (b*
+          ((path (frame->path frame head-index))
+           ((when
+                (or
+                 (equal src head-index)
+                 (atom
+                  (assoc-equal src
+                               (frame->frame frame)))))
+            (mv (frame->root frame) nil))
+           (src-path
+            (frame->path frame src))
+           (src-dir
+            (frame->dir frame src))
+           ((unless (prefixp src-path path))
+            (mv (frame->root frame) nil))
+           (src-dir-after-context-apply
+            (context-apply src-dir (frame->dir frame head-index)
+                           head-index
+                           (nthcdr (len src-path) path)))
+           ((when (not (context-apply-ok
+                        src-dir (frame->dir frame head-index)
+                        head-index
+                        (nthcdr (len src-path) path))))
+            (mv (frame->root frame) nil))
+           (frame
+            (frame-with-root
+             (frame->root frame)
+             (put-assoc-equal
+              src
+              (frame-val
+               (frame->path frame src)
+               ;; This fixing function wasn't always there; we added it after we
+               ;; realised we needed to maintain frame-p as an invariant. In one
+               ;; sense, though, it doesn't really impose an additional
+               ;; requirement, because abs-separate is a hypothesis in many of
+               ;; our theorems and that does require all the values in the frame
+               ;; to satisfy abs-no-dups-p.
+               (abs-fs-fix src-dir-after-context-apply)
+               (frame->src frame src))
+              (remove-assoc-equal
+               head-index (frame->frame frame))))))
+        (alt-collapse frame)))))
+
+(thm (equal (alt-collapse frame)
+            (collapse frame))
+     :hints (("goal" :in-theory (enable alt-collapse
+                                        collapse frame->src frame->path
+                                        frame->dir 1st-complete-src))))
 
 (assert-event
  (b*
