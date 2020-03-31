@@ -2589,95 +2589,6 @@
   collapse (frame)
   (declare (xargs :guard (and (frame-p frame)
                               (consp (assoc-equal 0 frame)))
-                  :guard-debug t
-                  :measure (len (frame->frame frame))))
-  (b*
-      (((when (atom (frame->frame frame)))
-        (mv (frame->root frame) t))
-       (head-index (1st-complete (frame->frame frame)))
-       ((when (zp head-index))
-        (mv (frame->root frame) nil))
-       (head-frame-val
-        (cdr (assoc-equal head-index (frame->frame frame))))
-       (src (1st-complete-src (frame->frame frame))))
-    (if
-        (zp src)
-        (b*
-            ((root-after-context-apply
-              (context-apply (frame->root frame)
-                             (frame-val->dir head-frame-val)
-                             head-index
-                             (frame-val->path head-frame-val)))
-             ((when
-                  (not
-                   (context-apply-ok (frame->root frame)
-                                     (frame-val->dir head-frame-val)
-                                     head-index
-                                     (frame-val->path head-frame-val))))
-              (mv (frame->root frame) nil))
-             (frame
-              (frame-with-root
-               root-after-context-apply
-               (remove-assoc-equal head-index (frame->frame frame)))))
-          (collapse frame))
-      (b*
-          ((path (frame-val->path head-frame-val))
-           ((when
-                (or
-                 (equal src head-index)
-                 (atom
-                  (assoc-equal src
-                               (remove-assoc-equal
-                                head-index (frame->frame frame))))))
-            (mv (frame->root frame) nil))
-           (src-path
-            (frame-val->path
-             (cdr
-              (assoc-equal src
-                           (remove-assoc-equal
-                            head-index (frame->frame frame))))))
-           (src-dir
-            (frame-val->dir
-             (cdr
-              (assoc-equal src
-                           (remove-assoc-equal
-                            head-index (frame->frame frame))))))
-           ((unless (prefixp src-path path))
-            (mv (frame->root frame) nil))
-           (src-dir-after-context-apply
-            (context-apply src-dir (frame-val->dir head-frame-val)
-                           head-index
-                           (nthcdr (len src-path) path)))
-           ((when (not (context-apply-ok
-                        src-dir (frame-val->dir head-frame-val)
-                        head-index
-                        (nthcdr (len src-path) path))))
-            (mv (frame->root frame) nil))
-           (frame
-            (frame-with-root
-             (frame->root frame)
-             (put-assoc-equal
-              src
-              (frame-val
-               (frame-val->path
-                (cdr (assoc-equal src (frame->frame frame))))
-               ;; This fixing function wasn't always there; we added it after we
-               ;; realised we needed to maintain frame-p as an invariant. In one
-               ;; sense, though, it doesn't really impose an additional
-               ;; requirement, because abs-separate is a hypothesis in many of
-               ;; our theorems and that does require all the values in the frame
-               ;; to satisfy abs-no-dups-p.
-               (abs-fs-fix src-dir-after-context-apply)
-               (frame-val->src
-                (cdr (assoc-equal src (frame->frame frame)))))
-              (remove-assoc-equal
-               head-index (frame->frame frame))))))
-        (collapse frame)))))
-
-(defund
-  alt-collapse (frame)
-  (declare (xargs :guard (and (frame-p frame)
-                              (consp (assoc-equal 0 frame)))
                   :measure (len (frame->frame frame))))
   (b*
       (((when (atom (frame->frame frame)))
@@ -2705,7 +2616,7 @@
               (frame-with-root
                root-after-context-apply
                (remove-assoc-equal head-index (frame->frame frame)))))
-          (alt-collapse frame))
+          (collapse frame))
       (b*
           ((path (frame->path frame head-index))
            ((when
@@ -2747,13 +2658,7 @@
                (frame->src frame src))
               (remove-assoc-equal
                head-index (frame->frame frame))))))
-        (alt-collapse frame)))))
-
-(thm (equal (alt-collapse frame)
-            (collapse frame))
-     :hints (("goal" :in-theory (enable alt-collapse
-                                        collapse frame->src frame->path
-                                        frame->dir 1st-complete-src))))
+        (collapse frame)))))
 
 (assert-event
  (b*
@@ -10428,90 +10333,6 @@
   (b*
       (((when (atom (frame->frame frame)))
         frame)
-       (head-index (1st-complete-under-pathname (frame->frame frame) pathname))
-       ((when (zp head-index))
-        frame)
-       (head-frame-val
-        (cdr (assoc-equal head-index (frame->frame frame))))
-       (src (1st-complete-under-pathname-src (frame->frame frame) pathname)))
-    (if
-        (zp src)
-        (b*
-            ((root-after-context-apply
-              (context-apply (frame->root frame)
-                             (frame-val->dir head-frame-val)
-                             head-index
-                             (frame-val->path head-frame-val)))
-             ((when
-                  (not
-                   (context-apply-ok (frame->root frame)
-                                     (frame-val->dir head-frame-val)
-                                     head-index
-                                     (frame-val->path head-frame-val))))
-              frame)
-             (frame
-              (frame-with-root
-               root-after-context-apply
-               (remove-assoc-equal head-index (frame->frame frame)))))
-          (partial-collapse frame pathname))
-      (b*
-          ((path (frame-val->path head-frame-val))
-           ((when
-                (or
-                 (equal src head-index)
-                 (atom
-                  (assoc-equal src
-                               (remove-assoc-equal
-                                head-index (frame->frame frame))))))
-            frame)
-           (src-path
-            (frame-val->path
-             (cdr
-              (assoc-equal src
-                           (remove-assoc-equal
-                            head-index (frame->frame frame))))))
-           (src-dir
-            (frame-val->dir
-             (cdr
-              (assoc-equal src
-                           (remove-assoc-equal
-                            head-index (frame->frame frame))))))
-           ((unless (prefixp src-path path))
-            frame)
-           (src-dir-after-context-apply
-            (context-apply src-dir (frame-val->dir head-frame-val)
-                           head-index
-                           (nthcdr (len src-path) path)))
-           ((when (not (context-apply-ok
-                        src-dir (frame-val->dir head-frame-val)
-                        head-index
-                        (nthcdr (len src-path) path))))
-            frame)
-           (frame
-            (frame-with-root
-             (frame->root frame)
-             (put-assoc-equal
-              src
-              (frame-val
-               (frame-val->path
-                (cdr (assoc-equal src (frame->frame frame))))
-               (abs-fs-fix
-                src-dir-after-context-apply)
-               (frame-val->src
-                (cdr (assoc-equal src (frame->frame frame)))))
-              (remove-assoc-equal
-               head-index (frame->frame frame))))))
-        (partial-collapse frame pathname)))))
-
-(defund
-  alt-partial-collapse (frame pathname)
-  (declare (xargs :guard (and (frame-p frame)
-                              (consp (assoc-equal 0 frame)))
-                  :measure (len (frame->frame frame))
-                  :guard-debug t))
-  (b*
-      (((when (atom (frame->frame frame)))
-        frame)
        (head-index
         (1st-complete-under-pathname (frame->frame frame)
                                      pathname))
@@ -10535,7 +10356,7 @@
            (frame-with-root
             root-after-context-apply
             (remove-assoc-equal head-index (frame->frame frame)))))
-       (alt-partial-collapse frame pathname))
+       (partial-collapse frame pathname))
      (b*
          ((path (frame->path frame head-index))
           ((when (or (equal src head-index)
@@ -10564,13 +10385,7 @@
                         (frame->src frame src))
              (remove-assoc-equal
               head-index (frame->frame frame))))))
-       (alt-partial-collapse frame pathname)))))
-
-(thm (equal (alt-partial-collapse frame pathname)
-            (partial-collapse frame pathname))
-     :hints (("goal" :in-theory (enable alt-partial-collapse partial-collapse
-                                        1st-complete-under-pathname-src
-                                        frame->dir frame->src frame->path))))
+       (partial-collapse frame pathname)))))
 
 (defthm
   absfat-subsetp-guard-lemma-1
