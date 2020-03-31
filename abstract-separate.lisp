@@ -15312,11 +15312,12 @@
     (frame-p (put-assoc-equal key (frame-val path dir src)
                               frame))
     (no-duplicatesp-equal (strip-cars frame))
-    (dist-names root nil
-                (put-assoc-equal key (frame-val path dir src)
-                                 frame))
-    (abs-separate (put-assoc-equal key (frame-val path dir src)
-                                   frame)))
+    (case-split (dist-names root nil
+                            (put-assoc-equal key (frame-val path dir src)
+                                             frame)))
+    (case-split
+     (abs-separate (put-assoc-equal key (frame-val path dir src)
+                                    frame))))
    (context-apply-ok root dir key path))
   :hints
   (("goal"
@@ -16401,55 +16402,6 @@
                 (frame->frame frame)))))
         (y (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
        (:rewrite partial-collapse-correctness-lemma-29)))))
-
-  (defthm
-    partial-collapse-correctness-lemma-79
-    (implies
-     (prefixp
-      (frame-val->path
-       (cdr
-        (assoc-equal
-         (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                           (frame->frame frame))))
-         (frame->frame frame))))
-      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         (frame->frame frame)))))
-     (iff
-      (nthcdr
-       (len
-        (frame-val->path
-         (cdr (assoc-equal
-               (frame-val->src
-                (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                  (frame->frame frame))))
-               (frame->frame frame)))))
-       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                          (frame->frame frame)))))
-      (not
-       (equal
-        (frame-val->path
-         (cdr
-          (assoc-equal
-           (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                             (frame->frame frame))))
-           (frame->frame frame))))
-        (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                           (frame->frame frame))))))))
-    :hints
-    (("goal"
-      :in-theory (disable append-when-prefixp)
-      :use
-      (:instance
-       append-when-prefixp
-       (x
-        (frame-val->path
-         (cdr
-          (assoc-equal
-           (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                             (frame->frame frame))))
-           (frame->frame frame)))))
-       (y (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                             (frame->frame frame)))))))))
 
   ;; Move later.
   (defthm
