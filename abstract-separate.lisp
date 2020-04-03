@@ -12649,6 +12649,34 @@
                            (frame->frame frame))))))))
 
 (defthm
+  partial-collapse-correctness-lemma-41
+  (implies
+   (not (zp x))
+   (not (equal (1st-complete (remove-assoc-equal x (frame->frame frame)))
+               x)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (collapse abs-separate 1st-complete-src)
+         ((:definition remove-assoc-equal)
+          (:rewrite abs-no-dups-p-of-append-lemma-1)
+          (:rewrite abs-file-alist-p-when-m1-file-alist-p)
+          (:type-prescription member-of-abs-fs-fix-when-natp-lemma-1)
+          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+          (:type-prescription 1st-complete-correctness-1)))
+    :use (:instance (:type-prescription 1st-complete-correctness-1)
+                    (frame (remove-assoc-equal x (frame->frame frame)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-40
+  (implies
+   (and (mv-nth 1 (collapse frame))
+        (not (zp x)))
+   (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+               x)))
+  :hints (("goal" :in-theory (enable collapse 1st-complete-src))))
+
+(defthm
   partial-collapse-correctness-lemma-2
   (implies
    (and
@@ -12694,6 +12722,18 @@
           (:type-prescription member-of-abs-fs-fix-when-natp-lemma-1)
           (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)))
     :induct (collapse frame))
+   ("Subgoal *1/7'''"
+    :expand
+    ((:with 1st-complete-of-remove-assoc-1
+            (1st-complete (remove-assoc-equal x (frame->frame frame))))
+     (COLLAPSE
+      (FRAME-WITH-ROOT
+       (CONTEXT-APPLY
+        (FRAME->ROOT FRAME)
+        (FRAME-VAL->DIR (CDR (ASSOC-EQUAL X (FRAME->FRAME FRAME))))
+        X
+        (FRAME-VAL->PATH (CDR (ASSOC-EQUAL X (FRAME->FRAME FRAME)))))
+       (REMOVE-ASSOC-EQUAL X (FRAME->FRAME FRAME))))))
    ("subgoal *1/4"
     :expand
     ((collapse
@@ -12755,15 +12795,6 @@
                  (frame->frame frame))))
   :hints (("goal" :in-theory (enable collapse 1st-complete-src)))
   :rule-classes (:type-prescription :rewrite))
-
-(defthm
-  partial-collapse-correctness-lemma-40
-  (implies
-   (and (mv-nth 1 (collapse frame))
-        (not (zp x)))
-   (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               x)))
-  :hints (("goal" :in-theory (enable collapse 1st-complete-src))))
 
 (defthm
   partial-collapse-correctness-lemma-23
