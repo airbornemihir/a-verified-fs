@@ -11255,7 +11255,7 @@
      (name (fat32-filename-fix (car x2-path)))))))
 
 (defthm
-  partial-collapse-correctness-lemma-55
+  partial-collapse-correctness-lemma-4
   (implies
    (absfat-equiv abs-file-alist1 abs-file-alist2)
    (equal
@@ -14298,7 +14298,15 @@
       (not (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame))))))
       (abs-complete (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
       (frame-p (frame->frame frame))
-      (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+      (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+      (fat32-filename-list-equiv relpath
+                            (nthcdr
+                             (len
+                              (frame-val->path
+                               (cdr (assoc-equal
+                                     (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                                     (frame->frame frame)))))
+                             (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
      (context-apply-ok
       (frame-val->dir
        (cdr (assoc-equal
@@ -14306,13 +14314,7 @@
              (frame->frame frame))))
       (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
       x
-      (nthcdr
-       (len
-        (frame-val->path
-         (cdr (assoc-equal
-               (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               (frame->frame frame)))))
-       (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))))
+      relpath)))))
 
 (defthm
   partial-collapse-correctness-lemma-35
@@ -17725,6 +17727,97 @@
                (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                (frame->frame frame)))))
            (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))))))
+
+  (defthm
+    partial-collapse-correctness-lemma-6
+    (implies
+     (and
+      (equal
+       (frame-val->path
+        (cdr (assoc-equal
+              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+              (frame->frame frame))))
+       (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+      (abs-separate (frame->frame frame))
+      (< 0 (1st-complete (frame->frame frame)))
+      (prefixp
+       (frame-val->path (cdr (assoc-equal x (frame->frame frame))))
+       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          (frame->frame frame)))))
+      (context-apply-ok
+       (frame-val->dir
+        (cdr (assoc-equal
+              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+              (frame->frame frame))))
+       (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                         (frame->frame frame))))
+       (1st-complete (frame->frame frame))
+       (nthcdr
+        (len (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+        (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           (frame->frame frame))))))
+      (frame-p (frame->frame frame))
+      (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+     (not
+      (intersectp-equal
+       (names-at (frame-val->dir$inline
+                  (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                    (frame->frame frame))))
+                 nil)
+       (names-at
+        (frame-val->dir$inline
+         (cdr
+          (assoc-equal
+           (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
+           (frame->frame frame))))
+        (nthcdr
+         (len
+          (frame-val->path$inline (cdr (assoc-equal x (frame->frame frame)))))
+         (frame-val->path$inline
+          (cdr (assoc-equal (1st-complete (frame->frame frame))
+                            (frame->frame frame)))))))))
+    :hints
+    (("goal"
+      :in-theory
+      (e/d (collapse abs-separate 1st-complete-src)
+           ((:definition assoc-equal)
+            (:definition remove-assoc-equal)
+            (:rewrite put-assoc-equal-without-change . 2)
+            (:rewrite nthcdr-when->=-n-len-l)
+            (:rewrite abs-no-dups-p-of-append-lemma-1)
+            (:rewrite abs-file-alist-p-when-m1-file-alist-p)
+            (:linear abs-separate-of-put-assoc-lemma-2)
+            abs-find-file-correctness-1-lemma-29
+            m1-file-alist-p-of-cdr-when-m1-file-alist-p
+            (:definition member-equal)
+            (:definition remove-equal)
+            (:rewrite remove-when-absent)
+            partial-collapse-correctness-lemma-23
+            (:type-prescription member-of-abs-fs-fix-when-natp-lemma-1)
+            (:definition len)
+            (:rewrite remove-assoc-when-absent)
+            (:rewrite abs-find-file-correctness-1-lemma-20)
+            lemma-3))
+      :expand
+      (:with
+       (:rewrite abs-separate-correctness-1-lemma-14 . 2)
+       (intersectp-equal
+        (names-at (frame-val->dir$inline
+                   (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                     (frame->frame frame))))
+                  nil)
+        (names-at
+         (frame-val->dir$inline
+          (cdr
+           (assoc-equal
+            (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
+            (frame->frame frame))))
+         (nthcdr
+          (len
+           (frame-val->path$inline (cdr (assoc-equal x (frame->frame frame)))))
+          (frame-val->path$inline
+           (cdr (assoc-equal (1st-complete (frame->frame frame))
+                             (frame->frame frame)))))))))))
 
   (thm (implies
         (and
