@@ -1930,13 +1930,14 @@
   (hifat-place-file fs pathname file) 3
   :hints (("goal" :in-theory (enable hifat-place-file))))
 
-(defthm hifat-no-dups-p-of-put-assoc-equal-1
-  (implies
-   (and (m1-file-alist-p m1-file-alist)
-        (hifat-no-dups-p m1-file-alist)
-        (m1-regular-file-p file))
-   (hifat-no-dups-p (put-assoc-equal key file m1-file-alist)))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+(local
+ (defthm hifat-no-dups-p-of-put-assoc-equal-1
+   (implies
+    (and (m1-file-alist-p m1-file-alist)
+         (hifat-no-dups-p m1-file-alist)
+         (m1-regular-file-p file))
+    (hifat-no-dups-p (put-assoc-equal key file m1-file-alist)))
+   :hints (("goal" :in-theory (enable hifat-no-dups-p)))))
 
 (defthm hifat-no-dups-p-of-put-assoc-equal-2
   (implies (and (m1-file-alist-p m1-file-alist)
@@ -2019,13 +2020,14 @@
    (hifat-remove-file fs pathname))
   :hints (("goal" :in-theory (enable hifat-remove-file))))
 
-(defthm
-  hifat-remove-file-correctness-3-lemma-1
-  (implies
-   (and (m1-file-alist-p m1-file-alist)
-        (hifat-no-dups-p m1-file-alist))
-   (hifat-no-dups-p (remove-assoc-equal key m1-file-alist)))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+(local
+ (defthm
+   hifat-remove-file-correctness-3-lemma-1
+   (implies
+    (and (m1-file-alist-p m1-file-alist)
+         (hifat-no-dups-p m1-file-alist))
+    (hifat-no-dups-p (remove-assoc-equal key m1-file-alist)))
+   :hints (("goal" :in-theory (enable hifat-no-dups-p)))))
 
 (defthm
   hifat-remove-file-correctness-3
