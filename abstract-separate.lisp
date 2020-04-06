@@ -19066,209 +19066,218 @@
              (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
              (frame->frame frame)))))
          (frame-val->path$inline
-          (cdr (assoc-equal x (frame->frame frame))))))))))
+          (cdr (assoc-equal x (frame->frame frame)))))))))))
 
-  ;; There's a fundamental hurdle with the induction scheme we are trying to
-  ;; use. Let me explain. Think of an x which has its source elsewhere in the
-  ;; frame, and gets context-applied without changing the root. Now, the new
-  ;; frame might have the source of x as its 1st complete variable. This the the
-  ;; only problematic scenario, because otherwise the 1st complete variable will
-  ;; be the same as (1st-complete frame) (of course, assuming x itself is
-  ;; different from (1st-complete frame)) and rearrangement of
-  ;; put-assoc and remove-assoc terms will give us what we need. But this
-  ;; rearrangement is not possible in the problematic scenario, because now the
-  ;; 1st complete element is necessarily different from (1st-complete frame).
-  ;;
-  ;; Now, what we need to prove for induction (to be specific, induction on
-  ;; (collapse frame)) is that first context-applying (1st-complete frame) and
-  ;; then context-applying x gives us the same results, and it might seem at
-  ;; first glance that there is no problem because the 1st complete variable
-  ;; afterwards will be the source of x. Unfortunately, there is one further
-  ;; scenario where this does not hold true - when the new 1st complete variable
-  ;; after context-applying x and (1st-complete frame) is the source of
-  ;; (1st-complete frame), it being assumed that this is different from the
-  ;; source of x. This kind of thing can occur arbitrarily many times, making the
-  ;; path through the frame arbitrarily different from what one would
-  ;; expect... so there has to be a new induction scheme.
-  ;;
-  ;; Seriously though, I'm not sure a new induction scheme is needed. The trouble
-  ;; is with a certain (context-apply-ok) term that arises when we're trying to
-  ;; prove that the variable at the source of x - to which x has already been
-  ;; context-applied - can be context-applied to its source. The proof of that
-  ;; can come from another term in which x has been context-applied, by means of
-  ;; partial-collapse-correctness-lemma-64. The trouble is, we enter hell when we
-  ;; try to directly use that lemma instance, because... I don't
-  ;; know... something goes wrong with the substitution and a lot of subgoals
-  ;; arise. But that can be worked around, by making a side lemma and then using
-  ;; brr. This weird infinite regression... can't so easily be worked
-  ;; around. That's the scene.
-  (thm
-   (implies
-    (and
-     (ABS-SEPARATE (FRAME->FRAME FRAME))
-     (dist-names (frame->root frame) 'nil (frame->frame frame))
-     (consp (frame->frame frame))
-     (integerp x)
-     (< 0 x)
-     (< 0
-        (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
-     (not
-      (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-             x))
-     (consp
-      (assoc-equal
-       (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-       (frame->frame frame)))
-     (prefixp
-      (frame-val->path
-       (cdr
-        (assoc-equal
-         (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-         (frame->frame frame))))
-      (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
-     (context-apply-ok
-      (frame-val->dir
-       (cdr
-        (assoc-equal
-         (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-         (frame->frame frame))))
-      (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
-      x
-      (nthcdr
-       (len
-        (frame-val->path
-         (cdr
-          (assoc-equal
-           (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-           (frame->frame frame)))))
-       (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-     (mv-nth 1 (collapse frame))
-     (abs-complete
-      (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
-     (frame-p (frame->frame frame))
-     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-     (not (consp (assoc-equal 0 (frame->frame frame)))))
-    (mv-nth
-     1
-     (collapse
-      (frame-with-root
-       (frame->root frame)
-       (put-assoc-equal
-        (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-        (frame-val
-         (frame-val->path
-          (cdr
-           (assoc-equal
-            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-            (frame->frame frame))))
-         (context-apply
-          (frame-val->dir
-           (cdr
-            (assoc-equal
-             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-             (frame->frame frame))))
-          (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
-          x
-          (nthcdr
-           (len
-            (frame-val->path
-             (cdr
-              (assoc-equal
-               (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               (frame->frame frame)))))
-           (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-         (frame-val->src
-          (cdr
-           (assoc-equal
-            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-            (frame->frame frame)))))
-        (remove-assoc-equal x (frame->frame frame)))))))
-   :hints (("goal" :in-theory (e/d (collapse abs-separate 1st-complete-src)
-                                   ((:DEFINITION ASSOC-EQUAL)
-                                    (:DEFINITION REMOVE-ASSOC-EQUAL)
-                                    (:REWRITE PUT-ASSOC-EQUAL-WITHOUT-CHANGE . 2)
-                                    (:REWRITE NTHCDR-WHEN->=-N-LEN-L)
-                                    (:REWRITE
-                                     ABS-FILE-ALIST-P-WHEN-M1-FILE-ALIST-P)
-                                    M1-FILE-ALIST-P-OF-CDR-WHEN-M1-FILE-ALIST-P
-                                    (:DEFINITION MEMBER-EQUAL)
-                                    (:DEFINITION REMOVE-EQUAL)
-                                    (:REWRITE REMOVE-WHEN-ABSENT)
-                                    (:DEFINITION NTHCDR)
-                                    (:DEFINITION LEN)
-                                    (:REWRITE REMOVE-ASSOC-WHEN-ABSENT)))
-            :induct (collapse frame))
-           ("subgoal *1/6"
-            :cases ((not (equal x
-                                (1st-complete (frame->frame frame))))))
-           ("subgoal *1/6.1'"
-            :cases
-            ((equal
-              (1st-complete
-               (put-assoc-equal
-                (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
-                (frame-val
-                 (frame-val->path$inline
-                  (cdr (assoc-equal (frame-val->src$inline
-                                     (cdr (assoc-equal x (frame->frame frame))))
-                                    (frame->frame frame))))
-                 (context-apply
-                  (frame-val->dir$inline
-                   (cdr
-                    (assoc-equal (frame-val->src$inline
-                                  (cdr (assoc-equal x (frame->frame frame))))
-                                 (frame->frame frame))))
-                  (frame-val->dir$inline (cdr (assoc-equal x (frame->frame frame))))
-                  x
-                  (nthcdr
-                   (len
-                    (frame-val->path$inline
-                     (cdr
-                      (assoc-equal (frame-val->src$inline
-                                    (cdr (assoc-equal x (frame->frame frame))))
-                                   (frame->frame frame)))))
-                   (frame-val->path$inline
-                    (cdr (assoc-equal x (frame->frame frame))))))
-                 (frame-val->src$inline
-                  (cdr (assoc-equal (frame-val->src$inline
-                                     (cdr (assoc-equal x (frame->frame frame))))
-                                    (frame->frame frame)))))
-                (remove-assoc-equal x (frame->frame frame))))
-              (frame-val->src$inline (cdr (assoc-equal x (frame->frame
-                                                          frame)))))))
-           ("Subgoal *1/6.1.2.1''"
-            :expand
-            (collapse
-             (frame-with-root
-              (frame->root frame)
-              (put-assoc-equal
-               (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               (frame-val
-                (frame-val->path
-                 (cdr (assoc-equal
-                       (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                       (frame->frame frame))))
-                (context-apply
-                 (frame-val->dir
-                  (cdr (assoc-equal
-                        (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                        (frame->frame frame))))
-                 (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
-                 x
-                 (nthcdr
-                  (len
-                   (frame-val->path
-                    (cdr
-                     (assoc-equal
-                      (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                      (frame->frame frame)))))
-                  (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-                (frame-val->src
-                 (cdr (assoc-equal
-                       (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                       (frame->frame frame)))))
-               (remove-assoc-equal x (frame->frame frame))))))
-           ("Subgoal *1/3.1'"))))
+;; There's a fundamental hurdle with the induction scheme we are trying to
+;; use. Let me explain. Think of an x which has its source elsewhere in the
+;; frame, and gets context-applied without changing the root. Now, the new
+;; frame might have the source of x as its 1st complete variable. This the the
+;; only problematic scenario, because otherwise the 1st complete variable will
+;; be the same as (1st-complete frame) (of course, assuming x itself is
+;; different from (1st-complete frame)) and rearrangement of
+;; put-assoc and remove-assoc terms will give us what we need. But this
+;; rearrangement is not possible in the problematic scenario, because now the
+;; 1st complete element is necessarily different from (1st-complete frame).
+;;
+;; Now, what we need to prove for induction (to be specific, induction on
+;; (collapse frame)) is that first context-applying (1st-complete frame) and
+;; then context-applying x gives us the same results, and it might seem at
+;; first glance that there is no problem because the 1st complete variable
+;; afterwards will be the source of x. Unfortunately, there is one further
+;; scenario where this does not hold true - when the new 1st complete variable
+;; after context-applying x and (1st-complete frame) is the source of
+;; (1st-complete frame), it being assumed that this is different from the
+;; source of x. This kind of thing can occur arbitrarily many times, making the
+;; path through the frame arbitrarily different from what one would
+;; expect... so there has to be a new induction scheme.
+;;
+;; Seriously though, I'm not sure a new induction scheme is needed. The trouble
+;; is with a certain (context-apply-ok) term that arises when we're trying to
+;; prove that the variable at the source of x - to which x has already been
+;; context-applied - can be context-applied to its source. The proof of that
+;; can come from another term in which x has been context-applied, by means of
+;; partial-collapse-correctness-lemma-64. The trouble is, we enter hell when we
+;; try to directly use that lemma instance, because... I don't
+;; know... something goes wrong with the substitution and a lot of subgoals
+;; arise. But that can be worked around, by making a side lemma and then using
+;; brr. This weird infinite regression... can't so easily be worked
+;; around. That's the scene. I keep second-guessing myself on this, but I can't
+;; figure out what induction scheme allows us to work out the case where the
+;; paths are different when x is folded up first, and afterwards...
+
+;; Although, perhaps the previously proved theorem, the one about x and
+;; (1st-complete frame) being interchangeable if x is going into the root, will
+;; suffice... if we extend it
+;; to a two-way theorem showing that (mv-nth 1 (collapse frame)) and (mv-nth 0
+;; (collapse frame)) are both equivalent. If that is proved, we can just switch
+;; the source of x and (1st-complete frame).
+;; (thm
+;;  (implies
+;;   (and
+;;    (abs-separate (frame->frame frame))
+;;    (dist-names (frame->root frame) 'nil (frame->frame frame))
+;;    (consp (frame->frame frame))
+;;    (integerp x)
+;;    (< 0 x)
+;;    (< 0
+;;       (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+;;    (not
+;;     (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;            x))
+;;    (consp
+;;     (assoc-equal
+;;      (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;      (frame->frame frame)))
+;;    (prefixp
+;;     (frame-val->path
+;;      (cdr
+;;       (assoc-equal
+;;        (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;        (frame->frame frame))))
+;;     (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+;;    (context-apply-ok
+;;     (frame-val->dir
+;;      (cdr
+;;       (assoc-equal
+;;        (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;        (frame->frame frame))))
+;;     (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+;;     x
+;;     (nthcdr
+;;      (len
+;;       (frame-val->path
+;;        (cdr
+;;         (assoc-equal
+;;          (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;          (frame->frame frame)))))
+;;      (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+;;    (mv-nth 1 (collapse frame))
+;;    (abs-complete
+;;     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
+;;    (frame-p (frame->frame frame))
+;;    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;    (not (consp (assoc-equal 0 (frame->frame frame)))))
+;;   (mv-nth
+;;    1
+;;    (collapse
+;;     (frame-with-root
+;;      (frame->root frame)
+;;      (put-assoc-equal
+;;       (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;       (frame-val
+;;        (frame-val->path
+;;         (cdr
+;;          (assoc-equal
+;;           (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;           (frame->frame frame))))
+;;        (context-apply
+;;         (frame-val->dir
+;;          (cdr
+;;           (assoc-equal
+;;            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;            (frame->frame frame))))
+;;         (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+;;         x
+;;         (nthcdr
+;;          (len
+;;           (frame-val->path
+;;            (cdr
+;;             (assoc-equal
+;;              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;              (frame->frame frame)))))
+;;          (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+;;        (frame-val->src
+;;         (cdr
+;;          (assoc-equal
+;;           (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;           (frame->frame frame)))))
+;;       (remove-assoc-equal x (frame->frame frame)))))))
+;;  :hints (("goal" :in-theory (e/d (collapse abs-separate 1st-complete-src)
+;;                                  ((:definition assoc-equal)
+;;                                   (:definition remove-assoc-equal)
+;;                                   (:rewrite put-assoc-equal-without-change . 2)
+;;                                   (:rewrite nthcdr-when->=-n-len-l)
+;;                                   (:rewrite
+;;                                    abs-file-alist-p-when-m1-file-alist-p)
+;;                                   m1-file-alist-p-of-cdr-when-m1-file-alist-p
+;;                                   (:definition member-equal)
+;;                                   (:definition remove-equal)
+;;                                   (:rewrite remove-when-absent)
+;;                                   (:definition nthcdr)
+;;                                   (:definition len)
+;;                                   (:rewrite remove-assoc-when-absent)))
+;;           :induct (collapse frame))
+;;          ("subgoal *1/6"
+;;           :cases ((not (equal x
+;;                               (1st-complete (frame->frame frame))))))
+;;          ("subgoal *1/6.1'"
+;;           :cases
+;;           ((equal
+;;             (1st-complete
+;;              (put-assoc-equal
+;;               (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
+;;               (frame-val
+;;                (frame-val->path$inline
+;;                 (cdr (assoc-equal (frame-val->src$inline
+;;                                    (cdr (assoc-equal x (frame->frame frame))))
+;;                                   (frame->frame frame))))
+;;                (context-apply
+;;                 (frame-val->dir$inline
+;;                  (cdr
+;;                   (assoc-equal (frame-val->src$inline
+;;                                 (cdr (assoc-equal x (frame->frame frame))))
+;;                                (frame->frame frame))))
+;;                 (frame-val->dir$inline (cdr (assoc-equal x (frame->frame frame))))
+;;                 x
+;;                 (nthcdr
+;;                  (len
+;;                   (frame-val->path$inline
+;;                    (cdr
+;;                     (assoc-equal (frame-val->src$inline
+;;                                   (cdr (assoc-equal x (frame->frame frame))))
+;;                                  (frame->frame frame)))))
+;;                  (frame-val->path$inline
+;;                   (cdr (assoc-equal x (frame->frame frame))))))
+;;                (frame-val->src$inline
+;;                 (cdr (assoc-equal (frame-val->src$inline
+;;                                    (cdr (assoc-equal x (frame->frame frame))))
+;;                                   (frame->frame frame)))))
+;;               (remove-assoc-equal x (frame->frame frame))))
+;;             (frame-val->src$inline (cdr (assoc-equal x (frame->frame
+;;                                                         frame)))))))
+;;          ("subgoal *1/6.1.2.1''"
+;;           :expand
+;;           (collapse
+;;            (frame-with-root
+;;             (frame->root frame)
+;;             (put-assoc-equal
+;;              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;              (frame-val
+;;               (frame-val->path
+;;                (cdr (assoc-equal
+;;                      (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;                      (frame->frame frame))))
+;;               (context-apply
+;;                (frame-val->dir
+;;                 (cdr (assoc-equal
+;;                       (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;                       (frame->frame frame))))
+;;                (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+;;                x
+;;                (nthcdr
+;;                 (len
+;;                  (frame-val->path
+;;                   (cdr
+;;                    (assoc-equal
+;;                     (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;                     (frame->frame frame)))))
+;;                 (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+;;               (frame-val->src
+;;                (cdr (assoc-equal
+;;                      (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;                      (frame->frame frame)))))
+;;              (remove-assoc-equal x (frame->frame frame))))))
+;;          ("subgoal *1/3.1'")))
 
 (defthm
   partial-collapse-correctness-lemma-92
