@@ -185,6 +185,12 @@
                   (take n (nats=>chars nats))))
   :hints (("goal" :in-theory (enable nats=>chars take))))
 
+(defthm list-equiv-when-true-listp
+  (implies (and (true-listp x) (true-listp y))
+           (iff (list-equiv x y) (equal x y)))
+  :hints (("goal" :in-theory (enable fast-list-equiv)
+           :induct (fast-list-equiv x y))))
+
 (defthm
   consecutive-read-file-into-string-1
   (implies
@@ -557,6 +563,12 @@
                 (<= 32 (len dir-contents)))
            (dir-ent-p (take 32 dir-contents)))
   :hints (("goal" :in-theory (enable dir-ent-p))))
+
+(defthm element-list-equiv-of-nthcdr-1
+  (implies (not (element-list-final-cdr-p t))
+           (element-list-equiv (nthcdr (len l) l)
+                               nil)))
+(table listfix-rules 'element-list-equiv-of-nthcdr-1 t)
 
 (fty::deflist dir-ent-list
               :elt-type dir-ent
@@ -1500,6 +1512,11 @@
   m1-file-alist-p-of-remove-assoc-equal
   (implies (m1-file-alist-p fs)
            (m1-file-alist-p (remove-assoc-equal key fs))))
+
+(defthm member-equal-of-strip-cars-when-m1-file-alist-p
+  (implies (and (not (fat32-filename-p x))
+                (m1-file-alist-p fs))
+           (not (member-equal x (strip-cars fs)))))
 
 (defun
     hifat-bounded-file-alist-p-helper (x ac)
