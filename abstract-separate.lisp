@@ -635,6 +635,11 @@
 	         (not (intersectp-equal (remove-equal nil (strip-cars x))
 				        (remove-equal nil (strip-cars y))))))))))
 
+(defthm abs-no-dups-p-of-remove-assoc
+  (implies (abs-no-dups-p fs)
+           (abs-no-dups-p (remove-assoc-equal x fs)))
+  :hints (("goal" :in-theory (enable abs-no-dups-p))))
+
 (defund abs-fs-p (x)
   (declare (xargs :guard t))
   (and (abs-file-alist-p x)
@@ -2874,6 +2879,364 @@
   :rule-classes :definition
   :hints (("goal" :in-theory (enable abs-top-names))))
 
+(defthm
+  absfat-subsetp-guard-lemma-1
+  (implies (and (abs-file-alist-p abs-file-alist)
+                (consp (assoc-equal name abs-file-alist)))
+           (abs-file-p (cdr (assoc-equal name abs-file-alist))))
+  :hints
+  (("goal" :expand ((abs-file-alist-p abs-file-alist)
+                    (abs-file-p (cdr (car abs-file-alist)))))))
+
+(defund
+  absfat-subsetp
+  (abs-file-alist1 abs-file-alist2)
+  (declare
+   (xargs
+    :guard (and (abs-file-alist-p abs-file-alist1)
+                (abs-file-alist-p abs-file-alist2))
+    :guard-hints
+    (("goal''"
+      :expand ((abs-file-alist-p abs-file-alist1)
+               (abs-file-p (cdr (car abs-file-alist1))))))
+    :guard-debug t))
+  (b* (((when (atom abs-file-alist1)) t)
+       ((unless (and (consp (car abs-file-alist1))
+                     (stringp (car (car abs-file-alist1)))))
+        (and (member-equal (car abs-file-alist1)
+                           abs-file-alist2)
+             (absfat-subsetp (cdr abs-file-alist1)
+                             abs-file-alist2)))
+       (name (caar abs-file-alist1))
+       (file1 (cdar abs-file-alist1))
+       ((unless (consp (abs-assoc name abs-file-alist2)))
+        nil)
+       (file2 (cdr (abs-assoc name abs-file-alist2))))
+    (if (not (abs-directory-file-p file1))
+        (and (not (abs-directory-file-p file2))
+             (absfat-subsetp (cdr abs-file-alist1)
+                             abs-file-alist2)
+             (equal (abs-file->contents file1)
+                    (abs-file->contents file2)))
+      (and (abs-directory-file-p file2)
+           (absfat-subsetp (cdr abs-file-alist1)
+                           abs-file-alist2)
+           (absfat-subsetp (abs-file->contents file1)
+                           (abs-file->contents file2))))))
+
+(defthm
+  absfat-subsetp-correctness-1
+  (implies
+   (and (m1-file-alist-p abs-file-alist1)
+        (m1-file-alist-p abs-file-alist2))
+   (equal (absfat-subsetp abs-file-alist1 abs-file-alist2)
+          (hifat-subsetp abs-file-alist1 abs-file-alist2)))
+  :hints
+  (("goal" :in-theory (enable absfat-subsetp hifat-subsetp))))
+
+(defthm absfat-subsetp-reflexivity-lemma-1
+  (implies (and (abs-file-alist-p x)
+                (consp (car x))
+                (consp (assoc-equal (car (car x)) y)))
+           (consp (assoc-equal (car (car x))
+                               (append (cdr x) y))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-file-p abs-file-alist-p)
+           :cases ((null (car (car x)))))))
+
+(defthm absfat-subsetp-reflexivity-lemma-3
+  (implies (and (abs-file-alist-p x)
+                (consp (assoc-equal name x))
+                (consp (assoc-equal name y)))
+           (not (abs-no-dups-p (append x y))))
+  :hints (("goal" :in-theory (enable abs-no-dups-p))))
+
+(defthm absfat-subsetp-reflexivity-lemma-4
+  (implies (and (abs-file-alist-p x)
+                (absfat-subsetp z y)
+                (abs-no-dups-p (append x y)))
+           (absfat-subsetp z (append x y)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm
+  absfat-subsetp-reflexivity-lemma-5
+  (implies (and (absfat-subsetp (cdr x)
+                                (append (cdr x) y))
+                (abs-file-alist-p x)
+                (abs-no-dups-p (append (cdr x) y))
+                (or
+                 (not (abs-directory-file-p (cdr (car x))))
+                 (abs-no-dups-p (abs-file->contents (cdr (car x)))))
+                (or (and (stringp (car (car x)))
+                         (not (consp (assoc-equal (car (car x)) (cdr x))))
+                         (not (consp (assoc-equal (car (car x)) y))))
+                    (and (consp x)
+                         (or
+                          (not (consp (car x)))
+                          (not (consp (assoc-equal (car (car x))
+                                                   (append (cdr x) y))))))))
+           (absfat-subsetp (cdr x)
+                           (cons (car x) (append (cdr x) y))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (abs-no-dups-p abs-file-alist-p)
+                    ((:rewrite absfat-subsetp-reflexivity-lemma-4)))
+    :use (:instance (:rewrite absfat-subsetp-reflexivity-lemma-4)
+                    (y (append (cdr x) y))
+                    (x (list (car x)))
+                    (z (cdr x)))
+    :expand (abs-file-alist-p (list (car x))))))
+
+(encapsulate
+  ()
+
+  (local
+   (defun induction-scheme (x y)
+     (cond
+      ((and (not (atom x))
+            (and (consp (car x))
+                 (stringp (car (car x))))
+            (consp (abs-assoc (car (car x)) (append x y)))
+            (abs-directory-file-p (cdr (car x)))
+            (abs-directory-file-p (cdr (abs-assoc (car (car x)) (append x y))))
+            (absfat-subsetp (cdr x) (append x y)))
+       (append
+        (induction-scheme (cdr x) y)
+        (induction-scheme (abs-file->contents (cdr (car x))) nil)))
+      ((and (not (atom x))
+            (if
+                (and (consp (car x))
+                     (stringp (car (car x))))
+                (and(consp (abs-assoc (car (car x)) (append x y)))
+                    (or
+                     (and
+                      (abs-directory-file-p (cdr (car x)))
+                      (abs-directory-file-p (cdr (abs-assoc (car (car x)) (append x y))))
+                      (not (absfat-subsetp (cdr x) (append x y))))
+                     (and
+                      (not (abs-directory-file-p (cdr (car x))))
+                      (not (abs-directory-file-p (cdr (abs-assoc (car (car x))
+                                                                 (append x y))))))))
+              (member-equal (car x) (append x y))))
+       (induction-scheme (cdr x) y))
+      (t (append x y)))))
+
+  (defthmd
+    absfat-subsetp-reflexivity-lemma-7
+    (implies (and (abs-file-alist-p x)
+                  (abs-no-dups-p (append x y)))
+             (absfat-subsetp x (append x y)))
+    :hints
+    (("goal" :in-theory (enable absfat-subsetp abs-no-dups-p)
+      :induct (induction-scheme x y)))))
+
+(defthm
+  absfat-subsetp-reflexivity
+  (implies (and (abs-file-alist-p x)
+                (abs-no-dups-p x))
+           (absfat-subsetp x x))
+  :hints (("goal"
+           :use (:instance absfat-subsetp-reflexivity-lemma-7
+                           (y nil)))))
+
+(defthm absfat-subsetp-transitivity-lemma-1
+  (implies (and (abs-file-alist-p y)
+                (consp (car y)))
+           (stringp (car (car y))))
+  :hints (("goal" :expand (abs-file-alist-p y))))
+
+(defthm absfat-subsetp-transitivity-lemma-2
+  (implies (and (abs-file-alist-p y)
+                (not (consp (assoc-equal (car (car x)) z)))
+                (consp (assoc-equal (car (car x)) y)))
+           (not (absfat-subsetp y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp)
+           :induct (absfat-subsetp y z))))
+
+(defthm absfat-subsetp-transitivity-lemma-3
+  (implies (and (abs-file-alist-p y)
+                (not (abs-directory-file-p (cdr (assoc-equal name z))))
+                (abs-directory-file-p (cdr (assoc-equal name y))))
+           (not (absfat-subsetp y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm
+  absfat-subsetp-transitivity-lemma-4
+  (implies (and (abs-file-alist-p y)
+                (abs-directory-file-p (cdr (assoc-equal name y)))
+                (absfat-subsetp y z))
+           (absfat-subsetp (abs-file->contents (cdr (assoc-equal name y)))
+                           (abs-file->contents (cdr (assoc-equal name z)))))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm
+  absfat-subsetp-transitivity-lemma-5
+  (implies (and (abs-directory-file-p (cdr (assoc-equal name z)))
+                (abs-file-alist-p z)
+                (consp (assoc-equal name y))
+                (not (abs-directory-file-p (cdr (assoc-equal name y)))))
+           (not (absfat-subsetp y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm absfat-subsetp-transitivity-lemma-6
+  (implies (and (not (consp (car x)))
+                (not (member-equal (car x) z))
+                (member-equal (car x) y))
+           (not (absfat-subsetp y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm
+  absfat-subsetp-transitivity-lemma-7
+  (implies (and (abs-file-alist-p fs)
+                (consp (assoc-equal name fs))
+                (not (abs-directory-file-p (cdr (assoc-equal name fs)))))
+           (m1-regular-file-p (cdr (assoc-equal name fs))))
+  :hints (("goal" :in-theory (e/d
+                              (abs-file-alist-p abs-directory-file-p
+                                                m1-regular-file-p m1-file-p abs-file-p
+                                                abs-file->contents m1-file->contents)
+                              (abs-file-alist-p-when-m1-file-alist-p)))))
+
+(defthm
+  absfat-subsetp-transitivity-lemma-8
+  (implies
+   (and (equal (m1-file->contents (cdr (assoc-equal (car (car y)) (cdr y))))
+               (abs-file->contents (cdr (car y))))
+        (consp (assoc-equal (car (car y)) z))
+        (not (abs-directory-file-p (cdr (assoc-equal (car (car y)) z))))
+        (abs-file-alist-p y)
+        (abs-file-alist-p z)
+        (equal (abs-file->contents (cdr (car y)))
+               (m1-file->contents (cdr (assoc-equal (car (car y)) z)))))
+   (m1-file-p (cdr (car y))))
+  :hints (("goal" :in-theory (enable abs-file-alist-p
+                                     abs-file-p m1-file-p abs-file->contents
+                                     m1-file-contents-p abs-directory-file-p)
+           :do-not-induct t)))
+
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     absfat-subsetp-transitivity-lemma-9
+     (implies
+      (and (not (consp (assoc-equal (car (car y)) (cdr y))))
+           (consp (assoc-equal (car (car y)) z))
+           (abs-file-alist-p y)
+           (abs-file-alist-p z)
+           (equal (abs-file->contents (cdr (car y)))
+                  (m1-file->contents (cdr (assoc-equal (car (car y)) z)))))
+      (m1-file-p (cdr (car y))))
+     :hints (("goal" :in-theory (enable abs-file->contents
+                                        m1-file-p abs-file-alist-p)
+              :do-not-induct t))))
+
+  (defthmd absfat-subsetp-transitivity-lemma-10
+    (implies (and (abs-file-alist-p y)
+                  (abs-file-alist-p z)
+                  (consp (assoc-equal name y))
+                  (not (abs-directory-file-p (cdr (assoc-equal name y))))
+                  (absfat-subsetp y z))
+             (equal (m1-file->contents (cdr (assoc-equal name y)))
+                    (m1-file->contents (cdr (assoc-equal name z)))))
+    :hints (("goal" :in-theory (enable absfat-subsetp)))))
+
+(defthm
+  absfat-subsetp-transitivity
+  (implies (and (absfat-subsetp x y)
+                (absfat-subsetp y z)
+                (abs-file-alist-p x)
+                (abs-file-alist-p y)
+                (abs-file-alist-p z))
+           (absfat-subsetp x z))
+  :hints
+  (("goal" :in-theory (enable absfat-subsetp)
+    :induct t)
+   ("subgoal *1/2''" :use (:instance absfat-subsetp-transitivity-lemma-10
+                                     (name (car (car x)))))))
+
+(defthm
+  absfat-subsetp-of-put-assoc-1
+  (implies
+   (and (abs-file-alist-p abs-file-alist1)
+        (abs-no-dups-p abs-file-alist1)
+        (absfat-subsetp (remove-assoc name abs-file-alist1)
+                        abs-file-alist2)
+        (abs-directory-file-p (cdr (assoc-equal name abs-file-alist2)))
+        (fat32-filename-p name)
+        (abs-directory-file-p val)
+        (absfat-subsetp
+         (abs-file->contents val)
+         (abs-file->contents (cdr (assoc-equal name abs-file-alist2)))))
+   (absfat-subsetp (put-assoc-equal name val abs-file-alist1)
+                   abs-file-alist2))
+  :hints (("goal" :in-theory (e/d (absfat-subsetp abs-no-dups-p) nil)
+           :induct (put-assoc-equal name val abs-file-alist1))
+          ("subgoal *1/2" :expand (abs-no-dups-p abs-file-alist1))))
+
+(defthm absfat-subsetp-of-put-assoc-2
+  (implies (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (fat32-filename-p name)
+                (atom (assoc-equal name abs-file-alist1)))
+           (absfat-subsetp abs-file-alist1
+                           (put-assoc-equal name val abs-file-alist2)))
+  :hints (("goal" :in-theory (e/d (absfat-subsetp) nil))))
+
+(defthm absfat-subsetp-of-remove-assoc-1
+  (implies (absfat-subsetp abs-file-alist1 abs-file-alist2)
+           (absfat-subsetp (remove-assoc-equal name abs-file-alist1)
+                           abs-file-alist2))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm absfat-subsetp-of-append-1
+  (equal (absfat-subsetp (append x y) z)
+         (and (absfat-subsetp x z)
+              (absfat-subsetp y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm absfat-subsetp-of-append-2
+  (implies (and (abs-file-alist-p y)
+                (or (absfat-subsetp x y)
+                    (and (abs-no-dups-p (append y z))
+                         (absfat-subsetp x z))))
+           (absfat-subsetp x (append y z)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm absfat-subsetp-of-remove-1
+  (implies (absfat-subsetp abs-file-alist1 abs-file-alist2)
+           (absfat-subsetp (remove-equal x abs-file-alist1)
+                           abs-file-alist2))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthm absfat-subsetp-of-remove-2
+  (implies (and (natp x)
+                (not (member-equal x abs-file-alist1))
+                (absfat-subsetp abs-file-alist1 abs-file-alist2))
+           (absfat-subsetp abs-file-alist1
+                           (remove-equal x abs-file-alist2)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defund
+  absfat-equiv
+  (abs-file-alist1 abs-file-alist2)
+  (declare
+   (xargs :guard (and (abs-file-alist-p abs-file-alist1)
+                      (abs-file-alist-p abs-file-alist2))))
+  (b* ((abs-file-alist1 (abs-fs-fix abs-file-alist1))
+       (abs-file-alist2 (abs-fs-fix abs-file-alist2)))
+    (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+         (absfat-subsetp abs-file-alist2 abs-file-alist1))))
+
+(defequiv
+  absfat-equiv
+  :hints (("Goal" :in-theory (enable absfat-equiv))))
+
+(defthm
+  absfat-equiv-of-abs-fs-fix
+  (absfat-equiv (abs-fs-fix fs) fs)
+  :hints (("Goal" :in-theory (enable absfat-equiv))))
+
 (defund
   names-at (fs relpath)
   (declare (xargs :guard (and (abs-fs-p fs)
@@ -2928,20 +3291,128 @@
          (names-at fs relpath))
   :hints (("goal" :in-theory (enable names-at))))
 
-(defthm
-  abs-no-dups-p-of-context-apply-lemma-1
-  (implies (and (abs-file-alist-p fs)
-                (consp (assoc-equal name fs))
-                (not (abs-directory-file-p (cdr (assoc-equal name fs)))))
-           (m1-regular-file-p (cdr (assoc-equal name fs))))
-  :hints (("goal" :in-theory (e/d
-                              (abs-file-alist-p abs-directory-file-p
-                                                m1-regular-file-p m1-file-p abs-file-p
-                                                abs-file->contents m1-file->contents)
-                              (abs-file-alist-p-when-m1-file-alist-p)))))
+(defthm absfat-equiv-implies-set-equiv-names-at-1-lemma-1
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (consp (assoc-equal x abs-file-alist1)))
+           (consp (assoc-equal x abs-file-alist2)))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
 
 (defthm
-  abs-no-dups-p-of-context-apply-lemma-2
+  absfat-equiv-implies-set-equiv-names-at-1-lemma-2
+  (implies (and (abs-file-alist-p abs-file-alist1)
+                (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1))))
+           (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2))))
+  :hints (("goal" :in-theory (enable absfat-subsetp))))
+
+(defthmd
+  absfat-equiv-implies-set-equiv-names-at-1-lemma-3
+  (implies
+   (and (abs-fs-p abs-file-alist1)
+        (abs-fs-p abs-file-alist2)
+        (absfat-equiv abs-file-alist1 abs-file-alist2))
+   (equal (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2)))
+          (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1)))))
+  :hints
+  (("goal" :in-theory (e/d (absfat-equiv)
+                           (absfat-equiv-implies-set-equiv-names-at-1-lemma-2))
+    :use (absfat-equiv-implies-set-equiv-names-at-1-lemma-2
+          (:instance absfat-equiv-implies-set-equiv-names-at-1-lemma-2
+                     (abs-file-alist2 abs-file-alist1)
+                     (abs-file-alist1 abs-file-alist2)))
+    :do-not-induct t)))
+
+(defthm
+  absfat-equiv-implies-set-equiv-names-at-1-lemma-4
+  (implies
+   (and
+    (abs-fs-p abs-file-alist1)
+    (abs-fs-p abs-file-alist2)
+    (absfat-equiv abs-file-alist1 abs-file-alist2)
+    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
+                                            abs-file-alist1))))
+   (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
+                                           abs-file-alist2))))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
+                    (x (fat32-filename-fix (car x-path)))))))
+
+(defthm member-equal-of-strip-cars-when-m1-file-alist-p
+  (implies (and (not (fat32-filename-p x))
+                (m1-file-alist-p fs))
+           (not (member-equal x (strip-cars fs))))) ;; Move later.
+
+;; The second rewrite rule of this defthm is needed...
+(defthm
+  absfat-equiv-implies-set-equiv-names-at-1-lemma-5
+  (implies (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (abs-file-alist-p abs-file-alist1))
+           (subsetp-equal (remove-equal nil (strip-cars abs-file-alist1))
+                          (remove-equal nil (strip-cars abs-file-alist2))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (absfat-subsetp)
+         (intersectp-is-commutative
+          (:rewrite abs-file->contents-when-m1-file-p)
+          (:rewrite member-equal-of-strip-cars-when-m1-file-alist-p)
+          (:rewrite absfat-subsetp-correctness-1)
+          (:rewrite absfat-subsetp-transitivity)))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+          (abs-file-alist-p abs-file-alist1)
+          (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist2))
+                                 y)))
+     (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist1))
+                            y)))
+    :hints
+    (("goal"
+      :use (:instance (:rewrite intersect-with-subset)
+                      (z y)
+                      (y (remove-equal nil (strip-cars abs-file-alist2)))
+                      (x (remove-equal nil (strip-cars abs-file-alist1)))))))))
+
+(defthm
+  absfat-equiv-implies-set-equiv-names-at-1-lemma-6
+  (implies (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
+                (abs-fs-p abs-file-alist1)
+                (abs-fs-p abs-file-alist2))
+           (subsetp-equal (names-at abs-file-alist1 relpath)
+                          (names-at abs-file-alist2 relpath)))
+  :hints
+  (("goal"
+    :in-theory (e/d (absfat-subsetp names-at)
+                    ((:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-1)))
+    :induct (mv (names-at abs-file-alist1 relpath)
+                (names-at abs-file-alist2 relpath)))
+   ("subgoal *1/3.2"
+    :use (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-1)
+                    (abs-file-alist2 abs-file-alist2)
+                    (x (fat32-filename-fix (car relpath)))
+                    (abs-file-alist1 abs-file-alist1)))))
+
+(defcong absfat-equiv set-equiv (names-at fs relpath) 1
+  :hints
+  (("goal"
+    :in-theory (e/d (absfat-equiv set-equiv)
+                    (absfat-equiv-implies-set-equiv-names-at-1-lemma-6))
+    :use
+    ((:instance absfat-equiv-implies-set-equiv-names-at-1-lemma-6
+                (abs-file-alist1 (abs-fs-fix fs))
+                (abs-file-alist2 (abs-fs-fix fs-equiv)))
+     (:instance
+      absfat-equiv-implies-set-equiv-names-at-1-lemma-6
+      (abs-file-alist1 (abs-fs-fix fs-equiv))
+      (abs-file-alist2 (abs-fs-fix fs)))))))
+
+(defthm
+  abs-no-dups-p-of-context-apply-lemma-1
   (implies
    (and (abs-file-alist-p abs-file-alist1)
         (abs-file-alist-p abs-file-alist2))
@@ -2956,7 +3427,7 @@
                                       abs-file-alist2 x x-path))))))
 
 (defthm
-  abs-no-dups-p-of-context-apply-lemma-3
+  abs-no-dups-p-of-context-apply-lemma-2
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal name abs-file-alist1)))
         (abs-no-dups-p abs-file-alist2)
@@ -2983,7 +3454,7 @@
     :expand (abs-file-alist-p abs-file-alist1))))
 
 (defthm
-  abs-no-dups-p-of-context-apply-lemma-4
+  abs-no-dups-p-of-context-apply-lemma-3
   (implies
    (and (abs-directory-file-p (cdr (assoc-equal (car x-path)
                                                 abs-file-alist1)))
@@ -3002,7 +3473,7 @@
 ;; This doesn't work all the time as a type prescription rule, because
 ;; rewriting is sometimes needed to establish the hypotheses.
 (defthm
-  abs-no-dups-p-of-context-apply-lemma-5
+  abs-no-dups-p-of-context-apply-lemma-4
   (implies (and (abs-no-dups-p abs-file-alist)
                 (fat32-filename-p name))
            (atom (assoc-equal name
@@ -3161,6 +3632,11 @@
                        (nthcdr (len (frame-val->path val))
                                relpath)))))
       (t t)))))
+  :hints (("goal" :in-theory (enable dist-names))))
+
+(defcong absfat-equiv
+  equal (dist-names dir relpath frame)
+  1
   :hints (("goal" :in-theory (enable dist-names))))
 
 (defthm
@@ -3708,7 +4184,7 @@
                 (root (frame-val->dir (cdr (car frame)))))))))
 
 (defthm
-  abs-separate-of-put-assoc-lemma-17
+  abs-separate-of-put-assoc-lemma-15
   (implies
    (and
     (dist-names dir1 relpath1 frame)
@@ -3741,7 +4217,7 @@
                                      names-at intersectp-equal))))
 
 (defthm
-  abs-separate-of-put-assoc-lemma-18
+  abs-separate-of-put-assoc-lemma-17
   (implies
    (and
     (dist-names dir1 relpath1 frame)
@@ -5101,11 +5577,6 @@
                                    pathname)))
   :hints (("goal" :in-theory (enable abs-find-file-helper
                                      hifat-find-file m1-file-alist-p))))
-
-(defthm member-equal-of-strip-cars-when-m1-file-alist-p
-  (implies (and (not (fat32-filename-p x))
-                (m1-file-alist-p fs))
-           (not (member-equal x (strip-cars fs)))))
 
 (defthm
   abs-find-file-helper-of-context-apply-lemma-1
@@ -9836,366 +10307,8 @@
                head-index (frame->frame frame))))))
         (partial-collapse frame pathname)))))
 
-(defthm
-  absfat-subsetp-guard-lemma-1
-  (implies (and (abs-file-alist-p abs-file-alist)
-                (consp (assoc-equal name abs-file-alist)))
-           (abs-file-p (cdr (assoc-equal name abs-file-alist))))
-  :hints
-  (("goal" :expand ((abs-file-alist-p abs-file-alist)
-                    (abs-file-p (cdr (car abs-file-alist)))))))
-
-(defund
-  absfat-subsetp
-  (abs-file-alist1 abs-file-alist2)
-  (declare
-   (xargs
-    :guard (and (abs-file-alist-p abs-file-alist1)
-                (abs-file-alist-p abs-file-alist2))
-    :guard-hints
-    (("goal''"
-      :expand ((abs-file-alist-p abs-file-alist1)
-               (abs-file-p (cdr (car abs-file-alist1))))))
-    :guard-debug t))
-  (b* (((when (atom abs-file-alist1)) t)
-       ((unless (and (consp (car abs-file-alist1))
-                     (stringp (car (car abs-file-alist1)))))
-        (and (member-equal (car abs-file-alist1)
-                           abs-file-alist2)
-             (absfat-subsetp (cdr abs-file-alist1)
-                             abs-file-alist2)))
-       (name (caar abs-file-alist1))
-       (file1 (cdar abs-file-alist1))
-       ((unless (consp (abs-assoc name abs-file-alist2)))
-        nil)
-       (file2 (cdr (abs-assoc name abs-file-alist2))))
-    (if (not (abs-directory-file-p file1))
-        (and (not (abs-directory-file-p file2))
-             (absfat-subsetp (cdr abs-file-alist1)
-                             abs-file-alist2)
-             (equal (abs-file->contents file1)
-                    (abs-file->contents file2)))
-      (and (abs-directory-file-p file2)
-           (absfat-subsetp (cdr abs-file-alist1)
-                           abs-file-alist2)
-           (absfat-subsetp (abs-file->contents file1)
-                           (abs-file->contents file2))))))
-
-(defthm
-  absfat-subsetp-correctness-1
-  (implies
-   (and (m1-file-alist-p abs-file-alist1)
-        (m1-file-alist-p abs-file-alist2))
-   (equal (absfat-subsetp abs-file-alist1 abs-file-alist2)
-          (hifat-subsetp abs-file-alist1 abs-file-alist2)))
-  :hints
-  (("goal" :in-theory (enable absfat-subsetp hifat-subsetp))))
-
-(defthm absfat-subsetp-reflexivity-lemma-1
-  (implies (and (abs-file-alist-p x)
-                (consp (car x))
-                (consp (assoc-equal (car (car x)) y)))
-           (consp (assoc-equal (car (car x))
-                               (append (cdr x) y))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable abs-file-p abs-file-alist-p)
-           :cases ((null (car (car x)))))))
-
-(defthm absfat-subsetp-reflexivity-lemma-3
-  (implies (and (abs-file-alist-p x)
-                (consp (assoc-equal name x))
-                (consp (assoc-equal name y)))
-           (not (abs-no-dups-p (append x y))))
-  :hints (("goal" :in-theory (enable abs-no-dups-p))))
-
-(defthm absfat-subsetp-reflexivity-lemma-4
-  (implies (and (abs-file-alist-p x)
-                (absfat-subsetp z y)
-                (abs-no-dups-p (append x y)))
-           (absfat-subsetp z (append x y)))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm
-  absfat-subsetp-reflexivity-lemma-5
-  (implies (and (absfat-subsetp (cdr x)
-                                (append (cdr x) y))
-                (abs-file-alist-p x)
-                (abs-no-dups-p (append (cdr x) y))
-                (or
-                 (not (abs-directory-file-p (cdr (car x))))
-                 (abs-no-dups-p (abs-file->contents (cdr (car x)))))
-                (or (and (stringp (car (car x)))
-                         (not (consp (assoc-equal (car (car x)) (cdr x))))
-                         (not (consp (assoc-equal (car (car x)) y))))
-                    (and (consp x)
-                         (or
-                          (not (consp (car x)))
-                          (not (consp (assoc-equal (car (car x))
-                                                   (append (cdr x) y))))))))
-           (absfat-subsetp (cdr x)
-                           (cons (car x) (append (cdr x) y))))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (e/d (abs-no-dups-p abs-file-alist-p)
-                    ((:rewrite absfat-subsetp-reflexivity-lemma-4)))
-    :use (:instance (:rewrite absfat-subsetp-reflexivity-lemma-4)
-                    (y (append (cdr x) y))
-                    (x (list (car x)))
-                    (z (cdr x)))
-    :expand (abs-file-alist-p (list (car x))))))
-
-(encapsulate
-  ()
-
-  (local
-   (defun induction-scheme (x y)
-     (cond
-      ((and (not (atom x))
-            (and (consp (car x))
-                 (stringp (car (car x))))
-            (consp (abs-assoc (car (car x)) (append x y)))
-            (abs-directory-file-p (cdr (car x)))
-            (abs-directory-file-p (cdr (abs-assoc (car (car x)) (append x y))))
-            (absfat-subsetp (cdr x) (append x y)))
-       (append
-        (induction-scheme (cdr x) y)
-        (induction-scheme (abs-file->contents (cdr (car x))) nil)))
-      ((and (not (atom x))
-            (if
-                (and (consp (car x))
-                     (stringp (car (car x))))
-                (and(consp (abs-assoc (car (car x)) (append x y)))
-                    (or
-                     (and
-                      (abs-directory-file-p (cdr (car x)))
-                      (abs-directory-file-p (cdr (abs-assoc (car (car x)) (append x y))))
-                      (not (absfat-subsetp (cdr x) (append x y))))
-                     (and
-                      (not (abs-directory-file-p (cdr (car x))))
-                      (not (abs-directory-file-p (cdr (abs-assoc (car (car x))
-                                                                 (append x y))))))))
-              (member-equal (car x) (append x y))))
-       (induction-scheme (cdr x) y))
-      (t (append x y)))))
-
-  (defthmd
-    absfat-subsetp-reflexivity-lemma-7
-    (implies (and (abs-file-alist-p x)
-                  (abs-no-dups-p (append x y)))
-             (absfat-subsetp x (append x y)))
-    :hints
-    (("goal" :in-theory (enable absfat-subsetp abs-no-dups-p)
-      :induct (induction-scheme x y)))))
-
-(defthm
-  absfat-subsetp-reflexivity
-  (implies (and (abs-file-alist-p x)
-                (abs-no-dups-p x))
-           (absfat-subsetp x x))
-  :hints (("goal"
-           :use (:instance absfat-subsetp-reflexivity-lemma-7
-                           (y nil)))))
-
-(defthm absfat-subsetp-transitivity-lemma-1
-  (implies (and (abs-file-alist-p y)
-                (consp (car y)))
-           (stringp (car (car y))))
-  :hints (("goal" :expand (abs-file-alist-p y))))
-
-(defthm absfat-subsetp-transitivity-lemma-2
-  (implies (and (abs-file-alist-p y)
-                (not (consp (assoc-equal (car (car x)) z)))
-                (consp (assoc-equal (car (car x)) y)))
-           (not (absfat-subsetp y z)))
-  :hints (("goal" :in-theory (enable absfat-subsetp)
-           :induct (absfat-subsetp y z))))
-
-(defthm absfat-subsetp-transitivity-lemma-3
-  (implies (and (abs-file-alist-p y)
-                (not (abs-directory-file-p (cdr (assoc-equal name z))))
-                (abs-directory-file-p (cdr (assoc-equal name y))))
-           (not (absfat-subsetp y z)))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm
-  absfat-subsetp-transitivity-lemma-4
-  (implies (and (abs-file-alist-p y)
-                (abs-directory-file-p (cdr (assoc-equal name y)))
-                (absfat-subsetp y z))
-           (absfat-subsetp (abs-file->contents (cdr (assoc-equal name y)))
-                           (abs-file->contents (cdr (assoc-equal name z)))))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm
-  absfat-subsetp-transitivity-lemma-5
-  (implies (and (abs-directory-file-p (cdr (assoc-equal name z)))
-                (abs-file-alist-p z)
-                (consp (assoc-equal name y))
-                (not (abs-directory-file-p (cdr (assoc-equal name y)))))
-           (not (absfat-subsetp y z)))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm absfat-subsetp-transitivity-lemma-6
-  (implies (and (not (consp (car x)))
-                (not (member-equal (car x) z))
-                (member-equal (car x) y))
-           (not (absfat-subsetp y z)))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm
-  absfat-subsetp-transitivity-lemma-7
-  (implies
-   (and (equal (m1-file->contents (cdr (assoc-equal (car (car y)) (cdr y))))
-               (abs-file->contents (cdr (car y))))
-        (consp (assoc-equal (car (car y)) z))
-        (not (abs-directory-file-p (cdr (assoc-equal (car (car y)) z))))
-        (abs-file-alist-p y)
-        (abs-file-alist-p z)
-        (equal (abs-file->contents (cdr (car y)))
-               (m1-file->contents (cdr (assoc-equal (car (car y)) z)))))
-   (m1-file-p (cdr (car y))))
-  :hints (("goal" :in-theory (enable abs-file-alist-p
-                                     abs-file-p m1-file-p abs-file->contents
-                                     m1-file-contents-p abs-directory-file-p)
-           :do-not-induct t)))
-
-(encapsulate
-  ()
-
-  (local
-   (defthm
-     absfat-subsetp-transitivity-lemma-9
-     (implies
-      (and (not (consp (assoc-equal (car (car y)) (cdr y))))
-           (consp (assoc-equal (car (car y)) z))
-           (abs-file-alist-p y)
-           (abs-file-alist-p z)
-           (equal (abs-file->contents (cdr (car y)))
-                  (m1-file->contents (cdr (assoc-equal (car (car y)) z)))))
-      (m1-file-p (cdr (car y))))
-     :hints (("goal" :in-theory (enable abs-file->contents
-                                        m1-file-p abs-file-alist-p)
-              :do-not-induct t))))
-
-  (defthmd absfat-subsetp-transitivity-lemma-10
-    (implies (and (abs-file-alist-p y)
-                  (abs-file-alist-p z)
-                  (consp (assoc-equal name y))
-                  (not (abs-directory-file-p (cdr (assoc-equal name y))))
-                  (absfat-subsetp y z))
-             (equal (m1-file->contents (cdr (assoc-equal name y)))
-                    (m1-file->contents (cdr (assoc-equal name z)))))
-    :hints (("goal" :in-theory (enable absfat-subsetp)))))
-
-(defthm
-  absfat-subsetp-transitivity
-  (implies (and (absfat-subsetp x y)
-                (absfat-subsetp y z)
-                (abs-file-alist-p x)
-                (abs-file-alist-p y)
-                (abs-file-alist-p z))
-           (absfat-subsetp x z))
-  :hints
-  (("goal" :in-theory (enable absfat-subsetp)
-    :induct t)
-   ("subgoal *1/2''" :use (:instance absfat-subsetp-transitivity-lemma-10
-                                     (name (car (car x)))))))
-
-(defthm
-  absfat-subsetp-of-put-assoc-1
-  (implies
-   (and (abs-file-alist-p abs-file-alist1)
-        (abs-no-dups-p abs-file-alist1)
-        (absfat-subsetp (remove-assoc name abs-file-alist1)
-                        abs-file-alist2)
-        (abs-directory-file-p (cdr (assoc-equal name abs-file-alist2)))
-        (fat32-filename-p name)
-        (abs-directory-file-p val)
-        (absfat-subsetp
-         (abs-file->contents val)
-         (abs-file->contents (cdr (assoc-equal name abs-file-alist2)))))
-   (absfat-subsetp (put-assoc-equal name val abs-file-alist1)
-                   abs-file-alist2))
-  :hints (("goal" :in-theory (e/d (absfat-subsetp abs-no-dups-p) nil)
-           :induct (put-assoc-equal name val abs-file-alist1))
-          ("subgoal *1/2" :expand (abs-no-dups-p abs-file-alist1))))
-
-(defthm absfat-subsetp-of-put-assoc-2
-  (implies (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
-                (fat32-filename-p name)
-                (atom (assoc-equal name abs-file-alist1)))
-           (absfat-subsetp abs-file-alist1
-                           (put-assoc-equal name val abs-file-alist2)))
-  :hints (("goal" :in-theory (e/d (absfat-subsetp) nil))))
-
-(defthm absfat-subsetp-of-remove-assoc-1
-  (implies (absfat-subsetp abs-file-alist1 abs-file-alist2)
-           (absfat-subsetp (remove-assoc-equal name abs-file-alist1)
-                           abs-file-alist2))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm absfat-subsetp-of-append-1
-  (equal (absfat-subsetp (append x y) z)
-         (and (absfat-subsetp x z)
-              (absfat-subsetp y z)))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm absfat-subsetp-of-append-2
-  (implies (and (abs-file-alist-p y)
-                (or (absfat-subsetp x y)
-                    (and (abs-no-dups-p (append y z))
-                         (absfat-subsetp x z))))
-           (absfat-subsetp x (append y z)))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm absfat-subsetp-of-remove-1
-  (implies (absfat-subsetp abs-file-alist1 abs-file-alist2)
-           (absfat-subsetp (remove-equal x abs-file-alist1)
-                           abs-file-alist2))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm absfat-subsetp-of-remove-2
-  (implies (and (natp x)
-                (not (member-equal x abs-file-alist1))
-                (absfat-subsetp abs-file-alist1 abs-file-alist2))
-           (absfat-subsetp abs-file-alist1
-                           (remove-equal x abs-file-alist2)))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthm abs-no-dups-p-of-remove-assoc
-  (implies (abs-no-dups-p fs)
-           (abs-no-dups-p (remove-assoc-equal x fs)))
-  :hints (("goal" :in-theory (enable abs-no-dups-p))))
-
-(defund
-  absfat-equiv
-  (abs-file-alist1 abs-file-alist2)
-  (declare
-   (xargs :guard (and (abs-file-alist-p abs-file-alist1)
-                      (abs-file-alist-p abs-file-alist2))))
-  (b* ((abs-file-alist1 (abs-fs-fix abs-file-alist1))
-       (abs-file-alist2 (abs-fs-fix abs-file-alist2)))
-    (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
-         (absfat-subsetp abs-file-alist2 abs-file-alist1))))
-
-(defequiv
-  absfat-equiv
-  :hints (("Goal" :in-theory (enable absfat-equiv))))
-
-(defthm
-  absfat-equiv-of-abs-fs-fix
-  (absfat-equiv (abs-fs-fix fs) fs)
-  :hints (("Goal" :in-theory (enable absfat-equiv))))
-
-(defthm context-apply-ok-when-absfat-equiv-lemma-1
-  (implies (and (abs-file-alist-p abs-file-alist1)
-                (absfat-subsetp abs-file-alist1 abs-file-alist2)
-                (consp (assoc-equal x abs-file-alist1)))
-           (consp (assoc-equal x abs-file-alist2)))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
 (defthmd
-  context-apply-ok-when-absfat-equiv-lemma-3
+  context-apply-ok-when-absfat-equiv-lemma-1
   (implies (and (abs-fs-p abs-file-alist1)
                 (abs-fs-p abs-file-alist2)
                 (absfat-equiv abs-file-alist1 abs-file-alist2))
@@ -10203,15 +10316,15 @@
                   (consp (assoc-equal x abs-file-alist2))))
   :hints
   (("goal" :in-theory (e/d (absfat-equiv)
-                           (context-apply-ok-when-absfat-equiv-lemma-1))
+                           (absfat-equiv-implies-set-equiv-names-at-1-lemma-1))
     :do-not-induct t
-    :use ((:instance context-apply-ok-when-absfat-equiv-lemma-1
+    :use ((:instance absfat-equiv-implies-set-equiv-names-at-1-lemma-1
                      (abs-file-alist2 abs-file-alist1)
                      (abs-file-alist1 abs-file-alist2))
-          context-apply-ok-when-absfat-equiv-lemma-1))))
+          absfat-equiv-implies-set-equiv-names-at-1-lemma-1))))
 
 (defthm
-  context-apply-ok-when-absfat-equiv-lemma-4
+  context-apply-ok-when-absfat-equiv-lemma-3
   (implies (and (abs-fs-p abs-file-alist1)
                 (abs-fs-p abs-file-alist2)
                 (absfat-equiv abs-file-alist1 abs-file-alist2)
@@ -10221,53 +10334,12 @@
                                abs-file-alist2)))
   :hints
   (("goal"
-    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-3)
+    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-1)
                     (abs-file-alist2 abs-file-alist1)
                     (abs-file-alist1 abs-file-alist2)
                     (x (fat32-filename-fix (car x-path)))))))
 
-(defthm
-  context-apply-ok-when-absfat-equiv-lemma-5
-  (implies (and (abs-file-alist-p abs-file-alist1)
-                (absfat-subsetp abs-file-alist1 abs-file-alist2)
-                (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1))))
-           (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2))))
-  :hints (("goal" :in-theory (enable absfat-subsetp))))
-
-(defthmd
-  context-apply-ok-when-absfat-equiv-lemma-7
-  (implies
-   (and (abs-fs-p abs-file-alist1)
-        (abs-fs-p abs-file-alist2)
-        (absfat-equiv abs-file-alist1 abs-file-alist2))
-   (equal (abs-directory-file-p (cdr (assoc-equal x abs-file-alist2)))
-          (abs-directory-file-p (cdr (assoc-equal x abs-file-alist1)))))
-  :hints
-  (("goal" :in-theory (e/d (absfat-equiv)
-                           (context-apply-ok-when-absfat-equiv-lemma-5))
-    :use (context-apply-ok-when-absfat-equiv-lemma-5
-          (:instance context-apply-ok-when-absfat-equiv-lemma-5
-                     (abs-file-alist2 abs-file-alist1)
-                     (abs-file-alist1 abs-file-alist2)))
-    :do-not-induct t)))
-
-(defthm
-  context-apply-ok-when-absfat-equiv-lemma-8
-  (implies
-   (and
-    (abs-fs-p abs-file-alist1)
-    (abs-fs-p abs-file-alist2)
-    (absfat-equiv abs-file-alist1 abs-file-alist2)
-    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
-                                            abs-file-alist1))))
-   (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x-path))
-                                           abs-file-alist2))))
-  :hints
-  (("goal"
-    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-7)
-                    (x (fat32-filename-fix (car x-path)))))))
-
-(defthm context-apply-ok-when-absfat-equiv-lemma-9
+(defthm context-apply-ok-when-absfat-equiv-lemma-4
   (implies (and (natp x)
                 (absfat-subsetp abs-file-alist1 abs-file-alist2)
                 (member-equal x abs-file-alist1))
@@ -10275,7 +10347,7 @@
   :hints (("goal" :in-theory (enable absfat-subsetp))))
 
 (defthm
-  context-apply-ok-when-absfat-equiv-lemma-10
+  context-apply-ok-when-absfat-equiv-lemma-5
   (implies (and (member-equal x abs-file-alist2)
                 (natp x)
                 (absfat-subsetp abs-file-alist1 abs-file-alist2)
@@ -10307,7 +10379,7 @@
 
   (local
    (defthmd
-     context-apply-ok-when-absfat-equiv-lemma-11
+     context-apply-ok-when-absfat-equiv-lemma-6
      (implies (and (natp x)
                    (absfat-equiv abs-file-alist1 abs-file-alist2)
                    (abs-fs-p abs-file-alist1)
@@ -10338,15 +10410,15 @@
                                       abs-file-alist3 x x-path)))
     :hints
     (("goal"
-      :use (context-apply-ok-when-absfat-equiv-lemma-11
-            (:instance context-apply-ok-when-absfat-equiv-lemma-11
+      :use (context-apply-ok-when-absfat-equiv-lemma-6
+            (:instance context-apply-ok-when-absfat-equiv-lemma-6
                        (x (nfix x))
                        (abs-file-alist1 (abs-fs-fix abs-file-alist1))
                        (abs-file-alist2 (abs-fs-fix abs-file-alist2))
                        (abs-file-alist3 (abs-fs-fix abs-file-alist3))))))))
 
 (defthm
-  context-apply-ok-when-absfat-equiv-lemma-12
+  context-apply-ok-when-absfat-equiv-lemma-7
   (implies (and (natp x)
                 (not (member-equal x (abs-addrs abs-file-alist1)))
                 (member-equal x abs-file-alist3))
@@ -10359,7 +10431,7 @@
                                          abs-file-alist1))))))
 
 ;; This is kinda general.
-(defthmd context-apply-ok-when-absfat-equiv-lemma-13
+(defthmd context-apply-ok-when-absfat-equiv-lemma-8
   (implies (and (natp x)
                 (absfat-equiv abs-file-alist1 abs-file-alist2)
                 (abs-fs-p abs-file-alist1)
@@ -10392,7 +10464,7 @@
    (:rewrite member-of-append)
    :top
    :bash
-   (:use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-13)
+   (:use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-8)
                     (abs-file-alist1 (abs-fs-fix abs-file-alist2))
                     (abs-file-alist2 (abs-fs-fix abs-file-alist1))))
    :bash :bash))
@@ -10413,42 +10485,8 @@
                        (context-apply abs-file-alist3
                                       abs-file-alist2 x x-path)))))
 
-;; The second rewrite rule of this defthm is needed...
 (defthm
   absfat-equiv-of-context-apply-lemma-1
-  (implies (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
-                (abs-file-alist-p abs-file-alist1))
-           (subsetp-equal (remove-equal nil (strip-cars abs-file-alist1))
-                          (remove-equal nil (strip-cars abs-file-alist2))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (absfat-subsetp)
-         (intersectp-is-commutative
-          (:rewrite abs-file->contents-when-m1-file-p)
-          (:rewrite member-equal-of-strip-cars-when-m1-file-alist-p)
-          (:rewrite absfat-subsetp-correctness-1)
-          (:rewrite absfat-subsetp-transitivity)))))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
-          (abs-file-alist-p abs-file-alist1)
-          (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist2))
-                                 y)))
-     (not (intersectp-equal (remove-equal nil (strip-cars abs-file-alist1))
-                            y)))
-    :hints
-    (("goal"
-      :use (:instance (:rewrite intersect-with-subset)
-                      (z y)
-                      (y (remove-equal nil (strip-cars abs-file-alist2)))
-                      (x (remove-equal nil (strip-cars abs-file-alist1)))))))))
-
-(defthm
-  absfat-equiv-of-context-apply-lemma-2
   (implies
    (and
     (subsetp-equal
@@ -10622,7 +10660,7 @@
                      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
                      (:rewrite abs-file-alist-p-correctness-1)
                      (:rewrite abs-file->contents-when-m1-file-p)
-                     (:rewrite absfat-subsetp-transitivity-lemma-7)
+                     (:rewrite absfat-subsetp-transitivity-lemma-8)
                      (:rewrite absfat-subsetp-transitivity-lemma-3)))
     :induct t
     :expand ((:with assoc-equal-of-append-1
@@ -10692,7 +10730,7 @@
                      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
                      (:rewrite abs-file-alist-p-correctness-1)
                      (:rewrite abs-file->contents-when-m1-file-p)
-                     (:rewrite absfat-subsetp-transitivity-lemma-7)
+                     (:rewrite absfat-subsetp-transitivity-lemma-8)
                      (:rewrite absfat-subsetp-transitivity-lemma-3))))))
 
 (defthm
@@ -10712,7 +10750,7 @@
                      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
                      (:rewrite abs-file-alist-p-correctness-1)
                      (:rewrite abs-file->contents-when-m1-file-p)
-                     (:rewrite absfat-subsetp-transitivity-lemma-7)
+                     (:rewrite absfat-subsetp-transitivity-lemma-8)
                      (:rewrite absfat-subsetp-transitivity-lemma-3)))
     :induct t
     :expand (:with assoc-equal-of-append-1
@@ -10798,44 +10836,6 @@
                       (abs-file-alist1 (abs-fs-fix abs-file-alist1))
                       (abs-file-alist2 (abs-fs-fix abs-file-alist2)))))
     :rule-classes :congruence))
-
-(defthm
-  absfat-equiv-implies-set-equiv-names-at-1-lemma-1
-  (implies (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
-                (abs-fs-p abs-file-alist1)
-                (abs-fs-p abs-file-alist2))
-           (subsetp-equal (names-at abs-file-alist1 relpath)
-                          (names-at abs-file-alist2 relpath)))
-  :hints
-  (("goal"
-    :in-theory (e/d (absfat-subsetp names-at)
-                    ((:rewrite context-apply-ok-when-absfat-equiv-lemma-1)))
-    :induct (mv (names-at abs-file-alist1 relpath)
-                (names-at abs-file-alist2 relpath)))
-   ("subgoal *1/3.2"
-    :use (:instance (:rewrite context-apply-ok-when-absfat-equiv-lemma-1)
-                    (abs-file-alist2 abs-file-alist2)
-                    (x (fat32-filename-fix (car relpath)))
-                    (abs-file-alist1 abs-file-alist1)))))
-
-(defcong absfat-equiv set-equiv (names-at fs relpath) 1
-  :hints
-  (("goal"
-    :in-theory (e/d (absfat-equiv set-equiv)
-                    (absfat-equiv-implies-set-equiv-names-at-1-lemma-1))
-    :use
-    ((:instance absfat-equiv-implies-set-equiv-names-at-1-lemma-1
-                (abs-file-alist1 (abs-fs-fix fs))
-                (abs-file-alist2 (abs-fs-fix fs-equiv)))
-     (:instance
-      absfat-equiv-implies-set-equiv-names-at-1-lemma-1
-      (abs-file-alist1 (abs-fs-fix fs-equiv))
-      (abs-file-alist2 (abs-fs-fix fs)))))))
-
-(defcong absfat-equiv
-  equal (dist-names dir relpath frame)
-  1
-  :hints (("goal" :in-theory (enable dist-names))))
 
 (defthm
   context-apply-ok-of-context-apply-lemma-1
@@ -11271,7 +11271,7 @@
           (:definition member-equal)
           (:rewrite abs-addrs-of-context-apply-1-lemma-4)
           (:definition assoc-equal)
-          (:rewrite context-apply-ok-when-absfat-equiv-lemma-9)
+          (:rewrite context-apply-ok-when-absfat-equiv-lemma-4)
           (:type-prescription abs-directory-file-p-when-m1-file-p-lemma-1)))
     :induct (mv (fat32-filename-list-prefixp z-path y-path)
                 (context-apply x z z-var z-path)
@@ -11308,7 +11308,7 @@
                (:definition member-equal)
                (:rewrite abs-addrs-of-context-apply-1-lemma-4)
                (:definition assoc-equal)
-               (:rewrite context-apply-ok-when-absfat-equiv-lemma-9)))
+               (:rewrite context-apply-ok-when-absfat-equiv-lemma-4)))
     :induct (mv (fat32-filename-list-prefixp z-path y-path)
                 (context-apply x z z-var z-path)
                 (context-apply x y y-var y-path)))
@@ -11495,13 +11495,13 @@
   :hints
   (("goal"
     :in-theory
-    (disable context-apply-ok-when-absfat-equiv-lemma-8)
+    (disable absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
     :use
-    ((:instance context-apply-ok-when-absfat-equiv-lemma-8
+    ((:instance absfat-equiv-implies-set-equiv-names-at-1-lemma-4
                 (abs-file-alist1 (abs-fs-fix abs-file-alist1))
                 (abs-file-alist2 (abs-fs-fix abs-file-alist2)))
      (:instance
-      context-apply-ok-when-absfat-equiv-lemma-8
+      absfat-equiv-implies-set-equiv-names-at-1-lemma-4
       (abs-file-alist1 (abs-fs-fix abs-file-alist2))
       (abs-file-alist2 (abs-fs-fix abs-file-alist1))))))
   :rule-classes :congruence)
@@ -13397,14 +13397,14 @@
   :hints
   (("goal"
     :in-theory (e/d (absfat-equiv)
-                    (absfat-equiv-of-context-apply-lemma-1))
+                    (absfat-equiv-implies-set-equiv-names-at-1-lemma-5))
     :use
-    ((:instance (:rewrite absfat-equiv-of-context-apply-lemma-1
+    ((:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-5
                           . 2)
                 (abs-file-alist1 (abs-fs-fix abs-file-alist1))
                 (abs-file-alist2 (abs-fs-fix abs-file-alist2)))
      (:instance
-      (:rewrite absfat-equiv-of-context-apply-lemma-1
+      (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-5
                 . 2)
       (abs-file-alist1 (abs-fs-fix abs-file-alist2))
       (abs-file-alist2 (abs-fs-fix abs-file-alist1))))))
@@ -13882,7 +13882,7 @@
             (:rewrite remove-assoc-of-remove-assoc)
             (:rewrite abs-file-alist-p-when-m1-file-alist-p)
             (:rewrite partial-collapse-correctness-lemma-36)
-            (:rewrite context-apply-ok-when-absfat-equiv-lemma-1)
+            (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-1)
             (:rewrite put-assoc-equal-without-change . 2)
             (:definition no-duplicatesp-equal)
             (:definition member-equal)
@@ -14187,7 +14187,7 @@
                      (:rewrite remove-assoc-of-put-assoc)
                      (:definition member-equal)
                      (:rewrite abs-file-alist-p-when-m1-file-alist-p)
-                     (:rewrite context-apply-ok-when-absfat-equiv-lemma-9)
+                     (:rewrite context-apply-ok-when-absfat-equiv-lemma-4)
                      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)))
     :induct (collapse frame)
     :expand
@@ -14832,7 +14832,7 @@
           (:rewrite remove-assoc-of-remove-assoc)
           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
           (:rewrite put-assoc-equal-without-change . 2)
-          (:rewrite context-apply-ok-when-absfat-equiv-lemma-9)
+          (:rewrite context-apply-ok-when-absfat-equiv-lemma-4)
           (:type-prescription absfat-equiv-of-context-apply-lemma-8)))
     :induct (collapse frame)
     :expand
