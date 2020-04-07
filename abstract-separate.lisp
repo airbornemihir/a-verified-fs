@@ -22,26 +22,6 @@
                      (:rewrite take-of-take-split)
                      (:rewrite take-more-of-take-fewer))))
 
-;; Move later.
-(defthm
-  append-when-prefixp
-  (implies (prefixp x y)
-           (equal (append x (nthcdr (len x) y)) y))
-  :hints
-  (("goal"
-    :in-theory (disable take-when-prefixp
-                        binary-append-take-nthcdr)
-    :use (take-when-prefixp (:instance binary-append-take-nthcdr (i (len x))
-                                       (l y))))))
-
-;; Move later
-(defthm nthcdr-when-prefixp
-  (implies (and (prefixp x y) (true-listp y))
-           (iff (nthcdr (len x) y)
-                (not (list-equiv x y))))
-  :hints (("Goal" :induct (prefixp x y)
-           :in-theory (enable prefixp)) ))
-
 (defthm abs-find-file-helper-of-collapse-lemma-3
   (implies (prefixp (fat32-filename-list-fix x) y)
            (prefixp (fat32-filename-list-fix x)
