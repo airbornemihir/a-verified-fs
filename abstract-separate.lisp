@@ -2566,6 +2566,107 @@
   :hints (("goal" :in-theory (enable frame-with-root))))
 
 (defund
+  collapse-this (frame x)
+  (declare
+   (xargs
+    :guard
+    (and
+     (frame-p frame)
+     (natp x)
+     (consp (assoc-equal 0 frame))
+     (consp (assoc-equal x (frame->frame frame)))
+     (not
+      (equal (frame-val->src
+              (cdr (assoc-equal x (frame->frame frame))))
+             x))
+     (or
+      (zp (frame-val->src
+           (cdr (assoc-equal x (frame->frame frame)))))
+      (consp
+       (assoc-equal
+        (frame-val->src
+         (cdr (assoc-equal x (frame->frame frame))))
+        (frame->frame frame)))))))
+  (if
+   (zp
+    (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+   (frame-with-root
+    (context-apply
+     (frame->root frame)
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+     x
+     (frame-val->path
+      (cdr (assoc-equal x (frame->frame frame)))))
+    (remove-assoc-equal x (frame->frame frame)))
+   (frame-with-root
+    (frame->root frame)
+    (put-assoc-equal
+     (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+     (frame-val
+      (frame-val->path
+       (cdr
+        (assoc-equal
+         (frame-val->src
+          (cdr (assoc-equal x (frame->frame frame))))
+         (frame->frame frame))))
+      (abs-fs-fix
+       (context-apply
+        (frame-val->dir
+         (cdr
+          (assoc-equal
+           (frame-val->src
+            (cdr (assoc-equal x (frame->frame frame))))
+           (remove-assoc-equal x (frame->frame frame)))))
+        (frame-val->dir
+         (cdr (assoc-equal x (frame->frame frame))))
+        x
+        (nthcdr
+         (len
+          (frame-val->path
+           (cdr
+            (assoc-equal
+             (frame-val->src
+              (cdr (assoc-equal x (frame->frame frame))))
+             (remove-assoc-equal x (frame->frame frame))))))
+         (frame-val->path
+          (cdr (assoc-equal x (frame->frame frame)))))))
+      (frame-val->src
+       (cdr
+        (assoc-equal
+         (frame-val->src
+          (cdr (assoc-equal x (frame->frame frame))))
+         (frame->frame frame)))))
+     (remove-assoc-equal x (frame->frame frame))))))
+
+(defthm
+  len-of-frame->frame-of-collapse-this
+  (implies
+   (and
+    (natp x)
+    (consp (assoc-equal x (frame->frame frame)))
+    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                x))
+    (or
+     (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+     (consp
+      (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                   (frame->frame frame)))))
+   (< (len (frame->frame (collapse-this frame x)))
+      (len (frame->frame frame))))
+  :hints (("goal" :in-theory (enable collapse-this)))
+  :rule-classes :linear)
+
+(defthm frame-p-of-collapse-this
+  (implies (frame-p frame)
+           (frame-p (collapse-this frame x)))
+  :hints (("goal" :in-theory (enable collapse-this))))
+
+(defthm collapse-guard-lemma-1
+  (consp (assoc-equal 0 (collapse-this frame x)))
+  :hints (("goal" :in-theory (enable collapse-this)))
+  :rule-classes :type-prescription)
+
+(defund
   collapse (frame)
   (declare (xargs :guard (and (frame-p frame)
                               (consp (assoc-equal 0 frame)))
@@ -2653,6 +2754,58 @@
               (remove-assoc-equal
                head-index (frame->frame frame))))))
         (collapse frame)))))
+
+(defund alt-collapse (frame)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame)))
+                  :measure (len (frame->frame frame))))
+  (b*
+      (((when (atom (frame->frame frame)))
+        (mv (frame->root frame) t))
+       (head-index (1st-complete (frame->frame frame)))
+       ((when (zp head-index))
+        (mv (frame->root frame) nil))
+       (head-frame-val (cdr (assoc-equal head-index (frame->frame frame))))
+       (src (frame-val->src
+             (cdr (assoc-equal (1st-complete (frame->frame frame))
+                               (frame->frame frame))))))
+    (if (zp src)
+        (b*
+            (((when (not (context-apply-ok (frame->root frame)
+                                           (frame-val->dir head-frame-val)
+                                           head-index
+                                           (frame-val->path head-frame-val))))
+              (mv (frame->root frame) nil)))
+          (alt-collapse (collapse-this frame (1st-complete (frame->frame frame)))))
+      (b*
+          ((path (frame-val->path head-frame-val))
+           ((when (or (equal src head-index)
+                      (atom (assoc-equal src
+                                         (remove-assoc-equal
+                                          head-index (frame->frame frame))))))
+            (mv (frame->root frame) nil))
+           (src-path
+            (frame-val->path
+             (cdr (assoc-equal src
+                               (remove-assoc-equal
+                                head-index (frame->frame frame))))))
+           (src-dir
+            (frame-val->dir
+             (cdr
+              (assoc-equal src
+                           (remove-assoc-equal
+                            head-index (frame->frame frame))))))
+           ((unless (prefixp src-path path)) (mv (frame->root frame) nil))
+           ((when (not (context-apply-ok
+                        src-dir (frame-val->dir head-frame-val)
+                        head-index
+                        (nthcdr (len src-path) path))))
+            (mv (frame->root frame) nil)))
+        (alt-collapse (collapse-this frame (1st-complete (frame->frame frame))))))))
+
+(thm (equal (alt-collapse frame) (collapse frame))
+     :hints (("GOal" :in-theory (enable 1st-complete-src collapse alt-collapse
+                                        collapse-this)) ))
 
 (assert-event
  (b*
