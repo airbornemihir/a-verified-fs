@@ -11165,7 +11165,7 @@
 
   (defthm
     context-apply-ok-of-context-apply-1
-    (implies (and (not (equal (nfix x2) (nfix x3)))
+    (implies (and (case-split (not (equal (nfix x2) (nfix x3))))
                   (abs-fs-p (context-apply abs-file-alist1
                                            abs-file-alist3 x3 x3-path))
                   (not (member-equal (nfix x2)
@@ -11378,7 +11378,7 @@
      (and
       (abs-complete (abs-fs-fix y))
       (abs-complete (abs-fs-fix z))
-      (not (equal (nfix y-var) (nfix z-var)))
+      (case-split (not (equal (nfix y-var) (nfix z-var))))
       (abs-no-dups-p (context-apply (context-apply x z z-var z-path)
                                     y y-var y-path))
       (not (intersectp-equal (names-at y nil)
@@ -12282,6 +12282,18 @@
                      (frame1 (frame-with-root root1 frame))
                      (frame2 (frame-with-root root2 frame)))))))
 
+(defthm
+  partial-collapse-correctness-lemma-43
+  (implies
+   (and
+    (no-duplicatesp-equal (strip-cars frame))
+    (frame-p frame)
+    (< 0 x)
+    (not (and (consp (assoc-equal x frame))
+              (abs-complete (frame-val->dir (cdr (assoc-equal x frame)))))))
+   (not (equal (1st-complete frame) x)))
+  :hints (("goal" :in-theory (enable 1st-complete))))
+
 ;; This theorem is used in an :expand hint later...
 (defthmd
   partial-collapse-correctness-lemma-22
@@ -12353,6 +12365,9 @@
   :hints
   (("goal"
     :do-not-induct t
+    :in-theory
+    (enable
+     (:rewrite context-apply-of-context-apply-1))
     :use
     ((:instance
       (:rewrite partial-collapse-correctness-lemma-20)
@@ -12392,19 +12407,7 @@
         (remove-assoc-equal
          x
          (remove-assoc-equal (1st-complete (frame->frame frame))
-                             (frame->frame frame))))))
-     (:instance
-      (:rewrite context-apply-of-context-apply-1)
-      (y-path (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
-      (y-var x)
-      (y (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
-      (z-path
-       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                          (frame->frame frame)))))
-      (z-var (1st-complete (frame->frame frame)))
-      (z (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                           (frame->frame frame)))))
-      (x (frame->root frame)))))))
+                             (frame->frame frame))))))))))
 
 (defthm
   partial-collapse-correctness-lemma-1
@@ -13924,18 +13927,6 @@
        (nthcdr (len (frame-val->path (cdr (assoc-equal src frame))))
                x-relpath)))))))
 
-(defthm
-  partial-collapse-correctness-lemma-43
-  (implies
-   (and
-    (no-duplicatesp-equal (strip-cars frame))
-    (frame-p frame)
-    (< 0 x)
-    (not (and (consp (assoc-equal x frame))
-              (abs-complete (frame-val->dir (cdr (assoc-equal x frame)))))))
-   (not (equal (1st-complete frame) x)))
-  :hints (("goal" :in-theory (enable 1st-complete))))
-
 ;; This can be p helpful...
 (defthm
   partial-collapse-correctness-lemma-59
@@ -14770,7 +14761,29 @@
                           (frame->frame frame)))))
       (frame-val->dir$inline (cdr (assoc-equal x (frame->frame frame))))
       x
-      (frame-val->path$inline (cdr (assoc-equal x (frame->frame frame)))))))))
+      (frame-val->path$inline (cdr (assoc-equal x (frame->frame frame))))))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and
+      (abs-separate (frame->frame frame))
+      (mv-nth 1 (collapse frame))
+      (consp (assoc-equal x (frame->frame frame)))
+      (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+      (abs-complete (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
+      (frame-p (frame->frame frame))
+      (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+      (dist-names (frame->root frame)
+                  nil (frame->frame frame))
+      (fat32-filename-list-equiv
+       relpath
+       (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+     (context-apply-ok
+      (frame->root frame)
+      (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+      x
+      relpath)))))
 
 (defthm
   partial-collapse-correctness-lemma-42
