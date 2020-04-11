@@ -10344,6 +10344,76 @@
                head-index (frame->frame frame))))))
         (partial-collapse frame pathname)))))
 
+(defund
+  alt-partial-collapse (frame pathname)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame)))
+                  :measure (len (frame->frame frame))
+                  :guard-debug t))
+  (b*
+      (((when (atom (frame->frame frame)))
+        frame)
+       (head-index (1st-complete-under-pathname (frame->frame frame) pathname))
+       ((when (zp head-index))
+        frame)
+       (head-frame-val
+        (cdr (assoc-equal head-index (frame->frame frame))))
+       (src
+        (frame-val->src
+         (cdr
+          (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                    pathname)
+                       (frame->frame frame))))))
+    (if
+        (zp src)
+        (b*
+            (((when
+                  (not
+                   (context-apply-ok (frame->root frame)
+                                     (frame-val->dir head-frame-val)
+                                     head-index
+                                     (frame-val->path head-frame-val))))
+              frame))
+          (alt-partial-collapse (collapse-this frame head-index) pathname))
+      (b*
+          ((path (frame-val->path head-frame-val))
+           ((when
+                (or
+                 (equal src head-index)
+                 (atom
+                  (assoc-equal src
+                               (remove-assoc-equal
+                                head-index (frame->frame frame))))))
+            frame)
+           (src-path
+            (frame-val->path
+             (cdr
+              (assoc-equal src
+                           (remove-assoc-equal
+                            head-index (frame->frame frame))))))
+           (src-dir
+            (frame-val->dir
+             (cdr
+              (assoc-equal src
+                           (remove-assoc-equal
+                            head-index (frame->frame frame))))))
+           ((unless (prefixp src-path path))
+            frame)
+           ((when (not (context-apply-ok
+                        src-dir (frame-val->dir head-frame-val)
+                        head-index
+                        (nthcdr (len src-path) path))))
+            frame))
+        (alt-partial-collapse (collapse-this frame head-index) pathname)))))
+
+(thm
+ (equal
+  (alt-partial-collapse frame pathname)
+  (partial-collapse frame pathname))
+ :hints (("Goal" :in-theory (enable partial-collapse alt-partial-collapse
+                                    1st-complete-under-pathname-src
+                                    collapse-this))))
+
 (defthmd
   context-apply-ok-when-absfat-equiv-lemma-1
   (implies (and (abs-fs-p abs-file-alist1)
