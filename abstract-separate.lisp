@@ -12662,31 +12662,6 @@
      x)))
   :hints (("goal" :in-theory (enable collapse-this))))
 
-;; The problem with this lemma is the
-;; (1st-complete (frame->frame (collapse-this frame x)))
-;; term. One could have rewrite that to an if-expression hinged on whether x equals
-;; (1st-complete (frame->frame frame)),
-;; but that expression would bring in
-;; (remove-assoc-equal (1st-complete (frame->frame frame)) (frame->frame frame)),
-;; which I am not sure I need to do.
-(defthm
-  partial-collapse-correctness-lemma-69
-  (implies
-   (and
-    (equal
-     (frame-val->src
-      (cdr (assoc-equal (1st-complete (frame->frame (collapse-this frame x)))
-                        (frame->frame frame))))
-     0)
-    (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-           0)
-    (not (zp x)))
-   (equal
-    (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                      (frame->frame frame))))
-    0))
-  :hints (("goal" :in-theory (enable collapse-this))))
-
 ;; This lemma is kinda large and complex, but that's because it comes from
 ;; expanding a collapse term rather than induction over collapse.
 (defthm
@@ -12747,6 +12722,22 @@
                         (frame->frame frame)))))))
   :hints (("goal" :in-theory (enable collapse-this))))
 
+;; The one hypothesis needs to cause a case-split some of the time - but does
+;; it, all of the time?
+(defthm
+  partial-collapse-correctness-lemma-69
+  (implies
+   (and
+    (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+           0)
+    (not (zp x))
+    (case-split
+     (not (equal x (1st-complete (frame->frame frame))))))
+   (equal
+    (1st-complete (frame->frame (collapse-this frame x)))
+    (1st-complete (frame->frame frame))))
+  :hints (("goal" :in-theory (enable collapse-this))))
+
 ;; This doesn't work as a pure type-prescription rule.
 (defthm
   partial-collapse-correctness-lemma-39
@@ -12759,8 +12750,6 @@
   :hints (("goal" :in-theory (enable collapse 1st-complete-src)))
   :rule-classes (:type-prescription :rewrite))
 
-;; This has the same problems as partial-collapse-correctness-lemma-69. Perhaps
-;; it can be generalised later...
 (defthm
   partial-collapse-correctness-lemma-71
   (implies
@@ -12771,17 +12760,33 @@
        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
                                          (frame->frame frame)))))
     (not
-     (equal
-      x
-      (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                        (frame->frame frame))))))
-    (not (zp x)))
+     (consp
+      (abs-addrs
+       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (context-apply-ok
+     (frame-val->dir
+      (cdr
+       (assoc-equal
+        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                          (frame->frame frame))))
+        (frame->frame frame))))
+     (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                       (frame->frame frame))))
+     (1st-complete (frame->frame frame))
+     (nthcdr
+      (len
+       (frame-val->path
+        (cdr (assoc-equal
+              (frame-val->src
+               (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                 (frame->frame frame))))
+              (frame->frame frame)))))
+      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                         (frame->frame frame)))))))
    (equal
-    (mv-nth
-     1
-     (collapse
-      (collapse-this (collapse-this frame x)
-                     (1st-complete (frame->frame (collapse-this frame x))))))
+    (mv-nth 1
+            (collapse (collapse-this (collapse-this frame x)
+                                     (1st-complete (frame->frame frame)))))
     (mv-nth
      1
      (collapse
@@ -12864,6 +12869,10 @@
     (< 0
        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
                                          (frame->frame frame)))))
+    (not
+     (consp
+      (abs-addrs
+       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
     (context-apply-ok
      (frame-val->dir
       (cdr
@@ -12883,31 +12892,17 @@
                                  (frame->frame frame))))
               (frame->frame frame)))))
       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         (frame->frame frame))))))
-    (absfat-equiv
-     (mv-nth
-      0
-      (collapse
-       (collapse-this (collapse-this frame
-                                     (1st-complete (frame->frame frame)))
-                      x)))
-     (mv-nth 0
-             (collapse (collapse-this frame
-                                      (1st-complete (frame->frame frame))))))
-    (not (zp x))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))))
+                                         (frame->frame frame)))))))
    (absfat-equiv
+    (mv-nth 0
+            (collapse (collapse-this (collapse-this frame x)
+                                     (1st-complete (frame->frame frame)))))
     (mv-nth
      0
      (collapse
-      (collapse-this (collapse-this frame x)
-                     (1st-complete (frame->frame (collapse-this frame x))))))
-    (mv-nth 0
-            (collapse (collapse-this frame
-                                     (1st-complete (frame->frame frame)))))))
+      (collapse-this (collapse-this frame
+                                    (1st-complete (frame->frame frame)))
+                     x)))))
   :hints (("goal" :in-theory (enable collapse-this))))
 
 (defthm
@@ -13598,73 +13593,54 @@
   partial-collapse-correctness-lemma-104
   (implies
    (and
+    ;; To prevent looping.
+    (not (equal x
+                (1st-complete (frame->frame frame))))
     (equal
-     (frame-val->src
-      (cdr (assoc-equal (1st-complete (frame->frame frame))
-                        (frame->frame frame))))
+     (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                       (frame->frame frame))))
      0)
-    (equal (frame-val->src
-            (cdr (assoc-equal x (frame->frame frame))))
+    (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
            0)
-    (consp (frame->frame (collapse-this frame x)))
-    (mv-nth
-     1
-     (collapse
-      (collapse-this
-       (collapse-this frame
-                      (1st-complete (frame->frame frame)))
-       x)))
-    (not (zp x))
     (consp (assoc-equal x (frame->frame frame)))
     (not
      (consp
       (abs-addrs
-       (frame-val->dir
-        (cdr (assoc-equal x (frame->frame frame)))))))
+       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
     (< 0 (1st-complete (frame->frame frame)))
-    (mv-nth
-     1
-     (collapse
-      (collapse-this frame
-                     (1st-complete (frame->frame frame)))))
     (frame-p (frame->frame frame))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (dist-names (frame->root frame)
                 nil (frame->frame frame))
     (abs-separate (frame->frame frame)))
    (equal
+    (mv-nth 1
+            (collapse (collapse-this (collapse-this frame x)
+                                     (1st-complete (frame->frame frame)))))
     (mv-nth
      1
      (collapse
-      (collapse-this
-       (collapse-this frame x)
-       (1st-complete (frame->frame (collapse-this frame x))))))
-    (mv-nth
-     1
-     (collapse
-      (collapse-this
-       (collapse-this frame
-                      (1st-complete (frame->frame frame)))
-       x)))))
+      (collapse-this (collapse-this frame
+                                    (1st-complete (frame->frame frame)))
+                     x)))))
   :hints
   (("goal"
-    :in-theory
-    (e/d (collapse-this collapse)
-         ((:definition member-equal)
-          (:definition assoc-equal)
-          (:definition remove-equal)
-          (:definition remove-assoc-equal)
-          (:definition no-duplicatesp-equal)
-          (:rewrite context-apply-ok-when-absfat-equiv-lemma-4)
-          (:rewrite partial-collapse-correctness-lemma-45
-                    . 2)
-          (:linear partial-collapse-correctness-lemma-100)
-          (:linear abs-find-file-correctness-1-lemma-44)
-          (:rewrite partial-collapse-correctness-lemma-39)
-          (:rewrite partial-collapse-correctness-lemma-54)
-          (:linear count-free-clusters-correctness-1)
-          (:rewrite strip-cars-of-put-assoc)
-          (:rewrite partial-collapse-correctness-lemma-28))))))
+    :in-theory (e/d (collapse-this collapse)
+                    ((:definition member-equal)
+                     (:definition assoc-equal)
+                     (:definition remove-equal)
+                     (:definition remove-assoc-equal)
+                     (:definition no-duplicatesp-equal)
+                     (:rewrite context-apply-ok-when-absfat-equiv-lemma-4)
+                     (:rewrite partial-collapse-correctness-lemma-45
+                               . 2)
+                     (:linear partial-collapse-correctness-lemma-100)
+                     (:linear abs-find-file-correctness-1-lemma-44)
+                     (:rewrite partial-collapse-correctness-lemma-39)
+                     (:rewrite partial-collapse-correctness-lemma-54)
+                     (:linear count-free-clusters-correctness-1)
+                     (:rewrite strip-cars-of-put-assoc)
+                     (:rewrite partial-collapse-correctness-lemma-28))))))
 
 (defthm
   partial-collapse-correctness-lemma-105
@@ -13767,7 +13743,13 @@
           partial-collapse-correctness-lemma-65))
     :use (:instance partial-collapse-correctness-lemma-65
                     (y
-                     (1ST-COMPLETE (FRAME->FRAME FRAME)))))))
+                     (1ST-COMPLETE (FRAME->FRAME FRAME)))))
+   ("subgoal *1/4.2" :in-theory
+    (e/d (collapse abs-separate 1st-complete-src)
+         ((:definition remove-assoc-equal)
+          (:rewrite abs-file-alist-p-when-m1-file-alist-p)
+          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+          (:e force))))))
 
 (defthm
   partial-collapse-correctness-lemma-38
