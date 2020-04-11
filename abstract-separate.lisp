@@ -10262,157 +10262,52 @@
 
 (defund
   partial-collapse (frame pathname)
-  (declare (xargs :guard (and (frame-p frame)
-                              (consp (assoc-equal 0 frame)))
-                  :measure (len (frame->frame frame))
-                  :guard-debug t))
+  (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame)))
+                  :measure (len (frame->frame frame))))
   (b*
-      (((when (atom (frame->frame frame)))
-        frame)
-       (head-index (1st-complete-under-pathname (frame->frame frame) pathname))
-       ((when (zp head-index))
-        frame)
+      (((when (atom (frame->frame frame))) frame)
+       (head-index
+        (1st-complete-under-pathname (frame->frame frame) pathname))
+       ((when (zp head-index)) frame)
        (head-frame-val
         (cdr (assoc-equal head-index (frame->frame frame))))
-       (src (1st-complete-under-pathname-src (frame->frame frame) pathname)))
+       (src (frame-val->src
+             (cdr
+              (assoc-equal
+               (1st-complete-under-pathname (frame->frame frame)
+                                            pathname)
+               (frame->frame frame))))))
     (if
-        (zp src)
-        (b*
-            ((root-after-context-apply
-              (context-apply (frame->root frame)
-                             (frame-val->dir head-frame-val)
-                             head-index
-                             (frame-val->path head-frame-val)))
-             ((when
-                  (not
-                   (context-apply-ok (frame->root frame)
-                                     (frame-val->dir head-frame-val)
-                                     head-index
-                                     (frame-val->path head-frame-val))))
-              frame)
-             (frame
-              (frame-with-root
-               root-after-context-apply
-               (remove-assoc-equal head-index (frame->frame frame)))))
-          (partial-collapse frame pathname))
-      (b*
-          ((path (frame-val->path head-frame-val))
-           ((when
-                (or
-                 (equal src head-index)
-                 (atom
-                  (assoc-equal src
-                               (remove-assoc-equal
-                                head-index (frame->frame frame))))))
-            frame)
-           (src-path
-            (frame-val->path
-             (cdr
-              (assoc-equal src
-                           (remove-assoc-equal
-                            head-index (frame->frame frame))))))
-           (src-dir
-            (frame-val->dir
-             (cdr
-              (assoc-equal src
-                           (remove-assoc-equal
-                            head-index (frame->frame frame))))))
-           ((unless (prefixp src-path path))
-            frame)
-           (src-dir-after-context-apply
-            (context-apply src-dir (frame-val->dir head-frame-val)
-                           head-index
-                           (nthcdr (len src-path) path)))
-           ((when (not (context-apply-ok
-                        src-dir (frame-val->dir head-frame-val)
-                        head-index
-                        (nthcdr (len src-path) path))))
-            frame)
-           (frame
-            (frame-with-root
-             (frame->root frame)
-             (put-assoc-equal
-              src
-              (frame-val
-               (frame-val->path
-                (cdr (assoc-equal src (frame->frame frame))))
-               (abs-fs-fix
-                src-dir-after-context-apply)
-               (frame-val->src
-                (cdr (assoc-equal src (frame->frame frame)))))
-              (remove-assoc-equal
-               head-index (frame->frame frame))))))
-        (partial-collapse frame pathname)))))
-
-(defund
-  alt-partial-collapse (frame pathname)
-  (declare (xargs :guard (and (frame-p frame)
-                              (consp (assoc-equal 0 frame)))
-                  :measure (len (frame->frame frame))
-                  :guard-debug t))
-  (b*
-      (((when (atom (frame->frame frame)))
-        frame)
-       (head-index (1st-complete-under-pathname (frame->frame frame) pathname))
-       ((when (zp head-index))
-        frame)
-       (head-frame-val
-        (cdr (assoc-equal head-index (frame->frame frame))))
-       (src
-        (frame-val->src
-         (cdr
-          (assoc-equal (1st-complete-under-pathname (frame->frame frame)
-                                                    pathname)
-                       (frame->frame frame))))))
-    (if
-        (zp src)
-        (b*
-            (((when
-                  (not
-                   (context-apply-ok (frame->root frame)
-                                     (frame-val->dir head-frame-val)
-                                     head-index
-                                     (frame-val->path head-frame-val))))
-              frame))
-          (alt-partial-collapse (collapse-this frame head-index) pathname))
-      (b*
-          ((path (frame-val->path head-frame-val))
-           ((when
-                (or
-                 (equal src head-index)
-                 (atom
-                  (assoc-equal src
-                               (remove-assoc-equal
-                                head-index (frame->frame frame))))))
-            frame)
-           (src-path
-            (frame-val->path
-             (cdr
-              (assoc-equal src
-                           (remove-assoc-equal
-                            head-index (frame->frame frame))))))
-           (src-dir
-            (frame-val->dir
-             (cdr
-              (assoc-equal src
-                           (remove-assoc-equal
-                            head-index (frame->frame frame))))))
-           ((unless (prefixp src-path path))
-            frame)
-           ((when (not (context-apply-ok
-                        src-dir (frame-val->dir head-frame-val)
-                        head-index
-                        (nthcdr (len src-path) path))))
-            frame))
-        (alt-partial-collapse (collapse-this frame head-index) pathname)))))
-
-(thm
- (equal
-  (alt-partial-collapse frame pathname)
-  (partial-collapse frame pathname))
- :hints (("Goal" :in-theory (enable partial-collapse alt-partial-collapse
-                                    1st-complete-under-pathname-src
-                                    collapse-this))))
+     (zp src)
+     (b*
+         (((when (not (context-apply-ok (frame->root frame)
+                                        (frame-val->dir head-frame-val)
+                                        head-index
+                                        (frame-val->path head-frame-val))))
+           frame))
+       (partial-collapse (collapse-this frame head-index) pathname))
+     (b*
+         ((path (frame-val->path head-frame-val))
+          ((when (or (equal src head-index)
+                     (atom (assoc-equal src
+                                        (remove-assoc-equal
+                                         head-index (frame->frame frame))))))
+           frame)
+          (src-path (frame-val->path
+                     (cdr (assoc-equal src
+                                       (remove-assoc-equal
+                                        head-index (frame->frame frame))))))
+          (src-dir (frame-val->dir
+                    (cdr
+                     (assoc-equal src (remove-assoc-equal
+                                       head-index (frame->frame frame))))))
+          ((unless (prefixp src-path path)) frame)
+          ((when (not (context-apply-ok
+                       src-dir (frame-val->dir head-frame-val)
+                       head-index
+                       (nthcdr (len src-path) path))))
+           frame))
+       (partial-collapse (collapse-this frame head-index) pathname)))))
 
 (defthmd
   context-apply-ok-when-absfat-equiv-lemma-1
@@ -19405,6 +19300,12 @@
 ;;              (remove-assoc-equal x (frame->frame frame))))))
 ;;          ("subgoal *1/3.1'")))
 
+(defthm
+  partial-collapse-correctness-lemma-92
+  (implies
+   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+   (no-duplicatesp-equal (strip-cars (frame->frame (collapse-this frame x)))))
+  :hints (("goal" :in-theory (enable collapse-this))))
 ;; (defthm
 ;;   partial-collapse-correctness-lemma-92
 ;;   (implies
@@ -19441,6 +19342,10 @@
 ;;                           (frame->frame frame))))))
 ;;   :hints (("goal" :in-theory (enable 1st-complete-under-pathname-src))))
 
+(defthm partial-collapse-correctness-lemma-93
+  (implies (frame-p (frame->frame frame))
+           (frame-p (frame->frame (collapse-this frame x))))
+  :hints (("goal" :in-theory (enable collapse-this))))
 ;; (defthm
 ;;   partial-collapse-correctness-lemma-93
 ;;   (implies
