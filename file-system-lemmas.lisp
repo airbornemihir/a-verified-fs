@@ -981,6 +981,7 @@
            (equal (remove-equal nil (strip-cars (remove-equal x alist)))
                   (remove-equal nil (strip-cars alist)))))
 
+;; Rename and add a case-split to the hypothesis about x1.
 (defthm assoc-equal-of-append-1
   (implies (not (null x1))
            (equal (assoc-equal x1 (append x2 y))
@@ -1029,6 +1030,7 @@
                   (equal (cdr (assoc-equal name2 alist))
                          val2))))))
 
+;; Add a case-split to the hypothesis about x2.
 (defthm assoc-of-remove
   (implies (and (atom x1) (not (null x2)))
            (equal (assoc-equal x2 (remove-equal x1 l))
