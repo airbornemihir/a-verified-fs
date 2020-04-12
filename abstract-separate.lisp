@@ -664,6 +664,12 @@
                            (abs-no-dups-p (abs-file->contents val))))))
   :hints (("goal" :in-theory (enable abs-fs-p))))
 
+(defthm abs-fs-p-of-abs-file->contents-of-cdr-of-assoc
+  (implies (and (abs-fs-p fs)
+                (abs-directory-file-p (cdr (assoc-equal name fs))))
+           (abs-fs-p (abs-file->contents (cdr (assoc-equal name fs)))))
+  :hints (("goal" :in-theory (enable abs-fs-p))))
+
 (defund
   abs-fs-fix (x)
   (declare
@@ -774,6 +780,50 @@
                  :define t
                  :forward t)
 
+(defund
+  addrs-at (fs relpath)
+  (declare (xargs :guard (and (abs-fs-p fs)
+                              (fat32-filename-list-p relpath))
+                  :measure (len relpath)))
+  (b*
+      ((fs (mbe :logic (abs-fs-fix fs) :exec fs))
+       ((when (atom relpath))
+        (abs-top-addrs fs))
+       (head (mbe :exec (car relpath)
+                  :logic (fat32-filename-fix (car relpath))))
+       ((unless
+            (and (consp (abs-assoc head fs))
+                 (abs-directory-file-p (cdr (abs-assoc head fs)))))
+        nil))
+    (addrs-at
+     (abs-file->contents (cdr (abs-assoc head fs)))
+     (cdr relpath))))
+
+(defthm addrs-at-of-fat32-filename-list-fix
+  (equal (addrs-at fs (fat32-filename-list-fix relpath))
+         (addrs-at fs relpath))
+  :hints (("goal" :in-theory (enable addrs-at))))
+
+(defcong
+  fat32-filename-list-equiv
+  equal (addrs-at fs relpath)
+  2
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (fat32-filename-list-equiv)
+         (addrs-at-of-fat32-filename-list-fix))
+    :use
+    (addrs-at-of-fat32-filename-list-fix
+     (:instance addrs-at-of-fat32-filename-list-fix
+                (relpath relpath-equiv))))))
+
+(defthm addrs-at-of-abs-fs-fix
+  (equal (addrs-at (abs-fs-fix fs)
+                   relpath)
+         (addrs-at fs relpath))
+  :hints (("goal" :in-theory (enable addrs-at))))
+
 ;; Where are the numbers going to come from? It's not going to work, the idea
 ;; of letting variables be represented by their index in the list. Under such a
 ;; scheme, we'll never be able to rewrite an (append ...) term, since that
@@ -866,12 +916,6 @@
   (abs-file-alist-p (context-apply abs-file-alist1
                                    abs-file-alist2 x x-path))
   :hints (("goal" :in-theory (enable context-apply))))
-
-(defthm abs-fs-p-of-abs-file->contents-of-cdr-of-assoc
-  (implies (and (abs-fs-p fs)
-                (abs-directory-file-p (cdr (assoc-equal name fs))))
-           (abs-fs-p (abs-file->contents (cdr (assoc-equal name fs)))))
-  :hints (("goal" :in-theory (enable abs-fs-p))))
 
 (verify-guards context-apply
   :guard-debug t
@@ -3442,6 +3486,46 @@
       absfat-equiv-implies-set-equiv-names-at-1-lemma-6
       (abs-file-alist1 (abs-fs-fix fs-equiv))
       (abs-file-alist2 (abs-fs-fix fs)))))))
+
+;; Move later
+(defthm member-of-abs-top-addrs
+  (implies (and (natp x) (member-equal x fs))
+           (member-equal x (abs-top-addrs fs)))
+  :hints (("goal" :in-theory (enable abs-top-addrs))))
+
+(defthm absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1
+  (implies (absfat-subsetp fs fs-equiv)
+           (subsetp-equal (abs-top-addrs fs)
+                          (abs-top-addrs fs-equiv)))
+  :hints (("goal" :in-theory (enable abs-top-addrs absfat-subsetp))))
+
+(defthm absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2
+  (implies (and (abs-fs-p fs)
+                (absfat-subsetp fs fs-equiv)
+                (consp (assoc-equal (fat32-filename-fix (car relpath))
+                                    fs)))
+           (consp (assoc-equal (fat32-filename-fix (car relpath))
+                               fs-equiv)))
+  :hints (("goal" :in-theory (enable abs-fs-p))))
+
+(defthm absfat-equiv-implies-set-equiv-addrs-at-1-lemma-3
+  (implies (and (abs-fs-p fs)
+                (abs-fs-p fs-equiv)
+                (absfat-subsetp fs fs-equiv))
+           (subsetp-equal (addrs-at fs relpath)
+                          (addrs-at fs-equiv relpath)))
+  :hints (("goal" :in-theory (enable addrs-at))))
+
+(defcong absfat-equiv set-equiv (addrs-at fs relpath) 1
+  :hints
+  (("goal"
+    :in-theory (e/d (absfat-equiv set-equiv)
+                    (absfat-equiv-implies-set-equiv-addrs-at-1-lemma-3))
+    :use
+    ((:instance absfat-equiv-implies-set-equiv-addrs-at-1-lemma-3
+                (fs (abs-fs-fix fs)) (fs-equiv (abs-fs-fix fs-equiv)))
+     (:instance absfat-equiv-implies-set-equiv-addrs-at-1-lemma-3
+                (fs (abs-fs-fix fs-equiv)) (fs-equiv (abs-fs-fix fs)))))))
 
 (defthm
   abs-no-dups-p-of-context-apply-lemma-1
