@@ -982,8 +982,8 @@
                   (remove-equal nil (strip-cars alist)))))
 
 ;; Rename and add a case-split to the hypothesis about x1.
-(defthm assoc-equal-of-append-1
-  (implies (not (null x1))
+(defthm assoc-of-append-1
+  (implies (case-split (not (null x1)))
            (equal (assoc-equal x1 (append x2 y))
                   (if (consp (assoc-equal x1 x2))
                       (assoc-equal x1 x2)
@@ -1030,9 +1030,8 @@
                   (equal (cdr (assoc-equal name2 alist))
                          val2))))))
 
-;; Add a case-split to the hypothesis about x2.
 (defthm assoc-of-remove
-  (implies (and (atom x1) (not (null x2)))
+  (implies (and (atom x1) (case-split (not (null x2))))
            (equal (assoc-equal x2 (remove-equal x1 l))
                   (assoc-equal x2 l))))
 
@@ -1182,7 +1181,6 @@
            (iff (member x (put-assoc-equal name val alist))
                 (member x alist))))
 
-;; Move later.
 (defthm
   consp-of-remove-assoc-1
   (implies (and (not (equal x2 x1))
@@ -1190,8 +1188,8 @@
            (consp (remove-assoc-equal x2 alist))))
 
 ;; The following is redundant with the eponymous theorem in
-;;  books/kestrel/lists-light/nthcdr.lisp, from where it was taken after a
-;;  discussion with Eric Smith.
+;; books/kestrel/lists-light/nthcdr.lisp, from where it was taken after a
+;; discussion with Eric Smith.
 (defthm nthcdr-iff
   (iff (nthcdr n x)
        (if (< (nfix n) (len x))
@@ -1202,3 +1200,8 @@
              (not (true-listp x))
            nil)))
   :hints (("Goal" :in-theory (enable nthcdr))))
+
+(defthm assoc-of-true-list-fix
+  (equal (assoc-equal x (true-list-fix l))
+         (assoc-equal x l))
+  :hints (("goal" :in-theory (enable true-list-fix))))
