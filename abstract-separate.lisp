@@ -12310,17 +12310,22 @@
                      x)))))
   :hints (("goal" :in-theory (enable collapse-this))))
 
-(defthmd
+(defthm
   partial-collapse-correctness-lemma-27
   (implies
    (and (no-duplicatesp-equal (strip-cars frame))
         (not (zp (1st-complete (remove-assoc-equal x frame)))))
-   (equal
-    (abs-addrs
-     (frame-val->dir
-      (cdr (assoc-equal (1st-complete (remove-assoc-equal x frame))
-                        frame))))
-    nil))
+   (and
+    (consp
+     (assoc-equal
+      (1st-complete (remove-assoc-equal x frame))
+      frame))
+    (equal
+     (abs-addrs
+      (frame-val->dir
+       (cdr (assoc-equal (1st-complete (remove-assoc-equal x frame))
+                         frame))))
+     nil)))
   :hints (("goal" :in-theory (e/d (1st-complete)
                                   (1st-complete-correctness-1)))
           ("subgoal *1/2"
@@ -12741,7 +12746,8 @@
   :hints
   (("goal"
     :in-theory (e/d (collapse-this collapse)
-                    (partial-collapse-correctness-lemma-1))
+                    (partial-collapse-correctness-lemma-1
+                     partial-collapse-correctness-lemma-27))
     :use ((:instance partial-collapse-correctness-lemma-1
                      (frame (collapse-this frame x)))
           (:instance (:rewrite partial-collapse-correctness-lemma-27)
@@ -12795,7 +12801,7 @@
                          (frame->frame frame))))))))
   :hints
   (("goal" :in-theory (e/d (collapse collapse-this)
-                           ())
+                           (partial-collapse-correctness-lemma-27))
     :use (:instance (:rewrite partial-collapse-correctness-lemma-27)
                     (frame (frame->frame frame))
                     (x (1st-complete (frame->frame frame)))))))
@@ -14126,6 +14132,107 @@
               (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
               (frame->frame frame))))))
      (name (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))))))
+
+(defthm collapse-shunt-lemma-1
+  (implies (and (atom (assoc-equal x frame))
+                (frame-p frame)
+                (natp x)
+                (atom (assoc-equal 0 frame))
+                (abs-complete (frame-val->dir val)))
+           (equal (1st-complete (put-assoc-equal x val frame))
+                  (if (zp (1st-complete frame))
+                      x (1st-complete frame))))
+  :hints (("goal" :in-theory (enable 1st-complete))))
+
+(defthm
+  collapse-shunt-lemma-2
+  (implies
+   (and (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (< 0 x))
+   (not (equal (1st-complete (remove-assoc-equal x (frame->frame frame)))
+               x)))
+  :hints
+  (("goal"
+    :in-theory (disable 1st-complete-correctness-1)
+    :use (:instance 1st-complete-correctness-1
+                    (frame (remove-assoc-equal x (frame->frame frame)))))))
+
+;; Move later.
+(defthm
+  true-list-fix-when-frame-p
+  (implies (frame-p x) (equal (true-list-fix x) x)))
+
+;; Something suspicious about this...
+(defthm
+  collapse-shunt-lemma-3
+  (implies
+   (equal
+    (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                      (frame->frame frame))))
+    0)
+   (equal
+    (collapse
+     (collapse-this
+      (frame-with-root
+       (frame->root frame)
+       (put-assoc-equal
+        (1st-complete (frame->frame frame))
+        (cdr (assoc-equal (1st-complete (frame->frame frame))
+                          (frame->frame frame)))
+        (remove-assoc-equal (1st-complete (frame->frame frame))
+                            (frame->frame frame))))
+      (1st-complete (frame->frame frame))))
+    (collapse (collapse-this frame
+                             (1st-complete (frame->frame frame))))))
+  :hints (("goal" :in-theory (enable collapse-this))))
+
+(defthm
+  collapse-shunt
+  (implies (and (frame-p (frame->frame frame))
+                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (subsetp (abs-addrs (frame->root frame))
+                         (frame-addrs-root (frame->frame frame)))
+                (abs-separate (frame-with-root (frame->root frame)
+                                               (frame->frame frame)))
+                (mv-nth 1
+                        (collapse frame))
+                (consp (assoc-equal x (frame->frame frame)))
+                (abs-complete
+                 (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
+                (NOT (CONSP (ASSOC-EQUAL 0 (FRAME->FRAME FRAME))))
+                (not (zp x)))
+           (mv-nth 1
+                   (collapse
+                    (frame-with-root
+                     (frame->root frame)
+                     (put-assoc-equal x (cdr (assoc-equal x (frame->frame frame)))
+                                      (remove-assoc-equal x (frame->frame frame)))))))
+     :hints
+     (("Goal" :in-theory (e/d (collapse)
+                              ((:DEFINITION MEMBER-EQUAL)
+                               (:DEFINITION REMOVE-EQUAL)
+                               (:REWRITE
+                                PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-43)
+                               (:REWRITE NTHCDR-WHEN->=-N-LEN-L)
+                               (:REWRITE
+                                PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-48)
+                               (:REWRITE
+                                CONTEXT-APPLY-OK-WHEN-ABSFAT-EQUIV-LEMMA-4)
+                               (:REWRITE
+                                PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-28)
+                               (:REWRITE
+                                PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-30)
+                               (:e force)))
+       :induct
+       (collapse frame)
+       :expand
+       (collapse
+        (frame-with-root
+         (frame->root frame)
+         (put-assoc-equal x
+                          (cdr (assoc-equal x (frame->frame frame)))
+                          (remove-assoc-equal x (frame->frame frame))))))))
 
 (skip-proofs
  (defthm partial-collapse-correctness-lemma-49
