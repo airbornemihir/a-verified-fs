@@ -1777,39 +1777,6 @@
                           :top :bash))
 
 (defthm
-  abs-addrs-of-context-apply-3-lemma-1
-  (implies
-   (and
-    (consp (assoc-equal (fat32-filename-fix (car x2-path))
-                        abs-file-alist1))
-    (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                                            abs-file-alist1)))
-    (not
-     (equal
-      (put-assoc-equal
-       (fat32-filename-fix (car x2-path))
-       (abs-file
-        (abs-file->dir-ent
-         (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                           abs-file-alist1)))
-        (context-apply
-         (abs-file->contents
-          (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                            abs-file-alist1)))
-         abs-file-alist2 x2 (cdr x2-path)))
-       abs-file-alist1)
-      abs-file-alist1)))
-   (not
-    (equal
-     (abs-file->contents$inline
-      (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                        abs-file-alist1)))
-     (context-apply (abs-file->contents$inline
-                     (cdr (assoc-equal (fat32-filename-fix (car x2-path))
-                                       abs-file-alist1)))
-                    abs-file-alist2 x2 (cdr x2-path))))))
-
-(defthm
   abs-addrs-of-context-apply-3-lemma-2
   (implies
    (and

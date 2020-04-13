@@ -1177,7 +1177,7 @@
                   (put-assoc-equal name val (remove-equal x alist)))))
 
 (defthm member-of-put-assoc
-  (implies (and (atom x) (force (not (null name))))
+  (implies (and (atom x) (case-split (not (null name))))
            (iff (member x (put-assoc-equal name val alist))
                 (member x alist))))
 

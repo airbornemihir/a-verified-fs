@@ -145,12 +145,13 @@
            (equal (hifat-subsetp m1-file-alist1 m1-file-alist2)
                   (atom m1-file-alist1))))
 
-(defthm hifat-subsetp-reflexive-lemma-1
-  (implies (and (m1-file-alist-p x)
-                (hifat-no-dups-p (append x y)))
-           (equal (assoc-equal (car (car y)) (append x y))
-                  (car y)))
-  :hints (("Goal" :in-theory (enable hifat-no-dups-p)) ))
+(local
+ (defthm hifat-subsetp-reflexive-lemma-1
+   (implies (and (m1-file-alist-p x)
+                 (hifat-no-dups-p (append x y)))
+            (equal (assoc-equal (car (car y)) (append x y))
+                   (car y)))
+   :hints (("Goal" :in-theory (enable hifat-no-dups-p)) )))
 
 (local
  (defthm hifat-subsetp-reflexive-lemma-2
