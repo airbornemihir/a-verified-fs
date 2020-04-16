@@ -2784,10 +2784,9 @@
     (if
      (zp src)
      (b*
-         (((when
-            (not (ctx-app-ok (frame->root frame)
-                             head-index
-                             (frame-val->path head-frame-val))))
+         (((unless (ctx-app-ok (frame->root frame)
+                               head-index
+                               (frame-val->path head-frame-val)))
            (mv (frame->root frame) nil)))
        (collapse
         (collapse-this frame
@@ -2803,10 +2802,9 @@
           (src-dir
            (frame-val->dir
             (cdr (assoc-equal src (frame->frame frame)))))
-          ((unless (prefixp src-path path))
-           (mv (frame->root frame) nil))
-          ((when (not (ctx-app-ok src-dir head-index
-                                  (nthcdr (len src-path) path))))
+          ((unless (and (prefixp src-path path)
+                        (ctx-app-ok src-dir head-index
+                                    (nthcdr (len src-path) path))))
            (mv (frame->root frame) nil)))
        (collapse
         (collapse-this frame
@@ -9867,10 +9865,9 @@
     (if
      (zp src)
      (b*
-         (((when
-            (not (ctx-app-ok (frame->root frame)
-                             head-index
-                             (frame-val->path head-frame-val))))
+         (((unless (ctx-app-ok (frame->root frame)
+                               head-index
+                               (frame-val->path head-frame-val)))
            frame))
        (partial-collapse (collapse-this frame head-index)
                          pathname))
@@ -12397,17 +12394,94 @@
                      (:rewrite strip-cars-of-put-assoc)
                      (:rewrite partial-collapse-correctness-lemma-28))))))
 
+;; (defthm
+;;   partial-collapse-correctness-lemma-105
+;;   (implies
+;;    (and
+;;     (equal
+;;      (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+;;                                        (frame->frame frame))))
+;;      0)
+;;     (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;            0)
+;;     (consp (frame->frame (collapse-this frame x)))
+;;     (absfat-equiv
+;;      (mv-nth
+;;       0
+;;       (collapse
+;;        (collapse-this (collapse-this frame
+;;                                      (1st-complete (frame->frame frame)))
+;;                       x)))
+;;      (mv-nth 0
+;;              (collapse (collapse-this frame
+;;                                       (1st-complete (frame->frame frame))))))
+;;     (not (zp x))
+;;     (consp (assoc-equal x (frame->frame frame)))
+;;     (not
+;;      (consp
+;;       (abs-addrs
+;;        (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+;;     (< 0 (1st-complete (frame->frame frame)))
+;;     (mv-nth 1
+;;             (collapse (collapse-this frame
+;;                                      (1st-complete (frame->frame frame)))))
+;;     (frame-p (frame->frame frame))
+;;     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;     (dist-names (frame->root frame)
+;;                 nil (frame->frame frame))
+;;     (abs-separate (frame->frame frame)))
+;;    (absfat-equiv
+;;     (mv-nth
+;;      0
+;;      (collapse
+;;       (collapse-this (collapse-this frame x)
+;;                      (1st-complete (frame->frame (collapse-this frame x))))))
+;;     (mv-nth 0
+;;             (collapse (collapse-this frame
+;;                                      (1st-complete (frame->frame frame)))))))
+;;   :hints
+;;   (("goal"
+;;     :in-theory (e/d (collapse-this collapse
+;;                                    partial-collapse-correctness-lemma-22)
+;;                     ((:definition member-equal)
+;;                      (:definition assoc-equal)
+;;                      (:definition remove-equal)
+;;                      (:definition remove-assoc-equal)
+;;                      (:definition no-duplicatesp-equal)
+;;                      (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
+;;                      (:rewrite partial-collapse-correctness-lemma-45
+;;                                . 2)
+;;                      (:linear abs-find-file-correctness-1-lemma-44))))))
 (defthm
-  partial-collapse-correctness-lemma-105
+  partial-collapse-correctness-lemma-17
+  (implies
+   (and (syntaxp (variablep x))
+        (not (consp (frame->frame (collapse-this frame x))))
+        (equal
+         (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           (frame->frame frame))))
+         0)
+        (< 0 (1st-complete (frame->frame frame))))
+   (absfat-equiv
+    (frame->root (collapse-this frame x))
+    (mv-nth 0
+            (collapse (collapse-this frame
+                                     (1st-complete (frame->frame frame)))))))
+  :hints (("goal" :in-theory (enable collapse-this collapse)
+           :cases ((equal x
+                          (1st-complete (frame->frame frame)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-37
   (implies
    (and
+    (syntaxp (variablep x))
     (equal
      (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
                                        (frame->frame frame))))
      0)
     (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
            0)
-    (consp (frame->frame (collapse-this frame x)))
     (absfat-equiv
      (mv-nth
       0
@@ -12418,43 +12492,25 @@
      (mv-nth 0
              (collapse (collapse-this frame
                                       (1st-complete (frame->frame frame))))))
-    (not (zp x))
     (consp (assoc-equal x (frame->frame frame)))
     (not
      (consp
       (abs-addrs
        (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
     (< 0 (1st-complete (frame->frame frame)))
-    (mv-nth 1
-            (collapse (collapse-this frame
-                                     (1st-complete (frame->frame frame)))))
     (frame-p (frame->frame frame))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (dist-names (frame->root frame)
                 nil (frame->frame frame))
     (abs-separate (frame->frame frame)))
    (absfat-equiv
-    (mv-nth
-     0
-     (collapse
-      (collapse-this (collapse-this frame x)
-                     (1st-complete (frame->frame (collapse-this frame x))))))
+    (mv-nth 0
+            (collapse (collapse-this (collapse-this frame x)
+                                     (1st-complete (frame->frame frame)))))
     (mv-nth 0
             (collapse (collapse-this frame
                                      (1st-complete (frame->frame frame)))))))
-  :hints
-  (("goal"
-    :in-theory (e/d (collapse-this collapse
-                                   partial-collapse-correctness-lemma-22)
-                    ((:definition member-equal)
-                     (:definition assoc-equal)
-                     (:definition remove-equal)
-                     (:definition remove-assoc-equal)
-                     (:definition no-duplicatesp-equal)
-                     (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
-                     (:rewrite partial-collapse-correctness-lemma-45
-                               . 2)
-                     (:linear abs-find-file-correctness-1-lemma-44))))))
+  :hints (("goal" :in-theory (enable collapse-this collapse))))
 
 (defthm
   partial-collapse-correctness-lemma-2
@@ -12653,48 +12709,6 @@
            (equal (1st-complete (put-assoc-equal x val frame))
                   (1st-complete frame)))
   :hints (("goal" :in-theory (enable 1st-complete abs-separate))))
-
-(defthm
-  partial-collapse-correctness-lemma-17
-  (implies
-   (absfat-equiv abs-file-alist1 abs-file-alist2)
-   (set-equiv
-    (remove-equal nil
-                  (strip-cars (abs-fs-fix abs-file-alist1)))
-    (remove-equal nil
-                  (strip-cars (abs-fs-fix abs-file-alist2)))))
-  :hints
-  (("goal"
-    :in-theory (e/d (absfat-equiv set-equiv)
-                    (absfat-equiv-implies-set-equiv-names-at-1-lemma-5))
-    :use
-    ((:instance absfat-equiv-implies-set-equiv-names-at-1-lemma-5
-                (abs-file-alist1 (abs-fs-fix abs-file-alist1))
-                (abs-file-alist2 (abs-fs-fix abs-file-alist2)))
-     (:instance
-      absfat-equiv-implies-set-equiv-names-at-1-lemma-5
-      (abs-file-alist1 (abs-fs-fix abs-file-alist2))
-      (abs-file-alist2 (abs-fs-fix abs-file-alist1))))))
-  :rule-classes :congruence)
-
-(defthm
-  partial-collapse-correctness-lemma-37
-  (implies
-   (and
-    (ctx-app-ok (frame->root frame)
-                x
-                (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
-    (dist-names (frame->root frame)
-                nil (frame->frame frame))
-    (m1-regular-file-p (mv-nth 0
-                               (abs-find-file-helper (frame->root frame)
-                                                     pathname))))
-   (equal (abs-find-file-helper (frame->root frame)
-                                pathname)
-          (abs-find-file-helper (frame->root (collapse-this frame x))
-                                pathname)))
-  :hints (("goal" :in-theory (enable collapse-this)
-           :do-not-induct t)))
 
 (encapsulate
   ()
