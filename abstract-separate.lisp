@@ -1232,12 +1232,11 @@
 ;; exist for context application to go right.
 (defthm
   abs-addrs-of-ctx-app-1-lemma-7
-  (implies (and (natp x)
-                (not (member-equal x
-                                   (abs-addrs (abs-fs-fix abs-file-alist1)))))
+  (implies (not (member-equal (nfix x)
+                              (abs-addrs (abs-fs-fix abs-file-alist1))))
            (not (ctx-app-ok abs-file-alist1 x x-path)))
-  :hints (("goal" :in-theory (enable abs-addrs addrs-at
-                                     ctx-app ctx-app-ok))))
+  :hints (("goal" :in-theory (e/d (abs-addrs addrs-at ctx-app ctx-app-ok)
+                                  (nfix)))))
 
 (defthm
   abs-addrs-of-ctx-app-1-lemma-8
@@ -1747,7 +1746,7 @@
                           :top :bash))
 
 (defthm
-  abs-addrs-of-ctx-app-3-lemma-2
+  abs-addrs-of-ctx-app-lemma-2
   (implies
    (and
     (member-equal
@@ -1766,7 +1765,7 @@
           (x (abs-addrs (cdr abs-file-alist1)))))))
 
 (defthm
-  abs-addrs-of-ctx-app-3-lemma-3
+  abs-addrs-of-ctx-app-lemma-3
   (implies
    (and
     (member-equal
@@ -1784,7 +1783,7 @@
   :hints (("goal" :in-theory (enable intersectp-member))))
 
 (defthm
- abs-addrs-of-ctx-app-3-lemma-4
+ abs-addrs-of-ctx-app-lemma-4
  (implies
   (and
    (member-equal
@@ -1827,7 +1826,7 @@
      abs-file-alist1)))))
 
 (defthm
-  abs-addrs-of-ctx-app-3-lemma-5
+  abs-addrs-of-ctx-app-lemma-5
   (implies (m1-file-alist-p abs-file-alist2)
            (equal (append (remove-equal x (abs-addrs abs-file-alist1))
                           (abs-addrs abs-file-alist2))
@@ -1840,12 +1839,12 @@
 
 
 (defthm
-  abs-addrs-of-ctx-app-3-lemma-7
+  abs-addrs-of-ctx-app-lemma-7
   (subsetp-equal (abs-top-addrs fs) (abs-addrs fs))
      :hints (("goal" :in-theory (enable abs-addrs abs-top-addrs))))
 
 (defthm
-  abs-addrs-of-ctx-app-3-lemma-8
+  abs-addrs-of-ctx-app-lemma-8
   (implies
    (abs-directory-file-p (cdr (assoc-equal name fs)))
    (subsetp-equal (abs-addrs (abs-file->contents (cdr (assoc-equal name fs))))
@@ -1853,21 +1852,26 @@
   :hints (("goal" :in-theory (enable abs-addrs))))
 
 (defthm
-  abs-addrs-of-ctx-app-3-lemma-6
-  (implies (abs-fs-p fs)
-           (subsetp-equal (addrs-at fs relpath) (abs-addrs fs)))
-  :hints (("Goal" :in-theory (enable abs-addrs addrs-at)) ))
+  abs-addrs-of-ctx-app-lemma-6
+  (subsetp-equal (addrs-at fs relpath)
+                 (abs-addrs (abs-fs-fix fs)))
+  :hints (("goal" :in-theory (enable abs-addrs addrs-at)))
+  :rule-classes
+  (:rewrite (:rewrite :corollary (implies (abs-fs-p fs)
+                                          (subsetp-equal (addrs-at fs relpath)
+                                                         (abs-addrs fs))))))
 
 (defthm
-  abs-addrs-of-ctx-app-3
+  abs-addrs-of-ctx-app
   (implies
    (and (no-duplicatesp-equal (abs-addrs (abs-fs-fix abs-file-alist1)))
-        (abs-complete (abs-fs-fix abs-file-alist2))
-        (ctx-app-ok abs-file-alist1 x x-path))
+        (abs-complete (abs-fs-fix abs-file-alist2)))
    (equal (abs-addrs (ctx-app abs-file-alist1
                               abs-file-alist2 x x-path))
-          (remove-equal (nfix x)
-                        (abs-addrs (abs-fs-fix abs-file-alist1)))))
+          (if (ctx-app-ok abs-file-alist1 x x-path)
+              (remove-equal (nfix x)
+                            (abs-addrs (abs-fs-fix abs-file-alist1)))
+              (abs-addrs (abs-fs-fix abs-file-alist1)))))
   :hints (("goal" :in-theory (e/d (ctx-app ctx-app-ok addrs-at)
                                   (nfix)))))
 
@@ -4122,10 +4126,10 @@
                                 (abs-addrs (abs-fs-fix abs-file-alist1)))))
   :hints
   (("goal"
-    :in-theory (disable abs-addrs-of-ctx-app-3
+    :in-theory (disable abs-addrs-of-ctx-app
                         abs-separate-correctness-1-lemma-2)
     :use
-    (abs-addrs-of-ctx-app-3
+    (abs-addrs-of-ctx-app
      (:instance abs-separate-correctness-1-lemma-2
                 (abs-file-alist (ctx-app abs-file-alist1
                                          abs-file-alist2 x x-path))))))
@@ -4336,10 +4340,10 @@
   (("goal"
     :do-not-induct t
     :in-theory (e/d (frame-with-root abs-separate)
-                    (abs-addrs-of-ctx-app-3))
+                    (abs-addrs-of-ctx-app))
     :use
     (:instance
-     (:rewrite abs-addrs-of-ctx-app-3)
+     (:rewrite abs-addrs-of-ctx-app)
      (x-path (frame-val->path (cdr (assoc-equal (1st-complete frame)
                                                 frame))))
      (x (1st-complete frame))
@@ -4490,8 +4494,8 @@
                             relpath)))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite abs-addrs-of-ctx-app-3))
-    :use ((:instance (:rewrite abs-addrs-of-ctx-app-3)
+    :in-theory (disable (:rewrite abs-addrs-of-ctx-app))
+    :use ((:instance (:rewrite abs-addrs-of-ctx-app)
                      (x-path (nthcdr (len (frame-val->path (cdr (car frame))))
                                      relpath))
                      (x x)
@@ -5335,7 +5339,7 @@
                (:rewrite abs-find-file-helper-when-m1-file-alist-p)
                (:rewrite m1-file-contents-p-correctness-1)
                (:rewrite abs-file-contents-p-when-m1-file-contents-p)
-               (:rewrite abs-addrs-of-ctx-app-3)
+               (:rewrite abs-addrs-of-ctx-app)
                (:rewrite abs-file-alist-p-correctness-1)
                (:definition no-duplicatesp-equal)))
     :induct
@@ -5883,7 +5887,8 @@
             (abs-find-file-helper (frame->root frame)
                                   pathname))))))
 
-(defthm
+;; This seems useless according to accumulated-persistence.
+(defthmd
   abs-find-file-helper-of-collapse-2
   (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
                 (frame-p (frame->frame frame))
@@ -10405,13 +10410,6 @@
           abs-file-alist3 x3 (cdr x3-path)))
         abs-file-alist1)))))))
 
-(defthm ctx-app-ok-of-ctx-app-lemma-3
-  (subsetp-equal (addrs-at fs relpath)
-                 (abs-addrs (abs-fs-fix fs)))
-  :hints (("goal" :in-theory (disable abs-addrs-of-ctx-app-3-lemma-6)
-           :use (:instance abs-addrs-of-ctx-app-3-lemma-6
-                           (fs (abs-fs-fix fs))))))
-
 (defthm
   ctx-app-ok-of-ctx-app-1
   (implies (and (case-split (not (equal (nfix x2) (nfix x3))))
@@ -10482,7 +10480,7 @@
     (e/d (ctx-app ctx-app-ok
                         names-at put-assoc-of-remove addrs-at)
          ((:definition no-duplicatesp-equal)
-          (:rewrite abs-addrs-of-ctx-app-3)
+          (:rewrite abs-addrs-of-ctx-app)
           (:rewrite abs-file-contents-p-when-m1-file-contents-p)
           (:rewrite m1-file-contents-p-correctness-1)
           (:definition member-equal)
@@ -10519,7 +10517,7 @@
     (e/d (ctx-app ctx-app-ok addrs-at
                         names-at put-assoc-of-remove)
          (nfix (:definition no-duplicatesp-equal)
-               (:rewrite abs-addrs-of-ctx-app-3)
+               (:rewrite abs-addrs-of-ctx-app)
                (:rewrite abs-file-contents-p-when-m1-file-contents-p)
                (:rewrite m1-file-contents-p-correctness-1)
                (:definition member-equal)

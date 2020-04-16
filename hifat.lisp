@@ -1775,6 +1775,7 @@
     :in-theory (enable hifat-no-dups-p)
     :induct (hifat-file-alist-fix hifat-file-alist))))
 
+;; This can't be made local.
 (defthm
   hifat-file-alist-fix-guard-lemma-1
   (implies (and (hifat-no-dups-p hifat-file-alist)

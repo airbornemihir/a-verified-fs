@@ -60,6 +60,7 @@
                 (consp (assoc-equal file x)))
            (consp (assoc-equal file y))))
 
+;; This can't be made local.
 (defthm
   hifat-subsetp-transitive-lemma-1
   (implies
@@ -72,9 +73,9 @@
   ((:rewrite
     :corollary
     (implies
-     (and (m1-file-alist-p y)
+     (and (hifat-subsetp y z)
+          (m1-file-alist-p y)
           (consp (assoc-equal key y))
-          (hifat-subsetp y z)
           (m1-directory-file-p (cdr (assoc-equal key y))))
      (m1-directory-file-p (cdr (assoc-equal key z)))))))
 
@@ -159,6 +160,7 @@
             (not (hifat-no-dups-p (append x y))))
    :hints (("Goal" :in-theory (enable hifat-no-dups-p)) )))
 
+;; This can't be made local.
 (defthm hifat-subsetp-reflexive-lemma-3
   (implies (and (m1-file-alist-p y)
                 (hifat-no-dups-p y)
