@@ -14048,11 +14048,13 @@
                   (atom seq)))
         frame)
        (head-index (car seq))
-       ;; We might have to change this to check if (car seq) is a complete
-       ;; variable.
        ((when (or (zp head-index)
                   (atom (assoc-equal (car seq)
-                                     (frame->frame frame)))))
+                                     (frame->frame frame)))
+                  (not (abs-complete
+                        (frame-val->dir
+                         (cdr (assoc-equal (car seq)
+                                            (frame->frame frame))))))))
         frame)
        (head-frame-val
         (cdr (assoc-equal head-index (frame->frame frame))))
@@ -14084,6 +14086,50 @@
            frame))
        (collapse-seq (collapse-this frame (car seq))
                      (cdr seq))))))
+
+(defthm frame-p-of-collapse-seq
+  (implies (frame-p frame)
+           (frame-p (collapse-seq frame seq)))
+  :hints (("goal" :in-theory (enable collapse-seq))))
+
+(defund valid-seqp (frame seq)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame))
+                              (nat-listp seq))))
+  (equal (len (frame->frame (collapse-seq frame seq)))
+         (- (len (frame->frame frame))
+            (len seq))))
+
+;; Auxiliary theorem that will get us there...
+;; (thm
+;;  (implies
+;;   (and (natp n)
+;;        ;; range of n has to be inclusive of (len ...) to make any claims about
+;;        ;; the end.
+;;        (<= n (len (frame->frame frame)))
+;;        (mv-nth 1 (collapse frame))
+;;        (valid-seqp frame seq)
+;;        (equal (len seq) (len (frame->frame frame))))
+;;   (and
+;;    (absfat-equiv
+;;     (frame->root (collapse-seq (take n seq)))
+;;     (ctx-app-plural (extracts 0 (take n seq)) (frame->root frame)))
+;;    (plural
+;;     x
+;;     (absfat-equiv
+;;      (frame-val->dir (cdr (assoc-equal x (frame->frame (collapse-seq (take n seq))))))
+;;      (ctx-app-plural (extracts x (take n seq))
+;;                      (frame-val->dir (cdr (assoc-equal x (frame->frame (collapse-seq (take n seq))))))))))))
+
+;; Main thing that we would like to prove...
+;; (thm
+;;  (implies
+;;   (and (equal (len seq) (len (frame->frame frame)))
+;;        (mv-nth 1 (collapse frame))
+;;        (valid-seqp frame seq))
+;;   (absfat-equiv
+;;    (frame->root (collapse-seq frame seq))
+;;    (mv-nth 0 (collapse frame)))))
 
 (skip-proofs
  (defthm partial-collapse-correctness-lemma-49
