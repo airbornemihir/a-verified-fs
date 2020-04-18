@@ -14035,6 +14035,56 @@
           (len (frame->frame frame))))
       :trigger-terms ((COLLAPSE-1ST-INDEX FRAME X))))))
 
+;; Ye olde hacky definition...
+(defund
+  collapse-seq (frame seq)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame))
+                              (nat-listp seq))
+                  :guard-debug t
+                  :measure (len (frame->frame frame))))
+  (b*
+      (((when (or (atom (frame->frame frame))
+                  (atom seq)))
+        frame)
+       (head-index (car seq))
+       ;; We might have to change this to check if (car seq) is a complete
+       ;; variable.
+       ((when (or (zp head-index)
+                  (atom (assoc-equal (car seq)
+                                     (frame->frame frame)))))
+        frame)
+       (head-frame-val
+        (cdr (assoc-equal head-index (frame->frame frame))))
+       (src
+        (frame-val->src (cdr (assoc-equal (car seq)
+                                          (frame->frame frame))))))
+    (if
+     (zp src)
+     (b* (((unless (ctx-app-ok (frame->root frame)
+                               head-index
+                               (frame-val->path head-frame-val)))
+           frame))
+       (collapse-seq (collapse-this frame (car seq))
+                     (cdr seq)))
+     (b*
+         ((path (frame-val->path head-frame-val))
+          ((when (or (equal src head-index)
+                     (atom (assoc-equal src (frame->frame frame)))))
+           frame)
+          (src-path
+           (frame-val->path
+            (cdr (assoc-equal src (frame->frame frame)))))
+          (src-dir
+           (frame-val->dir
+            (cdr (assoc-equal src (frame->frame frame)))))
+          ((unless (and (prefixp src-path path)
+                        (ctx-app-ok src-dir head-index
+                                    (nthcdr (len src-path) path))))
+           frame))
+       (collapse-seq (collapse-this frame (car seq))
+                     (cdr seq))))))
+
 (skip-proofs
  (defthm partial-collapse-correctness-lemma-49
    (implies (and (consp (frame->frame frame))
