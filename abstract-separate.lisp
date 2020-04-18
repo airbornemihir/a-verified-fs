@@ -13966,305 +13966,20 @@
     (collapse-correctness-1 (:instance collapse-iter-is-collapse
                                        (n (len (frame->frame frame))))))))
 
-(defund collapse-1st-index-helper (frame x n)
-  (declare (xargs :measure (nfix (- (len (frame->frame frame)) (nfix n)))))
-  (if (or (>= (nfix n) (len (frame->frame frame)))
-          (equal
-           (1st-complete (frame->frame (collapse-iter frame n)))
-           x))
-      (nfix n)
-    (collapse-1st-index-helper frame x (+ (nfix n) 1))))
-
-(defund collapse-1st-index (frame x)
-  (collapse-1st-index-helper frame x 0))
-
-(defthm collapse-1st-index-correctness-lemma-1
-  (equal (collapse-1st-index frame
-                             (1st-complete (frame->frame frame)))
-         0)
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable collapse-1st-index
-                              collapse-1st-index-helper
-                              collapse-iter))))
-
-(defthm collapse-1st-index-correctness-lemma-2
-  (implies (atom (assoc-equal x (frame->frame frame)))
-           (not (consp (assoc-equal x
-                                    (frame->frame (collapse-iter frame n))))))
-  :hints (("goal" :in-theory (enable collapse-iter)))
-  :rule-classes (:type-prescription :rewrite))
-
-(defthm
-  collapse-1st-index-correctness-lemma-3
-  (implies
-   (and
-    (< 0
-       (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                         (frame->frame frame)))))
-    (< 0 (1st-complete (frame->frame frame)))
-    (mv-nth 1
-            (collapse (collapse-this frame
-                                     (1st-complete (frame->frame frame))))))
-   (not
-    (equal
-     (1st-complete (frame->frame frame))
-     (1st-complete
-      (frame->frame
-       (collapse-iter (collapse-this frame
-                                     (1st-complete (frame->frame frame)))
-                      m))))))
-  :hints
-  (("goal"
-    :in-theory
-    (disable 1st-complete-correctness-1
-             (:type-prescription collapse-1st-index-correctness-lemma-2))
-    :use
-    ((:instance (:type-prescription collapse-1st-index-correctness-lemma-2)
-                (n m)
-                (frame (collapse-this frame
-                                      (1st-complete (frame->frame frame))))
-                (x (1st-complete (frame->frame frame))))
-     (:instance
-      1st-complete-correctness-1
-      (frame
-       (frame->frame
-        (collapse-iter (collapse-this frame
-                                      (1st-complete (frame->frame frame)))
-                       m))))))))
-
-(defthm
-  collapse-1st-index-correctness-lemma-4
-  (implies
-   (and
-    (equal
-     (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                       (frame->frame frame))))
-     0)
-    (< 0 (1st-complete (frame->frame frame))))
-   (not
-    (equal
-     (1st-complete
-      (frame->frame
-       (collapse-iter (collapse-this frame
-                                     (1st-complete (frame->frame frame)))
-                      n)))
-     (1st-complete (frame->frame frame)))))
-  :hints
-  (("goal"
-    :in-theory (disable 1st-complete-correctness-1)
-    :use
-    (:instance
-     1st-complete-correctness-1
-     (frame
-      (frame->frame
-       (collapse-iter (collapse-this frame
-                                     (1st-complete (frame->frame frame)))
-                      n)))))))
-
-(defthm
-  collapse-1st-index-correctness-lemma-5
-  (implies
-   (and
-    (mv-nth 1 (collapse frame))
-    (not (and (zp (1st-complete (frame->frame (collapse-iter frame n))))
-              (zp (1st-complete (frame->frame (collapse-iter frame m)))))))
-   (iff (equal (1st-complete (frame->frame (collapse-iter frame n)))
-               (1st-complete (frame->frame (collapse-iter frame m))))
-        (nat-equiv n m)))
-  :hints
-  (("goal"
-    :in-theory (e/d (collapse-iter collapse 1st-complete)
-                    ((:definition no-duplicatesp-equal)
-                     (:rewrite nthcdr-when->=-n-len-l)
-                     (:definition member-equal)
-                     (:rewrite partial-collapse-correctness-lemma-43))))))
-
-(defthm
-  collapse-1st-index-correctness-lemma-6
-  (implies
-   (and (mv-nth 1 (collapse frame))
-        (natp n)
-        (natp m)
-        (< m (len (frame->frame frame)))
-        (<= n (len (frame->frame frame)))
-        (not (zp (1st-complete (frame->frame (collapse-iter frame m))))))
-   (equal (collapse-1st-index-helper
-           frame
-           (1st-complete (frame->frame (collapse-iter frame m)))
-           n)
-          (if (<= n m)
-              m (len (frame->frame frame)))))
-  :hints (("goal" :in-theory (enable collapse-1st-index-helper)
-           :induct t)))
-
-(defthm
-  collapse-1st-index-correctness-lemma-7
-  (implies
-   (and (mv-nth 1 (collapse frame))
-        (natp m)
-        (< m (len (frame->frame frame)))
-        (not (zp (1st-complete (frame->frame (collapse-iter frame m))))))
-   (equal
-    (collapse-1st-index frame
-                        (1st-complete (frame->frame (collapse-iter frame m))))
-    m))
-  :hints (("goal" :in-theory (e/d (collapse-1st-index)
-                                  (collapse-1st-index-correctness-lemma-6))
-           :use (:instance collapse-1st-index-correctness-lemma-6
-                           (n 0)))))
-
-(defthm collapse-1st-index-correctness-lemma-8
-  (<= (nfix n)
-      (collapse-1st-index-helper frame x n))
-  :hints (("goal" :in-theory (enable collapse-1st-index-helper)))
-  :rule-classes :linear)
-
-(defthm
-  collapse-1st-index-correctness-lemma-9
-  (implies
-   (< (collapse-1st-index-helper frame x n)
-      (len (frame->frame frame)))
-   (equal
-    (1st-complete
-     (frame->frame (collapse-iter frame
-                                  (collapse-1st-index-helper frame x n))))
-    x))
-  :hints (("goal" :in-theory (enable collapse-1st-index-helper)
-           :induct (collapse-1st-index-helper frame x n))))
-
-(defthm
-  collapse-1st-index-correctness-lemma-10
-  (implies
-   (< (collapse-1st-index frame x)
-      (len (frame->frame frame)))
-   (equal
-    (1st-complete
-     (frame->frame (collapse-iter frame (collapse-1st-index frame x))))
-    x))
-  :hints (("goal" :in-theory (e/d (collapse-1st-index)
-                                  (collapse-1st-index-correctness-lemma-9))
-           :use (:instance collapse-1st-index-correctness-lemma-9
-                           (n 0)))))
-
-(defthm collapse-of-collapse-iter
-  (equal (collapse (collapse-iter frame m))
-         (collapse frame))
-  :hints (("goal" :in-theory (enable collapse collapse-iter))))
-
-(encapsulate
-  ()
-
-  (local
-   (defthm
-     lemma
-     (implies (and (frame-p frame)
-                   (no-duplicatesp-equal (strip-cars frame)))
-              (equal (len (remove-assoc-equal x frame))
-                     (if (atom (assoc-equal x frame))
-                         (len frame)
-                       (- (len frame) 1))))
-     :hints (("subgoal *1/4.3'"
-              :in-theory (disable member-of-strip-cars)
-              :use ((:instance (:type-prescription member-of-strip-cars . 1)
-                               (alist (cdr frame))
-                               (x (car (car frame))))
-                    (:instance (:type-prescription member-of-strip-cars . 2)
-                               (alist (cdr frame))
-                               (x (car (car frame)))))))))
-
-  (local
-   (in-theory
-    (e/d (collapse collapse-iter collapse-this)
-         (assoc-equal (:rewrite partial-collapse-correctness-lemma-48)
-                      (:rewrite partial-collapse-correctness-lemma-45
-                                . 2)
-                      (:rewrite partial-collapse-correctness-lemma-54)
-                      (:rewrite partial-collapse-correctness-lemma-43)
-                      (:definition remove-assoc-equal)
-                      (:rewrite remove-assoc-of-remove-assoc)
-                      (:rewrite nthcdr-when->=-n-len-l)
-                      (:definition member-equal)
-                      (:definition remove-equal)))))
-
-  (defthm
-    collapse-1st-index-correctness-lemma-11
-    (implies (and (mv-nth 1 (collapse frame))
-                  (< (nfix n) (len (frame->frame frame)))
-                  (frame-p (frame->frame frame))
-                  (no-duplicatesp-equal (strip-cars (frame->frame frame))))
-             (< 0
-                (1st-complete (frame->frame (collapse-iter frame n)))))
-    :hints
-    (("goal" :induct (collapse-iter frame n)))
-    :rule-classes :linear)
-
-  (defthm
-    collapse-1st-index-correctness-lemma-12
-    (implies (and (mv-nth 1 (collapse frame))
-                  (<= (nfix n) (len (frame->frame frame)))
-                  (frame-p (frame->frame frame))
-                  (no-duplicatesp-equal (strip-cars (frame->frame frame))))
-             (equal (len (frame->frame (collapse-iter frame n)))
-                    (- (len (frame->frame frame))
-                       (nfix n))))
-    :hints (("goal" :induct (collapse-iter frame n)))))
-
-(defthm
-  collapse-1st-index-correctness-lemma-13
-  (implies (and (natp m)
-                (natp n)
-                (mv-nth 1 (collapse frame))
-                (< n
-                   (len (frame->frame (collapse-iter frame m))))
-                (< m (len (frame->frame frame)))
-                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (frame-p (frame->frame frame)))
-           (equal (collapse-1st-index-helper (collapse-iter frame m)
-                                             x n)
-                  (- (collapse-1st-index-helper frame x (+ m n))
-                     m)))
-  :hints (("goal" :in-theory (enable collapse-1st-index-helper))))
-
-(defthmd
-  collapse-1st-index-correctness-lemma-14
-  (implies (and (mv-nth 1 (collapse frame))
-                (frame-p (frame->frame frame))
-                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (<= n (collapse-1st-index frame x))
-                (< (collapse-1st-index frame x)
-                   (len (frame->frame frame))))
-           (equal (collapse-1st-index-helper frame x n)
-                  (collapse-1st-index frame x)))
-  :hints (("goal" :in-theory (enable collapse-1st-index-helper
-                                     collapse-1st-index))))
-
-(defthm
-  collapse-1st-index-correctness-lemma-15
-  (implies (and (natp m)
-                (mv-nth 1 (collapse frame))
-                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (frame-p (frame->frame frame))
-                (<= m (collapse-1st-index frame x))
-                (< (collapse-1st-index frame x)
-                   (len (frame->frame frame))))
-           (equal (collapse-1st-index-helper (collapse-iter frame m)
-                                             x 0)
-                  (+ (- m) (collapse-1st-index frame x))))
-  :hints
-  (("goal" :in-theory (enable collapse-1st-index-correctness-lemma-14)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies (and (natp m)
-                  (mv-nth 1 (collapse frame))
-                  (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                  (frame-p (frame->frame frame))
-                  (<= m (collapse-1st-index frame x))
-                  (< (collapse-1st-index frame x)
-                     (len (frame->frame frame))))
-             (equal (collapse-1st-index (collapse-iter frame m) x)
-                    (+ (- m) (collapse-1st-index frame x))))
-    :hints (("Goal" :in-theory (enable collapse-1st-index)) ))))
+(defund
+  collapse-1st-index (frame x)
+  (declare
+   (xargs :measure (len (frame->frame frame))
+          :hints (("goal" :in-theory (enable collapse-iter)))))
+  (if (equal (1st-complete (frame->frame frame))
+             x)
+      0
+      (if (< (len (frame->frame (collapse-iter frame 1)))
+             (len (frame->frame frame)))
+          (+ 1
+             (collapse-1st-index (collapse-iter frame 1)
+                                 x))
+          (len (frame->frame frame)))))
 
 (encapsulate
   ()
@@ -14273,26 +13988,52 @@
            (implies (consp x) (not (zp (len x))))
            :rule-classes :type-prescription))
 
-  (thm
-   (implies
-    (and (mv-nth 1 (collapse frame))
-         (frame-p (frame->frame frame))
-         (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-         (consp (assoc-equal x (frame->frame frame))))
-    (< (collapse-1st-index frame x) (len (frame->frame frame))))
-   :hints (("Goal" :in-theory (enable collapse)) ))
-
-  (remove-hyps
-   (defthm collapse-1st-index-correctness-1
-     (implies (and t (consp (assoc-equal x (frame->frame frame)))
-                   (mv-nth 1 (collapse frame)))
-              (equal
-               (1st-complete
-                (frame->frame
-                 (collapse-iter frame (collapse-1st-index frame x))))
-               x))
-     :hints (("Goal" :do-not-induct t :in-theory (enable collapse-1st-index)) ))
-   t))
+  (defthm
+    collapse-1st-index-correctness-1
+    (implies
+     (and (mv-nth 1 (collapse frame))
+          (consp (assoc-equal x (frame->frame frame))))
+     (and
+      (equal
+       (1st-complete
+        (frame->frame (collapse-iter frame (collapse-1st-index frame x))))
+       x)
+      (< (collapse-1st-index frame x)
+         (len (frame->frame frame)))))
+    :hints
+    (("goal" :in-theory
+      (e/d (1st-complete collapse
+                         collapse-1st-index collapse-iter)
+           (member-equal no-duplicatesp-equal
+                         nthcdr-when->=-n-len-l
+                         (:rewrite partial-collapse-correctness-lemma-43)
+                         (:rewrite partial-collapse-correctness-lemma-54)
+                         (:rewrite partial-collapse-correctness-lemma-48)
+                         (:rewrite partial-collapse-correctness-lemma-74)
+                         (:rewrite partial-collapse-correctness-lemma-67)
+                         (:definition remove-assoc-equal)))
+      :induct (collapse-1st-index frame x)
+      :expand ((collapse frame)
+               (collapse-iter frame 1)))
+     ("subgoal *1/1" :expand (1st-complete (frame->frame frame))))
+    :rule-classes
+    ((:rewrite
+      :corollary
+      (implies
+       (and (mv-nth 1 (collapse frame))
+            (consp (assoc-equal x (frame->frame frame))))
+       (equal
+        (1st-complete
+         (frame->frame (collapse-iter frame (collapse-1st-index frame x))))
+        x)))
+     (:linear
+      :corollary
+      (implies
+       (and (mv-nth 1 (collapse frame))
+            (consp (assoc-equal x (frame->frame frame))))
+       (< (collapse-1st-index frame x)
+          (len (frame->frame frame))))
+      :trigger-terms ((COLLAPSE-1ST-INDEX FRAME X))))))
 
 (skip-proofs
  (defthm partial-collapse-correctness-lemma-49
