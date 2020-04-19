@@ -1,0 +1,144 @@
+Let's think for a moment about the proof of partial-collapse retaining
+the same collapse. How does one state it, and how does one prove it?
+
+The statement is: if one partially collapses frame under pathname,
+yielding (p-c frame pathname), one gets back t from
+(mv-nth 1 (c (p-c frame pathname))), and
+(mv-nth 0 (c (p-c frame pathname))) is absfat-equiv to
+(mv-nth 0 (c frame)).
+
+For the moment, we'll skip over some of the work already done in the
+theorem prover to establish that it comes down to one variable at a
+time, and the function partial-collapse completely disappears during
+the induction argument. Once the trivial cases have been sorted out,
+what remains is a claim that if (mv-nth 1 (c frame)) is t, then so is
+(mv-nth 1 (c (c-this x frame))) for an arbitrary x, and also
+(mv-nth 0 (c (c-this x frame))) is absfat-equiv to
+(mv-nth 0 (c frame)), under some assumptions for x: that it is
+non-zero, complete, and depending on whether its source is zero x can
+be collapsed into the its source, which is distinct from it.
+
+So why not a straightforward induction on collapse? Well, that screws
+us up in one of the induction cases. See, during induction we're
+constantly evaluating (c frame) to
+(c (c-this (1st-complete (f->f frame)) frame)). So during the
+induction, we end up comparing
+(c (c-this x (c-this (1st-complete (f->f frame)) frame))) to
+(c (c-this (1st-complete (f->f frame)) (c-this x frame))).
+This is where the problem comes in, in one of the cases below:
+(a) (f->src frame x) is zero, in which case no matter what happens to
+    (1st-complete (f->f frame)), we come out fine because we have the
+    same frame modulo absfat-equiv on (f->r frame), which we have
+    separately proved to yield the same (mv-nth 1 (c frame)) and
+    equivalent (mv-nth 0 (c frame)) under absfat-equiv.
+(b) (f->src frame x) is nonzero but
+    (f->src frame (1st-complete (f->f frame))) is zero, which is
+    essentially the same situation as (a).
+(c) (f->src frame x) is nonzero,
+    (f->src frame (1st-complete (f->f frame))) is nonzero, and
+    (1st-complete (f->f (c-this x frame))) does not equal
+    (f->src frame x). Note, in (a), (b), and (c)
+    some juggling (i.e. case splitting) is required to determine the
+    correct value of (1st-complete (f->f (c-this x frame))).
+(d) (f->src frame x) is nonzero,
+    (f->src frame (1st-complete (f->f frame))) is nonzero, and
+    (1st-complete (f->f (c-this x frame))) equals
+    (f->src frame x) (which obviously means that this context
+    application made the incomplete variable at (f->src frame x)
+    complete). In this situation, we can't draw conclusions about the
+    way
+    (c (c-this (1st-complete (f->f (c-this x frame))) (c-this x frame)))
+    will go. This seriously seriously complicates matters and rules
+    out anything like simplifying (c-this ... (c-this ...)) terms.
+
+If we want to stick with this induction scheme, we'll have to prove
+something about a chain of the form
+x -> (f->src frame x) -> (f->src frame (f->src frame x)) -> ...
+One interesting thing about such a chain is that it'll all take
+place at once whenever it occurs in the normal course of things.
+Basically this is the problem with tail-recursion - you need to
+prove something about the intermediate result from doing some
+number of recursive calls, and then instantiate that general result
+to make a statement about the specific case where we resolve the
+whole thing. Think of revappend... if you want to prove
+(revappend (revappend x nil) nil) is (true-list-fix x), you need to
+prove some intermediate stuff about appends, I
+think. Unfortunately there's no easy analogy, because the very
+shape of the tail recursion depends on what has happened so far in
+the recursion, whereas with revappend we were able to say
+something simple about the append thing.
+
+But what's our intuition? We know that under the induction, all these
+variables are going to collapse in predictable ways, because none of their
+sources change at any point. For any variable you choose, it will
+eventually become (1st-complete frame) and go wherever it was going.
+
+I wonder if the way to think about collapse is by creating another
+function which run collapse for a given number of iterations, and then
+stops. Then, we could reason about a given element x, by making a
+function that determines the number of iterations of numbered collapse
+that give us x. That doesn't do much of any by itself, because unlike
+a microprocessor execution there's no pattern of any kind to be seen
+here. It's just totally arbitrary how the context applications happen.
+So it's not evern very useful to find out the number n at which a
+given variable x becomes (1st-complete (f->f (collapse-iter frame
+n))). There's no guarantee that (collapse-iter (collapse-this frame x)
+n) would look anything alike.
+
+I suppose one could argue though that for any variable y, whenever it
+becomes complete in the two different scenarios (collapse frame) and
+(collapse (collapse-this x frame)), its values in the two scenarios
+are going to be absfat-equiv. It might be a complicated argument,
+because many other variables may have to be folded in order to get to
+y - so it's not as simple as just arguing about a permutation of the
+various variables that make their way to y.
+
+I don't know... I really don't know. Let's think about the very last
+element that gets folded into the root in both (collapse frame) and
+(collapse (collapse-this x frame)). A counter-example can be
+constructed to show that the two last elements need not be related at
+all.
+
+How about the weirdest possible way? We define:
+- "collapsing by a sequence" as a series of c-this steps per a given
+  sequence, returning the current state of the frame and a boolean
+  indicating whether or not all the variables were complete and could be
+  cleanly context-applied;
+- "a valid sequence" as a partial list of variables which can be
+  cleanly collapsed by the above;
+- "complete-equiv" as a predicate on two frames that checks whether
+  each complete variable in the one, if it is a complete variable in
+  the other, is absfat-equiv to the other... OK, while writing this
+  out I'm beginning to find it weird. Instead, let's compare it to the
+  canonical collapse. The idea is, given a valid sequence, we define a
+  predicate which will be our invariant: for every element in our
+  sequence, we collapse by the sequence until we get to it, and then
+  collapse the frame in the ordinary way until we get to the element
+  there too, and prove that these two are absfat-equiv. How on earth
+  are we going to do that, though?
+
+In terms of generality, it makes sense to think of the sequence
+generated by picking x and then picking all the 1st-complete elements
+as completely arbitrary, because it is completely arbitrary. Like,
+think of a frame where the sources look like this:
+1. (w -> 0) 2. (x -> w) 3. (z -> w) 4. (y -> x)
+Obviously, the two sequences {z, y, x, w} and {y, x, z, w} look
+completely different - but the only initial difference was that we
+picked y out of turn.
+
+So now what? I don't know... but think of a predicate on a prefix of
+the valid sequence, which says that all the elements so far in this
+prefix were absfat-equiv to their namesakes in the other frame,
+collapsed the regular way, at the moment when they came up for
+collapsing in that frame. How do we maintain this invariant
+inductively? I mean, it's just hard...
+But what we do want to say is, look, this variable we're looking at
+right now in the sequence, it has zero or more prior elements from the
+sequence folded into it in some order. In the other frame, we can
+prove that the same elements in some order were also folded into
+it. So... maybe define a function to record all the variables which
+are folded into this given variable, and prove that the two things
+come out equal?
+
+This is just too gosh-darned complicated, and it isn't getting us
+closer to reasoning about filesystems. Enough.
