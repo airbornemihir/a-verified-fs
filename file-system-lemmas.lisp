@@ -912,12 +912,29 @@
                 (atom (assoc-equal x alist)))
            (equal (remove-assoc-equal x alist)
                   (true-list-fix alist))))
-
-(defthm len-of-remove-assoc-equal-1
+(defthm
+  len-of-remove-assoc-equal-1
   (implies (and (not (null x))
                 (consp (assoc-equal x alist)))
            (< (len (remove-assoc-equal x alist))
               (len alist)))
+  :rule-classes
+  (:linear
+   (:linear :corollary (implies (and (not (null x)))
+                                (<= (len (remove-assoc-equal x alist))
+                                    (len alist)))
+            :hints (("goal" :in-theory (disable len-of-remove-assoc-equal-2)
+                     :use len-of-remove-assoc-equal-2)))))
+
+(defthm
+  len-of-remove-assoc-equal-3
+  (implies (and (not (null x))
+                (consp (assoc-equal x (remove-assoc-equal y alist))))
+           (< (len (remove-assoc-equal y (remove-assoc-equal x alist)))
+              (len (remove-assoc-equal y alist))))
+  :hints (("goal" :in-theory (disable len-of-remove-assoc-equal-1)
+           :use (:instance len-of-remove-assoc-equal-1
+                           (alist (remove-assoc-equal y alist)))))
   :rule-classes :linear)
 
 (defthm strip-cars-of-remove-assoc
@@ -1200,3 +1217,10 @@
   (equal (assoc-equal x (true-list-fix l))
          (assoc-equal x l))
   :hints (("goal" :in-theory (enable true-list-fix))))
+
+(defthm strip-cars-of-true-list-fix
+  (equal (strip-cars (true-list-fix x)) (strip-cars x)))
+
+(defthm remove-assoc-of-true-list-fix
+  (equal (remove-assoc-equal x (true-list-fix alist))
+         (remove-assoc-equal x alist)))

@@ -2083,6 +2083,7 @@
 (defthm fat32-filename-list-prefixp-of-self
   (fat32-filename-list-prefixp x x))
 
+;; This can't be made local.
 (defthm
   m1-read-after-write-lemma-2
   (implies (and (m1-file-alist-p fs)
