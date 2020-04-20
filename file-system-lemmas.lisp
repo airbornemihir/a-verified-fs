@@ -930,16 +930,11 @@
                   (strip-cars alist))))
 
 (defthm
-  member-of-strip-cars t
-  :rule-classes
-  ((:type-prescription
-    :corollary (implies (consp (assoc-equal x alist))
-                        (member-equal x (strip-cars alist))))
-   (:type-prescription
-    :corollary
-    (implies (and (not (null x))
-                  (not (consp (assoc-equal x alist))))
-             (not (member-equal x (strip-cars alist)))))))
+  member-of-strip-cars
+  (implies (case-split (not (null x)))
+           (iff
+            (member-equal x (strip-cars alist))
+            (consp (assoc-equal x alist)))))
 
 (defthm remove-when-absent
   (implies (not (member-equal x l))
