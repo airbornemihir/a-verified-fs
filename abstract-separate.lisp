@@ -1890,6 +1890,11 @@
   (implies (frame-p frame)
            (nat-listp (strip-cars frame))))
 
+(defthm assoc-equal-when-frame-p
+  (implies (and (frame-p frame) (not (natp x)))
+           (atom (assoc-equal x frame)))
+  :rule-classes :type-prescription)
+
 ;; That this lemma is needed is a reminder to get some list macros around
 ;; abs-file-alist-p...
 (defthm
@@ -3645,30 +3650,30 @@
   :hints (("goal" :in-theory (enable abs-fs-p))))
 
 (defthm
- strip-cars-of-ctx-app
- (implies
-  (ctx-app-ok abs-file-alist1 x x-path)
-  (equal (strip-cars (ctx-app abs-file-alist1
-                              abs-file-alist2 x x-path))
-         (if (consp x-path)
-             (strip-cars (abs-fs-fix abs-file-alist1))
-             (append (strip-cars (remove-equal (nfix x)
-                                               (abs-fs-fix abs-file-alist1)))
-                     (strip-cars (abs-fs-fix abs-file-alist2))))))
- :hints (("goal" :in-theory (e/d (ctx-app ctx-app-ok addrs-at)
-                                 (nfix))))
- :rule-classes
- ((:rewrite
+  strip-cars-of-ctx-app
+  (implies
+   (ctx-app-ok abs-file-alist1 x x-path)
+   (equal (strip-cars (ctx-app abs-file-alist1
+                               abs-file-alist2 x x-path))
+          (if (consp x-path)
+              (strip-cars (abs-fs-fix abs-file-alist1))
+            (append (strip-cars (remove-equal (nfix x)
+                                              (abs-fs-fix abs-file-alist1)))
+                    (strip-cars (abs-fs-fix abs-file-alist2))))))
+  :hints (("goal" :in-theory (e/d (ctx-app ctx-app-ok addrs-at)
+                                  (nfix))))
+  :rule-classes
+  ((:rewrite
     :corollary
     (equal
-         (strip-cars (ctx-app abs-file-alist1
-                              abs-file-alist2 x x-path))
-         (if (or (not (ctx-app-ok abs-file-alist1 x x-path))
-                 (consp x-path))
-             (strip-cars (abs-fs-fix abs-file-alist1))
-             (append (strip-cars (remove-equal (nfix x)
-                                               (abs-fs-fix abs-file-alist1)))
-                     (strip-cars (abs-fs-fix abs-file-alist2))))))))
+     (strip-cars (ctx-app abs-file-alist1
+                          abs-file-alist2 x x-path))
+     (if (or (not (ctx-app-ok abs-file-alist1 x x-path))
+             (consp x-path))
+         (strip-cars (abs-fs-fix abs-file-alist1))
+       (append (strip-cars (remove-equal (nfix x)
+                                         (abs-fs-fix abs-file-alist1)))
+               (strip-cars (abs-fs-fix abs-file-alist2))))))))
 
 ;; Shorter name for distinguish names.
 (defund
@@ -5572,66 +5577,72 @@
     :use (:instance (:rewrite abs-find-file-of-put-assoc-lemma-1)
                     (fs (abs-fs-fix root))))))
 
-(defund abs-find-file-alt
-  (frame indices pathname)
-  (b* (((when (atom indices))
-        (mv (make-abs-file) *enoent*))
-       (pathname (fat32-filename-list-fix pathname))
-       ((unless (prefixp (frame-val->path (cdr (assoc-equal (car indices) frame)))
-                         pathname))
-        (abs-find-file-alt frame (cdr indices) pathname))
-       ((mv file error-code)
-        (abs-find-file-helper
-         (frame-val->dir (cdr (assoc-equal (car indices) frame)))
-         (nthcdr (len (frame-val->path (cdr (assoc-equal (car indices) frame))))
-                 pathname)))
-       ((when (not (equal error-code *enoent*)))
-        (mv file error-code)))
-    (abs-find-file-alt frame (cdr indices) pathname)))
+(local
+ (defund abs-find-file-alt
+   (frame indices pathname)
+   (b* (((when (atom indices))
+         (mv (make-abs-file) *enoent*))
+        (pathname (fat32-filename-list-fix pathname))
+        ((unless (prefixp (frame-val->path (cdr (assoc-equal (car indices) frame)))
+                          pathname))
+         (abs-find-file-alt frame (cdr indices) pathname))
+        ((mv file error-code)
+         (abs-find-file-helper
+          (frame-val->dir (cdr (assoc-equal (car indices) frame)))
+          (nthcdr (len (frame-val->path (cdr (assoc-equal (car indices) frame))))
+                  pathname)))
+        ((when (not (equal error-code *enoent*)))
+         (mv file error-code)))
+     (abs-find-file-alt frame (cdr indices) pathname))))
 
-(defthm abs-find-file-alt-of-fat32-filename-list-fix
-  (equal (abs-find-file-alt frame indices
-                            (fat32-filename-list-fix pathname))
-         (abs-find-file-alt frame indices pathname))
-  :hints (("goal" :in-theory (enable abs-find-file-alt))))
+(local
+ (defthm abs-find-file-alt-of-fat32-filename-list-fix
+   (equal (abs-find-file-alt frame indices
+                             (fat32-filename-list-fix pathname))
+          (abs-find-file-alt frame indices pathname))
+   :hints (("goal" :in-theory (enable abs-find-file-alt)))))
 
-(defcong
-  fat32-filename-list-equiv equal
-  (abs-find-file-alt frame indices pathname)
-  3
-  :hints
-  (("goal"
-    :in-theory
-    (disable abs-find-file-alt-of-fat32-filename-list-fix)
-    :use
-    ((:instance abs-find-file-alt-of-fat32-filename-list-fix
-                (pathname pathname-equiv))
-     abs-find-file-alt-of-fat32-filename-list-fix))))
+(local
+ (defcong
+   fat32-filename-list-equiv equal
+   (abs-find-file-alt frame indices pathname)
+   3
+   :hints
+   (("goal"
+     :in-theory
+     (disable abs-find-file-alt-of-fat32-filename-list-fix)
+     :use
+     ((:instance abs-find-file-alt-of-fat32-filename-list-fix
+                 (pathname pathname-equiv))
+      abs-find-file-alt-of-fat32-filename-list-fix)))))
 
-(defthm abs-find-file-alt-correctness-1-lemma-1
-  (implies (not (member-equal (caar frame) indices))
-           (equal (abs-find-file-alt (cdr frame)
-                                     indices pathname)
-                  (abs-find-file-alt frame indices pathname)))
-  :hints (("goal" :in-theory (enable abs-find-file-alt))))
+(local
+ (defthm abs-find-file-alt-correctness-1-lemma-1
+   (implies (not (member-equal (caar frame) indices))
+            (equal (abs-find-file-alt (cdr frame)
+                                      indices pathname)
+                   (abs-find-file-alt frame indices pathname)))
+   :hints (("goal" :in-theory (enable abs-find-file-alt)))))
 
-(defthm
-  abs-find-file-alt-correctness-1
-  (implies (no-duplicatesp-equal (strip-cars frame))
-           (equal (abs-find-file-alt frame (strip-cars frame)
-                                     pathname)
-                  (abs-find-file frame pathname)))
-  :hints (("goal" :in-theory (enable abs-find-file-alt abs-find-file))))
+(local
+ (defthm
+   abs-find-file-alt-correctness-1
+   (implies (no-duplicatesp-equal (strip-cars frame))
+            (equal (abs-find-file-alt frame (strip-cars frame)
+                                      pathname)
+                   (abs-find-file frame pathname)))
+   :hints (("goal" :in-theory (enable abs-find-file-alt abs-find-file)))))
 
-(defthm
-  abs-find-file-alt-correctness-2
-  (implies (no-duplicatesp-equal (strip-cars frame))
-           (equal (abs-find-file-alt frame
-                                     (remove-equal x (strip-cars frame))
-                                     pathname)
-                  (abs-find-file (remove-assoc-equal x frame)
-                                 pathname)))
-  :hints (("goal" :in-theory (enable abs-find-file-alt abs-find-file))))
+(local
+ (defthm
+   abs-find-file-alt-correctness-2
+   (implies (no-duplicatesp-equal (strip-cars frame))
+            (equal (abs-find-file-alt frame
+                                      (remove-equal x (strip-cars frame))
+                                      pathname)
+                   (abs-find-file (remove-assoc-equal x frame)
+                                  pathname)))
+   :hints (("goal" :in-theory (enable abs-find-file-alt abs-find-file)))))
 
 (defund abs-enotdir-witness (fs pathname)
   (declare (xargs :measure (len pathname)))
@@ -9017,49 +9028,47 @@
              :in-theory (e/d (collapse 1st-complete-src)
                              ())))))
 
-(defthm
-  abs-find-file-correctness-1-lemma-47
-  (implies
-   (and
-    (no-duplicatesp-equal (strip-cars frame))
-    (mv-nth 1
-            (collapse (frame-with-root root frame)))
-    (frame-p frame)
-    (consp (assoc-equal x frame))
-    (subsetp-equal indices (strip-cars frame))
-    (not (member-equal x indices))
-    (prefixp (frame-val->path (cdr (assoc-equal x frame)))
-             (fat32-filename-list-fix pathname))
-    (dist-names root
-                nil frame)
-    (abs-separate frame)
-    (not
-     (equal
-      (mv-nth 1
-              (abs-find-file-helper
-               (frame-val->dir (cdr (assoc-equal x frame)))
-               (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
-                       pathname)))
-      *enoent*)))
-   (equal (abs-find-file-alt frame indices pathname)
-          (mv (abs-file-fix nil) *enoent*)))
-  :hints
-  (("goal"
-    :induct (abs-find-file-alt frame indices pathname)
-    :in-theory
-    (e/d
-     (abs-find-file-alt)
-     (member-of-a-nat-list (:type-prescription member-of-strip-cars . 2))))
-   ("subgoal *1/2"
-    :expand (subsetp-equal indices (strip-cars frame))
-    :use ((:instance (:type-prescription member-of-strip-cars . 2)
-                     (alist frame)
-                     (x (car indices)))
-          (:instance member-of-a-nat-list (x nil)
-                     (lst (strip-cars frame)))
-          (:instance (:rewrite abs-find-file-correctness-1-lemma-75)
-                     (frame (frame-with-root root frame))
-                     (y (car indices)))))))
+(local
+ (defthm
+   abs-find-file-correctness-1-lemma-47
+   (implies
+    (and
+     (no-duplicatesp-equal (strip-cars frame))
+     (mv-nth 1
+             (collapse (frame-with-root root frame)))
+     (frame-p frame)
+     (consp (assoc-equal x frame))
+     (subsetp-equal indices (strip-cars frame))
+     (not (member-equal x indices))
+     (prefixp (frame-val->path (cdr (assoc-equal x frame)))
+              (fat32-filename-list-fix pathname))
+     (dist-names root
+                 nil frame)
+     (abs-separate frame)
+     (not
+      (equal
+       (mv-nth 1
+               (abs-find-file-helper
+                (frame-val->dir (cdr (assoc-equal x frame)))
+                (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+                        pathname)))
+       *enoent*)))
+    (equal (abs-find-file-alt frame indices pathname)
+           (mv (abs-file-fix nil) *enoent*)))
+   :hints
+   (("goal"
+     :induct (abs-find-file-alt frame indices pathname)
+     :in-theory
+     (e/d
+      (abs-find-file-alt)
+      (member-of-a-nat-list)))
+    ("subgoal *1/2"
+     :expand (subsetp-equal indices (strip-cars frame))
+     :use ((:instance member-of-a-nat-list (x nil)
+                      (lst (strip-cars frame)))
+           (:instance (:rewrite abs-find-file-correctness-1-lemma-75)
+                      (frame (frame-with-root root frame))
+                      (y (car indices))))))))
 
 (defthmd
   abs-find-file-correctness-1-lemma-48
