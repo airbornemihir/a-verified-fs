@@ -3777,13 +3777,6 @@
          (dist-names dir relpath (cdr frame)))))
     (dist-names dir relpath (cdr frame))))
 
-;; Move later.
-(defthm fat32-filename-list-p-when-prefixp
-  (implies (and (prefixp x y)
-                (fat32-filename-list-p y))
-           (fat32-filename-list-p (true-list-fix x)))
-  :hints (("goal" :in-theory (enable prefixp fat32-filename-list-p))))
-
 (defthm dist-names-of-fat32-filename-list-fix
   (equal (dist-names dir (fat32-filename-list-fix relpath)
                      frame)
@@ -12835,11 +12828,6 @@
            (equal (1st-complete (put-assoc-equal x val frame))
                   (1st-complete frame)))
   :hints (("goal" :in-theory (enable 1st-complete abs-separate))))
-
-;; Move later
-(defthm put-assoc-equal-of-true-list-fix
-  (equal (put-assoc-equal name val (true-list-fix alist))
-         (true-list-fix (put-assoc-equal name val alist))))
 
 (encapsulate
   ()

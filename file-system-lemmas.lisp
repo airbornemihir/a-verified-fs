@@ -1224,3 +1224,7 @@
 (defthm remove-assoc-of-true-list-fix
   (equal (remove-assoc-equal x (true-list-fix alist))
          (remove-assoc-equal x alist)))
+
+(defthm put-assoc-equal-of-true-list-fix
+  (equal (put-assoc-equal name val (true-list-fix alist))
+         (true-list-fix (put-assoc-equal name val alist))))
