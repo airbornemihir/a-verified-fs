@@ -13786,18 +13786,11 @@
          (collapse-iter frame (+ (nfix m) (nfix n))))
   :hints (("goal" :in-theory (enable collapse-iter))))
 
-(encapsulate
-  ()
-
-  (local (defthm lemma
-           (implies (consp x) (not (zp (len x))))
-           :rule-classes :type-prescription))
-
-  (defthm collapse-iter-is-collapse
-    (implies (>= (nfix n) (len (frame->frame frame)))
-             (equal (frame->root (collapse-iter frame n))
-                    (mv-nth 0 (collapse frame))))
-    :hints (("goal" :in-theory (enable collapse-iter collapse)))))
+(defthm collapse-iter-is-collapse
+  (implies (>= (nfix n) (len (frame->frame frame)))
+           (equal (frame->root (collapse-iter frame n))
+                  (mv-nth 0 (collapse frame))))
+  :hints (("goal" :in-theory (enable collapse-iter collapse))))
 
 ;; Move later.
 (defthmd collapse-correctness-1
