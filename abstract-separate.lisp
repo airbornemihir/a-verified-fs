@@ -2817,6 +2817,53 @@
                             (frame frame-equiv))
                  collapse-this-of-true-list-fix))))
 
+(defthm assoc-of-frame->frame-of-collapse-this-lemma-1
+  (atom (assoc-equal 0 (frame->frame frame)))
+  :hints (("goal" :in-theory (enable frame->frame)))
+  :rule-classes :type-prescription)
+
+(defthm
+  assoc-of-frame->frame-of-collapse-this-1
+  (implies (equal (frame-val->src (cdr (assoc-equal y (frame->frame frame))))
+                  0)
+           (equal (assoc-equal x
+                               (frame->frame (collapse-this frame y)))
+                  (if (equal x y)
+                      nil
+                      (assoc-equal x (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable collapse-this)
+           :do-not-induct t)))
+
+(defthm
+  assoc-of-frame->frame-of-collapse-this-2
+  (implies
+   (not (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame))))))
+   (equal
+    (assoc-equal y
+                 (frame->frame (collapse-this frame x)))
+    (cond
+     ((equal y
+             (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+      (cons
+       y
+       (frame-val
+        (frame-val->path (cdr (assoc-equal y (frame->frame frame))))
+        (ctx-app
+         (frame-val->dir (cdr (and (not (equal y x))
+                                   (assoc-equal y (frame->frame frame)))))
+         (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+         x
+         (nthcdr
+          (len
+           (frame-val->path (cdr (and (not (equal y x))
+                                      (assoc-equal y (frame->frame frame))))))
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+        (frame-val->src (cdr (assoc-equal y (frame->frame frame)))))))
+     ((not (equal y x))
+      (assoc-equal y (frame->frame frame)))
+     (t nil))))
+  :hints (("goal" :in-theory (enable collapse-this))))
+
 (defthm collapse-guard-lemma-1
   (consp (assoc-equal 0 (collapse-this frame x)))
   :hints (("goal" :in-theory (enable collapse-this)))
@@ -5073,13 +5120,8 @@
                (frame->frame (collapse-this frame x))))
   :hints (("goal" :in-theory (enable collapse-this))))
 
-(defthm abs-separate-correctness-1-lemma-28
-  (atom (assoc-equal 0 (frame->frame frame)))
-  :hints (("goal" :in-theory (enable frame->frame)))
-  :rule-classes :type-prescription)
-
 (defthm
-  abs-separate-correctness-1-lemma-33
+  abs-separate-correctness-1-lemma-28
   (implies
    (and
     (natp x)
@@ -8175,18 +8217,6 @@
 
 (defthm
   abs-find-file-correctness-1-lemma-42
-  (implies (equal (frame-val->src (cdr (assoc-equal y (frame->frame frame))))
-                  0)
-           (equal (assoc-equal x
-                               (frame->frame (collapse-this frame y)))
-                  (if (equal x y)
-                      nil
-                      (assoc-equal x (frame->frame frame)))))
-  :hints (("goal" :in-theory (enable collapse-this)
-           :do-not-induct t)))
-
-(defthm
-  abs-find-file-correctness-1-lemma-60
   (implies
    (and
     (ctx-app-ok (frame->root frame)
@@ -12138,36 +12168,6 @@
 (defthm
   partial-collapse-correctness-lemma-31
   (implies
-   (not (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame))))))
-   (equal
-    (assoc-equal y
-                 (frame->frame (collapse-this frame x)))
-    (cond
-     ((equal y
-             (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
-      (cons
-       y
-       (frame-val
-        (frame-val->path (cdr (assoc-equal y (frame->frame frame))))
-        (ctx-app
-         (frame-val->dir (cdr (and (not (equal y x))
-                                   (assoc-equal y (frame->frame frame)))))
-         (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
-         x
-         (nthcdr
-          (len
-           (frame-val->path (cdr (and (not (equal y x))
-                                      (assoc-equal y (frame->frame frame))))))
-          (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-        (frame-val->src (cdr (assoc-equal y (frame->frame frame)))))))
-     ((not (equal y x))
-      (assoc-equal y (frame->frame frame)))
-     (t nil))))
-  :hints (("goal" :in-theory (enable collapse-this))))
-
-(defthm
-  partial-collapse-correctness-lemma-32
-  (implies
    (and (mv-nth 1 (collapse frame))
         (not (zp x)))
    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
@@ -13646,13 +13646,13 @@
      (1st-complete (frame->frame frame)))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite partial-collapse-correctness-lemma-32))
-    :use (:instance (:rewrite partial-collapse-correctness-lemma-32)
+    :in-theory (disable (:rewrite partial-collapse-correctness-lemma-31))
+    :use (:instance (:rewrite partial-collapse-correctness-lemma-31)
                     (frame (collapse-this frame x))
                     (x (1st-complete (frame->frame frame)))))))
 
 (defthm
-  partial-collapse-correctness-lemma-58
+  partial-collapse-correctness-lemma-32
   (implies
    (and
     (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
@@ -13668,13 +13668,13 @@
      (1st-complete (frame->frame frame)))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite partial-collapse-correctness-lemma-32))
-    :use (:instance (:rewrite partial-collapse-correctness-lemma-32)
+    :in-theory (disable (:rewrite partial-collapse-correctness-lemma-31))
+    :use (:instance (:rewrite partial-collapse-correctness-lemma-31)
                     (frame (collapse-this frame x))
                     (x (1st-complete (frame->frame frame)))))))
 
 (defthm
-  partial-collapse-correctness-lemma-59
+  partial-collapse-correctness-lemma-58
   (implies
    (and
     (equal
