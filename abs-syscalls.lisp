@@ -96,7 +96,7 @@
       ((frame (partial-collapse frame (butlast 1 pathname)))
        ;; After partial-collapse, either the parent directory is there in one
        ;; variable, or it isn't there at all.
-       (mv (parent-dir error-code) (abs-find-file-helper (frame->root frame)
+       ((mv parent-dir error-code) (abs-find-file-helper (frame->root frame)
                                                          pathname))
        ((mv new-root &) (abs-remove-file (frame->root frame) pathname))
        ((unless (equal error-code 0))
@@ -110,5 +110,6 @@
                  ;; Using this, not (strip-cars (frame->frame frame)), to make
                  ;; sure we don't get a zero.
                  (strip-cars frame))
-                new-parent-dir))))
+                new-parent-dir
+                (frame->frame frame)))))
     (mv frame -1 error-code)))
