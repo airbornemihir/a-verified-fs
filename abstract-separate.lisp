@@ -14492,26 +14492,37 @@
           (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
           (:rewrite 1st-complete-of-put-assoc-lemma-1))))))
 
-(thm
+(defthmd
+  partial-collapse-correctness-lemma-83
   (implies
    (and
-    (natp x)
-    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-    (consp (assoc-equal x (frame->frame frame)))
-    (not (equal (frame-val->src
-                 (cdr (assoc-equal x (frame->frame frame))))
-                x))
-    (or
-     (zp (frame-val->src
-          (cdr (assoc-equal x (frame->frame frame)))))
-     (consp
-      (assoc-equal
-       (frame-val->src
-        (cdr (assoc-equal x (frame->frame frame))))
-       (frame->frame frame)))))
-   (equal (len (frame->frame (collapse-this frame x)))
-          (- (len (frame->frame frame)) 1)))
-  :hints (("goal" :in-theory (enable collapse-this))))
+    (abs-separate (frame->frame frame))
+    (frame-p (frame->frame frame))
+    (consp
+     (assoc-equal
+      x
+      (frame->frame (collapse-iter frame (collapse-1st-index frame x)))))
+    (mv-nth 1 (collapse frame))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+   (equal
+    (final-val x frame)
+    (ctx-app-list
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+     (len (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+     frame
+     (frame-addrs-before frame x (collapse-1st-index frame x)))))
+  :hints (("goal" :in-theory (e/d (final-val)
+                                  (partial-collapse-correctness-lemma-79))
+           :use (:instance partial-collapse-correctness-lemma-79
+                           (n (collapse-1st-index frame x))))))
+
+(thm
+ (implies
+  (set-equiv l1 l2)
+  (absfat-equiv
+   (CTX-APP-LIST FS PATH-LEN FRAME L1)
+   (CTX-APP-LIST FS PATH-LEN FRAME L2)))
+ :hints (("Goal" :in-theory (enable CTX-APP-LIST)) ))
 
 ;; (thm
 ;;  (implies (and
