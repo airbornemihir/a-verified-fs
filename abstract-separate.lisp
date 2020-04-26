@@ -14005,7 +14005,7 @@
      (ctx-app-list fs path-len frame (cdr l))
      (final-val (car l) frame)
      (car l)
-     (nthcdr path-len (frame-val->src (cdr (assoc-equal (car l) (frame->frame
+     (nthcdr path-len (frame-val->path (cdr (assoc-equal (car l) (frame->frame
                                                                  frame))))))))
 
 (defthm partial-collapse-correctness-lemma-61
@@ -14482,6 +14482,22 @@
   :hints (("goal" :in-theory (enable frame-addrs-before)))
   :rule-classes (:rewrite :type-prescription))
 
+(defthm partial-collapse-correctness-lemma-82
+  (equal (ctx-app-list fs path-len frame (append x y))
+         (ctx-app-list (ctx-app-list fs path-len frame y)
+                       path-len frame x))
+  :hints (("goal" :in-theory (enable ctx-app-list))))
+
+;; Move later.
+(defthm
+  final-val-of-1st-complete
+  (equal (final-val (1st-complete (frame->frame frame))
+                    frame)
+         (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable final-val
+                                     collapse-1st-index collapse-iter))))
+
 (encapsulate
   ()
 
@@ -14518,6 +14534,7 @@
   (thm
    (implies
     (and
+     (abs-separate (frame->frame frame))
      (frame-p (frame->frame frame))
      (consp (assoc-equal x (frame->frame (collapse-iter frame n))))
      (mv-nth 1 (collapse frame))
