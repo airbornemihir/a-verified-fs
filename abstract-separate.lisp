@@ -2526,8 +2526,7 @@
   :hints (("goal" :in-theory (enable 1st-complete))))
 
 (defthm 1st-complete-of-remove-assoc-1
-  (implies (and (not (zp x))
-                (case-split (not (equal x (1st-complete frame)))))
+  (implies (case-split (not (nat-equiv x (1st-complete frame))))
            (equal (1st-complete (remove-assoc-equal x frame))
                   (1st-complete frame)))
   :hints (("goal" :in-theory (enable 1st-complete))))
@@ -2535,9 +2534,8 @@
 (defthm
   1st-complete-of-remove-assoc-2
   (implies
-   (and (not (zp y))
-        (not (equal y
-                    (1st-complete (remove-assoc-equal x frame)))))
+   (not (nat-equiv y
+                   (1st-complete (remove-assoc-equal x frame))))
    (equal (1st-complete (remove-assoc-equal x (remove-assoc-equal y frame)))
           (1st-complete (remove-assoc-equal x frame))))
   :hints (("goal" :in-theory (disable 1st-complete-of-remove-assoc-1)
@@ -2587,8 +2585,7 @@
   (frame-val->src (cdr (assoc-equal (1st-complete frame) frame))))
 
 (defthm 1st-complete-src-of-remove-assoc-1
-  (implies (and (not (zp x))
-                (not (equal x (1st-complete frame))))
+  (implies (not (nat-equiv x (1st-complete frame)))
            (equal (1st-complete-src (remove-assoc-equal x frame))
                   (1st-complete-src frame)))
   :hints (("goal" :in-theory (enable 1st-complete-src))))
@@ -2918,6 +2915,201 @@
                         n)
          (collapse-iter frame (+ (nfix m) (nfix n))))
   :hints (("goal" :in-theory (enable collapse-iter))))
+
+(defund
+  alt-collapse-this (frame x)
+  (declare
+   (xargs
+    :guard-debug t
+    :guard
+    (and
+     (frame-p frame)
+     (integerp x)
+     (< 0 x)
+     (consp (assoc-equal 0 frame))
+     (consp (assoc-equal x frame))
+     (not (equal (frame-val->src (cdr (assoc-equal x frame)))
+                 x))
+     (or
+      (zp (frame-val->src (cdr (assoc-equal x frame))))
+      (consp
+       (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
+                    frame))))))
+  (put-assoc-equal
+   (frame-val->src (cdr (assoc-equal x frame)))
+   (frame-val
+    (frame-val->path
+     (cdr
+      (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
+                   frame)))
+    (abs-fs-fix
+     (ctx-app
+      (frame-val->dir
+       (cdr (assoc-equal
+             (frame-val->src (cdr (assoc-equal x frame)))
+             (remove-assoc-equal x frame))))
+      (frame-val->dir (cdr (assoc-equal x frame)))
+      x
+      (nthcdr
+       (len
+        (frame-val->path
+         (cdr (assoc-equal
+               (frame-val->src (cdr (assoc-equal x frame)))
+               (remove-assoc-equal x frame)))))
+       (frame-val->path (cdr (assoc-equal x frame))))))
+    (frame-val->src
+     (cdr
+      (assoc-equal (frame-val->src (cdr (assoc-equal x frame)))
+                   frame))))
+   (remove-assoc-equal x frame)))
+
+(defthm len-of-frame-of-alt-collapse-this
+  (implies (and (consp (assoc-equal 0 x))
+                (not (zp x)))
+           (< (len (alt-collapse-this frame x))
+              (len frame)))
+  :hints (("goal" :in-theory (enable alt-collapse-this)))
+  :rule-classes :linear)
+
+(defthm frame-p-of-alt-collapse-this
+  (implies (frame-p frame)
+           (frame-p (alt-collapse-this frame x)))
+  :hints (("goal" :in-theory (enable alt-collapse-this))))
+
+(defthm
+  no-duplicatesp-equal-of-strip-cars-of-frame->frame-of-alt-collapse-this
+  (implies
+   (no-duplicatesp-equal (strip-cars frame))
+   (no-duplicatesp-equal (strip-cars (alt-collapse-this frame x))))
+  :hints (("goal" :in-theory (enable alt-collapse-this))))
+
+(defthm frame-p-of-frame->frame-of-alt-collapse-this
+  (implies (frame-p frame)
+           (frame-p (alt-collapse-this frame x)))
+  :hints (("goal" :in-theory (enable alt-collapse-this))))
+
+(defthmd alt-collapse-this-of-true-list-fix
+  (equal (alt-collapse-this (true-list-fix frame) x)
+         (alt-collapse-this frame x))
+  :hints (("goal" :in-theory (enable alt-collapse-this))))
+
+(defcong
+  list-equiv equal (alt-collapse-this frame x)
+  1
+  :hints
+  (("goal" :use ((:instance alt-collapse-this-of-true-list-fix
+                            (frame frame-equiv))
+                 alt-collapse-this-of-true-list-fix))))
+
+(defthm assoc-of-frame->frame-of-alt-collapse-this-1
+  (implies (and (not (zp x))
+                (equal (frame-val->src (cdr (assoc-equal y frame)))
+                       0))
+           (equal (assoc-equal x (alt-collapse-this frame y))
+                  (if (equal x y)
+                      nil (assoc-equal x frame))))
+  :hints (("goal" :in-theory (enable alt-collapse-this)
+           :do-not-induct t)))
+
+(defthm
+  assoc-of-frame->frame-of-alt-collapse-this-2
+  (equal
+   (assoc-equal y (alt-collapse-this frame x))
+   (cond
+    ((equal y
+            (frame-val->src (cdr (assoc-equal x frame))))
+     (cons
+      y
+      (frame-val
+       (frame-val->path (cdr (assoc-equal y frame)))
+       (ctx-app
+        (frame-val->dir (cdr (and (not (equal y x))
+                                  (assoc-equal y frame))))
+        (frame-val->dir (cdr (assoc-equal x frame)))
+        x
+        (nthcdr (len (frame-val->path (cdr (and (not (equal y x))
+                                                (assoc-equal y frame)))))
+                (frame-val->path (cdr (assoc-equal x frame)))))
+       (frame-val->src (cdr (assoc-equal y frame))))))
+    ((not (equal y x))
+     (assoc-equal y frame))
+    (t nil)))
+  :hints (("goal" :in-theory (enable alt-collapse-this))))
+
+(defthm alt-collapse-guard-lemma-1
+  (implies (and (consp (assoc-equal 0 frame))
+                (not (zp x)))
+           (consp (assoc-equal 0 (alt-collapse-this frame x))))
+  :hints (("goal" :in-theory (enable alt-collapse-this)))
+  :rule-classes :type-prescription)
+
+(defund
+  alt-collapse-iter (frame n)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame))
+                              (natp n))
+                  :measure (nfix n)))
+  (b*
+      (((when (or (zp n) (<= (len frame) 1)))
+        frame)
+       (head-index (1st-complete frame))
+       ((when (zp head-index)) frame)
+       (head-frame-val (cdr (assoc-equal head-index frame)))
+       (src (frame-val->src (cdr (assoc-equal (1st-complete frame)
+                                              frame))))
+       (path (frame-val->path head-frame-val))
+       ((when (or (equal src head-index)
+                  (atom (assoc-equal src frame))))
+        frame)
+       (src-path (frame-val->path (cdr (assoc-equal src frame))))
+       (src-dir (frame-val->dir (cdr (assoc-equal src frame))))
+       ((unless (and (prefixp src-path path)
+                     (ctx-app-ok src-dir head-index
+                                 (nthcdr (len src-path) path))))
+        frame))
+    (alt-collapse-iter (alt-collapse-this frame (1st-complete frame))
+                   (- n 1))))
+
+(defthmd alt-collapse-iter-of-nfix
+  (equal (alt-collapse-iter frame (nfix n))
+         (alt-collapse-iter frame n))
+  :hints (("goal" :in-theory (enable alt-collapse-iter))))
+
+(defcong
+  nat-equiv equal (alt-collapse-iter frame n)
+  2
+  :hints
+  (("goal"
+    :use (alt-collapse-iter-of-nfix
+          (:instance alt-collapse-iter-of-nfix (n n-equiv))))))
+
+(defthm alt-collapse-iter-of-alt-collapse-iter
+  (equal (alt-collapse-iter (alt-collapse-iter frame m)
+                        n)
+         (alt-collapse-iter frame (+ (nfix m) (nfix n))))
+  :hints (("goal" :in-theory (enable alt-collapse-iter))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthm lemma-1
+     (implies (and (<= (len frame) 1)
+                   (consp (assoc-equal x frame)))
+              (not (consp (remove-assoc-equal x frame))))))
+
+  (thm
+   (implies
+    (and (consp (assoc-equal 0 frame)))
+    (equal
+     (alt-collapse-iter frame n)
+     (collapse-iter frame n)))
+   :hints (("Goal" :in-theory (enable alt-collapse-iter collapse-iter
+                                      frame->frame
+                                      collapse-this
+                                      alt-collapse-this)
+            :induct (ALT-COLLAPSE-ITER FRAME N)
+            :expand (COLLAPSE-ITER FRAME N)) )))
 
 (defund
   collapse (frame)
