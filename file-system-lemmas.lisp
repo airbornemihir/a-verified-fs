@@ -130,15 +130,10 @@
          (append a (append b c))))
 
 (defthm member-of-a-nat-list
-  (implies (and (nat-listp lst)
-                (member-equal x lst))
-           (and (integerp x) (<= 0 x)))
-  :rule-classes ((:rewrite :corollary (implies (and (nat-listp lst)
-                                                    (member-equal x lst))
-                                               (<= 0 x)))
-                 (:forward-chaining :corollary (implies (and (member-equal x lst)
-                                                             (nat-listp lst))
-                                                        (integerp x)))))
+  (implies (and (member-equal x lst)
+                (nat-listp lst))
+           (natp x))
+  :rule-classes :forward-chaining)
 
 (defthm update-nth-of-boolean-list
   (implies (boolean-listp l)

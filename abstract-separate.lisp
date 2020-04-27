@@ -15,7 +15,6 @@
                      (:definition acl2-number-listp)
                      (:rewrite nat-listp-of-remove)
                      (:definition rational-listp)
-                     (:rewrite member-of-a-nat-list)
                      (:rewrite take-fewer-of-take-more)
                      (:rewrite assoc-equal-when-member-equal)
                      (:rewrite take-when-atom)
@@ -14415,16 +14414,14 @@
                             (:rewrite partial-collapse-correctness-lemma-28)))
     :induct (frame-addrs-before frame x n)
     :expand (collapse-iter frame 1)))
-  :rule-classes (:rewrite
-                 (:forward-chaining
+  :rule-classes ((:rewrite
                   :corollary
                   (implies (and (mv-nth 1 (collapse frame))
-                                (case-split
-                                 (and (<= (nfix n) (len (frame->frame frame)))
-                                      (no-duplicatesp-equal (strip-cars (frame->frame frame))))))
-                           (subsetp-equal (frame-addrs-before frame x n)
-                                          (strip-cars (frame->frame frame))))
-                  :trigger-terms ((frame-addrs-before frame x n)))))
+                                (<= (nfix n) (len (frame->frame frame)))
+                                (no-duplicatesp-equal (strip-cars (frame->frame
+                                                                   frame)))
+                                (subsetp-equal (strip-cars (frame->frame frame)) y))
+                           (subsetp-equal (frame-addrs-before frame x n) y)))))
 
 (defthm partial-collapse-correctness-lemma-80
   (implies (and (not (zp x))
@@ -14549,102 +14546,82 @@
   (abs-fs-p (final-val x frame))
   :hints (("goal" :in-theory (enable final-val))))
 
-;; This subgoal has too many crazy elements in it. Let's just skip it for the
-;; time being.
-(skip-proofs
- (defthm
-   partial-collapse-correctness-lemma-84
-   (implies
-    (and
-     (consp l)
-     (abs-separate (frame->frame frame))
-     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-     (frame-p (frame->frame frame))
-     (mv-nth 1 (collapse frame))
-     (member-equal x (cdr l))
-     (not (member-equal (car l) (cdr l)))
-     (no-duplicatesp-equal (cdr l))
-     (not (equal x (car l))))
-    (absfat-equiv
-     (ctx-app
-      (ctx-app
-       (ctx-app-list fs
-                     path-len frame (remove-equal x (cdr l)))
-       (final-val (car l) frame)
-       (car l)
-       (nthcdr path-len
-               (frame-val->path (cdr (assoc-equal (car l)
-                                                  (frame->frame frame))))))
-      (final-val x frame)
-      x
-      (nthcdr path-len
-              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-     (ctx-app
-      (ctx-app
-       (ctx-app-list fs
-                     path-len frame (remove-equal x (cdr l)))
-       (final-val x frame)
-       x
-       (nthcdr path-len
-               (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-      (final-val (car l) frame)
-      (car l)
-      (nthcdr path-len
-              (frame-val->path (cdr (assoc-equal (car l)
-                                                 (frame->frame frame))))))))))
+;; (thm
+;;  (implies
+;;   (and (abs-separate (frame->frame frame))
+;;        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;        (no-duplicatesp-equal l)
+;;        (frame-p (frame->frame frame))
+;;        (mv-nth 1 (collapse frame))
+;;        (nat-listp l)
+;;        (member-equal x l))
+;;   (and
+;;    (absfat-equiv
+;;     (ctx-app
+;;      (ctx-app-list fs path-len frame (remove-equal x l))
+;;      (final-val x frame)
+;;      x
+;;      (nthcdr path-len
+;;              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+;;     (ctx-app-list fs path-len frame l))
+;;    (not
+;;     (intersectp-equal
+;;      (names-at (final-val x frame) nil)
+;;      (names-at
+;;       (ctx-app-list fs
+;;                     path-len frame (remove-equal x l))
+;;       (nthcdr path-len
+;;               (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))))
+;;  :hints (("goal" :in-theory (enable ctx-app-list)
+;;           :induct
+;;           (ctx-app-list fs path-len frame l))
+;;          ("Subgoal *1/2.1'"
+;;           :in-theory (disable
+;;                       (:rewrite ctx-app-of-ctx-app-1))
+;;           :use
+;;           (:instance
+;;            (:rewrite ctx-app-of-ctx-app-1)
+;;            (y-path
+;;             (nthcdr path-len
+;;                     (frame-val->path
+;;                      (cdr (assoc-equal x (frame->frame frame))))))
+;;            (y-var x)
+;;            (y (final-val x frame))
+;;            (z-path
+;;             (nthcdr path-len
+;;                     (frame-val->path
+;;                      (cdr (assoc-equal (car l)
+;;                                        (frame->frame frame))))))
+;;            (z-var (car l))
+;;            (z (final-val (car l) frame))
+;;            (x (ctx-app-list fs path-len
+;;                             frame (remove-equal x (cdr l))))))))
 
-(defthm
-  partial-collapse-correctness-lemma-85
-  (implies
-   (and (abs-separate (frame->frame frame))
-        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-        (frame-p (frame->frame frame))
-        (mv-nth 1 (collapse frame))
-        (member-equal x l)
-        (no-duplicatesp-equal l))
-   (absfat-equiv
-    (ctx-app
-     (ctx-app-list fs path-len frame (remove-equal x l))
-     (final-val x frame)
-     x
-     (nthcdr path-len
-             (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-    (ctx-app-list fs path-len frame l)))
-  :hints (("goal" :in-theory (e/d (ctx-app-list)))))
+;; The problem with this is that it requires two screwy non-intersection properties...
+;; (encapsulate
+;;   ()
 
-(encapsulate
-  ()
+;;   (local
+;;    (defun
+;;        induction-scheme (l1 l2)
+;;      (cond
+;;       ((and (not (atom l1)))
+;;        (induction-scheme (cdr l1) (remove-equal (car l1) l2)))
+;;       (t (mv l1 l2)))))
 
-  (local
-   (defun
-       induction-scheme (l1 l2)
-     (cond
-      ((and (not (atom l1)))
-       (induction-scheme (cdr l1) (remove-equal (car l1) l2)))
-      (t (mv l1 l2)))))
-
-  (defthm
-    partial-collapse-correctness-lemma-86
-    (implies (and (abs-separate (frame->frame frame))
-                  (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                  (no-duplicatesp-equal l1)
-                  (no-duplicatesp-equal l2)
-                  (set-equiv l1 l2)
-                  (frame-p (frame->frame frame))
-                  (mv-nth '1 (collapse frame)))
-             (absfat-equiv (ctx-app-list fs path-len frame l1)
-                           (ctx-app-list fs path-len frame l2)))
-    :hints
-    (("goal" :in-theory (enable ctx-app-list)
-      :induct (induction-scheme l1 l2))
-     ("subgoal *1/1.2"
-      :in-theory (disable (:rewrite partial-collapse-correctness-lemma-85))
-      :use (:instance (:rewrite partial-collapse-correctness-lemma-85)
-                      (l l2)
-                      (x (car l1))
-                      (frame frame)
-                      (path-len path-len)
-                      (fs fs))))))
+;;   (thm
+;;    (implies (and (abs-separate (frame->frame frame))
+;;                  (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;                  (no-duplicatesp-equal l1)
+;;                  (no-duplicatesp-equal l2)
+;;                  (set-equiv l1 l2)
+;;                  (frame-p (frame->frame frame))
+;;                  (mv-nth '1 (collapse frame)))
+;;             (absfat-equiv (ctx-app-list fs path-len frame l1)
+;;                           (ctx-app-list fs path-len frame l2)))
+;;    :hints
+;;    (("goal" :in-theory (enable ctx-app-list)
+;;      :induct (induction-scheme l1 l2)))))
 
 ;; (thm
 ;;  (implies (and
