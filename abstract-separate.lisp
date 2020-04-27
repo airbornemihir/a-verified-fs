@@ -2856,6 +2856,71 @@
   :rule-classes :type-prescription)
 
 (defund
+  collapse-iter (frame n)
+  (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame))
+                              (natp n))
+                  :measure (nfix n)))
+  (b*
+      (((when (or (zp n) (atom (frame->frame frame))))
+        frame)
+       (head-index (1st-complete (frame->frame frame)))
+       ((when (zp head-index))
+        frame)
+       (head-frame-val
+        (cdr (assoc-equal head-index (frame->frame frame))))
+       (src
+        (frame-val->src
+         (cdr (assoc-equal (1st-complete (frame->frame frame))
+                           (frame->frame frame))))))
+    (if
+     (zp src)
+     (b*
+         (((unless (ctx-app-ok (frame->root frame)
+                               head-index
+                               (frame-val->path head-frame-val)))
+           frame))
+       (collapse-iter (collapse-this frame
+                                     (1st-complete (frame->frame frame)))
+                      (- n 1)))
+     (b*
+         ((path (frame-val->path head-frame-val))
+          ((when (or (equal src head-index)
+                     (atom (assoc-equal src (frame->frame frame)))))
+           frame)
+          (src-path
+           (frame-val->path
+            (cdr (assoc-equal src (frame->frame frame)))))
+          (src-dir
+           (frame-val->dir
+            (cdr (assoc-equal src (frame->frame frame)))))
+          ((unless (and (prefixp src-path path)
+                        (ctx-app-ok src-dir head-index
+                                    (nthcdr (len src-path) path))))
+           frame))
+       (collapse-iter (collapse-this frame
+                       (1st-complete (frame->frame frame)))
+                      (- n 1))))))
+
+(defthmd collapse-iter-of-nfix
+  (equal (collapse-iter frame (nfix n))
+         (collapse-iter frame n))
+  :hints (("goal" :in-theory (enable collapse-iter))))
+
+(defcong
+  nat-equiv equal (collapse-iter frame n)
+  2
+  :hints
+  (("goal"
+    :use (collapse-iter-of-nfix
+          (:instance collapse-iter-of-nfix (n n-equiv))))))
+
+(defthm collapse-iter-of-collapse-iter
+  (equal (collapse-iter (collapse-iter frame m)
+                        n)
+         (collapse-iter frame (+ (nfix m) (nfix n))))
+  :hints (("goal" :in-theory (enable collapse-iter))))
+
+(defund
   collapse (frame)
   (declare (xargs :guard (and (frame-p frame)
                               (consp (assoc-equal 0 frame)))
@@ -3110,6 +3175,29 @@
   :hints (("goal" :use ((:instance collapse-of-true-list-fix
                                    (frame frame-equiv))
                         collapse-of-true-list-fix))))
+
+(defthmd collapse-iter-is-collapse
+  (implies (>= (nfix n) (len (frame->frame frame)))
+           (equal (collapse frame)
+                  (mv (frame->root (collapse-iter frame n))
+                      (atom (frame->frame (collapse-iter frame n))))))
+  :hints (("goal" :in-theory (enable collapse-iter collapse))))
+
+;; I was thinking we could use this as the starting point for getting rid of
+;; collapse entirely, so that we have a smaller number of functions to keep in
+;; lockstep: namely collapse-iter, collapse-seq and partial-collapse. However,
+;; I think it's quite likely that keeping these functions in lockstep will be
+;; less work than trying to redo the dozen-plus lemmas that use induction on
+;; collapse directly.
+(defthmd
+  collapse-iter-correctness-1
+  (equal
+   (collapse frame)
+   (mv
+    (frame->root (collapse-iter frame (len (frame->frame frame))))
+    (atom (frame->frame (collapse-iter frame (len (frame->frame frame)))))))
+  :hints (("goal" :use (:instance collapse-iter-is-collapse
+                                  (n (len (frame->frame frame)))))))
 
 (defund abs-top-names (x)
   (declare (xargs :guard t))
@@ -13709,97 +13797,6 @@
   (implies (and (not (zp x))
                 (atom (assoc-equal x frame)))
            (not (equal x (1st-complete frame)))))
-
-(defund
-  collapse-iter (frame n)
-  (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame))
-                              (natp n))
-                  :measure (nfix n)))
-  (b*
-      (((when (or (zp n) (atom (frame->frame frame))))
-        frame)
-       (head-index (1st-complete (frame->frame frame)))
-       ((when (zp head-index))
-        frame)
-       (head-frame-val
-        (cdr (assoc-equal head-index (frame->frame frame))))
-       (src
-        (frame-val->src
-         (cdr (assoc-equal (1st-complete (frame->frame frame))
-                           (frame->frame frame))))))
-    (if
-     (zp src)
-     (b*
-         (((unless (ctx-app-ok (frame->root frame)
-                               head-index
-                               (frame-val->path head-frame-val)))
-           frame))
-       (collapse-iter (collapse-this frame
-                                     (1st-complete (frame->frame frame)))
-                      (- n 1)))
-     (b*
-         ((path (frame-val->path head-frame-val))
-          ((when (or (equal src head-index)
-                     (atom (assoc-equal src (frame->frame frame)))))
-           frame)
-          (src-path
-           (frame-val->path
-            (cdr (assoc-equal src (frame->frame frame)))))
-          (src-dir
-           (frame-val->dir
-            (cdr (assoc-equal src (frame->frame frame)))))
-          ((unless (and (prefixp src-path path)
-                        (ctx-app-ok src-dir head-index
-                                    (nthcdr (len src-path) path))))
-           frame))
-       (collapse-iter (collapse-this frame
-                       (1st-complete (frame->frame frame)))
-                      (- n 1))))))
-
-(defthmd collapse-iter-of-nfix
-  (equal (collapse-iter frame (nfix n))
-         (collapse-iter frame n))
-  :hints (("goal" :in-theory (enable collapse-iter))))
-
-(defcong
-  nat-equiv equal (collapse-iter frame n)
-  2
-  :hints
-  (("goal"
-    :use (collapse-iter-of-nfix
-          (:instance collapse-iter-of-nfix (n n-equiv))))))
-
-(defthm collapse-iter-of-collapse-iter
-  (equal (collapse-iter (collapse-iter frame m)
-                        n)
-         (collapse-iter frame (+ (nfix m) (nfix n))))
-  :hints (("goal" :in-theory (enable collapse-iter))))
-
-(defthm collapse-iter-is-collapse
-  (implies (>= (nfix n) (len (frame->frame frame)))
-           (equal (frame->root (collapse-iter frame n))
-                  (mv-nth 0 (collapse frame))))
-  :hints (("goal" :in-theory (enable collapse-iter collapse))))
-
-;; Move later.
-(defthmd collapse-correctness-1
-  (equal (collapse frame)
-         (mv (mv-nth 0 (collapse frame))
-             (mv-nth 1 (collapse frame))))
-  :hints (("goal" :in-theory (enable collapse))))
-
-(defthmd
-  collapse-iter-correctness-1
-  (implies
-   (mv-nth 1 (collapse frame))
-   (equal (collapse frame)
-          (mv (frame->root (collapse-iter frame (len (frame->frame frame))))
-              t)))
-  :hints
-  (("goal"
-    :use
-    (collapse-correctness-1 (:instance collapse-iter-is-collapse
-                                       (n (len (frame->frame frame))))))))
 
 (defund
   collapse-1st-index (frame x)
