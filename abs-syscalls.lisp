@@ -5,7 +5,7 @@
 
 (in-package "ACL2")
 
-(include-book "abstract-separate" :skip-proofs-okp t)
+(include-book "abs-find-file")
 
 ;; Let's try to do this intuitively first...
 

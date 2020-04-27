@@ -502,7 +502,7 @@
    (not (consp (assoc-equal key1 (remove1-equal x alist)))))
   :rule-classes (:rewrite :type-prescription))
 
-(defthm assoc-equal-when-member-equal
+(defthmd assoc-equal-when-member-equal
   (implies (and (member-equal x lst)
                 (consp x)
                 (not (equal (car x) nil)))
