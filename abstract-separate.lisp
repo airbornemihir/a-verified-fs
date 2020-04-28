@@ -2580,19 +2580,6 @@
            (frame-p (remove1-assoc-equal x alist)))
   :hints (("goal" :in-theory (enable frame-p))))
 
-(defund 1st-complete-src (frame)
-  (declare (xargs :guard (and (frame-p frame)
-                              (consp (assoc-equal (1st-complete frame)
-                                                  frame)))))
-  (frame-val->src (cdr (assoc-equal (1st-complete frame) frame))))
-
-(defthm 1st-complete-src-of-remove-assoc-1
-  (implies (and (not (zp x))
-                (not (equal x (1st-complete frame))))
-           (equal (1st-complete-src (remove-assoc-equal x frame))
-                  (1st-complete-src frame)))
-  :hints (("goal" :in-theory (enable 1st-complete-src))))
-
 ;; This is a "false" frame because the src value given to the root is 0, same
 ;; as its abstract variable. This is one of a few compromises in elegance
 ;; required for distinguishing the root, which is necessary to properly define
@@ -4744,53 +4731,6 @@
                 (fs (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                                       frame)))))))))
 
-(defthm
-  abs-separate-correctness-1-lemma-51
-  (implies
-   (and (< 0 (1st-complete-src frame))
-        (member-equal (1st-complete frame)
-                      (abs-addrs root))
-        (no-duplicatesp-equal (strip-cars frame))
-        (subsetp-equal (abs-addrs root)
-                       (frame-addrs-root frame)))
-   (let
-       ((fs
-         (mv-nth
-          0
-          (collapse
-           (frame-with-root
-            root
-            (put-assoc-equal
-             (1st-complete-src frame)
-             (frame-val
-              (frame-val->path
-               (cdr (assoc-equal (1st-complete-src frame)
-                                 frame)))
-              (ctx-app
-               (frame-val->dir
-                (cdr (assoc-equal (1st-complete-src frame)
-                                  frame)))
-               (frame-val->dir
-                (cdr (assoc-equal (1st-complete frame)
-                                  frame)))
-               (1st-complete frame)
-               (nthcdr
-                (len
-                 (frame-val->path
-                  (cdr (assoc-equal (1st-complete-src frame)
-                                    frame))))
-                (frame-val->path
-                 (cdr (assoc-equal (1st-complete frame)
-                                   frame)))))
-              (frame-val->src
-               (cdr (assoc-equal (1st-complete-src frame)
-                                 frame))))
-             (remove-assoc-equal (1st-complete frame)
-                                 frame)))))))
-     (and (hifat-no-dups-p fs)
-          (m1-file-alist-p fs))))
-  :hints (("goal" :in-theory (enable 1st-complete-src))))
-
 ;; This is interesting because it talks about two arbitrarily chosen abstract
 ;; variables. Somehow it's hard to use directly, though...
 (defthm
@@ -6517,7 +6457,10 @@
            (cdr (assoc-equal (1st-complete (frame->frame frame))
                              (frame->frame frame))))))
         (equal x
-               (1st-complete-src (frame->frame frame))))
+               (frame-val->src
+                (cdr
+                 (assoc-equal (1st-complete (frame->frame frame))
+                              (frame->frame frame))))))
        (induction-scheme
         (ctx-app
          dir
@@ -6677,7 +6620,7 @@
     (("goal"
       :in-theory
       (e/d
-       (collapse 1st-complete-src collapse-this)
+       (collapse collapse-this)
        ((:definition remove-assoc-equal)
         (:rewrite remove-assoc-of-remove-assoc)
         (:rewrite abs-file-alist-p-when-m1-file-alist-p)
@@ -7561,7 +7504,7 @@
    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                x)))
   :hints (("goal"
-           :in-theory (enable collapse 1st-complete-src))))
+           :in-theory (enable collapse))))
 
 ;; Out of x, y and frame, at least one has to be a free variable...
 (defthm partial-collapse-correctness-lemma-23
@@ -7650,7 +7593,7 @@
    (consp
     (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                  (frame->frame frame))))
-  :hints (("goal" :in-theory (enable collapse 1st-complete-src)))
+  :hints (("goal" :in-theory (enable collapse)))
   :rule-classes (:type-prescription :rewrite))
 
 (defthm
@@ -7716,7 +7659,7 @@
      (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
   :hints
   (("goal" :in-theory
-    (e/d (collapse 1st-complete-src abs-addrs-of-ctx-app-1-lemma-7)
+    (e/d (collapse abs-addrs-of-ctx-app-1-lemma-7)
          ((:rewrite remove-assoc-of-put-assoc)
           (:rewrite remove-assoc-of-remove-assoc)
           (:rewrite abs-file-alist-p-when-m1-file-alist-p)))
@@ -7864,7 +7807,7 @@
       (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
   :hints
   (("goal"
-    :in-theory (e/d (collapse 1st-complete-src)
+    :in-theory (e/d (collapse)
                     ((:rewrite partial-collapse-correctness-lemma-29)
                      (:definition no-duplicatesp-equal)
                      (:rewrite remove-assoc-of-remove-assoc)
@@ -8076,7 +8019,7 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (collapse 1st-complete-src collapse-this)
+    (e/d (collapse collapse-this)
          ((:rewrite remove-assoc-of-put-assoc)
           (:rewrite partial-collapse-correctness-lemma-29)
           (:definition remove-assoc-equal)
@@ -8409,14 +8352,14 @@
      (mv-nth 0 (collapse frame)))))
   :hints
   (("goal" :in-theory
-    (e/d (collapse abs-separate 1st-complete-src)
+    (e/d (collapse abs-separate)
          ((:definition remove-assoc-equal)
           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
           (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)))
     :induct (collapse frame)
     :expand (COLLAPSE (COLLAPSE-THIS FRAME X)))
    ("subgoal *1/4" :in-theory
-    (e/d (collapse abs-separate 1st-complete-src)
+    (e/d (collapse abs-separate)
          ((:definition remove-assoc-equal)
           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
           (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
@@ -8425,7 +8368,7 @@
                     (y
                      (1st-complete (frame->frame frame)))))
    ("subgoal *1/4.2" :in-theory
-    (e/d (collapse abs-separate 1st-complete-src)
+    (e/d (collapse abs-separate)
          ((:definition remove-assoc-equal)
           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
           (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
@@ -8808,7 +8751,7 @@
 ;;           (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
 ;;           (frame->frame frame)))))
 ;;       (remove-assoc-equal x (frame->frame frame)))))))
-;;  :hints (("goal" :in-theory (e/d (collapse abs-separate 1st-complete-src)
+;;  :hints (("goal" :in-theory (e/d (collapse abs-separate)
 ;;                                  ((:definition assoc-equal)
 ;;                                   (:definition remove-assoc-equal)
 ;;                                   (:rewrite put-assoc-equal-without-change . 2)
@@ -9148,7 +9091,7 @@
                 (cdr (assoc-equal (1st-complete (frame->frame frame))
                                   (frame->frame frame))))))
   :hints (("goal" :do-not-induct t
-           :in-theory (enable collapse 1st-complete-src))))
+           :in-theory (enable collapse))))
 
 (defthm
   collapse-1st-index-correctness-lemma-3
