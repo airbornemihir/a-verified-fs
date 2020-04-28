@@ -2854,6 +2854,12 @@
   :hints (("goal" :in-theory (enable collapse-this)))
   :rule-classes :type-prescription)
 
+;; I've tried - more than once - to replace this formulation with one where the
+;; root is treated just like the rest of the variables, except that it's never
+;; allowed to be 1st-complete. That approach, though, is terrible because the
+;; base case of the recursive definition becomes "length of frame <= 1" which
+;; is incredibly clunky. I mean, there are worse things, but this doesn't seem
+;; like a very important refactoring to take on right now.
 (defund
   collapse-iter (frame n)
   (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame))
