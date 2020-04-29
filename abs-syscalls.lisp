@@ -6,6 +6,7 @@
 (in-package "ACL2")
 
 (include-book "abs-find-file")
+(include-book "hifat-syscalls")
 
 ;; Let's try to do this intuitively first...
 
@@ -113,3 +114,69 @@
                 new-parent-dir
                 (frame->frame frame)))))
     (mv frame -1 error-code)))
+
+(defthm abs-mkdir-correctness-lemma-1
+  (implies (atom pathname)
+           (equal (1st-complete-under-pathname frame pathname)
+                  (1st-complete frame)))
+  :hints (("goal" :in-theory (enable 1st-complete-under-pathname
+                                     1st-complete prefixp))))
+
+;; Move later.
+(defthm true-listp-of-frame-with-root
+  (equal (true-listp (frame-with-root root frame))
+         (true-listp frame))
+  :hints (("goal" :in-theory (enable frame-with-root))))
+(defthm true-listp-of-put-assoc
+  (implies (not (null name))
+           (iff (true-listp (put-assoc-equal name val alist))
+                (or (true-listp alist)
+                    (atom (assoc-equal name alist))))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies (and (mv-nth 1 (collapse frame))
+                   (atom pathname)
+                   (equal frame
+                          (frame-with-root (frame->root frame)
+                                           (frame->frame frame))))
+              (equal (partial-collapse frame pathname)
+                     (frame-with-root (mv-nth 0 (collapse frame))
+                                      nil)))
+     :hints (("goal" :in-theory (enable partial-collapse collapse collapse-this)
+              :induct (collapse frame)
+              :expand (partial-collapse frame pathname)))))
+
+  (defthm
+    abs-mkdir-correctness-lemma-2
+    (implies
+     (and (mv-nth 1
+                  (collapse (frame-with-root root frame)))
+          (atom pathname)
+          (atom (assoc-equal 0 frame))
+          (frame-p frame))
+     (equal (partial-collapse (frame-with-root root frame)
+                              pathname)
+            (frame-with-root (mv-nth 0
+                                     (collapse (frame-with-root root frame)))
+                             nil)))
+    :hints (("goal" :use (:instance lemma
+                                    (frame (frame-with-root root frame)))))))
+
+(thm
+ (b*
+     (((mv fs result) (collapse (frame-with-root root frame))))
+   (implies
+    (and
+     result
+     (atom (assoc-equal 0 frame))
+     (frame-p frame))
+    (and (mv-nth 1 (collapse (mv-nth 0 (abs-mkdir (frame-with-root root frame) pathname))))
+         (absfat-equiv (mv-nth 0 (collapse (mv-nth 0 (abs-mkdir (frame-with-root root frame) pathname))))
+                       (mv-nth 0 (hifat-mkdir fs pathname))))))
+ :hints (("Goal" :in-theory (enable hifat-mkdir abs-mkdir collapse)
+          :do-not-induct t)) :otf-flg t)
