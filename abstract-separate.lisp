@@ -9049,6 +9049,71 @@
                 (atom (assoc-equal x frame)))
            (not (equal x (1st-complete frame)))))
 
+;; Ye olde hacky definition...
+(defund
+  collapse-seq (frame seq)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame))
+                              (nat-listp seq))
+                  :guard-debug t
+                  :measure (len (frame->frame frame))))
+  (b*
+      (((when (or (atom (frame->frame frame))
+                  (atom seq)))
+        frame)
+       (head-index (car seq))
+       ((when (or (zp head-index)
+                  (atom (assoc-equal (car seq)
+                                     (frame->frame frame)))
+                  (not (abs-complete
+                        (frame-val->dir
+                         (cdr (assoc-equal (car seq)
+                                            (frame->frame frame))))))))
+        frame)
+       (head-frame-val
+        (cdr (assoc-equal head-index (frame->frame frame))))
+       (src
+        (frame-val->src (cdr (assoc-equal (car seq)
+                                          (frame->frame frame))))))
+    (if
+     (zp src)
+     (b* (((unless (ctx-app-ok (frame->root frame)
+                               head-index
+                               (frame-val->path head-frame-val)))
+           frame))
+       (collapse-seq (collapse-this frame (car seq))
+                     (cdr seq)))
+     (b*
+         ((path (frame-val->path head-frame-val))
+          ((when (or (equal src head-index)
+                     (atom (assoc-equal src (frame->frame frame)))))
+           frame)
+          (src-path
+           (frame-val->path
+            (cdr (assoc-equal src (frame->frame frame)))))
+          (src-dir
+           (frame-val->dir
+            (cdr (assoc-equal src (frame->frame frame)))))
+          ((unless (and (prefixp src-path path)
+                        (ctx-app-ok src-dir head-index
+                                    (nthcdr (len src-path) path))))
+           frame))
+       (collapse-seq (collapse-this frame (car seq))
+                     (cdr seq))))))
+
+(defthm frame-p-of-collapse-seq
+  (implies (frame-p frame)
+           (frame-p (collapse-seq frame seq)))
+  :hints (("goal" :in-theory (enable collapse-seq))))
+
+(defund valid-seqp (frame seq)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame))
+                              (nat-listp seq))))
+  (equal (len (frame->frame (collapse-seq frame seq)))
+         (- (len (frame->frame frame))
+            (len seq))))
+
 (defund
   collapse-1st-index (frame x)
   (declare
@@ -9147,70 +9212,105 @@
         (len (frame->frame frame))))
     :trigger-terms ((COLLAPSE-1ST-INDEX FRAME X)))))
 
-;; Ye olde hacky definition...
 (defund
-  collapse-seq (frame seq)
-  (declare (xargs :guard (and (frame-p frame)
-                              (consp (assoc-equal 0 frame))
-                              (nat-listp seq))
-                  :guard-debug t
-                  :measure (len (frame->frame frame))))
-  (b*
-      (((when (or (atom (frame->frame frame))
-                  (atom seq)))
-        frame)
-       (head-index (car seq))
-       ((when (or (zp head-index)
-                  (atom (assoc-equal (car seq)
-                                     (frame->frame frame)))
-                  (not (abs-complete
-                        (frame-val->dir
-                         (cdr (assoc-equal (car seq)
-                                            (frame->frame frame))))))))
-        frame)
-       (head-frame-val
-        (cdr (assoc-equal head-index (frame->frame frame))))
-       (src
-        (frame-val->src (cdr (assoc-equal (car seq)
-                                          (frame->frame frame))))))
-    (if
-     (zp src)
-     (b* (((unless (ctx-app-ok (frame->root frame)
-                               head-index
-                               (frame-val->path head-frame-val)))
-           frame))
-       (collapse-seq (collapse-this frame (car seq))
-                     (cdr seq)))
-     (b*
-         ((path (frame-val->path head-frame-val))
-          ((when (or (equal src head-index)
-                     (atom (assoc-equal src (frame->frame frame)))))
-           frame)
-          (src-path
-           (frame-val->path
-            (cdr (assoc-equal src (frame->frame frame)))))
-          (src-dir
-           (frame-val->dir
-            (cdr (assoc-equal src (frame->frame frame)))))
-          ((unless (and (prefixp src-path path)
-                        (ctx-app-ok src-dir head-index
-                                    (nthcdr (len src-path) path))))
-           frame))
-       (collapse-seq (collapse-this frame (car seq))
-                     (cdr seq))))))
+  collapse-seq-1st-index (frame x seq)
+  (declare
+   (xargs :measure (len (frame->frame frame))
+          :hints (("goal" :in-theory (enable collapse-iter)))))
+  (if (equal (1st-complete (frame->frame frame))
+             x)
+      0
+      (if (< (len (frame->frame (collapse-seq frame (take 1 seq))))
+             (len (frame->frame frame)))
+          (+ 1
+             (collapse-seq-1st-index (collapse-seq frame (take 1 seq))
+                                 x (nthcdr 1 seq)))
+          (len (frame->frame frame)))))
 
-(defthm frame-p-of-collapse-seq
-  (implies (frame-p frame)
-           (frame-p (collapse-seq frame seq)))
-  :hints (("goal" :in-theory (enable collapse-seq))))
+(defthm collapse-seq-1st-index-correctness-lemma-1
+  (implies (zp (len alist))
+           (atom (assoc-equal x alist)))
+  :rule-classes :type-prescription)
 
-(defund valid-seqp (frame seq)
-  (declare (xargs :guard (and (frame-p frame)
-                              (consp (assoc-equal 0 frame))
-                              (nat-listp seq))))
-  (equal (len (frame->frame (collapse-seq frame seq)))
-         (- (len (frame->frame frame))
-            (len seq))))
+(defthm
+  collapse-seq-of-collapse-seq-lemma-1
+  (implies
+   (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+               0)
+        (< 0 x)
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (consp (assoc-equal x (frame->frame frame))))
+   (equal (len (frame->frame (collapse-this frame x)))
+          (+ -1 (len (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable collapse-this)
+           :do-not-induct t)))
+
+(defthm
+  collapse-seq-of-collapse-seq-lemma-2
+  (implies
+   (and
+    (natp x)
+    (consp
+     (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                  (frame->frame frame)))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                x)))
+   (equal (len (frame->frame (collapse-this frame x)))
+          (+ -1 (len (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable collapse-this))))
+
+(defthm
+  collapse-seq-of-collapse-seq
+  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (valid-seqp frame (append seq1 seq2)))
+           (equal (collapse-seq (collapse-seq frame seq1)
+                                seq2)
+                  (collapse-seq frame (append seq1 seq2))))
+  :hints (("goal" :in-theory (enable collapse-seq valid-seqp)
+           :induct (mv (collapse-seq frame seq1)
+                       (append seq1 seq2)))))
+
+(defthm
+  collapse-seq-1st-index-correctness-1
+  (implies
+   (and (valid-seqp frame seq)
+        (consp (assoc-equal x (frame->frame frame))))
+   (and
+    (equal
+     (1st-complete
+      (frame->frame (collapse-seq
+                     frame
+                     (take (collapse-seq-1st-index frame x seq) seq))))
+     x)
+    (< (collapse-seq-1st-index frame x seq)
+       (len (frame->frame frame)))))
+  :hints
+  (("goal" :in-theory
+    (e/d (1st-complete collapse-seq-1st-index collapse-seq)
+         (member-equal no-duplicatesp-equal
+                       nthcdr-when->=-n-len-l
+                       (:definition remove-assoc-equal)))
+    :induct (collapse-seq-1st-index frame x seq)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (valid-seqp frame seq)
+          (consp (assoc-equal x (frame->frame frame))))
+     (equal
+      (1st-complete
+       (frame->frame (collapse-seq
+                      frame
+                      (take (collapse-seq-1st-index frame x seq) seq))))
+      x)))
+   (:linear
+    :corollary
+    (implies
+     (and (valid-seqp frame seq)
+          (consp (assoc-equal x (frame->frame frame))))
+     (< (collapse-seq-1st-index frame x seq)
+        (len (frame->frame frame)))))))
 
 (defund final-val (x frame)
   (frame-val->dir (cdr (assoc-equal
@@ -9264,31 +9364,35 @@
          nil
        (list (1st-complete (frame->frame frame)))))))
 
-(defund ctx-app-list
-  (fs relpath frame l)
+(defund
+  ctx-app-list (fs relpath frame l)
   (b*
       (((when (atom l)) (mv fs t))
        ((mv tail tail-result)
         (ctx-app-list fs relpath frame (cdr l)))
        (fs
         (ctx-app
-         tail
-         (final-val (car l) frame)
+         tail (final-val (car l) frame)
          (car l)
-         (nthcdr
-          (len relpath)
-          (frame-val->path (cdr (assoc-equal (car l) (frame->frame frame))))))))
-    (mv fs (and tail-result
-                (abs-fs-p fs)
-                (prefixp relpath
-                         (frame-val->path
-                          (cdr (assoc-equal (car l) (frame->frame frame)))))
-                (ctx-app-ok
-                 tail
-                 (car l)
-                 (nthcdr
-                  (len relpath)
-                  (frame-val->path (cdr (assoc-equal (car l) (frame->frame frame))))))))))
+         (nthcdr (len relpath)
+                 (frame-val->path
+                  (cdr (assoc-equal (car l)
+                                    (frame->frame frame))))))))
+    (mv
+     fs
+     (and
+      tail-result (abs-fs-p fs)
+      (prefixp relpath
+               (frame-val->path
+                (cdr (assoc-equal (car l)
+                                  (frame->frame frame)))))
+      (ctx-app-ok
+       tail (car l)
+       (nthcdr
+        (len relpath)
+        (frame-val->path
+         (cdr (assoc-equal (car l)
+                           (frame->frame frame))))))))))
 
 (defthmd ctx-app-list-of-true-list-fix
   (equal (ctx-app-list fs path-len frame (true-list-fix l))
@@ -9315,34 +9419,6 @@
                     (collapse frame))
            :induct (frame-addrs-before frame x n)))
   :rule-classes (:rewrite :type-prescription))
-
-(defthm
-  partial-collapse-correctness-lemma-62
-  (implies
-   (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               0)
-        (< 0 x)
-        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-        (consp (assoc-equal x (frame->frame frame))))
-   (equal (len (frame->frame (collapse-this frame x)))
-          (+ -1 (len (frame->frame frame)))))
-  :hints (("goal" :in-theory (enable collapse-this)
-           :do-not-induct t)))
-
-(defthm
-  partial-collapse-correctness-lemma-64
-  (implies
-   (and
-    (natp x)
-    (consp
-     (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                  (frame->frame frame)))
-    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                x)))
-   (equal (len (frame->frame (collapse-this frame x)))
-          (+ -1 (len (frame->frame frame)))))
-  :instructions ((bash ("goal" :in-theory (enable collapse-this)))))
 
 (defthm
   partial-collapse-correctness-lemma-66
