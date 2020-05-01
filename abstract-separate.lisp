@@ -9880,114 +9880,6 @@
   (abs-fs-p (final-val x frame))
   :hints (("goal" :in-theory (enable final-val))))
 
-(encapsulate
-  ()
-
-  (local
-   (defthm lemma (implies (integerp y) (equal (+ x (- x) y) y))))
-
-  (local
-   (defun
-       induction-scheme (l y-names frame)
-     (if (consp l)
-         (induction-scheme (cdr l)
-                           (append (NAMES-AT (FINAL-VAL (CAR l) FRAME)
-                                             NIL)
-                                   y-names)
-                           frame)
-       (mv l y-names frame))))
-
-  (thm
-   (implies
-    (and
-     (fat32-filename-list-p y-path)
-     (not
-      (intersectp-equal
-       (names-at (final-val x frame) nil)
-       (names-at
-        (mv-nth 0
-                (ctx-app-list fs relpath frame (remove-equal x l1)))
-        (nthcdr (len relpath)
-                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
-     (member-equal x l1)
-     (mv-nth 1 (ctx-app-list fs relpath frame l1))
-     (not
-      (intersectp-equal y-names
-                        (names-at (mv-nth 0 (ctx-app-list fs relpath frame l1))
-                                  (nthcdr (len relpath) y-path))))
-     (prefixp relpath y-path))
-    (not
-     (intersectp-equal
-      y-names
-      (names-at (mv-nth 0
-                        (ctx-app-list fs relpath frame (remove-equal x l1)))
-                (nthcdr (len relpath) y-path)))))
-   :hints (("goal" :in-theory (e/d (ctx-app-list) ())
-            :induct
-            (induction-scheme l1 y-names frame))))
-
-  (thm (implies (and (member-equal x l)
-                     (mv-nth 1
-                             (ctx-app-list fs relpath frame l)))
-                (not
-                 (intersectp-equal
-                  (names-at (final-val x frame) nil)
-                  (names-at
-                   (mv-nth 0
-                           (ctx-app-list fs
-                                         relpath frame (remove-equal x l)))
-                   (nthcdr
-                    (len relpath)
-                    (frame-val->path$inline (cdr (assoc-equal x (frame->frame frame)))))))))
-       :hints (("goal" :in-theory (e/d (ctx-app-list) ())
-                :induct t)))
-
-  (thm
-   (implies
-    (and
-     (nat-listp l)
-     (mv-nth 1
-             (ctx-app-list fs relpath frame (remove-equal x l)))
-     (abs-separate (frame->frame frame))
-     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-     (no-duplicatesp-equal l)
-     (frame-p (frame->frame frame))
-     (mv-nth 1 (collapse frame))
-     (ctx-app-ok
-      (mv-nth 0
-              (ctx-app-list fs relpath frame (remove-equal x l)))
-      x
-      (nthcdr
-       (len relpath)
-       (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-     (not
-      (intersectp-equal
-       (names-at (final-val x frame) nil)
-       (names-at
-        (mv-nth 0
-                (ctx-app-list fs relpath frame (remove-equal x l)))
-        (nthcdr
-         (len relpath)
-         (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
-     (prefixp
-      relpath
-      (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
-     (member-equal x l))
-    (and
-     (mv-nth 1 (ctx-app-list fs relpath frame l))
-     (absfat-equiv
-      (ctx-app
-       (mv-nth 0
-               (ctx-app-list fs relpath frame (remove-equal x l)))
-       (final-val x frame)
-       x
-       (nthcdr
-        (len relpath)
-        (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-      (mv-nth 0 (ctx-app-list fs relpath frame l)))))
-   :hints (("goal" :in-theory (e/d (ctx-app-list) ())
-            :induct t))))
-
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
   ()
@@ -10000,22 +9892,23 @@
        (induction-scheme (cdr l1) (remove-equal (car l1) l2)))
       (t (mv l1 l2)))))
 
-  (thm
-   (implies (and (abs-separate (frame->frame frame))
-                 (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                 (no-duplicatesp-equal l1)
-                 (no-duplicatesp-equal l2)
-                 (set-equiv l1 l2)
-                 (frame-p (frame->frame frame))
-                 (mv-nth '1 (collapse frame))
-                 (mv-nth 1 (ctx-app-list fs relpath frame l1)))
-            (and
-             (absfat-equiv (mv-nth 0 (ctx-app-list fs relpath frame l1))
-                           (mv-nth 0 (ctx-app-list fs relpath frame l2)))
-             (mv-nth 1 (ctx-app-list fs relpath frame l2))))
-   :hints
-   (("goal" :in-theory (enable ctx-app-list)
-     :induct (induction-scheme l1 l2)))))
+  ;; (thm
+  ;;  (implies (and (abs-separate (frame->frame frame))
+  ;;                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+  ;;                (no-duplicatesp-equal l1)
+  ;;                (no-duplicatesp-equal l2)
+  ;;                (set-equiv l1 l2)
+  ;;                (frame-p (frame->frame frame))
+  ;;                (mv-nth '1 (collapse frame))
+  ;;                (mv-nth 1 (ctx-app-list fs relpath frame l1)))
+  ;;           (and
+  ;;            (absfat-equiv (mv-nth 0 (ctx-app-list fs relpath frame l1))
+  ;;                          (mv-nth 0 (ctx-app-list fs relpath frame l2)))
+  ;;            (mv-nth 1 (ctx-app-list fs relpath frame l2))))
+  ;;  :hints
+  ;;  (("goal" :in-theory (enable ctx-app-list)
+  ;;    :induct (induction-scheme l1 l2))))
+  )
 
 ;; (thm
 ;;  (implies (and
