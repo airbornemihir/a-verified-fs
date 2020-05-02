@@ -2915,13 +2915,11 @@
          (collapse-iter frame (+ (nfix m) (nfix n))))
   :hints (("goal" :in-theory (enable collapse-iter))))
 
-;; Move later.
 (defthm frame-p-of-collapse-iter
   (implies (frame-p frame)
            (frame-p (collapse-iter frame n)))
   :hints (("goal" :in-theory (enable collapse-iter))))
 
-;; Move later.
 (defthm
   assoc-of-frame->frame-of-collapse-iter
   (implies (not (consp (assoc-equal x (frame->frame frame))))
@@ -2929,6 +2927,18 @@
                                     (frame->frame (collapse-iter frame n))))))
   :hints (("goal" :in-theory (enable collapse-iter)))
   :rule-classes (:rewrite :type-prescription))
+
+(defthm frame-p-of-frame->frame-of-collapse-iter
+  (implies (frame-p (frame->frame frame))
+           (frame-p (frame->frame (collapse-iter frame n))))
+  :hints (("goal" :in-theory (enable collapse-iter))))
+
+(defthm
+  no-duplicatesp-of-strip-cars-of-frame->frame-of-collapse-iter
+  (implies
+   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+   (no-duplicatesp-equal (strip-cars (frame->frame (collapse-iter frame n)))))
+  :hints (("goal" :in-theory (enable collapse-iter))))
 
 (defund
   collapse (frame)
@@ -3191,6 +3201,11 @@
            (equal (collapse frame)
                   (mv (frame->root (collapse-iter frame n))
                       (atom (frame->frame (collapse-iter frame n))))))
+  :hints (("goal" :in-theory (enable collapse-iter collapse))))
+
+(defthm collapse-of-collapse-iter
+  (implies (mv-nth 1 (collapse frame))
+           (mv-nth 1 (collapse (collapse-iter frame n))))
   :hints (("goal" :in-theory (enable collapse-iter collapse))))
 
 ;; I was thinking we could use this as the starting point for getting rid of
@@ -9287,6 +9302,38 @@
                                        frame
                                        (collapse-1st-index frame x)))))))
 
+(defthm
+  final-val-of-1st-complete
+  (equal (final-val (1st-complete (frame->frame frame))
+                    frame)
+         (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                           (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable final-val
+                                     collapse-1st-index collapse-iter))))
+
+(defthm
+  m1-file-alist-p-of-final-val
+  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (frame-p (frame->frame frame))
+                (mv-nth 1 (collapse frame)))
+           (m1-file-alist-p (final-val x frame)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (final-val)
+     (collapse-1st-index-correctness-1 abs-separate-correctness-1-lemma-4))
+    :use
+    (collapse-1st-index-correctness-1
+     (:instance
+      abs-separate-correctness-1-lemma-4
+      (frame (frame->frame (collapse-iter frame
+                                          (collapse-1st-index frame x)))))))))
+
+(defthm abs-fs-p-of-final-val
+  (abs-fs-p (final-val x frame))
+  :hints (("goal" :in-theory (enable final-val))))
+
 (defund
   final-val-seq (x frame seq)
   (frame-val->dir
@@ -9478,20 +9525,6 @@
                   (len (frame->frame frame))))
   :hints (("goal" :in-theory (enable collapse
                                      collapse-iter collapse-1st-index))))
-
-;; Move later.
-(defthm collapse-of-collapse-iter
-  (implies (mv-nth 1 (collapse frame))
-           (mv-nth 1 (collapse (collapse-iter frame n))))
-  :hints (("goal" :in-theory (enable collapse-iter collapse))))
-
-;; Move later.
-(defthm
-  no-duplicatesp-of-strip-cars-of-frame->frame-of-collapse-iter
-  (implies
-   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-   (no-duplicatesp-equal (strip-cars (frame->frame (collapse-iter frame n)))))
-  :hints (("goal" :in-theory (enable collapse-iter))))
 
 (defthm
   partial-collapse-correctness-lemma-70
@@ -9847,16 +9880,6 @@
            :induct (append x y))
           ("subgoal *1/1" :use ctx-app-list-correctness-1)))
 
-;; Move later.
-(defthm
-  final-val-of-1st-complete
-  (equal (final-val (1st-complete (frame->frame frame))
-                    frame)
-         (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                           (frame->frame frame)))))
-  :hints (("goal" :in-theory (enable final-val
-                                     collapse-1st-index collapse-iter))))
-
 (defthm
   partial-collapse-correctness-lemma-79
   (implies
@@ -9934,36 +9957,6 @@
                                   (partial-collapse-correctness-lemma-79))
            :use (:instance partial-collapse-correctness-lemma-79
                            (n (collapse-1st-index frame x))))))
-
-(defthm frame-p-of-frame->frame-of-collapse-iter
-  (implies (frame-p (frame->frame frame))
-           (frame-p (frame->frame (collapse-iter frame n))))
-  :hints (("goal" :in-theory (enable collapse-iter))))
-
-;; Move later.
-(defthm
-  m1-file-alist-p-of-final-val
-  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (frame-p (frame->frame frame))
-                (mv-nth 1 (collapse frame)))
-           (m1-file-alist-p (final-val x frame)))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d
-     (final-val)
-     (collapse-1st-index-correctness-1 abs-separate-correctness-1-lemma-4))
-    :use
-    (collapse-1st-index-correctness-1
-     (:instance
-      abs-separate-correctness-1-lemma-4
-      (frame (frame->frame (collapse-iter frame
-                                          (collapse-1st-index frame x)))))))))
-
-;; Move later.
-(defthm abs-fs-p-of-final-val
-  (abs-fs-p (final-val x frame))
-  :hints (("goal" :in-theory (enable final-val))))
 
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
