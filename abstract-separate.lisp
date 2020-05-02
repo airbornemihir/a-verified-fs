@@ -18,7 +18,10 @@
                      (:rewrite take-fewer-of-take-more)
                      (:rewrite take-when-atom)
                      (:rewrite take-of-take-split)
-                     (:rewrite take-more-of-take-fewer))))
+                     (:rewrite take-more-of-take-fewer)
+                     ;; Disabling this because it's defined in terms of helper
+                     ;; functions and stuff.
+                     position)))
 
 (defthm abs-find-file-helper-of-collapse-lemma-3
   (implies (prefixp (fat32-filename-list-fix x) y)
@@ -2911,6 +2914,21 @@
                         n)
          (collapse-iter frame (+ (nfix m) (nfix n))))
   :hints (("goal" :in-theory (enable collapse-iter))))
+
+;; Move later.
+(defthm frame-p-of-collapse-iter
+  (implies (frame-p frame)
+           (frame-p (collapse-iter frame n)))
+  :hints (("goal" :in-theory (enable collapse-iter))))
+
+;; Move later.
+(defthm
+  assoc-of-frame->frame-of-collapse-iter
+  (implies (not (consp (assoc-equal x (frame->frame frame))))
+           (not (consp (assoc-equal x
+                                    (frame->frame (collapse-iter frame n))))))
+  :hints (("goal" :in-theory (enable collapse-iter)))
+  :rule-classes (:rewrite :type-prescription))
 
 (defund
   collapse (frame)
@@ -9269,20 +9287,14 @@
                                        frame
                                        (collapse-1st-index frame x)))))))
 
-;; Move later.
-(defthm frame-p-of-collapse-iter
-  (implies (frame-p frame)
-           (frame-p (collapse-iter frame n)))
-  :hints (("goal" :in-theory (enable collapse-iter))))
-
-;; Move later.
-(defthm
-  assoc-of-frame->frame-of-collapse-iter
-  (implies (not (consp (assoc-equal x (frame->frame frame))))
-           (not (consp (assoc-equal x
-                                    (frame->frame (collapse-iter frame n))))))
-  :hints (("goal" :in-theory (enable collapse-iter)))
-  :rule-classes (:rewrite :type-prescription))
+(defund
+  final-val-seq (x frame seq)
+  (frame-val->dir
+   (cdr
+    (assoc-equal
+     x
+     (frame->frame
+      (collapse-seq frame (take (position x seq) seq)))))))
 
 (defthm
   frame-addrs-before-guard-lemma-1
@@ -9313,6 +9325,23 @@
                  x))
          nil
        (list (1st-complete (frame->frame frame)))))))
+
+(defund frame-addrs-before-seq (frame x seq)
+  (if
+      (atom seq)
+      nil
+    (append
+     (frame-addrs-before-seq (collapse-seq frame (take 1 seq)) x (nthcdr 1 seq))
+     (if
+         (not
+          (equal (frame-val->src
+                  (cdr
+                   (assoc-equal
+                    (nth 1 seq)
+                    (frame->frame frame))))
+                 x))
+         nil
+       (take 1 seq)))))
 
 (defund
   ctx-app-list (fs relpath frame l)
@@ -9356,6 +9385,36 @@
   :hints (("goal" :use ((:instance ctx-app-list-of-true-list-fix
                                    (l l-equiv))
                         ctx-app-list-of-true-list-fix))))
+
+(defund
+  ctx-app-list-seq (fs relpath frame l seq)
+  (b*
+      (((when (atom l)) (mv fs t))
+       ((mv tail tail-result)
+        (ctx-app-list-seq fs relpath frame (cdr l) seq))
+       (fs
+        (ctx-app
+         tail (final-val-seq (car l) frame seq)
+         (car l)
+         (nthcdr (len relpath)
+                 (frame-val->path
+                  (cdr (assoc-equal (car l)
+                                    (frame->frame frame))))))))
+    (mv
+     fs
+     (and
+      tail-result (abs-fs-p fs)
+      (prefixp relpath
+               (frame-val->path
+                (cdr (assoc-equal (car l)
+                                  (frame->frame frame)))))
+      (ctx-app-ok
+       tail (car l)
+       (nthcdr
+        (len relpath)
+        (frame-val->path
+         (cdr (assoc-equal (car l)
+                           (frame->frame frame))))))))))
 
 (defthm partial-collapse-correctness-lemma-61
   (implies (and (mv-nth 1 (collapse frame))
