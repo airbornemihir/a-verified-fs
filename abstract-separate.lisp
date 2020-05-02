@@ -9215,17 +9215,14 @@
 (defund
   collapse-seq-1st-index (frame x seq)
   (declare
-   (xargs :measure (len (frame->frame frame))
+   (xargs :measure (len seq)
           :hints (("goal" :in-theory (enable collapse-iter)))))
-  (if (equal (1st-complete (frame->frame frame))
-             x)
+  (if (or (atom seq) (equal (1st-complete (frame->frame frame))
+                            x))
       0
-      (if (< (len (frame->frame (collapse-seq frame (take 1 seq))))
-             (len (frame->frame frame)))
-          (+ 1
-             (collapse-seq-1st-index (collapse-seq frame (take 1 seq))
-                                 x (nthcdr 1 seq)))
-          (len (frame->frame frame)))))
+    (+ 1
+       (collapse-seq-1st-index (collapse-seq frame (take 1 seq))
+                               x (nthcdr 1 seq)))))
 
 (defthm collapse-seq-1st-index-correctness-lemma-1
   (implies (zp (len alist))
@@ -9272,45 +9269,97 @@
                        (append seq1 seq2)))))
 
 (defthm
-  collapse-seq-1st-index-correctness-1
+  collapse-seq-1st-index-correctness-lemma-2
+  (implies (and (valid-seqp frame seq)
+                (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+           (valid-seqp (collapse-seq frame (list (car seq)))
+                       (nthcdr 1 seq)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable valid-seqp collapse-seq)
+           :expand (collapse-seq frame (list (car seq))))))
+
+;; Bizarro rule, hopefully not to be used too often...
+(defthm collapse-seq-1st-index-correctness-lemma-3
+  (implies (natp (- (len seq)))
+           (no-duplicatesp-equal seq))
+  :rule-classes :type-prescription)
+
+(defthm
+  collapse-seq-1st-index-correctness-lemma-4
+  (implies (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                  0)
+           (equal (strip-cars (frame->frame (collapse-this frame x)))
+                  (remove-equal x (strip-cars (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable collapse-this))))
+
+(defthm
+  collapse-seq-1st-index-correctness-lemma-5
   (implies
-   (and (valid-seqp frame seq)
-        (consp (assoc-equal x (frame->frame frame))))
    (and
-    (equal
-     (1st-complete
-      (frame->frame (collapse-seq
-                     frame
-                     (take (collapse-seq-1st-index frame x seq) seq))))
-     x)
-    (< (collapse-seq-1st-index frame x seq)
-       (len (frame->frame frame)))))
-  :hints
-  (("goal" :in-theory
-    (e/d (1st-complete collapse-seq-1st-index collapse-seq)
-         (member-equal no-duplicatesp-equal
-                       nthcdr-when->=-n-len-l
-                       (:definition remove-assoc-equal)))
-    :induct (collapse-seq-1st-index frame x seq)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and (valid-seqp frame seq)
-          (consp (assoc-equal x (frame->frame frame))))
-     (equal
-      (1st-complete
-       (frame->frame (collapse-seq
-                      frame
-                      (take (collapse-seq-1st-index frame x seq) seq))))
-      x)))
-   (:linear
-    :corollary
-    (implies
-     (and (valid-seqp frame seq)
-          (consp (assoc-equal x (frame->frame frame))))
-     (< (collapse-seq-1st-index frame x seq)
-        (len (frame->frame frame)))))))
+    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                x))
+    (consp
+     (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                  (frame->frame frame))))
+   (equal (strip-cars (frame->frame (collapse-this frame x)))
+          (remove-equal x (strip-cars (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable collapse-this)
+           :do-not-induct t)))
+
+;; This rule may deserve a second look if the forward-chaining doesn't work
+;; properly later...
+(defthm
+  collapse-seq-1st-index-correctness-lemma-6
+  (implies (and (valid-seqp frame seq)
+                (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+           (and (no-duplicatesp-equal seq)
+                (subsetp-equal seq (strip-cars (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
+           :induct (collapse-seq frame seq)
+           :expand (subsetp-equal seq
+                                  (strip-cars (frame->frame frame)))))
+  :rule-classes :forward-chaining)
+
+;; Move later
+(defthm
+  valid-seqp-when-prefixp
+  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (valid-seqp frame seq1)
+                (prefixp seq2 seq1))
+           (valid-seqp frame seq2))
+  :hints (("goal" :in-theory (enable prefixp valid-seqp collapse-seq)
+           :induct (mv (collapse-seq frame seq2)
+                       (prefixp seq2 seq1)))))
+
+(defthm
+  collapse-seq-1st-index-correctness-lemma-7
+  (implies
+   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+   (no-duplicatesp-equal
+    (strip-cars (frame->frame (collapse-seq frame (list (car seq)))))))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
+
+(defthm collapse-seq-1st-index-correctness-lemma-9
+  (implies (and (no-duplicatesp-equal seq)
+                (member-equal x seq))
+           (iff (member-equal x (nthcdr 1 seq))
+                (not (equal x (car seq))))))
+
+(defthm collapse-seq-1st-index-correctness-lemma-8
+  (implies (valid-seqp frame seq)
+           (<= (len seq)
+               (len (frame->frame frame))))
+  :hints (("goal" :in-theory (enable valid-seqp)))
+  :rule-classes :forward-chaining)
+
+(defthm
+  collapse-seq-1st-index-correctness-1
+  (implies (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+           (<= (collapse-seq-1st-index frame x seq)
+               (len seq)))
+  :hints (("goal" :in-theory (enable collapse-seq-1st-index)
+           :induct (collapse-seq-1st-index frame x seq)))
+  :rule-classes :linear)
 
 (defund final-val (x frame)
   (frame-val->dir (cdr (assoc-equal
