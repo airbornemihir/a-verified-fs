@@ -10177,55 +10177,16 @@
                   (ctx-app-list-seq fs relpath frame l seq)))
   :hints (("goal" :in-theory (enable ctx-app-list-seq))))
 
-;; This is Subgoal *1/2.2' of subsetp-of-frame-addrs-before-seq below.
-;;
-;; What happens with the :restrict hint below: the proof fails because
-;; subsetp-trans fails to relieve its hypothesis
-;; (subsetp-equal (nthcdr '1 seq) seq).
-;;
-;; What should happen without the restrict hint: exactly the same, because the
-;; y binding is obvious from the hypotheses.
-;;
-;; What happens without the restrict hint: y is not bound.
-;;
-;; Statements above are checked through the use of :brr, with the following
-;; monitoring:
-;; :monitor subsetp-trans
-;;  (equal (brr@ :target)
-;;         '(subsetp-equal
-;;           (frame-addrs-before-seq
-;;            frame
-;;            (frame-val->src$inline (cdr (assoc-equal (nth '1 seq)
-;;                                                     (frame->frame frame))))
-;;            (nthcdr '1 seq))
-;;           seq))
-(thm
- (implies
-  (and (consp seq)
-       (subsetp-equal
-        (frame-addrs-before-seq
-         frame
-         (frame-val->src (cdr (assoc-equal (nth 1 seq)
-                                           (frame->frame frame))))
-         (nthcdr 1 seq))
-        (nthcdr 1 seq)))
-  (subsetp-equal
-   (frame-addrs-before-seq
-    frame
-    (frame-val->src (cdr (assoc-equal (nth 1 seq)
-                                      (frame->frame frame))))
-    (nthcdr 1 seq))
-   seq))
- :hints (("goal" :in-theory (enable frame-addrs-before-seq)
-          :restrict ((subsetp-trans ((y
-                                      (nthcdr 1 seq)))))) ))
+;; Move later.
+(defthm
+  subsetp-of-nthcdr
+  (subsetp-equal (nthcdr n l) l))
 
 ;; Move later
 (defthm subsetp-of-frame-addrs-before-seq
-  (subsetp-equal
-   (FRAME-ADDRS-BEFORE-SEQ FRAME X SEQ)
-   seq)
-  :hints (("Goal" :in-theory (enable FRAME-ADDRS-BEFORE-SEQ)) ))
+  (subsetp-equal (frame-addrs-before-seq frame x seq)
+                 seq)
+  :hints (("goal" :in-theory (enable frame-addrs-before-seq))))
 
 ;; Prove this.
 (thm
