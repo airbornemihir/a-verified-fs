@@ -167,16 +167,20 @@
     :hints (("goal" :use (:instance lemma
                                     (frame (frame-with-root root frame)))))))
 
-(thm
- (b*
-     (((mv fs result) (collapse (frame-with-root root frame))))
-   (implies
-    (and
-     result
-     (atom (assoc-equal 0 frame))
-     (frame-p frame))
-    (and (mv-nth 1 (collapse (mv-nth 0 (abs-mkdir (frame-with-root root frame) pathname))))
-         (absfat-equiv (mv-nth 0 (collapse (mv-nth 0 (abs-mkdir (frame-with-root root frame) pathname))))
-                       (mv-nth 0 (hifat-mkdir fs pathname))))))
- :hints (("Goal" :in-theory (enable hifat-mkdir abs-mkdir collapse)
-          :do-not-induct t)) :otf-flg t)
+;; (thm
+;;  (b*
+;;      (((mv fs result) (collapse (frame-with-root root frame))))
+;;    (implies
+;;     (and
+;;      result
+;;      (atom (assoc-equal 0 frame))
+;;      (frame-p frame))
+;;     (and (mv-nth 1 (collapse (mv-nth 0 (abs-mkdir (frame-with-root root frame)
+;;                                                   pathname))))
+;;          (absfat-equiv (mv-nth 0 (collapse (mv-nth 0 (abs-mkdir
+;;                                                       (frame-with-root root
+;;                                                                        frame)
+;;                                                       pathname))))
+;;                        (mv-nth 0 (hifat-mkdir fs pathname))))))
+;;  :hints (("Goal" :in-theory (enable hifat-mkdir abs-mkdir collapse)
+;;           :do-not-induct t)) :otf-flg t)

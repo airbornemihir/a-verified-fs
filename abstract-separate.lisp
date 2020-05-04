@@ -10528,7 +10528,8 @@
                               (frame->frame (collapse-seq frame seq))))
           (valid-seqp frame seq)
           (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-          ;; Is this needed?
+          ;; This hypothesis occurs in a few theorems in order to make sure the
+          ;; position function works correctly.
           (nat-listp seq))
      (and
       (equal
