@@ -1278,3 +1278,12 @@
 (defthm
   subsetp-of-nthcdr
   (subsetp-equal (nthcdr n l) l))
+
+(defthm no-duplicatesp-equal-of-nthcdr
+  (implies (no-duplicatesp-equal l)
+           (no-duplicatesp-equal (nthcdr n l))))
+
+(defthm remove-assoc-of-append
+  (equal (remove-assoc-equal x (append alist1 alist2))
+         (append (remove-assoc-equal x alist1)
+                 (remove-assoc-equal x alist2))))

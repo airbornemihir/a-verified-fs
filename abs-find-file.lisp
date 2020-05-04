@@ -18,37 +18,24 @@
                      (:rewrite take-more-of-take-fewer))))
 
 (local
- (in-theory (disable
-             (:REWRITE
-              PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-29)
-             (:REWRITE
-              PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-48)
-             (:REWRITE
-                                    PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-40
-                                    . 2)
-             (:REWRITE
-              PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-21)
-             (:TYPE-PRESCRIPTION
-              ABS-FS-FIX-OF-PUT-ASSOC-EQUAL-LEMMA-3)
-             (:REWRITE
-              CTX-APP-OK-WHEN-ABSFAT-EQUIV-LEMMA-4)
-             (:REWRITE COLLAPSE-CONGRUENCE-LEMMA-4)
-             (:REWRITE
-              PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-49)
-             (:REWRITE
-              PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-46)
-             (:REWRITE
-              PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-39)
-             (:REWRITE ABS-ADDRS-OF-CTX-APP-1-LEMMA-2)
-             (:REWRITE ABS-ADDRS-OF-CTX-APP-1-LEMMA-12)
-             (:REWRITE
-              PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-23)
-             (:REWRITE ABSFAT-SUBSETP-TRANSITIVITY-LEMMA-8)
-             (:REWRITE COLLAPSE-CONGRUENCE-LEMMA-2)
-             (:REWRITE ABSFAT-EQUIV-OF-CTX-APP-LEMMA-8)
-             (:REWRITE ABS-ADDRS-OF-CTX-APP-2-LEMMA-8)
-             (:REWRITE ABS-SEPARATE-CORRECTNESS-1-LEMMA-19)
-             (:REWRITE ABS-SEPARATE-CORRECTNESS-1-LEMMA-38))))
+ (in-theory
+  (disable
+   (:rewrite partial-collapse-correctness-lemma-29)
+   (:rewrite partial-collapse-correctness-lemma-21)
+   (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+   (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
+   (:rewrite collapse-congruence-lemma-4)
+   (:rewrite partial-collapse-correctness-lemma-49)
+   (:rewrite partial-collapse-correctness-lemma-46)
+   (:rewrite abs-addrs-of-ctx-app-1-lemma-2)
+   (:rewrite abs-addrs-of-ctx-app-1-lemma-12)
+   (:rewrite partial-collapse-correctness-lemma-23)
+   (:rewrite absfat-subsetp-transitivity-lemma-8)
+   (:rewrite collapse-congruence-lemma-2)
+   (:rewrite absfat-equiv-of-ctx-app-lemma-8)
+   (:rewrite abs-addrs-of-ctx-app-2-lemma-8)
+   (:rewrite abs-separate-correctness-1-lemma-19)
+   (:rewrite abs-separate-correctness-1-lemma-38))))
 
 (defund abs-find-file-helper (fs pathname)
   (declare (xargs :guard (and (abs-file-alist-p fs)
