@@ -927,17 +927,6 @@
   :rule-classes :linear)
 
 (defthm
-  len-of-remove-assoc-3
-  (implies (consp (assoc-equal x (remove-assoc-equal y alist)))
-           (< (len (remove-assoc-equal y (remove-assoc-equal x alist)))
-              (len (remove-assoc-equal y alist))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable len-of-remove-assoc-2)
-           :use (:instance len-of-remove-assoc-2
-                           (alist (remove-assoc-equal y alist)))))
-  :rule-classes :linear)
-
-(defthm
   member-of-strip-cars
   (implies (case-split (not (null x)))
            (iff
@@ -1235,3 +1224,57 @@
 (defthm len-when-consp
   (implies (consp x) (not (zp (len x))))
   :rule-classes :type-prescription)
+
+(defthm subsetp-of-strip-cars-of-put-assoc
+  (implies (and (subsetp-equal (strip-cars x) l)
+                (member-equal key l))
+           (subsetp-equal (strip-cars (put-assoc-equal key val x))
+                          l)))
+
+(defthm position-equal-ac-of-nthcdr
+  (implies (and (integerp ac)
+                (not (member-equal item (take n lst))))
+           (equal (position-equal-ac item (nthcdr n lst)
+                                     ac)
+                  (position-equal-ac item lst (- ac (nfix n))))))
+
+(defthm position-equal-ac-of-+
+  (equal (position-equal-ac item lst (+ acc n))
+         (if (member-equal item lst)
+             (+ n (position-equal-ac item lst acc))
+             nil)))
+
+(defthm position-equal-ac-when-member
+  (implies (and (member-equal item lst) (natp acc))
+           (natp (position-equal-ac item lst acc)))
+  :rule-classes :type-prescription)
+
+(encapsulate
+  ()
+
+  (local (in-theory (disable position-equal)))
+
+  (defthm position-of-nthcdr
+    (implies (and (true-listp lst)
+                  (not (member-equal item (take n lst)))
+                  (member-equal item lst))
+             (equal (position-equal item (nthcdr n lst))
+                    (- (position-equal item lst) (nfix n))))
+    :hints (("goal" :in-theory (e/d (position-equal)
+                                    ((:rewrite position-equal-ac-of-+)))
+             :do-not-induct t
+             :use (:instance (:rewrite position-equal-ac-of-+)
+                             (n (- (nfix n)))
+                             (acc 0)
+                             (lst lst)
+                             (item item)))))
+
+  (defthm position-when-member
+    (implies (member-equal item lst)
+             (natp (position-equal item lst)))
+    :hints (("goal" :in-theory (enable position-equal)))
+    :rule-classes :type-prescription))
+
+(defthm
+  subsetp-of-nthcdr
+  (subsetp-equal (nthcdr n l) l))
