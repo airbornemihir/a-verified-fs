@@ -11043,6 +11043,38 @@
       (n (len (frame-addrs-before frame
                                   x (collapse-1st-index frame x)))))))))
 
+(defund messy-predicate
+  (frame seq n)
+  (or
+   (zp n)
+   (and
+    (set-equiv
+     (final-val-seq (nth (- n 1) seq) frame seq)
+     (final-val (nth (- n 1) seq) frame))
+    (messy-predicate frame seq (- n 1)))))
+
+(defthmd nth-of-position-equal-ac
+  (implies (member-equal item lst)
+           (equal (nth (- (position-equal-ac item lst acc)
+                          (fix acc))
+                       lst)
+                  item)))
+
+(defthm nth-of-position-equal
+  (implies (member-equal item lst)
+           (equal (nth (position-equal item lst) lst)
+                  item))
+  :hints (("goal" :in-theory (enable position-equal)
+           :use (:instance nth-of-position-equal-ac (acc 0)))))
+
+(defthm messy-predicate-correctness-1
+  (implies (and (messy-predicate frame seq n)
+                (member-equal x seq)
+                (< (position-equal x seq) (nfix n)))
+           (set-equiv (final-val-seq x frame seq)
+                      (final-val x frame)))
+  :hints (("goal" :in-theory (enable messy-predicate))))
+
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
   ()
