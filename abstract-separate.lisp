@@ -11110,6 +11110,64 @@
 
 (thm
  (implies
+  (and
+   (< (nfix m) (len seq))
+   (nat-listp seq)
+   (abs-separate (frame->frame frame))
+   (frame-p (frame->frame frame))
+   (consp
+    (assoc-equal
+     (nth m seq)
+     (frame->frame (collapse-seq frame
+                                 (take (position-equal (nth m seq) seq)
+                                       seq)))))
+   (valid-seqp frame seq)
+   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+   (mv-nth 1 (collapse frame)))
+  (set-equiv (frame-addrs-before-seq frame (nth m seq)
+                                     (take (position-equal (nth m seq) seq)
+                                           seq))
+             (frame-addrs-before frame (nth m seq)
+                                 (collapse-1st-index frame (nth m seq))))) :hints (("goal" :do-not-induct t :in-theory (disable
+                                 partial-collapse-correctness-lemma-111 (:definition nfix) (:definition nth)) :use (:instance
+                                 partial-collapse-correctness-lemma-111 (x (nth m seq))))))
+
+(thm
+ (implies
+  (and (mv-nth 1 (collapse frame))
+       (abs-separate (frame->frame frame))
+       (frame-p (frame->frame frame))
+       (valid-seqp frame seq)
+       (<= 0 m)
+       (< m (len seq))
+       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+       (nat-listp seq)
+       (natp m))
+  (absfat-equiv
+   (mv-nth
+    0
+    (ctx-app-list-seq
+     (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                       (frame->frame frame))))
+     (frame-val->path (cdr (assoc-equal (nth m seq)
+                                        (frame->frame frame))))
+     frame
+     (frame-addrs-before-seq frame (nth m seq)
+                             (take m seq))
+     (take m seq)))
+   (mv-nth
+    0
+    (ctx-app-list
+     (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                       (frame->frame frame))))
+     (frame-val->path (cdr (assoc-equal (nth m seq)
+                                        (frame->frame frame))))
+     frame
+     (frame-addrs-before frame (nth m seq)
+                         (collapse-1st-index frame (nth m seq))))))))
+
+(thm
+ (implies
   (and (abs-separate (frame->frame frame))
        (frame-p (frame->frame frame))
        (valid-seqp frame seq)
