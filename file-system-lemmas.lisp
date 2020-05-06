@@ -1246,8 +1246,20 @@
 
 (defthm position-equal-ac-when-member
   (implies (and (member-equal item lst) (natp acc))
-           (natp (position-equal-ac item lst acc)))
-  :rule-classes :type-prescription)
+           (and
+            (< (position-equal-ac item lst acc) (+ acc (len lst)))
+            (natp (position-equal-ac item lst acc))))
+  :rule-classes
+  ((:type-prescription
+    :corollary
+    (implies (and (member-equal item lst) (natp acc))
+             (natp (position-equal-ac item lst acc))))
+   (:linear
+    :corollary
+    (implies (and (member-equal item lst) (natp acc))
+             (and
+              (< (position-equal-ac item lst acc) (+ acc (len lst)))
+              (<= 0 (position-equal-ac item lst acc)))))))
 
 (encapsulate
   ()
@@ -1271,9 +1283,21 @@
 
   (defthm position-when-member
     (implies (member-equal item lst)
-             (natp (position-equal item lst)))
+             (and
+              (natp (position-equal item lst))
+              (< (position-equal item lst) (len lst))))
     :hints (("goal" :in-theory (enable position-equal)))
-    :rule-classes :type-prescription))
+    :rule-classes
+    ((:type-prescription
+      :corollary
+      (implies (member-equal item lst)
+               (natp (position-equal item lst))))
+     (:linear
+      :corollary
+      (implies (member-equal item lst)
+               (and
+                (<= 0 (position-equal item lst))
+                (< (position-equal item lst) (len lst))))))))
 
 (defthm
   subsetp-of-nthcdr
