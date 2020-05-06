@@ -11089,25 +11089,6 @@
            :use (:instance partial-collapse-correctness-lemma-113
                            (x (nth n seq))))))
 
-;; Move later.
-(defthm position-equal-ac-of-nth
-  (implies (and (no-duplicatesp-equal l)
-                (integerp acc)
-                (< (nfix n) (len l)))
-           (equal (position-equal-ac (nth n l) l acc)
-                  (+ acc (nfix n)))))
-(defthm position-equal-of-nth
-  (implies (and (no-duplicatesp-equal l)
-                (< (nfix n) (len l)))
-           (equal (position-equal (nth n l) l)
-                  (nfix n)))
-  :hints (("Goal" :in-theory (enable position-equal)) ))
-(defthm nat-listp-of-take
-  (implies (nat-listp l)
-           (iff (nat-listp (take n l))
-                (<= (nfix n) (len l))))
-  :hints (("goal" :in-theory (disable take-of-too-many))))
-
 ;; Run these two forms - the first confirms that nat-equiv is an equivalence,
 ;; and the second says that it is not.
 #||
@@ -11180,56 +11161,56 @@
            :use (:instance partial-collapse-correctness-lemma-111
                            (x (nth m seq))))))
 
-(thm
- (implies
-  (and (mv-nth 1 (collapse frame))
-       (abs-separate (frame->frame frame))
-       (frame-p (frame->frame frame))
-       (valid-seqp frame seq)
-       (<= 0 m)
-       (< m (len seq))
-       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-       (nat-listp seq)
-       (natp m))
-  (absfat-equiv
-   (mv-nth
-    0
-    (ctx-app-list-seq
-     (frame-val->dir (cdr (assoc-equal (nth m seq)
-                                       (frame->frame frame))))
-     (frame-val->path (cdr (assoc-equal (nth m seq)
-                                        (frame->frame frame))))
-     frame
-     (frame-addrs-before-seq frame (nth m seq)
-                             (take m seq))
-     (take m seq)))
-   (mv-nth
-    0
-    (ctx-app-list
-     (frame-val->dir (cdr (assoc-equal (nth m seq)
-                                       (frame->frame frame))))
-     (frame-val->path (cdr (assoc-equal (nth m seq)
-                                        (frame->frame frame))))
-     frame
-     (frame-addrs-before frame (nth m seq)
-                         (collapse-1st-index frame (nth m seq))))))))
+;; (thm
+;;  (implies
+;;   (and (mv-nth 1 (collapse frame))
+;;        (abs-separate (frame->frame frame))
+;;        (frame-p (frame->frame frame))
+;;        (valid-seqp frame seq)
+;;        (<= 0 m)
+;;        (< m (len seq))
+;;        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;        (nat-listp seq)
+;;        (natp m))
+;;   (absfat-equiv
+;;    (mv-nth
+;;     0
+;;     (ctx-app-list-seq
+;;      (frame-val->dir (cdr (assoc-equal (nth m seq)
+;;                                        (frame->frame frame))))
+;;      (frame-val->path (cdr (assoc-equal (nth m seq)
+;;                                         (frame->frame frame))))
+;;      frame
+;;      (frame-addrs-before-seq frame (nth m seq)
+;;                              (take m seq))
+;;      (take m seq)))
+;;    (mv-nth
+;;     0
+;;     (ctx-app-list
+;;      (frame-val->dir (cdr (assoc-equal (nth m seq)
+;;                                        (frame->frame frame))))
+;;      (frame-val->path (cdr (assoc-equal (nth m seq)
+;;                                         (frame->frame frame))))
+;;      frame
+;;      (frame-addrs-before frame (nth m seq)
+;;                          (collapse-1st-index frame (nth m seq))))))))
 
-(thm
- (implies
-  (and (abs-separate (frame->frame frame))
-       (frame-p (frame->frame frame))
-       (valid-seqp frame seq)
-       (<= (nfix n) (len seq))
-       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-       (nat-listp seq)
-       (mv-nth '1 (collapse frame)))
-  (absfat-equiv-upto-n
-   frame seq n))
- :hints
- (("goal" :in-theory (enable
-                      absfat-equiv-upto-n
-                      (:rewrite partial-collapse-correctness-lemma-63)
-                      (:rewrite partial-collapse-correctness-lemma-75)))))
+;; (thm
+;;  (implies
+;;   (and (abs-separate (frame->frame frame))
+;;        (frame-p (frame->frame frame))
+;;        (valid-seqp frame seq)
+;;        (<= (nfix n) (len seq))
+;;        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;        (nat-listp seq)
+;;        (mv-nth '1 (collapse frame)))
+;;   (absfat-equiv-upto-n
+;;    frame seq n))
+;;  :hints
+;;  (("goal" :in-theory (enable
+;;                       absfat-equiv-upto-n
+;;                       (:rewrite partial-collapse-correctness-lemma-63)
+;;                       (:rewrite partial-collapse-correctness-lemma-75)))))
 
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
