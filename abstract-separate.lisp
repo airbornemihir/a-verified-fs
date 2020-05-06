@@ -10910,7 +10910,6 @@
   (implies
    (and
     (member-equal x seq)
-    (< (position-equal x seq) (len seq))
     (nat-listp seq)
     (not (zp n))
     (subsetp-equal
@@ -10985,39 +10984,38 @@
     :hints
     (("goal" :induct (dec-induct n))))
 
-  (thm
-   (implies
-    (and
-     (abs-separate (frame->frame frame))
-     (frame-p (frame->frame frame))
-     (consp
-      (assoc-equal
-       x
-       (frame->frame (collapse-seq frame
-                                   (take (position-equal x seq) seq)))))
-     (valid-seqp frame (take (position-equal x seq) seq))
-     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-     (nat-listp (take (position-equal x seq) seq))
-     (mv-nth 1 (collapse frame))
-     (natp n)
-     (<=
-      n
-      (len
-       (frame-addrs-before frame
-                           x (collapse-1st-index frame x)))))
-    (subsetp-equal
-     (take
-      n
-      (frame-addrs-before frame
-                          x (collapse-1st-index frame x)))
-     (frame-addrs-before-seq frame
-                             x (take (position-equal x seq) seq))))
-   :hints (("goal" :in-theory (enable final-val-seq)
-            :induct (dec-induct n)))))
+  (defthm
+    partial-collapse-correctness-lemma-110
+    (implies
+     (and
+      (member-equal x seq)
+      (nat-listp seq)
+      (abs-separate (frame->frame frame))
+      (frame-p (frame->frame frame))
+      (consp
+       (assoc-equal
+        x
+        (frame->frame (collapse-seq frame
+                                    (take (position-equal x seq) seq)))))
+      (valid-seqp frame seq)
+      (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+      (mv-nth 1 (collapse frame))
+      (<= n
+          (len (frame-addrs-before frame x (collapse-1st-index frame x)))))
+     (subsetp-equal
+      (take n
+            (frame-addrs-before frame x (collapse-1st-index frame x)))
+      (frame-addrs-before-seq frame
+                              x (take (position-equal x seq) seq))))
+    :hints (("goal" :in-theory (enable final-val-seq)
+             :induct (dec-induct n)))))
 
-(thm
+(defthm
+  partial-collapse-correctness-lemma-111
   (implies
    (and
+    (member-equal x seq)
+    (nat-listp seq)
     (abs-separate (frame->frame frame))
     (frame-p (frame->frame frame))
     (consp
@@ -11025,16 +11023,25 @@
       x
       (frame->frame (collapse-seq frame
                                   (take (position-equal x seq) seq)))))
-    (valid-seqp frame (take (position-equal x seq) seq))
+    (valid-seqp frame seq)
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-    (nat-listp (take (position-equal x seq) seq))
     (mv-nth 1 (collapse frame)))
-   (set-equiv
-    (frame-addrs-before-seq frame
-                            x (take (position-equal x seq) seq))
-    (frame-addrs-before frame
-                        x (collapse-1st-index frame x))))
-  :hints (("goal" :in-theory (enable final-val-seq))))
+   (set-equiv (frame-addrs-before-seq frame
+                                      x (take (position-equal x seq) seq))
+              (frame-addrs-before frame x (collapse-1st-index frame x))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (set-equiv)
+                    (partial-collapse-correctness-lemma-109
+                     partial-collapse-correctness-lemma-110))
+    :use
+    ((:instance partial-collapse-correctness-lemma-109
+                (n (position-equal x seq)))
+     (:instance
+      partial-collapse-correctness-lemma-110
+      (n (len (frame-addrs-before frame
+                                  x (collapse-1st-index frame x)))))))))
 
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
