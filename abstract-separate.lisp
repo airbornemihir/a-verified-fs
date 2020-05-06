@@ -11070,12 +11070,47 @@
   :hints (("goal"
            :in-theory (enable collapse-seq valid-seqp))))
 
-;; The next proof will require at least two inductions. One will be on
-;; absfat-equiv-upto-n, to show that it is true of all values of n by
-;; inductively showing that each (- n 1) has the underlying property... which
-;; is itself the next induction, to show that ctx-app-list-seq is equivalent to
-;; ctx-app-list. Perhaps this latter will require showing that ctx-app-list
-;; allows permutation within its argument...
+;; If one copies and pastes the following sequence of commands into the
+;; read-eval-print loop - which means evaluating a (thm ...) in a wormhole
+;; state - one gets the Cryptic BRR Message 2.
+#||
+:monitor (:REWRITE PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-112)
+  (EQUAL
+   (GET-BRR-LOCAL 'TARGET STATE)
+   '(CONSP
+     (ASSOC-EQUAL
+          (NTH (BINARY-+ '-1 N) SEQ)
+          (FRAME->FRAME
+               (COLLAPSE-SEQ FRAME
+                             (TAKE (POSITION-EQUAL (NTH (BINARY-+ '-1 N) SEQ)
+                                                   SEQ)
+                                   SEQ))))))
+
+:monitor (:REWRITE PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-63)
+':T
+
+:monitor (:REWRITE PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-75)
+':T
+
+:brr t
+
+(thm
+ (IMPLIES (AND (NOT (ZP N))
+               (NOT (ABSFAT-EQUIV (FINAL-VAL-SEQ (NTH (+ -1 N) SEQ)
+                                                 FRAME SEQ)
+                                  (FINAL-VAL (NTH (+ -1 N) SEQ) FRAME)))
+               (ABS-SEPARATE (FRAME->FRAME FRAME))
+               (FRAME-P (FRAME->FRAME FRAME))
+               (VALID-SEQP FRAME SEQ))
+          (< (LEN SEQ) N))
+ :hints
+ (("goal" :in-theory (enable
+                      absfat-equiv-upto-n
+                      (:rewrite partial-collapse-correctness-lemma-63)
+                      (:rewrite partial-collapse-correctness-lemma-75)))))
+
+:eval
+
 (thm
  (implies
   (and (ABS-SEPARATE (FRAME->FRAME FRAME))
@@ -11091,6 +11126,7 @@
                       (:rewrite partial-collapse-correctness-lemma-75))
    :induct (absfat-equiv-upto-n
             frame seq n))))
+||#
 
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
