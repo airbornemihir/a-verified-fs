@@ -11061,6 +11061,15 @@
                          (final-val x frame)))
   :hints (("goal" :in-theory (enable absfat-equiv-upto-n))))
 
+(defthm
+  partial-collapse-correctness-lemma-112
+  (implies (and (consp (assoc-equal x (frame->frame frame)))
+                (not (member-equal x seq)))
+           (consp (assoc-equal x
+                               (frame->frame (collapse-seq frame seq)))))
+  :hints (("goal"
+           :in-theory (enable collapse-seq valid-seqp))))
+
 ;; The next proof will require at least two inductions. One will be on
 ;; absfat-equiv-upto-n, to show that it is true of all values of n by
 ;; inductively showing that each (- n 1) has the underlying property... which
@@ -11069,12 +11078,17 @@
 ;; allows permutation within its argument...
 (thm
  (implies
-  (<= (nfix n) (len seq))
+  (and (ABS-SEPARATE (FRAME->FRAME FRAME))
+       (FRAME-P (FRAME->FRAME FRAME))
+       (valid-seqp frame seq)
+       (<= (nfix n) (len seq)))
   (absfat-equiv-upto-n
    frame seq n))
  :hints
- (("Goal" :in-theory (enable
-                      absfat-equiv-upto-n)
+ (("goal" :in-theory (enable
+                      absfat-equiv-upto-n
+                      (:rewrite partial-collapse-correctness-lemma-63)
+                      (:rewrite partial-collapse-correctness-lemma-75))
    :induct (absfat-equiv-upto-n
             frame seq n))))
 
