@@ -11043,23 +11043,40 @@
       (n (len (frame-addrs-before frame
                                   x (collapse-1st-index frame x)))))))))
 
-(defund messy-predicate
+(defund absfat-equiv-upto-n
   (frame seq n)
   (or
    (zp n)
    (and
-    (set-equiv
+    (absfat-equiv
      (final-val-seq (nth (- n 1) seq) frame seq)
      (final-val (nth (- n 1) seq) frame))
-    (messy-predicate frame seq (- n 1)))))
+    (absfat-equiv-upto-n frame seq (- n 1)))))
 
-(defthm messy-predicate-correctness-1
-  (implies (and (messy-predicate frame seq n)
+(defthm absfat-equiv-upto-n-correctness-1
+  (implies (and (absfat-equiv-upto-n frame seq n)
                 (member-equal x seq)
                 (< (position-equal x seq) (nfix n)))
-           (set-equiv (final-val-seq x frame seq)
-                      (final-val x frame)))
-  :hints (("goal" :in-theory (enable messy-predicate))))
+           (absfat-equiv (final-val-seq x frame seq)
+                         (final-val x frame)))
+  :hints (("goal" :in-theory (enable absfat-equiv-upto-n))))
+
+;; The next proof will require at least two inductions. One will be on
+;; absfat-equiv-upto-n, to show that it is true of all values of n by
+;; inductively showing that each (- n 1) has the underlying property... which
+;; is itself the next induction, to show that ctx-app-list-seq is equivalent to
+;; ctx-app-list. Perhaps this latter will require showing that ctx-app-list
+;; allows permutation within its argument...
+(thm
+ (implies
+  (<= (nfix n) (len seq))
+  (absfat-equiv-upto-n
+   frame seq n))
+ :hints
+ (("Goal" :in-theory (enable
+                      absfat-equiv-upto-n)
+   :induct (absfat-equiv-upto-n
+            frame seq n))))
 
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
