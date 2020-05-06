@@ -10791,76 +10791,182 @@
            :induct (collapse-seq frame seq)
            :expand (position-equal (car seq) seq))))
 
-(thm
- (implies
-  (and
-   (natp (position-equal x seq))
-   (< (position-equal x seq) (len seq))
-   (nat-listp seq)
-   (not (zp n))
+(defthm
+  partial-collapse-correctness-lemma-103
+  (implies
+   (and (mv-nth 1 (collapse frame))
+        (not (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame))))))
+        (abs-separate (frame->frame frame))
+        (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+   (member-equal
+    x
+    (abs-addrs
+     (frame-val->dir
+      (cdr (assoc-equal
+            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+            (frame->frame frame)))))))
+  :hints
+  (("goal" :in-theory (e/d (collapse abs-addrs-of-ctx-app-1-lemma-7)
+                           ((:rewrite remove-assoc-of-put-assoc)
+                            (:rewrite remove-assoc-of-remove-assoc)
+                            (:rewrite abs-file-alist-p-when-m1-file-alist-p)))
+    :induct (collapse frame))))
+
+;; Ton of free variables here - at any rate, frame is free.
+(defthm
+  partial-collapse-correctness-lemma-106
+  (implies
+   (and
+    (valid-seqp frame seq)
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (member-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                  seq)
+    (member-equal
+     x
+     (abs-addrs
+      (frame-val->dir
+       (cdr (assoc-equal
+             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+             (frame->frame frame))))))
+    (abs-separate (frame->frame frame))
+    (frame-p (frame->frame frame)))
+   (member-equal x seq))
+  :hints (("goal" :induct (collapse-seq frame seq)
+           :in-theory (enable valid-seqp collapse-seq))))
+
+(defthm
+  partial-collapse-correctness-lemma-107
+  (implies
+   (and
+    (member-equal x seq)
+    (nat-listp seq)
+    (not (zp n))
+    (abs-separate (frame->frame frame))
+    (frame-p (frame->frame frame))
+    (consp
+     (assoc-equal
+      x
+      (frame->frame (collapse-seq frame
+                                  (take (position-equal x seq) seq)))))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (mv-nth 1 (collapse frame))
+    (<= n
+        (len (frame-addrs-before frame x (collapse-1st-index frame x)))))
+   (member-equal
+    (nth (binary-+ -1 n)
+         (frame-addrs-before frame x (collapse-1st-index frame x)))
+    (abs-addrs
+     (frame-val->dir$inline (cdr (assoc-equal x (frame->frame frame)))))))
+  :hints
+  (("goal"
+    :in-theory (disable partial-collapse-correctness-lemma-103)
+    :use
+    (:instance
+     partial-collapse-correctness-lemma-103
+     (x (nth (binary-+ -1 n)
+             (frame-addrs-before frame
+                                 x (collapse-1st-index frame x))))))))
+
+(defthm
+  partial-collapse-correctness-lemma-108
+  (implies
+   (and
+    (member-equal x seq)
+    (nat-listp seq)
+    (not (zp n))
+    (abs-separate (frame->frame frame))
+    (frame-p (frame->frame frame))
+    (consp
+     (assoc-equal
+      x
+      (frame->frame (collapse-seq frame
+                                  (take (position-equal x seq) seq)))))
+    (valid-seqp frame seq)
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (mv-nth 1 (collapse frame))
+    (<= n
+        (len (frame-addrs-before frame x (collapse-1st-index frame x)))))
+   (< (position-equal
+       (nth (+ -1 n)
+            (frame-addrs-before frame x (collapse-1st-index frame x)))
+       seq)
+      (position-equal x seq)))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable (:linear partial-collapse-correctness-lemma-102))
+    :use (:instance
+          (:linear partial-collapse-correctness-lemma-102)
+          (seq seq)
+          (frame frame)
+          (x (nth (+ -1 n)
+                  (frame-addrs-before frame
+                                      x (collapse-1st-index frame x)))))))
+  :rule-classes :linear)
+
+(defthm
+  partial-collapse-correctness-lemma-109
+  (implies
+   (and
+    (member-equal x seq)
+    (< (position-equal x seq) (len seq))
+    (nat-listp seq)
+    (not (zp n))
+    (subsetp-equal
+     (take (+ -1 n)
+           (frame-addrs-before frame x (collapse-1st-index frame x)))
+     (frame-addrs-before-seq frame
+                             x (take (position-equal x seq) seq)))
+    (abs-separate (frame->frame frame))
+    (frame-p (frame->frame frame))
+    (consp
+     (assoc-equal
+      x
+      (frame->frame (collapse-seq frame
+                                  (take (position-equal x seq) seq)))))
+    (valid-seqp frame seq)
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (mv-nth 1 (collapse frame))
+    (<= n
+        (len (frame-addrs-before frame x (collapse-1st-index frame x)))))
    (subsetp-equal
-    (take (+ -1 n)
+    (take n
           (frame-addrs-before frame x (collapse-1st-index frame x)))
     (frame-addrs-before-seq frame
-                            x (take (position-equal x seq) seq)))
-   (abs-separate (frame->frame frame))
-   (frame-p (frame->frame frame))
-   (consp
-    (assoc-equal
-     x
-     (frame->frame (collapse-seq frame
-                                 (take (position-equal x seq) seq)))))
-   (valid-seqp frame (take (position-equal x seq) seq))
-   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-   (nat-listp (take (position-equal x seq) seq))
-   (mv-nth 1 (collapse frame))
-   (<= 0 n)
-   (<= n
-       (len (frame-addrs-before frame x (collapse-1st-index frame x)))))
-  (subsetp-equal
-   (take n
-         (frame-addrs-before frame x (collapse-1st-index frame x)))
-   (frame-addrs-before-seq frame
-                           x (take (position-equal x seq) seq))))
- :hints
- (("goal" :do-not-induct t
-   :in-theory (e/d (
-                    (:rewrite take-fewer-of-take-more))
-                   ((:rewrite binary-append-take-nthcdr)
-                    (:rewrite subsetp-of-binary-append-3)))
-   :use
-   ((:instance
-     (:rewrite binary-append-take-nthcdr)
-     (l (take n
-              (frame-addrs-before
-               frame x (collapse-1st-index frame x))))
-     (i (+ -1 n)))
-    (:instance
-     (:rewrite subsetp-of-binary-append-3)
-     (z (frame-addrs-before-seq
-         frame
-         x (take (position-equal x seq) seq)))
-     (y
-      (nthcdr (+ -1 n)
-              (take n
-                    (frame-addrs-before
-                     frame x (collapse-1st-index frame x)))))
-     (x (take (+ -1 n)
-              (frame-addrs-before
-               frame x (collapse-1st-index frame x)))))
-    (:instance
-     (:rewrite take-of-nthcdr)
-     (l
-      (frame-addrs-before frame x (collapse-1st-index frame x)))
-     (n2 (+ -1 n))
-     (n1 1)))))
- :otf-flg t)
+                            x (take (position-equal x seq) seq))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d ((:rewrite take-fewer-of-take-more))
+                    ((:rewrite binary-append-take-nthcdr)
+                     (:rewrite subsetp-of-binary-append-3)))
+    :use
+    ((:instance
+      (:rewrite binary-append-take-nthcdr)
+      (l (take n
+               (frame-addrs-before frame x (collapse-1st-index frame x))))
+      (i (+ -1 n)))
+     (:instance
+      (:rewrite subsetp-of-binary-append-3)
+      (z (frame-addrs-before-seq frame
+                                 x (take (position-equal x seq) seq)))
+      (y
+       (nthcdr
+        (+ -1 n)
+        (take n
+              (frame-addrs-before frame x (collapse-1st-index frame x)))))
+      (x (take (+ -1 n)
+               (frame-addrs-before frame x (collapse-1st-index frame x)))))
+     (:instance (:rewrite take-of-nthcdr)
+                (l (frame-addrs-before frame x (collapse-1st-index frame x)))
+                (n2 (+ -1 n))
+                (n1 1))))))
 
 (encapsulate
   ()
 
-  (local (include-book "std/basic/inductions"
-                       :dir :system))
+  (local (include-book "std/basic/inductions" :dir :system))
 
   (defthm
     partial-collapse-correctness-lemma-86
