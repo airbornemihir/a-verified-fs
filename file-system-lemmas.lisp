@@ -1261,6 +1261,13 @@
               (< (position-equal-ac item lst acc) (+ acc (len lst)))
               (<= 0 (position-equal-ac item lst acc)))))))
 
+(defthmd nth-of-position-equal-ac
+  (implies (member-equal item lst)
+           (equal (nth (- (position-equal-ac item lst acc)
+                          (fix acc))
+                       lst)
+                  item)))
+
 (encapsulate
   ()
 
@@ -1297,7 +1304,14 @@
       (implies (member-equal item lst)
                (and
                 (<= 0 (position-equal item lst))
-                (< (position-equal item lst) (len lst))))))))
+                (< (position-equal item lst) (len lst)))))))
+
+  (defthm nth-of-position-equal
+    (implies (member-equal item lst)
+             (equal (nth (position-equal item lst) lst)
+                    item))
+    :hints (("goal" :in-theory (enable position-equal)
+             :use (:instance nth-of-position-equal-ac (acc 0))))))
 
 (defthm
   subsetp-of-nthcdr

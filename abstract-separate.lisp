@@ -11053,20 +11053,6 @@
      (final-val (nth (- n 1) seq) frame))
     (messy-predicate frame seq (- n 1)))))
 
-(defthmd nth-of-position-equal-ac
-  (implies (member-equal item lst)
-           (equal (nth (- (position-equal-ac item lst acc)
-                          (fix acc))
-                       lst)
-                  item)))
-
-(defthm nth-of-position-equal
-  (implies (member-equal item lst)
-           (equal (nth (position-equal item lst) lst)
-                  item))
-  :hints (("goal" :in-theory (enable position-equal)
-           :use (:instance nth-of-position-equal-ac (acc 0)))))
-
 (defthm messy-predicate-correctness-1
   (implies (and (messy-predicate frame seq n)
                 (member-equal x seq)
