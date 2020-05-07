@@ -7600,6 +7600,12 @@
   :hints (("goal" :in-theory (enable ctx-app-list)))
   :rule-classes :type-prescription)
 
+(defthm abs-file-alist-p-of-ctx-app-list
+  (implies
+   (abs-file-alist-p fs)
+   (abs-file-alist-p (mv-nth 0 (ctx-app-list fs path-len frame l))))
+  :hints (("goal" :in-theory (enable ctx-app-list))))
+
 (defthmd ctx-app-list-correctness-1
   (equal (ctx-app-list fs path-len frame y)
          (mv (mv-nth 0 (ctx-app-list fs path-len frame y))
@@ -11120,24 +11126,156 @@
            (equal (names-at fs relpath) nil))
   :hints (("goal" :in-theory (enable names-at))))
 
-(defthm
-  partial-collapse-correctness-lemma-117
-  (implies (and (fat32-filename-list-p relpath)
-                (not (member-equal x (names-at fs x-path)))
-                (equal x-path
-                       (take (position-equal x relpath)
-                             relpath))
-                (member-equal x relpath))
-           (equal (names-at fs relpath) nil))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable partial-collapse-correctness-lemma-116)
-           :use (:instance partial-collapse-correctness-lemma-116
-                           (n (position-equal x relpath))))))
+(encapsulate
+  ()
+
+  (local
+   (defthm lemma (equal (+ x (- x) y) (fix y))))
+
+  (defthm
+    partial-collapse-correctness-lemma-118
+    (implies
+     (and
+      (not
+       (equal
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal (car l)
+                                                   (frame->frame frame)))))
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
+      (prefixp (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame))))
+               (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+      (not
+       (member-equal
+        (nth (len (frame-val->path (cdr (assoc-equal (car l)
+                                                     (frame->frame frame)))))
+             (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+        (names-at
+         (mv-nth 0
+                 (ctx-app-list fs
+                               relpath frame (remove-equal x (cdr l))))
+         (nthcdr (len relpath)
+                 (frame-val->path (cdr (assoc-equal (car l)
+                                                    (frame->frame frame))))))))
+      (prefixp relpath
+               (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame))))))
+     (equal
+      (names-at
+       (mv-nth 0
+               (ctx-app-list fs
+                             relpath frame (remove-equal x (cdr l))))
+       (nthcdr (len relpath)
+               (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+      nil))
+    :hints
+    (("goal"
+      :in-theory (e/d (take-of-nthcdr)
+                      ((:rewrite partial-collapse-correctness-lemma-116)))
+      :use
+      (:instance
+       (:rewrite partial-collapse-correctness-lemma-116)
+       (relpath
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+       (fs (mv-nth 0
+                   (ctx-app-list fs relpath
+                                 frame (remove-equal x (cdr l)))))
+       (n (- (len (frame-val->path (cdr (assoc-equal (car l)
+                                                     (frame->frame frame)))))
+             (len relpath))))
+      :expand
+      ((:with
+        (:rewrite fat32-filename-p-of-nth-when-fat32-filename-list-p)
+        (fat32-filename-p
+         (nth (len (frame-val->path (cdr (assoc-equal (car l)
+                                                      (frame->frame frame)))))
+              (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
+       (:with
+        fat32-filename-p-when-fat32-filename-p
+        (fat32-filename-fix
+         (nth
+          (len (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame)))))
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))))))
+
+  (defthm
+    partial-collapse-correctness-lemma-117
+    (implies
+     (and
+      (not
+       (intersectp-equal
+        (names-at (final-val x frame) nil)
+        (names-at
+         (ctx-app
+          (mv-nth 0
+                  (ctx-app-list fs
+                                relpath frame (remove-equal x (cdr l))))
+          (final-val (car l) frame)
+          (car l)
+          (nthcdr (len relpath)
+                  (frame-val->path (cdr (assoc-equal (car l)
+                                                     (frame->frame frame))))))
+         (nthcdr
+          (len relpath)
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
+      (prefixp relpath
+               (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+      (prefixp relpath
+               (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame)))))
+      (abs-fs-p
+       (ctx-app
+        (mv-nth 0
+                (ctx-app-list fs
+                              relpath frame (remove-equal x (cdr l))))
+        (final-val (car l) frame)
+        (car l)
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal (car l)
+                                                   (frame->frame frame))))))))
+     (not
+      (intersectp-equal
+       (names-at (final-val x frame) nil)
+       (names-at
+        (mv-nth 0
+                (ctx-app-list fs
+                              relpath frame (remove-equal x (cdr l))))
+        (nthcdr
+         (len relpath)
+         (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable ctx-app-list intersectp-equal)))))
 
 (defthm
-  partial-collapse-correctness-lemma-118
+  partial-collapse-correctness-lemma-119
   (implies
    (and
+    (absfat-equiv
+     (ctx-app
+      (mv-nth 0
+              (ctx-app-list fs
+                            relpath frame (remove-equal x (cdr l))))
+      (final-val x frame)
+      x
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+     (mv-nth 0
+             (ctx-app-list fs relpath frame (cdr l))))
+    (not
+     (intersectp-equal
+      (names-at (final-val (car l) frame) nil)
+      (names-at
+       (mv-nth 0
+               (ctx-app-list fs
+                             relpath frame (remove-equal x (cdr l))))
+       (nthcdr (len relpath)
+               (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame))))))))
+    (prefixp relpath
+             (frame-val->path (cdr (assoc-equal (car l)
+                                                (frame->frame frame)))))
     (not
      (equal
       (nthcdr (len relpath)
@@ -11159,275 +11297,140 @@
                              relpath frame (remove-equal x (cdr l))))
        (nthcdr (len relpath)
                (frame-val->path (cdr (assoc-equal (car l)
-                                                  (frame->frame frame))))))))
-    (prefixp relpath
-             (frame-val->path (cdr (assoc-equal (car l)
-                                                (frame->frame frame))))))
-   (equal
-    (names-at
-     (mv-nth 0
-             (ctx-app-list fs
-                           relpath frame (remove-equal x (cdr l))))
-     (nthcdr (len relpath)
-             (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-    nil))
-  :hints
-  (("goal"
-    :in-theory (e/d (take-of-nthcdr)
-                    ((:rewrite partial-collapse-correctness-lemma-116)))
-    :use
-    (:instance
-     (:rewrite partial-collapse-correctness-lemma-116)
-     (relpath
-      (nthcdr (len relpath)
-              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-     (fs (mv-nth 0
-                 (ctx-app-list fs relpath
-                               frame (remove-equal x (cdr l)))))
-     (n (- (len (frame-val->path (cdr (assoc-equal (car l)
-                                                   (frame->frame frame)))))
-           (len relpath))))
-    :expand
-    ((:with
-      (:rewrite fat32-filename-p-of-nth-when-fat32-filename-list-p)
-      (fat32-filename-p
-       (nth (len (frame-val->path (cdr (assoc-equal (car l)
-                                                    (frame->frame frame)))))
-            (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
-     (:with
-      fat32-filename-p-when-fat32-filename-p
-      (fat32-filename-fix
-       (nth
-        (len (frame-val->path (cdr (assoc-equal (car l)
-                                                (frame->frame frame)))))
-        (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))))))
-
-(thm
- (implies
-  (and
-   (not (atom l))
-   (nat-listp l)
-   (not
-    (intersectp-equal
-     (names-at (final-val x frame) nil)
-     (names-at
-      (ctx-app
-       (mv-nth 0
-               (ctx-app-list fs
-                             relpath frame (remove-equal x (cdr l))))
-       (final-val (car l) frame)
-       (car l)
-       (nthcdr
-        (len relpath)
-        (frame-val->path (cdr (assoc-equal (car l)
-                                           (frame->frame frame))))))
-      (nthcdr
-       (len relpath)
-       (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
-   (abs-separate (frame->frame frame))
-   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-   (no-duplicatesp-equal l)
-   (frame-p (frame->frame frame))
-   (mv-nth 1 (collapse frame))
-   (ctx-app-ok
-    (mv-nth 0
-            (ctx-app-list fs
-                          relpath frame (remove-equal x (cdr l))))
-    x
-    (nthcdr
-     (len relpath)
-     (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-   (prefixp
-    relpath
-    (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
-   (not (equal x (car l)))
-   (member-equal x (cdr l))
-   (mv-nth 1
-           (ctx-app-list fs
-                         relpath frame (remove-equal x (cdr l))))
-   (ctx-app-ok
-    (mv-nth 0
-            (ctx-app-list fs
-                          relpath frame (remove-equal x (cdr l))))
-    (car l)
-    (nthcdr (len relpath)
-            (frame-val->path (cdr (assoc-equal (car l)
-                                               (frame->frame frame))))))
+                                                  (frame->frame frame)))))))))
    (not
     (intersectp-equal
      (names-at (final-val (car l) frame) nil)
      (names-at
       (mv-nth 0
-              (ctx-app-list fs
-                            relpath frame (remove-equal x (cdr l))))
-      (nthcdr
-       (len relpath)
-       (frame-val->path (cdr (assoc-equal (car l)
-                                          (frame->frame frame))))))))
-   (prefixp relpath
-            (frame-val->path (cdr (assoc-equal (car l)
-                                               (frame->frame frame)))))
-   (not (equal (nfix x) (nfix (car l))))
-   (abs-fs-p
-    (ctx-app
-     (mv-nth 0
-             (ctx-app-list fs
-                           relpath frame (remove-equal x (cdr l))))
-     (final-val (car l) frame)
-     (car l)
-     (nthcdr
-      (len relpath)
-      (frame-val->path (cdr (assoc-equal (car l)
-                                         (frame->frame frame)))))))
-   (not
-    (member-equal (nfix x)
-                  (abs-addrs (abs-fs-fix (final-val (car l) frame))))))
-  (not
-   (intersectp-equal
-    (names-at (final-val x frame) nil)
-    (names-at
-     (mv-nth 0
-             (ctx-app-list fs
-                           relpath frame (remove-equal x (cdr l))))
-     (nthcdr
-      (len relpath)
-      (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))))
- :hints
- (("goal" :do-not-induct t :in-theory (enable ctx-app-list)))
- :otf-flg t)
+              (ctx-app-list fs relpath frame (cdr l)))
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal (car l)
+                                                 (frame->frame frame)))))))))
+  :hints
+  (("goal"
+    :in-theory (e/d (intersectp-equal)
+                    ((:rewrite names-at-of-ctx-app)))
+    :use
+    (:instance
+     (:rewrite names-at-of-ctx-app)
+     (relpath
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal (car l)
+                                                 (frame->frame frame))))))
+     (x-path
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+     (x x)
+     (abs-file-alist (final-val x frame))
+     (root (mv-nth 0
+                   (ctx-app-list fs relpath
+                                 frame (remove-equal x (cdr l)))))))))
 
-(verify
- (implies
-  (and
-   (member-equal x l)
-   (nat-listp l)
-   (mv-nth 1
-           (ctx-app-list fs relpath frame (remove-equal x l)))
-   (abs-separate (frame->frame frame))
-   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-   (no-duplicatesp-equal l)
-   (frame-p (frame->frame frame))
-   (mv-nth 1 (collapse frame))
-   (ctx-app-ok
-    (mv-nth 0
-            (ctx-app-list fs relpath frame (remove-equal x l)))
-    x
-    (nthcdr (len relpath)
-            (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-   (not
-    (intersectp-equal
-     (names-at (final-val x frame) nil)
-     (names-at
-      (mv-nth 0
-              (ctx-app-list fs relpath frame (remove-equal x l)))
-      (nthcdr
-       (len relpath)
-       (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
-   (prefixp relpath
-            (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-  (and
-   (absfat-equiv
-    (ctx-app
-     (mv-nth 0
-             (ctx-app-list fs relpath frame (remove-equal x l)))
-     (final-val x frame)
-     x
-     (nthcdr
-      (len relpath)
-      (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-    (mv-nth 0 (ctx-app-list fs relpath frame l)))
-   (mv-nth 1 (ctx-app-list fs relpath frame l))
-   (not
-    (intersectp-equal
-     (names-at (final-val x frame) nil)
-     (names-at
-      (mv-nth 0
-              (ctx-app-list fs relpath frame (remove-equal x l)))
-      (nthcdr
-       (len relpath)
-       (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))))
- :instructions
- ((:in-theory (enable ctx-app-list))
-  :induct (:change-goal nil t)
-  :bash :promote
-  (:casesplit (not (and (not (equal x (car l)))
-                        (member-equal x (cdr l)))))
-  :bash (:demote 2 3)
-  (:= (no-duplicatesp-equal (cdr l)) t)
-  (:= (nat-listp (cdr l)) t)
-  (:dive 1 1 1)
-  :s :top
-  (:= (member-equal x l) t :equiv iff)
-  :promote (:contrapose 3)
-  (:dive 1 2 4)
-  :x :up :x :up :s :top (:contrapose 14)
-  (:= (mv-nth '1
-              (ctx-app-list fs
-                            relpath frame (remove-equal x (cdr l))))
-      t)
-  (:contrapose 9)
-  (:dive 1 1 2 4)
-  :x :up :x :up :s :up
-  (:claim
+(defthm
+  partial-collapse-correctness-lemma-120
+  (implies
    (and
-    (not (equal (nfix x) (nfix (car l))))
-    (abs-fs-p
+    (consp l)
+    (absfat-equiv
      (ctx-app
       (mv-nth 0
               (ctx-app-list fs
                             relpath frame (remove-equal x (cdr l))))
-      (final-val (car l) frame)
-      (car l)
-      (nthcdr
-       (len relpath)
-       (frame-val->path (cdr (assoc-equal (car l)
-                                          (frame->frame frame)))))))
-    (not
-     (member-equal (nfix x)
-                   (abs-addrs (abs-fs-fix (final-val (car l) frame)))))))
-  (:rewrite ctx-app-ok-of-ctx-app-1)
-  :top (:contrapose 9)
-  (:dive 1 1 2 1)
-  (:= t)
-  :top (:dive 1 1)
-  :s :top (:contrapose 10)
-  (:dive 2 1 2 4)
-  :x :up
-  :x :up
-  :s :up
-  :top (:contrapose 3)
-  :demote
-  (:casesplit
-   (not
-    (equal
-     (ctx-app-list fs relpath frame (remove-equal x l))
-     (cons
-      (ctx-app
-       (mv-nth 0
-               (ctx-app-list fs
-                             relpath frame (remove-equal x (cdr l))))
-       (final-val (car l) frame)
-       (car l)
-       (nthcdr
-        (len relpath)
-        (frame-val->path (cdr (assoc-equal (car l)
-                                           (frame->frame frame))))))
-      '(t)))))
-  :bash
-  (:=
-   (ctx-app-list fs relpath frame (remove-equal x l))
-   (mv
-    (ctx-app
+      (final-val x frame)
+      x
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+     (mv-nth 0
+             (ctx-app-list fs relpath frame (cdr l))))
+    (nat-listp l)
+    (ctx-app-ok
      (mv-nth 0
              (ctx-app-list fs
                            relpath frame (remove-equal x (cdr l))))
-     (final-val (car l) frame)
      (car l)
      (nthcdr (len relpath)
              (frame-val->path (cdr (assoc-equal (car l)
                                                 (frame->frame frame))))))
-    t))
-  :drop :promote))
+    (prefixp relpath
+             (frame-val->path (cdr (assoc-equal (car l)
+                                                (frame->frame frame)))))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (frame-p (frame->frame frame))
+    (mv-nth 1 (collapse frame))
+    (not
+     (equal
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal (car l)
+                                                 (frame->frame frame)))))
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
+    (prefixp (frame-val->path (cdr (assoc-equal (car l)
+                                                (frame->frame frame))))
+             (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+    (not
+     (member-equal
+      (nth (len (frame-val->path (cdr (assoc-equal (car l)
+                                                   (frame->frame frame)))))
+           (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+      (names-at
+       (mv-nth 0
+               (ctx-app-list fs
+                             relpath frame (remove-equal x (cdr l))))
+       (nthcdr (len relpath)
+               (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame)))))))))
+   (ctx-app-ok
+    (mv-nth 0
+            (ctx-app-list fs relpath frame (cdr l)))
+    (car l)
+    (nthcdr (len relpath)
+            (frame-val->path (cdr (assoc-equal (car l)
+                                               (frame->frame frame)))))))
+  :hints
+  (("goal"
+    :in-theory (e/d (intersectp-equal)
+                    ((:rewrite ctx-app-ok-of-ctx-app-1)))
+    :use
+    (:instance
+     (:rewrite ctx-app-ok-of-ctx-app-1)
+     (x2-path
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal (car l)
+                                                 (frame->frame frame))))))
+     (x2 (car l))
+     (x3-path
+      (nthcdr (len relpath)
+              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+     (x3 x)
+     (abs-file-alist3 (final-val x frame))
+     (abs-file-alist1
+      (mv-nth 0
+              (ctx-app-list fs relpath
+                            frame (remove-equal x (cdr l)))))))))
+
+;; Move later.
+(defthm partial-collapse-correctness-lemma-121
+  (implies (fat32-filename-list-p x)
+           (not (member-equal nil x))))
+
+(defthm partial-collapse-correctness-lemma-122
+  (implies (and (not (member-equal (fat32-filename-fix (nth n relpath))
+                                   (names-at fs (take n relpath))))
+                (< (nfix n) (len relpath)))
+           (equal (addrs-at fs relpath) nil))
+  :hints (("goal" :in-theory (enable addrs-at names-at))))
+
+(defthm
+  partial-collapse-correctness-lemma-123
+  (implies
+   (and (not (member-equal (fat32-filename-fix (nth n x-path))
+                           (names-at abs-file-alist1 (take n x-path))))
+        (< (nfix n) (len x-path)))
+   (equal (ctx-app-ok abs-file-alist1 x x-path)
+          nil))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable ctx-app-ok))))
 
 (encapsulate
   ()
@@ -11435,151 +11438,231 @@
   (local
    (defthm lemma (equal (+ x (- x) y) (fix y))))
 
-  (verify
-   (implies
-    (and
-     (member-equal x l)
-     (nat-listp l)
-     (mv-nth 1
-             (ctx-app-list fs relpath frame (remove-equal x l)))
-     (abs-separate (frame->frame frame))
-     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-     (no-duplicatesp-equal l)
-     (frame-p (frame->frame frame))
-     (mv-nth 1 (collapse frame))
-     (ctx-app-ok
-      (mv-nth 0
-              (ctx-app-list fs relpath frame (remove-equal x l)))
-      x
-      (nthcdr (len relpath)
-              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-     (not
-      (intersectp-equal
-       (names-at (final-val x frame) nil)
-       (names-at
-        (mv-nth 0
-                (ctx-app-list fs relpath frame (remove-equal x l)))
-        (nthcdr
-         (len relpath)
-         (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
-     (prefixp relpath
-              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-    (and
-     (absfat-equiv
-      (ctx-app
-       (mv-nth 0
-               (ctx-app-list fs relpath frame (remove-equal x l)))
-       (final-val x frame)
-       x
-       (nthcdr
-        (len relpath)
-        (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-      (mv-nth 0 (ctx-app-list fs relpath frame l)))
-     (mv-nth 1 (ctx-app-list fs relpath frame l))
-     (not
-      (intersectp-equal
-       (names-at (final-val x frame) nil)
-       (names-at
-        (mv-nth 0
-                (ctx-app-list fs relpath frame (remove-equal x l)))
-        (nthcdr
-         (len relpath)
-         (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))))
-   :instructions
-   ((:in-theory (enable ctx-app-list))
-    :induct (:change-goal nil t)
-    :bash :promote
-    (:casesplit (not (and (not (equal x (car l)))
-                          (member-equal x (cdr l)))))
-    :bash (:demote 2 3)
-    (:= (no-duplicatesp-equal (cdr l)) t)
-    (:= (nat-listp (cdr l)) t)
-    (:dive 1 1 1)
-    :s :top
-    (:= (member-equal x l) t :equiv iff)
-    :promote (:contrapose 3)
-    (:dive 1 2 4)
-    :x :up :x :up :s :top (:contrapose 14)
-    (:= (mv-nth '1
-                (ctx-app-list fs
-                              relpath frame (remove-equal x (cdr l))))
-        t)
-    (:contrapose 9)
-    (:dive 1 1 2 4)
-    :x :up :x :up :s :up
-    (:claim
+  (defthm
+    partial-collapse-correctness-lemma-124
+    (implies
      (and
-      (not (equal (nfix x) (nfix (car l))))
-      (abs-fs-p
+      (not
+       (equal
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal (car l)
+                                                   (frame->frame frame)))))
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
+      (prefixp (frame-val->path (cdr (assoc-equal x (frame->frame frame))))
+               (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame)))))
+      (<=
+       0
+       (+ (- (len relpath))
+          (len (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
+      (not
+       (member-equal
+        (nth (len (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+             (frame-val->path (cdr (assoc-equal (car l)
+                                                (frame->frame frame)))))
+        (names-at
+         (mv-nth 0
+                 (ctx-app-list fs
+                               relpath frame (remove-equal x (cdr l))))
+         (nthcdr
+          (len relpath)
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))))
+     (not
+      (ctx-app-ok
+       (mv-nth 0
+               (ctx-app-list fs
+                             relpath frame (remove-equal x (cdr l))))
+       (car l)
+       (nthcdr (len relpath)
+               (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame))))))))
+    :hints
+    (("goal"
+      :in-theory (e/d (take-of-nthcdr)
+                      ((:rewrite partial-collapse-correctness-lemma-123)))
+      :use
+      (:instance
+       (:rewrite partial-collapse-correctness-lemma-123)
+       (x-path
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal (car l)
+                                                   (frame->frame frame))))))
+       (x (car l))
+       (abs-file-alist1 (mv-nth 0
+                                (ctx-app-list fs relpath
+                                              frame (remove-equal x (cdr l)))))
+       (n (- (len (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+             (len relpath))))
+      :expand
+      ((:with
+        (:rewrite fat32-filename-p-of-nth-when-fat32-filename-list-p)
+        (fat32-filename-p
+         (nth (len (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+              (frame-val->path (cdr (assoc-equal (car l)
+                                                 (frame->frame frame)))))))
+       (:with
+        fat32-filename-p-when-fat32-filename-p
+        (fat32-filename-fix
+         (nth (len (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+              (frame-val->path (cdr (assoc-equal (car l)
+                                                 (frame->frame frame)))))))))))
+
+  (defthm
+    partial-collapse-correctness-lemma-125
+    (implies
+     (and
+      (absfat-equiv
        (ctx-app
         (mv-nth 0
                 (ctx-app-list fs
                               relpath frame (remove-equal x (cdr l))))
-        (final-val (car l) frame)
-        (car l)
-        (nthcdr
-         (len relpath)
-         (frame-val->path (cdr (assoc-equal (car l)
-                                            (frame->frame frame)))))))
+        (final-val x frame)
+        x
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+       (mv-nth 0
+               (ctx-app-list fs relpath frame (cdr l))))
+      (ctx-app-ok
+       (mv-nth 0
+               (ctx-app-list fs
+                             relpath frame (remove-equal x (cdr l))))
+       (car l)
+       (nthcdr (len relpath)
+               (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame))))))
       (not
-       (member-equal (nfix x)
-                     (abs-addrs (abs-fs-fix (final-val (car l) frame)))))))
-    (:rewrite ctx-app-ok-of-ctx-app-1)
-    :top (:contrapose 9)
-    (:dive 1 1 2 1)
-    (:= t)
-    :top (:dive 1 1)
-    :s
-    :top (:contrapose 3)))
-
-  (thm
-   (implies
-    (and
-     (member-equal x l)
-     (nat-listp l)
-     (mv-nth 1
-             (ctx-app-list fs relpath frame (remove-equal x l)))
-     (abs-separate (frame->frame frame))
-     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-     (no-duplicatesp-equal l)
-     (frame-p (frame->frame frame))
-     (mv-nth 1 (collapse frame))
-     (ctx-app-ok
-      (mv-nth 0
-              (ctx-app-list fs relpath frame (remove-equal x l)))
-      x
-      (nthcdr (len relpath)
-              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+       (intersectp-equal
+        (names-at (final-val (car l) frame) nil)
+        (names-at
+         (mv-nth 0
+                 (ctx-app-list fs
+                               relpath frame (remove-equal x (cdr l))))
+         (nthcdr (len relpath)
+                 (frame-val->path (cdr (assoc-equal (car l)
+                                                    (frame->frame frame))))))))
+      (prefixp relpath
+               (frame-val->path (cdr (assoc-equal (car l)
+                                                  (frame->frame frame)))))
+      (not
+       (equal
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal (car l)
+                                                   (frame->frame frame)))))
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
+      (not
+       (intersectp-equal
+        (names-at (final-val x frame) nil)
+        (names-at
+         (mv-nth 0
+                 (ctx-app-list fs
+                               relpath frame (remove-equal x (cdr l))))
+         (nthcdr
+          (len relpath)
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
+      (prefixp relpath
+               (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
      (not
       (intersectp-equal
-       (names-at (final-val x frame) nil)
+       (names-at (final-val (car l) frame) nil)
        (names-at
         (mv-nth 0
-                (ctx-app-list fs relpath frame (remove-equal x l)))
+                (ctx-app-list fs relpath frame (cdr l)))
         (nthcdr (len relpath)
-                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
-     (prefixp relpath
-              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-    (and
-     (absfat-equiv
-      (ctx-app
+                (frame-val->path (cdr (assoc-equal (car l)
+                                                   (frame->frame frame)))))))))
+    :hints
+    (("goal"
+      :in-theory (disable (:rewrite names-at-of-ctx-app))
+      :use
+      (:instance
+       (:rewrite names-at-of-ctx-app)
+       (relpath
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal (car l)
+                                                   (frame->frame frame))))))
+       (x-path
+        (nthcdr (len relpath)
+                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+       (x x)
+       (abs-file-alist (final-val x frame))
+       (root (mv-nth 0
+                     (ctx-app-list fs relpath
+                                   frame (remove-equal x (cdr l)))))))))
+
+  (defthm
+    partial-collapse-correctness-lemma-126
+    (implies
+     (and
+      (member-equal x l)
+      (nat-listp l)
+      (mv-nth 1
+              (ctx-app-list fs relpath frame (remove-equal x l)))
+      (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+      (no-duplicatesp-equal l)
+      (frame-p (frame->frame frame))
+      (mv-nth 1 (collapse frame))
+      (ctx-app-ok
        (mv-nth 0
                (ctx-app-list fs relpath frame (remove-equal x l)))
-       (final-val x frame)
        x
        (nthcdr (len relpath)
                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-      (mv-nth 0 (ctx-app-list fs relpath frame l)))
-     (mv-nth 1 (ctx-app-list fs relpath frame l))
-     (not
-      (intersectp-equal
-       (names-at (final-val x frame) nil)
-       (names-at
+      (not
+       (intersectp-equal
+        (names-at (final-val x frame) nil)
+        (names-at
+         (mv-nth 0
+                 (ctx-app-list fs relpath frame (remove-equal x l)))
+         (nthcdr
+          (len relpath)
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
+      (prefixp relpath
+               (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+     (and
+      (absfat-equiv
+       (ctx-app
         (mv-nth 0
                 (ctx-app-list fs relpath frame (remove-equal x l)))
+        (final-val x frame)
+        x
         (nthcdr (len relpath)
-                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))))
-   :hints (("goal" :in-theory (enable ctx-app-list)) )))
+                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+       (mv-nth 0 (ctx-app-list fs relpath frame l)))
+      (mv-nth 1 (ctx-app-list fs relpath frame l))
+      (not
+       (intersectp-equal
+        (names-at (final-val x frame) nil)
+        (names-at
+         (mv-nth 0
+                 (ctx-app-list fs relpath frame (remove-equal x l)))
+         (nthcdr
+          (len relpath)
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))))
+    :hints
+    (("goal" :in-theory (e/d (ctx-app-list intersectp-equal)
+                             ((:rewrite nthcdr-when->=-n-len-l)
+                              (:linear count-free-clusters-correctness-1)
+                              (:rewrite partial-collapse-correctness-lemma-28)
+                              (:rewrite final-val-of-collapse-this-lemma-6 . 3)
+                              (:rewrite partial-collapse-correctness-lemma-117)
+                              (:definition len)
+                              (:definition nthcdr)
+                              (:rewrite ctx-app-ok-when-abs-complete)
+                              (:rewrite
+                               ctx-app-ok-when-absfat-equiv-lemma-4)
+                              (:rewrite prefixp-one-way-or-another . 1)
+                              (:type-prescription assoc-when-zp-len)
+                              (:definition assoc-equal)
+                              (:rewrite
+                               nat-listp-if-fat32-masked-entry-list-p)
+                              (:linear position-when-member)
+                              (:linear position-equal-ac-when-member)
+                              (:rewrite
+                               partial-collapse-correctness-lemma-106)
+                              (:rewrite
+                               partial-collapse-correctness-lemma-124)))))))
 
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
