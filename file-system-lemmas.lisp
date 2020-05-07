@@ -990,7 +990,6 @@
            (equal (remove-equal nil (strip-cars (remove-equal x alist)))
                   (remove-equal nil (strip-cars alist)))))
 
-;; Rename and add a case-split to the hypothesis about x1.
 (defthm assoc-of-append-1
   (implies (case-split (not (null x1)))
            (equal (assoc-equal x1 (append x2 y))
@@ -1379,3 +1378,15 @@
   :hints (("goal" :in-theory (e/d (position-equal)
                                   (position-of-nthcdr))
            :use (:instance position-of-nthcdr (n 1)))))
+
+;; The following is redundant with the eponymous theorem in
+;; books/std/lists/take.lisp, from where it was taken with thanks.
+(defthm subsetp-of-take
+  (implies (<= (nfix n) (len x))
+           (subsetp (take n x) x)))
+
+;; Contributed to books/std/lists/take.lisp.
+(defthm no-duplicatesp-of-take
+  (implies (and (no-duplicatesp-equal l)
+                (<= (nfix n) (len l)))
+           (no-duplicatesp-equal (take n l))))

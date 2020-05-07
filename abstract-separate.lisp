@@ -1175,12 +1175,12 @@
           (:rewrite ctx-app-ok-of-nfix)))))
 
 (defthm
-  abs-addrs-of-ctx-app-lemma-5
+  ctx-app-ok-when-abs-complete-lemma-1
   (subsetp-equal (abs-top-addrs fs) (abs-addrs fs))
   :hints (("goal" :in-theory (enable abs-addrs abs-top-addrs))))
 
 (defthm
-  abs-addrs-of-ctx-app-lemma-8
+  ctx-app-ok-when-abs-complete-lemma-2
   (implies
    (abs-directory-file-p (cdr (assoc-equal name fs)))
    (subsetp-equal (abs-addrs (abs-file->contents (cdr (assoc-equal name fs))))
@@ -1188,7 +1188,7 @@
   :hints (("goal" :in-theory (enable abs-addrs))))
 
 (defthm
-  abs-addrs-of-ctx-app-lemma-6
+  ctx-app-ok-when-abs-complete-lemma-3
   (subsetp-equal (addrs-at fs relpath)
                  (abs-addrs (abs-fs-fix fs)))
   :hints (("goal" :in-theory (enable abs-addrs addrs-at)))
@@ -2778,7 +2778,7 @@
   :hints (("goal" :in-theory (enable collapse-this))))
 
 (defthm
-  no-duplicatesp-equal-of-strip-cars-of-frame->frame-of-collapse-this
+  no-duplicatesp-of-strip-cars-of-frame->frame-of-collapse-this
   (implies
    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
    (no-duplicatesp-equal (strip-cars (frame->frame (collapse-this frame x)))))
@@ -7529,6 +7529,53 @@
          nil
        (list (1st-complete (frame->frame frame)))))))
 
+(defthm nat-listp-of-frame-addrs-before
+  (nat-listp (frame-addrs-before frame x n))
+  :hints (("goal" :in-theory (enable frame-addrs-before))))
+
+(defthm member-of-frame-addrs-before-lemma-1
+  (implies (and (consp (assoc-equal x (frame->frame frame)))
+                (natp x))
+           (not (zp x)))
+  :rule-classes :forward-chaining)
+
+(defthm member-of-frame-addrs-before-lemma-2
+  (implies (and (atom (assoc-equal y (frame->frame frame)))
+                (not (zp y)))
+           (not (member-equal y (frame-addrs-before frame x n))))
+  :hints (("goal" :in-theory (enable frame-addrs-before)))
+  :rule-classes (:rewrite :type-prescription))
+
+(defthm
+  member-of-frame-addrs-before
+  (implies
+   (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        ;; i was hoping not to have to put this in...
+        (equal (len (frame->frame (collapse-iter frame n)))
+               (- (len (frame->frame frame))
+                  (nfix n))))
+   (iff
+    (member-equal y (frame-addrs-before frame x n))
+    (and (< (collapse-1st-index frame y)
+            (nfix n))
+         (consp (assoc-equal y (frame->frame frame)))
+         (equal (frame-val->src (cdr (assoc-equal y (frame->frame frame))))
+                x))))
+  :hints (("goal" :in-theory (enable collapse-1st-index
+                                     frame-addrs-before collapse-iter)
+           :induct t
+           :expand (collapse-iter frame 1))))
+
+(defthm
+  no-duplicatesp-of-frame-addrs-before
+  (implies (and (mv-nth 1 (collapse frame))
+                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (<= (nfix n)
+                    (len (frame->frame frame))))
+           (no-duplicatesp-equal (frame-addrs-before frame x n)))
+  :hints (("goal" :in-theory (enable frame-addrs-before
+                                     intersectp-equal collapse-1st-index))))
+
 (defund frame-addrs-before-seq (frame x seq)
   (if
       (atom seq)
@@ -7545,6 +7592,11 @@
                  x))
          nil
        (take 1 seq)))))
+
+(defthm nat-listp-of-frame-addrs-before-seq
+  (implies (and (nat-listp seq))
+           (nat-listp (frame-addrs-before-seq frame x seq)))
+  :hints (("goal" :in-theory (enable frame-addrs-before-seq))))
 
 (defthm subsetp-of-frame-addrs-before-seq
   (subsetp-equal (frame-addrs-before-seq frame x seq)
@@ -7568,6 +7620,12 @@
          (append (frame-addrs-before-seq frame x l2)
                  (frame-addrs-before-seq frame x l1)))
   :hints (("goal" :in-theory (enable frame-addrs-before-seq))))
+
+(defthm no-duplicatesp-of-frame-addrs-before-seq
+  (implies (no-duplicatesp-equal seq)
+           (no-duplicatesp-equal (frame-addrs-before-seq frame x seq)))
+  :hints (("goal" :in-theory (enable frame-addrs-before-seq
+                                     intersectp-equal))))
 
 (defund
   ctx-app-list (fs relpath frame l)
@@ -9640,7 +9698,6 @@
                   (strip-cars (frame->frame frame))))
   :hints (("goal" :in-theory (enable collapse-this))))
 
-;; Could we trim one hypothesis to (mv-nth 1 (collapse-iter frame n))?
 (defthm
   partial-collapse-correctness-lemma-78
   (implies (and (mv-nth 1 (collapse frame))
@@ -9681,21 +9738,14 @@
                              y
                              (frame-addrs-before frame x n)))))))
 
-(defthm partial-collapse-correctness-lemma-80
+(defthm partial-collapse-correctness-lemma-55
   (implies (and (not (zp x))
                 (mv-nth 1 (collapse frame)))
            (not (member-equal x (frame-addrs-before frame x n))))
   :hints (("goal" :in-theory (enable frame-addrs-before collapse))))
 
-(defthm partial-collapse-correctness-lemma-81
-  (implies (and (atom (assoc-equal y (frame->frame frame)))
-                (not (zp y)))
-           (not (member-equal y (frame-addrs-before frame x n))))
-  :hints (("goal" :in-theory (enable frame-addrs-before)))
-  :rule-classes (:rewrite :type-prescription))
-
 (defthm
-  partial-collapse-correctness-lemma-55
+  partial-collapse-correctness-lemma-62
   (implies
    (and (abs-separate (frame->frame frame))
         (frame-p (frame->frame frame))
@@ -9767,8 +9817,8 @@
              (frame-addrs-before frame
                                  x (collapse-1st-index frame x))))))
   :hints (("goal" :in-theory (e/d (final-val)
-                                  (partial-collapse-correctness-lemma-55))
-           :use (:instance partial-collapse-correctness-lemma-55
+                                  (partial-collapse-correctness-lemma-62))
+           :use (:instance partial-collapse-correctness-lemma-62
                            (n (collapse-1st-index frame x))))))
 
 (defthm
@@ -9923,7 +9973,7 @@
   :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
 
 (defthm
-  partial-collapse-correctness-lemma-95
+  partial-collapse-correctness-lemma-74
   (implies (and (valid-seqp frame seq)
                 (frame-p (frame->frame frame))
                 (not (equal x (car seq)))
@@ -9945,7 +9995,7 @@
                             (item x))))))
 
 (defthm
-  partial-collapse-correctness-lemma-96
+  partial-collapse-correctness-lemma-80
   (implies (and (valid-seqp frame seq)
                 (frame-p (frame->frame frame))
                 (not (member-equal (car seq) l))
@@ -9989,12 +10039,6 @@
   :hints
   (("goal" :in-theory (enable frame-addrs-before-seq)
     :induct (frame-addrs-before-seq frame x seq))))
-
-(defthm partial-collapse-correctness-lemma-62
-  (implies (and (consp (assoc-equal x (frame->frame frame)))
-                (natp x))
-           (not (zp x)))
-  :rule-classes :forward-chaining)
 
 (defthm partial-collapse-correctness-lemma-70
   (implies (and (consp (assoc-equal x (frame->frame frame)))
@@ -10268,26 +10312,6 @@
            :expand (subsetp-equal seq
                                   (strip-cars (frame->frame frame))))))
 
-(defthm
-  partial-collapse-correctness-lemma-74
-  (implies
-   (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-        ;; i was hoping not to have to put this in...
-        (equal (len (frame->frame (collapse-iter frame n)))
-               (- (len (frame->frame frame))
-                  (nfix n))))
-   (iff
-    (member-equal y (frame-addrs-before frame x n))
-    (and (< (collapse-1st-index frame y)
-            (nfix n))
-         (consp (assoc-equal y (frame->frame frame)))
-         (equal (frame-val->src (cdr (assoc-equal y (frame->frame frame))))
-                x))))
-  :hints (("goal" :in-theory (enable collapse-1st-index
-                                     frame-addrs-before collapse-iter)
-           :induct t
-           :expand (collapse-iter frame 1))))
-
 (defthmd
   partial-collapse-correctness-lemma-75
   (implies
@@ -10506,12 +10530,8 @@
                 (n2 (- n 1))
                 (n1 1))))))
 
-(defthm nat-listp-of-frame-addrs-before
-  (nat-listp (frame-addrs-before frame x n))
-  :hints (("goal" :in-theory (enable frame-addrs-before))))
-
 (defthm
-  partial-collapse-correctness-lemma-87
+  partial-collapse-correctness-lemma-81
   (implies
    (and
     (member-equal
@@ -10610,13 +10630,13 @@
                (y (nth m (frame-addrs-before frame x n)))))))
 
 ;; Bizarre.
-(defthm partial-collapse-correctness-lemma-94
+(defthm partial-collapse-correctness-lemma-87
   (implies (natp (- (len seq)))
            (not (member-equal x seq)))
   :rule-classes :type-prescription)
 
 (defthm
-  partial-collapse-correctness-lemma-97
+  partial-collapse-correctness-lemma-94
   (implies (and (member-equal 0 seq)
                 (no-duplicatesp-equal (strip-cars (frame->frame frame))))
            (not (equal (len (frame->frame (collapse-seq frame seq)))
@@ -10627,7 +10647,7 @@
            :use partial-collapse-correctness-lemma-59)))
 
 (defthm
-  partial-collapse-correctness-lemma-98
+  partial-collapse-correctness-lemma-95
   (implies
    (and
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
@@ -10670,11 +10690,11 @@
            (car seq))))
   :hints
   (("goal" :in-theory (e/d (valid-seqp collapse-seq)
-                           ((:rewrite partial-collapse-correctness-lemma-98)))
-    :use (:rewrite partial-collapse-correctness-lemma-98))))
+                           ((:rewrite partial-collapse-correctness-lemma-95)))
+    :use (:rewrite partial-collapse-correctness-lemma-95))))
 
 (defthm
-  partial-collapse-correctness-lemma-100
+  partial-collapse-correctness-lemma-96
   (implies
    (and
     (consp seq)
@@ -10717,11 +10737,11 @@
            (car seq))))
   :hints
   (("goal" :in-theory (e/d (valid-seqp collapse-seq)
-                           ((:rewrite partial-collapse-correctness-lemma-98)))
-    :use (:rewrite partial-collapse-correctness-lemma-98))))
+                           ((:rewrite partial-collapse-correctness-lemma-95)))
+    :use (:rewrite partial-collapse-correctness-lemma-95))))
 
 (defthm
-  partial-collapse-correctness-lemma-101
+  partial-collapse-correctness-lemma-97
   (implies
    (and
     (nat-listp seq)
@@ -11074,7 +11094,7 @@
                            (x (nth n seq))))))
 
 (defthm
-  partial-collapse-correctness-lemma-115
+  partial-collapse-correctness-lemma-98
   (implies
    (and (< (nfix m) (len seq))
         (nat-listp seq)
@@ -11384,7 +11404,7 @@
               (ctx-app-list fs relpath
                             frame (remove-equal x (cdr l)))))))))
 
-(defthm partial-collapse-correctness-lemma-122
+(defthm partial-collapse-correctness-lemma-100
   (implies (and (not (member-equal (fat32-filename-fix (nth n relpath))
                                    (names-at fs (take n relpath))))
                 (< (nfix n) (len relpath)))
@@ -11634,30 +11654,6 @@
                               (:rewrite
                                partial-collapse-correctness-lemma-124)))))))
 
-;; Could we trim the hypothesis after performing a similar trimming for
-;; partial-collapse-correctness-lemma-78?
-(defthm
-  no-duplicatesp-equal-of-frame-addrs-before
-  (implies (and (mv-nth 1 (collapse frame))
-                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (<= (nfix n)
-                    (len (frame->frame frame))))
-           (no-duplicatesp-equal (frame-addrs-before frame x n)))
-  :hints (("goal" :in-theory (enable frame-addrs-before
-                                     intersectp-equal collapse-1st-index))))
-
-;; Move later.
-(defthm no-duplicatesp-equal-of-frame-addrs-before-seq
-  (implies (no-duplicatesp-equal seq)
-           (no-duplicatesp-equal (frame-addrs-before-seq frame x seq)))
-  :hints (("goal" :in-theory (enable frame-addrs-before-seq
-                                     intersectp-equal))))
-
-(defthm nat-listp-of-frame-addrs-before-seq
-  (implies (and (nat-listp seq))
-           (nat-listp (frame-addrs-before-seq frame x seq)))
-  :hints (("goal" :in-theory (enable frame-addrs-before-seq))))
-
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
   ()
@@ -11695,12 +11691,6 @@
                       (frame frame)
                       (relpath relpath)
                       (fs fs))))))
-
-;; Move later.
-(defthm no-duplicatesp-equal-of-take
-  (implies (and (no-duplicatesp-equal l)
-                (<= (nfix n) (len l)))
-           (no-duplicatesp-equal (take n l))))
 
 ;; Just trying to replace one term in this theorem with another, not actually
 ;; prove it.
