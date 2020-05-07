@@ -9640,6 +9640,7 @@
                   (strip-cars (frame->frame frame))))
   :hints (("goal" :in-theory (enable collapse-this))))
 
+;; Could we trim one hypothesis to (mv-nth 1 (collapse-iter frame n))?
 (defthm
   partial-collapse-correctness-lemma-78
   (implies (and (mv-nth 1 (collapse frame))
@@ -9665,7 +9666,20 @@
                                 (no-duplicatesp-equal (strip-cars (frame->frame
                                                                    frame)))
                                 (subsetp-equal (strip-cars (frame->frame frame)) y))
-                           (subsetp-equal (frame-addrs-before frame x n) y)))))
+                           (subsetp-equal (frame-addrs-before frame x n) y)))
+                 (:rewrite
+                  :corollary
+                  (implies (and (mv-nth 1 (collapse frame))
+                                (<= (nfix n) (len (frame->frame frame)))
+                                (no-duplicatesp-equal (strip-cars (frame->frame
+                                                                   frame)))
+                                (not (member-equal y
+                                                   (strip-cars (frame->frame
+                                                                frame)))))
+                           (not
+                            (member-equal
+                             y
+                             (frame-addrs-before frame x n)))))))
 
 (defthm partial-collapse-correctness-lemma-80
   (implies (and (not (zp x))
@@ -11619,6 +11633,24 @@
                                partial-collapse-correctness-lemma-106)
                               (:rewrite
                                partial-collapse-correctness-lemma-124)))))))
+
+;; Could we trim the hypothesis after performing a similar trimming for
+;; partial-collapse-correctness-lemma-78?
+(defthm
+  no-duplicatesp-equal-of-frame-addrs-before
+  (implies (and (mv-nth 1 (collapse frame))
+                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (<= (nfix n)
+                    (len (frame->frame frame))))
+           (no-duplicatesp-equal (frame-addrs-before frame x n)))
+  :hints (("goal" :in-theory (enable frame-addrs-before
+                                     intersectp-equal collapse-1st-index))))
+
+(defthm no-duplicatesp-equal-of-frame-addrs-before-seq
+  (implies (no-duplicatesp-equal seq)
+           (no-duplicatesp-equal (frame-addrs-before-seq frame x seq)))
+  :hints (("goal" :in-theory (enable frame-addrs-before-seq
+                                     intersectp-equal))))
 
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
