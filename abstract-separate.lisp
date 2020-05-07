@@ -11595,10 +11595,10 @@
     partial-collapse-correctness-lemma-126
     (implies
      (and
-      (member-equal x l)
-      (nat-listp l)
       (mv-nth 1
               (ctx-app-list fs relpath frame (remove-equal x l)))
+      (member-equal x l)
+      (nat-listp l)
       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
       (no-duplicatesp-equal l)
       (frame-p (frame->frame frame))
@@ -11676,22 +11676,31 @@
        (induction-scheme (cdr l1) (remove-equal (car l1) l2)))
       (t (mv l1 l2)))))
 
-  (thm
-   (implies (and (abs-separate (frame->frame frame))
-                 (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                 (no-duplicatesp-equal l1)
-                 (no-duplicatesp-equal l2)
-                 (set-equiv l1 l2)
-                 (frame-p (frame->frame frame))
-                 (mv-nth '1 (collapse frame))
-                 (mv-nth 1 (ctx-app-list fs relpath frame l1)))
-            (and
-             (absfat-equiv (mv-nth 0 (ctx-app-list fs relpath frame l1))
-                           (mv-nth 0 (ctx-app-list fs relpath frame l2)))
-             (mv-nth 1 (ctx-app-list fs relpath frame l2))))
-   :hints
-   (("goal" :in-theory (enable ctx-app-list)
-     :induct (induction-scheme l1 l2)))))
+  (local (in-theory (enable ctx-app-list)))
+
+  (defthm
+    ctx-app-list-when-set-equiv
+    (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                  (no-duplicatesp-equal l1)
+                  (no-duplicatesp-equal l2)
+                  (set-equiv l1 l2)
+                  (nat-listp l2)
+                  (frame-p (frame->frame frame))
+                  (mv-nth '1 (collapse frame))
+                  (mv-nth 1 (ctx-app-list fs relpath frame l1)))
+             (and (absfat-equiv (mv-nth 0 (ctx-app-list fs relpath frame l1))
+                                (mv-nth 0 (ctx-app-list fs relpath frame l2)))
+                  (mv-nth 1 (ctx-app-list fs relpath frame l2))))
+    :hints
+    (("goal" :induct (induction-scheme l1 l2))
+     ("subgoal *1/1.1"
+      :in-theory (disable (:rewrite partial-collapse-correctness-lemma-126))
+      :use (:instance (:rewrite partial-collapse-correctness-lemma-126)
+                      (l l2)
+                      (x (car l1))
+                      (frame frame)
+                      (relpath relpath)
+                      (fs fs))))))
 
 (thm
  (implies
