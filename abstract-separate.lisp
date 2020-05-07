@@ -11646,11 +11646,17 @@
   :hints (("goal" :in-theory (enable frame-addrs-before
                                      intersectp-equal collapse-1st-index))))
 
+;; Move later.
 (defthm no-duplicatesp-equal-of-frame-addrs-before-seq
   (implies (no-duplicatesp-equal seq)
            (no-duplicatesp-equal (frame-addrs-before-seq frame x seq)))
   :hints (("goal" :in-theory (enable frame-addrs-before-seq
                                      intersectp-equal))))
+
+(defthm nat-listp-of-frame-addrs-before-seq
+  (implies (and (nat-listp seq))
+           (nat-listp (frame-addrs-before-seq frame x seq)))
+  :hints (("goal" :in-theory (enable frame-addrs-before-seq))))
 
 ;; The problem with this is that it requires two screwy non-intersection properties...
 (encapsulate
@@ -11689,6 +11695,56 @@
                       (frame frame)
                       (relpath relpath)
                       (fs fs))))))
+
+;; Move later.
+(defthm no-duplicatesp-equal-of-take
+  (implies (and (no-duplicatesp-equal l)
+                (<= (nfix n) (len l)))
+           (no-duplicatesp-equal (take n l))))
+
+;; Just trying to replace one term in this theorem with another, not actually
+;; prove it.
+(verify
+ (implies
+  (and (mv-nth 1 (collapse frame))
+       (abs-separate (frame->frame frame))
+       (frame-p (frame->frame frame))
+       (valid-seqp frame seq)
+       (<= 0 m)
+       (< m (len seq))
+       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+       (nat-listp seq)
+       (natp m))
+  (absfat-equiv
+   (mv-nth 0
+           (ctx-app-list-seq
+            (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                              (frame->frame frame))))
+            (frame-val->path (cdr (assoc-equal (nth m seq)
+                                               (frame->frame frame))))
+            frame
+            (frame-addrs-before-seq frame (nth m seq)
+                                    (take m seq))
+            (take m seq)))
+   (mv-nth
+    0
+    (ctx-app-list
+     (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                       (frame->frame frame))))
+     (frame-val->path (cdr (assoc-equal (nth m seq)
+                                        (frame->frame frame))))
+     frame
+     (frame-addrs-before frame (nth m seq)
+                         (collapse-1st-index frame (nth m seq)))))))
+ :instructions
+ (:promote (:dive 2)
+           (:rewrite ctx-app-list-when-set-equiv
+                     ((l2 (frame-addrs-before-seq frame (nth m seq)
+                                                  (take m seq)))))
+           (:change-goal nil t)
+           :bash
+           :bash :bash
+           :bash :bash))
 
 (thm
  (implies
