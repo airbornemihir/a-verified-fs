@@ -1344,3 +1344,38 @@
   (implies (nat-listp l)
            (iff (nat-listp (take n l))
                 (<= (nfix n) (len l)))))
+
+(defthm assoc-when-zp-len
+  (implies (zp (len alist))
+           (atom (assoc-equal x alist)))
+  :rule-classes :type-prescription)
+
+(defthm
+  member-of-take
+  (implies (and (true-listp l)
+                (< (nfix n) (len l)))
+           (iff (member-equal x (take n l))
+                (and (member-equal x l)
+                     (< (position-equal x l) (nfix n)))))
+  :hints (("goal" :induct (mv (member-equal x l) (take n l))
+           :expand (position-equal (car l) l))
+          ("subgoal *1/2" :in-theory (disable (:rewrite position-of-nthcdr))
+           :use (:instance (:rewrite position-of-nthcdr)
+                           (lst l)
+                           (n 1)
+                           (item x)))
+          ("subgoal *1/1.1'"
+           :in-theory (disable (:type-prescription position-when-member))
+           :use (:instance (:type-prescription position-when-member)
+                           (lst l)
+                           (item x)))))
+
+(defthm position-of-cdr
+  (implies (and (true-listp lst)
+                (not (equal item (car lst)))
+                (member-equal item lst))
+           (equal (position-equal item (cdr lst))
+                  (- (position-equal item lst) 1)))
+  :hints (("goal" :in-theory (e/d (position-equal)
+                                  (position-of-nthcdr))
+           :use (:instance position-of-nthcdr (n 1)))))

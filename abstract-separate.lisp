@@ -1174,6 +1174,40 @@
                      (x x-equiv))
           (:rewrite ctx-app-ok-of-nfix)))))
 
+(defthm
+  abs-addrs-of-ctx-app-lemma-5
+  (subsetp-equal (abs-top-addrs fs) (abs-addrs fs))
+  :hints (("goal" :in-theory (enable abs-addrs abs-top-addrs))))
+
+(defthm
+  abs-addrs-of-ctx-app-lemma-8
+  (implies
+   (abs-directory-file-p (cdr (assoc-equal name fs)))
+   (subsetp-equal (abs-addrs (abs-file->contents (cdr (assoc-equal name fs))))
+                  (abs-addrs fs)))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm
+  abs-addrs-of-ctx-app-lemma-6
+  (subsetp-equal (addrs-at fs relpath)
+                 (abs-addrs (abs-fs-fix fs)))
+  :hints (("goal" :in-theory (enable abs-addrs addrs-at)))
+  :rule-classes
+  (:rewrite (:rewrite :corollary (implies (abs-fs-p fs)
+                                          (subsetp-equal (addrs-at fs relpath)
+                                                         (abs-addrs fs))))))
+
+(defthm
+  ctx-app-ok-when-abs-complete
+  (implies (abs-complete (abs-fs-fix abs-file-alist1))
+           (not (ctx-app-ok abs-file-alist1 x x-path)))
+  :hints
+  (("goal" :in-theory (e/d (ctx-app-ok) (nfix subsetp-member))
+    :use ((:instance (:rewrite subsetp-member . 4)
+                     (a (nfix x))
+                     (x (addrs-at abs-file-alist1 x-path))
+                     (y (abs-addrs (abs-fs-fix abs-file-alist1))))))))
+
 (defthm abs-addrs-of-ctx-app-1-lemma-1
   (subsetp-equal (abs-addrs (remove-equal x abs-file-alist))
                  (abs-addrs abs-file-alist))
@@ -1825,29 +1859,6 @@
        (ctx-app (abs-file->contents (cdr (assoc-equal name abs-file-alist1)))
                 abs-file-alist2 x (cdr x-path)))
       abs-file-alist1)))))
-
-(defthm
-  abs-addrs-of-ctx-app-lemma-5
-  (subsetp-equal (abs-top-addrs fs) (abs-addrs fs))
-  :hints (("goal" :in-theory (enable abs-addrs abs-top-addrs))))
-
-(defthm
-  abs-addrs-of-ctx-app-lemma-8
-  (implies
-   (abs-directory-file-p (cdr (assoc-equal name fs)))
-   (subsetp-equal (abs-addrs (abs-file->contents (cdr (assoc-equal name fs))))
-                  (abs-addrs fs)))
-  :hints (("goal" :in-theory (enable abs-addrs))))
-
-(defthm
-  abs-addrs-of-ctx-app-lemma-6
-  (subsetp-equal (addrs-at fs relpath)
-                 (abs-addrs (abs-fs-fix fs)))
-  :hints (("goal" :in-theory (enable abs-addrs addrs-at)))
-  :rule-classes
-  (:rewrite (:rewrite :corollary (implies (abs-fs-p fs)
-                                          (subsetp-equal (addrs-at fs relpath)
-                                                         (abs-addrs fs))))))
 
 (defthm
   abs-addrs-of-ctx-app
@@ -7552,6 +7563,12 @@
      (not (member-equal y seq))
      (not (member-equal y (frame-addrs-before-seq frame x seq)))))))
 
+(defthm frame-addrs-before-seq-of-append
+  (equal (frame-addrs-before-seq frame x (append l1 l2))
+         (append (frame-addrs-before-seq frame x l2)
+                 (frame-addrs-before-seq frame x l1)))
+  :hints (("goal" :in-theory (enable frame-addrs-before-seq))))
+
 (defund
   ctx-app-list (fs relpath frame l)
   (b*
@@ -9891,7 +9908,8 @@
                                        (frame->frame frame))))))
   :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
 
-(defthm partial-collapse-correctness-lemma-95
+(defthm
+  partial-collapse-correctness-lemma-95
   (implies (and (valid-seqp frame seq)
                 (frame-p (frame->frame frame))
                 (not (equal x (car seq)))
@@ -9902,12 +9920,15 @@
                   (final-val-seq x frame seq)))
   :hints (("goal" :do-not-induct t
            :in-theory (e/d (final-val-seq collapse-seq)
-                           ((:rewrite position-of-nthcdr)))
+                           ((:rewrite position-of-nthcdr)
+                            position-of-cdr position-when-member))
            :expand (take (position-equal x seq) seq)
-           :use (:instance (:rewrite position-of-nthcdr)
-                           (lst seq)
-                           (n 1)
-                           (item x)))))
+           :use ((:instance position-when-member (lst seq)
+                            (item x))
+                 (:instance (:rewrite position-of-nthcdr)
+                            (lst seq)
+                            (n 1)
+                            (item x))))))
 
 (defthm
   partial-collapse-correctness-lemma-96
@@ -10279,19 +10300,6 @@
              (take (position-equal x seq) seq)))))
   :hints (("goal" :in-theory (enable final-val-seq))))
 
-;;Move later.
-(defthm frame-addrs-before-seq-of-append
-  (equal (frame-addrs-before-seq frame x (append l1 l2))
-         (append (frame-addrs-before-seq frame x l2)
-                 (frame-addrs-before-seq frame x l1)))
-  :hints (("goal" :in-theory (enable frame-addrs-before-seq))))
-
-;; Move later.
-(defthm assoc-when-zp-len
-  (implies (zp (len alist))
-           (atom (assoc-equal x alist)))
-  :rule-classes :type-prescription)
-
 (defthm
   partial-collapse-correctness-lemma-77
   (implies
@@ -10587,27 +10595,6 @@
     (:instance partial-collapse-correctness-lemma-89
                (y (nth m (frame-addrs-before frame x n)))))))
 
-;; Move later.
-(defthm
-  member-of-take
-  (implies (and (true-listp l)
-                (< (nfix n) (len l)))
-           (iff (member-equal x (take n l))
-                (and (member-equal x l)
-                     (< (position-equal x l) (nfix n)))))
-  :hints (("goal" :induct (mv (member-equal x l) (take n l))
-           :expand (position-equal (car l) l))
-          ("subgoal *1/2" :in-theory (disable (:rewrite position-of-nthcdr))
-           :use (:instance (:rewrite position-of-nthcdr)
-                           (lst l)
-                           (n 1)
-                           (item x)))
-          ("subgoal *1/1.1'"
-           :in-theory (disable (:type-prescription position-when-member))
-           :use (:instance (:type-prescription position-when-member)
-                           (lst l)
-                           (item x)))))
-
 ;; Bizarre.
 (defthm partial-collapse-correctness-lemma-94
   (implies (natp (- (len seq)))
@@ -10624,29 +10611,6 @@
   :hints (("goal" :in-theory (e/d (valid-seqp)
                                   (partial-collapse-correctness-lemma-59))
            :use partial-collapse-correctness-lemma-59)))
-
-;; Move later.
-(defthm position-of-cdr
-  (implies (and (true-listp lst)
-                (not (equal item (car lst)))
-                (member-equal item lst))
-           (equal (position-equal item (cdr lst))
-                  (- (position-equal item lst) 1)))
-  :hints (("goal" :in-theory (e/d (position-equal)
-                                  (position-of-nthcdr))
-           :use (:instance position-of-nthcdr (n 1)))))
-
-;; Move later.
-(defthm
-  ctx-app-ok-when-abs-complete
-  (implies (abs-complete (abs-fs-fix abs-file-alist1))
-           (not (ctx-app-ok abs-file-alist1 x x-path)))
-  :hints
-  (("goal" :in-theory (e/d (ctx-app-ok) (nfix subsetp-member))
-    :use ((:instance (:rewrite subsetp-member . 4)
-                     (a (nfix x))
-                     (x (addrs-at abs-file-alist1 x-path))
-                     (y (abs-addrs (abs-fs-fix abs-file-alist1))))))))
 
 (defthm
   partial-collapse-correctness-lemma-98
@@ -11095,9 +11059,6 @@
            :use (:instance partial-collapse-correctness-lemma-113
                            (x (nth n seq))))))
 
-;; Move later.
-(defcong nat-equiv equal (take n l) 1)
-
 (defthm
   partial-collapse-correctness-lemma-115
   (implies
@@ -11408,11 +11369,6 @@
       (mv-nth 0
               (ctx-app-list fs relpath
                             frame (remove-equal x (cdr l)))))))))
-
-;; Move later.
-(defthm partial-collapse-correctness-lemma-121
-  (implies (fat32-filename-list-p x)
-           (not (member-equal nil x))))
 
 (defthm partial-collapse-correctness-lemma-122
   (implies (and (not (member-equal (fat32-filename-fix (nth n relpath))
