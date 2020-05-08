@@ -12124,6 +12124,98 @@
   :hints (("goal" :in-theory (enable collapse-this)
            :do-not-induct t)))
 
+(defthm
+  partial-collapse-correctness-lemma-132
+  (implies
+   (and
+    (abs-separate (frame->frame frame))
+    (frame-p (frame->frame frame))
+    (mv-nth 1 (collapse frame))
+    (absfat-equiv
+     (mv-nth
+      0
+      (ctx-app-list-seq (frame->root frame)
+                        nil frame
+                        (frame-addrs-before-seq frame 0 (take (+ -1 n) seq))
+                        seq))
+     (mv-nth
+      0
+      (ctx-app-list (frame->root frame)
+                    nil frame
+                    (frame-addrs-before-seq frame 0 (take (+ -1 n) seq)))))
+    (valid-seqp frame seq)
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (nat-listp seq)
+    (<= n (len seq)))
+   (absfat-equiv
+    (mv-nth 0
+            (ctx-app-list-seq (frame->root frame)
+                              nil frame
+                              (frame-addrs-before-seq frame 0 (take n seq))
+                              seq))
+    (mv-nth 0
+            (ctx-app-list (frame->root frame)
+                          nil frame
+                          (frame-addrs-before-seq frame 0 (take n seq))))))
+  :instructions
+  ((bash
+    ("goal"
+     :in-theory (e/d (frame-addrs-before-seq ctx-app-list-seq ctx-app-list)
+                     ((:rewrite binary-append-take-nthcdr)))
+     :use (:instance (:rewrite binary-append-take-nthcdr)
+                     (l (take n seq))
+                     (i (+ -1 n)))))
+   (:dive 1 2 4 3)
+   := :up
+   (:rewrite frame-addrs-before-seq-of-append)
+   :top (:dive 2 2 4 3)
+   :=
+   :up (:rewrite frame-addrs-before-seq-of-append)
+   :top (:bash ("goal" :in-theory (enable frame-addrs-before-seq
+                                          ctx-app-list-seq ctx-app-list)
+                :use (:instance (:rewrite take-of-nthcdr)
+                                (l seq)
+                                (n2 (+ -1 n))
+                                (n1 1))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "std/basic/inductions" :dir :system))
+
+  (defthm
+    partial-collapse-correctness-lemma-133
+    (implies
+     (and (abs-separate (frame->frame frame))
+          (frame-p (frame->frame frame))
+          (mv-nth '1 (collapse frame))
+          (valid-seqp frame seq)
+          (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+          (nat-listp seq)
+          (<= n (len seq)))
+     (absfat-equiv
+      (mv-nth 0
+              (ctx-app-list-seq (frame->root frame)
+                                nil frame
+                                (frame-addrs-before-seq frame 0 (take n seq))
+                                seq))
+      (mv-nth 0
+              (ctx-app-list (frame->root frame)
+                            nil frame
+                            (frame-addrs-before-seq frame 0 (take n seq))))))
+    :hints
+    (("goal"
+      :in-theory (e/d (frame-addrs-before-seq ctx-app-list ctx-app-list-seq)
+                      ((:rewrite ctx-app-list-when-set-equiv)
+                       (:definition member-equal)
+                       (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)))
+      :induct (dec-induct n)))))
+
+(defthm partial-collapse-correctness-lemma-134
+  (implies (atom (frame->frame frame))
+           (iff (valid-seqp frame seq) (atom seq)))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
+
 (encapsulate
   ()
 
@@ -12143,12 +12235,8 @@
           (dist-names (frame->root frame)
                       nil (frame->frame frame))
           (frame-p (frame->frame frame))
-          (consp (assoc-equal x
-                              (frame->frame (collapse-seq frame seq))))
           (valid-seqp frame seq)
           (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-          ;; this hypothesis occurs in a few theorems in order to make sure the
-          ;; position function works correctly.
           (nat-listp seq))
      (and (equal (frame->root (collapse-seq frame seq))
                  (mv-nth 0
@@ -12163,6 +12251,53 @@
                                     seq))))
     :hints (("goal" :induct (collapse-seq frame seq)
              :in-theory (enable partial-collapse-correctness-lemma-71)))))
+
+(defthm
+  partial-collapse-correctness-lemma-135
+  (implies (and (abs-separate (frame->frame frame))
+                (dist-names (frame->root frame)
+                            nil (frame->frame frame))
+                (frame-p (frame->frame frame))
+                (valid-seqp frame seq)
+                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (nat-listp seq)
+                (mv-nth 1 (collapse frame)))
+           (absfat-equiv
+            (frame->root (collapse-seq frame seq))
+            (mv-nth 0
+                    (ctx-app-list (frame->root frame)
+                                  nil frame
+                                  (frame-addrs-before-seq frame 0 seq)))))
+  :hints
+  (("goal"
+    :in-theory (disable partial-collapse-correctness-lemma-131
+                        (:rewrite partial-collapse-correctness-lemma-133))
+    :use (partial-collapse-correctness-lemma-131
+          (:instance (:rewrite partial-collapse-correctness-lemma-133)
+                     (seq seq)
+                     (n (len seq))
+                     (frame frame))))))
+
+(defund
+  seq-this
+  (frame)
+  (declare
+   (xargs :measure (len (frame->frame frame))
+          :verify-guards nil))
+  (b*
+      (((when (atom (frame->frame frame))) nil)
+       (next-frame (collapse-iter frame 1))
+       ((unless (< (len (frame->frame next-frame)) (len (frame->frame frame))))
+        nil))
+    (cons (1st-complete (frame->frame frame))
+          (seq-this
+           next-frame))))
+
+;; Next thing to prove is that (frame-addrs-before-seq frame 0 seq) and
+;; (frame-addrs-before frame 0 n) are equivalent (set-equiv) for appropriate
+;; values of seq and n. Then, we will be able to use
+;; partial-collapse-correctness-lemma-117 to prove that collapse and
+;; collapse-seq work the same way.
 
 ;; (thm
 ;;  (implies (and
