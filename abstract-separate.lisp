@@ -12106,6 +12106,31 @@
           (:definition len)
           (:rewrite partial-collapse-correctness-lemma-1))))))
 
+;; Move later.
+(defthm
+  strip-cars-of-frame->frame-of-collapse-this
+  (implies
+   (and
+    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                x))
+    (or
+     (zp (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame)))))
+     (consp
+      (assoc-equal
+       (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
+       (frame->frame frame)))))
+   (equal (strip-cars (frame->frame (collapse-this frame x)))
+          (remove-equal x (strip-cars (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable collapse-this)
+           :do-not-induct t)))
+
+;; Move later.
+(defthm partial-collapse-correctness-lemma-131
+  (implies (subsetp-equal l1 l2)
+           (subsetp-equal (remove-equal x l1)
+                          (remove-equal x l2)))
+  :hints (("goal" :in-theory (enable subsetp-equal))))
+
 (encapsulate
   ()
 
@@ -12118,8 +12143,7 @@
                     (:definition remove-assoc-equal)
                     (:definition len)))))
 
-  (defthm
-    partial-collapse-correctness-lemma-131
+  (thm
     (implies
      (and (abs-separate (frame->frame frame))
           (dist-names (frame->root frame)
@@ -12131,18 +12155,17 @@
           (no-duplicatesp-equal (strip-cars (frame->frame frame)))
           ;; this hypothesis occurs in a few theorems in order to make sure the
           ;; position function works correctly.
-          (nat-listp seq))
+          (nat-listp seq)
+          (subsetp-equal (strip-cars (frame->frame frame)) seq))
      (and (equal (frame->root (collapse-seq frame seq))
                  (mv-nth 0
-                         (ctx-app-list-seq (frame->root frame)
+                         (ctx-app-list (frame->root frame)
                                            nil frame
-                                           (frame-addrs-before-seq frame 0 seq)
-                                           seq)))
+                                           (frame-addrs-before-seq frame 0 seq))))
           (mv-nth 1
-                  (ctx-app-list-seq (frame->root frame)
-                                    nil frame
-                                    (frame-addrs-before-seq frame 0 seq)
-                                    seq))))
+                  (ctx-app-list (frame->root frame)
+                                nil frame
+                                (frame-addrs-before-seq frame 0 seq)))))
     :hints (("goal" :induct (collapse-seq frame seq)
              :in-theory (enable partial-collapse-correctness-lemma-71)))))
 
