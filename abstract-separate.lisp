@@ -12124,12 +12124,43 @@
   :hints (("goal" :in-theory (enable collapse-this)
            :do-not-induct t)))
 
+(defthm
+  partial-collapse-correctness-lemma-131
+  (implies (subsetp-equal (strip-cars (frame->frame frame))
+                          seq)
+           (subsetp-equal (remove-equal (car seq)
+                                        (strip-cars (frame->frame frame)))
+                          (cdr seq)))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite subsetp-of-remove1))
+    :use (:instance (:rewrite subsetp-of-remove1)
+                    (y seq)
+                    (a (car seq))
+                    (x (remove-equal (car seq)
+                                     (strip-cars (frame->frame frame))))))))
 ;; Move later.
-(defthm partial-collapse-correctness-lemma-131
-  (implies (subsetp-equal l1 l2)
-           (subsetp-equal (remove-equal x l1)
-                          (remove-equal x l2)))
-  :hints (("goal" :in-theory (enable subsetp-equal))))
+(defthm assoc-when-atom-strip-cars
+  (implies (not (consp (strip-cars alist)))
+           (atom (assoc-equal x alist)))
+  :rule-classes :type-prescription)
+
+;; When this is done, it can replace partial-collapse-correctness-lemma-64.
+(thm
+  (implies
+   (and (frame-p (frame->frame frame))
+        (subsetp-equal l (strip-cars (frame->frame frame)))
+        (not (member-equal x l))
+        (mv-nth 1 (collapse frame))
+        (consp (assoc-equal x (frame->frame frame)))
+        (abs-complete (frame-val->dir (cdr
+                                       (assoc-equal x (frame->frame frame))))))
+   (equal (ctx-app-list fs path-len
+                        (collapse-this frame
+                                       (1st-complete (frame->frame frame)))
+                        l)
+          (ctx-app-list fs path-len frame l)))
+  :hints (("goal" :in-theory (enable ctx-app-list subsetp-equal))))
 
 (encapsulate
   ()
