@@ -11618,6 +11618,90 @@
                                  frame (remove-equal x (cdr l)))))))))
 
 (defthm
+  partial-collapse-correctness-lemma-121
+  (implies
+   (and
+    (not (zp n))
+    (absfat-equiv
+     (mv-nth 0
+             (ctx-app-list-seq
+              (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                                (frame->frame frame))))
+              (frame-val->path (cdr (assoc-equal (nth m seq)
+                                                 (frame->frame frame))))
+              frame
+              (frame-addrs-before-seq frame (nth m seq)
+                                      (take (+ -1 n) seq))
+              (take m seq)))
+     (mv-nth
+      0
+      (ctx-app-list (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                                      (frame->frame frame))))
+                    (frame-val->path (cdr (assoc-equal (nth m seq)
+                                                       (frame->frame frame))))
+                    frame
+                    (frame-addrs-before-seq frame (nth m seq)
+                                            (take (+ -1 n) seq)))))
+    (absfat-equiv-upto-n frame seq m)
+    (valid-seqp frame seq)
+    (< m (len seq))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (nat-listp seq)
+    (integerp m)
+    (<= n m))
+   (absfat-equiv
+    (mv-nth
+     0
+     (ctx-app-list-seq
+      (mv-nth 0
+              (ctx-app-list-seq
+               (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                                 (frame->frame frame))))
+               (frame-val->path (cdr (assoc-equal (nth m seq)
+                                                  (frame->frame frame))))
+               frame
+               (frame-addrs-before-seq frame (nth m seq)
+                                       (take (+ -1 n) seq))
+               (take m seq)))
+      (frame-val->path (cdr (assoc-equal (nth m seq)
+                                         (frame->frame frame))))
+      frame
+      (frame-addrs-before-seq frame (nth m seq)
+                              (nthcdr (+ -1 n) (take n seq)))
+      (take m seq)))
+    (mv-nth
+     0
+     (ctx-app-list
+      (mv-nth 0
+              (ctx-app-list
+               (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                                 (frame->frame frame))))
+               (frame-val->path (cdr (assoc-equal (nth m seq)
+                                                  (frame->frame frame))))
+               frame
+               (frame-addrs-before-seq frame (nth m seq)
+                                       (take (+ -1 n) seq))))
+      (frame-val->path (cdr (assoc-equal (nth m seq)
+                                         (frame->frame frame))))
+      frame
+      (frame-addrs-before-seq frame (nth m seq)
+                              (nthcdr (+ -1 n) (take n seq)))))))
+  :hints
+  (("goal"
+    :in-theory (e/d (frame-addrs-before-seq ctx-app-list ctx-app-list-seq)
+                    ((:rewrite ctx-app-list-when-set-equiv)
+                     (:definition member-equal)
+                     (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
+                     (:rewrite binary-append-take-nthcdr)))
+    :use ((:instance (:rewrite binary-append-take-nthcdr)
+                     (l (take n seq))
+                     (i (+ -1 n)))
+          (:instance (:rewrite take-of-nthcdr)
+                     (l seq)
+                     (n2 (+ -1 n))
+                     (n1 1))))))
+
+(defthm
   partial-collapse-correctness-lemma-115
   (implies
    (and
