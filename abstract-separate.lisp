@@ -12124,13 +12124,6 @@
   :hints (("goal" :in-theory (enable collapse-this)
            :do-not-induct t)))
 
-;; Move later.
-(defthm partial-collapse-correctness-lemma-131
-  (implies (subsetp-equal l1 l2)
-           (subsetp-equal (remove-equal x l1)
-                          (remove-equal x l2)))
-  :hints (("goal" :in-theory (enable subsetp-equal))))
-
 (encapsulate
   ()
 
@@ -12143,7 +12136,8 @@
                     (:definition remove-assoc-equal)
                     (:definition len)))))
 
-  (thm
+  (defthm
+    partial-collapse-correctness-lemma-131
     (implies
      (and (abs-separate (frame->frame frame))
           (dist-names (frame->root frame)
@@ -12155,17 +12149,18 @@
           (no-duplicatesp-equal (strip-cars (frame->frame frame)))
           ;; this hypothesis occurs in a few theorems in order to make sure the
           ;; position function works correctly.
-          (nat-listp seq)
-          (subsetp-equal (strip-cars (frame->frame frame)) seq))
+          (nat-listp seq))
      (and (equal (frame->root (collapse-seq frame seq))
                  (mv-nth 0
-                         (ctx-app-list (frame->root frame)
+                         (ctx-app-list-seq (frame->root frame)
                                            nil frame
-                                           (frame-addrs-before-seq frame 0 seq))))
+                                           (frame-addrs-before-seq frame 0 seq)
+                                           seq)))
           (mv-nth 1
-                  (ctx-app-list (frame->root frame)
-                                nil frame
-                                (frame-addrs-before-seq frame 0 seq)))))
+                  (ctx-app-list-seq (frame->root frame)
+                                    nil frame
+                                    (frame-addrs-before-seq frame 0 seq)
+                                    seq))))
     :hints (("goal" :induct (collapse-seq frame seq)
              :in-theory (enable partial-collapse-correctness-lemma-71)))))
 
