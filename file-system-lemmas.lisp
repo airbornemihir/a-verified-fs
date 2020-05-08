@@ -1274,6 +1274,19 @@
            (equal (position-equal-ac (nth n l) l acc)
                   (+ acc (nfix n)))))
 
+(defthm position-equal-ac-of-take
+  (implies (and (member-equal item (take n l))
+                (<= (nfix n) (len l)))
+           (equal (position-equal-ac item (take n l) ac)
+                  (position-equal-ac item l ac))))
+
+(defthm position-equal-ac-when-member-of-take
+  (implies (and (member-equal x (take n l))
+                (<= (nfix n) (len l)))
+           (<= (position-equal-ac x l acc)
+               (+ (nfix n) acc)))
+  :rule-classes :linear)
+
 (encapsulate
   ()
 
@@ -1324,7 +1337,25 @@
                   (< (nfix n) (len l)))
              (equal (position-equal (nth n l) l)
                     (nfix n)))
-    :hints (("Goal" :in-theory (enable position-equal)))))
+    :hints (("Goal" :in-theory (enable position-equal))))
+
+  (defthm position-of-take
+    (implies (and (member-equal item (take n l))
+                  (<= (nfix n) (len l)))
+             (equal (position-equal item (take n l))
+                    (position-equal item l)))
+    :hints (("goal" :in-theory (enable position-equal))))
+
+  (defthm
+    position-when-member-of-take
+    (implies (and (member-equal x (take n l))
+                  (<= (nfix n) (len l)))
+             (<= (position-equal x l) (nfix n)))
+    :hints (("goal" :in-theory (e/d (position-equal)
+                                    (position-equal-ac-when-member-of-take))
+             :use (:instance position-equal-ac-when-member-of-take
+                             (acc 0))))
+    :rule-classes :linear))
 
 (defthm
   subsetp-of-nthcdr
