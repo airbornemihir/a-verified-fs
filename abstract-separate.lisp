@@ -4332,14 +4332,15 @@
                                         abs-file-alist2 x x-path))
                     (abs-addrs abs-file-alist1))))))
 
-(defthm abs-separate-correctness-1-lemma-4
-  (implies (and (frame-p frame)
-                (not (zp (1st-complete frame)))
-                (no-duplicatesp-equal (strip-cars frame)))
-           (equal (abs-addrs (frame-val->dir (cdr (assoc-equal
-                                                   (1st-complete frame) frame))))
-                  nil))
-  :hints (("Goal" :in-theory (enable 1st-complete)) ))
+(defthm
+  abs-separate-correctness-1-lemma-4
+  (implies
+   (and (not (zp (1st-complete frame)))
+        (no-duplicatesp-equal (strip-cars frame)))
+   (equal (abs-addrs (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                       frame))))
+          nil))
+  :hints (("goal" :in-theory (enable 1st-complete))))
 
 ;; This is a hack...
 (defthm
@@ -12292,6 +12293,18 @@
     (cons (1st-complete (frame->frame frame))
           (seq-this
            next-frame))))
+
+;; While it would be nice to see this have no hypothesis, the way
+;; collapse-iter-is-collapse has no hypotheses, the fact is that it won't work
+;; because of the stupid truth that a frame with duplicate variables in it will
+;; be accepted by collapse but not by collapse-seq.
+(defthm
+  collapse-seq-of-seq-this-is-collapse
+  (implies (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+           (equal (mv-nth 0 (collapse frame))
+                  (frame->root (collapse-seq frame (seq-this frame)))))
+  :hints (("goal" :in-theory (enable collapse
+                                     collapse-seq seq-this collapse-iter))))
 
 ;; Next thing to prove is that (frame-addrs-before-seq frame 0 seq) and
 ;; (frame-addrs-before frame 0 n) are equivalent (set-equiv) for appropriate
