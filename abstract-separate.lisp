@@ -13952,6 +13952,102 @@
     :use (:instance partial-collapse-correctness-lemma-173
                     (n (len (seq-this (collapse-this frame x))))))))
 
+(defthmd
+  partial-collapse-correctness-lemma-174
+  (implies
+   (and (abs-separate (frame->frame frame))
+        (dist-names (frame->root frame)
+                    nil (frame->frame frame))
+        (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (nat-listp (cons x (seq-this (collapse-this frame x))))
+        (mv-nth 1 (collapse frame))
+        (consp (assoc-equal x (frame->frame frame)))
+        (abs-complete
+         (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
+   (absfat-equiv
+    (frame->root (collapse-seq frame
+                               (cons x (seq-this (collapse-this frame x)))))
+    (mv-nth
+     0
+     (ctx-app-list
+      (frame->root frame)
+      nil frame
+      (frame-addrs-before-seq frame 0
+                              (cons x
+                                    (seq-this (collapse-this frame x))))))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (disable valid-seqp-after-collapse-this)
+    :use ((:instance partial-collapse-correctness-lemma-135
+                     (seq (cons x (seq-this (collapse-this frame x)))))
+          valid-seqp-after-collapse-this))))
+
+(skip-proofs
+ (defthm
+   partial-collapse-correctness-lemma-175
+   (implies
+    (and
+     (mv-nth
+      1
+      (ctx-app-list
+       (frame->root frame)
+       nil frame
+       (frame-addrs-before frame 0 (len (frame->frame frame)))))
+     (abs-separate (frame->frame frame))
+     (dist-names (frame->root frame)
+                 nil (frame->frame frame))
+     (frame-p (frame->frame frame))
+     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+     (<= 0 x)
+     (mv-nth 1 (collapse frame))
+     (consp (assoc-equal x (frame->frame frame)))
+     (not
+      (consp
+       (abs-addrs
+        (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))))
+    (set-equiv
+     (frame-addrs-before-seq frame 0
+                             (cons x (seq-this (collapse-this frame x))))
+     (frame-addrs-before frame 0 (len (frame->frame frame)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-176
+  (implies
+   (and (abs-separate (frame->frame frame))
+        (dist-names (frame->root frame)
+                    nil (frame->frame frame))
+        (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (mv-nth 1 (collapse frame))
+        (consp (assoc-equal x (frame->frame frame)))
+        (abs-complete
+         (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
+   (absfat-equiv (mv-nth 0 (collapse (collapse-this frame x)))
+                 (mv-nth 0 (collapse frame))))
+  :hints
+  (("goal"
+    :in-theory (e/d (collapse-seq)
+                    (partial-collapse-correctness-lemma-117
+                     (:rewrite ctx-app-list-when-set-equiv)
+                     (:rewrite collapse-seq-of-seq-this-is-collapse)))
+    :use
+    (partial-collapse-correctness-lemma-174
+     (:instance partial-collapse-correctness-lemma-117
+                (n (len (frame->frame frame))))
+     (:instance
+      (:rewrite ctx-app-list-when-set-equiv)
+      (l1 (frame-addrs-before frame 0 (len (frame->frame frame))))
+      (l2
+       (frame-addrs-before-seq frame 0
+                               (cons x (seq-this (collapse-this frame x)))))
+      (frame frame)
+      (relpath nil)
+      (fs (frame->root frame)))
+     collapse-iter-correctness-1
+     (:instance (:rewrite collapse-seq-of-seq-this-is-collapse)
+                (frame (collapse-this frame x)))))))
+
 ;; Next thing to prove is that (frame-addrs-before-seq frame 0 seq) and
 ;; (frame-addrs-before frame 0 n) are equivalent (set-equiv) for appropriate
 ;; values of seq and n. Then, we will be able to use
