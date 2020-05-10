@@ -13241,20 +13241,58 @@
     :expand ((seq-this frame)))))
 
 (defthm
+  partial-collapse-correctness-lemma-162
+  (implies
+   (and (<= (nfix n) (len (seq-this frame)))
+        (member-equal x (take n (seq-this frame)))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+   (not
+    (consp (assoc-equal
+           x
+           (frame->frame (collapse-seq frame (take n (seq-this frame))))))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (seq-this collapse-seq collapse-iter)
+         (member-of-take (:definition assoc-equal)
+                         (:rewrite take-of-len-free)
+                         (:rewrite partial-collapse-correctness-lemma-24)
+                         (:definition member-equal)
+                         (:rewrite nthcdr-when->=-n-len-l)
+                         (:definition remove-equal)
+                         (:rewrite remove-when-absent)
+                         (:rewrite partial-collapse-correctness-lemma-99)
+                         (:rewrite partial-collapse-correctness-lemma-20)
+                         (:definition strip-cars)))
+    :induct (collapse-iter frame n))))
+
+(defthm
   partial-collapse-correctness-lemma-158
   (implies
-   (consp (assoc-equal y
-                       (frame->frame (collapse-seq frame seq))))
    (and
-    (equal (frame-val->src
-            (cdr (assoc-equal y
-                              (frame->frame (collapse-seq frame seq)))))
-           (frame-val->src (cdr (assoc-equal y (frame->frame frame)))))
-    (equal (frame-val->path
-            (cdr (assoc-equal y
-                              (frame->frame (collapse-seq frame seq)))))
-           (frame-val->path (cdr (assoc-equal y (frame->frame frame)))))))
-  :hints (("goal" :in-theory (enable collapse-seq))))
+    (< (nfix n) (len (seq-this frame)))
+    (not (zp (frame-val->src
+              (cdr (assoc-equal (nth n (seq-this frame))
+                                (frame->frame frame))))))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+   (not
+    (member-equal
+     (frame-val->src (cdr (assoc-equal (nth n (seq-this frame))
+                                       (frame->frame frame))))
+     (take n (seq-this frame)))))
+  :hints
+  (("goal"
+    :in-theory (disable partial-collapse-correctness-lemma-157
+                        partial-collapse-correctness-lemma-162
+                        member-of-take)
+    :do-not-induct t
+    :use
+    ((:instance
+      partial-collapse-correctness-lemma-162
+      (x (frame-val->src
+          (cdr (assoc-equal (nth n (seq-this frame))
+                            (frame->frame frame))))))
+     partial-collapse-correctness-lemma-157))))
 
 (defthm
   partial-collapse-correctness-lemma-159
@@ -13365,20 +13403,6 @@
     :use (:instance (:rewrite partial-collapse-correctness-lemma-157)
                     (frame (collapse-this frame x))
                     (n (+ -1 n))))))
-
-(defthm
-  partial-collapse-correctness-lemma-162
-  (implies
-   (and (member-equal x (seq-this frame))
-        (no-duplicatesp-equal (strip-cars (frame->frame frame))))
-   (atom (assoc-equal x
-                      (frame->frame (collapse-seq frame (seq-this frame))))))
-  :hints
-  (("goal" :in-theory (enable seq-this collapse-seq collapse-iter)
-    :expand ((collapse-seq frame
-                           (cons (1st-complete (frame->frame frame))
-                                 (seq-this (collapse-iter frame 1))))
-             (seq-this frame)))))
 
 (thm
  (implies
