@@ -4445,7 +4445,6 @@
                      (:rewrite prefixp-one-way-or-another . 1)
                      (:rewrite abs-find-file-correctness-1-lemma-21)
                      (:definition member-equal)
-                     (:rewrite partial-collapse-correctness-lemma-28)
                      (:rewrite abs-find-file-correctness-1-lemma-45)
                      (:rewrite abs-find-file-helper-of-collapse-lemma-2)
                      (:definition remove-equal))))))
@@ -4486,8 +4485,6 @@
                      (:rewrite
                       abs-find-file-correctness-1-lemma-21)
                      (:definition member-equal)
-                     (:rewrite
-                      partial-collapse-correctness-lemma-28)
                      (:rewrite
                       abs-find-file-correctness-1-lemma-45)
                      (:rewrite
