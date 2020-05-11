@@ -14273,11 +14273,12 @@
      (equal (len (seq-this (collapse-this frame x)))
             (- (len (frame->frame frame)) 1))))))
 
-;; This rule could be trouble at a later point, seeing as it can potentially
-;; rewrite
+;; This rule is trouble, because it can rewrite
 ;; (mv-nth 0 (collapse (collapse-this frame (1st-complete (frame->frame frame)))))
+;; and
+;; (mv-nth 1 (collapse (collapse-this frame (1st-complete (frame->frame frame)))))
 ;; terms, which arise naturally from opening up the definition of collapse...
-(defthm
+(defthmd
   partial-collapse-correctness-lemma-176
   (implies
    (and (abs-separate (frame->frame frame))
@@ -14317,6 +14318,41 @@
      collapse-iter-correctness-1
      (:instance (:rewrite collapse-seq-of-seq-this-is-collapse)
                 (frame (collapse-this frame x)))))))
+
+(defthm
+  partial-collapse-correctness-lemma-183
+  (implies
+   (and (abs-separate (frame->frame frame))
+        (dist-names (frame->root frame)
+                    nil (frame->frame frame))
+        (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (mv-nth 1 (collapse frame))
+        (consp (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                         pathname)
+                            (frame->frame frame))))
+   (and
+    (absfat-equiv
+     (mv-nth
+      0
+      (collapse
+       (collapse-this frame
+                      (1st-complete-under-pathname (frame->frame frame)
+                                                   pathname))))
+     (mv-nth 0 (collapse frame)))
+    (iff
+     (mv-nth
+      1
+      (collapse
+       (collapse-this frame
+                      (1st-complete-under-pathname (frame->frame frame)
+                                                   pathname))))
+     (mv-nth 1 (collapse frame)))))
+  :hints
+  (("goal"
+    :use (:instance partial-collapse-correctness-lemma-176
+                    (x (1st-complete-under-pathname (frame->frame frame)
+                                                    pathname))))))
 
 (defthm partial-collapse-correctness-1
   (implies

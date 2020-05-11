@@ -25,7 +25,6 @@
    (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
    (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
    (:rewrite collapse-congruence-lemma-4)
-   (:rewrite partial-collapse-correctness-lemma-49)
    (:rewrite partial-collapse-correctness-lemma-46)
    (:rewrite abs-addrs-of-ctx-app-1-lemma-2)
    (:rewrite abs-addrs-of-ctx-app-1-lemma-12)
@@ -3260,7 +3259,12 @@
         pathname))
       (mv (abs-file-fix nil) *enoent*)))
     :hints (("goal" :induct (induction-scheme frame pathname x)
-             :in-theory (enable collapse)))))
+             :in-theory
+             (e/d (collapse)
+                  ((:rewrite partial-collapse-correctness-lemma-1)
+                   (:rewrite partial-collapse-correctness-lemma-24)
+                   (:rewrite partial-collapse-correctness-lemma-33)
+                   (:rewrite partial-collapse-correctness-lemma-77)))))))
 
 (defthmd
   abs-find-file-correctness-1-lemma-15
