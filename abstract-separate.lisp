@@ -11168,83 +11168,64 @@
   :rule-classes :linear)
 
 (defthm
-  partial-collapse-correctness-lemma-52
+  partial-collapse-correctness-lemma-109
   (implies
-   (not (member-equal x seq))
    (and
-    (iff (consp (assoc-equal x
-                             (frame->frame (collapse-seq frame seq))))
-         (consp (assoc-equal x (frame->frame frame))))
-    (equal (frame-val->path
-            (cdr (assoc-equal x
-                              (frame->frame (collapse-seq frame seq)))))
-           (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
-    (equal (frame-val->src
-            (cdr (assoc-equal x
-                              (frame->frame (collapse-seq frame seq)))))
-           (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))))
-  :hints (("goal" :in-theory (enable collapse-seq valid-seqp))))
+    (member-equal x seq)
+    (nat-listp seq)
+    (not (zp n))
+    (subsetp-equal
+     (take (+ -1 n)
+           (frame-addrs-before frame x (collapse-1st-index frame x)))
+     (frame-addrs-before-seq frame
+                             x (take (position-equal x seq) seq)))
+    (abs-separate (frame->frame frame))
+    (frame-p (frame->frame frame))
+    (consp
+     (assoc-equal
+      x
+      (frame->frame (collapse-seq frame
+                                  (take (position-equal x seq) seq)))))
+    (valid-seqp frame seq)
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (mv-nth 1 (collapse frame))
+    (<= n
+        (len (frame-addrs-before frame x (collapse-1st-index frame x)))))
+   (subsetp-equal
+    (take n
+          (frame-addrs-before frame x (collapse-1st-index frame x)))
+    (frame-addrs-before-seq frame
+                            x (take (position-equal x seq) seq))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d ()
+                    ((:rewrite binary-append-take-nthcdr)
+                     (:rewrite subsetp-of-binary-append-3)))
+    :use
+    ((:instance
+      (:rewrite binary-append-take-nthcdr)
+      (l (take n
+               (frame-addrs-before frame x (collapse-1st-index frame x))))
+      (i (+ -1 n)))
+     (:instance
+      (:rewrite subsetp-of-binary-append-3)
+      (z (frame-addrs-before-seq frame
+                                 x (take (position-equal x seq) seq)))
+      (y
+       (nthcdr
+        (+ -1 n)
+        (take n
+              (frame-addrs-before frame x (collapse-1st-index frame x)))))
+      (x (take (+ -1 n)
+               (frame-addrs-before frame x (collapse-1st-index frame x)))))
+     (:instance (:rewrite take-of-nthcdr)
+                (l (frame-addrs-before frame x (collapse-1st-index frame x)))
+                (n2 (+ -1 n))
+                (n1 1))))))
 
 (encapsulate
   ()
-
-  (local
-   (defthm
-     lemma
-     (implies
-      (and
-       (member-equal x seq)
-       (nat-listp seq)
-       (not (zp n))
-       (subsetp-equal
-        (take (+ -1 n)
-              (frame-addrs-before frame x (collapse-1st-index frame x)))
-        (frame-addrs-before-seq frame
-                                x (take (position-equal x seq) seq)))
-       (abs-separate (frame->frame frame))
-       (frame-p (frame->frame frame))
-       (consp
-        (assoc-equal
-         x
-         (frame->frame (collapse-seq frame
-                                     (take (position-equal x seq) seq)))))
-       (valid-seqp frame seq)
-       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-       (mv-nth 1 (collapse frame))
-       (<= n
-           (len (frame-addrs-before frame x (collapse-1st-index frame x)))))
-      (subsetp-equal
-       (take n
-             (frame-addrs-before frame x (collapse-1st-index frame x)))
-       (frame-addrs-before-seq frame
-                               x (take (position-equal x seq) seq))))
-     :hints
-     (("goal"
-       :do-not-induct t
-       :in-theory (e/d ()
-                       ((:rewrite binary-append-take-nthcdr)
-                        (:rewrite subsetp-of-binary-append-3)))
-       :use
-       ((:instance
-         (:rewrite binary-append-take-nthcdr)
-         (l (take n
-                  (frame-addrs-before frame x (collapse-1st-index frame x))))
-         (i (+ -1 n)))
-        (:instance
-         (:rewrite subsetp-of-binary-append-3)
-         (z (frame-addrs-before-seq frame
-                                    x (take (position-equal x seq) seq)))
-         (y
-          (nthcdr
-           (+ -1 n)
-           (take n
-                 (frame-addrs-before frame x (collapse-1st-index frame x)))))
-         (x (take (+ -1 n)
-                  (frame-addrs-before frame x (collapse-1st-index frame x)))))
-        (:instance (:rewrite take-of-nthcdr)
-                   (l (frame-addrs-before frame x (collapse-1st-index frame x)))
-                   (n2 (+ -1 n))
-                   (n1 1)))))))
 
   (local (include-book "std/basic/inductions" :dir :system))
 
@@ -11289,40 +11270,40 @@
       (frame-addrs-before-seq frame
                               x (take (position-equal x seq) seq))))
     :hints (("goal" :in-theory (enable final-val-seq)
-             :induct (dec-induct n))))
+             :induct (dec-induct n)))))
 
-  (defthm
-    partial-collapse-correctness-lemma-111
-    (implies
-     (and
-      (member-equal x seq)
-      (nat-listp seq)
-      (abs-separate (frame->frame frame))
-      (frame-p (frame->frame frame))
-      (consp
-       (assoc-equal
-        x
-        (frame->frame (collapse-seq frame
-                                    (take (position-equal x seq) seq)))))
-      (valid-seqp frame seq)
-      (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-      (mv-nth 1 (collapse frame)))
-     (set-equiv (frame-addrs-before-seq frame
-                                        x (take (position-equal x seq) seq))
-                (frame-addrs-before frame x (collapse-1st-index frame x))))
-    :hints
-    (("goal"
-      :do-not-induct t
-      :in-theory (e/d (set-equiv)
-                      (lemma
-                       partial-collapse-correctness-lemma-110))
-      :use
-      ((:instance lemma
-                  (n (position-equal x seq)))
-       (:instance
-        partial-collapse-correctness-lemma-110
-        (n (len (frame-addrs-before frame
-                                    x (collapse-1st-index frame x))))))))))
+(defthm
+  partial-collapse-correctness-lemma-111
+  (implies
+   (and
+    (member-equal x seq)
+    (nat-listp seq)
+    (abs-separate (frame->frame frame))
+    (frame-p (frame->frame frame))
+    (consp
+     (assoc-equal
+      x
+      (frame->frame (collapse-seq frame
+                                  (take (position-equal x seq) seq)))))
+    (valid-seqp frame seq)
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (mv-nth 1 (collapse frame)))
+   (set-equiv (frame-addrs-before-seq frame
+                                      x (take (position-equal x seq) seq))
+              (frame-addrs-before frame x (collapse-1st-index frame x))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (set-equiv)
+                    (partial-collapse-correctness-lemma-109
+                     partial-collapse-correctness-lemma-110))
+    :use
+    ((:instance partial-collapse-correctness-lemma-109
+                (n (position-equal x seq)))
+     (:instance
+      partial-collapse-correctness-lemma-110
+      (n (len (frame-addrs-before frame
+                                  x (collapse-1st-index frame x)))))))))
 
 (defund absfat-equiv-upto-n
   (frame seq n)
@@ -11341,6 +11322,23 @@
            (absfat-equiv (final-val-seq x frame seq)
                          (final-val x frame)))
   :hints (("goal" :in-theory (enable absfat-equiv-upto-n))))
+
+(defthm
+  partial-collapse-correctness-lemma-51
+  (implies (not (member-equal x seq))
+           (and
+            (equal (frame-val->path
+                    (cdr (assoc-equal x
+                                      (frame->frame (collapse-seq frame seq)))))
+                   (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+            (equal (frame-val->src
+                    (cdr (assoc-equal x
+                                      (frame->frame (collapse-seq frame seq)))))
+                   (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+            (iff (consp (assoc-equal x
+                                     (frame->frame (collapse-seq frame seq))))
+                 (consp (assoc-equal x (frame->frame frame))))))
+  :hints (("goal" :in-theory (enable collapse-seq valid-seqp))))
 
 (defthmd
   partial-collapse-correctness-lemma-113
@@ -11550,83 +11548,81 @@
                      (n2 (+ -1 n))
                      (n1 1))))))
 
+(defthm
+  partial-collapse-correctness-lemma-115
+  (implies
+   (and
+    (not (zp n))
+    (absfat-equiv
+     (mv-nth 0
+             (ctx-app-list-seq
+              (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                                (frame->frame frame))))
+              (frame-val->path (cdr (assoc-equal (nth m seq)
+                                                 (frame->frame frame))))
+              frame
+              (frame-addrs-before-seq frame (nth m seq)
+                                      (take (+ -1 n) seq))
+              (take m seq)))
+     (mv-nth
+      0
+      (ctx-app-list (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                                      (frame->frame frame))))
+                    (frame-val->path (cdr (assoc-equal (nth m seq)
+                                                       (frame->frame frame))))
+                    frame
+                    (frame-addrs-before-seq frame (nth m seq)
+                                            (take (+ -1 n) seq)))))
+    (absfat-equiv-upto-n frame seq m)
+    (valid-seqp frame seq)
+    (< m (len seq))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (nat-listp seq)
+    (integerp m)
+    (<= n m))
+   (absfat-equiv
+    (mv-nth 0
+            (ctx-app-list-seq
+             (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                               (frame->frame frame))))
+             (frame-val->path (cdr (assoc-equal (nth m seq)
+                                                (frame->frame frame))))
+             frame
+             (frame-addrs-before-seq frame (nth m seq)
+                                     (take n seq))
+             (take m seq)))
+    (mv-nth
+     0
+     (ctx-app-list (frame-val->dir (cdr (assoc-equal (nth m seq)
+                                                     (frame->frame frame))))
+                   (frame-val->path (cdr (assoc-equal (nth m seq)
+                                                      (frame->frame frame))))
+                   frame
+                   (frame-addrs-before-seq frame (nth m seq)
+                                           (take n seq))))))
+  :instructions
+  (:promote (:claim (equal (take n seq)
+                           (append (take (+ -1 n) (take n seq))
+                                   (nthcdr (+ -1 n) (take n seq))))
+                    :hints :none)
+            (:change-goal nil t)
+            (:dive 2)
+            (:rewrite binary-append-take-nthcdr)
+            :top :s :bash (:dive 1 2 4 3)
+            := :up
+            (:rewrite frame-addrs-before-seq-of-append)
+            :top (:dive 2 2 4 3)
+            :=
+            :up (:rewrite frame-addrs-before-seq-of-append)
+            :top bash))
+
 (encapsulate
   ()
 
   (local (include-book "std/basic/inductions" :dir :system))
 
-
-  (local
-   (defthm
-     lemma
-     (implies
-      (and
-       (not (zp n))
-       (absfat-equiv
-        (mv-nth 0
-                (ctx-app-list-seq
-                 (frame-val->dir (cdr (assoc-equal (nth m seq)
-                                                   (frame->frame frame))))
-                 (frame-val->path (cdr (assoc-equal (nth m seq)
-                                                    (frame->frame frame))))
-                 frame
-                 (frame-addrs-before-seq frame (nth m seq)
-                                         (take (+ -1 n) seq))
-                 (take m seq)))
-        (mv-nth
-         0
-         (ctx-app-list (frame-val->dir (cdr (assoc-equal (nth m seq)
-                                                         (frame->frame frame))))
-                       (frame-val->path (cdr (assoc-equal (nth m seq)
-                                                          (frame->frame frame))))
-                       frame
-                       (frame-addrs-before-seq frame (nth m seq)
-                                               (take (+ -1 n) seq)))))
-       (absfat-equiv-upto-n frame seq m)
-       (valid-seqp frame seq)
-       (< m (len seq))
-       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-       (nat-listp seq)
-       (integerp m)
-       (<= n m))
-      (absfat-equiv
-       (mv-nth 0
-               (ctx-app-list-seq
-                (frame-val->dir (cdr (assoc-equal (nth m seq)
-                                                  (frame->frame frame))))
-                (frame-val->path (cdr (assoc-equal (nth m seq)
-                                                   (frame->frame frame))))
-                frame
-                (frame-addrs-before-seq frame (nth m seq)
-                                        (take n seq))
-                (take m seq)))
-       (mv-nth
-        0
-        (ctx-app-list (frame-val->dir (cdr (assoc-equal (nth m seq)
-                                                        (frame->frame frame))))
-                      (frame-val->path (cdr (assoc-equal (nth m seq)
-                                                         (frame->frame frame))))
-                      frame
-                      (frame-addrs-before-seq frame (nth m seq)
-                                              (take n seq))))))
-     :instructions
-     (:promote (:claim (equal (take n seq)
-                              (append (take (+ -1 n) (take n seq))
-                                      (nthcdr (+ -1 n) (take n seq))))
-                       :hints :none)
-               (:change-goal nil t)
-               (:dive 2)
-               (:rewrite binary-append-take-nthcdr)
-               :top :s :bash (:dive 1 2 4 3)
-               := :up
-               (:rewrite frame-addrs-before-seq-of-append)
-               :top (:dive 2 2 4 3)
-               :=
-               :up (:rewrite frame-addrs-before-seq-of-append)
-               :top bash)))
-
   (defthm
-    partial-collapse-correctness-lemma-51
+    partial-collapse-correctness-lemma-122
     (implies
      (and (absfat-equiv-upto-n frame seq m)
           (valid-seqp frame seq)
@@ -12460,7 +12456,7 @@
   :rule-classes :linear)
 
 (defthm
-  partial-collapse-correctness-lemma-145
+  partial-collapse-correctness-lemma-52
   (implies (and (not (zp n))
                 (frame-p (frame->frame frame))
                 (mv-nth 1 (collapse frame))
