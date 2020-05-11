@@ -9312,50 +9312,50 @@
      (ctx-app-ok (frame->root frame)
                  x relpath)))))
 
-(defthm
-  partial-collapse-correctness-lemma-16
-  (implies
-   (and
-    (equal
-     (frame-val->src
-      (cdr (assoc-equal (1st-complete (frame->frame (collapse-this frame x)))
-                        (frame->frame frame))))
-     0)
-    (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-           0)
-    (consp (frame->frame (collapse-this frame x)))
-    (not (zp x))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
-    (ctx-app-ok
-     (frame->root frame)
-     (1st-complete (frame->frame frame))
-     (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                        (frame->frame frame)))))
-    (mv-nth 1
-            (collapse (collapse-this frame
-                                     (1st-complete (frame->frame frame)))))
-    (frame-p (frame->frame frame))
-    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-    (dist-names (frame->root frame)
-                nil (frame->frame frame)))
-   (ctx-app-ok
-    (frame->root (collapse-this frame x))
-    (1st-complete (frame->frame (collapse-this frame x)))
-    (frame-val->path
-     (cdr (assoc-equal (1st-complete (frame->frame (collapse-this frame x)))
-                       (frame->frame frame))))))
-  :hints
-  (("goal" :in-theory (e/d (collapse-this collapse)
-                           ((:rewrite partial-collapse-correctness-lemma-27)
-                            partial-collapse-correctness-lemma-1))
-    :use ((:instance partial-collapse-correctness-lemma-1
-                     (frame (collapse-this frame x)))
-          (:instance (:rewrite partial-collapse-correctness-lemma-27)
-                     (frame (frame->frame frame))
-                     (x (1st-complete (frame->frame frame))))))))
+;; (defthm
+;;   partial-collapse-correctness-lemma-16
+;;   (implies
+;;    (and
+;;     (equal
+;;      (frame-val->src
+;;       (cdr (assoc-equal (1st-complete (frame->frame (collapse-this frame x)))
+;;                         (frame->frame frame))))
+;;      0)
+;;     (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+;;            0)
+;;     (consp (frame->frame (collapse-this frame x)))
+;;     (not (zp x))
+;;     (not
+;;      (consp
+;;       (abs-addrs
+;;        (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+;;     (ctx-app-ok
+;;      (frame->root frame)
+;;      (1st-complete (frame->frame frame))
+;;      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame))
+;;                                         (frame->frame frame)))))
+;;     (mv-nth 1
+;;             (collapse (collapse-this frame
+;;                                      (1st-complete (frame->frame frame)))))
+;;     (frame-p (frame->frame frame))
+;;     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;     (dist-names (frame->root frame)
+;;                 nil (frame->frame frame)))
+;;    (ctx-app-ok
+;;     (frame->root (collapse-this frame x))
+;;     (1st-complete (frame->frame (collapse-this frame x)))
+;;     (frame-val->path
+;;      (cdr (assoc-equal (1st-complete (frame->frame (collapse-this frame x)))
+;;                        (frame->frame frame))))))
+;;   :hints
+;;   (("goal" :in-theory (e/d (collapse-this collapse)
+;;                            ((:rewrite partial-collapse-correctness-lemma-27)
+;;                             partial-collapse-correctness-lemma-1))
+;;     :use ((:instance partial-collapse-correctness-lemma-1
+;;                      (frame (collapse-this frame x)))
+;;           (:instance (:rewrite partial-collapse-correctness-lemma-27)
+;;                      (frame (frame->frame frame))
+;;                      (x (1st-complete (frame->frame frame))))))))
 
 (defthm
   partial-collapse-correctness-lemma-41
@@ -9570,54 +9570,54 @@
                                      (1st-complete (frame->frame frame)))))))
   :hints (("goal" :in-theory (enable collapse-this collapse))))
 
-(defthm
-  partial-collapse-correctness-lemma-2
-  (implies
-   (and
-    (not (zp x))
-    (consp (assoc-equal x (frame->frame frame)))
-    (abs-complete (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
-    (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
-    (mv-nth 1 (collapse frame))
-    (frame-p (frame->frame frame))
-    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-    (dist-names (frame->root frame)
-                nil (frame->frame frame))
-    (abs-separate (frame->frame frame)))
-   (and
-    (mv-nth
-     1
-     (collapse
-      (collapse-this frame x)))
-    (absfat-equiv
-     (mv-nth
-      0
-      (collapse
-       (collapse-this frame x)))
-     (mv-nth 0 (collapse frame)))))
-  :hints
-  (("goal" :in-theory
-    (e/d (collapse abs-separate)
-         ((:definition remove-assoc-equal)
-          (:rewrite abs-file-alist-p-when-m1-file-alist-p)
-          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)))
-    :induct (collapse frame)
-    :expand (COLLAPSE (COLLAPSE-THIS FRAME X)))
-   ("subgoal *1/4" :in-theory
-    (e/d (collapse abs-separate)
-         ((:definition remove-assoc-equal)
-          (:rewrite abs-file-alist-p-when-m1-file-alist-p)
-          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-          partial-collapse-correctness-lemma-23))
-    :use (:instance partial-collapse-correctness-lemma-23
-                    (y
-                     (1st-complete (frame->frame frame)))))
-   ("subgoal *1/4.2" :in-theory
-    (e/d (collapse abs-separate)
-         ((:definition remove-assoc-equal)
-          (:rewrite abs-file-alist-p-when-m1-file-alist-p)
-          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-          (:e force))))))
+;; (defthm
+;;   partial-collapse-correctness-lemma-2
+;;   (implies
+;;    (and
+;;     (not (zp x))
+;;     (consp (assoc-equal x (frame->frame frame)))
+;;     (abs-complete (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
+;;     (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+;;     (mv-nth 1 (collapse frame))
+;;     (frame-p (frame->frame frame))
+;;     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;     (dist-names (frame->root frame)
+;;                 nil (frame->frame frame))
+;;     (abs-separate (frame->frame frame)))
+;;    (and
+;;     (mv-nth
+;;      1
+;;      (collapse
+;;       (collapse-this frame x)))
+;;     (absfat-equiv
+;;      (mv-nth
+;;       0
+;;       (collapse
+;;        (collapse-this frame x)))
+;;      (mv-nth 0 (collapse frame)))))
+;;   :hints
+;;   (("goal" :in-theory
+;;     (e/d (collapse abs-separate)
+;;          ((:definition remove-assoc-equal)
+;;           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
+;;           (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)))
+;;     :induct (collapse frame)
+;;     :expand (COLLAPSE (COLLAPSE-THIS FRAME X)))
+;;    ("subgoal *1/4" :in-theory
+;;     (e/d (collapse abs-separate)
+;;          ((:definition remove-assoc-equal)
+;;           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
+;;           (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+;;           partial-collapse-correctness-lemma-23))
+;;     :use (:instance partial-collapse-correctness-lemma-23
+;;                     (y
+;;                      (1st-complete (frame->frame frame)))))
+;;    ("subgoal *1/4.2" :in-theory
+;;     (e/d (collapse abs-separate)
+;;          ((:definition remove-assoc-equal)
+;;           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
+;;           (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+;;           (:e force))))))
 
 (defthm
   partial-collapse-correctness-lemma-38
@@ -13332,7 +13332,6 @@
                             (:definition member-equal)
                             (:definition no-duplicatesp-equal)
                             (:definition remove-equal)
-                            (:rewrite partial-collapse-correctness-lemma-2)
                             (:definition nthcdr)
                             (:definition assoc-equal)
                             (:rewrite nthcdr-when->=-n-len-l)))
@@ -13457,7 +13456,6 @@
                      (:definition member-equal)
                      (:definition no-duplicatesp-equal)
                      (:definition remove-equal)
-                     (:rewrite partial-collapse-correctness-lemma-2)
                      (:definition nthcdr)
                      (:definition assoc-equal)
                      (:rewrite nthcdr-when->=-n-len-l)
@@ -13486,7 +13484,6 @@
                             (:definition member-equal)
                             (:definition no-duplicatesp-equal)
                             (:definition remove-equal)
-                            (:rewrite partial-collapse-correctness-lemma-2)
                             (:definition nthcdr)
                             (:definition assoc-equal)
                             (:rewrite nthcdr-when->=-n-len-l)
@@ -14103,8 +14100,7 @@
                      (:rewrite no-duplicatesp-of-seq-this-lemma-1 . 2)
                      (:definition remove-equal)
                      (:rewrite remove-when-absent)
-                     (:rewrite subsetp-of-remove1)
-                     (:rewrite partial-collapse-correctness-lemma-2)))
+                     (:rewrite subsetp-of-remove1)))
     :expand
     (collapse-seq (collapse-seq (collapse-this frame x)
                                 (take (+ -1 n)
