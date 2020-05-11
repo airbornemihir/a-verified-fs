@@ -2842,6 +2842,25 @@
     (t nil)))
   :hints (("goal" :in-theory (enable collapse-this))))
 
+(defthm
+  frame->root-of-collapse-this
+  (equal
+   (frame->root (collapse-this frame x))
+   (cond
+    ((equal (frame-val->src
+             (cdr (assoc-equal x (frame->frame frame))))
+            0)
+     (abs-fs-fix
+      (ctx-app
+       (frame->root frame)
+       (frame-val->dir
+        (cdr (assoc-equal x (frame->frame frame))))
+       x
+       (frame-val->path
+        (cdr (assoc-equal x (frame->frame frame)))))))
+    (t (frame->root frame))))
+  :hints (("goal" :in-theory (enable collapse-this))))
+
 (defthm collapse-guard-lemma-1
   (consp (assoc-equal 0 (collapse-this frame x)))
   :hints (("goal" :in-theory (enable collapse-this)))
@@ -12005,26 +12024,6 @@
                             (n (len seq)))
                  partial-collapse-correctness-lemma-129))))
 
-;; Move later.
-(defthm
-  frame->root-of-collapse-this
-  (equal
-   (frame->root (collapse-this frame x))
-   (cond
-    ((equal (frame-val->src
-             (cdr (assoc-equal x (frame->frame frame))))
-            0)
-     (abs-fs-fix
-      (ctx-app
-       (frame->root frame)
-       (frame-val->dir
-        (cdr (assoc-equal x (frame->frame frame))))
-       x
-       (frame-val->path
-        (cdr (assoc-equal x (frame->frame frame)))))))
-    (t (frame->root frame))))
-  :hints (("goal" :in-theory (enable collapse-this))))
-
 (defthm
   partial-collapse-correctness-lemma-76
   (implies
@@ -14104,63 +14103,25 @@
 ;;    (frame->root (collapse-seq frame seq))
 ;;    (mv-nth 0 (collapse frame)))))
 
-(skip-proofs
- (defthm partial-collapse-correctness-lemma-49
-   (implies (and (consp (frame->frame frame))
-                 (< 0 x)
-                 (abs-complete
-                  (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
-                 (< 0
-                    (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
-                 (frame-p (frame->frame frame))
-                 (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                 (subsetp-equal (abs-addrs (frame->root frame))
-                                (frame-addrs-root (frame->frame frame)))
-                 (no-duplicatesp-equal (abs-addrs (frame->root frame)))
-                 (dist-names (frame->root frame)
-                             nil (frame->frame frame))
-                 (abs-separate (frame->frame frame))
-                 (mv-nth 1 (collapse frame)))
-            (and (mv-nth 1 (collapse (collapse-this frame x)))
-                 (absfat-equiv (mv-nth 0 (collapse (collapse-this frame x)))
-                               (mv-nth 0 (collapse frame)))))
-   :hints (("Goal" :in-theory
-            (e/d (collapse)
-                 (partial-collapse-correctness-lemma-2
-                  (:definition assoc-equal)
-                  (:definition member-equal)
-                  (:definition remove-equal)
-                  (:rewrite remove-when-absent)
-                  (:definition remove-assoc-equal)
-                  (:rewrite nthcdr-when->=-n-len-l)
-                  (:rewrite default-<-2)
-                  (:rewrite remove-assoc-when-absent-1)
-                  (:rewrite
-                   partial-collapse-correctness-lemma-28)
-                  (:definition strip-cars)
-                  (:rewrite
-                   abs-addrs-of-ctx-app-1-lemma-7)
-                  (:rewrite
-                   partial-collapse-correctness-lemma-20)
-                  (:definition len)
-                  (:linear count-free-clusters-correctness-1)
-                  (:rewrite
-                   partial-collapse-correctness-lemma-1)
-                  (:rewrite
-                   collapse-1st-index-correctness-lemma-2)
-                  (:definition alistp)
-                  (:definition nthcdr)))
-            :induct (collapse frame)
-            :expand (collapse (collapse-this frame x)))
-           ("Subgoal *1/6.10" :in-theory
-            (e/d (collapse)
-                 (partial-collapse-correctness-lemma-2 (:e force))))
-           ("Subgoal *1/6.8" :in-theory
-            (e/d (collapse)
-                 (partial-collapse-correctness-lemma-2 (:e force))))
-           ("Subgoal *1/6.6" :in-theory
-            (e/d (collapse)
-                 (partial-collapse-correctness-lemma-2 (:e force)))))))
+(defthm partial-collapse-correctness-lemma-49
+  (implies (and (consp (frame->frame frame))
+                (< 0 x)
+                (abs-complete
+                 (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
+                (< 0
+                   (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+                (frame-p (frame->frame frame))
+                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (subsetp-equal (abs-addrs (frame->root frame))
+                               (frame-addrs-root (frame->frame frame)))
+                (no-duplicatesp-equal (abs-addrs (frame->root frame)))
+                (dist-names (frame->root frame)
+                            nil (frame->frame frame))
+                (abs-separate (frame->frame frame))
+                (mv-nth 1 (collapse frame)))
+           (and (mv-nth 1 (collapse (collapse-this frame x)))
+                (absfat-equiv (mv-nth 0 (collapse (collapse-this frame x)))
+                              (mv-nth 0 (collapse frame))))))
 
 (defthm partial-collapse-correctness-1
   (implies
