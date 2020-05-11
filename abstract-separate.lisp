@@ -5145,8 +5145,6 @@
   abs-separate-correctness-1-lemma-32
   (implies
    (and
-    (frame-p (frame->frame frame))
-    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (consp
      (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                   (frame->frame frame)))
@@ -5172,9 +5170,11 @@
     (dist-names (frame->root frame)
                 nil (frame->frame frame))
     (abs-separate (frame->frame frame))
-    (abs-complete
-     (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
-   (dist-names (frame->root (collapse-this frame x))
+    (not
+     (consp
+      (abs-addrs
+       (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))))
+   (dist-names (frame->root frame)
                nil
                (frame->frame (collapse-this frame x))))
   :hints (("goal" :in-theory (enable collapse-this
@@ -5183,24 +5183,12 @@
 (defthm
   abs-separate-correctness-1-lemma-28
   (implies
-   (and
-    (natp x)
-    (equal (frame-val->src (cdr (assoc-equal (nfix x)
-                                             (frame->frame frame))))
-           0)
-    (ctx-app-ok (frame->root frame)
-                x
-                (frame-val->path (cdr (assoc-equal (nfix x)
-                                                   (frame->frame frame)))))
-    (frame-p (frame->frame frame))
-    (subsetp-equal (abs-addrs (frame->root frame))
-                   (frame-addrs-root (frame->frame frame)))
-    (no-duplicatesp-equal (abs-addrs (frame->root frame)))
-    (dist-names (frame->root frame)
-                nil (frame->frame frame))
-    (abs-complete (frame-val->dir (cdr (assoc-equal (nfix x)
-                                                    (frame->frame frame))))))
-   (subsetp-equal (abs-addrs (frame->root (collapse-this frame x)))
+   (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+               0)
+        (frame-p (frame->frame frame))
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame))))
+   (subsetp-equal (remove-equal x (abs-addrs (frame->root frame)))
                   (frame-addrs-root (frame->frame (collapse-this frame x)))))
   :hints (("goal" :in-theory (enable collapse-this))))
 
@@ -5231,14 +5219,17 @@
 (defthm
   abs-separate-correctness-1-lemma-37
   (implies
-   (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               0)
+   (and (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
         (dist-names (frame->root frame)
                     nil (frame->frame frame))
         (abs-separate (frame->frame frame)))
-   (dist-names (frame->root (collapse-this frame x))
-               nil
-               (frame->frame (collapse-this frame x))))
+   (dist-names
+    (ctx-app (frame->root frame)
+             (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+             x
+             (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+    nil
+    (frame->frame (collapse-this frame x))))
   :hints (("goal" :in-theory (enable collapse-this))))
 
 (defthm
@@ -5246,8 +5237,6 @@
   (implies
    (and
     (< 0 x)
-    (< 0
-       (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
     (consp
      (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                   (frame->frame frame)))
@@ -5268,9 +5257,11 @@
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (subsetp-equal (abs-addrs (frame->root frame))
                    (frame-addrs-root (frame->frame frame)))
-    (abs-complete
-     (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
-   (subsetp-equal (abs-addrs (frame->root (collapse-this frame x)))
+    (not
+     (consp
+      (abs-addrs
+       (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))))
+   (subsetp-equal (abs-addrs (frame->root frame))
                   (frame-addrs-root (frame->frame (collapse-this frame x)))))
   :hints (("goal" :in-theory (enable collapse-this
                                      abs-addrs-of-ctx-app-1-lemma-7))))
