@@ -1323,7 +1323,13 @@
       (implies (member-equal item lst)
                (and
                 (<= 0 (position-equal item lst))
-                (< (position-equal item lst) (len lst)))))))
+                (< (position-equal item lst) (len lst)))))
+     (:rewrite
+      :corollary
+      (implies (member-equal item lst)
+               (and
+                (integerp (position-equal item lst))
+                (acl2-numberp (position-equal item lst)))))))
 
   (defthm nth-of-position-equal
     (implies (member-equal item lst)
@@ -1421,3 +1427,53 @@
   (implies (and (no-duplicatesp-equal l)
                 (<= (nfix n) (len l)))
            (no-duplicatesp-equal (take n l))))
+
+(defthm member-equal-nth-take-when-no-duplicatesp
+  (implies (and (< (nfix n) (len l))
+                (no-duplicatesp-equal l))
+           (not (member-equal (nth n l) (take n l)))))
+
+(defthmd subsetp-when-atom-set-difference$
+  (iff (consp (set-difference-equal l1 l2))
+       (not (subsetp-equal l1 l2))))
+
+;; The following is redundant with the eponymous theorem in
+;; books/std/lists/sets.lisp, from where it was taken with thanks.
+(defthm member-of-set-difference-equal
+  (iff (member a (set-difference-equal x y))
+       (and (member a x) (not (member a y))))
+  :hints (("goal" :induct (len x))))
+
+(defthm no-duplicatesp-of-set-difference
+  (implies
+   (no-duplicatesp-equal l1)
+   (no-duplicatesp-equal (set-difference-equal l1 l2))))
+
+(encapsulate
+  ()
+
+  (local (defthmd lemma-1
+           (implies (atom l2)
+                    (equal (set-difference-equal l1 l2)
+                           (true-list-fix l1)))))
+
+  (local
+   (defthmd
+     lemma-2
+     (implies
+      (consp l2)
+      (equal
+       (set-difference-equal l1 l2)
+       (remove-equal (car l2)
+                     (set-difference-equal l1 (cdr l2)))))))
+
+  (defthmd
+    set-difference$-redefinition
+    (equal
+     (set-difference-equal l1 l2)
+     (if (atom l2)
+         (true-list-fix l1)
+       (remove-equal (car l2)
+                     (set-difference-equal l1 (cdr l2)))))
+    :hints (("goal" :use (lemma-1 lemma-2)))
+    :rule-classes :definition))
