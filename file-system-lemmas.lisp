@@ -1386,7 +1386,7 @@
            (atom (assoc-equal x alist)))
   :rule-classes :type-prescription)
 
-(defthm
+(defthmd
   member-of-take
   (implies (and (true-listp l)
                 (< (nfix n) (len l)))

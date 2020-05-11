@@ -11222,7 +11222,7 @@
      :hints
      (("goal"
        :do-not-induct t
-       :in-theory (e/d ()
+       :in-theory (e/d (member-of-take)
                        ((:rewrite binary-append-take-nthcdr)
                         (:rewrite subsetp-of-binary-append-3)
                         partial-collapse-correctness-lemma-51))
@@ -11288,7 +11288,7 @@
             (frame-addrs-before frame x (collapse-1st-index frame x)))
       (frame-addrs-before-seq frame
                               x (take (position-equal x seq) seq))))
-    :hints (("goal" :in-theory (enable final-val-seq)
+    :hints (("goal" :in-theory (enable final-val-seq member-of-take)
              :induct (dec-induct n)))))
 
 (defthm
@@ -11313,7 +11313,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (set-equiv)
+    :in-theory (e/d (set-equiv member-of-take)
                     (partial-collapse-correctness-lemma-110))
     :use
     ((:instance partial-collapse-correctness-lemma-110
@@ -11452,7 +11452,7 @@
                               (nthcdr (+ -1 n) (take n seq)))))))
   :hints
   (("goal"
-    :in-theory (e/d (frame-addrs-before-seq ctx-app-list ctx-app-list-seq)
+    :in-theory (e/d (frame-addrs-before-seq ctx-app-list ctx-app-list-seq member-of-take)
                     ((:rewrite ctx-app-list-when-set-equiv)
                      (:definition member-equal)
                      (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
@@ -12739,7 +12739,7 @@
                                        (frame->frame frame))))
      (frame->frame (collapse-seq frame (take n (seq-this frame)))))))
   :hints
-  (("goal" :in-theory (e/d (seq-this collapse-iter collapse-seq)
+  (("goal" :in-theory (e/d (seq-this collapse-iter collapse-seq member-of-take)
                            ((:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
                             (:definition member-equal)
                             (:definition no-duplicatesp-equal)
@@ -12765,16 +12765,16 @@
   (("goal"
     :in-theory
     (e/d (seq-this collapse-seq collapse-iter)
-         (member-of-take (:definition assoc-equal)
-                         (:rewrite take-of-len-free)
-                         (:rewrite partial-collapse-correctness-lemma-24)
-                         (:definition member-equal)
-                         (:rewrite nthcdr-when->=-n-len-l)
-                         (:definition remove-equal)
-                         (:rewrite remove-when-absent)
-                         (:rewrite partial-collapse-correctness-lemma-99)
-                         (:rewrite partial-collapse-correctness-lemma-20)
-                         (:definition strip-cars)))
+         ((:definition assoc-equal)
+          (:rewrite take-of-len-free)
+          (:rewrite partial-collapse-correctness-lemma-24)
+          (:definition member-equal)
+          (:rewrite nthcdr-when->=-n-len-l)
+          (:definition remove-equal)
+          (:rewrite remove-when-absent)
+          (:rewrite partial-collapse-correctness-lemma-99)
+          (:rewrite partial-collapse-correctness-lemma-20)
+          (:definition strip-cars)))
     :induct (collapse-iter frame n))))
 
 (defthm
@@ -12793,8 +12793,7 @@
      (take n (seq-this frame)))))
   :hints
   (("goal"
-    :in-theory (disable partial-collapse-correctness-lemma-157
-                        member-of-take)
+    :in-theory (disable partial-collapse-correctness-lemma-157)
     :do-not-induct t
     :use
     ((:instance
@@ -13350,7 +13349,6 @@
                      (:rewrite partial-collapse-correctness-lemma-96)
                      (:rewrite m1-file-alist-p-of-final-val-seq-lemma-2)
                      (:rewrite partial-collapse-correctness-lemma-114)
-                     (:rewrite member-of-take)
                      (:rewrite final-val-of-collapse-this-lemma-10)
                      (:rewrite no-duplicatesp-of-seq-this-lemma-1 . 2)
                      (:definition remove-equal)
