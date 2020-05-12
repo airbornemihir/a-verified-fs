@@ -1504,3 +1504,5 @@
 
 (defthm no-duplicatesp-of-remove-duplicates
   (no-duplicatesp-equal (remove-duplicates-equal l)))
+
+(defthm len-of-strip-cars (equal (len (strip-cars x)) (len x)))
