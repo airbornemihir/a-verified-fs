@@ -1477,3 +1477,28 @@
                      (set-difference-equal l1 (cdr l2)))))
     :hints (("goal" :use (lemma-1 lemma-2)))
     :rule-classes :definition))
+
+(defthm len-of-remove-when-member-1
+  (implies (member-equal x l)
+           (< (len (remove-equal x l)) (len l)))
+  :rule-classes :linear)
+
+(defthm
+  len-of-set-difference-when-subsetp
+  (implies (and (subsetp-equal x y)
+                (no-duplicatesp-equal x))
+           (<= (+ (len x)
+                  (len (set-difference-equal y x)))
+               (len y)))
+  :hints
+  (("goal"
+    :in-theory (e/d (set-difference$-redefinition subsetp-equal)
+                    (set-difference-equal))))
+  :rule-classes :linear)
+
+(defthm member-of-remove-duplicates
+  (iff (member-equal x (remove-duplicates-equal lst))
+       (member-equal x lst)))
+
+(defthm no-duplicatesp-of-remove-duplicates
+  (no-duplicatesp-equal (remove-duplicates-equal l)))
