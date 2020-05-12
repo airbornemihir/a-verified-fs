@@ -1231,8 +1231,7 @@
                           l)))
 
 (defthm position-equal-ac-of-nthcdr
-  (implies (and (integerp ac)
-                (not (member-equal item (take n lst))))
+  (implies (not (member-equal item (take n lst)))
            (equal (position-equal-ac item (nthcdr n lst)
                                      ac)
                   (position-equal-ac item lst (- ac (nfix n))))))
@@ -1262,17 +1261,20 @@
 
 (defthmd nth-of-position-equal-ac
   (implies (member-equal item lst)
-           (equal (nth (- (position-equal-ac item lst acc)
-                          (fix acc))
+           (equal (nth (- (position-equal-ac item lst acc) acc)
                        lst)
                   item)))
 
 (defthm position-equal-ac-of-nth
   (implies (and (no-duplicatesp-equal l)
-                (integerp acc)
                 (< (nfix n) (len l)))
            (equal (position-equal-ac (nth n l) l acc)
-                  (+ acc (nfix n)))))
+                  (+ acc (nfix n))))
+  :hints (("goal" :induct (mv (position-equal-ac (nth n l) l acc)
+                              (nth n l))
+           :in-theory (disable member-equal-nth))
+          ("subgoal *1/2" :use (:instance member-equal-nth (l (cdr l))
+                                          (n (+ -1 n))))))
 
 (defthm position-equal-ac-of-take
   (implies (and (member-equal item (take n l))
