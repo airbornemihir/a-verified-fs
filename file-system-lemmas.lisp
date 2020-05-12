@@ -1431,9 +1431,10 @@
            (no-duplicatesp-equal (take n l))))
 
 (defthm member-equal-nth-take-when-no-duplicatesp
-  (implies (and (< (nfix n) (len l))
+  (implies (and (equal x (nth n l))
+                (< (nfix n) (len l))
                 (no-duplicatesp-equal l))
-           (not (member-equal (nth n l) (take n l)))))
+           (not (member-equal x (take n l)))))
 
 (defthmd subsetp-when-atom-set-difference$
   (iff (consp (set-difference-equal l1 l2))

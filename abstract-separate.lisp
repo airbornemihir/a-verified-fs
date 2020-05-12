@@ -12615,7 +12615,8 @@
     :in-theory (disable (:rewrite member-equal-nth-take-when-no-duplicatesp))
     :use (:instance (:rewrite member-equal-nth-take-when-no-duplicatesp)
                     (l (seq-this (collapse-this frame x)))
-                    (n (+ -1 n))))))
+                    (n (+ -1 n))
+                    (x (nth (+ -1 n) (seq-this (collapse-this frame x))))))))
 
 (defthm
   partial-collapse-correctness-lemma-151
@@ -12713,25 +12714,17 @@
                              0
                              (take (binary-+ -1 n)
                                    (seq-this (collapse-this frame x)))))))
-  :instructions
-  (:promote
-   (:dive 1 1)
-   := :top (:dive 1)
-   (:claim
-    (and (not (member-equal (nth (+ -1 n)
-                                 (seq-this (collapse-this frame x)))
-                            (take (+ -1 n)
-                                  (seq-this (collapse-this frame x))))))
-    :hints :none)
-   (:rewrite (:rewrite subsetp-of-frame-addrs-before-seq . 2))
-   (:dive 1)
-   (:claim (and (< (nfix (+ -1 n))
-                   (len (seq-this (collapse-this frame x))))
-                (no-duplicatesp-equal (seq-this (collapse-this frame x)))))
-   (:rewrite member-equal-nth-take-when-no-duplicatesp)))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable (:rewrite member-equal-nth-take-when-no-duplicatesp))
+    :use (:instance (:rewrite member-equal-nth-take-when-no-duplicatesp)
+                    (x (nth (+ -1 n) (seq-this (collapse-this frame x))))
+                    (l (seq-this (collapse-this frame x)))
+                    (n (+ -1 n))))))
 
 (defthm
-  partial-collapse-correctness-lemma-156
+  partial-collapse-correctness-lemma-115
   (implies
    (and
     (ctx-app-ok
@@ -13263,10 +13256,11 @@
     :in-theory (disable (:rewrite member-equal-nth-take-when-no-duplicatesp))
     :use (:instance (:rewrite member-equal-nth-take-when-no-duplicatesp)
                     (l (seq-this (collapse-this frame x)))
-                    (n (+ -1 n))))))
+                    (n (+ -1 n))
+                    (x (nth (+ -1 n) (seq-this (collapse-this frame x))))))))
 
 (defthm
-  partial-collapse-correctness-lemma-169
+  partial-collapse-correctness-lemma-116
   (implies
    (and
     (equal
