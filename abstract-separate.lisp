@@ -13632,23 +13632,41 @@
                     (x (1st-complete-under-pathname (frame->frame frame)
                                                     pathname))))))
 
-(defthm partial-collapse-correctness-1
+(defund collapse-equiv (frame1 frame2)
+  (b* (((mv root1 result1) (collapse frame1))
+       ((mv root2 result2) (collapse frame2)))
+    (or (not (or result1 result2))
+        (and result1
+             result2 (absfat-equiv root1 root2)))))
+
+(defequiv collapse-equiv
+  :hints (("goal" :in-theory (enable collapse-equiv))))
+
+(defthm
+  partial-collapse-correctness-1
   (implies
-   (and
-    (frame-p (frame->frame frame))
-    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-    (subsetp (abs-addrs (frame->root frame))
-             (frame-addrs-root (frame->frame frame)))
-    (abs-separate (frame-with-root (frame->root frame)
-                                   (frame->frame frame)))
-    ;; The above 4 hypotheses seem reasonable since they're shared with
-    ;; abs-separate-correctness-1.
-    (mv-nth 1 (collapse frame)))
-   (absfat-equiv
-    (b*
-        ((frame (partial-collapse frame pathname))
-         ((mv root &) (collapse frame)))
-      root)
-    (mv-nth 0 (collapse frame))))
-  :hints (("Goal" :in-theory (enable partial-collapse)
-           :induct (PARTIAL-COLLAPSE FRAME PATHNAME)) ))
+   (and (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (abs-separate (frame-with-root (frame->root frame)
+                                       (frame->frame frame)))
+        (mv-nth 1 (collapse frame)))
+   (and (absfat-equiv (mv-nth 0
+                              (collapse (partial-collapse frame pathname)))
+                      (mv-nth 0 (collapse frame)))
+        (iff (mv-nth 1
+                     (collapse (partial-collapse frame pathname)))
+             (mv-nth 1 (collapse frame)))))
+  :hints (("goal" :in-theory (enable partial-collapse)
+           :induct (partial-collapse frame pathname)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (frame-p (frame->frame frame))
+                  (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                  (abs-separate (frame-with-root (frame->root frame)
+                                                 (frame->frame frame)))
+                  (mv-nth 1 (collapse frame)))
+             (collapse-equiv (partial-collapse frame pathname)
+                             frame))
+    :hints (("goal" :in-theory (enable collapse-equiv))))))
