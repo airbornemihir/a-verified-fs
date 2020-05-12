@@ -7860,6 +7860,20 @@
   :hints (("goal" :in-theory (enable frame-addrs-before-seq
                                      intersectp-equal))))
 
+(defthm
+  frame-addrs-before-seq-of-collapse-this
+  (implies
+   (and
+    (not (zp x))
+    (not (equal x
+                (frame-val->src (cdr (assoc-equal y (frame->frame frame)))))))
+   (equal (frame-addrs-before-seq (collapse-this frame y)
+                                  x seq)
+          (frame-addrs-before-seq frame x seq)))
+  :hints
+  (("goal" :in-theory (enable frame-addrs-before-seq)
+    :induct (frame-addrs-before-seq frame x seq))))
+
 (defund
   ctx-app-list (fs relpath frame l)
   (b*
@@ -8472,6 +8486,42 @@
                                              ABS-ADDRS-OF-CTX-APP-1-LEMMA-7)
                            (set-difference-equal))
     :induct (ctx-app-list-seq fs relpath frame l seq))))
+
+;; This could potentially get really expensive if it's a rewrite rule..
+(defthm
+  ctx-app-ok-of-ctx-app-list-seq-lemma-1
+  (implies (and (valid-seqp frame seq)
+                (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+           (and (subsetp-equal seq (strip-cars (frame->frame frame)))
+                (no-duplicatesp-equal seq)
+                (not (member-equal (car seq) (cdr seq)))))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
+           :induct (collapse-seq frame seq)))
+  :rule-classes
+  (:forward-chaining
+   (:rewrite
+    :corollary
+    (implies (and (valid-seqp frame seq)
+                  (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+             (subsetp-equal seq
+                            (strip-cars (frame->frame frame)))))))
+
+(defthm
+  ctx-app-ok-of-ctx-app-list-seq
+  (implies (and (not (member-equal x l))
+                (mv-nth 1
+                        (ctx-app-list-seq fs relpath frame l seq))
+                (nat-listp l)
+                (nat-listp seq)
+                (valid-seqp frame seq)
+                (subsetp-equal l seq)
+                (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+           (iff (ctx-app-ok (mv-nth 0
+                                    (ctx-app-list-seq fs relpath frame l seq))
+                            x x-path)
+                (ctx-app-ok fs x x-path)))
+  :hints (("goal" :in-theory (enable ctx-app-list-seq)
+           :induct (ctx-app-list-seq fs relpath frame l seq))))
 
 (defund
   seq-this
@@ -10349,40 +10399,7 @@
                   (ctx-app-list-seq fs relpath frame l seq)))
   :hints (("goal" :in-theory (enable ctx-app-list-seq))))
 
-;; This could potentially get really expensive if it's a rewrite rule..
-(defthm
-  partial-collapse-correctness-lemma-59
-  (implies (and (valid-seqp frame seq)
-                (no-duplicatesp-equal (strip-cars (frame->frame frame))))
-           (and (subsetp-equal seq (strip-cars (frame->frame frame)))
-                (no-duplicatesp-equal seq)
-                (not (member-equal (car seq) (cdr seq)))))
-  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
-           :induct (collapse-seq frame seq)))
-  :rule-classes
-  (:forward-chaining
-   (:rewrite
-    :corollary
-    (implies (and (valid-seqp frame seq)
-                  (no-duplicatesp-equal (strip-cars (frame->frame frame))))
-             (subsetp-equal seq
-                            (strip-cars (frame->frame frame)))))))
-
-(defthm
-  partial-collapse-correctness-lemma-61
-  (implies
-   (and
-    (not (zp x))
-    (not (equal x
-                (frame-val->src (cdr (assoc-equal y (frame->frame frame)))))))
-   (equal (frame-addrs-before-seq (collapse-this frame y)
-                                  x seq)
-          (frame-addrs-before-seq frame x seq)))
-  :hints
-  (("goal" :in-theory (enable frame-addrs-before-seq)
-    :induct (frame-addrs-before-seq frame x seq))))
-
-(defthm partial-collapse-correctness-lemma-70
+(defthm partial-collapse-correctness-lemma-59
   (implies (and (consp (assoc-equal x (frame->frame frame)))
                 (frame-p (frame->frame frame)))
            (natp x))
@@ -10588,58 +10605,57 @@
                                                 (frame->frame frame))))
               seq)))))
 
-(encapsulate
-  ()
-
-  (local
-   (in-theory (e/d (collapse-seq frame-addrs-before-seq
-                                 ctx-app-list-seq collapse)
-                   ((:definition no-duplicatesp-equal)
-                    (:definition member-equal)
-                    (:rewrite nthcdr-when->=-n-len-l)
-                    (:definition remove-assoc-equal)
-                    (:definition nthcdr)
-                    (:definition len)))))
-
-  (defthm
-    partial-collapse-correctness-lemma-105
-    (implies
-     (and (abs-separate (frame->frame frame))
-          (frame-p (frame->frame frame))
-          (consp (assoc-equal x
-                              (frame->frame (collapse-seq frame seq))))
-          (valid-seqp frame seq)
-          (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-          ;; This hypothesis occurs in a few theorems in order to make sure the
-          ;; position function works correctly.
-          (nat-listp seq))
-     (and
-      (equal
-       (frame-val->dir
-        (cdr (assoc-equal x
-                          (frame->frame (collapse-seq frame seq)))))
-       (mv-nth 0
-               (ctx-app-list-seq
-                (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
-                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))
-                frame
-                (frame-addrs-before-seq frame x seq)
-                seq)))
-      (mv-nth 1
-              (ctx-app-list-seq
-               (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
-               (frame-val->path (cdr (assoc-equal x (frame->frame frame))))
-               frame
-               (frame-addrs-before-seq frame x seq)
-               seq))))
-    :hints (("goal" :induct (collapse-seq frame seq))
-            ("subgoal *1/6.6''"
-             :in-theory (enable partial-collapse-correctness-lemma-71))
-            ("subgoal *1/6.4''"
-             :in-theory (enable partial-collapse-correctness-lemma-71)))))
+(defthm
+  partial-collapse-correctness-lemma-61
+  (implies
+   (and (abs-separate (frame->frame frame))
+        (frame-p (frame->frame frame))
+        (consp (assoc-equal x
+                            (frame->frame (collapse-seq frame seq))))
+        (valid-seqp frame seq)
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (nat-listp seq))
+   (and
+    (equal
+     (frame-val->dir
+      (cdr (assoc-equal x
+                        (frame->frame (collapse-seq frame seq)))))
+     (mv-nth 0
+             (ctx-app-list-seq
+              (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+              (frame-val->path (cdr (assoc-equal x (frame->frame frame))))
+              frame
+              (frame-addrs-before-seq frame x seq)
+              seq)))
+    (mv-nth 1
+            (ctx-app-list-seq
+             (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+             (frame-val->path (cdr (assoc-equal x (frame->frame frame))))
+             frame
+             (frame-addrs-before-seq frame x seq)
+             seq))))
+  :hints
+  (("goal"
+    :in-theory (e/d (collapse-seq frame-addrs-before-seq
+                                  ctx-app-list-seq collapse)
+                    ((:definition no-duplicatesp-equal)
+                     (:definition member-equal)
+                     (:rewrite nthcdr-when->=-n-len-l)
+                     (:definition remove-assoc-equal)
+                     (:definition nthcdr)
+                     (:definition len)))
+    :induct (collapse-seq frame seq)
+    :expand
+    (:with
+     partial-collapse-correctness-lemma-71
+     (frame-addrs-before-seq
+      (collapse-this frame (car seq))
+      (frame-val->src$inline (cdr (assoc-equal (car seq)
+                                               (frame->frame frame))))
+      (cdr seq))))))
 
 (defthm
-  partial-collapse-correctness-lemma-73
+  partial-collapse-correctness-lemma-70
   (implies
    (and (subsetp-equal seq (strip-cars (frame->frame frame)))
         (frame-p (frame->frame frame)))
@@ -10977,11 +10993,11 @@
                        (+ (len (frame->frame frame))
                           (- (len seq))))))
   :hints (("goal" :in-theory (e/d (valid-seqp)
-                                  (partial-collapse-correctness-lemma-59))
-           :use partial-collapse-correctness-lemma-59)))
+                                  (ctx-app-ok-of-ctx-app-list-seq-lemma-1))
+           :use ctx-app-ok-of-ctx-app-list-seq-lemma-1)))
 
 (defthmd
-  partial-collapse-correctness-lemma-95
+  partial-collapse-correctness-lemma-73
   (implies
    (and
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
@@ -11028,7 +11044,7 @@
               (car seq))))
      :hints
      (("goal" :in-theory (e/d (valid-seqp collapse-seq))
-       :use partial-collapse-correctness-lemma-95))))
+       :use partial-collapse-correctness-lemma-73))))
 
   (local
    (defthm
@@ -11075,7 +11091,7 @@
               (car seq))))
      :hints
      (("goal" :in-theory (e/d (valid-seqp collapse-seq))
-       :use (:rewrite partial-collapse-correctness-lemma-95)))))
+       :use (:rewrite partial-collapse-correctness-lemma-73)))))
 
   (defthm
     partial-collapse-correctness-lemma-87
@@ -12119,7 +12135,10 @@
        :do-not-induct t
        :in-theory (e/d (frame-addrs-before-seq ctx-app-list-seq ctx-app-list)
                        ((:rewrite binary-append-take-nthcdr)
-                        (:rewrite frame-addrs-before-seq-of-append)))
+                        (:rewrite frame-addrs-before-seq-of-append)
+                        (:rewrite member-equal-nth-take-when-no-duplicatesp)
+                        (:rewrite ctx-app-ok-of-ctx-app-list-seq)
+                        ctx-app-ok-of-ctx-app-list-seq-lemma-1))
        :use ((:instance (:rewrite binary-append-take-nthcdr)
                         (l (take n seq))
                         (i (+ -1 n)))
@@ -12172,7 +12191,10 @@
         :do-not-induct t
         :in-theory (e/d (frame-addrs-before-seq ctx-app-list-seq ctx-app-list)
                         ((:rewrite binary-append-take-nthcdr)
-                         (:rewrite frame-addrs-before-seq-of-append)))
+                         (:rewrite frame-addrs-before-seq-of-append)
+                         (:rewrite member-equal-nth-take-when-no-duplicatesp)
+                         (:rewrite ctx-app-ok-of-ctx-app-list-seq)
+                         ctx-app-ok-of-ctx-app-list-seq-lemma-1))
         :use ((:instance (:rewrite binary-append-take-nthcdr)
                          (l (take n seq))
                          (i (+ -1 n)))
@@ -12189,8 +12211,11 @@
       (:dive 1 2 4)
       :=
       :up (:rewrite ctx-app-list-of-append)
-      :top (:bash ("goal" :in-theory (enable frame-addrs-before-seq
-                                             ctx-app-list-seq ctx-app-list)
+      :top (:bash ("goal" :in-theory (e/d (frame-addrs-before-seq
+                                           ctx-app-list-seq ctx-app-list)
+                                          ((:rewrite member-equal-nth-take-when-no-duplicatesp)
+                                           (:rewrite ctx-app-ok-of-ctx-app-list-seq)
+                                           ctx-app-ok-of-ctx-app-list-seq-lemma-1))
                    :use (:instance (:rewrite take-of-nthcdr)
                                    (l seq)
                                    (n2 (+ -1 n))
@@ -12505,7 +12530,7 @@
                             (:rewrite final-val-of-collapse-this-lemma-7)
                             (:rewrite abs-addrs-of-ctx-app-2)
                             (:definition nthcdr)
-                            (:rewrite partial-collapse-correctness-lemma-105)))
+                            (:rewrite partial-collapse-correctness-lemma-61)))
     :do-not-induct t
     :expand (collapse-iter (collapse-this frame x)
                            1)))
@@ -12618,23 +12643,6 @@
                     (n (+ -1 n))
                     (x (nth (+ -1 n) (seq-this (collapse-this frame x))))))))
 
-(defthm
-  partial-collapse-correctness-lemma-151
-  (implies (and (not (member-equal x2 l))
-                (mv-nth 1
-                        (ctx-app-list-seq fs relpath frame l seq))
-                (nat-listp l)
-                (nat-listp seq)
-                (valid-seqp frame seq)
-                (subsetp-equal l seq)
-                (no-duplicatesp-equal (strip-cars (frame->frame frame))))
-           (iff (ctx-app-ok (mv-nth 0
-                                    (ctx-app-list-seq fs relpath frame l seq))
-                            x2 x2-path)
-                (ctx-app-ok fs x2 x2-path)))
-  :hints (("goal" :in-theory (enable ctx-app-list-seq)
-           :induct (ctx-app-list-seq fs relpath frame l seq))))
-
 (defthmd
   partial-collapse-correctness-lemma-152
   (implies (and (not (member-equal x2
@@ -12698,8 +12706,8 @@
      x2 x2-path)
     (ctx-app-ok (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
                 x2 x2-path)))
-  :hints (("goal" :in-theory (disable partial-collapse-correctness-lemma-105)
-           :use partial-collapse-correctness-lemma-105)))
+  :hints (("goal" :in-theory (disable partial-collapse-correctness-lemma-61)
+           :use partial-collapse-correctness-lemma-61)))
 
 (defthm
   partial-collapse-correctness-lemma-155
@@ -13025,7 +13033,7 @@
                            ((:rewrite partial-collapse-correctness-lemma-161)
                             collapse-seq-of-collapse-seq
                             take set-difference-equal
-                            partial-collapse-correctness-lemma-105
+                            partial-collapse-correctness-lemma-61
                             (:definition member-equal)
                             (:rewrite partial-collapse-correctness-lemma-40)
                             (:definition assoc-equal)
@@ -13097,7 +13105,7 @@
                     ((:rewrite partial-collapse-correctness-lemma-154)
                      collapse-seq-of-collapse-seq
                      take set-difference-equal
-                     partial-collapse-correctness-lemma-105
+                     partial-collapse-correctness-lemma-61
                      (:definition member-equal)
                      (:rewrite partial-collapse-correctness-lemma-40)
                      (:definition assoc-equal)
@@ -13180,7 +13188,7 @@
                                 partial-collapse-correctness-lemma-152)
                     (collapse-seq-of-collapse-seq
                      take set-difference-equal
-                     partial-collapse-correctness-lemma-105
+                     partial-collapse-correctness-lemma-61
                      (:definition member-equal)
                      (:rewrite partial-collapse-correctness-lemma-40)
                      (:definition assoc-equal)
@@ -13399,7 +13407,7 @@
                                 partial-collapse-correctness-lemma-152)
                     (collapse-seq-of-collapse-seq
                      take set-difference-equal
-                     partial-collapse-correctness-lemma-105
+                     partial-collapse-correctness-lemma-61
                      (:definition member-equal)
                      (:rewrite partial-collapse-correctness-lemma-40)
                      (:definition assoc-equal)
