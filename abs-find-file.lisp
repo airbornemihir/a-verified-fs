@@ -15,7 +15,8 @@
                      (:rewrite take-fewer-of-take-more)
                      (:rewrite take-when-atom)
                      (:rewrite take-of-take-split)
-                     (:rewrite take-more-of-take-fewer))))
+                     (:rewrite take-more-of-take-fewer)
+                     (:rewrite remove-assoc-of-put-assoc))))
 
 (local
  (in-theory
@@ -34,7 +35,25 @@
    (:rewrite absfat-equiv-of-ctx-app-lemma-8)
    (:rewrite abs-addrs-of-ctx-app-2-lemma-8)
    (:rewrite abs-separate-correctness-1-lemma-19)
-   (:rewrite abs-separate-correctness-1-lemma-38))))
+   (:rewrite abs-separate-correctness-1-lemma-38)
+   (:rewrite final-val-of-collapse-this-lemma-7)
+   (:rewrite
+    partial-collapse-correctness-lemma-20)
+   (:rewrite
+    final-val-of-collapse-this-lemma-6 . 1)
+   (:rewrite m1-file-alist-p-when-subsetp-equal)
+   (:rewrite
+    m1-file-alist-p-of-final-val-seq-lemma-3)
+   (:rewrite final-val-of-collapse-this-lemma-2)
+   (:rewrite collapse-congruence-lemma-5)
+   (:rewrite
+    abs-file-alist-p-correctness-1-lemma-1)
+   (:rewrite
+    abs-find-file-helper-of-collapse-lemma-3)
+   (:rewrite
+    partial-collapse-correctness-lemma-106)
+   (:rewrite
+    abs-fs-fix-of-put-assoc-equal-lemma-2))))
 
 (defund abs-find-file-helper (fs pathname)
   (declare (xargs :guard (and (abs-file-alist-p fs)
