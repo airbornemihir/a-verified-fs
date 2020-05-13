@@ -31,7 +31,6 @@
    (:rewrite absfat-subsetp-transitivity-lemma-8)
    (:rewrite collapse-congruence-lemma-2)
    (:rewrite absfat-equiv-of-ctx-app-lemma-8)
-   (:rewrite abs-addrs-of-ctx-app-2-lemma-8)
    (:rewrite abs-separate-correctness-1-lemma-19)
    (:rewrite abs-separate-correctness-1-lemma-38)
    (:rewrite final-val-of-collapse-this-lemma-7)

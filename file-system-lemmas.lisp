@@ -946,9 +946,12 @@
          (remove-equal x (strip-cars alist))))
 
 (defthm strip-cars-of-put-assoc
-  (implies (consp (assoc-equal name alist))
+  (implies (case-split (not (null name)))
            (equal (strip-cars (put-assoc-equal name val alist))
-                  (strip-cars alist))))
+                  (if (consp (assoc-equal name alist))
+                      (strip-cars alist)
+                      (append (strip-cars alist)
+                              (list name))))))
 
 (defthm remove-when-absent
   (implies (not (member-equal x l))
@@ -1507,3 +1510,9 @@
   (no-duplicatesp-equal (remove-duplicates-equal l)))
 
 (defthm len-of-strip-cars (equal (len (strip-cars x)) (len x)))
+
+(defthm consp-of-last (iff (consp (last l)) (consp l)))
+
+(defthm member-of-car-of-last
+  (implies (consp x)
+           (member-equal (car (last x)) x)))

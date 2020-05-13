@@ -51,69 +51,6 @@
      head-error-code)))
 
 ;; Move later.
-(defthm fat32-filename-p-of-car-of-last-when-fat32-filename-list-p
-  (implies (and (fat32-filename-list-p x)
-                (consp (last x)))
-           (fat32-filename-p (car (last x)))))
-(defthm consp-of-last (iff (consp (last l)) (consp l)))
-(defthm
-  abs-addrs-of-put-assoc-2
-  (implies
-   (and (m1-regular-file-p val)
-        (abs-file-alist-p abs-file-alist)
-        (abs-no-dups-p abs-file-alist)
-        (fat32-filename-p name))
-   (set-equiv (abs-addrs (put-assoc-equal name val abs-file-alist))
-              (abs-addrs (remove-assoc-equal name abs-file-alist))))
-  :hints
-  (("goal"
-    :in-theory (e/d (abs-addrs)
-                    ((:rewrite commutativity-2-of-append-under-set-equiv)))
-    :induct (mv (remove-assoc-equal name abs-file-alist)
-                (put-assoc-equal name val abs-file-alist)))))
-(defthm
-  no-duplicatesp-of-abs-addrs-of-put-assoc-2
-  (implies
-   (and (m1-regular-file-p val)
-        (abs-no-dups-p abs-file-alist)
-        (abs-file-alist-p abs-file-alist)
-        (fat32-filename-p name))
-   (equal
-    (no-duplicatesp-equal
-     (abs-addrs (put-assoc-equal name val abs-file-alist)))
-    (no-duplicatesp-equal
-     (abs-addrs (remove-assoc-equal name abs-file-alist)))))
-  :hints (("goal" :in-theory (e/d (abs-addrs intersectp-equal
-                                             no-duplicatesp-of-abs-addrs-of-put-assoc-lemma-1)))))
-(defthm
-  no-duplicatesp-of-abs-addrs-of-remove-assoc
-  (implies
-   (and (abs-no-dups-p abs-file-alist)
-        (abs-file-alist-p abs-file-alist)
-        (fat32-filename-p name)
-        (no-duplicatesp-equal
-         (abs-addrs abs-file-alist)))
-    (no-duplicatesp-equal
-     (abs-addrs (remove-assoc-equal name abs-file-alist))))
-  :hints (("goal" :in-theory (e/d (abs-addrs intersectp-equal
-                                             no-duplicatesp-of-abs-addrs-of-put-assoc-lemma-1)))))
-(defthm strip-cars-of-put-assoc-alt
-  (implies (case-split (not (null name)))
-           (equal (strip-cars (put-assoc-equal name val alist))
-                  (if (consp (assoc-equal name alist))
-                      (strip-cars alist)
-                      (append (strip-cars alist)
-                              (list name))))))
-(defthm names-at-of-put-assoc
-  (implies (and (abs-fs-p dir)
-                (fat32-filename-p name)
-                (not (member-equal name (names-at dir nil))))
-           (equal (names-at (put-assoc-equal name file dir)
-                            nil)
-                  (append (names-at dir nil)
-                          (list name))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable names-at))))
 (defthm intersectp-of-cons-2
   (iff (intersectp-equal x1 (cons x2 y))
        (or (member-equal x2 x1)
@@ -122,34 +59,6 @@
                                   (intersectp-is-commutative))
            :expand (:with intersectp-is-commutative
                           (intersectp-equal x1 (cons x2 y))))))
-(defthm hifat-no-dups-p-when-abs-complete
-  (implies (and (abs-no-dups-p dir)
-                (abs-complete dir))
-           (hifat-no-dups-p dir))
-  :hints (("goal" :in-theory (enable abs-addrs
-                                     abs-no-dups-p hifat-no-dups-p))))
-(defthm
-  names-at-of-put-assoc-alt
-  (implies (and (abs-fs-p fs)
-                (fat32-filename-p name))
-           (equal (names-at (put-assoc-equal name val fs)
-                            relpath)
-                  (cond ((and (atom relpath)
-                              (atom (assoc-equal name fs)))
-                         (append (names-at fs relpath)
-                                 (list name)))
-                        ((and (consp relpath)
-                              (equal (fat32-filename-fix (car relpath))
-                                     name)
-                              (abs-directory-file-p (abs-file-fix val)))
-                         (names-at (abs-file->contents val)
-                                   (cdr relpath)))
-                        ((and (consp relpath)
-                              (equal (fat32-filename-fix (car relpath))
-                                     name))
-                         nil)
-                        (t (names-at fs relpath)))))
-  :hints (("goal" :in-theory (enable names-at))))
 
 (defund
   pathname-clear (pathname frame)
@@ -182,10 +91,9 @@
                   pathname)))))))
 
 (defthm
-  dist-names-of-put-assoc-when-pathname-clear
+  dist-names-when-pathname-clear
   (implies (pathname-clear pathname frame)
-           (dist-names (put-assoc-equal name val dir)
-                       pathname frame))
+           (dist-names dir pathname frame))
   :hints (("goal" :in-theory (enable dist-names
                                      pathname-clear prefixp intersectp-equal)
            :induct (pathname-clear pathname frame)
