@@ -21,6 +21,9 @@
                      ;; functions and stuff.
                      position)))
 
+(local
+ (in-theory (disable nat-listp-if-fat32-masked-entry-list-p)))
+
 (defthm abs-find-file-helper-of-collapse-lemma-3
   (implies (prefixp (fat32-filename-list-fix x) y)
            (prefixp (fat32-filename-list-fix x)
@@ -1808,22 +1811,7 @@
         (abs-file->contents$inline (cdr (car abs-file-alist1))))))))))
 
 (defthm
-  abs-addrs-of-ctx-app-2-lemma-12
-  (implies
-   (and (abs-directory-file-p (cdr (car abs-file-alist1)))
-        (not (intersectp-equal
-              (abs-addrs (remove-assoc-equal (car (car abs-file-alist1))
-                                             (cdr abs-file-alist1)))
-              (abs-addrs abs-file-alist2)))
-        (abs-no-dups-p abs-file-alist1)
-        (abs-file-alist-p abs-file-alist1))
-   (not (intersectp-equal (abs-addrs abs-file-alist2)
-                          (abs-addrs (cdr abs-file-alist1)))))
-  :hints (("goal" :expand ((abs-no-dups-p abs-file-alist1)
-                           (abs-file-alist-p abs-file-alist1)))))
-
-(defthm
-  abs-addrs-of-ctx-app-2-lemma-2
+  abs-addrs-of-ctx-app-lemma-12
   (implies
    (and
     (not
@@ -2130,7 +2118,7 @@
                :val-type frame-val
                :true-listp t)
 
-(defthm nat-listp-of-strip-cars-when-frame-p
+(defthmd nat-listp-of-strip-cars-when-frame-p
   (implies (frame-p frame)
            (nat-listp (strip-cars frame))))
 
@@ -7741,13 +7729,13 @@
              (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
              (:linear count-free-clusters-correctness-1)
              (:rewrite final-val-of-collapse-this-lemma-6
-                       . 2)
-             (:rewrite nat-listp-of-strip-cars-when-frame-p)))
+                       . 2)))
        :use (:instance
              (:rewrite final-val-of-collapse-this-lemma-14)
              (x x)
              (n 1)
              (frame frame))))))
+
   (defthm
     final-val-of-collapse-this-1
     (implies
@@ -8095,18 +8083,7 @@
            (equal (addrs-at fs relpath) nil))
   :hints (("goal" :in-theory (enable addrs-at names-at))))
 
-(defthm
-  ctx-app-list-when-set-equiv-lemma-2
-  (implies
-   (and (not (member-equal (fat32-filename-fix (nth n x-path))
-                           (names-at abs-file-alist1 (take n x-path))))
-        (< (nfix n) (len x-path)))
-   (equal (ctx-app-ok abs-file-alist1 x x-path)
-          nil))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable ctx-app-ok))))
-
-(defthmd ctx-app-list-when-set-equiv-lemma-3
+(defthmd ctx-app-list-when-set-equiv-lemma-2
   (implies (and (< (nfix n) (len relpath))
                 (not (member-equal (fat32-filename-fix (nth n relpath))
                                    (names-at fs (take n relpath)))))
@@ -8123,7 +8100,7 @@
   ()
 
   (local
-   (defthm lemma (equal (+ x (- x) y) (fix y))))
+   (defthm lemma-1 (equal (+ x (- x) y) (fix y))))
 
   (defthm
     ctx-app-list-when-set-equiv-lemma-5
@@ -8167,7 +8144,7 @@
       :in-theory (e/d (take-of-nthcdr))
       :use
       (:instance
-       (:rewrite ctx-app-list-when-set-equiv-lemma-3)
+       (:rewrite ctx-app-list-when-set-equiv-lemma-2)
        (relpath
         (nthcdr (len relpath)
                 (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
@@ -8274,6 +8251,18 @@
                 (ctx-app-list fs relpath
                               frame (remove-equal x (cdr l)))))))))
 
+  (local
+   (defthmd
+     lemma-2
+     (implies
+      (and (not (member-equal (fat32-filename-fix (nth n x-path))
+                              (names-at abs-file-alist1 (take n x-path))))
+           (< (nfix n) (len x-path)))
+      (equal (ctx-app-ok abs-file-alist1 x x-path)
+             nil))
+     :hints (("goal" :do-not-induct t
+              :in-theory (enable ctx-app-ok)))))
+
   (defthm
     ctx-app-list-when-set-equiv-lemma-7
     (implies
@@ -8316,10 +8305,10 @@
     :hints
     (("goal"
       :in-theory (e/d (take-of-nthcdr)
-                      ((:rewrite ctx-app-list-when-set-equiv-lemma-2)))
+                      ())
       :use
       (:instance
-       (:rewrite ctx-app-list-when-set-equiv-lemma-2)
+       (:rewrite lemma-2)
        (x-path
         (nthcdr (len relpath)
                 (frame-val->path (cdr (assoc-equal (car l)
@@ -8510,7 +8499,7 @@
 
   (local (in-theory (enable ctx-app-list)))
 
-  (defthm
+  (defthmd
     ctx-app-list-when-set-equiv
     (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
                   (no-duplicatesp-equal l1)
@@ -9952,30 +9941,6 @@
 (defthm
   partial-collapse-correctness-lemma-25
   (implies
-   (and
-    (absfat-equiv
-     (frame-val->dir
-      (cdr
-       (assoc-equal
-        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                          (frame->frame frame))))
-        (frame->frame frame))))
-     dir)
-    (abs-fs-p dir))
-   (subsetp-equal
-    (abs-addrs dir)
-    (abs-addrs
-     (frame-val->dir
-      (cdr
-       (assoc-equal
-        (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                          (frame->frame frame))))
-        (frame->frame frame)))))))
-  :hints (("goal" :in-theory (enable absfat-equiv))))
-
-(defthm
-  partial-collapse-correctness-lemma-35
-  (implies
    (and (force (consp (assoc-equal x frame)))
         (abs-separate frame)
         (force (equal (assoc-equal x frame)
@@ -11149,8 +11114,8 @@
      (("goal" :in-theory (e/d (valid-seqp collapse-seq))
        :use (:rewrite partial-collapse-correctness-lemma-73)))))
 
-  (defthm
-    partial-collapse-correctness-lemma-87
+  (defthmd
+    partial-collapse-correctness-lemma-35
     (implies
      (and
       (nat-listp seq)
@@ -11272,10 +11237,8 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable
-                (:linear partial-collapse-correctness-lemma-87))
     :use (:instance
-          (:linear partial-collapse-correctness-lemma-87)
+          (:linear partial-collapse-correctness-lemma-35)
           (seq seq)
           (frame frame)
           (x (nth (+ -1 n)
@@ -11569,8 +11532,7 @@
   :hints
   (("goal"
     :in-theory (e/d (frame-addrs-before-seq ctx-app-list ctx-app-list-seq member-of-take)
-                    ((:rewrite ctx-app-list-when-set-equiv)
-                     (:definition member-equal)
+                    ((:definition member-equal)
                      (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
                      (:rewrite binary-append-take-nthcdr)))
     :use ((:instance (:rewrite binary-append-take-nthcdr)
@@ -11653,8 +11615,7 @@
   :hints
   (("goal"
     :in-theory (e/d (frame-addrs-before-seq ctx-app-list ctx-app-list-seq)
-                    ((:rewrite ctx-app-list-when-set-equiv)
-                     (:definition member-equal)
+                    ((:definition member-equal)
                      (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
                      (:rewrite binary-append-take-nthcdr)))
     :use ((:instance (:rewrite binary-append-take-nthcdr)
@@ -11772,8 +11733,7 @@
     :hints
     (("goal"
       :in-theory (e/d (frame-addrs-before-seq ctx-app-list ctx-app-list-seq)
-                      ((:rewrite ctx-app-list-when-set-equiv)
-                       (:definition member-equal)
+                      ((:definition member-equal)
                        (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)))
       :induct (dec-induct n))))
 
@@ -11814,7 +11774,7 @@
     (("goal"
       :do-not-induct t
       :in-theory (e/d (partial-collapse-correctness-lemma-62)
-                      ((:rewrite ctx-app-list-when-set-equiv)))
+                      ())
       :use
       (:instance
        (:rewrite ctx-app-list-when-set-equiv)
@@ -12154,8 +12114,7 @@
     :hints
     (("goal"
       :in-theory (e/d (frame-addrs-before-seq ctx-app-list ctx-app-list-seq)
-                      ((:rewrite ctx-app-list-when-set-equiv)
-                       (:definition member-equal)
+                      ((:definition member-equal)
                        (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)))
       :induct (dec-induct n))))
 
@@ -12301,12 +12260,11 @@
     :hints
     (("goal"
       :in-theory (e/d (frame-addrs-before-seq ctx-app-list ctx-app-list-seq)
-                      ((:rewrite ctx-app-list-when-set-equiv)
-                       (:definition member-equal)
+                      ((:definition member-equal)
                        (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)))
       :induct (dec-induct n)))))
 
-(defthm partial-collapse-correctness-lemma-134
+(defthm partial-collapse-correctness-lemma-44
   (implies (atom (frame->frame frame))
            (iff (valid-seqp frame seq) (atom seq)))
   :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
@@ -13689,7 +13647,6 @@
                 (y (strip-cars (frame->frame frame)))))
     :in-theory (e/d (collapse-seq)
                     (partial-collapse-correctness-lemma-117
-                     (:rewrite ctx-app-list-when-set-equiv)
                      (:rewrite collapse-seq-of-seq-this-is-collapse)
                      (:rewrite nthcdr-when->=-n-len-l)
                      (:rewrite
