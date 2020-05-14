@@ -692,6 +692,8 @@
            (abs-no-dups-p (remove-assoc-equal x fs)))
   :hints (("goal" :in-theory (enable abs-no-dups-p))))
 
+;; Potentially overlapping with abs-no-dups-p-when-m1-file-alist-p, which is
+;; actually more general.
 (defthm hifat-no-dups-p-when-abs-complete
   (implies (and (abs-no-dups-p dir)
                 (abs-complete dir))
@@ -5541,8 +5543,9 @@
                 (no-duplicatesp-equal (strip-cars (frame->frame frame)))
                 (subsetp (abs-addrs (frame->root frame))
                          (frame-addrs-root (frame->frame frame)))
-                (abs-separate (frame-with-root (frame->root frame)
-                                               (frame->frame frame))))
+                (case-split
+                 (abs-separate (frame-with-root (frame->root frame)
+                                                (frame->frame frame)))))
            (mv-let (fs result)
              (collapse frame)
              (implies (equal result t)
