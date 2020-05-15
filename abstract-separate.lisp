@@ -5543,9 +5543,8 @@
                 (no-duplicatesp-equal (strip-cars (frame->frame frame)))
                 (subsetp (abs-addrs (frame->root frame))
                          (frame-addrs-root (frame->frame frame)))
-                (case-split
-                 (abs-separate (frame-with-root (frame->root frame)
-                                                (frame->frame frame)))))
+                (abs-separate (frame-with-root (frame->root frame)
+                                               (frame->frame frame))))
            (mv-let (fs result)
              (collapse frame)
              (implies (equal result t)
