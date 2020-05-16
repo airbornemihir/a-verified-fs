@@ -8,6 +8,7 @@
 (include-book "std/io/read-ints" :dir :system)
 (local (include-book "ihs/logops-lemmas" :dir :system))
 (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+;; This book happens to non-locally disable intersectp.
 (include-book "kestrel/utilities/strings/top" :dir :system)
 (include-book "std/strings/case-conversion" :dir :system)
 
@@ -1483,7 +1484,7 @@
   ((:rewrite
     :corollary
     (implies
-     (m1-directory-file-p file)
+     (m1-directory-file-p (m1-file-fix file))
      (m1-file-alist-p (m1-file->contents file))))))
 
 (defthm
@@ -1964,30 +1965,20 @@
   :hints (("goal" :in-theory (enable hifat-place-file))))
 
 ;; Do not make this local, it's needed elsewhere.
-(defthm hifat-no-dups-p-of-put-assoc-equal-1
-  (implies
-   (and (m1-file-alist-p m1-file-alist)
-        (hifat-no-dups-p m1-file-alist)
-        (m1-regular-file-p file))
-   (hifat-no-dups-p (put-assoc-equal key file m1-file-alist)))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
-
-(defthm hifat-no-dups-p-of-put-assoc-equal-2
+(defthm hifat-no-dups-p-of-put-assoc
   (implies (and (m1-file-alist-p m1-file-alist)
                 (hifat-no-dups-p m1-file-alist)
-                (hifat-no-dups-p (m1-file->contents file)))
+                (or (m1-regular-file-p file)
+                    (hifat-no-dups-p (m1-file->contents file))))
            (hifat-no-dups-p (put-assoc-equal key file m1-file-alist)))
   :hints (("goal" :in-theory (enable hifat-no-dups-p))))
 
 (defthm
-  hifat-place-file-correctness-3
-  (implies
-   (m1-regular-file-p file)
-   (hifat-no-dups-p
-    (mv-nth 0
-            (hifat-place-file fs pathname file))))
-  :hints
-  (("goal" :in-theory (enable hifat-place-file))))
+  hifat-no-dups-p-of-hifat-place-file
+  (implies (or (hifat-no-dups-p (m1-file->contents file))
+               (m1-regular-file-p file))
+           (hifat-no-dups-p (mv-nth 0 (hifat-place-file fs pathname file))))
+  :hints (("goal" :in-theory (enable hifat-place-file))))
 
 (defund
   hifat-remove-file (fs pathname)

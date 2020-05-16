@@ -108,43 +108,97 @@
                   (1st-complete frame)))
   :hints (("goal" :in-theory (enable 1st-complete))))
 
-;; The folllowing is based on
-;; hifat-find-file-correctness-3-lemma-7.
-(skip-proofs
- (defthm
-   hifat-place-file-correctness-4
-   (implies
-    (hifat-equiv m1-file-alist2 m1-file-alist1)
+(defthm
+  hifat-subsetp-of-put-assoc-1
+  (implies
+   (and (m1-file-alist-p x)
+        (hifat-no-dups-p x)
+        (stringp name))
+   (equal
+    (hifat-subsetp (put-assoc-equal name val x)
+                   y)
     (and
-     (equal
-      (mv-nth 1
-              (hifat-place-file m1-file-alist2 pathname file))
-      (mv-nth 1
-              (hifat-place-file m1-file-alist1 pathname file)))
-     (hifat-equiv
-      (mv-nth 0
-              (hifat-place-file m1-file-alist2 pathname file))
-      (mv-nth 0
-              (hifat-place-file m1-file-alist1 pathname file)))))
-   :rule-classes
-   ((:congruence
-     :corollary
-     (implies
-      (hifat-equiv m1-file-alist2 m1-file-alist1)
-      (equal
-       (mv-nth 1
-               (hifat-place-file m1-file-alist2 pathname file))
-       (mv-nth 1
-               (hifat-place-file m1-file-alist1 pathname file)))))
-    (:congruence
-     :corollary
-     (implies
-      (hifat-equiv m1-file-alist2 m1-file-alist1)
-      (hifat-equiv
-       (mv-nth 0
-               (hifat-place-file m1-file-alist2 pathname file))
-       (mv-nth 0
-               (hifat-place-file m1-file-alist1 pathname file))))))))
+     (hifat-subsetp (remove-assoc-equal name x)
+                    y)
+     (consp (assoc-equal name y))
+     (or
+      (and (not (m1-directory-file-p (cdr (assoc-equal name y))))
+           (not (m1-directory-file-p val))
+           (equal (m1-file->contents val)
+                  (m1-file->contents (cdr (assoc-equal name y)))))
+      (and (m1-directory-file-p (cdr (assoc-equal name y)))
+           (m1-directory-file-p val)
+           (hifat-subsetp (m1-file->contents val)
+                          (m1-file->contents (cdr (assoc-equal name y)))))))))
+  :hints (("goal" :in-theory (enable hifat-subsetp)
+           :induct (mv (put-assoc-equal name val x)
+                       (remove-assoc-equal name x)))))
+
+(defthm hifat-subsetp-of-put-assoc-2
+  (implies (and (m1-file-alist-p x)
+                (hifat-subsetp x (remove-assoc-equal name y)))
+           (hifat-subsetp x (put-assoc-equal name val y)))
+  :hints (("goal" :in-theory (enable hifat-subsetp))))
+
+(defthm hifat-subsetp-of-remove-assoc-1
+  (implies (and (m1-file-alist-p x)
+                (atom (assoc-equal name x))
+                (hifat-subsetp x y))
+           (hifat-subsetp x (remove-assoc-equal name y)))
+  :hints (("goal" :in-theory (enable hifat-subsetp))))
+
+(defthm hifat-subsetp-of-remove-assoc-2
+  (implies (hifat-subsetp x y)
+           (hifat-subsetp (remove-assoc-equal name x)
+                          y))
+  :hints (("goal" :in-theory (enable hifat-subsetp))))
+
+(defthm
+  hifat-place-file-correctness-lemma-1
+  (implies (and (m1-file-alist-p x)
+                (m1-file-alist-p y)
+                (hifat-no-dups-p x)
+                (hifat-no-dups-p y)
+                (hifat-subsetp x y)
+                (hifat-subsetp y x)
+                (or (hifat-no-dups-p (m1-file->contents file))
+                    (m1-regular-file-p file)))
+           (and
+            (hifat-subsetp (mv-nth 0 (hifat-place-file y pathname file))
+                           (mv-nth 0 (hifat-place-file x pathname file)))
+            (equal (mv-nth 1 (hifat-place-file y pathname file))
+                   (mv-nth 1 (hifat-place-file x pathname file)))))
+  :hints (("goal" :in-theory (enable hifat-place-file hifat-subsetp))))
+
+;; This isn't a congruence rule, so it may have to be left disabled...
+(defthm
+  hifat-place-file-correctness-4
+  (implies
+   (and (hifat-equiv m1-file-alist2 m1-file-alist1)
+        (or (hifat-no-dups-p (m1-file->contents file))
+            (m1-regular-file-p file)))
+   (and
+    (equal (mv-nth 1
+                   (hifat-place-file m1-file-alist2 pathname file))
+           (mv-nth 1
+                   (hifat-place-file m1-file-alist1 pathname file)))
+    (hifat-equiv (mv-nth 0
+                         (hifat-place-file m1-file-alist2 pathname file))
+                 (mv-nth 0
+                         (hifat-place-file m1-file-alist1 pathname file)))))
+  :hints
+  (("goal" :in-theory (enable hifat-place-file hifat-equiv)
+    :use ((:instance (:rewrite hifat-place-file-correctness-lemma-1)
+                     (x (hifat-file-alist-fix m1-file-alist2))
+                     (file file)
+                     (pathname pathname)
+                     (y (hifat-file-alist-fix m1-file-alist1)))
+          (:instance (:rewrite hifat-place-file-correctness-lemma-1)
+                     (x (hifat-file-alist-fix m1-file-alist1))
+                     (file file)
+                     (pathname pathname)
+                     (y (hifat-file-alist-fix m1-file-alist2))))
+    :do-not-induct t)))
 
 ;; Probably tricky to get a refinement relationship (in the defrefinement
 ;; sense) between literally absfat-equiv and hifat-equiv. But we can still have
