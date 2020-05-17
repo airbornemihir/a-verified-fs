@@ -721,10 +721,7 @@
              (and (equal (mv-nth 0 (collapse frame1))
                          (mv-nth 0 (hifat-place-file (mv-nth 0 (collapse frame2)) pathname file)))
                   (equal (mv-nth 1 (collapse frame1))
-                         (mv-nth 1 (collapse frame2)))
-                  (equal (mv-nth 1 (hifat-place-file (mv-nth 0 (collapse frame2)) pathname file))
-                         (mv-nth 1 (hifat-place-file (frame->root frame2)
-                                                     pathname file)))))
+                         (mv-nth 1 (collapse frame2)))))
     :hints (("goal" :in-theory (enable collapse)
              :induct (induction-scheme frame1 frame2)
              :expand (collapse frame2))))))
@@ -750,15 +747,6 @@
       (hifat-place-file (mv-nth 0
                                 (collapse (frame-with-root root frame)))
                         pathname file)))
-    (equal
-     (mv-nth
-      1
-      (hifat-place-file (mv-nth 0
-                                (collapse (frame-with-root root frame)))
-                        pathname file))
-     (mv-nth 1
-             (hifat-place-file (abs-fs-fix root)
-                               pathname file)))
     (equal
      (mv-nth
       1
@@ -817,23 +805,6 @@
          (frame-val->path (cdr (assoc-equal x frame)))
          pathname)
         file)))
-     (equal
-      (mv-nth
-       1
-       (hifat-place-file
-        (mv-nth
-         0
-         (collapse
-          (frame-with-root
-           root
-           frame)))
-        (append
-         (frame-val->path (cdr (assoc-equal x frame)))
-         pathname)
-        file))
-      (mv-nth 1
-              (hifat-place-file (frame-val->dir (cdr (assoc-equal x frame)))
-                                pathname file)))
      (equal
       (mv-nth
        1
