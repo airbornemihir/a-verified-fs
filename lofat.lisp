@@ -12073,7 +12073,6 @@ Some (rather awful) testing forms are
       :in-theory
       (e/d
        (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4
-                              hifat-entry-count useful-dir-ent-list-p
                               lofat-remove-file-correctness-1-lemma-61
                               lofat-remove-file-correctness-1-lemma-37
                               lofat-remove-file-correctness-1-lemma-38)
