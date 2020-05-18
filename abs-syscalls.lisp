@@ -39,7 +39,7 @@
         (abs-find-file-helper
          (frame-val->dir (cdar frame))
          (nthcdr (len (frame-val->path (cdar frame)))
-                 (butlast 1 pathname))))
+                 (butlast pathname 1))))
        ((when (or (equal error-code *enoent*)
                   (not (abs-complete (frame-val->dir (cdar frame))))))
         (mv (list* (car frame) tail) tail-error-code))
@@ -826,12 +826,78 @@
          root
          frame))))))))
 
+(thm (implies
+      (and
+       (m1-file-alist-p fs)
+       (hifat-no-dups-p fs)
+       (fat32-filename-list-p pathname)
+       (m1-regular-file-p file)
+       (abs-fs-p dir)
+       (not (consp (abs-addrs dir)))
+       (pathname-clear nil frame)
+       (not (consp (names-at root nil)))
+       (abs-fs-p root)
+       (not (zp x))
+       (not (consp (assoc-equal 0 frame)))
+       (frame-p frame)
+       (not (consp (assoc-equal x frame)))
+       (no-duplicatesp-equal (strip-cars frame))
+       (subsetp-equal
+        (abs-addrs root)
+        (frame-addrs-root
+         (cons (cons x
+                     (frame-val nil
+                                (put-assoc-equal (car (last pathname))
+                                                 file dir)
+                                src))
+               frame)))
+       (mv-nth
+        1
+        (collapse (frame-with-root root
+                                   (cons (cons x (frame-val nil dir src))
+                                         frame))))
+       (hifat-equiv
+        (mv-nth
+         0
+         (collapse (frame-with-root root
+                                    (cons (cons x (frame-val nil dir src))
+                                          frame))))
+        fs)
+       (no-duplicatesp-equal (abs-addrs root))
+       (not (intersectp-equal nil (names-at dir nil)))
+       (abs-separate frame)
+       (not (member-equal (car (last pathname))
+                          (names-at dir nil)))
+       (consp pathname))
+      (hifat-equiv
+       (mv-nth
+        0
+        (collapse
+         (frame-with-root
+          root
+          (cons (cons x
+                      (frame-val nil
+                                 (put-assoc-equal (car (last pathname))
+                                                  file dir)
+                                 src))
+                frame))))
+       (mv-nth 0 (hifat-place-file fs pathname file))))
+     :hints (
+             ("goal" :do-not-induct t :in-theory (e/d (hifat-place-file
+                                                       dist-names
+                                                       abs-separate)
+                                               (collapse-congruence-4))
+       :use (:instance collapse-congruence-4
+                       (frame (cons (cons x (frame-val nil dir src))
+                                    frame))
+                       (pathname nil)))))
+
 ;; I'm not even sure what the definition of abs-place-file above should be. But
 ;; I'm pretty sure it should support a theorem like the following.
 ;;
 ;; In the hypotheses here, there has to be a stipulation that not only is dir
 ;; complete, but also that it's the only one which has any names at that
-;; particular relpath, i.e. (butlast 1 pathname). It's going to be a natural
+;; particular relpath, i.e. (butlast pathname 1). It's going to be a natural
 ;; outcome of partial-collapse, but it may have to be codified somehow.
 (thm
  (implies
@@ -843,8 +909,8 @@
    (m1-regular-file-p file)
    (abs-fs-p dir)
    (abs-complete dir)
-   (pathname-clear (butlast 1 pathname) frame)
-   (atom (names-at root (butlast 1 pathname)))
+   (pathname-clear (butlast pathname 1) frame)
+   (atom (names-at root (butlast pathname 1)))
    (abs-fs-p root)
    (not (zp x))
    (atom (assoc-equal 0 frame))
@@ -866,7 +932,7 @@
                          (cons
                           x
                           (frame-val
-                           (butlast 1 pathname)
+                           (butlast pathname 1)
                            dir
                            src))
                          frame))))
@@ -876,7 +942,7 @@
                                        (cons
                                         x
                                         (frame-val
-                                         (butlast 1 pathname)
+                                         (butlast pathname 1)
                                          dir
                                          src))
                                        frame))))
@@ -887,7 +953,7 @@
                    (cons
                     x
                     (frame-val
-                     (butlast 1 pathname)
+                     (butlast pathname 1)
                      dir
                      src))
                    frame)))
@@ -901,13 +967,14 @@
                 (cons
                  x
                  (frame-val
-                  (butlast 1 pathname)
+                  (butlast pathname 1)
                   dir
                   src))
                 frame)))
-       ((mv fs error-code) (hifat-place-file fs pathname file)))
+       ;; ((mv fs error-code) (hifat-place-file fs pathname file))
+       ((mv fs &) (hifat-place-file fs pathname file)))
     (and
-     (equal error-code 0)
+     ;; (equal error-code 0)
      (mv-nth 1 (collapse frame))
      (absfat-equiv (mv-nth 0 (collapse frame))
                    fs)
@@ -956,7 +1023,7 @@
         (abs-find-file-helper
          (frame-val->dir (cdar frame))
          (nthcdr (len (frame-val->path (cdar frame)))
-                 (butlast 1 pathname))))
+                 (butlast pathname 1))))
        ((when (or (equal error-code *enoent*)
                   (not (abs-complete (frame-val->dir (cdar frame))))))
         (mv (list* (car frame) tail) tail-error-code))
@@ -970,7 +1037,7 @@
 (defund abs-mkdir
   (frame pathname)
   (b*
-      ((frame (partial-collapse frame (butlast 1 pathname)))
+      ((frame (partial-collapse frame (butlast pathname 1)))
        ;; After partial-collapse, either the parent directory is there in one
        ;; variable, or it isn't there at all.
        ((mv parent-dir error-code) (abs-find-file-helper (frame->root frame)

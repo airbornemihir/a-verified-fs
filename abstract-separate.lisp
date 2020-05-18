@@ -13458,7 +13458,7 @@
 
   (local
    (defthm
-     partial-collapse-correctness-lemma-44
+     lemma
      (implies (and (valid-seqp frame
                                (cons x
                                      (take (+ -1 n)
