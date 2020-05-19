@@ -44,8 +44,6 @@
    (:rewrite final-val-of-collapse-this-lemma-2)
    (:rewrite collapse-congruence-lemma-5)
    (:rewrite
-    abs-file-alist-p-correctness-1-lemma-1)
-   (:rewrite
     abs-find-file-helper-of-collapse-lemma-3)
    (:rewrite
     partial-collapse-correctness-lemma-106)

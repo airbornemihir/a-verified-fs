@@ -321,23 +321,35 @@
                                      m1-file->contents abs-file->contents
                                      m1-file-contents-p))))
 
-;; top-complete is known to match up with alistp
-(defund abs-complete (x)
-  (declare (xargs :guard t))
-  (or (atom x)
-      (and (consp (car x))
-           (or (not (abs-directory-file-p (cdar x)))
-               (abs-complete (abs-file->contents (cdar x))))
-           (abs-complete (cdr x)))))
+;; abs-fs-fix might seem to be a nice fixer for the first (only) argument, but
+;; it's not because when you have the removal of duplicate elements, you end up
+;; with some addresses disappearing. The same thing explains why abs-complete
+;; does not neatly line up.
+(defund
+  abs-addrs (abs-file-alist)
+  (declare
+   (xargs :guard (abs-file-alist-p abs-file-alist)
+          :guard-hints
+          (("goal" :in-theory (enable abs-file-alist-p)))))
+  (cond ((atom abs-file-alist) nil)
+        ((atom (car abs-file-alist))
+         (list* (mbe :logic (nfix (car abs-file-alist))
+                     :exec (car abs-file-alist))
+                (abs-addrs (cdr abs-file-alist))))
+        ((abs-directory-file-p (cdar abs-file-alist))
+         (append
+          (abs-addrs (abs-file->contents (cdar abs-file-alist)))
+          (abs-addrs (cdr abs-file-alist))))
+        (t (abs-addrs (cdr abs-file-alist)))))
 
 (defthm
-  abs-file-alist-p-correctness-1-lemma-1
+  abs-addrs-when-m1-file-alist-p-lemma-2
   (implies (and (or (and (consp (car x))
                          (m1-file-alist-p (abs-file->contents (cdr (car x)))))
                     (not
                      (and (abs-file-alist-p (abs-file->contents (cdr (car x))))
                           (or (abs-directory-file-p (cdr (car x)))
-                              (abs-complete (abs-file->contents (cdr (car x))))))))
+                              (atom (abs-addrs (abs-file->contents (cdr (car x)))))))))
                 (abs-file-alist-p x))
            (m1-file-p (cdr (car x))))
   :hints
@@ -349,7 +361,7 @@
                     (abs-file-p (cdr (car x)))))))
 
 (defthmd
-  abs-file-alist-p-correctness-1-lemma-2
+  abs-addrs-when-m1-file-alist-p-lemma-1
   (implies (and (consp (car x))
                 (m1-file-alist-p (abs-file->contents (cdr (car x))))
                 (m1-file-alist-p (cdr x))
@@ -361,22 +373,98 @@
                            (a (car x)))
            :expand (abs-file-alist-p x))))
 
+;; This doesn't work as a pure type-prescription rule...
+(defthm abs-addrs-when-m1-file-alist-p
+  (implies (m1-file-alist-p x)
+           (equal (abs-addrs x) nil))
+  :hints (("goal" :in-theory (enable abs-addrs
+                                     abs-addrs-when-m1-file-alist-p-lemma-1)))
+  :rule-classes (:type-prescription :rewrite))
+
+(defthm abs-addrs-of-true-list-fix
+  (equal (abs-addrs (true-list-fix abs-file-alist))
+         (abs-addrs abs-file-alist))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm
+  member-of-abs-addrs-when-natp
+  (implies (and (natp x)
+                (member-equal x abs-file-alist))
+           (member-equal x (abs-addrs abs-file-alist)))
+  :hints (("goal" :in-theory (enable abs-addrs abs-file-alist-p)))
+  :rule-classes
+  (:rewrite
+   (:rewrite :corollary (implies (and (natp x)
+                                      (equal (abs-addrs abs-file-alist) nil))
+                                 (not (member-equal x abs-file-alist))))))
+
+(defthm
+  abs-addrs-of-remove-lemma-1
+  (implies (and (member-equal x abs-file-alist1)
+                (integerp x)
+                (<= 0 x)
+                (member-equal x (abs-addrs abs-file-alist2)))
+           (intersectp-equal (abs-addrs abs-file-alist1)
+                             (abs-addrs abs-file-alist2)))
+  :hints (("goal" :use (:instance (:rewrite intersectp-member)
+                                  (a x)
+                                  (y (abs-addrs abs-file-alist2))
+                                  (x (abs-addrs abs-file-alist1))))))
+
+(defthm
+  abs-addrs-of-remove-lemma-2
+  (implies
+   (and
+    (natp x)
+    (member-equal x (cdr abs-file-alist))
+    (not (intersectp-equal
+          (abs-addrs (cdr abs-file-alist))
+          (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))))
+   (not (member-equal
+         x
+         (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))))
+  :hints
+  (("goal"
+    :use
+    (:instance (:rewrite intersectp-member)
+               (a x)
+               (y (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))
+               (x (abs-addrs (cdr abs-file-alist)))))))
+
+(defthm abs-addrs-of-remove
+  (implies (and (natp x)
+                (member-equal x abs-file-alist)
+                (no-duplicatesp-equal (abs-addrs abs-file-alist)))
+           (equal (abs-addrs (remove-equal x abs-file-alist))
+                  (remove-equal x (abs-addrs abs-file-alist))))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm abs-addrs-of-append
+  (equal (abs-addrs (append x y))
+         (append (abs-addrs x) (abs-addrs y)))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+;; top-complete is known to match up with alistp
+(defun abs-complete (x)
+  (declare
+   (xargs :guard (abs-file-alist-p x)))
+  (atom (abs-addrs x)))
+
 (encapsulate
   ()
 
   (local
    (defthm
-     abs-file-alist-p-correctness-1-lemma-3
-     (implies (and (not (and (abs-file-alist-p (abs-file->contents (cdr (car x))))
-                             (or (abs-directory-file-p (cdr (car x)))
-                                 (abs-complete (abs-file->contents (cdr (car x)))))))
+     lemma
+     (implies (and (consp (car x))
+                   (not (abs-directory-file-p (cdr (car x))))
                    (m1-file-alist-p (cdr x))
                    (abs-file-alist-p x))
               (m1-file-alist-p x))
-     :hints (("goal" :in-theory (disable (:rewrite m1-file-alist-p-of-cons))
-              :use (:instance (:rewrite m1-file-alist-p-of-cons)
-                              (x (cdr x))
-                              (a (car x)))
+     :hints (("goal" :in-theory (enable m1-file-alist-p
+                                        abs-file-p m1-file-contents-p m1-file-p
+                                        abs-directory-file-p abs-file->contents)
+              :do-not-induct t
               :expand (abs-file-alist-p x)))))
 
   ;; This theorem states that an abstract filesystem tree without any body
@@ -386,9 +474,9 @@
     (implies (and (abs-file-alist-p x)
                   (abs-complete x))
              (m1-file-alist-p x))
-    :hints (("goal" :in-theory (enable abs-file-alist-p abs-complete
-                                       abs-file-alist-p-correctness-1-lemma-2)
-             :induct (abs-complete x)))))
+    :hints (("goal" :in-theory (enable abs-file-alist-p abs-addrs
+                                       abs-addrs-when-m1-file-alist-p-lemma-1)
+             :induct (abs-addrs x)))))
 
 (defthm abs-file-alist-p-of-put-assoc-equal
   (implies (abs-file-alist-p alist)
@@ -468,104 +556,6 @@
            (equal (abs-top-addrs (put-assoc-equal name val fs))
                   (abs-top-addrs fs)))
   :hints (("goal" :in-theory (enable abs-top-addrs))))
-
-;; abs-fs-fix might seem to be a nice fixer for the first (only) argument, but
-;; it's not because when you have the removal of duplicate elements, you end up
-;; with some addresses disappearing. The same thing explains why abs-complete
-;; does not neatly line up.
-(defund
-  abs-addrs (abs-file-alist)
-  (declare
-   (xargs :guard (abs-file-alist-p abs-file-alist)
-          :guard-hints
-          (("goal" :in-theory (enable abs-file-alist-p)))))
-  (cond ((atom abs-file-alist) nil)
-        ((atom (car abs-file-alist))
-         (list* (mbe :logic (nfix (car abs-file-alist))
-                     :exec (car abs-file-alist))
-                (abs-addrs (cdr abs-file-alist))))
-        ((abs-directory-file-p (cdar abs-file-alist))
-         (append
-          (abs-addrs (abs-file->contents (cdar abs-file-alist)))
-          (abs-addrs (cdr abs-file-alist))))
-        (t (abs-addrs (cdr abs-file-alist)))))
-
-;; This doesn't work as a pure type-prescription rule...
-(defthm abs-addrs-when-m1-file-alist-p
-  (implies (m1-file-alist-p x)
-           (equal (abs-addrs x) nil))
-  :hints (("goal" :in-theory (enable abs-addrs
-                                     abs-file-alist-p-correctness-1-lemma-2)))
-  :rule-classes (:type-prescription :rewrite))
-
-(defthm abs-addrs-of-true-list-fix
-  (equal (abs-addrs (true-list-fix abs-file-alist))
-         (abs-addrs abs-file-alist))
-  :hints (("goal" :in-theory (enable abs-addrs))))
-
-(defthm
-  member-of-abs-addrs-when-natp
-  (implies (and (natp x)
-                (member-equal x abs-file-alist))
-           (member-equal x (abs-addrs abs-file-alist)))
-  :hints (("goal" :in-theory (enable abs-addrs abs-file-alist-p)))
-  :rule-classes
-  (:rewrite
-   (:rewrite :corollary (implies (and (natp x)
-                                      (equal (abs-addrs abs-file-alist) nil))
-                                 (not (member-equal x abs-file-alist))))))
-
-(defthm
-  abs-addrs-of-remove-lemma-1
-  (implies (and (member-equal x abs-file-alist1)
-                (integerp x)
-                (<= 0 x)
-                (member-equal x (abs-addrs abs-file-alist2)))
-           (intersectp-equal (abs-addrs abs-file-alist1)
-                             (abs-addrs abs-file-alist2)))
-  :hints (("goal" :use (:instance (:rewrite intersectp-member)
-                                  (a x)
-                                  (y (abs-addrs abs-file-alist2))
-                                  (x (abs-addrs abs-file-alist1))))))
-
-(defthm
-  abs-addrs-of-remove-lemma-2
-  (implies
-   (and
-    (natp x)
-    (member-equal x (cdr abs-file-alist))
-    (not (intersectp-equal
-          (abs-addrs (cdr abs-file-alist))
-          (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))))
-   (not (member-equal
-         x
-         (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))))
-  :hints
-  (("goal"
-    :use
-    (:instance (:rewrite intersectp-member)
-               (a x)
-               (y (abs-addrs (abs-file->contents (cdr (car abs-file-alist)))))
-               (x (abs-addrs (cdr abs-file-alist)))))))
-
-(defthm abs-addrs-of-remove
-  (implies (and (natp x)
-                (member-equal x abs-file-alist)
-                (no-duplicatesp-equal (abs-addrs abs-file-alist)))
-           (equal (abs-addrs (remove-equal x abs-file-alist))
-                  (remove-equal x (abs-addrs abs-file-alist))))
-  :hints (("goal" :in-theory (enable abs-addrs))))
-
-(defthm abs-addrs-of-append
-  (equal (abs-addrs (append x y))
-         (append (abs-addrs x) (abs-addrs y)))
-  :hints (("goal" :in-theory (enable abs-addrs))))
-
-(defthm abs-complete-definition
-  (equal (abs-complete x)
-         (atom (abs-addrs x)))
-  :rule-classes :definition
-  :hints (("goal" :in-theory (enable abs-complete abs-addrs))))
 
 (defund
   abs-no-dups-p (fs)
@@ -2077,7 +2067,7 @@
                     ((:definition member-equal)
                      (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-1)
                      (:rewrite abs-file-alist-p-when-m1-file-alist-p)
-                     (:rewrite abs-file-alist-p-correctness-1-lemma-1)
+                     (:rewrite abs-addrs-when-m1-file-alist-p-lemma-2)
                      (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-2)
                      (:type-prescription assoc-when-zp-len)
                      (:rewrite abs-addrs-of-ctx-app)))
@@ -4659,7 +4649,7 @@
     :induct (abs-fs-fix abs-file-alist)
     :in-theory (e/d (abs-addrs abs-fs-fix abs-file-alist-p
                                abs-file-fix abs-file->contents)
-                    ((:rewrite abs-file-alist-p-correctness-1-lemma-1)
+                    ((:rewrite abs-addrs-when-m1-file-alist-p-lemma-2)
                      (:rewrite abs-file-alist-p-correctness-1)
                      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
                      (:rewrite abs-file->contents-when-m1-file-p)
@@ -6196,7 +6186,6 @@
     (e/d (ctx-app-ok ctx-app put-assoc-equal-match)
          (nfix (:definition no-duplicatesp-equal)
                (:rewrite abs-file-alist-p-correctness-1)
-               (:definition abs-complete-definition)
                (:rewrite abs-file-contents-p-when-m1-file-contents-p)))
     :induct (mv (ctx-app abs-file-alist1
                          abs-file-alist2 x2 x2-path)
@@ -7679,7 +7668,6 @@
           (:rewrite ctx-app-ok-when-abs-complete)
           (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
           (:rewrite frame->root-of-collapse-this)
-          (:definition abs-complete-definition)
           (:rewrite abs-addrs-when-m1-file-alist-p)
           (:rewrite ctx-app-ok-of-ctx-app-1)
           (:rewrite final-val-of-collapse-this-lemma-6 . 1)
@@ -10217,7 +10205,6 @@
           (:definition nthcdr)
           (:rewrite 1st-complete-of-remove-assoc-2)
           (:rewrite final-val-of-collapse-this-lemma-7)
-          (:definition abs-complete-definition)
           (:rewrite final-val-of-collapse-this-lemma-6
                     . 1)
           (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
@@ -11924,7 +11911,6 @@
           (:definition remove-assoc-equal)
           (:rewrite 1st-complete-of-remove-assoc-2)
           (:rewrite final-val-of-collapse-this-lemma-7)
-          (:definition abs-complete-definition)
           (:rewrite final-val-of-collapse-this-lemma-6 . 1)
           (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
           (:rewrite 1st-complete-of-put-assoc-lemma-1)
@@ -11932,7 +11918,7 @@
           (:rewrite partial-collapse-correctness-lemma-1))))))
 
 (defthmd
-  partial-collapse-correctness-lemma-177
+  partial-collapse-correctness-lemma-87
   (implies
    (and
     (abs-separate (frame->frame frame))
@@ -12096,7 +12082,7 @@
                         (l1 (take (+ -1 n) (take n seq)))
                         (x 0)
                         (frame frame))
-             partial-collapse-correctness-lemma-177)))))
+             partial-collapse-correctness-lemma-87)))))
 
   (defthm
     partial-collapse-correctness-lemma-43
@@ -12225,7 +12211,7 @@
                          (l1 (take (+ -1 n) (take n seq)))
                          (x 0)
                          (frame frame))
-              partial-collapse-correctness-lemma-177)))
+              partial-collapse-correctness-lemma-87)))
       (:dive 2 4)
       := :up
       (:rewrite ctx-app-list-seq-of-append)
@@ -12520,45 +12506,7 @@
                           (1st-complete (frame->frame frame)))))))
 
 (defthm
-  partial-collapse-correctness-lemma-97
-  (implies
-   (and
-    (consp (frame->frame frame))
-    (abs-separate (frame->frame frame))
-    (frame-p (frame->frame frame))
-    (dist-names (frame->root frame)
-                nil (frame->frame frame))
-    (mv-nth 1 (collapse frame))
-    (consp (assoc-equal x (frame->frame frame)))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
-    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-    (<= 1 (+ -1 (len (frame->frame frame)))))
-   (< (len (frame->frame (collapse-iter (collapse-this frame x)
-                                        1)))
-      (+ -1 (len (frame->frame frame)))))
-  :hints
-  (("goal" :in-theory (e/d (collapse-iter)
-                           ((:definition assoc-equal)
-                            (:rewrite partial-collapse-correctness-lemma-65)
-                            (:rewrite nthcdr-when->=-n-len-l)
-                            (:rewrite partial-collapse-correctness-lemma-40)
-                            (:definition member-equal)
-                            (:rewrite partial-collapse-correctness-lemma-2)
-                            (:rewrite partial-collapse-correctness-lemma-51)
-                            (:rewrite final-val-of-collapse-this-lemma-7)
-                            (:rewrite abs-addrs-of-ctx-app-2)
-                            (:definition nthcdr)
-                            (:rewrite partial-collapse-correctness-lemma-61)))
-    :do-not-induct t
-    :expand (collapse-iter (collapse-this frame x)
-                           1)))
-  :rule-classes :linear)
-
-(defthm
-  partial-collapse-correctness-lemma-52
+  partial-collapse-correctness-lemma-46
   (implies (and (not (zp n))
                 (frame-p (frame->frame frame))
                 (mv-nth 1 (collapse frame))
@@ -12567,23 +12515,22 @@
            (consp (assoc-equal (nth (+ -1 n)
                                     (seq-this (collapse-this frame x)))
                                (frame->frame frame))))
-  :instructions
-  (:promote
-   (:= (consp (assoc-equal (nth (+ -1 n)
-                                (seq-this (collapse-this frame x)))
-                           (frame->frame frame)))
-       (member-equal (nth (+ -1 n)
-                          (seq-this (collapse-this frame x)))
-                     (strip-cars (frame->frame frame)))
-       :equiv iff)
-   (:rewrite (:rewrite subsetp-member . 1)
-             ((x (seq-this (collapse-this frame x)))))
-   :bash (:rewrite subsetp-trans
-                   ((y (strip-cars (frame->frame (collapse-this frame x))))))
-   :bash :bash))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite subsetp-member . 1))
+    :use
+    ((:instance (:rewrite subsetp-member . 1)
+                (y (strip-cars (frame->frame frame)))
+                (a (nth (+ -1 n)
+                        (seq-this (collapse-this frame x))))
+                (x (seq-this (collapse-this frame x))))
+     (:instance (:rewrite subsetp-trans)
+                (z (strip-cars (frame->frame frame)))
+                (x x)
+                (y (strip-cars (frame->frame (collapse-this frame x)))))))))
 
 (defthm
-  partial-collapse-correctness-lemma-146
+  partial-collapse-correctness-lemma-47
   (implies (and (mv-nth 1 (collapse frame))
                 (not (zp x)))
            (not (equal (nth (+ -1 n)
@@ -12915,7 +12862,6 @@
                      (:linear nth-of-seq-this-1)
                      (:linear natp-of-nth-of-seq-this)
                      (:rewrite partial-collapse-correctness-lemma-20)
-                     (:definition abs-complete-definition)
                      (:definition strip-cars)
                      (:rewrite m1-file-alist-p-of-final-val-seq-lemma-3)
                      (:rewrite abs-file-alist-p-correctness-1)
