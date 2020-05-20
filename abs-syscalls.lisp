@@ -487,6 +487,15 @@
                                     dir))))
   :hints (("goal" :in-theory (enable names-at))))
 
+(thm (implies (and (m1-file-p file)) (equal
+                                      (addrs-at
+                                       (hifat-place-file fs pathname file) relpath)
+                                      (addrs-at fs relpath)))
+     :hints
+     (("goal" :in-theory (enable hifat-place-file
+                                 addrs-at)
+       :induct (mv (fat32-filename-list-prefixp relpath pathname) (addrs-at fs relpath)))))
+
 (encapsulate
   ()
 

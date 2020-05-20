@@ -518,15 +518,17 @@
           :guard-hints
           (("goal" :in-theory (enable abs-file-alist-p)))))
   (cond ((atom abs-file-alist) nil)
-        ((natp (car abs-file-alist))
-         (list* (car abs-file-alist)
+        ((atom (car abs-file-alist))
+         (list* (mbe :exec (car abs-file-alist)
+                     :logic (nfix (car abs-file-alist)))
                 (abs-top-addrs (cdr abs-file-alist))))
         (t (abs-top-addrs (cdr abs-file-alist)))))
 
 (defthm member-of-abs-top-addrs
-  (implies (natp x)
-           (iff (member-equal x (abs-top-addrs fs))
-                (member-equal x fs)))
+  (implies (and
+            (natp x)
+            (member-equal x fs))
+           (member-equal x (abs-top-addrs fs)))
   :hints (("goal" :in-theory (enable abs-top-addrs))))
 
 (defthm abs-top-addrs-of-append
@@ -547,8 +549,10 @@
                      (x x-equiv))))))
 
 (defthm abs-top-addrs-of-remove
-  (equal (abs-top-addrs (remove-equal var x))
-         (remove-equal var (abs-top-addrs x)))
+  (implies (abs-file-alist-p x)
+           (equal (abs-top-addrs (remove-equal var x))
+                  (remove-equal (nfix var)
+                                (abs-top-addrs x))))
   :hints (("goal" :in-theory (enable abs-top-addrs))))
 
 (defthm abs-top-addrs-of-put-assoc
@@ -1040,6 +1044,11 @@
     :use (abs-fs-fix-of-true-list-fix
           (:instance abs-fs-fix-of-true-list-fix
                      (x x-equiv))))))
+
+(defthm abs-top-addrs-of-abs-fs-fix
+  (equal (abs-top-addrs (abs-fs-fix fs))
+         (abs-top-addrs fs))
+  :hints (("goal" :in-theory (enable abs-top-addrs abs-fs-fix))))
 
 ;; I'm not sure what to do with abs-fs-equiv...
 (fty::deffixtype abs-fs
