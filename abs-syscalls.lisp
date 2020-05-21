@@ -523,6 +523,56 @@
          fs)
         error-code)))
 
+(defthm
+  abs-file-alist-p-of-abs-place-file-helper
+  (implies
+   (and (abs-file-alist-p fs)
+        (abs-file-p file))
+   (abs-file-alist-p (mv-nth 0
+                             (abs-place-file-helper fs pathname file))))
+  :hints (("goal" :in-theory (enable abs-place-file-helper))))
+
+(defthm abs-file-p-when-m1-file-p
+  (implies (m1-file-p file)
+           (abs-file-p file))
+  :hints (("goal" :cases ((abs-directory-file-p file)))))
+
+(defthm
+  m1-file-p-of-abs-file
+  (equal (m1-file-p (abs-file dir-ent contents))
+         (or (stringp (abs-file-contents-fix contents))
+             (m1-file-alist-p contents)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable m1-file-p abs-file abs-file-contents-fix
+                              abs-file-contents-p
+                              m1-file-contents-p))))
+
+(defthm
+  m1-file-alist-p-of-abs-place-file-helper
+  (implies
+   (and (m1-file-alist-p fs)
+        (m1-file-p file))
+   (m1-file-alist-p (mv-nth 0
+                            (abs-place-file-helper fs pathname file))))
+  :hints (("goal" :in-theory (enable abs-place-file-helper))))
+
+(defthm
+  abs-place-file-helper-correctness-1
+  (implies (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs)
+                (m1-file-p file))
+           (equal (abs-place-file-helper fs pathname file)
+                  (hifat-place-file fs pathname file)))
+  :hints
+  (("goal" :in-theory (enable abs-place-file-helper hifat-place-file)
+    :induct (abs-place-file-helper fs pathname file))
+   ("subgoal *1/3.4'" :in-theory (enable abs-place-file-helper
+                                         hifat-place-file abs-file m1-file
+                                         abs-file->dir-ent m1-file->dir-ent))
+   ("subgoal *1/3.3" :in-theory (enable abs-place-file-helper
+                                        hifat-place-file abs-file m1-file
+                                        abs-file->dir-ent m1-file->dir-ent))))
+
 (thm
  (IMPLIES
   (AND
