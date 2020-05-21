@@ -487,9 +487,19 @@
                                     dir))))
   :hints (("goal" :in-theory (enable names-at))))
 
+(thm
+ (IMPLIES
+  (AND
+   (M1-FILE-P FILE))
+  (EQUAL (ABS-TOP-ADDRS (MV-NTH 0 (HIFAT-PLACE-FILE FS PATHNAME FILE)))
+         (ABS-TOP-ADDRS FS)))
+    :hints (("Goal" :in-theory (enable abs-top-addrs hifat-place-file))))
+
 (thm (implies (and (m1-file-p file)) (equal
                                       (addrs-at
-                                       (hifat-place-file fs pathname file) relpath)
+                                       (mv-nth 0
+                                               (hifat-place-file fs pathname file))
+                                       relpath)
                                       (addrs-at fs relpath)))
      :hints
      (("goal" :in-theory (enable hifat-place-file

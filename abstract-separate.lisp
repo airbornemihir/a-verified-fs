@@ -524,13 +524,6 @@
                 (abs-top-addrs (cdr abs-file-alist))))
         (t (abs-top-addrs (cdr abs-file-alist)))))
 
-(defthm member-of-abs-top-addrs
-  (implies (and
-            (natp x)
-            (member-equal x fs))
-           (member-equal x (abs-top-addrs fs)))
-  :hints (("goal" :in-theory (enable abs-top-addrs))))
-
 (defthm abs-top-addrs-of-append
   (equal (abs-top-addrs (append x y))
          (append (abs-top-addrs x)
@@ -551,9 +544,8 @@
 (defthm abs-top-addrs-of-remove
   (implies (abs-file-alist-p x)
            (equal (abs-top-addrs (remove-equal var x))
-                  (remove-equal (nfix var)
-                                (abs-top-addrs x))))
-  :hints (("goal" :in-theory (enable abs-top-addrs))))
+                  (remove-equal var (abs-top-addrs x))))
+  :hints (("goal" :in-theory (enable abs-top-addrs abs-file-alist-p))))
 
 (defthm abs-top-addrs-of-put-assoc
   (implies (fat32-filename-p name)
@@ -612,7 +604,7 @@
     (consp (assoc-equal name (remove-equal x abs-file-alist)))))
   :hints (("goal" :in-theory (enable abs-file-alist-p))))
 
-(defthm abs-no-dups-p-of-remove
+(defthmd abs-no-dups-p-of-remove
   (implies (and (abs-no-dups-p abs-file-alist)
                 (abs-file-alist-p abs-file-alist))
            (abs-no-dups-p (remove-equal x abs-file-alist)))
@@ -1050,6 +1042,12 @@
          (abs-top-addrs fs))
   :hints (("goal" :in-theory (enable abs-top-addrs abs-fs-fix))))
 
+(defthm member-of-abs-top-addrs
+  (implies (natp x)
+           (iff (member-equal x (abs-top-addrs fs))
+                (member-equal x (abs-fs-fix fs))))
+  :hints (("goal" :in-theory (enable abs-top-addrs abs-fs-fix))))
+
 ;; I'm not sure what to do with abs-fs-equiv...
 (fty::deffixtype abs-fs
                  :pred abs-fs-p
@@ -1373,6 +1371,14 @@
 
 (defthm
   ctx-app-ok-when-abs-complete-lemma-3
+  (subsetp-equal (abs-top-addrs fs)
+                 (abs-addrs (abs-fs-fix fs)))
+  :hints (("goal" :in-theory (disable ctx-app-ok-when-abs-complete-lemma-1)
+           :use (:instance ctx-app-ok-when-abs-complete-lemma-1
+                           (fs (abs-fs-fix fs))))))
+
+(defthm
+  ctx-app-ok-when-abs-complete-lemma-4
   (subsetp-equal (addrs-at fs relpath)
                  (abs-addrs (abs-fs-fix fs)))
   :hints (("goal" :in-theory (enable abs-addrs addrs-at)))
@@ -1403,10 +1409,16 @@
 (defthm
   ctx-app-when-not-ctx-app-ok
   (implies (not (ctx-app-ok abs-file-alist1 x x-path))
-           (equal (ctx-app abs-file-alist1 abs-file-alist2 x x-path)
+           (equal (ctx-app abs-file-alist1
+                           abs-file-alist2 x x-path)
                   (abs-fs-fix abs-file-alist1)))
   :hints (("goal" :in-theory (e/d (ctx-app-ok ctx-app addrs-at)
-                                  (nfix)))))
+                                  (nfix member-of-abs-top-addrs))
+           :induct (ctx-app abs-file-alist1
+                            abs-file-alist2 x x-path))
+          ("subgoal *1/1''" :use (:instance member-of-abs-top-addrs
+                                            (fs (abs-fs-fix abs-file-alist1))
+                                            (x (nfix x))))))
 
 (defthm
   ctx-app-when-not-natp
@@ -3982,7 +3994,15 @@
       (abs-file-alist2 (abs-fs-fix fs)))))))
 
 (defthm absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1
-  (implies (absfat-subsetp fs fs-equiv)
+  (implies (and (not (natp x))
+                (atom x)
+                (not (member-equal 0 (abs-fs-fix fs))))
+           (not (member-equal x fs)))
+  :hints (("goal" :in-theory (enable abs-fs-fix))))
+
+(defthm absfat-equiv-implies-set-equiv-addrs-at-1-lemma-4
+  (implies (and (abs-file-alist-p fs-equiv)
+                (absfat-subsetp fs fs-equiv))
            (subsetp-equal (abs-top-addrs fs)
                           (abs-top-addrs fs-equiv)))
   :hints (("goal" :in-theory (enable abs-top-addrs absfat-subsetp))))
@@ -7953,6 +7973,32 @@
   (("goal" :in-theory (enable frame-addrs-before-seq)
     :induct (frame-addrs-before-seq frame x seq))))
 
+(defthm member-of-frame-addrs-before-seq-lemma-1
+  (implies (frame-p frame)
+           (not (member-equal nil (strip-cars frame)))))
+
+(defthm member-of-frame-addrs-before-seq-lemma-2
+  (implies (and (consp (assoc-equal x (frame->frame frame)))
+                (frame-p (frame->frame frame)))
+           (natp x))
+  :rule-classes :forward-chaining)
+
+(defthm
+  member-of-frame-addrs-before-seq
+  (implies
+   (and (subsetp-equal seq (strip-cars (frame->frame frame)))
+        (frame-p (frame->frame frame)))
+   (iff
+    (member-equal y (frame-addrs-before-seq frame x seq))
+    (and (member-equal y seq)
+         (consp (assoc-equal y (frame->frame frame)))
+         (equal (frame-val->src (cdr (assoc-equal y (frame->frame frame))))
+                x))))
+  :hints (("goal" :in-theory (enable frame-addrs-before-seq)
+           :induct (frame-addrs-before-seq frame x seq)
+           :expand (subsetp-equal seq
+                                  (strip-cars (frame->frame frame))))))
+
 (defund
   ctx-app-list (fs relpath frame l)
   (b*
@@ -8001,7 +8047,7 @@
   :hints (("goal" :in-theory (enable ctx-app-list)))
   :rule-classes :type-prescription)
 
-(defthm abs-file-alist-p-of-ctx-app-list
+(defthmd abs-file-alist-p-of-ctx-app-list
   (implies
    (abs-file-alist-p fs)
    (abs-file-alist-p (mv-nth 0 (ctx-app-list fs path-len frame l))))
@@ -9458,18 +9504,6 @@
   :hints (("goal" :in-theory (enable collapse-this abs-addrs-of-ctx-app-1-lemma-7))))
 
 (defthm
-  partial-collapse-correctness-lemma-31
-  (implies
-   (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               0)
-        (not (zp x))
-        (frame-p (frame->frame frame))
-        (no-duplicatesp-equal (strip-cars (frame->frame frame))))
-   (not (equal (1st-complete (frame->frame (collapse-this frame x)))
-               x)))
-  :hints (("goal" :in-theory (enable collapse-this))))
-
-(defthm
   partial-collapse-correctness-lemma-26
   (implies
    (and
@@ -9646,23 +9680,6 @@
 
 (defthm
   partial-collapse-correctness-lemma-28
-  (implies
-   (and
-    (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-           0)
-    (consp (frame->frame (collapse-this frame x)))
-    (not (zp x))
-    (< 0 (1st-complete (frame->frame frame)))
-    (mv-nth 1
-            (collapse (collapse-this frame
-                                     (1st-complete (frame->frame frame))))))
-   (> (1st-complete (frame->frame (collapse-this frame x)))
-      0))
-  :hints (("goal" :in-theory (enable collapse-this)))
-  :rule-classes :linear)
-
-(defthm
-  partial-collapse-correctness-lemma-40
   (implies
    (and
     (ctx-app-ok
@@ -10048,12 +10065,8 @@
                      (frame (frame->frame frame))
                      (x x))))))
 
-(defthm partial-collapse-correctness-lemma-53
-  (implies (frame-p frame)
-           (not (member-equal nil (strip-cars frame)))))
-
 (defthm
-  partial-collapse-correctness-lemma-64
+  partial-collapse-correctness-lemma-31
   (implies
    (and (frame-p (frame->frame frame))
         (subsetp-equal l (strip-cars (frame->frame frame)))
@@ -10373,14 +10386,8 @@
                   (ctx-app-list-seq fs relpath frame l seq)))
   :hints (("goal" :in-theory (enable ctx-app-list-seq))))
 
-(defthm partial-collapse-correctness-lemma-59
-  (implies (and (consp (assoc-equal x (frame->frame frame)))
-                (frame-p (frame->frame frame)))
-           (natp x))
-  :rule-classes :forward-chaining)
-
 (defthm
-  partial-collapse-correctness-lemma-60
+  partial-collapse-correctness-lemma-40
   (implies
    (and
     (or
@@ -10628,24 +10635,8 @@
                                                (frame->frame frame))))
       (cdr seq))))))
 
-(defthm
-  partial-collapse-correctness-lemma-70
-  (implies
-   (and (subsetp-equal seq (strip-cars (frame->frame frame)))
-        (frame-p (frame->frame frame)))
-   (iff
-    (member-equal y (frame-addrs-before-seq frame x seq))
-    (and (member-equal y seq)
-         (consp (assoc-equal y (frame->frame frame)))
-         (equal (frame-val->src (cdr (assoc-equal y (frame->frame frame))))
-                x))))
-  :hints (("goal" :in-theory (enable frame-addrs-before-seq)
-           :induct (frame-addrs-before-seq frame x seq)
-           :expand (subsetp-equal seq
-                                  (strip-cars (frame->frame frame))))))
-
 (defthmd
-  partial-collapse-correctness-lemma-75
+  partial-collapse-correctness-lemma-53
   (implies
    (and
     (abs-separate (frame->frame frame))
@@ -11755,11 +11746,11 @@
       :in-theory
       (e/d
        (absfat-equiv-upto-n (:rewrite partial-collapse-correctness-lemma-63)
-                            (:rewrite partial-collapse-correctness-lemma-75)))
+                            (:rewrite partial-collapse-correctness-lemma-53)))
       :induct (dec-induct n)))))
 
 (defthm
-  partial-collapse-correctness-lemma-129
+  partial-collapse-correctness-lemma-59
   (implies (and (abs-separate (frame->frame frame))
                 (frame-p (frame->frame frame))
                 (valid-seqp frame seq)
@@ -11779,14 +11770,14 @@
                 (member-equal x seq))
            (absfat-equiv (final-val-seq x frame seq)
                          (final-val x frame)))
-  :hints (("goal" :in-theory (disable partial-collapse-correctness-lemma-129
+  :hints (("goal" :in-theory (disable partial-collapse-correctness-lemma-59
                                       absfat-equiv-upto-n-correctness-1)
            :use ((:instance absfat-equiv-upto-n-correctness-1
                             (n (len seq)))
-                 partial-collapse-correctness-lemma-129))))
+                 partial-collapse-correctness-lemma-59))))
 
 (defthm
-  partial-collapse-correctness-lemma-76
+  partial-collapse-correctness-lemma-60
   (implies
    (and
     (abs-separate (frame->frame frame))
@@ -12322,22 +12313,6 @@
       :cases
       ((equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
               0)))))))
-
-(defthm
-  partial-collapse-correctness-lemma-137
-  (implies (and (mv-nth 1 (collapse frame))
-                (not (zp x))
-                (consp (assoc-equal x (frame->frame frame)))
-                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (<= 1 (+ -1 (len (frame->frame frame)))))
-           (consp (frame->frame (collapse-this frame x))))
-  :hints
-  (("goal"
-    :in-theory (e/d (seq-this valid-seqp collapse-iter)
-                    ((:rewrite partial-collapse-correctness-lemma-49)))
-    :use (:instance (:rewrite partial-collapse-correctness-lemma-49)
-                    (x x)
-                    (frame frame)))))
 
 (defthm
   partial-collapse-correctness-lemma-46
@@ -12894,7 +12869,7 @@
                             take set-difference-equal
                             partial-collapse-correctness-lemma-61
                             (:definition member-equal)
-                            (:rewrite partial-collapse-correctness-lemma-40)
+                            (:rewrite partial-collapse-correctness-lemma-28)
                             (:definition assoc-equal)
                             (:definition no-duplicatesp-equal)
                             (:rewrite partial-collapse-correctness-lemma-65)
@@ -12966,7 +12941,7 @@
                      take set-difference-equal
                      partial-collapse-correctness-lemma-61
                      (:definition member-equal)
-                     (:rewrite partial-collapse-correctness-lemma-40)
+                     (:rewrite partial-collapse-correctness-lemma-28)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
                      (:rewrite partial-collapse-correctness-lemma-65)
@@ -13049,7 +13024,7 @@
                      take set-difference-equal
                      partial-collapse-correctness-lemma-61
                      (:definition member-equal)
-                     (:rewrite partial-collapse-correctness-lemma-40)
+                     (:rewrite partial-collapse-correctness-lemma-28)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
                      (:rewrite partial-collapse-correctness-lemma-65)
@@ -13127,7 +13102,7 @@
                     (x (nth (+ -1 n) (seq-this (collapse-this frame x))))))))
 
 (defthm
-  partial-collapse-correctness-lemma-116
+  partial-collapse-correctness-lemma-95
   (implies
    (and
     (equal
@@ -13157,25 +13132,21 @@
        (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))))
     (+ -1 (- n)
        (len (frame->frame frame)))))
-  :instructions
-  (:promote
-   (:dive 1)
-   :top
-   (:bash
-    ("goal"
-     :cases
-     ((zp
-       (frame-val->src
-        (cdr
-         (assoc-equal
-          (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-          (frame->frame
-           (collapse-seq (collapse-this frame x)
-                         (take (+ -1 n)
-                               (seq-this (collapse-this frame x))))))))))))))
+  :hints
+  (("goal"
+    :cases
+    ((zp
+      (frame-val->src
+       (cdr
+        (assoc-equal
+         (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+         (frame->frame
+          (collapse-seq (collapse-this frame x)
+                        (take (+ -1 n)
+                              (seq-this (collapse-this frame x)))))))))))))
 
 (defthm
-  partial-collapse-correctness-lemma-170
+  partial-collapse-correctness-lemma-97
   (implies
    (and
     (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
@@ -13206,27 +13177,23 @@
                           (seq-this (collapse-this frame x))))))
     (+ -1 (- n)
        (len (frame->frame frame)))))
-  :instructions
-  (:promote
-   (:dive 1)
-   :top
-   (:bash
-    ("goal"
-     :cases
-     ((equal
-       (frame-val->src
-        (cdr
-         (assoc-equal
-          (nth (+ -1 n)
-               (seq-this (collapse-this frame x)))
-          (frame->frame
-           (collapse-seq (collapse-this frame x)
-                         (take (+ -1 n)
-                               (seq-this (collapse-this frame x))))))))
-       0))))))
+  :hints
+  (("goal"
+    :cases
+    ((equal
+      (frame-val->src
+       (cdr
+        (assoc-equal
+         (nth (+ -1 n)
+              (seq-this (collapse-this frame x)))
+         (frame->frame
+          (collapse-seq (collapse-this frame x)
+                        (take (+ -1 n)
+                              (seq-this (collapse-this frame x))))))))
+      0)))))
 
 (defthm
-  partial-collapse-correctness-lemma-171
+  partial-collapse-correctness-lemma-105
   (implies
    (and
     (not (zp n))
@@ -13268,7 +13235,7 @@
                      take set-difference-equal
                      partial-collapse-correctness-lemma-61
                      (:definition member-equal)
-                     (:rewrite partial-collapse-correctness-lemma-40)
+                     (:rewrite partial-collapse-correctness-lemma-28)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
                      (:rewrite partial-collapse-correctness-lemma-65)
@@ -13490,7 +13457,7 @@
                      (:rewrite collapse-seq-of-seq-this-is-collapse)
                      (:rewrite nthcdr-when->=-n-len-l)
                      (:rewrite
-                      partial-collapse-correctness-lemma-40)
+                      partial-collapse-correctness-lemma-28)
                      (:linear count-free-clusters-correctness-1)
                      (:type-prescription frame-val->path$inline)
                      (:definition nthcdr)
