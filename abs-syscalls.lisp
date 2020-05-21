@@ -573,24 +573,81 @@
                                         hifat-place-file abs-file m1-file
                                         abs-file->dir-ent m1-file->dir-ent))))
 
-(thm
- (IMPLIES
-  (AND
-   (M1-FILE-P FILE))
-  (EQUAL (ABS-TOP-ADDRS (MV-NTH 0 (HIFAT-PLACE-FILE FS PATHNAME FILE)))
-         (ABS-TOP-ADDRS FS)))
-    :hints (("Goal" :in-theory (enable abs-top-addrs hifat-place-file))))
+(defthm
+  abs-top-addrs-of-abs-place-file-helper
+  (equal (abs-top-addrs (mv-nth 0
+                                (abs-place-file-helper fs pathname file)))
+         (abs-top-addrs fs))
+  :hints (("goal" :in-theory (enable abs-top-addrs abs-place-file-helper))))
 
-(thm (implies (and (m1-file-p file)) (equal
-                                      (addrs-at
-                                       (mv-nth 0
-                                               (hifat-place-file fs pathname file))
-                                       relpath)
-                                      (addrs-at fs relpath)))
-     :hints
-     (("goal" :in-theory (enable hifat-place-file
-                                 addrs-at)
-       :induct (mv (fat32-filename-list-prefixp relpath pathname) (addrs-at fs relpath)))))
+;; Move later.
+(defthm subsetp-when-prefixp
+  (implies (prefixp x y)
+           (subsetp-equal x y))
+  :hints (("goal" :in-theory (enable subsetp-equal prefixp)
+           :induct (prefixp x y))))
+
+(defthm
+  addrs-at-when-abs-complete
+  (implies (abs-complete (abs-fs-fix fs))
+           (equal (addrs-at fs relpath) nil))
+  :hints
+  (("goal" :in-theory (enable addrs-at)
+    :induct (addrs-at fs relpath))
+   ("subgoal *1/1''" :in-theory (disable ctx-app-ok-when-abs-complete-lemma-3)
+    :use ctx-app-ok-when-abs-complete-lemma-3)))
+
+(defthm
+  addrs-at-of-abs-place-file-helper-lemma-1
+  (implies (and (m1-file-p file)
+                (or (m1-regular-file-p file)
+                    (hifat-no-dups-p (m1-file->contents file))))
+           (not (addrs-at (m1-file->contents file)
+                          (cdr relpath))))
+  :hints
+  (("goal" :in-theory
+    (e/d (m1-file-contents-p addrs-at m1-regular-file-p
+                             m1-file-p m1-file->contents abs-fs-fix)
+         (m1-file-contents-p-of-m1-file->contents))
+    :use (:instance m1-file-contents-p-of-m1-file->contents
+                    (x file))
+    :do-not-induct t))
+  :otf-flg t)
+
+(defthm
+  addrs-at-of-abs-place-file-helper-1
+  (implies (and (abs-fs-p fs)
+                (m1-file-p file)
+                (or (m1-regular-file-p file)
+                    (hifat-no-dups-p (m1-file->contents file))))
+           (equal (addrs-at (mv-nth 0
+                                    (abs-place-file-helper fs pathname file))
+                            relpath)
+                  (addrs-at fs relpath)))
+  :hints
+  (("goal"
+    :in-theory (enable abs-place-file-helper addrs-at)
+    :induct (mv (fat32-filename-list-prefixp relpath pathname)
+                (addrs-at fs relpath))
+    :expand
+    ((abs-place-file-helper fs pathname file)
+     (addrs-at
+      (put-assoc-equal
+       (fat32-filename-fix (car pathname))
+       (abs-file
+        (abs-file->dir-ent
+         (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                           fs)))
+        (mv-nth
+         0
+         (abs-place-file-helper
+          (abs-file->contents
+           (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                             fs)))
+          (cdr pathname)
+          file)))
+       fs)
+      relpath)))))
 
 (encapsulate
   ()
