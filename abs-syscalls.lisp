@@ -459,13 +459,6 @@
 
   (local (defequiv bar-equiv))
 
-  (thm (implies (and
-                 (abs-file-alist-p x)
-                 (abs-file-alist-p y)
-                 (absfat-subsetp x y))
-                (subsetp-equal (abs-addrs x) (abs-addrs y)))
-       :hints (("goal" :in-theory (enable abs-addrs absfat-subsetp))))
-
   (local
    (defrefinement bar-equiv foo-equiv
      :hints
@@ -486,6 +479,49 @@
            (not (consp (assoc-equal (car (last pathname))
                                     dir))))
   :hints (("goal" :in-theory (enable names-at))))
+
+(defund
+  abs-place-file-helper (fs pathname file)
+  (declare (xargs :guard (and (abs-file-alist-p fs)
+                              (fat32-filename-list-p pathname)
+                              (abs-file-p file))
+                  :guard-debug t
+                  :measure (acl2-count pathname)))
+  (b*
+      (((unless (consp pathname))
+        (mv fs *enoent*))
+       (name (fat32-filename-fix (car pathname)))
+       (alist-elem (abs-assoc name fs))
+       ((unless (consp alist-elem))
+        (if (atom (cdr pathname))
+            (mv (abs-put-assoc name file fs) 0)
+            (mv fs *enotdir*)))
+       ((when (and (not (abs-directory-file-p (cdr alist-elem)))
+                   (or (consp (cdr pathname))
+                       (abs-directory-file-p file))))
+        (mv fs *enotdir*))
+       ((when
+         (not (or (abs-directory-file-p (cdr alist-elem))
+                  (consp (cdr pathname))
+                  (abs-directory-file-p file)
+                  (and (atom alist-elem)
+                       (>= (len fs) *ms-max-dir-ent-count*)))))
+        (mv (abs-put-assoc name file fs) 0))
+       ((when (and (atom alist-elem)
+                   (>= (len fs) *ms-max-dir-ent-count*)))
+        (mv fs *enospc*))
+       ((mv new-contents error-code)
+        (abs-place-file-helper
+         (abs-file->contents (cdr alist-elem))
+         (cdr pathname)
+         file)))
+    (mv (abs-put-assoc
+         name
+         (make-abs-file
+          :dir-ent (abs-file->dir-ent (cdr alist-elem))
+          :contents new-contents)
+         fs)
+        error-code)))
 
 (thm
  (IMPLIES
