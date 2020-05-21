@@ -7850,6 +7850,142 @@
   :hints (("goal" :in-theory (enable final-val-seq
                                      valid-seqp collapse-seq))))
 
+(defthm
+  final-val-seq-of-collapse-this-lemma-1
+  (implies
+   (and (< 0
+           (frame-val->src (cdr (assoc-equal (car seq)
+                                             (frame->frame frame)))))
+        (frame-p (frame->frame frame))
+        (valid-seqp frame seq))
+   (ctx-app-ok
+    (frame-val->dir
+     (cdr
+      (assoc-equal (frame-val->src (cdr (assoc-equal (car seq)
+                                                     (frame->frame frame))))
+                   (frame->frame frame))))
+    (car seq)
+    (nthcdr
+     (len
+      (frame-val->path
+       (cdr
+        (assoc-equal (frame-val->src (cdr (assoc-equal (car seq)
+                                                       (frame->frame frame))))
+                     (frame->frame frame)))))
+     (frame-val->path (cdr (assoc-equal (car seq)
+                                        (frame->frame frame)))))))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
+           :do-not-induct t)))
+
+(defthm
+  final-val-seq-of-collapse-this-lemma-2
+  (implies
+   (and (frame-p (frame->frame frame))
+        (valid-seqp frame seq))
+   (equal
+    (abs-addrs (frame-val->dir (cdr (assoc-equal (car seq)
+                                                 (frame->frame frame)))))
+    nil))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
+           :do-not-induct t)))
+
+(defthm
+  final-val-seq-of-collapse-this-lemma-3
+  (implies
+   (valid-seqp frame seq)
+   (not (equal (frame-val->src (cdr (assoc-equal (car seq)
+                                                 (frame->frame frame))))
+               (car seq))))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
+
+(defthm
+  final-val-seq-of-collapse-this-lemma-4
+  (implies
+   (and (equal (frame-val->src (cdr (assoc-equal (car seq)
+                                                 (frame->frame frame))))
+               0)
+        (consp (assoc-equal (car seq)
+                            (frame->frame frame)))
+        (frame-p (frame->frame frame))
+        (valid-seqp frame seq))
+   (ctx-app-ok (frame->root frame)
+               (car seq)
+               (frame-val->path (cdr (assoc-equal (car seq)
+                                                  (frame->frame frame))))))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
+
+(defthm
+  final-val-seq-of-collapse-this-lemma-5
+  (implies
+   (and (valid-seqp frame seq)
+        (member-equal x (cdr seq))
+        (< 0
+           (frame-val->src (cdr (assoc-equal (car seq)
+                                             (frame->frame frame))))))
+   (prefixp
+    (frame-val->path
+     (cdr
+      (assoc-equal (frame-val->src (cdr (assoc-equal (car seq)
+                                                     (frame->frame frame))))
+                   (frame->frame frame))))
+    (frame-val->path (cdr (assoc-equal (car seq)
+                                       (frame->frame frame))))))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
+
+(defthm
+  final-val-seq-of-collapse-this-lemma-6
+  (implies
+   (and (consp seq)
+        (not (consp (assoc-equal (car seq)
+                                 (frame->frame frame)))))
+   (not (valid-seqp frame seq)))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
+           :do-not-induct t))
+  :rule-classes :type-prescription)
+
+(defthm final-val-seq-of-collapse-this-lemma-7
+  (implies (and (consp seq) (zp (car seq)))
+           (not (valid-seqp frame seq)))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)))
+  :rule-classes :type-prescription)
+
+(defthm
+  final-val-seq-of-collapse-this-lemma-8
+  (implies
+   (and (< 0
+           (frame-val->src (cdr (assoc-equal (car seq)
+                                             (frame->frame frame)))))
+        (frame-p (frame->frame frame))
+        (valid-seqp frame seq))
+   (consp
+    (assoc-equal (frame-val->src (cdr (assoc-equal (car seq)
+                                                   (frame->frame frame))))
+                 (frame->frame frame))))
+  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)))
+  :rule-classes :type-prescription)
+
+(defthm
+  final-val-seq-of-collapse-this-1
+  (implies (and (valid-seqp frame seq)
+                (frame-p (frame->frame frame))
+                (not (equal x (car seq)))
+                (member-equal x seq)
+                (nat-listp seq))
+           (equal (final-val-seq x (collapse-this frame (car seq))
+                                 (cdr seq))
+                  (final-val-seq x frame seq)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (final-val-seq collapse-seq)
+                           ((:rewrite position-of-nthcdr)
+                            position-of-cdr position-when-member))
+           :expand (take (position-equal x seq) seq)
+           :use ((:instance position-when-member (lst seq)
+                            (item x))
+                 (:instance (:rewrite position-of-nthcdr)
+                            (lst seq)
+                            (n 1)
+                            (item x))))))
+
 (defund frame-addrs-before (frame x n)
   (if
       (zp n)
@@ -9547,7 +9683,7 @@
   :hints (("goal" :in-theory (enable collapse-this abs-addrs-of-ctx-app-1-lemma-7))))
 
 
-(defthm
+(defthmd
   partial-collapse-correctness-lemma-27
   (implies
    (and (no-duplicatesp-equal (strip-cars frame))
@@ -10211,83 +10347,12 @@
 
 (defthm
   partial-collapse-correctness-lemma-56
-  (implies
-   (and (< 0
-           (frame-val->src (cdr (assoc-equal (car seq)
-                                             (frame->frame frame)))))
-        (frame-p (frame->frame frame))
-        (valid-seqp frame seq))
-   (ctx-app-ok
-    (frame-val->dir
-     (cdr
-      (assoc-equal (frame-val->src (cdr (assoc-equal (car seq)
-                                                     (frame->frame frame))))
-                   (frame->frame frame))))
-    (car seq)
-    (nthcdr
-     (len
-      (frame-val->path
-       (cdr
-        (assoc-equal (frame-val->src (cdr (assoc-equal (car seq)
-                                                       (frame->frame frame))))
-                     (frame->frame frame)))))
-     (frame-val->path (cdr (assoc-equal (car seq)
-                                        (frame->frame frame)))))))
-  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
-           :do-not-induct t)))
-
-(defthm
-  partial-collapse-correctness-lemma-65
-  (implies
-   (and (frame-p (frame->frame frame))
-        (valid-seqp frame seq))
-   (equal
-    (abs-addrs (frame-val->dir (cdr (assoc-equal (car seq)
-                                                 (frame->frame frame)))))
-    nil))
-  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
-           :do-not-induct t)))
-
-(defthm
-  partial-collapse-correctness-lemma-66
-  (implies
-   (and (consp seq)
-        (not (consp (assoc-equal (car seq)
-                                 (frame->frame frame)))))
-   (not (valid-seqp frame seq)))
-  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
-           :do-not-induct t))
-  :rule-classes :type-prescription)
-
-(defthm partial-collapse-correctness-lemma-67
-  (implies (and (consp seq) (zp (car seq)))
-           (not (valid-seqp frame seq)))
-  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)))
-  :rule-classes :type-prescription)
-
-(defthm
-  partial-collapse-correctness-lemma-69
   (implies (and (valid-seqp frame seq)
                 (no-duplicatesp-equal (strip-cars (frame->frame frame))))
            (valid-seqp (collapse-this frame (car seq))
                        (cdr seq)))
   :hints (("goal" :in-theory (enable valid-seqp collapse-seq)))
   :rule-classes (:rewrite :type-prescription))
-
-(defthm
-  partial-collapse-correctness-lemma-90
-  (implies
-   (and (< 0
-           (frame-val->src (cdr (assoc-equal (car seq)
-                                             (frame->frame frame)))))
-        (frame-p (frame->frame frame))
-        (valid-seqp frame seq))
-   (consp
-    (assoc-equal (frame-val->src (cdr (assoc-equal (car seq)
-                                                   (frame->frame frame))))
-                 (frame->frame frame))))
-  :hints (("goal" :in-theory (enable valid-seqp collapse-seq)))
-  :rule-classes :type-prescription)
 
 (defthm
   partial-collapse-correctness-lemma-57
@@ -10309,72 +10374,7 @@
   :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
 
 (defthm
-  partial-collapse-correctness-lemma-92
-  (implies
-   (valid-seqp frame seq)
-   (not (equal (frame-val->src (cdr (assoc-equal (car seq)
-                                                 (frame->frame frame))))
-               (car seq))))
-  :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
-
-(defthm
-  partial-collapse-correctness-lemma-93
-  (implies
-   (and (equal (frame-val->src (cdr (assoc-equal (car seq)
-                                                 (frame->frame frame))))
-               0)
-        (consp (assoc-equal (car seq)
-                            (frame->frame frame)))
-        (frame-p (frame->frame frame))
-        (valid-seqp frame seq))
-   (ctx-app-ok (frame->root frame)
-               (car seq)
-               (frame-val->path (cdr (assoc-equal (car seq)
-                                                  (frame->frame frame))))))
-  :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
-
-(defthm
   partial-collapse-correctness-lemma-58
-  (implies
-   (and (valid-seqp frame seq)
-        (member-equal x (cdr seq))
-        (< 0
-           (frame-val->src (cdr (assoc-equal (car seq)
-                                             (frame->frame frame))))))
-   (prefixp
-    (frame-val->path
-     (cdr
-      (assoc-equal (frame-val->src (cdr (assoc-equal (car seq)
-                                                     (frame->frame frame))))
-                   (frame->frame frame))))
-    (frame-val->path (cdr (assoc-equal (car seq)
-                                       (frame->frame frame))))))
-  :hints (("goal" :in-theory (enable valid-seqp collapse-seq))))
-
-(defthm
-  partial-collapse-correctness-lemma-74
-  (implies (and (valid-seqp frame seq)
-                (frame-p (frame->frame frame))
-                (not (equal x (car seq)))
-                (member-equal x seq)
-                (nat-listp seq))
-           (equal (final-val-seq x (collapse-this frame (car seq))
-                                 (cdr seq))
-                  (final-val-seq x frame seq)))
-  :hints (("goal" :do-not-induct t
-           :in-theory (e/d (final-val-seq collapse-seq)
-                           ((:rewrite position-of-nthcdr)
-                            position-of-cdr position-when-member))
-           :expand (take (position-equal x seq) seq)
-           :use ((:instance position-when-member (lst seq)
-                            (item x))
-                 (:instance (:rewrite position-of-nthcdr)
-                            (lst seq)
-                            (n 1)
-                            (item x))))))
-
-(defthm
-  partial-collapse-correctness-lemma-80
   (implies (and (valid-seqp frame seq)
                 (frame-p (frame->frame frame))
                 (not (member-equal (car seq) l))
@@ -12872,14 +12872,14 @@
                             (:rewrite partial-collapse-correctness-lemma-28)
                             (:definition assoc-equal)
                             (:definition no-duplicatesp-equal)
-                            (:rewrite partial-collapse-correctness-lemma-65)
+                            (:rewrite final-val-seq-of-collapse-this-lemma-2)
                             (:rewrite partial-collapse-correctness-lemma-83)
                             (:rewrite nthcdr-when->=-n-len-l)
                             (:rewrite m1-file-alist-p-of-final-val-seq-lemma-2)))
     :use (:rewrite partial-collapse-correctness-lemma-161))))
 
 (defthm
-  partial-collapse-correctness-lemma-102
+  partial-collapse-correctness-lemma-64
   (implies
    (and
     (not (zp n))
@@ -12944,7 +12944,7 @@
                      (:rewrite partial-collapse-correctness-lemma-28)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
-                     (:rewrite partial-collapse-correctness-lemma-65)
+                     (:rewrite final-val-seq-of-collapse-this-lemma-2)
                      (:rewrite partial-collapse-correctness-lemma-83)
                      (:rewrite nthcdr-when->=-n-len-l)
                      (:rewrite m1-file-alist-p-of-final-val-seq-lemma-2)))
@@ -13027,7 +13027,7 @@
                      (:rewrite partial-collapse-correctness-lemma-28)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
-                     (:rewrite partial-collapse-correctness-lemma-65)
+                     (:rewrite final-val-seq-of-collapse-this-lemma-2)
                      (:rewrite partial-collapse-correctness-lemma-83)
                      (:rewrite nthcdr-when->=-n-len-l)
                      (:rewrite m1-file-alist-p-of-final-val-seq-lemma-2)))
@@ -13238,7 +13238,7 @@
                      (:rewrite partial-collapse-correctness-lemma-28)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
-                     (:rewrite partial-collapse-correctness-lemma-65)
+                     (:rewrite final-val-seq-of-collapse-this-lemma-2)
                      (:rewrite partial-collapse-correctness-lemma-83)
                      (:rewrite nthcdr-when->=-n-len-l)
                      (:rewrite m1-file-alist-p-of-final-val-seq-lemma-2)
