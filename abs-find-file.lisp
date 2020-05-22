@@ -44,7 +44,14 @@
    (:rewrite
     partial-collapse-correctness-lemma-106)
    (:rewrite
-    abs-fs-fix-of-put-assoc-equal-lemma-2))))
+    abs-fs-fix-of-put-assoc-equal-lemma-2)
+   final-val-of-collapse-this-lemma-3
+   abs-separate-of-frame->frame-of-collapse-this-lemma-8
+   abs-fs-fix-of-put-assoc-equal-lemma-3
+   (:rewrite
+    absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
+   (:type-prescription
+    abs-directory-file-p-when-m1-file-p-lemma-1))))
 
 (defund abs-find-file-helper (fs pathname)
   (declare (xargs :guard (and (abs-file-alist-p fs)

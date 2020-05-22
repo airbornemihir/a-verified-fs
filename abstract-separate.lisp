@@ -11794,42 +11794,6 @@
 (defthm
   partial-collapse-correctness-lemma-60
   (implies
-   (and
-    (abs-separate (frame->frame frame))
-    (dist-names (frame->root frame)
-                nil (frame->frame frame))
-    (consp
-     (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                  (frame->frame frame)))
-    (prefixp
-     (frame-val->path
-      (cdr (assoc-equal
-            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-            (frame->frame frame))))
-     (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
-    (ctx-app-ok
-     (frame-val->dir
-      (cdr (assoc-equal
-            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-            (frame->frame frame))))
-     x
-     (nthcdr
-      (len
-       (frame-val->path
-        (cdr (assoc-equal
-              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-              (frame->frame frame)))))
-      (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-    (abs-complete
-     (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
-   (dist-names (frame->root frame)
-               nil
-               (frame->frame (collapse-this frame x))))
-  :hints (("goal" :in-theory (enable collapse-this))))
-
-(defthm
-  partial-collapse-correctness-lemma-101
-  (implies
    (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                0)
         (abs-separate (frame->frame frame))
