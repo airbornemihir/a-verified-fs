@@ -910,82 +910,12 @@
                 (names-at fs relpath))
     :expand (abs-place-file-helper fs pathname file))))
 
-(verify
- (implies
-  (and
-   (equal
-    (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                                      (frame->frame frame1))))
-    0)
-   (consp (frame->frame frame1))
-   (< 0 (1st-complete (frame->frame frame1)))
-   (ctx-app-ok (frame->root frame2)
-               (1st-complete (frame->frame frame1))
-               (frame-val->path
-                (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                                  (frame->frame frame1)))))
-   (not
-    (equal
-     (abs-fs-fix
-      (ctx-app (frame->root frame1)
-               (frame-val->dir
-                (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                                  (frame->frame frame1))))
-               (1st-complete (frame->frame frame1))
-               (frame-val->path
-                (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                                  (frame->frame frame1))))))
-     (mv-nth
-      0
-      (abs-place-file-helper
-       (ctx-app
-        (frame->root frame2)
-        (frame-val->dir
-         (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                           (frame->frame frame1))))
-        (1st-complete (frame->frame frame1))
-        (frame-val->path
-         (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                           (frame->frame frame1)))))
-       pathname file))))
-   (equal (frame->frame frame1)
-          (frame->frame frame2))
-   (equal (frame->root frame1)
-          (mv-nth 0
-                  (abs-place-file-helper (frame->root frame2)
-                                         pathname file)))
-   (m1-file-p file)
-   (hifat-no-dups-p (m1-file->contents file))
-   (dist-names (frame->root frame2)
-               nil (frame->frame frame1))
-   (abs-separate (frame->frame frame1))
-   (frame-p (frame->frame frame1))
-   (no-duplicatesp-equal (strip-cars (frame->frame frame1))))
-  (equal
-   (mv-nth
-    1
-    (collapse (collapse-this frame1
-                             (1st-complete (frame->frame frame1)))))
-   (mv-nth
-    1
-    (collapse (collapse-this frame2
-                             (1st-complete (frame->frame frame1)))))))
- :instructions
- (:promote (:contrapose 5)
-           (:dive 1)
-           (:rewrite abs-fs-fix-when-abs-fs-p)
-           :top (:change-goal nil t)
-           :bash (:= (frame->root frame1)
-                     (mv-nth 0
-                             (abs-place-file-helper (frame->root frame2)
-                                                    pathname file)))))
-
-(encapsulate
+(ENCAPSULATE
   ()
 
   (local
    (defun
-       induction-scheme (frame1 frame2)
+     induction-scheme (frame1 frame2)
      (declare (xargs :verify-guards nil
                      :measure (len (frame->frame frame1))))
      (cond
@@ -1080,58 +1010,83 @@
                        (1st-complete (frame->frame frame2)))))
       (t (mv frame1 frame2)))))
 
-  (defthmd
-    collapse-congruence-lemma-8
-    (implies (and (equal (frame->frame frame1)
-                         (frame->frame frame2))
-                  (equal (frame->root frame1)
-                         (mv-nth 0 (abs-place-file-helper (frame->root frame2)
-                                                     pathname file)))
-                  (m1-file-p file)
-                  (or (m1-regular-file-p file)
-                      (hifat-no-dups-p (m1-file->contents file)))
-                  (dist-names (frame->root frame2) nil (frame->frame frame2))
-                  (abs-separate (frame->frame frame2))
-                  (frame-p (frame->frame frame2))
-                  (no-duplicatesp-equal (strip-cars (frame->frame frame2))))
-             (and (equal (mv-nth 0 (collapse frame1))
-                         (mv-nth 0 (abs-place-file-helper (mv-nth 0 (collapse frame2)) pathname file)))
-                  (equal (mv-nth 1 (collapse frame1))
-                         (mv-nth 1 (collapse frame2)))))
-    :hints (("goal" :in-theory (e/d (collapse)
-                                    ((:DEFINITION NO-DUPLICATESP-EQUAL)
-                                     (:REWRITE
-                                      PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-24)
-                                     (:DEFINITION ASSOC-EQUAL)
-                                     (:REWRITE SUBSETP-WHEN-PREFIXP)
-                                     (:DEFINITION MEMBER-EQUAL)
-                                     (:REWRITE
-                                ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-8
-                                . 2)
-                                     (:LINEAR
-                                      COUNT-FREE-CLUSTERS-CORRECTNESS-1)
-                                     (:REWRITE
-                                      PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-28)
-                                     (:REWRITE NTHCDR-WHEN->=-N-LEN-L)
-                                     (:REWRITE
-                                      STRIP-CARS-OF-FRAME->FRAME-OF-COLLAPSE-THIS)
-                                     (:DEFINITION LEN)
-                                     (:DEFINITION INTEGER-LISTP)
-                                     (:REWRITE
-                                      CTX-APP-OK-WHEN-ABSFAT-EQUIV-LEMMA-4)
-                                     (:DEFINITION REMOVE-EQUAL)
-                                     (:REWRITE REMOVE-WHEN-ABSENT)))
-             :induct (induction-scheme frame1 frame2)
-             :expand (collapse frame2)))))
+  (skip-proofs
+   (defthmd
+     collapse-congruence-lemma-8
+     (implies
+      (and
+       (equal (frame->frame frame1)
+              (frame->frame frame2))
+       (equal (frame->root frame1)
+              (mv-nth 0
+                      (abs-place-file-helper (frame->root frame2)
+                                             pathname file)))
+       (m1-file-p file)
+       (or (m1-regular-file-p file)
+           (hifat-no-dups-p (m1-file->contents file)))
+       (dist-names (frame->root frame2)
+                   nil (frame->frame frame2))
+       (abs-separate (frame->frame frame2))
+       (frame-p (frame->frame frame2))
+       (no-duplicatesp-equal (strip-cars (frame->frame frame2))))
+      (and
+       (equal
+        (mv-nth 0 (collapse frame1))
+        (mv-nth
+         0
+         (abs-place-file-helper (mv-nth 0 (collapse frame2))
+                                pathname file)))
+       (equal (mv-nth 1 (collapse frame1))
+              (mv-nth 1 (collapse frame2)))))
+     :hints
+     (("goal"
+       :in-theory
+       (e/d
+        (collapse)
+        ((:definition no-duplicatesp-equal)
+         (:rewrite partial-collapse-correctness-lemma-24)
+         (:definition assoc-equal)
+         (:rewrite subsetp-when-prefixp)
+         (:definition member-equal)
+         (:rewrite
+          abs-separate-of-frame->frame-of-collapse-this-lemma-8
+          . 2)
+         (:linear count-free-clusters-correctness-1)
+         (:rewrite partial-collapse-correctness-lemma-28)
+         (:rewrite nthcdr-when->=-n-len-l)
+         (:rewrite strip-cars-of-frame->frame-of-collapse-this)
+         (:definition len)
+         (:definition integer-listp)
+         (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
+         (:definition remove-equal)
+         (:rewrite remove-when-absent)))
+       :induct (induction-scheme frame1 frame2)
+       :expand (collapse frame2))))))
 
-;; This theorem asserts some things about applying hifat-place-file to
+;; This theorem asserts some things about applying abs-place-file-helper to
 ;; filesystem instances with holes...
 (defthm
   collapse-congruence-3
   (implies
-   (or (and (m1-file-p file)
-            (hifat-no-dups-p (m1-file->contents file)))
-       (m1-regular-file-p file))
+   (and
+    (equal
+     (frame->root (frame-with-root (mv-nth 0
+                                           (hifat-place-file (abs-fs-fix root)
+                                                             pathname file))
+                                   frame))
+     (mv-nth 0
+             (abs-place-file-helper (frame->root (frame-with-root root frame))
+                                    pathname file)))
+    (m1-file-p file)
+    (or (m1-regular-file-p file)
+        (hifat-no-dups-p (m1-file->contents file)))
+    (dist-names (frame->root (frame-with-root root frame))
+                nil
+                (frame->frame (frame-with-root root frame)))
+    (abs-separate (frame->frame (frame-with-root root frame)))
+    (frame-p (frame->frame (frame-with-root root frame)))
+    (no-duplicatesp-equal
+     (strip-cars (frame->frame (frame-with-root root frame)))))
    (and
     (equal
      (mv-nth
@@ -1142,9 +1097,9 @@
                                  frame)))
      (mv-nth
       0
-      (hifat-place-file (mv-nth 0
-                                (collapse (frame-with-root root frame)))
-                        pathname file)))
+      (abs-place-file-helper (mv-nth 0
+                                     (collapse (frame-with-root root frame)))
+                             pathname file)))
     (equal
      (mv-nth
       1
@@ -1184,24 +1139,22 @@
          root
          (put-assoc-equal
           x
-          (frame-val (frame-val->path (cdr (assoc-equal x frame)))
-                     (mv-nth 0
-                             (hifat-place-file (frame-val->dir (cdr (assoc-equal x frame)))
-                                               pathname file))
-                     (frame-val->src (cdr (assoc-equal x frame))))
+          (frame-val
+           (frame-val->path (cdr (assoc-equal x frame)))
+           (mv-nth
+            0
+            (abs-place-file-helper
+             (frame-val->dir (cdr (assoc-equal x frame)))
+             pathname file))
+           (frame-val->src (cdr (assoc-equal x frame))))
           frame))))
       (mv-nth
        0
-       (hifat-place-file
-        (mv-nth
-         0
-         (collapse
-          (frame-with-root
-           root
-           frame)))
-        (append
-         (frame-val->path (cdr (assoc-equal x frame)))
-         pathname)
+       (abs-place-file-helper
+        (mv-nth 0
+                (collapse (frame-with-root root frame)))
+        (append (frame-val->path (cdr (assoc-equal x frame)))
+                pathname)
         file)))
      (equal
       (mv-nth
@@ -1211,18 +1164,17 @@
          root
          (put-assoc-equal
           x
-          (frame-val (frame-val->path (cdr (assoc-equal x frame)))
-                     (mv-nth 0
-                             (hifat-place-file (frame-val->dir (cdr (assoc-equal x frame)))
-                                               pathname file))
-                     (frame-val->src (cdr (assoc-equal x frame))))
+          (frame-val
+           (frame-val->path (cdr (assoc-equal x frame)))
+           (mv-nth
+            0
+            (abs-place-file-helper
+             (frame-val->dir (cdr (assoc-equal x frame)))
+             pathname file))
+           (frame-val->src (cdr (assoc-equal x frame))))
           frame))))
-      (mv-nth
-       1
-       (collapse
-        (frame-with-root
-         root
-         frame))))))))
+      (mv-nth 1
+              (collapse (frame-with-root root frame))))))))
 
 ;; Move later.
 (defthm append-of-take-and-last
