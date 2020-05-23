@@ -1504,3 +1504,15 @@
 (defthm member-of-car-of-last
   (implies (consp x)
            (member-equal (car (last x)) x)))
+
+(defthm append-of-take-and-last
+  (equal (append (take (+ -1 (len pathname)) pathname)
+                 (last pathname))
+         pathname))
+
+(defthm atom-of-cdr-of-last
+  (atom (cdr (last x)))
+  :rule-classes :type-prescription)
+
+(defthm last-when-equal-len-1
+  (implies (equal (len l) 1) (equal (last l) l)))

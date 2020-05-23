@@ -575,13 +575,6 @@
          (abs-top-addrs fs))
   :hints (("goal" :in-theory (enable abs-top-addrs abs-place-file-helper))))
 
-;; Move later.
-(defthm subsetp-when-prefixp
-  (implies (prefixp x y)
-           (subsetp-equal x y))
-  :hints (("goal" :in-theory (enable subsetp-equal prefixp)
-           :induct (prefixp x y))))
-
 (defthm
   addrs-at-when-abs-complete
   (implies (abs-complete (abs-fs-fix fs))
@@ -656,6 +649,12 @@
                       x x-path)
           (ctx-app-ok fs x x-path)))
   :hints (("goal" :in-theory (enable ctx-app-ok))))
+
+(defthm natp-of-abs-place-file-helper
+  (natp (mv-nth 1
+                (abs-place-file-helper fs pathname file)))
+  :hints (("goal" :in-theory (enable abs-place-file-helper)))
+  :rule-classes :type-prescription)
 
 (defthm
   collapse-congruence-lemma-9
@@ -806,13 +805,6 @@
                                      abs-file-p abs-file->contents
                                      abs-file-contents-p abs-fs-fix)
            :do-not-induct t)))
-
-;; Move later.
-(defthm natp-of-abs-place-file-helper
-  (natp (mv-nth 1
-                (abs-place-file-helper fs pathname file)))
-  :hints (("goal" :in-theory (enable abs-place-file-helper)))
-  :rule-classes :type-prescription)
 
 (defthm names-at-of-abs-place-file-helper-lemma-3
   (implies (and (abs-no-dups-p (abs-file->contents file))
@@ -1175,17 +1167,6 @@
           frame))))
       (mv-nth 1
               (collapse (frame-with-root root frame))))))))
-
-;; Move later.
-(defthm append-of-take-and-last
-  (equal (append (take (+ -1 (len pathname)) pathname)
-                 (last pathname))
-         pathname))
-(defthm atom-of-cdr-of-last
-  (atom (cdr (last x)))
-  :rule-classes :type-prescription)
-(defthm last-when-equal-len-1
-  (implies (equal (len l) 1) (equal (last l) l)))
 
 (defthm
   absfat-place-file-correctness-lemma-6

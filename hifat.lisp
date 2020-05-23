@@ -427,6 +427,12 @@
               (unsigned-byte-listp width y)))
   :hints (("goal" :induct (revappend x y))))
 
+(defthm subsetp-when-prefixp
+  (implies (prefixp x y)
+           (subsetp-equal x y))
+  :hints (("goal" :in-theory (enable subsetp-equal prefixp)
+           :induct (prefixp x y))))
+
 (encapsulate
   ()
 
