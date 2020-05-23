@@ -1119,9 +1119,17 @@
  (defthm
    collapse-congruence-4
    (implies
-    (or (and (m1-file-p file)
-             (hifat-no-dups-p (m1-file->contents file)))
-        (m1-regular-file-p file))
+    (and
+     (m1-file-p file)
+     (or (m1-regular-file-p file)
+         (hifat-no-dups-p (m1-file->contents file)))
+     (dist-names (frame->root (frame-with-root root frame))
+                 nil
+                 (frame->frame (frame-with-root root frame)))
+     (abs-separate (frame->frame (frame-with-root root frame)))
+     (frame-p (frame->frame (frame-with-root root frame)))
+     (no-duplicatesp-equal
+      (strip-cars (frame->frame (frame-with-root root frame)))))
     (and
      (equal
       (mv-nth
