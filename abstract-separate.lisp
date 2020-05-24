@@ -10915,8 +10915,7 @@
   (("goal"
     :in-theory (e/d (frame-addrs-before-seq)
                     ((:rewrite binary-append-take-nthcdr)
-                     (:rewrite frame-addrs-before-seq-of-append)
-                     (:rewrite subsetp-of-binary-append-3)))
+                     (:rewrite frame-addrs-before-seq-of-append)))
     :use
     ((:instance (:rewrite binary-append-take-nthcdr)
                 (l (take n seq))
@@ -10927,8 +10926,14 @@
                 (x x)
                 (frame frame))
      (:instance
-      (:rewrite subsetp-of-binary-append-3)
-      (z
+      (:rewrite subsetp-append1)
+      (a (nthcdr (+ -1 n) (take n seq)))
+      (b (frame-addrs-before-seq
+          frame
+          (frame-val->src (cdr (assoc-equal (nth (+ -1 n) seq)
+                                            (frame->frame frame))))
+          (take (+ -1 n) seq)))
+      (c
        (frame-addrs-before
         frame
         (frame-val->src (cdr (assoc-equal (nth (+ -1 n) seq)
@@ -10936,13 +10941,7 @@
         (collapse-1st-index
          frame
          (frame-val->src (cdr (assoc-equal (nth (+ -1 n) seq)
-                                           (frame->frame frame)))))))
-      (y (frame-addrs-before-seq
-          frame
-          (frame-val->src (cdr (assoc-equal (nth (+ -1 n) seq)
-                                            (frame->frame frame))))
-          (take (+ -1 n) seq)))
-      (x (nthcdr (+ -1 n) (take n seq))))
+                                           (frame->frame frame))))))))
      (:instance take-of-nthcdr (l seq)
                 (n2 (- n 1))
                 (n1 1))))))
@@ -11342,7 +11341,7 @@
        :do-not-induct t
        :in-theory (e/d (member-of-take)
                        ((:rewrite binary-append-take-nthcdr)
-                        (:rewrite subsetp-of-binary-append-3)
+                        (:rewrite subsetp-append1)
                         partial-collapse-correctness-lemma-51))
        :use
        ((:instance
@@ -11351,16 +11350,16 @@
                   (frame-addrs-before frame x (collapse-1st-index frame x))))
          (i (+ -1 n)))
         (:instance
-         (:rewrite subsetp-of-binary-append-3)
-         (z (frame-addrs-before-seq frame
-                                    x (take (position-equal x seq) seq)))
-         (y
+         (:rewrite subsetp-append1)
+         (a (take (+ -1 n)
+                  (frame-addrs-before frame x (collapse-1st-index frame x))))
+         (b
           (nthcdr
            (+ -1 n)
            (take n
                  (frame-addrs-before frame x (collapse-1st-index frame x)))))
-         (x (take (+ -1 n)
-                  (frame-addrs-before frame x (collapse-1st-index frame x)))))
+         (c (frame-addrs-before-seq frame
+                                    x (take (position-equal x seq) seq))))
         (:instance (:rewrite take-of-nthcdr)
                    (l (frame-addrs-before frame x (collapse-1st-index frame x)))
                    (n2 (+ -1 n))
@@ -12667,29 +12666,37 @@
     :expand ((seq-this frame)))))
 
 (defthmd
-  partial-collapse-correctness-lemma-162
+  partial-collapse-correctness-lemma-69
   (implies
    (and (<= (nfix n) (len (seq-this frame)))
-        (member-equal x (take n (seq-this frame)))
         (no-duplicatesp-equal (strip-cars (frame->frame frame))))
-   (not
-    (consp (assoc-equal
-           x
-           (frame->frame (collapse-seq frame (take n (seq-this frame))))))))
+   (iff
+    (consp
+     (assoc-equal
+      x
+      (frame->frame (collapse-seq frame (take n (seq-this frame))))))
+    (and
+     (consp (assoc-equal x (frame->frame frame)))
+     (not (member-equal x (take n (seq-this frame)))))))
   :hints
   (("goal"
-    :in-theory
-    (e/d (seq-this collapse-seq collapse-iter)
-         ((:definition assoc-equal)
-          (:rewrite take-of-len-free)
-          (:rewrite partial-collapse-correctness-lemma-24)
-          (:definition member-equal)
-          (:rewrite nthcdr-when->=-n-len-l)
-          (:definition remove-equal)
-          (:rewrite remove-when-absent)
-          (:rewrite partial-collapse-correctness-lemma-20)
-          (:definition strip-cars)))
-    :induct (collapse-iter frame n))))
+    :in-theory (e/d (seq-this collapse-seq collapse-iter)
+                    ((:definition assoc-equal)
+                     (:rewrite take-of-len-free)
+                     (:rewrite partial-collapse-correctness-lemma-24)
+                     (:definition member-equal)
+                     (:rewrite nthcdr-when->=-n-len-l)
+                     (:definition remove-equal)
+                     (:rewrite remove-when-absent)
+                     (:rewrite partial-collapse-correctness-lemma-20)
+                     (:definition strip-cars)))
+    :induct (collapse-iter frame n)
+    :expand
+    ((seq-this frame)
+     (collapse-seq frame
+                   (cons (1st-complete (frame->frame frame))
+                         (take (+ -1 n)
+                               (seq-this (collapse-iter frame 1)))))))))
 
 (defthm
   partial-collapse-correctness-lemma-100
@@ -12711,7 +12718,7 @@
     :do-not-induct t
     :use
     ((:instance
-      partial-collapse-correctness-lemma-162
+      partial-collapse-correctness-lemma-69
       (x (frame-val->src
           (cdr (assoc-equal (nth n (seq-this frame))
                             (frame->frame frame))))))
@@ -13430,6 +13437,95 @@
     :use ((:instance partial-collapse-correctness-lemma-135
                      (seq (cons x (seq-this (collapse-this frame x)))))
           valid-seqp-after-collapse-this))))
+
+;; (verify
+;;  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;                (not (zp n))
+;;                (<= n (len (seq-this frame)))
+;;                (subsetp-equal (take (+ -1 n) (seq-this frame))
+;;                               (cons x (seq-this (collapse-this frame x))))
+;;                (mv-nth 1 (collapse frame))
+;;                (<= 0 (len (seq-this frame)))
+;;                (not (equal (nth (+ -1 n) (seq-this frame))
+;;                            x)))
+;;           (member-equal (nth (+ -1 n) (seq-this frame))
+;;                         (seq-this (collapse-this frame x))))
+;;  :instructions
+;;  ((:use (:instance partial-collapse-correctness-lemma-69
+;;                    (x (nth (+ -1 n) (seq-this frame)))
+;;                    (n (len (seq-this (collapse-this frame x))))
+;;                    (frame (collapse-this frame x))))
+;;   :promote (:demote 1)
+;;   (:dive 1 1)
+;;   (:= t)
+;;   :up
+;;   (:= (take (len (seq-this (collapse-this frame x)))
+;;             (seq-this (collapse-this frame x)))
+;;       (seq-this (collapse-this frame x)))
+;;   :top :split (:contrapose 8)
+;;   (:dive 1)
+;;   :top
+;;   (:bash ("goal" :in-theory (disable member-of-a-nat-list
+;;                                      member-of-strip-cars
+;;                                      no-duplicatesp-of-seq-this-lemma-1)
+;;           :use ((:instance member-of-a-nat-list
+;;                            (x (nth (+ -1 n) (seq-this frame)))
+;;                            (lst (seq-this frame)))
+;;                 (:instance member-of-strip-cars
+;;                            (x (nth (+ -1 n) (seq-this frame)))
+;;                            (alist (frame->frame frame)))
+;;                 no-duplicatesp-of-seq-this-lemma-1)))))
+
+;; (thm
+;;  (implies
+;;   (and (not (zp n))
+;;        (subsetp-equal (take (+ -1 n) (seq-this frame))
+;;                       (cons x (seq-this (collapse-this frame x))))
+;;        (mv-nth 1 (collapse frame))
+;;        (<= 0 (len (seq-this frame)))
+;;        (not (equal (nth (+ -1 n) (seq-this frame))
+;;                    x)))
+;;   (member-equal (nth (+ -1 n) (seq-this frame))
+;;                 (seq-this (collapse-this frame x)))))
+
+;; (verify
+;;  (implies (and (not (zp n))
+;;                (subsetp-equal (take (+ -1 n) (seq-this frame))
+;;                               (cons x (seq-this (collapse-this frame x))))
+;;                (mv-nth 1 (collapse frame))
+;;                (<= 0 (len (seq-this frame))))
+;;           (subsetp-equal (take n (seq-this frame))
+;;                          (cons x (seq-this (collapse-this frame x)))))
+;;  :instructions
+;;  (:promote (:= (take n (seq-this frame))
+;;                (append (take (- n 1) (take n (seq-this frame)))
+;;                        (nthcdr (- n 1)
+;;                                (take n (seq-this frame))))
+;;                :hints :none)
+;;            (:change-goal nil t)
+;;            (:dive 2)
+;;            (:rewrite binary-append-take-nthcdr)
+;;            :top :s :bash (:rewrite subsetp-append1)
+;;            (:bash ("goal" :use (:instance (:rewrite take-of-nthcdr)
+;;                                           (l (seq-this frame))
+;;                                           (n2 (+ -1 n))
+;;                                           (n1 1))))))
+
+;; (encapsulate
+;;   ()
+
+;;   (local (include-book "std/basic/inductions" :dir :system))
+
+;;   (thm
+;;    (implies
+;;     (and
+;;      (mv-nth 1 (collapse frame))
+;;      (<= () (len (seq-this frame))))
+;;     (subsetp-equal
+;;      (take n (seq-this frame))
+;;      (cons x (seq-this (collapse-this frame x)))))
+;;    :hints (("Goal" :in-theory (e/d () ())
+;;             :induct (dec-induct n)))))
 
 (skip-proofs
  (defthm

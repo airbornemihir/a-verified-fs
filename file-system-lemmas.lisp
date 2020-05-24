@@ -171,24 +171,19 @@
   (equal (intersectp-equal x y)
          (intersectp-equal y x)))
 
-(defthm subsetp-of-binary-append-1
-  (subsetp-equal y (binary-append x y)))
-
-(defthm subsetp-of-binary-append-2
-  (subsetp-equal x (binary-append x y)))
-
-(defthm subsetp-of-binary-append-3
-  (equal (subsetp-equal (binary-append x y) z)
-         (and (subsetp-equal x z) (subsetp-equal y z))))
-
-;; The following is redundant with the eponymous theorem in
-;; books/std/lists/sets.lisp, from where it was taken with thanks.
+;; The following five theorems are redundant with the eponymous theorems in
+;; books/std/lists/sets.lisp, from where they were taken with thanks.
+(defthm subsetp-append1
+  (equal (subsetp (append a b) c)
+         (and (subsetp a c)
+              (subsetp b c))))
+(defthm subsetp-append2
+  (subsetp a (append a b)))
+(defthm subsetp-append3
+  (subsetp b (append a b)))
 (defthm subsetp-trans
   (implies (and (subsetp x y) (subsetp y z))
            (subsetp x z)))
-
-;; The following is redundant with the eponymous theorem in
-;; books/std/lists/sets.lisp, from where it was taken with thanks.
 (defthm
   subsetp-member
   (implies (and (member a x) (subsetp x y))

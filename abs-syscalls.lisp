@@ -8,6 +8,7 @@
 (include-book "abs-find-file")
 (include-book "hifat-syscalls")
 (local (include-book "std/lists/prefixp" :dir :system))
+(local (include-book "std/lists/intersectp" :dir :system))
 
 (local (in-theory (e/d (abs-file-p-when-m1-regular-file-p)
                        nil)))
@@ -49,16 +50,6 @@
      (list* (cons (caar frame) (change-frame-val (cdar frame) :dir head))
             (cdr frame))
      head-error-code)))
-
-;; Move later.
-(defthm intersectp-of-cons-2
-  (iff (intersectp-equal x1 (cons x2 y))
-       (or (member-equal x2 x1)
-           (intersectp-equal y x1)))
-  :hints (("goal" :in-theory (e/d (intersectp-equal)
-                                  (intersectp-is-commutative))
-           :expand (:with intersectp-is-commutative
-                          (intersectp-equal x1 (cons x2 y))))))
 
 (defund
   pathname-clear (pathname frame)
