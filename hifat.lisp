@@ -160,11 +160,9 @@
          (+ (len (explode str1))
             (len (explode str2)))))
 
-(defthmd
-  length-of-empty-list
-  (implies (stringp x)
-           (iff (equal (len (explode x)) 0)
-                (equal x "")))
+(defthmd length-of-empty-list
+  (iff (equal (len (explode x)) 0)
+       (equal (str-fix x) ""))
   :hints (("goal" :expand (len (explode x)))))
 
 (defthm
