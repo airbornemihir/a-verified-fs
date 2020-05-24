@@ -648,7 +648,7 @@
   :rule-classes :type-prescription)
 
 (defthm
-  collapse-congruence-lemma-9
+  collapse-hifat-place-file-lemma-9
   (implies
    (and (equal (frame->root frame1)
                (mv-nth 0
@@ -683,7 +683,7 @@
      (fs (frame->root frame2))))))
 
 (defthm
-  collapse-congruence-lemma-10
+  collapse-hifat-place-file-lemma-10
   (implies
    (and
     (< 0 (1st-complete (frame->frame frame1)))
@@ -733,7 +733,7 @@
                     (frame frame2)))))
 
 (defthm
-  collapse-congruence-lemma-11
+  collapse-hifat-place-file-lemma-11
   (implies
    (and
     (equal
@@ -995,7 +995,7 @@
 
   (skip-proofs
    (defthmd
-     collapse-congruence-lemma-8
+     collapse-hifat-place-file-lemma-8
      (implies
       (and
        (equal (frame->frame frame1)
@@ -1049,7 +1049,7 @@
 ;; This theorem asserts some things about applying abs-place-file-helper to
 ;; filesystem instances with holes...
 (defthm
-  collapse-congruence-3
+  collapse-hifat-place-file-3
   (implies
    (and
     (equal
@@ -1096,19 +1096,19 @@
   (("goal"
     :use
     (:instance
-     (:rewrite collapse-congruence-lemma-8)
+     (:rewrite collapse-hifat-place-file-lemma-8)
      (frame1 (frame-with-root (mv-nth 0
                                       (hifat-place-file (abs-fs-fix root)
                                                         pathname file))
                               frame))
      (frame2 (frame-with-root root frame))))))
 
-;; This is based on collapse-congruence-2, which relies on the lemma
-;; collapse-congruence-lemma-6. That lemma would probably have to be tweaked to
+;; This is based on collapse-hifat-place-file-2, which relies on the lemma
+;; collapse-hifat-place-file-lemma-6. That lemma would probably have to be tweaked to
 ;; deal with all the pathname appending stuff, which I'm skipping over for now.
 (skip-proofs
  (defthm
-   collapse-congruence-4
+   collapse-hifat-place-file-4
    (implies
     (and
      (m1-file-p file)
@@ -1239,7 +1239,7 @@
     :do-not-induct t
     :in-theory (e/d (hifat-place-file dist-names
                                       abs-separate frame-addrs-root)
-                    (collapse-congruence-4))
+                    (collapse-hifat-place-file-4))
     :use
     ((:instance
       (:rewrite hifat-place-file-correctness-4)
@@ -1331,7 +1331,7 @@
   (("goal"
     :in-theory (e/d (hifat-place-file dist-names
                                       abs-separate frame-addrs-root)
-                    (collapse-congruence-4))
+                    (collapse-hifat-place-file-4))
     :use
     (:instance
      (:rewrite hifat-place-file-correctness-4)
@@ -1345,6 +1345,12 @@
                                         frame)))))
      (m1-file-alist1 fs)))))
 
+;; I guess I should say that this function can only really do so much, and if
+;; we try to use this in our proofs we'll kinda be back to representing
+;; filesystem trees as... filesystem trees. When I say it can only do so much,
+;; I mean that it can only help us do some refinement proofs, which will tie
+;; lofat to hifat and hifat to absfat. Ultimately, I guess we'll want theorems
+;; that use the collapse-equiv relation defined previously...
 (defun frame-reps-fs
     (frame fs)
   (b*
@@ -1411,8 +1417,8 @@
   :hints
   (("goal" :do-not-induct t
     :in-theory (e/d (hifat-place-file dist-names abs-separate)
-                    (collapse-congruence-4))
-    :use ((:instance collapse-congruence-4
+                    (collapse-hifat-place-file-4))
+    :use ((:instance collapse-hifat-place-file-4
                      (frame (cons (cons x
                                         (frame-val (butlast pathname 1)
                                                    dir src))
