@@ -1345,6 +1345,14 @@
                                         frame)))))
      (m1-file-alist1 fs)))))
 
+(defun frame-reps-fs
+    (frame fs)
+  (b*
+      (((mv fs-equiv result) (collapse frame)))
+    (and result
+         (absfat-equiv fs-equiv fs)
+         (abs-separate frame))))
+
 ;; I'm not even sure what the definition of abs-place-file above should be. But
 ;; I'm pretty sure it should support a theorem like the following.
 ;;
@@ -1380,27 +1388,13 @@
                                               file dir)
                              src))
             frame)))
-    (mv-nth
-     1
-     (collapse (frame-with-root root
-                                (cons (cons x
-                                            (frame-val (butlast pathname 1)
-                                                       dir src))
-                                      frame))))
-    (absfat-equiv
-     (mv-nth
-      0
-      (collapse (frame-with-root root
-                                 (cons (cons x
-                                             (frame-val (butlast pathname 1)
-                                                        dir src))
-                                       frame))))
+    (frame-reps-fs
+     (frame-with-root root
+                      (cons (cons x
+                                  (frame-val (butlast pathname 1)
+                                             dir src))
+                            frame))
      fs)
-    (abs-separate (frame-with-root root
-                                   (cons (cons x
-                                               (frame-val (butlast pathname 1)
-                                                          dir src))
-                                         frame)))
     (not (member-equal (car (last pathname))
                        (names-at dir nil)))
     (consp pathname))
@@ -1413,10 +1407,7 @@
                                       frame)))
         ((mv fs &)
          (hifat-place-file fs pathname file)))
-     (and (mv-nth 1 (collapse frame))
-          (absfat-equiv (mv-nth 0 (collapse frame))
-                        fs)
-          (abs-separate frame))))
+     (frame-reps-fs frame fs)))
   :hints
   (("goal" :do-not-induct t
     :in-theory (e/d (hifat-place-file dist-names abs-separate)
