@@ -1049,7 +1049,7 @@
 ;; This theorem asserts some things about applying abs-place-file-helper to
 ;; filesystem instances with holes...
 (defthm
-  collapse-hifat-place-file-3
+  collapse-hifat-place-file-1
   (implies
    (and
     (equal
@@ -1108,7 +1108,7 @@
 ;; deal with all the pathname appending stuff, which I'm skipping over for now.
 (skip-proofs
  (defthm
-   collapse-hifat-place-file-4
+   collapse-hifat-place-file-2
    (implies
     (and
      (m1-file-p file)
@@ -1167,184 +1167,6 @@
       (mv-nth 1
               (collapse (frame-with-root root frame))))))))
 
-(defthm
-  absfat-place-file-correctness-lemma-6
-  (implies
-   (and
-    (m1-file-alist-p fs)
-    (hifat-no-dups-p fs)
-    (m1-regular-file-p file)
-    (abs-fs-p dir)
-    (not (consp (abs-addrs dir)))
-    (pathname-clear (take (+ -1 (len pathname)) pathname)
-                    frame)
-    (not (consp (names-at root
-                          (take (+ -1 (len pathname)) pathname))))
-    (abs-fs-p root)
-    (not (zp x))
-    (not (consp (assoc-equal 0 frame)))
-    (frame-p frame)
-    (not (consp (assoc-equal x frame)))
-    (no-duplicatesp-equal (strip-cars frame))
-    (subsetp-equal
-     (abs-addrs root)
-     (frame-addrs-root
-      (cons (cons x
-                  (frame-val nil
-                             (put-assoc-equal (car (last pathname))
-                                              file dir)
-                             src))
-            frame)))
-    (mv-nth
-     1
-     (collapse
-      (frame-with-root
-       root
-       (cons (cons x
-                   (frame-val (take (+ -1 (len pathname)) pathname)
-                              dir src))
-             frame))))
-    (absfat-equiv
-     (mv-nth
-      0
-      (collapse
-       (frame-with-root
-        root
-        (cons (cons x
-                    (frame-val (take (+ -1 (len pathname)) pathname)
-                               dir src))
-              frame))))
-     fs)
-    (no-duplicatesp-equal (abs-addrs root))
-    (not (intersectp-equal nil (names-at dir nil)))
-    (dist-names root nil frame)
-    (abs-separate frame))
-   (hifat-equiv
-    (mv-nth
-     0
-     (hifat-place-file
-      (mv-nth
-       0
-       (collapse
-        (frame-with-root
-         root
-         (cons (cons x
-                     (frame-val (take (+ -1 (len pathname)) pathname)
-                                dir src))
-               frame))))
-      pathname file))
-    (mv-nth 0 (hifat-place-file fs pathname file))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (e/d (hifat-place-file dist-names
-                                      abs-separate frame-addrs-root)
-                    (collapse-hifat-place-file-4))
-    :use
-    ((:instance
-      (:rewrite hifat-place-file-correctness-4)
-      (file file)
-      (pathname pathname)
-      (m1-file-alist2
-       (mv-nth
-        0
-        (collapse
-         (frame-with-root
-          root
-          (cons (cons x
-                      (frame-val (take (+ -1 (len pathname)) pathname)
-                                 dir src))
-                frame)))))
-      (m1-file-alist1 fs))))))
-
-(defthm
-  absfat-place-file-correctness-lemma-8
-  (implies
-   (and
-    (equal
-     (mv-nth
-      0
-      (collapse
-       (frame-with-root root
-                        (cons (cons x
-                                    (frame-val nil
-                                               (put-assoc-equal (car pathname)
-                                                                file dir)
-                                               src))
-                              frame))))
-     (mv-nth
-      0
-      (hifat-place-file
-       (mv-nth
-        0
-        (collapse (frame-with-root root
-                                   (cons (cons x (frame-val nil dir src))
-                                         frame))))
-       pathname file)))
-    (m1-file-alist-p fs)
-    (hifat-no-dups-p fs)
-    (m1-regular-file-p file)
-    (abs-fs-p dir)
-    (not (consp (abs-addrs dir)))
-    (pathname-clear nil frame)
-    (not (consp (names-at root nil)))
-    (abs-fs-p root)
-    (not (zp x))
-    (not (consp (assoc-equal 0 frame)))
-    (frame-p frame)
-    (not (consp (assoc-equal x frame)))
-    (no-duplicatesp-equal (strip-cars frame))
-    (subsetp-equal
-     (abs-addrs root)
-     (frame-addrs-root (cons (cons x
-                                   (frame-val nil
-                                              (put-assoc-equal (car pathname)
-                                                               file dir)
-                                              src))
-                             frame)))
-    (mv-nth 1
-            (collapse (frame-with-root root
-                                       (cons (cons x (frame-val nil dir src))
-                                             frame))))
-    (absfat-equiv
-     (mv-nth 0
-             (collapse (frame-with-root root
-                                        (cons (cons x (frame-val nil dir src))
-                                              frame))))
-     fs)
-    (no-duplicatesp-equal (abs-addrs root))
-    (not (intersectp-equal nil (names-at dir nil)))
-    (abs-separate frame))
-   (hifat-equiv
-    (mv-nth
-     0
-     (collapse
-      (frame-with-root root
-                       (cons (cons x
-                                   (frame-val nil
-                                              (put-assoc-equal (car pathname)
-                                                               file dir)
-                                              src))
-                             frame))))
-    (mv-nth 0 (hifat-place-file fs pathname file))))
-  :hints
-  (("goal"
-    :in-theory (e/d (hifat-place-file dist-names
-                                      abs-separate frame-addrs-root)
-                    (collapse-hifat-place-file-4))
-    :use
-    (:instance
-     (:rewrite hifat-place-file-correctness-4)
-     (file file)
-     (pathname pathname)
-     (m1-file-alist2
-      (mv-nth
-       0
-       (collapse (frame-with-root root
-                                  (cons (cons x (frame-val nil dir src))
-                                        frame)))))
-     (m1-file-alist1 fs)))))
-
 ;; I guess I should say that this function can only really do so much, and if
 ;; we try to use this in our proofs we'll kinda be back to representing
 ;; filesystem trees as... filesystem trees. When I say it can only do so much,
@@ -1359,6 +1181,8 @@
          (absfat-equiv fs-equiv fs)
          (abs-separate frame))))
 
+(defcong absfat-equiv equal (frame-reps-fs frame fs) 2)
+
 ;; I'm not even sure what the definition of abs-place-file above should be. But
 ;; I'm pretty sure it should support a theorem like the following.
 ;;
@@ -1367,7 +1191,7 @@
 ;; particular relpath, i.e. (butlast pathname 1). It's going to be a natural
 ;; outcome of partial-collapse, but it may have to be codified somehow.
 (defthm
-  absfat-place-file-correctness-lemma-9
+  absfat-place-file-correctness-lemma-2
   (implies
    (and
     (m1-file-alist-p fs)
@@ -1389,10 +1213,8 @@
      (abs-addrs root)
      (frame-addrs-root
       (cons (cons x
-                  (frame-val nil
-                             (put-assoc-equal (car (last pathname))
-                                              file dir)
-                             src))
+                  (frame-val (butlast pathname 1)
+                             dir src))
             frame)))
     (frame-reps-fs
      (frame-with-root root
@@ -1415,15 +1237,75 @@
          (hifat-place-file fs pathname file)))
      (frame-reps-fs frame fs)))
   :hints
-  (("goal" :do-not-induct t
-    :in-theory (e/d (hifat-place-file dist-names abs-separate)
-                    (collapse-hifat-place-file-4))
-    :use ((:instance collapse-hifat-place-file-4
-                     (frame (cons (cons x
-                                        (frame-val (butlast pathname 1)
-                                                   dir src))
-                                  frame))
-                     (pathname (last pathname)))))))
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d (hifat-place-file dist-names
+                           abs-separate frame-addrs-root)
+         (collapse-hifat-place-file-2
+          (:rewrite m1-file-alist-p-when-subsetp-equal)
+          (:definition member-equal)
+          (:rewrite len-of-remove-assoc-when-no-duplicatesp-strip-cars)
+          (:linear len-of-remove-assoc-1)
+          (:definition remove-assoc-equal)
+          (:rewrite subsetp-trans)
+          (:rewrite abs-addrs-of-put-assoc-lemma-2)
+          (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
+          (:rewrite collapse-congruence-lemma-4)
+          (:definition integer-listp)
+          len-when-hifat-bounded-file-alist-p
+          member-of-abs-addrs-when-natp
+          (:linear position-equal-ac-when-member)
+          (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
+          (:rewrite 1st-complete-of-put-assoc-lemma-1)
+          (:definition hifat-file-alist-fix)
+          (:rewrite hifat-find-file-correctness-1-lemma-1)
+          (:type-prescription ctx-app-list-when-set-equiv-lemma-4)
+          (:rewrite m1-directory-file-p-when-m1-file-p)
+          (:rewrite abs-no-dups-p-of-put-assoc-equal)
+          (:rewrite nthcdr-when->=-n-len-l)
+          (:rewrite
+           ctx-app-ok-when-absfat-equiv-lemma-3)
+          (:type-prescription assoc-when-zp-len)
+          (:definition take)
+          (:rewrite take-of-len-free)
+          (:rewrite take-of-too-many)
+          (:definition true-listp)
+          (:rewrite true-listp-when-string-list)
+          (:definition string-listp)))
+    :use
+    ((:instance collapse-hifat-place-file-2
+                (frame (cons (cons x
+                                   (frame-val (butlast pathname 1)
+                                              dir src))
+                             frame))
+                (pathname (last pathname)))
+     (:instance
+      (:rewrite hifat-place-file-correctness-4)
+      (file file)
+      (pathname pathname)
+      (m1-file-alist2
+       (mv-nth
+        0
+        (collapse
+         (frame-with-root
+          root
+          (cons (cons x
+                      (frame-val (take (+ -1 (len pathname)) pathname)
+                                 dir src))
+                frame)))))
+      (m1-file-alist1 fs))
+     (:instance
+      (:rewrite hifat-place-file-correctness-4)
+      (file file)
+      (pathname pathname)
+      (m1-file-alist2
+       (mv-nth
+        0
+        (collapse (frame-with-root root
+                                   (cons (cons x (frame-val nil dir src))
+                                         frame)))))
+      (m1-file-alist1 fs))))))
 
 (defthm
   frame-p-of-abs-place-file
