@@ -1179,7 +1179,10 @@
       (((mv fs-equiv result) (collapse frame)))
     (and result
          (absfat-equiv fs-equiv fs)
-         (abs-separate frame))))
+         (abs-separate frame)
+         (subsetp-equal
+          (abs-addrs (frame->root frame))
+          (frame-addrs-root (frame->frame frame))))))
 
 (defcong absfat-equiv equal (frame-reps-fs frame fs) 2)
 
@@ -1209,13 +1212,6 @@
     (frame-p frame)
     (not (consp (assoc-equal x frame)))
     (no-duplicatesp-equal (strip-cars frame))
-    (subsetp-equal
-     (abs-addrs root)
-     (frame-addrs-root
-      (cons (cons x
-                  (frame-val (butlast pathname 1)
-                             dir src))
-            frame)))
     (frame-reps-fs
      (frame-with-root root
                       (cons (cons x
