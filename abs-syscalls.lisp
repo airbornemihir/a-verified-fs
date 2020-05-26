@@ -124,7 +124,6 @@
    (xargs :guard (and (frame-p frame)
                       (abs-file-p file)
                       (fat32-filename-list-p pathname))
-          :guard-debug t
           :guard-hints (("Goal" :do-not-induct t) )))
   (b*
       (((when (atom frame))
@@ -1347,31 +1346,83 @@
             (cdr frame))
      head-error-code)))
 
+;; Move later.
+(defthm frame-p-of-partial-collapse
+  (implies (frame-p frame)
+           (frame-p (partial-collapse frame pathname)))
+  :hints (("goal" :in-theory (enable partial-collapse))))
+
+(defund abs-disassoc (fs pathname new-index)
+  (b*
+      (((when (atom pathname))
+        (mv fs (list new-index)))
+       (alist-elem (assoc-equal (car pathname) fs))
+       ((when (or (atom alist-elem)
+                  (not (abs-directory-file-p (cdr alist-elem)))))
+        (mv nil fs))
+       ((mv x y)
+        (abs-disassoc
+         (abs-file->contents (cdr alist-elem))
+         (cdr pathname)
+         new-index)))
+    (mv x
+        (put-assoc-equal
+         (car pathname)
+         (change-abs-file
+          (cdr alist-elem)
+          :contents
+          y)
+         fs))))
+
+(defthm abs-mkdir-guard-lemma-1
+  (implies (consp (assoc-equal 0 frame))
+           (consp (assoc-equal 0 (partial-collapse frame pathname))))
+  :hints (("goal" :in-theory (enable partial-collapse))))
+
 ;; This has an error which could easily have been caught by guard verification,
 ;; which was sort of the inevitable consequence of skipping that work up until
 ;; this point.
+;;
+;; OK, here's the plan for defining abs-mkdir. We can proooobably get rid of
+;; abs-place-file and abs-remove-file, since those tasks are going to be
+;; accomplished by first bringing the parent directory to the front and then
+;; doing a put-assoc or a remove-assoc respectively - I think?
 (defund abs-mkdir
   (frame pathname)
-  (declare (xargs :guard t))
+  (declare (xargs :guard
+                  (and (frame-p frame)
+                       (consp (assoc-equal 0 frame))
+                       (fat32-filename-list-p pathname))))
   (b*
       ((frame (partial-collapse frame (butlast pathname 1)))
        ;; After partial-collapse, either the parent directory is there in one
        ;; variable, or it isn't there at all.
-       ((mv parent-dir error-code) (abs-find-file-helper (frame->root frame)
-                                                         pathname))
-       ((mv new-root &) (abs-remove-file (frame->root frame) pathname))
-       ((unless (equal error-code 0))
-        (mv frame -1 error-code))
-       ((mv new-parent-dir error-code)
-        (abs-place-file parent-dir pathname (make-abs-file :contents nil)))
+       ((mv parent-dir error-code) (abs-find-file (frame->root frame)
+                                                  (butlast pathname 1)))
+       ;; It's not even a matter of removing that thing - we need to leave a
+       ;; body address in its place...
+       ((mv frame &) (abs-remove-file frame (butlast pathname 1)))
+       ;; Check somewhere that (cdr (last pathname)) is not already present...
+       (new-parent-dir
+        (put-assoc-equal (cdr (last pathname))
+                         (make-abs-file :contents nil)
+                         parent-dir))
        (frame (frame-with-root
-               new-root
-               (put-assoc-equal
-                (find-new-index
-                 ;; Using this, not (strip-cars (frame->frame frame)), to make
-                 ;; sure we don't get a zero.
-                 (strip-cars frame))
-                new-parent-dir
+               (frame->root frame)
+               (cons
+                (cons
+                 (find-new-index
+                  ;; Using this, not (strip-cars (frame->frame frame)), to make
+                  ;; sure we don't get a zero.
+                  (strip-cars frame))
+                 (frame-val
+                  (butlast pathname 1)
+                  new-parent-dir
+                  ;; From where are we going to return the source? It'll have
+                  ;; to be abs-find-file I think, because we do wanna change
+                  ;; abs-remove-file and replace it with abs-disassoc which
+                  ;; will only take a single directory tree with holes - not a frame.
+                  src))
                 (frame->frame frame)))))
     (mv frame -1 error-code)))
 
