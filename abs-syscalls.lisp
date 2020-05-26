@@ -67,13 +67,65 @@
 ;; Let's try to do this intuitively first...
 
 (defund
+  abs-place-file-helper (fs pathname file)
+  (declare (xargs :guard (and (abs-file-alist-p fs)
+                              (fat32-filename-list-p pathname)
+                              (abs-file-p file))
+                  :guard-debug t
+                  :measure (acl2-count pathname)))
+  (b*
+      (((unless (consp pathname))
+        (mv fs *enoent*))
+       (name (fat32-filename-fix (car pathname)))
+       (alist-elem (abs-assoc name fs))
+       ((unless (consp alist-elem))
+        (if (atom (cdr pathname))
+            (mv (abs-put-assoc name file fs) 0)
+            (mv fs *enotdir*)))
+       ((when (and (not (abs-directory-file-p (cdr alist-elem)))
+                   (or (consp (cdr pathname))
+                       (abs-directory-file-p file))))
+        (mv fs *enotdir*))
+       ((when
+         (not (or (abs-directory-file-p (cdr alist-elem))
+                  (consp (cdr pathname))
+                  (abs-directory-file-p file)
+                  (and (atom alist-elem)
+                       (>= (len fs) *ms-max-dir-ent-count*)))))
+        (mv (abs-put-assoc name file fs) 0))
+       ((when (and (atom alist-elem)
+                   (>= (len fs) *ms-max-dir-ent-count*)))
+        (mv fs *enospc*))
+       ((mv new-contents error-code)
+        (abs-place-file-helper
+         (abs-file->contents (cdr alist-elem))
+         (cdr pathname)
+         file)))
+    (mv (abs-put-assoc
+         name
+         (make-abs-file
+          :dir-ent (abs-file->dir-ent (cdr alist-elem))
+          :contents new-contents)
+         fs)
+        error-code)))
+
+(defthm
+  abs-file-alist-p-of-abs-place-file-helper
+  (implies
+   (and (abs-file-alist-p fs)
+        (abs-file-p file))
+   (abs-file-alist-p (mv-nth 0
+                             (abs-place-file-helper fs pathname file))))
+  :hints (("goal" :in-theory (enable abs-place-file-helper))))
+
+(defund
   abs-place-file (frame pathname file)
   (declare
    (xargs :guard (and (frame-p frame)
+                      (abs-file-p file)
                       (fat32-filename-list-p pathname))
           :guard-debug t
-          :guard-hints (("Goal" :do-not-induct t) )
-          :verify-guards nil))
+          :guard-hints (("Goal" :do-not-induct t) )))
   (b*
       (((when (atom frame))
         (mv frame *enoent*))
@@ -96,9 +148,10 @@
                   (not (abs-complete (frame-val->dir (cdar frame))))))
         (mv (list* (car frame) tail) tail-error-code))
        ((mv head head-error-code)
-        (hifat-place-file (frame-val->dir (cdar frame)) pathname file)))
+        (abs-place-file-helper (frame-val->dir (cdar frame)) pathname file)))
     (mv
-     (list* (cons (caar frame) (change-frame-val (cdar frame) :dir head))
+     (list* (cons (caar frame) (change-frame-val (cdar frame)
+                                                 :dir (abs-fs-fix head)))
             (cdr frame))
      head-error-code)))
 
@@ -470,58 +523,6 @@
            (not (consp (assoc-equal (car (last pathname))
                                     dir))))
   :hints (("goal" :in-theory (enable names-at))))
-
-(defund
-  abs-place-file-helper (fs pathname file)
-  (declare (xargs :guard (and (abs-file-alist-p fs)
-                              (fat32-filename-list-p pathname)
-                              (abs-file-p file))
-                  :guard-debug t
-                  :measure (acl2-count pathname)))
-  (b*
-      (((unless (consp pathname))
-        (mv fs *enoent*))
-       (name (fat32-filename-fix (car pathname)))
-       (alist-elem (abs-assoc name fs))
-       ((unless (consp alist-elem))
-        (if (atom (cdr pathname))
-            (mv (abs-put-assoc name file fs) 0)
-            (mv fs *enotdir*)))
-       ((when (and (not (abs-directory-file-p (cdr alist-elem)))
-                   (or (consp (cdr pathname))
-                       (abs-directory-file-p file))))
-        (mv fs *enotdir*))
-       ((when
-         (not (or (abs-directory-file-p (cdr alist-elem))
-                  (consp (cdr pathname))
-                  (abs-directory-file-p file)
-                  (and (atom alist-elem)
-                       (>= (len fs) *ms-max-dir-ent-count*)))))
-        (mv (abs-put-assoc name file fs) 0))
-       ((when (and (atom alist-elem)
-                   (>= (len fs) *ms-max-dir-ent-count*)))
-        (mv fs *enospc*))
-       ((mv new-contents error-code)
-        (abs-place-file-helper
-         (abs-file->contents (cdr alist-elem))
-         (cdr pathname)
-         file)))
-    (mv (abs-put-assoc
-         name
-         (make-abs-file
-          :dir-ent (abs-file->dir-ent (cdr alist-elem))
-          :contents new-contents)
-         fs)
-        error-code)))
-
-(defthm
-  abs-file-alist-p-of-abs-place-file-helper
-  (implies
-   (and (abs-file-alist-p fs)
-        (abs-file-p file))
-   (abs-file-alist-p (mv-nth 0
-                             (abs-place-file-helper fs pathname file))))
-  :hints (("goal" :in-theory (enable abs-place-file-helper))))
 
 (defthm abs-file-p-when-m1-file-p
   (implies (m1-file-p file)
@@ -1191,8 +1192,19 @@
 ;;
 ;; In the hypotheses here, there has to be a stipulation that not only is dir
 ;; complete, but also that it's the only one which has any names at that
-;; particular relpath, i.e. (butlast pathname 1). It's going to be a natural
-;; outcome of partial-collapse, but it may have to be codified somehow.
+;; particular relpath, i.e. (butlast pathname 1). It's codified under
+;; pathname-clear.
+;;
+;; Also, the use hints in this theorem are awkward but necessary - restrict
+;; hints do not work because there's never a real chance for them to be
+;; applied, or so :brr tells us.
+;;
+;; OK, so how do we develop a specification for abs-mkdir which we can actually
+;; USE? Like, we would want to say that (abs-mkdir frame) is going to return a
+;; new frame and an error code, and that error code will tell us whether to
+;; expect an unchanged frame (modulo absfat-equiv) or a new frame with an
+;; element right at the front representing the parent directory of the new
+;; directory with the new directory inside it.
 (defthm
   absfat-place-file-correctness-lemma-2
   (implies
@@ -1290,17 +1302,6 @@
                       (frame-val (take (+ -1 (len pathname)) pathname)
                                  dir src))
                 frame)))))
-      (m1-file-alist1 fs))
-     (:instance
-      (:rewrite hifat-place-file-correctness-4)
-      (file file)
-      (pathname pathname)
-      (m1-file-alist2
-       (mv-nth
-        0
-        (collapse (frame-with-root root
-                                   (cons (cons x (frame-val nil dir src))
-                                         frame)))))
       (m1-file-alist1 fs))))))
 
 (defthm
@@ -1317,9 +1318,7 @@
   (declare
    (xargs :guard (and (frame-p frame)
                       (fat32-filename-list-p pathname))
-          :guard-debug t
-          :guard-hints (("Goal" :do-not-induct t) )
-          :verify-guards nil))
+          :guard-hints (("Goal" :do-not-induct t) )))
   (b*
       (((when (atom frame))
         (mv frame *enoent*))
@@ -1348,8 +1347,12 @@
             (cdr frame))
      head-error-code)))
 
+;; This has an error which could easily have been caught by guard verification,
+;; which was sort of the inevitable consequence of skipping that work up until
+;; this point.
 (defund abs-mkdir
   (frame pathname)
+  (declare (xargs :guard t))
   (b*
       ((frame (partial-collapse frame (butlast pathname 1)))
        ;; After partial-collapse, either the parent directory is there in one
