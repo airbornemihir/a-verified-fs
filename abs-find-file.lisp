@@ -104,6 +104,8 @@
          (abs-find-file-helper fs pathname))
   :hints (("goal" :in-theory (enable abs-find-file-helper))))
 
+;; Going to have to add a return value to represent the variable where the file
+;; was found.
 (defund
   abs-find-file (frame pathname)
   (declare
@@ -111,7 +113,7 @@
                       (fat32-filename-list-p pathname))))
   (b*
       (((when (atom frame))
-        (mv (make-abs-file) *enoent*))
+        (mv (make-abs-file) *enoent* 0))
        (pathname (mbe :exec pathname
                       :logic (fat32-filename-list-fix pathname)))
        ((unless (prefixp (frame-val->path (cdar frame))
@@ -123,7 +125,7 @@
          (nthcdr (len (frame-val->path (cdar frame)))
                  pathname)))
        ((when (not (equal error-code *enoent*)))
-        (mv file error-code)))
+        (mv file error-code (caar frame))))
     (abs-find-file (cdr frame) pathname)))
 
 (defthm natp-of-abs-find-file
@@ -420,7 +422,8 @@
   (implies (not (zp (mv-nth 1 (abs-find-file frame pathname))))
            (equal (abs-find-file frame pathname)
                   (mv (abs-file-fix nil)
-                      (mv-nth 1 (abs-find-file frame pathname)))))
+                      (mv-nth 1 (abs-find-file frame pathname))
+                      (mv-nth 2 (abs-find-file frame pathname)))))
   :hints
   (("goal" :in-theory (enable abs-find-file))
    ("subgoal *1/2"
@@ -430,17 +433,17 @@
                                  pathname))
                (fs (frame-val->dir (cdr (car frame))))))))
 
-(defthm
-  abs-find-file-of-put-assoc-lemma-5
-  (implies (and (equal (mv-nth 1 (abs-find-file (cdr frame) pathname))
-                       2)
-                (equal const (mv (abs-file-fix nil) *enoent*)))
-           (iff (equal (abs-find-file (cdr frame) pathname)
-                       const)
-                t))
-  :hints
-  (("goal" :use (:instance (:rewrite abs-find-file-of-put-assoc-lemma-4)
-                           (frame (cdr frame))))))
+;; (defthm
+;;   abs-find-file-of-put-assoc-lemma-5
+;;   (implies (and (equal (mv-nth 1 (abs-find-file (cdr frame) pathname))
+;;                        2)
+;;                 (equal const (mv (abs-file-fix nil) *enoent*)))
+;;            (iff (equal (abs-find-file (cdr frame) pathname)
+;;                        const)
+;;                 t))
+;;   :hints
+;;   (("goal" :use (:instance (:rewrite abs-find-file-of-put-assoc-lemma-4)
+;;                            (frame (cdr frame))))))
 
 ;; Could be important...
 (defthm
@@ -456,11 +459,24 @@
    (equal (abs-find-file frame pathname)
           (if (prefixp (frame-val->path (cdr (assoc-equal x frame)))
                        (fat32-filename-list-fix pathname))
-              (abs-find-file-helper
-               (frame-val->dir (cdr (assoc-equal x frame)))
-               (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
-                       pathname))
-            (mv (abs-file-fix nil) *enoent*))))
+              (mv
+               (mv-nth
+                0
+                (abs-find-file-helper
+                 (frame-val->dir (cdr (assoc-equal x frame)))
+                 (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+                         pathname)))
+               (mv-nth
+                1
+                (abs-find-file-helper
+                 (frame-val->dir (cdr (assoc-equal x frame)))
+                 (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+                         pathname)))
+               x)
+            (mv (abs-file-fix nil) *enoent*
+                (mv-nth 2
+                       (abs-find-file (remove-assoc-equal x frame)
+                                      pathname))))))
   :hints (("goal" :in-theory (enable abs-find-file))))
 
 ;; What do you know, this theorem is useless except in one place where it has
