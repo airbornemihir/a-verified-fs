@@ -10,7 +10,9 @@
 (local (include-book "std/lists/prefixp" :dir :system))
 (local (include-book "std/lists/intersectp" :dir :system))
 
-(local (in-theory (e/d (abs-file-p-when-m1-regular-file-p)
+(local (in-theory (e/d (abs-file-p-when-m1-regular-file-p
+                        nat-listp-of-strip-cars-when-frame-p
+                        no-duplicatesp-of-strip-cars-of-frame->frame)
                        nil)))
 
 (defthm
@@ -1353,10 +1355,19 @@
   :hints (("goal" :in-theory (enable partial-collapse))))
 
 (defund abs-disassoc (fs pathname new-index)
+  (declare (xargs :guard
+                  (and (fat32-filename-list-p pathname)
+                       (abs-file-alist-p fs)
+                       (natp new-index))
+                  :verify-guards nil))
   (b*
-      (((when (atom pathname))
+      ((new-index
+        (mbe :exec new-index :logic (nfix new-index)))
+       (pathname
+        (mbe :exec pathname :logic (fat32-filename-list-fix pathname)))
+       ((when (atom pathname))
         (mv fs (list new-index)))
-       (alist-elem (assoc-equal (car pathname) fs))
+       (alist-elem (abs-assoc (car pathname) fs))
        ((when (or (atom alist-elem)
                   (not (abs-directory-file-p (cdr alist-elem)))))
         (mv nil fs))
@@ -1366,13 +1377,58 @@
          (cdr pathname)
          new-index)))
     (mv x
-        (put-assoc-equal
+        (abs-put-assoc
          (car pathname)
          (change-abs-file
           (cdr alist-elem)
           :contents
           y)
          fs))))
+
+(defthm
+  abs-file-alist-p-of-abs-disassoc-1
+  (implies
+   (abs-file-alist-p fs)
+   (abs-file-alist-p (mv-nth 1 (abs-disassoc fs pathname new-index))))
+  :hints (("Goal" :in-theory (enable abs-disassoc abs-file-alist-p)
+           :induct (abs-disassoc fs pathname new-index))))
+
+(defthm
+  abs-file-alist-p-of-abs-disassoc-2
+  (implies (abs-file-alist-p fs)
+           (abs-file-alist-p (mv-nth 0
+                                     (abs-disassoc fs pathname new-index))))
+  :hints (("goal" :in-theory (enable abs-disassoc)
+           :induct (abs-disassoc fs pathname new-index))))
+
+(defthm
+  abs-no-dups-p-of-abs-disassoc-1
+  (implies (and (abs-file-alist-p fs)
+                (abs-no-dups-p fs))
+           (abs-no-dups-p (mv-nth 0
+                                  (abs-disassoc fs pathname new-index))))
+  :hints (("goal" :in-theory (enable abs-disassoc)
+           :induct (abs-disassoc fs pathname new-index))))
+
+(defthm
+  abs-no-dups-p-of-abs-disassoc-2
+  (implies (and (abs-file-alist-p fs)
+                (abs-no-dups-p fs))
+           (abs-no-dups-p (mv-nth 1
+                                  (abs-disassoc fs pathname new-index))))
+  :hints (("goal" :in-theory (enable abs-disassoc)
+           :induct (abs-disassoc fs pathname new-index))))
+
+(defthm
+  abs-no-dups-p-of-abs-disassoc-2
+  (implies (and (abs-file-alist-p fs)
+                (abs-no-dups-p fs))
+           (abs-no-dups-p (mv-nth 1
+                                  (abs-disassoc fs pathname new-index))))
+  :hints (("goal" :in-theory (enable abs-disassoc abs-no-dups-p)
+           :induct (abs-disassoc fs pathname new-index))))
+
+(verify-guards abs-disassoc)
 
 (defthm abs-mkdir-guard-lemma-1
   (implies (consp (assoc-equal 0 frame))
@@ -1400,7 +1456,7 @@
          (nthcdr (len (frame-val->path (cdar frame)))
                  pathname)))
        ((when (not (equal error-code *enoent*)))
-        (caar frame)))
+        (mbe :exec (caar frame) :logic (nfix (caar frame)))))
     (abs-find-file-src (cdr frame) pathname)))
 
 (defthm
@@ -1431,54 +1487,7 @@
       *enoent*))))
   :hints (("goal" :in-theory (enable abs-find-file abs-find-file-src))))
 
-;; This has an error which could easily have been caught by guard verification,
-;; which was sort of the inevitable consequence of skipping that work up until
-;; this point.
-;;
-;; OK, here's the plan for defining abs-mkdir. We can proooobably get rid of
-;; abs-place-file and abs-remove-file, since those tasks are going to be
-;; accomplished by first bringing the parent directory to the front and then
-;; doing a put-assoc or a remove-assoc respectively - I think?
-(defund abs-mkdir
-  (frame pathname)
-  (declare (xargs :guard
-                  (and (frame-p frame)
-                       (consp (assoc-equal 0 frame))
-                       (fat32-filename-list-p pathname))))
-  (b*
-      ((frame (partial-collapse frame (butlast pathname 1)))
-       ;; After partial-collapse, either the parent directory is there in one
-       ;; variable, or it isn't there at all.
-       ((mv parent-dir error-code) (abs-find-file (frame->root frame)
-                                                  (butlast pathname 1)))
-       ;; It's not even a matter of removing that thing - we need to leave a
-       ;; body address in its place...
-       ((mv frame &) (abs-remove-file frame (butlast pathname 1)))
-       ;; Check somewhere that (cdr (last pathname)) is not already present...
-       (new-parent-dir
-        (put-assoc-equal (cdr (last pathname))
-                         (make-abs-file :contents nil)
-                         parent-dir))
-       (frame (frame-with-root
-               (frame->root frame)
-               (cons
-                (cons
-                 (find-new-index
-                  ;; Using this, not (strip-cars (frame->frame frame)), to make
-                  ;; sure we don't get a zero.
-                  (strip-cars frame))
-                 (frame-val
-                  (butlast pathname 1)
-                  new-parent-dir
-                  ;; From where are we going to return the source? It'll have
-                  ;; to be abs-find-file I think, because we do wanna change
-                  ;; abs-remove-file and replace it with abs-disassoc which
-                  ;; will only take a single directory tree with holes - not a frame.
-                  src))
-                (frame->frame frame)))))
-    (mv frame -1 error-code)))
-
-(defthm abs-mkdir-correctness-lemma-1
+(defthm abs-mkdir-guard-lemma-2
   (implies (atom pathname)
            (equal (1st-complete-under-pathname frame pathname)
                   (1st-complete frame)))
@@ -1495,40 +1504,170 @@
            (iff (true-listp (put-assoc-equal name val alist))
                 (or (true-listp alist)
                     (atom (assoc-equal name alist))))))
+(defthm alistp-of-frame-with-root
+  (implies (frame-p frame)
+           (alistp (frame-with-root root frame)))
+  :hints (("goal" :in-theory (disable alistp-when-frame-p)
+           :use (:instance alistp-when-frame-p
+                           (x (frame-with-root root frame))))))
+(defthm strip-cars-of-frame-with-root
+  (equal (strip-cars (frame-with-root root frame))
+         (cons 0 (strip-cars frame)))
+  :hints (("goal" :in-theory (enable frame-with-root))))
+(defthm
+  assoc-after-remove1-assoc-when-no-duplicatesp
+  (implies (and (not (null name))
+                (no-duplicatesp-equal (remove-equal nil (strip-cars alist))))
+           (not (consp (assoc-equal name
+                                    (remove1-assoc-equal name alist))))))
 
-(encapsulate
-  ()
+(defthm
+  abs-mkdir-guard-lemma-3
+  (implies (and (mv-nth 1 (collapse frame))
+                (atom pathname)
+                (equal frame
+                       (frame-with-root (frame->root frame)
+                                        (frame->frame frame))))
+           (equal (partial-collapse frame pathname)
+                  (frame-with-root (mv-nth 0 (collapse frame))
+                                   nil)))
+  :hints (("goal" :in-theory
+           (e/d
+            (partial-collapse collapse collapse-this)
+            ((:definition no-duplicatesp-equal)
+             (:rewrite
+              partial-collapse-correctness-lemma-24)
+             (:definition assoc-equal)
+             (:rewrite subsetp-when-prefixp)
+             (:definition member-equal)
+             (:definition true-listp)
+             (:rewrite put-assoc-equal-without-change . 2)
+             abs-separate-of-frame->frame-of-collapse-this-lemma-8
+             (:rewrite true-list-fix-when-true-listp)
+             (:rewrite true-listp-when-string-list)
+             (:definition string-listp)
+             (:definition put-assoc-equal)
+             (:rewrite remove-assoc-of-put-assoc)
+             (:rewrite abs-fs-p-when-hifat-no-dups-p)
+             (:definition remove-assoc-equal)
+             (:definition remove-equal)
+             (:rewrite fat32-filename-p-correctness-1)))
+           :induct (collapse frame)
+           :expand (partial-collapse frame pathname))))
 
-  (local
-   (defthmd
-     lemma
-     (implies (and (mv-nth 1 (collapse frame))
-                   (atom pathname)
-                   (equal frame
-                          (frame-with-root (frame->root frame)
-                                           (frame->frame frame))))
-              (equal (partial-collapse frame pathname)
-                     (frame-with-root (mv-nth 0 (collapse frame))
-                                      nil)))
-     :hints (("goal" :in-theory (enable partial-collapse collapse collapse-this)
-              :induct (collapse frame)
-              :expand (partial-collapse frame pathname)))))
+(defthm
+  abs-mkdir-guard-lemma-4
+  (implies
+   (and (mv-nth 1
+                (collapse (frame-with-root root frame)))
+        (atom pathname)
+        (atom (assoc-equal 0 frame))
+        (frame-p frame))
+   (equal (partial-collapse (frame-with-root root frame)
+                            pathname)
+          (frame-with-root (mv-nth 0
+                                   (collapse (frame-with-root root frame)))
+                           nil)))
+  :hints (("goal"
+           :in-theory (disable abs-mkdir-guard-lemma-3)
+           :use (:instance abs-mkdir-guard-lemma-3
+                           (frame (frame-with-root root frame))))))
 
-  (defthm
-    abs-mkdir-correctness-lemma-2
-    (implies
-     (and (mv-nth 1
-                  (collapse (frame-with-root root frame)))
-          (atom pathname)
-          (atom (assoc-equal 0 frame))
-          (frame-p frame))
-     (equal (partial-collapse (frame-with-root root frame)
-                              pathname)
-            (frame-with-root (mv-nth 0
-                                     (collapse (frame-with-root root frame)))
-                             nil)))
-    :hints (("goal" :use (:instance lemma
-                                    (frame (frame-with-root root frame)))))))
+(defthm abs-mkdir-guard-lemma-5
+  (implies (abs-no-dups-p fs)
+           (no-duplicatesp-equal (remove-equal nil (strip-cars fs))))
+  :hints (("goal" :in-theory (enable abs-no-dups-p))))
+
+(defthm
+  abs-mkdir-guard-lemma-6
+  (implies
+   (no-duplicatesp-equal (strip-cars frame))
+   (no-duplicatesp-equal (strip-cars (partial-collapse frame pathname))))
+  :hints (("goal" :in-theory (enable partial-collapse collapse-this))))
+
+(defthm
+  abs-mkdir-guard-lemma-7
+  (implies
+   (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs pathname)))
+   (abs-no-dups-p
+    (abs-file->contents (mv-nth 0 (abs-find-file-helper fs pathname)))))
+  :hints (("goal" :in-theory (enable abs-find-file-helper))))
+
+(defthm
+  abs-mkdir-guard-lemma-8
+  (implies
+   (abs-directory-file-p (mv-nth 0 (abs-find-file frame pathname)))
+   (abs-no-dups-p
+    (abs-file->contents (mv-nth 0 (abs-find-file frame pathname)))))
+  :hints (("goal" :in-theory (enable abs-find-file))))
+
+;; This has an error which could easily have been caught by guard verification,
+;; which was sort of the inevitable consequence of skipping that work up until
+;; this point.
+;;
+;; OK, here's the plan for defining abs-mkdir. We can proooobably get rid of
+;; abs-place-file and abs-remove-file, since those tasks are going to be
+;; accomplished by first bringing the parent directory to the front and then
+;; doing a put-assoc or a remove-assoc respectively - I think?
+(defund abs-mkdir
+  (frame pathname)
+  (declare (xargs :guard
+                  (and (frame-p frame)
+                       (consp (assoc-equal 0 frame))
+                       (fat32-filename-list-p pathname)
+                       (no-duplicatesp-equal (strip-cars frame)))
+                  :guard-debug t
+                  :guard-hints (("Goal" :in-theory (enable abs-find-file-helper
+                                                           abs-fs-p)))))
+  (b*
+      ((pathname
+        (mbe :exec pathname :logic (fat32-filename-list-fix pathname)))
+       ((unless (consp pathname))
+        (mv frame -1 *enoent*))
+       (frame (partial-collapse frame (butlast pathname 1)))
+       ;; After partial-collapse, either the parent directory is there in one
+       ;; variable, or it isn't there at all.
+       ((mv parent-dir error-code) (abs-find-file frame
+                                                  (butlast pathname 1)))
+       ((unless (zp error-code))
+        (mv frame -1 error-code))
+       ((unless (abs-directory-file-p parent-dir))
+        (mv frame -1 *ENOTDIR*))
+       (src (abs-find-file-src frame (butlast pathname 1)))
+       (new-index
+        (find-new-index
+         ;; Using this, not (strip-cars (frame->frame frame)), to make
+         ;; sure we don't get a zero.
+         (strip-cars frame)))
+       ;; It's not even a matter of removing that thing - we need to leave a
+       ;; body address in its place...
+       ((mv var new-src-dir)
+        (abs-disassoc
+         (frame-val->dir (cdr (assoc-equal src frame)))
+         (butlast pathname 1)
+         new-index))
+       (frame
+        (put-assoc-equal
+         src
+         (change-frame-val (cdr (assoc-equal src frame))
+                           :dir
+                            new-src-dir)
+         frame))
+       ;; Check somewhere that (car (last pathname)) is not already present...
+       (new-var
+        (abs-put-assoc (car (last pathname))
+                       (make-abs-file :contents nil)
+                       var))
+       (frame (frame-with-root
+               (frame->root frame)
+               (cons
+                (cons
+                 new-index
+                 (frame-val
+                  (butlast pathname 1)
+                  new-var src))
+                (frame->frame frame)))))
+    (mv frame -1 error-code)))
 
 ;; (thm
 ;;  (b*
