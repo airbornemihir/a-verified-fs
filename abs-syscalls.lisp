@@ -1379,6 +1379,58 @@
            (consp (assoc-equal 0 (partial-collapse frame pathname))))
   :hints (("goal" :in-theory (enable partial-collapse))))
 
+;; This deliberately follows an almost-identical induction scheme to
+;; abs-find-file. It was going to be a part of that function, but that just led
+;; to too many failures.
+(defund
+  abs-find-file-src (frame pathname)
+  (declare
+   (xargs :guard (and (frame-p frame)
+                      (fat32-filename-list-p pathname))))
+  (b*
+      (((when (atom frame)) 0)
+       (pathname (mbe :exec pathname
+                      :logic (fat32-filename-list-fix pathname)))
+       ((unless (prefixp (frame-val->path (cdar frame))
+                         pathname))
+        (abs-find-file-src (cdr frame) pathname))
+       ((mv & error-code)
+        (abs-find-file-helper
+         (frame-val->dir (cdar frame))
+         (nthcdr (len (frame-val->path (cdar frame)))
+                 pathname)))
+       ((when (not (equal error-code *enoent*)))
+        (caar frame)))
+    (abs-find-file-src (cdr frame) pathname)))
+
+(defthm
+  abs-find-file-src-correctness-1
+  (implies
+   (and (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame))
+        (not (equal (mv-nth 1 (abs-find-file frame pathname))
+                    *enoent*)))
+   (and
+    (consp (assoc-equal (abs-find-file-src frame pathname)
+                        frame))
+    (prefixp
+     (frame-val->path (cdr (assoc-equal (abs-find-file-src frame pathname)
+                                        frame)))
+     (fat32-filename-list-fix pathname))
+    (not
+     (equal
+      (mv-nth
+       1
+       (abs-find-file-helper
+        (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame pathname)
+                                          frame)))
+        (nthcdr (len (frame-val->path
+                      (cdr (assoc-equal (abs-find-file-src frame pathname)
+                                        frame))))
+                pathname)))
+      *enoent*))))
+  :hints (("goal" :in-theory (enable abs-find-file abs-find-file-src))))
+
 ;; This has an error which could easily have been caught by guard verification,
 ;; which was sort of the inevitable consequence of skipping that work up until
 ;; this point.
