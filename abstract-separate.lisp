@@ -13355,6 +13355,29 @@
                      (seq (cons x (seq-this (collapse-this frame x)))))
           valid-seqp-after-collapse-this))))
 
+;; (thm
+;;  (b*
+;;      ((frame (collapse-seq frame (seq-this frame)))
+;;       (1st-complete (1st-complete (frame->frame frame))))
+;;    (or
+;;     (zp 1st-complete)
+;;     (and
+;;      (zp (frame-val->src (cdr (assoc-equal 1st-complete (frame->frame
+;;                                                          frame)))))
+;;      (not
+;;       (ctx-app-ok
+;;        (frame->root frame)
+;;        1st-complete
+;;        (frame-val->path (cdr (assoc-equal 1st-complete (frame->frame
+;;                                                         frame)))))))
+;;     (and
+;;      (not
+;;       (zp (frame-val->src (cdr (assoc-equal 1st-complete (frame->frame
+;;                                                           frame)))))))))
+;;  :hints (("Goal" :in-theory (enable seq-this collapse-seq collapse-iter)
+;;           :induct (SEQ-THIS FRAME)
+;;           :expand (COLLAPSE-ITER FRAME 1))))
+
 ;; (verify
 ;;  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
 ;;                (not (zp n))
