@@ -1416,7 +1416,7 @@
                 (abs-no-dups-p fs))
            (abs-no-dups-p (mv-nth 1
                                   (abs-disassoc fs pathname new-index))))
-  :hints (("goal" :in-theory (enable abs-disassoc)
+  :hints (("goal" :in-theory (enable abs-disassoc abs-no-dups-p)
            :induct (abs-disassoc fs pathname new-index))))
 
 (defthm
@@ -1609,65 +1609,57 @@
 ;; abs-place-file and abs-remove-file, since those tasks are going to be
 ;; accomplished by first bringing the parent directory to the front and then
 ;; doing a put-assoc or a remove-assoc respectively - I think?
-(defund abs-mkdir
-  (frame pathname)
-  (declare (xargs :guard
-                  (and (frame-p frame)
-                       (consp (assoc-equal 0 frame))
-                       (fat32-filename-list-p pathname)
-                       (no-duplicatesp-equal (strip-cars frame)))
-                  :guard-debug t
-                  :guard-hints (("Goal" :in-theory (enable abs-find-file-helper
-                                                           abs-fs-p)))))
+(defund abs-mkdir (frame pathname)
+  (declare (xargs
+            :guard (and (frame-p frame)
+                        (consp (assoc-equal 0 frame))
+                        (fat32-filename-list-p pathname)
+                        (no-duplicatesp-equal (strip-cars frame)))
+            :guard-hints
+            (("goal"
+              :in-theory (enable abs-find-file-helper abs-fs-p)))))
   (b*
-      ((pathname
-        (mbe :exec pathname :logic (fat32-filename-list-fix pathname)))
-       ((unless (consp pathname))
-        (mv frame -1 *enoent*))
+      ((pathname (mbe :exec pathname :logic (fat32-filename-list-fix pathname)))
+       ((unless (consp pathname)) (mv frame -1 *enoent*))
        (frame (partial-collapse frame (butlast pathname 1)))
        ;; After partial-collapse, either the parent directory is there in one
        ;; variable, or it isn't there at all.
-       ((mv parent-dir error-code) (abs-find-file frame
-                                                  (butlast pathname 1)))
-       ((unless (zp error-code))
-        (mv frame -1 error-code))
-       ((unless (abs-directory-file-p parent-dir))
-        (mv frame -1 *ENOTDIR*))
+       ((mv parent-dir error-code) (abs-find-file frame (butlast pathname 1)))
+       ((unless (zp error-code)) (mv frame -1 error-code))
+       ((unless (abs-directory-file-p parent-dir)) (mv frame -1 *enotdir*))
        (src (abs-find-file-src frame (butlast pathname 1)))
-       (new-index
-        (find-new-index
-         ;; Using this, not (strip-cars (frame->frame frame)), to make
-         ;; sure we don't get a zero.
-         (strip-cars frame)))
+       (new-index (find-new-index
+                   ;; Using this, not (strip-cars (frame->frame frame)), to make
+                   ;; sure we don't get a zero.
+                   (strip-cars frame)))
        ;; It's not even a matter of removing that thing - we need to leave a
        ;; body address in its place...
-       ((mv var new-src-dir)
-        (abs-disassoc
-         (frame-val->dir (cdr (assoc-equal src frame)))
-         (butlast pathname 1)
-         new-index))
-       (frame
-        (put-assoc-equal
-         src
-         (change-frame-val (cdr (assoc-equal src frame))
-                           :dir
-                            new-src-dir)
-         frame))
+       ((mv var new-src-dir) (abs-disassoc
+                              (frame-val->dir (cdr (assoc-equal src frame)))
+                              (butlast pathname 1) new-index))
+       (frame (put-assoc-equal src
+                               (change-frame-val (cdr (assoc-equal src frame))
+                                                 :dir new-src-dir)
+                               frame))
        ;; Check somewhere that (car (last pathname)) is not already present...
-       (new-var
-        (abs-put-assoc (car (last pathname))
-                       (make-abs-file :contents nil)
-                       var))
-       (frame (frame-with-root
-               (frame->root frame)
-               (cons
-                (cons
-                 new-index
-                 (frame-val
-                  (butlast pathname 1)
-                  new-var src))
-                (frame->frame frame)))))
+       (new-var (abs-put-assoc (car (last pathname))
+                               (make-abs-file :contents nil)
+                               var))
+       (frame (frame-with-root (frame->root frame)
+                               (cons (cons new-index
+                                           (frame-val (butlast pathname 1)
+                                                      new-var src))
+                                     (frame->frame frame)))))
     (mv frame -1 error-code)))
+
+(thm
+ (implies
+  (and
+   (frame-reps-fs frame fs))
+  (frame-reps-fs
+   (mv-nth 0 (abs-mkdir frame pathname))
+   (mv-nth 0 (hifat-mkdir frame pathname))))
+ :hints (("Goal" :in-theory (enable abs-mkdir hifat-mkdir))))
 
 ;; (thm
 ;;  (b*
