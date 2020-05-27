@@ -6,7 +6,6 @@
 ; filesystem.
 
 (include-book "fat32")
-(include-book "std/lists/resize-list" :dir :system)
 (include-book "std/typed-lists/unsigned-byte-listp" :dir :system)
 
 (make-event
