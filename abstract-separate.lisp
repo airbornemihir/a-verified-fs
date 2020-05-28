@@ -13486,42 +13486,42 @@
     :induct (seq-this frame)
     :expand (collapse-iter frame 1))))
 
-(verify
- (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-               (not (zp n))
-               (<= n (len (seq-this frame)))
-               (subsetp-equal (take (+ -1 n) (seq-this frame))
-                              (cons x (seq-this (collapse-this frame x))))
-               (mv-nth 1 (collapse frame))
-               (<= 0 (len (seq-this frame)))
-               (not (equal (nth (+ -1 n) (seq-this frame))
-                           x)))
-          (member-equal (nth (+ -1 n) (seq-this frame))
-                        (seq-this (collapse-this frame x))))
- :instructions
- ((:use (:instance partial-collapse-correctness-lemma-69
-                   (x (nth (+ -1 n) (seq-this frame)))
-                   (n (len (seq-this (collapse-this frame x))))
-                   (frame (collapse-this frame x))))
-  :promote (:demote 1)
-  (:dive 1 1)
-  (:= t)
-  :up
-  (:= (take (len (seq-this (collapse-this frame x)))
-            (seq-this (collapse-this frame x)))
-      (seq-this (collapse-this frame x)))
-  :top
-  :split
-  (:bash ("goal" :in-theory (disable member-of-a-nat-list
-                                     member-of-strip-cars
-                                     no-duplicatesp-of-seq-this-lemma-1)
-          :use ((:instance member-of-a-nat-list
-                           (x (nth (+ -1 n) (seq-this frame)))
-                           (lst (seq-this frame)))
-                (:instance member-of-strip-cars
-                           (x (nth (+ -1 n) (seq-this frame)))
-                           (alist (frame->frame frame)))
-                no-duplicatesp-of-seq-this-lemma-1)))))
+;; (verify
+;;  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;                (not (zp n))
+;;                (<= n (len (seq-this frame)))
+;;                (subsetp-equal (take (+ -1 n) (seq-this frame))
+;;                               (cons x (seq-this (collapse-this frame x))))
+;;                (mv-nth 1 (collapse frame))
+;;                (<= 0 (len (seq-this frame)))
+;;                (not (equal (nth (+ -1 n) (seq-this frame))
+;;                            x)))
+;;           (member-equal (nth (+ -1 n) (seq-this frame))
+;;                         (seq-this (collapse-this frame x))))
+;;  :instructions
+;;  ((:use (:instance partial-collapse-correctness-lemma-69
+;;                    (x (nth (+ -1 n) (seq-this frame)))
+;;                    (n (len (seq-this (collapse-this frame x))))
+;;                    (frame (collapse-this frame x))))
+;;   :promote (:demote 1)
+;;   (:dive 1 1)
+;;   (:= t)
+;;   :up
+;;   (:= (take (len (seq-this (collapse-this frame x)))
+;;             (seq-this (collapse-this frame x)))
+;;       (seq-this (collapse-this frame x)))
+;;   :top
+;;   :split
+;;   (:bash ("goal" :in-theory (disable member-of-a-nat-list
+;;                                      member-of-strip-cars
+;;                                      no-duplicatesp-of-seq-this-lemma-1)
+;;           :use ((:instance member-of-a-nat-list
+;;                            (x (nth (+ -1 n) (seq-this frame)))
+;;                            (lst (seq-this frame)))
+;;                 (:instance member-of-strip-cars
+;;                            (x (nth (+ -1 n) (seq-this frame)))
+;;                            (alist (frame->frame frame)))
+;;                 no-duplicatesp-of-seq-this-lemma-1)))))
 
 ;; (thm
 ;;  (implies
