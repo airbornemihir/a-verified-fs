@@ -45,31 +45,6 @@
                   (not (list-equiv x y))))
   :hints (("goal" :in-theory (enable prefixp))))
 
-(defthmd
-  len-when-set-equiv
-  (implies (and (set-equiv x y)
-                (no-duplicatesp-equal x)
-                (no-duplicatesp-equal y))
-           (equal (len x) (len y)))
-  :hints
-  (("goal" :in-theory (disable (:linear len-of-set-difference-when-subsetp))
-    :use ((:linear len-of-set-difference-when-subsetp)
-          (:instance (:linear len-of-set-difference-when-subsetp)
-                     (x y)
-                     (y x))))))
-
-(defthm
-  len-of-no-duplicatesp-when-set-equiv
-  (implies (set-equiv x y)
-           (equal (len (remove-duplicates-equal x))
-                  (len (remove-duplicates-equal y))))
-  :hints
-  (("goal" :do-not-induct t
-    :use (:instance len-when-set-equiv
-                    (x (remove-duplicates-equal x))
-                    (y (remove-duplicates-equal y)))))
-  :rule-classes :congruence)
-
 ;; This is explicitly a replacement for assoc-equal with a vacuous guard.
 (defund abs-assoc (x alist)
   (declare (xargs :guard t))
@@ -13639,7 +13614,7 @@
      collapse-iter-correctness-1
      (:instance (:rewrite collapse-seq-of-seq-this-is-collapse)
                 (frame (collapse-this frame x)))
-     (:instance len-when-set-equiv
+     (:instance set-equiv-implies-equal-len-1-when-no-duplicatesp
                 (x (cons x (seq-this (collapse-this frame x))))
                 (y (strip-cars (frame->frame frame)))))
     :in-theory (e/d (collapse-seq)
