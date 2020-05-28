@@ -403,44 +403,39 @@
   :hints (("goal" :in-theory (enable subsetp-equal prefixp)
            :induct (prefixp x y))))
 
-(encapsulate
-  ()
+(defthmd
+  painful-debugging-lemma-14
+  (implies (not (zp cluster-size))
+           (and
+            (equal (ceiling cluster-size cluster-size) 1)
+            (equal (ceiling 0 cluster-size) 0))))
 
-  (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
+(defthm painful-debugging-lemma-15
+  (implies (and (not (zp j)) (integerp i) (> i j))
+           (> (floor i j) 0))
+  :rule-classes :linear)
 
-  (defthmd
-    painful-debugging-lemma-14
-    (implies (not (zp cluster-size))
-             (and
-              (equal (ceiling cluster-size cluster-size) 1)
-              (equal (ceiling 0 cluster-size) 0))))
+(defthmd painful-debugging-lemma-16
+  (implies (and (<= i1 i2)
+                (integerp i1)
+                (integerp i2)
+                (not (zp j)))
+           (and
+            (<= (floor i1 j) (floor i2 j))
+            (<= (ceiling i1 j) (ceiling i2 j))))
+  :rule-classes :linear)
 
-  (defthm painful-debugging-lemma-15
-    (implies (and (not (zp j)) (integerp i) (> i j))
-             (> (floor i j) 0))
-    :rule-classes :linear)
+(defthm painful-debugging-lemma-17 (equal (mod (* y (len x)) y) 0))
 
-  (defthmd painful-debugging-lemma-16
-    (implies (and (<= i1 i2)
-                  (integerp i1)
-                  (integerp i2)
-                  (not (zp j)))
-             (and
-              (<= (floor i1 j) (floor i2 j))
-              (<= (ceiling i1 j) (ceiling i2 j))))
-    :rule-classes :linear)
+(defthm painful-debugging-lemma-19
+  (implies (and (not (zp j)) (integerp i) (>= i 0))
+           (>= (ceiling i j) 0))
+  :rule-classes :linear)
 
-  (defthm painful-debugging-lemma-17 (equal (mod (* y (len x)) y) 0))
-
-  (defthm painful-debugging-lemma-19
-    (implies (and (not (zp j)) (integerp i) (>= i 0))
-             (>= (ceiling i j) 0))
-    :rule-classes :linear)
-
-  (defthm painful-debugging-lemma-20
-    (implies (and (not (zp j)) (integerp i) (> i 0))
-             (> (ceiling i j) 0))
-    :rule-classes :linear))
+(defthm painful-debugging-lemma-20
+  (implies (and (not (zp j)) (integerp i) (> i 0))
+           (> (ceiling i j) 0))
+  :rule-classes :linear)
 
 (defund dir-ent-p (x)
   (declare (xargs :guard t))
@@ -2419,11 +2414,6 @@
   len-of-name-to-fat32-name-helper
   (equal (len (name-to-fat32-name-helper character-list n))
          (nfix n)))
-
-;; (defthm name-to-fat32-name-helper-correctness-1
-;;   (implies (member x (name-to-fat32-name-helper
-;;                       character-list n))
-;;            (or (equal x #\space) (str::up-alpha-p x))))
 
 (defthm
   character-listp-of-name-to-fat32-name-helper
