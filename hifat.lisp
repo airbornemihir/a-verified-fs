@@ -2330,14 +2330,8 @@
   (declare (xargs :guard (nat-listp fd-list)))
   (find-new-index-helper fd-list 0))
 
-(defthm find-new-index-correctness-1-lemma-1
-  (>= (find-new-index fd-list) 0)
-  :hints (("Goal" :in-theory (enable find-new-index)))
-  :rule-classes :linear)
-
-(defthm
-  find-new-index-correctness-1-lemma-2
-  (integerp (find-new-index fd-list))
+(defthm find-new-index-correctness-lemma-1
+  (natp (find-new-index fd-list))
   :hints (("Goal" :in-theory (enable find-new-index)))
   :rule-classes :type-prescription)
 
