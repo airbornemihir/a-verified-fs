@@ -1693,11 +1693,165 @@
 ;;                  (pathname-to-fat32-pathname (explode "/tmp/docs/pdf-docs")))))
 ;;   (list (m1-file-alist-p fs) result1 error-code result3 frame))
 
-;; (thm
-;;  (implies
-;;   (and
-;;    (frame-reps-fs frame fs))
-;;   (frame-reps-fs
-;;    (mv-nth 0 (abs-mkdir frame pathname))
-;;    (mv-nth 0 (hifat-mkdir frame pathname))))
-;;  :hints (("Goal" :in-theory (enable abs-mkdir hifat-mkdir))))
+(defthm
+  abs-mkdir-correctness-lemma-1
+  (implies (and (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+                (abs-separate frame))
+           (dist-names (frame->root frame)
+                       nil (frame->frame frame)))
+  :hints (("goal" :in-theory (e/d (abs-separate frame->root frame->frame)))))
+
+(defthm abs-mkdir-correctness-lemma-2
+  (implies (abs-separate frame)
+           (abs-separate (frame->frame frame)))
+  :hints (("goal" :in-theory (e/d (abs-separate frame->frame)))))
+
+(defthm
+  abs-mkdir-correctness-lemma-3
+  (implies
+   (and
+    (equal
+     (frame-val->src
+      (cdr (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                     pathname)
+                        (frame->frame frame))))
+     0)
+    (< 0
+       (1st-complete-under-pathname (frame->frame frame)
+                                    pathname))
+    (no-duplicatesp-equal (abs-addrs (frame->root frame)))
+    (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (abs-separate frame))
+   (abs-separate
+    (collapse-this frame
+                   (1st-complete-under-pathname (frame->frame frame)
+                                                pathname))))
+  :hints (("goal" :in-theory (enable collapse-this)
+           :do-not-induct t)))
+
+(defthm
+  abs-mkdir-correctness-lemma-4
+  (implies
+   (and
+    (< 0
+       (1st-complete-under-pathname (frame->frame frame)
+                                    pathname))
+    (not
+     (equal
+      (frame-val->src
+       (cdr (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                      pathname)
+                         (frame->frame frame))))
+      (1st-complete-under-pathname (frame->frame frame)
+                                   pathname)))
+    (consp
+     (assoc-equal
+      (frame-val->src
+       (cdr (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                      pathname)
+                         (frame->frame frame))))
+      (frame->frame frame)))
+    (prefixp
+     (frame-val->path
+      (cdr
+       (assoc-equal
+        (frame-val->src
+         (cdr (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                        pathname)
+                           (frame->frame frame))))
+        (frame->frame frame))))
+     (frame-val->path
+      (cdr (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                     pathname)
+                        (frame->frame frame)))))
+    (ctx-app-ok
+     (frame-val->dir
+      (cdr
+       (assoc-equal
+        (frame-val->src
+         (cdr (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                        pathname)
+                           (frame->frame frame))))
+        (frame->frame frame))))
+     (1st-complete-under-pathname (frame->frame frame)
+                                  pathname)
+     (nthcdr
+      (len
+       (frame-val->path
+        (cdr
+         (assoc-equal
+          (frame-val->src
+           (cdr (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                          pathname)
+                             (frame->frame frame))))
+          (frame->frame frame)))))
+      (frame-val->path
+       (cdr (assoc-equal (1st-complete-under-pathname (frame->frame frame)
+                                                      pathname)
+                         (frame->frame frame))))))
+    (no-duplicatesp-equal (abs-addrs (frame->root frame)))
+    (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+    (frame-p (frame->frame frame))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (abs-separate frame))
+   (abs-separate
+    (collapse-this frame
+                   (1st-complete-under-pathname (frame->frame frame)
+                                                pathname))))
+  :hints (("goal" :in-theory (enable collapse-this)
+           :do-not-induct t)))
+
+(defthm
+  abs-mkdir-correctness-lemma-5
+  (not
+   (consp
+    (frame-val->path
+     (cdr
+      (assoc-equal
+       0
+       (collapse-this frame
+                      (1st-complete-under-pathname (frame->frame frame)
+                                                   pathname)))))))
+  :hints (("goal" :in-theory (enable collapse-this
+                                     frame->root frame-with-root)
+           :do-not-induct t)))
+
+(defthm
+  abs-mkdir-correctness-lemma-6
+  (implies (and (no-duplicatesp-equal (abs-addrs (frame->root frame)))
+                (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+                (frame-p (frame->frame frame))
+                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (abs-separate frame))
+           (abs-separate (partial-collapse frame pathname)))
+  :hints (("goal" :in-theory (enable partial-collapse))))
+
+(defthm
+  abs-mkdir-correctness-lemma-7
+  (implies
+   (and (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (abs-separate (frame-with-root (frame->root frame)
+                                       (frame->frame frame)))
+        (subsetp (abs-addrs (frame->root frame))
+                 (frame-addrs-root (frame->frame frame))))
+   (subsetp-equal
+    (abs-addrs (frame->root (partial-collapse frame pathname)))
+    (frame-addrs-root (frame->frame (partial-collapse frame pathname)))))
+  :hints (("goal" :in-theory (enable partial-collapse)
+           :induct (partial-collapse frame pathname))))
+
+(thm
+ (implies
+  (and
+   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+   (abs-separate (frame-with-root (frame->root frame) (frame->frame frame)))
+   (frame-p (frame->frame frame))
+   (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
+   (frame-reps-fs frame fs))
+  (frame-reps-fs
+   (mv-nth 0 (abs-mkdir frame pathname))
+   (mv-nth 0 (hifat-mkdir (mv-nth 0 (collapse frame)) pathname))))
+ :hints (("Goal" :in-theory (enable abs-mkdir hifat-mkdir collapse)
+          :do-not-induct t)))
