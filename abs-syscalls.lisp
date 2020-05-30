@@ -1611,19 +1611,21 @@
                         (consp (assoc-equal 0 frame))
                         (fat32-filename-list-p pathname)
                         (no-duplicatesp-equal (strip-cars frame)))
+            :guard-debug t
             :guard-hints
             (("goal"
               :in-theory (enable abs-find-file-helper abs-fs-p)))))
   (b*
       ((pathname (mbe :exec pathname :logic (fat32-filename-list-fix pathname)))
        ((unless (consp pathname)) (mv frame -1 *enoent*))
-       (frame (partial-collapse frame (butlast pathname 1)))
+       (dirname (hifat-dirname pathname))
+       (frame (partial-collapse frame dirname))
        ;; After partial-collapse, either the parent directory is there in one
        ;; variable, or it isn't there at all.
-       ((mv parent-dir error-code) (abs-find-file frame (butlast pathname 1)))
+       ((mv parent-dir error-code) (abs-find-file frame dirname))
        ((unless (zp error-code)) (mv frame -1 error-code))
        ((unless (abs-directory-file-p parent-dir)) (mv frame -1 *enotdir*))
-       (src (abs-find-file-src frame (butlast pathname 1)))
+       (src (abs-find-file-src frame dirname))
        (new-index (find-new-index
                    ;; Using this, not (strip-cars (frame->frame frame)), to make
                    ;; sure we don't get a zero.
@@ -1632,7 +1634,12 @@
        ;; body address in its place...
        ((mv var new-src-dir) (abs-disassoc
                               (frame-val->dir (cdr (assoc-equal src frame)))
-                              (butlast pathname 1) new-index))
+                              (nthcdr
+                               (len
+                                (frame-val->path (cdr (assoc-equal src
+                                                                   frame))))
+                               dirname)
+                              new-index))
        (frame (put-assoc-equal src
                                (change-frame-val (cdr (assoc-equal src frame))
                                                  :dir new-src-dir)
@@ -1643,10 +1650,22 @@
                                var))
        (frame (frame-with-root (frame->root frame)
                                (cons (cons new-index
-                                           (frame-val (butlast pathname 1)
+                                           (frame-val dirname
                                                       new-var src))
                                      (frame->frame frame)))))
     (mv frame -1 error-code)))
+
+;; Counterexample to smooth functioning of abs-mkdir.
+;; (b*
+;;     ((fs (list (cons (implode (name-to-fat32-name (explode "tmp")))
+;;                      (make-m1-file :contents nil))))
+;;      (frame (frame-with-root fs nil))
+;;      (result1 (frame-reps-fs frame fs))
+;;      ((mv frame & &) (abs-mkdir frame (pathname-to-fat32-pathname (explode "/tmp/docs"))))
+;;      ((mv frame error-code result3)
+;;       (abs-mkdir frame
+;;                  (pathname-to-fat32-pathname (explode "/tmp/docs/pdf-docs")))))
+;;   (list (m1-file-alist-p fs) result1 error-code result3 frame))
 
 ;; (thm
 ;;  (implies
