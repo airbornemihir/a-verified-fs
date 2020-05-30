@@ -13461,8 +13461,15 @@
     :induct (seq-this frame)
     :expand (collapse-iter frame 1))))
 
+;; This theorem needs to be set aside because there's no obvious path towards
+;; proving
+;; (VALID-SEQP (COLLAPSE-THIS FRAME X) (SEQ-THIS (COLLAPSE-THIS FRAME X)))
+;; which is one of the subgoals.
+
 ;; (verify
-;;  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;  (implies (and (frame-p (frame->frame frame))
+;;                (abs-separate (frame->frame frame))
+;;                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
 ;;                (not (zp n))
 ;;                (<= n (len (seq-this frame)))
 ;;                (subsetp-equal (take (+ -1 n) (seq-this frame))
@@ -13470,7 +13477,9 @@
 ;;                (mv-nth 1 (collapse frame))
 ;;                (<= 0 (len (seq-this frame)))
 ;;                (not (equal (nth (+ -1 n) (seq-this frame))
-;;                            x)))
+;;                            x))
+;;                (abs-complete
+;;                 (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
 ;;           (member-equal (nth (+ -1 n) (seq-this frame))
 ;;                         (seq-this (collapse-this frame x))))
 ;;  :instructions

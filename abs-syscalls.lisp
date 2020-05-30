@@ -1646,7 +1646,11 @@
                                frame))
        ;; Check somewhere that (car (last pathname)) is not already present...
        (new-var (abs-put-assoc (car (last pathname))
-                               (make-abs-file :contents nil)
+                               (make-abs-file :contents nil
+                                              :dir-ent
+                                              (dir-ent-install-directory-bit
+                                               (dir-ent-fix nil)
+                                               t))
                                var))
        (frame (frame-with-root (frame->root frame)
                                (cons (cons new-index
@@ -1654,6 +1658,28 @@
                                                       new-var src))
                                      (frame->frame frame)))))
     (mv frame -1 error-code)))
+
+;; An example demonstrating that both ways of doing mkdir work out the same:
+;; (b*
+;;     ((fs (list (cons (implode (name-to-fat32-name (explode "tmp")))
+;;                      (make-m1-file :contents nil))))
+;;      (frame (frame-with-root fs nil))
+;;      (result1 (frame-reps-fs frame fs))
+;;      ((mv frame & &) (abs-mkdir frame (pathname-to-fat32-pathname (explode "/tmp/docs"))))
+;;      ((mv frame error-code result3)
+;;       (abs-mkdir frame
+;;                  (pathname-to-fat32-pathname (explode "/tmp/docs/pdf-docs"))))
+;;      ((mv frame result4) (collapse frame)))
+;;   (list (m1-file-alist-p fs) result1 error-code result3 frame
+;;         result4))
+;; (b*
+;;     ((fs (list (cons (implode (name-to-fat32-name (explode "tmp")))
+;;                      (make-m1-file :contents nil))))
+;;      ((mv fs & &) (hifat-mkdir fs (pathname-to-fat32-pathname (explode "/tmp/docs"))))
+;;      ((mv fs & &)
+;;       (hifat-mkdir fs
+;;                  (pathname-to-fat32-pathname (explode "/tmp/docs/pdf-docs")))))
+;;   (list fs))
 
 ;; Counterexample to smooth functioning of abs-mkdir.
 ;; (b*
