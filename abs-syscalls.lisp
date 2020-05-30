@@ -1644,8 +1644,8 @@
                                (change-frame-val (cdr (assoc-equal src frame))
                                                  :dir new-src-dir)
                                frame))
-       ;; Check somewhere that (car (last pathname)) is not already present...
-       (new-var (abs-put-assoc (car (last pathname))
+       ;; Check somewhere that (hifat-basename pathname) is not already present...
+       (new-var (abs-put-assoc (hifat-basename pathname)
                                (make-abs-file :contents nil
                                               :dir-ent
                                               (dir-ent-install-directory-bit
@@ -1842,6 +1842,51 @@
   :hints (("goal" :in-theory (enable partial-collapse)
            :induct (partial-collapse frame pathname))))
 
+(defthm
+  abs-mkdir-correctness-lemma-8
+  (not (consp (assoc-equal (find-new-index (strip-cars alist))
+                           alist)))
+  :hints (("goal" :in-theory (disable member-of-strip-cars)
+           :use (:instance member-of-strip-cars
+                           (x (find-new-index (strip-cars alist))))))
+  :rule-classes (:rewrite :type-prescription))
+
+(defthm
+  abs-mkdir-correctness-lemma-9
+  (implies
+   (consp (assoc-equal 0 alist))
+   (not (equal (find-new-index (strip-cars alist)) 0)))
+  :hints (("Goal" :in-theory
+           (disable
+            abs-mkdir-correctness-lemma-8)
+           :use
+           abs-mkdir-correctness-lemma-8))
+  :rule-classes
+  (:rewrite
+   (:linear
+    :corollary
+    (implies
+     (consp (assoc-equal 0 alist))
+     (< 0 (find-new-index (strip-cars alist)))))))
+
+(defthmd
+  hifat-basename-dirname-helper-of-fat32-filename-list-fix
+  (equal (hifat-basename-dirname-helper (fat32-filename-list-fix path))
+         (hifat-basename-dirname-helper path))
+  :hints (("goal" :in-theory (enable hifat-basename-dirname-helper))))
+
+(defcong
+  fat32-filename-list-equiv equal
+  (hifat-basename-dirname-helper path)
+  1
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      hifat-basename-dirname-helper-of-fat32-filename-list-fix
+      (path path-equiv))
+     hifat-basename-dirname-helper-of-fat32-filename-list-fix))))
+
 (thm
  (implies
   (and
@@ -1849,9 +1894,10 @@
    (abs-separate (frame-with-root (frame->root frame) (frame->frame frame)))
    (frame-p (frame->frame frame))
    (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
-   (frame-reps-fs frame fs))
+   (frame-reps-fs frame fs)
+   (consp (assoc-equal 0 frame)))
   (frame-reps-fs
    (mv-nth 0 (abs-mkdir frame pathname))
    (mv-nth 0 (hifat-mkdir (mv-nth 0 (collapse frame)) pathname))))
- :hints (("Goal" :in-theory (enable abs-mkdir hifat-mkdir collapse)
+ :hints (("Goal" :in-theory (enable abs-mkdir hifat-mkdir collapse 1st-complete)
           :do-not-induct t)))
