@@ -75,10 +75,13 @@
     (declare (ignore dirname))
     basename))
 
-(defthm stringp-of-hifat-basename
-  (stringp (hifat-basename path))
+(defthm fat32-filename-p-of-hifat-basename
+  (fat32-filename-p (hifat-basename path))
   :hints (("goal" :in-theory (enable hifat-basename)))
-  :rule-classes (:rewrite :type-prescription))
+  :rule-classes (:rewrite
+                 (:type-prescription
+                  :corollary
+                  (stringp (hifat-basename path)))))
 
 (defund hifat-dirname (path)
   (declare (xargs :guard (fat32-filename-list-p path)))
