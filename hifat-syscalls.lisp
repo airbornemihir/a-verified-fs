@@ -68,19 +68,28 @@
     :corollary
     (true-listp (mv-nth 1 (hifat-basename-dirname-helper path))))))
 
-(defun hifat-basename (path)
+(defund hifat-basename (path)
   (declare (xargs :guard (fat32-filename-list-p path)))
   (mv-let (basename dirname)
     (hifat-basename-dirname-helper path)
     (declare (ignore dirname))
     basename))
 
-(defun hifat-dirname (path)
+(defthm stringp-of-hifat-basename
+  (stringp (hifat-basename path))
+  :hints (("goal" :in-theory (enable hifat-basename)))
+  :rule-classes (:rewrite :type-prescription))
+
+(defund hifat-dirname (path)
   (declare (xargs :guard (fat32-filename-list-p path)))
   (mv-let (basename dirname)
     (hifat-basename-dirname-helper path)
     (declare (ignore basename))
     dirname))
+
+(defthm fat32-filename-list-p-of-hifat-dirname
+  (fat32-filename-list-p (hifat-dirname path))
+  :hints (("goal" :in-theory (enable hifat-dirname))))
 
 (defun hifat-lstat (fs pathname)
   (declare (xargs :guard (and (m1-file-alist-p fs)
