@@ -1931,6 +1931,23 @@
           (:instance hifat-place-file-correctness-2
                      (pathname pathname-equiv))))))
 
+;; This can't be made local.
+(defthm
+  hifat-place-file-correctness-lemma-2
+  (implies (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs))
+           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key fs)))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p m1-file->contents
+                                     m1-file-contents-fix m1-file-contents-p
+                                     m1-directory-file-p))))
+
+(defthm
+  hifat-place-file-correctness-3
+  (implies (not (zp (mv-nth 1 (hifat-place-file fs pathname file))))
+           (equal (mv-nth 0 (hifat-place-file fs pathname file))
+                  (hifat-file-alist-fix fs)))
+  :hints (("goal" :in-theory (enable hifat-place-file))))
+
 (defcong m1-file-equiv equal
   (hifat-place-file fs pathname file) 3
   :hints (("goal" :in-theory (enable hifat-place-file))))
@@ -2059,15 +2076,6 @@
 
 (defthm fat32-filename-list-prefixp-of-self
   (fat32-filename-list-prefixp x x))
-
-;; This can't be made local.
-(defthm
-  m1-read-after-write-lemma-2
-  (implies (and (m1-file-alist-p fs)
-                (hifat-no-dups-p fs)
-                (m1-directory-file-p (cdr (assoc-equal key fs))))
-           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key fs)))))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
 
 (encapsulate
   ()
