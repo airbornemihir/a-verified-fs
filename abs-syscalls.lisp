@@ -2067,7 +2067,8 @@
              0)))
  :hints
  (("goal"
-   :in-theory (e/d (abs-find-file collapse abs-separate intersectp-equal collapse-this)
+   :in-theory (e/d (abs-find-file collapse abs-separate intersectp-equal
+                                  collapse-this)
                    ((:rewrite nthcdr-when->=-n-len-l)
                     (:rewrite len-when-prefixp)
                     (:rewrite abs-file-alist-p-when-m1-file-alist-p)

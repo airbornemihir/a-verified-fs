@@ -789,7 +789,7 @@
                                   pathname))))))
 
 ;; This seems useless according to accumulated-persistence.
-(defthmd
+(defthm
   abs-find-file-helper-of-collapse-2
   (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
                 (frame-p (frame->frame frame))
@@ -809,7 +809,29 @@
                   (abs-find-file-helper (frame->root frame)
                                         pathname)))
   :hints (("goal" :in-theory (enable collapse dist-names collapse-this)
-           :induct (collapse frame))))
+           :induct (collapse frame)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                  (frame-p (frame->frame frame))
+                  (abs-separate (frame->frame frame))
+                  (dist-names (frame->root frame)
+                              nil (frame->frame frame))
+                  (not (equal (mv-nth 1
+                                      (abs-find-file-helper (frame->root frame)
+                                                            pathname))
+                              0))
+                  (not (equal (mv-nth 1
+                                      (abs-find-file-helper (frame->root frame)
+                                                            pathname))
+                              *enoent*))
+                  (m1-file-alist-p (mv-nth 0 (collapse frame))))
+             (equal (hifat-find-file (mv-nth 0 (collapse frame))
+                                     pathname)
+                    (abs-find-file-helper (frame->root frame)
+                                          pathname))))))
 
 ;; The somewhat weaker conclusion, in terms of (mv-nth 1 (abs-find-file ...))
 ;; rather than (abs-find-file ...), is because of the possibility that the file
