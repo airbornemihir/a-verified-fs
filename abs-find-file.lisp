@@ -782,8 +782,7 @@
           (m1-regular-file-p (mv-nth 0
                                      (abs-find-file-helper (frame->root frame)
                                                            pathname)))
-          (m1-file-alist-p (mv-nth 0 (collapse frame)))
-          (hifat-no-dups-p (mv-nth 0 (collapse frame))))
+          (m1-file-alist-p (mv-nth 0 (collapse frame))))
      (equal (hifat-find-file (mv-nth 0 (collapse frame))
                              pathname)
             (abs-find-file-helper (frame->root frame)
@@ -838,24 +837,22 @@
   (:rewrite
    (:rewrite
     :corollary
-    (implies
-     (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-          (frame-p (frame->frame frame))
-          (abs-separate (frame->frame frame))
-          (dist-names (frame->root frame)
-                      nil (frame->frame frame))
-          (not (equal (mv-nth 1
-                              (abs-find-file-helper (frame->root frame)
-                                                    pathname))
-                      *enoent*))
-          (m1-file-alist-p (mv-nth 0 (collapse frame)))
-          (hifat-no-dups-p (mv-nth 0 (collapse frame))))
-     (equal (mv-nth 1
-                    (hifat-find-file (mv-nth 0 (collapse frame))
-                                     pathname))
-            (mv-nth 1
-                    (abs-find-file-helper (frame->root frame)
-                                          pathname)))))))
+    (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                  (frame-p (frame->frame frame))
+                  (abs-separate (frame->frame frame))
+                  (dist-names (frame->root frame)
+                              nil (frame->frame frame))
+                  (not (equal (mv-nth 1
+                                      (abs-find-file-helper (frame->root frame)
+                                                            pathname))
+                              *enoent*))
+                  (m1-file-alist-p (mv-nth 0 (collapse frame))))
+             (equal (mv-nth 1
+                            (hifat-find-file (mv-nth 0 (collapse frame))
+                                             pathname))
+                    (mv-nth 1
+                            (abs-find-file-helper (frame->root frame)
+                                                  pathname)))))))
 
 (defthm
   abs-find-file-correctness-1-lemma-1
