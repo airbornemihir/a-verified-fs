@@ -4509,38 +4509,44 @@
 (local
  (defthm
    abs-find-file-correctness-lemma-5
-   (implies (and (atom (assoc-equal 0 frame))
-                 (no-duplicatesp-equal (strip-cars frame))
-                 (mv-nth 1
-                         (collapse (frame-with-root root frame)))
-                 (frame-p frame)
-                 (subsetp-equal indices (strip-cars frame))
-                 (dist-names root nil frame)
-                 (abs-separate frame)
-                 (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
+   (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                 (mv-nth 1 (collapse frame))
+                 (frame-p (frame->frame frame))
+                 (subsetp-equal indices
+                                (strip-cars (frame->frame frame)))
+                 (dist-names (frame->root frame)
+                             nil (frame->frame frame))
+                 (abs-separate (frame->frame frame))
+                 (not (equal (mv-nth 1
+                                     (abs-find-file-helper (frame->root frame)
+                                                           pathname))
                              *enoent*)))
-            (equal (abs-find-file-alt frame indices pathname)
+            (equal (abs-find-file-alt (frame->frame frame)
+                                      indices pathname)
                    (mv (abs-file-fix nil) *enoent*)))
    :hints
-   (("goal" :induct (abs-find-file-alt frame indices pathname)
+   (("goal" :induct (abs-find-file-alt (frame->frame frame)
+                                       indices pathname)
      :in-theory (enable abs-find-file-alt))
     ("subgoal *1/2''" :use (:instance abs-find-file-correctness-1-lemma-36
-                                      (frame (frame-with-root root frame))
                                       (x (car indices)))))))
 
 (defthm
   abs-find-file-correctness-lemma-6
-  (implies (and (atom (assoc-equal 0 frame))
-                (no-duplicatesp-equal (strip-cars frame))
-                (mv-nth 1
-                        (collapse (frame-with-root root frame)))
-                (frame-p frame)
-                (dist-names root nil frame)
-                (abs-separate frame)
-                (not (equal (mv-nth 1 (abs-find-file-helper root pathname))
-                            *enoent*)))
-           (equal (abs-find-file frame pathname)
+  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (mv-nth 1 (collapse frame))
+                (frame-p (frame->frame frame))
+                (dist-names (frame->root frame)
+                            nil (frame->frame frame))
+                (abs-separate (frame->frame frame))
+                (not (equal (mv-nth 1
+                                    (abs-find-file-helper (frame->root frame)
+                                                          pathname))
+                            2)))
+           (equal (abs-find-file (frame->frame frame)
+                                 pathname)
                   (mv (abs-file-fix nil) *enoent*)))
-  :hints (("goal" :in-theory (disable abs-find-file-correctness-lemma-5)
-           :use (:instance abs-find-file-correctness-lemma-5
-                           (indices (strip-cars frame))))))
+  :hints
+  (("goal" :in-theory (disable abs-find-file-correctness-lemma-5)
+    :use (:instance abs-find-file-correctness-lemma-5
+                    (indices (strip-cars (frame->frame frame)))))))
