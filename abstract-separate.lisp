@@ -2944,6 +2944,11 @@
          (true-list-fix (frame-with-root root frame)))
   :hints (("goal" :in-theory (enable frame-with-root))))
 
+(defthm strip-cars-of-frame-with-root
+  (equal (strip-cars (frame-with-root root frame))
+         (cons 0 (strip-cars frame)))
+  :hints (("goal" :in-theory (enable frame-with-root))))
+
 (defund frame->root (frame)
   (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame)))))
   (frame-val->dir (cdr (assoc-equal 0 frame))))

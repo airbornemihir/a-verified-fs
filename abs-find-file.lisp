@@ -5188,16 +5188,6 @@
                     (x (1st-complete (frame->frame frame2)))
                     (frame frame2)))))
 
-(defthm true-listp-of-put-assoc
-  (implies (not (null name))
-           (iff (true-listp (put-assoc-equal name val alist))
-                (or (true-listp alist)
-                    (atom (assoc-equal name alist))))))
-(defthm strip-cars-of-frame-with-root
-  (equal (strip-cars (frame-with-root root frame))
-         (cons 0 (strip-cars frame)))
-  :hints (("goal" :in-theory (enable frame-with-root))))
-
 (defthm
   abs-find-file-correctness-2
   (implies (and (consp (assoc-equal 0 frame))
