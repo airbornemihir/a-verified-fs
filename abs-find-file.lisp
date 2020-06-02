@@ -314,31 +314,31 @@
                  abs-file-alist2 x x-path)))))
 
 (defthm
-  abs-find-file-of-remove-assoc-1
-  (implies
-   (and
-    (frame-p frame)
-    (no-duplicatesp-equal (strip-cars frame))
-    (or
-     (not (prefixp (frame-val->path (cdr (assoc-equal x frame)))
-                   (fat32-filename-list-fix pathname)))
-     (equal
-      (mv-nth 1
-              (abs-find-file-helper
-               (frame-val->dir (cdr (assoc-equal x frame)))
-               (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
-                       pathname)))
-      *enoent*)))
-   (equal (abs-find-file (remove-assoc-equal x frame)
-                         pathname)
-          (abs-find-file frame pathname)))
-  :hints (("goal" :in-theory (enable abs-find-file))))
+ abs-find-file-of-remove-assoc-1
+ (implies
+  (and
+   (not (null x))
+   (no-duplicatesp-equal (strip-cars frame))
+   (or
+    (not (prefixp (frame-val->path (cdr (assoc-equal x frame)))
+                  (fat32-filename-list-fix pathname)))
+    (equal
+     (mv-nth 1
+             (abs-find-file-helper
+                  (frame-val->dir (cdr (assoc-equal x frame)))
+                  (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+                          pathname)))
+     *enoent*)))
+  (equal (abs-find-file (remove-assoc-equal x frame)
+                        pathname)
+         (abs-find-file frame pathname)))
+ :hints (("goal" :in-theory (enable abs-find-file))))
 
 (defthm
   abs-find-file-of-remove-assoc-2
   (implies
    (and
-    (frame-p (remove-assoc-equal x frame))
+    (not (null y))
     (no-duplicatesp-equal (strip-cars (remove-assoc-equal x frame)))
     (or
      (not
