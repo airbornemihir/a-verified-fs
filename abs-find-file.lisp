@@ -4570,7 +4570,7 @@
     (enable
      (:definition collapse)
      (:definition collapse-this)
-     (:rewrite no-duplicatesp-of-strip-cars-of-frame->frame))
+     )
     :do-not-induct t)))
 
 (defthm
@@ -4619,7 +4619,7 @@
     (enable
      (:definition collapse)
      (:definition collapse-this)
-     (:rewrite no-duplicatesp-of-strip-cars-of-frame->frame))
+     )
     :do-not-induct t)))
 
 (defthm
@@ -4666,7 +4666,7 @@
   (("goal"
     :in-theory
     (enable collapse collapse-this
-            (:rewrite no-duplicatesp-of-strip-cars-of-frame->frame))
+)
     :do-not-induct t)))
 
 (defthm
@@ -4749,8 +4749,8 @@
     (abs-find-file frame pathname)))
   :hints
   (("goal" :in-theory (e/d
-                       ((:rewrite
-                         no-duplicatesp-of-strip-cars-of-frame->frame))
+                       (
+                        )
                        ((:rewrite abs-find-file-of-put-assoc-lemma-6)))
     :use (:instance (:rewrite abs-find-file-of-put-assoc-lemma-6)
                     (pathname pathname)
@@ -4834,7 +4834,7 @@
     (abs-find-file frame pathname)))
   :hints
   (("goal" :in-theory
-    (e/d (no-duplicatesp-of-strip-cars-of-frame->frame)
+    (e/d ()
          ((:rewrite abs-find-file-of-put-assoc-lemma-6)))
     :use (:instance (:rewrite abs-find-file-of-put-assoc-lemma-6)
                     (pathname pathname)
@@ -4907,7 +4907,7 @@
        pathname)))))
   :hints
   (("goal" :in-theory
-    (e/d ((:rewrite no-duplicatesp-of-strip-cars-of-frame->frame))
+    (e/d ()
          ((:rewrite abs-find-file-of-put-assoc-lemma-6)))
     :use (:instance (:rewrite abs-find-file-of-put-assoc-lemma-6)
                     (pathname pathname)
@@ -5027,7 +5027,7 @@
           (:rewrite abs-separate-correctness-1-lemma-38)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                     . 3)
-          (:rewrite no-duplicatesp-of-strip-cars-of-frame->frame))
+          )
          ((:rewrite partial-collapse-correctness-lemma-24)
           (:definition remove-equal)
           (:definition assoc-equal)

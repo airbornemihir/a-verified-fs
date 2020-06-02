@@ -3011,7 +3011,7 @@
          (frame-with-root root frame))
   :hints (("goal" :in-theory (enable frame-with-root))))
 
-(defthmd no-duplicatesp-of-strip-cars-of-frame->frame
+(defthm no-duplicatesp-of-strip-cars-of-frame->frame
   (implies
    (no-duplicatesp-equal (strip-cars frame))
    (no-duplicatesp-equal (strip-cars (frame->frame frame))))

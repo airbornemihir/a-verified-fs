@@ -11,8 +11,7 @@
 (local (include-book "std/lists/intersectp" :dir :system))
 
 (local (in-theory (e/d (abs-file-p-when-m1-regular-file-p
-                        nat-listp-of-strip-cars-when-frame-p
-                        no-duplicatesp-of-strip-cars-of-frame->frame)
+                        nat-listp-of-strip-cars-when-frame-p)
                        nil)))
 
 (defthm
