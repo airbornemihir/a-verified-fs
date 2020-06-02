@@ -2793,16 +2793,19 @@
                      abs-find-file-correctness-1))
     :induct (collapse frame))))
 
+;; This is the result of an exercise that proves that
+;; abs-find-file-correctness-1 cannot be strictly reproduced through the use of
+;; abs-find-file-correctness-2, although we can get close...
 (thm
  (implies
-  (and (NOT (CONSP (FRAME-VAL->PATH$INLINE (CDR (ASSOC-EQUAL 0 FRAME)))))
+  (and (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
+       (consp (assoc-equal '0 frame))
        (mv-nth 1 (collapse frame))
-       (frame-p (frame->frame frame))
-       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+       (frame-p frame)
+       (no-duplicatesp-equal (strip-cars frame))
        (subsetp-equal (abs-addrs (frame->root frame))
                       (frame-addrs-root (frame->frame frame)))
-       (abs-separate (frame-with-root (frame->root frame)
-                                      (frame->frame frame)))
+       (abs-separate frame)
        (zp (mv-nth 1
                    (abs-find-file (frame-with-root (frame->root frame)
                                                    (frame->frame frame))
@@ -2819,10 +2822,8 @@
                      (hifat-find-file (mv-nth 0 (collapse frame))
                                       pathname))
              0)))
- :hints
- (("goal" :do-not-induct t
-   :in-theory (disable
-               abs-find-file-correctness-1))))
+ :hints (("goal" :do-not-induct t
+          :in-theory (disable abs-find-file-correctness-1))))
 
 (thm
  (implies
