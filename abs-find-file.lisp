@@ -753,6 +753,36 @@
                      (fs root))))))
 
 (defthm
+  abs-find-file-helper-of-collapse-lemma-6
+  (implies
+   (not (m1-regular-file-p (mv-nth 0 (abs-find-file-helper fs pathname))))
+   (abs-fs-p
+    (abs-file->contents (mv-nth 0 (abs-find-file-helper fs pathname)))))
+  :hints (("goal" :in-theory (enable abs-find-file-helper))))
+
+(defthm
+  abs-find-file-helper-of-collapse-lemma-7
+  (abs-file-p (mv-nth 0 (abs-find-file-helper fs pathname)))
+  :hints (("goal" :in-theory (enable abs-find-file-helper))))
+
+(defthm
+  abs-find-file-helper-of-collapse-lemma-8
+  (implies (equal (mv-nth 1
+                          (abs-find-file-helper (frame->root frame)
+                                                pathname))
+                  0)
+           (equal (cons (mv-nth 0
+                                (abs-find-file-helper (frame->root frame)
+                                                      pathname))
+                        '(0))
+                  (abs-find-file-helper (frame->root frame)
+                                        pathname)))
+  :hints
+  (("goal" :use (:instance (:rewrite abs-find-file-of-put-assoc-lemma-1)
+                           (pathname pathname)
+                           (fs (frame->root frame))))))
+
+(defthm
   abs-find-file-helper-of-collapse-1
   (implies
    (and (frame-p (frame->frame frame))
@@ -760,29 +790,58 @@
         (abs-separate (frame->frame frame))
         (dist-names (frame->root frame)
                     nil (frame->frame frame))
-        (m1-regular-file-p (mv-nth 0
-                                   (abs-find-file-helper (frame->root frame)
-                                                         pathname))))
+        (zp (mv-nth 1
+                    (abs-find-file-helper (frame->root frame)
+                                          pathname)))
+        (or
+         (m1-regular-file-p (mv-nth 0
+                                    (abs-find-file-helper (frame->root frame)
+                                                          pathname)))
+         (and
+          (abs-fs-p
+           (abs-file->contents (mv-nth 0
+                                       (abs-find-file-helper (frame->root frame)
+                                                             pathname))))
+          (abs-complete (abs-file->contents (mv-nth 0
+                                                    (abs-find-file-helper (frame->root frame)
+                                                                          pathname)))))))
    (equal (abs-find-file-helper (mv-nth 0 (collapse frame))
                                 pathname)
           (abs-find-file-helper (frame->root frame)
                                 pathname)))
-  :hints (("goal" :in-theory (enable collapse dist-names collapse-this)
+  :hints (("goal"
+           :in-theory
+           (e/d (collapse dist-names collapse-this)
+                (abs-find-file-helper-of-collapse-lemma-6))
            :induct (collapse frame)))
   :rule-classes
   (:rewrite
    (:rewrite
     :corollary
     (implies
-     (and (frame-p (frame->frame frame))
-          (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-          (abs-separate (frame->frame frame))
-          (dist-names (frame->root frame)
-                      nil (frame->frame frame))
-          (m1-regular-file-p (mv-nth 0
+     (and
+      (frame-p (frame->frame frame))
+      (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+      (abs-separate (frame->frame frame))
+      (dist-names (frame->root frame)
+                  nil (frame->frame frame))
+      (zp (mv-nth 1
+                  (abs-find-file-helper (frame->root frame)
+                                        pathname)))
+      (or
+       (m1-regular-file-p (mv-nth 0
+                                  (abs-find-file-helper (frame->root frame)
+                                                        pathname)))
+       (and
+        (abs-fs-p
+         (abs-file->contents (mv-nth 0
                                      (abs-find-file-helper (frame->root frame)
-                                                           pathname)))
-          (m1-file-alist-p (mv-nth 0 (collapse frame))))
+                                                           pathname))))
+        (abs-complete
+         (abs-file->contents (mv-nth 0
+                                     (abs-find-file-helper (frame->root frame)
+                                                           pathname))))))
+      (m1-file-alist-p (mv-nth 0 (collapse frame))))
      (equal (hifat-find-file (mv-nth 0 (collapse frame))
                              pathname)
             (abs-find-file-helper (frame->root frame)
@@ -5013,7 +5072,9 @@
                                (frame-addrs-root (frame->frame frame)))
                 (abs-separate frame)
                 (zp (mv-nth 1 (abs-find-file frame pathname)))
-                (m1-regular-file-p (mv-nth 0 (abs-find-file frame pathname))))
+                (or
+                 (m1-regular-file-p (mv-nth 0 (abs-find-file frame pathname)))
+                 (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame pathname))))))
            (equal (abs-find-file frame pathname)
                   (mv (mv-nth 0
                               (hifat-find-file (mv-nth 0 (collapse frame))
