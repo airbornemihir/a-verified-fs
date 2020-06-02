@@ -1604,7 +1604,7 @@
 ;;   (list (m1-file-alist-p fs) result1 error-code result3 frame))
 
 (defthm
-  abs-mkdir-correctness-lemma-3
+  abs-mkdir-correctness-lemma-1
   (implies
    (and
     (equal

@@ -2803,7 +2803,7 @@
   :rule-classes :type-prescription)
 
 (defthm
-  abs-find-file-correctness-1-lemma-44
+  abs-find-file-correctness-lemma-9
   (implies (equal (mv-nth 1
                           (hifat-find-file (frame->root frame)
                                            pathname))
@@ -2903,7 +2903,7 @@
   :rule-classes :type-prescription)
 
 (defthm
-  abs-find-file-correctness-1-lemma-50
+  abs-find-file-correctness-lemma-11
   (implies
    (and
     (equal
@@ -3604,7 +3604,7 @@
 
 (local
  (defthmd
-   abs-find-file-correctness-1-lemma-47
+   abs-find-file-correctness-lemma-13
    (implies
     (and
      (atom (assoc-equal 0 frame))
@@ -3669,12 +3669,12 @@
           (mv (abs-file-fix nil) *enoent*)))
   :hints
   (("goal"
-    :use (:instance abs-find-file-correctness-1-lemma-47
+    :use (:instance abs-find-file-correctness-lemma-13
                     (indices (remove-equal x (strip-cars frame))))
     :do-not-induct t)))
 
 (defthm
-  abs-find-file-correctness-1-lemma-10
+  abs-find-file-correctness-lemma-18
   (implies
    (and
     (< 0
@@ -3930,7 +3930,7 @@
               frame)))))))
 
 (defthm
-  abs-find-file-correctness-1-lemma-62
+  abs-find-file-correctness-lemma-19
   (implies
    (and
     (atom (assoc-equal 0 frame))
@@ -4455,14 +4455,14 @@
   :hints (("goal" :in-theory (enable frame-with-root))))
 
 (defthm
-  abs-mkdir-correctness-lemma-1
+  abs-find-file-correctness-lemma-20
   (implies (and (atom (frame-val->path (cdr (assoc-equal 0 frame))))
                 (abs-separate frame))
            (dist-names (frame->root frame)
                        nil (frame->frame frame)))
   :hints (("goal" :in-theory (e/d (abs-separate frame->root frame->frame)))))
 
-(defthm abs-mkdir-correctness-lemma-2
+(defthm abs-find-file-correctness-lemma-21
   (implies (abs-separate frame)
            (abs-separate (frame->frame frame)))
   :hints (("goal" :in-theory (e/d (abs-separate frame->frame)))))
@@ -4583,8 +4583,8 @@
       (:forward-chaining m1-file-alist-p-of-final-val-seq-lemma-1)
       (:rewrite abs-find-file-correctness-lemma-6)
       (:rewrite abs-fs-fix-under-abs-fs-equiv)
-      (:rewrite abs-mkdir-correctness-lemma-1)
-      (:rewrite abs-mkdir-correctness-lemma-2)
+      (:rewrite abs-find-file-correctness-lemma-20)
+      (:rewrite abs-find-file-correctness-lemma-21)
       (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-9)
       (:rewrite assoc-after-remove-assoc)
       (:rewrite frame-p-of-frame->frame)
@@ -4662,8 +4662,8 @@
       (:forward-chaining m1-file-alist-p-of-final-val-seq-lemma-1)
       (:rewrite abs-find-file-correctness-lemma-6)
       (:rewrite abs-fs-fix-under-abs-fs-equiv)
-      (:rewrite abs-mkdir-correctness-lemma-1)
-      (:rewrite abs-mkdir-correctness-lemma-2)
+      (:rewrite abs-find-file-correctness-lemma-20)
+      (:rewrite abs-find-file-correctness-lemma-21)
       (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-9)
       (:rewrite assoc-after-remove-assoc)
       (:rewrite frame-p-of-frame->frame)
@@ -4736,8 +4736,8 @@
       (:executable-counterpart mv-nth)
       (:executable-counterpart zp)
       (:rewrite abs-find-file-correctness-lemma-6)
-      (:rewrite abs-mkdir-correctness-lemma-1)
-      (:rewrite abs-mkdir-correctness-lemma-2)
+      (:rewrite abs-find-file-correctness-lemma-20)
+      (:rewrite abs-find-file-correctness-lemma-21)
       (:rewrite frame-p-of-frame->frame)
       (:rewrite no-duplicatesp-of-strip-cars-of-frame->frame)
       (:type-prescription 1st-complete)
@@ -4843,8 +4843,8 @@
       (:rewrite abs-find-file-helper-when-m1-file-alist-p)
       (:rewrite abs-fs-fix-when-abs-fs-p)
       (:rewrite abs-fs-p-of-frame-val->dir)
-      (:rewrite abs-mkdir-correctness-lemma-1)
-      (:rewrite abs-mkdir-correctness-lemma-2)
+      (:rewrite abs-find-file-correctness-lemma-20)
+      (:rewrite abs-find-file-correctness-lemma-21)
       (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-10)
       (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-9)
       (:rewrite frame-p-of-frame->frame)
@@ -4955,8 +4955,8 @@
       (:rewrite abs-find-file-helper-when-m1-file-alist-p)
       (:rewrite abs-fs-fix-when-abs-fs-p)
       (:rewrite abs-fs-p-of-frame-val->dir)
-      (:rewrite abs-mkdir-correctness-lemma-1)
-      (:rewrite abs-mkdir-correctness-lemma-2)
+      (:rewrite abs-find-file-correctness-lemma-20)
+      (:rewrite abs-find-file-correctness-lemma-21)
       (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-10)
       (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-9)
       (:rewrite frame-p-of-frame->frame)
@@ -5056,8 +5056,8 @@
       (:rewrite abs-find-file-helper-when-m1-file-alist-p)
       (:rewrite abs-fs-fix-when-abs-fs-p)
       (:rewrite abs-fs-p-of-frame-val->dir)
-      (:rewrite abs-mkdir-correctness-lemma-1)
-      (:rewrite abs-mkdir-correctness-lemma-2)
+      (:rewrite abs-find-file-correctness-lemma-20)
+      (:rewrite abs-find-file-correctness-lemma-21)
       (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-10)
       (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-9)
       (:rewrite frame-p-of-frame->frame)
@@ -5258,7 +5258,7 @@
       (:rewrite abs-find-file-correctness-1-lemma-18)
       (:rewrite abs-find-file-correctness-1-lemma-35)
       (:rewrite abs-find-file-correctness-1-lemma-40)
-      (:rewrite abs-find-file-correctness-1-lemma-44)
+      (:rewrite abs-find-file-correctness-lemma-9)
       (:rewrite abs-find-file-correctness-1-lemma-5)
       (:rewrite abs-find-file-correctness-1-lemma-51)
       (:rewrite abs-find-file-correctness-1-lemma-56)
@@ -5284,8 +5284,8 @@
       (:rewrite abs-fs-p-of-ctx-app)
       (:rewrite abs-fs-p-of-frame->root)
       (:rewrite abs-fs-p-of-frame-val->dir)
-      (:rewrite abs-mkdir-correctness-lemma-1)
-      (:rewrite abs-mkdir-correctness-lemma-2)
+      (:rewrite abs-find-file-correctness-lemma-20)
+      (:rewrite abs-find-file-correctness-lemma-21)
       (:rewrite abs-separate-correctness-1)
       (:rewrite abs-separate-correctness-1-lemma-14)
       (:rewrite abs-separate-correctness-1-lemma-18)
