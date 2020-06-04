@@ -1991,7 +1991,7 @@
     (mv-nth 2 (hifat-mkdir (mv-nth 0 (collapse frame)) pathname)))))
  :hints (("Goal" :in-theory (enable abs-mkdir hifat-mkdir collapse 1st-complete
                                     collapse-this hifat-place-file
-                                    hifat-find-file abs-find-file)
+                                    hifat-find-file abs-find-file abs-find-file-src)
           :do-not-induct t
           :cases
           ((< 0

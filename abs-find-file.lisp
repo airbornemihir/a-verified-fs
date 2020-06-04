@@ -30,7 +30,6 @@
    (:rewrite collapse-congruence-lemma-2)
    (:rewrite absfat-equiv-of-ctx-app-lemma-8)
    (:rewrite abs-separate-correctness-1-lemma-19)
-   (:rewrite abs-separate-correctness-1-lemma-38)
    (:rewrite
     partial-collapse-correctness-lemma-20)
    (:rewrite m1-file-alist-p-when-subsetp-equal)
@@ -45,7 +44,6 @@
    (:rewrite
     abs-fs-fix-of-put-assoc-equal-lemma-2)
    final-val-of-collapse-this-lemma-3
-   abs-separate-of-frame->frame-of-collapse-this-lemma-8
    abs-fs-fix-of-put-assoc-equal-lemma-3
    (:rewrite
     absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
@@ -5854,8 +5852,7 @@
                       (pathname pathname)
                       (fs (frame->root frame))))))))
 
-;; Keeping this disabled because it could conflict with other rules...
-(defthmd
+(defthm
   abs-find-file-correctness-lemma-14
   (implies
    (and (consp (assoc-equal x frame))
@@ -6266,7 +6263,7 @@
     (abs-find-file frame pathname)))
   :hints
   (("goal"
-    :in-theory (e/d (abs-find-file-correctness-lemma-14)
+    :in-theory (e/d ()
                     ((:rewrite abs-find-file-correctness-lemma-30)
                      (:rewrite remove-when-absent)
                      (:definition remove-equal)
@@ -6533,7 +6530,7 @@
    nil)
   :hints
   (("goal"
-    :in-theory (e/d (abs-find-file-correctness-lemma-14)
+    :in-theory (e/d ()
                     ((:rewrite abs-find-file-correctness-lemma-30)
                      (:rewrite remove-when-absent)
                      (:definition remove-equal)
@@ -6823,10 +6820,7 @@
   (("goal"
     :in-theory
     (e/d ((:definition abs-find-file)
-          collapse (:definition collapse-this)
-          (:rewrite abs-separate-correctness-1-lemma-38)
-          (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
-                    . 3))
+          collapse (:definition collapse-this))
          ((:rewrite partial-collapse-correctness-lemma-24)
           (:definition remove-equal)
           (:definition assoc-equal)
