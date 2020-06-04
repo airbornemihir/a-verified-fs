@@ -1874,12 +1874,76 @@
            (not (consp (assoc-equal x (frame->frame frame)))))
   :hints (("goal" :in-theory (enable frame->frame))))
 
+(defthm
+  abs-mkdir-correctness-lemma-2
+  (equal (frame-val->path (cdr (assoc-equal 0 (frame-with-root root frame))))
+         nil)
+  :hints (("goal" :in-theory (enable frame-with-root))))
+
+(defthmd abs-mkdir-correctness-lemma-3
+  (equal (assoc-equal x (frame-with-root root frame))
+         (if (equal x 0)
+             (cons 0 (frame-val nil (abs-fs-fix root) 0))
+             (assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable frame-with-root))))
+
+(defthmd abs-mkdir-correctness-lemma-13
+  (equal (assoc-equal x (frame->frame frame))
+         (if (not (equal x 0))
+             (assoc-equal x frame)
+             nil))
+  :hints (("goal" :in-theory (enable frame->frame))))
+
+(defthm
+  abs-mkdir-correctness-lemma-14
+  (implies (and (consp (assoc-equal 0 frame))
+                (not (consp (assoc-equal x frame))))
+           (not (consp (assoc-equal x (partial-collapse frame pathname)))))
+  :hints (("goal" :in-theory (enable partial-collapse collapse-this
+                                     abs-mkdir-correctness-lemma-3
+                                     abs-mkdir-correctness-lemma-13)
+           :induct (partial-collapse frame pathname))))
+
+(defthm
+  abs-mkdir-correctness-lemma-15
+  (implies
+   (and (equal (frame-val->path (cdr (assoc-equal 0 frame)))
+               nil)
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0))
+   (and
+    (equal
+     (frame-val->path (cdr (assoc-equal x (partial-collapse frame pathname))))
+     (if (consp (assoc-equal x (partial-collapse frame pathname)))
+         (frame-val->path (cdr (assoc-equal x frame)))
+       nil))
+    (equal
+     (frame-val->src (cdr (assoc-equal x (partial-collapse frame pathname))))
+     (if (consp (assoc-equal x (partial-collapse frame pathname)))
+         (frame-val->src (cdr (assoc-equal x frame)))
+       0))))
+  :hints (("goal" :in-theory
+           (e/d (partial-collapse collapse-this
+                                  abs-mkdir-correctness-lemma-3
+                                  abs-mkdir-correctness-lemma-13)
+                ((:definition remove-assoc-equal)
+                 (:rewrite remove-assoc-when-absent-1)
+                 (:rewrite remove-assoc-of-put-assoc)
+                 (:rewrite subsetp-when-prefixp)
+                 (:rewrite abs-fs-fix-when-abs-fs-p)
+                 (:rewrite abs-fs-p-when-hifat-no-dups-p)
+                 (:definition member-equal)
+                 (:definition abs-complete)
+                 (:rewrite remove-assoc-of-remove-assoc)
+                 (:definition len)))
+           :induct (partial-collapse frame pathname))))
+
 (thm
  (implies
   (and
-   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+   (no-duplicatesp-equal (strip-cars frame))
    (abs-separate (frame-with-root (frame->root frame) (frame->frame frame)))
-   (frame-p (frame->frame frame))
+   (frame-p frame)
    ;; I know, these both mean the same thing!
    (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
    (equal
@@ -1915,26 +1979,9 @@
           (hifat-dirname pathname))
          (find-new-index
           (strip-cars (partial-collapse frame (hifat-dirname pathname))))))))))
-   ;; This is a terrible hypothesis because it only makes sense in one of two cases.
-   (not
-    (equal
-     (mv-nth
-      1
-      (abs-disassoc
-       (frame-val->dir
-        (cdr
-         (assoc-equal
-          0
-          (partial-collapse frame (hifat-dirname pathname)))))
-       (hifat-dirname pathname)
-       (find-new-index
-        (strip-cars
-         (partial-collapse frame (hifat-dirname pathname))))))
-     (frame-val->dir
-      (cdr
-       (assoc-equal
-        0
-        (partial-collapse frame (hifat-dirname pathname))))))))
+   (equal
+    (frame-with-root (frame->root frame) (frame->frame frame))
+    frame))
   (and
    (frame-reps-fs
     (mv-nth 0 (abs-mkdir frame pathname))
@@ -1943,9 +1990,11 @@
     (mv-nth 2 (abs-mkdir frame pathname))
     (mv-nth 2 (hifat-mkdir (mv-nth 0 (collapse frame)) pathname)))))
  :hints (("Goal" :in-theory (enable abs-mkdir hifat-mkdir collapse 1st-complete
-                                    collapse-this hifat-place-file)
+                                    collapse-this hifat-place-file
+                                    hifat-find-file abs-find-file)
           :do-not-induct t
           :cases
           ((< 0
               (abs-find-file-src (partial-collapse frame (hifat-dirname pathname))
-                                 (hifat-dirname pathname)))))))
+                                 (hifat-dirname pathname))))))
+ :otf-flg t)
