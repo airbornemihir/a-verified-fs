@@ -5870,12 +5870,6 @@
           (mv (abs-file-fix nil) *enoent*)))
   :hints (("goal" :in-theory (enable abs-find-file))))
 
-;; Move later.
-(defthm abs-addrs-when-m1-file-contents-p
-  (implies (m1-file-contents-p fs)
-           (not (consp (abs-addrs fs))))
-  :hints (("goal" :in-theory (enable abs-addrs m1-file-contents-p))))
-
 (defthm
   abs-find-file-correctness-lemma-16
   (implies
@@ -5900,12 +5894,6 @@
      (fs (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car x))
                                                (abs-fs-fix fs)))))
      (relpath (cdr y))))))
-
-(defthmd fat32-filename-list-prefixp-alt
-  (equal
-   (fat32-filename-list-prefixp x y)
-   (prefixp (fat32-filename-list-fix x) (fat32-filename-list-fix y)))
-  :hints (("Goal" :in-theory (enable fat32-filename-list-prefixp prefixp))))
 
 (defthm
   abs-find-file-correctness-lemma-17

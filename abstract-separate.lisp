@@ -419,6 +419,11 @@
          (append (abs-addrs x) (abs-addrs y)))
   :hints (("goal" :in-theory (enable abs-addrs))))
 
+(defthm abs-addrs-when-m1-file-contents-p
+  (implies (m1-file-contents-p fs)
+           (not (consp (abs-addrs fs))))
+  :hints (("goal" :in-theory (enable abs-addrs m1-file-contents-p))))
+
 ;; top-complete is known to match up with alistp
 (defun abs-complete (x)
   (declare

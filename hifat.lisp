@@ -2077,6 +2077,12 @@
 (defthm fat32-filename-list-prefixp-of-self
   (fat32-filename-list-prefixp x x))
 
+(defthmd fat32-filename-list-prefixp-alt
+  (equal
+   (fat32-filename-list-prefixp x y)
+   (prefixp (fat32-filename-list-fix x) (fat32-filename-list-fix y)))
+  :hints (("Goal" :in-theory (enable fat32-filename-list-prefixp prefixp))))
+
 (encapsulate
   ()
 
