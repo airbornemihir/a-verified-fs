@@ -464,7 +464,7 @@
   :hints (("goal" :in-theory (enable abs-find-file))))
 
 (defthm
-  abs-find-file-correctness-1-lemma-12
+  abs-find-file-of-put-assoc-lemma-7
   (implies
    (and (frame-p frame)
         (no-duplicatesp-equal (strip-cars frame))
@@ -506,9 +506,7 @@
                pathname))
       (abs-find-file frame pathname))))))
 
-;; What do you know, this theorem is useless except in one place where it has
-;; to be manually invoked anyway...
-(defthmd
+(defthm
   abs-find-file-of-put-assoc
   (implies
    (and
@@ -3814,7 +3812,7 @@
   :hints
   (("goal"
     :in-theory (e/d (collapse-this)
-                    (abs-find-file-correctness-1-lemma-12))
+                    (abs-find-file-of-put-assoc-lemma-7))
     :use
     (:instance
      (:rewrite abs-find-file-of-put-assoc-lemma-4)
@@ -3891,7 +3889,7 @@
     :in-theory (e/d (collapse abs-addrs-of-ctx-app-1-lemma-7)
                     ((:rewrite remove-assoc-of-put-assoc)
                      (:rewrite abs-find-file-helper-of-ctx-app)
-                     abs-find-file-correctness-1-lemma-12))
+                     abs-find-file-of-put-assoc-lemma-7))
     :use
     ((:instance (:rewrite abs-find-file-correctness-1-lemma-48)
                 (x (1st-complete frame)))
@@ -4084,7 +4082,7 @@
   (("goal"
     :do-not-induct t
     :in-theory (e/d (collapse abs-addrs-of-ctx-app-1-lemma-7)
-                    (abs-find-file-correctness-1-lemma-12))
+                    (abs-find-file-of-put-assoc-lemma-7))
     :use
     ((:instance (:rewrite abs-find-file-correctness-1-lemma-48)
                 (x (frame-val->src (cdr (assoc-equal (1st-complete frame)
@@ -4222,7 +4220,7 @@
   (("goal"
     :do-not-induct t
     :in-theory (e/d (collapse-this abs-find-file-of-put-assoc-lemma-6)
-                    (abs-find-file-correctness-1-lemma-12))
+                    (abs-find-file-of-put-assoc-lemma-7))
     :expand
     ((:with abs-find-file-of-remove-assoc-1
             (abs-find-file (remove-assoc-equal (1st-complete frame)
@@ -4432,7 +4430,7 @@
                      (:rewrite
                       abs-find-file-helper-of-collapse-lemma-2)
                      (:definition remove-equal)
-                     abs-find-file-correctness-1-lemma-12))
+                     abs-find-file-of-put-assoc-lemma-7))
     :induct (collapse frame))))
 
 (local
@@ -5444,7 +5442,7 @@
     (abs-find-file frame pathname)))
   :hints
   (("goal"
-    :in-theory (disable abs-find-file-correctness-1-lemma-12)
+    :in-theory (disable abs-find-file-of-put-assoc-lemma-7)
     :use
     (:instance
      (:rewrite abs-find-file-of-put-assoc-lemma-6)
@@ -6040,7 +6038,7 @@
   :hints (("goal" :do-not-induct t
            :in-theory (e/d nil
                            (abs-find-file-correctness-lemma-29
-                            abs-find-file-correctness-1-lemma-12))
+                            abs-find-file-of-put-assoc-lemma-7))
            :use abs-find-file-correctness-lemma-29)))
 
 (defthm
@@ -6840,8 +6838,7 @@
           collapse (:definition collapse-this)
           (:rewrite abs-separate-correctness-1-lemma-38)
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
-                    . 3)
-          abs-find-file-of-put-assoc)
+                    . 3))
          ((:rewrite partial-collapse-correctness-lemma-24)
           (:definition remove-equal)
           (:definition assoc-equal)
