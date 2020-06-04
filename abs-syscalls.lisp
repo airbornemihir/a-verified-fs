@@ -1632,6 +1632,8 @@
                                                  :dir new-src-dir)
                                frame))
        ;; Check somewhere that (hifat-basename pathname) is not already present...
+       ((when (consp (abs-assoc (hifat-basename pathname) var)))
+        (mv frame -1 *eexist*))
        (new-var (abs-put-assoc (hifat-basename pathname)
                                (make-abs-file :contents nil
                                               :dir-ent
@@ -1697,18 +1699,6 @@
          ("PDF-DOCS   " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 16
                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
           (CONTENTS))))))))))
-
-;; Counterexample to smooth functioning of abs-mkdir.
-(b*
-    ((fs (list (cons (implode (name-to-fat32-name (explode "tmp")))
-                     (make-m1-file :contents nil))))
-     (frame (frame-with-root fs nil))
-     (result1 (frame-reps-fs frame fs))
-     ((mv frame & &) (abs-mkdir frame (pathname-to-fat32-pathname (explode "/tmp/docs"))))
-     ((mv frame error-code result3)
-      (abs-mkdir frame
-                 (pathname-to-fat32-pathname (explode "/tmp/docs/pdf-docs")))))
-  (list (m1-file-alist-p fs) result1 error-code result3 frame))
 
 (defthm
   abs-mkdir-correctness-lemma-1
@@ -2064,8 +2054,8 @@
  (implies
   (and
    (no-duplicatesp-equal (strip-cars frame))
-   (abs-separate (frame-with-root (frame->root frame) (frame->frame frame)))
    (frame-p frame)
+   (equal (frame-val->src$inline (cdr (assoc-equal 0 frame))) '0)
    ;; I know, these both mean the same thing!
    (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
    (equal
@@ -2103,7 +2093,12 @@
           (strip-cars (partial-collapse frame (hifat-dirname pathname))))))))))
    (equal
     (frame-with-root (frame->root frame) (frame->frame frame))
-    frame))
+    frame)
+   (not
+    (m1-regular-file-p
+     (mv-nth 0
+             (abs-find-file (partial-collapse frame (hifat-dirname pathname))
+                            (hifat-dirname pathname))))))
   (and
    (frame-reps-fs
     (mv-nth 0 (abs-mkdir frame pathname))
@@ -2118,4 +2113,5 @@
                                     abs-disassoc
                                     abs-mkdir-correctness-lemma-16
                                     abs-mkdir-correctness-lemma-3)
-          :do-not-induct t)))
+          :do-not-induct t))
+ :otf-flg t)
