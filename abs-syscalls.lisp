@@ -1403,6 +1403,24 @@
       *enoent*))))
   :hints (("goal" :in-theory (enable abs-find-file abs-find-file-src))))
 
+(defthmd
+  abs-find-file-src-of-fat32-filename-list-fix
+  (equal
+   (abs-find-file-src frame (fat32-filename-list-fix pathname))
+   (abs-find-file-src frame pathname))
+  :hints (("Goal" :in-theory (enable abs-find-file-src))))
+
+(defcong
+  fat32-filename-list-equiv
+  equal (abs-find-file-src frame pathname)
+  2
+  :hints
+  (("goal"
+    :use
+    ((:instance abs-find-file-src-of-fat32-filename-list-fix
+                (pathname pathname-equiv))
+     abs-find-file-src-of-fat32-filename-list-fix))))
+
 (defthm abs-mkdir-guard-lemma-2
   (implies (atom pathname)
            (equal (1st-complete-under-pathname frame pathname)
@@ -1938,63 +1956,76 @@
                  (:definition len)))
            :induct (partial-collapse frame pathname))))
 
-(thm
- (implies
-  (and
-   (no-duplicatesp-equal (strip-cars frame))
-   (abs-separate (frame-with-root (frame->root frame) (frame->frame frame)))
-   (frame-p frame)
-   ;; I know, these both mean the same thing!
-   (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
-   (equal
-    (len
-     (frame-val->path
-      (cdr (assoc-equal 0
-                        (partial-collapse frame (hifat-dirname pathname))))))
-    0)
-   (frame-reps-fs frame fs)
-   (consp (assoc-equal 0 frame))
-   (not
-    (consp
-     (abs-addrs
-      (remove-assoc-equal
-       (hifat-basename pathname)
-       (mv-nth
-        0
-        (abs-disassoc
-         (frame-val->dir$inline
-          (cdr
-           (assoc-equal (abs-find-file-src
-                         (partial-collapse frame (hifat-dirname pathname))
-                         (hifat-dirname pathname))
-                        (partial-collapse frame (hifat-dirname pathname)))))
-         (nthcdr
-          (len
-           (frame-val->path$inline
-            (cdr (assoc-equal
-                  (abs-find-file-src
-                   (partial-collapse frame (hifat-dirname pathname))
-                   (hifat-dirname pathname))
-                  (partial-collapse frame (hifat-dirname pathname))))))
-          (hifat-dirname pathname))
-         (find-new-index
-          (strip-cars (partial-collapse frame (hifat-dirname pathname))))))))))
-   (equal
-    (frame-with-root (frame->root frame) (frame->frame frame))
-    frame))
-  (and
-   (frame-reps-fs
-    (mv-nth 0 (abs-mkdir frame pathname))
-    (mv-nth 0 (hifat-mkdir (mv-nth 0 (collapse frame)) pathname)))
-   (equal
-    (mv-nth 2 (abs-mkdir frame pathname))
-    (mv-nth 2 (hifat-mkdir (mv-nth 0 (collapse frame)) pathname)))))
- :hints (("Goal" :in-theory (enable abs-mkdir hifat-mkdir collapse 1st-complete
-                                    collapse-this hifat-place-file
-                                    hifat-find-file abs-find-file abs-find-file-src)
-          :do-not-induct t
-          :cases
-          ((< 0
-              (abs-find-file-src (partial-collapse frame (hifat-dirname pathname))
-                                 (hifat-dirname pathname))))))
- :otf-flg t)
+(defthmd
+  abs-mkdir-correctness-lemma-16
+  (implies (not (consp (hifat-dirname pathname)))
+           (fat32-filename-list-equiv (hifat-dirname pathname)
+                                      nil))
+  :hints (("goal" :in-theory (enable hifat-dirname))))
+
+(defthm abs-mkdir-correctness-lemma-17
+  (implies (atom pathname)
+           (equal (abs-find-file-src frame pathname)
+                  0))
+  :hints (("goal" :in-theory (enable abs-find-file-src
+                                     abs-find-file-helper))))
+
+;; (thm
+;;  (implies
+;;   (and
+;;    (no-duplicatesp-equal (strip-cars frame))
+;;    (abs-separate (frame-with-root (frame->root frame) (frame->frame frame)))
+;;    (frame-p frame)
+;;    ;; I know, these both mean the same thing!
+;;    (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
+;;    (equal
+;;     (len
+;;      (frame-val->path
+;;       (cdr (assoc-equal 0
+;;                         (partial-collapse frame (hifat-dirname pathname))))))
+;;     0)
+;;    (frame-reps-fs frame fs)
+;;    (consp (assoc-equal 0 frame))
+;;    (not
+;;     (consp
+;;      (abs-addrs
+;;       (remove-assoc-equal
+;;        (hifat-basename pathname)
+;;        (mv-nth
+;;         0
+;;         (abs-disassoc
+;;          (frame-val->dir$inline
+;;           (cdr
+;;            (assoc-equal (abs-find-file-src
+;;                          (partial-collapse frame (hifat-dirname pathname))
+;;                          (hifat-dirname pathname))
+;;                         (partial-collapse frame (hifat-dirname pathname)))))
+;;          (nthcdr
+;;           (len
+;;            (frame-val->path$inline
+;;             (cdr (assoc-equal
+;;                   (abs-find-file-src
+;;                    (partial-collapse frame (hifat-dirname pathname))
+;;                    (hifat-dirname pathname))
+;;                   (partial-collapse frame (hifat-dirname pathname))))))
+;;           (hifat-dirname pathname))
+;;          (find-new-index
+;;           (strip-cars (partial-collapse frame (hifat-dirname pathname))))))))))
+;;    (equal
+;;     (frame-with-root (frame->root frame) (frame->frame frame))
+;;     frame))
+;;   (and
+;;    (frame-reps-fs
+;;     (mv-nth 0 (abs-mkdir frame pathname))
+;;     (mv-nth 0 (hifat-mkdir (mv-nth 0 (collapse frame)) pathname)))
+;;    (equal
+;;     (mv-nth 2 (abs-mkdir frame pathname))
+;;     (mv-nth 2 (hifat-mkdir (mv-nth 0 (collapse frame)) pathname)))))
+;;  :hints (("Goal" :in-theory (enable abs-mkdir hifat-mkdir collapse 1st-complete
+;;                                     collapse-this hifat-place-file
+;;                                     hifat-find-file abs-find-file
+;;                                     abs-find-file-src
+;;                                     abs-disassoc
+;;                                     abs-mkdir-correctness-lemma-16
+;;                                     abs-mkdir-correctness-lemma-3)
+;;           :do-not-induct t)))
