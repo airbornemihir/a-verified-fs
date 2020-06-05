@@ -14,57 +14,6 @@
                         nat-listp-of-strip-cars-when-frame-p)
                        nil)))
 
-(defthm
-  abs-addrs-when-absfat-equiv
-  (implies (absfat-equiv x y)
-           (set-equiv (abs-addrs (abs-fs-fix x))
-                      (abs-addrs (abs-fs-fix y))))
-  :hints (("goal" :in-theory (e/d (absfat-equiv set-equiv abs-fs-p)
-                                  (absfat-equiv-of-ctx-app-lemma-4))
-           :use ((:instance absfat-equiv-of-ctx-app-lemma-4
-                            (abs-file-alist1 (abs-fs-fix x))
-                            (abs-file-alist2 (abs-fs-fix y)))
-                 (:instance absfat-equiv-of-ctx-app-lemma-4
-                            (abs-file-alist2 (abs-fs-fix x))
-                            (abs-file-alist1 (abs-fs-fix y))))))
-  :rule-classes :congruence)
-
-(encapsulate
-  ()
-
-  (local (defun foo-equiv (fs1 fs2)
-           (b* ((good1 (and (m1-file-alist-p fs1) (hifat-no-dups-p fs1)))
-                (good2 (and (m1-file-alist-p fs2) (hifat-no-dups-p fs2))))
-             (or (not (or good1 good2))
-                 (and good1 good2
-                      (hifat-subsetp fs1 fs2)
-                      (hifat-subsetp fs2 fs1))))))
-
-  (local (defequiv foo-equiv))
-
-  (local (defun bar-equiv (fs1 fs2)
-           (b* ((good1 (abs-fs-p fs1))
-                (good2 (abs-fs-p fs2)))
-             (or (not (or good1 good2))
-                 (and good1 good2
-                      (absfat-subsetp fs1 fs2)
-                      (absfat-subsetp fs2 fs1))))))
-
-  (local (defequiv bar-equiv))
-
-  (local
-   (defrefinement bar-equiv foo-equiv
-     :hints
-     (("goal"
-       :in-theory (e/d (absfat-subsetp-correctness-1 abs-fs-p
-                                                     absfat-equiv)
-                       (abs-addrs-when-m1-file-alist-p abs-addrs-when-absfat-equiv))
-       :use
-       (abs-addrs-when-m1-file-alist-p
-        (:instance
-         abs-addrs-when-m1-file-alist-p (x y))
-        abs-addrs-when-absfat-equiv))))))
-
 ;; Let's try to do this intuitively first...
 
 (defund
@@ -2213,6 +2162,14 @@
                 (names-at fs relpath))
     :expand ((:free (fs) (names-at fs relpath))
              (abs-disassoc fs pathname new-index)))))
+
+(defthm dist-names-of-abs-disassoc
+  (implies (and (abs-fs-p fs)
+                (natp new-index)
+                (dist-names fs relpath frame))
+           (dist-names (mv-nth 1 (abs-disassoc fs pathname new-index))
+                       relpath frame))
+  :hints (("goal" :in-theory (enable dist-names))))
 
 (thm
  (implies
