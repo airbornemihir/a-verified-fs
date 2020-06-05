@@ -2171,6 +2171,43 @@
                        relpath frame))
   :hints (("goal" :in-theory (enable dist-names))))
 
+(defthm
+  abs-mkdir-correctness-lemma-25
+  (implies
+   (and
+    (consp (assoc-equal 0 frame))
+    (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+    (mv-nth 1 (collapse frame))
+    (frame-p frame)
+    (no-duplicatesp-equal (strip-cars frame))
+    (subsetp-equal (abs-addrs (frame->root frame))
+                   (frame-addrs-root (frame->frame frame)))
+    (abs-separate frame)
+    (or (m1-regular-file-p (mv-nth 0 (abs-find-file frame pathname)))
+        (abs-complete
+         (abs-file->contents (mv-nth 0 (abs-find-file frame pathname))))))
+   (equal
+    (abs-directory-file-p (mv-nth 0 (abs-find-file frame pathname)))
+    (m1-directory-file-p (mv-nth 0
+                                 (hifat-find-file (mv-nth 0 (collapse frame))
+                                                  pathname)))))
+  :hints
+  (("goal" :in-theory (e/d ((:definition abs-find-file)
+                            collapse (:definition collapse-this))
+                           ((:rewrite partial-collapse-correctness-lemma-24)
+                            (:definition remove-equal)
+                            (:definition assoc-equal)
+                            (:definition member-equal)
+                            (:definition remove-assoc-equal)
+                            (:rewrite abs-file-alist-p-correctness-1)
+                            (:rewrite nthcdr-when->=-n-len-l)
+                            (:rewrite abs-find-file-of-put-assoc-lemma-6)
+                            (:rewrite subsetp-when-prefixp)
+                            (:definition strip-cars)
+                            abs-find-file-helper-of-collapse-3
+                            abs-find-file-correctness-1-lemma-3))
+    :induct (collapse frame))))
+
 (thm
  (implies
   (and
@@ -2243,7 +2280,8 @@
                           abs-disassoc
                           abs-mkdir-correctness-lemma-16
                           abs-mkdir-correctness-lemma-3
-                          abs-separate dist-names abs-fs-fix)
+                          abs-separate dist-names abs-fs-fix
+                          abs-addrs frame-addrs-root)
                ((:rewrite prefixp-when-equal-lengths)
                 (:definition member-equal)
                 (:rewrite
