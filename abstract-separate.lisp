@@ -3850,25 +3850,26 @@
                                                 abs-file->contents m1-file->contents)
                               (abs-file-alist-p-when-m1-file-alist-p)))))
 
-(defthm
-  absfat-subsetp-transitivity-lemma-8
-  (implies
-   (and (equal (m1-file->contents (cdr (assoc-equal (car (car y)) (cdr y))))
-               (abs-file->contents (cdr (car y))))
-        (consp (assoc-equal (car (car y)) z))
-        (not (abs-directory-file-p (cdr (assoc-equal (car (car y)) z))))
-        (abs-file-alist-p y)
-        (abs-file-alist-p z)
-        (equal (abs-file->contents (cdr (car y)))
-               (m1-file->contents (cdr (assoc-equal (car (car y)) z)))))
-   (m1-file-p (cdr (car y))))
-  :hints (("goal" :in-theory (enable abs-file-alist-p
-                                     abs-file-p m1-file-p abs-file->contents
-                                     m1-file-contents-p abs-directory-file-p)
-           :do-not-induct t)))
-
 (encapsulate
   ()
+
+  (local
+   (defthm
+     absfat-subsetp-transitivity-lemma-8
+     (implies
+      (and (equal (m1-file->contents (cdr (assoc-equal (car (car y)) (cdr y))))
+                  (abs-file->contents (cdr (car y))))
+           (consp (assoc-equal (car (car y)) z))
+           (not (abs-directory-file-p (cdr (assoc-equal (car (car y)) z))))
+           (abs-file-alist-p y)
+           (abs-file-alist-p z)
+           (equal (abs-file->contents (cdr (car y)))
+                  (m1-file->contents (cdr (assoc-equal (car (car y)) z)))))
+      (m1-file-p (cdr (car y))))
+     :hints (("goal" :in-theory (enable abs-file-alist-p
+                                        abs-file-p m1-file-p abs-file->contents
+                                        m1-file-contents-p abs-directory-file-p)
+              :do-not-induct t))))
 
   (local
    (defthm
@@ -6285,7 +6286,6 @@
                      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
                      (:rewrite abs-file-alist-p-correctness-1)
                      (:rewrite abs-file->contents-when-m1-file-p)
-                     (:rewrite absfat-subsetp-transitivity-lemma-8)
                      (:rewrite absfat-subsetp-transitivity-lemma-3)
                      nfix
                      (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-2)))
@@ -6313,7 +6313,6 @@
           (:rewrite abs-file->contents-when-m1-file-p)
           (:rewrite abs-directory-file-p-when-m1-file-p)
           (:rewrite abs-addrs-when-m1-file-alist-p-lemma-2)
-          (:rewrite absfat-subsetp-transitivity-lemma-8)
           (:rewrite abs-addrs-when-m1-file-alist-p)
           (:rewrite member-of-abs-addrs-when-natp . 2)
           (:rewrite abs-no-dups-p-when-m1-file-alist-p)
@@ -6337,7 +6336,6 @@
                      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
                      (:rewrite abs-file-alist-p-correctness-1)
                      (:rewrite abs-file->contents-when-m1-file-p)
-                     (:rewrite absfat-subsetp-transitivity-lemma-8)
                      (:rewrite absfat-subsetp-transitivity-lemma-3))))))
 
 (defthm
@@ -6357,7 +6355,6 @@
                      (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
                      (:rewrite abs-file-alist-p-correctness-1)
                      (:rewrite abs-file->contents-when-m1-file-p)
-                     (:rewrite absfat-subsetp-transitivity-lemma-8)
                      (:rewrite absfat-subsetp-transitivity-lemma-3)))
     :induct t)))
 
