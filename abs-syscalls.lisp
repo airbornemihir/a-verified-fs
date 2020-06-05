@@ -2157,7 +2157,7 @@
                      (:rewrite
                       abs-file-contents-p-when-m1-file-contents-p)
                      (:rewrite
-                      fat32-filename-p-when-fat32-filename-p)))
+                      fat32-filename-fix-when-fat32-filename-p)))
     :induct (mv (fat32-filename-list-prefixp pathname relpath)
                 (names-at fs relpath))
     :expand ((:free (fs) (names-at fs relpath))

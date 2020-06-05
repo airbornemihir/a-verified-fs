@@ -8476,7 +8476,7 @@
                                                       (frame->frame frame)))))
               (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
        (:with
-        fat32-filename-p-when-fat32-filename-p
+        fat32-filename-fix-when-fat32-filename-p
         (fat32-filename-fix
          (nth
           (len (frame-val->path (cdr (assoc-equal (car l)
@@ -8641,7 +8641,7 @@
               (frame-val->path (cdr (assoc-equal (car l)
                                                  (frame->frame frame)))))))
        (:with
-        fat32-filename-p-when-fat32-filename-p
+        fat32-filename-fix-when-fat32-filename-p
         (fat32-filename-fix
          (nth (len (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
               (frame-val->path (cdr (assoc-equal (car l)
