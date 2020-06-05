@@ -2154,6 +2154,66 @@
   :hints (("goal" :in-theory (enable abs-disassoc abs-addrs)
            :induct (abs-disassoc fs pathname new-index))))
 
+(defthm
+  abs-mkdir-correctness-lemma-24
+  (ctx-app-ok
+   (list (find-new-index
+          (strip-cars (partial-collapse frame (hifat-dirname pathname)))))
+   (find-new-index
+    (strip-cars (partial-collapse frame (hifat-dirname pathname))))
+   nil)
+  :hints (("goal" :in-theory (enable ctx-app-ok addrs-at abs-fs-fix)
+           :do-not-induct t)))
+
+(defthm
+  names-at-of-abs-disassoc
+  (implies
+   (and (abs-fs-p fs) (natp new-index))
+   (equal (names-at (mv-nth 1 (abs-disassoc fs pathname new-index))
+                    relpath)
+          (cond ((or (equal (mv-nth 1 (abs-disassoc fs pathname new-index))
+                            fs)
+                     (not (fat32-filename-list-prefixp pathname relpath)))
+                 (names-at fs relpath))
+                (t nil))))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-top-addrs names-at
+                                   abs-disassoc fat32-filename-list-fix
+                                   abs-fs-p abs-file-alist-p abs-no-dups-p)
+                    ((:rewrite abs-fs-p-correctness-1)
+                     (:rewrite abs-no-dups-p-of-put-assoc-equal)
+                     (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-1)
+                     (:rewrite abs-fs-p-when-hifat-no-dups-p)
+                     (:rewrite hifat-find-file-correctness-1-lemma-1)
+                     (:rewrite consp-of-assoc-of-abs-fs-fix)
+                     (:rewrite abs-file->contents-when-m1-file-p)
+                     (:rewrite subsetp-when-prefixp)
+                     (:rewrite remove-when-absent)
+                     (:rewrite
+                      absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
+                     (:definition remove-equal)
+                     (:rewrite
+                      m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+                     (:definition member-equal)
+                     (:rewrite
+                      abs-file-alist-p-when-m1-file-alist-p)
+                     (:rewrite abs-file-alist-p-correctness-1)
+                     (:rewrite abs-no-dups-p-when-m1-file-alist-p)
+                     (:rewrite
+                      abs-addrs-when-m1-file-alist-p-lemma-2)
+                     (:rewrite abs-addrs-when-m1-file-alist-p)
+                     (:rewrite member-of-abs-addrs-when-natp . 2)
+                     (:rewrite member-of-abs-fs-fix-when-natp)
+                     (:rewrite
+                      abs-file-contents-p-when-m1-file-contents-p)
+                     (:rewrite
+                      fat32-filename-p-when-fat32-filename-p)))
+    :induct (mv (fat32-filename-list-prefixp pathname relpath)
+                (names-at fs relpath))
+    :expand ((:free (fs) (names-at fs relpath))
+             (abs-disassoc fs pathname new-index)))))
+
 (thm
  (implies
   (and
@@ -2195,9 +2255,22 @@
           (hifat-dirname pathname))
          (find-new-index
           (strip-cars (partial-collapse frame (hifat-dirname pathname))))))))))
-   (equal
-    (frame-with-root (frame->root frame) (frame->frame frame))
-    frame))
+   (not
+    (member-equal
+     (find-new-index
+      (strip-cars (partial-collapse frame (hifat-dirname pathname))))
+     (abs-addrs
+      (frame-val->dir$inline
+       (cdr
+        (assoc-equal
+         (abs-find-file-src (partial-collapse frame (hifat-dirname pathname))
+                            (hifat-dirname pathname))
+         (partial-collapse frame (hifat-dirname pathname))))))))
+   ;; This hypothesis is causing a lot of trouble...
+   ;; (equal
+   ;;  (frame-with-root (frame->root frame) (frame->frame frame))
+   ;;  frame)
+   )
   (and
    (frame-reps-fs
     (mv-nth 0 (abs-mkdir frame pathname))
@@ -2213,7 +2286,7 @@
                           abs-disassoc
                           abs-mkdir-correctness-lemma-16
                           abs-mkdir-correctness-lemma-3
-                          abs-separate dist-names)
+                          abs-separate dist-names abs-fs-fix)
                ((:rewrite prefixp-when-equal-lengths)
                 (:definition member-equal)
                 (:rewrite
