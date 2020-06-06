@@ -2404,6 +2404,70 @@
                               (hifat-find-file (mv-nth 0 (collapse frame))
                                                pathname))))))
 
+(defthm
+  abs-mkdir-correctness-lemma-28
+  (not
+   (intersectp-equal
+    (names-at
+     (frame-val->dir
+      (cdr (assoc-equal 0
+                        (partial-collapse frame (hifat-dirname pathname)))))
+     nil)
+    (names-at
+     (list
+      (find-new-index
+       (strip-cars (partial-collapse frame (hifat-dirname pathname)))))
+     nil)))
+  :hints (("goal" :in-theory (enable names-at abs-fs-fix)
+           :do-not-induct t)))
+
+(defthm abs-mkdir-correctness-lemma-29
+  (implies (atom n)
+           (dist-names (list n) relpath frame))
+  :hints (("goal" :in-theory (enable names-at abs-fs-fix dist-names))))
+
+;; Move later.
+(defthm
+  abs-mkdir-correctness-lemma-30
+  (implies
+   (hifat-equiv fs1 fs2)
+   (equal (m1-directory-file-p
+           (mv-nth 0 (hifat-find-file fs1 pathname)))
+          (m1-directory-file-p
+           (mv-nth 0 (hifat-find-file fs2 pathname)))))
+  :hints
+  (("goal" :in-theory (enable hifat-find-file hifat-equiv)))
+  :rule-classes :congruence)
+
+(defthm
+  abs-mkdir-correctness-lemma-31
+  (implies
+   (hifat-equiv fs1 fs2)
+   (equal (m1-regular-file-p
+           (mv-nth 0 (hifat-find-file fs1 pathname)))
+          (m1-regular-file-p
+           (mv-nth 0 (hifat-find-file fs2 pathname)))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (disable abs-mkdir-correctness-lemma-30
+             (:rewrite m1-directory-file-p-when-m1-file-p)
+             (:rewrite m1-regular-file-p-correctness-1))
+    :use
+    (abs-mkdir-correctness-lemma-30
+     (:instance (:rewrite m1-directory-file-p-when-m1-file-p)
+                (x (mv-nth 0 (hifat-find-file fs1 pathname))))
+     (:instance (:rewrite m1-directory-file-p-when-m1-file-p)
+                (x (mv-nth 0 (hifat-find-file fs2 pathname))))
+     (:instance
+      (:rewrite m1-regular-file-p-correctness-1)
+      (file (mv-nth 0 (hifat-find-file fs1 pathname))))
+     (:instance
+      (:rewrite m1-regular-file-p-correctness-1)
+      (file (mv-nth 0 (hifat-find-file fs2 pathname)))))))
+  :rule-classes :congruence)
+
 (thm
  (implies
   (and
