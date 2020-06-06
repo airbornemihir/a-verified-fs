@@ -1604,31 +1604,6 @@
           (frame (frame->frame frame))
           (x (1st-complete (frame->frame frame)))))))
 
-(defthm
-  abs-find-file-correctness-lemma-16
-  (implies
-   (and
-    (fat32-filename-list-prefixp x y)
-    (zp (mv-nth 1 (abs-find-file-helper fs x)))
-    (not
-     (consp
-      (abs-addrs
-       (abs-file->contents (mv-nth 0 (abs-find-file-helper fs x)))))))
-   (not (consp (addrs-at fs y))))
-  :hints
-  (("goal" :in-theory
-    (e/d (abs-find-file-helper addrs-at fat32-filename-list-prefixp)
-         (ctx-app-ok-when-abs-complete-lemma-4))
-    :induct (mv (fat32-filename-list-prefixp x y)
-                (mv-nth 0 (abs-find-file-helper fs x))))
-   ("subgoal *1/1'''"
-    :use
-    (:instance
-     ctx-app-ok-when-abs-complete-lemma-4
-     (fs (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car x))
-                                               (abs-fs-fix fs)))))
-     (relpath (cdr y))))))
-
 (encapsulate
   ()
 
