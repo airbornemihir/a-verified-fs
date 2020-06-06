@@ -2354,29 +2354,55 @@
 (defthm abs-file-p-of-abs-find-file
   (abs-file-p (mv-nth 0 (abs-find-file frame pathname)))
   :hints (("goal" :in-theory (enable abs-find-file))))
+(defthmd
+  abs-file-p-alt
+  (equal (abs-file-p x)
+         (or (m1-regular-file-p x)
+             (abs-directory-file-p x)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable m1-regular-file-p
+                              abs-file-p abs-directory-file-p
+                              m1-file->contents m1-file-contents-fix
+                              m1-file-p abs-file-contents-p
+                              abs-file->contents))))
 
-(thm
-  (implies
-   (and (consp (assoc-equal 0 frame))
-        (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-        (mv-nth 1 (collapse frame))
-        (frame-p frame)
-        (no-duplicatesp-equal (strip-cars frame))
-        (subsetp-equal (abs-addrs (frame->root frame))
-                       (frame-addrs-root (frame->frame frame)))
-        (abs-separate frame))
-   (equal
-    (abs-directory-file-p (mv-nth 0 (abs-find-file frame pathname)))
-    (m1-directory-file-p (mv-nth 0
-                               (hifat-find-file (mv-nth 0 (collapse frame))
-                                                pathname)))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (disable
-                abs-mkdir-correctness-lemma-26)
-    :use
-    abs-mkdir-correctness-lemma-26)))
+(defthm
+  abs-mkdir-correctness-lemma-27
+ (implies
+  (and (consp (assoc-equal 0 frame))
+       (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+       (mv-nth 1 (collapse frame))
+       (frame-p frame)
+       (no-duplicatesp-equal (strip-cars frame))
+       (subsetp-equal (abs-addrs (frame->root frame))
+                      (frame-addrs-root (frame->frame frame)))
+       (abs-separate frame))
+  (equal
+   (abs-directory-file-p (mv-nth 0 (abs-find-file frame pathname)))
+   (m1-directory-file-p (mv-nth 0
+                                (hifat-find-file (mv-nth 0 (collapse frame))
+                                                 pathname)))))
+ :hints
+ (("goal"
+   :do-not-induct t
+   :in-theory
+   (e/d
+    (abs-file-p-alt)
+    (abs-file-p-of-abs-find-file abs-mkdir-correctness-lemma-26
+                                 (:rewrite m1-regular-file-p-correctness-1)
+                                 m1-directory-file-p-when-m1-file-p))
+   :use
+   (abs-file-p-of-abs-find-file
+    abs-mkdir-correctness-lemma-26
+    (:instance (:rewrite m1-regular-file-p-correctness-1)
+               (file (mv-nth 0
+                             (hifat-find-file (mv-nth 0 (collapse frame))
+                                              pathname))))))
+  ("subgoal 1"
+   :expand
+   (m1-regular-file-p (mv-nth 0
+                              (hifat-find-file (mv-nth 0 (collapse frame))
+                                               pathname))))))
 
 (thm
  (implies
