@@ -614,7 +614,7 @@
     :induct (hifat-find-file m1-file-alist pathname))))
 
 (defthm
-  hifat-find-file-correctness-3-lemma-7
+  hifat-equiv-implies-equal-mv-nth-1-hifat-find-file-2
   (implies
    (hifat-equiv m1-file-alist2 m1-file-alist1)
    (mv-let
@@ -792,7 +792,7 @@
                (name (fat32-filename-fix (car pathname)))))))
 
 (defthm
-  hifat-find-file-correctness-5
+  hifat-equiv-implies-equal-m1-regular-file-p-mv-nth-0-hifat-find-file-2
   (implies
    (hifat-equiv m1-file-alist2 m1-file-alist1)
    (mv-let
@@ -826,3 +826,15 @@
             (m1-regular-file-p
              (mv-nth 0
                      (hifat-find-file m1-file-alist2 pathname)))))))
+
+(defthm
+  hifat-equiv-implies-equal-m1-directory-file-p-mv-nth-0-hifat-find-file-2
+  (implies
+   (hifat-equiv fs1 fs2)
+   (equal (m1-directory-file-p
+           (mv-nth 0 (hifat-find-file fs1 pathname)))
+          (m1-directory-file-p
+           (mv-nth 0 (hifat-find-file fs2 pathname)))))
+  :hints
+  (("goal" :in-theory (enable hifat-find-file hifat-equiv)))
+  :rule-classes :congruence)
