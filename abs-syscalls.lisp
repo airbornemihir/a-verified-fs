@@ -2676,6 +2676,21 @@
           (:rewrite abs-file-contents-p-when-m1-file-contents-p)
           (:rewrite fat32-filename-fix-when-fat32-filename-p))))))
 
+;; I regard both of the following rewrite rules as dangerous, so I'm keeping
+;; them disabled except for where they're needed.
+(defthmd frame->frame-of-put-assoc
+  (equal (frame->frame (put-assoc-equal key val frame))
+         (if (equal 0 key)
+             (frame->frame frame)
+             (put-assoc-equal key val (frame->frame frame))))
+  :hints (("goal" :in-theory (enable frame->frame))))
+(defthm frame->root-of-put-assoc
+  (equal (frame->root (put-assoc-equal key val frame))
+         (if (equal 0 key)
+             (frame-val->dir val)
+             (frame->root frame)))
+  :hints (("goal" :in-theory (enable frame->root))))
+
 (thm
  (implies
   (and
