@@ -2470,57 +2470,59 @@
                     frame)
     :hints (("Goal" :in-theory (enable collapse-equiv))))))
 
-(thm (implies
-      (and (collapse-equiv frame1 frame2)
-           (consp (assoc-equal 0 frame1))
-           (not (consp (frame-val->path (cdr (assoc-equal 0 frame1)))))
-           (mv-nth 1 (collapse frame1))
-           (frame-p frame1)
-           (no-duplicatesp-equal (strip-cars frame1))
-           (subsetp-equal (abs-addrs (frame->root frame1))
-                          (frame-addrs-root (frame->frame frame1)))
-           (abs-separate frame1)
-           (or
-            (m1-regular-file-p (mv-nth 0 (abs-find-file frame1 pathname)))
-            (abs-complete
-             (abs-file->contents (mv-nth 0 (abs-find-file frame1 pathname)))))
-           (consp (assoc-equal 0 frame2))
-           (not (consp (frame-val->path (cdr (assoc-equal 0 frame2)))))
-           (mv-nth 1 (collapse frame2))
-           (frame-p frame2)
-           (no-duplicatesp-equal (strip-cars frame2))
-           (subsetp-equal (abs-addrs (frame->root frame2))
-                          (frame-addrs-root (frame->frame frame2)))
-           (abs-separate frame2)
-           (or
-            (m1-regular-file-p (mv-nth 0 (abs-find-file frame2 pathname)))
-            (abs-complete
-             (abs-file->contents (mv-nth 0 (abs-find-file frame2 pathname))))))
-      (equal (abs-find-file frame1 pathname)
-             (abs-find-file frame2 pathname)))
-     :hints
-     (("goal"
-       :do-not-induct t
-       :in-theory (e/d
-                   (collapse-equiv)
-                   (abs-find-file-correctness-2
-                    abs-mkdir-correctness-lemma-26))
-       :use ((:instance
-              abs-find-file-correctness-2 (frame frame1))
-             (:instance
-              abs-find-file-correctness-2 (frame frame2)))))
-     :otf-flg t)
+;; (thm (implies
+;;       (and (collapse-equiv frame1 frame2)
+;;            (consp (assoc-equal 0 frame1))
+;;            (not (consp (frame-val->path (cdr (assoc-equal 0 frame1)))))
+;;            (mv-nth 1 (collapse frame1))
+;;            (frame-p frame1)
+;;            (no-duplicatesp-equal (strip-cars frame1))
+;;            (subsetp-equal (abs-addrs (frame->root frame1))
+;;                           (frame-addrs-root (frame->frame frame1)))
+;;            (abs-separate frame1)
+;;            (or
+;;             (m1-regular-file-p (mv-nth 0 (abs-find-file frame1 pathname)))
+;;             (abs-complete
+;;              (abs-file->contents (mv-nth 0 (abs-find-file frame1 pathname)))))
+;;            (consp (assoc-equal 0 frame2))
+;;            (not (consp (frame-val->path (cdr (assoc-equal 0 frame2)))))
+;;            (mv-nth 1 (collapse frame2))
+;;            (frame-p frame2)
+;;            (no-duplicatesp-equal (strip-cars frame2))
+;;            (subsetp-equal (abs-addrs (frame->root frame2))
+;;                           (frame-addrs-root (frame->frame frame2)))
+;;            (abs-separate frame2)
+;;            (or
+;;             (m1-regular-file-p (mv-nth 0 (abs-find-file frame2 pathname)))
+;;             (abs-complete
+;;              (abs-file->contents (mv-nth 0 (abs-find-file frame2 pathname))))))
+;;       (equal (abs-find-file frame1 pathname)
+;;              (abs-find-file frame2 pathname)))
+;;      :hints
+;;      (("goal"
+;;        :do-not-induct t
+;;        :in-theory (e/d
+;;                    (collapse-equiv)
+;;                    (abs-find-file-correctness-2
+;;                     abs-mkdir-correctness-lemma-26))
+;;        :use ((:instance
+;;               abs-find-file-correctness-2 (frame frame1))
+;;              (:instance
+;;               abs-find-file-correctness-2 (frame frame2)))))
+;;      :otf-flg t)
 
 (defthm
   abs-mkdir-correctness-lemma-32
   (implies (and (mv-nth 1 (collapse frame))
                 (atom pathname))
-           (collapse-equiv (partial-collapse frame pathname)
-                           (frame-with-root (mv-nth 0 (collapse frame))
-                                            nil)))
+           (equal (partial-collapse frame pathname)
+                  (if (atom (frame->frame frame))
+                      frame
+                      (frame-with-root (mv-nth 0 (collapse frame))
+                                       nil))))
   :hints
   (("goal"
-    :in-theory (e/d (partial-collapse collapse collapse-this collapse-equiv)
+    :in-theory (e/d (partial-collapse collapse)
                     ((:definition no-duplicatesp-equal)
                      (:rewrite partial-collapse-correctness-lemma-24)
                      (:definition assoc-equal)
@@ -2539,7 +2541,9 @@
                      (:definition remove-equal)
                      (:rewrite fat32-filename-p-correctness-1)))
     :induct (collapse frame)
-    :expand (partial-collapse frame pathname))))
+    :expand ((partial-collapse frame pathname)
+             (collapse-this frame
+                            (1st-complete (frame->frame frame)))))))
 
 (thm
  (implies
