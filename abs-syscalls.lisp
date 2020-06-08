@@ -2925,21 +2925,27 @@
      (frame
       (frame->frame (partial-collapse frame (hifat-dirname pathname))))))))
 
+;; Move later.
+(defcong nat-equiv equal
+  (abs-disassoc fs pathname new-index)
+  3
+  :hints (("goal" :in-theory (enable abs-disassoc))))
+
 (defthm
   abs-mkdir-correctness-lemma-47
   (implies
-   (and (natp new-index)
-        (abs-fs-p fs)
+   (and (abs-fs-p fs)
         (zp (mv-nth 1 (abs-find-file-helper fs pathname)))
         (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs pathname)))
-        (fat32-filename-list-p pathname)
-        (not (member-equal new-index (abs-addrs fs))))
+        (not (member-equal (nfix new-index)
+                           (abs-addrs fs))))
    (not (equal (mv-nth 1 (abs-disassoc fs pathname new-index))
                fs)))
   :hints
   (("goal"
-    :in-theory (e/d (abs-find-file-helper abs-disassoc)
-                    (ctx-app-ok-when-abs-complete-lemma-2))
+    :in-theory
+    (e/d (abs-find-file-helper abs-disassoc fat32-filename-list-fix)
+         (ctx-app-ok-when-abs-complete-lemma-2 nfix))
     :expand
     ((:with
       put-assoc-equal-without-change
@@ -2947,14 +2953,15 @@
        (put-assoc-equal
         (car pathname)
         (abs-file (abs-file->dir-ent (cdr (assoc-equal (car pathname) fs)))
-                  (list new-index))
+                  (list (nfix new-index)))
         fs)
        fs))
      (abs-disassoc fs pathname new-index)
-     (abs-file-contents-fix (list new-index)))
+     (abs-file-contents-fix (list (nfix new-index))))
     :induct (abs-find-file-helper fs pathname))
-   ("subgoal *1/1.2" :use (:instance ctx-app-ok-when-abs-complete-lemma-2
-                                     (name (car pathname))))))
+   ("subgoal *1/1"
+    :use (:instance ctx-app-ok-when-abs-complete-lemma-2
+                    (name (fat32-filename-fix (car pathname)))))))
 
 (defthm
   abs-mkdir-correctness-lemma-48
@@ -3061,6 +3068,35 @@
                            (hifat-dirname pathname)))))
    ("subgoal 2" :in-theory (enable frame->frame))
    ("subgoal 1" :in-theory (enable frame->frame))))
+
+;; Move later.
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies (and (abs-fs-p fs)
+                   (natp new-index)
+                   (not (equal (mv-nth 1 (abs-disassoc fs pathname new-index))
+                               fs)))
+              (equal (ctx-app (mv-nth 1 (abs-disassoc fs pathname new-index))
+                              (mv-nth 0 (abs-disassoc fs pathname new-index))
+                              new-index pathname)
+                     fs))
+     :hints (("goal" :in-theory (enable ctx-app abs-disassoc abs-fs-fix)))))
+
+  (defthm
+    ctx-app-of-abs-disassoc
+    (implies (and (abs-fs-p fs)
+                  (not (equal (mv-nth 1 (abs-disassoc fs pathname new-index))
+                              fs)))
+             (equal (ctx-app (mv-nth 1 (abs-disassoc fs pathname new-index))
+                             (mv-nth 0 (abs-disassoc fs pathname new-index))
+                             new-index pathname)
+                    fs))
+    :hints (("goal"
+             :use (:instance lemma (new-index (nfix new-index)))))))
 
 (thm
  (implies
