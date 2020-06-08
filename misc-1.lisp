@@ -454,10 +454,10 @@
            :in-theory (e/d
                        (abs-find-file-correctness-1-lemma-29)
                        (abs-separate-correctness-1-lemma-19
-                        abs-separate-of-put-assoc-lemma-1))
+                        abs-separate-of-frame->frame-of-collapse-this-lemma-16))
            :use ((:instance abs-separate-of-frame->frame-of-collapse-this-lemma-1
                             (dir (abs-fs-fix dir)))
-                 (:instance abs-separate-of-put-assoc-lemma-1
+                 (:instance abs-separate-of-frame->frame-of-collapse-this-lemma-16
                             (dir (abs-fs-fix dir))))))
   :rule-classes
   (:rewrite
