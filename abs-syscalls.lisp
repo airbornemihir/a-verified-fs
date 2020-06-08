@@ -3070,33 +3070,68 @@
    ("subgoal 1" :in-theory (enable frame->frame))))
 
 ;; Move later.
-(encapsulate
-  ()
+(defthm abs-disassoc-when-not-natp
+  (implies (not (natp new-index))
+           (equal (abs-disassoc fs pathname new-index)
+                  (abs-disassoc fs pathname 0)))
+  :hints (("Goal" :in-theory (enable abs-disassoc))))
 
-  (local
-   (defthmd
-     lemma
-     (implies (and (abs-fs-p fs)
-                   (natp new-index)
-                   (not (equal (mv-nth 1 (abs-disassoc fs pathname new-index))
-                               fs)))
-              (equal (ctx-app (mv-nth 1 (abs-disassoc fs pathname new-index))
-                              (mv-nth 0 (abs-disassoc fs pathname new-index))
-                              new-index pathname)
-                     fs))
-     :hints (("goal" :in-theory (enable ctx-app abs-disassoc abs-fs-fix)))))
+;; Move later.
+(defthm abs-disassoc-correctness-1
+  (implies (and (not (member-equal (nfix new-index)
+                                   (abs-addrs fs)))
+                (equal (mv-nth 1 (abs-disassoc fs pathname new-index))
+                       fs))
+           (equal (mv-nth 0 (abs-disassoc fs pathname new-index))
+                  nil))
+  :hints (("goal" :in-theory (enable abs-disassoc))))
 
-  (defthm
-    ctx-app-of-abs-disassoc
-    (implies (and (abs-fs-p fs)
-                  (not (equal (mv-nth 1 (abs-disassoc fs pathname new-index))
-                              fs)))
-             (equal (ctx-app (mv-nth 1 (abs-disassoc fs pathname new-index))
-                             (mv-nth 0 (abs-disassoc fs pathname new-index))
-                             new-index pathname)
-                    fs))
-    :hints (("goal"
-             :use (:instance lemma (new-index (nfix new-index)))))))
+;; Move later.
+(defthm
+  ctx-app-of-abs-disassoc
+  (implies (abs-fs-p fs)
+           (equal (ctx-app (mv-nth 1 (abs-disassoc fs pathname new-index))
+                           (mv-nth 0 (abs-disassoc fs pathname new-index))
+                           new-index pathname)
+                  fs))
+  :hints (("goal" :in-theory (enable ctx-app abs-disassoc abs-fs-fix))))
+
+(defthm
+  ctx-app-of-abs-place-file-helper-1
+  (implies
+   (and (abs-fs-p fs)
+        (abs-fs-p (mv-nth 0
+                          (abs-place-file-helper fs pathname file)))
+        (ctx-app-ok abs-file-alist1 x x-path)
+        (not (member-equal (fat32-filename-fix (car pathname))
+                           (names-at abs-file-alist1 x-path))))
+   (equal (ctx-app abs-file-alist1
+                   (mv-nth 0
+                           (abs-place-file-helper fs pathname file))
+                   x x-path)
+          (mv-nth 0
+                  (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
+                                         (append x-path pathname)
+                                         file))))
+  :hints
+  (("goal" :in-theory
+    (e/d (abs-place-file-helper ctx-app ctx-app-ok addrs-at names-at)
+         ((:rewrite abs-file-alist-p-correctness-1)
+          (:rewrite hifat-equiv-when-absfat-equiv)
+          (:definition no-duplicatesp-equal)
+          (:definition member-equal)
+          (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-1)
+          (:rewrite subsetp-when-prefixp)
+          (:rewrite abs-addrs-when-m1-file-alist-p)
+          (:rewrite abs-addrs-of-ctx-app-2)))
+    :induct (mv (append x-path pathname)
+                (ctx-app abs-file-alist1 fs x x-path))
+    :do-not-induct t)
+   ("subgoal *1/1'''"
+    :expand ((abs-place-file-helper (append (remove-equal x abs-file-alist1)
+                                            fs)
+                                    pathname file)
+             (abs-place-file-helper fs pathname file)))))
 
 (thm
  (implies
