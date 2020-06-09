@@ -1114,7 +1114,6 @@
           len-when-hifat-bounded-file-alist-p
           member-of-abs-addrs-when-natp
           (:linear position-equal-ac-when-member)
-          (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
           (:rewrite 1st-complete-of-put-assoc-lemma-1)
           (:definition hifat-file-alist-fix)
           (:rewrite hifat-find-file-correctness-1-lemma-1)
@@ -2139,8 +2138,6 @@
                      (:rewrite abs-file->contents-when-m1-file-p)
                      (:rewrite subsetp-when-prefixp)
                      (:rewrite remove-when-absent)
-                     (:rewrite
-                      absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
                      (:definition remove-equal)
                      (:rewrite
                       m1-file-alist-p-of-cdr-when-m1-file-alist-p)
