@@ -4165,7 +4165,7 @@
       (abs-file-alist1 (abs-fs-fix fs-equiv))
       (abs-file-alist2 (abs-fs-fix fs)))))))
 
-(defthm absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1
+(defthmd absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1
   (implies (and (not (natp x))
                 (atom x)
                 (not (member-equal 0 (abs-fs-fix fs))))
@@ -4177,7 +4177,8 @@
                 (absfat-subsetp fs fs-equiv))
            (subsetp-equal (abs-top-addrs fs)
                           (abs-top-addrs fs-equiv)))
-  :hints (("goal" :in-theory (enable abs-top-addrs absfat-subsetp))))
+  :hints (("goal" :in-theory (enable abs-top-addrs absfat-subsetp
+                                     absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1))))
 
 (defthm absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2
   (implies (and (abs-fs-p fs)
@@ -6244,7 +6245,6 @@
     (e/d (abs-fs-fix abs-no-dups-p abs-fs-p)
          ((:rewrite remove-when-absent)
           (:rewrite abs-fs-p-of-append)
-          (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
           (:definition remove-equal)
           (:definition member-equal)
           (:rewrite abs-file-alist-p-correctness-1)
@@ -8327,8 +8327,6 @@
   (local
    (in-theory
     (disable
-     (:rewrite
-      absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
      (:rewrite abs-file-alist-p-correctness-1)
      (:rewrite
       abs-file-alist-p-when-m1-file-alist-p)
@@ -8342,8 +8340,6 @@
      (:rewrite subsetp-trans)
      (:type-prescription assoc-when-zp-len)
      (:definition nth)
-     (:rewrite
-      absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
      (:rewrite nat-listp-when-unsigned-byte-listp)
      (:linear nth-when-dir-ent-p)
      (:rewrite ctx-app-ok-when-abs-complete)
@@ -9486,11 +9482,11 @@
   partial-collapse-correctness-lemma-24
   (implies
    (and
+    (not (and (consp (assoc-equal x frame))
+              (abs-complete (frame-val->dir (cdr (assoc-equal x frame))))))
     (no-duplicatesp-equal (strip-cars frame))
     (frame-p frame)
-    (< 0 x)
-    (not (and (consp (assoc-equal x frame))
-              (abs-complete (frame-val->dir (cdr (assoc-equal x frame)))))))
+    (< 0 x))
    (not (equal (1st-complete frame) x)))
   :hints (("goal" :in-theory (enable 1st-complete))))
 
@@ -13407,8 +13403,7 @@
            (frame-val->path (cdr (assoc-equal 1st-complete
                                               (frame->frame frame))))))))))))
   :hints
-  (("goal" :in-theory (e/d (seq-this collapse-seq collapse-iter
-                                     partial-collapse-correctness-lemma-32)
+  (("goal" :in-theory (e/d (seq-this collapse-seq collapse-iter)
                            ((:rewrite partial-collapse-correctness-lemma-24)
                             (:definition no-duplicatesp-equal)
                             (:rewrite subsetp-when-prefixp)

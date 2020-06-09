@@ -42,8 +42,6 @@
     abs-fs-fix-of-put-assoc-equal-lemma-2)
    final-val-of-collapse-this-lemma-3
    abs-fs-fix-of-put-assoc-equal-lemma-3
-   (:rewrite
-    absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
    (:type-prescription
     abs-directory-file-p-when-m1-file-p-lemma-1))))
 
