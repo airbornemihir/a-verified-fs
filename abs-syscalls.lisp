@@ -3722,33 +3722,6 @@
            :induct (mv (abs-place-file-helper fs1 pathname file)
                        (abs-place-file-helper fs2 pathname file)))))
 
-;; This theorem reminds me of one more reason why no duplication should be
-;; allowed. List lengths have to be the same!
-(defthm
-  abs-mkdir-correctness-lemma-60
-  (implies (and (absfat-equiv fs1 fs2)
-                (abs-file-p file)
-                (abs-no-dups-p (abs-file->contents file))
-                (zp (mv-nth 1
-                            (abs-place-file-helper fs1 pathname file)))
-                (zp (mv-nth 1
-                            (abs-place-file-helper fs2 pathname file))))
-           (absfat-equiv (mv-nth 0
-                                 (abs-place-file-helper fs1 pathname file))
-                         (mv-nth 0
-                                 (abs-place-file-helper fs2 pathname file))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (e/d (absfat-equiv)
-                    (abs-mkdir-correctness-lemma-57))
-    :use ((:instance abs-mkdir-correctness-lemma-57
-                     (fs1 (abs-fs-fix fs1))
-                     (fs2 (abs-fs-fix fs2)))
-          (:instance abs-mkdir-correctness-lemma-57
-                     (fs1 (abs-fs-fix fs2))
-                     (fs2 (abs-fs-fix fs1)))))))
-
 (defthmd
   abs-mkdir-correctness-lemma-61
   (implies (not (or (equal (mv-nth 1
@@ -3765,9 +3738,184 @@
                   0))
   :hints (("goal" :in-theory (enable abs-place-file-helper))))
 
-;; Once this is proved, it can replace
-;; abs-mkdir-correctness-lemma-60.
-(thm
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies
+      (and
+       (equal (mv-nth 1
+                      (abs-place-file-helper fs2 pathname file))
+              28)
+       (abs-fs-p fs1)
+       (abs-fs-p fs2))
+      (> (mv-nth 1
+                 (abs-place-file-helper fs1 pathname file))
+         0))
+     :hints
+     (("goal"
+       :in-theory (enable abs-place-file-helper
+                          absfat-subsetp abs-file-p-alt)
+       :do-not-induct t
+       :induct (mv (abs-place-file-helper fs1 pathname file)
+                   (abs-place-file-helper fs2 pathname file))))
+     :rule-classes :linear))
+
+  (defthm
+    abs-mkdir-correctness-lemma-68
+    (implies
+     (and
+      (equal (mv-nth 1
+                     (abs-place-file-helper fs2 pathname file))
+             28))
+     (> (mv-nth 1
+                (abs-place-file-helper fs1 pathname file))
+        0))
+    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
+                                    (fs2 (abs-fs-fix fs2)))))
+    :rule-classes :linear))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies
+      (and
+       (equal (mv-nth 1
+                      (abs-place-file-helper fs2 pathname file))
+              *enoent*)
+       (abs-fs-p fs1)
+       (abs-fs-p fs2)
+       (absfat-subsetp fs2 fs1))
+      (> (mv-nth 1
+                 (abs-place-file-helper fs1 pathname file))
+         0))
+     :hints
+     (("goal"
+       :in-theory (enable abs-place-file-helper
+                          absfat-subsetp abs-file-p-alt)
+       :induct (mv (abs-place-file-helper fs1 pathname file)
+                   (abs-place-file-helper fs2 pathname file))))
+     :rule-classes :linear))
+
+  (defthm
+    abs-mkdir-correctness-lemma-69
+    (implies
+     (and
+      (equal (mv-nth 1
+                     (abs-place-file-helper fs2 pathname file))
+             *enoent*)
+      (absfat-subsetp (abs-fs-fix fs2)
+                      (abs-fs-fix fs1)))
+     (> (mv-nth 1
+                (abs-place-file-helper fs1 pathname file))
+        0))
+    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
+                                    (fs2 (abs-fs-fix fs2)))))
+    :rule-classes :linear))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies (and (equal (mv-nth 1
+                                  (abs-place-file-helper fs2 pathname file))
+                          *enotdir*)
+                   (abs-fs-p fs1)
+                   (absfat-subsetp (abs-fs-fix fs1)
+                                   (abs-fs-fix fs2))
+                   (not (abs-directory-file-p file)))
+              (> (mv-nth 1
+                         (abs-place-file-helper fs1 pathname file))
+                 0))
+     :hints (("goal" :in-theory (enable abs-place-file-helper
+                                        absfat-subsetp abs-file-p-alt)
+              :induct (mv (abs-place-file-helper fs1 pathname file)
+                          (abs-place-file-helper fs2 pathname file))))
+     :rule-classes :linear))
+
+  (defthm
+    abs-mkdir-correctness-lemma-70
+    (implies (and (equal (mv-nth 1
+                                 (abs-place-file-helper fs2 pathname file))
+                         *enotdir*)
+                  (absfat-subsetp (abs-fs-fix fs1)
+                                  (abs-fs-fix fs2))
+                  (case-split (not (abs-directory-file-p file))))
+             (> (mv-nth 1
+                        (abs-place-file-helper fs1 pathname file))
+                0))
+    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1)))))
+    :rule-classes :linear))
+
+(defthmd
+  abs-mkdir-correctness-lemma-71
+  (implies
+   (and (or (abs-directory-file-p
+             (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                               fs1)))
+            (abs-directory-file-p
+             (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                               fs2))))
+        (abs-fs-p fs1)
+        (abs-fs-p fs2)
+        (absfat-equiv fs1 fs2))
+   (absfat-equiv
+    (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                          fs1)))
+    (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                          fs2)))))
+  :hints (("goal" :in-theory (enable absfat-equiv)
+           :do-not-induct t)))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies (and (equal (mv-nth 1
+                                  (abs-place-file-helper fs2 pathname file))
+                          *enotdir*)
+                   (abs-fs-p fs1)
+                   (abs-fs-p fs2)
+                   (absfat-equiv fs1 fs2)
+                   (abs-directory-file-p file))
+              (> (mv-nth 1
+                         (abs-place-file-helper fs1 pathname file))
+                 0))
+     :hints (("goal" :in-theory (enable abs-place-file-helper
+                                        absfat-subsetp abs-file-p-alt)
+              :induct (mv (abs-place-file-helper fs1 pathname file)
+                          (abs-place-file-helper fs2 pathname file)))
+             ("subgoal *1/2" :use abs-mkdir-correctness-lemma-71))
+     :rule-classes :linear))
+
+  (defthm
+    abs-mkdir-correctness-lemma-72
+    (implies (and (equal (mv-nth 1
+                                 (abs-place-file-helper fs2 pathname file))
+                         *enotdir*)
+                  (absfat-equiv
+                   (abs-fs-fix fs1)
+                   (abs-fs-fix fs2))
+                  (abs-directory-file-p file))
+             (> (mv-nth 1
+                        (abs-place-file-helper fs1 pathname file))
+                0))
+    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1)) (fs2 (abs-fs-fix fs2)))))
+    :rule-classes :linear))
+
+;; This theorem reminds me of one more reason why no duplication should be
+;; allowed. List lengths have to be the same!
+(defthm
+  abs-mkdir-correctness-lemma-60
   (implies (and (absfat-equiv fs1 fs2)
                 (abs-file-p file)
                 (abs-no-dups-p (abs-file->contents file)))
@@ -3795,16 +3943,14 @@
                      (file file)
                      (pathname pathname)
                      (fs fs2))
-          (:instance
-           (:rewrite abs-mkdir-correctness-lemma-61)
-           (file file)
-           (pathname pathname)
-           (fs fs1))
-          (:instance
-           (:rewrite abs-mkdir-correctness-lemma-61)
-           (file file)
-           (pathname pathname)
-           (fs fs2)))))
+          (:instance (:rewrite abs-mkdir-correctness-lemma-61)
+                     (file file)
+                     (pathname pathname)
+                     (fs fs1))
+          (:instance (:rewrite abs-mkdir-correctness-lemma-61)
+                     (file file)
+                     (pathname pathname)
+                     (fs fs2)))))
   :otf-flg t)
 
 ;; One of the subgoals.
