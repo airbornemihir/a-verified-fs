@@ -16,48 +16,28 @@
 
 ;; Let's try to do this intuitively first...
 
-(defund
-  abs-place-file-helper (fs pathname file)
-  (declare (xargs :guard (and (abs-fs-p fs)
-                              (fat32-filename-list-p pathname)
-                              (abs-file-p file))
-                  :guard-debug t
-                  :measure (acl2-count pathname)))
-  (b*
-      ((fs (mbe :exec fs :logic (abs-fs-fix fs)))
-       ((unless (consp pathname))
-        (mv fs *enoent*))
+(defund abs-place-file-helper (fs pathname file)
+  (declare (xargs :guard (and (abs-fs-p fs) (abs-file-p file) (fat32-filename-list-p pathname))
+                  :measure (len pathname)))
+  (b* ((fs (mbe :exec fs :logic (abs-fs-fix fs)))
+       ((unless (consp pathname)) (mv fs *enoent*))
        (name (fat32-filename-fix (car pathname)))
        (alist-elem (abs-assoc name fs))
-       ((unless (consp alist-elem))
-        (if (atom (cdr pathname))
-            (mv (abs-put-assoc name file fs) 0)
-            (mv fs *enotdir*)))
+       ((unless (consp alist-elem)) (if (consp (cdr pathname)) (mv fs *enotdir*)
+                                      (mv (abs-put-assoc name file fs) 0)))
        ((when (and (not (abs-directory-file-p (cdr alist-elem)))
-                   (or (consp (cdr pathname))
-                       (abs-directory-file-p file))))
+                   (or (consp (cdr pathname)) (abs-directory-file-p file))))
         (mv fs *enotdir*))
-       ((when
-         (not (or (abs-directory-file-p (cdr alist-elem))
-                  (consp (cdr pathname))
-                  (abs-directory-file-p file)
-                  (and (atom alist-elem)
-                       (>= (len fs) *ms-max-dir-ent-count*)))))
+       ((when (not (or (abs-directory-file-p (cdr alist-elem))
+                       (consp (cdr pathname)) (abs-directory-file-p file)
+                       (and (atom alist-elem) (>= (len fs) *ms-max-dir-ent-count*)))))
         (mv (abs-put-assoc name file fs) 0))
-       ((when (and (atom alist-elem)
-                   (>= (len fs) *ms-max-dir-ent-count*)))
-        (mv fs *enospc*))
-       ((mv new-contents error-code)
-        (abs-place-file-helper
-         (abs-file->contents (cdr alist-elem))
-         (cdr pathname)
-         file)))
-    (mv (abs-put-assoc
-         name
-         (make-abs-file
-          :dir-ent (abs-file->dir-ent (cdr alist-elem))
-          :contents new-contents)
-         fs)
+       ((when (and (atom alist-elem) (>= (len fs) *ms-max-dir-ent-count*))) (mv fs *enospc*))
+       ((mv new-contents error-code) (abs-place-file-helper (abs-file->contents (cdr alist-elem))
+                                                            (cdr pathname) file)))
+    (mv (abs-put-assoc name (make-abs-file :dir-ent (abs-file->dir-ent (cdr alist-elem))
+                                           :contents new-contents)
+                       fs)
         error-code)))
 
 (defthm
@@ -84,7 +64,13 @@
            (abs-no-dups-p (abs-file->contents file)))
   :hints (("goal" :do-not-induct t
            :in-theory (enable m1-file->contents m1-regular-file-p
-                              m1-file-contents-fix abs-no-dups-p))))
+                              m1-file-contents-fix abs-no-dups-p)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (m1-regular-file-p file)
+             (abs-no-dups-p (m1-file->contents file))))))
 
 (defthm
   abs-fs-p-of-abs-place-file-helper
@@ -3506,6 +3492,218 @@
                            (abs-file-alist1 fs1)))))
 
 (defthm
+  abs-mkdir-correctness-lemma-62
+  (implies
+   (and
+    (absfat-subsetp
+     (mv-nth 0
+             (abs-place-file-helper
+              (abs-file->contents
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs1)))
+              (cdr pathname)
+              file))
+     (mv-nth 0
+             (abs-place-file-helper
+              (abs-file->contents
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs2)))
+              (cdr pathname)
+              file)))
+    (m1-regular-file-p file))
+   (absfat-subsetp
+    (mv-nth '0
+            (abs-place-file-helper
+             (abs-file->contents$inline
+              (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                fs1)))
+             (cdr pathname)
+             file))
+    (abs-file-contents-fix
+     (mv-nth '0
+             (abs-place-file-helper
+              (abs-file->contents$inline
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs2)))
+              (cdr pathname)
+              file))))))
+
+(defthm
+  abs-mkdir-correctness-lemma-63
+  (implies
+   (and
+    (absfat-subsetp
+     (mv-nth 0
+             (abs-place-file-helper
+              (abs-file->contents
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs1)))
+              (cdr pathname)
+              file))
+     (mv-nth 0
+             (abs-place-file-helper
+              (abs-file->contents
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs2)))
+              (cdr pathname)
+              file)))
+    (abs-directory-file-p file))
+   (absfat-subsetp
+    (mv-nth '0
+            (abs-place-file-helper
+             (abs-file->contents$inline
+              (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                fs1)))
+             (cdr pathname)
+             file))
+    (abs-file-contents-fix
+     (mv-nth '0
+             (abs-place-file-helper
+              (abs-file->contents$inline
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs2)))
+              (cdr pathname)
+              file))))))
+
+(defthm
+  abs-mkdir-correctness-lemma-64
+  (implies
+   (not
+    (absfat-subsetp
+     (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                           fs1)))
+     (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                           fs2)))))
+   (consp (assoc-equal (fat32-filename-fix (car pathname))
+                       fs1)))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (abs-place-file-helper absfat-subsetp abs-file-p-alt)
+                    nil))))
+
+(defthm
+  abs-mkdir-correctness-lemma-65
+  (implies
+   (and
+    (abs-directory-file-p
+     (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                       fs2)))
+    (abs-fs-p fs1)
+    (absfat-subsetp fs1 fs2)
+    (not (abs-directory-file-p
+          (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                            fs1)))))
+   (absfat-subsetp
+    fs1
+    (put-assoc-equal
+     (fat32-filename-fix (car pathname))
+     (abs-file
+      (abs-file->dir-ent
+       (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                         fs2)))
+      (mv-nth
+       0
+       (abs-place-file-helper
+        (abs-file->contents
+         (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                           fs2)))
+        (cdr pathname)
+        file)))
+     fs2)))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-place-file-helper absfat-subsetp abs-file-p-alt)
+                    ((:rewrite abs-mkdir-correctness-lemma-58)))
+    :use (:instance (:rewrite abs-mkdir-correctness-lemma-58)
+                    (abs-file-alist2 fs2)
+                    (x (fat32-filename-fix (car pathname)))
+                    (abs-file-alist1 fs1)))))
+
+(defthm
+  abs-mkdir-correctness-lemma-66
+  (implies
+   (and
+    (absfat-subsetp
+     (mv-nth 0
+             (abs-place-file-helper
+              (abs-file->contents
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs1)))
+              (cdr pathname)
+              file))
+     (mv-nth 0
+             (abs-place-file-helper
+              (abs-file->contents
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs2)))
+              (cdr pathname)
+              file)))
+    (m1-regular-file-p file))
+   (absfat-subsetp
+    (abs-file-contents-fix
+     (mv-nth '0
+             (abs-place-file-helper
+              (abs-file->contents$inline
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs1)))
+              (cdr pathname)
+              file)))
+    (abs-file-contents-fix
+     (mv-nth '0
+             (abs-place-file-helper
+              (abs-file->contents$inline
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs2)))
+              (cdr pathname)
+              file)))))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-place-file-helper absfat-subsetp abs-file-p-alt)))))
+
+(defthm
+  abs-mkdir-correctness-lemma-67
+  (implies
+   (and
+    (absfat-subsetp
+     (mv-nth 0
+             (abs-place-file-helper
+              (abs-file->contents
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs1)))
+              (cdr pathname)
+              file))
+     (mv-nth 0
+             (abs-place-file-helper
+              (abs-file->contents
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs2)))
+              (cdr pathname)
+              file)))
+    (abs-directory-file-p file))
+   (absfat-subsetp
+    (abs-file-contents-fix
+     (mv-nth '0
+             (abs-place-file-helper
+              (abs-file->contents$inline
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs1)))
+              (cdr pathname)
+              file)))
+    (abs-file-contents-fix
+     (mv-nth '0
+             (abs-place-file-helper
+              (abs-file->contents$inline
+               (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                 fs2)))
+              (cdr pathname)
+              file)))))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-place-file-helper absfat-subsetp abs-file-p-alt))
+    :do-not-induct t)))
+
+(defthm
   abs-mkdir-correctness-lemma-57
   (implies
    (and (abs-fs-p fs1)
@@ -3519,51 +3717,13 @@
                            (abs-place-file-helper fs1 pathname file))
                    (mv-nth 0
                            (abs-place-file-helper fs2 pathname file))))
-  :hints
-  (("goal"
-    :in-theory (e/d (abs-place-file-helper absfat-subsetp abs-file-p-alt)
-                    ((:rewrite abs-mkdir-correctness-lemma-58)))
-    :induct (mv (abs-place-file-helper fs1 pathname file)
-                (abs-place-file-helper fs2 pathname file))
-    :expand
-    (:with
-     (:rewrite absfat-subsetp-of-put-assoc-1)
-     (absfat-subsetp
-      (put-assoc-equal
-       (fat32-filename-fix (car pathname))
-       (abs-file
-        (abs-file->dir-ent
-         (cdr (assoc-equal (fat32-filename-fix (car pathname))
-                           fs1)))
-        (mv-nth
-         0
-         (abs-place-file-helper
-          (abs-file->contents
-           (cdr (assoc-equal (fat32-filename-fix (car pathname))
-                             fs1)))
-          (cdr pathname)
-          file)))
-       fs1)
-      (put-assoc-equal
-       (fat32-filename-fix (car pathname))
-       (abs-file
-        (abs-file->dir-ent
-         (cdr (assoc-equal (fat32-filename-fix (car pathname))
-                           fs2)))
-        (mv-nth
-         0
-         (abs-place-file-helper
-          (abs-file->contents
-           (cdr (assoc-equal (fat32-filename-fix (car pathname))
-                             fs2)))
-          (cdr pathname)
-          file)))
-       fs2))))
-   ("subgoal *1/3" :use (:instance (:rewrite abs-mkdir-correctness-lemma-58)
-                                   (abs-file-alist2 fs2)
-                                   (x (fat32-filename-fix (car pathname)))
-                                   (abs-file-alist1 fs1)))))
+  :hints (("goal" :in-theory (enable abs-place-file-helper
+                                     absfat-subsetp abs-file-p-alt)
+           :induct (mv (abs-place-file-helper fs1 pathname file)
+                       (abs-place-file-helper fs2 pathname file)))))
 
+;; This theorem reminds me of one more reason why no duplication should be
+;; allowed. List lengths have to be the same!
 (defthm
   abs-mkdir-correctness-lemma-60
   (implies (and (absfat-equiv fs1 fs2)
@@ -3577,15 +3737,74 @@
                                  (abs-place-file-helper fs1 pathname file))
                          (mv-nth 0
                                  (abs-place-file-helper fs2 pathname file))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (e/d (absfat-equiv)
-                           (abs-mkdir-correctness-lemma-57))
-           :use ((:instance abs-mkdir-correctness-lemma-57
-                            (fs1 (abs-fs-fix fs1))
-                            (fs2 (abs-fs-fix fs2)))
-                 (:instance abs-mkdir-correctness-lemma-57
-                            (fs1 (abs-fs-fix fs2))
-                            (fs2 (abs-fs-fix fs1))))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (absfat-equiv)
+                    (abs-mkdir-correctness-lemma-57))
+    :use ((:instance abs-mkdir-correctness-lemma-57
+                     (fs1 (abs-fs-fix fs1))
+                     (fs2 (abs-fs-fix fs2)))
+          (:instance abs-mkdir-correctness-lemma-57
+                     (fs1 (abs-fs-fix fs2))
+                     (fs2 (abs-fs-fix fs1)))))))
+
+(defthmd
+  abs-mkdir-correctness-lemma-61
+  (implies (not (or (equal (mv-nth 1
+                                   (abs-place-file-helper fs pathname file))
+                           *enospc*)
+                    (equal (mv-nth 1
+                                   (abs-place-file-helper fs pathname file))
+                           *enotdir*)
+                    (equal (mv-nth 1
+                                   (abs-place-file-helper fs pathname file))
+                           *enoent*)))
+           (equal (mv-nth 1
+                          (abs-place-file-helper fs pathname file))
+                  0))
+  :hints (("goal" :in-theory (enable abs-place-file-helper))))
+
+;; Once this is proved, it can replace
+;; abs-mkdir-correctness-lemma-60.
+(thm
+  (implies (and (absfat-equiv fs1 fs2)
+                (abs-file-p file)
+                (abs-no-dups-p (abs-file->contents file)))
+           (absfat-equiv (mv-nth 0
+                                 (abs-place-file-helper fs1 pathname file))
+                         (mv-nth 0
+                                 (abs-place-file-helper fs2 pathname file))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (absfat-equiv)
+                    (abs-mkdir-correctness-lemma-57
+                     (:rewrite abs-place-file-helper-correctness-2)))
+    :use ((:instance abs-mkdir-correctness-lemma-57
+                     (fs1 (abs-fs-fix fs1))
+                     (fs2 (abs-fs-fix fs2)))
+          (:instance abs-mkdir-correctness-lemma-57
+                     (fs1 (abs-fs-fix fs2))
+                     (fs2 (abs-fs-fix fs1)))
+          (:instance (:rewrite abs-place-file-helper-correctness-2)
+                     (file file)
+                     (pathname pathname)
+                     (fs fs1))
+          (:instance (:rewrite abs-place-file-helper-correctness-2)
+                     (file file)
+                     (pathname pathname)
+                     (fs fs2))
+          (:instance
+           (:rewrite abs-mkdir-correctness-lemma-61)
+           (file file)
+           (pathname pathname)
+           (fs fs1))
+          (:instance
+           (:rewrite abs-mkdir-correctness-lemma-61)
+           (file file)
+           (pathname pathname)
+           (fs fs2)))))
   :otf-flg t)
 
 ;; One of the subgoals.
