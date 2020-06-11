@@ -3829,25 +3829,63 @@
   (("goal" :in-theory (enable ctx-app-ok))))
 
 (defthm
-  collapse-hifat-place-file-lemma-7
+  collapse-hifat-place-file-lemma-9
   (implies
    (and
-    (equal
-     (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                                       (frame->frame frame1))))
-     0)
     (equal (mv-nth 1
                    (abs-find-file-helper (frame->root frame2)
                                          (hifat-dirname pathname)))
            0)
-    (not
-     (ctx-app-ok
-      (frame->root frame1)
-      (1st-complete (frame->frame frame1))
+    (equal (mv-nth 1
+                   (abs-find-file-helper (frame->root frame2)
+                                         pathname))
+           2)
+    (prefixp
+     (fat32-filename-list-fix pathname)
+     (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                        (frame->frame frame1))))))
+   (not
+    (ctx-app-ok
+     (frame->root frame2)
+     (1st-complete (frame->frame frame1))
+     (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                        (frame->frame frame1)))))))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-find-file-helper hifat-dirname
+                                          hifat-basename-dirname-helper
+                                          fat32-filename-list-prefixp-alt)
+                    ((:rewrite collapse-hifat-place-file-lemma-6)))
+    :use
+    (:instance
+     (:rewrite collapse-hifat-place-file-lemma-6)
+     (y
       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                                         (frame->frame frame1))))))
-    (equal (frame->frame frame1)
-           (frame->frame frame2))
+                                         (frame->frame frame1)))))
+     (var (1st-complete (frame->frame frame1)))
+     (fs (frame->root frame2))
+     (x pathname)))))
+
+(defthm
+  collapse-hifat-place-file-lemma-10
+  (implies (and (m1-file-p file)
+                (hifat-no-dups-p (m1-file->contents file)))
+           (abs-no-dups-p (m1-file->contents file)))
+  :hints
+  (("goal" :in-theory (e/d (m1-file-p m1-file->contents
+                                      m1-file-contents-p abs-no-dups-p)
+                           ((:rewrite abs-no-dups-p-when-m1-file-alist-p)))
+    :use (:instance (:rewrite abs-no-dups-p-when-m1-file-alist-p)
+                    (fs (abs-file->contents file))))))
+
+(defthm
+  collapse-hifat-place-file-lemma-7
+  (implies
+   (and
+    (equal (mv-nth 1
+                   (abs-find-file-helper (frame->root frame2)
+                                         (hifat-dirname pathname)))
+           0)
     (equal (frame->root frame1)
            (mv-nth 0
                    (abs-place-file-helper (frame->root frame2)
@@ -3858,48 +3896,29 @@
            2)
     (m1-file-p file)
     (hifat-no-dups-p (m1-file->contents file))
-    (dist-names (frame->root frame2)
-                nil (frame->frame frame1))
-    (abs-separate (frame->frame frame1))
-    (frame-p (frame->frame frame1))
-    (no-duplicatesp-equal (strip-cars (frame->frame frame1)))
-    (consp (frame->frame frame1))
-    (< 0 (1st-complete (frame->frame frame1)))
     (ctx-app-ok
      (frame->root frame2)
      (1st-complete (frame->frame frame1))
      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
                                         (frame->frame frame1))))))
-   (not
-    (mv-nth 1
-            (collapse (collapse-this frame2
-                                     (1st-complete (frame->frame frame1)))))))
-  :instructions
-  (:promote
-   (:contrapose 3)
-   (:= (frame->root frame1)
-       (mv-nth 0
-               (abs-place-file-helper (frame->root frame2)
-                                      pathname file)))
-   (:claim (and (abs-file-p file)
-                (abs-no-dups-p (abs-file->contents file)))
-           :hints :none)
-   (:rewrite ctx-app-ok-of-abs-place-file-helper-1)
-   :bash (:change-goal nil t)
-   (:bash
-    ("goal" :in-theory (e/d (m1-file-p m1-file->contents
-                                       m1-file-contents-p abs-no-dups-p)
-                            ((:rewrite abs-no-dups-p-when-m1-file-alist-p)))
-     :use (:instance (:rewrite abs-no-dups-p-when-m1-file-alist-p)
-                     (fs (abs-file->contents file)))))
-   (:contrapose 15)
-   (:dive 1)
-   (:rewrite collapse-hifat-place-file-lemma-6
-             ((x pathname)))
-   (:bash ("goal" :in-theory (enable abs-find-file-helper hifat-dirname
-                                     hifat-basename-dirname-helper)))
-   (:rewrite fat32-filename-list-prefixp-alt)
-   :bash))
+   (ctx-app-ok
+    (frame->root frame1)
+    (1st-complete (frame->frame frame1))
+    (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                       (frame->frame frame1))))))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite ctx-app-ok-of-abs-place-file-helper-1))
+    :use
+    (:instance
+     (:rewrite ctx-app-ok-of-abs-place-file-helper-1)
+     (x-path
+      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                         (frame->frame frame1)))))
+     (x (1st-complete (frame->frame frame1)))
+     (file file)
+     (pathname pathname)
+     (fs (frame->root frame2))))))
 
 (verify
  (implies
