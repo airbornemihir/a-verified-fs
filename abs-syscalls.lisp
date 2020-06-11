@@ -3753,7 +3753,7 @@
        (abs-fs-p fs2))
       (> (mv-nth 1
                  (abs-place-file-helper fs1 pathname file))
-         0))
+         2))
      :hints
      (("goal"
        :in-theory (enable abs-place-file-helper
@@ -3772,7 +3772,7 @@
              28))
      (> (mv-nth 1
                 (abs-place-file-helper fs1 pathname file))
-        0))
+        2))
     :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
                                     (fs2 (abs-fs-fix fs2)))))
     :rule-classes :linear))
@@ -3831,15 +3831,9 @@
                    (absfat-subsetp (abs-fs-fix fs1)
                                    (abs-fs-fix fs2))
                    (not (abs-directory-file-p file)))
-              (and
-               (not
-                (equal (mv-nth 1
-                               (abs-place-file-helper fs1 pathname file))
-                       0))
-               (not
-                (equal (mv-nth 1
-                               (abs-place-file-helper fs1 pathname file))
-                       *enoent*))))
+              (equal (mv-nth 1
+                             (abs-place-file-helper fs1 pathname file))
+                     *enotdir*))
      :hints (("goal" :in-theory (enable abs-place-file-helper
                                         absfat-subsetp abs-file-p-alt)
               :induct (mv (abs-place-file-helper fs1 pathname file)
@@ -3853,15 +3847,9 @@
                   (absfat-subsetp (abs-fs-fix fs1)
                                   (abs-fs-fix fs2))
                   (case-split (not (abs-directory-file-p file))))
-             (and
-              (not
-               (equal (mv-nth 1
-                              (abs-place-file-helper fs1 pathname file))
-                      0))
-              (not
-               (equal (mv-nth 1
-                              (abs-place-file-helper fs1 pathname file))
-                      *enoent*))))
+             (equal (mv-nth 1
+                            (abs-place-file-helper fs1 pathname file))
+                    *enotdir*))
     :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1)))))))
 
 (defthmd
@@ -3919,64 +3907,6 @@
                             (abs-place-file-helper fs1 pathname file))
                     *enotdir*))
     :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1)) (fs2 (abs-fs-fix fs2)))))))
-
-(encapsulate
-  ()
-
-  (local
-   (defthmd
-     lemma
-     (implies
-      (and
-       (equal (mv-nth 1
-                      (abs-place-file-helper fs2 pathname file))
-              28)
-       (abs-fs-p fs1)
-       (abs-fs-p fs2))
-      (> (mv-nth 1
-                 (abs-place-file-helper fs1 pathname file))
-         2))
-     :hints
-     (("goal"
-       :in-theory (enable abs-place-file-helper
-                          absfat-subsetp abs-file-p-alt)
-       :do-not-induct t
-       :induct (mv (abs-place-file-helper fs1 pathname file)
-                   (abs-place-file-helper fs2 pathname file))))
-     :rule-classes :linear))
-
-  ;; Subsumes abs-mkdir-correctness-lemma-68.
-  (defthm
-    abs-mkdir-correctness-lemma-73
-    (implies
-     (and
-      (equal (mv-nth 1
-                     (abs-place-file-helper fs2 pathname file))
-             28))
-     (> (mv-nth 1
-                (abs-place-file-helper fs1 pathname file))
-        2))
-    :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
-                                    (fs2 (abs-fs-fix fs2)))))
-    :rule-classes :linear))
-
-(thm
- (implies (and (equal (mv-nth 1
-                              (abs-place-file-helper fs2 pathname file))
-                      *enotdir*)
-               (abs-fs-p fs1)
-               (abs-fs-p fs2)
-               (absfat-equiv fs1 fs2)
-               (abs-directory-file-p file))
-          (not
-           (equal (mv-nth 1
-                          (abs-place-file-helper fs1 pathname file))
-                  *ENOSPC*)))
- :hints (("goal" :in-theory (enable abs-place-file-helper
-                                    absfat-subsetp abs-file-p-alt)
-          :induct (mv (abs-place-file-helper fs1 pathname file)
-                      (abs-place-file-helper fs2 pathname file)))
-         ("subgoal *1/2" :use abs-mkdir-correctness-lemma-71)))
 
 ;; This theorem reminds me of one more reason why no duplication should be
 ;; allowed. List lengths have to be the same!
