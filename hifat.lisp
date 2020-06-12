@@ -1123,7 +1123,7 @@
  :forward t)
 
 (defthm
-  fat32-filename-p-correctness-1
+  fat32-filename-p-correctness-1-forward-chaining
   (implies (fat32-filename-p x)
            (and (stringp x)
                 (equal (len (explode x)) 11)
@@ -1131,7 +1131,38 @@
                 (not (equal (nth 0 (explode x)) (code-char #xe5)))
                 (not (equal x *current-dir-fat32-name*))
                 (not (equal x *parent-dir-fat32-name*))))
-  :hints (("Goal" :in-theory (enable fat32-filename-p))))
+  :hints (("Goal" :in-theory (enable fat32-filename-p)))
+  :rule-classes :forward-chaining)
+
+(defthmd
+  fat32-filename-p-correctness-1-rewrite
+  (implies (fat32-filename-p x)
+           (and (stringp x)
+                (equal (len (explode x)) 11)
+                (not (equal (nth 0 (explode x)) (code-char #x00)))
+                (not (equal (nth 0 (explode x)) (code-char #xe5)))
+                (not (equal x *current-dir-fat32-name*))
+                (not (equal x *parent-dir-fat32-name*))))
+  :hints (("Goal" :in-theory (disable
+                              fat32-filename-p-correctness-1-forward-chaining)
+           :use
+           fat32-filename-p-correctness-1-forward-chaining)))
+
+(defthm
+  fat32-filename-fix-correctness-1
+  (b* ((x (fat32-filename-fix x)))
+    (and (stringp x)
+         (equal (len (explode x)) 11)
+         (not (equal (nth 0 (explode x))
+                     (code-char 0)))
+         (not (equal (nth 0 (explode x))
+                     (code-char 229)))
+         (not (equal x *current-dir-fat32-name*))
+         (not (equal x *parent-dir-fat32-name*))))
+  :hints
+  (("goal" :in-theory (disable fat32-filename-p-correctness-1-forward-chaining)
+    :use (:instance fat32-filename-p-correctness-1-forward-chaining
+                    (x (fat32-filename-fix x))))))
 
 (defthm dir-ent-set-filename-correctness-1
   (implies

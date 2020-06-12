@@ -1487,8 +1487,7 @@
              (:rewrite remove-assoc-of-put-assoc)
              (:rewrite abs-fs-p-when-hifat-no-dups-p)
              (:definition remove-assoc-equal)
-             (:definition remove-equal)
-             (:rewrite fat32-filename-p-correctness-1)))
+             (:definition remove-equal)))
            :induct (collapse frame)
            :expand (partial-collapse frame pathname))))
 

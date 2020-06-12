@@ -3935,7 +3935,8 @@
                 (atom (assoc-equal name abs-file-alist1)))
            (absfat-subsetp abs-file-alist1
                            (put-assoc-equal name val abs-file-alist2)))
-  :hints (("goal" :in-theory (e/d (absfat-subsetp) nil))))
+  :hints (("goal" :in-theory (enable absfat-subsetp
+                                     fat32-filename-p-correctness-1-rewrite))))
 
 (defthm absfat-subsetp-of-remove-assoc-1
   (implies (absfat-subsetp abs-file-alist1 abs-file-alist2)
