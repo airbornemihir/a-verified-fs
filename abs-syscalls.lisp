@@ -4306,6 +4306,16 @@
                                        (x (fat32-filename-list-fix y))
                                        (y (fat32-filename-list-fix x)))))))
 
+(defthm collapse-hifat-place-file-lemma-15
+  (implies (and (equal (frame->frame frame1)
+                       (frame->frame frame2))
+                (equal (frame->root frame1)
+                       (frame->root frame2))
+                (syntaxp (not (term-order frame1 frame2))))
+           (equal (collapse-this frame1 x)
+                  (collapse-this frame2 x)))
+  :hints (("goal" :in-theory (enable collapse-this))))
+
 ;; Here's the problem with this theorem: it doesn't work for the arbitrary
 ;; place-file because it can literally dump a number of names in different
 ;; directories while wiping out a bunch of others, making an utter mess of
@@ -4490,8 +4500,8 @@
       :expand (collapse frame2))))
   )
 
-This theorem asserts some things about applying abs-place-file-helper to
-filesystem instances with holes...
+;; This theorem asserts some things about applying abs-place-file-helper to
+;; filesystem instances with holes...
 (defthm
   collapse-hifat-place-file-1
   (implies
