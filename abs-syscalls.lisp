@@ -3008,7 +3008,7 @@
   :hints (("goal" :in-theory (enable ctx-app abs-disassoc abs-fs-fix)
            :expand (ctx-app fs nil new-index pathname))))
 
-(defthmd
+(defthm
   abs-place-file-helper-of-ctx-app-1
   (implies
    (and (abs-fs-p (mv-nth 0
@@ -3017,21 +3017,14 @@
         (not (member-equal (fat32-filename-fix (car pathname))
                            (names-at abs-file-alist1 x-path)))
         (abs-fs-p (ctx-app abs-file-alist1 fs x x-path)))
-   (and
-    (equal (mv-nth 0
-                   (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                                          (append x-path pathname)
-                                          file))
-           (ctx-app abs-file-alist1
-                    (mv-nth 0
-                            (abs-place-file-helper fs pathname file))
-                    x x-path))
-    (equal (mv-nth 1
-                   (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                                          (append x-path pathname)
-                                          file))
-           (mv-nth 1
-                   (abs-place-file-helper fs pathname file)))))
+   (equal (ctx-app abs-file-alist1
+                   (mv-nth 0
+                           (abs-place-file-helper fs pathname file))
+                   x x-path)
+          (mv-nth 0
+                  (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
+                                         (append x-path pathname)
+                                         file))))
   :hints
   (("goal" :in-theory
     (e/d (abs-place-file-helper ctx-app ctx-app-ok addrs-at names-at)
@@ -3059,21 +3052,14 @@
           (abs-fs-p fs)
           (abs-complete fs)
           (m1-file-p file))
-     (and
-      (equal (mv-nth 0
-                     (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                                            (append x-path pathname)
-                                            file))
-             (ctx-app abs-file-alist1
-                      (mv-nth 0
-                              (hifat-place-file fs pathname file))
-                      x x-path))
-      (equal (mv-nth 1
-                     (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                                            (append x-path pathname)
-                                            file))
-             (mv-nth 1
-                     (hifat-place-file fs pathname file))))))))
+     (equal (ctx-app abs-file-alist1
+                     (mv-nth 0
+                             (hifat-place-file fs pathname file))
+                     x x-path)
+            (mv-nth 0
+                    (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
+                                           (append x-path pathname)
+                                           file)))))))
 
 (defthmd abs-place-file-helper-of-fat32-filename-list-fix
   (equal
@@ -3096,123 +3082,6 @@
   abs-place-file-helper-of-ctx-app-lemma-1
   (implies (>= (nfix n) (len l))
            (fat32-filename-equiv (nth n l) nil)))
-
-(encapsulate
-  ()
-
-  (local
-   (defthmd
-     lemma
-     (implies
-      (and
-       (abs-fs-p (mv-nth 0
-                         (abs-place-file-helper fs (nthcdr (len x-path) pathname)
-                                                file)))
-       (ctx-app-ok abs-file-alist1 x x-path)
-       (prefixp x-path pathname)
-       (not (member-equal (fat32-filename-fix (nth (len x-path) pathname))
-                          (names-at abs-file-alist1 x-path)))
-       (not (intersectp-equal (names-at fs nil)
-                              (names-at abs-file-alist1 x-path))))
-      (and
-       (equal
-        (mv-nth 0
-                (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                                       pathname file))
-        (ctx-app abs-file-alist1
-                 (mv-nth 0
-                         (abs-place-file-helper fs (nthcdr (len x-path) pathname)
-                                                file))
-                 x x-path))
-       (equal
-        (mv-nth 1
-                (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                                       pathname file))
-        (mv-nth 1
-                (abs-place-file-helper fs (nthcdr (len x-path) pathname)
-                                       file)))))
-     :hints
-     (("goal"
-       :use (:instance abs-place-file-helper-of-ctx-app-1
-                        (pathname (nthcdr (len x-path) pathname)))))))
-
-  (defthm
-    abs-place-file-helper-of-ctx-app-2
-    (implies
-     (and
-      (abs-fs-p (mv-nth 0
-                        (abs-place-file-helper fs (nthcdr (len x-path) pathname)
-                                               file)))
-      (ctx-app-ok abs-file-alist1 x x-path)
-      (prefixp (fat32-filename-list-fix x-path) (fat32-filename-list-fix pathname))
-      (not (member-equal (fat32-filename-fix (nth (len x-path) pathname))
-                         (names-at abs-file-alist1 x-path)))
-      (not (intersectp-equal (names-at fs nil)
-                             (names-at abs-file-alist1 x-path))))
-     (and
-      (equal
-       (mv-nth 0
-               (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                                      pathname file))
-       (ctx-app abs-file-alist1
-                (mv-nth 0
-                        (abs-place-file-helper fs (nthcdr (len x-path) pathname)
-                                               file))
-                x x-path))
-      (equal
-       (mv-nth 1
-               (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                                      pathname file))
-       (mv-nth 1
-               (abs-place-file-helper fs (nthcdr (len x-path) pathname)
-                                      file)))))
-    :hints
-    (("goal" :use ((:instance lemma
-                              (x-path (fat32-filename-list-fix x-path))
-                              (pathname (fat32-filename-list-fix pathname)))
-                   (:instance len-when-prefixp
-                              (x (fat32-filename-list-fix x-path))
-                              (y (fat32-filename-list-fix pathname))))
-      :do-not-induct t
-      :in-theory (disable len-when-prefixp)))))
-
-(thm
- (implies
-  (and
-   (abs-fs-p (mv-nth 0
-                     (abs-place-file-helper fs (nthcdr (len x-path) pathname)
-                                            file)))
-   (ctx-app-ok abs-file-alist1 x x-path)
-   (not
-    (member-equal (fat32-filename-fix (car (nthcdr (len x-path) pathname)))
-                  (names-at abs-file-alist1 x-path)))
-   (abs-fs-p (ctx-app abs-file-alist1 fs x x-path)))
-  (and
-   (equal
-    (mv-nth
-     0
-     (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                            (append x-path (nthcdr (len x-path) pathname))
-                            file))
-    (ctx-app abs-file-alist1
-             (mv-nth 0
-                     (abs-place-file-helper fs (nthcdr (len x-path) pathname)
-                                            file))
-             x x-path))
-   (equal
-    (mv-nth
-     1
-     (abs-place-file-helper (ctx-app abs-file-alist1 fs x x-path)
-                            (append x-path (nthcdr (len x-path) pathname))
-                            file))
-    (mv-nth 1
-            (abs-place-file-helper fs (nthcdr (len x-path) pathname)
-                                   file)))))
- :hints (("goal" :in-theory (disable
-                             abs-place-file-helper-of-ctx-app-1)
-          :use (:instance
-                abs-place-file-helper-of-ctx-app-1
-                (pathname (nthcdr (len x-path) pathname))))))
 
 (defthm abs-mkdir-correctness-lemma-50
   (implies (consp pathname)
@@ -4316,6 +4185,91 @@
                   (collapse-this frame2 x)))
   :hints (("goal" :in-theory (enable collapse-this))))
 
+(defthm
+  abs-place-file-helper-of-ctx-app-2
+  (implies
+   (not (fat32-filename-list-prefixp x-path pathname))
+   (equal
+    (mv-nth 1 (abs-place-file-helper
+               (ctx-app fs1 fs2 x x-path)
+               pathname file))
+    (mv-nth 1 (abs-place-file-helper
+               fs1
+               pathname file))))
+  :hints (("Goal" :in-theory (enable abs-place-file-helper ctx-app)
+           :induct (mv (fat32-filename-list-prefixp x-path pathname)
+                       (ctx-app fs1 fs2 x x-path)))))
+
+(defthm
+  abs-place-file-helper-of-ctx-app-3
+  (implies
+   (and
+    (fat32-filename-list-prefixp x-path pathname)
+    (ctx-app-ok fs1 x x-path)
+    (equal (mv-nth 1 (abs-place-file-helper
+                      fs1
+                      (nthcdr (len x-path) pathname) file))
+           *enoent*)
+    (abs-fs-p fs1)
+    (abs-fs-p fs2)
+    (natp x)
+    (not (intersectp-equal (names-at fs2 nil)
+                           (names-at fs1 x-path)))
+    (equal (abs-fs-fix (ctx-app fs1 fs2 x x-path)) (ctx-app fs1 fs2 x x-path)))
+   (equal
+    (mv-nth 1 (abs-place-file-helper
+               (ctx-app fs1 fs2 x x-path)
+               pathname file))
+    (mv-nth 1 (abs-place-file-helper
+               fs2
+               (nthcdr (len x-path) pathname) file))))
+  :hints (("goal" :in-theory (e/d (abs-place-file-helper ctx-app ctx-app-ok
+                                                         addrs-at names-at)
+                                  ((:definition remove-equal)
+                                   (:rewrite abs-fs-p-when-hifat-no-dups-p)
+                                   (:rewrite
+                                    m1-file-alist-p-when-subsetp-equal)
+                                   (:definition member-equal)
+                                   (:rewrite abs-file-alist-p-correctness-1)
+                                   (:rewrite subsetp-of-remove1)
+                                   (:rewrite abs-fs-p-correctness-1)
+                                   (:linear len-of-remove-when-member-1)
+                                   (:rewrite remove-when-absent)
+                                   (:definition no-duplicatesp-equal)))
+           :induct (mv (fat32-filename-list-prefixp x-path pathname)
+                       (ctx-app fs1 fs2 x x-path)))
+          ("subgoal *1/1" :expand ((abs-place-file-helper fs2 pathname file)
+                                   (abs-place-file-helper (append (remove-equal
+                                                                   x fs1)
+                                                                  fs2)
+                                                          pathname file)))))
+
+;; (remove-hyps (defthm
+;;                abs-place-file-helper-of-ctx-app-3
+;;                (implies
+;;                 (and t (natp x) (abs-fs-p fs1) (abs-fs-p fs2)
+;;                      (ctx-app-ok fs1 x x-path)
+;;                      (abs-fs-p (ctx-app fs1 fs2 x x-path)))
+;;                 (equal
+;;                  (mv-nth 1 (abs-place-file-helper
+;;                             (ctx-app fs1 fs2 x x-path)
+;;                             pathname file)) (cond ((fat32-filename-list-prefixp x-path pathname)
+;;                             (mv-nth 1 (abs-place-file-helper
+;;                                        fs2
+;;                                        (nthcdr (len x-path) pathname) file))) (t
+;;                             (mv-nth 1 (abs-place-file-helper
+;;                                        fs1
+;;                                        pathname file))))))
+;;                :hints (("goal" :in-theory (enable abs-place-file-helper ctx-app ctx-app-ok addrs-at)
+;;                         :induct (mv (fat32-filename-list-prefixp x-path pathname)
+;;                                     (ctx-app fs1 fs2 x x-path)))
+;;                        ("subgoal *1/1''"
+;;                         :expand
+;;                         ((ABS-PLACE-FILE-HELPER (APPEND (REMOVE-EQUAL X FS1) FS2)
+;;                                                 PATHNAME FILE)
+;;                          (ABS-PLACE-FILE-HELPER FS2 PATHNAME FILE)))))
+;;              t)
+
 ;; Here's the problem with this theorem: it doesn't work for the arbitrary
 ;; place-file because it can literally dump a number of names in different
 ;; directories while wiping out a bunch of others, making an utter mess of
@@ -4442,22 +4396,24 @@
       ;; We're going to need to make some assumptions about
       ;; abs-place-file-helper and where it is called, because currently it has
       ;; the ability to come in and smoosh the directory structure by placing a file
-      ;; at an arbitrary place...
+      ;; at an arbitrary place. While it's all very well to think about
+      ;; basenames and dirnames and what should and should not exist, perhaps
+      ;; we can go for a property I suspect is provided by partial-collapse -
+      ;; pathname-clear...
       (or
-       (not
-        (zp (mv-nth 1
-                    (abs-place-file-helper (frame->root frame2)
-                                           pathname file))))
-       (and
-        (zp (mv-nth 1
-                    (abs-place-file-helper (frame->root frame2)
-                                           pathname file)))
-        (equal (mv-nth 1
-                       (abs-find-file-helper (frame->root frame2) pathname))
-               *enoent*)
-        (or (atom (hifat-dirname pathname))
-            (zp (mv-nth 1
-                        (abs-find-file-helper (frame->root frame2) (hifat-dirname pathname)))))))
+       (atom (hifat-dirname pathname))
+       (pathname-clear (hifat-dirname pathname) (frame->frame frame)))
+
+      (and
+       (zp (mv-nth 1
+                   (abs-place-file-helper (frame->root frame2)
+                                          pathname file)))
+       (equal (mv-nth 1
+                      (abs-find-file-helper (frame->root frame2) pathname))
+              *enoent*)
+       (or (atom (hifat-dirname pathname))
+           (zp (mv-nth 1
+                       (abs-find-file-helper (frame->root frame2) (hifat-dirname pathname))))))
       (m1-file-p file)
       (hifat-no-dups-p (m1-file->contents file))
       (dist-names (frame->root frame2)
@@ -4497,8 +4453,7 @@
         (:definition remove-equal)
         (:rewrite remove-when-absent)))
       :induct (induction-scheme frame1 frame2)
-      :expand (collapse frame2))))
-  )
+      :expand (collapse frame2)))))
 
 ;; This theorem asserts some things about applying abs-place-file-helper to
 ;; filesystem instances with holes...
