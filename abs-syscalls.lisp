@@ -1359,12 +1359,12 @@
                                               :dir-ent (dir-ent-install-directory-bit
                                                         (dir-ent-fix nil) t))
                                var))
-       (frame (frame-with-root (frame->root frame)
-                               (cons (cons new-index
-                                           (frame-val dirname
-                                                      new-var src))
-                                     (frame->frame frame)))))
-    (mv frame -1 error-code)))
+       (frame
+        (cons (cons new-index
+                    (frame-val dirname
+                               new-var src))
+              (frame-with-root (frame->root frame) (frame->frame frame)))))
+    (mv frame 0 0)))
 
 ;; An example demonstrating that both ways of doing mkdir work out the same:
 (assert-event
@@ -1382,7 +1382,7 @@
     (list (m1-file-alist-p fs) result1 error-code result3 frame
           result4))
   '(T
-    T -1 0
+    T 0 0
     (("TMP        "
       (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
@@ -4427,6 +4427,90 @@
                        frame))
      (frame2 (frame-with-root root frame))))))
 
+(defthmd abs-find-file-after-abs-mkdir-lemma-1
+  (implies (consp path)
+           (fat32-filename-list-equiv (nthcdr (- (len path) 1) path)
+                                      (list (hifat-basename path))))
+  :hints (("goal" :in-theory (enable hifat-basename-dirname-helper
+                                     hifat-basename))))
+
+(defthm abs-find-file-after-abs-mkdir-1
+  (implies (and (fat32-filename-list-p pathname)
+                (equal
+                 (len
+                  (frame-val->path
+                   (cdr (assoc-equal 0
+                                     (partial-collapse frame (hifat-dirname pathname))))))
+                 0))
+           (b*
+               (((mv frame & mkdir-error-code)
+                 (abs-mkdir frame pathname)))
+             (implies
+              (equal mkdir-error-code 0)
+              (b*
+                  (((mv file error-code)
+                    (abs-find-file frame pathname)))
+                (and
+                 (equal error-code 0)
+                 (m1-file-equiv
+                  file
+                  (make-m1-file :dir-ent (dir-ent-install-directory-bit (dir-ent-fix nil)
+                                                                        t))))))))
+  :hints (("goal" :in-theory (e/d (abs-mkdir abs-find-file
+                                             abs-find-file-helper
+                                             abs-find-file-after-abs-mkdir-lemma-1)
+                                  (abs-mkdir-correctness-lemma-50))
+           :use
+           abs-mkdir-correctness-lemma-50
+           :do-not-induct t))
+  :otf-flg t)
+
+(defthm abs-find-file-after-abs-mkdir-2
+ (b*
+     (((mv frame & mkdir-error-code)
+       (abs-mkdir frame "/tmp/elements")))
+   (implies
+    (equal mkdir-error-code 0)
+    (b*
+        (((mv frame & &)
+          (abs-mkdir frame "/tmp/elements/metals"))
+         ((mv file error-code)
+          (abs-find-file frame pathname)))
+      (and
+       (equal error-code 0)
+       (m1-file-equiv
+        file
+        (make-m1-file :dir-ent (dir-ent-install-directory-bit (dir-ent-fix nil)
+                                                              t)))))))
+ :hints (("goal" :in-theory (enable abs-mkdir)
+          :do-not-induct t)))
+
+(thm
+ (implies
+  (and (frame-p frame)
+       (no-duplicatesp-equal (strip-cars frame))
+       (not (equal (mv-nth 1 (abs-find-file frame pathname))
+                   *enoent*)))
+  (equal (abs-find-file frame pathname)
+         (abs-find-file-helper
+          (frame-val->dir
+           (cdr (assoc-equal (abs-find-file-src frame pathname)
+                             frame)))
+          (nthcdr
+           (len
+            (frame-val->path
+             (cdr (assoc-equal (abs-find-file-src frame pathname)
+                               frame))))
+           pathname))))
+ :hints (("goal" :in-theory (e/d () (
+           abs-find-file-src-correctness-2)) :use ((:instance
+           (:rewrite abs-find-file-of-put-assoc-lemma-6) (x (abs-find-file-src frame pathname)))
+          (:instance
+           abs-find-file-correctness-1-lemma-48 (x (abs-find-file-src frame
+                                                                      pathname))
+           (root (frame->root frame)))
+          abs-find-file-src-correctness-2) :do-not-induct t)))
+
 (thm
  (implies
   (and
@@ -4605,3 +4689,26 @@
           :do-not-induct t
           :use abs-mkdir-correctness-lemma-50))
  :otf-flg t)
+
+(thm
+ (implies
+  (and (frame-p (frame->frame frame))
+       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+       (subsetp (abs-addrs (frame->root frame))
+                (frame-addrs-root (frame->frame frame)))
+       (abs-separate (frame-with-root (frame->root frame)
+                                      (frame->frame frame))))
+  (b*
+      (((mv frame & error-code) (abs-mkdir frame "/tmp/elements")))
+    (implies
+     (zp error-code)
+     (b*
+         (((mv file error-code) (abs-find-file frame pathname)))
+       (and (equal error-code 0)
+            (m1-file-equiv file (make-m1-file
+                                 :dir-ent
+                                 (dir-ent-install-directory-bit
+                                  (dir-ent-fix nil)
+                                  t))))))))
+ :hints (("Goal" :in-theory (enable abs-mkdir)
+          :do-not-induct t)))
