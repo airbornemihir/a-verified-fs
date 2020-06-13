@@ -543,12 +543,10 @@
   (equal (abs-find-file (frame-with-root root frame)
                         pathname)
          (if (equal (mv-nth 1
-                            (abs-find-file-helper (abs-fs-fix root)
-                                                  pathname))
+                            (abs-find-file-helper root pathname))
                     *enoent*)
              (abs-find-file frame pathname)
-           (abs-find-file-helper (abs-fs-fix root)
-                                 pathname)))
+           (abs-find-file-helper root pathname)))
   :hints
   (("goal" :do-not-induct t
     :in-theory (e/d (abs-find-file frame-with-root)
