@@ -11,7 +11,8 @@
 (local (include-book "std/lists/intersectp" :dir :system))
 
 (local (in-theory (e/d (abs-file-p-when-m1-regular-file-p
-                        nat-listp-of-strip-cars-when-frame-p)
+                        nat-listp-of-strip-cars-when-frame-p
+                        len-when-consp)
                        nil)))
 
 ;; Let's try to do this intuitively first...
@@ -751,7 +752,6 @@
                      (:type-prescription assoc-equal-when-frame-p)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
-                     (:type-prescription len-when-consp)
                      (:rewrite m1-file-alist-p-when-subsetp-equal)
                      (:rewrite subsetp-when-prefixp)))
     :induct (mv (fat32-filename-list-prefixp relpath pathname)
