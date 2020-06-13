@@ -8282,7 +8282,6 @@
                            ((:rewrite nthcdr-when->=-n-len-l)
                             (:linear count-free-clusters-correctness-1)
                             (:rewrite partial-collapse-correctness-lemma-2)
-                            (:type-prescription len-when-consp)
                             (:definition len)
                             (:definition nthcdr)
                             (:rewrite ctx-app-ok-when-abs-complete)
@@ -9969,7 +9968,6 @@
           (:linear count-free-clusters-correctness-1)
           (:rewrite collapse-1st-index-correctness-lemma-1)
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
-          (:type-prescription len-when-consp)
           (:rewrite assoc-of-frame->frame-of-collapse-this)
           (:definition len)
           (:linear abs-separate-of-frame->frame-of-collapse-this-lemma-11)
