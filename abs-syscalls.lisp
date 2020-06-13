@@ -4422,33 +4422,43 @@
      (frame2 (frame-with-root root frame))))))
 
 (defthmd abs-find-file-after-abs-mkdir-lemma-1
-  (implies (consp path)
+  (implies (case-split (consp path))
            (fat32-filename-list-equiv (nthcdr (- (len path) 1) path)
                                       (list (hifat-basename path))))
   :hints (("goal" :in-theory (enable hifat-basename-dirname-helper
                                      hifat-basename))))
 
-(defthm
-  abs-find-file-after-abs-mkdir-1
-  (implies
-   (fat32-filename-list-p pathname)
-   (b*
-       (((mv frame & mkdir-error-code)
-         (abs-mkdir frame pathname)))
-     (implies
-      (equal mkdir-error-code 0)
-      (b*
-          (((mv file error-code)
-            (abs-find-file frame pathname)))
-        (and (equal error-code 0)
-             (m1-file-equiv
-              file
-              (make-m1-file
-               :dir-ent (dir-ent-install-directory-bit (dir-ent-fix nil)
-                                                       t))))))))
+(defthm fat32-filename-list-fix-when-zp-len
+  (implies (zp (len x))
+           (equal (fat32-filename-list-fix x) nil))
+  :rule-classes :type-prescription)
+
+(defthmd abs-find-file-after-abs-mkdir-lemma-2
+  (iff (equal x (fat32-filename-list-fix y))
+       (and (fat32-filename-list-equiv x y)
+            (fat32-filename-list-p x))))
+
+(defthm prefixp-of-hifat-dirname
+  (prefixp (hifat-dirname path)
+           (fat32-filename-list-fix path))
+  :hints (("goal" :in-theory (enable hifat-dirname
+                                     hifat-basename-dirname-helper))))
+
+(defthmd abs-find-file-after-abs-mkdir-lemma-3
+  (iff (equal (fat32-filename-fix x) y)
+       (and (fat32-filename-equiv x y)
+            (fat32-filename-p y))))
+
+(defthmd
+  abs-find-file-after-abs-mkdir-lemma-4
+  (implies (fat32-filename-list-equiv (list (hifat-basename pathname))
+                                      pathname)
+           (fat32-filename-equiv$inline (hifat-basename pathname)
+                                        (car pathname)))
   :hints
   (("goal" :in-theory (e/d (abs-mkdir abs-find-file abs-find-file-helper
-                                      abs-find-file-after-abs-mkdir-lemma-1)
+                                      abs-find-file-after-abs-mkdir-lemma-1
+                                      len-when-consp fat32-filename-list-fix)
                            (abs-mkdir-correctness-lemma-50
                             (:definition nth)
                             (:definition true-listp)
@@ -4456,18 +4466,54 @@
                             (:definition string-listp)
                             (:rewrite true-listp-when-string-list)
                             (:rewrite fat32-filename-p-correctness-1)))
+    :do-not-induct t)))
+
+(defthm
+  abs-find-file-after-abs-mkdir-1
+  (b*
+      (((mv frame & mkdir-error-code)
+        (abs-mkdir frame pathname)))
+    (implies
+     (equal mkdir-error-code 0)
+     (b*
+         (((mv file error-code)
+           (abs-find-file frame pathname)))
+       (and
+        (equal error-code 0)
+        (m1-file-equiv
+         file
+         (make-m1-file :dir-ent (dir-ent-install-directory-bit (dir-ent-fix nil)
+                                                               t)))))))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d
+     (abs-mkdir abs-find-file abs-find-file-helper
+                abs-find-file-after-abs-mkdir-lemma-1
+                abs-find-file-after-abs-mkdir-lemma-2
+                abs-find-file-after-abs-mkdir-lemma-3
+                abs-find-file-after-abs-mkdir-lemma-4
+                len-when-consp fat32-filename-list-fix)
+     (abs-mkdir-correctness-lemma-50 (:definition nth)
+                                     (:definition true-listp)
+                                     (:definition member-equal)
+                                     (:definition string-listp)
+                                     (:rewrite true-listp-when-string-list)
+                                     (:rewrite fat32-filename-p-correctness-1)
+                                     fat32-filename-list-equiv
+                                     fat32-filename-equiv))
     :use abs-mkdir-correctness-lemma-50
     :do-not-induct t)))
 
 (defthm abs-find-file-after-abs-mkdir-2
  (b*
      (((mv frame & mkdir-error-code)
-       (abs-mkdir frame "/tmp/elements")))
+       (abs-mkdir frame (pathname-to-fat32-pathname (explode "/tmp/docs")))))
    (implies
     (equal mkdir-error-code 0)
     (b*
         (((mv frame & &)
-          (abs-mkdir frame "/tmp/elements/metals"))
+          (abs-mkdir frame (pathname-to-fat32-pathname (explode "/tmp/docs/pdf-docs"))))
          ((mv file error-code)
           (abs-find-file frame pathname)))
       (and
@@ -4478,32 +4524,6 @@
                                                               t)))))))
  :hints (("goal" :in-theory (enable abs-mkdir)
           :do-not-induct t)))
-
-(thm
- (implies
-  (and (frame-p frame)
-       (no-duplicatesp-equal (strip-cars frame))
-       (not (equal (mv-nth 1 (abs-find-file frame pathname))
-                   *enoent*)))
-  (equal (abs-find-file frame pathname)
-         (abs-find-file-helper
-          (frame-val->dir
-           (cdr (assoc-equal (abs-find-file-src frame pathname)
-                             frame)))
-          (nthcdr
-           (len
-            (frame-val->path
-             (cdr (assoc-equal (abs-find-file-src frame pathname)
-                               frame))))
-           pathname))))
- :hints (("goal" :in-theory (e/d () (
-           abs-find-file-src-correctness-2)) :use ((:instance
-           (:rewrite abs-find-file-of-put-assoc-lemma-6) (x (abs-find-file-src frame pathname)))
-          (:instance
-           abs-find-file-correctness-1-lemma-48 (x (abs-find-file-src frame
-                                                                      pathname))
-           (root (frame->root frame)))
-          abs-find-file-src-correctness-2) :do-not-induct t)))
 
 (thm
  (implies
