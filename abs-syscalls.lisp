@@ -2139,7 +2139,8 @@
   :hints
   (("goal"
     :in-theory (e/d ((:definition abs-find-file)
-                     collapse (:definition collapse-this))
+                     collapse (:definition collapse-this)
+                     len-of-fat32-filename-list-fix)
                     ((:rewrite partial-collapse-correctness-lemma-24)
                      (:definition remove-equal)
                      (:definition assoc-equal)
@@ -4111,32 +4112,25 @@
    (not (consp (names-at (frame-val->dir (cdr (car frame)))
                          (nthcdr (len (frame-val->path (cdr (car frame))))
                                  y)))))
-  :instructions
-  (:promote
-   (:claim (prefixp (nthcdr (len (frame-val->path (cdr (car frame))))
-                            (fat32-filename-list-fix x))
-                    (nthcdr (len (frame-val->path (cdr (car frame))))
-                            (fat32-filename-list-fix y)))
-           :hints :none)
-   (:change-goal nil t)
-   (:claim (and (<= (len (frame-val->path (cdr (car frame))))
-                    (len (fat32-filename-list-fix y)))
-                (equal (take (len (frame-val->path (cdr (car frame))))
-                             (fat32-filename-list-fix x))
-                       (take (len (frame-val->path (cdr (car frame))))
-                             (fat32-filename-list-fix y)))))
-   (:rewrite prefixp-nthcdr-nthcdr)
-   :bash (:dive 1)
-   (:claim
-    (and (prefixp (fat32-filename-list-fix
-                   (nthcdr (len (frame-val->path (cdr (car frame))))
-                           x))
-                  (fat32-filename-list-fix
-                   (nthcdr (len (frame-val->path (cdr (car frame))))
-                           y)))))
-   (:rewrite names-at-when-prefixp
-             ((x (nthcdr (len (frame-val->path (cdr (car frame))))
-                         x))))))
+  :hints
+  (("goal"
+    :in-theory (e/d nil
+                    ((:rewrite prefixp-nthcdr-nthcdr)
+                     (:rewrite names-at-when-prefixp)
+                     len-when-prefixp))
+    :use ((:instance (:rewrite names-at-when-prefixp)
+                     (y (nthcdr (len (frame-val->path (cdr (car frame))))
+                                y))
+                     (fs (frame-val->dir (cdr (car frame))))
+                     (x (nthcdr (len (frame-val->path (cdr (car frame))))
+                                x)))
+          (:instance (:rewrite prefixp-nthcdr-nthcdr)
+                     (l2 (fat32-filename-list-fix y))
+                     (l1 (fat32-filename-list-fix x))
+                     (n (len (frame-val->path (cdr (car frame))))))
+          (:instance len-when-prefixp
+                     (x (frame-val->path (cdr (car frame))))
+                     (y (fat32-filename-list-fix y)))))))
 
 (defthm
   pathname-clear-when-prefixp-lemma-2
@@ -4433,17 +4427,6 @@
                                       (list (hifat-basename path))))
   :hints (("goal" :in-theory (enable hifat-basename-dirname-helper
                                      hifat-basename))))
-
-(defcong
-  fat32-filename-list-equiv equal (len x)
-  1
-  :hints
-  (("goal"
-    :in-theory
-    (disable (:rewrite len-of-fat32-filename-list-fix))
-    :use ((:rewrite len-of-fat32-filename-list-fix)
-          (:instance (:rewrite len-of-fat32-filename-list-fix)
-                     (x x-equiv))))))
 
 (defthm
   abs-find-file-after-abs-mkdir-1
