@@ -743,7 +743,8 @@
           (t (names-at fs relpath)))))
   :hints
   (("goal"
-    :in-theory (e/d (abs-place-file-helper names-at fat32-filename-list-fix)
+    :in-theory (e/d (abs-place-file-helper names-at fat32-filename-list-fix
+                                           fat32-filename-list-equiv fat32-filename-equiv)
                     ((:definition member-equal)
                      (:definition put-assoc-equal)
                      (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
@@ -1664,6 +1665,7 @@
      (("goal"
        :in-theory (e/d (abs-top-addrs addrs-at
                                       abs-disassoc fat32-filename-list-fix
+                                      fat32-filename-list-equiv fat32-filename-equiv
                                       abs-fs-p abs-file-alist-p abs-no-dups-p)
                        ((:rewrite abs-no-dups-p-of-put-assoc-equal)
                         (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-1)
@@ -4426,7 +4428,7 @@
            (fat32-filename-list-equiv (nthcdr (- (len path) 1) path)
                                       (list (hifat-basename path))))
   :hints (("goal" :in-theory (enable hifat-basename-dirname-helper
-                                     hifat-basename))))
+                                     fat32-filename-list-equiv hifat-basename))))
 
 (defthm fat32-filename-list-fix-when-zp-len
   (implies (zp (len x))
@@ -4458,7 +4460,10 @@
   :hints
   (("goal" :in-theory (e/d (abs-mkdir abs-find-file abs-find-file-helper
                                       abs-find-file-after-abs-mkdir-lemma-1
-                                      len-when-consp fat32-filename-list-fix)
+                                      len-when-consp
+                                      fat32-filename-list-fix
+                                      fat32-filename-list-equiv
+                                      fat32-filename-equiv)
                            (abs-mkdir-correctness-lemma-50
                             (:definition nth)
                             (:definition true-listp)
@@ -4499,9 +4504,7 @@
                                      (:definition member-equal)
                                      (:definition string-listp)
                                      (:rewrite true-listp-when-string-list)
-                                     (:rewrite fat32-filename-p-correctness-1)
-                                     fat32-filename-list-equiv
-                                     fat32-filename-equiv))
+                                     (:rewrite fat32-filename-p-correctness-1)))
     :use abs-mkdir-correctness-lemma-50
     :do-not-induct t)))
 
