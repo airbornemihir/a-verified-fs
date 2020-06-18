@@ -1361,10 +1361,11 @@
                                                         (dir-ent-fix nil) t))
                                var))
        (frame
-        (cons (cons new-index
-                    (frame-val dirname
-                               new-var src))
-              (frame-with-root (frame->root frame) (frame->frame frame)))))
+        (frame-with-root (frame->root frame)
+                         (cons (cons new-index
+                                     (frame-val dirname
+                                                new-var src))
+                               (frame->frame frame)))))
     (mv frame 0 0)))
 
 ;; An example demonstrating that both ways of doing mkdir work out the same:
@@ -4464,21 +4465,51 @@
     :do-not-induct t)))
 
 (defthm
+  abs-find-file-after-abs-mkdir-lemma-2
+  (implies (equal (list (hifat-basename pathname))
+                  (fat32-filename-list-fix pathname))
+           (consp pathname))
+  :hints
+  (("goal" :in-theory (e/d (abs-mkdir abs-find-file abs-find-file-helper
+                                      abs-find-file-after-abs-mkdir-lemma-1
+                                      abs-find-file-after-abs-mkdir-lemma-4
+                                      len-when-consp
+                                      fat32-filename-list-fix abs-disassoc)
+                           (abs-mkdir-correctness-lemma-50
+                            (:definition nth)
+                            (:definition true-listp)
+                            (:definition member-equal)
+                            (:definition string-listp)
+                            (:rewrite true-listp-when-string-list)
+                            (:rewrite fat32-filename-p-correctness-1)))
+    :do-not-induct t))
+  :rule-classes :forward-chaining)
+
+(defthm
   abs-find-file-after-abs-mkdir-1
-  (b*
-      (((mv frame & mkdir-error-code)
-        (abs-mkdir frame pathname)))
-    (implies
-     (equal mkdir-error-code 0)
-     (b*
-         (((mv file error-code)
-           (abs-find-file frame pathname)))
-       (and
-        (equal error-code 0)
-        (m1-file-equiv
-         file
-         (make-m1-file :dir-ent (dir-ent-install-directory-bit (dir-ent-fix nil)
-                                                               t)))))))
+  (implies
+   (and (equal (frame-val->path (cdr (assoc-equal 0 frame))) nil)
+        (consp
+         (assoc-equal 0
+                      (partial-collapse frame (hifat-dirname pathname))))
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0)
+        (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame)))
+   (b*
+       (((mv frame & mkdir-error-code)
+         (abs-mkdir frame pathname)))
+     (implies
+      (equal mkdir-error-code 0)
+      (b*
+          (((mv file error-code)
+            (abs-find-file frame pathname)))
+        (and
+         (equal error-code 0)
+         (m1-file-equiv
+          file
+          (make-m1-file :dir-ent (dir-ent-install-directory-bit (dir-ent-fix nil)
+                                                                t))))))))
   :hints
   (("goal"
     :in-theory
@@ -4486,7 +4517,8 @@
      (abs-mkdir abs-find-file abs-find-file-helper
                 abs-find-file-after-abs-mkdir-lemma-1
                 abs-find-file-after-abs-mkdir-lemma-4
-                len-when-consp fat32-filename-list-fix)
+                len-when-consp fat32-filename-list-fix
+                abs-disassoc abs-fs-fix)
      (abs-mkdir-correctness-lemma-50 (:definition nth)
                                      (:definition true-listp)
                                      (:definition member-equal)
@@ -4494,7 +4526,8 @@
                                      (:rewrite true-listp-when-string-list)
                                      (:rewrite fat32-filename-p-correctness-1)))
     :use abs-mkdir-correctness-lemma-50
-    :do-not-induct t)))
+    :do-not-induct t))
+  :otf-flg t)
 
 ;; (thm
 ;;  (implies
