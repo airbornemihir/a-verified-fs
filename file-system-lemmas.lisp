@@ -310,7 +310,35 @@
 (defthmd intersect-with-subset
   (implies (and (subsetp-equal x y)
                 (intersectp-equal x z))
-           (intersectp-equal y z)))
+           (intersectp-equal y z))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (not
+                   (intersectp-equal y z))
+                  (subsetp-equal x y))
+             (not
+              (intersectp-equal x z))))
+   (:rewrite
+    :corollary
+    (implies (and (not
+                   (intersectp-equal y z))
+                  (subsetp-equal x y))
+             (not
+              (intersectp-equal z x))))
+   (:rewrite
+    :corollary
+    (implies (and (not
+                   (intersectp-equal z y))
+                  (subsetp-equal x y))
+             (not
+              (intersectp-equal z x))))
+   (:rewrite
+    :corollary
+    (implies (and (intersectp-equal z x)
+                  (subsetp-equal x y))
+             (intersectp-equal z y)))))
 
 (defthm update-nth-of-make-list
   (implies (and (integerp key) (>= key n) (natp n))

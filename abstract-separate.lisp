@@ -796,10 +796,7 @@
                       (abs-addrs (remove-assoc-equal name abs-file-alist1)))))
   :hints
   (("goal"
-    :use (:instance (:rewrite intersect-with-subset)
-                    (z (abs-addrs abs-file-alist2))
-                    (x (abs-addrs (remove-assoc-equal name abs-file-alist1)))
-                    (y (abs-addrs abs-file-alist1))))))
+    :in-theory (enable intersect-with-subset) :do-not-induct t)))
 
 (defthm no-duplicatesp-of-abs-addrs-of-remove-assoc-lemma-3
   (implies (and (abs-directory-file-p (cdr (car y)))
@@ -1689,12 +1686,8 @@
        abs-file-alist1))
      y)))
   :hints
-  (("goal"
-    :use
-    (:instance (:rewrite intersect-with-subset)
-               (z y)
-               (y (abs-addrs abs-file-alist1))
-               (x (abs-addrs (remove-assoc-equal name abs-file-alist1)))))))
+  (("goal" :do-not-induct t
+    :in-theory (enable intersect-with-subset))))
 
 (defthm
   abs-addrs-of-ctx-app-lemma-9
@@ -1724,12 +1717,8 @@
      (abs-addrs (abs-file->contents$inline (cdr (car abs-file-alist1)))))))
   :hints
   (("goal"
-    :use
-    ((:instance
-      (:rewrite intersect-with-subset)
-      (z (abs-addrs (abs-file->contents (cdr (car abs-file-alist1)))))
-      (x (abs-addrs (remove-assoc-equal name (cdr abs-file-alist1))))
-      (y (abs-addrs (cdr abs-file-alist1))))))))
+    :in-theory
+    (enable intersect-with-subset))))
 
 (defthm
   abs-addrs-of-ctx-app-2-lemma-9
