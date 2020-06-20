@@ -307,7 +307,7 @@
   (equal (nth n (nthcdr m x))
          (nth (+ (nfix n) (nfix m)) x)))
 
-(defthmd intersect-with-subset
+(defthm intersect-with-subset
   (implies (and (subsetp-equal x y)
                 (intersectp-equal x z))
            (intersectp-equal y z))

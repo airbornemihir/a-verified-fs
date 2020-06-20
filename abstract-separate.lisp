@@ -793,10 +793,7 @@
                           (abs-addrs abs-file-alist2)))
    (not
     (intersectp-equal (abs-addrs abs-file-alist2)
-                      (abs-addrs (remove-assoc-equal name abs-file-alist1)))))
-  :hints
-  (("goal"
-    :in-theory (enable intersect-with-subset) :do-not-induct t)))
+                      (abs-addrs (remove-assoc-equal name abs-file-alist1))))))
 
 (defthm no-duplicatesp-of-abs-addrs-of-remove-assoc-lemma-3
   (implies (and (abs-directory-file-p (cdr (car y)))
@@ -1684,10 +1681,7 @@
          (abs-file->contents (cdr (assoc-equal name abs-file-alist1)))
          abs-file-alist2 x x-path))
        abs-file-alist1))
-     y)))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (enable intersect-with-subset))))
+     y))))
 
 (defthm
   abs-addrs-of-ctx-app-lemma-9
@@ -1714,11 +1708,7 @@
    (not
     (intersectp-equal
      (abs-addrs (remove-assoc-equal name (cdr abs-file-alist1)))
-     (abs-addrs (abs-file->contents$inline (cdr (car abs-file-alist1)))))))
-  :hints
-  (("goal"
-    :in-theory
-    (enable intersect-with-subset))))
+     (abs-addrs (abs-file->contents$inline (cdr (car abs-file-alist1))))))))
 
 (defthm
   abs-addrs-of-ctx-app-2-lemma-9
@@ -9896,7 +9886,8 @@
                      (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-7)
                      (:linear count-free-clusters-correctness-1)
                      (:rewrite strip-cars-of-put-assoc)
-                     (:rewrite partial-collapse-correctness-lemma-2)))
+                     (:rewrite partial-collapse-correctness-lemma-2)
+                     intersect-with-subset))
     :use partial-collapse-correctness-lemma-22)))
 
 (defthm
