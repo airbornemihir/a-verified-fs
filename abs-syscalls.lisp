@@ -33,6 +33,10 @@
                        (consp (cdr pathname)) (abs-directory-file-p file)
                        (and (atom alist-elem) (>= (len fs) *ms-max-dir-ent-count*)))))
         (mv (abs-put-assoc name file fs) 0))
+       ((when (not (or (m1-regular-file-p (cdr alist-elem))
+                       (consp (cdr pathname)) (m1-regular-file-p file)
+                       (and (atom alist-elem) (>= (len fs) *ms-max-dir-ent-count*)))))
+        (mv (abs-put-assoc name file fs) 0))
        ((when (and (atom alist-elem) (>= (len fs) *ms-max-dir-ent-count*))) (mv fs *enospc*))
        ((mv new-contents error-code) (abs-place-file-helper (abs-file->contents (cdr alist-elem))
                                                             (cdr pathname) file)))
@@ -201,6 +205,20 @@
                           y))
   :hints (("goal" :in-theory (enable hifat-subsetp))))
 
+(defthm
+  hifat-place-file-correctness-lemma-3
+  (implies
+   (and
+    (not
+     (m1-regular-file-p (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                          x))))
+    (m1-file-alist-p x)
+    (hifat-subsetp y x))
+   (not
+    (m1-regular-file-p (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                         y)))))
+  :hints (("goal" :in-theory (enable hifat-subsetp))))
+
 (defthmd
   hifat-place-file-correctness-lemma-1
   (implies (and (m1-file-alist-p x)
@@ -209,13 +227,11 @@
                 (hifat-no-dups-p y)
                 (hifat-subsetp x y)
                 (hifat-subsetp y x)
-                (or (hifat-no-dups-p (m1-file->contents file))
-                    (m1-regular-file-p file)))
-           (and
-            (hifat-subsetp (mv-nth 0 (hifat-place-file y pathname file))
-                           (mv-nth 0 (hifat-place-file x pathname file)))
-            (equal (mv-nth 1 (hifat-place-file y pathname file))
-                   (mv-nth 1 (hifat-place-file x pathname file)))))
+                (hifat-no-dups-p (m1-file->contents file)))
+           (and (hifat-subsetp (mv-nth 0 (hifat-place-file y pathname file))
+                               (mv-nth 0 (hifat-place-file x pathname file)))
+                (equal (mv-nth 1 (hifat-place-file y pathname file))
+                       (mv-nth 1 (hifat-place-file x pathname file)))))
   :hints (("goal" :in-theory (enable hifat-place-file hifat-subsetp))))
 
 ;; This isn't a congruence rule, so it may have to be left disabled...
@@ -223,8 +239,7 @@
   hifat-place-file-correctness-4
   (implies
    (and (hifat-equiv m1-file-alist2 m1-file-alist1)
-        (or (hifat-no-dups-p (m1-file->contents file))
-            (m1-regular-file-p file)))
+        (hifat-no-dups-p (m1-file->contents file)))
    (and
     (equal (mv-nth 1
                    (hifat-place-file m1-file-alist2 pathname file))
@@ -514,6 +529,7 @@
      lemma
      (implies (and (m1-file-alist-p fs)
                    (hifat-no-dups-p fs)
+                   ;; This hypothesis is suboptimal... I know.
                    (m1-file-p file))
               (equal (abs-place-file-helper fs pathname file)
                      (hifat-place-file fs pathname file)))
@@ -742,19 +758,20 @@
                    (list (fat32-filename-fix (car (last pathname))))))
           (t (names-at fs relpath)))))
   :hints
-  (("goal"
-    :in-theory (e/d (abs-place-file-helper names-at fat32-filename-list-fix
-                                           fat32-filename-list-equiv fat32-filename-equiv)
-                    ((:definition member-equal)
-                     (:definition put-assoc-equal)
-                     (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
-                     (:definition abs-complete)
-                     (:rewrite hifat-find-file-correctness-1-lemma-1)
-                     (:type-prescription assoc-equal-when-frame-p)
-                     (:definition assoc-equal)
-                     (:definition no-duplicatesp-equal)
-                     (:rewrite m1-file-alist-p-when-subsetp-equal)
-                     (:rewrite subsetp-when-prefixp)))
+  (("goal" :in-theory
+    (e/d (abs-place-file-helper names-at fat32-filename-list-fix
+                                fat32-filename-list-equiv
+                                fat32-filename-equiv abs-file-p-alt)
+         ((:definition member-equal)
+          (:definition put-assoc-equal)
+          (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
+          (:definition abs-complete)
+          (:rewrite hifat-find-file-correctness-1-lemma-1)
+          (:type-prescription assoc-equal-when-frame-p)
+          (:definition assoc-equal)
+          (:definition no-duplicatesp-equal)
+          (:rewrite m1-file-alist-p-when-subsetp-equal)
+          (:rewrite subsetp-when-prefixp)))
     :induct (mv (fat32-filename-list-prefixp relpath pathname)
                 (names-at fs relpath))
     :expand (abs-place-file-helper fs pathname file))))
@@ -2157,17 +2174,6 @@
 (defthm abs-file-p-of-abs-find-file
   (abs-file-p (mv-nth 0 (abs-find-file frame pathname)))
   :hints (("goal" :in-theory (enable abs-find-file))))
-(defthmd
-  abs-file-p-alt
-  (equal (abs-file-p x)
-         (or (m1-regular-file-p x)
-             (abs-directory-file-p x)))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable m1-regular-file-p
-                              abs-file-p abs-directory-file-p
-                              m1-file->contents m1-file-contents-fix
-                              m1-file-p abs-file-contents-p
-                              abs-file->contents))))
 
 (defthm
   abs-mkdir-correctness-lemma-27

@@ -296,6 +296,18 @@
                                      m1-file->contents abs-file->contents
                                      m1-file-contents-p))))
 
+(defthmd
+  abs-file-p-alt
+  (equal (abs-file-p x)
+         (or (m1-regular-file-p x)
+             (abs-directory-file-p x)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable m1-regular-file-p
+                              abs-file-p abs-directory-file-p
+                              m1-file->contents m1-file-contents-fix
+                              m1-file-p abs-file-contents-p
+                              abs-file->contents))))
+
 ;; abs-fs-fix might seem to be a nice fixer for the first (only) argument, but
 ;; it's not because when you have the removal of duplicate elements, you end up
 ;; with some addresses disappearing. The same thing explains why abs-complete

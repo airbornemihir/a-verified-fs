@@ -1899,6 +1899,13 @@
                         (atom (assoc-equal name fs))
                         (>= (len fs) *ms-max-dir-ent-count*)))))
         (mv (put-assoc-equal name file fs) 0))
+       ((when (not (or (m1-regular-file-p (cdr alist-elem))
+                       (consp (cdr pathname))
+                       (m1-regular-file-p file)
+                       (and
+                        (atom (assoc-equal name fs))
+                        (>= (len fs) *ms-max-dir-ent-count*)))))
+        (mv (put-assoc-equal name file fs) 0))
        ((when (and (atom (assoc-equal name fs)) (>= (len fs) *ms-max-dir-ent-count*)))
         (mv fs *enospc*))
        ((mv new-contents error-code)
