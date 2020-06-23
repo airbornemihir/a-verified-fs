@@ -4547,7 +4547,6 @@
   (("goal"
     :in-theory (e/d (dist-names names-at)
                     ((:rewrite remove-when-absent)
-                     (:linear count-free-clusters-correctness-1)
                      (:rewrite abs-fs-p-correctness-1))))))
 
 (defthm
@@ -7760,7 +7759,6 @@
              (:rewrite final-val-of-collapse-this-lemma-3)
              (:definition member-equal)
              (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
-             (:linear count-free-clusters-correctness-1)
              (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                        . 2)))
        :use (:instance
@@ -8270,7 +8268,6 @@
   :hints
   (("goal" :in-theory (e/d (ctx-app-list)
                            ((:rewrite nthcdr-when->=-n-len-l)
-                            (:linear count-free-clusters-correctness-1)
                             (:rewrite partial-collapse-correctness-lemma-2)
                             (:definition len)
                             (:definition nthcdr)
@@ -8320,7 +8317,6 @@
      (:rewrite
       abs-file-alist-p-when-m1-file-alist-p)
      (:rewrite member-of-abs-fs-fix-when-natp)
-     (:linear count-free-clusters-correctness-1)
      (:rewrite m1-file-alist-p-when-subsetp-equal)
      (:rewrite abs-fs-p-correctness-1)
      subsetp-member
@@ -9896,7 +9892,6 @@
                      (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
                                . 2)
                      (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-7)
-                     (:linear count-free-clusters-correctness-1)
                      (:rewrite strip-cars-of-put-assoc)
                      (:rewrite partial-collapse-correctness-lemma-2)
                      intersect-with-subset))
@@ -9956,7 +9951,6 @@
           (:rewrite partial-collapse-correctness-lemma-1)
           (:rewrite final-val-of-collapse-this-lemma-3)
           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
-          (:linear count-free-clusters-correctness-1)
           (:rewrite collapse-1st-index-correctness-lemma-1)
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
           (:rewrite assoc-of-frame->frame-of-collapse-this)
@@ -13398,7 +13392,6 @@
                             (:rewrite subsetp-when-prefixp)
                             (:definition assoc-equal)
                             (:definition member-equal)
-                            (:linear count-free-clusters-correctness-1)
                             (:rewrite member-of-abs-addrs-when-natp . 2)
                             (:definition remove-equal)))
     :induct (seq-this frame)
@@ -13645,7 +13638,6 @@
                      (:rewrite nthcdr-when->=-n-len-l)
                      (:rewrite
                       partial-collapse-correctness-lemma-28)
-                     (:linear count-free-clusters-correctness-1)
                      (:type-prescription frame-val->path$inline)
                      (:definition nthcdr)
                      (:type-prescription
