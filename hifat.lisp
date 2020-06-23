@@ -1557,6 +1557,9 @@
   (declare (xargs :guard (m1-file-alist-p x)))
   (hifat-bounded-file-alist-p-helper x *ms-max-dir-ent-count*))
 
+;; This can't be converted to forward-chaining - a lot of proofs stop
+;; working. We'll just have to put up with a lot of useless frames and tries on
+;; (len x) terms...
 (defthm
   len-when-hifat-bounded-file-alist-p
   (implies (hifat-bounded-file-alist-p x)
