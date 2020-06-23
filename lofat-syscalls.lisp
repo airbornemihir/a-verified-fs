@@ -159,7 +159,6 @@
           (:definition member-equal)
           (:rewrite take-of-len-free)
           (:definition take)
-          (:linear count-free-clusters-correctness-1)
           (:definition assoc-equal))))))
 
 (defthm

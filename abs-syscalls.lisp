@@ -2258,7 +2258,6 @@
           (:rewrite remove-when-absent)
           (:rewrite remove-assoc-of-put-assoc)
           (:rewrite remove-assoc-of-remove-assoc)
-          (:linear count-free-clusters-correctness-1)
           abs-separate-of-frame->frame-of-collapse-this-lemma-8))
     :do-not-induct t
     :expand ((collapse frame)
@@ -3782,7 +3781,7 @@
 ;;                              (m1-file-alist-p abs-fs-fix m1-directory-file-p
 ;;                                               m1-file->contents abs-file)
 ;;                              ((:REWRITE ABS-FS-P-CORRECTNESS-1)(:REWRITE ABS-FS-P-WHEN-HIFAT-NO-DUPS-P)(:REWRITE
-;;                                                                                                         ABS-ADDRS-WHEN-M1-FILE-ALIST-P-LEMMA-2)(:DEFINITION LEN)(:LINEAR COUNT-FREE-CLUSTERS-CORRECTNESS-1)(:REWRITE
+;;                                                                                                         ABS-ADDRS-WHEN-M1-FILE-ALIST-P-LEMMA-2)(:DEFINITION LEN)(:REWRITE
 ;;                                                                                                         M1-FILE-ALIST-P-OF-M1-FILE->CONTENTS)(:REWRITE M1-FILE-FIX-WHEN-M1-FILE-P))))))
 
 ;; (thm (implies (m1-file-alist-p fs) (equal (addrs-at fs relpath) nil)) :hints
@@ -4360,7 +4359,6 @@
          (:rewrite
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
           . 2)
-         (:linear count-free-clusters-correctness-1)
          (:rewrite partial-collapse-correctness-lemma-28)
          (:rewrite nthcdr-when->=-n-len-l)
          (:rewrite strip-cars-of-frame->frame-of-collapse-this)
@@ -4953,7 +4951,6 @@
                             (:rewrite abs-find-file-correctness-1-lemma-3)
                             (:rewrite
                              abs-find-file-helper-of-collapse-lemma-1)
-                            (:linear count-free-clusters-correctness-1)
                             (:definition no-duplicatesp-equal)
                             (:rewrite abs-fs-p-correctness-1)
                             (:definition len)))
@@ -5096,7 +5093,6 @@
 ;;                 (:rewrite abs-file->contents-when-m1-file-p)
 ;;                 (:rewrite
 ;;                  abs-fs-fix-of-put-assoc-equal-lemma-1)
-;;                 (:linear count-free-clusters-correctness-1)
 ;;                 (:rewrite
 ;;                  partial-collapse-correctness-lemma-24)
 ;;                 (:definition put-assoc-equal)

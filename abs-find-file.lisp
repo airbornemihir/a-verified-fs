@@ -3959,7 +3959,6 @@
                      (:definition assoc-equal)
                      (:rewrite abs-addrs-when-m1-file-alist-p)
                      (:rewrite abs-separate-of-put-assoc)
-                     (:linear count-free-clusters-correctness-1)
                      (:rewrite nthcdr-when->=-n-len-l)
                      (:definition remove-assoc-equal)))
     :expand
