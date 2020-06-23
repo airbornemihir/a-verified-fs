@@ -5712,6 +5712,31 @@
                                      hifat-basename-dirname-helper)))
   :rule-classes :type-prescription)
 
+(defthm
+  abs-mkdir-correctness-lemma-98
+  (implies
+   (and (hifat-equiv (mv-nth 0 (collapse frame))
+                     fs)
+        (no-duplicatesp-equal (strip-cars frame))
+        (frame-p frame)
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0)
+        (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+        (mv-nth 1 (collapse frame))
+        (abs-separate frame)
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame)))
+        (m1-directory-file-p
+         (mv-nth 0
+                 (hifat-find-file fs (hifat-dirname pathname)))))
+   (m1-directory-file-p
+    (mv-nth
+     '0
+     (hifat-find-file
+      (mv-nth '0
+              (collapse (partial-collapse frame (hifat-dirname pathname))))
+      (hifat-dirname pathname))))))
+
 (thm
  (implies
   (and
