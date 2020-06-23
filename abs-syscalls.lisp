@@ -5734,6 +5734,144 @@
               (collapse (partial-collapse frame (hifat-dirname pathname))))
       (hifat-dirname pathname))))))
 
+(defthm abs-mkdir-correctness-lemma-99
+  (implies (and (hifat-equiv fs1 fs2)
+                (syntaxp (not (term-order fs1 fs2)))
+                (fat32-filename-p name)
+                (m1-file-alist-p fs1)
+                (m1-file-alist-p fs2)
+                (hifat-no-dups-p fs1)
+                (hifat-no-dups-p fs2))
+           (iff (consp (assoc-equal name fs1))
+                (consp (assoc-equal name fs2))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-equiv))))
+
+(defthm
+  abs-mkdir-correctness-lemma-100
+  (implies (consp (assoc-equal name fs))
+           (consp (assoc-equal (fat32-filename-fix name)
+                               (hifat-file-alist-fix fs))))
+  :hints (("goal" :in-theory (enable hifat-file-alist-fix)))
+  :rule-classes
+  (:rewrite
+   (:rewrite :corollary
+             (implies (and (fat32-filename-p name)
+                           (consp (assoc-equal name fs)))
+                      (consp (assoc-equal name (hifat-file-alist-fix fs)))))))
+
+(defthm
+  abs-mkdir-correctness-lemma-102
+  (implies
+   (and (hifat-equiv (mv-nth 0 (collapse frame))
+                     fs)
+        (m1-directory-file-p
+         (mv-nth 0
+                 (hifat-find-file fs (hifat-dirname pathname)))))
+   (m1-directory-file-p (mv-nth 0
+                                (hifat-find-file (mv-nth 0 (collapse frame))
+                                                 (hifat-dirname pathname))))))
+
+(defthm
+  abs-mkdir-correctness-lemma-101
+  (implies
+   (and (hifat-equiv (mv-nth 0 (collapse frame))
+                     fs)
+        (no-duplicatesp-equal (strip-cars frame))
+        (frame-p frame)
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0)
+        (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+        (mv-nth 1 (collapse frame))
+        (abs-separate frame)
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame)))
+        (m1-directory-file-p
+         (mv-nth 0
+                 (hifat-find-file fs (hifat-dirname pathname))))
+        (equal (mv-nth 1
+                       (hifat-find-file fs (hifat-dirname pathname)))
+               0))
+   (hifat-equiv
+    (m1-file->contents
+     (mv-nth
+      0
+      (hifat-find-file
+       (mv-nth 0
+               (collapse (partial-collapse frame (hifat-dirname pathname))))
+       (hifat-dirname pathname))))
+    (m1-file->contents
+     (mv-nth 0
+             (hifat-find-file fs (hifat-dirname pathname))))))
+  :hints
+  (("goal"
+    :use
+    (:instance
+     hifat-find-file-correctness-4
+     (m1-file-alist2 (mv-nth 0 (collapse frame)))
+     (m1-file-alist1
+      (mv-nth 0
+              (collapse (partial-collapse frame (hifat-dirname pathname)))))
+     (pathname (hifat-dirname pathname))))))
+
+(defthm
+  abs-mkdir-correctness-lemma-103
+  (implies
+   (and
+    (hifat-equiv (mv-nth 0 (collapse frame))
+                 fs)
+    (consp
+     (assoc-equal (hifat-basename pathname)
+                  (m1-file->contents
+                   (mv-nth 0
+                           (hifat-find-file (mv-nth 0 (collapse frame))
+                                            (hifat-dirname pathname))))))
+    (no-duplicatesp-equal (strip-cars frame))
+    (frame-p frame)
+    (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+           0)
+    (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+    (mv-nth 1 (collapse frame))
+    (abs-separate frame)
+    (subsetp-equal (abs-addrs (frame->root frame))
+                   (frame-addrs-root (frame->frame frame)))
+    (m1-directory-file-p
+     (mv-nth 0
+             (hifat-find-file fs (hifat-dirname pathname))))
+    (equal (mv-nth 1
+                   (hifat-find-file fs (hifat-dirname pathname)))
+           0))
+   (consp
+    (assoc-equal
+     (hifat-basename pathname)
+     (m1-file->contents
+      (mv-nth
+       0
+       (hifat-find-file
+        (mv-nth 0
+                (collapse (partial-collapse frame (hifat-dirname pathname))))
+        (hifat-dirname pathname)))))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :use
+    ((:instance
+      abs-mkdir-correctness-lemma-99
+      (name (hifat-basename pathname))
+      (fs1
+       (m1-file->contents
+        (mv-nth
+         0
+         (hifat-find-file
+          (mv-nth
+           0
+           (collapse (partial-collapse frame (hifat-dirname pathname))))
+          (hifat-dirname pathname)))))
+      (fs2 (m1-file->contents
+            (mv-nth 0
+                    (hifat-find-file (mv-nth 0 (collapse frame))
+                                     (hifat-dirname pathname))))))))))
+
 (thm
  (implies
   (and
