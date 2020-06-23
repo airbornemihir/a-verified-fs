@@ -713,31 +713,71 @@
   :hints (("goal" :in-theory (enable hifat-no-dups-p m1-file-alist-p
                                      hifat-find-file))))
 
-(defthm
-  hifat-find-file-correctness-4
-  (implies
-   (and (m1-file-alist-p m1-file-alist1)
-        (hifat-no-dups-p m1-file-alist1)
-        (m1-file-alist-p m1-file-alist2)
-        (hifat-no-dups-p m1-file-alist2)
-        (hifat-equiv m1-file-alist2 m1-file-alist1))
-   (mv-let
-     (file error-code)
-     (hifat-find-file m1-file-alist1 pathname)
+(defthm hifat-find-file-correctness-lemma-1
+  (and (equal (hifat-equiv (hifat-file-alist-fix fs1)
+                           fs2)
+              (hifat-equiv fs1 fs2))
+       (equal (hifat-equiv fs1 (hifat-file-alist-fix fs2))
+              (hifat-equiv fs1 fs2)))
+  :hints (("goal" :in-theory (enable hifat-equiv))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
      (implies
-      (and (equal error-code 0)
-           (m1-directory-file-p file))
       (and
-       (hifat-equiv
-        (m1-file->contents file)
-        (m1-file->contents
-         (mv-nth 0
-                 (hifat-find-file m1-file-alist2 pathname))))
-       (m1-directory-file-p
-        (mv-nth 0
-                (hifat-find-file m1-file-alist2 pathname)))))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable m1-file-alist-p hifat-equiv))))
+       (hifat-equiv m1-file-alist1 m1-file-alist2)
+       (m1-file-alist-p m1-file-alist1)
+       (hifat-no-dups-p m1-file-alist1)
+       (m1-file-alist-p m1-file-alist2)
+       (hifat-no-dups-p m1-file-alist2)
+       (equal (mv-nth 1
+                      (hifat-find-file m1-file-alist1 pathname))
+              0)
+       (m1-directory-file-p (mv-nth 0
+                                    (hifat-find-file m1-file-alist1 pathname))))
+      (hifat-equiv
+       (m1-file->contents (mv-nth 0
+                                  (hifat-find-file m1-file-alist1 pathname)))
+       (m1-file->contents (mv-nth 0
+                                  (hifat-find-file m1-file-alist2 pathname)))))
+     :hints (("goal" :do-not-induct t
+              :in-theory (enable m1-file-alist-p hifat-equiv)))))
+
+  (defthm
+    hifat-find-file-correctness-4
+    (implies
+     (and (hifat-equiv m1-file-alist1 m1-file-alist2)
+          (syntaxp (not (term-order m1-file-alist1 m1-file-alist2)))
+          (or (and (equal (mv-nth 1
+                                  (hifat-find-file m1-file-alist1 pathname))
+                          0)
+                   (m1-directory-file-p
+                    (mv-nth 0
+                            (hifat-find-file m1-file-alist1 pathname))))
+              (and (equal (mv-nth 1
+                                  (hifat-find-file m1-file-alist2 pathname))
+                          0)
+                   (m1-directory-file-p
+                    (mv-nth 0
+                            (hifat-find-file m1-file-alist2 pathname))))))
+     (hifat-equiv
+      (m1-file->contents (mv-nth 0
+                                 (hifat-find-file m1-file-alist1 pathname)))
+      (m1-file->contents (mv-nth 0
+                                 (hifat-find-file m1-file-alist2 pathname)))))
+    :hints
+    (("goal"
+      :use ((:instance lemma
+                       (m1-file-alist1 (hifat-file-alist-fix m1-file-alist1))
+                       (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))
+            (:instance lemma
+                       (m1-file-alist1 (hifat-file-alist-fix m1-file-alist2))
+                       (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1))))
+      :do-not-induct t))))
 
 ;; This should be disabled because it causes infinite loops otherwise...
 (defthmd
