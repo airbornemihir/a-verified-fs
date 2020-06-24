@@ -5455,18 +5455,18 @@
      (frame-val->path (cdr (assoc-equal (abs-find-file-src frame pathname)
                                         frame)))
      (fat32-filename-list-fix pathname))
-    (nat-equiv
-     n
-     (len
+    (fat32-filename-list-equiv
+     path
+     (nthcdr
+      (len
       (frame-val->path (cdr (assoc-equal (abs-find-file-src frame pathname)
-                                         frame))))))
+                                         frame))))
+      pathname)))
    (equal
     (abs-find-file-helper
      (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame pathname)
                                        frame)))
-     (nthcdr
-      n
-      pathname))
+     path)
     (abs-find-file frame pathname)))
   :hints (("goal" :in-theory (e/d ()
                                   (abs-find-file-src-correctness-2 nfix nat-equiv))
