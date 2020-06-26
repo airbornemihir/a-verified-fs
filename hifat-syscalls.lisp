@@ -721,6 +721,60 @@
               (hifat-equiv fs1 fs2)))
   :hints (("goal" :in-theory (enable hifat-equiv))))
 
+(defthm
+  hifat-find-file-correctness-lemma-2
+  (implies
+   (and
+    (hifat-equiv m1-file-alist1 m1-file-alist2)
+    (m1-file-alist-p m1-file-alist1)
+    (hifat-no-dups-p m1-file-alist1)
+    (m1-file-alist-p m1-file-alist2)
+    (hifat-no-dups-p m1-file-alist2)
+    (consp (assoc-equal (fat32-filename-fix (car pathname))
+                        m1-file-alist1))
+    (m1-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                           m1-file-alist1))))
+   (m1-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                          m1-file-alist2))))
+  :hints (("goal" :in-theory (enable hifat-equiv)
+           :do-not-induct t)))
+
+(defthm
+  hifat-find-file-correctness-lemma-3
+  (implies
+   (and
+    (hifat-equiv m1-file-alist1 m1-file-alist2)
+    (syntaxp (not (term-order m1-file-alist1 m1-file-alist2)))
+    (m1-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                           m1-file-alist2)))
+    (m1-file-alist-p m1-file-alist1)
+    (hifat-no-dups-p m1-file-alist1)
+    (m1-file-alist-p m1-file-alist2)
+    (hifat-no-dups-p m1-file-alist2)
+    (consp (assoc-equal (fat32-filename-fix (car pathname))
+                        m1-file-alist1)))
+   (hifat-equiv
+    (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                         m1-file-alist1)))
+    (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car pathname))
+                                         m1-file-alist2)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-equiv))))
+
+(defthm
+  hifat-find-file-correctness-lemma-4
+  (implies (and (hifat-equiv m1-file-alist1 m1-file-alist2)
+                (m1-file-alist-p m1-file-alist1)
+                (hifat-no-dups-p m1-file-alist1)
+                (m1-file-alist-p m1-file-alist2)
+                (hifat-no-dups-p m1-file-alist2)
+                (consp (assoc-equal (fat32-filename-fix (car pathname))
+                                    m1-file-alist1)))
+           (consp (assoc-equal (fat32-filename-fix (car pathname))
+                               m1-file-alist2)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-equiv))))
+
 (encapsulate
   ()
 
@@ -734,9 +788,6 @@
        (hifat-no-dups-p m1-file-alist1)
        (m1-file-alist-p m1-file-alist2)
        (hifat-no-dups-p m1-file-alist2)
-       (equal (mv-nth 1
-                      (hifat-find-file m1-file-alist1 pathname))
-              0)
        (m1-directory-file-p (mv-nth 0
                                     (hifat-find-file m1-file-alist1 pathname))))
       (hifat-equiv
@@ -744,26 +795,12 @@
                                   (hifat-find-file m1-file-alist1 pathname)))
        (m1-file->contents (mv-nth 0
                                   (hifat-find-file m1-file-alist2 pathname)))))
-     :hints (("goal" :do-not-induct t
-              :in-theory (enable m1-file-alist-p hifat-equiv)))))
+     :hints (("goal" :in-theory (enable m1-file-alist-p hifat-find-file)))))
 
   (defthm
     hifat-find-file-correctness-4
     (implies
-     (and (hifat-equiv m1-file-alist1 m1-file-alist2)
-          (syntaxp (not (term-order m1-file-alist1 m1-file-alist2)))
-          (or (and (equal (mv-nth 1
-                                  (hifat-find-file m1-file-alist1 pathname))
-                          0)
-                   (m1-directory-file-p
-                    (mv-nth 0
-                            (hifat-find-file m1-file-alist1 pathname))))
-              (and (equal (mv-nth 1
-                                  (hifat-find-file m1-file-alist2 pathname))
-                          0)
-                   (m1-directory-file-p
-                    (mv-nth 0
-                            (hifat-find-file m1-file-alist2 pathname))))))
+     (hifat-equiv m1-file-alist1 m1-file-alist2)
      (hifat-equiv
       (m1-file->contents (mv-nth 0
                                  (hifat-find-file m1-file-alist1 pathname)))
@@ -776,8 +813,18 @@
                        (m1-file-alist2 (hifat-file-alist-fix m1-file-alist2)))
             (:instance lemma
                        (m1-file-alist1 (hifat-file-alist-fix m1-file-alist2))
-                       (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1))))
-      :do-not-induct t))))
+                       (m1-file-alist2 (hifat-file-alist-fix m1-file-alist1)))
+            (:instance (:rewrite hifat-find-file-correctness-1)
+                       (pathname pathname)
+                       (fs m1-file-alist1))
+            (:instance (:rewrite hifat-find-file-correctness-1)
+                       (pathname pathname)
+                       (fs m1-file-alist2)))
+      :do-not-induct t
+      :in-theory (e/d (m1-file-p m1-directory-file-p m1-file-contents-p
+                                 m1-file->contents hifat-equiv)
+                      ((:rewrite hifat-find-file-correctness-1)))))
+    :rule-classes :congruence))
 
 ;; This should be disabled because it causes infinite loops otherwise...
 (defthmd
