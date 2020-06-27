@@ -793,7 +793,8 @@
      (abs-separate (frame->frame (frame-with-root root frame)))
      (frame-p (frame->frame (frame-with-root root frame)))
      (no-duplicatesp-equal
-      (strip-cars (frame->frame (frame-with-root root frame)))))
+      (strip-cars (frame->frame (frame-with-root root frame))))
+     (consp (assoc-equal x frame)))
     (and
      (equal
       (mv-nth
