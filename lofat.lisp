@@ -410,15 +410,15 @@ Some (rather awful) testing forms are
                                      lofat-file-contents-p
                                      lofat-file->contents))))
 
-(defun lofat-find-file (fat32-in-memory dir-ent-list pathname)
+(defun lofat-find-file (fat32-in-memory dir-ent-list path)
   (declare (xargs :guard (and (lofat-fs-p fat32-in-memory)
-                              (fat32-filename-list-p pathname)
+                              (fat32-filename-list-p path)
                               (useful-dir-ent-list-p dir-ent-list))
-                  :measure (acl2-count pathname)
+                  :measure (acl2-count path)
                   :stobjs fat32-in-memory))
-  (b* (((unless (consp pathname))
+  (b* (((unless (consp path))
         (mv (make-lofat-file) *enoent*))
-       (name (fat32-filename-fix (car pathname)))
+       (name (fat32-filename-fix (car path)))
        ((mv dir-ent error-code) (find-dir-ent dir-ent-list name))
        ((unless (equal error-code 0))
         (mv (make-lofat-file) error-code))
@@ -437,16 +437,16 @@ Some (rather awful) testing forms are
           (dir-ent-clusterchain-contents
            fat32-in-memory dir-ent)))
        ((unless directory-p)
-        (if (consp (cdr pathname))
+        (if (consp (cdr path))
             (mv (make-lofat-file) *enotdir*)
           (mv (make-lofat-file :dir-ent dir-ent :contents contents) 0)))
-       ((when (atom (cdr pathname)))
+       ((when (atom (cdr path)))
         (mv
          (make-lofat-file :dir-ent dir-ent
                           :contents (make-dir-ent-list contents))
          0)))
     (lofat-find-file
-     fat32-in-memory (make-dir-ent-list contents) (cdr pathname))))
+     fat32-in-memory (make-dir-ent-list contents) (cdr path))))
 
 (defthm
   lofat-find-file-correctness-1-lemma-2
@@ -801,7 +801,7 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   fat32-in-memory
                   dir-ent-list entry-limit))
-         pathname)))
+         path)))
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -815,9 +815,9 @@ Some (rather awful) testing forms are
        (mv-nth
         0
         (lofat-find-file fat32-in-memory
-                         dir-ent-list pathname))))
+                         dir-ent-list path))))
      (equal (lofat-find-file
-             fat32-in-memory dir-ent-list pathname)
+             fat32-in-memory dir-ent-list path)
             (mv (make-lofat-file :contents (m1-file->contents file)
                                  :dir-ent (m1-file->dir-ent file))
                 error-code))))
@@ -832,7 +832,7 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   fat32-in-memory
                   dir-ent-list entry-limit))
-         pathname)))
+         path)))
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -846,13 +846,13 @@ Some (rather awful) testing forms are
        (mv-nth
         0
         (lofat-find-file fat32-in-memory
-                         dir-ent-list pathname))))
+                         dir-ent-list path))))
      (and
       (equal
        (lofat-file->dir-ent
         (mv-nth 0
                 (lofat-find-file
-                 fat32-in-memory dir-ent-list pathname)))
+                 fat32-in-memory dir-ent-list path)))
        (m1-file->dir-ent file))
       (equal
        (mv-nth
@@ -862,13 +862,13 @@ Some (rather awful) testing forms are
          (lofat-file->contents
           (mv-nth 0
                   (lofat-find-file
-                   fat32-in-memory dir-ent-list pathname)))
+                   fat32-in-memory dir-ent-list path)))
          entry-limit))
        (m1-file->contents file))
       (equal
        (mv-nth 1
                (lofat-find-file
-                fat32-in-memory dir-ent-list pathname))
+                fat32-in-memory dir-ent-list path))
        error-code))))
   :hints
   (("goal" :in-theory (enable hifat-find-file)
@@ -879,10 +879,10 @@ Some (rather awful) testing forms are
                          (lofat-to-hifat-helper
                           fat32-in-memory
                           dir-ent-list entry-limit))
-                 pathname))
+                 path))
         (mv-nth 0
                 (lofat-find-file
-                 fat32-in-memory dir-ent-list pathname)))
+                 fat32-in-memory dir-ent-list path)))
     :expand (lofat-to-hifat-helper
              fat32-in-memory nil entry-limit))))
 
@@ -890,20 +890,20 @@ Some (rather awful) testing forms are
   lofat-find-file-correctness-3
   (and (lofat-file-p
         (mv-nth 0
-                (lofat-find-file fat32-in-memory dir-ent-list pathname)))
+                (lofat-find-file fat32-in-memory dir-ent-list path)))
        (natp (mv-nth 1
                      (lofat-find-file fat32-in-memory
-                                      dir-ent-list pathname))))
+                                      dir-ent-list path))))
   :rule-classes
   ((:type-prescription
     :corollary (natp (mv-nth 1
                              (lofat-find-file fat32-in-memory
-                                              dir-ent-list pathname))))
+                                              dir-ent-list path))))
    (:rewrite
     :corollary
     (lofat-file-p (mv-nth 0
                           (lofat-find-file fat32-in-memory
-                                           dir-ent-list pathname))))))
+                                           dir-ent-list path))))))
 
 (defun
     place-dir-ent (dir-ent-list dir-ent)
@@ -2897,7 +2897,7 @@ Some (rather awful) testing forms are
 ;; dotdot entries have to be everywhere other than the root.)
 (defun
     lofat-remove-file
-    (fat32-in-memory root-dir-ent pathname)
+    (fat32-in-memory root-dir-ent path)
   (declare
    (xargs
     :guard (and (lofat-fs-p fat32-in-memory)
@@ -2906,16 +2906,16 @@ Some (rather awful) testing forms are
                 (< (dir-ent-first-cluster root-dir-ent)
                    (+ *ms-first-data-cluster*
                       (count-of-clusters fat32-in-memory)))
-                (fat32-filename-list-p pathname))
-    :measure (len pathname)
+                (fat32-filename-list-p path))
+    :measure (len path)
     :stobjs fat32-in-memory))
   (b*
-      (((unless (consp pathname))
+      (((unless (consp path))
         (mv fat32-in-memory *enoent*))
        ;; Design choice - calls which ask for the entire root directory to be
        ;; affected will fail.
-       (name (mbe :logic (fat32-filename-fix (car pathname))
-                  :exec (car pathname)))
+       (name (mbe :logic (fat32-filename-fix (car path))
+                  :exec (car path)))
        ((mv dir-contents &)
         (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
        (dir-ent-list
@@ -2927,7 +2927,7 @@ Some (rather awful) testing forms are
         (mv fat32-in-memory *enoent*))
        ;; ENOTDIR - can't delete anything that supposedly exists inside a
        ;; regular file.
-       ((when (and (consp (cdr pathname)) (not (dir-ent-directory-p dir-ent))))
+       ((when (and (consp (cdr path)) (not (dir-ent-directory-p dir-ent))))
         (mv fat32-in-memory *enotdir*))
        (first-cluster (dir-ent-first-cluster dir-ent))
        ((when
@@ -2936,16 +2936,16 @@ Some (rather awful) testing forms are
                  (<= (+ *ms-first-data-cluster*
                         (count-of-clusters fat32-in-memory))
                      first-cluster))
-             (consp (cdr pathname))))
+             (consp (cdr path))))
             (mv fat32-in-memory *eio*))
-       ((when (consp (cdr pathname)))
+       ((when (consp (cdr path)))
         ;; Recursion
         (lofat-remove-file
          fat32-in-memory
          dir-ent
-         (cdr pathname)))
+         (cdr path)))
        ;; After these conditionals, the only remaining possibility is that
-       ;; (cdr pathname) is an atom, which means we need to delete a file or
+       ;; (cdr path) is an atom, which means we need to delete a file or
        ;; a(n empty) directory.
        ((mv fat32-in-memory error-code)
         (update-dir-contents fat32-in-memory
@@ -2982,14 +2982,14 @@ Some (rather awful) testing forms are
                       (count-of-clusters fat32-in-memory))))
            (lofat-fs-p (mv-nth 0
                                (lofat-remove-file fat32-in-memory
-                                                  root-dir-ent pathname)))))
+                                                  root-dir-ent path)))))
 
 (defthm
   max-entry-count-of-lofat-remove-file
   (equal
    (max-entry-count
     (mv-nth 0
-            (lofat-remove-file fat32-in-memory root-dir-ent pathname)))
+            (lofat-remove-file fat32-in-memory root-dir-ent path)))
    (max-entry-count fat32-in-memory)))
 
 (defthm
@@ -2998,7 +2998,7 @@ Some (rather awful) testing forms are
    (pseudo-root-dir-ent
     (mv-nth
      0
-     (lofat-remove-file fat32-in-memory root-dir-ent pathname)))
+     (lofat-remove-file fat32-in-memory root-dir-ent path)))
    (pseudo-root-dir-ent fat32-in-memory)))
 
 (defthm
@@ -3014,10 +3014,10 @@ Some (rather awful) testing forms are
           (count-of-clusters fat32-in-memory)))
     (not
      (equal (mv-nth 1
-                    (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                    (lofat-remove-file fat32-in-memory root-dir-ent path))
             0)))
    (equal (mv-nth 0
-                  (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                  (lofat-remove-file fat32-in-memory root-dir-ent path))
           fat32-in-memory))
   :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
                                      clear-clusterchain-correctness-3))))
@@ -3941,11 +3941,11 @@ Some (rather awful) testing forms are
    (equal
     (dir-ent-clusterchain-contents
      (mv-nth 0
-             (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+             (lofat-remove-file fat32-in-memory root-dir-ent path))
      dir-ent)
     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
   :hints (("goal" :induct (lofat-remove-file fat32-in-memory
-                                             root-dir-ent pathname))))
+                                             root-dir-ent path))))
 
 (defthm
   root-dir-ent-list-of-update-dir-contents
@@ -3979,7 +3979,7 @@ Some (rather awful) testing forms are
   (equal (count-of-clusters
           (mv-nth 0
                   (lofat-remove-file
-                   fat32-in-memory rootclus pathname)))
+                   fat32-in-memory rootclus path)))
          (count-of-clusters fat32-in-memory)))
 
 (defthm
@@ -3987,7 +3987,7 @@ Some (rather awful) testing forms are
   (equal (cluster-size
           (mv-nth 0
                   (lofat-remove-file
-                   fat32-in-memory rootclus pathname)))
+                   fat32-in-memory rootclus path)))
          (cluster-size fat32-in-memory)))
 
 (defthm
@@ -4234,7 +4234,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-       (car pathname))))
+       (car path))))
     (<=
      2
      (dir-ent-first-cluster
@@ -4253,8 +4253,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname)))))
+             (car path))))))
+        (cadr path)))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -4272,8 +4272,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname))))
+             (car path))))))
+        (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (equal
      (mv-nth
@@ -4297,7 +4297,7 @@ Some (rather awful) testing forms are
          (make-dir-ent-list
           (mv-nth '0
                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-         (car pathname)))))
+         (car path)))))
      (mv-nth
       '0
       (dir-ent-clusterchain
@@ -4317,8 +4317,8 @@ Some (rather awful) testing forms are
                (mv-nth
                 '0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-              (car pathname))))))
-         (car (cdr pathname)))))))))
+              (car path))))))
+         (car (cdr path)))))))))
   :hints
   (("goal"
     :in-theory
@@ -4331,7 +4331,7 @@ Some (rather awful) testing forms are
      (:rewrite
       get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
       . 1)
-     (filename (cadr pathname))
+     (filename (cadr path))
      (dir-ent-list
       (make-dir-ent-list
        (mv-nth
@@ -4344,7 +4344,7 @@ Some (rather awful) testing forms are
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-           (car pathname)))))))
+           (car path)))))))
      (fat32-in-memory fat32-in-memory)
      (x
       (mv-nth
@@ -4357,7 +4357,7 @@ Some (rather awful) testing forms are
           (make-dir-ent-list
            (mv-nth 0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-          (car pathname))))))))))
+          (car path))))))))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-remove-file-coincident-lemma-4
@@ -4370,7 +4370,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-       (car pathname))))
+       (car path))))
     (<=
      2
      (dir-ent-first-cluster
@@ -4389,8 +4389,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname)))))
+             (car path))))))
+        (cadr path)))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -4408,8 +4408,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname))))
+             (car path))))))
+        (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (equal
      (mv-nth
@@ -4455,8 +4455,8 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-              (car pathname))))))
-         (cadr pathname))))))))
+              (car path))))))
+         (cadr path))))))))
   :hints
   (("goal"
     :in-theory
@@ -4469,7 +4469,7 @@ Some (rather awful) testing forms are
      (:rewrite
       get-clusterchain-contents-of-lofat-remove-file-coincident-lemma-5
       . 1)
-     (filename (cadr pathname))
+     (filename (cadr path))
      (dir-ent-list
       (make-dir-ent-list
        (mv-nth
@@ -4482,7 +4482,7 @@ Some (rather awful) testing forms are
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-           (car pathname)))))))
+           (car path)))))))
      (fat32-in-memory fat32-in-memory)
      (x (mv-nth 0
                 (dir-ent-clusterchain fat32-in-memory dir-ent)))))))
@@ -4498,7 +4498,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-       (car pathname))))
+       (car path))))
     (lofat-fs-p fat32-in-memory)
     (dir-ent-p dir-ent)
     (<= 2 (dir-ent-first-cluster dir-ent))
@@ -4538,8 +4538,8 @@ Some (rather awful) testing forms are
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-         (car pathname)))
-       (cdr pathname)))
+         (car path)))
+       (cdr path)))
      dir-ent)
     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
   :hints
@@ -4550,7 +4550,7 @@ Some (rather awful) testing forms are
     :use
     (:instance
      (:rewrite dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint)
-     (pathname (cdr pathname))
+     (path (cdr path))
      (root-dir-ent
       (mv-nth
        0
@@ -4558,7 +4558,7 @@ Some (rather awful) testing forms are
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-        (car pathname))))
+        (car path))))
      (fat32-in-memory fat32-in-memory)))))
 
 (defthm
@@ -4602,7 +4602,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-       (car pathname))))
+       (car path))))
     (equal
      (mv-nth
       3
@@ -4631,8 +4631,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname)))))
+             (car path))))))
+        (cadr path)))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -4650,8 +4650,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname))))
+             (car path))))))
+        (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (equal
     (mv-nth
@@ -4673,8 +4673,8 @@ Some (rather awful) testing forms are
               (mv-nth
                '0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (car (cdr pathname))))))
+             (car path))))))
+        (car (cdr path))))))
     0))
   :hints
   (("goal"
@@ -4686,7 +4686,7 @@ Some (rather awful) testing forms are
     (:instance
      (:rewrite
       dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-4)
-     (filename (cadr pathname))
+     (filename (cadr path))
      (dir-ent-list
       (make-dir-ent-list
        (mv-nth
@@ -4699,7 +4699,7 @@ Some (rather awful) testing forms are
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-           (car pathname)))))))
+           (car path)))))))
      (fat32-in-memory fat32-in-memory)))))
 
 (defthm
@@ -4854,7 +4854,7 @@ Some (rather awful) testing forms are
     (lofat-fs-p fat32-in-memory)
     (dir-ent-p dir-ent)
     (dir-ent-directory-p dir-ent)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (equal (mv-nth 1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
            0)
@@ -4882,15 +4882,15 @@ Some (rather awful) testing forms are
    (equal
     (dir-ent-clusterchain-contents
      (mv-nth 0
-             (lofat-remove-file fat32-in-memory dir-ent pathname))
+             (lofat-remove-file fat32-in-memory dir-ent path))
      dir-ent)
     (if
         (or
          (not
           (equal (mv-nth 1
-                         (lofat-remove-file fat32-in-memory dir-ent pathname))
+                         (lofat-remove-file fat32-in-memory dir-ent path))
                  0))
-         (consp (cdr pathname)))
+         (consp (cdr path)))
         (dir-ent-clusterchain-contents fat32-in-memory dir-ent)
       (mv
        (implode
@@ -4900,7 +4900,7 @@ Some (rather awful) testing forms are
            (string=>nats
             (mv-nth 0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-           (car pathname)))
+           (car path)))
          (make-list-ac
           (+
            (-
@@ -4919,14 +4919,14 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                (car pathname)))
+                (car path)))
               (cluster-size fat32-in-memory)))))
           (code-char 0)
           nil)))
        0))))
   :hints
   (("goal" :do-not-induct t
-    :expand (lofat-remove-file fat32-in-memory dir-ent pathname))))
+    :expand (lofat-remove-file fat32-in-memory dir-ent path))))
 
 (encapsulate
   ()
@@ -4980,11 +4980,11 @@ Some (rather awful) testing forms are
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (equal (mv-nth 1
                    (lofat-remove-file fat32-in-memory
                                       (pseudo-root-dir-ent fat32-in-memory)
-                                      pathname))
+                                      path))
            0)
     (equal (mv-nth 1 (lofat-to-hifat fat32-in-memory))
            0))
@@ -4993,11 +4993,11 @@ Some (rather awful) testing forms are
      (mv-nth 0
              (lofat-remove-file fat32-in-memory
                                 (pseudo-root-dir-ent fat32-in-memory)
-                                pathname)))
-    (if (consp (cdr pathname))
+                                path)))
+    (if (consp (cdr path))
         (root-dir-ent-list fat32-in-memory)
         (mv (delete-dir-ent (mv-nth 0 (root-dir-ent-list fat32-in-memory))
-                            (car pathname))
+                            (car path))
             0))))
   :hints (("goal" :in-theory (e/d (root-dir-ent-list lofat-to-hifat)
                                   ((:rewrite make-list-ac-removal)))
@@ -5176,11 +5176,11 @@ Some (rather awful) testing forms are
    (equal
     (dir-ent-clusterchain
      (mv-nth 0
-             (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+             (lofat-remove-file fat32-in-memory root-dir-ent path))
      dir-ent)
     (dir-ent-clusterchain fat32-in-memory dir-ent)))
   :hints (("goal" :induct (lofat-remove-file fat32-in-memory
-                                             root-dir-ent pathname))))
+                                             root-dir-ent path))))
 
 (defthm
   lofat-to-hifat-helper-after-delete-and-clear-1-lemma-1
@@ -5989,12 +5989,12 @@ Some (rather awful) testing forms are
    (equal
     (lofat-to-hifat-helper
      (mv-nth 0
-             (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+             (lofat-remove-file fat32-in-memory root-dir-ent path))
      dir-ent-list entry-limit1)
     (lofat-to-hifat-helper fat32-in-memory
                            dir-ent-list entry-limit1)))
   :hints (("goal" :induct (lofat-remove-file fat32-in-memory
-                                             root-dir-ent pathname))))
+                                             root-dir-ent path))))
 
 (defthm
   no-duplicatesp-equal-of-fat32-build-index-list-of-effective-fat-of-update-dir-contents
@@ -6225,7 +6225,7 @@ Some (rather awful) testing forms are
   lofat-remove-file-correctness-1-lemma-23
   (implies
    (and
-    (consp (cdr pathname))
+    (consp (cdr path))
     (lofat-fs-p fat32-in-memory)
     (<= 2 (dir-ent-first-cluster dir-ent))
     (dir-ent-p dir-ent)
@@ -6245,7 +6245,7 @@ Some (rather awful) testing forms are
             (make-dir-ent-list
              (mv-nth 0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (fat32-filename-fix (car pathname)))))))
+            (fat32-filename-fix (car path)))))))
        entry-limit))
      0)
     (not-intersectp-list
@@ -6266,7 +6266,7 @@ Some (rather awful) testing forms are
             (make-dir-ent-list
              (mv-nth 0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (fat32-filename-fix (car pathname)))))))
+            (fat32-filename-fix (car path)))))))
        entry-limit)))
     (not
      (intersectp-equal
@@ -6280,7 +6280,7 @@ Some (rather awful) testing forms are
           (make-dir-ent-list
            (mv-nth 0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-          (fat32-filename-fix (car pathname))))))
+          (fat32-filename-fix (car path))))))
       (mv-nth 0
               (dir-ent-clusterchain fat32-in-memory dir-ent))))
     (not-intersectp-list
@@ -6294,7 +6294,7 @@ Some (rather awful) testing forms are
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-         (fat32-filename-fix (car pathname))))))
+         (fat32-filename-fix (car path))))))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -6310,14 +6310,14 @@ Some (rather awful) testing forms are
             (make-dir-ent-list
              (mv-nth 0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (fat32-filename-fix (car pathname)))))))
+            (fat32-filename-fix (car path)))))))
        entry-limit)))
     (equal (mv-nth 1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
            0))
    (equal (dir-ent-clusterchain
            (mv-nth 0
-                   (lofat-remove-file fat32-in-memory dir-ent pathname))
+                   (lofat-remove-file fat32-in-memory dir-ent path))
            dir-ent)
           (dir-ent-clusterchain fat32-in-memory dir-ent))))
 
@@ -6393,7 +6393,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname))
+                                path))
      (car dir-ent-list))
     (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
   :hints
@@ -6483,7 +6483,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname))
+                                path))
      (make-dir-ent-list
       (mv-nth
        0
@@ -6509,7 +6509,7 @@ Some (rather awful) testing forms are
        (mv-nth
         0
         (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list)))))
-     (pathname pathname)
+     (path path)
      (root-dir-ent (mv-nth 0
                            (find-dir-ent (cdr dir-ent-list)
                                          filename)))
@@ -6554,13 +6554,13 @@ Some (rather awful) testing forms are
                                                filename)))
     (lofat-fs-p fat32-in-memory)
     (useful-dir-ent-list-p dir-ent-list)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (equal (mv-nth 1
                    (lofat-remove-file fat32-in-memory
                                       (mv-nth 0
                                               (find-dir-ent (cdr dir-ent-list)
                                                             filename))
-                                      pathname))
+                                      path))
            0))
    (equal
     (dir-ent-clusterchain-contents
@@ -6569,12 +6569,12 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname))
+                                path))
      (mv-nth 0
              (find-dir-ent (cdr dir-ent-list)
                            filename)))
     (if
-        (consp (cdr pathname))
+        (consp (cdr path))
         (dir-ent-clusterchain-contents fat32-in-memory
                                        (mv-nth 0
                                                (find-dir-ent (cdr dir-ent-list)
@@ -6590,7 +6590,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename)))))
-           (car pathname)))
+           (car path)))
          (make-list-ac
           (+
            (-
@@ -6613,7 +6613,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (find-dir-ent (cdr dir-ent-list)
                                                 filename)))))
-                (car pathname)))
+                (car path)))
               (cluster-size fat32-in-memory)))))
           (code-char 0) nil)))
        0))))
@@ -6625,7 +6625,7 @@ Some (rather awful) testing forms are
     :use
     (:instance
      (:rewrite dir-ent-clusterchain-contents-of-lofat-remove-file-coincident)
-     (pathname pathname)
+     (path path)
      (dir-ent (mv-nth 0
                       (find-dir-ent (cdr dir-ent-list)
                                     filename)))
@@ -6659,7 +6659,7 @@ Some (rather awful) testing forms are
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
        entry-limit))
      0)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (dir-ent-directory-p
      (mv-nth
       0
@@ -6667,7 +6667,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (car pathname)))))
+       (car path)))))
    (equal
     (dir-ent-clusterchain-contents
      (mv-nth
@@ -6681,15 +6681,15 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname)))
-       (cdr pathname)))
+         (car path)))
+       (cdr path)))
      (mv-nth
       0
       (find-dir-ent
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (car pathname))))
+       (car path))))
     (if
      (or
       (not
@@ -6705,10 +6705,10 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname)))
-          (cdr pathname)))
+            (car path)))
+          (cdr path)))
         0))
-      (consp (cddr pathname)))
+      (consp (cddr path)))
      (dir-ent-clusterchain-contents
       fat32-in-memory
       (mv-nth
@@ -6718,7 +6718,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname))))
+        (car path))))
      (mv
       (implode
        (append
@@ -6735,8 +6735,8 @@ Some (rather awful) testing forms are
                (make-dir-ent-list (mv-nth 0
                                           (dir-ent-clusterchain-contents
                                            fat32-in-memory root-dir-ent)))
-               (car pathname))))))
-          (cadr pathname)))
+               (car path))))))
+          (cadr path)))
         (make-list-ac
          (+
           (-
@@ -6752,7 +6752,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))))))
+                        (car path))))))))
           (*
            (cluster-size fat32-in-memory)
            (len
@@ -6771,8 +6771,8 @@ Some (rather awful) testing forms are
                      (mv-nth 0
                              (dir-ent-clusterchain-contents
                               fat32-in-memory root-dir-ent)))
-                    (car pathname))))))
-               (cadr pathname)))
+                    (car path))))))
+               (cadr path)))
              (cluster-size fat32-in-memory)))))
          (code-char 0)
          nil)))
@@ -6785,7 +6785,7 @@ Some (rather awful) testing forms are
     :use
     (:instance
      (:rewrite dir-ent-clusterchain-contents-of-lofat-remove-file-coincident)
-     (pathname (cdr pathname))
+     (path (cdr path))
      (dir-ent
       (mv-nth
        0
@@ -6794,7 +6794,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname))))))))
+        (car path))))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-14
@@ -8703,13 +8703,13 @@ Some (rather awful) testing forms are
         0
         (lofat-remove-file fat32-in-memory
                            (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                           pathname))
+                           path))
        dir-ent-list entry-limit))
      0)
-    (consp (cdr pathname))
+    (consp (cdr path))
     (lofat-fs-p fat32-in-memory)
     (useful-dir-ent-list-p dir-ent-list)
-    (fat32-filename-list-p pathname))
+    (fat32-filename-list-p path))
    (equal
     (mv-nth
      3
@@ -8718,7 +8718,7 @@ Some (rather awful) testing forms are
        0
        (lofat-remove-file fat32-in-memory
                           (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                          pathname))
+                          path))
       (make-dir-ent-list
        (mv-nth 0
                (dir-ent-clusterchain-contents
@@ -8733,7 +8733,7 @@ Some (rather awful) testing forms are
     :use
     ((:instance
       (:rewrite dir-ent-clusterchain-contents-of-lofat-remove-file-coincident)
-      (pathname pathname)
+      (path path)
       (dir-ent (mv-nth 0 (find-dir-ent dir-ent-list filename)))
       (fat32-in-memory fat32-in-memory))
      (:instance (:rewrite lofat-find-file-correctness-1-lemma-6)
@@ -8747,7 +8747,7 @@ Some (rather awful) testing forms are
         0
         (lofat-remove-file fat32-in-memory
                            (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                           pathname))))))))
+                           path))))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-44
@@ -8771,7 +8771,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (cdr dir-ent-list)
        (+ -1 entry-limit)))
      0)
@@ -8784,7 +8784,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (cdr dir-ent-list)
        (+ -1 entry-limit)))
      (put-assoc-equal
@@ -8801,7 +8801,7 @@ Some (rather awful) testing forms are
                                     (mv-nth 0
                                             (find-dir-ent (cdr dir-ent-list)
                                                           filename))
-                                    pathname))
+                                    path))
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents
@@ -8813,16 +8813,16 @@ Some (rather awful) testing forms are
       (mv-nth 0
               (lofat-to-hifat-helper fat32-in-memory (cdr dir-ent-list)
                                      (+ -1 entry-limit)))))
-    (consp (cdr pathname))
+    (consp (cdr path))
     (lofat-fs-p fat32-in-memory)
     (useful-dir-ent-list-p dir-ent-list)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (equal (mv-nth 1
                    (lofat-remove-file fat32-in-memory
                                       (mv-nth 0
                                               (find-dir-ent (cdr dir-ent-list)
                                                             filename))
-                                      pathname))
+                                      path))
            0))
    (equal
     (mv-nth
@@ -8833,7 +8833,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname))
+                                 path))
       (cdr dir-ent-list)
       (+ -1 entry-limit)))
     (put-assoc-equal
@@ -8850,7 +8850,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -8882,7 +8882,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname)))))))
+                                 path)))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-45
@@ -8917,7 +8917,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname))
+                                path))
      (car dir-ent-list))
     (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
   :hints
@@ -8967,7 +8967,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (cdr dir-ent-list)
        (+
         -1 entry-limit
@@ -8991,7 +8991,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (cdr dir-ent-list)
        (+
         -1 entry-limit
@@ -9019,7 +9019,7 @@ Some (rather awful) testing forms are
                                     (mv-nth 0
                                             (find-dir-ent (cdr dir-ent-list)
                                                           filename))
-                                    pathname))
+                                    path))
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents
@@ -9057,16 +9057,16 @@ Some (rather awful) testing forms are
                       (dir-ent-clusterchain-contents
                        fat32-in-memory (car dir-ent-list))))
              (+ -1 entry-limit))))))))))
-    (consp (cdr pathname))
+    (consp (cdr path))
     (lofat-fs-p fat32-in-memory)
     (useful-dir-ent-list-p dir-ent-list)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (equal (mv-nth 1
                    (lofat-remove-file fat32-in-memory
                                       (mv-nth 0
                                               (find-dir-ent (cdr dir-ent-list)
                                                             filename))
-                                      pathname))
+                                      path))
            0))
    (equal
     (mv-nth
@@ -9077,7 +9077,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname))
+                                 path))
       (cdr dir-ent-list)
       (+
        -1 entry-limit
@@ -9105,7 +9105,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -9163,7 +9163,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))))
+                                  path))))
      (:instance
       (:linear lofat-to-hifat-helper-correctness-3)
       (entry-limit
@@ -9192,7 +9192,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))))))))
+                                  path))))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-47
@@ -9205,7 +9205,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-       (car pathname))))
+       (car path))))
     (lofat-fs-p fat32-in-memory)
     (dir-ent-p dir-ent)
     (<= 2 (dir-ent-first-cluster dir-ent))
@@ -9250,8 +9250,8 @@ Some (rather awful) testing forms are
           (make-dir-ent-list
            (mv-nth 0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-          (car pathname)))
-        (cdr pathname)))
+          (car path)))
+        (cdr path)))
       dir-ent))))
   :hints
   (("goal"
@@ -9261,7 +9261,7 @@ Some (rather awful) testing forms are
     (:instance
      (:rewrite dir-ent-clusterchain-of-lofat-remove-file-disjoint)
      (dir-ent dir-ent)
-     (pathname (cdr pathname))
+     (path (cdr path))
      (root-dir-ent
       (mv-nth
        0
@@ -9269,7 +9269,7 @@ Some (rather awful) testing forms are
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-        (car pathname))))
+        (car path))))
      (fat32-in-memory fat32-in-memory)))))
 
 (defthm
@@ -9284,12 +9284,12 @@ Some (rather awful) testing forms are
     (< (dir-ent-first-cluster dir-ent)
        (+ *ms-first-data-cluster*
           (count-of-clusters fat32-in-memory)))
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (equal (mv-nth 1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
            0)
     (equal (mv-nth 1
-                   (lofat-remove-file fat32-in-memory dir-ent pathname))
+                   (lofat-remove-file fat32-in-memory dir-ent path))
            0)
     (equal
      (mv-nth
@@ -9319,7 +9319,7 @@ Some (rather awful) testing forms are
     (mv-nth 0
             (dir-ent-clusterchain
              (mv-nth 0
-                     (lofat-remove-file fat32-in-memory dir-ent pathname))
+                     (lofat-remove-file fat32-in-memory dir-ent path))
              dir-ent)))))
 
 (defthm
@@ -9340,7 +9340,7 @@ Some (rather awful) testing forms are
                                       (mv-nth 0
                                               (find-dir-ent (cdr dir-ent-list)
                                                             filename))
-                                      pathname))
+                                      path))
            0)
     (equal
      (mv-nth
@@ -9351,14 +9351,14 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (cdr dir-ent-list)
        (+ -1 entry-limit)))
      0)
-    (consp (cdr pathname))
+    (consp (cdr path))
     (lofat-fs-p fat32-in-memory)
     (useful-dir-ent-list-p dir-ent-list)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (<
      (hifat-entry-count
       (mv-nth
@@ -9369,7 +9369,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -9412,7 +9412,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -9441,7 +9441,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))))
+                                  path))))
      (:instance
       (:rewrite lofat-to-hifat-helper-correctness-4)
       (entry-limit1 (- entry-limit 1))
@@ -9471,7 +9471,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (cdr dir-ent-list)
        (+ -1 entry-limit)))
      0)
@@ -9485,7 +9485,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname))
+                                 path))
       (cdr dir-ent-list)
       entry-limit))
     0))
@@ -9503,7 +9503,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))))
+                                  path))))
      (:instance
       (:rewrite lofat-to-hifat-helper-correctness-4)
       (entry-limit1 (+ -1 entry-limit))
@@ -9530,7 +9530,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -9550,7 +9550,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -9580,7 +9580,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname))
+                                 path))
       (make-dir-ent-list (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory
@@ -9609,7 +9609,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname)))))))
+                                 path)))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-52
@@ -9624,7 +9624,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -9656,7 +9656,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -9699,7 +9699,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -9729,7 +9729,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))))
+                                  path))))
      (:instance
       lofat-to-hifat-helper-correctness-4
       (entry-limit1 (+ -1 entry-limit))
@@ -9757,7 +9757,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -9799,7 +9799,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -9829,7 +9829,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname))
+                                 path))
       (make-dir-ent-list (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory
@@ -9882,7 +9882,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))))
+                                  path))))
      (:instance
       lofat-find-file-correctness-1-lemma-6
       (entry-limit
@@ -9984,7 +9984,7 @@ Some (rather awful) testing forms are
              (lofat-to-hifat-helper
               (mv-nth 0
                       (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                         pathname))
+                                         path))
               (make-dir-ent-list
                (mv-nth 0
                        (dir-ent-clusterchain-contents
@@ -10004,7 +10004,7 @@ Some (rather awful) testing forms are
         (fat32-in-memory
          (mv-nth 0
                  (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                    pathname))))))))
+                                    path))))))))
 
   (defthm
     lofat-remove-file-correctness-1-lemma-54
@@ -10016,7 +10016,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth 0
                  (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                    pathname))
+                                    path))
          (make-dir-ent-list
           (mv-nth
            0
@@ -10049,7 +10049,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth 0
                   (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                     pathname))
+                                     path))
           (make-dir-ent-list
            (mv-nth
             0
@@ -10081,7 +10081,7 @@ Some (rather awful) testing forms are
              (lofat-to-hifat-helper
               (mv-nth '0
                       (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                         pathname))
+                                         path))
               (make-dir-ent-list
                (mv-nth '0
                        (dir-ent-clusterchain-contents
@@ -10099,7 +10099,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth 0
                  (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                    pathname))
+                                    path))
          (make-dir-ent-list
           (mv-nth
            0
@@ -10151,7 +10151,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth 0
                   (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                     pathname))
+                                     path))
           (make-dir-ent-list
            (mv-nth
             0
@@ -10185,7 +10185,7 @@ Some (rather awful) testing forms are
              (lofat-to-hifat-helper
               (mv-nth '0
                       (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                         pathname))
+                                         path))
               (make-dir-ent-list
                (mv-nth '0
                        (dir-ent-clusterchain-contents
@@ -10202,7 +10202,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth 0
                  (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                    pathname))
+                                    path))
          (make-dir-ent-list
           (mv-nth
            0
@@ -10263,7 +10263,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth 0
                   (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                     pathname))
+                                     path))
           (make-dir-ent-list
            (mv-nth
             0
@@ -10305,7 +10305,7 @@ Some (rather awful) testing forms are
               (lofat-to-hifat-helper
                (mv-nth '0
                        (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                          pathname))
+                                          path))
                (make-dir-ent-list
                 (mv-nth '0
                         (dir-ent-clusterchain-contents
@@ -10322,7 +10322,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth 0
                  (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                    pathname))
+                                    path))
          (make-dir-ent-list
           (mv-nth
            0
@@ -10355,7 +10355,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth 0
                   (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                     pathname))
+                                     path))
           (make-dir-ent-list
            (mv-nth
             0
@@ -10404,7 +10404,7 @@ Some (rather awful) testing forms are
             (lofat-to-hifat-helper
              (mv-nth 0
                      (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                        pathname))
+                                        path))
              (make-dir-ent-list
               (mv-nth 0
                       (dir-ent-clusterchain-contents
@@ -10421,7 +10421,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth 0
                  (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                    pathname))
+                                    path))
          (make-dir-ent-list
           (mv-nth
            0
@@ -10454,7 +10454,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth 0
                   (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                     pathname))
+                                     path))
           (make-dir-ent-list
            (mv-nth
             0
@@ -10484,7 +10484,7 @@ Some (rather awful) testing forms are
             (lofat-to-hifat-helper
              (mv-nth 0
                      (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                        pathname))
+                                        path))
              (make-dir-ent-list
               (mv-nth 0
                       (dir-ent-clusterchain-contents
@@ -10517,7 +10517,7 @@ Some (rather awful) testing forms are
         (lofat-to-hifat-helper
          (mv-nth 0
                  (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                    pathname))
+                                    path))
          (make-dir-ent-list
           (mv-nth
            0
@@ -10550,7 +10550,7 @@ Some (rather awful) testing forms are
          (lofat-to-hifat-helper
           (mv-nth 0
                   (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                     pathname))
+                                     path))
           (make-dir-ent-list
            (mv-nth
             0
@@ -10580,7 +10580,7 @@ Some (rather awful) testing forms are
             (lofat-to-hifat-helper
              (mv-nth 0
                      (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                        pathname))
+                                        path))
              (make-dir-ent-list
               (mv-nth 0
                       (dir-ent-clusterchain-contents
@@ -10618,7 +10618,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -10638,7 +10638,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -10666,7 +10666,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname))
+                                path))
      (make-dir-ent-list
       (mv-nth
        0
@@ -10681,7 +10681,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname))
+                                path))
      (make-dir-ent-list
       (mv-nth
        0
@@ -10710,7 +10710,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname)))))))
+                                 path)))))))
 
 ;; Very handy!
 (defthm
@@ -10719,7 +10719,7 @@ Some (rather awful) testing forms are
    (and
     (<= 2
         (dir-ent-first-cluster (car dir-ent-list)))
-    (consp (cdr pathname))
+    (consp (cdr path))
     (lofat-fs-p fat32-in-memory)
     (useful-dir-ent-list-p dir-ent-list)
     (equal
@@ -10750,17 +10750,17 @@ Some (rather awful) testing forms are
          0
          (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
        (+ -1 entry-limit))))
-    (fat32-filename-list-p pathname))
+    (fat32-filename-list-p path))
    (equal (dir-ent-clusterchain
            (mv-nth 0
                    (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                      pathname))
+                                      path))
            (car dir-ent-list))
           (dir-ent-clusterchain fat32-in-memory (car dir-ent-list))))
   :hints
   (("goal"
     :expand (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                               pathname)
+                               path)
     :in-theory
     (disable (:rewrite dir-ent-clusterchain-of-lofat-remove-file-disjoint))
     :use
@@ -10768,7 +10768,7 @@ Some (rather awful) testing forms are
      (:rewrite dir-ent-clusterchain-of-lofat-remove-file-disjoint)
      (entry-limit (- entry-limit 1))
      (dir-ent (car dir-ent-list))
-     (pathname (cdr pathname))
+     (path (cdr path))
      (root-dir-ent
       (mv-nth
        0
@@ -10777,7 +10777,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory (car dir-ent-list))))
-        (car pathname))))
+        (car path))))
      (fat32-in-memory fat32-in-memory)))))
 
 (defthm
@@ -10793,7 +10793,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -10835,7 +10835,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -10890,7 +10890,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -10954,7 +10954,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname)))
+                                  path)))
       (entry-limit1
        (+
         -1 entry-limit
@@ -10996,7 +10996,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))))))))
+                                  path))))))))
 
 ;; Hypotheses minimised.
 (defthm
@@ -11153,7 +11153,7 @@ Some (rather awful) testing forms are
       (lofat-to-hifat-helper
        (mv-nth 0
                (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth
          0
@@ -11167,7 +11167,7 @@ Some (rather awful) testing forms are
        (lofat-to-hifat-helper
         (mv-nth 0
                 (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth
           0
@@ -11187,7 +11187,7 @@ Some (rather awful) testing forms are
     (lofat-to-hifat-helper
      (mv-nth 0
              (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                pathname))
+                                path))
      (make-dir-ent-list
       (mv-nth
        0
@@ -11196,7 +11196,7 @@ Some (rather awful) testing forms are
     (lofat-to-hifat-helper
      (mv-nth 0
              (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                pathname))
+                                path))
      (make-dir-ent-list
       (mv-nth
        0
@@ -11217,7 +11217,7 @@ Some (rather awful) testing forms are
      (fat32-in-memory
       (mv-nth 0
               (lofat-remove-file fat32-in-memory (car dir-ent-list)
-                                 pathname)))))))
+                                 path)))))))
 
 (defthmd
   lofat-remove-file-correctness-1-lemma-38
@@ -11232,7 +11232,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -11274,7 +11274,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname))
+                                   path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -11302,7 +11302,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname))
+                                path))
      (make-dir-ent-list
       (mv-nth
        0
@@ -11328,7 +11328,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname))
+                                path))
      (make-dir-ent-list
       (mv-nth
        0
@@ -11369,7 +11369,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))))
+                                  path))))
      (:instance
       lofat-to-hifat-helper-correctness-4
       (entry-limit1
@@ -11422,7 +11422,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))))
+                                  path))))
      (:instance
       (:linear lofat-to-hifat-helper-correctness-3)
       (entry-limit
@@ -11460,7 +11460,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -11519,7 +11519,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname))
+                                  path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -11575,7 +11575,7 @@ Some (rather awful) testing forms are
                                     (mv-nth 0
                                             (find-dir-ent (cdr dir-ent-list)
                                                           filename))
-                                    pathname))
+                                    path))
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents
@@ -11887,7 +11887,7 @@ Some (rather awful) testing forms are
     lofat-remove-file-correctness-1-lemma-3
     (implies
      (and
-      (consp (cdr pathname))
+      (consp (cdr path))
       (equal
        (mv-nth
         3
@@ -11896,7 +11896,7 @@ Some (rather awful) testing forms are
           0
           (lofat-remove-file fat32-in-memory
                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                             pathname))
+                             path))
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents
@@ -11918,7 +11918,7 @@ Some (rather awful) testing forms are
           0
           (lofat-remove-file fat32-in-memory
                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                             pathname))
+                             path))
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents
@@ -11939,7 +11939,7 @@ Some (rather awful) testing forms are
            0
            (lofat-remove-file fat32-in-memory
                               (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                              pathname))
+                              path))
           (make-dir-ent-list
            (mv-nth 0
                    (dir-ent-clusterchain-contents
@@ -11956,7 +11956,7 @@ Some (rather awful) testing forms are
           0
           (lofat-remove-file fat32-in-memory
                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                             pathname))
+                             path))
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents
@@ -11970,7 +11970,7 @@ Some (rather awful) testing forms are
                      (lofat-to-hifat-helper fat32-in-memory
                                             dir-ent-list entry-limit))
              0)
-      (fat32-filename-list-p pathname)
+      (fat32-filename-list-p path)
       (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
       (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
          (+ 2 (count-of-clusters fat32-in-memory)))
@@ -11988,7 +11988,7 @@ Some (rather awful) testing forms are
            0
            (lofat-remove-file fat32-in-memory
                               (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                              pathname))
+                              path))
           (make-dir-ent-list
            (mv-nth 0
                    (dir-ent-clusterchain-contents
@@ -12017,7 +12017,7 @@ Some (rather awful) testing forms are
           0
           (lofat-remove-file fat32-in-memory
                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                             pathname))
+                             path))
          dir-ent-list entry-limit))
        0)
       (equal
@@ -12028,7 +12028,7 @@ Some (rather awful) testing forms are
           0
           (lofat-remove-file fat32-in-memory
                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                             pathname))
+                             path))
          dir-ent-list entry-limit))
        (put-assoc-equal
         filename
@@ -12041,7 +12041,7 @@ Some (rather awful) testing forms are
             0
             (lofat-remove-file fat32-in-memory
                                (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                               pathname))
+                               path))
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents
@@ -12061,7 +12061,7 @@ Some (rather awful) testing forms are
           0
           (lofat-remove-file fat32-in-memory
                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                             pathname))
+                             path))
          dir-ent-list entry-limit)))))
     :hints
     (("goal"
@@ -12123,7 +12123,7 @@ Some (rather awful) testing forms are
       :corollary
       (implies
        (and
-        (consp (cdr pathname))
+        (consp (cdr path))
         (equal
          (mv-nth
           3
@@ -12132,7 +12132,7 @@ Some (rather awful) testing forms are
             0
             (lofat-remove-file fat32-in-memory
                                (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                               pathname))
+                               path))
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents
@@ -12154,7 +12154,7 @@ Some (rather awful) testing forms are
             0
             (lofat-remove-file fat32-in-memory
                                (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                               pathname))
+                               path))
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents
@@ -12175,7 +12175,7 @@ Some (rather awful) testing forms are
              0
              (lofat-remove-file fat32-in-memory
                                 (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                                pathname))
+                                path))
             (make-dir-ent-list
              (mv-nth 0
                      (dir-ent-clusterchain-contents
@@ -12192,7 +12192,7 @@ Some (rather awful) testing forms are
             0
             (lofat-remove-file fat32-in-memory
                                (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                               pathname))
+                               path))
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents
@@ -12206,7 +12206,7 @@ Some (rather awful) testing forms are
                        (lofat-to-hifat-helper fat32-in-memory
                                               dir-ent-list entry-limit))
                0)
-        (fat32-filename-list-p pathname)
+        (fat32-filename-list-p path)
         (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
         (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
            (+ 2 (count-of-clusters fat32-in-memory)))
@@ -12224,7 +12224,7 @@ Some (rather awful) testing forms are
              0
              (lofat-remove-file fat32-in-memory
                                 (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                                pathname))
+                                path))
             (make-dir-ent-list
              (mv-nth 0
                      (dir-ent-clusterchain-contents
@@ -12253,7 +12253,7 @@ Some (rather awful) testing forms are
            0
            (lofat-remove-file fat32-in-memory
                               (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                              pathname))
+                              path))
           dir-ent-list entry-limit))))))))
 
 (defthm
@@ -12374,7 +12374,7 @@ Some (rather awful) testing forms are
   lofat-remove-file-correctness-1-lemma-5
   (implies
    (and
-    (consp (cdr pathname))
+    (consp (cdr path))
     (equal
      (mv-nth
       3
@@ -12383,7 +12383,7 @@ Some (rather awful) testing forms are
         0
         (lofat-remove-file fat32-in-memory
                            (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                           pathname))
+                           path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -12405,7 +12405,7 @@ Some (rather awful) testing forms are
         0
         (lofat-remove-file fat32-in-memory
                            (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                           pathname))
+                           path))
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents
@@ -12426,7 +12426,7 @@ Some (rather awful) testing forms are
          0
          (lofat-remove-file fat32-in-memory
                             (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                            pathname))
+                            path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -12440,7 +12440,7 @@ Some (rather awful) testing forms are
                    (lofat-to-hifat-helper fat32-in-memory
                                           dir-ent-list entry-limit))
            0)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
     (<
      (hifat-entry-count
@@ -12451,7 +12451,7 @@ Some (rather awful) testing forms are
          0
          (lofat-remove-file fat32-in-memory
                             (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                            pathname))
+                            path))
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents
@@ -12480,7 +12480,7 @@ Some (rather awful) testing forms are
         0
         (lofat-remove-file fat32-in-memory
                            (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                           pathname))
+                           path))
        dir-ent-list entry-limit))
      0)
     (equal
@@ -12491,7 +12491,7 @@ Some (rather awful) testing forms are
         0
         (lofat-remove-file fat32-in-memory
                            (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                           pathname))
+                           path))
        dir-ent-list entry-limit))
      (put-assoc-equal
       filename
@@ -12504,7 +12504,7 @@ Some (rather awful) testing forms are
           0
           (lofat-remove-file fat32-in-memory
                              (mv-nth 0 (find-dir-ent dir-ent-list filename))
-                             pathname))
+                             path))
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents
@@ -12593,7 +12593,7 @@ Some (rather awful) testing forms are
                   (make-dir-ent-list
                    (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                   entry-limit))
-         pathname)))
+         path)))
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -12618,13 +12618,13 @@ Some (rather awful) testing forms are
      (equal
       (mv-nth
        1
-       (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+       (lofat-remove-file fat32-in-memory root-dir-ent path))
       error-code)))
   :hints
   (("goal"
-    :induct (lofat-remove-file fat32-in-memory root-dir-ent pathname)
+    :induct (lofat-remove-file fat32-in-memory root-dir-ent path)
     :expand
-    (lofat-remove-file fat32-in-memory root-dir-ent pathname)
+    (lofat-remove-file fat32-in-memory root-dir-ent path)
     :in-theory (enable hifat-remove-file
                        (:rewrite hifat-to-lofat-inversion-lemma-17)
                        (:rewrite lofat-to-hifat-inversion-lemma-4)
@@ -12634,7 +12634,7 @@ Some (rather awful) testing forms are
   lofat-remove-file-correctness-1-lemma-67
   (implies
    (and
-    (consp (cddr pathname))
+    (consp (cddr path))
     (equal
      (mv-nth
       3
@@ -12650,8 +12650,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -12664,7 +12664,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit))
      0)
     (equal
@@ -12682,8 +12682,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -12696,7 +12696,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit))
      (mv-nth
       0
@@ -12717,9 +12717,9 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname))))))
+              (car path))))))
          entry-limit))
-       (cdr pathname))))
+       (cdr path))))
     (not-intersectp-list
      (mv-nth
       0
@@ -12732,7 +12732,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname)))))
+         (car path)))))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -12747,8 +12747,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -12761,7 +12761,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit)))
     (not
      (member-intersectp-equal
@@ -12774,7 +12774,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname))
+         (car path))
         entry-limit))
       (mv-nth
        2
@@ -12790,8 +12790,8 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname)))
-          (cdr pathname)))
+            (car path)))
+          (cdr path)))
         (make-dir-ent-list
          (mv-nth
           0
@@ -12804,7 +12804,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname))))))
+             (car path))))))
         entry-limit))))
     (lofat-fs-p fat32-in-memory)
     (equal
@@ -12817,7 +12817,7 @@ Some (rather awful) testing forms are
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
        entry-limit))
      0)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (dir-ent-directory-p
      (mv-nth
       0
@@ -12825,7 +12825,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (car pathname)))))
+       (car path)))))
    (equal
     (mv-nth
      3
@@ -12841,8 +12841,8 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (car pathname)))
-        (cdr pathname)))
+          (car path)))
+        (cdr path)))
       (make-dir-ent-list
        (mv-nth 0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
@@ -12863,14 +12863,14 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (car pathname)))
-        (cdr pathname)))
+          (car path)))
+        (cdr path)))
       0))
     :in-theory (disable (:rewrite lofat-remove-file-correctness-1-lemma-66))
     :use
     ((:instance
       (:rewrite lofat-remove-file-correctness-1-lemma-66)
-      (pathname (cdr pathname))
+      (path (cdr path))
       (root-dir-ent
        (mv-nth
         0
@@ -12879,11 +12879,11 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname))))
+         (car path))))
       (fat32-in-memory fat32-in-memory))
      (:instance
       (:linear hifat-entry-count-of-hifat-remove-file)
-      (pathname (cdr pathname))
+      (path (cdr path))
       (fs
        (mv-nth
         0
@@ -12901,14 +12901,14 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname))))))
+              (car path))))))
          entry-limit))))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-68
   (implies
    (and
-    (consp (cddr pathname))
+    (consp (cddr path))
     (equal
      (mv-nth
       3
@@ -12924,8 +12924,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -12938,7 +12938,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit))
      0)
     (equal
@@ -12956,8 +12956,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -12970,7 +12970,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit))
      (mv-nth
       0
@@ -12991,9 +12991,9 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname))))))
+              (car path))))))
          entry-limit))
-       (cdr pathname))))
+       (cdr path))))
     (not-intersectp-list
      (mv-nth
       0
@@ -13006,7 +13006,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname)))))
+         (car path)))))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -13021,8 +13021,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -13035,7 +13035,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit)))
     (not
      (member-intersectp-equal
@@ -13048,7 +13048,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname))
+         (car path))
         entry-limit))
       (mv-nth
        2
@@ -13064,8 +13064,8 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname)))
-          (cdr pathname)))
+            (car path)))
+          (cdr path)))
         (make-dir-ent-list
          (mv-nth
           0
@@ -13078,7 +13078,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname))))))
+             (car path))))))
         entry-limit))))
     (not-intersectp-list
      x
@@ -13096,8 +13096,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -13110,7 +13110,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit)))
     (lofat-fs-p fat32-in-memory)
     (equal
@@ -13123,7 +13123,7 @@ Some (rather awful) testing forms are
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
        entry-limit))
      0)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (not-intersectp-list
      x
      (mv-nth
@@ -13141,7 +13141,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (car pathname))))
+       (car path))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -13151,7 +13151,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname))))
+        (car path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (not-intersectp-list
     x
@@ -13169,8 +13169,8 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (car pathname)))
-        (cdr pathname)))
+          (car path)))
+        (cdr path)))
       (make-dir-ent-list
        (mv-nth 0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
@@ -13190,14 +13190,14 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (car pathname)))
-        (cdr pathname)))
+          (car path)))
+        (cdr path)))
       0))
     :in-theory (disable (:rewrite lofat-remove-file-correctness-1-lemma-66))
     :use
     ((:instance
       (:rewrite lofat-remove-file-correctness-1-lemma-66)
-      (pathname (cdr pathname))
+      (path (cdr path))
       (root-dir-ent
        (mv-nth
         0
@@ -13206,11 +13206,11 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname))))
+         (car path))))
       (fat32-in-memory fat32-in-memory))
      (:instance
       (:linear hifat-entry-count-of-hifat-remove-file)
-      (pathname (cdr pathname))
+      (path (cdr path))
       (fs
        (mv-nth
         0
@@ -13228,14 +13228,14 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname))))))
+              (car path))))))
          entry-limit))))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-65
   (implies
    (and
-    (consp (cddr pathname))
+    (consp (cddr path))
     (equal
      (mv-nth
       3
@@ -13251,8 +13251,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -13265,7 +13265,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit))
      0)
     (equal
@@ -13283,8 +13283,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -13297,7 +13297,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit))
      (mv-nth
       0
@@ -13318,9 +13318,9 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname))))))
+              (car path))))))
          entry-limit))
-       (cdr pathname))))
+       (cdr path))))
     (not-intersectp-list
      (mv-nth
       0
@@ -13333,7 +13333,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname)))))
+         (car path)))))
      (mv-nth
       2
       (lofat-to-hifat-helper
@@ -13348,8 +13348,8 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
-         (cdr pathname)))
+           (car path)))
+         (cdr path)))
        (make-dir-ent-list
         (mv-nth
          0
@@ -13362,7 +13362,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        entry-limit)))
     (not
      (member-intersectp-equal
@@ -13375,7 +13375,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname))
+         (car path))
         entry-limit))
       (mv-nth
        2
@@ -13391,8 +13391,8 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname)))
-          (cdr pathname)))
+            (car path)))
+          (cdr path)))
         (make-dir-ent-list
          (mv-nth
           0
@@ -13405,7 +13405,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname))))))
+             (car path))))))
         entry-limit))))
     (lofat-fs-p fat32-in-memory)
     (equal
@@ -13418,7 +13418,7 @@ Some (rather awful) testing forms are
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
        entry-limit))
      0)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (dir-ent-directory-p
      (mv-nth
       0
@@ -13426,7 +13426,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (car pathname)))))
+       (car path)))))
    (equal
     (mv-nth
      0
@@ -13442,14 +13442,14 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (car pathname)))
-        (cdr pathname)))
+          (car path)))
+        (cdr path)))
       (make-dir-ent-list
        (mv-nth 0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
       entry-limit))
     (put-assoc-equal
-     (car pathname)
+     (car path)
      (m1-file
       (mv-nth
        0
@@ -13458,7 +13458,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname)))
+        (car path)))
       (mv-nth
        0
        (hifat-remove-file
@@ -13477,9 +13477,9 @@ Some (rather awful) testing forms are
                (make-dir-ent-list (mv-nth 0
                                           (dir-ent-clusterchain-contents
                                            fat32-in-memory root-dir-ent)))
-               (car pathname))))))
+               (car path))))))
           entry-limit))
-        (cdr pathname))))
+        (cdr path))))
      (mv-nth
       0
       (lofat-to-hifat-helper
@@ -13510,9 +13510,9 @@ Some (rather awful) testing forms are
                (make-dir-ent-list (mv-nth 0
                                           (dir-ent-clusterchain-contents
                                            fat32-in-memory root-dir-ent)))
-               (car pathname))))))
+               (car path))))))
           entry-limit))
-        (cdr pathname)))
+        (cdr path)))
       0))
     :in-theory (disable (:rewrite lofat-remove-file-correctness-2)
                         (:rewrite lofat-remove-file-correctness-1-lemma-66)
@@ -13520,7 +13520,7 @@ Some (rather awful) testing forms are
     :use
     ((:instance
       (:rewrite lofat-remove-file-correctness-2)
-      (pathname (cdr pathname))
+      (path (cdr path))
       (root-dir-ent
        (mv-nth
         0
@@ -13529,11 +13529,11 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname))))
+         (car path))))
       (fat32-in-memory fat32-in-memory))
      (:instance
       (:rewrite lofat-remove-file-correctness-1-lemma-66)
-      (pathname (cdr pathname))
+      (path (cdr path))
       (root-dir-ent
        (mv-nth
         0
@@ -13542,13 +13542,13 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname))))
+         (car path))))
       (fat32-in-memory fat32-in-memory))
      (:instance
       (:rewrite lofat-remove-file-correctness-1-lemma-5)
       (entry-limit entry-limit)
-      (pathname (cdr pathname))
-      (filename (car pathname))
+      (path (cdr path))
+      (filename (car path))
       (dir-ent-list
        (make-dir-ent-list
         (mv-nth
@@ -13562,10 +13562,10 @@ Some (rather awful) testing forms are
   (local
    (defun-nx
      induction-scheme
-     (entry-limit fat32-in-memory pathname root-dir-ent x)
+     (entry-limit fat32-in-memory path root-dir-ent x)
      (cond
       ((and
-        (consp pathname)
+        (consp path)
         (equal
          (mv-nth
           1
@@ -13573,7 +13573,7 @@ Some (rather awful) testing forms are
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (fat32-filename-fix (car pathname))))
+           (fat32-filename-fix (car path))))
          0)
         (dir-ent-directory-p
          (mv-nth
@@ -13583,18 +13583,18 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (fat32-filename-fix (car pathname)))))
-        (consp (cdr pathname)))
+           (fat32-filename-fix (car path)))))
+        (consp (cdr path)))
        (induction-scheme
         entry-limit
-        fat32-in-memory (cdr pathname)
+        fat32-in-memory (cdr path)
         (mv-nth
          0
          (find-dir-ent
           (make-dir-ent-list
            (mv-nth 0
                    (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car pathname))))
+          (fat32-filename-fix (car path))))
         (append
          (mv-nth
           0
@@ -13606,7 +13606,7 @@ Some (rather awful) testing forms are
              (make-dir-ent-list
               (mv-nth 0
                       (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car pathname))))))
+             (fat32-filename-fix (car path))))))
          (flatten
           (mv-nth
            2
@@ -13616,11 +13616,11 @@ Some (rather awful) testing forms are
              (make-dir-ent-list
               (mv-nth 0
                       (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car pathname)))
+             (fat32-filename-fix (car path)))
             entry-limit)))
          x)))
       (t
-       (mv entry-limit fat32-in-memory pathname root-dir-ent x)))))
+       (mv entry-limit fat32-in-memory path root-dir-ent x)))))
 
   ;; Hypotheses trimmed.
   (defthm
@@ -13634,7 +13634,7 @@ Some (rather awful) testing forms are
                     (make-dir-ent-list
                      (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                     entry-limit))
-           pathname)))
+           path)))
       (implies
        (and
         (lofat-fs-p fat32-in-memory)
@@ -13650,7 +13650,7 @@ Some (rather awful) testing forms are
         (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
         (< (dir-ent-first-cluster root-dir-ent)
            (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
-        (fat32-filename-list-p pathname)
+        (fat32-filename-list-p path)
         (not-intersectp-list
          (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
          (mv-nth 2
@@ -13680,13 +13680,13 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   (mv-nth
                    0
-                   (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                   (lofat-remove-file fat32-in-memory root-dir-ent path))
                   (make-dir-ent-list
                    (mv-nth 0
                            (dir-ent-clusterchain-contents
                             (mv-nth
                              0
-                             (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                             (lofat-remove-file fat32-in-memory root-dir-ent path))
                             root-dir-ent)))
                   entry-limit))
          0)
@@ -13695,13 +13695,13 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   (mv-nth
                    0
-                   (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                   (lofat-remove-file fat32-in-memory root-dir-ent path))
                   (make-dir-ent-list
                    (mv-nth 0
                            (dir-ent-clusterchain-contents
                             (mv-nth
                              0
-                             (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                             (lofat-remove-file fat32-in-memory root-dir-ent path))
                             root-dir-ent)))
                   entry-limit))
          fs)
@@ -13711,22 +13711,22 @@ Some (rather awful) testing forms are
                  (lofat-to-hifat-helper
                   (mv-nth
                    0
-                   (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                   (lofat-remove-file fat32-in-memory root-dir-ent path))
                   (make-dir-ent-list
                    (mv-nth 0
                            (dir-ent-clusterchain-contents
                             (mv-nth
                              0
-                             (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                             (lofat-remove-file fat32-in-memory root-dir-ent path))
                             root-dir-ent)))
                   entry-limit))))))
     :hints
     (("goal"
       :induct
       (induction-scheme
-       entry-limit fat32-in-memory pathname root-dir-ent x)
+       entry-limit fat32-in-memory path root-dir-ent x)
       :expand
-      (lofat-remove-file fat32-in-memory root-dir-ent pathname)
+      (lofat-remove-file fat32-in-memory root-dir-ent path)
       :in-theory (enable hifat-remove-file
                          (:rewrite hifat-to-lofat-inversion-lemma-17)
                          (:rewrite lofat-to-hifat-inversion-lemma-4)
@@ -13743,7 +13743,7 @@ Some (rather awful) testing forms are
                       (make-dir-ent-list
                        (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                       entry-limit))
-             pathname)))
+             path)))
         (implies
          (and
           (lofat-fs-p fat32-in-memory)
@@ -13759,7 +13759,7 @@ Some (rather awful) testing forms are
           (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
           (< (dir-ent-first-cluster root-dir-ent)
              (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
-          (fat32-filename-list-p pathname)
+          (fat32-filename-list-p path)
           (not-intersectp-list
            (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
            (mv-nth 2
@@ -13789,13 +13789,13 @@ Some (rather awful) testing forms are
                   (lofat-to-hifat-helper
                    (mv-nth
                     0
-                    (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                    (lofat-remove-file fat32-in-memory root-dir-ent path))
                    (make-dir-ent-list
                     (mv-nth 0
                             (dir-ent-clusterchain-contents
                              (mv-nth
                               0
-                              (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                              (lofat-remove-file fat32-in-memory root-dir-ent path))
                              root-dir-ent)))
                    entry-limit)))))))))
 
@@ -13811,7 +13811,7 @@ Some (rather awful) testing forms are
                   (make-dir-ent-list
                    (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                   entry-limit))
-         pathname)))
+         path)))
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -13827,7 +13827,7 @@ Some (rather awful) testing forms are
       (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
       (< (dir-ent-first-cluster root-dir-ent)
          (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
-      (fat32-filename-list-p pathname)
+      (fat32-filename-list-p path)
       (not-intersectp-list
        (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
        (mv-nth 2
@@ -13848,13 +13848,13 @@ Some (rather awful) testing forms are
                (lofat-to-hifat-helper
                 (mv-nth
                  0
-                 (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                 (lofat-remove-file fat32-in-memory root-dir-ent path))
                 (make-dir-ent-list
                  (mv-nth 0
                          (dir-ent-clusterchain-contents
                           (mv-nth
                            0
-                           (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                           (lofat-remove-file fat32-in-memory root-dir-ent path))
                           root-dir-ent)))
                 entry-limit))
        0)
@@ -13863,13 +13863,13 @@ Some (rather awful) testing forms are
                (lofat-to-hifat-helper
                 (mv-nth
                  0
-                 (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                 (lofat-remove-file fat32-in-memory root-dir-ent path))
                 (make-dir-ent-list
                  (mv-nth 0
                          (dir-ent-clusterchain-contents
                           (mv-nth
                            0
-                           (lofat-remove-file fat32-in-memory root-dir-ent pathname))
+                           (lofat-remove-file fat32-in-memory root-dir-ent path))
                           root-dir-ent)))
                 entry-limit))
        fs))))
@@ -14096,7 +14096,7 @@ Some (rather awful) testing forms are
 
 (defun
     lofat-place-file
-    (fat32-in-memory root-dir-ent pathname file)
+    (fat32-in-memory root-dir-ent path file)
   (declare
    (xargs
     :guard (and (lofat-fs-p fat32-in-memory)
@@ -14105,17 +14105,17 @@ Some (rather awful) testing forms are
                 (< (dir-ent-first-cluster root-dir-ent)
                    (+ *ms-first-data-cluster*
                       (count-of-clusters fat32-in-memory)))
-                (fat32-filename-list-p pathname)
+                (fat32-filename-list-p path)
                 (lofat-file-p file)
                 (implies (not (lofat-regular-file-p file))
                          (unsigned-byte-p 32
                                           (* 32 (len (lofat-file->contents file))))))
-    :measure (acl2-count pathname)
+    :measure (acl2-count path)
     :stobjs fat32-in-memory
     :verify-guards nil))
-  (b* (((unless (consp pathname)) (mv fat32-in-memory *enoent*))
+  (b* (((unless (consp path)) (mv fat32-in-memory *enoent*))
        ;; Design choice - calls which ask for the entire root directory to be affected will fail.
-       (name (mbe :logic (fat32-filename-fix (car pathname)) :exec (car pathname)))
+       (name (mbe :logic (fat32-filename-fix (car path)) :exec (car path)))
        ((mv dir-contents &) (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
        (dir-ent-list (make-dir-ent-list dir-contents))
        ((mv dir-ent error-code) (find-dir-ent dir-ent-list name))
@@ -14124,15 +14124,15 @@ Some (rather awful) testing forms are
        ;; the old file. We may be moving a file and changing its name in the process.
        (dir-ent (if (equal error-code 0) dir-ent (dir-ent-set-filename (dir-ent-fix nil) name)))
        ;; ENOTDIR - can't act on anything that supposedly exists inside a regular file.
-       ((when (and (consp (cdr pathname)) (not (dir-ent-directory-p dir-ent))))
+       ((when (and (consp (cdr path)) (not (dir-ent-directory-p dir-ent))))
         (mv fat32-in-memory *enotdir*))
        (first-cluster (dir-ent-first-cluster dir-ent))
        ((when (and (or (< first-cluster 2)
                        (<= (+ 2 (count-of-clusters fat32-in-memory)) first-cluster))
-                   (consp (cdr pathname)))) (mv fat32-in-memory *eio*))
+                   (consp (cdr path)))) (mv fat32-in-memory *eio*))
        ;; Recursion
-       ((when(consp(cdr pathname))) (lofat-place-file fat32-in-memory dir-ent (cdr pathname) file))
-       ;; After these conditionals, the only remaining possibility is that (cdr pathname)
+       ((when(consp(cdr path))) (lofat-place-file fat32-in-memory dir-ent (cdr path) file))
+       ;; After these conditionals, the only remaining possibility is that (cdr path)
        ;; is an atom, which means we need to place a regular file or an empty directory, which
        ;; we have hopefully ensured in the guard or something.
        (length (if (dir-ent-directory-p dir-ent) *ms-max-dir-size* (dir-ent-file-size dir-ent)))
@@ -14172,7 +14172,7 @@ Some (rather awful) testing forms are
     (mv-nth
      0
      (lofat-place-file
-      fat32-in-memory root-dir-ent pathname file)))
+      fat32-in-memory root-dir-ent path file)))
    (count-of-clusters fat32-in-memory)))
 
 (defthm
@@ -14203,7 +14203,7 @@ Some (rather awful) testing forms are
           (make-dir-ent-list
            (mv-nth 0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-          (fat32-filename-fix (car pathname))))))
+          (fat32-filename-fix (car path))))))
       (make-list-ac
        (len
         (mv-nth
@@ -14217,7 +14217,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (fat32-filename-fix (car pathname)))))))
+            (fat32-filename-fix (car path)))))))
        0 nil))))
    (<
     (nfix 0)
@@ -14235,7 +14235,7 @@ Some (rather awful) testing forms are
            (make-dir-ent-list
             (mv-nth '0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-           (fat32-filename-fix (car pathname))))))
+           (fat32-filename-fix (car path))))))
        (make-list-ac
         (len
          (mv-nth
@@ -14249,7 +14249,7 @@ Some (rather awful) testing forms are
               (mv-nth
                '0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (fat32-filename-fix (car pathname)))))))
+             (fat32-filename-fix (car path)))))))
         '0
         'nil))
       1))))
@@ -14282,7 +14282,7 @@ Some (rather awful) testing forms are
           (make-dir-ent-list
            (mv-nth 0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-          (fat32-filename-fix (car pathname))))))
+          (fat32-filename-fix (car path))))))
       (make-list-ac
        (len
         (mv-nth
@@ -14296,7 +14296,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (fat32-filename-fix (car pathname)))))))
+            (fat32-filename-fix (car path)))))))
        0 nil))))
    (not
     (<
@@ -14316,7 +14316,7 @@ Some (rather awful) testing forms are
              (mv-nth
               '0
               (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (fat32-filename-fix (car pathname))))))
+            (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
@@ -14330,7 +14330,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 '0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-              (fat32-filename-fix (car pathname)))))))
+              (fat32-filename-fix (car path)))))))
          '0
          'nil))
        '1))
@@ -14350,7 +14350,7 @@ Some (rather awful) testing forms are
         fat32-in-memory
         (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                              (fat32-filename-fix (car pathname)))))
+                              (fat32-filename-fix (car path)))))
       (make-list-ac
        (len
         (mv-nth
@@ -14359,7 +14359,7 @@ Some (rather awful) testing forms are
           fat32-in-memory
           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                (fat32-filename-fix (car pathname))))))
+                                (fat32-filename-fix (car path))))))
        0 nil))))
    (<=
     *ms-first-data-cluster*
@@ -14374,7 +14374,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               (fat32-filename-fix (car pathname)))))
+                               (fat32-filename-fix (car path)))))
        (make-list-ac
         (len
          (mv-nth
@@ -14383,7 +14383,7 @@ Some (rather awful) testing forms are
            fat32-in-memory
            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                 (fat32-filename-fix (car pathname))))))
+                                 (fat32-filename-fix (car path))))))
         '0
         'nil))
       '1))))
@@ -14403,7 +14403,7 @@ Some (rather awful) testing forms are
          fat32-in-memory
          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               (fat32-filename-fix (car pathname)))))
+                               (fat32-filename-fix (car path)))))
        (make-list-ac
         (len
          (mv-nth
@@ -14412,7 +14412,7 @@ Some (rather awful) testing forms are
            fat32-in-memory
            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                 (fat32-filename-fix (car pathname))))))
+                                 (fat32-filename-fix (car path))))))
         0 nil)))
      (m 0))))
   :rule-classes :linear)
@@ -14432,7 +14432,7 @@ Some (rather awful) testing forms are
         (dir-ent-first-cluster
          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               (fat32-filename-fix (car pathname))))
+                               (fat32-filename-fix (car path))))
         0 (cluster-size fat32-in-memory)))
       (make-list-ac
        (len
@@ -14443,7 +14443,7 @@ Some (rather awful) testing forms are
           (dir-ent-first-cluster
            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                 (fat32-filename-fix (car pathname))))
+                                 (fat32-filename-fix (car path))))
           0 (cluster-size fat32-in-memory))))
        0 nil))))
    (<=
@@ -14460,7 +14460,7 @@ Some (rather awful) testing forms are
          (dir-ent-first-cluster
           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                (fat32-filename-fix (car pathname))))
+                                (fat32-filename-fix (car path))))
          '0
          (cluster-size fat32-in-memory)))
        (make-list-ac
@@ -14472,7 +14472,7 @@ Some (rather awful) testing forms are
            (dir-ent-first-cluster
             (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  (fat32-filename-fix (car pathname))))
+                                  (fat32-filename-fix (car path))))
            '0
            (cluster-size fat32-in-memory))))
         '0
@@ -14495,7 +14495,7 @@ Some (rather awful) testing forms are
          (dir-ent-first-cluster
           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                (fat32-filename-fix (car pathname))))
+                                (fat32-filename-fix (car path))))
          0 (cluster-size fat32-in-memory)))
        (make-list-ac
         (len
@@ -14506,7 +14506,7 @@ Some (rather awful) testing forms are
            (dir-ent-first-cluster
             (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  (fat32-filename-fix (car pathname))))
+                                  (fat32-filename-fix (car path))))
            0 (cluster-size fat32-in-memory))))
         0 nil)))
      (m 0))))
@@ -14532,7 +14532,7 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car pathname))))))
+          (fat32-filename-fix (car path))))))
       (make-list-ac
        (len
         (mv-nth
@@ -14546,7 +14546,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car pathname)))))))
+            (fat32-filename-fix (car path)))))))
        0 nil))))
    (not
     (<
@@ -14566,7 +14566,7 @@ Some (rather awful) testing forms are
              (mv-nth
               '0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car pathname))))))
+            (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
@@ -14580,7 +14580,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 '0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname)))))))
+              (fat32-filename-fix (car path)))))))
          '0
          'nil))
        '1))
@@ -14608,9 +14608,9 @@ Some (rather awful) testing forms are
               (count-of-clusters fat32-in-memory))))
    (lofat-fs-p (mv-nth 0
                        (lofat-place-file fat32-in-memory
-                                         root-dir-ent pathname file))))
+                                         root-dir-ent path file))))
   :hints (("goal" :induct (lofat-place-file fat32-in-memory
-                                            root-dir-ent pathname file))))
+                                            root-dir-ent path file))))
 
 (defthm
   lofat-place-file-guard-lemma-1
@@ -14656,7 +14656,7 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (car pathname)))))
+          (car path)))))
       (make-list-ac
        (len
         (mv-nth
@@ -14670,7 +14670,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        0 nil))))
    (<=
     2
@@ -14690,7 +14690,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))))
+           (car path)))))
        (make-list-ac
         (len
          (mv-nth
@@ -14704,7 +14704,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname))))))
+             (car path))))))
         0 nil))
       1)))))
 
@@ -14723,7 +14723,7 @@ Some (rather awful) testing forms are
         (dir-ent-first-cluster
          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               (car pathname)))
+                               (car path)))
         0 (cluster-size fat32-in-memory)))
       (make-list-ac
        (len
@@ -14734,7 +14734,7 @@ Some (rather awful) testing forms are
           (dir-ent-first-cluster
            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                 (car pathname)))
+                                 (car path)))
           0 (cluster-size fat32-in-memory))))
        0 nil))))
    (<=
@@ -14751,7 +14751,7 @@ Some (rather awful) testing forms are
          (dir-ent-first-cluster
           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                (car pathname)))
+                                (car path)))
          '0
          (cluster-size fat32-in-memory)))
        (make-list-ac
@@ -14763,7 +14763,7 @@ Some (rather awful) testing forms are
            (dir-ent-first-cluster
             (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  (car pathname)))
+                                  (car path)))
            '0
            (cluster-size fat32-in-memory))))
         '0
@@ -14787,7 +14787,7 @@ Some (rather awful) testing forms are
          (dir-ent-first-cluster
           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                (car pathname)))
+                                (car path)))
          0 (cluster-size fat32-in-memory)))
        (make-list-ac
         (len
@@ -14798,7 +14798,7 @@ Some (rather awful) testing forms are
            (dir-ent-first-cluster
             (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  (car pathname)))
+                                  (car path)))
            0 (cluster-size fat32-in-memory))))
         0 nil)))
      (m 0)))))
@@ -14823,7 +14823,7 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (car pathname)))))
+          (car path)))))
       (make-list-ac
        (len
         (mv-nth
@@ -14837,7 +14837,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname))))))
+            (car path))))))
        0 nil))))
    (not
     (<
@@ -14857,7 +14857,7 @@ Some (rather awful) testing forms are
              (mv-nth
               '0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname)))))
+            (car path)))))
         (make-list-ac
          (len
           (mv-nth
@@ -14871,7 +14871,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 '0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname))))))
+              (car path))))))
          '0
          'nil))
        '1))
@@ -14885,7 +14885,7 @@ Some (rather awful) testing forms are
 (defthm natp-of-lofat-place-file
   (natp (mv-nth 1
                 (lofat-place-file fat32-in-memory
-                                  root-dir-ent pathname file)))
+                                  root-dir-ent path file)))
   :rule-classes :type-prescription)
 
 ;; So this is going to be harder than the same lemma for lofat-remove-file
@@ -14909,7 +14909,7 @@ Some (rather awful) testing forms are
 ;;     (< (dir-ent-first-cluster root-dir-ent)
 ;;        (+ *ms-first-data-cluster*
 ;;           (count-of-clusters fat32-in-memory)))
-;;     (fat32-filename-list-p pathname)
+;;     (fat32-filename-list-p path)
 ;;     (lofat-file-p file)
 ;;     (implies (not (lofat-regular-file-p file))
 ;;              (unsigned-byte-p
@@ -14918,10 +14918,10 @@ Some (rather awful) testing forms are
 ;;     (not
 ;;      (zp (mv-nth 1
 ;;                  (lofat-place-file
-;;                   fat32-in-memory root-dir-ent pathname file)))))
+;;                   fat32-in-memory root-dir-ent path file)))))
 ;;    (equal (mv-nth 0
 ;;                   (lofat-place-file
-;;                    fat32-in-memory root-dir-ent pathname file))
+;;                    fat32-in-memory root-dir-ent path file))
 ;;           fat32-in-memory))
 ;;   :hints (("goal" :in-theory (enable update-dir-contents-correctness-1
 ;;                                      clear-clusterchain-correctness-3
@@ -14978,18 +14978,18 @@ Some (rather awful) testing forms are
 ;; Rather general
 (defthm lofat-place-file-correctness-1-lemma-3
   (and
-   (natp (mv-nth 1 (hifat-place-file fs pathname file)))
-   (not (stringp (mv-nth 0 (hifat-place-file fs pathname file)))))
+   (natp (mv-nth 1 (hifat-place-file fs path file)))
+   (not (stringp (mv-nth 0 (hifat-place-file fs path file)))))
   :hints (("goal" :in-theory (enable hifat-place-file)))
   :rule-classes
   ((:type-prescription :corollary
-    (natp (mv-nth 1 (hifat-place-file fs pathname file))))
+    (natp (mv-nth 1 (hifat-place-file fs path file))))
    (:type-prescription :corollary
-    (not (stringp (mv-nth 0 (hifat-place-file fs pathname file)))))))
+    (not (stringp (mv-nth 0 (hifat-place-file fs path file)))))))
 
 ;; Rather general
 (defthm lofat-place-file-correctness-1-lemma-4
-  (natp (mv-nth 1 (hifat-find-file fs pathname)))
+  (natp (mv-nth 1 (hifat-find-file fs path)))
   :hints (("goal" :in-theory (enable hifat-find-file)))
   :rule-classes :type-prescription)
 
@@ -15004,10 +15004,10 @@ Some (rather awful) testing forms are
 ;; Move later
 (defthm
   len-of-hifat-place-file
-  (equal (len (mv-nth 0 (hifat-place-file fs pathname file)))
-         (if (and (consp pathname)
-                  (atom (cdr pathname))
-                  (atom (assoc-equal (fat32-filename-fix (car pathname))
+  (equal (len (mv-nth 0 (hifat-place-file fs path file)))
+         (if (and (consp path)
+                  (atom (cdr path))
+                  (atom (assoc-equal (fat32-filename-fix (car path))
                                      (hifat-file-alist-fix fs))))
              (+ 1 (len (hifat-file-alist-fix fs)))
              (len (hifat-file-alist-fix fs))))
@@ -15017,32 +15017,32 @@ Some (rather awful) testing forms are
   hifat-cluster-count-of-hifat-place-file-lemma-2
   (implies
    (and
-    (equal (len (cdr pathname)) 1)
-    (m1-directory-file-p (cdr (assoc-equal (car pathname) fs)))
+    (equal (len (cdr path)) 1)
+    (m1-directory-file-p (cdr (assoc-equal (car path) fs)))
     (m1-file-alist-p fs)
     (hifat-no-dups-p fs)
-    (fat32-filename-list-p pathname)
+    (fat32-filename-list-p path)
     (consp
-     (assoc-equal (cadr pathname)
-                  (m1-file->contents (cdr (assoc-equal (car pathname) fs))))))
+     (assoc-equal (cadr path)
+                  (m1-file->contents (cdr (assoc-equal (car path) fs))))))
    (equal
     (mv-nth 1
             (hifat-find-file
-             (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-             (cdr pathname)))
+             (m1-file->contents (cdr (assoc-equal (car path) fs)))
+             (cdr path)))
     0))
   :hints
   (("goal"
     :expand ((hifat-find-file
-              (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-              (cdr pathname))
-             (len (cdr pathname))
-             (len (cddr pathname))))))
+              (m1-file->contents (cdr (assoc-equal (car path) fs)))
+              (cdr path))
+             (len (cdr path))
+             (len (cddr path))))))
 
 (defthmd hifat-cluster-count-of-hifat-place-file-lemma-3
-  (implies (equal (+ 1 (len (cddr pathname))) 1)
-           (not (consp (cddr pathname))))
-  :hints (("goal" :expand (len (cddr pathname)))))
+  (implies (equal (+ 1 (len (cddr path))) 1)
+           (not (consp (cddr path))))
+  :hints (("goal" :expand (len (cddr path)))))
 
 (encapsulate
   ()
@@ -15063,22 +15063,22 @@ Some (rather awful) testing forms are
   hifat-cluster-count-of-hifat-place-file-lemma-1
   (implies
    (and
-    (consp pathname)
-    (m1-directory-file-p (cdr (assoc-equal (car pathname) fs)))
-    (< 1 (len (cdr pathname)))
+    (consp path)
+    (m1-directory-file-p (cdr (assoc-equal (car path) fs)))
+    (< 1 (len (cdr path)))
     (equal
      (hifat-cluster-count
       (mv-nth 0
               (hifat-place-file
-               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-               (cdr pathname)
+               (m1-file->contents (cdr (assoc-equal (car path) fs)))
+               (cdr path)
                file))
       cluster-size)
      (+
       (len (make-clusters (m1-file->contents file)
                           cluster-size))
       (hifat-cluster-count
-       (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+       (m1-file->contents (cdr (assoc-equal (car path) fs)))
        cluster-size)
       (-
        (ceiling
@@ -15091,9 +15091,9 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (hifat-find-file
-              (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-              (take (+ -1 (len (cdr pathname)))
-                    (cdr pathname))))))))
+              (m1-file->contents (cdr (assoc-equal (car path) fs)))
+              (take (+ -1 (len (cdr path)))
+                    (cdr path))))))))
         cluster-size))
       (ceiling
        (+
@@ -15105,24 +15105,24 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (hifat-find-file
-             (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-             (take (+ -1 (len (cdr pathname)))
-                   (cdr pathname))))))))
+             (m1-file->contents (cdr (assoc-equal (car path) fs)))
+             (take (+ -1 (len (cdr path)))
+                   (cdr path))))))))
        cluster-size)))
     (m1-file-alist-p fs)
     (hifat-no-dups-p fs)
-    (fat32-filename-list-p pathname))
+    (fat32-filename-list-p path))
    (equal
     (+
      (hifat-cluster-count fs cluster-size)
      (- (hifat-cluster-count
-         (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+         (m1-file->contents (cdr (assoc-equal (car path) fs)))
          cluster-size))
      (hifat-cluster-count
       (mv-nth 0
               (hifat-place-file
-               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-               (cdr pathname)
+               (m1-file->contents (cdr (assoc-equal (car path) fs)))
+               (cdr path)
                file))
       cluster-size))
     (+
@@ -15136,8 +15136,8 @@ Some (rather awful) testing forms are
              (len (m1-file->contents
                    (mv-nth 0
                            (hifat-find-file fs
-                                            (take (len (cdr pathname))
-                                                  pathname)))))))
+                                            (take (len (cdr path))
+                                                  path)))))))
        cluster-size))
      (ceiling
       (+ 96
@@ -15145,33 +15145,33 @@ Some (rather awful) testing forms are
             (len (m1-file->contents
                   (mv-nth 0
                           (hifat-find-file fs
-                                           (take (len (cdr pathname))
-                                                 pathname)))))))
+                                           (take (len (cdr path))
+                                                 path)))))))
       cluster-size))))
   :hints (("goal" :expand ((hifat-find-file fs
-                                            (cons (car pathname)
-                                                  (take (len (cddr pathname))
-                                                        (cdr pathname))))
-                           (take (+ 1 (len (cddr pathname)))
-                                 pathname))
-           :cases ((equal (consp (cdr (take (+ 1 (len (cddr pathname)))
-                                            pathname)))
+                                            (cons (car path)
+                                                  (take (len (cddr path))
+                                                        (cdr path))))
+                           (take (+ 1 (len (cddr path)))
+                                 path))
+           :cases ((equal (consp (cdr (take (+ 1 (len (cddr path)))
+                                            path)))
                           (< 1
-                             (len (take (+ 1 (len (cddr pathname)))
-                                        pathname))))))))
+                             (len (take (+ 1 (len (cddr path)))
+                                        path))))))))
 
 (defthm
   hifat-cluster-count-of-hifat-place-file-lemma-4
   (implies
    (and
-    (m1-directory-file-p (cdr (assoc-equal (car pathname) fs)))
-    (< 1 (len (cdr pathname)))
+    (m1-directory-file-p (cdr (assoc-equal (car path) fs)))
+    (< 1 (len (cdr path)))
     (equal
      (hifat-cluster-count
       (mv-nth 0
               (hifat-place-file
-               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-               (cdr pathname)
+               (m1-file->contents (cdr (assoc-equal (car path) fs)))
+               (cdr path)
                file))
       cluster-size)
      (+
@@ -15181,7 +15181,7 @@ Some (rather awful) testing forms are
                   (* 32 (len (m1-file->contents file))))
                cluster-size)
       (hifat-cluster-count
-       (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+       (m1-file->contents (cdr (assoc-equal (car path) fs)))
        cluster-size)
       (-
        (ceiling
@@ -15194,9 +15194,9 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (hifat-find-file
-              (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-              (take (+ -1 (len (cdr pathname)))
-                    (cdr pathname))))))))
+              (m1-file->contents (cdr (assoc-equal (car path) fs)))
+              (take (+ -1 (len (cdr path)))
+                    (cdr path))))))))
         cluster-size))
       (ceiling
        (+
@@ -15208,24 +15208,24 @@ Some (rather awful) testing forms are
            (mv-nth
             0
             (hifat-find-file
-             (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-             (take (+ -1 (len (cdr pathname)))
-                   (cdr pathname))))))))
+             (m1-file->contents (cdr (assoc-equal (car path) fs)))
+             (take (+ -1 (len (cdr path)))
+                   (cdr path))))))))
        cluster-size)))
     (m1-file-alist-p fs)
     (hifat-no-dups-p fs)
-    (fat32-filename-list-p pathname))
+    (fat32-filename-list-p path))
    (equal
     (+
      (hifat-cluster-count fs cluster-size)
      (- (hifat-cluster-count
-         (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
+         (m1-file->contents (cdr (assoc-equal (car path) fs)))
          cluster-size))
      (hifat-cluster-count
       (mv-nth 0
               (hifat-place-file
-               (m1-file->contents (cdr (assoc-equal (car pathname) fs)))
-               (cdr pathname)
+               (m1-file->contents (cdr (assoc-equal (car path) fs)))
+               (cdr path)
                file))
       cluster-size))
     (+
@@ -15242,8 +15242,8 @@ Some (rather awful) testing forms are
              (len (m1-file->contents
                    (mv-nth 0
                            (hifat-find-file fs
-                                            (take (len (cdr pathname))
-                                                  pathname)))))))
+                                            (take (len (cdr path))
+                                                  path)))))))
        cluster-size))
      (ceiling
       (+ 96
@@ -15251,20 +15251,20 @@ Some (rather awful) testing forms are
             (len (m1-file->contents
                   (mv-nth 0
                           (hifat-find-file fs
-                                           (take (len (cdr pathname))
-                                                 pathname)))))))
+                                           (take (len (cdr path))
+                                                 path)))))))
       cluster-size))))
   :hints (("goal" :expand ((hifat-find-file fs
-                                            (cons (car pathname)
-                                                  (take (len (cddr pathname))
-                                                        (cdr pathname))))
-                           (take (+ 1 (len (cddr pathname)))
-                                 pathname))
-           :cases ((equal (consp (cdr (take (+ 1 (len (cddr pathname)))
-                                            pathname)))
+                                            (cons (car path)
+                                                  (take (len (cddr path))
+                                                        (cdr path))))
+                           (take (+ 1 (len (cddr path)))
+                                 path))
+           :cases ((equal (consp (cdr (take (+ 1 (len (cddr path)))
+                                            path)))
                           (< 1
-                             (len (take (+ 1 (len (cddr pathname)))
-                                        pathname))))))))
+                             (len (take (+ 1 (len (cddr path)))
+                                        path))))))))
 
 (encapsulate
   ()
@@ -15275,24 +15275,24 @@ Some (rather awful) testing forms are
      (implies
       (and (m1-file-alist-p fs)
            (hifat-no-dups-p fs)
-           (fat32-filename-list-p pathname)
+           (fat32-filename-list-p path)
            (m1-file-p file)
            (integerp cluster-size)
            (<= 512 cluster-size))
       (equal
        (hifat-cluster-count
-        (mv-nth 0 (hifat-place-file fs pathname file))
+        (mv-nth 0 (hifat-place-file fs path file))
         cluster-size)
        (b*
            ((new-contents (m1-file->contents file))
             ((when
                  (not (zp (mv-nth 1
-                                  (hifat-place-file fs pathname file)))))
+                                  (hifat-place-file fs path file)))))
              (hifat-cluster-count fs cluster-size))
             ;; This may be inaccurate because the parent directory's length
             ;; will change.
             ((when
-                 (and (not (zp (mv-nth 1 (hifat-find-file fs pathname))))
+                 (and (not (zp (mv-nth 1 (hifat-find-file fs path))))
                       (m1-regular-file-p file)))
              (+
               (hifat-cluster-count fs cluster-size)
@@ -15307,7 +15307,7 @@ Some (rather awful) testing forms are
                    (m1-file->contents
                     (mv-nth
                      0
-                     (hifat-find-file fs (butlast pathname 1)))))))
+                     (hifat-find-file fs (butlast path 1)))))))
                 cluster-size))
               (-
                (nfix
@@ -15320,12 +15320,12 @@ Some (rather awful) testing forms are
                     (m1-file->contents
                      (mv-nth
                       0
-                      (hifat-find-file fs (butlast pathname 1)))))))
+                      (hifat-find-file fs (butlast path 1)))))))
                  cluster-size)))))
             ;; This may be inaccurate because the parent directory's length
             ;; will change.
             ((when
-                 (not (zp (mv-nth 1 (hifat-find-file fs pathname)))))
+                 (not (zp (mv-nth 1 (hifat-find-file fs path)))))
              (+ (hifat-cluster-count fs cluster-size)
                 (hifat-cluster-count new-contents cluster-size)
                 (nfix (ceiling (* 32 (+ 2 (len new-contents)))
@@ -15340,7 +15340,7 @@ Some (rather awful) testing forms are
                      (m1-file->contents
                       (mv-nth
                        0
-                       (hifat-find-file fs (butlast pathname 1)))))))
+                       (hifat-find-file fs (butlast path 1)))))))
                   cluster-size))
                 (-
                  (nfix
@@ -15353,9 +15353,9 @@ Some (rather awful) testing forms are
                       (m1-file->contents
                        (mv-nth
                         0
-                        (hifat-find-file fs (butlast pathname 1)))))))
+                        (hifat-find-file fs (butlast path 1)))))))
                    cluster-size)))))
-            (old-file (mv-nth 0 (hifat-find-file fs pathname)))
+            (old-file (mv-nth 0 (hifat-find-file fs path)))
             (old-contents (m1-file->contents old-file))
             ((when (and (m1-regular-file-p file)
                         (m1-regular-file-p old-file)))
@@ -15384,7 +15384,7 @@ Some (rather awful) testing forms are
      :hints
      (("goal" :in-theory (enable hifat-place-file hifat-find-file
                                  hifat-cluster-count-of-hifat-place-file-lemma-3)
-       :induct (hifat-place-file fs pathname file)))))
+       :induct (hifat-place-file fs path file)))))
 
   (defthm
     hifat-cluster-count-of-hifat-place-file
@@ -15393,21 +15393,21 @@ Some (rather awful) testing forms are
           (<= 512 cluster-size))
      (equal
       (hifat-cluster-count
-       (mv-nth 0 (hifat-place-file fs pathname file))
+       (mv-nth 0 (hifat-place-file fs path file))
        cluster-size)
       (b*
           ((new-contents (m1-file->contents file))
            (fs (hifat-file-alist-fix fs))
-           (pathname (fat32-filename-list-fix pathname))
+           (path (fat32-filename-list-fix path))
            (file (m1-file-fix file))
            ((when
                 (not (zp (mv-nth 1
-                                 (hifat-place-file fs pathname file)))))
+                                 (hifat-place-file fs path file)))))
             (hifat-cluster-count fs cluster-size))
            ;; This may be inaccurate because the parent directory's length
            ;; will change.
            ((when
-                (and (not (zp (mv-nth 1 (hifat-find-file fs pathname))))
+                (and (not (zp (mv-nth 1 (hifat-find-file fs path))))
                      (m1-regular-file-p file)))
             (+
              (hifat-cluster-count fs cluster-size)
@@ -15422,7 +15422,7 @@ Some (rather awful) testing forms are
                   (m1-file->contents
                    (mv-nth
                     0
-                    (hifat-find-file fs (butlast pathname 1)))))))
+                    (hifat-find-file fs (butlast path 1)))))))
                cluster-size))
              (-
               (nfix
@@ -15435,12 +15435,12 @@ Some (rather awful) testing forms are
                    (m1-file->contents
                     (mv-nth
                      0
-                     (hifat-find-file fs (butlast pathname 1)))))))
+                     (hifat-find-file fs (butlast path 1)))))))
                 cluster-size)))))
            ;; This may be inaccurate because the parent directory's length
            ;; will change.
            ((when
-                (not (zp (mv-nth 1 (hifat-find-file fs pathname)))))
+                (not (zp (mv-nth 1 (hifat-find-file fs path)))))
             (+ (hifat-cluster-count fs cluster-size)
                (hifat-cluster-count new-contents cluster-size)
                (nfix (ceiling (* 32 (+ 2 (len new-contents)))
@@ -15455,7 +15455,7 @@ Some (rather awful) testing forms are
                     (m1-file->contents
                      (mv-nth
                       0
-                      (hifat-find-file fs (butlast pathname 1)))))))
+                      (hifat-find-file fs (butlast path 1)))))))
                  cluster-size))
                (-
                 (nfix
@@ -15468,9 +15468,9 @@ Some (rather awful) testing forms are
                      (m1-file->contents
                       (mv-nth
                        0
-                       (hifat-find-file fs (butlast pathname 1)))))))
+                       (hifat-find-file fs (butlast path 1)))))))
                   cluster-size)))))
-           (old-file (mv-nth 0 (hifat-find-file fs pathname)))
+           (old-file (mv-nth 0 (hifat-find-file fs path)))
            (old-contents (m1-file->contents old-file))
            ((when (and (m1-regular-file-p file)
                        (m1-regular-file-p old-file)))
@@ -15501,7 +15501,7 @@ Some (rather awful) testing forms are
       :use (:instance
             hifat-cluster-count-of-hifat-place-file-lemma-5
             (fs (hifat-file-alist-fix fs))
-            (pathname (fat32-filename-list-fix pathname))
+            (path (fat32-filename-list-fix path))
             (file (m1-file-fix file)))))))
 
 (defthm lofat-place-file-correctness-1-lemma-5
@@ -15529,7 +15529,7 @@ Some (rather awful) testing forms are
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
          entry-limit))
-       pathname))
+       path))
      0)
     (equal
      (mv-nth
@@ -15541,7 +15541,7 @@ Some (rather awful) testing forms are
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
        entry-limit))
      0)
-    (fat32-filename-list-p pathname))
+    (fat32-filename-list-p path))
    (equal
     (mv-nth
      1
@@ -15549,7 +15549,7 @@ Some (rather awful) testing forms are
       (make-dir-ent-list
        (mv-nth 0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-      (car pathname)))
+      (car path)))
     0))
   :hints
   (("goal"
@@ -15563,7 +15563,7 @@ Some (rather awful) testing forms are
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
        entry-limit))
-     pathname))))
+     path))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-7
@@ -15582,7 +15582,7 @@ Some (rather awful) testing forms are
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
          entry-limit))
-       pathname
+       path
        (m1-file dir-ent (lofat-file->contents file))))
      0)
     (equal
@@ -15595,8 +15595,8 @@ Some (rather awful) testing forms are
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
        entry-limit))
      0)
-    (fat32-filename-list-p pathname)
-    (< 1 (+ 1 (len (cdr pathname)))))
+    (fat32-filename-list-p path)
+    (< 1 (+ 1 (len (cdr path)))))
    (equal
     (mv-nth
      1
@@ -15604,7 +15604,7 @@ Some (rather awful) testing forms are
       (make-dir-ent-list
        (mv-nth 0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-      (car pathname)))
+      (car path)))
     0))
   :hints
   (("goal"
@@ -15618,7 +15618,7 @@ Some (rather awful) testing forms are
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
        entry-limit))
-     pathname
+     path
      (m1-file dir-ent (lofat-file->contents file))))))
 
 (defthm
@@ -15666,7 +15666,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (fat32-filename-fix (car pathname)))))
+       (fat32-filename-fix (car path)))))
     (<= 2 (dir-ent-first-cluster dir-ent))
     (< (dir-ent-first-cluster dir-ent)
        (+ 2 (count-of-clusters fat32-in-memory)))
@@ -15710,7 +15710,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (fat32-filename-fix (car pathname))))))
+           (fat32-filename-fix (car path))))))
        (make-list-ac
         (len
          (mv-nth
@@ -15724,7 +15724,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car pathname)))))))
+             (fat32-filename-fix (car path)))))))
         0 nil)))))
    (not
     (member-equal
@@ -15744,7 +15744,7 @@ Some (rather awful) testing forms are
              (mv-nth
               '0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car pathname))))))
+            (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
@@ -15758,7 +15758,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 '0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname)))))))
+              (fat32-filename-fix (car path)))))))
          '0
          'nil))
        '1))
@@ -15784,7 +15784,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car pathname))))))
+            (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
@@ -15798,7 +15798,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname)))))))
+              (fat32-filename-fix (car path)))))))
          0 nil)))
       (x (mv-nth 0
                  (dir-ent-clusterchain fat32-in-memory dir-ent)))
@@ -15819,7 +15819,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname))))))
+              (fat32-filename-fix (car path))))))
           (make-list-ac
            (len
             (mv-nth
@@ -15832,7 +15832,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (fat32-filename-fix (car pathname)))))))
+                             (fat32-filename-fix (car path)))))))
            0 nil))
          1))))))))
 
@@ -15850,7 +15850,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (fat32-filename-fix (car pathname))))))
+        (fat32-filename-fix (car path))))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -15860,7 +15860,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (fat32-filename-fix (car pathname)))))
+        (fat32-filename-fix (car path)))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (<= 2 (dir-ent-first-cluster root-dir-ent))
     (< (dir-ent-first-cluster root-dir-ent)
@@ -15906,7 +15906,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (fat32-filename-fix (car pathname))))))
+           (fat32-filename-fix (car path))))))
        (make-list-ac
         (len
          (mv-nth
@@ -15920,7 +15920,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car pathname)))))))
+             (fat32-filename-fix (car path)))))))
         0 nil)))))
    (not
     (member-equal
@@ -15940,7 +15940,7 @@ Some (rather awful) testing forms are
              (mv-nth
               '0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car pathname))))))
+            (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
@@ -15954,7 +15954,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 '0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname)))))))
+              (fat32-filename-fix (car path)))))))
          '0
          'nil))
        '1))
@@ -15985,7 +15985,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname))))))
+              (fat32-filename-fix (car path))))))
           (make-list-ac
            (len
             (mv-nth
@@ -15998,7 +15998,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (fat32-filename-fix (car pathname)))))))
+                             (fat32-filename-fix (car path)))))))
            0 nil))
          1)))
       (fa-table
@@ -16015,7 +16015,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car pathname))))))
+            (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
@@ -16029,7 +16029,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname)))))))
+              (fat32-filename-fix (car path)))))))
          0 nil))))))))
 
 (defthm
@@ -16046,7 +16046,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (fat32-filename-fix (car pathname))))))
+        (fat32-filename-fix (car path))))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -16056,7 +16056,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (fat32-filename-fix (car pathname)))))
+        (fat32-filename-fix (car path)))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (<= 2 (dir-ent-first-cluster dir-ent))
     (< (dir-ent-first-cluster dir-ent)
@@ -16101,7 +16101,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (fat32-filename-fix (car pathname))))))
+           (fat32-filename-fix (car path))))))
        (make-list-ac
         (len
          (mv-nth
@@ -16115,7 +16115,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car pathname)))))))
+             (fat32-filename-fix (car path)))))))
         0 nil)))))
    (not
     (member-equal
@@ -16135,7 +16135,7 @@ Some (rather awful) testing forms are
              (mv-nth
               '0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car pathname))))))
+            (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
@@ -16149,7 +16149,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 '0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname)))))))
+              (fat32-filename-fix (car path)))))))
          '0
          'nil))
        '1))
@@ -16180,7 +16180,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname))))))
+              (fat32-filename-fix (car path))))))
           (make-list-ac
            (len
             (mv-nth
@@ -16193,7 +16193,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (fat32-filename-fix (car pathname)))))))
+                             (fat32-filename-fix (car path)))))))
            0 nil))
          1)))
       (fa-table
@@ -16210,7 +16210,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car pathname))))))
+            (fat32-filename-fix (car path))))))
         (make-list-ac
          (len
           (mv-nth
@@ -16224,7 +16224,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car pathname)))))))
+              (fat32-filename-fix (car path)))))))
          0 nil))))))))
 
 (defthm
@@ -16282,11 +16282,11 @@ Some (rather awful) testing forms are
    (equal (dir-ent-clusterchain-contents
            (mv-nth 0
                    (lofat-place-file fat32-in-memory
-                                     root-dir-ent pathname file))
+                                     root-dir-ent path file))
            dir-ent)
           (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
   :hints (("goal" :induct (lofat-place-file fat32-in-memory
-                                            root-dir-ent pathname file))))
+                                            root-dir-ent path file))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-8
@@ -16326,7 +16326,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-       (car pathname)))))
+       (car path)))))
    (equal
     (dir-ent-clusterchain-contents
      (mv-nth
@@ -16340,8 +16340,8 @@ Some (rather awful) testing forms are
           (mv-nth
            '0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname)))
-       (cdr pathname)
+         (car path)))
+       (cdr path)
        file))
      root-dir-ent)
     (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
@@ -16355,7 +16355,7 @@ Some (rather awful) testing forms are
       (:rewrite dir-ent-clusterchain-contents-of-lofat-place-file-disjoint)
       (dir-ent root-dir-ent)
       (file file)
-      (pathname (cdr pathname))
+      (path (cdr path))
       (root-dir-ent
        (mv-nth
         0
@@ -16364,7 +16364,7 @@ Some (rather awful) testing forms are
           (mv-nth
            0
            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname))))
+         (car path))))
       (fat32-in-memory fat32-in-memory))))))
 
 (defthm lofat-place-file-correctness-1-lemma-9
@@ -16389,7 +16389,7 @@ Some (rather awful) testing forms are
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-        (car pathname)))))
+        (car path)))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -16398,7 +16398,7 @@ Some (rather awful) testing forms are
         (make-dir-ent-list
          (mv-nth 0
                  (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-        (car pathname))))
+        (car path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (equal (mv-nth 1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
@@ -16439,7 +16439,7 @@ Some (rather awful) testing forms are
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-           (car pathname)))))
+           (car path)))))
        (make-list-ac
         (len
          (mv-nth
@@ -16453,7 +16453,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
+             (car path))))))
         0 nil)))))
    (not
     (member-equal
@@ -16472,7 +16472,7 @@ Some (rather awful) testing forms are
             (make-dir-ent-list
              (mv-nth '0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (car pathname)))))
+            (car path)))))
         (make-list-ac
          (len
           (mv-nth
@@ -16486,7 +16486,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 '0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-              (car pathname))))))
+              (car path))))))
          '0
          'nil))
        '1))
@@ -16517,7 +16517,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-              (car pathname)))))
+              (car path)))))
           (make-list-ac
            (len
             (mv-nth
@@ -16531,7 +16531,7 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                (car pathname))))))
+                (car path))))))
            0 nil))
          1)))
       (fa-table
@@ -16547,7 +16547,7 @@ Some (rather awful) testing forms are
             (make-dir-ent-list
              (mv-nth 0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (car pathname)))))
+            (car path)))))
         (make-list-ac
          (len
           (mv-nth
@@ -16561,7 +16561,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-              (car pathname))))))
+              (car path))))))
          0 nil))))))))
 
 (defthm
@@ -16575,7 +16575,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-       (car pathname))))
+       (car path))))
     (<=
      1
      (count-free-clusters
@@ -16600,8 +16600,8 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                (car pathname))))))
-           (cadr pathname)))))
+                (car path))))))
+           (cadr path)))))
        (make-list-ac
         (len
          (mv-nth
@@ -16623,8 +16623,8 @@ Some (rather awful) testing forms are
                    (mv-nth
                     0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                  (car pathname))))))
-             (cadr pathname))))))
+                  (car path))))))
+             (cadr path))))))
         0 nil))))
     (equal
      (mv-nth
@@ -16654,8 +16654,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname)))))
+             (car path))))))
+        (cadr path)))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -16673,8 +16673,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname))))
+             (car path))))))
+        (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (not
     (member-equal
@@ -16702,8 +16702,8 @@ Some (rather awful) testing forms are
                   (mv-nth
                    '0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                 (car pathname))))))
-            (car (cdr pathname))))))
+                 (car path))))))
+            (car (cdr path))))))
         (make-list-ac
          (len
           (mv-nth
@@ -16725,8 +16725,8 @@ Some (rather awful) testing forms are
                     (mv-nth
                      '0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                   (car pathname))))))
-              (car (cdr pathname)))))))
+                   (car path))))))
+              (car (cdr path)))))))
          '0
          'nil))
        '1))
@@ -16740,7 +16740,7 @@ Some (rather awful) testing forms are
          (make-dir-ent-list
           (mv-nth '0
                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-         (car pathname))))))))
+         (car path))))))))
   :hints
   (("goal"
     :in-theory (disable (:rewrite non-free-index-listp-correctness-2 . 1))
@@ -16758,7 +16758,7 @@ Some (rather awful) testing forms are
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-           (car pathname))))))
+           (car path))))))
       (key
        (nth
         0
@@ -16784,8 +16784,8 @@ Some (rather awful) testing forms are
                     (mv-nth
                      0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                   (car pathname))))))
-              (cadr pathname)))))
+                   (car path))))))
+              (cadr path)))))
           (make-list-ac
            (len
             (mv-nth
@@ -16806,8 +16806,8 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (dir-ent-clusterchain-contents
                                             fat32-in-memory dir-ent)))
-                                  (car pathname))))))
-                (cadr pathname))))))
+                                  (car path))))))
+                (cadr path))))))
            0 nil))
          1)))
       (fa-table
@@ -16832,8 +16832,8 @@ Some (rather awful) testing forms are
                   (mv-nth
                    0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                 (car pathname))))))
-            (cadr pathname)))))
+                 (car path))))))
+            (cadr path)))))
         (make-list-ac
          (len
           (mv-nth
@@ -16855,8 +16855,8 @@ Some (rather awful) testing forms are
                     (mv-nth
                      0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                   (car pathname))))))
-              (cadr pathname))))))
+                   (car path))))))
+              (cadr path))))))
          0 nil))))))))
 
 ;; (defthm
@@ -16887,8 +16887,8 @@ Some (rather awful) testing forms are
 ;;                  (mv-nth
 ;;                   0
 ;;                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-;;                 (car pathname))))))
-;;            (cadr pathname))))
+;;                 (car path))))))
+;;            (cadr path))))
 ;;         (dir-ent-file-size
 ;;          (mv-nth
 ;;           0
@@ -16905,8 +16905,8 @@ Some (rather awful) testing forms are
 ;;                  (mv-nth
 ;;                   0
 ;;                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-;;                 (car pathname))))))
-;;            (cadr pathname))))
+;;                 (car path))))))
+;;            (cadr path))))
 ;;         (cluster-size fat32-in-memory)))
 ;;       (make-list-ac
 ;;        (len
@@ -16930,8 +16930,8 @@ Some (rather awful) testing forms are
 ;;                    (mv-nth
 ;;                     0
 ;;                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-;;                   (car pathname))))))
-;;              (cadr pathname))))
+;;                   (car path))))))
+;;              (cadr path))))
 ;;           (dir-ent-file-size
 ;;            (mv-nth
 ;;             0
@@ -16948,8 +16948,8 @@ Some (rather awful) testing forms are
 ;;                    (mv-nth
 ;;                     0
 ;;                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-;;                   (car pathname))))))
-;;              (cadr pathname))))
+;;                   (car path))))))
+;;              (cadr path))))
 ;;           (cluster-size fat32-in-memory))))
 ;;        0 nil))))
 ;;    (<=
@@ -16979,8 +16979,8 @@ Some (rather awful) testing forms are
 ;;                   (mv-nth
 ;;                    '0
 ;;                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-;;                  (car pathname))))))
-;;             (car (cdr pathname)))))
+;;                  (car path))))))
+;;             (car (cdr path)))))
 ;;          (dir-ent-file-size
 ;;           (mv-nth
 ;;            '0
@@ -16997,8 +16997,8 @@ Some (rather awful) testing forms are
 ;;                   (mv-nth
 ;;                    '0
 ;;                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-;;                  (car pathname))))))
-;;             (car (cdr pathname)))))
+;;                  (car path))))))
+;;             (car (cdr path)))))
 ;;          (cluster-size fat32-in-memory)))
 ;;        (make-list-ac
 ;;         (len
@@ -17022,8 +17022,8 @@ Some (rather awful) testing forms are
 ;;                     (mv-nth
 ;;                      '0
 ;;                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-;;                    (car pathname))))))
-;;               (car (cdr pathname)))))
+;;                    (car path))))))
+;;               (car (cdr path)))))
 ;;            (dir-ent-file-size
 ;;             (mv-nth
 ;;              '0
@@ -17040,8 +17040,8 @@ Some (rather awful) testing forms are
 ;;                     (mv-nth
 ;;                      '0
 ;;                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-;;                    (car pathname))))))
-;;               (car (cdr pathname)))))
+;;                    (car path))))))
+;;               (car (cdr path)))))
 ;;            (cluster-size fat32-in-memory))))
 ;;         '0
 ;;         'nil))
@@ -17190,7 +17190,7 @@ Some (rather awful) testing forms are
            (make-dir-ent-list
             (mv-nth 0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-           (car pathname))))))))
+           (car path))))))))
     (equal (mv-nth 1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
            0)
@@ -17211,7 +17211,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-       (car pathname))))
+       (car path))))
     (not
      (intersectp-equal
       (mv-nth 0
@@ -17226,7 +17226,7 @@ Some (rather awful) testing forms are
           (make-dir-ent-list
            (mv-nth 0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-          (car pathname))))))))
+          (car path))))))))
    (not
     (member-equal
      (nth
@@ -17244,7 +17244,7 @@ Some (rather awful) testing forms are
             (make-dir-ent-list
              (mv-nth 0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (car pathname)))))
+            (car path)))))
         (make-list-ac
          (len
           (mv-nth
@@ -17258,7 +17258,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-              (car pathname))))))
+              (car path))))))
          0 nil))
        1))
      (mv-nth 0
@@ -17288,7 +17288,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-              (car pathname)))))
+              (car path)))))
           (make-list-ac
            (len
             (mv-nth
@@ -17302,7 +17302,7 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                (car pathname))))))
+                (car path))))))
            0 nil))
          1)))
       (fa-table
@@ -17318,7 +17318,7 @@ Some (rather awful) testing forms are
             (make-dir-ent-list
              (mv-nth 0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-            (car pathname)))))
+            (car path)))))
         (make-list-ac
          (len
           (mv-nth
@@ -17332,7 +17332,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-              (car pathname))))))
+              (car path))))))
          0 nil))))))))
 
 ;; Kinda general.
@@ -17350,7 +17350,7 @@ Some (rather awful) testing forms are
   (implies (<= 2
                (dir-ent-first-cluster
                 (mv-nth 0
-                        (find-dir-ent dir-ent-list (car pathname)))))
+                        (find-dir-ent dir-ent-list (car path)))))
            (> (len dir-ent-list) 0))
   :rule-classes :linear)
 
@@ -17365,7 +17365,7 @@ Some (rather awful) testing forms are
        (make-dir-ent-list
         (mv-nth 0
                 (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-       (car pathname))))
+       (car path))))
     (<=
      2
      (dir-ent-first-cluster
@@ -17384,8 +17384,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname)))))
+             (car path))))))
+        (cadr path)))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -17403,8 +17403,8 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-             (car pathname))))))
-        (cadr pathname))))
+             (car path))))))
+        (cadr path))))
      (+ 2 (count-of-clusters fat32-in-memory)))
     (<=
      1
@@ -17430,8 +17430,8 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                (car pathname))))))
-           (cadr pathname)))))
+                (car path))))))
+           (cadr path)))))
        (make-list-ac
         (len
          (mv-nth
@@ -17453,8 +17453,8 @@ Some (rather awful) testing forms are
                    (mv-nth
                     0
                     (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                  (car pathname))))))
-             (cadr pathname))))))
+                  (car path))))))
+             (cadr path))))))
         0 nil))))
     (equal (mv-nth 1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
@@ -17506,8 +17506,8 @@ Some (rather awful) testing forms are
                   (mv-nth
                    0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                 (car pathname))))))
-            (cadr pathname)))))
+                 (car path))))))
+            (cadr path)))))
         (make-list-ac
          (len
           (mv-nth
@@ -17529,8 +17529,8 @@ Some (rather awful) testing forms are
                     (mv-nth
                      0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                   (car pathname))))))
-              (cadr pathname))))))
+                   (car path))))))
+              (cadr path))))))
          0 nil))
        1))
      (mv-nth 0
@@ -17568,8 +17568,8 @@ Some (rather awful) testing forms are
                     (mv-nth
                      0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                   (car pathname))))))
-              (cadr pathname)))))
+                   (car path))))))
+              (cadr path)))))
           (make-list-ac
            (len
             (mv-nth
@@ -17590,8 +17590,8 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (dir-ent-clusterchain-contents
                                             fat32-in-memory dir-ent)))
-                                  (car pathname))))))
-                (cadr pathname))))))
+                                  (car path))))))
+                (cadr path))))))
            0 nil))
          1)))
       (fa-table
@@ -17616,8 +17616,8 @@ Some (rather awful) testing forms are
                   (mv-nth
                    0
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                 (car pathname))))))
-            (cadr pathname)))))
+                 (car path))))))
+            (cadr path)))))
         (make-list-ac
          (len
           (mv-nth
@@ -17639,8 +17639,8 @@ Some (rather awful) testing forms are
                     (mv-nth
                      0
                      (dir-ent-clusterchain-contents fat32-in-memory dir-ent)))
-                   (car pathname))))))
-              (cadr pathname))))))
+                   (car path))))))
+              (cadr path))))))
          0 nil))))))))
 
 (defthm
@@ -17833,7 +17833,7 @@ Some (rather awful) testing forms are
                (mv-nth 0
                        (dir-ent-clusterchain-contents
                         fat32-in-memory dir-ent)))
-              (car pathname)))))
+              (car path)))))
           (if
            (<
             (dir-ent-first-cluster
@@ -17844,7 +17844,7 @@ Some (rather awful) testing forms are
                 (mv-nth 0
                         (dir-ent-clusterchain-contents
                          fat32-in-memory dir-ent)))
-               (car pathname))))
+               (car path))))
             (+ 2 (count-of-clusters fat32-in-memory)))
            (dir-ent-set-first-cluster-file-size
             (mv-nth
@@ -17854,7 +17854,7 @@ Some (rather awful) testing forms are
                (mv-nth 0
                        (dir-ent-clusterchain-contents
                         fat32-in-memory dir-ent)))
-              (car pathname)))
+              (car path)))
             (nth
              0
              (find-n-free-clusters
@@ -17871,7 +17871,7 @@ Some (rather awful) testing forms are
                     (mv-nth 0
                             (dir-ent-clusterchain-contents
                              fat32-in-memory dir-ent)))
-                   (car pathname)))))
+                   (car path)))))
                (make-list-ac
                 (len
                  (mv-nth
@@ -17885,7 +17885,7 @@ Some (rather awful) testing forms are
                       (mv-nth 0
                               (dir-ent-clusterchain-contents
                                fat32-in-memory dir-ent)))
-                     (car pathname))))))
+                     (car path))))))
                 0 nil))
               1))
             (len (explode (lofat-file->contents file))))
@@ -17897,7 +17897,7 @@ Some (rather awful) testing forms are
                (mv-nth 0
                        (dir-ent-clusterchain-contents
                         fat32-in-memory dir-ent)))
-              (car pathname)))
+              (car path)))
             (nth
              0
              (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -17912,7 +17912,7 @@ Some (rather awful) testing forms are
                (mv-nth 0
                        (dir-ent-clusterchain-contents
                         fat32-in-memory dir-ent)))
-              (car pathname)))
+              (car path)))
             0)
            (dir-ent-set-first-cluster-file-size
             (mv-nth
@@ -17922,7 +17922,7 @@ Some (rather awful) testing forms are
                (mv-nth 0
                        (dir-ent-clusterchain-contents
                         fat32-in-memory dir-ent)))
-              (car pathname)))
+              (car path)))
             (nth
              0
              (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -17930,7 +17930,7 @@ Some (rather awful) testing forms are
             (len (explode (lofat-file->contents file))))
            (dir-ent-set-first-cluster-file-size
             (dir-ent-set-filename (dir-ent-fix nil)
-                                  (car pathname))
+                                  (car path))
             (nth
              0
              (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -17945,7 +17945,7 @@ Some (rather awful) testing forms are
               (mv-nth 0
                       (dir-ent-clusterchain-contents
                        fat32-in-memory dir-ent)))
-             (car pathname)))
+             (car path)))
            0)
           (dir-ent-set-first-cluster-file-size
            (mv-nth
@@ -17955,11 +17955,11 @@ Some (rather awful) testing forms are
               (mv-nth 0
                       (dir-ent-clusterchain-contents
                        fat32-in-memory dir-ent)))
-             (car pathname)))
+             (car path)))
            0 0)
           (dir-ent-set-first-cluster-file-size
            (dir-ent-set-filename (dir-ent-fix nil)
-                                 (car pathname))
+                                 (car path))
            0 0))))
        (new-contents
         (nats=>chars
@@ -17970,7 +17970,7 @@ Some (rather awful) testing forms are
       (lofat-fs-p fat32-in-memory)
       (dir-ent-p dir-ent)
       (dir-ent-directory-p dir-ent)
-      (fat32-filename-list-p pathname)
+      (fat32-filename-list-p path)
       (equal error-code 0)
       (equal
        (mv-nth 3
@@ -17999,17 +17999,17 @@ Some (rather awful) testing forms are
       (equal
        (mv-nth
         1
-        (lofat-place-file fat32-in-memory dir-ent pathname file))
+        (lofat-place-file fat32-in-memory dir-ent path file))
        0)
       (lofat-regular-file-p file))
      (equal
       (dir-ent-clusterchain-contents
        (mv-nth
         0
-        (lofat-place-file fat32-in-memory dir-ent pathname file))
+        (lofat-place-file fat32-in-memory dir-ent path file))
        dir-ent)
       (if
-       (atom (cdr pathname))
+       (atom (cdr path))
        (mv
         (implode
          (append
@@ -18030,7 +18030,7 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :expand
-    (lofat-place-file fat32-in-memory dir-ent pathname file)
+    (lofat-place-file fat32-in-memory dir-ent path file)
     :do-not-induct t
     :in-theory
     (e/d (update-dir-contents-correctness-1
@@ -18711,7 +18711,7 @@ Some (rather awful) testing forms are
 ;;             (mv-nth
 ;;              0
 ;;              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;            (car pathname))))
+;;            (car path))))
 ;;         (dir-ent-file-size
 ;;          (mv-nth
 ;;           0
@@ -18720,7 +18720,7 @@ Some (rather awful) testing forms are
 ;;             (mv-nth
 ;;              0
 ;;              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;            (car pathname))))
+;;            (car path))))
 ;;         (cluster-size fat32-in-memory)))
 ;;       (make-list-ac
 ;;        (len
@@ -18736,7 +18736,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname))))
+;;              (car path))))
 ;;           (dir-ent-file-size
 ;;            (mv-nth
 ;;             0
@@ -18745,7 +18745,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname))))
+;;              (car path))))
 ;;           (cluster-size fat32-in-memory))))
 ;;        0 nil))))
 ;;    (not
@@ -18767,7 +18767,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                '0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname))))
+;;              (car path))))
 ;;           (dir-ent-file-size
 ;;            (mv-nth
 ;;             '0
@@ -18776,7 +18776,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                '0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname))))
+;;              (car path))))
 ;;           (cluster-size fat32-in-memory)))
 ;;         (make-list-ac
 ;;          (len
@@ -18791,7 +18791,7 @@ Some (rather awful) testing forms are
 ;;                (make-dir-ent-list (mv-nth '0
 ;;                                           (dir-ent-clusterchain-contents
 ;;                                            fat32-in-memory root-dir-ent)))
-;;                (car pathname))))
+;;                (car path))))
 ;;             (dir-ent-file-size
 ;;              (mv-nth
 ;;               '0
@@ -18799,7 +18799,7 @@ Some (rather awful) testing forms are
 ;;                (make-dir-ent-list (mv-nth '0
 ;;                                           (dir-ent-clusterchain-contents
 ;;                                            fat32-in-memory root-dir-ent)))
-;;                (car pathname))))
+;;                (car path))))
 ;;             (cluster-size fat32-in-memory))))
 ;;          '0
 ;;          'nil))
@@ -18845,7 +18845,7 @@ Some (rather awful) testing forms are
 ;;          (mv-nth
 ;;           0
 ;;           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;         (car pathname)))))
+;;         (car path)))))
 ;;     (<
 ;;      (dir-ent-first-cluster
 ;;       (mv-nth
@@ -18855,7 +18855,7 @@ Some (rather awful) testing forms are
 ;;          (mv-nth
 ;;           0
 ;;           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;         (car pathname))))
+;;         (car path))))
 ;;      (+ 2 (count-of-clusters fat32-in-memory)))
 ;;     (not
 ;;      (dir-ent-directory-p
@@ -18866,7 +18866,7 @@ Some (rather awful) testing forms are
 ;;          (mv-nth
 ;;           0
 ;;           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;         (car pathname)))))
+;;         (car path)))))
 ;;     (<=
 ;;      1
 ;;      (count-free-clusters
@@ -18884,7 +18884,7 @@ Some (rather awful) testing forms are
 ;;              (mv-nth
 ;;               0
 ;;               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;             (car pathname))))
+;;             (car path))))
 ;;          (dir-ent-file-size
 ;;           (mv-nth
 ;;            0
@@ -18893,7 +18893,7 @@ Some (rather awful) testing forms are
 ;;              (mv-nth
 ;;               0
 ;;               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;             (car pathname))))
+;;             (car path))))
 ;;          (cluster-size fat32-in-memory)))
 ;;        (make-list-ac
 ;;         (len
@@ -18909,7 +18909,7 @@ Some (rather awful) testing forms are
 ;;                (mv-nth
 ;;                 0
 ;;                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;               (car pathname))))
+;;               (car path))))
 ;;            (dir-ent-file-size
 ;;             (mv-nth
 ;;              0
@@ -18918,7 +18918,7 @@ Some (rather awful) testing forms are
 ;;                (mv-nth
 ;;                 0
 ;;                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;               (car pathname))))
+;;               (car path))))
 ;;            (cluster-size fat32-in-memory))))
 ;;         0 nil)))))
 ;;    (not
@@ -18940,7 +18940,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                '0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname))))
+;;              (car path))))
 ;;           (dir-ent-file-size
 ;;            (mv-nth
 ;;             '0
@@ -18949,7 +18949,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                '0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname))))
+;;              (car path))))
 ;;           (cluster-size fat32-in-memory)))
 ;;         (make-list-ac
 ;;          (len
@@ -18964,7 +18964,7 @@ Some (rather awful) testing forms are
 ;;                (make-dir-ent-list (mv-nth '0
 ;;                                           (dir-ent-clusterchain-contents
 ;;                                            fat32-in-memory root-dir-ent)))
-;;                (car pathname))))
+;;                (car path))))
 ;;             (dir-ent-file-size
 ;;              (mv-nth
 ;;               '0
@@ -18972,7 +18972,7 @@ Some (rather awful) testing forms are
 ;;                (make-dir-ent-list (mv-nth '0
 ;;                                           (dir-ent-clusterchain-contents
 ;;                                            fat32-in-memory root-dir-ent)))
-;;                (car pathname))))
+;;                (car path))))
 ;;             (cluster-size fat32-in-memory))))
 ;;          '0
 ;;          'nil))
@@ -19004,7 +19004,7 @@ Some (rather awful) testing forms are
 ;;                (make-dir-ent-list (mv-nth 0
 ;;                                           (dir-ent-clusterchain-contents
 ;;                                            fat32-in-memory root-dir-ent)))
-;;                (car pathname))))
+;;                (car path))))
 ;;             (dir-ent-file-size
 ;;              (mv-nth
 ;;               0
@@ -19012,7 +19012,7 @@ Some (rather awful) testing forms are
 ;;                (make-dir-ent-list (mv-nth 0
 ;;                                           (dir-ent-clusterchain-contents
 ;;                                            fat32-in-memory root-dir-ent)))
-;;                (car pathname))))
+;;                (car path))))
 ;;             (cluster-size fat32-in-memory)))
 ;;           (make-list-ac
 ;;            (len
@@ -19027,7 +19027,7 @@ Some (rather awful) testing forms are
 ;;                          (mv-nth 0
 ;;                                  (dir-ent-clusterchain-contents
 ;;                                   fat32-in-memory root-dir-ent)))
-;;                         (car pathname))))
+;;                         (car path))))
 ;;               (dir-ent-file-size
 ;;                (mv-nth 0
 ;;                        (find-dir-ent
@@ -19035,7 +19035,7 @@ Some (rather awful) testing forms are
 ;;                          (mv-nth 0
 ;;                                  (dir-ent-clusterchain-contents
 ;;                                   fat32-in-memory root-dir-ent)))
-;;                         (car pathname))))
+;;                         (car path))))
 ;;               (cluster-size fat32-in-memory))))
 ;;            0 nil))
 ;;          1)))
@@ -19054,7 +19054,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname))))
+;;              (car path))))
 ;;           (dir-ent-file-size
 ;;            (mv-nth
 ;;             0
@@ -19063,7 +19063,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname))))
+;;              (car path))))
 ;;           (cluster-size fat32-in-memory)))
 ;;         (make-list-ac
 ;;          (len
@@ -19078,7 +19078,7 @@ Some (rather awful) testing forms are
 ;;                (make-dir-ent-list (mv-nth 0
 ;;                                           (dir-ent-clusterchain-contents
 ;;                                            fat32-in-memory root-dir-ent)))
-;;                (car pathname))))
+;;                (car path))))
 ;;             (dir-ent-file-size
 ;;              (mv-nth
 ;;               0
@@ -19086,7 +19086,7 @@ Some (rather awful) testing forms are
 ;;                (make-dir-ent-list (mv-nth 0
 ;;                                           (dir-ent-clusterchain-contents
 ;;                                            fat32-in-memory root-dir-ent)))
-;;                (car pathname))))
+;;                (car path))))
 ;;             (cluster-size fat32-in-memory))))
 ;;          0 nil))))))))
 
@@ -19110,7 +19110,7 @@ Some (rather awful) testing forms are
 ;;             (mv-nth
 ;;              0
 ;;              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;            (car pathname)))))))
+;;            (car path)))))))
 ;;      (len (make-clusters (lofat-file->contents file)
 ;;                          (cluster-size fat32-in-memory))))
 ;;     (lofat-fs-p fat32-in-memory)
@@ -19165,7 +19165,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname)))))
+;;              (car path)))))
 ;;          (cluster-size fat32-in-memory)))))
 ;;      (count-free-clusters (effective-fat fat32-in-memory)))
 ;;     (<=
@@ -19178,7 +19178,7 @@ Some (rather awful) testing forms are
 ;;          (mv-nth
 ;;           0
 ;;           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;         (car pathname)))))
+;;         (car path)))))
 ;;     (<
 ;;      (dir-ent-first-cluster
 ;;       (mv-nth
@@ -19188,7 +19188,7 @@ Some (rather awful) testing forms are
 ;;          (mv-nth
 ;;           0
 ;;           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;         (car pathname))))
+;;         (car path))))
 ;;      (+ 2 (count-of-clusters fat32-in-memory))))
 ;;    (not-intersectp-list
 ;;     x
@@ -19219,7 +19219,7 @@ Some (rather awful) testing forms are
 ;;                     (mv-nth 0
 ;;                             (dir-ent-clusterchain-contents
 ;;                              fat32-in-memory root-dir-ent)))
-;;                    (car pathname))))
+;;                    (car path))))
 ;;                 (dir-ent-file-size
 ;;                  (mv-nth
 ;;                   0
@@ -19228,7 +19228,7 @@ Some (rather awful) testing forms are
 ;;                     (mv-nth 0
 ;;                             (dir-ent-clusterchain-contents
 ;;                              fat32-in-memory root-dir-ent)))
-;;                    (car pathname))))
+;;                    (car path))))
 ;;                 (cluster-size fat32-in-memory)))
 ;;               (make-list-ac
 ;;                (len
@@ -19244,7 +19244,7 @@ Some (rather awful) testing forms are
 ;;                       (mv-nth 0
 ;;                               (dir-ent-clusterchain-contents
 ;;                                fat32-in-memory root-dir-ent)))
-;;                      (car pathname))))
+;;                      (car path))))
 ;;                   (dir-ent-file-size
 ;;                    (mv-nth
 ;;                     0
@@ -19253,7 +19253,7 @@ Some (rather awful) testing forms are
 ;;                       (mv-nth 0
 ;;                               (dir-ent-clusterchain-contents
 ;;                                fat32-in-memory root-dir-ent)))
-;;                      (car pathname))))
+;;                      (car path))))
 ;;                   (cluster-size fat32-in-memory))))
 ;;                0 nil))
 ;;              1))
@@ -19276,7 +19276,7 @@ Some (rather awful) testing forms are
 ;;                       (mv-nth 0
 ;;                               (dir-ent-clusterchain-contents
 ;;                                fat32-in-memory root-dir-ent)))
-;;                      (car pathname))))
+;;                      (car path))))
 ;;                   (dir-ent-file-size
 ;;                    (mv-nth
 ;;                     0
@@ -19285,7 +19285,7 @@ Some (rather awful) testing forms are
 ;;                       (mv-nth 0
 ;;                               (dir-ent-clusterchain-contents
 ;;                                fat32-in-memory root-dir-ent)))
-;;                      (car pathname))))
+;;                      (car path))))
 ;;                   (cluster-size fat32-in-memory)))
 ;;                 (make-list-ac
 ;;                  (len
@@ -19301,7 +19301,7 @@ Some (rather awful) testing forms are
 ;;                         (mv-nth 0
 ;;                                 (dir-ent-clusterchain-contents
 ;;                                  fat32-in-memory root-dir-ent)))
-;;                        (car pathname))))
+;;                        (car path))))
 ;;                     (dir-ent-file-size
 ;;                      (mv-nth
 ;;                       0
@@ -19310,7 +19310,7 @@ Some (rather awful) testing forms are
 ;;                         (mv-nth 0
 ;;                                 (dir-ent-clusterchain-contents
 ;;                                  fat32-in-memory root-dir-ent)))
-;;                        (car pathname))))
+;;                        (car path))))
 ;;                     (cluster-size fat32-in-memory))))
 ;;                  0 nil))
 ;;                1))
@@ -19327,7 +19327,7 @@ Some (rather awful) testing forms are
 ;;                               (mv-nth 0
 ;;                                       (dir-ent-clusterchain-contents
 ;;                                        fat32-in-memory root-dir-ent)))
-;;                              (car pathname))))
+;;                              (car path))))
 ;;              (dir-ent-file-size
 ;;               (mv-nth
 ;;                0
@@ -19335,7 +19335,7 @@ Some (rather awful) testing forms are
 ;;                               (mv-nth 0
 ;;                                       (dir-ent-clusterchain-contents
 ;;                                        fat32-in-memory root-dir-ent)))
-;;                              (car pathname)))))))
+;;                              (car path)))))))
 ;;           (mv-nth
 ;;            0
 ;;            (find-dir-ent
@@ -19343,7 +19343,7 @@ Some (rather awful) testing forms are
 ;;              (mv-nth
 ;;               0
 ;;               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;             (car pathname)))
+;;             (car path)))
 ;;           (lofat-file->contents file)
 ;;           (len (explode (lofat-file->contents file)))
 ;;           (nth
@@ -19362,7 +19362,7 @@ Some (rather awful) testing forms are
 ;;                           (mv-nth 0
 ;;                                   (dir-ent-clusterchain-contents
 ;;                                    fat32-in-memory root-dir-ent)))
-;;                          (car pathname))))
+;;                          (car path))))
 ;;                (dir-ent-file-size
 ;;                 (mv-nth 0
 ;;                         (find-dir-ent
@@ -19370,7 +19370,7 @@ Some (rather awful) testing forms are
 ;;                           (mv-nth 0
 ;;                                   (dir-ent-clusterchain-contents
 ;;                                    fat32-in-memory root-dir-ent)))
-;;                          (car pathname))))
+;;                          (car path))))
 ;;                (cluster-size fat32-in-memory)))
 ;;              (make-list-ac
 ;;               (len
@@ -19386,7 +19386,7 @@ Some (rather awful) testing forms are
 ;;                      (mv-nth 0
 ;;                              (dir-ent-clusterchain-contents
 ;;                               fat32-in-memory root-dir-ent)))
-;;                     (car pathname))))
+;;                     (car path))))
 ;;                  (dir-ent-file-size
 ;;                   (mv-nth
 ;;                    0
@@ -19395,7 +19395,7 @@ Some (rather awful) testing forms are
 ;;                      (mv-nth 0
 ;;                              (dir-ent-clusterchain-contents
 ;;                               fat32-in-memory root-dir-ent)))
-;;                     (car pathname))))
+;;                     (car path))))
 ;;                  (cluster-size fat32-in-memory))))
 ;;               0 nil))
 ;;             1))))
@@ -19414,7 +19414,7 @@ Some (rather awful) testing forms are
 ;;               (mv-nth
 ;;                0
 ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-;;              (car pathname)))
+;;              (car path)))
 ;;            (nth
 ;;             0
 ;;             (find-n-free-clusters
@@ -19432,7 +19432,7 @@ Some (rather awful) testing forms are
 ;;                     (mv-nth 0
 ;;                             (dir-ent-clusterchain-contents
 ;;                              fat32-in-memory root-dir-ent)))
-;;                    (car pathname))))
+;;                    (car path))))
 ;;                 (dir-ent-file-size
 ;;                  (mv-nth
 ;;                   0
@@ -19441,7 +19441,7 @@ Some (rather awful) testing forms are
 ;;                     (mv-nth 0
 ;;                             (dir-ent-clusterchain-contents
 ;;                              fat32-in-memory root-dir-ent)))
-;;                    (car pathname))))
+;;                    (car path))))
 ;;                 (cluster-size fat32-in-memory)))
 ;;               (make-list-ac
 ;;                (len
@@ -19457,7 +19457,7 @@ Some (rather awful) testing forms are
 ;;                       (mv-nth 0
 ;;                               (dir-ent-clusterchain-contents
 ;;                                fat32-in-memory root-dir-ent)))
-;;                      (car pathname))))
+;;                      (car path))))
 ;;                   (dir-ent-file-size
 ;;                    (mv-nth
 ;;                     0
@@ -19466,7 +19466,7 @@ Some (rather awful) testing forms are
 ;;                       (mv-nth 0
 ;;                               (dir-ent-clusterchain-contents
 ;;                                fat32-in-memory root-dir-ent)))
-;;                      (car pathname))))
+;;                      (car path))))
 ;;                   (cluster-size fat32-in-memory))))
 ;;                0 nil))
 ;;              1))
@@ -19499,7 +19499,7 @@ Some (rather awful) testing forms are
 ;;                        (mv-nth 0
 ;;                                (dir-ent-clusterchain-contents
 ;;                                 fat32-in-memory root-dir-ent)))
-;;                       (car pathname))))
+;;                       (car path))))
 ;;                    (dir-ent-file-size
 ;;                     (mv-nth
 ;;                      0
@@ -19508,7 +19508,7 @@ Some (rather awful) testing forms are
 ;;                        (mv-nth 0
 ;;                                (dir-ent-clusterchain-contents
 ;;                                 fat32-in-memory root-dir-ent)))
-;;                       (car pathname))))
+;;                       (car path))))
 ;;                    (cluster-size fat32-in-memory)))
 ;;                  (make-list-ac
 ;;                   (len
@@ -19524,7 +19524,7 @@ Some (rather awful) testing forms are
 ;;                          (mv-nth 0
 ;;                                  (dir-ent-clusterchain-contents
 ;;                                   fat32-in-memory root-dir-ent)))
-;;                         (car pathname))))
+;;                         (car path))))
 ;;                      (dir-ent-file-size
 ;;                       (mv-nth
 ;;                        0
@@ -19533,7 +19533,7 @@ Some (rather awful) testing forms are
 ;;                          (mv-nth 0
 ;;                                  (dir-ent-clusterchain-contents
 ;;                                   fat32-in-memory root-dir-ent)))
-;;                         (car pathname))))
+;;                         (car path))))
 ;;                      (cluster-size fat32-in-memory))))
 ;;                   0 nil))
 ;;                 1))
@@ -19556,7 +19556,7 @@ Some (rather awful) testing forms are
 ;;                          (mv-nth 0
 ;;                                  (dir-ent-clusterchain-contents
 ;;                                   fat32-in-memory root-dir-ent)))
-;;                         (car pathname))))
+;;                         (car path))))
 ;;                      (dir-ent-file-size
 ;;                       (mv-nth
 ;;                        0
@@ -19565,7 +19565,7 @@ Some (rather awful) testing forms are
 ;;                          (mv-nth 0
 ;;                                  (dir-ent-clusterchain-contents
 ;;                                   fat32-in-memory root-dir-ent)))
-;;                         (car pathname))))
+;;                         (car path))))
 ;;                      (cluster-size fat32-in-memory)))
 ;;                    (make-list-ac
 ;;                     (len
@@ -19581,7 +19581,7 @@ Some (rather awful) testing forms are
 ;;                            (mv-nth 0
 ;;                                    (dir-ent-clusterchain-contents
 ;;                                     fat32-in-memory root-dir-ent)))
-;;                           (car pathname))))
+;;                           (car path))))
 ;;                        (dir-ent-file-size
 ;;                         (mv-nth
 ;;                          0
@@ -19590,7 +19590,7 @@ Some (rather awful) testing forms are
 ;;                            (mv-nth 0
 ;;                                    (dir-ent-clusterchain-contents
 ;;                                     fat32-in-memory root-dir-ent)))
-;;                           (car pathname))))
+;;                           (car path))))
 ;;                        (cluster-size fat32-in-memory))))
 ;;                     0 nil))
 ;;                   1))
@@ -19608,7 +19608,7 @@ Some (rather awful) testing forms are
 ;;                     (mv-nth 0
 ;;                             (dir-ent-clusterchain-contents
 ;;                              fat32-in-memory root-dir-ent)))
-;;                    (car pathname))))
+;;                    (car path))))
 ;;                 (dir-ent-file-size
 ;;                  (mv-nth
 ;;                   0
@@ -19617,14 +19617,14 @@ Some (rather awful) testing forms are
 ;;                     (mv-nth 0
 ;;                             (dir-ent-clusterchain-contents
 ;;                              fat32-in-memory root-dir-ent)))
-;;                    (car pathname)))))))
+;;                    (car path)))))))
 ;;              (mv-nth
 ;;               0
 ;;               (find-dir-ent
 ;;                (make-dir-ent-list (mv-nth 0
 ;;                                           (dir-ent-clusterchain-contents
 ;;                                            fat32-in-memory root-dir-ent)))
-;;                (car pathname)))
+;;                (car path)))
 ;;              (lofat-file->contents file)
 ;;              (len (explode (lofat-file->contents file)))
 ;;              (nth
@@ -19644,7 +19644,7 @@ Some (rather awful) testing forms are
 ;;                       (mv-nth 0
 ;;                               (dir-ent-clusterchain-contents
 ;;                                fat32-in-memory root-dir-ent)))
-;;                      (car pathname))))
+;;                      (car path))))
 ;;                   (dir-ent-file-size
 ;;                    (mv-nth
 ;;                     0
@@ -19653,7 +19653,7 @@ Some (rather awful) testing forms are
 ;;                       (mv-nth 0
 ;;                               (dir-ent-clusterchain-contents
 ;;                                fat32-in-memory root-dir-ent)))
-;;                      (car pathname))))
+;;                      (car path))))
 ;;                   (cluster-size fat32-in-memory)))
 ;;                 (make-list-ac
 ;;                  (len
@@ -19669,7 +19669,7 @@ Some (rather awful) testing forms are
 ;;                         (mv-nth 0
 ;;                                 (dir-ent-clusterchain-contents
 ;;                                  fat32-in-memory root-dir-ent)))
-;;                        (car pathname))))
+;;                        (car path))))
 ;;                     (dir-ent-file-size
 ;;                      (mv-nth
 ;;                       0
@@ -19678,7 +19678,7 @@ Some (rather awful) testing forms are
 ;;                         (mv-nth 0
 ;;                                 (dir-ent-clusterchain-contents
 ;;                                  fat32-in-memory root-dir-ent)))
-;;                        (car pathname))))
+;;                        (car path))))
 ;;                     (cluster-size fat32-in-memory))))
 ;;                  0 nil))
 ;;                1))))
@@ -19696,7 +19696,7 @@ Some (rather awful) testing forms are
 ;;                               (mv-nth 0
 ;;                                       (dir-ent-clusterchain-contents
 ;;                                        fat32-in-memory root-dir-ent)))
-;;                              (car pathname)))
+;;                              (car path)))
 ;;               (nth
 ;;                0
 ;;                (find-n-free-clusters
@@ -19714,7 +19714,7 @@ Some (rather awful) testing forms are
 ;;                        (mv-nth 0
 ;;                                (dir-ent-clusterchain-contents
 ;;                                 fat32-in-memory root-dir-ent)))
-;;                       (car pathname))))
+;;                       (car path))))
 ;;                    (dir-ent-file-size
 ;;                     (mv-nth
 ;;                      0
@@ -19723,7 +19723,7 @@ Some (rather awful) testing forms are
 ;;                        (mv-nth 0
 ;;                                (dir-ent-clusterchain-contents
 ;;                                 fat32-in-memory root-dir-ent)))
-;;                       (car pathname))))
+;;                       (car path))))
 ;;                    (cluster-size fat32-in-memory)))
 ;;                  (make-list-ac
 ;;                   (len
@@ -19739,7 +19739,7 @@ Some (rather awful) testing forms are
 ;;                          (mv-nth 0
 ;;                                  (dir-ent-clusterchain-contents
 ;;                                   fat32-in-memory root-dir-ent)))
-;;                         (car pathname))))
+;;                         (car path))))
 ;;                      (dir-ent-file-size
 ;;                       (mv-nth
 ;;                        0
@@ -19748,7 +19748,7 @@ Some (rather awful) testing forms are
 ;;                          (mv-nth 0
 ;;                                  (dir-ent-clusterchain-contents
 ;;                                   fat32-in-memory root-dir-ent)))
-;;                         (car pathname))))
+;;                         (car path))))
 ;;                      (cluster-size fat32-in-memory))))
 ;;                   0 nil))
 ;;                 1))
@@ -19854,7 +19854,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))))
+             (car path)))))
          (cluster-size fat32-in-memory)))))
      (count-free-clusters (effective-fat fat32-in-memory)))
     (<=
@@ -19867,7 +19867,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname)))))
+        (car path)))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -19877,7 +19877,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname))))
+        (car path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (not
     (<
@@ -19899,7 +19899,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))))))
+           (car path)))))))
      (len
       (make-clusters
        (mv-nth 0
@@ -19968,7 +19968,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))))
+             (car path)))))
          (cluster-size fat32-in-memory)))))
      (count-free-clusters (effective-fat fat32-in-memory)))
     (<=
@@ -19981,7 +19981,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname)))))
+        (car path)))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -19991,7 +19991,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname))))
+        (car path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (not
     (<
@@ -20014,7 +20014,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))))))
+           (car path)))))))
      (len
       (make-clusters
        (mv-nth 0
@@ -22549,25 +22549,25 @@ Some (rather awful) testing forms are
   (implies
    (m1-file-p file)
    (equal
-    (hifat-entry-count (mv-nth 0 (hifat-place-file fs pathname file)))
+    (hifat-entry-count (mv-nth 0 (hifat-place-file fs path file)))
     (if
-     (zp (mv-nth 1 (hifat-place-file fs pathname file)))
+     (zp (mv-nth 1 (hifat-place-file fs path file)))
      (+
       (hifat-entry-count fs)
       (if (m1-regular-file-p file)
           0
           (hifat-entry-count (m1-file->contents file)))
       (cond
-       ((not (zp (mv-nth 1 (hifat-find-file fs pathname))))
+       ((not (zp (mv-nth 1 (hifat-find-file fs path))))
         1)
-       ((m1-regular-file-p (mv-nth 0 (hifat-find-file fs pathname)))
+       ((m1-regular-file-p (mv-nth 0 (hifat-find-file fs path)))
         0)
        (t
         (-
          (hifat-entry-count
-          (m1-file->contents (mv-nth 0 (hifat-find-file fs pathname))))))))
+          (m1-file->contents (mv-nth 0 (hifat-find-file fs path))))))))
      (hifat-entry-count fs))))
-  :hints (("goal" :induct (hifat-place-file fs pathname file)
+  :hints (("goal" :induct (hifat-place-file fs path file)
            :in-theory (enable hifat-place-file hifat-find-file))))
 
 (defthm
@@ -22606,18 +22606,18 @@ Some (rather awful) testing forms are
 
 (thm
  (implies
-  (and (consp pathname)
-       (equal (cdr pathname) nil)
-       (fat32-filename-list-p pathname)
+  (and (consp path)
+       (equal (cdr path) nil)
+       (fat32-filename-list-p path)
        (m1-regular-file-p file)
        (not (zp (mv-nth 1
-                        (hifat-place-file fs pathname file)))))
-  (and (consp (assoc-equal (car pathname)
+                        (hifat-place-file fs path file)))))
+  (and (consp (assoc-equal (car path)
                            (hifat-file-alist-fix fs)))
-       (m1-directory-file-p (cdr (assoc-equal (car pathname)
+       (m1-directory-file-p (cdr (assoc-equal (car path)
                                               (hifat-file-alist-fix fs))))))
  :hints (("goal" :do-not-induct t
-          :expand (hifat-place-file fs pathname file))))
+          :expand (hifat-place-file fs path file))))
 
 (encapsulate
   ()
@@ -22651,7 +22651,7 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (car pathname)))))))
+                (car path)))))))
           (cluster-size fat32-in-memory)))
         (ceiling
          (+
@@ -22669,7 +22669,7 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (car pathname))))))))
+                (car path))))))))
          (cluster-size fat32-in-memory))))
       (and
        (zp (count-free-clusters (effective-fat fat32-in-memory)))
@@ -22690,7 +22690,7 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (car pathname))))))))
+                (car path))))))))
          (cluster-size fat32-in-memory))
         (+
          1
@@ -22708,7 +22708,7 @@ Some (rather awful) testing forms are
                  (mv-nth
                   0
                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (car pathname)))))))
+                (car path)))))))
           (cluster-size fat32-in-memory)))))))
     :hints (("goal" :do-not-induct t)))
 
@@ -22794,7 +22794,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))))))
+             (car path)))))))
        (cluster-size fat32-in-memory))))
     (lofat-fs-p fat32-in-memory)
     (equal
@@ -22832,7 +22832,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname)))))
+        (car path)))))
     (<
      (dir-ent-first-cluster
       (mv-nth
@@ -22842,7 +22842,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname))))
+        (car path))))
      (+ 2 (count-of-clusters fat32-in-memory))))
    (not
     (member-equal
@@ -22862,7 +22862,7 @@ Some (rather awful) testing forms are
              (mv-nth
               '0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname)))))
+            (car path)))))
         (make-list-ac
          (ceiling
           (len
@@ -22877,7 +22877,7 @@ Some (rather awful) testing forms are
                               (mv-nth '0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname)))))))
+                             (car path)))))))
           (cluster-size fat32-in-memory))
          '0
          'nil))
@@ -22906,7 +22906,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname)))))
+            (car path)))))
         (make-list-ac
          (ceiling
           (len
@@ -22921,7 +22921,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname)))))))
+                             (car path)))))))
           (cluster-size fat32-in-memory))
          0 nil)))
       (x (mv-nth 0
@@ -22943,7 +22943,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname)))))
+              (car path)))))
           (make-list-ac
            (ceiling
             (len
@@ -22958,7 +22958,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname)))))))
+                         (car path)))))))
             (cluster-size fat32-in-memory))
            0 nil))
          1))))))))
@@ -22992,7 +22992,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))))
+                        (car path))))))
             entry-limit)))))
        (cluster-size fat32-in-memory)))
      (ceiling
@@ -23016,7 +23016,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname))))))
+                             (car path))))))
            entry-limit)))))
       (cluster-size fat32-in-memory)))))
   :hints
@@ -23046,7 +23046,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname))))))
+                             (car path))))))
            entry-limit))))))
      (i2
       (+
@@ -23069,7 +23069,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname))))))
+                             (car path))))))
            entry-limit)))))))))
   :rule-classes :linear)
 
@@ -23096,7 +23096,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))))))))
+             (car path)))))))))
      (cluster-size fat32-in-memory))
     (ceiling
      (+
@@ -23116,7 +23116,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))))))))
+             (car path)))))))))
      (cluster-size fat32-in-memory))))
   :hints
   (("goal"
@@ -23142,7 +23142,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname))))))))))
+              (car path))))))))))
      (i2
       (+
        96
@@ -23161,7 +23161,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname)))))))))))))
+              (car path)))))))))))))
   :rule-classes :linear)
 
 (defthm
@@ -23196,7 +23196,7 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (car pathname)))
+        (car path)))
       (lofat-file->contents file)
       (len (explode (lofat-file->contents file)))
       (nth 0
@@ -23262,7 +23262,7 @@ Some (rather awful) testing forms are
        fat32-in-memory)
       (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                            (car pathname))
+                            (car path))
       (lofat-file->contents file)
       (len (explode (lofat-file->contents file)))
       (nth 0
@@ -23306,7 +23306,7 @@ Some (rather awful) testing forms are
        fat32-in-memory)
       (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                            (cadr pathname))
+                            (cadr path))
       (lofat-file->contents file)
       (len (explode (lofat-file->contents file)))
       (nth 0
@@ -23390,7 +23390,7 @@ Some (rather awful) testing forms are
                   (make-dir-ent-list
                    (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
                   entry-limit))
-         pathname (m1-file (lofat-file->dir-ent file) (lofat-file->contents file)))))
+         path (m1-file (lofat-file->dir-ent file) (lofat-file->contents file)))))
     (implies
      (and
       (lofat-fs-p fat32-in-memory)
@@ -23419,25 +23419,25 @@ Some (rather awful) testing forms are
        (mv-nth '0
                (dir-ent-clusterchain fat32-in-memory root-dir-ent)))
       (lofat-regular-file-p file)
-      (fat32-filename-list-p pathname)
+      (fat32-filename-list-p path)
       ;; we really can't deal with enospc, for reasons explained in a comment
       ;; above.
       (not
        (equal
         (mv-nth
          1
-         (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+         (lofat-place-file fat32-in-memory root-dir-ent path file))
         *enospc*)))
      (equal
       (mv-nth
        1
-       (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+       (lofat-place-file fat32-in-memory root-dir-ent path file))
       error-code)))
   :hints
   (("goal"
-    :induct (lofat-place-file fat32-in-memory root-dir-ent pathname file)
+    :induct (lofat-place-file fat32-in-memory root-dir-ent path file)
     :expand
-    (lofat-place-file fat32-in-memory root-dir-ent pathname file)
+    (lofat-place-file fat32-in-memory root-dir-ent path file)
     :in-theory (enable hifat-find-file hifat-place-file
                        (:rewrite hifat-to-lofat-inversion-lemma-17)
                        (:rewrite lofat-to-hifat-inversion-lemma-4)
@@ -23463,7 +23463,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (find-dir-ent (cdr dir-ent-list)
                                                     filename)))))
-                    (car pathname)))
+                    (car path)))
      0)
     (equal (lofat-file->contents file) "")
     (equal
@@ -23475,7 +23475,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname file))
+                                 path file))
        (make-dir-ent-list
         (mv-nth
          0
@@ -23485,7 +23485,7 @@ Some (rather awful) testing forms are
                                     (mv-nth 0
                                             (find-dir-ent (cdr dir-ent-list)
                                                           filename))
-                                    pathname file))
+                                    path file))
           (mv-nth 0
                   (find-dir-ent (cdr dir-ent-list)
                                 filename)))))
@@ -23500,7 +23500,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname file))
+                                 path file))
        (make-dir-ent-list
         (mv-nth
          0
@@ -23510,7 +23510,7 @@ Some (rather awful) testing forms are
                                     (mv-nth 0
                                             (find-dir-ent (cdr dir-ent-list)
                                                           filename))
-                                    pathname file))
+                                    path file))
           (mv-nth 0
                   (find-dir-ent (cdr dir-ent-list)
                                 filename)))))
@@ -23529,7 +23529,7 @@ Some (rather awful) testing forms are
                                   (find-dir-ent (cdr dir-ent-list)
                                                 filename)))))
                 (+ -1 entry-limit)))
-       pathname
+       path
        (m1-file
         (dir-ent-set-first-cluster-file-size
          (mv-nth
@@ -23542,7 +23542,7 @@ Some (rather awful) testing forms are
                      (mv-nth 0
                              (find-dir-ent (cdr dir-ent-list)
                                            filename)))))
-           (car pathname)))
+           (car path)))
          0 0)
         ""))))
     (equal (mv-nth 3
@@ -23567,7 +23567,7 @@ Some (rather awful) testing forms are
                                (mv-nth 0
                                        (find-dir-ent (cdr dir-ent-list)
                                                      filename))
-                               pathname file))
+                               path file))
      (make-dir-ent-list
       (mv-nth
        0
@@ -23577,7 +23577,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname file))
+                                  path file))
         (mv-nth 0
                 (find-dir-ent (cdr dir-ent-list)
                               filename)))))
@@ -23588,7 +23588,7 @@ Some (rather awful) testing forms are
                                (mv-nth 0
                                        (find-dir-ent (cdr dir-ent-list)
                                                      filename))
-                               pathname file))
+                               path file))
      (make-dir-ent-list
       (mv-nth
        0
@@ -23598,7 +23598,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname file))
+                                  path file))
         (mv-nth 0
                 (find-dir-ent (cdr dir-ent-list)
                               filename)))))
@@ -23620,7 +23620,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname file))
+                                   path file))
          (mv-nth 0
                  (find-dir-ent (cdr dir-ent-list)
                                filename))))))
@@ -23630,7 +23630,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname file)))))))
+                                path file)))))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-49
@@ -23649,7 +23649,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname file))
+                                 path file))
        (make-dir-ent-list
         (mv-nth
          0
@@ -23659,7 +23659,7 @@ Some (rather awful) testing forms are
                                     (mv-nth 0
                                             (find-dir-ent (cdr dir-ent-list)
                                                           filename))
-                                    pathname file))
+                                    path file))
           (mv-nth 0
                   (find-dir-ent (cdr dir-ent-list)
                                 filename)))))
@@ -23674,7 +23674,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname file))
+                                 path file))
        (make-dir-ent-list
         (mv-nth
          0
@@ -23684,7 +23684,7 @@ Some (rather awful) testing forms are
                                     (mv-nth 0
                                             (find-dir-ent (cdr dir-ent-list)
                                                           filename))
-                                    pathname file))
+                                    path file))
           (mv-nth 0
                   (find-dir-ent (cdr dir-ent-list)
                                 filename)))))
@@ -23703,7 +23703,7 @@ Some (rather awful) testing forms are
                                   (find-dir-ent (cdr dir-ent-list)
                                                 filename)))))
                 (+ -1 entry-limit)))
-       pathname
+       path
        (m1-file
         (dir-ent-set-first-cluster-file-size
          (mv-nth
@@ -23716,7 +23716,7 @@ Some (rather awful) testing forms are
                      (mv-nth 0
                              (find-dir-ent (cdr dir-ent-list)
                                            filename)))))
-           (car pathname)))
+           (car path)))
          0 0)
         ""))))
     (equal (mv-nth 3
@@ -23741,7 +23741,7 @@ Some (rather awful) testing forms are
                                   (find-dir-ent (cdr dir-ent-list)
                                                 filename)))))
                 (+ -1 entry-limit)))
-       pathname))))
+       path))))
    (equal
     (lofat-to-hifat-helper
      (mv-nth 0
@@ -23749,7 +23749,7 @@ Some (rather awful) testing forms are
                                (mv-nth 0
                                        (find-dir-ent (cdr dir-ent-list)
                                                      filename))
-                               pathname file))
+                               path file))
      (make-dir-ent-list
       (mv-nth
        0
@@ -23759,7 +23759,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname file))
+                                  path file))
         (mv-nth 0
                 (find-dir-ent (cdr dir-ent-list)
                               filename)))))
@@ -23770,7 +23770,7 @@ Some (rather awful) testing forms are
                                (mv-nth 0
                                        (find-dir-ent (cdr dir-ent-list)
                                                      filename))
-                               pathname file))
+                               path file))
      (make-dir-ent-list
       (mv-nth
        0
@@ -23780,7 +23780,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname file))
+                                  path file))
         (mv-nth 0
                 (find-dir-ent (cdr dir-ent-list)
                               filename)))))
@@ -23802,7 +23802,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname file))
+                                   path file))
          (mv-nth 0
                  (find-dir-ent (cdr dir-ent-list)
                                filename))))))
@@ -23812,7 +23812,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname file)))))))
+                                path file)))))))
 
 (defthm
   lofat-place-file-correctness-1-lemma-50
@@ -23830,7 +23830,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname file))
+                                 path file))
        (make-dir-ent-list
         (mv-nth
          0
@@ -23840,7 +23840,7 @@ Some (rather awful) testing forms are
                                     (mv-nth 0
                                             (find-dir-ent (cdr dir-ent-list)
                                                           filename))
-                                    pathname file))
+                                    path file))
           (mv-nth 0
                   (find-dir-ent (cdr dir-ent-list)
                                 filename)))))
@@ -23855,7 +23855,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (find-dir-ent (cdr dir-ent-list)
                                                        filename))
-                                 pathname file))
+                                 path file))
        (make-dir-ent-list
         (mv-nth
          0
@@ -23865,7 +23865,7 @@ Some (rather awful) testing forms are
                                     (mv-nth 0
                                             (find-dir-ent (cdr dir-ent-list)
                                                           filename))
-                                    pathname file))
+                                    path file))
           (mv-nth 0
                   (find-dir-ent (cdr dir-ent-list)
                                 filename)))))
@@ -23884,7 +23884,7 @@ Some (rather awful) testing forms are
                                   (find-dir-ent (cdr dir-ent-list)
                                                 filename)))))
                 (+ -1 entry-limit)))
-       pathname
+       path
        (m1-file
         (dir-ent-set-first-cluster-file-size
          (mv-nth
@@ -23897,7 +23897,7 @@ Some (rather awful) testing forms are
                      (mv-nth 0
                              (find-dir-ent (cdr dir-ent-list)
                                            filename)))))
-           (car pathname)))
+           (car path)))
          0 0)
         ""))))
     (equal (mv-nth 3
@@ -23924,7 +23924,7 @@ Some (rather awful) testing forms are
                             (find-dir-ent (cdr dir-ent-list)
                                           filename)))))
           (+ -1 entry-limit)))
-        pathname)))))
+        path)))))
    (equal
     (lofat-to-hifat-helper
      (mv-nth 0
@@ -23932,7 +23932,7 @@ Some (rather awful) testing forms are
                                (mv-nth 0
                                        (find-dir-ent (cdr dir-ent-list)
                                                      filename))
-                               pathname file))
+                               path file))
      (make-dir-ent-list
       (mv-nth
        0
@@ -23942,7 +23942,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname file))
+                                  path file))
         (mv-nth 0
                 (find-dir-ent (cdr dir-ent-list)
                               filename)))))
@@ -23953,7 +23953,7 @@ Some (rather awful) testing forms are
                                (mv-nth 0
                                        (find-dir-ent (cdr dir-ent-list)
                                                      filename))
-                               pathname file))
+                               path file))
      (make-dir-ent-list
       (mv-nth
        0
@@ -23963,7 +23963,7 @@ Some (rather awful) testing forms are
                                   (mv-nth 0
                                           (find-dir-ent (cdr dir-ent-list)
                                                         filename))
-                                  pathname file))
+                                  path file))
         (mv-nth 0
                 (find-dir-ent (cdr dir-ent-list)
                               filename)))))
@@ -23985,7 +23985,7 @@ Some (rather awful) testing forms are
                                    (mv-nth 0
                                            (find-dir-ent (cdr dir-ent-list)
                                                          filename))
-                                   pathname file))
+                                   path file))
          (mv-nth 0
                  (find-dir-ent (cdr dir-ent-list)
                                filename))))))
@@ -23995,7 +23995,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (find-dir-ent (cdr dir-ent-list)
                                                       filename))
-                                pathname file)))))))
+                                path file)))))))
 
 (encapsulate
   ()
@@ -24089,14 +24089,14 @@ Some (rather awful) testing forms are
   ;;       0
   ;;       (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
   ;;     dir-ent-list)
-  ;;    (equal pathname (list filename)))
+  ;;    (equal path (list filename)))
   ;;   :hints :none)
   ;;  (:=
   ;;   (make-dir-ent-list
   ;;    (mv-nth 0
   ;;            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
   ;;   dir-ent-list)
-  ;;  (:= pathname (list filename))
+  ;;  (:= path (list filename))
   ;;  :drop :bash)
   ;; The hypotheses have been minimised.
   (defthm
@@ -24978,7 +24978,7 @@ Some (rather awful) testing forms are
   ;;                  fat32-in-memory
   ;;                  (mv-nth 0
   ;;                          (find-dir-ent dir-ent-list filename)))))
-  ;;        (car pathname)))
+  ;;        (car path)))
   ;;      0)
   ;;     (equal (lofat-file->contents file) "")
   ;;     (equal
@@ -24989,7 +24989,7 @@ Some (rather awful) testing forms are
   ;;         0
   ;;         (lofat-place-file fat32-in-memory
   ;;                           (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                           pathname file))
+  ;;                           path file))
   ;;        (make-dir-ent-list
   ;;         (mv-nth
   ;;          0
@@ -24998,7 +24998,7 @@ Some (rather awful) testing forms are
   ;;                   (lofat-place-file
   ;;                    fat32-in-memory
   ;;                    (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                    pathname file))
+  ;;                    path file))
   ;;           (mv-nth 0
   ;;                   (find-dir-ent dir-ent-list filename)))))
   ;;        entry-limit))
@@ -25011,7 +25011,7 @@ Some (rather awful) testing forms are
   ;;         0
   ;;         (lofat-place-file fat32-in-memory
   ;;                           (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                           pathname file))
+  ;;                           path file))
   ;;        (make-dir-ent-list
   ;;         (mv-nth
   ;;          0
@@ -25020,7 +25020,7 @@ Some (rather awful) testing forms are
   ;;                   (lofat-place-file
   ;;                    fat32-in-memory
   ;;                    (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                    pathname file))
+  ;;                    path file))
   ;;           (mv-nth 0
   ;;                   (find-dir-ent dir-ent-list filename)))))
   ;;        entry-limit))
@@ -25038,7 +25038,7 @@ Some (rather awful) testing forms are
   ;;                    (mv-nth 0
   ;;                            (find-dir-ent dir-ent-list filename)))))
   ;;          entry-limit))
-  ;;        pathname
+  ;;        path
   ;;        (m1-file
   ;;         (dir-ent-set-first-cluster-file-size
   ;;          (mv-nth
@@ -25050,7 +25050,7 @@ Some (rather awful) testing forms are
   ;;                      fat32-in-memory
   ;;                      (mv-nth 0
   ;;                              (find-dir-ent dir-ent-list filename)))))
-  ;;            (car pathname)))
+  ;;            (car path)))
   ;;          0 0)
   ;;         ""))))
   ;;     (not-intersectp-list
@@ -25062,7 +25062,7 @@ Some (rather awful) testing forms are
   ;;         0
   ;;         (lofat-place-file fat32-in-memory
   ;;                           (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                           pathname file))
+  ;;                           path file))
   ;;        (make-dir-ent-list
   ;;         (mv-nth
   ;;          0
@@ -25071,7 +25071,7 @@ Some (rather awful) testing forms are
   ;;                   (lofat-place-file
   ;;                    fat32-in-memory
   ;;                    (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                    pathname file))
+  ;;                    path file))
   ;;           (mv-nth 0
   ;;                   (find-dir-ent dir-ent-list filename)))))
   ;;        entry-limit)))
@@ -25081,7 +25081,7 @@ Some (rather awful) testing forms are
   ;;                                           dir-ent-list entry-limit))
   ;;            0)
   ;;     (fat32-filename-p filename)
-  ;;     (fat32-filename-list-p pathname)
+  ;;     (fat32-filename-list-p path)
   ;;     (lofat-regular-file-p file)
   ;;     (fat32-filename-p (dir-ent-filename (lofat-file->dir-ent file)))
   ;;     (non-free-index-listp x (effective-fat fat32-in-memory))
@@ -25090,7 +25090,7 @@ Some (rather awful) testing forms are
   ;;      (mv-nth 2
   ;;              (lofat-to-hifat-helper fat32-in-memory
   ;;                                     dir-ent-list entry-limit)))
-  ;;     (consp pathname)
+  ;;     (consp path)
   ;;     (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list filename)))
   ;;     (<= 2
   ;;         (dir-ent-first-cluster
@@ -25104,7 +25104,7 @@ Some (rather awful) testing forms are
   ;;       1
   ;;       (lofat-place-file fat32-in-memory
   ;;                         (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                         pathname file)))
+  ;;                         path file)))
   ;;     (>=
   ;;      entry-limit
   ;;      (hifat-entry-count
@@ -25126,7 +25126,7 @@ Some (rather awful) testing forms are
   ;;                       (mv-nth 0
   ;;                               (find-dir-ent dir-ent-list filename)))))
   ;;             entry-limit))
-  ;;           pathname
+  ;;           path
   ;;           (m1-file (dir-ent-set-first-cluster-file-size
   ;;                     (mv-nth 0 (find-dir-ent dir-ent-list filename))
   ;;                     0 0)
@@ -25144,7 +25144,7 @@ Some (rather awful) testing forms are
   ;;         0
   ;;         (lofat-place-file fat32-in-memory
   ;;                           (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                           pathname file))
+  ;;                           path file))
   ;;        dir-ent-list entry-limit)))
   ;;     (equal
   ;;      (mv-nth
@@ -25154,7 +25154,7 @@ Some (rather awful) testing forms are
   ;;         0
   ;;         (lofat-place-file fat32-in-memory
   ;;                           (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                           pathname file))
+  ;;                           path file))
   ;;        dir-ent-list entry-limit))
   ;;      0)
   ;;     (equal
@@ -25165,7 +25165,7 @@ Some (rather awful) testing forms are
   ;;         0
   ;;         (lofat-place-file fat32-in-memory
   ;;                           (mv-nth 0 (find-dir-ent dir-ent-list filename))
-  ;;                           pathname file))
+  ;;                           path file))
   ;;        dir-ent-list entry-limit))
   ;;      (put-assoc-equal
   ;;       filename
@@ -25185,7 +25185,7 @@ Some (rather awful) testing forms are
   ;;                      (mv-nth 0
   ;;                              (find-dir-ent dir-ent-list filename)))))
   ;;            entry-limit))
-  ;;          pathname
+  ;;          path
   ;;          (m1-file (dir-ent-set-first-cluster-file-size
   ;;                    (mv-nth 0 (find-dir-ent dir-ent-list filename))
   ;;                    0 0)
@@ -25647,13 +25647,13 @@ Some (rather awful) testing forms are
    (defun-nx
      induction-scheme
      (entry-limit fat32-in-memory
-                  file pathname root-dir-ent x)
+                  file path root-dir-ent x)
      (cond
       ((and
-        (consp pathname)
+        (consp path)
         (consp
          (assoc-equal
-          (fat32-filename-fix (car pathname))
+          (fat32-filename-fix (car path))
           (hifat-file-alist-fix
            (mv-nth
             0
@@ -25667,7 +25667,7 @@ Some (rather awful) testing forms are
         (m1-directory-file-p
          (cdr
           (assoc-equal
-           (fat32-filename-fix (car pathname))
+           (fat32-filename-fix (car path))
            (hifat-file-alist-fix
             (mv-nth
              0
@@ -25680,7 +25680,7 @@ Some (rather awful) testing forms are
               entry-limit)))))))
        (induction-scheme
         entry-limit
-        fat32-in-memory file (cdr pathname)
+        fat32-in-memory file (cdr path)
         (mv-nth
          0
          (find-dir-ent
@@ -25688,10 +25688,10 @@ Some (rather awful) testing forms are
            (mv-nth 0
                    (dir-ent-clusterchain-contents
                     fat32-in-memory root-dir-ent)))
-          (car pathname)))
+          (car path)))
         x))
       (t (mv entry-limit fat32-in-memory
-             file pathname root-dir-ent x)))))
+             file path root-dir-ent x)))))
 
   (local (in-theory (disable
                      (:DEFINITION BUTLAST)
@@ -25714,7 +25714,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname)))
+            (car path)))
           (nth 0
                (find-n-free-clusters (effective-fat fat32-in-memory)
                                      1))
@@ -25748,7 +25748,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -25762,7 +25762,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (fat32-update-lower-28
@@ -25783,7 +25783,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -25797,7 +25797,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))
                 (mv-nth
@@ -25811,7 +25811,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))
+                            (car path))))
                   (dir-ent-file-size
                    (mv-nth 0
                            (find-dir-ent
@@ -25819,7 +25819,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))))
+                            (car path)))))))
                268435455)
               (mv-nth
                0
@@ -25832,7 +25832,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname))))
+                                (car path))))
                 (dir-ent-file-size
                  (mv-nth
                   0
@@ -25840,7 +25840,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname)))))))
+                                (car path)))))))
              (mv-nth
               0
               (find-dir-ent
@@ -25848,7 +25848,7 @@ Some (rather awful) testing forms are
                 (mv-nth
                  0
                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (car pathname)))
+               (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -25866,7 +25866,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
@@ -25880,7 +25880,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))))
+                      (car path))))))
                  0 nil))
                1))))
            (dir-ent-first-cluster root-dir-ent)
@@ -25911,7 +25911,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -25925,7 +25925,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -25946,7 +25946,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -25960,7 +25960,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -25975,7 +25975,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -25984,7 +25984,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -25998,7 +25998,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -26007,14 +26007,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -26033,7 +26033,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -26047,7 +26047,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (nth
@@ -26065,7 +26065,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -26079,7 +26079,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (length (lofat-file->contents file)))))))
@@ -26110,7 +26110,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -26124,7 +26124,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -26145,7 +26145,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -26159,7 +26159,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -26174,7 +26174,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -26183,7 +26183,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -26197,7 +26197,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -26206,14 +26206,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -26232,7 +26232,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -26246,7 +26246,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (dir-ent-first-cluster root-dir-ent)
@@ -26277,7 +26277,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
@@ -26291,7 +26291,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname))))))
+                             (car path))))))
                         0 nil))
                       1))
                     (fat32-update-lower-28
@@ -26312,7 +26312,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname)))))
+                             (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
@@ -26326,7 +26326,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (dir-ent-clusterchain-contents
                                          fat32-in-memory root-dir-ent)))
-                               (car pathname))))))
+                               (car path))))))
                           0 nil))
                         1))
                       (mv-nth
@@ -26341,7 +26341,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname))))
+                           (car path))))
                         (dir-ent-file-size
                          (mv-nth
                           0
@@ -26350,7 +26350,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))))
+                           (car path)))))))
                      268435455)
                     (mv-nth
                      0
@@ -26364,7 +26364,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))
+                         (car path))))
                       (dir-ent-file-size
                        (mv-nth
                         0
@@ -26373,14 +26373,14 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname)))))))
+                         (car path)))))))
                    (mv-nth 0
                            (find-dir-ent
                             (make-dir-ent-list
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))
+                            (car path)))
                    (lofat-file->contents file)
                    (length (lofat-file->contents file))
                    (nth
@@ -26399,7 +26399,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -26413,7 +26413,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))))
                  (nth
@@ -26432,7 +26432,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -26446,7 +26446,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (length (lofat-file->contents file)))))))
@@ -26472,7 +26472,7 @@ Some (rather awful) testing forms are
              (mv-nth
               0
               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (car pathname)))
+            (car path)))
           (nth 0
                (find-n-free-clusters (effective-fat fat32-in-memory)
                                      1))
@@ -26505,7 +26505,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -26519,7 +26519,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (fat32-update-lower-28
@@ -26540,7 +26540,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -26554,7 +26554,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))
                 (mv-nth
@@ -26568,7 +26568,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))
+                            (car path))))
                   (dir-ent-file-size
                    (mv-nth 0
                            (find-dir-ent
@@ -26576,7 +26576,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))))
+                            (car path)))))))
                268435455)
               (mv-nth
                0
@@ -26589,7 +26589,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname))))
+                                (car path))))
                 (dir-ent-file-size
                  (mv-nth
                   0
@@ -26597,7 +26597,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname)))))))
+                                (car path)))))))
              (mv-nth
               0
               (find-dir-ent
@@ -26605,7 +26605,7 @@ Some (rather awful) testing forms are
                 (mv-nth
                  0
                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (car pathname)))
+               (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -26623,7 +26623,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
@@ -26637,7 +26637,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))))
+                      (car path))))))
                  0 nil))
                1))))
            (dir-ent-first-cluster root-dir-ent)
@@ -26668,7 +26668,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -26682,7 +26682,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -26703,7 +26703,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -26717,7 +26717,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -26732,7 +26732,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -26741,7 +26741,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -26755,7 +26755,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -26764,14 +26764,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -26790,7 +26790,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -26804,7 +26804,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (nth
@@ -26822,7 +26822,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -26836,7 +26836,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (length (lofat-file->contents file)))))))
@@ -26867,7 +26867,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -26881,7 +26881,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -26902,7 +26902,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -26916,7 +26916,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -26931,7 +26931,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -26940,7 +26940,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -26954,7 +26954,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -26963,14 +26963,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -26989,7 +26989,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -27003,7 +27003,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (dir-ent-first-cluster root-dir-ent)
@@ -27034,7 +27034,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
@@ -27048,7 +27048,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname))))))
+                             (car path))))))
                         0 nil))
                       1))
                     (fat32-update-lower-28
@@ -27069,7 +27069,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname)))))
+                             (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
@@ -27083,7 +27083,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (dir-ent-clusterchain-contents
                                          fat32-in-memory root-dir-ent)))
-                               (car pathname))))))
+                               (car path))))))
                           0 nil))
                         1))
                       (mv-nth
@@ -27098,7 +27098,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname))))
+                           (car path))))
                         (dir-ent-file-size
                          (mv-nth
                           0
@@ -27107,7 +27107,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))))
+                           (car path)))))))
                      268435455)
                     (mv-nth
                      0
@@ -27121,7 +27121,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))
+                         (car path))))
                       (dir-ent-file-size
                        (mv-nth
                         0
@@ -27130,14 +27130,14 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname)))))))
+                         (car path)))))))
                    (mv-nth 0
                            (find-dir-ent
                             (make-dir-ent-list
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))
+                            (car path)))
                    (lofat-file->contents file)
                    (length (lofat-file->contents file))
                    (nth
@@ -27156,7 +27156,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -27170,7 +27170,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))))
                  (nth
@@ -27189,7 +27189,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -27203,7 +27203,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (length (lofat-file->contents file)))))))
@@ -27221,7 +27221,7 @@ Some (rather awful) testing forms are
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
            entry-limit))
-         pathname
+         path
          (m1-file
           (dir-ent-set-first-cluster-file-size
            (mv-nth
@@ -27231,7 +27231,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))
+             (car path)))
            (nth 0
                 (find-n-free-clusters (effective-fat fat32-in-memory)
                                       1))
@@ -27256,7 +27256,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))))
+           (car path)))))
        (lofat-fs-p fat32-in-memory)
        (<=
         4294967296
@@ -27273,7 +27273,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname)))))))))
+              (car path)))))))))
       (not-intersectp-list
        x
        (mv-nth
@@ -27301,7 +27301,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -27315,7 +27315,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (fat32-update-lower-28
@@ -27336,7 +27336,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -27350,7 +27350,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))
                 (mv-nth
@@ -27364,7 +27364,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))
+                            (car path))))
                   (dir-ent-file-size
                    (mv-nth 0
                            (find-dir-ent
@@ -27372,7 +27372,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))))
+                            (car path)))))))
                268435455)
               (mv-nth
                0
@@ -27385,7 +27385,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname))))
+                                (car path))))
                 (dir-ent-file-size
                  (mv-nth
                   0
@@ -27393,7 +27393,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname)))))))
+                                (car path)))))))
              (mv-nth
               0
               (find-dir-ent
@@ -27401,7 +27401,7 @@ Some (rather awful) testing forms are
                 (mv-nth
                  0
                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (car pathname)))
+               (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -27419,7 +27419,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
@@ -27433,7 +27433,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))))
+                      (car path))))))
                  0 nil))
                1))))
            (dir-ent-first-cluster root-dir-ent)
@@ -27464,7 +27464,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -27478,7 +27478,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -27499,7 +27499,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -27513,7 +27513,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -27528,7 +27528,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -27537,7 +27537,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -27551,7 +27551,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -27560,14 +27560,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -27586,7 +27586,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -27600,7 +27600,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (nth
@@ -27618,7 +27618,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -27632,7 +27632,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (length (lofat-file->contents file)))))))
@@ -27663,7 +27663,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -27677,7 +27677,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -27698,7 +27698,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -27712,7 +27712,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -27727,7 +27727,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -27736,7 +27736,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -27750,7 +27750,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -27759,14 +27759,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -27785,7 +27785,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -27799,7 +27799,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (dir-ent-first-cluster root-dir-ent)
@@ -27830,7 +27830,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
@@ -27844,7 +27844,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname))))))
+                             (car path))))))
                         0 nil))
                       1))
                     (fat32-update-lower-28
@@ -27865,7 +27865,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname)))))
+                             (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
@@ -27879,7 +27879,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (dir-ent-clusterchain-contents
                                          fat32-in-memory root-dir-ent)))
-                               (car pathname))))))
+                               (car path))))))
                           0 nil))
                         1))
                       (mv-nth
@@ -27894,7 +27894,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname))))
+                           (car path))))
                         (dir-ent-file-size
                          (mv-nth
                           0
@@ -27903,7 +27903,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))))
+                           (car path)))))))
                      268435455)
                     (mv-nth
                      0
@@ -27917,7 +27917,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))
+                         (car path))))
                       (dir-ent-file-size
                        (mv-nth
                         0
@@ -27926,14 +27926,14 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname)))))))
+                         (car path)))))))
                    (mv-nth 0
                            (find-dir-ent
                             (make-dir-ent-list
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))
+                            (car path)))
                    (lofat-file->contents file)
                    (length (lofat-file->contents file))
                    (nth
@@ -27952,7 +27952,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -27966,7 +27966,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))))
                  (nth
@@ -27985,7 +27985,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -27999,7 +27999,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (length (lofat-file->contents file)))))))
@@ -28024,7 +28024,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
+           (car path)))
          (mv-nth
           0
           (dir-ent-clusterchain-contents
@@ -28036,7 +28036,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))))))
+             (car path)))))))
        (lofat-fs-p fat32-in-memory)
        (not
         (dir-ent-directory-p
@@ -28047,7 +28047,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname))))))
+           (car path))))))
       (not-intersectp-list
        x
        (mv-nth
@@ -28075,7 +28075,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -28089,7 +28089,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (fat32-update-lower-28
@@ -28110,7 +28110,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -28124,7 +28124,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))
                 (mv-nth
@@ -28138,7 +28138,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))
+                            (car path))))
                   (dir-ent-file-size
                    (mv-nth 0
                            (find-dir-ent
@@ -28146,7 +28146,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))))
+                            (car path)))))))
                268435455)
               (mv-nth
                0
@@ -28159,7 +28159,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname))))
+                                (car path))))
                 (dir-ent-file-size
                  (mv-nth
                   0
@@ -28167,7 +28167,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname)))))))
+                                (car path)))))))
              (mv-nth
               0
               (find-dir-ent
@@ -28175,7 +28175,7 @@ Some (rather awful) testing forms are
                 (mv-nth
                  0
                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (car pathname)))
+               (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -28193,7 +28193,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
@@ -28207,7 +28207,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))))
+                      (car path))))))
                  0 nil))
                1))))
            (dir-ent-first-cluster root-dir-ent)
@@ -28238,7 +28238,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -28252,7 +28252,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -28273,7 +28273,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -28287,7 +28287,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -28302,7 +28302,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -28311,7 +28311,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -28325,7 +28325,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -28334,14 +28334,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -28360,7 +28360,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -28374,7 +28374,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (nth
@@ -28392,7 +28392,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -28406,7 +28406,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (length (lofat-file->contents file)))))))
@@ -28437,7 +28437,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -28451,7 +28451,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -28472,7 +28472,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -28486,7 +28486,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -28501,7 +28501,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -28510,7 +28510,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -28524,7 +28524,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -28533,14 +28533,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -28559,7 +28559,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -28573,7 +28573,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (dir-ent-first-cluster root-dir-ent)
@@ -28604,7 +28604,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
@@ -28618,7 +28618,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname))))))
+                             (car path))))))
                         0 nil))
                       1))
                     (fat32-update-lower-28
@@ -28639,7 +28639,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname)))))
+                             (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
@@ -28653,7 +28653,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (dir-ent-clusterchain-contents
                                          fat32-in-memory root-dir-ent)))
-                               (car pathname))))))
+                               (car path))))))
                           0 nil))
                         1))
                       (mv-nth
@@ -28668,7 +28668,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname))))
+                           (car path))))
                         (dir-ent-file-size
                          (mv-nth
                           0
@@ -28677,7 +28677,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))))
+                           (car path)))))))
                      268435455)
                     (mv-nth
                      0
@@ -28691,7 +28691,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))
+                         (car path))))
                       (dir-ent-file-size
                        (mv-nth
                         0
@@ -28700,14 +28700,14 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname)))))))
+                         (car path)))))))
                    (mv-nth 0
                            (find-dir-ent
                             (make-dir-ent-list
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))
+                            (car path)))
                    (lofat-file->contents file)
                    (length (lofat-file->contents file))
                    (nth
@@ -28726,7 +28726,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -28740,7 +28740,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))))
                  (nth
@@ -28759,7 +28759,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -28773,7 +28773,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (length (lofat-file->contents file)))))))
@@ -28798,7 +28798,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
+           (car path)))
          (mv-nth
           0
           (dir-ent-clusterchain-contents
@@ -28810,7 +28810,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))))))
+             (car path)))))))
        (lofat-fs-p fat32-in-memory)
        (not
         (dir-ent-directory-p
@@ -28821,7 +28821,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname))))))
+           (car path))))))
       (equal
        (mv-nth
         3
@@ -28848,7 +28848,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -28862,7 +28862,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (fat32-update-lower-28
@@ -28883,7 +28883,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -28897,7 +28897,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))
                 (mv-nth
@@ -28911,7 +28911,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))
+                            (car path))))
                   (dir-ent-file-size
                    (mv-nth 0
                            (find-dir-ent
@@ -28919,7 +28919,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))))
+                            (car path)))))))
                268435455)
               (mv-nth
                0
@@ -28932,7 +28932,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname))))
+                                (car path))))
                 (dir-ent-file-size
                  (mv-nth
                   0
@@ -28940,7 +28940,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname)))))))
+                                (car path)))))))
              (mv-nth
               0
               (find-dir-ent
@@ -28948,7 +28948,7 @@ Some (rather awful) testing forms are
                 (mv-nth
                  0
                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (car pathname)))
+               (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -28966,7 +28966,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
@@ -28980,7 +28980,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))))
+                      (car path))))))
                  0 nil))
                1))))
            (dir-ent-first-cluster root-dir-ent)
@@ -29011,7 +29011,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -29025,7 +29025,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -29046,7 +29046,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -29060,7 +29060,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -29075,7 +29075,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -29084,7 +29084,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -29098,7 +29098,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -29107,14 +29107,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -29133,7 +29133,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -29147,7 +29147,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (nth
@@ -29165,7 +29165,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -29179,7 +29179,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (length (lofat-file->contents file)))))))
@@ -29210,7 +29210,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -29224,7 +29224,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -29245,7 +29245,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -29259,7 +29259,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -29274,7 +29274,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -29283,7 +29283,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -29297,7 +29297,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -29306,14 +29306,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -29332,7 +29332,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -29346,7 +29346,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (dir-ent-first-cluster root-dir-ent)
@@ -29377,7 +29377,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
@@ -29391,7 +29391,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname))))))
+                             (car path))))))
                         0 nil))
                       1))
                     (fat32-update-lower-28
@@ -29412,7 +29412,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname)))))
+                             (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
@@ -29426,7 +29426,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (dir-ent-clusterchain-contents
                                          fat32-in-memory root-dir-ent)))
-                               (car pathname))))))
+                               (car path))))))
                           0 nil))
                         1))
                       (mv-nth
@@ -29441,7 +29441,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname))))
+                           (car path))))
                         (dir-ent-file-size
                          (mv-nth
                           0
@@ -29450,7 +29450,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))))
+                           (car path)))))))
                      268435455)
                     (mv-nth
                      0
@@ -29464,7 +29464,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))
+                         (car path))))
                       (dir-ent-file-size
                        (mv-nth
                         0
@@ -29473,14 +29473,14 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname)))))))
+                         (car path)))))))
                    (mv-nth 0
                            (find-dir-ent
                             (make-dir-ent-list
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))
+                            (car path)))
                    (lofat-file->contents file)
                    (length (lofat-file->contents file))
                    (nth
@@ -29499,7 +29499,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -29513,7 +29513,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))))
                  (nth
@@ -29532,7 +29532,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -29546,7 +29546,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (length (lofat-file->contents file)))))))
@@ -29572,7 +29572,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
+           (car path)))
          (mv-nth
           0
           (dir-ent-clusterchain-contents
@@ -29584,7 +29584,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))))))
+             (car path)))))))
        (lofat-fs-p fat32-in-memory)
        (not
         (dir-ent-directory-p
@@ -29595,7 +29595,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname))))))
+           (car path))))))
       (equal
        (mv-nth
         0
@@ -29622,7 +29622,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -29636,7 +29636,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (fat32-update-lower-28
@@ -29657,7 +29657,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -29671,7 +29671,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))
                 (mv-nth
@@ -29685,7 +29685,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))
+                            (car path))))
                   (dir-ent-file-size
                    (mv-nth 0
                            (find-dir-ent
@@ -29693,7 +29693,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))))
+                            (car path)))))))
                268435455)
               (mv-nth
                0
@@ -29706,7 +29706,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname))))
+                                (car path))))
                 (dir-ent-file-size
                  (mv-nth
                   0
@@ -29714,7 +29714,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname)))))))
+                                (car path)))))))
              (mv-nth
               0
               (find-dir-ent
@@ -29722,7 +29722,7 @@ Some (rather awful) testing forms are
                 (mv-nth
                  0
                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (car pathname)))
+               (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -29740,7 +29740,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
@@ -29754,7 +29754,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))))
+                      (car path))))))
                  0 nil))
                1))))
            (dir-ent-first-cluster root-dir-ent)
@@ -29785,7 +29785,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -29799,7 +29799,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -29820,7 +29820,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -29834,7 +29834,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -29849,7 +29849,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -29858,7 +29858,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -29872,7 +29872,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -29881,14 +29881,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -29907,7 +29907,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -29921,7 +29921,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (nth
@@ -29939,7 +29939,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -29953,7 +29953,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (length (lofat-file->contents file)))))))
@@ -29984,7 +29984,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -29998,7 +29998,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (fat32-update-lower-28
@@ -30019,7 +30019,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -30033,7 +30033,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))
                    (mv-nth
@@ -30048,7 +30048,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname))))
+                        (car path))))
                      (dir-ent-file-size
                       (mv-nth
                        0
@@ -30057,7 +30057,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))))
+                        (car path)))))))
                   268435455)
                  (mv-nth
                   0
@@ -30071,7 +30071,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))
+                      (car path))))
                    (dir-ent-file-size
                     (mv-nth
                      0
@@ -30080,14 +30080,14 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname)))))))
+                      (car path)))))))
                 (mv-nth
                  0
                  (find-dir-ent
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))
+                  (car path)))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -30106,7 +30106,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -30120,7 +30120,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))))
               (dir-ent-first-cluster root-dir-ent)
@@ -30151,7 +30151,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                        (make-list-ac
                         (len
                          (mv-nth
@@ -30165,7 +30165,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname))))))
+                             (car path))))))
                         0 nil))
                       1))
                     (fat32-update-lower-28
@@ -30186,7 +30186,7 @@ Some (rather awful) testing forms are
                               (mv-nth 0
                                       (dir-ent-clusterchain-contents
                                        fat32-in-memory root-dir-ent)))
-                             (car pathname)))))
+                             (car path)))))
                          (make-list-ac
                           (len
                            (mv-nth
@@ -30200,7 +30200,7 @@ Some (rather awful) testing forms are
                                 (mv-nth 0
                                         (dir-ent-clusterchain-contents
                                          fat32-in-memory root-dir-ent)))
-                               (car pathname))))))
+                               (car path))))))
                           0 nil))
                         1))
                       (mv-nth
@@ -30215,7 +30215,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname))))
+                           (car path))))
                         (dir-ent-file-size
                          (mv-nth
                           0
@@ -30224,7 +30224,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))))
+                           (car path)))))))
                      268435455)
                     (mv-nth
                      0
@@ -30238,7 +30238,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))
+                         (car path))))
                       (dir-ent-file-size
                        (mv-nth
                         0
@@ -30247,14 +30247,14 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname)))))))
+                         (car path)))))))
                    (mv-nth 0
                            (find-dir-ent
                             (make-dir-ent-list
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))
+                            (car path)))
                    (lofat-file->contents file)
                    (length (lofat-file->contents file))
                    (nth
@@ -30273,7 +30273,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname)))))
+                          (car path)))))
                       (make-list-ac
                        (len
                         (mv-nth
@@ -30287,7 +30287,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                        0 nil))
                      1))))
                  (nth
@@ -30306,7 +30306,7 @@ Some (rather awful) testing forms are
                          (mv-nth 0
                                  (dir-ent-clusterchain-contents
                                   fat32-in-memory root-dir-ent)))
-                        (car pathname)))))
+                        (car path)))))
                     (make-list-ac
                      (len
                       (mv-nth
@@ -30320,7 +30320,7 @@ Some (rather awful) testing forms are
                            (mv-nth 0
                                    (dir-ent-clusterchain-contents
                                     fat32-in-memory root-dir-ent)))
-                          (car pathname))))))
+                          (car path))))))
                      0 nil))
                    1))
                  (length (lofat-file->contents file)))))))
@@ -30353,7 +30353,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))))
+           (car path)))))
        (lofat-fs-p fat32-in-memory)
        (<=
         4294967296
@@ -30370,7 +30370,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname)))))))))
+              (car path)))))))))
       (<
        2097152
        (length
@@ -30399,7 +30399,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))
+                            (car path)))))
                  (make-list-ac
                   (len
                    (mv-nth
@@ -30413,7 +30413,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname))))))
+                       (car path))))))
                   0 nil))
                 1))
               (fat32-update-lower-28
@@ -30434,7 +30434,7 @@ Some (rather awful) testing forms are
                         (mv-nth 0
                                 (dir-ent-clusterchain-contents
                                  fat32-in-memory root-dir-ent)))
-                       (car pathname)))))
+                       (car path)))))
                    (make-list-ac
                     (len
                      (mv-nth
@@ -30448,7 +30448,7 @@ Some (rather awful) testing forms are
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (car pathname))))))
+                         (car path))))))
                     0 nil))
                   1))
                 (mv-nth
@@ -30462,7 +30462,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))
+                            (car path))))
                   (dir-ent-file-size
                    (mv-nth 0
                            (find-dir-ent
@@ -30470,7 +30470,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname)))))))
+                            (car path)))))))
                268435455)
               (mv-nth
                0
@@ -30483,7 +30483,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname))))
+                                (car path))))
                 (dir-ent-file-size
                  (mv-nth
                   0
@@ -30491,7 +30491,7 @@ Some (rather awful) testing forms are
                                  (mv-nth 0
                                          (dir-ent-clusterchain-contents
                                           fat32-in-memory root-dir-ent)))
-                                (car pathname)))))))
+                                (car path)))))))
              (mv-nth
               0
               (find-dir-ent
@@ -30499,7 +30499,7 @@ Some (rather awful) testing forms are
                 (mv-nth
                  0
                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (car pathname)))
+               (car path)))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -30517,7 +30517,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname)))))
+                           (car path)))))
                 (make-list-ac
                  (len
                   (mv-nth
@@ -30531,7 +30531,7 @@ Some (rather awful) testing forms are
                        (mv-nth 0
                                (dir-ent-clusterchain-contents
                                 fat32-in-memory root-dir-ent)))
-                      (car pathname))))))
+                      (car path))))))
                  0 nil))
                1))))
            (nth
@@ -30549,7 +30549,7 @@ Some (rather awful) testing forms are
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname)))))
+                  (car path)))))
               (make-list-ac
                (len
                 (mv-nth
@@ -30562,7 +30562,7 @@ Some (rather awful) testing forms are
                             (mv-nth 0
                                     (dir-ent-clusterchain-contents
                                      fat32-in-memory root-dir-ent)))
-                           (car pathname))))))
+                           (car path))))))
                0 nil))
              1))
            (length (lofat-file->contents file))))))))
@@ -30587,8 +30587,8 @@ Some (rather awful) testing forms are
      lofat-place-file-correctness-1-lemma-60
      (implies
       (and
-       (consp pathname)
-       (fat32-filename-list-p pathname)
+       (consp path)
+       (fat32-filename-list-p path)
        (equal
         (mv-nth 1
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
@@ -30596,7 +30596,7 @@ Some (rather awful) testing forms are
       (< (dir-ent-first-cluster
           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                (car pathname)))
+                                (car path)))
          (binary-+ '2
                    (count-of-clusters fat32-in-memory))))
      :hints (("goal" :in-theory (enable (:definition butlast)
@@ -30609,13 +30609,13 @@ Some (rather awful) testing forms are
    (defthm
      lofat-place-file-correctness-1-lemma-61
      (implies
-      (and (consp pathname)
-           (fat32-filename-list-p pathname))
+      (and (consp path)
+           (fat32-filename-list-p path))
       (equal
        (dir-ent-first-cluster
         (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                              (car pathname)))
+                              (car path)))
        0))
      :hints (("goal" :in-theory (enable (:definition butlast)
                                         (:definition nfix)
@@ -30627,13 +30627,13 @@ Some (rather awful) testing forms are
      lofat-place-file-correctness-1-lemma-62
      (implies
       (and
-       (fat32-filename-list-p pathname)
+       (fat32-filename-list-p path)
        (<=
         2
         (dir-ent-first-cluster
          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               (cadr pathname)))))
+                               (cadr path)))))
       (equal
        (mv-nth
         3
@@ -30657,7 +30657,7 @@ Some (rather awful) testing forms are
                     (dir-ent-set-filename
                      '(0 0 0 0 0 0 0 0 0 0 0 0
                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                     (cadr pathname)))
+                     (cadr path)))
                    0)))
                 1))
               (fat32-update-lower-28
@@ -30674,7 +30674,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   1))
                 (mv-nth
@@ -30685,7 +30685,7 @@ Some (rather awful) testing forms are
                    (dir-ent-set-filename
                     '(0 0 0 0 0 0 0 0 0 0 0 0
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                    (cadr pathname)))
+                    (cadr path)))
                   0)))
                268435455)
               (mv-nth 0
@@ -30695,11 +30695,11 @@ Some (rather awful) testing forms are
                         (dir-ent-set-filename
                          '(0 0 0 0 0 0 0 0 0 0 0 0
                              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                         (cadr pathname)))
+                         (cadr path)))
                        0)))
              (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                   (cadr pathname))
+                                   (cadr path))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -30714,7 +30714,7 @@ Some (rather awful) testing forms are
                    (dir-ent-set-filename
                     '(0 0 0 0 0 0 0 0 0 0 0 0
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                    (cadr pathname)))
+                    (cadr path)))
                   0)))
                1))))
            (dir-ent-first-cluster
@@ -30725,7 +30725,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname))))
+              (car path))))
            (nats=>string
             (insert-dir-ent
              (string=>nats
@@ -30739,7 +30739,7 @@ Some (rather awful) testing forms are
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname))))))
+                  (car path))))))
              (dir-ent-set-first-cluster-file-size
               (mv-nth
                1
@@ -30757,7 +30757,7 @@ Some (rather awful) testing forms are
                        (dir-ent-set-filename
                         '(0 0 0 0 0 0 0 0 0 0 0 0
                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                        (cadr pathname)))
+                        (cadr path)))
                       0)))
                    1))
                  (fat32-update-lower-28
@@ -30774,7 +30774,7 @@ Some (rather awful) testing forms are
                          (dir-ent-set-filename
                           '(0 0 0 0 0 0 0 0 0 0 0 0
                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                          (cadr pathname)))
+                          (cadr path)))
                         0)))
                      1))
                    (mv-nth
@@ -30785,7 +30785,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   268435455)
                  (mv-nth
@@ -30796,12 +30796,12 @@ Some (rather awful) testing forms are
                     (dir-ent-set-filename
                      '(0 0 0 0 0 0 0 0 0 0 0 0
                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                     (cadr pathname)))
+                     (cadr path)))
                    0)))
                 (dir-ent-set-filename
                  '(0 0 0 0 0 0 0 0 0 0 0 0
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                 (cadr pathname))
+                 (cadr path))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -30816,7 +30816,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   1))))
               (nth
@@ -30831,7 +30831,7 @@ Some (rather awful) testing forms are
                     (dir-ent-set-filename
                      '(0 0 0 0 0 0 0 0 0 0 0 0
                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                     (cadr pathname)))
+                     (cadr path)))
                    0)))
                 1))
               (length (lofat-file->contents file)))))))
@@ -30858,7 +30858,7 @@ Some (rather awful) testing forms are
                        (dir-ent-set-filename
                         '(0 0 0 0 0 0 0 0 0 0 0 0
                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                        (cadr pathname)))
+                        (cadr path)))
                       0)))
                    1))
                  (fat32-update-lower-28
@@ -30875,7 +30875,7 @@ Some (rather awful) testing forms are
                          (dir-ent-set-filename
                           '(0 0 0 0 0 0 0 0 0 0 0 0
                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                          (cadr pathname)))
+                          (cadr path)))
                         0)))
                      1))
                    (mv-nth
@@ -30886,7 +30886,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   268435455)
                  (mv-nth
@@ -30897,12 +30897,12 @@ Some (rather awful) testing forms are
                     (dir-ent-set-filename
                      '(0 0 0 0 0 0 0 0 0 0 0 0
                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                     (cadr pathname)))
+                     (cadr path)))
                    0)))
                 (dir-ent-set-filename
                  '(0 0 0 0 0 0 0 0 0 0 0 0
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                 (cadr pathname))
+                 (cadr path))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -30917,7 +30917,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   1))))
               (dir-ent-first-cluster
@@ -30928,7 +30928,7 @@ Some (rather awful) testing forms are
                   (mv-nth
                    0
                    (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                 (car pathname))))
+                 (car path))))
               (nats=>string
                (insert-dir-ent
                 (string=>nats
@@ -30942,7 +30942,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                 (dir-ent-set-first-cluster-file-size
                  (mv-nth
                   1
@@ -30960,7 +30960,7 @@ Some (rather awful) testing forms are
                           (dir-ent-set-filename
                            '(0 0 0 0 0 0 0 0 0 0 0 0
                                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                           (cadr pathname)))
+                           (cadr path)))
                          0)))
                       1))
                     (fat32-update-lower-28
@@ -30977,7 +30977,7 @@ Some (rather awful) testing forms are
                             (dir-ent-set-filename
                              '(0 0 0 0 0 0 0 0 0 0 0 0
                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                             (cadr pathname)))
+                             (cadr path)))
                            0)))
                         1))
                       (mv-nth
@@ -30988,7 +30988,7 @@ Some (rather awful) testing forms are
                          (dir-ent-set-filename
                           '(0 0 0 0 0 0 0 0 0 0 0 0
                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                          (cadr pathname)))
+                          (cadr path)))
                         0)))
                      268435455)
                     (mv-nth
@@ -30999,12 +30999,12 @@ Some (rather awful) testing forms are
                        (dir-ent-set-filename
                         '(0 0 0 0 0 0 0 0 0 0 0 0
                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                        (cadr pathname)))
+                        (cadr path)))
                       0)))
                    (dir-ent-set-filename
                     '(0 0 0 0 0 0 0 0 0 0 0 0
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                    (cadr pathname))
+                    (cadr path))
                    (lofat-file->contents file)
                    (length (lofat-file->contents file))
                    (nth
@@ -31019,7 +31019,7 @@ Some (rather awful) testing forms are
                          (dir-ent-set-filename
                           '(0 0 0 0 0 0 0 0 0 0 0 0
                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                          (cadr pathname)))
+                          (cadr path)))
                         0)))
                      1))))
                  (nth
@@ -31034,7 +31034,7 @@ Some (rather awful) testing forms are
                        (dir-ent-set-filename
                         '(0 0 0 0 0 0 0 0 0 0 0 0
                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                        (cadr pathname)))
+                        (cadr path)))
                       0)))
                    1))
                  (length (lofat-file->contents file)))))))
@@ -31055,13 +31055,13 @@ Some (rather awful) testing forms are
      lofat-place-file-correctness-1-lemma-63
      (implies
       (and
-       (fat32-filename-list-p pathname)
+       (fat32-filename-list-p path)
        (<=
         2
         (dir-ent-first-cluster
          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               (cadr pathname)))))
+                               (cadr path)))))
       (not-intersectp-list
        x
        (mv-nth
@@ -31086,7 +31086,7 @@ Some (rather awful) testing forms are
                     (dir-ent-set-filename
                      '(0 0 0 0 0 0 0 0 0 0 0 0
                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                     (cadr pathname)))
+                     (cadr path)))
                    0)))
                 1))
               (fat32-update-lower-28
@@ -31103,7 +31103,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   1))
                 (mv-nth
@@ -31114,7 +31114,7 @@ Some (rather awful) testing forms are
                    (dir-ent-set-filename
                     '(0 0 0 0 0 0 0 0 0 0 0 0
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                    (cadr pathname)))
+                    (cadr path)))
                   0)))
                268435455)
               (mv-nth 0
@@ -31124,11 +31124,11 @@ Some (rather awful) testing forms are
                         (dir-ent-set-filename
                          '(0 0 0 0 0 0 0 0 0 0 0 0
                              0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                         (cadr pathname)))
+                         (cadr path)))
                        0)))
              (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                   (cadr pathname))
+                                   (cadr path))
              (lofat-file->contents file)
              (length (lofat-file->contents file))
              (nth
@@ -31143,7 +31143,7 @@ Some (rather awful) testing forms are
                    (dir-ent-set-filename
                     '(0 0 0 0 0 0 0 0 0 0 0 0
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                    (cadr pathname)))
+                    (cadr path)))
                   0)))
                1))))
            (dir-ent-first-cluster
@@ -31154,7 +31154,7 @@ Some (rather awful) testing forms are
                (mv-nth
                 0
                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (car pathname))))
+              (car path))))
            (nats=>string
             (insert-dir-ent
              (string=>nats
@@ -31168,7 +31168,7 @@ Some (rather awful) testing forms are
                   (make-dir-ent-list (mv-nth 0
                                              (dir-ent-clusterchain-contents
                                               fat32-in-memory root-dir-ent)))
-                  (car pathname))))))
+                  (car path))))))
              (dir-ent-set-first-cluster-file-size
               (mv-nth
                1
@@ -31186,7 +31186,7 @@ Some (rather awful) testing forms are
                        (dir-ent-set-filename
                         '(0 0 0 0 0 0 0 0 0 0 0 0
                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                        (cadr pathname)))
+                        (cadr path)))
                       0)))
                    1))
                  (fat32-update-lower-28
@@ -31203,7 +31203,7 @@ Some (rather awful) testing forms are
                          (dir-ent-set-filename
                           '(0 0 0 0 0 0 0 0 0 0 0 0
                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                          (cadr pathname)))
+                          (cadr path)))
                         0)))
                      1))
                    (mv-nth
@@ -31214,7 +31214,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   268435455)
                  (mv-nth
@@ -31225,12 +31225,12 @@ Some (rather awful) testing forms are
                     (dir-ent-set-filename
                      '(0 0 0 0 0 0 0 0 0 0 0 0
                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                     (cadr pathname)))
+                     (cadr path)))
                    0)))
                 (dir-ent-set-filename
                  '(0 0 0 0 0 0 0 0 0 0 0 0
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                 (cadr pathname))
+                 (cadr path))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -31245,7 +31245,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   1))))
               (nth
@@ -31260,7 +31260,7 @@ Some (rather awful) testing forms are
                     (dir-ent-set-filename
                      '(0 0 0 0 0 0 0 0 0 0 0 0
                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                     (cadr pathname)))
+                     (cadr path)))
                    0)))
                 1))
               (length (lofat-file->contents file)))))))
@@ -31287,7 +31287,7 @@ Some (rather awful) testing forms are
                        (dir-ent-set-filename
                         '(0 0 0 0 0 0 0 0 0 0 0 0
                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                        (cadr pathname)))
+                        (cadr path)))
                       0)))
                    1))
                  (fat32-update-lower-28
@@ -31304,7 +31304,7 @@ Some (rather awful) testing forms are
                          (dir-ent-set-filename
                           '(0 0 0 0 0 0 0 0 0 0 0 0
                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                          (cadr pathname)))
+                          (cadr path)))
                         0)))
                      1))
                    (mv-nth
@@ -31315,7 +31315,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   268435455)
                  (mv-nth
@@ -31326,12 +31326,12 @@ Some (rather awful) testing forms are
                     (dir-ent-set-filename
                      '(0 0 0 0 0 0 0 0 0 0 0 0
                          0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                     (cadr pathname)))
+                     (cadr path)))
                    0)))
                 (dir-ent-set-filename
                  '(0 0 0 0 0 0 0 0 0 0 0 0
                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                 (cadr pathname))
+                 (cadr path))
                 (lofat-file->contents file)
                 (length (lofat-file->contents file))
                 (nth
@@ -31346,7 +31346,7 @@ Some (rather awful) testing forms are
                       (dir-ent-set-filename
                        '(0 0 0 0 0 0 0 0 0 0 0 0
                            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                       (cadr pathname)))
+                       (cadr path)))
                      0)))
                   1))))
               (dir-ent-first-cluster
@@ -31357,7 +31357,7 @@ Some (rather awful) testing forms are
                   (mv-nth
                    0
                    (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                 (car pathname))))
+                 (car path))))
               (nats=>string
                (insert-dir-ent
                 (string=>nats
@@ -31371,7 +31371,7 @@ Some (rather awful) testing forms are
                              (mv-nth 0
                                      (dir-ent-clusterchain-contents
                                       fat32-in-memory root-dir-ent)))
-                            (car pathname))))))
+                            (car path))))))
                 (dir-ent-set-first-cluster-file-size
                  (mv-nth
                   1
@@ -31389,7 +31389,7 @@ Some (rather awful) testing forms are
                           (dir-ent-set-filename
                            '(0 0 0 0 0 0 0 0 0 0 0 0
                                0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                           (cadr pathname)))
+                           (cadr path)))
                          0)))
                       1))
                     (fat32-update-lower-28
@@ -31406,7 +31406,7 @@ Some (rather awful) testing forms are
                             (dir-ent-set-filename
                              '(0 0 0 0 0 0 0 0 0 0 0 0
                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                             (cadr pathname)))
+                             (cadr path)))
                            0)))
                         1))
                       (mv-nth
@@ -31417,7 +31417,7 @@ Some (rather awful) testing forms are
                          (dir-ent-set-filename
                           '(0 0 0 0 0 0 0 0 0 0 0 0
                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                          (cadr pathname)))
+                          (cadr path)))
                         0)))
                      268435455)
                     (mv-nth
@@ -31428,12 +31428,12 @@ Some (rather awful) testing forms are
                        (dir-ent-set-filename
                         '(0 0 0 0 0 0 0 0 0 0 0 0
                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                        (cadr pathname)))
+                        (cadr path)))
                       0)))
                    (dir-ent-set-filename
                     '(0 0 0 0 0 0 0 0 0 0 0 0
                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                    (cadr pathname))
+                    (cadr path))
                    (lofat-file->contents file)
                    (length (lofat-file->contents file))
                    (nth
@@ -31448,7 +31448,7 @@ Some (rather awful) testing forms are
                          (dir-ent-set-filename
                           '(0 0 0 0 0 0 0 0 0 0 0 0
                               0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                          (cadr pathname)))
+                          (cadr path)))
                         0)))
                      1))))
                  (nth
@@ -31463,7 +31463,7 @@ Some (rather awful) testing forms are
                        (dir-ent-set-filename
                         '(0 0 0 0 0 0 0 0 0 0 0 0
                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                        (cadr pathname)))
+                        (cadr path)))
                       0)))
                    1))
                  (length (lofat-file->contents file)))))))
@@ -31504,7 +31504,7 @@ Some (rather awful) testing forms are
             (mv-nth
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (car pathname)))
+           (car path)))
          (mv-nth
           0
           (dir-ent-clusterchain-contents
@@ -31516,7 +31516,7 @@ Some (rather awful) testing forms are
               (mv-nth
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (car pathname)))))))
+             (car path)))))))
        (lofat-fs-p fat32-in-memory))
       (dir-ent-directory-p
        (mv-nth
@@ -31525,7 +31525,7 @@ Some (rather awful) testing forms are
          (make-dir-ent-list
           (mv-nth 0
                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (car pathname)))))
+         (car path)))))
      :hints (("goal" :in-theory (enable (:definition butlast)
                                         (:definition nfix)
                                         (:definition length)
@@ -31575,7 +31575,7 @@ Some (rather awful) testing forms are
   ;;            (make-dir-ent-list
   ;;             (mv-nth 0
   ;;                     (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-  ;;            (car pathname)))))
+  ;;            (car path)))))
   ;;        (dir-ent-clusterchain-exists
   ;;         (and
   ;;          (<=
@@ -31587,7 +31587,7 @@ Some (rather awful) testing forms are
   ;;              (make-dir-ent-list
   ;;               (mv-nth 0
   ;;                       (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-  ;;              (car pathname)))))
+  ;;              (car path)))))
   ;;          (<
   ;;           (dir-ent-first-cluster
   ;;            (mv-nth
@@ -31596,7 +31596,7 @@ Some (rather awful) testing forms are
   ;;              (make-dir-ent-list
   ;;               (mv-nth 0
   ;;                       (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-  ;;              (car pathname))))
+  ;;              (car path))))
   ;;           (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))))
   ;;        (dir-ent
   ;;         (cond
@@ -31610,7 +31610,7 @@ Some (rather awful) testing forms are
   ;;               (mv-nth
   ;;                0
   ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-  ;;              (car pathname)))
+  ;;              (car path)))
   ;;            0 0))
   ;;          ((and dir-ent-exists dir-ent-clusterchain-exists)
   ;;           (dir-ent-set-first-cluster-file-size
@@ -31621,7 +31621,7 @@ Some (rather awful) testing forms are
   ;;               (mv-nth
   ;;                0
   ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-  ;;              (car pathname)))
+  ;;              (car path)))
   ;;            (nth 0
   ;;                 (find-n-free-clusters
   ;;                  (set-indices-in-fa-table
@@ -31636,7 +31636,7 @@ Some (rather awful) testing forms are
   ;;                       (make-dir-ent-list
   ;;                        (mv-nth 0
   ;;                                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-  ;;                       (car pathname)))))
+  ;;                       (car path)))))
   ;;                   (make-list-ac
   ;;                    (len
   ;;                     (mv-nth
@@ -31649,7 +31649,7 @@ Some (rather awful) testing forms are
   ;;                         (make-dir-ent-list (mv-nth 0
   ;;                                                    (dir-ent-clusterchain-contents
   ;;                                                     fat32-in-memory root-dir-ent)))
-  ;;                         (car pathname))))))
+  ;;                         (car path))))))
   ;;                    0 nil))
   ;;                  1))
   ;;            (len (explode (lofat-file->contents file)))))
@@ -31662,7 +31662,7 @@ Some (rather awful) testing forms are
   ;;               (mv-nth
   ;;                0
   ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-  ;;              (car pathname)))
+  ;;              (car path)))
   ;;            0 0))
   ;;          (dir-ent-exists
   ;;           (dir-ent-set-first-cluster-file-size
@@ -31673,7 +31673,7 @@ Some (rather awful) testing forms are
   ;;               (mv-nth
   ;;                0
   ;;                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-  ;;              (car pathname)))
+  ;;              (car path)))
   ;;            (nth 0
   ;;                 (find-n-free-clusters
   ;;                  (effective-fat fat32-in-memory)
@@ -31682,12 +31682,12 @@ Some (rather awful) testing forms are
   ;;          ((zp (len (explode (lofat-file->contents file))))
   ;;           (dir-ent-set-first-cluster-file-size
   ;;            (dir-ent-set-filename (dir-ent-fix nil)
-  ;;                                  (car pathname))
+  ;;                                  (car path))
   ;;            0 0))
   ;;          (t
   ;;           (dir-ent-set-first-cluster-file-size
   ;;            (dir-ent-set-filename (dir-ent-fix nil)
-  ;;                                  (car pathname))
+  ;;                                  (car path))
   ;;            (nth 0
   ;;                 (find-n-free-clusters (effective-fat fat32-in-memory)
   ;;                                       1))
@@ -31700,7 +31700,7 @@ Some (rather awful) testing forms are
   ;;                   (make-dir-ent-list
   ;;                    (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
   ;;                   entry-limit))
-  ;;          pathname
+  ;;          path
   ;;          (m1-file dir-ent (lofat-file->contents file)))))
   ;;     (implies
   ;;      (and
@@ -31717,7 +31717,7 @@ Some (rather awful) testing forms are
   ;;       (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
   ;;       (< (dir-ent-first-cluster root-dir-ent)
   ;;          (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
-  ;;       (fat32-filename-list-p pathname)
+  ;;       (fat32-filename-list-p path)
   ;;       (not-intersectp-list
   ;;        (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
   ;;        (mv-nth 2
@@ -31747,7 +31747,7 @@ Some (rather awful) testing forms are
   ;;        (equal
   ;;         (mv-nth
   ;;          1
-  ;;          (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+  ;;          (lofat-place-file fat32-in-memory root-dir-ent path file))
   ;;         *ENOSPC*)))
   ;;      (and
   ;;       (equal
@@ -31755,13 +31755,13 @@ Some (rather awful) testing forms are
   ;;                (lofat-to-hifat-helper
   ;;                 (mv-nth
   ;;                  0
-  ;;                  (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+  ;;                  (lofat-place-file fat32-in-memory root-dir-ent path file))
   ;;                 (make-dir-ent-list
   ;;                  (mv-nth 0
   ;;                          (dir-ent-clusterchain-contents
   ;;                           (mv-nth
   ;;                            0
-  ;;                            (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+  ;;                            (lofat-place-file fat32-in-memory root-dir-ent path file))
   ;;                           root-dir-ent)))
   ;;                 entry-limit))
   ;;        0)
@@ -31770,13 +31770,13 @@ Some (rather awful) testing forms are
   ;;                (lofat-to-hifat-helper
   ;;                 (mv-nth
   ;;                  0
-  ;;                  (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+  ;;                  (lofat-place-file fat32-in-memory root-dir-ent path file))
   ;;                 (make-dir-ent-list
   ;;                  (mv-nth 0
   ;;                          (dir-ent-clusterchain-contents
   ;;                           (mv-nth
   ;;                            0
-  ;;                            (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+  ;;                            (lofat-place-file fat32-in-memory root-dir-ent path file))
   ;;                           root-dir-ent)))
   ;;                 entry-limit))
   ;;        fs)
@@ -31786,22 +31786,22 @@ Some (rather awful) testing forms are
   ;;                (lofat-to-hifat-helper
   ;;                 (mv-nth
   ;;                  0
-  ;;                  (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+  ;;                  (lofat-place-file fat32-in-memory root-dir-ent path file))
   ;;                 (make-dir-ent-list
   ;;                  (mv-nth 0
   ;;                          (dir-ent-clusterchain-contents
   ;;                           (mv-nth
   ;;                            0
-  ;;                            (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+  ;;                            (lofat-place-file fat32-in-memory root-dir-ent path file))
   ;;                           root-dir-ent)))
   ;;                 entry-limit))))))
   ;;   :hints
   ;;   (("goal"
   ;;     :induct
   ;;     (induction-scheme
-  ;;      ENTRY-LIMIT FAT32-IN-MEMORY FILE PATHNAME ROOT-DIR-ENT X)
+  ;;      ENTRY-LIMIT FAT32-IN-MEMORY FILE PATH ROOT-DIR-ENT X)
   ;;     :expand
-  ;;     (lofat-place-file fat32-in-memory root-dir-ent pathname file)
+  ;;     (lofat-place-file fat32-in-memory root-dir-ent path file)
   ;;     :in-theory
   ;;     (e/d (hifat-place-file
   ;;           (:rewrite hifat-to-lofat-inversion-lemma-17)
@@ -31827,7 +31827,7 @@ Some (rather awful) testing forms are
   ;;                     (make-dir-ent-list
   ;;                      (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
   ;;                     entry-limit))
-  ;;            pathname)))
+  ;;            path)))
   ;;       (implies
   ;;        (and
   ;;         (lofat-fs-p fat32-in-memory)
@@ -31843,7 +31843,7 @@ Some (rather awful) testing forms are
   ;;         (<= *ms-first-data-cluster* (dir-ent-first-cluster root-dir-ent))
   ;;         (< (dir-ent-first-cluster root-dir-ent)
   ;;            (+ *ms-first-data-cluster* (count-of-clusters fat32-in-memory)))
-  ;;         (fat32-filename-list-p pathname)
+  ;;         (fat32-filename-list-p path)
   ;;         (not-intersectp-list
   ;;          (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
   ;;          (mv-nth 2
@@ -31873,13 +31873,13 @@ Some (rather awful) testing forms are
   ;;                 (lofat-to-hifat-helper
   ;;                  (mv-nth
   ;;                   0
-  ;;                   (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+  ;;                   (lofat-place-file fat32-in-memory root-dir-ent path file))
   ;;                  (make-dir-ent-list
   ;;                   (mv-nth 0
   ;;                           (dir-ent-clusterchain-contents
   ;;                            (mv-nth
   ;;                             0
-  ;;                             (lofat-place-file fat32-in-memory root-dir-ent pathname file))
+  ;;                             (lofat-place-file fat32-in-memory root-dir-ent path file))
   ;;                            root-dir-ent)))
   ;;                  entry-limit))))))))
   )

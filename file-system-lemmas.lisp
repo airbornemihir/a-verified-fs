@@ -1598,9 +1598,9 @@
            (member-equal (car (last x)) x)))
 
 (defthm append-of-take-and-last
-  (equal (append (take (+ -1 (len pathname)) pathname)
-                 (last pathname))
-         pathname))
+  (equal (append (take (+ -1 (len path)) path)
+                 (last path))
+         path))
 
 (defthm atom-of-cdr-of-last
   (atom (cdr (last x)))

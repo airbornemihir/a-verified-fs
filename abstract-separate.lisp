@@ -5888,49 +5888,49 @@
   :hints (("goal" :in-theory (enable abs-separate
                                      mutual-dist-names))))
 
-(defund 1st-complete-under-pathname (frame pathname)
+(defund 1st-complete-under-path (frame path)
   (declare (xargs :guard (frame-p frame)))
   (b* (((when (atom frame)) 0)
        (head-index (caar frame))
        (head-frame-val (cdar frame)))
     (if (and (abs-complete (frame-val->dir head-frame-val))
-             (prefixp pathname (frame-val->path head-frame-val)))
+             (prefixp path (frame-val->path head-frame-val)))
         (mbe :exec head-index :logic (nfix head-index))
-      (1st-complete-under-pathname (cdr frame) pathname))))
+      (1st-complete-under-path (cdr frame) path))))
 
-(defund 1st-complete-under-pathname-src (frame pathname)
+(defund 1st-complete-under-path-src (frame path)
   (declare (xargs :guard (and (frame-p frame)
-                              (consp (assoc-equal (1st-complete-under-pathname
-                                                   frame pathname)
+                              (consp (assoc-equal (1st-complete-under-path
+                                                   frame path)
                                                   frame)))))
-  (frame-val->src (cdr (assoc-equal (1st-complete-under-pathname frame pathname) frame))))
+  (frame-val->src (cdr (assoc-equal (1st-complete-under-path frame path) frame))))
 
 (defund
-  1st-complete-under-pathname-src
-  (frame pathname)
+  1st-complete-under-path-src
+  (frame path)
   (declare
    (xargs
     :guard
     (and
      (frame-p frame)
      (consp
-      (assoc-equal (1st-complete-under-pathname frame pathname)
+      (assoc-equal (1st-complete-under-path frame path)
                    frame)))))
   (frame-val->src
    (cdr
-    (assoc-equal (1st-complete-under-pathname frame pathname)
+    (assoc-equal (1st-complete-under-path frame path)
                  frame))))
 
 (defthm
-  1st-complete-under-pathname-correctness-1
-  (implies (not (zp (1st-complete-under-pathname frame pathname)))
-           (consp (assoc-equal (1st-complete-under-pathname frame pathname)
+  1st-complete-under-path-correctness-1
+  (implies (not (zp (1st-complete-under-path frame path)))
+           (consp (assoc-equal (1st-complete-under-path frame path)
                                frame)))
-  :hints (("goal" :in-theory (enable 1st-complete-under-pathname)))
+  :hints (("goal" :in-theory (enable 1st-complete-under-path)))
   :rule-classes :type-prescription)
 
 (defund
-  partial-collapse (frame pathname)
+  partial-collapse (frame path)
   (declare (xargs :guard (and (frame-p frame)
                               (consp (assoc-equal 0 frame)))
                   :measure (len (frame->frame frame))))
@@ -5938,8 +5938,8 @@
       (((when (atom (frame->frame frame)))
         frame)
        (head-index
-        (1st-complete-under-pathname (frame->frame frame)
-                                     pathname))
+        (1st-complete-under-path (frame->frame frame)
+                                     path))
        ((when (zp head-index)) frame)
        (head-frame-val
         (cdr (assoc-equal head-index (frame->frame frame))))
@@ -5947,8 +5947,8 @@
         (frame-val->src
          (cdr
           (assoc-equal
-           (1st-complete-under-pathname (frame->frame frame)
-                                        pathname)
+           (1st-complete-under-path (frame->frame frame)
+                                        path)
            (frame->frame frame))))))
     (if
         (zp src)
@@ -5958,7 +5958,7 @@
                                   (frame-val->path head-frame-val)))
               frame))
           (partial-collapse (collapse-this frame head-index)
-                            pathname))
+                            path))
       (b*
           ((path (frame-val->path head-frame-val))
            ((when (or (equal src head-index)
@@ -5975,7 +5975,7 @@
                                      (nthcdr (len src-path) path))))
             frame))
         (partial-collapse (collapse-this frame head-index)
-                          pathname)))))
+                          path)))))
 
 (defthmd
   ctx-app-ok-when-absfat-equiv-lemma-1
@@ -9961,15 +9961,15 @@
 (defthm
   partial-collapse-correctness-lemma-34
   (implies
-   (and (not (zp (1st-complete-under-pathname frame pathname)))
+   (and (not (zp (1st-complete-under-path frame path)))
         (no-duplicatesp-equal (strip-cars frame)))
    (equal
     (abs-addrs
      (frame-val->dir
-      (cdr (assoc-equal (1st-complete-under-pathname frame pathname)
+      (cdr (assoc-equal (1st-complete-under-path frame path)
                         frame))))
     nil))
-  :hints (("goal" :in-theory (enable 1st-complete-under-pathname))))
+  :hints (("goal" :in-theory (enable 1st-complete-under-path))))
 
 (defthm
   partial-collapse-correctness-lemma-25
@@ -13658,8 +13658,8 @@
         (frame-p (frame->frame frame))
         (no-duplicatesp-equal (strip-cars (frame->frame frame)))
         (mv-nth 1 (collapse frame))
-        (consp (assoc-equal (1st-complete-under-pathname (frame->frame frame)
-                                                         pathname)
+        (consp (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                         path)
                             (frame->frame frame))))
    (and
     (absfat-equiv
@@ -13667,22 +13667,22 @@
       0
       (collapse
        (collapse-this frame
-                      (1st-complete-under-pathname (frame->frame frame)
-                                                   pathname))))
+                      (1st-complete-under-path (frame->frame frame)
+                                                   path))))
      (mv-nth 0 (collapse frame)))
     (iff
      (mv-nth
       1
       (collapse
        (collapse-this frame
-                      (1st-complete-under-pathname (frame->frame frame)
-                                                   pathname))))
+                      (1st-complete-under-path (frame->frame frame)
+                                                   path))))
      (mv-nth 1 (collapse frame)))))
   :hints
   (("goal"
     :use (:instance partial-collapse-correctness-lemma-176
-                    (x (1st-complete-under-pathname (frame->frame frame)
-                                                    pathname))))))
+                    (x (1st-complete-under-path (frame->frame frame)
+                                                    path))))))
 
 (defund collapse-equiv (frame1 frame2)
   (b* (((mv root1 result1) (collapse frame1))
@@ -13703,13 +13703,13 @@
                                        (frame->frame frame)))
         (mv-nth 1 (collapse frame)))
    (and (absfat-equiv (mv-nth 0
-                              (collapse (partial-collapse frame pathname)))
+                              (collapse (partial-collapse frame path)))
                       (mv-nth 0 (collapse frame)))
         (iff (mv-nth 1
-                     (collapse (partial-collapse frame pathname)))
+                     (collapse (partial-collapse frame path)))
              (mv-nth 1 (collapse frame)))))
   :hints (("goal" :in-theory (enable partial-collapse)
-           :induct (partial-collapse frame pathname)))
+           :induct (partial-collapse frame path)))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -13719,6 +13719,6 @@
                   (abs-separate (frame-with-root (frame->root frame)
                                                  (frame->frame frame)))
                   (mv-nth 1 (collapse frame)))
-             (collapse-equiv (partial-collapse frame pathname)
+             (collapse-equiv (partial-collapse frame path)
                              frame))
     :hints (("goal" :in-theory (enable collapse-equiv))))))
