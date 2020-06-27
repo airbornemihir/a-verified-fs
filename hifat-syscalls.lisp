@@ -31,7 +31,7 @@
 ;; with a "/". While not documented properly in the man page, for a path such
 ;; as "/home" or "/tmp", the dirname will be "/".
 (defund
-  hifat-basename-dirname-helper (path)
+  basename-dirname-helper (path)
   (declare (xargs :guard (fat32-filename-list-p path)
                   :guard-hints (("Goal" :in-theory (disable
                                                     make-list-ac-removal)))))
@@ -45,54 +45,54 @@
          (fat32-filename-fix (car path))
          nil))
        ((mv tail-basename tail-dirname)
-        (hifat-basename-dirname-helper (cdr path))))
+        (basename-dirname-helper (cdr path))))
     (mv tail-basename
         (list* (fat32-filename-fix (car path))
                tail-dirname))))
 
 (defthm
-  hifat-basename-dirname-helper-correctness-1
+  basename-dirname-helper-correctness-1
   (mv-let (basename dirname)
-    (hifat-basename-dirname-helper path)
+    (basename-dirname-helper path)
     (and (fat32-filename-p basename)
          (fat32-filename-list-p dirname)))
   :hints
-  (("goal" :induct (hifat-basename-dirname-helper path)
-    :in-theory (enable hifat-basename-dirname-helper)))
+  (("goal" :induct (basename-dirname-helper path)
+    :in-theory (enable basename-dirname-helper)))
   :rule-classes
   (:rewrite
    (:type-prescription
     :corollary
-    (stringp (mv-nth 0 (hifat-basename-dirname-helper path))))
+    (stringp (mv-nth 0 (basename-dirname-helper path))))
    (:type-prescription
     :corollary
-    (true-listp (mv-nth 1 (hifat-basename-dirname-helper path))))))
+    (true-listp (mv-nth 1 (basename-dirname-helper path))))))
 
-(defund hifat-basename (path)
+(defund basename (path)
   (declare (xargs :guard (fat32-filename-list-p path)))
   (mv-let (basename dirname)
-    (hifat-basename-dirname-helper path)
+    (basename-dirname-helper path)
     (declare (ignore dirname))
     basename))
 
-(defthm fat32-filename-p-of-hifat-basename
-  (fat32-filename-p (hifat-basename path))
-  :hints (("goal" :in-theory (enable hifat-basename)))
+(defthm fat32-filename-p-of-basename
+  (fat32-filename-p (basename path))
+  :hints (("goal" :in-theory (enable basename)))
   :rule-classes (:rewrite
                  (:type-prescription
                   :corollary
-                  (stringp (hifat-basename path)))))
+                  (stringp (basename path)))))
 
-(defund hifat-dirname (path)
+(defund dirname (path)
   (declare (xargs :guard (fat32-filename-list-p path)))
   (mv-let (basename dirname)
-    (hifat-basename-dirname-helper path)
+    (basename-dirname-helper path)
     (declare (ignore basename))
     dirname))
 
-(defthm fat32-filename-list-p-of-hifat-dirname
-  (fat32-filename-list-p (hifat-dirname path))
-  :hints (("goal" :in-theory (enable hifat-dirname))))
+(defthm fat32-filename-list-p-of-dirname
+  (fat32-filename-list-p (dirname path))
+  :hints (("goal" :in-theory (enable dirname))))
 
 (defun hifat-lstat (fs path)
   (declare (xargs :guard (and (m1-file-alist-p fs)
@@ -271,12 +271,12 @@
     (("goal"
       :in-theory
       (disable
-       (:rewrite hifat-basename-dirname-helper-correctness-1))
+       (:rewrite basename-dirname-helper-correctness-1))
       :use
       (:instance
-       (:rewrite hifat-basename-dirname-helper-correctness-1)
+       (:rewrite basename-dirname-helper-correctness-1)
        (path path))))))
-  (b* ((dirname (hifat-dirname path))
+  (b* ((dirname (dirname path))
        ;; Never pass relative paths to syscalls - make them always begin
        ;; with "/".
        ((mv parent-dir errno)
@@ -289,7 +289,7 @@
         (hifat-find-file fs path))
        ((when (equal errno 0))
         (mv fs -1 *eexist*))
-       (basename (hifat-basename path))
+       (basename (basename path))
        ((unless (equal (length basename) 11))
         (mv fs -1 *enametoolong*))
        (dir-ent
@@ -309,8 +309,8 @@
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (hifat-no-dups-p fs)
                               (fat32-filename-list-p path))))
-  (b* ((dirname (hifat-dirname path))
-       (basename (hifat-basename path))
+  (b* ((dirname (dirname path))
+       (basename (basename path))
        ((mv parent-dir errno)
         (hifat-find-file fs dirname))
        ((unless (or (atom dirname)
@@ -444,7 +444,7 @@
         (hifat-remove-file fs oldpath))
        ((unless (equal error-code 0))
         (mv fs -1 error-code))
-       (dirname (hifat-dirname newpath))
+       (dirname (dirname newpath))
        ((mv dir error-code)
         (hifat-find-file fs dirname))
        ((unless (and (equal error-code 0) (m1-directory-file-p dir)))
