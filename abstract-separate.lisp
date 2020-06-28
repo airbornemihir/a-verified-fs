@@ -5930,7 +5930,7 @@
   :rule-classes :type-prescription)
 
 (defund
-  partial-collapse (frame path)
+  partial-collapse (frame pathname)
   (declare (xargs :guard (and (frame-p frame)
                               (consp (assoc-equal 0 frame)))
                   :measure (len (frame->frame frame))))
@@ -5939,7 +5939,7 @@
         frame)
        (head-index
         (1st-complete-under-path (frame->frame frame)
-                                     path))
+                                 pathname))
        ((when (zp head-index)) frame)
        (head-frame-val
         (cdr (assoc-equal head-index (frame->frame frame))))
@@ -5948,7 +5948,7 @@
          (cdr
           (assoc-equal
            (1st-complete-under-path (frame->frame frame)
-                                        path)
+                                    pathname)
            (frame->frame frame))))))
     (if
         (zp src)
@@ -5958,7 +5958,7 @@
                                   (frame-val->path head-frame-val)))
               frame))
           (partial-collapse (collapse-this frame head-index)
-                            path))
+                            pathname))
       (b*
           ((path (frame-val->path head-frame-val))
            ((when (or (equal src head-index)
@@ -5975,7 +5975,7 @@
                                      (nthcdr (len src-path) path))))
             frame))
         (partial-collapse (collapse-this frame head-index)
-                          path)))))
+                          pathname)))))
 
 (defthmd
   ctx-app-ok-when-absfat-equiv-lemma-1
