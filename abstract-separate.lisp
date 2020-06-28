@@ -3019,6 +3019,14 @@
          (frame-p frame))
   :hints (("goal" :in-theory (enable frame-with-root))))
 
+(defthm frame->root-normalisation
+  (equal (frame-val->dir (cdr (assoc-equal 0 frame)))
+         (frame->root frame))
+  :hints (("Goal" :in-theory (enable frame->root))))
+
+(theory-invariant (incompatible (:definition frame->root)
+                                (:rewrite frame->root-normalisation)))
+
 (defund
   collapse-this (frame x)
   (declare

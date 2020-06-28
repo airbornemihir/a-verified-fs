@@ -1539,8 +1539,9 @@
        (collapse-this frame
                       (1st-complete-under-path (frame->frame frame)
                                                    path)))))))
-  :hints (("goal" :in-theory (enable collapse-this
-                                     frame->root frame-with-root)
+  :hints (("goal" :in-theory (e/d (collapse-this
+                                   frame->root frame-with-root)
+                                  (frame->root-normalisation))
            :do-not-induct t)))
 
 (defthm
@@ -1648,7 +1649,7 @@
   (equal (frame->root (put-assoc-equal 0 val frame))
          (frame-val->dir val))
   :hints (("goal" :do-not-induct t
-           :in-theory (enable frame->root))))
+           :in-theory (e/d (frame->root) (frame->root-normalisation)))))
 
 ;; Move later.
 (defthm abs-disassoc-when-not-natp
@@ -2383,7 +2384,8 @@
                                               :src 0
                                               :path nil)))
                   frame))
-  :hints (("goal" :in-theory (enable frame->frame frame->root frame-p)
+  :hints (("goal" :in-theory (e/d (frame->frame frame->root frame-p)
+                                  (frame->root-normalisation))
            :do-not-induct t
            :use (:instance abs-mkdir-correctness-lemma-34 (x 0)
                            (alist frame))
@@ -2445,7 +2447,7 @@
         (cdr (assoc-equal 0
                           (partial-collapse frame (dirname path)))))
        (frame->root (partial-collapse frame (dirname path)))))))
-   ("subgoal 1" :in-theory (enable frame->root))))
+   ("subgoal 1" :in-theory (e/d (frame->root) (frame->root-normalisation)))))
 
 (defthm
   names-at-of-abs-disassoc-lemma-1
@@ -2582,13 +2584,13 @@
          (if (equal 0 key)
              (frame->frame frame)
              (put-assoc-equal key val (frame->frame frame))))
-  :hints (("goal" :in-theory (enable frame->frame))))
+  :hints (("goal" :in-theory (e/d (frame->frame)))))
 (defthm frame->root-of-put-assoc
   (equal (frame->root (put-assoc-equal key val frame))
          (if (equal 0 key)
              (frame-val->dir val)
              (frame->root frame)))
-  :hints (("goal" :in-theory (enable frame->root))))
+  :hints (("goal" :in-theory (e/d (frame->root) (frame->root-normalisation)))))
 
 (defthm
   abs-mkdir-correctness-lemma-41
@@ -2786,7 +2788,7 @@
         (cdr (assoc-equal 0
                           (partial-collapse frame (dirname path)))))
        (frame->root (partial-collapse frame (dirname path)))))))
-   ("subgoal 1" :in-theory (enable frame->root))))
+   ("subgoal 1" :in-theory (e/d (frame->root) (frame->root-normalisation)))))
 
 (defthm
   abs-mkdir-correctness-lemma-46
@@ -3176,7 +3178,7 @@
   :hints
   (("goal"
     :in-theory (e/d (hifat-find-file fat32-filename-list-fix frame->root)
-                    (abs-mkdir-correctness-lemma-50))
+                    (abs-mkdir-correctness-lemma-50 frame->root-normalisation))
     :do-not-induct t
     :use abs-mkdir-correctness-lemma-50
     :expand (fat32-filename-list-fix path))))
@@ -4829,7 +4831,8 @@
     (mv (abs-file-fix nil) *enoent*)))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite abs-find-file-after-abs-mkdir-lemma-9))
+    :in-theory (disable (:rewrite abs-find-file-after-abs-mkdir-lemma-9)
+                        frame->root-normalisation)
     :use
     ((:instance
       (:rewrite abs-find-file-after-abs-mkdir-lemma-9)
@@ -4907,7 +4910,7 @@
      (cdr (assoc-equal 0
                        (partial-collapse frame (dirname path)))))
     (frame->root (partial-collapse frame (dirname path)))
-    :hints (("goal" :in-theory (enable frame->root))))
+    :hints (("goal" :in-theory (e/d (frame->root) (frame->root-normalisation)))))
    (:rewrite
     subsetp-trans2
     ((y
@@ -4938,7 +4941,7 @@
   abs-find-file-after-abs-mkdir-1
   (implies
    (and
-    (mv-nth '1 (collapse frame))
+    (mv-nth 1 (collapse frame))
     (equal (frame-val->path (cdr (assoc-equal 0 frame)))
            nil)
     (consp (assoc-equal 0
@@ -4970,7 +4973,8 @@
                                       abs-find-file-after-abs-mkdir-lemma-4
                                       len-when-consp fat32-filename-list-fix
                                       abs-disassoc abs-fs-fix)
-                           (abs-mkdir-correctness-lemma-50
+                           (frame->root-normalisation
+                            abs-mkdir-correctness-lemma-50
                             (:definition nth)
                             (:definition true-listp)
                             (:definition member-equal)
@@ -5199,7 +5203,9 @@
    (:dive 1 2)
    :x
    :top
-   (:bash ("goal" :in-theory (enable fat32-filename-list-fix frame->root)))))
+   (:bash ("goal" :in-theory
+           (e/d (fat32-filename-list-fix frame->root)
+                (frame->root-normalisation))))))
 
 ;; How come these two weren't already proven?
 (defthm
@@ -5388,8 +5394,9 @@
    (:dive 2)
    :x
    :top
-   (:bash ("goal" :in-theory (enable hifat-place-file
-                                     fat32-filename-list-fix frame->root)))))
+   (:bash ("goal" :in-theory (e/d (hifat-place-file
+                                   fat32-filename-list-fix frame->root)
+                                  (frame->root-normalisation))))))
 
 (defthm abs-mkdir-correctness-lemma-83
   (implies (fat32-filename-list-equiv (list (basename path))
@@ -5509,7 +5516,8 @@
                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                          (contents))))
     0))
-  :hints (("goal" :in-theory (enable hifat-place-file frame->root))))
+  :hints (("goal" :in-theory (e/d (hifat-place-file frame->root)
+                                  (frame->root-normalisation)))))
 
 (defthm
   abs-mkdir-correctness-lemma-92
@@ -5517,7 +5525,7 @@
                                (frame-val->dir (cdr (assoc-equal 0 frame)))))
            (consp (assoc-equal (basename path)
                                (frame->root frame))))
-  :hints (("goal" :in-theory (enable frame->root))))
+  :hints (("goal" :in-theory (e/d (frame->root) (frame->root-normalisation)))))
 
 (defthm
   abs-mkdir-correctness-lemma-93
@@ -6131,7 +6139,8 @@
         (consp (assoc-equal (basename path)
                             fs))))
   :hints (("goal" :in-theory (e/d (collapse frame->root)
-                                  ((:rewrite abs-mkdir-correctness-lemma-99)))
+                                  ((:rewrite abs-mkdir-correctness-lemma-99)
+                                   frame->root-normalisation))
            :use (:instance (:rewrite abs-mkdir-correctness-lemma-99)
                            (fs1 (mv-nth 0 (collapse frame)))
                            (name (basename path))
@@ -6285,7 +6294,7 @@
   :hints
   (("goal"
     :in-theory (e/d (frame->root)
-                    (abs-mkdir-correctness-lemma-86))
+                    (abs-mkdir-correctness-lemma-86 frame->root-normalisation))
     :do-not-induct t
     :use
     (:instance
@@ -7133,7 +7142,7 @@
                (m1-file (dir-ent-install-directory-bit (dir-ent-fix nil)
                                                        t)
                         nil)))))
-    :hints (("goal" :in-theory (enable frame->root)
+    :hints (("goal" :in-theory (e/d (frame->root) (frame->root-normalisation))
              :do-not-induct t)))
 
   (defthm
@@ -7152,7 +7161,7 @@
                  0))
      (equal (mv-nth 2 (abs-mkdir frame path))
             *eexist*))
-    :hints (("goal" :in-theory (enable frame->root)
+    :hints (("goal" :in-theory (e/d (frame->root) (frame->root-normalisation))
              :do-not-induct t)))
 
   (defthm
@@ -7498,7 +7507,8 @@
           (partial-collapse frame (dirname path))))))))
     :hints
     (("goal" :in-theory (e/d (frame->root abs-mkdir-correctness-lemma-13)
-                             ((:rewrite abs-find-file-after-abs-mkdir-lemma-5)))
+                             ((:rewrite abs-find-file-after-abs-mkdir-lemma-5)
+                              frame->root-normalisation))
       :use (:instance (:rewrite abs-find-file-after-abs-mkdir-lemma-5)
                       (path (dirname path))
                       (frame frame)))))
@@ -8021,7 +8031,7 @@
      (frame-reps-fs (mv-nth 0 (abs-mkdir frame path))
                     (mv-nth 0 (collapse frame))))
     :hints (("goal" :do-not-induct t
-             :in-theory (enable frame->root))))
+             :in-theory (e/d (frame->root) (frame->root-normalisation)))))
 
   (defthm
     abs-mkdir-correctness-lemma-156

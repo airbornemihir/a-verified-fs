@@ -1124,7 +1124,7 @@
                   (abs-find-file frame path)))
   :hints (("goal" :do-not-induct t
            :in-theory (e/d (abs-find-file frame->root frame->frame)
-                           nil))))
+                           (frame->root-normalisation)))))
 
 (defthm
   abs-find-file-correctness-lemma-20
@@ -1132,7 +1132,8 @@
                 (abs-separate frame))
            (dist-names (frame->root frame)
                        nil (frame->frame frame)))
-  :hints (("goal" :in-theory (e/d (abs-separate frame->root frame->frame)))))
+  :hints (("goal" :in-theory (e/d (abs-separate frame->root frame->frame)
+                                  (frame->root-normalisation)))))
 
 (defthm abs-find-file-correctness-lemma-8
   (implies (abs-separate frame)
@@ -4280,7 +4281,8 @@
 (defthm abs-find-file-correctness-lemma-4
   (implies (abs-separate frame)
            (no-duplicatesp-equal (abs-addrs (frame->root frame))))
-  :hints (("goal" :in-theory (enable frame->root))))
+  :hints (("goal" :in-theory (e/d (frame->root)
+                                  (frame->root-normalisation)))))
 
 (defthm
   abs-find-file-correctness-lemma-2
@@ -4301,7 +4303,8 @@
                        path))
               (mv (abs-file-fix nil) *enoent*))))
   :hints
-  (("goal" :in-theory (e/d (frame->root frame->frame))
+  (("goal" :in-theory (e/d (frame->root frame->frame)
+                           (frame->root-normalisation))
     :use (:instance (:rewrite abs-find-file-of-put-assoc-lemma-6)
                     (x 0)))))
 
