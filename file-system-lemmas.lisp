@@ -9,8 +9,11 @@
 (defthm make-character-list-makes-character-list
   (character-listp (make-character-list x)))
 
-(defthm len-of-binary-append
-  (equal (len (binary-append x y)) (+ (len x) (len y))))
+;; The following is redundant with the definition in
+;; books/std/lists/append.lisp, from where it was taken with thanks.
+(defthm len-of-append
+  (equal (len (append x y))
+         (+ (len x) (len y))))
 
 (defthm len-of-make-character-list
   (equal (len (make-character-list x)) (len x)))
