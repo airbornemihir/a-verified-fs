@@ -6604,7 +6604,7 @@
           (:rewrite m1-file-alist-p-when-not-consp)
           (:rewrite
            abs-fs-fix-of-put-assoc-equal-lemma-3)
-          ;; Should this really be disabled?
+          ;; should this really be disabled?
           (:rewrite abs-mkdir-correctness-lemma-95)
           (:rewrite
            abs-no-dups-p-of-abs-file->contents-of-cdr-of-assoc)
@@ -6641,16 +6641,42 @@
           (:rewrite
            abs-find-file-helper-of-collapse-lemma-2)
           (:rewrite abs-find-file-correctness-lemma-3)
-          (:REWRITE
-           FAT32-FILENAME-P-OF-CAAR-WHEN-M1-FILE-ALIST-P)
-          (:REWRITE SUBSETP-CAR-MEMBER)
-          (:REWRITE ABS-MKDIR-CORRECTNESS-LEMMA-59)
-          (:REWRITE M1-FILE-ALIST-P-OF-CONS)
-          (:REWRITE ABS-MKDIR-CORRECTNESS-LEMMA-102)
-          (:LINEAR
-           ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-11)
-          (:REWRITE ABS-FIND-FILE-CORRECTNESS-LEMMA-14)
-          (:REWRITE SUBSETP-TRANS)))))
+          (:rewrite
+           fat32-filename-p-of-caar-when-m1-file-alist-p)
+          (:rewrite subsetp-car-member)
+          (:rewrite abs-mkdir-correctness-lemma-59)
+          (:rewrite m1-file-alist-p-of-cons)
+          (:rewrite abs-mkdir-correctness-lemma-102)
+          (:linear
+           abs-separate-of-frame->frame-of-collapse-this-lemma-11)
+          (:rewrite abs-find-file-correctness-lemma-14)
+          (:rewrite subsetp-trans)
+          hifat-place-file-correctness-3
+          prefixp-when-not-consp-right
+          1st-complete-of-put-assoc-2
+          cdr-of-append-when-consp
+          abs-no-dups-p-when-m1-file-alist-p
+          hifat-find-file-correctness-lemma-2
+          hifat-find-file-correctness-lemma-4
+          fat32-filename-list-fix-when-zp-len
+          (:rewrite m1-regular-file-p-correctness-1)
+          abs-file-alist-p-when-m1-file-alist-p
+          abs-disassoc-when-not-natp
+          (:rewrite prefixp-transitive . 1)
+          abs-addrs-of-ctx-app-1-lemma-6
+          absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2
+          (:rewrite
+           m1-file-alist-p-of-abs-place-file-helper)
+          path-clear-when-prefixp-lemma-2
+          car-of-append
+          frame-p-of-put-assoc-equal
+          names-at-when-prefixp
+          list-fix-when-true-listp
+          ctx-app-ok-of-abs-place-file-helper-1
+          true-listp-when-string-list
+          m1-regular-file-p-of-m1-file
+          dir-ent-p-when-member-equal-of-dir-ent-list-p
+          abs-mkdir-correctness-lemma-64))))
 
   (defthm
     abs-mkdir-correctness-lemma-109
@@ -8841,14 +8867,12 @@
                        (:rewrite consp-of-assoc-of-frame->frame)
                        (:rewrite abs-disassoc-correctness-1)
                        (:rewrite abs-mkdir-correctness-lemma-155)
-                       (:rewrite hifat-find-file-correctness-lemma-2)
                        (:rewrite abs-place-file-helper-correctness-1)
                        (:rewrite abs-find-file-after-abs-mkdir-lemma-14)
                        (:rewrite abs-place-file-helper-correctness-2)
                        (:rewrite abs-find-file-helper-of-collapse-1 . 2)
                        (:rewrite abs-find-file-helper-of-collapse-2 . 2)
-                       (:rewrite integer-listp-when-not-consp)
-                       (:rewrite hifat-find-file-correctness-lemma-4))))))
+                       (:rewrite integer-listp-when-not-consp))))))
 
   (defthm
     abs-mkdir-correctness-lemma-174
@@ -8992,12 +9016,8 @@
             (:rewrite abs-find-file-after-abs-mkdir-lemma-14)
             (:rewrite abs-mkdir-correctness-lemma-155)
             (:rewrite absfat-place-file-correctness-lemma-6)
-            (:rewrite hifat-find-file-correctness-lemma-2)
-            (:rewrite hifat-find-file-correctness-lemma-4)
             (:rewrite 1st-complete-of-put-assoc-lemma-1)
-            (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
             (:rewrite abs-mkdir-correctness-lemma-39)
-            (:rewrite fat32-filename-list-p-when-subsetp-equal)
             (:definition no-duplicatesp-equal)))))
     :otf-flg t)
 
@@ -9654,14 +9674,8 @@
         (:rewrite abs-mkdir-correctness-lemma-155)
         (:rewrite abs-find-file-after-abs-mkdir-lemma-14)
         (:rewrite absfat-place-file-correctness-lemma-6)
-        (:rewrite hifat-find-file-correctness-lemma-2)
-        (:rewrite hifat-find-file-correctness-lemma-4)
-        (:rewrite hifat-place-file-correctness-3)
-        (:rewrite hifat-place-file-correctness-3)
         (:rewrite abs-find-file-helper-of-collapse-2 . 2)
         (:rewrite abs-place-file-helper-correctness-2)
-        (:rewrite 1st-complete-of-put-assoc-2)
-        (:rewrite cdr-of-append-when-consp)
         (:rewrite fat32-filename-p-of-car-when-fat32-filename-list-p)
         (:rewrite abs-no-dups-p-of-remove1-assoc)
         (:rewrite abs-mkdir-correctness-lemma-16 . 1)
@@ -9670,21 +9684,15 @@
         (:rewrite car-of-true-list-list-fix-x-normalize-const-under-list-equiv)
         (:rewrite abs-find-file-helper-of-collapse-1 . 2)
         (:rewrite integer-listp-when-not-consp)
-        (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
-        (:rewrite hifat-place-file-correctness-3)
         (:rewrite len-of-append)
         (:rewrite collapse-congruence-lemma-5)
-        (:rewrite car-of-append)
         (:rewrite 1st-complete-of-put-assoc-lemma-1)
-        (:rewrite 1st-complete-of-put-assoc-2)
-        (:rewrite cdr-of-append-when-consp)
         (:rewrite fat32-filename-p-of-car-when-fat32-filename-list-p)
         (:rewrite member-of-strip-cars)
         (:rewrite remove-assoc-of-remove-assoc)
         (:rewrite absfat-subsetp-transitivity)
         (:rewrite abs-mkdir-correctness-lemma-64)
-        (:rewrite hifat-file-alist-fix-guard-lemma-1)
-        (:rewrite prefixp-transitive . 1))))))
+        (:rewrite hifat-file-alist-fix-guard-lemma-1))))))
 
   (defthm
     abs-mkdir-correctness-lemma-186
@@ -10322,14 +10330,8 @@
         (:rewrite abs-mkdir-correctness-lemma-155)
         (:rewrite abs-find-file-after-abs-mkdir-lemma-14)
         (:rewrite absfat-place-file-correctness-lemma-6)
-        (:rewrite hifat-find-file-correctness-lemma-2)
-        (:rewrite hifat-find-file-correctness-lemma-4)
-        (:rewrite hifat-place-file-correctness-3)
-        (:rewrite hifat-place-file-correctness-3)
         (:rewrite abs-find-file-helper-of-collapse-2 . 2)
         (:rewrite abs-place-file-helper-correctness-2)
-        (:rewrite 1st-complete-of-put-assoc-2)
-        (:rewrite cdr-of-append-when-consp)
         (:rewrite fat32-filename-p-of-car-when-fat32-filename-list-p)
         (:rewrite abs-no-dups-p-of-remove1-assoc)
         (:rewrite abs-mkdir-correctness-lemma-16 . 1)
@@ -10338,21 +10340,15 @@
         (:rewrite car-of-true-list-list-fix-x-normalize-const-under-list-equiv)
         (:rewrite abs-find-file-helper-of-collapse-1 . 2)
         (:rewrite integer-listp-when-not-consp)
-        (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
-        (:rewrite hifat-place-file-correctness-3)
         (:rewrite len-of-append)
         (:rewrite collapse-congruence-lemma-5)
-        (:rewrite car-of-append)
         (:rewrite 1st-complete-of-put-assoc-lemma-1)
-        (:rewrite 1st-complete-of-put-assoc-2)
-        (:rewrite cdr-of-append-when-consp)
         (:rewrite fat32-filename-p-of-car-when-fat32-filename-list-p)
         (:rewrite member-of-strip-cars)
         (:rewrite remove-assoc-of-remove-assoc)
         (:rewrite absfat-subsetp-transitivity)
         (:rewrite abs-mkdir-correctness-lemma-64)
         (:rewrite hifat-file-alist-fix-guard-lemma-1)
-        (:rewrite prefixp-transitive . 1)
         (:linear abs-mkdir-correctness-lemma-124)
         (:rewrite abs-mkdir-correctness-lemma-43)
         (:rewrite abs-disassoc-correctness-1)
@@ -10367,7 +10363,6 @@
         (:rewrite car-of-nthcdr)
         (:rewrite abs-fs-fix-under-abs-fs-equiv)
         (:rewrite remove-assoc-when-absent-2)
-        (:rewrite m1-regular-file-p-correctness-1)
         (:rewrite m1-file-alist-p-of-abs-place-file-helper)))))))
 
 (defthm abs-mkdir-correctness-1
