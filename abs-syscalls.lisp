@@ -7176,7 +7176,6 @@
           (:rewrite abs-mkdir-correctness-lemma-51)
           (:rewrite
            abs-find-file-helper-of-collapse-lemma-2)
-          (:rewrite len-of-binary-append)
           (:rewrite abs-find-file-correctness-lemma-3)
           M1-FILE-P-OF-CDAR-WHEN-M1-FILE-ALIST-P
           (:REWRITE
