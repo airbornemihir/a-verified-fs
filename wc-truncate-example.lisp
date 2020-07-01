@@ -9,6 +9,7 @@
                   :guard (and (lofat-fs-p fat32-in-memory)
                               (string-listp name-list)
                               (natp size))
+                  :guard-hints (("Goal" :in-theory (enable hifat-no-dups-p)))
                   :measure (len name-list)))
   (b*
       (((when (atom name-list))
@@ -177,7 +178,9 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable truncate-list-correctness-1-lemma-2)
+    :in-theory (e/d
+                (hifat-no-dups-p)
+                (truncate-list-correctness-1-lemma-2))
     :use
     (:instance
      truncate-list-correctness-1-lemma-2
@@ -201,8 +204,7 @@
                (hifat-find-file
                 (mv-nth 0 (lofat-to-hifat fat32-in-memory))
                 (path-to-fat32-path (explode path)))))))
-           nil))))))
-     (fat32-in-memory fat32-in-memory)))))
+           nil))))))))))
 
 (defthm
   truncate-list-correctness-1-lemma-6
@@ -328,7 +330,7 @@
                 (path-to-fat32-path (explode path)))))))))
   :hints
   (("goal"
-    :in-theory (e/d (hifat-find-file)
+    :in-theory (e/d (hifat-find-file hifat-no-dups-p)
                     ((:rewrite truncate-list-correctness-1-lemma-2)))
     :use
     (:instance
@@ -446,7 +448,7 @@
                            path-list size exit-status)
     :in-theory
     (e/d
-     (lofat-truncate)
+     (lofat-truncate hifat-no-dups-p)
      ((:rewrite take-of-take-split)
       (:linear len-of-member-equal)
       (:rewrite fat32-filename-fix-when-fat32-filename-p)
@@ -731,7 +733,9 @@
      size)))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite m1-directory-file-p-when-m1-file-p))
+    :in-theory (e/d
+                (hifat-no-dups-p)
+                ((:rewrite m1-directory-file-p-when-m1-file-p)))
     :use
     (:instance
      (:rewrite m1-directory-file-p-when-m1-file-p)
@@ -789,7 +793,7 @@
                                           path-list size exit-status))))
           (path-to-fat32-path (explode path)))))))
      size)))
-  :hints (("goal" :in-theory (e/d (lofat-truncate)
+  :hints (("goal" :in-theory (e/d (lofat-truncate hifat-no-dups-p)
                                   ((:rewrite take-of-take-split)
                                    (:linear len-of-member-equal)
                                    (:definition take)
