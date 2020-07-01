@@ -320,35 +320,6 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable abs-fs-p))))
 
-;; Move later to replace hifat-no-dups-p-of-hifat-place-file.
-(defthm
-  hifat-place-file-correctness-5
-  (implies (hifat-no-dups-p (m1-file->contents file))
-           (hifat-no-dups-p (mv-nth 0 (hifat-place-file fs path file))))
-  :hints
-  (("goal"
-    :in-theory (enable hifat-place-file)
-    :induct (hifat-place-file fs path file)
-    :expand
-    (:with
-     (:rewrite hifat-no-dups-p-of-put-assoc)
-     (hifat-no-dups-p
-      (put-assoc-equal
-       (fat32-filename-fix (car path))
-       (m1-file
-        (m1-file->dir-ent
-         (cdr (assoc-equal (fat32-filename-fix (car path))
-                           (hifat-file-alist-fix fs))))
-        (mv-nth
-         0
-         (hifat-place-file
-          (m1-file->contents
-           (cdr (assoc-equal (fat32-filename-fix (car path))
-                             (hifat-file-alist-fix fs))))
-          (cdr path)
-          file)))
-       (hifat-file-alist-fix fs)))))))
-
 (defthm
   absfat-place-file-correctness-lemma-3
   (implies
@@ -1034,12 +1005,6 @@
      (list* (cons (caar frame) (change-frame-val (cdar frame) :dir head))
             (cdr frame))
      head-error-code)))
-
-;; Move later.
-(defthm frame-p-of-partial-collapse
-  (implies (frame-p frame)
-           (frame-p (partial-collapse frame path)))
-  :hints (("goal" :in-theory (enable partial-collapse))))
 
 (defund abs-disassoc (fs path new-index)
   (declare (xargs :guard

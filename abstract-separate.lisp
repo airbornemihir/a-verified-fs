@@ -5995,6 +5995,11 @@
         (partial-collapse (collapse-this frame head-index)
                           pathname)))))
 
+(defthm frame-p-of-partial-collapse
+  (implies (frame-p frame)
+           (frame-p (partial-collapse frame path)))
+  :hints (("goal" :in-theory (enable partial-collapse))))
+
 (defthmd
   ctx-app-ok-when-absfat-equiv-lemma-1
   (implies (and (abs-fs-p abs-file-alist1)

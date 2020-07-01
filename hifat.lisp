@@ -1992,10 +1992,31 @@
 
 (defthm
   hifat-no-dups-p-of-hifat-place-file
-  (implies (or (hifat-no-dups-p (m1-file->contents file))
-               (m1-regular-file-p file))
+  (implies (hifat-no-dups-p (m1-file->contents file))
            (hifat-no-dups-p (mv-nth 0 (hifat-place-file fs path file))))
-  :hints (("goal" :in-theory (enable hifat-place-file))))
+  :hints
+  (("goal"
+    :in-theory (enable hifat-place-file)
+    :induct (hifat-place-file fs path file)
+    :expand
+    (:with
+     (:rewrite hifat-no-dups-p-of-put-assoc)
+     (hifat-no-dups-p
+      (put-assoc-equal
+       (fat32-filename-fix (car path))
+       (m1-file
+        (m1-file->dir-ent
+         (cdr (assoc-equal (fat32-filename-fix (car path))
+                           (hifat-file-alist-fix fs))))
+        (mv-nth
+         0
+         (hifat-place-file
+          (m1-file->contents
+           (cdr (assoc-equal (fat32-filename-fix (car path))
+                             (hifat-file-alist-fix fs))))
+          (cdr path)
+          file)))
+       (hifat-file-alist-fix fs)))))))
 
 (defund
   hifat-remove-file (fs path)
@@ -2127,6 +2148,14 @@
   :hints
   (("goal"
     :in-theory (enable fat32-filename-list-prefixp-alt))))
+
+(defthm
+  m1-read-after-write-lemma-1
+  (implies (m1-regular-file-p file)
+           (hifat-no-dups-p (m1-file->contents file)))
+  :hints
+  (("goal" :in-theory (enable m1-regular-file-p hifat-no-dups-p)
+    :do-not-induct t)))
 
 (encapsulate
   ()
