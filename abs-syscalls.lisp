@@ -13,7 +13,19 @@
 (local (in-theory (e/d (abs-file-p-when-m1-regular-file-p
                         nat-listp-of-strip-cars-when-frame-p
                         len-when-consp)
-                       nil)))
+                       ((:definition member-equal)
+                        (:rewrite
+                         abs-addrs-when-m1-file-alist-p-lemma-2)
+                        (:rewrite m1-directory-file-p-correctness-1)
+                        (:rewrite assoc-of-car-when-member)
+                        (:rewrite integerp-of-car-when-integer-listp)
+                        (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
+                        (:linear
+                         len-when-hifat-bounded-file-alist-p . 1)
+                        (:rewrite
+                         m1-file-p-of-cdar-when-m1-file-alist-p)
+                        (:definition integer-listp)
+                        (:rewrite natp-of-car-when-nat-listp)))))
 
 ;; Let's try to do this intuitively first...
 
@@ -771,8 +783,7 @@
     (e/d (abs-place-file-helper names-at fat32-filename-list-fix
                                 fat32-filename-list-equiv
                                 fat32-filename-equiv abs-file-p-alt)
-         ((:definition member-equal)
-          (:definition put-assoc-equal)
+         ((:definition put-assoc-equal)
           (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
           (:definition abs-complete)
           (:rewrite hifat-find-file-correctness-1-lemma-1)
@@ -934,16 +945,12 @@
                            abs-separate frame-addrs-root)
          (collapse-hifat-place-file-2
           (:rewrite m1-file-alist-p-when-subsetp-equal)
-          (:definition member-equal)
           (:rewrite len-of-remove-assoc-when-no-duplicatesp-strip-cars)
           (:linear len-of-remove-assoc-1)
           (:definition remove-assoc-equal)
           (:rewrite subsetp-trans)
           (:rewrite abs-addrs-of-put-assoc-lemma-2)
-          (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
           (:rewrite collapse-congruence-lemma-4)
-          (:definition integer-listp)
-          len-when-hifat-bounded-file-alist-p
           member-of-abs-addrs-when-natp
           (:linear position-equal-ac-when-member)
           (:rewrite 1st-complete-of-put-assoc-lemma-1)
@@ -1276,7 +1283,6 @@
               partial-collapse-correctness-lemma-24)
              (:definition assoc-equal)
              (:rewrite subsetp-when-prefixp)
-             (:definition member-equal)
              (:definition true-listp)
              (:rewrite put-assoc-equal-without-change . 2)
              abs-separate-of-frame->frame-of-collapse-this-lemma-8
@@ -1795,7 +1801,6 @@
                  (:rewrite subsetp-when-prefixp)
                  (:rewrite abs-fs-fix-when-abs-fs-p)
                  (:rewrite abs-fs-p-when-hifat-no-dups-p)
-                 (:definition member-equal)
                  (:definition abs-complete)
                  (:rewrite remove-assoc-of-remove-assoc)
                  (:definition len)))
@@ -1951,7 +1956,6 @@
          (:rewrite remove-when-absent)
          (:definition remove-equal)
          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-         (:definition member-equal)
          (:rewrite abs-file-alist-p-when-m1-file-alist-p)
          (:rewrite abs-file-alist-p-correctness-1)
          (:rewrite abs-no-dups-p-when-m1-file-alist-p)
@@ -2078,7 +2082,6 @@
                      (:rewrite abs-addrs-when-m1-file-alist-p)
                      (:rewrite partial-collapse-correctness-lemma-24)
                      (:definition assoc-equal)
-                     (:definition member-equal)
                      (:rewrite remove-when-absent)
                      (:definition remove-equal)
                      (:rewrite abs-file-alist-p-correctness-1)
@@ -2149,7 +2152,6 @@
                     ((:rewrite partial-collapse-correctness-lemma-24)
                      (:definition remove-equal)
                      (:definition assoc-equal)
-                     (:definition member-equal)
                      (:definition remove-assoc-equal)
                      (:rewrite abs-file-alist-p-correctness-1)
                      (:rewrite nthcdr-when->=-n-len-l)
@@ -2262,7 +2264,6 @@
          ((:rewrite partial-collapse-correctness-lemma-24)
           (:definition no-duplicatesp-equal)
           (:definition assoc-equal)
-          (:definition member-equal)
           (:rewrite subsetp-when-prefixp)
           (:rewrite prefixp-when-equal-lengths)
           (:definition remove-equal)
@@ -2345,7 +2346,6 @@
                      (:rewrite partial-collapse-correctness-lemma-24)
                      (:definition assoc-equal)
                      (:rewrite subsetp-when-prefixp)
-                     (:definition member-equal)
                      (:definition true-listp)
                      (:rewrite put-assoc-equal-without-change . 2)
                      abs-separate-of-frame->frame-of-collapse-this-lemma-8
@@ -2539,11 +2539,9 @@
              (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
              (:definition remove-equal)
              (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-             (:definition member-equal)
              (:rewrite abs-file-alist-p-when-m1-file-alist-p)
              (:rewrite abs-file-alist-p-correctness-1)
              (:rewrite abs-no-dups-p-when-m1-file-alist-p)
-             (:rewrite abs-addrs-when-m1-file-alist-p-lemma-2)
              (:rewrite abs-addrs-when-m1-file-alist-p)
              (:rewrite member-of-abs-addrs-when-natp . 2)
              (:rewrite member-of-abs-fs-fix-when-natp)
@@ -3041,7 +3039,6 @@
          ((:rewrite abs-file-alist-p-correctness-1)
           (:rewrite hifat-equiv-when-absfat-equiv)
           (:definition no-duplicatesp-equal)
-          (:definition member-equal)
           (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-1)
           (:rewrite subsetp-when-prefixp)
           (:rewrite abs-addrs-when-m1-file-alist-p)
@@ -4407,7 +4404,6 @@
          (:rewrite partial-collapse-correctness-lemma-24)
          (:definition assoc-equal)
          (:rewrite subsetp-when-prefixp)
-         (:definition member-equal)
          (:rewrite
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
           . 2)
@@ -4415,8 +4411,6 @@
          (:rewrite nthcdr-when->=-n-len-l)
          (:rewrite strip-cars-of-frame->frame-of-collapse-this)
          (:definition len)
-         (:definition integer-listp)
-         (:rewrite ctx-app-ok-when-absfat-equiv-lemma-4)
          (:definition remove-equal)
          (:rewrite remove-when-absent)))
        :induct (induction-scheme frame1 frame2)
@@ -4513,7 +4507,6 @@
                            (abs-mkdir-correctness-lemma-50
                             (:definition nth)
                             (:definition true-listp)
-                            (:definition member-equal)
                             (:definition string-listp)
                             (:rewrite true-listp-when-string-list)
                             (:rewrite fat32-filename-p-correctness-1)))
@@ -4533,7 +4526,6 @@
                            (abs-mkdir-correctness-lemma-50
                             (:definition nth)
                             (:definition true-listp)
-                            (:definition member-equal)
                             (:definition string-listp)
                             (:rewrite true-listp-when-string-list)
                             (:rewrite fat32-filename-p-correctness-1)))
@@ -4700,7 +4692,6 @@
                      abs-find-file-src-correctness-2
                      (:definition nth)
                      (:definition true-listp)
-                     (:definition member-equal)
                      (:definition string-listp)
                      (:rewrite true-listp-when-string-list)
                      (:rewrite fat32-filename-p-correctness-1)))
@@ -4982,7 +4973,6 @@
                            (abs-mkdir-correctness-lemma-50
                             (:definition nth)
                             (:definition true-listp)
-                            (:definition member-equal)
                             (:definition string-listp)
                             (:rewrite true-listp-when-string-list)
                             (:rewrite fat32-filename-p-correctness-1)
@@ -6804,8 +6794,6 @@
          (hifat-subsetp-reflexive-lemma-4
           (:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)
           (:rewrite abs-find-file-helper-when-m1-file-alist-p-lemma-1)
-          (:rewrite abs-addrs-when-m1-file-alist-p-lemma-2)
-          (:definition member-equal)
           (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-1)
           (:rewrite abs-file-fix-when-abs-file-p)
           (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-2)
@@ -6989,7 +6977,6 @@
           (:rewrite
            abs-separate-of-frame->frame-of-collapse-this-lemma-8
            . 2)
-          (:definition member-equal)
           (:rewrite abs-addrs-of-ctx-app-2)
           (:rewrite remove-when-absent)
           (:rewrite abs-mkdir-correctness-lemma-26)
@@ -7024,7 +7011,6 @@
           (:rewrite
            abs-fs-fix-of-put-assoc-equal-lemma-2)
           (:rewrite final-val-of-collapse-this-lemma-3)
-          (:definition integer-listp)
           (:rewrite abs-fs-p-of-ctx-app)
           (:type-prescription
            abs-fs-fix-of-put-assoc-equal-lemma-3)
@@ -7057,7 +7043,6 @@
           (:rewrite
            hifat-find-file-correctness-1-lemma-1)
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
-          len-when-hifat-bounded-file-alist-p
           (:rewrite
            abs-find-file-after-abs-mkdir-lemma-13)
           (:definition strip-cars)
@@ -7090,7 +7075,6 @@
           (:rewrite abs-mkdir-correctness-lemma-75)
           (:rewrite len-when-prefixp)
           (:rewrite m1-directory-file-p-when-m1-file-p)
-          (:rewrite m1-directory-file-p-correctness-1)
           (:rewrite abs-find-file-correctness-lemma-31)
           (:rewrite consp-of-assoc-of-abs-fs-fix)
           (:rewrite
@@ -7166,7 +7150,6 @@
           (:linear abs-mkdir-correctness-lemma-51)
           (:rewrite
            absfat-equiv-implies-set-equiv-names-at-1-lemma-4)
-          (:rewrite assoc-of-car-when-member)
           (:rewrite
            abs-find-file-after-abs-mkdir-lemma-7)
           (:rewrite consp-of-remove-assoc-1)
@@ -7177,7 +7160,6 @@
           (:rewrite
            abs-find-file-helper-of-collapse-lemma-2)
           (:rewrite abs-find-file-correctness-lemma-3)
-          M1-FILE-P-OF-CDAR-WHEN-M1-FILE-ALIST-P
           (:REWRITE
            FAT32-FILENAME-P-OF-CAAR-WHEN-M1-FILE-ALIST-P)
           (:REWRITE SUBSETP-CAR-MEMBER)
@@ -9489,7 +9471,6 @@
                        (:rewrite abs-find-file-helper-of-collapse-1 . 2)
                        (:rewrite abs-find-file-helper-of-collapse-2 . 2)
                        (:rewrite integer-listp-when-not-consp)
-                       (:rewrite integerp-of-car-when-integer-listp)
                        (:rewrite hifat-find-file-correctness-lemma-4))))))
 
   (defthm
@@ -10310,7 +10291,6 @@
         (:linear 1st-complete-of-put-assoc-1)
         (:rewrite subsetp-when-prefixp)
         (:rewrite car-of-true-list-list-fix-x-normalize-const-under-list-equiv)
-        (:rewrite integerp-of-car-when-integer-listp)
         (:rewrite abs-find-file-helper-of-collapse-1 . 2)
         (:rewrite integer-listp-when-not-consp)
         (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
@@ -10979,7 +10959,6 @@
         (:linear 1st-complete-of-put-assoc-1)
         (:rewrite subsetp-when-prefixp)
         (:rewrite car-of-true-list-list-fix-x-normalize-const-under-list-equiv)
-        (:rewrite integerp-of-car-when-integer-listp)
         (:rewrite abs-find-file-helper-of-collapse-1 . 2)
         (:rewrite integer-listp-when-not-consp)
         (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
@@ -11255,22 +11234,22 @@
          (strip-cars (partial-collapse frame (dirname path))))))))
     abs-mkdir-correctness-lemma-50))))
 
-(defthm abs-find-file-after-abs-mkdir-2
- (b*
-     (((mv frame & mkdir-error-code)
-       (abs-mkdir frame (path-to-fat32-path (explode "/tmp/docs")))))
-   (implies
-    (equal mkdir-error-code 0)
-    (b*
-        (((mv frame & &)
-          (abs-mkdir frame (path-to-fat32-path (explode "/tmp/docs/pdf-docs"))))
-         ((mv file error-code)
-          (abs-find-file frame path)))
-      (and
-       (equal error-code 0)
-       (m1-file-equiv
-        file
-        (make-m1-file :dir-ent (dir-ent-install-directory-bit (dir-ent-fix nil)
-                                                              t)))))))
- :hints (("goal" :in-theory (enable abs-mkdir partial-collapse)
-          :do-not-induct t)))
+;; (defthm abs-find-file-after-abs-mkdir-2
+;;  (b*
+;;      (((mv frame & mkdir-error-code)
+;;        (abs-mkdir frame (path-to-fat32-path (explode "/tmp/docs")))))
+;;    (implies
+;;     (equal mkdir-error-code 0)
+;;     (b*
+;;         (((mv frame & &)
+;;           (abs-mkdir frame (path-to-fat32-path (explode "/tmp/docs/pdf-docs"))))
+;;          ((mv file error-code)
+;;           (abs-find-file frame path)))
+;;       (and
+;;        (equal error-code 0)
+;;        (m1-file-equiv
+;;         file
+;;         (make-m1-file :dir-ent (dir-ent-install-directory-bit (dir-ent-fix nil)
+;;                                                               t)))))))
+;;  :hints (("goal" :in-theory (enable abs-mkdir partial-collapse)
+;;           :do-not-induct t)))
