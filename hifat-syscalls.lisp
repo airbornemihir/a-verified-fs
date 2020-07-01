@@ -132,6 +132,22 @@
   :hints (("goal" :in-theory (enable basename-dirname-helper
                                      dirname))))
 
+(defthmd dirname-alt
+  (equal (dirname path)
+         (fat32-filename-list-fix (butlast path 1)))
+  :hints (("goal" :in-theory (enable dirname
+                                     basename-dirname-helper
+                                     fat32-filename-list-fix)
+           :induct (basename-dirname-helper path))))
+
+(defthmd basename-alt
+  (equal (basename path)
+         (fat32-filename-fix (car (last path))))
+  :hints (("goal" :in-theory (enable basename
+                                     basename-dirname-helper
+                                     fat32-filename-list-fix)
+           :induct (basename-dirname-helper path))))
+
 (defun hifat-lstat (fs path)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (hifat-no-dups-p fs)

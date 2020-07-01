@@ -1634,3 +1634,5 @@
                 (no-duplicatesp-equal (remove-equal nil (strip-cars alist))))
            (not (consp (assoc-equal name
                                     (remove1-assoc-equal name alist))))))
+
+(defthmd last-alt (equal (last x) (nthcdr (- (len x) 1) x)))

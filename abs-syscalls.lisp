@@ -5910,24 +5910,6 @@
        (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
                                           frame)))))))))
 
-(defthmd dirname-alt
-  (equal (dirname path)
-         (fat32-filename-list-fix (butlast path 1)))
-  :hints (("goal" :in-theory (enable dirname
-                                     basename-dirname-helper
-                                     fat32-filename-list-fix)
-           :induct (basename-dirname-helper path))))
-
-(defthmd basename-alt
-  (equal (basename path)
-         (fat32-filename-fix (car (last path))))
-  :hints (("goal" :in-theory (enable basename
-                                     basename-dirname-helper
-                                     fat32-filename-list-fix)
-           :induct (basename-dirname-helper path))))
-
-(defthmd last-alt (equal (last x) (nthcdr (- (len x) 1) x)))
-
 (defthm
   abs-mkdir-correctness-lemma-139
   (implies
