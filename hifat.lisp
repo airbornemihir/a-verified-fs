@@ -186,6 +186,8 @@
   ;; thanks.
   (defcong nat-equiv equal (take n x) 1))
 
+(defcong nat-equiv equal (nthcdr n l) 1)
+
 (defcong
   str::charlisteqv equal (chars=>nats x)
   1
@@ -2109,6 +2111,22 @@
    (fat32-filename-list-prefixp x y)
    (prefixp (fat32-filename-list-fix x) (fat32-filename-list-fix y)))
   :hints (("Goal" :in-theory (enable fat32-filename-list-prefixp prefixp))))
+
+(defcong
+  fat32-filename-list-equiv
+  equal (fat32-filename-list-prefixp x y)
+  1
+  :hints
+  (("goal"
+    :in-theory (enable fat32-filename-list-prefixp-alt))))
+
+(defcong
+  fat32-filename-list-equiv
+  equal (fat32-filename-list-prefixp x y)
+  2
+  :hints
+  (("goal"
+    :in-theory (enable fat32-filename-list-prefixp-alt))))
 
 (encapsulate
   ()

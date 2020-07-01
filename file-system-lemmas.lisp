@@ -1627,3 +1627,10 @@
            (iff (true-listp (put-assoc-equal name val alist))
                 (or (true-listp alist)
                     (atom (assoc-equal name alist))))))
+
+(defthm
+  assoc-after-remove1-assoc-when-no-duplicatesp
+  (implies (and (not (null name))
+                (no-duplicatesp-equal (remove-equal nil (strip-cars alist))))
+           (not (consp (assoc-equal name
+                                    (remove1-assoc-equal name alist))))))

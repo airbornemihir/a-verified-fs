@@ -1074,13 +1074,6 @@
           y)
          fs))))
 
-;; (defthm
-;;    abs-fs-p-of-abs-disassoc-1
-;;    (implies
-;;     t
-;;     (abs-fs-p (mv-nth 1 (abs-disassoc fs path new-index))))
-;;    :hints (("Goal" :in-theory (enable abs-disassoc abs-file-alist-p abs-no-dups-p abs-fs-p)
-;;             :induct (abs-disassoc fs path new-index))))
 (defthm
    abs-fs-p-of-abs-disassoc-1
    (abs-fs-p (mv-nth 1 (abs-disassoc fs path new-index)))
@@ -1100,6 +1093,12 @@
          (abs-disassoc fs path new-index))
   :hints (("goal" :in-theory (enable abs-disassoc))))
 
+(defthm abs-disassoc-when-not-natp
+  (implies (not (natp new-index))
+           (equal (abs-disassoc fs path new-index)
+                  (abs-disassoc fs path 0)))
+  :hints (("Goal" :in-theory (enable abs-disassoc))))
+
 (defcong
   fat32-filename-list-equiv equal
   (abs-disassoc fs path new-index)
@@ -1109,6 +1108,28 @@
     :use (abs-disassoc-of-fat32-filename-list-fix
           (:instance abs-disassoc-of-fat32-filename-list-fix
                      (path path-equiv))))))
+
+(defcong nat-equiv equal
+  (abs-disassoc fs path new-index)
+  3
+  :hints (("goal" :in-theory (enable abs-disassoc))))
+
+(defthm abs-disassoc-correctness-1
+  (implies (and (not (member-equal (nfix new-index)
+                                   (abs-addrs (abs-fs-fix fs))))
+                (equal (mv-nth 1 (abs-disassoc fs path new-index))
+                       (abs-fs-fix fs)))
+           (equal (mv-nth 0 (abs-disassoc fs path new-index))
+                  nil))
+  :hints (("goal" :in-theory (enable abs-disassoc))))
+
+(defthm ctx-app-of-abs-disassoc
+  (equal (ctx-app (mv-nth 1 (abs-disassoc fs path new-index))
+                  (mv-nth 0 (abs-disassoc fs path new-index))
+                  new-index path)
+         (abs-fs-fix fs))
+  :hints (("goal" :in-theory (enable ctx-app abs-disassoc abs-fs-fix)
+           :expand (ctx-app fs nil new-index path))))
 
 (defthm abs-mkdir-guard-lemma-1
   (implies (consp (assoc-equal 0 frame))
@@ -1244,26 +1265,6 @@
                   (1st-complete frame)))
   :hints (("goal" :in-theory (enable 1st-complete-under-path
                                      1st-complete prefixp))))
-
-;; Move later.
-(defthm true-listp-of-frame-with-root
-  (equal (true-listp (frame-with-root root frame))
-         (true-listp frame))
-  :hints (("goal" :in-theory (enable frame-with-root))))
-
-(defthm alistp-of-frame-with-root
-  (implies (frame-p frame)
-           (alistp (frame-with-root root frame)))
-  :hints (("goal" :in-theory (disable alistp-when-frame-p)
-           :use (:instance alistp-when-frame-p
-                           (x (frame-with-root root frame))))))
-
-(defthm
-  assoc-after-remove1-assoc-when-no-duplicatesp
-  (implies (and (not (null name))
-                (no-duplicatesp-equal (remove-equal nil (strip-cars alist))))
-           (not (consp (assoc-equal name
-                                    (remove1-assoc-equal name alist))))))
 
 (defthm
   abs-mkdir-guard-lemma-3
@@ -1615,50 +1616,11 @@
      (consp (assoc-equal 0 alist))
      (< 0 (find-new-index (strip-cars alist)))))))
 
-(defthmd
-  basename-dirname-helper-of-fat32-filename-list-fix
-  (equal (basename-dirname-helper (fat32-filename-list-fix path))
-         (basename-dirname-helper path))
-  :hints (("goal" :in-theory (enable basename-dirname-helper))))
-
-(defcong
-  fat32-filename-list-equiv equal
-  (basename-dirname-helper path)
-  1
-  :hints
-  (("goal"
-    :use
-    ((:instance
-      basename-dirname-helper-of-fat32-filename-list-fix
-      (path path-equiv))
-     basename-dirname-helper-of-fat32-filename-list-fix))))
-
-(defcong
-  fat32-filename-list-equiv equal
-  (basename path)
-  1
-  :hints
-  (("goal" :in-theory (enable basename))))
-
-(defcong
-  fat32-filename-list-equiv equal
-  (dirname path)
-  1
-  :hints
-  (("goal" :in-theory (enable dirname))))
-
 (defthm abs-mkdir-correctness-lemma-11
   (equal (frame->root (put-assoc-equal 0 val frame))
          (frame-val->dir val))
   :hints (("goal" :do-not-induct t
            :in-theory (enable frame->root))))
-
-;; Move later.
-(defthm abs-disassoc-when-not-natp
-  (implies (not (natp new-index))
-           (equal (abs-disassoc fs path new-index)
-                  (abs-disassoc fs path 0)))
-  :hints (("Goal" :in-theory (enable abs-disassoc))))
 
 (encapsulate
   ()
@@ -1724,12 +1686,6 @@
          (frame->frame frame))
   :hints (("goal" :do-not-induct t
            :in-theory (enable frame->frame))))
-
-;; Move later.
-(defthm consp-of-assoc-of-frame->frame
-  (implies (not (consp (assoc-equal x frame)))
-           (not (consp (assoc-equal x (frame->frame frame)))))
-  :hints (("goal" :in-theory (enable frame->frame))))
 
 (defthm
   abs-mkdir-correctness-lemma-2
@@ -1804,7 +1760,8 @@
    (:rewrite
     :corollary
     (implies (zp (len (dirname path)))
-             (equal (dirname path) nil)))))
+             (equal (dirname path) nil))
+    :hints (("goal" :in-theory (disable len-of-dirname))))))
 
 (defthm abs-mkdir-correctness-lemma-17
   (implies (atom path)
@@ -2155,11 +2112,6 @@
                                          (frame->frame frame))
                      path))))
    ("subgoal *1/6.4'" :expand ((:free (x) (hide x))))))
-
-;; Move later.
-(defthm abs-file-p-of-abs-find-file
-  (abs-file-p (mv-nth 0 (abs-find-file frame path)))
-  :hints (("goal" :in-theory (enable abs-find-file))))
 
 (defthm
   abs-mkdir-correctness-lemma-27
@@ -2608,13 +2560,6 @@
      (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
   :hints (("goal" :in-theory (enable partial-collapse))))
 
-;; Move later
-(defthm len-of-dirname
-  (equal (len (dirname path))
-         (nfix (- (len path) 1)))
-  :hints (("goal" :in-theory (enable basename-dirname-helper
-                                     dirname))))
-
 (defthm
   abs-mkdir-correctness-lemma-44
   (implies
@@ -2813,12 +2758,6 @@
      (frame
       (frame->frame (partial-collapse frame (dirname path))))))))
 
-;; Move later.
-(defcong nat-equiv equal
-  (abs-disassoc fs path new-index)
-  3
-  :hints (("goal" :in-theory (enable abs-disassoc))))
-
 (defthm
   abs-mkdir-correctness-lemma-47
   (implies
@@ -2967,25 +2906,6 @@
                            (dirname path)))))
    ("subgoal 2" :in-theory (enable frame->frame))
    ("subgoal 1" :in-theory (enable frame->frame))))
-
-;; Move later.
-(defthm abs-disassoc-correctness-1
-  (implies (and (not (member-equal (nfix new-index)
-                                   (abs-addrs (abs-fs-fix fs))))
-                (equal (mv-nth 1 (abs-disassoc fs path new-index))
-                       (abs-fs-fix fs)))
-           (equal (mv-nth 0 (abs-disassoc fs path new-index))
-                  nil))
-  :hints (("goal" :in-theory (enable abs-disassoc))))
-
-;; Move later.
-(defthm ctx-app-of-abs-disassoc
-  (equal (ctx-app (mv-nth 1 (abs-disassoc fs path new-index))
-                  (mv-nth 0 (abs-disassoc fs path new-index))
-                  new-index path)
-         (abs-fs-fix fs))
-  :hints (("goal" :in-theory (enable ctx-app abs-disassoc abs-fs-fix)
-           :expand (ctx-app fs nil new-index path))))
 
 (defthm
   abs-place-file-helper-of-ctx-app-1
@@ -4476,24 +4396,6 @@
                        *enoent*)))
   :hints (("goal" :in-theory (enable abs-find-file-helper))))
 
-;; Move later
-(defcong
-  fat32-filename-list-equiv
-  equal (fat32-filename-list-prefixp x y)
-  1
-  :hints
-  (("goal"
-    :in-theory (enable fat32-filename-list-prefixp-alt))))
-
-(defcong
-  fat32-filename-list-equiv
-  equal (fat32-filename-list-prefixp x y)
-  2
-  :hints
-  (("goal"
-    :in-theory (enable fat32-filename-list-prefixp-alt))))
-
-;; Move and rename later.
 (defthm
   abs-find-file-after-abs-mkdir-lemma-5
   (implies (and (dist-names (frame->root frame)
@@ -4795,7 +4697,6 @@
           (strip-cars
            (partial-collapse frame (dirname path))))))))))))
 
-;; Move later.
 (defthm abs-find-file-after-abs-mkdir-lemma-12
   (subsetp-equal (frame-addrs-root frame)
                  (strip-cars frame))
@@ -5242,9 +5143,6 @@
                           path))
              (abs-find-file frame path)))
  :hints (("goal" :in-theory (enable abs-find-file hifat-find-file))))
-
-;; Move later.
-(defcong nat-equiv equal (nthcdr n l) 1)
 
 (defthm
   abs-mkdir-correctness-lemma-86
@@ -5985,7 +5883,6 @@
                                    (abs-find-file-helper fs2 path)))))
      :hints (("goal" :in-theory (enable abs-find-file-helper)))))
 
-  ;; Move and rename later.
   (defthm
     abs-mkdir-correctness-lemma-128
     (implies

@@ -94,6 +94,44 @@
   (fat32-filename-list-p (dirname path))
   :hints (("goal" :in-theory (enable dirname))))
 
+(defthmd
+  basename-dirname-helper-of-fat32-filename-list-fix
+  (equal (basename-dirname-helper (fat32-filename-list-fix path))
+         (basename-dirname-helper path))
+  :hints (("goal" :in-theory (enable basename-dirname-helper))))
+
+(defcong
+  fat32-filename-list-equiv equal
+  (basename-dirname-helper path)
+  1
+  :hints
+  (("goal"
+    :use
+    ((:instance
+      basename-dirname-helper-of-fat32-filename-list-fix
+      (path path-equiv))
+     basename-dirname-helper-of-fat32-filename-list-fix))))
+
+(defcong
+  fat32-filename-list-equiv equal
+  (basename path)
+  1
+  :hints
+  (("goal" :in-theory (enable basename))))
+
+(defcong
+  fat32-filename-list-equiv equal
+  (dirname path)
+  1
+  :hints
+  (("goal" :in-theory (enable dirname))))
+
+(defthm len-of-dirname
+  (equal (len (dirname path))
+         (nfix (- (len path) 1)))
+  :hints (("goal" :in-theory (enable basename-dirname-helper
+                                     dirname))))
+
 (defun hifat-lstat (fs path)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (hifat-no-dups-p fs)

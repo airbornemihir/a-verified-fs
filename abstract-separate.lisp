@@ -2945,6 +2945,24 @@
          (cons 0 (strip-cars frame)))
   :hints (("goal" :in-theory (enable frame-with-root))))
 
+(defthm true-listp-of-frame-with-root
+  (equal (true-listp (frame-with-root root frame))
+         (true-listp frame))
+  :hints (("goal" :in-theory (enable frame-with-root true-listp))))
+
+;; This is because of fixing.
+(defthm frame-p-of-frame-with-root
+  (equal (frame-p (frame-with-root root frame))
+         (frame-p frame))
+  :hints (("goal" :in-theory (enable frame-with-root))))
+
+(defthm alistp-of-frame-with-root
+  (implies (frame-p frame)
+           (alistp (frame-with-root root frame)))
+  :hints (("goal" :in-theory (disable alistp-when-frame-p)
+           :use (:instance alistp-when-frame-p
+                           (x (frame-with-root root frame))))))
+
 (defund frame->root (frame)
   (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame)))))
   (frame-val->dir (cdr (assoc-equal 0 frame))))
@@ -3013,11 +3031,11 @@
    (no-duplicatesp-equal (strip-cars (frame->frame frame))))
   :hints (("goal" :in-theory (enable frame->frame))))
 
-;; This is because of fixing.
-(defthm frame-p-of-frame-with-root
-  (equal (frame-p (frame-with-root root frame))
-         (frame-p frame))
-  :hints (("goal" :in-theory (enable frame-with-root))))
+;; Move later.
+(defthm consp-of-assoc-of-frame->frame
+  (implies (not (consp (assoc-equal x frame)))
+           (not (consp (assoc-equal x (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable frame->frame))))
 
 (defund
   collapse-this (frame x)

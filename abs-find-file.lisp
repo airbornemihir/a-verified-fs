@@ -160,6 +160,15 @@
                  abs-find-file-of-true-list-fix))))
 
 (defthm
+  abs-find-file-helper-of-collapse-lemma-7
+  (abs-file-p (mv-nth 0 (abs-find-file-helper fs path)))
+  :hints (("goal" :in-theory (enable abs-find-file-helper))))
+
+(defthm abs-file-p-of-abs-find-file
+  (abs-file-p (mv-nth 0 (abs-find-file frame path)))
+  :hints (("goal" :in-theory (enable abs-find-file))))
+
+(defthm
   abs-find-file-helper-when-m1-file-alist-p-lemma-1
   (implies (and (abs-fs-p fs) (abs-complete fs))
            (equal (hifat-file-alist-fix fs) fs))
@@ -793,11 +802,6 @@
    (not (m1-regular-file-p (mv-nth 0 (abs-find-file-helper fs path))))
    (abs-fs-p
     (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path)))))
-  :hints (("goal" :in-theory (enable abs-find-file-helper))))
-
-(defthm
-  abs-find-file-helper-of-collapse-lemma-7
-  (abs-file-p (mv-nth 0 (abs-find-file-helper fs path)))
   :hints (("goal" :in-theory (enable abs-find-file-helper))))
 
 (defthm
