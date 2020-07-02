@@ -27,12 +27,70 @@
                         (:definition integer-listp)
                         (:rewrite natp-of-car-when-nat-listp)))))
 
-;; Let's try to do this intuitively first...
+(defund abs-no-dups-file-p (file)
+  (declare (xargs :guard t))
+  (or (m1-regular-file-p file)
+      (and (abs-directory-file-p file)
+           (abs-no-dups-p (abs-file->contents file)))))
+
+(defthm
+  abs-file-p-when-abs-no-dups-file-p
+  (implies (abs-no-dups-file-p file)
+           (abs-file-p file))
+  :hints (("goal" :in-theory (enable abs-file-p-alt abs-no-dups-file-p))))
+
+(defund
+  abs-no-dups-file-fix (file)
+  (if (not (abs-file-alist-p (abs-file->contents file)))
+      (abs-file-fix file)
+      (change-abs-file
+       file
+       :contents (abs-fs-fix (abs-file->contents file)))))
+
+(defthm abs-no-dups-file-fix-of-abs-no-dups-file-fix
+  (equal (abs-no-dups-file-fix (abs-no-dups-file-fix x))
+         (abs-no-dups-file-fix x))
+  :hints (("goal" :in-theory (enable abs-no-dups-file-fix))))
+
+(defthm abs-fs-p-of-abs-file->contents-1
+  (implies (and (abs-no-dups-p (abs-file->contents file))
+                (abs-directory-file-p file))
+           (abs-fs-p (abs-file->contents file)))
+  :hints (("goal" :in-theory (enable abs-directory-file-p)
+           :do-not-induct t)))
+
+(defthm abs-no-dups-file-fix-when-abs-no-dups-file-p
+  (implies (abs-no-dups-file-p x)
+           (equal (abs-no-dups-file-fix x) x))
+  :hints (("goal" :in-theory (enable abs-no-dups-file-fix abs-no-dups-file-p))))
+
+(defthm
+  abs-no-dups-file-p-of-abs-no-dups-file-fix
+  (abs-no-dups-file-p (abs-no-dups-file-fix x))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-no-dups-file-fix abs-no-dups-file-p abs-file-p-alt)
+                    (abs-file-p-of-abs-file-fix))
+    :use abs-file-p-of-abs-file-fix)))
+
+(defund
+  abs-no-dups-file-equiv (file1 file2)
+  (cond ((and (abs-file-alist-p (abs-file->contents file1))
+              (abs-file-alist-p (abs-file->contents file2)))
+         (absfat-equiv (abs-file->contents file1)
+                       (abs-file->contents file2)))
+        ((and (stringp (abs-file->contents file1))
+              (stringp (abs-file->contents file2)))
+         (equal (abs-file->contents file1)
+                (abs-file->contents file2)))
+        (t nil)))
 
 (defund abs-place-file-helper (fs path file)
-  (declare (xargs :guard (and (abs-fs-p fs) (abs-file-p file) (fat32-filename-list-p path))
+  (declare (xargs :guard (and (abs-fs-p fs) (abs-no-dups-file-p file)
+                              (fat32-filename-list-p path))
                   :measure (len path)))
   (b* ((fs (mbe :exec fs :logic (abs-fs-fix fs)))
+       (file (mbe :exec file :logic (abs-no-dups-file-fix file)))
        ((unless (consp path)) (mv fs *enoent*))
        (name (fat32-filename-fix (car path)))
        (alist-elem (abs-assoc name fs))
@@ -57,21 +115,21 @@
                        fs)
         error-code)))
 
-(defthm
-  abs-file-alist-p-of-abs-place-file-helper
-  (implies
-   (abs-file-p file)
-   (abs-file-alist-p (mv-nth 0
-                             (abs-place-file-helper fs path file))))
+(defthm abs-file-alist-p-of-abs-place-file-helper
+  (abs-file-alist-p (mv-nth 0 (abs-place-file-helper fs path file)))
   :hints (("goal" :in-theory (enable abs-place-file-helper))))
 
 (defthm
+  abs-no-dups-p-of-abs-file->contents-of-abs-no-dups-file-fix
+  (abs-no-dups-p (abs-file->contents (abs-no-dups-file-fix file)))
+  :hints (("goal" :in-theory (enable abs-no-dups-file-fix
+                                     abs-file->contents abs-file-contents-fix
+                                     abs-no-dups-p abs-file-contents-p
+                                     abs-file abs-file-fix))))
+
+(defthm
   abs-no-dups-p-of-abs-place-file-helper
-  (implies (and (abs-file-p file)
-                (or (m1-regular-file-p file)
-                    (abs-no-dups-p (abs-file->contents file))))
-           (abs-no-dups-p (mv-nth 0
-                                  (abs-place-file-helper fs path file))))
+  (abs-no-dups-p (mv-nth 0 (abs-place-file-helper fs path file)))
   :hints (("goal" :in-theory (enable abs-place-file-helper abs-no-dups-p)
            :induct (abs-place-file-helper fs path file))))
 
@@ -89,19 +147,15 @@
     (implies (m1-regular-file-p file)
              (abs-no-dups-p (m1-file->contents file))))))
 
-(defthm
-  abs-fs-p-of-abs-place-file-helper
-  (implies (and (abs-file-p file)
-                (abs-no-dups-p (abs-file->contents file)))
-           (abs-fs-p (mv-nth 0
-                             (abs-place-file-helper fs path file))))
+(defthm abs-fs-p-of-abs-place-file-helper
+  (abs-fs-p (mv-nth 0 (abs-place-file-helper fs path file)))
   :hints (("goal" :in-theory (enable abs-fs-p))))
 
 (defund
   abs-place-file (frame path file)
   (declare
    (xargs :guard (and (frame-p frame)
-                      (abs-file-p file)
+                      (abs-no-dups-file-p file)
                       (fat32-filename-list-p path))
           :guard-hints (("Goal" :do-not-induct t) )))
   (b*
@@ -503,13 +557,18 @@
   m1-file-alist-p-of-abs-place-file-helper
   (implies
    (and (abs-complete (abs-fs-fix fs))
-        (m1-file-p file))
+        (m1-file-p (abs-no-dups-file-fix file)))
    (m1-file-alist-p (mv-nth 0
                             (abs-place-file-helper fs path file))))
   :hints (("goal" :in-theory (enable abs-place-file-helper))))
 
 (defthm abs-place-file-helper-of-abs-fs-fix
   (equal (abs-place-file-helper (abs-fs-fix fs) path file)
+         (abs-place-file-helper fs path file))
+  :hints (("goal" :in-theory (enable abs-place-file-helper))))
+
+(defthm abs-place-file-helper-of-abs-no-dups-file-fix
+  (equal (abs-place-file-helper fs path (abs-no-dups-file-fix file))
          (abs-place-file-helper fs path file))
   :hints (("goal" :in-theory (enable abs-place-file-helper))))
 
@@ -522,7 +581,8 @@
      (implies (and (m1-file-alist-p fs)
                    (hifat-no-dups-p fs)
                    ;; This hypothesis is suboptimal... I know.
-                   (m1-file-p file))
+                   (m1-file-p file)
+                   (abs-no-dups-file-p file))
               (equal (abs-place-file-helper fs path file)
                      (hifat-place-file fs path file)))
      :hints
@@ -535,13 +595,14 @@
   (defthm
     abs-place-file-helper-correctness-1
     (implies (and (abs-complete (abs-fs-fix fs))
-                  (m1-file-p file))
+                  (m1-file-p (abs-no-dups-file-fix file)))
              (equal (abs-place-file-helper fs path file)
                     (hifat-place-file (abs-fs-fix fs)
-                                      path file)))
+                                      path (abs-no-dups-file-fix file))))
     :hints (("goal" :in-theory (disable lemma)
              :use (:instance lemma
-                             (fs (abs-fs-fix fs)))))))
+                             (fs (abs-fs-fix fs))
+                             (file (abs-no-dups-file-fix file)))))))
 
 (defthm
   abs-top-addrs-of-abs-place-file-helper
@@ -589,7 +650,7 @@
                                    (abs-place-file-helper fs path file)))
                        (prefixp (fat32-filename-list-fix path)
                                 (fat32-filename-list-fix relpath)))
-                      (addrs-at (abs-file->contents file)
+                      (addrs-at (abs-file->contents (abs-no-dups-file-fix file))
                                 (nthcdr (len path) relpath))
                     (addrs-at fs relpath))))
   :hints
@@ -637,24 +698,40 @@
   :hints (("goal" :in-theory (enable addrs-at abs-fs-fix)))
   :rule-classes (:type-prescription :rewrite))
 
-(defthm
-  ctx-app-ok-of-abs-place-file-helper-1
-  (implies
-   (and (abs-file-p file)
-        (abs-no-dups-p (abs-file->contents file)))
-   (equal (ctx-app-ok (mv-nth 0
-                              (abs-place-file-helper fs path file))
-                      x x-path)
-          (if (and (zp (mv-nth 1
-                               (abs-place-file-helper fs path file)))
-                   (prefixp (fat32-filename-list-fix path)
-                            (fat32-filename-list-fix x-path)))
-              (ctx-app-ok (abs-file->contents file)
-                          x (nthcdr (len path) x-path))
-              (ctx-app-ok fs x x-path))))
-  :hints (("goal" :in-theory (enable ctx-app-ok)
-           :do-not-induct t))
-  :otf-flg t)
+(encapsulate
+  ()
+
+  (local
+   (defthmd lemma
+     (implies
+      (and (abs-file-p file)
+           (abs-no-dups-p (abs-file->contents file)))
+      (equal (ctx-app-ok (mv-nth 0
+                                 (abs-place-file-helper fs path file))
+                         x x-path)
+             (if (and (zp (mv-nth 1
+                                  (abs-place-file-helper fs path file)))
+                      (prefixp (fat32-filename-list-fix path)
+                               (fat32-filename-list-fix x-path)))
+                 (ctx-app-ok (abs-file->contents (abs-no-dups-file-fix file))
+                             x (nthcdr (len path) x-path))
+               (ctx-app-ok fs x x-path))))
+     :hints (("goal" :in-theory (enable ctx-app-ok)
+              :do-not-induct t))
+     :otf-flg t))
+
+  (defthm
+    ctx-app-ok-of-abs-place-file-helper-1
+    (equal (ctx-app-ok (mv-nth 0 (abs-place-file-helper fs path file))
+                       x x-path)
+           (if (and (zp (mv-nth 1 (abs-place-file-helper fs path file)))
+                    (prefixp (fat32-filename-list-fix path)
+                             (fat32-filename-list-fix x-path)))
+               (ctx-app-ok (abs-file->contents (abs-no-dups-file-fix file))
+                           x (nthcdr (len path) x-path))
+             (ctx-app-ok fs x x-path)))
+    :hints (("goal" :use (:instance lemma
+                                    (file (abs-no-dups-file-fix file)))))))
 
 (defthm natp-of-abs-place-file-helper
   (natp (mv-nth 1
@@ -683,13 +760,6 @@
                                      abs-file-contents-p abs-fs-fix)
            :do-not-induct t)))
 
-(defthm names-at-of-abs-place-file-helper-lemma-3
-  (implies (and (abs-no-dups-p (abs-file->contents file))
-                (abs-directory-file-p file))
-           (abs-fs-p (abs-file->contents file)))
-  :hints (("goal" :in-theory (enable abs-directory-file-p)
-           :do-not-induct t)))
-
 (defthm names-at-of-abs-place-file-helper-lemma-5
   (implies (m1-regular-file-p file)
            (equal (strip-cars (abs-fs-fix (m1-file->contents file)))
@@ -699,61 +769,38 @@
                               abs-file-p abs-file->contents
                               abs-fs-fix abs-file-contents-p))))
 
-;; (b* ((fs (list (cons (coerce (name-to-fat32-name (coerce "var" 'list)) 'string)
-;;                      (make-abs-file))
-;;                (cons (coerce (name-to-fat32-name (coerce
-;;                                                   "tmp"
-;;                                                   'list))
-;;                              'string)
-;;                      (make-abs-file
-;;                       :contents (list
-;;                                  (cons
-;;                                   (coerce
-;;                                    (name-to-fat32-name
-;;                                     (coerce
-;;                                      "pipe"
-;;                                      'list))
-;;                                    'string)
-;;                                   (make-abs-file)))))))
-;;      ((mv val &) (abs-place-file-helper fs (path-to-fat32-path
-;;                                             (coerce "/tmp/hspid" 'list))
-;;                                         (make-abs-file))))
-;;   (list (names-at val
-;;                   (path-to-fat32-path
-;;                    (coerce
-;;                     "/tmp"
-;;                     'list)))
-;;         (names-at fs
-;;                   (path-to-fat32-path
-;;                    (coerce
-;;                     "/tmp"
-;;                     'list)))))
+(defthmd names-at-of-abs-place-file-helper-lemma-6
+  (implies (not (m1-regular-file-p (abs-no-dups-file-fix file)))
+           (abs-directory-file-p (abs-no-dups-file-fix file)))
+  :hints
+  (("goal" :in-theory (e/d (abs-file-p-alt)
+                           ((:rewrite abs-file-p-when-abs-no-dups-file-p)))
+    :use (:instance (:rewrite abs-file-p-when-abs-no-dups-file-p)
+                    (file (abs-no-dups-file-fix file))))))
 
 (defthm
   names-at-of-abs-place-file-helper-1
-  (implies
-   (abs-file-p file)
-   (equal
-    (names-at (mv-nth 0
-                      (abs-place-file-helper fs path file))
-              relpath)
-    (cond ((not (zp (mv-nth 1
-                            (abs-place-file-helper fs path file))))
-           (names-at fs relpath))
-          ((fat32-filename-list-prefixp path relpath)
-           (names-at (abs-file->contents file)
-                     (nthcdr (len path) relpath)))
-          ((and (fat32-filename-list-equiv relpath (butlast path 1))
-                (not (member-equal (fat32-filename-fix (car (last path)))
-                                   (names-at fs relpath))))
-           (append (names-at fs relpath)
-                   (list (fat32-filename-fix (car (last path))))))
-          (t (names-at fs relpath)))))
+  (equal (names-at (mv-nth 0 (abs-place-file-helper fs path file))
+                   relpath)
+         (cond ((not (zp (mv-nth 1
+                                 (abs-place-file-helper fs path file))))
+                (names-at fs relpath))
+               ((fat32-filename-list-prefixp path relpath)
+                (names-at (abs-file->contents (abs-no-dups-file-fix file))
+                          (nthcdr (len path) relpath)))
+               ((and (fat32-filename-list-equiv relpath (butlast path 1))
+                     (not (member-equal (fat32-filename-fix (car (last path)))
+                                        (names-at fs relpath))))
+                (append (names-at fs relpath)
+                        (list (fat32-filename-fix (car (last path))))))
+               (t (names-at fs relpath))))
   :hints
-  (("goal" :in-theory
+  (("goal"
+    :in-theory
     (e/d (abs-place-file-helper names-at fat32-filename-list-fix
                                 fat32-filename-list-equiv
-                                fat32-filename-equiv abs-file-p-alt)
+                                fat32-filename-equiv
+                                names-at-of-abs-place-file-helper-lemma-6)
          ((:definition put-assoc-equal)
           (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
           (:definition abs-complete)
@@ -849,7 +896,13 @@
           (abs-addrs (frame->root frame))
           (frame-addrs-root (frame->frame frame))))))
 
-(defcong absfat-equiv equal (frame-reps-fs frame fs) 2)
+(defcong absfat-equiv equal (frame-reps-fs frame fs) 2
+  :hints (("Goal" :in-theory (enable frame-reps-fs))))
+
+(defthm absfat-place-file-correctness-lemma-1
+  (implies (m1-regular-file-p file)
+           (abs-no-dups-file-p file))
+  :hints (("goal" :in-theory (enable abs-no-dups-file-p))))
 
 ;; I'm not even sure what the definition of abs-place-file above should be. But
 ;; I'm pretty sure it should support a theorem like the following.
@@ -913,7 +966,7 @@
     :do-not-induct t
     :in-theory
     (e/d (hifat-place-file dist-names
-                           abs-separate frame-addrs-root)
+                           abs-separate frame-addrs-root frame-reps-fs)
          (collapse-hifat-place-file-2
           (:rewrite m1-file-alist-p-when-subsetp-equal)
           (:rewrite len-of-remove-assoc-when-no-duplicatesp-strip-cars)
@@ -2723,6 +2776,8 @@
      (frame
       (frame->frame (partial-collapse frame (dirname path))))))))
 
+;; It's not hard to imagine a scenario where the first corollary might be
+;; needed, even though accumulated-persistence says it is useless.
 (defthm
   abs-mkdir-correctness-lemma-47
   (implies
@@ -2909,14 +2964,13 @@
    (:rewrite
     :corollary
     (implies
-     (and (abs-fs-p (mv-nth 0
-                            (abs-place-file-helper fs path file)))
-          (ctx-app-ok abs-file-alist1 x x-path)
+     (and (ctx-app-ok abs-file-alist1 x x-path)
           (not (member-equal (fat32-filename-fix (car path))
                              (names-at abs-file-alist1 x-path)))
           (abs-fs-p (ctx-app abs-file-alist1 fs x x-path))
           (abs-fs-p fs)
           (abs-complete fs)
+          (abs-no-dups-file-p file)
           (m1-file-p file))
      (equal
       (ctx-app abs-file-alist1
@@ -3355,24 +3409,43 @@
     :in-theory (e/d (abs-place-file-helper absfat-subsetp abs-file-p-alt))
     :do-not-induct t)))
 
-(defthm
-  abs-mkdir-correctness-lemma-57
-  (implies
-   (and (abs-fs-p fs1)
-        (abs-fs-p fs2)
-        (absfat-subsetp fs1 fs2)
-        (abs-file-p file)
-        (abs-no-dups-p (abs-file->contents file))
-        (zp (mv-nth 1
-                    (abs-place-file-helper fs2 path file))))
-   (absfat-subsetp (mv-nth 0
-                           (abs-place-file-helper fs1 path file))
-                   (mv-nth 0
-                           (abs-place-file-helper fs2 path file))))
-  :hints (("goal" :in-theory (enable abs-place-file-helper
-                                     absfat-subsetp abs-file-p-alt)
-           :induct (mv (abs-place-file-helper fs1 path file)
-                       (abs-place-file-helper fs2 path file)))))
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies (and (absfat-subsetp fs1 fs2)
+                   (abs-fs-p fs1)
+                   (abs-fs-p fs2)
+                   (abs-no-dups-file-p file)
+                   (zp (mv-nth 1
+                               (abs-place-file-helper fs2 path file))))
+              (absfat-subsetp (mv-nth 0 (abs-place-file-helper fs1 path file))
+                              (mv-nth 0
+                                      (abs-place-file-helper fs2 path file))))
+     :hints (("goal" :in-theory (enable abs-place-file-helper absfat-subsetp
+                                        abs-file-p-alt abs-no-dups-file-p)
+              :induct (mv (abs-place-file-helper fs1 path file)
+                          (abs-place-file-helper fs2 path file))))))
+
+  (defthm
+    abs-mkdir-correctness-lemma-57
+    (implies
+     (and (absfat-subsetp (abs-fs-fix fs1) (abs-fs-fix fs2))
+          (zp (mv-nth 1
+                      (abs-place-file-helper fs2 path file))))
+     (absfat-subsetp (mv-nth 0
+                             (abs-place-file-helper fs1 path file))
+                     (mv-nth 0
+                             (abs-place-file-helper fs2 path file))))
+    :hints (("goal" :use
+             (:instance
+              lemma
+              (fs1 (abs-fs-fix fs1))
+              (fs2 (abs-fs-fix fs2))
+              (file (abs-no-dups-file-fix file)))
+             :do-not-induct t))))
 
 (defthmd
   abs-mkdir-correctness-lemma-61
@@ -3482,7 +3555,7 @@
                    (abs-fs-p fs1)
                    (absfat-subsetp (abs-fs-fix fs1)
                                    (abs-fs-fix fs2))
-                   (not (abs-directory-file-p file)))
+                   (not (abs-directory-file-p (abs-no-dups-file-fix file))))
               (equal (mv-nth 1
                              (abs-place-file-helper fs1 path file))
                      *enotdir*))
@@ -3498,7 +3571,7 @@
                          *enotdir*)
                   (absfat-subsetp (abs-fs-fix fs1)
                                   (abs-fs-fix fs2))
-                  (case-split (not (abs-directory-file-p file))))
+                  (case-split (not (abs-directory-file-p (abs-no-dups-file-fix file)))))
              (equal (mv-nth 1
                             (abs-place-file-helper fs1 path file))
                     *enotdir*))
@@ -3509,12 +3582,6 @@
   (implies
    (and (absfat-equiv fs1 fs2)
         (syntaxp (not (term-order fs1 fs2)))
-        (or (abs-directory-file-p
-             (cdr (assoc-equal (fat32-filename-fix (car path))
-                               fs1)))
-            (abs-directory-file-p
-             (cdr (assoc-equal (fat32-filename-fix (car path))
-                               fs2))))
         (abs-fs-p fs1)
         (abs-fs-p fs2))
    (absfat-equiv
@@ -3522,8 +3589,25 @@
                                           fs1)))
     (abs-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
                                           fs2)))))
-  :hints (("goal" :in-theory (enable absfat-equiv)
-           :do-not-induct t)))
+  :hints
+  (("goal"
+    :in-theory (e/d (absfat-equiv absfat-subsetp abs-fs-fix
+                                  abs-file-p-alt m1-regular-file-p)
+                    ((:rewrite absfat-subsetp-guard-lemma-1)))
+    :do-not-induct t
+    :cases
+    ((or
+      (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car path))
+                                              fs1)))
+      (abs-directory-file-p (cdr (assoc-equal (fat32-filename-fix (car path))
+                                              fs2))))))
+   ("subgoal 2" :use ((:instance (:rewrite absfat-subsetp-guard-lemma-1)
+                                 (abs-file-alist fs1)
+                                 (name (fat32-filename-fix (car path))))
+                      (:instance (:rewrite absfat-subsetp-guard-lemma-1)
+                                 (abs-file-alist fs2)
+                                 (name (fat32-filename-fix (car path)))))))
+  :otf-flg t)
 
 (encapsulate
   ()
@@ -3537,7 +3621,7 @@
                    (abs-fs-p fs1)
                    (abs-fs-p fs2)
                    (absfat-equiv fs1 fs2)
-                   (abs-directory-file-p file))
+                   (abs-directory-file-p (abs-no-dups-file-fix file)))
               (equal (mv-nth 1
                              (abs-place-file-helper fs1 path file))
                      *enotdir*))
@@ -3580,29 +3664,22 @@
                                  (abs-place-file-helper fs2 path file))
                          *enotdir*)
                   (absfat-equiv fs1 fs2)
-                  (abs-directory-file-p file))
+                  (abs-directory-file-p (abs-no-dups-file-fix file)))
              (equal (mv-nth 1
                             (abs-place-file-helper fs1 path file))
                     *enotdir*))
     :hints (("goal" :use (:instance lemma (fs1 (abs-fs-fix fs1))
                                     (fs2 (abs-fs-fix fs2)))))))
 
-;; This theorem reminds me of one more reason why no duplication should be
-;; allowed. List lengths have to be the same!
 (defthm
   abs-mkdir-correctness-lemma-60
-  (implies (and (absfat-equiv fs1 fs2)
-                (abs-file-p file)
-                (abs-no-dups-p (abs-file->contents file)))
-           (and
-            (absfat-equiv (mv-nth 0
-                                  (abs-place-file-helper fs1 path file))
-                          (mv-nth 0
-                                  (abs-place-file-helper fs2 path file)))
-            (equal (mv-nth 1
-                           (abs-place-file-helper fs1 path file))
-                   (mv-nth 1
-                           (abs-place-file-helper fs2 path file)))))
+  (implies (absfat-equiv fs1 fs2)
+           (and (absfat-equiv (mv-nth 0 (abs-place-file-helper fs1 path file))
+                              (mv-nth 0
+                                      (abs-place-file-helper fs2 path file)))
+                (equal (mv-nth 1 (abs-place-file-helper fs1 path file))
+                       (mv-nth 1
+                               (abs-place-file-helper fs2 path file)))))
   :hints
   (("goal"
     :do-not-induct t
@@ -3631,7 +3708,19 @@
                      (file file)
                      (path path)
                      (fs fs2)))))
-  :otf-flg t)
+  :rule-classes
+  ((:congruence
+    :corollary
+    (implies (absfat-equiv fs1 fs2)
+             (absfat-equiv (mv-nth 0 (abs-place-file-helper fs1 path file))
+                           (mv-nth 0
+                                   (abs-place-file-helper fs2 path file)))))
+   (:congruence
+    :corollary
+    (implies (absfat-equiv fs1 fs2)
+             (equal (mv-nth 1 (abs-place-file-helper fs1 path file))
+                    (mv-nth 1
+                            (abs-place-file-helper fs2 path file)))))))
 
 (defthm collapse-hifat-place-file-lemma-1
   (implies (stringp x)
@@ -3791,40 +3880,41 @@
                     (x file)))))
 
 (defthm
-  collapse-hifat-place-file-lemma-11
-  (implies
-   (and
-    (equal (frame->root frame1)
-           (mv-nth 0
-                   (abs-place-file-helper (frame->root frame2)
-                                          path file)))
-    (m1-file-p file)
-    (hifat-no-dups-p (m1-file->contents file))
-    (not
-     (ctx-app-ok
+ collapse-hifat-place-file-lemma-11
+ (implies
+  (and
+   (equal (frame->root frame1)
+          (mv-nth 0
+                  (abs-place-file-helper (frame->root frame2)
+                                         path file)))
+   (m1-file-p file)
+   (hifat-no-dups-p (m1-file->contents file))
+   (not
+    (ctx-app-ok
       (frame->root frame2)
       (1st-complete (frame->frame frame1))
       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
                                          (frame->frame frame1)))))))
-   (not
-    (ctx-app-ok
-     (frame->root frame1)
-     (1st-complete (frame->frame frame1))
-     (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                                        (frame->frame frame1)))))))
-  :hints
-  (("goal"
-    :in-theory (disable (:rewrite ctx-app-ok-of-abs-place-file-helper-1))
-    :use
-    (:instance
-     (:rewrite ctx-app-ok-of-abs-place-file-helper-1)
-     (x-path
+  (not
+   (ctx-app-ok
+      (frame->root frame1)
+      (1st-complete (frame->frame frame1))
+      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                         (frame->frame frame1)))))))
+ :hints
+ (("goal"
+   :in-theory (e/d (abs-no-dups-file-fix)
+                   ((:rewrite ctx-app-ok-of-abs-place-file-helper-1)))
+   :use
+   (:instance
+    (:rewrite ctx-app-ok-of-abs-place-file-helper-1)
+    (x-path
       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
                                          (frame->frame frame1)))))
-     (x (1st-complete (frame->frame frame1)))
-     (file file)
-     (path path)
-     (fs (frame->root frame2))))))
+    (x (1st-complete (frame->frame frame1)))
+    (file file)
+    (path path)
+    (fs (frame->root frame2))))))
 
 (defthm
   collapse-hifat-place-file-lemma-7
@@ -3924,20 +4014,20 @@
      (1st-complete (frame->frame frame1))
      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
                                         (frame->frame frame1)))))))
-  :instructions
-  ((:bash
-    ("goal"
-     :in-theory (disable (:rewrite ctx-app-ok-of-abs-place-file-helper-1))
-     :use
-     (:instance
-      (:rewrite ctx-app-ok-of-abs-place-file-helper-1)
-      (x-path
-       (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
-                                          (frame->frame frame1)))))
-      (x (1st-complete (frame->frame frame1)))
-      (file file)
-      (path path)
-      (fs (frame->root frame2)))))))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-no-dups-file-fix)
+                    ((:rewrite ctx-app-ok-of-abs-place-file-helper-1)))
+    :use
+    (:instance
+     (:rewrite ctx-app-ok-of-abs-place-file-helper-1)
+     (x-path
+      (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                         (frame->frame frame1)))))
+     (x (1st-complete (frame->frame frame1)))
+     (file file)
+     (path path)
+     (fs (frame->root frame2))))))
 
 (encapsulate
   ()
@@ -5413,16 +5503,10 @@
 
 (defthm
   abs-mkdir-correctness-lemma-100
-  (implies (consp (assoc-equal name fs))
-           (consp (assoc-equal (fat32-filename-fix name)
-                               (hifat-file-alist-fix fs))))
-  :hints (("goal" :in-theory (enable hifat-file-alist-fix)))
-  :rule-classes
-  (:rewrite
-   (:rewrite :corollary
-             (implies (and (fat32-filename-p name)
-                           (consp (assoc-equal name fs)))
-                      (consp (assoc-equal name (hifat-file-alist-fix fs)))))))
+  (implies (and (fat32-filename-p name)
+                (consp (assoc-equal name fs)))
+           (consp (assoc-equal name (hifat-file-alist-fix fs))))
+  :hints (("goal" :in-theory (enable hifat-file-alist-fix))))
 
 (defthm
   abs-mkdir-correctness-lemma-102
@@ -5786,18 +5870,18 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (abs-mkdir collapse)
-         ((:DEFINITION ASSOC-EQUAL)
-          (:REWRITE ABS-FIND-FILE-CORRECTNESS-2)
-          (:REWRITE CONSP-OF-ASSOC-OF-FRAME->FRAME)
-          (:REWRITE DEFAULT-CDR)
-          (:REWRITE
-           ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-8
+    (e/d (abs-mkdir collapse frame-reps-fs)
+         ((:definition assoc-equal)
+          (:rewrite abs-find-file-correctness-2)
+          (:rewrite consp-of-assoc-of-frame->frame)
+          (:rewrite default-cdr)
+          (:rewrite
+           abs-separate-of-frame->frame-of-collapse-this-lemma-8
            . 2)
-          (:REWRITE PREFIXP-WHEN-EQUAL-LENGTHS)
-          (:REWRITE SUBSETP-WHEN-PREFIXP)
-          (:REWRITE
-           PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-24)))
+          (:rewrite prefixp-when-equal-lengths)
+          (:rewrite subsetp-when-prefixp)
+          (:rewrite
+           partial-collapse-correctness-lemma-24)))
     :do-not-induct t)))
 
 (defthm
@@ -5820,15 +5904,14 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (abs-mkdir collapse)
+    (e/d (abs-mkdir collapse frame-reps-fs)
          (abs-file-alist-p-correctness-1 abs-fs-p-correctness-1
                                          abs-fs-p-when-hifat-no-dups-p
                                          abs-mkdir-correctness-lemma-32
                                          abs-separate-correctness-1
                                          collapse-congruence-lemma-4
                                          frame->frame-of-frame-with-root
-                                         frame->root-of-frame-with-root
-                                         mv-nth-of-cons))
+                                         frame->root-of-frame-with-root))
     :do-not-induct t)))
 
 (encapsulate
@@ -6256,7 +6339,7 @@
     0))
   :hints
   (("goal" :do-not-induct t
-    :in-theory (disable (:rewrite abs-find-file-correctness-2))
+    :in-theory (e/d (frame-reps-fs) ((:rewrite abs-find-file-correctness-2)))
     :use (:instance (:rewrite abs-find-file-correctness-2)
                     (path (dirname path))
                     (frame (partial-collapse frame (dirname path)))))))
@@ -6341,12 +6424,14 @@
         (cdr path)
         file2)))
      (hifat-file-alist-fix fs))))
-  :instructions
-  (:promote
-   (:dive 1)
-   (:rewrite
-    hifat-equiv-of-put-assoc-equal-1
-    ((file2
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite hifat-equiv-of-put-assoc-equal-1))
+    :use
+    (:instance
+     (:rewrite hifat-equiv-of-put-assoc-equal-1)
+     (fs (hifat-file-alist-fix fs))
+     (file1
       (m1-file
        (m1-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car path))
                                            (hifat-file-alist-fix fs))))
@@ -6356,30 +6441,19 @@
          (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
                                               (hifat-file-alist-fix fs))))
          (cdr path)
-         file2))))))
-   :top
-   :bash :bash
-   :bash :bash))
-
-(defthm
-  hifat-place-file-when-hifat-equiv-lemma-2
-  (implies (and (hifat-equiv (m1-file->contents file1)
-                             (m1-file->contents file2))
-                (syntaxp (not (term-order file1 file2)))
-                (not (m1-regular-file-p (m1-file-fix file2)))
-                (not (m1-regular-file-p (m1-file-fix file1))))
-           (hifat-equiv (put-assoc-equal (fat32-filename-fix (car path))
-                                         (m1-file-fix file1)
-                                         (hifat-file-alist-fix fs))
-                        (put-assoc-equal (fat32-filename-fix (car path))
-                                         (m1-file-fix file2)
-                                         (hifat-file-alist-fix fs))))
-  :instructions (:promote (:dive 1)
-                          (:rewrite hifat-equiv-of-put-assoc-equal-1
-                                    ((file2 (m1-file-fix file2))))
-                          :top
-                          :bash :bash
-                          :bash :bash))
+         file1))))
+     (file2
+      (m1-file
+       (m1-file->dir-ent (cdr (assoc-equal (fat32-filename-fix (car path))
+                                           (hifat-file-alist-fix fs))))
+       (mv-nth
+        0
+        (hifat-place-file
+         (m1-file->contents (cdr (assoc-equal (fat32-filename-fix (car path))
+                                              (hifat-file-alist-fix fs))))
+         (cdr path)
+         file2))))
+     (name (fat32-filename-fix (car path)))))))
 
 (defthm
   hifat-place-file-when-hifat-equiv-lemma-3
@@ -8117,7 +8191,6 @@
                        (:definition 1st-complete)
                        (:definition remove-assoc-equal)
                        (:rewrite collapse-congruence-lemma-4)
-                       (:rewrite abs-mkdir-correctness-lemma-100 . 2)
                        (:rewrite prefixp-when-equal-lengths)
                        (:rewrite abs-place-file-helper-correctness-2)
                        (:rewrite abs-mkdir-correctness-lemma-73)
@@ -8568,71 +8641,6 @@
      :bash))
 
   (defthm
-    abs-mkdir-correctness-lemma-172
-    (implies
-     (and
-      (no-duplicatesp-equal (strip-cars frame))
-      (frame-p frame)
-      (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-      (hifat-equiv (mv-nth 0 (collapse frame))
-                   fs)
-      (m1-file-alist-p fs)
-      (mv-nth 1 (collapse frame))
-      (abs-separate frame)
-      (subsetp-equal (abs-addrs (frame->root frame))
-                     (frame-addrs-root (frame->frame frame)))
-      (equal (mv-nth 1 (hifat-find-file fs (dirname path)))
-             0)
-      (m1-directory-file-p (mv-nth 0 (hifat-find-file fs (dirname path))))
-      (not
-       (consp
-        (assoc-equal
-         (basename path)
-         (m1-file->contents (mv-nth 0
-                                    (hifat-find-file fs (dirname path)))))))
-      (consp path))
-     (absfat-equiv
-      (mv-nth
-       0
-       (abs-place-file-helper
-        (mv-nth
-         0
-         (collapse
-          (frame-with-root
-           (frame-val->dir
-            (cdr (assoc-equal 0
-                              (partial-collapse frame (dirname path)))))
-           (frame->frame (partial-collapse frame (dirname path))))))
-        path
-        '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
-                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-          (contents))))
-      (mv-nth
-       0
-       (hifat-place-file
-        (mv-nth 0 (collapse frame))
-        (dirname path)
-        (m1-file
-         (m1-file->dir-ent (mv-nth 0
-                                   (hifat-find-file (mv-nth 0 (collapse frame))
-                                                    (dirname path))))
-         (put-assoc-equal
-          (basename path)
-          '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
-                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-            (contents))
-          (m1-file->contents
-           (mv-nth 0
-                   (hifat-find-file (mv-nth 0 (collapse frame))
-                                    (dirname path))))))))))
-    :instructions (:promote (:dive 1)
-                            (:rewrite abs-mkdir-correctness-lemma-60
-                                      ((fs2 (mv-nth 0 (collapse frame)))))
-                            :top (:change-goal nil t)
-                            :bash :bash
-                            :bash :bash))
-
-  (defthm
     abs-mkdir-correctness-lemma-173
     (implies
      (and
@@ -9026,7 +9034,6 @@
            ((:rewrite abs-mkdir-correctness-lemma-148)
             (:rewrite collapse-congruence-lemma-4)
             (:linear abs-mkdir-correctness-lemma-143)
-            (:rewrite abs-mkdir-correctness-lemma-100 . 2)
             (:rewrite abs-find-file-after-abs-mkdir-lemma-14)
             (:rewrite abs-mkdir-correctness-lemma-155)
             (:rewrite absfat-place-file-correctness-lemma-6)
@@ -10369,7 +10376,6 @@
         (:linear len-when-prefixp)
         (:definition remove-equal)
         (:rewrite abs-mkdir-correctness-lemma-47 . 2)
-        (:rewrite abs-mkdir-correctness-lemma-100 . 2)
         (:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)
         (:rewrite consp-of-assoc-of-frame->frame)
         (:rewrite prefixp-transitive . 2)
