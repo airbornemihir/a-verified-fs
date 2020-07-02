@@ -10363,7 +10363,20 @@
         (:rewrite car-of-nthcdr)
         (:rewrite abs-fs-fix-under-abs-fs-equiv)
         (:rewrite remove-assoc-when-absent-2)
-        (:rewrite m1-file-alist-p-of-abs-place-file-helper)))))))
+        (:rewrite m1-file-alist-p-of-abs-place-file-helper))))))
+
+  (defthm
+    abs-mkdir-correctness-lemma-10
+    (implies
+     (and (equal (frame-val->src$inline (cdr (assoc-equal 0 frame)))
+                 '0)
+          (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame))))))
+     (equal
+      (len (frame-val->path
+            (cdr (assoc-equal 0
+                              (partial-collapse frame (dirname path))))))
+      0))
+    :hints (("goal" :do-not-induct t))))
 
 (defthm abs-mkdir-correctness-1
  (implies
@@ -10373,11 +10386,6 @@
    (equal (frame-val->src$inline (cdr (assoc-equal 0 frame)))
           '0)
    (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
-   (equal
-    (len (frame-val->path
-          (cdr (assoc-equal 0
-                            (partial-collapse frame (dirname path))))))
-    0)
    (abs-fs-p fs)
    (m1-file-alist-p fs)
    (frame-reps-fs frame fs)
@@ -10517,7 +10525,8 @@
                             abs-mkdir-correctness-lemma-180
                             abs-mkdir-correctness-lemma-181
                             abs-mkdir-correctness-lemma-185
-                            abs-mkdir-correctness-lemma-189)
+                            abs-mkdir-correctness-lemma-189
+                            abs-mkdir-correctness-lemma-10)
                    (theory 'minimal-theory))
    :do-not-induct t
    :use
