@@ -10390,7 +10390,170 @@
             (cdr (assoc-equal 0
                               (partial-collapse frame (dirname path))))))
       0))
-    :hints (("goal" :do-not-induct t))))
+    :hints (("goal" :do-not-induct t)))
+
+  (defthm abs-mkdir-correctness-lemma-19
+    (implies
+     (and
+      (not (consp path))
+      (path-clear (dirname path)
+                  (frame->frame (partial-collapse frame (dirname path)))))
+     (dist-names (frame->root (partial-collapse frame (dirname path)))
+                 nil
+                 (frame->frame (partial-collapse frame (dirname path)))))
+    :hints (("goal" :do-not-induct t)))
+
+  (defthm abs-mkdir-correctness-lemma-51
+    (implies
+     (and
+      (frame-reps-fs frame fs)
+      (no-duplicatesp-equal (strip-cars frame))
+      (frame-p frame)
+      (not (consp (frame-val->path (cdr (assoc-equal 0 frame))))))
+     (dist-names (frame->root (partial-collapse frame (dirname path)))
+                 nil
+                 (frame->frame (partial-collapse frame (dirname path)))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable abs-mkdir frame-reps-fs))))
+
+  (defthm
+    abs-mkdir-correctness-lemma-78
+    (implies
+     (and
+      (no-duplicatesp-equal (strip-cars frame))
+      (frame-p frame)
+      (frame-reps-fs frame fs))
+     (abs-separate (frame->frame (partial-collapse frame (dirname path)))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable abs-mkdir frame-reps-fs))))
+
+  (defthm
+    abs-mkdir-correctness-lemma-79
+    (implies
+     (and
+      (not (consp path))
+      (frame-reps-fs frame fs)
+      (abs-fs-p fs)
+      (m1-file-alist-p fs))
+     (frame-reps-fs
+      (mv-nth 0 (abs-mkdir frame path))
+      (mv-nth
+       0
+       (hifat-place-file (mv-nth 0 (collapse frame))
+                         path
+                         '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                           (contents))))))
+   :hints (("goal" :do-not-induct t
+            :in-theory (enable abs-mkdir frame-reps-fs))))
+
+  (thm
+   (IMPLIES
+    (AND
+     (EQUAL
+      (CTX-APP
+       (MV-NTH
+        1
+        (ABS-DISASSOC
+         (FRAME-VAL->DIR
+          (CDR (ASSOC-EQUAL 0
+                            (PARTIAL-COLLAPSE FRAME (DIRNAME PATH)))))
+         (DIRNAME PATH)
+         (FIND-NEW-INDEX (STRIP-CARS (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))))))
+       (MV-NTH
+        0
+        (ABS-PLACE-FILE-HELPER
+         (MV-NTH
+          0
+          (ABS-DISASSOC
+           (FRAME-VAL->DIR
+            (CDR (ASSOC-EQUAL 0
+                              (PARTIAL-COLLAPSE FRAME (DIRNAME PATH)))))
+           (DIRNAME PATH)
+           (FIND-NEW-INDEX
+            (STRIP-CARS (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))))))
+         (LIST (BASENAME PATH))
+         '((DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 16
+                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+           (CONTENTS))))
+       (FIND-NEW-INDEX (STRIP-CARS (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))))
+       (DIRNAME PATH))
+      (MV-NTH
+       0
+       (ABS-PLACE-FILE-HELPER
+        (FRAME-VAL->DIR
+         (CDR (ASSOC-EQUAL 0
+                           (PARTIAL-COLLAPSE FRAME (DIRNAME PATH)))))
+        PATH
+        '((DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 16
+                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+          (CONTENTS)))))
+     (FAT32-FILENAME-LIST-EQUIV (APPEND (DIRNAME PATH)
+                                        (LIST (BASENAME PATH)))
+                                PATH)
+     (NO-DUPLICATESP-EQUAL (STRIP-CARS FRAME))
+     (FRAME-P FRAME)
+     (EQUAL (FRAME-VAL->SRC (CDR (ASSOC-EQUAL 0 FRAME)))
+            0)
+     (NOT (CONSP (FRAME-VAL->PATH (CDR (ASSOC-EQUAL 0 FRAME)))))
+     (FRAME-REPS-FS FRAME FS)
+     (ABS-FS-P FS)
+     (M1-FILE-ALIST-P FS)
+     (CONSP (ASSOC-EQUAL 0 FRAME))
+     (NOT
+      (CONSP
+       (ABS-ADDRS
+        (REMOVE-ASSOC-EQUAL
+         (BASENAME PATH)
+         (MV-NTH
+          0
+          (ABS-DISASSOC
+           (FRAME-VAL->DIR
+            (CDR (ASSOC-EQUAL 0
+                              (PARTIAL-COLLAPSE FRAME (DIRNAME PATH)))))
+           (DIRNAME PATH)
+           (FIND-NEW-INDEX
+            (STRIP-CARS (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))))))))))
+     (NOT
+      (CONSP
+       (ABS-ADDRS
+        (ABS-FILE->CONTENTS
+         (MV-NTH 0
+                 (ABS-FIND-FILE (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))
+                                (DIRNAME PATH)))))))
+     (NOT
+      (MEMBER-EQUAL
+       (FIND-NEW-INDEX (STRIP-CARS (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))))
+       (ABS-ADDRS
+        (FRAME-VAL->DIR
+         (CDR (ASSOC-EQUAL 0
+                           (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))))))))
+     (NOT
+      (EQUAL
+       (MV-NTH
+        1
+        (ABS-DISASSOC
+         (FRAME-VAL->DIR
+          (CDR (ASSOC-EQUAL 0
+                            (PARTIAL-COLLAPSE FRAME (DIRNAME PATH)))))
+         (DIRNAME PATH)
+         (FIND-NEW-INDEX (STRIP-CARS (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))))))
+       (FRAME-VAL->DIR
+        (CDR (ASSOC-EQUAL 0
+                          (PARTIAL-COLLAPSE FRAME (DIRNAME PATH)))))))
+     (EQUAL (ABS-FIND-FILE-SRC (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))
+                               (DIRNAME PATH))
+            0)
+     (PATH-CLEAR (DIRNAME PATH)
+                 (FRAME->FRAME (PARTIAL-COLLAPSE FRAME (DIRNAME PATH))))
+     (EQUAL (MV-NTH 1
+                    (HIFAT-FIND-FILE (MV-NTH 0 (COLLAPSE FRAME))
+                                     PATH))
+            0))
+    (FRAME-REPS-FS (MV-NTH 0 (ABS-MKDIR FRAME PATH))
+                   (MV-NTH 0 (COLLAPSE FRAME))))
+   :hints (("goal" :do-not-induct t
+            :in-theory (enable abs-mkdir frame-reps-fs)))))
 
 (defthm abs-mkdir-correctness-1
  (implies
@@ -10492,56 +10655,11 @@
  :hints
  (("goal"
    :in-theory
-   (union-theories '(length hifat-mkdir fat32-filename-p-of-basename
-                            fat32-filename-p-correctness-1
-                            str::coerce-to-list-removal
-                            (:e m1-file-p)
-                            (:e m1-regular-file-p)
-                            (:e hifat-no-dups-p)
-                            (:e m1-file->contents)
-                            abs-mkdir-correctness-lemma-97
-                            abs-mkdir-correctness-lemma-109
-                            abs-mkdir-correctness-lemma-110
-                            abs-mkdir-correctness-lemma-111
-                            abs-mkdir-correctness-lemma-112
-                            abs-mkdir-correctness-lemma-113
-                            abs-mkdir-correctness-lemma-114
-                            abs-mkdir-correctness-lemma-115
-                            abs-mkdir-correctness-lemma-117
-                            abs-mkdir-correctness-lemma-118
-                            abs-mkdir-correctness-lemma-119
-                            abs-mkdir-correctness-lemma-120
-                            abs-mkdir-correctness-lemma-121
-                            abs-mkdir-correctness-lemma-122
-                            abs-mkdir-correctness-lemma-125
-                            abs-mkdir-correctness-lemma-132
-                            abs-mkdir-correctness-lemma-136
-                            abs-mkdir-correctness-lemma-140
-                            abs-mkdir-correctness-lemma-141
-                            abs-mkdir-correctness-lemma-142
-                            abs-mkdir-correctness-lemma-143
-                            abs-mkdir-correctness-lemma-144
-                            abs-mkdir-correctness-lemma-145
-                            abs-mkdir-correctness-lemma-146
-                            abs-mkdir-correctness-lemma-147
-                            abs-mkdir-correctness-lemma-148
-                            abs-mkdir-correctness-lemma-149
-                            abs-mkdir-correctness-lemma-150
-                            abs-mkdir-correctness-lemma-151
-                            abs-mkdir-correctness-lemma-152
-                            abs-mkdir-correctness-lemma-153
-                            abs-mkdir-correctness-lemma-154
-                            abs-mkdir-correctness-lemma-156
-                            abs-mkdir-correctness-lemma-159
-                            abs-mkdir-correctness-lemma-161
-                            abs-mkdir-correctness-lemma-165
-                            abs-mkdir-correctness-lemma-173
-                            abs-mkdir-correctness-lemma-180
-                            abs-mkdir-correctness-lemma-181
-                            abs-mkdir-correctness-lemma-185
-                            abs-mkdir-correctness-lemma-189
-                            abs-mkdir-correctness-lemma-10)
-                   (theory 'minimal-theory))
+   (e/d (hifat-mkdir)
+                   (collapse-hifat-place-file-2
+      abs-find-file-src-correctness-2
+     (:rewrite abs-place-file-helper-of-ctx-app-1 . 1)
+    abs-mkdir-correctness-lemma-50))
    :do-not-induct t
    :use
    ((:instance
