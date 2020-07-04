@@ -2306,8 +2306,8 @@
                 (atom (remove-assoc-equal x alist))
                 (no-duplicatesp-equal (strip-cars alist)))
            (list-equiv alist
-                       (if (atom (assoc-equal x alist))
-                           nil (list (assoc-equal x alist))))))
+                       (if (consp (assoc-equal x alist))
+                           (list (assoc-equal x alist)) nil))))
 
 (defthmd
   abs-mkdir-correctness-lemma-35
@@ -5081,38 +5081,6 @@
    :top
    (:bash ("goal" :in-theory (enable fat32-filename-list-fix frame->root)))))
 
-;; How come these two weren't already proven?
-(defthm
-  abs-mkdir-correctness-lemma-77
-  (equal
-   (hifat-find-file fs (append x y))
-   (cond
-    ((atom y) (hifat-find-file fs x))
-    ((and (zp (mv-nth 1 (hifat-find-file fs x)))
-          (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
-     (hifat-find-file (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
-                      y))
-    ((zp (mv-nth 1 (hifat-find-file fs x)))
-     (mv (m1-file-fix nil) *enotdir*))
-    ((atom x) (hifat-find-file fs y))
-    (t (hifat-find-file fs x))))
-  :hints (("goal" :in-theory (enable hifat-find-file))))
-(defthm
-  abs-mkdir-correctness-lemma-89
-  (equal
-   (abs-find-file-helper fs (append x y))
-   (cond ((atom y) (abs-find-file-helper fs x))
-         ((and (zp (mv-nth 1 (abs-find-file-helper fs x)))
-               (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs x))))
-          (abs-find-file-helper
-           (abs-file->contents (mv-nth 0 (abs-find-file-helper fs x)))
-           y))
-         ((zp (mv-nth 1 (abs-find-file-helper fs x)))
-          (mv (abs-file-fix nil) *enotdir*))
-         ((atom x) (abs-find-file-helper fs y))
-         (t (abs-find-file-helper fs x))))
-  :hints (("goal" :in-theory (enable abs-find-file-helper))))
-
 (defthm
   abs-mkdir-correctness-lemma-82
   (implies
@@ -5356,50 +5324,6 @@
                            (n (+ -1 (len path)))))))
 
 (defthm
-  abs-mkdir-correctness-lemma-95
-  (implies
-   (and (zp (mv-nth 1 (hifat-find-file fs x)))
-        (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
-   (equal
-    (hifat-place-file fs (append x y) file)
-    (if
-        (consp y)
-        (mv
-         (mv-nth
-          0
-          (hifat-place-file
-           fs x
-           (make-m1-file
-            :contents
-            (mv-nth 0
-                    (hifat-place-file
-                     (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
-                     y file))
-            :dir-ent (m1-file->dir-ent (mv-nth 0 (hifat-find-file fs x))))))
-         (mv-nth
-          1
-          (hifat-place-file (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
-                            y file)))
-      (hifat-place-file fs x file))))
-  :hints
-  (("goal"
-    :in-theory (enable hifat-place-file hifat-find-file)
-    :induct
-    (mv
-     (mv-nth
-      0
-      (hifat-place-file
-       fs x
-       (m1-file
-        (m1-file->dir-ent (mv-nth 0 (hifat-find-file fs x)))
-        (mv-nth 0
-                (hifat-place-file
-                 (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
-                 y file)))))
-     (append x y)
-     (mv-nth 0 (hifat-find-file fs x))))))
-
-(defthm
   abs-mkdir-correctness-lemma-96
   (implies
    (and
@@ -5434,8 +5358,8 @@
     0))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite abs-mkdir-correctness-lemma-95))
-    :use (:instance (:rewrite abs-mkdir-correctness-lemma-95)
+    :in-theory (disable (:rewrite hifat-place-file-of-append-1))
+    :use (:instance (:rewrite hifat-place-file-of-append-1)
                     (file '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                             (contents)))
@@ -5697,8 +5621,8 @@
          (contents)))))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite abs-mkdir-correctness-lemma-95))
-    :use (:instance (:rewrite abs-mkdir-correctness-lemma-95)
+    :in-theory (disable (:rewrite hifat-place-file-of-append-1))
+    :use (:instance (:rewrite hifat-place-file-of-append-1)
                     (file '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
                             (contents)))
@@ -5784,8 +5708,8 @@
                     (hifat-find-file fs (dirname path))))
            (list (basename path)))))
   :hints
-  (("goal" :in-theory (disable (:rewrite abs-mkdir-correctness-lemma-77))
-    :use (:instance (:rewrite abs-mkdir-correctness-lemma-77)
+  (("goal" :in-theory (disable (:rewrite hifat-find-file-of-append-1))
+    :use (:instance (:rewrite hifat-find-file-of-append-1)
                     (y (list (basename path)))
                     (x (dirname path))
                     (fs fs)))))
@@ -6477,109 +6401,6 @@
            :do-not-induct t)))
 
 (defthm
-  abs-mkdir-correctness-lemma-78
-  (implies
-   (abs-file-alist-p abs-file-alist)
-   (and
-    (implies
-     (not (intersectp-equal x (abs-addrs abs-file-alist)))
-     (not (intersectp-equal
-           x
-           (abs-addrs (abs-fs-fix abs-file-alist)))))
-    (implies
-     (not (intersectp-equal (abs-addrs abs-file-alist)
-                            x))
-     (not
-      (intersectp-equal (abs-addrs (abs-fs-fix abs-file-alist))
-                        x)))))
-  :hints
-  (("goal"
-    :in-theory (disable abs-separate-correctness-1-lemma-2)
-    :use abs-separate-correctness-1-lemma-2)))
-
-(defthm abs-mkdir-correctness-lemma-79
-  (implies (and (abs-file-alist-p x)
-                (no-duplicatesp-equal (abs-addrs x)))
-           (no-duplicatesp-equal (abs-addrs (abs-fs-fix x))))
-  :hints (("goal" :in-theory (enable abs-addrs abs-fs-fix))))
-
-;; Inductive; probably shouldn't be disabled.
-(defthm
-  abs-mkdir-correctness-lemma-80
-  (implies
-   (and (abs-file-alist-p x)
-        (no-duplicatesp-equal (abs-addrs x))
-        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-        (frame-p (frame->frame frame))
-        (mv-nth 1 (collapse frame)))
-   (no-duplicatesp-equal
-    (abs-addrs (abs-fs-fix (mv-nth 0 (ctx-app-list x relpath frame l))))))
-  :hints
-  (("goal"
-    :in-theory (enable ctx-app-list)
-    :induct (ctx-app-list x relpath frame l)
-    :expand
-    (:with
-     abs-mkdir-correctness-lemma-79
-     (no-duplicatesp-equal
-      (abs-addrs
-       (abs-fs-fix
-        (ctx-app
-         (mv-nth 0
-                 (ctx-app-list x relpath frame (cdr l)))
-         (final-val (car l) frame)
-         (car l)
-         (nthcdr
-          (len relpath)
-          (frame-val->path (cdr (assoc-equal (car l)
-                                             (frame->frame frame)))))))))))))
-
-;; Move later.
-(defthm abs-fs-p-of-ctx-app-list
-  (implies (and (abs-fs-p x)
-                (mv-nth 1 (ctx-app-list x relpath frame l)))
-           (abs-fs-p (mv-nth 0 (ctx-app-list x relpath frame l))))
-  :hints (("goal" :in-theory (enable ctx-app-list))))
-(defthm
-  abs-addrs-of-ctx-app-list
-  (implies
-   (and (frame-p (frame->frame frame))
-        (mv-nth 1 (collapse frame))
-        (abs-fs-p fs)
-        (no-duplicatesp-equal (abs-addrs fs))
-        (mv-nth 1 (ctx-app-list fs relpath frame l))
-        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-        (nat-listp l))
-   (and (equal (abs-addrs (mv-nth 0 (ctx-app-list fs relpath frame l)))
-               (set-difference-equal (abs-addrs fs) l))
-        (subsetp-equal l (abs-addrs fs))))
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (ctx-app-list set-difference$-redefinition
-                       subsetp-equal
-                       abs-addrs-of-ctx-app-1-lemma-7)
-         (set-difference-equal (:rewrite abs-mkdir-correctness-lemma-80)
-                               (:rewrite subsetp-car-member)
-                               (:rewrite subsetp-trans)
-                               (:linear len-of-set-difference-when-subsetp)
-                               (:rewrite remove-when-absent)
-                               (:linear position-equal-ac-when-member)
-                               (:rewrite abs-file-alist-p-correctness-1)
-                               (:definition len)
-                               (:rewrite abs-fs-p-when-hifat-no-dups-p)
-                               (:definition remove-equal)
-                               (:rewrite subsetp-member . 1)
-                               (:rewrite abs-addrs-when-m1-file-contents-p)
-                               (:type-prescription len-when-consp)))
-    :induct (ctx-app-list fs relpath frame l))
-   ("subgoal *1/2" :use (:instance (:rewrite abs-mkdir-correctness-lemma-80)
-                                   (l (cdr l))
-                                   (frame frame)
-                                   (relpath relpath)
-                                   (x fs)))))
-
-(defthm
   abs-mkdir-correctness-lemma-81
   (implies
    (and
@@ -6711,7 +6532,6 @@
                    frame->frame-of-put-assoc
                    abs-mkdir-correctness-lemma-88
                    abs-find-file-helper
-                   abs-mkdir-correctness-lemma-95
                    abs-place-file-helper)
          ((:rewrite put-assoc-equal-without-change . 2)
           (:rewrite
@@ -6858,8 +6678,6 @@
           (:rewrite m1-file-alist-p-when-not-consp)
           (:rewrite
            abs-fs-fix-of-put-assoc-equal-lemma-3)
-          ;; should this really be disabled?
-          (:rewrite abs-mkdir-correctness-lemma-95)
           (:rewrite
            abs-no-dups-p-of-abs-file->contents-of-cdr-of-assoc)
           (:rewrite subsetp-member . 2)
@@ -8824,10 +8642,10 @@
     :hints
     (("goal"
       :do-not-induct t
-      :in-theory (disable (:rewrite abs-mkdir-correctness-lemma-89))
+      :in-theory (disable (:rewrite abs-find-file-helper-of-append-1))
       :use
       (:instance
-       (:rewrite abs-mkdir-correctness-lemma-89)
+       (:rewrite abs-find-file-helper-of-append-1)
        (y (list (basename path)))
        (x (dirname path))
        (fs
@@ -9138,14 +8956,14 @@
                                         (list (basename path)))
                                 :equiv fat32-filename-list-equiv$inline)
                             :up
-                            (:rewrite abs-mkdir-correctness-lemma-89)
+                            (:rewrite abs-find-file-helper-of-append-1)
                             :top :bash (:contrapose 2)
                             (:dive 1 2 2)
                             (:= path
                                 (append (dirname path)
                                         (list (basename path)))
                                 :equiv fat32-filename-list-equiv$inline)
-                            :up (:rewrite abs-mkdir-correctness-lemma-77)
+                            :up (:rewrite hifat-find-file-of-append-1)
                             :top :bash))
 
   (defthm
@@ -9758,10 +9576,10 @@
        (list (basename path)))))
     :hints
     (("goal"
-      :in-theory (disable (:rewrite abs-mkdir-correctness-lemma-89))
+      :in-theory (disable (:rewrite abs-find-file-helper-of-append-1))
       :use
       (:instance
-       (:rewrite abs-mkdir-correctness-lemma-89)
+       (:rewrite abs-find-file-helper-of-append-1)
        (y (list (basename path)))
        (x (dirname path))
        (fs
@@ -10381,7 +10199,6 @@
                               (:rewrite subsetp-member . 3)
                               (:rewrite abs-mkdir-correctness-lemma-86))))))
 
-  ;; Hypotheses are still being removed...
   (defthm
     abs-mkdir-correctness-lemma-191
     (implies
