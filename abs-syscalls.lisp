@@ -6749,7 +6749,6 @@
           m1-regular-file-p-of-m1-file
           dir-ent-p-when-member-equal-of-dir-ent-list-p
           abs-mkdir-correctness-lemma-64
-          (:linear abs-mkdir-correctness-lemma-143)
           (:rewrite hifat-place-file-of-append-1)
           (:type-prescription
            1st-complete-correctness-1)
@@ -6773,7 +6772,12 @@
           (:rewrite len-of-append)
           (:rewrite
            fat32-filename-list-p-when-subsetp-equal)
-          (:rewrite abs-addrs-of-put-assoc-lemma-1)))))
+          (:rewrite abs-addrs-of-put-assoc-lemma-1)
+          (:rewrite
+           member-equal-of-strip-cars-when-m1-file-alist-p)
+          (:rewrite hifat-file-alist-fix-guard-lemma-1)
+          (:rewrite abs-addrs-of-put-assoc-lemma-2)
+          (:rewrite true-listp-when-dir-ent-p)))))
 
   (defthm
     abs-mkdir-correctness-lemma-109
@@ -10415,7 +10419,6 @@
                              abs-mkdir-correctness-lemma-133
                              abs-mkdir-correctness-lemma-172
                              abs-mkdir-correctness-lemma-185
-                             abs-mkdir-correctness-lemma-189
                              abs-mkdir-correctness-lemma-191)
                     (theory 'minimal-theory))
     :do-not-induct t
