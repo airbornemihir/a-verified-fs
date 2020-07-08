@@ -3011,6 +3011,21 @@
            :use (:instance alistp-when-frame-p
                            (x (frame-with-root root frame))))))
 
+(defthmd put-assoc-equal-of-frame-with-root
+  (equal (put-assoc-equal key val (frame-with-root root frame))
+         (if (equal key 0)
+             (cons (cons 0 val) frame)
+           (frame-with-root root (put-assoc-equal key val frame))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable frame-with-root))))
+
+(defthmd assoc-equal-of-frame-with-root
+  (equal (assoc-equal x (frame-with-root root frame))
+         (if (equal x 0)
+             (cons 0 (frame-val nil (abs-fs-fix root) 0))
+             (assoc-equal x frame)))
+  :hints (("goal" :in-theory (enable frame-with-root))))
+
 (defund frame->root (frame)
   (declare (xargs :guard (and (frame-p frame) (consp (assoc-equal 0 frame)))))
   (frame-val->dir (cdr (assoc-equal 0 frame))))
@@ -3079,10 +3094,16 @@
    (no-duplicatesp-equal (strip-cars (frame->frame frame))))
   :hints (("goal" :in-theory (enable frame->frame))))
 
-;; Move later.
 (defthm consp-of-assoc-of-frame->frame
   (implies (not (consp (assoc-equal x frame)))
            (not (consp (assoc-equal x (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable frame->frame))))
+
+(defthmd assoc-equal-of-frame->frame
+  (equal (assoc-equal x (frame->frame frame))
+         (if (not (equal x 0))
+             (assoc-equal x frame)
+             nil))
   :hints (("goal" :in-theory (enable frame->frame))))
 
 (defund
