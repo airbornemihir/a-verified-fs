@@ -4367,6 +4367,27 @@
                        frame))
      (frame2 (frame-with-root root frame))))))
 
+(defund abs-lstat (frame path)
+  (declare
+   (xargs
+    :guard (and (fat32-filename-list-p path)
+                (frame-p frame))
+    :guard-debug t
+    :guard-hints
+    (("goal"
+      :in-theory (e/d (abs-file-p-alt)
+                      ((:rewrite abs-file-p-of-abs-find-file)))
+      :use (:rewrite abs-file-p-of-abs-find-file)))))
+  (b* (((mv file errno)
+        (abs-find-file frame path))
+       ((when (not (equal errno 0)))
+        (mv (make-struct-stat) -1 errno))
+       (st_size (if (abs-directory-file-p file)
+                    *ms-max-dir-size*
+                  (length (abs-file->contents file)))))
+    (mv (make-struct-stat :st_size st_size)
+        0 0)))
+
 (defthmd abs-find-file-after-abs-mkdir-lemma-1
   (implies (case-split (consp path))
            (fat32-filename-list-equiv (nthcdr (- (len path) 1) path)
