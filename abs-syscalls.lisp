@@ -11102,6 +11102,25 @@
      (:rewrite assoc-equal-of-frame->frame)
      :top :bash)))
 
+(defthm
+  abs-find-file-after-abs-mkdir-lemma-23
+  (implies
+   (not
+    (equal (mv-nth 1
+                   (abs-find-file-helper
+                    (frame->root (partial-collapse frame (cons name nil)))
+                    (cons name path)))
+           *enoent*))
+   (not
+    (equal (mv-nth '1
+                   (abs-find-file-helper
+                    (frame->root (partial-collapse frame (cons name nil)))
+                    (cons name nil)))
+           *enoent*)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-find-file-helper)))
+  :rule-classes :forward-chaining)
+
 ;; This theorem shows that abs-find-file, without the benefit of
 ;; partial-collapse, can't really get the contents of a directory.
 (DEFTHM
@@ -11110,6 +11129,8 @@
   (AND
    (FRAME-P FRAME)
    (NO-DUPLICATESP-EQUAL (STRIP-CARS FRAME))
+   (abs-separate frame)
+   (MV-NTH '1 (COLLAPSE FRAME))
    (CONSP (ASSOC-EQUAL 0 FRAME))
    (EQUAL (FRAME-VAL->PATH$INLINE (CDR (ASSOC-EQUAL 0 FRAME)))
           NIL)
@@ -11156,13 +11177,7 @@
                  FRAME))))
        (PARTIAL-COLLAPSE FRAME '("TMP        "))))
      '("TMP        " "DOCS       "))
-    0)
-   (EQUAL
-        (MV-NTH 1
-                (ABS-FIND-FILE-HELPER
-                     (FRAME->ROOT (PARTIAL-COLLAPSE FRAME '("TMP        ")))
-                     '("TMP        " "DOCS       ")))
-        2))
+    0))
   (B*
    (((MV FRAME & MKDIR-ERROR-CODE)
      (ABS-MKDIR FRAME
@@ -11182,5 +11197,10 @@
                 ABS-FIND-FILE ABS-FIND-FILE-SRC
                 ASSOC-EQUAL-OF-FRAME-WITH-ROOT
                 PUT-ASSOC-EQUAL-OF-FRAME-WITH-ROOT)
-               (abs-find-file-after-abs-mkdir-lemma-22))
+               ((:REWRITE FRAME-P-OF-CDR-WHEN-FRAME-P)
+                (:REWRITE COLLAPSE-HIFAT-PLACE-FILE-LEMMA-6)
+                (:DEFINITION FAT32-FILENAME-LIST-PREFIXP)
+                (:REWRITE LEN-WHEN-PREFIXP)
+                (:REWRITE CAR-OF-NTHCDR)
+                ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-8))
                  :DO-NOT-INDUCT T)))
