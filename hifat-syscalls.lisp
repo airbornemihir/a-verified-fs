@@ -990,11 +990,12 @@
 (defthm
   hifat-find-file-correctness-3
   (implies
-   (and (m1-file-alist-p m1-file-alist1)
+   (and (hifat-equiv m1-file-alist1 m1-file-alist2)
+        (syntaxp (not (term-order m1-file-alist1 m1-file-alist2)))
+        (m1-file-alist-p m1-file-alist1)
         (m1-file-alist-p m1-file-alist2)
         (hifat-no-dups-p m1-file-alist1)
-        (hifat-no-dups-p m1-file-alist2)
-        (hifat-equiv m1-file-alist2 m1-file-alist1))
+        (hifat-no-dups-p m1-file-alist2))
    (mv-let
      (file error-code)
      (hifat-find-file m1-file-alist1 path)
@@ -1002,10 +1003,10 @@
      (implies
       (m1-regular-file-p file)
       (equal
+       (m1-file->contents file)
        (m1-file->contents
         (mv-nth 0
-                (hifat-find-file m1-file-alist2 path)))
-       (m1-file->contents file)))))
+                (hifat-find-file m1-file-alist2 path)))))))
   :hints
   (("goal"
     :do-not-induct t
