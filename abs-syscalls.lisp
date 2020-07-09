@@ -11225,3 +11225,25 @@
                 (:REWRITE CAR-OF-NTHCDR)
                 ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-8))
                  :DO-NOT-INDUCT T)))
+
+(thm
+ (implies
+  (and
+   (frame-reps-fs frame fs)
+   (abs-fs-p fs)
+   (m1-file-alist-p fs)
+   (consp (assoc-equal 0 frame))
+   (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+   (mv-nth 1 (collapse frame))
+   (frame-p frame)
+   (no-duplicatesp-equal (strip-cars frame))
+   (subsetp-equal (abs-addrs (frame->root frame))
+                  (frame-addrs-root (frame->frame frame)))
+   (abs-separate frame)
+   (abs-complete
+    (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))
+  (equal
+   (abs-lstat frame path)
+   (hifat-lstat fs path)))
+ :hints (("goal" :do-not-induct t :in-theory (enable abs-lstat
+                                                     frame-reps-fs))))
