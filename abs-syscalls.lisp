@@ -11271,3 +11271,44 @@
     :hints (("goal" :do-not-induct t
              :in-theory (enable frame-reps-fs)
              :use lemma))))
+
+(defthm
+  abs-lstat-after-abs-mkdir-lemma-1
+  (implies (fat32-filename-list-equiv (append (dirname path)
+                                              (list (basename path)))
+                                      path)
+           (equal (abs-find-file-helper fs (nthcdr (+ -1 (len path)) path))
+                  (abs-find-file-helper fs (list (basename path)))))
+  :hints (("goal" :do-not-induct t)))
+
+(defthm
+  abs-lstat-after-abs-mkdir-1
+  (implies
+   (and
+    (mv-nth '1 (collapse frame))
+    (equal (frame-val->path (cdr (assoc-equal 0 frame)))
+           nil)
+    (consp (assoc-equal 0
+                        (partial-collapse frame (dirname path))))
+    (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+           0)
+    (frame-p frame)
+    (no-duplicatesp-equal (strip-cars frame))
+    (abs-separate frame)
+    (subsetp-equal (abs-addrs (frame->root frame))
+                   (frame-addrs-root (frame->frame frame))))
+   (b*
+       (((mv frame & mkdir-error-code)
+         (abs-mkdir frame path)))
+     (implies
+      (equal mkdir-error-code 0)
+      (b*
+          (((mv & lstat-error-code &)
+            (abs-lstat frame path)))
+        (equal lstat-error-code 0)))))
+  :hints
+  (("goal" :in-theory (e/d (abs-mkdir abs-lstat abs-find-file-helper abs-find-file)
+                           (abs-mkdir-correctness-lemma-50))
+    :do-not-induct t
+    :use abs-mkdir-correctness-lemma-50))
+  :otf-flg t)
