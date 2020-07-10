@@ -113,6 +113,12 @@
          (t (abs-find-file-helper fs x))))
   :hints (("goal" :in-theory (enable abs-find-file-helper))))
 
+(defthm abs-find-file-helper-when-atom
+  (implies (atom path)
+           (equal (abs-find-file-helper fs path)
+                  (mv (abs-file-fix nil) *enoent*)))
+  :hints (("goal" :in-theory (enable abs-find-file-helper))))
+
 (defund
   abs-find-file (frame path)
   (declare
@@ -175,8 +181,14 @@
                             (frame frame-equiv))
                  abs-find-file-of-true-list-fix))))
 
+(defthm abs-find-file-when-atom
+  (implies (atom path)
+           (equal (abs-find-file frame path)
+                  (mv (abs-file-fix nil) *enoent*)))
+  :hints (("goal" :in-theory (enable abs-find-file))))
+
 (defthm
-  abs-find-file-helper-of-collapse-lemma-7
+  abs-file-p-of-abs-find-file-helper
   (abs-file-p (mv-nth 0 (abs-find-file-helper fs path)))
   :hints (("goal" :in-theory (enable abs-find-file-helper))))
 

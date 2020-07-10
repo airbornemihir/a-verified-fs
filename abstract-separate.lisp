@@ -5995,6 +5995,13 @@
   :hints (("goal" :in-theory (enable 1st-complete-under-path)))
   :rule-classes :type-prescription)
 
+(defthm 1st-complete-under-path-when-atom-1
+  (implies (atom path)
+           (equal (1st-complete-under-path frame path)
+                  (1st-complete frame)))
+  :hints (("goal" :in-theory (enable 1st-complete-under-path
+                                     1st-complete prefixp))))
+
 (defund
   partial-collapse (frame pathname)
   (declare (xargs :guard (and (frame-p frame)
@@ -6047,6 +6054,37 @@
   (implies (frame-p frame)
            (frame-p (partial-collapse frame path)))
   :hints (("goal" :in-theory (enable partial-collapse))))
+
+(defthm
+  partial-collapse-when-atom
+  (implies (and (mv-nth 1 (collapse frame))
+                (atom path))
+           (equal (partial-collapse frame path)
+                  (if (atom (frame->frame frame))
+                      frame
+                      (frame-with-root (mv-nth 0 (collapse frame))
+                                       nil))))
+  :hints
+  (("goal"
+    :in-theory (e/d (partial-collapse collapse)
+                    ((:definition no-duplicatesp-equal)
+                     (:definition assoc-equal)
+                     (:rewrite subsetp-when-prefixp)
+                     (:definition true-listp)
+                     (:rewrite put-assoc-equal-without-change . 2)
+                     abs-separate-of-frame->frame-of-collapse-this-lemma-8
+                     (:rewrite true-list-fix-when-true-listp)
+                     (:rewrite true-listp-when-string-list)
+                     (:definition string-listp)
+                     (:definition put-assoc-equal)
+                     (:rewrite remove-assoc-of-put-assoc)
+                     (:definition remove-assoc-equal)
+                     (:definition remove-equal)
+                     (:rewrite fat32-filename-p-correctness-1)))
+    :induct (collapse frame)
+    :expand ((partial-collapse frame path)
+             (collapse-this frame
+                            (1st-complete (frame->frame frame)))))))
 
 (defthmd
   ctx-app-ok-when-absfat-equiv-lemma-1
@@ -13839,6 +13877,43 @@
 
 (defequiv collapse-equiv
   :hints (("goal" :in-theory (enable collapse-equiv))))
+
+(defthm
+  collapse-of-frame-with-root-of-frame->root-and-frame->frame
+  (equal (collapse (frame-with-root (frame->root frame)
+                                    (frame->frame frame)))
+         (collapse frame))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (collapse collapse-this)
+         ((:rewrite partial-collapse-correctness-lemma-24)
+          (:definition no-duplicatesp-equal)
+          (:definition assoc-equal)
+          (:rewrite subsetp-when-prefixp)
+          (:rewrite prefixp-when-equal-lengths)
+          (:definition remove-equal)
+          (:rewrite strip-cars-of-remove-assoc)
+          (:rewrite assoc-after-put-assoc)
+          (:rewrite strip-cars-of-put-assoc)
+          (:rewrite no-duplicatesp-of-strip-cars-of-frame->frame)
+          (:definition remove-assoc-equal)
+          (:rewrite remove-when-absent)
+          (:rewrite remove-assoc-of-put-assoc)
+          (:rewrite remove-assoc-of-remove-assoc)
+          abs-separate-of-frame->frame-of-collapse-this-lemma-8))
+    :do-not-induct t
+    :expand ((collapse frame)
+             (collapse (frame-with-root (frame->root frame)
+                                        (frame->frame frame))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (collapse-equiv (frame-with-root (frame->root frame)
+                                     (frame->frame frame))
+                    frame)
+    :hints (("Goal" :in-theory (enable collapse-equiv))))))
 
 (defthm
   partial-collapse-correctness-1
