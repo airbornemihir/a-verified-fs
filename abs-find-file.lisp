@@ -1159,19 +1159,6 @@
                            nil))))
 
 (defthm
-  abs-find-file-correctness-lemma-20
-  (implies (and (atom (frame-val->path (cdr (assoc-equal 0 frame))))
-                (abs-separate frame))
-           (dist-names (frame->root frame)
-                       nil (frame->frame frame)))
-  :hints (("goal" :in-theory (e/d (abs-separate frame->root frame->frame)))))
-
-(defthm abs-find-file-correctness-lemma-8
-  (implies (abs-separate frame)
-           (abs-separate (frame->frame frame)))
-  :hints (("goal" :in-theory (e/d (abs-separate frame->frame)))))
-
-(defthm
   abs-find-file-correctness-1-lemma-30
   (implies
    (and (fat32-filename-list-p path2)

@@ -5109,6 +5109,19 @@
     :cases ((equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                    0)))))
 
+(defthm
+  dist-names-of-frame->root-and-frame->frame
+  (implies (and (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+                (abs-separate frame))
+           (dist-names (frame->root frame)
+                       nil (frame->frame frame)))
+  :hints (("goal" :in-theory (e/d (abs-separate frame->root frame->frame)))))
+
+(defthm abs-separate-of-frame->frame
+  (implies (abs-separate frame)
+           (abs-separate (frame->frame frame)))
+  :hints (("goal" :in-theory (e/d (abs-separate frame->frame)))))
+
 (defund frame-addrs-root (frame)
   (declare (xargs :guard (frame-p frame)))
   (cond ((atom frame) nil)
@@ -13580,6 +13593,33 @@
                             (:definition remove-equal)))
     :induct (seq-this frame)
     :expand (collapse-iter frame 1))))
+
+(defthm
+  partial-collapse-correctness-lemma-70
+  (implies
+   (and (mv-nth 1 (collapse frame))
+        (abs-separate (frame->frame frame))
+        (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+   (equal (1st-complete (frame->frame (collapse-seq frame (seq-this frame))))
+          0))
+  :hints (("goal" :in-theory (e/d (collapse-seq
+                                   seq-this collapse-iter collapse)
+                                  ((:rewrite
+                                    assoc-of-frame->frame-of-collapse-this)
+                                   (:rewrite nthcdr-when->=-n-len-l)
+                                   (:definition assoc-equal)
+                                   (:rewrite final-val-of-collapse-this-lemma-3)
+                                   (:rewrite
+                                    abs-separate-of-frame->frame-of-collapse-this-lemma-8
+                                    . 2)
+                                   (:linear len-of-seq-this-1)
+                                   (:rewrite subsetp-when-prefixp)
+                                   (:rewrite
+                                    partial-collapse-correctness-lemma-20)))
+           :expand (collapse-iter frame 1)
+           :induct (collapse frame)
+           :do-not-induct t)))
 
 ;; This helps prove a necessary congruence.
 ;; (thm
