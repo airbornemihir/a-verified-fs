@@ -13773,6 +13773,28 @@
            (equal (len (put-assoc-equal name val alist))
                   (len alist))))
 
+(defthm
+  collapse-seq-congruence-lemma-5
+  (implies
+   (and
+    (not
+     (consp
+      (abs-addrs (frame-val->dir (cdr (assoc-equal (car seq)
+                                                   (frame->frame frame)))))))
+    (absfat-equiv (frame-val->dir (cdr (assoc-equal (car seq)
+                                                    (frame->frame frame))))
+                  dir))
+   (not (consp (abs-addrs (abs-fs-fix dir)))))
+  :instructions
+  (:promote
+   (:=
+    (abs-addrs (abs-fs-fix dir))
+    (abs-addrs
+     (abs-fs-fix (frame-val->dir (cdr (assoc-equal (car seq)
+                                                   (frame->frame frame))))))
+    :equiv set-equiv)
+   :bash))
+
 (encapsulate
   ()
 
@@ -13920,7 +13942,6 @@
     collapse-seq-congruence-lemma-4
     (implies
      (and
-      (abs-fs-p dir)
       (consp (assoc-equal x (frame->frame frame)))
       (absfat-equiv (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
                     dir))
@@ -13941,9 +13962,24 @@
     (("goal"
       :in-theory (e/d (collapse-seq collapse-this)
                       (len put-assoc-equal
-                           remove-assoc-equal strip-cars))
+                           remove-assoc-equal strip-cars
+                           (:rewrite put-assoc-equal-without-change . 2)
+                           (:type-prescription assoc-when-zp-len)
+                           (:rewrite consp-of-assoc-of-frame->frame)
+                           (:rewrite assoc-of-car-when-member)
+                           (:rewrite
+                            partial-collapse-correctness-lemma-28)
+                           (:definition member-equal)
+                           (:rewrite
+                            partial-collapse-correctness-lemma-24)
+                           (:rewrite subsetp-car-member)
+                           (:definition no-duplicatesp-equal)
+                           (:rewrite subsetp-when-prefixp)
+                           (:rewrite valid-seqp-when-prefixp)
+                           (:rewrite
+                            final-val-seq-of-collapse-this-lemma-5)
+                           (:rewrite true-listp-when-abs-file-alist-p)))
       :induct (induction-scheme dir frame seq x)
-      :do-not-induct t
       :expand
       (collapse-seq
        (frame-with-root
@@ -13955,6 +13991,85 @@
                     (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
          (frame->frame frame)))
        seq)))))
+
+;; Move later.
+(defthm true-listp-of-collapse-this
+  (true-listp (collapse-this frame x))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable collapse-this)))
+  :rule-classes :type-prescription)
+
+(defthmd collapse-seq-of-true-list-fix
+  (equal (collapse-seq (true-list-fix frame) seq)
+         (true-list-fix (collapse-seq frame seq)))
+  :hints (("goal" :in-theory (enable collapse-seq)
+           :induct (collapse-seq frame seq)
+           :expand (collapse-seq (true-list-fix frame)
+                                 seq))))
+
+(defcong list-equiv list-equiv (collapse-seq frame seq) 1
+  :hints (("Goal" :use
+           (collapse-seq-of-true-list-fix
+            (:instance collapse-seq-of-true-list-fix (frame frame-equiv))))))
+
+(defthm
+  collapse-seq-congruence-2
+  (implies
+   (absfat-equiv dir1 dir2)
+   (equal
+    (len
+     (frame->frame
+      (collapse-seq
+       (frame-with-root
+        (frame->root frame)
+        (put-assoc-equal
+         x
+         (frame-val
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame))))
+          dir1
+          (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+         (frame->frame frame)))
+       seq)))
+    (len
+     (frame->frame
+      (collapse-seq
+       (frame-with-root
+        (frame->root frame)
+        (put-assoc-equal
+         x
+         (frame-val
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame))))
+          dir2
+          (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+         (frame->frame frame)))
+       seq)))))
+  :hints
+  (("goal"
+    :in-theory (disable collapse-seq-congruence-lemma-4
+                        (:rewrite collapse-seq-congruence-lemma-3))
+    :use
+    ((:instance
+      collapse-seq-congruence-lemma-4
+      (frame
+       (frame-with-root
+        (frame->root frame)
+        (put-assoc-equal
+         x
+         (change-frame-val (cdr (assoc-equal x (frame->frame frame)))
+                           :dir dir1)
+         (frame->frame frame))))
+      (dir dir2))
+     (:instance (:rewrite collapse-seq-congruence-lemma-3)
+                (seq seq)
+                (frame (put-assoc-equal 0 (frame-val nil dir2 0)
+                                        (frame->frame frame)))
+                (root (frame->root frame)))
+     (:instance (:rewrite collapse-seq-congruence-lemma-3)
+                (seq seq)
+                (frame (put-assoc-equal 0 (frame-val nil dir1 0)
+                                        (frame->frame frame)))
+                (root (frame->root frame))))))
+  :rule-classes :congruence)
 
 ;; This theorem helps with
 ;; (valid-seqp (collapse-this frame x) (seq-this (collapse-this frame x)))
