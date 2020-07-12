@@ -4296,11 +4296,6 @@
     0))
   :hints (("goal" :in-theory (enable frame-with-root))))
 
-(defthm abs-find-file-correctness-lemma-4
-  (implies (abs-separate frame)
-           (no-duplicatesp-equal (abs-addrs (frame->root frame))))
-  :hints (("goal" :in-theory (enable frame->root))))
-
 (defthm
   abs-find-file-correctness-lemma-2
   (implies
