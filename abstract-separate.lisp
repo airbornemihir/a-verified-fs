@@ -13767,6 +13767,12 @@
                 (dir (abs-fs-fix root2))))))
   :rule-classes :congruence)
 
+;; Move later
+(defthm len-of-put-assoc-equal-2
+  (implies (consp (assoc-equal name alist))
+           (equal (len (put-assoc-equal name val alist))
+                  (len alist))))
+
 (encapsulate
   ()
 
@@ -13914,7 +13920,6 @@
     collapse-seq-congruence-lemma-4
     (implies
      (and
-      (natp x)
       (abs-fs-p dir)
       (consp (assoc-equal x (frame->frame frame)))
       (absfat-equiv (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
