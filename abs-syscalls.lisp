@@ -11171,7 +11171,7 @@
   :otf-flg t)
 
 (defun
-    some-kind-of-chain (frame x acc)
+    chain-to-complete (frame x acc)
   (declare
    (xargs
     :measure
@@ -11190,29 +11190,29 @@
        (nexts
         (frame-addrs-before frame x (collapse-1st-index frame x)))
        ((when (atom nexts)) (cons x acc)))
-    (some-kind-of-chain frame (nth 0 nexts)
+    (chain-to-complete frame (nth 0 nexts)
                         (cons x acc))))
 
-(defthm subsetp-of-some-kind-of-chain-1
+(defthm subsetp-of-chain-to-complete-1
   (implies (subsetp-equal acc (strip-cars (frame->frame frame)))
-           (subsetp-equal (some-kind-of-chain frame x acc)
+           (subsetp-equal (chain-to-complete frame x acc)
                           (strip-cars (frame->frame frame)))))
 
-(defthm no-duplicatesp-of-some-kind-of-chain-1
+(defthm no-duplicatesp-of-chain-to-complete-1
   (implies (no-duplicatesp-equal acc)
-           (no-duplicatesp-equal (some-kind-of-chain frame x acc))))
+           (no-duplicatesp-equal (chain-to-complete frame x acc))))
 
 (defthm
-  some-kind-of-chain-correctness-1
+  chain-to-complete-correctness-1
   (implies (and (mv-nth 1 (collapse frame))
                 (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (member-equal y (some-kind-of-chain frame x acc))
+                (member-equal y (chain-to-complete frame x acc))
                 (not (nat-equiv y x))
                 (not (member-equal y acc)))
            (< (collapse-1st-index frame y)
               (collapse-1st-index frame x)))
   :hints
-  (("goal" :induct (some-kind-of-chain frame x acc)
+  (("goal" :induct (chain-to-complete frame x acc)
     :in-theory (disable (:linear partial-collapse-correctness-lemma-82)
                         (:rewrite member-of-frame-addrs-before)))
    ("subgoal *1/3"
@@ -11247,9 +11247,9 @@
                           :top
                           :bash :x))
 
-(defthm nat-listp-of-some-kind-of-chain
+(defthm nat-listp-of-chain-to-complete
   (implies (nat-listp acc)
-           (nat-listp (some-kind-of-chain frame x acc))))
+           (nat-listp (chain-to-complete frame x acc))))
 
 (defthm
   chain-ends-in-abs-complete-lemma-2
@@ -11261,7 +11261,7 @@
     (not
      (equal
       (car
-       (some-kind-of-chain
+       (chain-to-complete
         frame
         (car (frame-addrs-before frame x (collapse-1st-index frame x)))
         (cons x acc)))
@@ -11283,21 +11283,21 @@
                                  x (collapse-1st-index frame x))))))))
 
 (defthmd
-  some-kind-of-chain-of-true-list-fix
-  (equal (some-kind-of-chain frame x (true-list-fix acc))
-         (true-list-fix (some-kind-of-chain frame x acc)))
+  chain-to-complete-of-true-list-fix
+  (equal (chain-to-complete frame x (true-list-fix acc))
+         (true-list-fix (chain-to-complete frame x acc)))
   :hints (("goal" :in-theory (enable true-list-fix)
-           :induct (some-kind-of-chain frame x acc)
-           :expand (some-kind-of-chain frame x (true-list-fix acc)))))
+           :induct (chain-to-complete frame x acc)
+           :expand (chain-to-complete frame x (true-list-fix acc)))))
 
 (defcong
   list-equiv list-equiv
-  (some-kind-of-chain frame x acc)
+  (chain-to-complete frame x acc)
   3
   :hints
-  (("goal" :use ((:instance some-kind-of-chain-of-true-list-fix
+  (("goal" :use ((:instance chain-to-complete-of-true-list-fix
                             (acc acc-equiv))
-                 some-kind-of-chain-of-true-list-fix))))
+                 chain-to-complete-of-true-list-fix))))
 
 (encapsulate
   ()
@@ -11310,15 +11310,15 @@
                    (consp (assoc-equal x (frame->frame frame)))
                    (frame-p frame)
                    (not (member-equal x acc))
-                   (not (nat-equiv (car (some-kind-of-chain frame x acc))
+                   (not (nat-equiv (car (chain-to-complete frame x acc))
                                    x))
                    (nat-listp acc))
-              (not (member-equal (car (some-kind-of-chain frame x acc))
+              (not (member-equal (car (chain-to-complete frame x acc))
                                  acc)))
      :hints
      (("goal" :in-theory (e/d (abs-mkdir-correctness-lemma-107)
                               ((:linear partial-collapse-correctness-lemma-82)))
-       :induct (some-kind-of-chain frame x acc)
+       :induct (chain-to-complete frame x acc)
        :do-not-induct t))))
 
   (defthm
@@ -11328,10 +11328,10 @@
                   (consp (assoc-equal x (frame->frame frame)))
                   (frame-p frame)
                   (not (member-equal x acc))
-                  (not (nat-equiv (car (some-kind-of-chain frame x acc))
+                  (not (nat-equiv (car (chain-to-complete frame x acc))
                                   x))
                   (nat-listp (true-list-fix acc)))
-             (not (member-equal (car (some-kind-of-chain frame x acc))
+             (not (member-equal (car (chain-to-complete frame x acc))
                                 acc)))
     :hints (("goal" :do-not-induct t
              :in-theory (disable lemma)
@@ -11343,10 +11343,10 @@
            (natp (car (frame-addrs-before frame x n))))
   :rule-classes :type-prescription)
 
-(defthm natp-of-car-of-some-kind-of-chain
+(defthm natp-of-car-of-chain-to-complete
   (implies (and (nat-listp (true-list-fix acc))
-                (consp (some-kind-of-chain frame x acc)))
-           (natp (car (some-kind-of-chain frame x acc))))
+                (consp (chain-to-complete frame x acc)))
+           (natp (car (chain-to-complete frame x acc))))
   :rule-classes :type-prescription)
 
 (defthm
@@ -11403,14 +11403,14 @@
       (frame-addrs-before
        frame
        (car
-        (some-kind-of-chain
+        (chain-to-complete
          frame
          (car (frame-addrs-before frame x (collapse-1st-index frame x)))
          (cons x acc)))
        (collapse-1st-index
         frame
         (car
-         (some-kind-of-chain
+         (chain-to-complete
           frame
           (car (frame-addrs-before frame x (collapse-1st-index frame x)))
           (cons x acc))))))
@@ -11425,14 +11425,14 @@
     x
     (frame-addrs-before
      frame
-     (car (some-kind-of-chain
+     (car (chain-to-complete
            frame
            (car (frame-addrs-before frame x (collapse-1st-index frame x)))
            (cons x acc)))
      (collapse-1st-index
       frame
       (car
-       (some-kind-of-chain
+       (chain-to-complete
         frame
         (car (frame-addrs-before frame x (collapse-1st-index frame x)))
         (cons x acc)))))))
@@ -11444,7 +11444,7 @@
    (and
     (equal
      (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-     (car (some-kind-of-chain
+     (car (chain-to-complete
            frame
            (car (frame-addrs-before frame x (collapse-1st-index frame x)))
            (cons x acc))))
@@ -11474,7 +11474,7 @@
    (and
     (equal
      (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-     (car (some-kind-of-chain
+     (car (chain-to-complete
            frame
            (car (frame-addrs-before frame x (collapse-1st-index frame x)))
            (cons x acc))))
@@ -11533,22 +11533,22 @@
    (not
     (equal
      (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-     (car (some-kind-of-chain
+     (car (chain-to-complete
            frame
            (car (frame-addrs-before frame x (collapse-1st-index frame x)))
            (cons x acc))))))
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable (:linear some-kind-of-chain-correctness-1))
+    :in-theory (disable (:linear chain-to-complete-correctness-1))
     :use
     (:instance
-     (:linear some-kind-of-chain-correctness-1)
+     (:linear chain-to-complete-correctness-1)
      (x (car (frame-addrs-before frame x (collapse-1st-index frame x))))
      (acc (cons x acc))
      (y
       (car
-       (some-kind-of-chain
+       (chain-to-complete
         frame
         (car (frame-addrs-before frame x (collapse-1st-index frame x)))
         (cons x acc))))
@@ -11582,14 +11582,14 @@
       (frame-addrs-before
        frame
        (car
-        (some-kind-of-chain
+        (chain-to-complete
          frame
          (car (frame-addrs-before frame x (collapse-1st-index frame x)))
          (cons x acc)))
        (collapse-1st-index
         frame
         (car
-         (some-kind-of-chain
+         (chain-to-complete
           frame
           (car (frame-addrs-before frame x (collapse-1st-index frame x)))
           (cons x acc))))))
@@ -11607,20 +11607,20 @@
         (frame-addrs-before
          frame
          (car
-          (some-kind-of-chain
+          (chain-to-complete
            frame
            (car (frame-addrs-before frame x (collapse-1st-index frame x)))
            (cons x acc)))
          (collapse-1st-index
           frame
           (car
-           (some-kind-of-chain
+           (chain-to-complete
             frame
             (car (frame-addrs-before frame x (collapse-1st-index frame x)))
             (cons x acc)))))))
       (x
        (car
-        (some-kind-of-chain
+        (chain-to-complete
          frame
          (car (frame-addrs-before frame x (collapse-1st-index frame x)))
          (cons x acc))))
@@ -11628,7 +11628,7 @@
        (collapse-1st-index
         frame
         (car
-         (some-kind-of-chain
+         (chain-to-complete
           frame
           (car (frame-addrs-before frame x (collapse-1st-index frame x)))
           (cons x acc))))))
@@ -11639,14 +11639,14 @@
         (frame-addrs-before
          frame
          (car
-          (some-kind-of-chain
+          (chain-to-complete
            frame
            (car (frame-addrs-before frame x (collapse-1st-index frame x)))
            (cons x acc)))
          (collapse-1st-index
           frame
           (car
-           (some-kind-of-chain
+           (chain-to-complete
             frame
             (car (frame-addrs-before frame x (collapse-1st-index frame x)))
             (cons x acc))))))))))))
@@ -11679,14 +11679,14 @@
       (frame-addrs-before
        frame
        (car
-        (some-kind-of-chain
+        (chain-to-complete
          frame
          (car (frame-addrs-before frame x (collapse-1st-index frame x)))
          (cons x acc)))
        (collapse-1st-index
         frame
         (car
-         (some-kind-of-chain
+         (chain-to-complete
           frame
           (car (frame-addrs-before frame x (collapse-1st-index frame x)))
           (cons x acc))))))
@@ -11716,18 +11716,18 @@
      (member-equal
       (car (frame-addrs-before
             frame
-            (car (some-kind-of-chain frame x acc))
+            (car (chain-to-complete frame x acc))
             (collapse-1st-index frame
-                                (car (some-kind-of-chain frame x acc)))))
+                                (car (chain-to-complete frame x acc)))))
       acc)))
    (abs-complete
-    (frame-val->dir (cdr (assoc-equal (car (some-kind-of-chain frame x acc))
+    (frame-val->dir (cdr (assoc-equal (car (chain-to-complete frame x acc))
                                       (frame->frame frame))))))
   :hints
   (("goal" :do-not-induct t
     :in-theory (e/d (abs-mkdir-correctness-lemma-107)
                     ((:linear partial-collapse-correctness-lemma-82)))
-    :induct (some-kind-of-chain frame x acc))
+    :induct (chain-to-complete frame x acc))
    ("subgoal *1/3"
     :use
     ((:instance
@@ -11736,7 +11736,7 @@
       (frame frame))))))
 
 (defthm
-  some-kind-of-chain-correctness-2
+  chain-to-complete-correctness-2
   (implies
    (and (mv-nth 1 (collapse frame))
         (no-duplicatesp-equal (strip-cars (frame->frame frame)))
@@ -11746,6 +11746,6 @@
    (not
     (consp
      (abs-addrs
-      (frame-val->dir (cdr (assoc-equal (car (some-kind-of-chain frame x nil))
+      (frame-val->dir (cdr (assoc-equal (car (chain-to-complete frame x nil))
                                         (frame->frame frame))))))))
   :hints (("goal" :use (:instance chain-ends-in-abs-complete (acc nil)))))
