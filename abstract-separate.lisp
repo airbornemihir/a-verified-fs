@@ -13737,6 +13737,39 @@
 ;;                            (alist (frame->frame frame)))
 ;;                 no-duplicatesp-of-seq-this-lemma-1)))))
 
+(defthm
+  partial-collapse-correctness-lemma-74
+  (implies (and (mv-nth 1 (collapse frame))
+                (< (nfix n) (len (seq-this frame))))
+           (consp (assoc-equal (nth n (seq-this frame))
+                               (frame->frame frame))))
+  :hints
+  (("goal"
+    :in-theory (e/d (seq-this nth collapse-iter collapse)
+                    ((:rewrite partial-collapse-correctness-lemma-24)
+                     (:rewrite nthcdr-when->=-n-len-l)
+                     (:rewrite consp-of-assoc-of-frame->frame)
+                     (:definition member-equal)
+                     (:definition no-duplicatesp-equal)
+                     (:rewrite partial-collapse-correctness-lemma-2)
+                     (:rewrite subsetp-when-prefixp)
+                     (:rewrite assoc-of-car-when-member)
+                     (:rewrite subsetp-car-member)
+                     (:rewrite prefixp-when-equal-lengths)
+                     (:definition assoc-equal)
+                     (:linear natp-of-nth-of-seq-this)
+                     (:linear nth-of-seq-this-1)
+                     (:rewrite abs-fs-fix-when-abs-fs-p)
+                     (:rewrite partial-collapse-correctness-lemma-49)
+                     (:rewrite ctx-app-ok-when-abs-complete)
+                     (:rewrite frame->root-of-collapse-this)
+                     (:rewrite abs-fs-p-of-ctx-app)
+                     (:rewrite final-val-of-collapse-this-lemma-3)
+                     (:rewrite m1-file-alist-p-of-final-val-seq-lemma-3)
+                     (:rewrite m1-file-alist-p-of-final-val-seq-lemma-3)))
+    :induct (collapse-iter frame n))
+   ("subgoal *1/1.2" :expand (seq-this frame))))
+
 ;; (thm
 ;;  (implies
 ;;   (and (not (zp n))
@@ -13745,9 +13778,22 @@
 ;;        (mv-nth 1 (collapse frame))
 ;;        (<= 0 (len (seq-this frame)))
 ;;        (not (equal (nth (+ -1 n) (seq-this frame))
-;;                    x)))
+;;                    x))
+;;        (< (nfix (+ -1 n))
+;;           (len (seq-this frame))))
 ;;   (member-equal (nth (+ -1 n) (seq-this frame))
-;;                 (seq-this (collapse-this frame x)))))
+;;                 (seq-this (collapse-this frame x))))
+;;  :hints (("goal"
+;;           :do-not-induct t
+;;           :in-theory
+;;           (disable
+;;            (:rewrite partial-collapse-correctness-lemma-51))
+;;           :use (:instance
+;;                 (:rewrite partial-collapse-correctness-lemma-51)
+;;                 (seq (seq-this (collapse-this frame x)))
+;;                 (frame (collapse-this frame x))
+;;                 (x (nth (+ -1 n) (seq-this frame))))))
+;;  :otf-flg t)
 
 ;; (verify
 ;;  (implies (and (not (zp n))
