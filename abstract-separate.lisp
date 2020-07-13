@@ -14114,49 +14114,45 @@
            (no-duplicatesp-equal (abs-addrs (frame->root frame))))
   :hints (("goal" :in-theory (enable frame->root))))
 
-(thm
- (implies
-  (and
-   (consp (frame->frame frame))
-   (consp seq)
-   (< 0 (car seq))
-   (consp (assoc-equal (car seq)
-                       (frame->frame frame)))
-   (< 0
-      (frame-val->src (cdr (assoc-equal (car seq)
-                                        (frame->frame frame)))))
-   (not (equal x
-               (frame-val->src (cdr (assoc-equal x (frame->frame frame))))))
-   (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-          (frame-val->src (cdr (assoc-equal (car seq)
-                                            (frame->frame frame)))))
-   (< 0
-      (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
-   (not (equal x (car seq)))
-   (equal
-    (len
-     (frame->frame
-      (collapse-seq
-       (frame-with-root
-        (frame->root frame)
-        (put-assoc-equal
-         (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-         (frame-val
-          (frame-val->path
-           (cdr
-            (assoc-equal
-             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-             (frame->frame frame))))
-          (ctx-app
+(defthm
+  partial-collapse-correctness-lemma-80
+  (implies
+   (and
+    (equal
+     (len
+      (frame->frame
+       (collapse-seq
+        (frame-with-root
+         (frame->root frame)
+         (put-assoc-equal
+          (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+          (frame-val
+           (frame-val->path
+            (cdr
+             (assoc-equal
+              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+              (frame->frame frame))))
            (ctx-app
-            (frame-val->dir
-             (cdr
-              (assoc-equal
-               (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               (frame->frame frame))))
-            (frame-val->dir (cdr (assoc-equal (car seq)
-                                              (frame->frame frame))))
-            (car seq)
+            (ctx-app
+             (frame-val->dir
+              (cdr
+               (assoc-equal
+                (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                (frame->frame frame))))
+             (frame-val->dir (cdr (assoc-equal (car seq)
+                                               (frame->frame frame))))
+             (car seq)
+             (nthcdr
+              (len
+               (frame-val->path
+                (cdr
+                 (assoc-equal
+                  (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                  (frame->frame frame)))))
+              (frame-val->path (cdr (assoc-equal (car seq)
+                                                 (frame->frame frame))))))
+            (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+            x
             (nthcdr
              (len
               (frame-val->path
@@ -14164,59 +14160,68 @@
                 (assoc-equal
                  (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                  (frame->frame frame)))))
-             (frame-val->path (cdr (assoc-equal (car seq)
-                                                (frame->frame frame))))))
-           (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
-           x
-           (nthcdr
-            (len
-             (frame-val->path
-              (cdr
-               (assoc-equal
-                (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                (frame->frame frame)))))
-            (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-          (frame-val->src
-           (cdr
-            (assoc-equal
-             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-             (frame->frame frame)))))
-         (remove-assoc-equal x
-                             (remove-assoc-equal (car seq)
-                                                 (frame->frame frame)))))
-       (cdr seq))))
-    (+ -2 (- (len (cdr seq)))
-       (len (frame->frame frame))))
-   (not
+             (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+           (frame-val->src
+            (cdr
+             (assoc-equal
+              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+              (frame->frame frame)))))
+          (remove-assoc-equal x
+                              (remove-assoc-equal (car seq)
+                                                  (frame->frame frame)))))
+        (cdr seq))))
+     (+ -2 (- (len (cdr seq)))
+        (len (frame->frame frame))))
+    (consp seq)
+    (consp (assoc-equal (car seq)
+                        (frame->frame frame)))
+    (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+           (frame-val->src (cdr (assoc-equal (car seq)
+                                             (frame->frame frame)))))
+    (not (equal x (car seq)))
+    (not
+     (consp
+      (abs-addrs (frame-val->dir (cdr (assoc-equal (car seq)
+                                                   (frame->frame frame)))))))
+    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                (car seq)))
     (consp
-     (abs-addrs (frame-val->dir (cdr (assoc-equal (car seq)
-                                                  (frame->frame frame)))))))
-   (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               (car seq)))
-   (consp
-    (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                 (frame->frame frame)))
-   (prefixp
-    (frame-val->path
-     (cdr
-      (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                   (frame->frame frame))))
-    (frame-val->path (cdr (assoc-equal (car seq)
-                                       (frame->frame frame)))))
-   (ctx-app-ok
-    (frame-val->dir
-     (cdr
-      (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                   (frame->frame frame))))
-    (car seq)
-    (nthcdr
-     (len
-      (frame-val->path
-       (cdr (assoc-equal
-             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-             (frame->frame frame)))))
+     (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                  (frame->frame frame)))
+    (prefixp
+     (frame-val->path
+      (cdr (assoc-equal
+            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+            (frame->frame frame))))
      (frame-val->path (cdr (assoc-equal (car seq)
-                                        (frame->frame frame))))))
+                                        (frame->frame frame)))))
+    (ctx-app-ok
+     (frame-val->dir
+      (cdr (assoc-equal
+            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+            (frame->frame frame))))
+     (car seq)
+     (nthcdr
+      (len
+       (frame-val->path
+        (cdr (assoc-equal
+              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+              (frame->frame frame)))))
+      (frame-val->path (cdr (assoc-equal (car seq)
+                                         (frame->frame frame))))))
+    (consp (assoc-equal x (frame->frame frame)))
+    (abs-separate frame)
+    (not
+     (consp
+      (abs-addrs
+       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (frame-p (frame->frame frame))
+    (prefixp
+     (frame-val->path
+      (cdr (assoc-equal
+            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+            (frame->frame frame))))
+     (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
    (equal
     (len
      (frame->frame
@@ -14237,9 +14242,8 @@
              (assoc-equal
               (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
               (frame->frame frame))))
-           (frame-val->dir (cdr (assoc-equal (car seq)
-                                             (frame->frame frame))))
-           (car seq)
+           (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+           x
            (nthcdr
             (len
              (frame-val->path
@@ -14247,66 +14251,87 @@
                (assoc-equal
                 (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                 (frame->frame frame)))))
-            (frame-val->path (cdr (assoc-equal (car seq)
-                                               (frame->frame frame))))))
+            (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
           (frame-val->src
            (cdr
             (assoc-equal
              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
              (frame->frame frame)))))
-         (remove-assoc-equal (car seq)
-                             (frame->frame frame))))
-       (cdr seq))))
-    (+ -1 (- (len (cdr seq)))
-       (len (frame->frame frame))))
-   (consp (assoc-equal x (frame->frame frame)))
-   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-   (not (member-equal x seq))
-   (abs-separate frame)
-   (not
-    (consp
-     (abs-addrs (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
-   (frame-p (frame->frame frame))
-   (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-   (ctx-app-ok
-    (frame-val->dir
-     (cdr
-      (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                   (frame->frame frame))))
-    x
-    (nthcdr
-     (len
-      (frame-val->path
-       (cdr (assoc-equal
-             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-             (frame->frame frame)))))
-     (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-   (prefixp
-    (frame-val->path
-     (cdr
-      (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                   (frame->frame frame))))
-    (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-  (equal
-   (len
-    (frame->frame
-     (collapse-seq
-      (frame-with-root
-       (frame->root frame)
-       (put-assoc-equal
-        (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-        (frame-val
-         (frame-val->path
-          (cdr
-           (assoc-equal
-            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-            (frame->frame frame))))
+         (remove-assoc-equal x (frame->frame frame))))
+       seq)))
+    (+ -2 (- (len (cdr seq)))
+       (len (frame->frame frame)))))
+  :instructions
+  (:promote
+   (:contrapose 1)
+   (:=
+    (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                 (frame->frame frame))
+    (assoc-equal
+     (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+     (remove-assoc-equal x
+                         (remove-assoc-equal (car seq)
+                                             (frame->frame frame)))))
+   (:dv 1 1 1 1 1 2 2 2)
+   (:claim
+    (and
+     (abs-complete
+      (abs-fs-fix
+       (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
+     (abs-complete
+      (abs-fs-fix (frame-val->dir (cdr (assoc-equal (car seq)
+                                                    (frame->frame frame))))))
+     (case-split
+      (and
+       (not (equal (nfix x) (nfix (car seq))))
+       (abs-no-dups-p
+        (ctx-app
          (ctx-app
           (frame-val->dir
            (cdr
             (assoc-equal
              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-             (frame->frame frame))))
+             (remove-assoc-equal x
+                                 (remove-assoc-equal (car seq)
+                                                     (frame->frame frame))))))
+          (frame-val->dir (cdr (assoc-equal (car seq)
+                                            (frame->frame frame))))
+          (car seq)
+          (nthcdr
+           (len
+            (frame-val->path
+             (cdr
+              (assoc-equal
+               (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+               (remove-assoc-equal
+                x
+                (remove-assoc-equal (car seq)
+                                    (frame->frame frame)))))))
+           (frame-val->path (cdr (assoc-equal (car seq)
+                                              (frame->frame frame))))))
+         (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+         x
+         (nthcdr
+          (len
+           (frame-val->path
+            (cdr
+             (assoc-equal
+              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+              (remove-assoc-equal
+               x
+               (remove-assoc-equal (car seq)
+                                   (frame->frame frame)))))))
+          (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))))
+       (abs-no-dups-p
+        (ctx-app
+         (ctx-app
+          (frame-val->dir
+           (cdr
+            (assoc-equal
+             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+             (remove-assoc-equal x
+                                 (remove-assoc-equal (car seq)
+                                                     (frame->frame frame))))))
           (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
           x
           (nthcdr
@@ -14315,121 +14340,168 @@
              (cdr
               (assoc-equal
                (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               (frame->frame frame)))))
+               (remove-assoc-equal
+                x
+                (remove-assoc-equal (car seq)
+                                    (frame->frame frame)))))))
            (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-         (frame-val->src
-          (cdr
-           (assoc-equal
-            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-            (frame->frame frame)))))
-        (remove-assoc-equal x (frame->frame frame))))
-      seq)))
-   (+ -2 (- (len (cdr seq)))
-      (len (frame->frame frame)))))
- :hints (("goal" :in-theory (e/d (collapse-seq valid-seqp collapse-this)
-                                 ((:definition assoc-equal)
-                                  (:definition member-equal)
-                                  (:linear len-when-prefixp)
-                                  (:rewrite len-when-prefixp)
-                                  (:rewrite m1-file-contents-p-correctness-1)
-                                  nthcdr-when->=-n-len-l
-                                  list-equiv-when-true-listp
-                                  abs-separate-of-frame->frame-of-collapse-this-lemma-8
-                                  (:rewrite
-                                   abs-separate-of-frame->frame-of-collapse-this-lemma-15)
-                                  (:rewrite
-                                   partial-collapse-correctness-lemma-28)
-                                  (:rewrite
-                                   partial-collapse-correctness-lemma-1)))
-          :do-not-induct t
-          :expand
-          (collapse-seq
-           (frame-with-root
-            (frame->root frame)
-            (put-assoc-equal
-             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-             (frame-val
-              (frame-val->path
-               (cdr
-                (assoc-equal
-                 (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                 (frame->frame frame))))
-              (ctx-app
-               (frame-val->dir
-                (cdr
-                 (assoc-equal
-                  (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                  (frame->frame frame))))
-               (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+         (frame-val->dir (cdr (assoc-equal (car seq)
+                                           (frame->frame frame))))
+         (car seq)
+         (nthcdr
+          (len
+           (frame-val->path
+            (cdr
+             (assoc-equal
+              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+              (remove-assoc-equal
                x
-               (nthcdr
-                (len
-                 (frame-val->path
-                  (cdr
-                   (assoc-equal
-                    (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                    (frame->frame frame)))))
-                (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
-              (frame-val->src
-               (cdr
-                (assoc-equal
-                 (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                 (frame->frame frame)))))
-             (remove-assoc-equal x (frame->frame frame))))
-           seq)))
- :otf-flg t)
+               (remove-assoc-equal (car seq)
+                                   (frame->frame frame)))))))
+          (frame-val->path (cdr (assoc-equal (car seq)
+                                             (frame->frame frame)))))))))
+     (not
+      (intersectp-equal
+       (names-at (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))
+                 nil)
+       (names-at
+        (frame-val->dir
+         (cdr
+          (assoc-equal
+           (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+           (remove-assoc-equal x
+                               (remove-assoc-equal (car seq)
+                                                   (frame->frame frame))))))
+        (nthcdr
+         (len
+          (frame-val->path
+           (cdr
+            (assoc-equal
+             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+             (remove-assoc-equal
+              x
+              (remove-assoc-equal (car seq)
+                                  (frame->frame frame)))))))
+         (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))
+     (not
+      (intersectp-equal
+       (names-at (frame-val->dir (cdr (assoc-equal (car seq)
+                                                   (frame->frame frame))))
+                 nil)
+       (names-at
+        (frame-val->dir
+         (cdr
+          (assoc-equal
+           (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+           (remove-assoc-equal x
+                               (remove-assoc-equal (car seq)
+                                                   (frame->frame frame))))))
+        (nthcdr
+         (len
+          (frame-val->path
+           (cdr
+            (assoc-equal
+             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+             (remove-assoc-equal
+              x
+              (remove-assoc-equal (car seq)
+                                  (frame->frame frame)))))))
+         (frame-val->path (cdr (assoc-equal (car seq)
+                                            (frame->frame frame)))))))))
+    :hints
+    (("goal"
+      :in-theory (disable prefixp-nthcdr-nthcdr)
+      :use
+      ((:instance
+        prefixp-nthcdr-nthcdr
+        (n
+         (len
+          (frame-val->path
+           (cdr
+            (assoc-equal
+             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+             (frame->frame frame))))))
+        (l1 (frame-val->path (cdr (assoc-equal (car seq)
+                                               (frame->frame frame)))))
+        (l2 (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+       (:instance
+        prefixp-nthcdr-nthcdr
+        (n
+         (len
+          (frame-val->path
+           (cdr
+            (assoc-equal
+             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+             (frame->frame frame))))))
+        (l2 (frame-val->path (cdr (assoc-equal (car seq)
+                                               (frame->frame frame)))))
+        (l1 (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))))))
+   (:rewrite ctx-app-of-ctx-app-1)
+   :top (:contrapose 1)
+   (:dive 1 1 1)
+   :x
+   :top :split
+   :bash (:change-goal nil t)
+   :bash (:bash ("goal" :in-theory (e/d (collapse-this)
+                                        ((:rewrite abs-no-dups-p-of-ctx-app)
+                                         (:rewrite names-at-of-ctx-app)))))))
 
 ;; This theorem helps with
 ;; (valid-seqp (collapse-this frame x) (seq-this (collapse-this frame x)))
 ;; which is a pre-requisite of the next theorem. Note, adding (mv-nth 1
 ;; (collapse frame)) kinda defeats the purpose.
-(thm
- (implies
-  (and (valid-seqp frame seq)
-       (consp (assoc-equal x (frame->frame frame)))
-       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-       (not (member-equal x seq))
-       (abs-separate frame)
-       (abs-complete (frame-val->dir (cdr (assoc-equal x (frame->frame
-                                                          frame)))))
-       (frame-p (frame->frame frame))
-       (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-       (ctx-app-ok
-        (frame-val->dir$inline
-         (cdr
-          (assoc-equal
-           (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
-           (frame->frame frame))))
-        x
-        (nthcdr
-         (len
-          (frame-val->path$inline
-           (cdr
-            (assoc-equal
-             (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
-             (frame->frame frame)))))
-         (frame-val->path$inline (cdr (assoc-equal x (frame->frame frame))))))
-       (prefixp (frame-val->path$inline (cdr #@531#))
-                (frame-val->path$inline (cdr #@532#))))
-  (valid-seqp (collapse-this frame x) seq))
- :hints (("goal" :in-theory (e/d (collapse-seq valid-seqp collapse-this)
-                                 ((:DEFINITION ASSOC-EQUAL)
-                                  (:DEFINITION member-EQUAL)
-                                  (:LINEAR LEN-WHEN-PREFIXP)
-                                  (:REWRITE LEN-WHEN-PREFIXP)
-                                  (:REWRITE M1-FILE-CONTENTS-P-CORRECTNESS-1)
-                                  nthcdr-when->=-n-len-l
-                                  list-equiv-when-true-listp
-                                  ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-8
-                                  (:REWRITE
-                                   ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-15)
-                                  (:REWRITE
-                                   PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-28)
-                                  (:REWRITE
-                                   PARTIAL-COLLAPSE-CORRECTNESS-LEMMA-1)))
-          :induct (collapse-seq frame seq)
-          :expand (collapse-seq (collapse-this frame x)
-                                seq))))
+(defthm
+  partial-collapse-correctness-lemma-90
+  (implies
+   (and
+    (valid-seqp frame seq)
+    (consp (assoc-equal x (frame->frame frame)))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (not (member-equal x seq))
+    (abs-separate frame)
+    (abs-complete (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
+    (frame-p (frame->frame frame))
+    (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+    (ctx-app-ok
+     (frame-val->dir$inline
+      (cdr
+       (assoc-equal
+        (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
+        (frame->frame frame))))
+     x
+     (nthcdr
+      (len
+       (frame-val->path$inline
+        (cdr
+         (assoc-equal
+          (frame-val->src$inline (cdr (assoc-equal x (frame->frame frame))))
+          (frame->frame frame)))))
+      (frame-val->path$inline (cdr (assoc-equal x (frame->frame frame))))))
+    (prefixp
+     (frame-val->path
+      (cdr (assoc-equal
+            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+            (frame->frame frame))))
+     (frame-val->path (cdr (assoc-equal x (frame->frame frame))))))
+   (valid-seqp (collapse-this frame x)
+               seq))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (collapse-seq valid-seqp collapse-this)
+         ((:definition assoc-equal)
+          (:definition member-equal)
+          (:linear len-when-prefixp)
+          (:rewrite len-when-prefixp)
+          (:rewrite m1-file-contents-p-correctness-1)
+          nthcdr-when->=-n-len-l
+          list-equiv-when-true-listp
+          abs-separate-of-frame->frame-of-collapse-this-lemma-8
+          (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-15)
+          (:rewrite partial-collapse-correctness-lemma-28)
+          (:rewrite partial-collapse-correctness-lemma-1)))
+    :do-not-induct t
+    :induct (collapse-seq frame seq))))
 
 ;; This theorem needs to be set aside because there's no obvious path towards
 ;; proving
