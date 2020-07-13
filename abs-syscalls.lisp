@@ -11171,7 +11171,7 @@
   :otf-flg t)
 
 (defun
-    chain-to-complete (frame x acc)
+    chain-to-complete (frame x acc seq)
   (declare
    (xargs
     :measure
@@ -11187,69 +11187,228 @@
        ((when (or (atom (assoc-equal x (frame->frame frame)))
                   (member-equal x acc)))
         acc)
-       (nexts
-        (frame-addrs-before frame x (collapse-1st-index frame x)))
+       (nexts (set-difference-equal
+               (frame-addrs-before frame x (collapse-1st-index frame x))
+               seq))
        ((when (atom nexts)) (cons x acc)))
     (chain-to-complete frame (nth 0 nexts)
-                        (cons x acc))))
+                       (cons x acc) seq)))
 
 (defthm subsetp-of-chain-to-complete-1
   (implies (subsetp-equal acc (strip-cars (frame->frame frame)))
-           (subsetp-equal (chain-to-complete frame x acc)
+           (subsetp-equal (chain-to-complete frame x acc seq)
                           (strip-cars (frame->frame frame)))))
 
 (defthm no-duplicatesp-of-chain-to-complete-1
   (implies (no-duplicatesp-equal acc)
-           (no-duplicatesp-equal (chain-to-complete frame x acc))))
+           (no-duplicatesp-equal (chain-to-complete frame x acc seq))))
+
+(defthm nat-listp-of-chain-to-complete
+  (implies (nat-listp acc)
+           (nat-listp (chain-to-complete frame x acc seq))))
+
+(defthm
+  chain-to-complete-correctness-lemma-1
+  (implies
+   (and
+    (<= 0
+        (+ (len (frame->frame frame))
+           (- (collapse-1st-index frame x))))
+    (consp (set-difference-equal
+            (frame-addrs-before frame x (collapse-1st-index frame x))
+            seq))
+    (mv-nth 1 (collapse frame))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+   (consp
+    (assoc-equal
+     (car (set-difference-equal
+           (frame-addrs-before frame x (collapse-1st-index frame x))
+           seq))
+     (frame->frame frame))))
+  :hints
+  (("goal"
+    :in-theory (disable (:rewrite member-of-frame-addrs-before)
+                        (:rewrite member-of-set-difference-equal))
+    :use
+    ((:instance
+      (:rewrite member-of-frame-addrs-before)
+      (n (collapse-1st-index frame x))
+      (x x)
+      (frame frame)
+      (y (car (set-difference-equal
+               (frame-addrs-before frame x (collapse-1st-index frame x))
+               seq))))
+     (:instance
+      (:rewrite member-of-set-difference-equal)
+      (y seq)
+      (x (frame-addrs-before frame x (collapse-1st-index frame x)))
+      (a (car (set-difference-equal
+               (frame-addrs-before frame x (collapse-1st-index frame x))
+               seq))))))))
+
+(defthm
+  chain-to-complete-correctness-2
+  (implies (consp (set-difference-equal x y))
+           (member-equal (car (set-difference-equal x y))
+                         x))
+  :hints (("goal" :in-theory (disable member-of-set-difference-equal)
+           :use (:instance member-of-set-difference-equal
+                           (a (car (set-difference-equal x y))))))
+  :rule-classes :forward-chaining)
 
 (defthm
   chain-to-complete-correctness-1
   (implies (and (mv-nth 1 (collapse frame))
                 (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (member-equal y (chain-to-complete frame x acc))
+                (member-equal y (chain-to-complete frame x acc seq))
                 (not (nat-equiv y x))
                 (not (member-equal y acc)))
            (< (collapse-1st-index frame y)
               (collapse-1st-index frame x)))
   :hints
-  (("goal" :induct (chain-to-complete frame x acc)
-    :in-theory (disable (:linear partial-collapse-correctness-lemma-82)
-                        (:rewrite member-of-frame-addrs-before)))
+  (("goal" :induct (chain-to-complete frame x acc seq)
+    :in-theory (e/d (partial-collapse-correctness-lemma-89)
+                    ((:linear partial-collapse-correctness-lemma-82)
+                     (:rewrite member-of-frame-addrs-before))))
    ("subgoal *1/3"
     :use
     ((:instance
       (:linear partial-collapse-correctness-lemma-82)
-      (x (car (frame-addrs-before frame x (collapse-1st-index frame x))))
+      (x (car (set-difference-equal
+               (frame-addrs-before frame x (collapse-1st-index frame x))
+               seq)))
       (frame frame))
      (:instance
       (:rewrite member-of-frame-addrs-before)
       (n (collapse-1st-index frame x))
       (x x)
       (frame frame)
-      (y (car (frame-addrs-before frame
-                                  x (collapse-1st-index frame x))))))))
+      (y (car (set-difference-equal
+               (frame-addrs-before frame x (collapse-1st-index frame x))
+               seq)))))))
   :rule-classes :linear)
 
-(defthm
-  chain-ends-in-abs-complete-lemma-1
-  (implies
-   (and (consp (frame-addrs-before frame x (collapse-1st-index frame x)))
-        (equal (car (frame-addrs-before frame x (collapse-1st-index frame x)))
-               x))
-   (= (collapse-1st-index
-       frame
-       (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
-      (collapse-1st-index frame x)))
-  :instructions (:promote (:dive 1 2 1 1 1)
-                          := :top (:dive 1 2)
-                          (:rewrite partial-collapse-correctness-lemma-89
-                                    ((n (collapse-1st-index frame x))))
-                          :top
-                          :bash :x))
+(defthmd
+  chain-to-complete-of-true-list-fix
+  (equal (chain-to-complete frame x (true-list-fix acc) seq)
+         (true-list-fix (chain-to-complete frame x acc seq)))
+  :hints (("goal" :in-theory (enable true-list-fix)
+           :induct (chain-to-complete frame x acc seq)
+           :expand (chain-to-complete frame x (true-list-fix acc) seq))))
 
-(defthm nat-listp-of-chain-to-complete
-  (implies (nat-listp acc)
-           (nat-listp (chain-to-complete frame x acc))))
+(defcong
+  list-equiv list-equiv
+  (chain-to-complete frame x acc seq)
+  3
+  :hints
+  (("goal" :use ((:instance chain-to-complete-of-true-list-fix
+                            (acc acc-equiv))
+                 chain-to-complete-of-true-list-fix))))
+
+(defthm natp-of-car-of-chain-to-complete
+  (implies (and (nat-listp (true-list-fix acc))
+                (consp (chain-to-complete frame x acc seq)))
+           (natp (car (chain-to-complete frame x acc seq))))
+  :rule-classes :type-prescription)
+
+;; Move later.
+(defthm nat-listp-when-subsetp
+  (implies (and (subsetp-equal x y) (nat-listp y))
+           (nat-listp (true-list-fix x)))
+  :hints (("goal" :in-theory (enable subsetp-equal))))
+
+(encapsulate
+  ()
+
+  (local
+   (defthmd
+     lemma
+     (implies (and (mv-nth 1 (collapse frame))
+                   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                   (consp (assoc-equal x (frame->frame frame)))
+                   (frame-p frame)
+                   (not (member-equal x acc))
+                   (not (nat-equiv (car (chain-to-complete frame x acc seq))
+                                   x))
+                   (nat-listp acc))
+              (not (member-equal (car (chain-to-complete frame x acc seq))
+                                 acc)))
+     :hints
+     (("goal" :in-theory (e/d (abs-mkdir-correctness-lemma-107)
+                              ((:linear partial-collapse-correctness-lemma-82)))
+       :induct (chain-to-complete frame x acc seq)
+       :do-not-induct t))))
+
+  (defthm
+    chain-ends-in-abs-complete-lemma-3
+    (implies (and (mv-nth 1 (collapse frame))
+                  (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                  (consp (assoc-equal x (frame->frame frame)))
+                  (frame-p frame)
+                  (not (member-equal x acc))
+                  (not (nat-equiv (car (chain-to-complete frame x acc seq))
+                                  x))
+                  (nat-listp (true-list-fix acc)))
+             (not (member-equal (car (chain-to-complete frame x acc seq))
+                                acc)))
+    :hints (("goal" :do-not-induct t
+             :in-theory (disable lemma)
+             :use (:instance lemma (acc (true-list-fix acc)))))))
+
+(defthm
+  chain-ends-in-abs-complete
+  (implies
+   (and
+    (mv-nth 1 (collapse frame))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (consp (assoc-equal x (frame->frame frame)))
+    (frame-p frame)
+    (abs-separate frame)
+    (not (member-equal x acc))
+    (subsetp-equal acc (strip-cars (frame->frame frame)))
+    (not
+     (member-equal
+      (car (frame-addrs-before
+            frame
+            (car (chain-to-complete frame x acc seq))
+            (collapse-1st-index frame
+                                (car (chain-to-complete frame x acc seq)))))
+      acc)))
+   (not
+    (consp
+     (set-difference-equal
+      (abs-addrs
+       (frame-val->dir (cdr (assoc-equal (car (chain-to-complete frame x acc seq))
+                                         (frame->frame frame)))))
+      seq))))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-mkdir-correctness-lemma-107)
+                    ((:linear partial-collapse-correctness-lemma-82)))
+    :induct (chain-to-complete frame x acc seq))
+   ("subgoal *1/3"
+    :use
+    ((:instance
+      (:linear partial-collapse-correctness-lemma-82)
+      (x (car (frame-addrs-before frame x (collapse-1st-index frame x))))
+      (frame frame))))))
+
+;; (defthm
+;;   chain-ends-in-abs-complete-lemma-1
+;;   (implies
+;;    (and (consp (frame-addrs-before frame x (collapse-1st-index frame x)))
+;;         (equal (car (frame-addrs-before frame x (collapse-1st-index frame x)))
+;;                x))
+;;    (= (collapse-1st-index
+;;        frame
+;;        (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+;;       (collapse-1st-index frame x)))
+;;   :instructions (:promote (:dive 1 2 1 1 1)
+;;                           := :top (:dive 1 2)
+;;                           (:rewrite partial-collapse-correctness-lemma-89
+;;                                     ((n (collapse-1st-index frame x))))
+;;                           :top
+;;                           :bash :x))
 
 (defthm
   chain-ends-in-abs-complete-lemma-2
@@ -11281,73 +11440,6 @@
      (frame frame)
      (y (car (frame-addrs-before frame
                                  x (collapse-1st-index frame x))))))))
-
-(defthmd
-  chain-to-complete-of-true-list-fix
-  (equal (chain-to-complete frame x (true-list-fix acc))
-         (true-list-fix (chain-to-complete frame x acc)))
-  :hints (("goal" :in-theory (enable true-list-fix)
-           :induct (chain-to-complete frame x acc)
-           :expand (chain-to-complete frame x (true-list-fix acc)))))
-
-(defcong
-  list-equiv list-equiv
-  (chain-to-complete frame x acc)
-  3
-  :hints
-  (("goal" :use ((:instance chain-to-complete-of-true-list-fix
-                            (acc acc-equiv))
-                 chain-to-complete-of-true-list-fix))))
-
-(encapsulate
-  ()
-
-  (local
-   (defthmd
-     lemma
-     (implies (and (mv-nth 1 (collapse frame))
-                   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                   (consp (assoc-equal x (frame->frame frame)))
-                   (frame-p frame)
-                   (not (member-equal x acc))
-                   (not (nat-equiv (car (chain-to-complete frame x acc))
-                                   x))
-                   (nat-listp acc))
-              (not (member-equal (car (chain-to-complete frame x acc))
-                                 acc)))
-     :hints
-     (("goal" :in-theory (e/d (abs-mkdir-correctness-lemma-107)
-                              ((:linear partial-collapse-correctness-lemma-82)))
-       :induct (chain-to-complete frame x acc)
-       :do-not-induct t))))
-
-  (defthm
-    chain-ends-in-abs-complete-lemma-3
-    (implies (and (mv-nth 1 (collapse frame))
-                  (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                  (consp (assoc-equal x (frame->frame frame)))
-                  (frame-p frame)
-                  (not (member-equal x acc))
-                  (not (nat-equiv (car (chain-to-complete frame x acc))
-                                  x))
-                  (nat-listp (true-list-fix acc)))
-             (not (member-equal (car (chain-to-complete frame x acc))
-                                acc)))
-    :hints (("goal" :do-not-induct t
-             :in-theory (disable lemma)
-             :use (:instance lemma (acc (true-list-fix acc)))))))
-
-;; Move later.
-(defthm natp-of-car-of-frame-addrs-before
-  (implies (consp (frame-addrs-before frame x n))
-           (natp (car (frame-addrs-before frame x n))))
-  :rule-classes :type-prescription)
-
-(defthm natp-of-car-of-chain-to-complete
-  (implies (and (nat-listp (true-list-fix acc))
-                (consp (chain-to-complete frame x acc)))
-           (natp (car (chain-to-complete frame x acc))))
-  :rule-classes :type-prescription)
 
 (defthm
   chain-ends-in-abs-complete-lemma-4
@@ -11387,12 +11479,6 @@
    (:dive 1 1)
    :x
    :top :bash))
-
-;; Move later.
-(defthm nat-listp-when-subsetp
-  (implies (and (subsetp-equal x y) (nat-listp y))
-           (nat-listp (true-list-fix x)))
-  :hints (("goal" :in-theory (enable subsetp-equal))))
 
 (defthm
   chain-ends-in-abs-complete-lemma-5
@@ -11700,40 +11786,6 @@
       (frame frame)
       (y (car (frame-addrs-before frame x (collapse-1st-index frame x))))
       (n (collapse-1st-index frame x)))))))
-
-(defthmd
-  chain-ends-in-abs-complete
-  (implies
-   (and
-    (mv-nth 1 (collapse frame))
-    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-    (consp (assoc-equal x (frame->frame frame)))
-    (frame-p frame)
-    (abs-separate frame)
-    (not (member-equal x acc))
-    (subsetp-equal acc (strip-cars (frame->frame frame)))
-    (not
-     (member-equal
-      (car (frame-addrs-before
-            frame
-            (car (chain-to-complete frame x acc))
-            (collapse-1st-index frame
-                                (car (chain-to-complete frame x acc)))))
-      acc)))
-   (abs-complete
-    (frame-val->dir (cdr (assoc-equal (car (chain-to-complete frame x acc))
-                                      (frame->frame frame))))))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (e/d (abs-mkdir-correctness-lemma-107)
-                    ((:linear partial-collapse-correctness-lemma-82)))
-    :induct (chain-to-complete frame x acc))
-   ("subgoal *1/3"
-    :use
-    ((:instance
-      (:linear partial-collapse-correctness-lemma-82)
-      (x (car (frame-addrs-before frame x (collapse-1st-index frame x))))
-      (frame frame))))))
 
 (defthm
   chain-to-complete-correctness-2

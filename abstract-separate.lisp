@@ -14582,6 +14582,19 @@
     :induct (collapse-iter frame n))
    ("subgoal *1/1.2" :expand (seq-this frame))))
 
+(defthm partial-collapse-correctness-lemma-92
+ (implies (and (not (zp n))
+               (< (+ -1 n) (len (seq-this frame))))
+          (natp
+           (nth (+ -1 n) (seq-this frame))))
+ :hints (("goal" :in-theory (disable (:type-prescription nth-of-seq-this-1))
+          :use (:instance (:type-prescription nth-of-seq-this-1)
+                          (frame frame)
+                          (n (+ -1 n)))))
+ :rule-classes :type-prescription)
+
+;; This lemma can be wrapped up as soon as we get the chain thing fixed up.
+
 ;; (thm
 ;;  (implies
 ;;   (and (not (zp n))
