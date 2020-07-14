@@ -4163,7 +4163,6 @@
          (:rewrite
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
           . 2)
-         (:rewrite partial-collapse-correctness-lemma-28)
          (:rewrite nthcdr-when->=-n-len-l)
          (:rewrite strip-cars-of-frame->frame-of-collapse-this)
          (:definition len)
@@ -6229,15 +6228,15 @@
   :hints
   (("goal" :do-not-induct t
     :in-theory (e/d ()
-                    ((:rewrite partial-collapse-correctness-lemma-78
+                    ((:rewrite chain-ends-in-abs-complete-lemma-5
                                . 1)))
-    :use ((:instance (:rewrite partial-collapse-correctness-lemma-78
+    :use ((:instance (:rewrite chain-ends-in-abs-complete-lemma-5
                                . 1)
                      (y (strip-cars (frame->frame frame)))
                      (n (collapse-1st-index frame x))
                      (x x)
                      (frame frame))
-          abs-mkdir-correctness-lemma-107)))
+          chain-ends-in-abs-complete-lemma-9)))
   :rule-classes
   (:rewrite
    (:rewrite
@@ -6338,8 +6337,6 @@
           (:rewrite
            partial-collapse-correctness-lemma-1)
           (:rewrite
-           partial-collapse-correctness-lemma-28)
-          (:rewrite
            abs-separate-of-frame->frame-of-collapse-this-lemma-15)
           (:rewrite m1-file-alist-p-when-subsetp-equal)
           (:type-prescription
@@ -6391,8 +6388,6 @@
           (:rewrite
            abs-separate-of-frame->frame-of-collapse-this-lemma-7)
           (:rewrite nth-when-prefixp)
-          (:rewrite
-           partial-collapse-correctness-lemma-77)
           (:rewrite abs-addrs-of-ctx-app-1-lemma-2)
           (:rewrite
            collapse-1st-index-correctness-lemma-1)

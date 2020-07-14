@@ -9318,7 +9318,7 @@
   :rule-classes :forward-chaining)
 
 (defthmd
-  partial-collapse-correctness-lemma-89
+  chain-to-complete-correctness-lemma-3
   (implies (member-equal y (frame-addrs-before frame x n))
            (equal (frame-val->src (cdr (assoc-equal y (frame->frame frame))))
                   x))
@@ -9327,7 +9327,7 @@
            :expand (collapse-iter frame 1))))
 
 (defthm
-  partial-collapse-correctness-lemma-77
+  chain-to-complete-correctness-lemma-4
   (implies
    (and (mv-nth 1 (collapse frame))
         (consp (assoc-equal x (frame->frame frame)))
@@ -9344,7 +9344,7 @@
                     (y (1st-complete (frame->frame frame)))))))
 
 (defthm
-  partial-collapse-correctness-lemma-79
+  chain-to-complete-correctness-lemma-5
   (implies
    (not (equal (1st-complete (frame->frame frame))
                x))
@@ -9373,7 +9373,7 @@
     :expand (collapse-iter frame 1))))
 
 (defthm
-  partial-collapse-correctness-lemma-82
+  chain-to-complete-correctness-lemma-6
   (implies
    (and (mv-nth 1 (collapse frame))
         (consp (assoc-equal x (frame->frame frame)))
@@ -9397,13 +9397,13 @@
               (collapse-1st-index frame x)))
   :hints
   (("goal" :induct (chain-to-complete frame x acc seq)
-    :in-theory (e/d (partial-collapse-correctness-lemma-89)
-                    ((:linear partial-collapse-correctness-lemma-82)
+    :in-theory (e/d (chain-to-complete-correctness-lemma-3)
+                    ((:linear chain-to-complete-correctness-lemma-6)
                      (:rewrite member-of-frame-addrs-before))))
    ("subgoal *1/3"
     :use
     ((:instance
-      (:linear partial-collapse-correctness-lemma-82)
+      (:linear chain-to-complete-correctness-lemma-6)
       (x (car (set-difference-equal
                (frame-addrs-before frame x (collapse-1st-index frame x))
                seq)))
@@ -9459,11 +9459,11 @@
                                  acc)))
      :hints
      (("goal" :in-theory (e/d ()
-                              ((:linear partial-collapse-correctness-lemma-82)))
+                              ((:linear chain-to-complete-correctness-lemma-6)))
        :induct (chain-to-complete frame x acc seq)
        :do-not-induct t))))
 
-  (defthm
+  (defthmd
     chain-ends-in-abs-complete-lemma-3
     (implies (and (mv-nth 1 (collapse frame))
                   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
@@ -9496,7 +9496,7 @@
           (collapse-1st-index frame x)))
   :instructions (:promote (:dive 1 2 1 1 1)
                           := :top (:dive 1 2)
-                          (:rewrite partial-collapse-correctness-lemma-89
+                          (:rewrite chain-to-complete-correctness-lemma-3
                                     ((n (collapse-1st-index frame x))
                                      (x x)))
                           :top :bash))
@@ -9546,7 +9546,7 @@
    (:dive 1 1 1 1)
    := :top (:dive 1)
    (:rewrite
-    partial-collapse-correctness-lemma-89
+    chain-to-complete-correctness-lemma-3
     ((x
       (car
        (chain-to-complete
@@ -9670,10 +9670,10 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (disable (:linear partial-collapse-correctness-lemma-82))
+    :in-theory (disable (:linear chain-to-complete-correctness-lemma-6))
     :use
     ((:instance
-      (:linear partial-collapse-correctness-lemma-82)
+      (:linear chain-to-complete-correctness-lemma-6)
       (x
        (car
         (set-difference-equal
@@ -9757,8 +9757,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (member-equal)
-                    ((:rewrite chain-ends-in-abs-complete-lemma-3)))
+    :in-theory (e/d (member-equal))
     :use
     (:instance
      (:rewrite chain-ends-in-abs-complete-lemma-3)
@@ -9832,8 +9831,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (member-equal)
-                    ((:rewrite chain-ends-in-abs-complete-lemma-3)))
+    :in-theory (e/d (member-equal))
     :use
     (:instance
      (:rewrite chain-ends-in-abs-complete-lemma-3)
@@ -10066,7 +10064,7 @@
      seq))))
 
 (defthm
-  partial-collapse-correctness-lemma-28
+  chain-ends-in-abs-complete-lemma-2
   (implies
    (and
     (ctx-app-ok
@@ -10108,7 +10106,7 @@
           (:definition len))))))
 
 (defthm
-  partial-collapse-correctness-lemma-31
+  chain-ends-in-abs-complete-lemma-4
   (implies
    (and (frame-p (frame->frame frame))
         (subsetp-equal l (strip-cars (frame->frame frame)))
@@ -10123,7 +10121,7 @@
   :hints (("goal" :in-theory (enable ctx-app-list subsetp-equal))))
 
 (defthm
-  partial-collapse-correctness-lemma-78
+  chain-ends-in-abs-complete-lemma-5
   (implies (and (mv-nth 1 (collapse frame))
                 (<= (nfix n) (len (frame->frame frame)))
                 (no-duplicatesp-equal (strip-cars (frame->frame frame))))
@@ -10162,7 +10160,7 @@
                              (frame-addrs-before frame x n)))))))
 
 (defthmd
-  partial-collapse-correctness-lemma-62
+  chain-ends-in-abs-complete-lemma-6
   (implies
    (and (abs-separate (frame->frame frame))
         (frame-p (frame->frame frame))
@@ -10206,7 +10204,7 @@
           (:definition len))))))
 
 (defthmd
-  partial-collapse-correctness-lemma-63
+  chain-ends-in-abs-complete-lemma-7
   (implies
    (and
     (abs-separate (frame->frame frame))
@@ -10227,11 +10225,11 @@
              (frame-addrs-before frame
                                  x (collapse-1st-index frame x))))))
   :hints (("goal" :in-theory (e/d (final-val))
-           :use (:instance partial-collapse-correctness-lemma-62
+           :use (:instance chain-ends-in-abs-complete-lemma-6
                            (n (collapse-1st-index frame x))))))
 
 (defthm
-  abs-mkdir-correctness-lemma-81
+  chain-ends-in-abs-complete-lemma-8
   (implies
    (and
     (abs-separate (frame->frame frame))
@@ -10265,14 +10263,14 @@
                             x (collapse-1st-index frame x))))))
     :hints (("goal" :do-not-induct t
              :in-theory (e/d nil
-                             (partial-collapse-correctness-lemma-63))
-             :use partial-collapse-correctness-lemma-63)))
+                             (chain-ends-in-abs-complete-lemma-7))
+             :use chain-ends-in-abs-complete-lemma-7)))
    :bash))
 
 ;; This could be kinda important, although for now we're keeping it disabled to
 ;; avoid weird stuff coming in from nowhere.
 (defthmd
-  abs-mkdir-correctness-lemma-107
+  chain-ends-in-abs-complete-lemma-9
   (implies
    (and
     (abs-separate (frame->frame frame))
@@ -10288,10 +10286,10 @@
     :do-not-induct t
     :in-theory
     (e/d
-     (set-equiv partial-collapse-correctness-lemma-62)
-     (abs-mkdir-correctness-lemma-81 (:rewrite abs-addrs-of-ctx-app-list)))
+     (set-equiv chain-ends-in-abs-complete-lemma-6)
+     (chain-ends-in-abs-complete-lemma-8 (:rewrite abs-addrs-of-ctx-app-list)))
     :use
-    (abs-mkdir-correctness-lemma-81
+    (chain-ends-in-abs-complete-lemma-8
      (:instance
       (:rewrite subsetp-when-atom-set-difference$)
       (l2 (frame-addrs-before frame x (collapse-1st-index frame x)))
@@ -10339,14 +10337,14 @@
   (("goal"
     :in-theory
     (e/d
-     (abs-mkdir-correctness-lemma-107 partial-collapse-correctness-lemma-89)
-     ((:linear partial-collapse-correctness-lemma-82)))
+     (chain-ends-in-abs-complete-lemma-9 chain-to-complete-correctness-lemma-3)
+     ((:linear chain-to-complete-correctness-lemma-6)))
     :do-not-induct t
     :induct (chain-to-complete frame x acc seq))
    ("subgoal *1/3"
     :use
     ((:instance
-      (:linear partial-collapse-correctness-lemma-82)
+      (:linear chain-to-complete-correctness-lemma-6)
       (x (car (set-difference-equal
                (frame-addrs-before frame x (collapse-1st-index frame x))
                seq)))
@@ -11914,7 +11912,7 @@
                 (subsetp-equal (strip-cars (frame->frame frame))
                                (strip-cars (frame->frame frame))))
            :hints :none)
-   (:rewrite partial-collapse-correctness-lemma-78)
+   (:rewrite chain-ends-in-abs-complete-lemma-5)
    :bash (:dive 1 2)
    (:apply-linear collapse-1st-index-correctness-1)
    :top
@@ -11972,7 +11970,7 @@
   :hints
   (("goal"
     :use
-    (:instance partial-collapse-correctness-lemma-89
+    (:instance chain-to-complete-correctness-lemma-3
                (y (nth m (frame-addrs-before frame x n)))))))
 
 (defthm
@@ -12742,7 +12740,7 @@
     :hints
     (("goal"
       :do-not-induct t
-      :in-theory (e/d (partial-collapse-correctness-lemma-62)
+      :in-theory (e/d (chain-ends-in-abs-complete-lemma-6)
                       ())
       :use
       (:instance
@@ -12770,7 +12768,7 @@
     (("goal"
       :in-theory
       (e/d
-       (absfat-equiv-upto-n (:rewrite partial-collapse-correctness-lemma-63)
+       (absfat-equiv-upto-n (:rewrite chain-ends-in-abs-complete-lemma-7)
                             (:rewrite partial-collapse-correctness-lemma-53)))
       :induct (dec-induct n)))))
 
@@ -13831,7 +13829,7 @@
                             take set-difference-equal
                             partial-collapse-correctness-lemma-61
                             (:definition member-equal)
-                            (:rewrite partial-collapse-correctness-lemma-28)
+                            (:rewrite chain-ends-in-abs-complete-lemma-2)
                             (:definition assoc-equal)
                             (:definition no-duplicatesp-equal)
                             (:rewrite final-val-seq-of-collapse-this-lemma-2)
@@ -13903,7 +13901,7 @@
                      take set-difference-equal
                      partial-collapse-correctness-lemma-61
                      (:definition member-equal)
-                     (:rewrite partial-collapse-correctness-lemma-28)
+                     (:rewrite chain-ends-in-abs-complete-lemma-2)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
                      (:rewrite final-val-seq-of-collapse-this-lemma-2)
@@ -13986,7 +13984,7 @@
                      take set-difference-equal
                      partial-collapse-correctness-lemma-61
                      (:definition member-equal)
-                     (:rewrite partial-collapse-correctness-lemma-28)
+                     (:rewrite chain-ends-in-abs-complete-lemma-2)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
                      (:rewrite final-val-seq-of-collapse-this-lemma-2)
@@ -14197,7 +14195,7 @@
                      take set-difference-equal
                      partial-collapse-correctness-lemma-61
                      (:definition member-equal)
-                     (:rewrite partial-collapse-correctness-lemma-28)
+                     (:rewrite chain-ends-in-abs-complete-lemma-2)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
                      (:rewrite final-val-seq-of-collapse-this-lemma-2)
@@ -14264,7 +14262,7 @@
                         (:rewrite
                          partial-collapse-correctness-lemma-61)
                         (:rewrite
-                         partial-collapse-correctness-lemma-28)
+                         chain-ends-in-abs-complete-lemma-2)
                         (:rewrite
                          m1-file-alist-p-of-final-val-seq-lemma-2)
                         (:rewrite
@@ -14871,7 +14869,7 @@
                            (:rewrite consp-of-assoc-of-frame->frame)
                            (:rewrite assoc-of-car-when-member)
                            (:rewrite
-                            partial-collapse-correctness-lemma-28)
+                            chain-ends-in-abs-complete-lemma-2)
                            (:definition member-equal)
                            (:rewrite
                             partial-collapse-correctness-lemma-24)
@@ -15401,7 +15399,7 @@
           list-equiv-when-true-listp
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-15)
-          (:rewrite partial-collapse-correctness-lemma-28)
+          (:rewrite chain-ends-in-abs-complete-lemma-2)
           (:rewrite partial-collapse-correctness-lemma-1)))
     :do-not-induct t
     :induct (collapse-seq frame seq))))
@@ -15635,7 +15633,7 @@
                      (:rewrite collapse-seq-of-seq-this-is-collapse)
                      (:rewrite nthcdr-when->=-n-len-l)
                      (:rewrite
-                      partial-collapse-correctness-lemma-28)
+                      chain-ends-in-abs-complete-lemma-2)
                      (:type-prescription frame-val->path$inline)
                      (:definition nthcdr)
                      (:type-prescription

@@ -2534,8 +2534,7 @@
              (e/d (collapse len-of-fat32-filename-list-fix)
                   ((:rewrite partial-collapse-correctness-lemma-1)
                    (:rewrite partial-collapse-correctness-lemma-24)
-                   (:rewrite partial-collapse-correctness-lemma-33)
-                   (:rewrite partial-collapse-correctness-lemma-77)))))))
+                   (:rewrite partial-collapse-correctness-lemma-33)))))))
 
 ;; Kinda general
 (defthm
@@ -3755,8 +3754,7 @@
                             (:definition assoc-equal)
                             (:rewrite assoc-after-put-assoc)
                             (:definition member-equal)
-                            (:rewrite abs-find-file-correctness-1-lemma-27)
-                            (:rewrite partial-collapse-correctness-lemma-77)))
+                            (:rewrite abs-find-file-correctness-1-lemma-27)))
     :use ((:instance
            (:rewrite abs-find-file-of-put-assoc-lemma-4)
            (path path)
