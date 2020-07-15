@@ -7,6 +7,7 @@
 
 (include-book "hifat-equiv")
 (local (include-book "std/lists/prefixp" :dir :system))
+(local (include-book "std/lists/intersection" :dir :system))
 
 (local
  (in-theory (disable (:definition true-listp)
@@ -9240,7 +9241,8 @@
                                acc))
     :hints
     (("goal" :in-theory (e/d (set-difference$-redefinition)
-                             (set-difference-equal))))
+                             (set-difference-equal
+                              remove-of-set-difference-equal))))
     :guard (natp x)
     :verify-guards nil))
   (b*
@@ -15483,21 +15485,6 @@
                              (consp (assoc-equal x (frame->frame frame))))
                         (consp (chain-to-complete frame x acc seq))))))
 
-;; Move later.
-(defthm
-  set-difference$-of-intersection-1
-  (equal (set-difference-equal l1 (intersection-equal l1 l2))
-         (set-difference-equal l1 l2))
-  :hints
-  (("goal"
-    :induct (mv (intersection-equal l1 l2)
-                (set-difference-equal l1 l2))
-    :expand
-    (:with set-difference$-redefinition
-           (set-difference-equal (cdr l1)
-                                 (cons (car l1)
-                                       (intersection-equal (cdr l1) l2)))))))
-
 (defthm
   partial-collapse-correctness-lemma-28
   (implies
@@ -15559,121 +15546,353 @@
      (:free (y) (intersection-equal seq y)))
     :do-not-induct t)))
 
-(verify
- (implies
-  (and
-   (natp x)
-   (consp (assoc-equal x (frame->frame frame)))
-   (abs-complete
-    (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
-   (not
-    (equal (nth (+ -1 n) (seq-this frame))
-           (frame-val->src (cdr (assoc-equal x (frame->frame frame))))))
-   (consp
-    (assoc-equal
-     (nth (+ -1 n) (seq-this frame))
-     (frame->frame (collapse-seq (collapse-this frame x)
-                                 (seq-this (collapse-this frame x))))))
-   (not (zp n))
-   (subsetp-equal (take (+ -1 n) (seq-this frame))
-                  (cons x (seq-this (collapse-this frame x))))
-   (mv-nth 1 (collapse frame))
-   (<= 0 (len (seq-this frame)))
-   (not (equal (nth (+ -1 n) (seq-this frame))
-               x))
-   (< (+ -1 n) (len (seq-this frame)))
-   (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-   (abs-separate frame)
-   (frame-p frame)
-   (not (consp (frame-val->path (cdr (assoc-equal 0 frame))))))
-  (member-equal (nth (+ -1 n) (seq-this frame))
-                (seq-this (collapse-this frame x))))
- :instructions
- ((:in-theory (disable chain-to-complete-correctness-2))
-  (:use (:instance chain-to-complete-correctness-2
-                   (x (nth (+ -1 n) (seq-this frame)))
-                   (seq (cons x (seq-this (collapse-this frame x))))))
-  :split :bash
-  (:in-theory (disable (:rewrite partial-collapse-correctness-lemma-61)))
-  (:use
-   (:instance
-    (:rewrite partial-collapse-correctness-lemma-61)
-    (seq (cons x (seq-this (collapse-this frame x))))
-    (frame frame)
-    (x
-     (car
-      (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
-                         nil
-                         (cons x
-                               (seq-this (collapse-this frame x))))))))
-  :split :bash :bash (:change-goal nil t)
-  :bash :bash
-  (:use
-   (:instance
-    (:rewrite abs-addrs-of-ctx-app-list-seq)
-    (seq (cons x (seq-this (collapse-this frame x))))
-    (l
-     (frame-addrs-before-seq
-      frame
-      (car
-       (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
-                          nil
-                          (cons x (seq-this (collapse-this frame x)))))
-      (cons x (seq-this (collapse-this frame x)))))
-    (frame frame)
-    (relpath
-     (frame-val->path
-      (cdr
-       (assoc-equal
-        (car
-         (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
-                            nil
-                            (cons x (seq-this (collapse-this frame x)))))
-        (frame->frame frame)))))
-    (fs
-     (frame-val->dir
-      (cdr
-       (assoc-equal
-        (car
-         (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
-                            nil
-                            (cons x (seq-this (collapse-this frame x)))))
-        (frame->frame frame)))))))
-  :split
-  :bash :bash
-  :bash :bash
-  :bash :bash))
+;; Move later, and fix the free variable - right now there are three different
+;; ways of expressing abs-complete.
+(defthm
+  1st-complete-correctness-2
+  (implies (and (frame-p frame)
+                (atom (assoc-equal 0 frame))
+                (consp (assoc-equal x frame))
+                (abs-complete (frame-val->dir (cdr (assoc-equal x frame)))))
+           (< 0 (1st-complete frame)))
+  :hints (("goal" :in-theory (enable 1st-complete)))
+  :rule-classes :linear)
+
+;; Move later.
+(defthm
+  strip-cars-of-frame->frame-of-set-difference-equal
+  (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (valid-seqp frame seq))
+           (equal (strip-cars (frame->frame (collapse-seq frame seq)))
+                  (set-difference-equal (strip-cars (frame->frame frame))
+                                        seq)))
+  :hints
+  (("goal"
+    :in-theory (enable collapse-seq valid-seqp)
+    :induct (collapse-seq frame seq)
+    :expand (:with (:definition set-difference$-redefinition)
+                   (set-difference-equal (strip-cars (frame->frame frame))
+                                         seq))
+    :do-not-induct t)))
+
+;; (verify
+;;  (implies
+;;   (and
+;;    (natp x)
+;;    (consp (assoc-equal x (frame->frame frame)))
+;;    (abs-complete
+;;     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
+;;    (not
+;;     (equal (nth (+ -1 n) (seq-this frame))
+;;            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))))
+;;    (consp
+;;     (assoc-equal
+;;      (nth (+ -1 n) (seq-this frame))
+;;      (frame->frame (collapse-seq (collapse-this frame x)
+;;                                  (seq-this (collapse-this frame x))))))
+;;    (not (zp n))
+;;    (subsetp-equal (take (+ -1 n) (seq-this frame))
+;;                   (cons x (seq-this (collapse-this frame x))))
+;;    (mv-nth 1 (collapse frame))
+;;    (<= 0 (len (seq-this frame)))
+;;    (not (equal (nth (+ -1 n) (seq-this frame))
+;;                x))
+;;    (< (+ -1 n) (len (seq-this frame)))
+;;    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+;;    (abs-separate frame)
+;;    (frame-p frame)
+;;    (not (consp (frame-val->path (cdr (assoc-equal 0 frame))))))
+;;   (member-equal (nth (+ -1 n) (seq-this frame))
+;;                 (seq-this (collapse-this frame x))))
+;;  :instructions
+;;  ((:in-theory (disable chain-to-complete-correctness-2))
+;;   (:use (:instance chain-to-complete-correctness-2
+;;                    (x (nth (+ -1 n) (seq-this frame)))
+;;                    (seq (cons x (seq-this (collapse-this frame x))))))
+;;   :split :bash
+;;   (:in-theory (disable (:rewrite partial-collapse-correctness-lemma-61)))
+;;   (:use
+;;    (:instance
+;;     (:rewrite partial-collapse-correctness-lemma-61)
+;;     (seq (cons x (seq-this (collapse-this frame x))))
+;;     (frame frame)
+;;     (x
+;;      (car
+;;       (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                          nil
+;;                          (cons x
+;;                                (seq-this (collapse-this frame x))))))))
+;;   :split :bash :bash (:change-goal nil t)
+;;   :bash :bash
+;;   (:use
+;;    (:instance
+;;     (:rewrite abs-addrs-of-ctx-app-list-seq)
+;;     (seq (cons x (seq-this (collapse-this frame x))))
+;;     (l
+;;      (frame-addrs-before-seq
+;;       frame
+;;       (car
+;;        (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                           nil
+;;                           (cons x (seq-this (collapse-this frame x)))))
+;;       (cons x (seq-this (collapse-this frame x)))))
+;;     (frame frame)
+;;     (relpath
+;;      (frame-val->path
+;;       (cdr
+;;        (assoc-equal
+;;         (car
+;;          (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                             nil
+;;                             (cons x (seq-this (collapse-this frame x)))))
+;;         (frame->frame frame)))))
+;;     (fs
+;;      (frame-val->dir
+;;       (cdr
+;;        (assoc-equal
+;;         (car
+;;          (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                             nil
+;;                             (cons x (seq-this (collapse-this frame x)))))
+;;         (frame->frame frame)))))))
+;;   :split :bash :bash
+;;   :bash :bash :bash :bash (:contrapose 1)
+;;   (:dive 1 2 2)
+;;   (:claim
+;;    (and
+;;     (abs-separate (frame->frame frame))
+;;     (frame-p (frame->frame frame))
+;;     (consp
+;;      (assoc-equal
+;;       (car
+;;        (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                           nil
+;;                           (cons x (seq-this (collapse-this frame x)))))
+;;       (frame->frame frame))))
+;;    :hints :none)
+;;   (:rewrite partial-collapse-correctness-lemma-31)
+;;   (:rewrite intersection$-commutes-under-set-equiv)
+;;   :expand :up
+;;   (:rewrite set-difference$-of-intersection-1)
+;;   :top (:contrapose 1)
+;;   (:claim
+;;    (atom
+;;     (abs-addrs
+;;      (frame-val->dir
+;;       (cdr
+;;        (assoc-equal
+;;         (car
+;;          (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                             nil
+;;                             (cons x (seq-this (collapse-this frame x)))))
+;;         (frame->frame
+;;          (collapse-seq frame
+;;                        (cons x
+;;                              (seq-this (collapse-this frame x)))))))))))
+;;   (:claim
+;;    (<
+;;     0
+;;     (1st-complete
+;;      (frame->frame
+;;       (collapse-seq frame
+;;                     (cons x
+;;                           (seq-this (collapse-this frame x)))))))
+;;    :hints :none)
+;;   (:change-goal nil t)
+;;   (:dive 2)
+;;   (:apply-linear
+;;    1st-complete-correctness-2
+;;    ((x
+;;      (car
+;;       (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                          nil
+;;                          (cons x
+;;                                (seq-this (collapse-this frame x))))))))
+;;   :top :bash :bash
+;;   (:=
+;;    (consp
+;;     (assoc-equal
+;;      (car (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                              nil
+;;                              (cons x (seq-this (collapse-this frame x)))))
+;;      (frame->frame
+;;       (collapse-seq frame
+;;                     (cons x
+;;                           (seq-this (collapse-this frame x)))))))
+;;    (member-equal
+;;     (car (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                             nil
+;;                             (cons x (seq-this (collapse-this frame x)))))
+;;     (strip-cars
+;;      (frame->frame
+;;       (collapse-seq frame
+;;                     (cons x
+;;                           (seq-this (collapse-this frame x)))))))
+;;    :equiv iff
+;;    :hints :none)
+;;   (:change-goal nil t)
+;;   (:dive 2)
+;;   (:rewrite member-of-strip-cars)
+;;   :top :s :bash :bash
+;;   (:=
+;;    (consp
+;;     (assoc-equal
+;;      (car (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                              nil
+;;                              (cons x (seq-this (collapse-this frame x)))))
+;;      (frame->frame frame)))
+;;    (member-equal
+;;     (car (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                             nil
+;;                             (cons x (seq-this (collapse-this frame x)))))
+;;     (strip-cars (frame->frame frame)))
+;;    :equiv iff
+;;    :hints :none)
+;;   (:change-goal nil t)
+;;   (:dive 2)
+;;   (:claim
+;;    (not
+;;     (null
+;;      (car (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                              nil
+;;                              (cons x
+;;                                    (seq-this (collapse-this frame x)))))))
+;;    :hints :none)
+;;   (:rewrite member-of-strip-cars)
+;;   :top :bash :bash
+;;   (:bash
+;;    ("goal"
+;;     :in-theory
+;;     (disable (:type-prescription natp-of-car-of-chain-to-complete))
+;;     :use (:instance (:type-prescription natp-of-car-of-chain-to-complete)
+;;                     (seq (cons x (seq-this (collapse-this frame x))))
+;;                     (acc nil)
+;;                     (x (nth (+ -1 n) (seq-this frame)))
+;;                     (frame frame))))
+;;   (:contrapose 1)
+;;   (:=
+;;    (consp
+;;     (assoc-equal
+;;      (car (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                              nil
+;;                              (cons x (seq-this (collapse-this frame x)))))
+;;      (frame->frame
+;;       (collapse-seq frame
+;;                     (cons x
+;;                           (seq-this (collapse-this frame x)))))))
+;;    (member-equal
+;;     (car (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                             nil
+;;                             (cons x (seq-this (collapse-this frame x)))))
+;;     (strip-cars
+;;      (frame->frame
+;;       (collapse-seq frame
+;;                     (cons x
+;;                           (seq-this (collapse-this frame x)))))))
+;;    :equiv iff
+;;    :hints :none)
+;;   (:change-goal nil t)
+;;   (:dive 2)
+;;   (:rewrite member-of-strip-cars)
+;;   :top :bash
+;;   (:bash
+;;    ("goal"
+;;     :do-not-induct t
+;;     :in-theory
+;;     (disable (:type-prescription natp-of-car-of-chain-to-complete))
+;;     :use (:instance (:type-prescription natp-of-car-of-chain-to-complete)
+;;                     (seq (cons x (seq-this (collapse-this frame x))))
+;;                     (acc nil)
+;;                     (x (nth (+ -1 n) (seq-this frame)))
+;;                     (frame frame))))
+;;   (:contrapose 25)
+;;   (:dive 1 2 1 1)
+;;   :x
+;;   :top :split :bash (:change-goal nil t)
+;;   (:change-goal nil t)
+;;   :bash :bash (:dive 2)
+;;   (:claim (valid-seqp frame
+;;                       (cons x (seq-this (collapse-this frame x)))))
+;;   (:rewrite strip-cars-of-frame->frame-of-set-difference-equal)
+;;   :up
+;;   (:rewrite member-of-set-difference-equal)
+;;   :split
+;;   (:rewrite
+;;    (:rewrite subsetp-member . 2)
+;;    ((x (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                           nil
+;;                           (cons x
+;;                                 (seq-this (collapse-this frame x)))))))
+;;   :bash :x :bash
+;;   (:use
+;;    (:instance
+;;     (:rewrite intersectp-member)
+;;     (a
+;;      (car
+;;       (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                          nil
+;;                          (cons x (seq-this (collapse-this frame x))))))
+;;     (x (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                           nil
+;;                           (cons x (seq-this (collapse-this frame x)))))
+;;     (y (cons x (seq-this (collapse-this frame x))))))
+;;   :split :bash (:contrapose 1)
+;;   (:change-goal nil t)
+;;   (:rewrite
+;;    (:rewrite subsetp-member . 1)
+;;    ((x (chain-to-complete frame (nth (+ -1 n) (seq-this frame))
+;;                           nil
+;;                           (cons x
+;;                                 (seq-this (collapse-this frame x)))))))
+;;   :x :bash :bash (:dive 2)
+;;   (:claim (valid-seqp frame
+;;                       (cons x (seq-this (collapse-this frame x)))))
+;;   (:rewrite strip-cars-of-frame->frame-of-set-difference-equal)
+;;   :up
+;;   (:rewrite member-of-set-difference-equal)
+;;   :bash (:change-goal nil t)
+;;   (:change-goal nil t)
+;;   (:dive 1 2)
+;;   (:claim (and (mv-nth 1 (collapse (collapse-this frame x)))
+;;                (abs-separate (frame->frame (collapse-this frame x)))
+;;                (frame-p (frame->frame (collapse-this frame x)))
+;;                (no-duplicatesp-equal
+;;                 (strip-cars (frame->frame (collapse-this frame x)))))
+;;           :hints :none)
+;;   (:rewrite partial-collapse-correctness-lemma-70)
+;;   :bash))
 
 ;; This lemma can be wrapped up as soon as we get the chain thing fixed up.
+;; Or so we thought...
 
-(thm
- (implies
-  (and (natp x)
-       (not (zp n))
-       (subsetp-equal (take (+ -1 n) (seq-this frame))
-                      (cons x (seq-this (collapse-this frame x))))
-       (mv-nth 1 (collapse frame))
-       (<= 0 (len (seq-this frame)))
-       (not (equal (nth (+ -1 n) (seq-this frame))
-                   x))
-       (< (nfix (+ -1 n))
-          (len (seq-this frame)))
-       (NO-DUPLICATESP-EQUAL (STRIP-CARS (FRAME->FRAME FRAME)))
-       (ABS-SEPARATE FRAME)
-       (FRAME-P FRAME))
-  (member-equal (nth (+ -1 n) (seq-this frame))
-                (seq-this (collapse-this frame x))))
- :hints (("goal"
-          :do-not-induct t
-          :in-theory
-          (disable
-           (:rewrite partial-collapse-correctness-lemma-51))
-          :use (:instance
-                (:rewrite partial-collapse-correctness-lemma-51)
-                (seq (seq-this (collapse-this frame x)))
-                (frame (collapse-this frame x))
-                (x (nth (+ -1 n) (seq-this frame))))))
- :otf-flg t)
+;; (thm
+;;  (implies
+;;   (and (natp x)
+;;        (not (zp n))
+;;        (subsetp-equal (take (+ -1 n) (seq-this frame))
+;;                       (cons x (seq-this (collapse-this frame x))))
+;;        (mv-nth 1 (collapse frame))
+;;        (<= 0 (len (seq-this frame)))
+;;        (not (equal (nth (+ -1 n) (seq-this frame))
+;;                    x))
+;;        (< (nfix (+ -1 n))
+;;           (len (seq-this frame)))
+;;        (NO-DUPLICATESP-EQUAL (STRIP-CARS (FRAME->FRAME FRAME)))
+;;        (ABS-SEPARATE FRAME)
+;;        (FRAME-P FRAME))
+;;   (member-equal (nth (+ -1 n) (seq-this frame))
+;;                 (seq-this (collapse-this frame x))))
+;;  :hints (("goal"
+;;           :do-not-induct t
+;;           :in-theory
+;;           (disable
+;;            (:rewrite partial-collapse-correctness-lemma-51))
+;;           :use (:instance
+;;                 (:rewrite partial-collapse-correctness-lemma-51)
+;;                 (seq (seq-this (collapse-this frame x)))
+;;                 (frame (collapse-this frame x))
+;;                 (x (nth (+ -1 n) (seq-this frame))))))
+;;  :otf-flg t)
 
 ;; (verify
 ;;  (implies (and (not (zp n))
