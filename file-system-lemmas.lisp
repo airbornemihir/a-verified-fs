@@ -1655,7 +1655,7 @@
                   (set-difference-equal x y))))
 
 (defthm
-  set-difference$-of-intersection-1
+  set-difference$-of-intersection$-1
   (equal (set-difference-equal l1 (intersection-equal l1 l2))
          (set-difference-equal l1 l2))
   :hints
