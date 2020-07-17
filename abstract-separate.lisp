@@ -15730,6 +15730,32 @@
     0))
   :hints (("goal" :do-not-induct t)))
 
+(defthm
+  partial-collapse-correctness-lemma-93
+  (implies
+   (and (mv-nth 1 (collapse frame))
+        (abs-separate frame)
+        (frame-p (frame->frame frame))
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (valid-seqp frame (list x))
+        (not (consp (frame-val->path (cdr (assoc-equal 0 frame))))))
+   (equal
+    (1st-complete
+     (frame->frame (collapse-seq (collapse-this frame x)
+                                 (seq-this (collapse-this frame x)))))
+    0))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (collapse-seq valid-seqp)
+                    (partial-collapse-correctness-lemma-89))
+    :expand ((collapse-seq frame (list x))
+             (collapse-seq frame
+                           (cons x
+                                 (seq-this (collapse-seq frame (list x))))))
+    :use (:instance partial-collapse-correctness-lemma-89
+                    (seq (list x))))))
+
 ;; This theorem needs to be set aside because there's no obvious path towards
 ;; proving
 ;; (valid-seqp (collapse-this frame x) (seq-this (collapse-this frame x)))
