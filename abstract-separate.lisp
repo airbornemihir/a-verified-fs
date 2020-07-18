@@ -5176,7 +5176,7 @@
   :hints (("goal" :in-theory (e/d (abs-separate frame->frame)))))
 
 (defthm
-  abs-separate-correctness-1-lemma-21
+  abs-separate-of-collapse-this-lemma-1
   (implies
    (dist-names root nil frame)
    (not (intersectp-equal
@@ -5223,7 +5223,7 @@
 
 ;; Obtained by replacing (1st-complete frame) with x in the proof-builder.
 (defthm
-  abs-separate-correctness-1-lemma-4
+  abs-separate-of-collapse-this-lemma-2
   (implies
    (and
     (dist-names root nil frame)
@@ -5242,7 +5242,7 @@
            :do-not-induct t)))
 
 (defthmd
-  abs-separate-correctness-1-lemma-17
+  abs-separate-of-collapse-this-lemma-3
   (implies
    (and
     (consp (assoc-equal src frame))
@@ -5272,7 +5272,7 @@
                                      len-of-fat32-filename-list-fix))))
 
 (defthm
-  abs-separate-correctness-1-lemma-18
+  abs-separate-of-collapse-this-lemma-4
   (implies
    (and
     (abs-fs-p
@@ -5324,22 +5324,22 @@
      (remove-assoc-equal x frame))))
   :hints
   (("goal"
-    :use (:instance abs-separate-correctness-1-lemma-17
+    :use (:instance abs-separate-of-collapse-this-lemma-3
                     (src (frame-val->src (cdr (assoc-equal x frame))))
                     (dir (frame-val->dir (cdr (assoc-equal x frame))))
                     (relpath (frame-val->path (cdr (assoc-equal x frame))))
                     (frame (remove-assoc-equal x frame))))))
 
-(defthm abs-separate-correctness-1-lemma-14
+;; Move later.
+(defthm abs-separate-of-frame-with-root
   (equal (abs-separate (frame-with-root root frame))
          (and (no-duplicatesp-equal (abs-addrs (abs-fs-fix root)))
-              (dist-names root
-                          nil frame)
+              (dist-names root nil frame)
               (abs-separate frame)))
   :hints (("goal" :in-theory (enable frame-with-root abs-separate))))
 
 (defthm
-  partial-collapse-correctness-lemma-25
+  abs-separate-of-collapse-this-lemma-5
   (implies
    (and (force (consp (assoc-equal x frame)))
         (abs-separate frame)
@@ -5351,8 +5351,8 @@
   :hints (("goal" :in-theory (disable abs-separate-of-frame->frame-of-collapse-this-lemma-2)
            :use abs-separate-of-frame->frame-of-collapse-this-lemma-2)))
 
-;; Rename later.
-(defthm abs-find-file-correctness-lemma-4
+(defthm
+  abs-separate-of-collapse-this-lemma-6
   (implies (abs-separate frame)
            (no-duplicatesp-equal (abs-addrs (frame->root frame))))
   :hints (("goal" :in-theory (enable frame->root))))
@@ -5418,7 +5418,7 @@
         (t (frame-addrs-root (cdr frame)))))
 
 (defthm
-  frame-addrs-root-correctness-1
+  frame-addrs-root-of-put-assoc
   (implies (and (consp (assoc-equal name frame))
                 (equal (frame-val->src frame-val)
                        (frame-val->src (cdr (assoc-equal name frame)))))
@@ -5431,14 +5431,14 @@
            (not (member-equal x (frame-addrs-root frame))))
   :hints (("goal" :in-theory (enable frame-addrs-root))))
 
-(defthm frame-addrs-root-correctness-3
+(defthm frame-addrs-root-of-remove-assoc
   (implies (frame-p frame)
            (equal (frame-addrs-root (remove-assoc-equal name frame))
                   (remove-equal name (frame-addrs-root frame))))
   :hints (("goal" :in-theory (enable frame-addrs-root))))
 
 (defthm
-  frame-addrs-root-correctness-4
+  member-of-frame-addrs-root
   (implies (and (not (null x))
                 (no-duplicatesp-equal (strip-cars frame)))
            (iff (member-equal x (frame-addrs-root frame))
@@ -6073,7 +6073,7 @@
     nil
     (frame->frame (collapse-this frame x))))
   :hints (("goal" :in-theory (e/d (collapse-this)
-                                  (partial-collapse-correctness-lemma-25)))))
+                                  (abs-separate-of-collapse-this-lemma-5)))))
 
 (defthm
   abs-separate-correctness-1-lemma-38
@@ -6284,7 +6284,7 @@
                             (1st-complete (frame->frame frame)))))))
 
 (defthm
-  partial-collapse-correctness-lemma-34
+  abs-separate-of-partial-collapse-lemma-1
   (implies
    (and (not (zp (1st-complete-under-path frame path)))
         (no-duplicatesp-equal (strip-cars frame)))
@@ -6297,13 +6297,13 @@
   :hints (("goal" :in-theory (enable 1st-complete-under-path))))
 
 (defthm
-  partial-collapse-correctness-lemma-76
+  abs-separate-of-partial-collapse-lemma-2
   (equal (frame-val->path (cdr (assoc-equal 0 (frame-with-root root frame))))
          nil)
   :hints (("goal" :do-not-induct t
            :in-theory (enable frame-with-root))))
 
-(defthm partial-collapse-correctness-lemma-124
+(defthm abs-separate-of-partial-collapse-lemma-3
   (not
    (consp (frame-val->path (cdr (assoc-equal 0 (collapse-this frame x))))))
   :hints (("goal" :do-not-induct t
@@ -6311,7 +6311,7 @@
   :rule-classes :type-prescription)
 
 (defthm
-  abs-mkdir-correctness-lemma-4
+  abs-separate-of-partial-collapse-lemma-4
   (implies
    (and
     (< 0
@@ -6382,9 +6382,8 @@
   :hints (("goal" :in-theory (enable collapse-this)
            :do-not-induct t)))
 
-;; Rename later.
 (defthm
-  abs-mkdir-correctness-lemma-6
+  abs-separate-of-partial-collapse
   (implies (and (no-duplicatesp-equal (abs-addrs (frame->root frame)))
                 (atom (frame-val->path (cdr (assoc-equal 0 frame))))
                 (frame-p (frame->frame frame))
@@ -6395,16 +6394,15 @@
 
 ;; Rename later.
 (defthm
-  abs-find-file-after-abs-mkdir-lemma-6
+  abs-separate-of-frame->frame-of-partial-collapse
   (implies (and (abs-separate (frame->frame frame))
                 (no-duplicatesp-equal (strip-cars (frame->frame frame)))
                 (frame-p (frame->frame frame)))
            (abs-separate (frame->frame (partial-collapse frame path))))
   :hints (("goal" :in-theory (enable partial-collapse))))
 
-;; Rename later.
 (defthm
-  abs-mkdir-guard-lemma-6
+  no-duplicatesp-of-strip-cars-of-partial-collapse
   (implies
    (no-duplicatesp-equal (strip-cars frame))
    (no-duplicatesp-equal (strip-cars (partial-collapse frame path))))
@@ -16696,7 +16694,7 @@
                       (frame-addrs-root (frame->frame frame)))))
   :hints
   (("goal" :expand
-    ((:with (:rewrite frame-addrs-root-correctness-4)
+    ((:with (:rewrite member-of-frame-addrs-root)
             (member-equal (car seq)
                           (frame-addrs-root (frame->frame frame))))))))
 
@@ -17016,7 +17014,7 @@
     :hints (("Goal" :in-theory (enable collapse-equiv))))))
 
 (defthm
-  abs-mkdir-correctness-lemma-5
+  partial-collapse-correctness-lemma-25
   (not
    (consp
     (frame-val->path
@@ -17031,7 +17029,7 @@
            :do-not-induct t)))
 
 (defthm
-  abs-mkdir-correctness-lemma-7
+  partial-collapse-correctness-lemma-34
   (implies
    (and (frame-p (frame->frame frame))
         (no-duplicatesp-equal (strip-cars (frame->frame frame)))
@@ -17046,7 +17044,7 @@
            :induct (partial-collapse frame path))))
 
 (defthm
-  abs-find-file-after-abs-mkdir-lemma-5
+  partial-collapse-correctness-lemma-76
   (implies (and (dist-names (frame->root frame)
                             nil (frame->frame frame))
                 (abs-separate (frame->frame frame))

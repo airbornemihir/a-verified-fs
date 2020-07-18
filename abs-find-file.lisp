@@ -2075,7 +2075,6 @@
     :do-not-induct t
     :in-theory (e/d (take-of-nthcdr abs-find-file-helper len-of-fat32-filename-list-fix)
                     (nthcdr-of-fat32-filename-list-fix
-                     abs-separate-correctness-1-lemma-14
                      (:rewrite abs-find-file-correctness-1-lemma-18)
                      (:rewrite abs-find-file-correctness-1-lemma-57)))
     :use

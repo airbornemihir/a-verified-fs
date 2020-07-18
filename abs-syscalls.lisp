@@ -2568,11 +2568,11 @@
   (("goal"
     :do-not-induct t
     :in-theory (e/d nil
-                    ((:rewrite abs-separate-correctness-1-lemma-21
+                    ((:rewrite abs-separate-of-collapse-this-lemma-1
                                . 1)))
     :use
     (:instance
-     (:rewrite abs-separate-correctness-1-lemma-21 . 1)
+     (:rewrite abs-separate-of-collapse-this-lemma-1 . 1)
      (relpath
       (frame-val->path
        (cdr
@@ -4133,26 +4133,6 @@
            (not (equal (mv-nth 1 (abs-find-file-helper fs x))
                        *enoent*)))
   :hints (("goal" :in-theory (enable abs-find-file-helper))))
-
-(defthm
-  abs-find-file-after-abs-mkdir-lemma-5
-  (implies (and (dist-names (frame->root frame)
-                            nil (frame->frame frame))
-                (abs-separate (frame->frame frame))
-                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (frame-p (frame->frame frame)))
-           (dist-names (frame->root (partial-collapse frame path))
-                       nil
-                       (frame->frame (partial-collapse frame path))))
-  :hints (("goal" :in-theory (enable partial-collapse))))
-
-(defthm
-  abs-find-file-after-abs-mkdir-lemma-6
-  (implies (and (abs-separate (frame->frame frame))
-                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-                (frame-p (frame->frame frame)))
-           (abs-separate (frame->frame (partial-collapse frame path))))
-  :hints (("goal" :in-theory (enable partial-collapse))))
 
 (defthm
   abs-find-file-after-abs-mkdir-lemma-7
@@ -6444,8 +6424,8 @@
           (partial-collapse frame (dirname path))))))))
     :hints
     (("goal" :in-theory (e/d (frame->root assoc-equal-of-frame->frame)
-                             ((:rewrite abs-find-file-after-abs-mkdir-lemma-5)))
-      :use (:instance (:rewrite abs-find-file-after-abs-mkdir-lemma-5)
+                             ((:rewrite partial-collapse-correctness-lemma-76)))
+      :use (:instance (:rewrite partial-collapse-correctness-lemma-76)
                       (path (dirname path))
                       (frame frame)))))
 
