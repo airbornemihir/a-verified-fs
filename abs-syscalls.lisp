@@ -10480,3 +10480,50 @@
     :do-not-induct t
     :use abs-mkdir-correctness-lemma-50))
   :otf-flg t)
+
+(defund abs-mknod (frame path)
+  (declare (xargs :guard (and (frame-p frame)
+                              (consp (assoc-equal 0 frame))
+                              (fat32-filename-list-p path)
+                              (no-duplicatesp-equal (strip-cars frame)))
+                  :guard-debug t
+                  :guard-hints
+                  (("goal"
+                    :in-theory (enable abs-find-file-helper abs-fs-p)))))
+  (b*
+      ((path (mbe :exec path :logic (fat32-filename-list-fix path)))
+       (dirname (dirname path)) (frame (partial-collapse frame dirname))
+       ;; After partial-collapse, either the parent directory is there in one
+       ;; variable, or it isn't there at all.
+       ((mv parent-dir error-code) (abs-find-file frame dirname))
+       ((unless (or (atom dirname) (and (zp error-code) (abs-directory-file-p parent-dir))))
+        (mv frame -1 *enoent*))
+       (src (abs-find-file-src frame dirname))
+       (new-index (find-new-index
+                   ;; Using this, not (strip-cars (frame->frame frame)), to make
+                   ;; sure we don't get a zero.
+                   (strip-cars frame)))
+       ;; It's not even a matter of removing that thing - we need to leave a
+       ;; body address in its place...
+       ((mv var new-src-dir)
+        (abs-disassoc (frame-val->dir (cdr (assoc-equal src frame)))
+                      (nthcdr (len (frame-val->path (cdr (assoc-equal src frame)))) dirname)
+                      new-index))
+       ;; Check somewhere that (basename path) is not already present...
+       ((unless (consp path)) (mv frame -1 *enoent*))
+       ((when (consp (abs-assoc (basename path) var))) (mv frame -1 *eexist*))
+       (frame (put-assoc-equal src (change-frame-val (cdr (assoc-equal src frame))
+                                                     :dir new-src-dir)
+                               frame))
+       (new-var (abs-put-assoc (basename path)
+                               (make-abs-file :contents ""
+                                              :dir-ent (dir-ent-set-filename (dir-ent-fix nil)
+                                                                             basename))
+                               var))
+       (frame
+        (frame-with-root (frame->root frame)
+                         (cons (cons new-index
+                                     (frame-val dirname
+                                                new-var src))
+                               (frame->frame frame)))))
+    (mv frame 0 0)))
