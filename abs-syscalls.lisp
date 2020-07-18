@@ -1517,12 +1517,6 @@
            :in-theory (enable frame->frame))))
 
 (defthm
-  abs-mkdir-correctness-lemma-2
-  (equal (frame-val->path (cdr (assoc-equal 0 (frame-with-root root frame))))
-         nil)
-  :hints (("goal" :in-theory (enable frame-with-root))))
-
-(defthm
   abs-mkdir-correctness-lemma-14
   (implies (and (consp (assoc-equal 0 frame))
                 (not (consp (assoc-equal x frame))))

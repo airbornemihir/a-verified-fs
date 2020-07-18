@@ -1667,3 +1667,14 @@
            (set-difference-equal l1
                                  (cons (car l1)
                                        (intersection-equal (cdr l1) l2)))))))
+
+(defthm len-of-put-assoc-equal-2
+  (implies (consp (assoc-equal name alist))
+           (equal (len (put-assoc-equal name val alist))
+                  (len alist))))
+
+(defthm intersection$-of-remove-1
+  (equal (intersection-equal y (remove-equal x l))
+         (if (not (member-equal x y))
+             (intersection-equal y l)
+             (remove-equal x (intersection-equal y l)))))
