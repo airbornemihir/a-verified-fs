@@ -5,6 +5,7 @@
 
 (in-package "ACL2")
 
+(include-book "partial-collapse")
 (include-book "abs-find-file")
 (include-book "hifat-syscalls")
 (local (include-book "std/lists/prefixp" :dir :system))
