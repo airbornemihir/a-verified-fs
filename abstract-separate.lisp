@@ -15346,7 +15346,8 @@
 ;; This theorem helps with
 ;; (valid-seqp (collapse-this frame x) (seq-this (collapse-this frame x)))
 ;; which is a pre-requisite of the next theorem. Note, adding (mv-nth 1
-;; (collapse frame)) kinda defeats the purpose.
+;; (collapse frame)) kinda defeats the purpose. It seems to be useless but it's
+;; inductive...
 (defthm
   partial-collapse-correctness-lemma-90
   (implies
@@ -16693,6 +16694,7 @@
            (l (intersection-equal (abs-addrs (frame->root frame))
                                   (strip-cars (frame->frame frame)))))))))
 
+;; This needs to be disabled.
 (defthm
   partial-collapse-correctness-lemma-139
   (implies (and (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
