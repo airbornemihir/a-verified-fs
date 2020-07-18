@@ -20,7 +20,6 @@
  (in-theory
   (disable
    (:rewrite abs-addrs-of-ctx-app-1-lemma-2)
-   (:rewrite collapse-congruence-lemma-2)
    (:rewrite abs-separate-correctness-1-lemma-19)
    (:rewrite m1-file-alist-p-when-subsetp-equal)
    (:rewrite

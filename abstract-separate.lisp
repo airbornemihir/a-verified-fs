@@ -2281,6 +2281,11 @@
            (atom (assoc-equal x frame)))
   :rule-classes :type-prescription)
 
+(defthm member-of-strip-cars-when-frame-p
+  (implies (frame-p frame)
+           (not (member-equal nil (strip-cars frame))))
+  :hints (("Goal" :in-theory (enable frame-p strip-cars))))
+
 ;; That this lemma is needed is a reminder to get some list macros around
 ;; abs-file-alist-p...
 (defthm
@@ -3124,6 +3129,13 @@
              nil))
   :hints (("goal" :in-theory (enable frame->frame))))
 
+(defthm when-consp-assoc-of-frame->frame-1
+  (implies (and (consp (assoc-equal x (frame->frame frame)))
+                (natp x))
+           (not (zp x)))
+  :rule-classes :forward-chaining
+  :hints (("Goal" :in-theory (enable assoc-equal-of-frame->frame))))
+
 (defund
   collapse-this (frame x)
   (declare
@@ -3330,6 +3342,14 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable collapse-this)))
   :rule-classes :type-prescription)
+
+(defthm equal-of-frame->frame-of-collapse-this
+  (implies (and (equal (frame->frame frame1)
+                       (frame->frame frame2))
+                (syntaxp (not (term-order frame1 frame2))))
+           (equal (frame->frame (collapse-this frame1 x))
+                  (frame->frame (collapse-this frame2 x))))
+  :hints (("goal" :in-theory (enable collapse-this))))
 
 (defthm collapse-guard-lemma-1
   (consp (assoc-equal 0 (collapse-this frame x)))
@@ -3691,6 +3711,24 @@
   :hints (("goal" :use ((:instance collapse-of-true-list-fix
                                    (frame frame-equiv))
                         collapse-of-true-list-fix))))
+
+(defthm
+  when-zp-src-of-1st-collapse-1
+  (implies
+   (and
+    (mv-nth 1 (collapse frame))
+    (equal
+     (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                       (frame->frame frame))))
+     0)
+    (consp (assoc-equal y (frame->frame frame))))
+   (ctx-app-ok (frame->root frame)
+               (1st-complete (frame->frame frame))
+               (frame-val->path$inline
+                (cdr (assoc-equal (1st-complete (frame->frame frame))
+                                  (frame->frame frame))))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable collapse))))
 
 (defthmd collapse-iter-is-collapse
   (implies (>= (nfix n) (len (frame->frame frame)))
@@ -5175,6 +5213,13 @@
            (abs-separate (frame->frame frame)))
   :hints (("goal" :in-theory (e/d (abs-separate frame->frame)))))
 
+(defthm abs-separate-of-frame-with-root
+  (equal (abs-separate (frame-with-root root frame))
+         (and (no-duplicatesp-equal (abs-addrs (abs-fs-fix root)))
+              (dist-names root nil frame)
+              (abs-separate frame)))
+  :hints (("goal" :in-theory (enable frame-with-root abs-separate))))
+
 (defthm
   abs-separate-of-collapse-this-lemma-1
   (implies
@@ -5330,14 +5375,6 @@
                     (relpath (frame-val->path (cdr (assoc-equal x frame))))
                     (frame (remove-assoc-equal x frame))))))
 
-;; Move later.
-(defthm abs-separate-of-frame-with-root
-  (equal (abs-separate (frame-with-root root frame))
-         (and (no-duplicatesp-equal (abs-addrs (abs-fs-fix root)))
-              (dist-names root nil frame)
-              (abs-separate frame)))
-  :hints (("goal" :in-theory (enable frame-with-root abs-separate))))
-
 (defthm
   abs-separate-of-collapse-this-lemma-5
   (implies
@@ -5391,7 +5428,8 @@
      (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
    (abs-separate (collapse-this frame x)))
   :hints (("goal" :do-not-induct t
-           :in-theory (enable collapse-this))))
+           :in-theory (e/d (collapse-this)
+                           (WHEN-CONSP-ASSOC-OF-FRAME->FRAME-1)))))
 
 (defthm
   abs-separate-of-collapse-this-2
@@ -6151,40 +6189,8 @@
   :hints (("goal" :in-theory (enable abs-separate
                                      mutual-dist-names))))
 
-(defthm collapse-congruence-lemma-2
-  (implies (and (equal (frame->frame frame1)
-                       (frame->frame frame2))
-                (syntaxp (not (term-order frame1 frame2))))
-           (equal (frame->frame (collapse-this frame1 x))
-                  (frame->frame (collapse-this frame2 x))))
-  :hints (("goal" :in-theory (enable collapse-this))))
-
 (defthm
-  collapse-1st-index-correctness-lemma-1
-  (implies
-   (and
-    (mv-nth 1 (collapse frame))
-    (equal
-     (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                       (frame->frame frame))))
-     0)
-    (consp (assoc-equal y (frame->frame frame))))
-   (ctx-app-ok (frame->root frame)
-               (1st-complete (frame->frame frame))
-               (frame-val->path$inline
-                (cdr (assoc-equal (1st-complete (frame->frame frame))
-                                  (frame->frame frame))))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable collapse))))
-
-(defthm m1-file-alist-p-of-final-val-seq-lemma-1
-  (implies (and (consp (assoc-equal x (frame->frame frame)))
-                (natp x))
-           (not (zp x)))
-  :rule-classes :forward-chaining)
-
-(defthm
-  chain-ends-in-abs-complete-lemma-2
+  different-from-own-src-1
   (implies
    (and
     (ctx-app-ok
@@ -6224,7 +6230,3 @@
           (:rewrite remove-assoc-when-absent-1)
           (:definition member-equal)
           (:definition len))))))
-
-(defthm member-of-frame-addrs-before-seq-lemma-1
-  (implies (frame-p frame)
-           (not (member-equal nil (strip-cars frame)))))

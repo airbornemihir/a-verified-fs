@@ -22,7 +22,6 @@
  (in-theory
   (disable
    (:rewrite abs-addrs-of-ctx-app-1-lemma-2)
-   (:rewrite collapse-congruence-lemma-2)
    (:rewrite abs-separate-correctness-1-lemma-19)
    (:rewrite m1-file-alist-p-when-subsetp-equal)
    (:rewrite
@@ -4252,7 +4251,7 @@
   :hints
   (("goal" :in-theory
     (e/d
-     ((:rewrite collapse-congruence-lemma-2))
+     ((:rewrite equal-of-frame->frame-of-collapse-this))
      ((:rewrite abs-separate-correctness-1-lemma-37)))
     :use (:instance (:rewrite abs-separate-correctness-1-lemma-37)
                     (x (1st-complete (frame->frame frame2)))

@@ -4835,7 +4835,7 @@
                            (:rewrite consp-of-assoc-of-frame->frame)
                            (:rewrite assoc-of-car-when-member)
                            (:rewrite
-                            chain-ends-in-abs-complete-lemma-2)
+                            different-from-own-src-1)
                            (:definition member-equal)
                            (:rewrite subsetp-car-member)
                            (:definition no-duplicatesp-equal)
@@ -5791,7 +5791,6 @@
           (:rewrite partial-collapse-correctness-lemma-1)
           (:rewrite final-val-of-collapse-this-lemma-3)
           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
-          (:rewrite collapse-1st-index-correctness-lemma-1)
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
           (:rewrite assoc-of-frame->frame-of-collapse-this)
           (:definition len)
@@ -8337,7 +8336,7 @@
                             take set-difference-equal
                             partial-collapse-correctness-lemma-61
                             (:definition member-equal)
-                            (:rewrite chain-ends-in-abs-complete-lemma-2)
+                            (:rewrite different-from-own-src-1)
                             (:definition assoc-equal)
                             (:definition no-duplicatesp-equal)
                             (:rewrite final-val-seq-of-collapse-this-lemma-2)
@@ -8409,7 +8408,7 @@
                      take set-difference-equal
                      partial-collapse-correctness-lemma-61
                      (:definition member-equal)
-                     (:rewrite chain-ends-in-abs-complete-lemma-2)
+                     (:rewrite different-from-own-src-1)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
                      (:rewrite final-val-seq-of-collapse-this-lemma-2)
@@ -8492,7 +8491,7 @@
                      take set-difference-equal
                      partial-collapse-correctness-lemma-61
                      (:definition member-equal)
-                     (:rewrite chain-ends-in-abs-complete-lemma-2)
+                     (:rewrite different-from-own-src-1)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
                      (:rewrite final-val-seq-of-collapse-this-lemma-2)
@@ -8703,7 +8702,7 @@
                      take set-difference-equal
                      partial-collapse-correctness-lemma-61
                      (:definition member-equal)
-                     (:rewrite chain-ends-in-abs-complete-lemma-2)
+                     (:rewrite different-from-own-src-1)
                      (:definition assoc-equal)
                      (:definition no-duplicatesp-equal)
                      (:rewrite final-val-seq-of-collapse-this-lemma-2)
@@ -8770,7 +8769,7 @@
                         (:rewrite
                          partial-collapse-correctness-lemma-61)
                         (:rewrite
-                         chain-ends-in-abs-complete-lemma-2)
+                         different-from-own-src-1)
                         (:rewrite
                          m1-file-alist-p-of-final-val-seq-lemma-2)
                         (:rewrite
@@ -9415,7 +9414,7 @@
           list-equiv-when-true-listp
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-15)
-          (:rewrite chain-ends-in-abs-complete-lemma-2)
+          (:rewrite different-from-own-src-1)
           (:rewrite partial-collapse-correctness-lemma-1)))
     :do-not-induct t
     :induct (collapse-seq frame seq))))
@@ -9451,7 +9450,7 @@
                     (partial-collapse-correctness-lemma-61
                      (:rewrite remove-assoc-of-put-assoc)
                      (:definition remove-assoc-equal)
-                     (:rewrite chain-ends-in-abs-complete-lemma-2)
+                     (:rewrite different-from-own-src-1)
                      (:rewrite partial-collapse-correctness-lemma-24)
                      (:rewrite assoc-of-car-when-member)
                      (:definition member-equal)
@@ -9484,7 +9483,7 @@
                     (partial-collapse-correctness-lemma-61
                      (:rewrite remove-assoc-of-put-assoc)
                      (:definition remove-assoc-equal)
-                     (:rewrite chain-ends-in-abs-complete-lemma-2)
+                     (:rewrite different-from-own-src-1)
                      (:rewrite partial-collapse-correctness-lemma-24)
                      (:rewrite assoc-of-car-when-member)
                      (:definition member-equal)
@@ -9553,7 +9552,7 @@
                     (partial-collapse-correctness-lemma-61
                      (:rewrite remove-assoc-of-put-assoc)
                      (:definition remove-assoc-equal)
-                     (:rewrite chain-ends-in-abs-complete-lemma-2)
+                     (:rewrite different-from-own-src-1)
                      (:rewrite partial-collapse-correctness-lemma-24)
                      (:rewrite assoc-of-car-when-member)
                      (:definition member-equal)
@@ -9588,7 +9587,7 @@
                     (partial-collapse-correctness-lemma-61
                      (:rewrite remove-assoc-of-put-assoc)
                      (:definition remove-assoc-equal)
-                     (:rewrite chain-ends-in-abs-complete-lemma-2)
+                     (:rewrite different-from-own-src-1)
                      (:rewrite partial-collapse-correctness-lemma-24)
                      (:rewrite assoc-of-car-when-member)
                      (:definition member-equal)
@@ -10663,7 +10662,7 @@
                        (:rewrite collapse-seq-of-seq-this-is-collapse)
                        (:rewrite nthcdr-when->=-n-len-l)
                        (:rewrite
-                        chain-ends-in-abs-complete-lemma-2)
+                        different-from-own-src-1)
                        (:type-prescription frame-val->path$inline)
                        (:definition nthcdr)
                        (:type-prescription
