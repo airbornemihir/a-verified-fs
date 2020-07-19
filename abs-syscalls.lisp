@@ -3267,29 +3267,6 @@
            (equal (abs-top-addrs fs) nil))
   :hints (("goal" :in-theory (enable abs-top-addrs m1-file-alist-p))))
 
-
-;; (thm
-;;  (implies
-;;   (and (consp relpath)
-;;        (consp (assoc-equal name
-;;                            fs))
-;;        (abs-file-alist-p
-;;         (cdr (caddr (assoc-equal name
-;;                                  (abs-fs-fix fs)))))
-;;        (m1-file-alist-p fs))
-;;   (m1-file-alist-p
-;;    (cdr (caddr (assoc-equal name
-;;                             (abs-fs-fix fs))))))
-;;  :hints (("goal" :in-theory (e/d
-;;                              (m1-file-alist-p abs-fs-fix m1-directory-file-p
-;;                                               m1-file->contents abs-file)
-;;                              ((:REWRITE ABS-FS-P-CORRECTNESS-1)(:REWRITE ABS-FS-P-WHEN-HIFAT-NO-DUPS-P)(:REWRITE
-;;                                                                                                         ABS-ADDRS-WHEN-M1-FILE-ALIST-P-LEMMA-2)(:DEFINITION LEN)(:REWRITE
-;;                                                                                                         M1-FILE-ALIST-P-OF-M1-FILE->CONTENTS)(:REWRITE M1-FILE-FIX-WHEN-M1-FILE-P))))))
-
-;; (thm (implies (m1-file-alist-p fs) (equal (addrs-at fs relpath) nil)) :hints
-;;      (("GOal" :in-theory (enable addrs-at m1-file-alist-p abs-directory-file-p abs-file->contents))))
-
 (defthm collapse-hifat-place-file-lemma-2
   (implies
    (path-clear path frame)
@@ -9605,7 +9582,7 @@
        (no-duplicatesp-equal
         (strip-cars (partial-collapse frame (dirname path)))))
       :hints (("goal" :do-not-induct t
-               :in-theory (enable frame-reps-fs))))
+               :in-theory (enable frame-reps-fs)))))
 
   ;; This has some unnecessary hypotheses which are awkward to remove.
   (defthm abs-mkdir-correctness-1
@@ -9736,6 +9713,120 @@
            (find-new-index
             (strip-cars (partial-collapse frame (dirname path))))))))
        abs-mkdir-correctness-lemma-50)))))
+
+(defthm
+  abs-mkdir-correctness-lemma-155
+  (implies
+   (and (absfat-equiv (mv-nth 0 (collapse frame))
+                      fs)
+        (abs-fs-p fs)
+        (m1-file-alist-p fs))
+   (equal
+    (frame-reps-fs
+     (mv-nth 0 (abs-mkdir frame path))
+     (mv-nth
+      0
+      (hifat-place-file (mv-nth 0 (collapse frame))
+                        path
+                        '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                          (contents)))))
+    (frame-reps-fs
+     (mv-nth 0 (abs-mkdir frame path))
+     (mv-nth
+      0
+      (hifat-place-file fs path
+                        '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                          (contents)))))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d nil
+                    ((:rewrite abs-place-file-helper-correctness-1)))
+    :use ((:instance (:rewrite abs-place-file-helper-correctness-1)
+                     (file '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                             (contents)))
+                     (path path)
+                     (fs (mv-nth 0 (collapse frame))))
+          (:instance (:rewrite abs-place-file-helper-correctness-1)
+                     (file '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                             (contents)))
+                     (path path)
+                     (fs fs))))))
+
+(defthmd
+  abs-mkdir-correctness-lemma-156
+  (implies (and (frame-reps-fs frame fs)
+                (abs-fs-p fs)
+                (m1-file-alist-p fs))
+           (and (absfat-equiv (mv-nth 0 (collapse frame))
+                              fs)
+                (hifat-equiv (mv-nth 0 (collapse frame))
+                             fs)))
+  :instructions
+  (:promote
+   (:demote 1)
+   (:dive 1)
+   :x :top :split (:demote 4)
+   (:dive 1)
+   (:claim (and (m1-file-alist-p (abs-fs-fix (mv-nth 0 (collapse frame))))
+                (m1-file-alist-p (abs-fs-fix fs))))
+   (:rewrite hifat-equiv-when-absfat-equiv)
+   :top :bash))
+
+(defthm abs-mkdir-correctness-2
+  (implies
+   (and
+    (frame-p frame)
+    (no-duplicatesp-equal (strip-cars frame))
+    (equal (frame-val->src$inline (cdr (assoc-equal 0 frame)))
+           '0)
+    (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
+    (frame-reps-fs frame fs)
+    (abs-fs-p fs)
+    (m1-file-alist-p fs)
+    (consp (assoc-equal 0 frame))
+    (not
+     (consp
+      (abs-addrs
+       (abs-file->contents$inline
+        (mv-nth 0
+                (abs-find-file (partial-collapse frame (dirname path))
+                               (dirname path)))))))
+    (if
+        (equal (abs-find-file-src (partial-collapse frame (dirname path))
+                                  (dirname path))
+               0)
+        (path-clear (dirname path)
+                    (frame->frame (partial-collapse frame (dirname path))))
+      (and
+       (atom (names-at (frame->root (partial-collapse frame (dirname path)))
+                       (dirname path)))
+       (path-clear
+        (dirname path)
+        (remove-assoc-equal
+         (abs-find-file-src (partial-collapse frame (dirname path))
+                            (dirname path))
+         (frame->frame (partial-collapse frame (dirname path))))))))
+   (and (frame-reps-fs (mv-nth 0 (abs-mkdir frame path))
+                       (mv-nth 0
+                               (hifat-mkdir fs
+                                            path)))
+        (equal (mv-nth 2 (abs-mkdir frame path))
+               (mv-nth 2
+                       (hifat-mkdir fs
+                                    path)))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (e/d () (abs-mkdir-correctness-1))
+    :use
+    (abs-mkdir-correctness-1
+     abs-mkdir-correctness-lemma-156))))
 
 (defthm
   abs-find-file-after-abs-mkdir-lemma-15
