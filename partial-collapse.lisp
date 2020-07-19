@@ -4416,7 +4416,7 @@
     :use
     (chain-ends-in-abs-complete-lemma-8
      (:instance
-      (:rewrite subsetp-when-atom-set-difference$)
+      (:rewrite not-subsetp-when-atom-set-difference$)
       (l2 (frame-addrs-before frame x (collapse-1st-index frame x)))
       (l1 (abs-addrs
            (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
@@ -8329,7 +8329,7 @@
                           (seq-this (collapse-this frame x))))))))
   :hints
   (("goal" :in-theory (e/d (valid-seqp collapse-seq seq-this
-                                       subsetp-when-atom-set-difference$
+                                       not-subsetp-when-atom-set-difference$
                                        partial-collapse-correctness-lemma-152)
                            ((:rewrite partial-collapse-correctness-lemma-66)
                             collapse-seq-of-collapse-seq
@@ -8401,7 +8401,7 @@
   :hints
   (("goal"
     :in-theory (e/d (valid-seqp collapse-seq seq-this
-                                subsetp-when-atom-set-difference$
+                                not-subsetp-when-atom-set-difference$
                                 partial-collapse-correctness-lemma-152)
                     ((:rewrite partial-collapse-correctness-lemma-65)
                      collapse-seq-of-collapse-seq
@@ -8485,7 +8485,7 @@
   :hints
   (("goal"
     :in-theory (e/d (valid-seqp collapse-seq seq-this
-                                subsetp-when-atom-set-difference$
+                                not-subsetp-when-atom-set-difference$
                                 partial-collapse-correctness-lemma-152)
                     (collapse-seq-of-collapse-seq
                      take set-difference-equal
@@ -8696,7 +8696,7 @@
   :hints
   (("goal"
     :in-theory (e/d (valid-seqp collapse-seq seq-this
-                                subsetp-when-atom-set-difference$
+                                not-subsetp-when-atom-set-difference$
                                 partial-collapse-correctness-lemma-152)
                     (collapse-seq-of-collapse-seq
                      take set-difference-equal
