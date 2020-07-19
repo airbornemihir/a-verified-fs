@@ -9570,13 +9570,49 @@
            (strip-cars (partial-collapse frame (dirname path))))))
         (find-new-index (strip-cars (partial-collapse frame (dirname path))))
         (nthcdr (len (frame-val->path (cdr (assoc-equal 0 frame))))
-                (dirname path))))))
+                (dirname path)))))
 
+    (defthm abs-mkdir-correctness-lemma-148
+      (implies
+       (and
+        (no-duplicatesp-equal
+         (strip-cars (partial-collapse frame (dirname path)))))
+       (no-duplicatesp-equal
+        (strip-cars
+         (frame->frame
+          (frame-with-root
+           (frame->root (partial-collapse frame (dirname path)))
+           (frame->frame (partial-collapse frame (dirname path)))))))))
+
+    (defthm
+      abs-mkdir-correctness-lemma-150
+      (implies
+       (and
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0)
+        (not (consp (frame-val->path (cdr (assoc-equal 0 frame))))))
+       (prefixp
+        (frame-val->path
+         (cdr (assoc-equal 0
+                           (partial-collapse frame (dirname path)))))
+        (fat32-filename-list-fix (dirname path))))
+      :hints (("goal" :do-not-induct t)))
+
+    (defthm
+      abs-mkdir-correctness-lemma-151
+      (implies
+       (frame-reps-fs frame fs)
+       (no-duplicatesp-equal
+        (strip-cars (partial-collapse frame (dirname path)))))
+      :hints (("goal" :do-not-induct t
+               :in-theory (enable frame-reps-fs))))
+
+  ;; This has some unnecessary hypotheses which are awkward to remove.
   (defthm abs-mkdir-correctness-1
     (implies
      (and
-      (no-duplicatesp-equal (strip-cars frame))
       (frame-p frame)
+      (no-duplicatesp-equal (strip-cars frame))
       (equal (frame-val->src$inline (cdr (assoc-equal 0 frame)))
              '0)
       (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
