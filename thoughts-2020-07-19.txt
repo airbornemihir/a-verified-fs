@@ -1,0 +1,10 @@
+Package things together into a predicate.
+Make the hypotheses easier to relieve. The rewriter is just going to
+look at a single term.
+He's trying to make a guess.
+1999 paper - fundamental theorem of calculus - top down proof.
+Try to keep each lemma manageable.
+Specific example of this kind.
+Bind that path term to something else. Make a function binding
+it. Haven't done enough abstracting.
+Structured proofs, more reusable lemmas.
