@@ -25,16 +25,6 @@
 (local
  (in-theory (disable nat-listp-if-fat32-masked-entry-list-p)))
 
-(defthm abs-find-file-helper-of-collapse-lemma-3
-  (implies (prefixp (fat32-filename-list-fix x) y)
-           (prefixp (fat32-filename-list-fix x)
-                    (fat32-filename-list-fix y)))
-  :hints (("goal" :in-theory (e/d (fat32-filename-list-fix prefixp)
-                                  ((:i fat32-filename-list-fix)))
-           :induct (fat32-filename-list-prefixp x y)
-           :expand ((fat32-filename-list-fix x)
-                    (fat32-filename-list-fix y)))))
-
 ;; This rule is of more use on this project than it is in the larger set of
 ;; community books that include the STD prefixp book. It introduces a new
 ;; concept, namely prefixp, into proofs by backchaining - per a discussion on

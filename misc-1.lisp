@@ -23,8 +23,6 @@
    (:rewrite abs-separate-correctness-1-lemma-19)
    (:rewrite m1-file-alist-p-when-subsetp-equal)
    (:rewrite
-    abs-find-file-helper-of-collapse-lemma-3)
-   (:rewrite
     abs-fs-fix-of-put-assoc-equal-lemma-2)
    abs-fs-fix-of-put-assoc-equal-lemma-3
    (:type-prescription
@@ -803,7 +801,6 @@
                      (:rewrite prefixp-one-way-or-another . 1)
                      (:rewrite abs-find-file-correctness-1-lemma-21)
                      (:definition member-equal)
-                     (:rewrite abs-find-file-correctness-1-lemma-45)
                      (:rewrite abs-find-file-helper-of-collapse-lemma-2)
                      (:definition remove-equal))))))
 
@@ -844,8 +841,6 @@
                       abs-find-file-correctness-1-lemma-21)
                      (:definition member-equal)
                      (:rewrite
-                      abs-find-file-correctness-1-lemma-45)
-                     (:rewrite
                       abs-find-file-helper-of-collapse-lemma-2)
                      (:definition remove-equal)
                      abs-find-file-of-put-assoc-lemma-7
@@ -853,7 +848,6 @@
                      (:rewrite assoc-of-car-when-member)
                      (:rewrite subsetp-car-member)
                      (:rewrite consp-of-assoc-of-frame->frame)
-                     (:rewrite abs-find-file-correctness-lemma-21)
                      (:definition remove-assoc-equal)
                      (:definition len)
                      (:rewrite put-assoc-equal-without-change . 2)))
