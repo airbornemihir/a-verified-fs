@@ -5190,6 +5190,10 @@
     :cases ((equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                    0)))))
 
+;; This theorem is the reason for a lot of
+;; (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+;; hypotheses. Without such a hypothesis, there would be no way to say that the
+;; second argument of dist-names is nil.
 (defthm
   dist-names-of-frame->root-and-frame->frame
   (implies (and (atom (frame-val->path (cdr (assoc-equal 0 frame))))
@@ -5389,7 +5393,7 @@
   (implies
    (and
     (abs-separate frame)
-    (frame-p frame)
+    (frame-p (frame->frame frame))
     (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (consp
@@ -6138,21 +6142,34 @@
                                      abs-addrs-of-ctx-app-1-lemma-7))))
 
 (defthm
-  abs-separate-correctness-1
+  abs-separate-of-partial-collapse-lemma-2
+  (equal (frame-val->path (cdr (assoc-equal 0 (frame-with-root root frame))))
+         nil)
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable frame-with-root))))
+
+(defthm abs-separate-of-partial-collapse-lemma-3
+  (not
+   (consp (frame-val->path (cdr (assoc-equal 0 (collapse-this frame x))))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable collapse-this)))
+  :rule-classes :type-prescription)
+
+(defthm
+  abs-separate-correctness-2
   (implies (and (frame-p (frame->frame frame))
                 (no-duplicatesp-equal (strip-cars (frame->frame frame)))
                 (subsetp (abs-addrs (frame->root frame))
                          (frame-addrs-root (frame->frame frame)))
-                (abs-separate (frame-with-root (frame->root frame)
-                                               (frame->frame frame))))
+                (abs-separate frame)
+                (atom (frame-val->path (cdr (assoc-equal 0 frame)))))
            (mv-let (fs result)
              (collapse frame)
              (implies (equal result t)
                       (and (m1-file-alist-p fs)
                            (hifat-no-dups-p fs)))))
-  :hints
-  (("goal" :in-theory (enable collapse intersectp-equal)
-    :induct (collapse frame))))
+  :hints (("goal" :in-theory (e/d (collapse intersectp-equal))
+           :induct (collapse frame))))
 
 (defthm dist-names-of-append
   (equal (dist-names dir relpath (append frame1 frame2))

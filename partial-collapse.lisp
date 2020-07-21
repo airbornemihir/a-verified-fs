@@ -145,92 +145,6 @@
   :hints (("goal" :in-theory (enable 1st-complete-under-path))))
 
 (defthm
-  abs-separate-of-partial-collapse-lemma-2
-  (equal (frame-val->path (cdr (assoc-equal 0 (frame-with-root root frame))))
-         nil)
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable frame-with-root))))
-
-(defthm abs-separate-of-partial-collapse-lemma-3
-  (not
-   (consp (frame-val->path (cdr (assoc-equal 0 (collapse-this frame x))))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable collapse-this)))
-  :rule-classes :type-prescription)
-
-(defthm
-  abs-separate-of-partial-collapse-lemma-4
-  (implies
-   (and
-    (< 0
-       (1st-complete-under-path (frame->frame frame)
-                                    path))
-    (not
-     (equal
-      (frame-val->src
-       (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                      path)
-                         (frame->frame frame))))
-      (1st-complete-under-path (frame->frame frame)
-                                   path)))
-    (consp
-     (assoc-equal
-      (frame-val->src
-       (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                      path)
-                         (frame->frame frame))))
-      (frame->frame frame)))
-    (prefixp
-     (frame-val->path
-      (cdr
-       (assoc-equal
-        (frame-val->src
-         (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                        path)
-                           (frame->frame frame))))
-        (frame->frame frame))))
-     (frame-val->path
-      (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                     path)
-                        (frame->frame frame)))))
-    (ctx-app-ok
-     (frame-val->dir
-      (cdr
-       (assoc-equal
-        (frame-val->src
-         (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                        path)
-                           (frame->frame frame))))
-        (frame->frame frame))))
-     (1st-complete-under-path (frame->frame frame)
-                                  path)
-     (nthcdr
-      (len
-       (frame-val->path
-        (cdr
-         (assoc-equal
-          (frame-val->src
-           (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                          path)
-                             (frame->frame frame))))
-          (frame->frame frame)))))
-      (frame-val->path
-       (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                      path)
-                         (frame->frame frame))))))
-    (no-duplicatesp-equal (abs-addrs (frame->root frame)))
-    (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-    (frame-p (frame->frame frame))
-    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-    (abs-separate frame))
-   (abs-separate
-    (collapse-this frame
-                   (1st-complete-under-path (frame->frame frame)
-                                                path))))
-  :hints (("goal" :in-theory (enable collapse-this)
-           :do-not-induct t)))
-
-(defthm
   abs-separate-of-partial-collapse
   (implies (and (no-duplicatesp-equal (abs-addrs (frame->root frame)))
                 (atom (frame-val->path (cdr (assoc-equal 0 frame))))
@@ -10635,6 +10549,44 @@
                        (frame->frame (partial-collapse frame path))))
   :hints (("goal" :in-theory (enable partial-collapse))))
 
+;; Move later.
+(defthm
+  no-duplicatesp-of-strip-cars-of-collapse-this-1
+  (implies
+   (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+               0)
+        (no-duplicatesp-equal (strip-cars frame)))
+   (no-duplicatesp-equal (strip-cars (collapse-this frame x))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable collapse-this))))
+
+(defthm
+  no-duplicatesp-of-strip-cars-of-collapse-this-2
+  (implies
+   (and
+    (no-duplicatesp-equal (strip-cars frame))
+    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                x))
+    (consp
+     (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                  (frame->frame frame))))
+   (no-duplicatesp-equal (strip-cars (collapse-this frame x))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable collapse-this))))
+
+(defthm
+  partial-collapse-correctness-lemma-140
+  (implies
+   (and (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame))
+        (abs-separate frame)
+        (atom (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
+   (not
+    (consp
+     (frame-val->path (cdr (assoc-equal '0
+                                        (partial-collapse frame path)))))))
+  :hints (("goal" :in-theory (enable partial-collapse))))
+
 (defthm
   partial-collapse-correctness-1
   (implies
@@ -10657,17 +10609,16 @@
   (:rewrite
    (:rewrite
     :corollary
-    (implies
-     (and (frame-p frame)
-          (no-duplicatesp-equal (strip-cars frame))
-          (abs-separate frame)
-          (mv-nth 1 (collapse frame))
-          (atom (frame-val->path$inline (cdr (assoc-equal 0 frame))))
-          (subsetp-equal (abs-addrs (frame->root frame))
-                         (frame-addrs-root (frame->frame frame))))
-     (hifat-equiv (mv-nth 0
-                          (collapse (partial-collapse frame path)))
-                  (mv-nth 0 (collapse frame)))))
+    (implies (and (frame-p frame)
+                  (no-duplicatesp-equal (strip-cars frame))
+                  (abs-separate frame)
+                  (mv-nth 1 (collapse frame))
+                  (atom (frame-val->path$inline (cdr (assoc-equal 0 frame))))
+                  (subsetp-equal (abs-addrs (frame->root frame))
+                                 (frame-addrs-root (frame->frame frame))))
+             (hifat-equiv (mv-nth 0
+                                  (collapse (partial-collapse frame path)))
+                          (mv-nth 0 (collapse frame)))))
    (:rewrite
     :corollary
     (implies (and (frame-p frame)

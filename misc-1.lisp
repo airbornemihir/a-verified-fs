@@ -29,6 +29,23 @@
     abs-directory-file-p-when-m1-file-p-lemma-1))))
 
 (defthm
+  abs-separate-correctness-1
+  (implies (and (frame-p (frame->frame frame))
+                (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+                (subsetp (abs-addrs (frame->root frame))
+                         (frame-addrs-root (frame->frame frame)))
+                (abs-separate (frame-with-root (frame->root frame)
+                                               (frame->frame frame))))
+           (mv-let (fs result)
+             (collapse frame)
+             (implies (equal result t)
+                      (and (m1-file-alist-p fs)
+                           (hifat-no-dups-p fs)))))
+  :hints
+  (("goal" :in-theory (enable collapse intersectp-equal)
+    :induct (collapse frame))))
+
+(defthm
   abs-find-file-correctness-1-lemma-1
   (implies
    (and (not (consp (abs-addrs (abs-fs-fix root))))
