@@ -3310,7 +3310,22 @@
     (implies (absfat-equiv fs1 fs2)
              (equal (mv-nth 1 (abs-place-file-helper fs1 path file))
                     (mv-nth 1
-                            (abs-place-file-helper fs2 path file)))))))
+                            (abs-place-file-helper fs2 path file)))))
+   (:rewrite
+    :corollary
+    (implies
+     (and (absfat-equiv fs1 fs2)
+          (syntaxp (not (term-order fs1 fs2)))
+          (abs-fs-p fs1)
+          (abs-complete fs1)
+          (abs-no-dups-file-p file)
+          (m1-file-p file))
+     (and (absfat-equiv (mv-nth 0 (hifat-place-file fs1 path file))
+                        (mv-nth 0
+                                (abs-place-file-helper fs2 path file)))
+          (equal (mv-nth 1 (hifat-place-file fs1 path file))
+                 (mv-nth 1
+                         (abs-place-file-helper fs2 path file))))))))
 
 (defthm collapse-hifat-place-file-lemma-1
   (implies (stringp x)
@@ -5269,26 +5284,32 @@
      (implies
       (and (absfat-equiv fs1 fs2)
            (abs-fs-p fs1)
-           (abs-fs-p fs2)
-           (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs1 path))))
-      (absfat-equiv
-       (abs-file->contents (mv-nth 0 (abs-find-file-helper fs1 path)))
-       (abs-file->contents (mv-nth 0
-                                   (abs-find-file-helper fs2 path)))))
+           (abs-fs-p fs2))
+      (and (absfat-equiv
+            (abs-file->contents (mv-nth 0 (abs-find-file-helper fs1 path)))
+            (abs-file->contents (mv-nth 0 (abs-find-file-helper fs2 path))))
+           (equal
+            (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs1 path)))
+            (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs2 path))))
+           (equal (mv-nth 1 (abs-find-file-helper fs1 path))
+                  (mv-nth 1 (abs-find-file-helper fs2 path)))))
      :hints (("goal" :in-theory (enable abs-find-file-helper)))))
 
   (defthm
     abs-mkdir-correctness-lemma-128
     (implies
      (absfat-equiv fs1 fs2)
-     (absfat-equiv
-      (abs-file->contents (mv-nth 0 (abs-find-file-helper fs1 path)))
-      (abs-file->contents (mv-nth 0
-                                  (abs-find-file-helper fs2 path)))))
+     (and (absfat-equiv
+           (abs-file->contents (mv-nth 0 (abs-find-file-helper fs1 path)))
+           (abs-file->contents (mv-nth 0 (abs-find-file-helper fs2 path))))
+          (equal
+           (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs1 path)))
+           (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs2 path))))
+          (equal (mv-nth 1 (abs-find-file-helper fs1 path))
+                 (mv-nth 1 (abs-find-file-helper fs2 path)))))
     :hints
     (("goal"
-      :in-theory (e/d (abs-file-p-alt absfat-equiv hifat-subsetp
-                                      abs-fs-fix m1-regular-file-p)
+      :in-theory (e/d (abs-file-p-alt abs-fs-fix m1-regular-file-p)
                       ((:rewrite abs-file-p-of-abs-find-file-helper)))
       :do-not-induct t
       :use ((:instance lemma (fs1 (abs-fs-fix fs1))
@@ -5301,7 +5322,44 @@
             (:instance (:rewrite abs-file-p-of-abs-find-file-helper)
                        (path path)
                        (fs fs1)))))
-    :rule-classes :congruence))
+    :rule-classes
+    ((:congruence
+      :corollary
+      (implies
+       (absfat-equiv fs1 fs2)
+       (absfat-equiv
+        (abs-file->contents (mv-nth 0 (abs-find-file-helper fs1 path)))
+        (abs-file->contents (mv-nth 0 (abs-find-file-helper fs2 path))))))
+     (:congruence
+      :corollary
+      (implies
+       (absfat-equiv fs1 fs2)
+       (equal
+        (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs1 path)))
+        (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs2 path))))))
+     (:congruence
+      :corollary
+      (implies
+       (absfat-equiv fs1 fs2)
+       (equal
+        (mv-nth 1 (abs-find-file-helper fs1 path))
+        (mv-nth 1 (abs-find-file-helper fs2 path)))))
+     (:rewrite
+      :corollary
+      (implies
+       (and
+        (absfat-equiv fs1 fs2)
+        (syntaxp (not (term-order fs1 fs2)))
+        (abs-fs-p fs1)
+        (abs-complete fs1))
+       (and (absfat-equiv
+             (abs-file->contents (mv-nth 0 (hifat-find-file fs1 path)))
+             (abs-file->contents (mv-nth 0 (abs-find-file-helper fs2 path))))
+            (equal
+             (m1-directory-file-p (mv-nth 0 (hifat-find-file fs1 path)))
+             (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs2 path))))
+            (equal (mv-nth 1 (hifat-find-file fs1 path))
+                   (mv-nth 1 (abs-find-file-helper fs2 path)))))))))
 
 (defthmd
   abs-mkdir-correctness-lemma-129
