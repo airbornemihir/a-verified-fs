@@ -158,6 +158,119 @@
            :in-theory (enable collapse-this)))
   :rule-classes :type-prescription)
 
+(defthm abs-separate-of-partial-collapse-lemma-5
+  (implies
+   (and
+    (< 0
+       (1st-complete-under-path (frame->frame frame)
+                                path))
+    (not
+     (equal
+      (frame-val->src
+       (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                  path)
+                         (frame->frame frame))))
+      (1st-complete-under-path (frame->frame frame)
+                               path)))
+    (prefixp
+     (frame-val->path
+      (cdr
+       (assoc-equal
+        (frame-val->src
+         (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                    path)
+                           (frame->frame frame))))
+        (frame->frame frame))))
+     (frame-val->path
+      (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                 path)
+                        (frame->frame frame)))))
+    (ctx-app-ok
+     (frame-val->dir
+      (cdr
+       (assoc-equal
+        (frame-val->src
+         (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                    path)
+                           (frame->frame frame))))
+        (frame->frame frame))))
+     (1st-complete-under-path (frame->frame frame)
+                              path)
+     (nthcdr
+      (len
+       (frame-val->path
+        (cdr
+         (assoc-equal
+          (frame-val->src
+           (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                      path)
+                             (frame->frame frame))))
+          (frame->frame frame)))))
+      (frame-val->path
+       (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                  path)
+                         (frame->frame frame))))))
+    (frame-p (frame->frame frame))
+    (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+    (abs-separate frame))
+   (abs-separate
+    (put-assoc-equal
+     (frame-val->src
+      (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                 path)
+                        (frame->frame frame))))
+     (frame-val
+      (frame-val->path
+       (cdr
+        (assoc-equal
+         (frame-val->src
+          (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                     path)
+                            (frame->frame frame))))
+         (frame->frame frame))))
+      (ctx-app
+       (frame-val->dir
+        (cdr
+         (assoc-equal
+          (frame-val->src
+           (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                      path)
+                             (frame->frame frame))))
+          (frame->frame frame))))
+       (frame-val->dir
+        (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                   path)
+                          (frame->frame frame))))
+       (1st-complete-under-path (frame->frame frame)
+                                path)
+       (nthcdr
+        (len
+         (frame-val->path
+          (cdr
+           (assoc-equal
+            (frame-val->src
+             (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                        path)
+                               (frame->frame frame))))
+            (frame->frame frame)))))
+        (frame-val->path
+         (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                    path)
+                           (frame->frame frame))))))
+      (frame-val->src
+       (cdr
+        (assoc-equal
+         (frame-val->src
+          (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                     path)
+                            (frame->frame frame))))
+         (frame->frame frame)))))
+     (remove-assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                  path)
+                         (frame->frame frame)))))
+  :hints (("goal" :in-theory (enable collapse-this abs-complete)
+           :do-not-induct t)))
+
 (defthm
   abs-separate-of-partial-collapse-lemma-4
   (implies
@@ -229,6 +342,19 @@
                                                 path))))
   :hints (("goal" :in-theory (enable collapse-this)
            :do-not-induct t)))
+
+(defthm abs-separate-of-partial-collapse-lemma-6
+ (implies
+  (and (< 0
+          (1st-complete-under-path frame path))
+       (no-duplicatesp-equal (strip-cars frame)))
+  (and
+   (m1-file-alist-p
+    (frame-val->dir$inline
+     (cdr (assoc-equal (1st-complete-under-path frame path)
+                       frame))))))
+ :hints (("goal" :in-theory (enable collapse-this abs-complete)
+          :do-not-induct t)))
 
 (defthm
   abs-separate-of-partial-collapse
@@ -986,10 +1112,13 @@
   (implies (and (absfat-equiv abs-file-alist1 abs-file-alist2)
                 (m1-file-alist-p (abs-fs-fix abs-file-alist1))
                 (abs-fs-p abs-file-alist2))
-           (equal (abs-addrs abs-file-alist2) nil))
+           (and
+            (equal (abs-addrs abs-file-alist2) nil)
+            (abs-complete abs-file-alist2)))
   :hints
   (("goal"
-    :in-theory (e/d (absfat-equiv)
+    :in-theory (e/d (absfat-equiv
+                     abs-separate-of-frame->frame-of-collapse-this-lemma-10)
                     (abs-addrs-when-absfat-equiv-lemma-1))
     :use ((:instance abs-addrs-when-absfat-equiv-lemma-1
                      (abs-file-alist1 (abs-fs-fix abs-file-alist1)))
@@ -10260,7 +10389,6 @@
       (:rewrite len-when-prefixp)
       (:rewrite nthcdr-when->=-n-len-l)
       (:rewrite abs-addrs-when-m1-file-alist-p)
-      (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-10)
       (:definition remove-equal))))))
 
 (defthm

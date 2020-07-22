@@ -428,10 +428,15 @@
   :hints (("goal" :in-theory (enable abs-addrs m1-file-contents-p))))
 
 ;; top-complete is known to match up with alistp
-(defun abs-complete (x)
+(defund abs-complete (x)
   (declare
    (xargs :guard (abs-file-alist-p x)))
   (atom (abs-addrs x)))
+
+(defthm abs-complete-of-cdr
+  (implies (abs-complete x) (abs-complete (cdr x)))
+  :hints (("Goal" :in-theory (enable abs-complete abs-addrs)
+           :expand (abs-addrs x))))
 
 (encapsulate
   ()
@@ -458,7 +463,8 @@
                   (abs-complete x))
              (m1-file-alist-p x))
     :hints (("goal" :in-theory (enable abs-file-alist-p abs-addrs
-                                       abs-addrs-when-m1-file-alist-p-lemma-1)
+                                       abs-addrs-when-m1-file-alist-p-lemma-1
+                                       abs-complete)
              :induct (abs-addrs x)))))
 
 (defthm abs-file-alist-p-of-put-assoc-equal
@@ -475,7 +481,7 @@
        (and (abs-file-alist-p (true-list-fix x))
             (abs-file-alist-p y)))
   :hints (("goal" :in-theory (enable abs-file-alist-p true-list-fix)
-           :induct (mv (TRUE-LIST-FIX X) (APPEND X Y))
+           :induct (mv (true-list-fix x) (append x y))
            :expand (abs-file-alist-p (cons (car x)
                                            (true-list-fix (cdr x)))))))
 
@@ -667,7 +673,7 @@
   (implies (and (abs-no-dups-p dir)
                 (abs-complete dir))
            (hifat-no-dups-p dir))
-  :hints (("goal" :in-theory (enable abs-addrs
+  :hints (("goal" :in-theory (enable abs-addrs abs-complete
                                      abs-no-dups-p hifat-no-dups-p))))
 
 (defthm abs-addrs-of-put-assoc-lemma-1
@@ -2883,24 +2889,11 @@
         (subsetp-equal
          (abs-addrs (frame-val->dir val))
          (abs-addrs (frame-val->dir (cdr (assoc-equal name frame)))))))
-   (not (equal (1st-complete (put-assoc-equal name val frame))
-               0)))
-  :hints (("goal" :in-theory (enable 1st-complete)))
+   (> (1st-complete (put-assoc-equal name val frame))
+      0))
+  :hints (("goal" :in-theory (enable 1st-complete abs-complete)))
   :rule-classes
-  (:rewrite
-   (:linear
-    :corollary
-    (implies
-     (and
-      (frame-p frame)
-      (not (equal name 0))
-      (not (equal (1st-complete frame) 0))
-      (or (atom (assoc-equal name frame))
-          (subsetp-equal
-           (abs-addrs (frame-val->dir val))
-           (abs-addrs (frame-val->dir (cdr (assoc-equal name frame)))))))
-     (> (1st-complete (put-assoc-equal name val frame))
-        0)))))
+  :linear)
 
 (defthm
   1st-complete-of-put-assoc-2
@@ -4144,6 +4137,10 @@
                             (abs-file-alist1 (abs-fs-fix y))))))
   :rule-classes :congruence)
 
+(defthm hifat-equiv-when-absfat-equiv-lemma-1
+  (implies (m1-file-alist-p fs) (abs-complete fs))
+  :hints (("goal" :in-theory (enable abs-complete))))
+
 ;; Probably tricky to get a refinement relationship (in the defrefinement
 ;; sense) between literally absfat-equiv and hifat-equiv. But we can still have
 ;; some kind of substitute...
@@ -5011,19 +5008,18 @@
   (implies
    (and (not (zp (1st-complete frame)))
         (no-duplicatesp-equal (strip-cars frame)))
-   (equal (abs-addrs (frame-val->dir (cdr (assoc-equal (1st-complete frame)
-                                                       frame))))
-          nil))
-  :hints (("goal" :in-theory (enable 1st-complete))))
+   (and
+    (equal (abs-addrs (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                        frame))))
+           nil)
+    (abs-complete (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                                    frame))))))
+  :hints (("goal" :in-theory (enable 1st-complete abs-complete))))
 
-(defthm
-  abs-separate-of-frame->frame-of-collapse-this-lemma-10
-  (implies
-   (not
-    (consp
-     (abs-addrs (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
-   (abs-complete
-    (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+(defthmd abs-separate-of-frame->frame-of-collapse-this-lemma-10
+  (implies (not (consp (abs-addrs fs)))
+           (abs-complete fs))
+  :hints (("goal" :in-theory (enable abs-complete))))
 
 (defthm
   abs-separate-of-frame->frame-of-collapse-this-lemma-11
@@ -5073,6 +5069,25 @@
     :use (:instance (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-13)
                     (frame (collapse-this frame x))
                     (x (1st-complete (frame->frame frame)))))))
+
+(defthm
+  abs-separate-of-frame->frame-of-collapse-this-lemma-17
+  (implies
+   (and (< 0 (1st-complete frame))
+        (no-duplicatesp-equal (strip-cars frame)))
+   (abs-complete (frame-val->dir$inline (cdr (assoc-equal (1st-complete frame)
+                                                          frame)))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory
+    (e/d (collapse abs-complete)
+         ((:definition no-duplicatesp-equal)
+          (:rewrite remove-assoc-of-remove-assoc)
+          (:definition remove-assoc-equal)
+          (:rewrite remove-assoc-of-put-assoc)
+          (:definition member-equal)
+          (:rewrite abs-file-alist-p-when-m1-file-alist-p)
+          (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p))))))
 
 ;; This is important when you're reasoning about two ways of collapsing to get
 ;; to the same place...
@@ -5179,10 +5194,8 @@
     (abs-separate (frame->frame frame))
     (frame-p (frame->frame frame))
     (mv-nth 1 (collapse frame))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (no-duplicatesp-equal (strip-cars (frame->frame frame))))
    (abs-separate (frame->frame (collapse-this frame x))))
   :hints
@@ -5736,7 +5749,7 @@
 (defthm
   abs-separate-correctness-1-lemma-20
   (implies
-   (and (atom (abs-addrs (abs-fs-fix dir)))
+   (and (abs-complete (abs-fs-fix dir))
         (no-duplicatesp-equal (abs-addrs (frame-val->dir (cdr (car frame))))))
    (no-duplicatesp-equal
     (abs-addrs
@@ -5772,7 +5785,7 @@
 
 (defthm
   abs-separate-correctness-1-lemma-29
-  (implies (not (consp (abs-addrs (frame->root frame))))
+  (implies (abs-complete (frame->root frame))
            (hifat-no-dups-p (frame->root frame)))
   :hints
   (("goal" :in-theory (disable (:rewrite abs-no-dups-p-when-m1-file-alist-p))
@@ -6151,7 +6164,8 @@
                       (and (m1-file-alist-p fs)
                            (hifat-no-dups-p fs)))))
   :hints
-  (("goal" :in-theory (enable collapse intersectp-equal)
+  (("goal" :in-theory (enable collapse intersectp-equal
+                              abs-separate-of-frame->frame-of-collapse-this-lemma-10)
     :induct (collapse frame))))
 
 (defthm dist-names-of-append

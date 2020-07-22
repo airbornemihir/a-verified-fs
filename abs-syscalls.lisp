@@ -5876,8 +5876,6 @@
           (:rewrite remove-when-absent)
           (:rewrite abs-mkdir-correctness-lemma-26)
           (:rewrite
-           abs-separate-of-frame->frame-of-collapse-this-lemma-10)
-          (:rewrite
            abs-fs-fix-of-put-assoc-equal-lemma-1)
           (:linear count-free-clusters-correctness-1)
           (:rewrite
