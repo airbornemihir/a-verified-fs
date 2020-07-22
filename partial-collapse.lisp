@@ -10549,31 +10549,6 @@
                        (frame->frame (partial-collapse frame path))))
   :hints (("goal" :in-theory (enable partial-collapse))))
 
-;; Move later.
-(defthm
-  no-duplicatesp-of-strip-cars-of-collapse-this-1
-  (implies
-   (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               0)
-        (no-duplicatesp-equal (strip-cars frame)))
-   (no-duplicatesp-equal (strip-cars (collapse-this frame x))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable collapse-this))))
-
-(defthm
-  no-duplicatesp-of-strip-cars-of-collapse-this-2
-  (implies
-   (and
-    (no-duplicatesp-equal (strip-cars frame))
-    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                x))
-    (consp
-     (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                  (frame->frame frame))))
-   (no-duplicatesp-equal (strip-cars (collapse-this frame x))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable collapse-this))))
-
 (defthm
   partial-collapse-correctness-lemma-140
   (implies

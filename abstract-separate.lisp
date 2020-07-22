@@ -3341,6 +3341,30 @@
                   (frame->frame (collapse-this frame2 x))))
   :hints (("goal" :in-theory (enable collapse-this))))
 
+(defthm
+  no-duplicatesp-of-strip-cars-of-collapse-this-1
+  (implies
+   (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+               0)
+        (no-duplicatesp-equal (strip-cars frame)))
+   (no-duplicatesp-equal (strip-cars (collapse-this frame x))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable collapse-this))))
+
+(defthm
+  no-duplicatesp-of-strip-cars-of-collapse-this-2
+  (implies
+   (and
+    (no-duplicatesp-equal (strip-cars frame))
+    (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                x))
+    (consp
+     (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
+                  (frame->frame frame))))
+   (no-duplicatesp-equal (strip-cars (collapse-this frame x))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable collapse-this))))
+
 (defthm collapse-guard-lemma-1
   (consp (assoc-equal 0 (collapse-this frame x)))
   :hints (("goal" :in-theory (enable collapse-this)))
@@ -6142,13 +6166,13 @@
                                      abs-addrs-of-ctx-app-1-lemma-7))))
 
 (defthm
-  abs-separate-of-partial-collapse-lemma-2
+  abs-separate-correctness-lemma-1
   (equal (frame-val->path (cdr (assoc-equal 0 (frame-with-root root frame))))
          nil)
   :hints (("goal" :do-not-induct t
            :in-theory (enable frame-with-root))))
 
-(defthm abs-separate-of-partial-collapse-lemma-3
+(defthm abs-separate-correctness-lemma-2
   (not
    (consp (frame-val->path (cdr (assoc-equal 0 (collapse-this frame x))))))
   :hints (("goal" :do-not-induct t
