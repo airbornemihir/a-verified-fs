@@ -1110,21 +1110,33 @@
 (defthm
   collapse-congruence-lemma-4
   (implies (and (absfat-equiv abs-file-alist1 abs-file-alist2)
-                (m1-file-alist-p (abs-fs-fix abs-file-alist1))
-                (abs-fs-p abs-file-alist2))
+                (m1-file-alist-p (abs-fs-fix abs-file-alist1)))
            (and
-            (equal (abs-addrs abs-file-alist2) nil)
-            (abs-complete abs-file-alist2)))
+            (equal (abs-addrs
+                    (abs-fs-fix abs-file-alist2))
+                   nil)
+            (abs-complete (abs-fs-fix abs-file-alist2))))
   :hints
   (("goal"
     :in-theory (e/d (absfat-equiv
                      abs-separate-of-frame->frame-of-collapse-this-lemma-10)
                     (abs-addrs-when-absfat-equiv-lemma-1))
     :use ((:instance abs-addrs-when-absfat-equiv-lemma-1
-                     (abs-file-alist1 (abs-fs-fix abs-file-alist1)))
+                     (abs-file-alist1 (abs-fs-fix abs-file-alist1))
+                     (abs-file-alist2 (abs-fs-fix abs-file-alist2)))
           (:instance abs-addrs-when-absfat-equiv-lemma-1
-                     (abs-file-alist1 abs-file-alist2)
-                     (abs-file-alist2 (abs-fs-fix abs-file-alist1)))))))
+                     (abs-file-alist1 (abs-fs-fix abs-file-alist2))
+                     (abs-file-alist2 (abs-fs-fix abs-file-alist1))))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies (and (absfat-equiv abs-file-alist1 abs-file-alist2)
+                  (m1-file-alist-p (abs-fs-fix abs-file-alist1))
+                  (abs-fs-p abs-file-alist2))
+             (and
+              (equal (abs-addrs abs-file-alist2) nil)
+              (abs-complete abs-file-alist2))))))
 
 (defthm
   collapse-congruence-lemma-5
@@ -2346,10 +2358,8 @@
   (implies
    (and (frame-p (frame->frame frame))
         (valid-seqp frame seq))
-   (equal
-    (abs-addrs (frame-val->dir (cdr (assoc-equal (car seq)
-                                                 (frame->frame frame)))))
-    nil))
+   (abs-complete
+    (frame-val->dir (cdr (assoc-equal (car seq) (frame->frame frame))))))
   :hints (("goal" :in-theory (enable valid-seqp collapse-seq)
            :do-not-induct t)))
 
@@ -5636,8 +5646,8 @@
         (frame-p frame)
         (zp (1st-complete frame))
         (consp (assoc-equal x frame)))
-   (consp
-    (abs-addrs (frame-val->dir (cdr (assoc-equal x frame))))))
+   (not
+    (abs-complete (frame-val->dir (cdr (assoc-equal x frame))))))
   :hints (("goal" :in-theory (enable 1st-complete))))
 
 ;; This is important.
@@ -5707,10 +5717,8 @@
    (and
     (syntaxp (variablep x))
     (consp (assoc-equal x (frame->frame frame)))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (< 0 (1st-complete (frame->frame frame)))
     (frame-p (frame->frame frame))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
@@ -5835,10 +5843,8 @@
              (collapse (collapse-this frame
                                       (1st-complete (frame->frame frame))))))
     (consp (assoc-equal x (frame->frame frame)))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (< 0 (1st-complete (frame->frame frame)))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (dist-names (frame->root frame)
@@ -5989,7 +5995,9 @@
                            (frame->frame frame))))
         (frame->frame frame)))))
     (1st-complete (remove-assoc-equal (1st-complete (frame->frame frame))
-                                      (frame->frame frame))))))
+                                      (frame->frame frame)))))
+  :hints
+  (("goal" :in-theory (enable abs-complete))))
 
 (defthmd
   partial-collapse-correctness-lemma-36
@@ -5998,10 +6006,8 @@
     (mv-nth 1 (collapse (collapse-this frame x)))
     (consp (frame->frame frame))
     (< 0 x)
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (frame-p (frame->frame frame)))
    (> (1st-complete (frame->frame frame))
       0))
@@ -6575,8 +6581,8 @@
     (valid-seqp frame seq)
     (member-equal x seq)
     (not (zp (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))))
-   (consp
-    (abs-addrs
+   (not
+    (abs-complete
      (frame-val->dir
       (cdr (assoc-equal
             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
@@ -6596,10 +6602,8 @@
               0)
        (consp (assoc-equal (car seq)
                            (frame->frame frame)))
-       (not
-        (consp
-         (abs-addrs (frame-val->dir (cdr (assoc-equal (car seq)
-                                                      (frame->frame frame)))))))
+       (abs-complete (frame-val->dir (cdr (assoc-equal (car seq)
+                                                       (frame->frame frame)))))
        (ctx-app-ok (frame->root frame)
                    (car seq)
                    (frame-val->path (cdr (assoc-equal (car seq)
@@ -6623,10 +6627,8 @@
      (implies
       (and
        (consp seq)
-       (not
-        (consp
-         (abs-addrs (frame-val->dir (cdr (assoc-equal (car seq)
-                                                      (frame->frame frame)))))))
+       (abs-complete (frame-val->dir (cdr (assoc-equal (car seq)
+                                                       (frame->frame frame)))))
        (prefixp
         (frame-val->path
          (cdr
@@ -8038,14 +8040,21 @@
   (implies
    (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
         (< (nfix n) (len (seq-this frame))))
-   (equal
-    (abs-addrs
+   (and
+    (equal
+     (abs-addrs
+      (frame-val->dir
+       (cdr
+        (assoc-equal
+         (nth n (seq-this frame))
+         (frame->frame (collapse-seq frame (take n (seq-this frame))))))))
+     nil)
+    (abs-complete
      (frame-val->dir
       (cdr
        (assoc-equal
         (nth n (seq-this frame))
-        (frame->frame (collapse-seq frame (take n (seq-this frame))))))))
-    nil))
+        (frame->frame (collapse-seq frame (take n (seq-this frame))))))))))
   :hints
   (("goal"
     :do-not-induct t
@@ -8437,10 +8446,8 @@
     (frame-p (frame->frame frame))
     (mv-nth 1 (collapse frame))
     (consp (assoc-equal x (frame->frame frame)))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (<= n
         (len (seq-this (collapse-this frame x))))
@@ -8542,10 +8549,8 @@
                 nil (frame->frame frame))
     (mv-nth 1 (collapse frame))
     (consp (assoc-equal x (frame->frame frame)))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (<= n
         (len (seq-this (collapse-this frame x)))))
@@ -8656,10 +8661,8 @@
                                         (seq-this (collapse-this frame x))))))
      (+ (- n) (len (frame->frame frame))))
     (mv-nth 1 (collapse frame))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (< 0
        (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
@@ -8753,10 +8756,8 @@
                 nil (frame->frame frame))
     (mv-nth 1 (collapse frame))
     (consp (assoc-equal x (frame->frame frame)))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (<= n
         (len (seq-this (collapse-this frame x)))))
@@ -9171,10 +9172,8 @@
            (frame-val->src (cdr (assoc-equal (car seq)
                                              (frame->frame frame)))))
     (not (equal x (car seq)))
-    (not
-     (consp
-      (abs-addrs (frame-val->dir (cdr (assoc-equal (car seq)
-                                                   (frame->frame frame)))))))
+    (abs-complete (frame-val->dir (cdr (assoc-equal (car seq)
+                                                    (frame->frame frame)))))
     (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                 (car seq)))
     (consp
@@ -9203,10 +9202,8 @@
                                          (frame->frame frame))))))
     (consp (assoc-equal x (frame->frame frame)))
     (abs-separate frame)
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame)))))
     (frame-p (frame->frame frame))
     (prefixp
      (frame-val->path
@@ -10105,7 +10102,8 @@
   (("goal"
     :do-not-induct t
     :in-theory
-    (e/d (intersectp-equal)
+    (e/d (intersectp-equal
+          abs-separate-of-frame->frame-of-collapse-this-lemma-10)
          (partial-collapse-correctness-lemma-102 1st-complete-correctness-2
                                                  subsetp-member))
     :use (partial-collapse-correctness-lemma-102
@@ -10401,10 +10399,8 @@
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (mv-nth 1 (collapse frame))
     (consp (assoc-equal x (frame->frame frame)))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
    (set-equiv (cons x (seq-this (collapse-this frame x)))
               (strip-cars (frame->frame frame))))
   :hints (("goal" :do-not-induct t
@@ -10566,10 +10562,8 @@
     (no-duplicatesp-equal (strip-cars (frame->frame frame)))
     (mv-nth 1 (collapse frame))
     (consp (assoc-equal x (frame->frame frame)))
-    (not
-     (consp
-      (abs-addrs
-       (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))))
+    (abs-complete
+     (frame-val->dir (cdr (assoc-equal x (frame->frame frame))))))
    (set-equiv
     (frame-addrs-before-seq frame 0
                             (cons x (seq-this (collapse-this frame x))))
