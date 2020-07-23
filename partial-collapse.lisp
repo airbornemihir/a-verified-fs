@@ -366,7 +366,6 @@
            (abs-separate (partial-collapse frame path)))
   :hints (("goal" :in-theory (enable partial-collapse))))
 
-;; Rename later.
 (defthm
   abs-separate-of-frame->frame-of-partial-collapse
   (implies (and (abs-separate (frame->frame frame))
@@ -10706,21 +10705,6 @@
 
 (defthm
   partial-collapse-correctness-lemma-25
-  (not
-   (consp
-    (frame-val->path
-     (cdr
-      (assoc-equal
-       0
-       (collapse-this frame
-                      (1st-complete-under-path (frame->frame frame)
-                                                   path)))))))
-  :hints (("goal" :in-theory (enable collapse-this
-                                     frame->root frame-with-root)
-           :do-not-induct t)))
-
-(defthm
-  partial-collapse-correctness-lemma-34
   (implies
    (and (frame-p (frame->frame frame))
         (no-duplicatesp-equal (strip-cars (frame->frame frame)))
