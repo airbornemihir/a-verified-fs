@@ -90,13 +90,6 @@
          (abs-no-dups-file-fix x))
   :hints (("goal" :in-theory (enable abs-no-dups-file-fix))))
 
-(defthm abs-fs-p-of-abs-file->contents-1
-  (implies (and (abs-no-dups-p (abs-file->contents file))
-                (abs-directory-file-p file))
-           (abs-fs-p (abs-file->contents file)))
-  :hints (("goal" :in-theory (enable abs-directory-file-p)
-           :do-not-induct t)))
-
 (defthm abs-no-dups-file-fix-when-abs-no-dups-file-p
   (implies (abs-no-dups-file-p x)
            (equal (abs-no-dups-file-fix x) x))
@@ -675,12 +668,6 @@
                           (abs-place-file-helper fs path file))
                   (abs-fs-fix fs)))
   :hints (("goal" :in-theory (enable abs-place-file-helper))))
-
-(defthm ctx-app-ok-of-abs-place-file-helper-lemma-1
-  (implies (stringp x)
-           (equal (addrs-at x relpath) nil))
-  :hints (("goal" :in-theory (enable addrs-at abs-fs-fix)))
-  :rule-classes (:type-prescription :rewrite))
 
 (encapsulate
   ()
@@ -1828,7 +1815,44 @@
            (no-duplicatesp-equal
             (abs-addrs (mv-nth 1
                                (abs-disassoc fs path new-index)))))
-  :hints (("goal" :in-theory (enable abs-disassoc abs-addrs)
+  :hints (("goal" :in-theory (e/d
+                              (abs-disassoc abs-addrs)
+                              ((:CONGRUENCE SET-EQUIV-IMPLIES-EQUAL-INTERSECTP-1)
+                               (:CONGRUENCE SET-EQUIV-IMPLIES-EQUAL-SET-DIFFERENCE-EQUAL-2)
+                               (:DEFINITION ENDP)
+                               (:DEFINITION TRUE-LISTP)
+                               (:ELIM CAR-CDR-ELIM)
+                               (:EXECUTABLE-COUNTERPART CONSP)
+                               (:EXECUTABLE-COUNTERPART LEN)
+                               (:EXECUTABLE-COUNTERPART NATP)
+                               (:EXECUTABLE-COUNTERPART UNARY--)
+                               (:INDUCTION ABS-ADDRS)
+                               (:INDUCTION MEMBER-EQUAL)
+                               (:INDUCTION NO-DUPLICATESP-EQUAL)
+                               (:INDUCTION TRUE-LISTP)
+                               (:REWRITE ABS-ADDRS-OF-REMOVE-ASSOC)
+                               (:REWRITE COMMUTATIVITY-OF-APPEND-UNDER-SET-EQUIV)
+                               (:REWRITE INTERSECT-EQUAL-OF-CONS-LEFT)
+                               (:REWRITE INTERSECT-WITH-SUBSET . 11)
+                               (:REWRITE INTERSECT-WITH-SUBSET . 12)
+                               (:REWRITE INTERSECTP-EQUAL-OF-ATOM-LEFT)
+                               (:REWRITE INTERSECTP-EQUAL-OF-ATOM-RIGHT)
+                               (:REWRITE INTERSECTP-IS-COMMUTATIVE)
+                               (:REWRITE LIST-EQUIV-WHEN-TRUE-LISTP)
+                               (:REWRITE MEMBER-OF-CONS)
+                               (:REWRITE MEMBER-WHEN-ATOM)
+                               (:REWRITE PREFIXP-WHEN-EQUAL-LENGTHS)
+                               (:REWRITE SET-DIFFERENCE$-WHEN-NOT-INTERSECTP)
+                               (:REWRITE SUBSETP-CAR-MEMBER)
+                               (:REWRITE SUBSETP-MEMBER . 3)
+                               (:REWRITE SUBSETP-OF-CDR)
+                               (:REWRITE SUBSETP-WHEN-PREFIXP)
+                               (:REWRITE TRUE-LIST-FIX-WHEN-TRUE-LISTP)
+                               (:TYPE-PRESCRIPTION ABS-ADDRS)
+                               (:TYPE-PRESCRIPTION ABS-DISASSOC)
+                               (:TYPE-PRESCRIPTION ABS-FS-FIX)
+                               (:TYPE-PRESCRIPTION CTX-APP-LIST-WHEN-SET-EQUIV-LEMMA-4)
+                               (:TYPE-PRESCRIPTION SET-DIFFERENCE-EQUAL)))
            :induct (abs-disassoc fs path new-index))))
 
 (defthm
@@ -8093,7 +8117,7 @@
               (:rewrite collapse-congruence-lemma-4 . 2)
               (:rewrite hifat-find-file-correctness-1)
               (:rewrite intersectp-equal-of-atom-left)
-              (:rewrite set-difference-when-not-intersectp)))
+              (:rewrite set-difference$-when-not-intersectp)))
         :do-not-induct t)))
 
     (defthm
