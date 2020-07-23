@@ -42,13 +42,14 @@
                       (and (m1-file-alist-p fs)
                            (hifat-no-dups-p fs)))))
   :hints
-  (("goal" :in-theory (enable collapse intersectp-equal)
+  (("goal" :in-theory (enable collapse intersectp-equal
+                              abs-separate-of-frame->frame-of-collapse-this-lemma-10)
     :induct (collapse frame))))
 
 (defthm
   abs-find-file-correctness-1-lemma-1
   (implies
-   (and (not (consp (abs-addrs (abs-fs-fix root))))
+   (and (abs-complete (abs-fs-fix root))
         (m1-regular-file-p (mv-nth 0
                                    (abs-find-file (frame-with-root root nil)
                                                   path))))
@@ -849,7 +850,9 @@
               0)))
   :hints
   (("goal"
-    :in-theory (e/d (abs-find-file collapse abs-separate intersectp-equal collapse-this)
+    :in-theory (e/d (abs-find-file collapse abs-separate intersectp-equal
+                                   collapse-this
+                                   abs-separate-of-frame->frame-of-collapse-this-lemma-10)
                     ((:rewrite nthcdr-when->=-n-len-l)
                      (:rewrite len-when-prefixp)
                      (:rewrite abs-file-alist-p-when-m1-file-alist-p)
@@ -1292,10 +1295,8 @@
     (frame-p frame)
     (no-duplicatesp-equal (strip-cars frame))
     (abs-separate frame)
-    (not
-     (consp
-      (abs-addrs
-       (abs-file->contents (mv-nth 0 (abs-find-file frame path))))))
+    (abs-complete
+     (abs-file->contents (mv-nth 0 (abs-find-file frame path))))
     (equal (mv-nth 1 (abs-find-file frame path))
            0))
    (equal
@@ -1519,8 +1520,9 @@
    (defrefinement bar-equiv foo-equiv
      :hints
      (("goal"
-       :in-theory (e/d (absfat-subsetp-correctness-1 abs-fs-p
-                                                     absfat-equiv)
+       :in-theory (e/d (absfat-subsetp-correctness-1
+                        abs-fs-p absfat-equiv
+                        abs-separate-of-frame->frame-of-collapse-this-lemma-10)
                        (abs-addrs-when-m1-file-alist-p abs-addrs-when-absfat-equiv))
        :use
        (abs-addrs-when-m1-file-alist-p

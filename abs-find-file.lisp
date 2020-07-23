@@ -3501,10 +3501,8 @@
     (frame-p frame)
     (no-duplicatesp-equal (strip-cars frame))
     (abs-separate frame)
-    (not
-     (consp
-      (abs-addrs
-       (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))))
+    (abs-complete
+     (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))
    (equal
     (cons
      (abs-file
@@ -3806,8 +3804,8 @@
          (remove-assoc-equal (1st-complete (frame->frame frame))
                              (frame->frame frame)))
         path))))
-    (consp
-     (abs-addrs
+    (not
+     (abs-complete
       (abs-file->contents
        (mv-nth
         0
@@ -3942,10 +3940,8 @@
     (frame-p frame)
     (no-duplicatesp-equal (strip-cars frame))
     (abs-separate frame)
-    (not
-     (consp
-      (abs-addrs
-       (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))))
+    (abs-complete
+     (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))
    nil)
   :hints
   (("goal"
@@ -4020,8 +4016,8 @@
                      (abs-find-file-helper (frame->root frame)
                                            path))
              2)
-      (consp
-       (abs-addrs
+      (not
+       (abs-complete
         (abs-file->contents
          (mv-nth
           0
@@ -4159,10 +4155,8 @@
       (frame-p frame)
       (no-duplicatesp-equal (strip-cars frame))
       (abs-separate frame)
-      (not
-       (consp
-        (abs-addrs
-         (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))))
+      (abs-complete
+       (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))
      (m1-regular-file-p
       (mv-nth
        0
@@ -5101,10 +5095,8 @@
      (frame-p frame)
      (no-duplicatesp-equal (strip-cars frame))
      (abs-separate frame)
-     (not
-      (consp
-       (abs-addrs
-        (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))))
+     (abs-complete
+      (abs-file->contents (mv-nth 0 (abs-find-file frame path)))))
     (equal
      (abs-find-file
       (put-assoc-equal
@@ -5248,7 +5240,8 @@
      (("goal"
        :in-theory
        (e/d ((:definition abs-find-file)
-             collapse (:definition collapse-this))
+             collapse (:definition collapse-this)
+             abs-separate-of-frame->frame-of-collapse-this-lemma-10)
             ((:definition remove-equal)
              (:definition assoc-equal)
              (:definition member-equal)
