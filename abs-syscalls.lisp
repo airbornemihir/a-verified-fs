@@ -14,16 +14,16 @@
 (local (in-theory (e/d (abs-file-p-when-m1-regular-file-p
                         len-when-consp)
                        ((:definition member-equal)
-                        (:DEFINITION INTERSECTION-EQUAL)
+                        (:definition intersection-equal)
                         (:definition integer-listp)
-                        (:REWRITE TRUE-LISTP-WHEN-STRING-LIST)
-                        (:DEFINITION STRING-LISTP)
-                        (:LINEAR POSITION-EQUAL-AC-WHEN-MEMBER)
-                        (:LINEAR POSITION-WHEN-MEMBER)
-                        (:REWRITE NTH-WHEN->=-N-LEN-L)
-                        (:LINEAR LEN-OF-REMOVE-ASSOC-1)
-                        (:DEFINITION POSITION-EQUAL-AC)
-                        (:DEFINITION REMOVE1-ASSOC-EQUAL)
+                        (:rewrite true-listp-when-string-list)
+                        (:definition string-listp)
+                        (:linear position-equal-ac-when-member)
+                        (:linear position-when-member)
+                        (:rewrite nth-when->=-n-len-l)
+                        (:linear len-of-remove-assoc-1)
+                        (:definition position-equal-ac)
+                        (:definition remove1-assoc-equal)
                         (:rewrite
                          abs-addrs-when-m1-file-alist-p-lemma-2)
                         (:rewrite m1-directory-file-p-correctness-1)
@@ -40,30 +40,31 @@
                          partial-collapse-correctness-lemma-24)
                         (:rewrite abs-find-file-correctness-lemma-29)
                         (:rewrite final-val-of-collapse-this-lemma-3)
-                        (:REWRITE WHEN-ZP-SRC-OF-1ST-COLLAPSE-1)
-                        (:REWRITE CTX-APP-OK-OF-ABS-FS-FIX-1)
-                        (:REWRITE
-                         HIFAT-FIND-FILE-CORRECTNESS-3-LEMMA-3)
-                        (:REWRITE ABS-ADDRS-OF-CTX-APP-1-LEMMA-2)
-                        (:REWRITE
-                         ABS-FS-FIX-OF-PUT-ASSOC-EQUAL-LEMMA-2)
-                        (:REWRITE HIFAT-FILE-ALIST-FIX-GUARD-LEMMA-1)
-                        (:REWRITE
-                         ABS-FILE-ALIST-P-OF-ABS-FILE->CONTENTS)
-                        (:REWRITE MEMBER-OF-ABS-FS-FIX-WHEN-NATP)
-                        (:REWRITE HIFAT-FIND-FILE-CORRECTNESS-LEMMA-2)
-                        (:REWRITE
-                         NO-DUPLICATESP-EQUAL-OF-ABS-ADDRS-OF-ABS-FS-FIX)
-                        (:REWRITE
-                         ABS-FIND-FILE-HELPER-OF-COLLAPSE-LEMMA-2)
-                        (:REWRITE
-                         M1-FILE-ALIST-P-OF-INTERSECTION-EQUAL-2)
-                        (:REWRITE ABSFAT-SUBSETP-TRANSITIVITY-LEMMA-5)
-                        (:REWRITE
-                         NO-DUPLICATESP-OF-SEQ-THIS-LEMMA-1 . 3)
-                        (:REWRITE
-                         ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-7)
-                        (:LINEAR 1ST-COMPLETE-CORRECTNESS-2)))))
+                        (:rewrite when-zp-src-of-1st-collapse-1)
+                        (:rewrite ctx-app-ok-of-abs-fs-fix-1)
+                        (:rewrite
+                         hifat-find-file-correctness-3-lemma-3)
+                        (:rewrite abs-addrs-of-ctx-app-1-lemma-2)
+                        (:rewrite
+                         abs-fs-fix-of-put-assoc-equal-lemma-2)
+                        (:rewrite hifat-file-alist-fix-guard-lemma-1)
+                        (:rewrite
+                         abs-file-alist-p-of-abs-file->contents)
+                        (:rewrite member-of-abs-fs-fix-when-natp)
+                        (:rewrite hifat-find-file-correctness-lemma-2)
+                        (:rewrite
+                         no-duplicatesp-equal-of-abs-addrs-of-abs-fs-fix)
+                        (:rewrite
+                         abs-find-file-helper-of-collapse-lemma-2)
+                        (:rewrite
+                         m1-file-alist-p-of-intersection-equal-2)
+                        (:rewrite absfat-subsetp-transitivity-lemma-5)
+                        (:rewrite
+                         no-duplicatesp-of-seq-this-lemma-1 . 3)
+                        (:rewrite
+                         abs-separate-of-frame->frame-of-collapse-this-lemma-7)
+                        (:linear 1st-complete-correctness-2)
+                        different-from-own-src-1))))
 
 (defund abs-no-dups-file-p (file)
   (declare (xargs :guard t))
@@ -1991,7 +1992,7 @@
   :otf-flg t)
 
 ;; For whatever reason, it is not tempting to replace this. It has an inductive proof...
-(defthm
+(defthmd
   abs-mkdir-correctness-lemma-26
   (implies
    (and (consp (assoc-equal 0 frame))
@@ -2012,7 +2013,8 @@
     :in-theory (e/d ((:definition abs-find-file)
                      collapse (:definition collapse-this)
                      len-of-fat32-filename-list-fix
-                     abs-separate-of-frame->frame-of-collapse-this-lemma-10)
+                     abs-separate-of-frame->frame-of-collapse-this-lemma-10
+                     different-from-own-src-1)
                     ((:rewrite partial-collapse-correctness-lemma-24)
                      (:definition remove-equal)
                      (:definition assoc-equal)
@@ -2067,8 +2069,7 @@
    :in-theory
    (e/d
     (abs-file-p-alt)
-    (abs-file-p-of-abs-find-file abs-mkdir-correctness-lemma-26
-                                 (:rewrite m1-regular-file-p-correctness-1)
+    (abs-file-p-of-abs-find-file (:rewrite m1-regular-file-p-correctness-1)
                                  m1-directory-file-p-when-m1-file-p))
    :use
    (abs-file-p-of-abs-find-file
@@ -5112,6 +5113,19 @@
   ()
 
   (local
+   (defthm
+     lemma-2
+     (implies (and
+               (absfat-equiv fs1 fs2)
+               (abs-fs-p fs1)
+               (abs-fs-p fs2)
+               (consp (assoc-equal (fat32-filename-fix (car path))
+                                   fs1)))
+              (consp (assoc-equal (fat32-filename-fix (car path))
+                                  fs2)))
+     :hints (("goal" :in-theory (enable abs-find-file-helper)))))
+
+  (local
    (defthmd
      lemma
      (implies
@@ -5779,7 +5793,6 @@
            . 2)
           (:rewrite abs-addrs-of-ctx-app-2)
           (:rewrite remove-when-absent)
-          (:rewrite abs-mkdir-correctness-lemma-26)
           (:rewrite
            abs-fs-fix-of-put-assoc-equal-lemma-1)
           (:linear count-free-clusters-correctness-1)
@@ -10693,6 +10706,77 @@
 
 (encapsulate
   ()
+
+  (local
+   (defthm
+     lemma-2
+     (implies
+      (and
+       (mv-nth 1 (collapse frame))
+       (consp (assoc-equal 0 frame))
+       (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+       (frame-p frame)
+       (no-duplicatesp-equal (strip-cars frame))
+       (subsetp-equal (abs-addrs (frame->root frame))
+                      (frame-addrs-root (frame->frame frame)))
+       (abs-separate frame)
+       (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame
+                                                                  path))))
+       (not
+        (equal (mv-nth 1 (abs-find-file frame path))
+               (mv-nth 1 (hifat-find-file fs path)))))
+      (not
+       (hifat-equiv (mv-nth 0 (collapse frame))
+                    fs)))))
+
+  (local
+   (defthm
+     lemma-3
+     (implies
+      (and
+       (mv-nth 1 (collapse frame))
+       (abs-fs-p fs)
+       (m1-file-alist-p fs)
+       (consp (assoc-equal 0 frame))
+       (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+       (frame-p frame)
+       (no-duplicatesp-equal (strip-cars frame))
+       (subsetp-equal (abs-addrs (frame->root frame))
+                      (frame-addrs-root (frame->frame frame)))
+       (abs-separate frame)
+       (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path))))
+       (stringp (m1-file->contents (mv-nth 0 (hifat-find-file fs path))))
+       (not
+        (equal
+         (len (explode (m1-file->contents (mv-nth 0 (hifat-find-file fs path)))))
+         (len
+          (explode (abs-file->contents (mv-nth 0 (abs-find-file frame path))))))))
+      (not
+       (hifat-equiv (mv-nth 0 (collapse frame))
+                    fs)))))
+
+  (local
+   (defthm
+     lemma-4
+     (implies
+      (and
+       (mv-nth 1 (collapse frame))
+       (abs-fs-p fs)
+       (m1-file-alist-p fs)
+       (consp (assoc-equal 0 frame))
+       (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+       (frame-p frame)
+       (no-duplicatesp-equal (strip-cars frame))
+       (subsetp-equal (abs-addrs (frame->root frame))
+                      (frame-addrs-root (frame->frame frame)))
+       (abs-separate frame)
+       (abs-complete (abs-file->contents (mv-nth 0 (abs-find-file frame path))))
+       (stringp (m1-file->contents (mv-nth 0 (hifat-find-file fs path))))
+       (not
+        (stringp (abs-file->contents (mv-nth 0 (abs-find-file frame path))))))
+      (not
+       (hifat-equiv (mv-nth 0 (collapse frame))
+                    fs)))))
 
   (local
    (defthmd

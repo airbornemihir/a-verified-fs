@@ -489,11 +489,6 @@
             (abs-complete fs)))
   :hints (("goal" :in-theory (enable abs-addrs m1-file-contents-p abs-complete))))
 
-(defthm abs-complete-of-cdr
-  (implies (abs-complete x) (abs-complete (cdr x)))
-  :hints (("Goal" :in-theory (enable abs-complete abs-addrs)
-           :expand (abs-addrs x))))
-
 (encapsulate
   ()
 
