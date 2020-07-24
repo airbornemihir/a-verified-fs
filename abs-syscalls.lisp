@@ -10682,9 +10682,7 @@
                 (:REWRITE LEN-WHEN-PREFIXP)
                 (:REWRITE CAR-OF-NTHCDR)
                 ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-8))
-          :DO-NOT-INDUCT T)
-         ("Subgoal 2.1"
-          :in-theory (enable abs-find-file-helper abs-disassoc abs-file-alist-p)
+          :DO-NOT-INDUCT T
           :expand
           (ABS-DIRECTORY-FILE-P
            (ABS-FILE
@@ -10696,7 +10694,9 @@
                 (CDR (ASSOC-EQUAL 0
                                   (PARTIAL-COLLAPSE FRAME '("TMP        "))))))))
             (LIST (FIND-NEW-INDEX
-                   (STRIP-CARS (PARTIAL-COLLAPSE FRAME '("TMP        ")))))))))
+                   (STRIP-CARS (PARTIAL-COLLAPSE FRAME '("TMP        "))))))))
+         ("Subgoal 2.1"
+          :in-theory (enable abs-find-file-helper abs-disassoc abs-file-alist-p)))
  :otf-flg t)
 
 (defthm

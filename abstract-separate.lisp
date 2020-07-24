@@ -2093,40 +2093,6 @@
 
 (defthm
   abs-addrs-of-ctx-app-lemma-1
-  (set-equiv
-   (append (abs-addrs (abs-fs-fix abs-file-alist2))
-           (cons (car abs-file-alist1)
-                 (remove-equal x (abs-addrs (cdr abs-file-alist1)))))
-   (cons (car abs-file-alist1)
-         (append (abs-addrs (abs-fs-fix abs-file-alist2))
-                 (remove-equal x (abs-addrs (cdr abs-file-alist1))))))
-  :hints
-  (("goal"
-    :in-theory (disable (:rewrite commutativity-2-of-append-under-set-equiv))
-    :use (:instance (:rewrite commutativity-2-of-append-under-set-equiv)
-                    (z (remove-equal x (abs-addrs (cdr abs-file-alist1))))
-                    (y (abs-addrs (abs-fs-fix abs-file-alist2)))
-                    (x (list (car abs-file-alist1)))))))
-
-(defthm
-  abs-addrs-of-ctx-app-lemma-5
-  (set-equiv
-   (append (abs-addrs (abs-fs-fix abs-file-alist2))
-           (cons 0
-                 (remove-equal x (abs-addrs (cdr abs-file-alist1)))))
-   (cons 0
-         (append (abs-addrs (abs-fs-fix abs-file-alist2))
-                 (remove-equal x (abs-addrs (cdr abs-file-alist1))))))
-  :hints
-  (("goal"
-    :in-theory (disable (:rewrite commutativity-2-of-append-under-set-equiv))
-    :use (:instance (:rewrite commutativity-2-of-append-under-set-equiv)
-                    (z (remove-equal x (abs-addrs (cdr abs-file-alist1))))
-                    (y (abs-addrs (abs-fs-fix abs-file-alist2)))
-                    (x '(0))))))
-
-(defthm
-  abs-addrs-of-ctx-app-lemma-6
   (implies
    (and
     (member-equal

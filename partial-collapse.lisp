@@ -3217,7 +3217,6 @@
          (set-difference-equal (:rewrite abs-addrs-of-ctx-app-list-lemma-1)
                                (:rewrite subsetp-car-member)
                                (:rewrite subsetp-trans)
-                               (:linear len-of-set-difference-when-subsetp)
                                (:rewrite remove-when-absent)
                                (:linear position-equal-ac-when-member)
                                (:rewrite abs-file-alist-p-correctness-1)
