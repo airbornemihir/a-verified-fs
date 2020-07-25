@@ -62,7 +62,15 @@
                         (:rewrite
                          abs-separate-of-frame->frame-of-collapse-this-lemma-7)
                         (:linear 1st-complete-correctness-2)
-                        different-from-own-src-1))))
+                        different-from-own-src-1
+                        (:rewrite m1-file-alist-p-when-subsetp-equal)
+                        (:rewrite stringp-when-nonempty-stringp)
+                        m1-file-alist-p-of-nthcdr
+                        take-of-len-free
+                        nth-when-prefixp
+                        take-of-too-many
+                        len-of-remove-assoc-2
+                        nth-of-take))))
 
 (defund abs-no-dups-file-p (file)
   (declare (xargs :guard t))
@@ -287,12 +295,43 @@
            :induct (path-clear path frame)
            :expand (dist-names dir path frame))))
 
-;; Rename later.
-(defthm collapse-hifat-place-file-lemma-2
+(defthm path-clear-of-remove-assoc
   (implies
    (path-clear path frame)
    (path-clear path (remove-assoc-equal x frame)))
   :hints (("goal" :in-theory (enable path-clear))))
+
+(defthm
+  1st-complete-under-path-when-path-clear-of-prefix
+  (implies (and (fat32-filename-list-p path2)
+                (path-clear path1 frame)
+                (prefixp (fat32-filename-list-fix path1)
+                         (fat32-filename-list-fix path2))
+                (not (fat32-filename-list-equiv path1 path2)))
+           (equal (1st-complete-under-path frame path2)
+                  0))
+  :hints
+  (("goal" :in-theory (e/d (frame-p path-clear
+                                    1st-complete-under-path names-at)
+                           (prefixp-when-equal-lengths len-when-prefixp)))
+   ("subgoal *1/2" :use ((:instance prefixp-when-equal-lengths (x path2)
+                                    (y (fat32-filename-list-fix path1)))
+                         (:instance len-when-prefixp
+                                    (x (fat32-filename-list-fix path1))
+                                    (y path2))
+                         (:instance len-when-prefixp
+                                    (y (fat32-filename-list-fix path1))
+                                    (x path2))))))
+
+(defthm partial-collapse-when-path-clear-of-prefix
+  (implies (and (fat32-filename-list-p path2)
+                (path-clear path1 (frame->frame frame))
+                (prefixp (fat32-filename-list-fix path1)
+                         (fat32-filename-list-fix path2))
+                (not (fat32-filename-list-equiv path1 path2)))
+           (equal (partial-collapse frame path2)
+                  frame))
+  :hints (("Goal" :in-theory (enable partial-collapse))))
 
 (defthm
   hifat-subsetp-of-put-assoc-1
@@ -5757,15 +5796,7 @@
   abs-mkdir-correctness-lemma-197
   (subsetp-equal (abs-addrs (mv-nth 0 (abs-disassoc fs path new-index)))
                  (abs-addrs (abs-fs-fix fs)))
-  :hints (("goal" :in-theory (enable abs-disassoc abs-fs-fix abs-addrs)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (abs-complete (abs-fs-fix fs))
-     (not
-      (consp (abs-addrs (mv-nth 0 (abs-disassoc fs path new-index)))))))))
+  :hints (("goal" :in-theory (enable abs-disassoc abs-fs-fix abs-addrs))))
 
 (encapsulate
   ()
@@ -9410,6 +9441,7 @@
        :bash :bash
        :bash :bash))
 
+    ;; Hypotheses minimised.
     (defthm
       abs-mkdir-correctness-lemma-143
       (implies
@@ -9679,7 +9711,6 @@
                0)
         (frame-reps-fs frame fs)
         (abs-fs-p fs)
-        (m1-file-alist-p fs)
         (consp (assoc-equal 0 frame))
         (atom
          (abs-addrs
@@ -9689,11 +9720,10 @@
             0
             (abs-disassoc
              (frame-val->dir
-              (cdr
-               (assoc-equal
-                (abs-find-file-src (partial-collapse frame (dirname path))
-                                   (dirname path))
-                (partial-collapse frame (dirname path)))))
+              (cdr (assoc-equal
+                    (abs-find-file-src (partial-collapse frame (dirname path))
+                                       (dirname path))
+                    (partial-collapse frame (dirname path)))))
              (nthcdr
               (len
                (frame-val->path
@@ -9742,17 +9772,19 @@
                  (m1-file (dir-ent-install-directory-bit (dir-ent-fix nil)
                                                          t)
                           nil)))))
-      :hints (("goal" :do-not-induct t
-               :in-theory (e/d (abs-mkdir
-                                frame-reps-fs abs-complete
-                                abs-separate-of-frame->frame-of-collapse-this-lemma-10)
-                               ((:rewrite abs-mkdir-correctness-lemma-128)
-                                (:rewrite abs-mkdir-correctness-lemma-177)
-                                (:rewrite abs-no-dups-p-of-remove1-assoc)
-                                (:rewrite frame-addrs-root-of-frame->frame-of-collapse-this-lemma-1)
-                                (:rewrite different-from-own-src-1)
-                                (:rewrite abs-mkdir-correctness-lemma-192)
-                                (:rewrite hifat-equiv-when-absfat-equiv-lemma-1))))))
+      :hints
+      (("goal"
+        :do-not-induct t
+        :in-theory
+        (e/d (abs-mkdir frame-reps-fs abs-complete
+                        abs-separate-of-frame->frame-of-collapse-this-lemma-10)
+             ((:rewrite abs-mkdir-correctness-lemma-128)
+              (:rewrite abs-mkdir-correctness-lemma-177)
+              (:rewrite abs-no-dups-p-of-remove1-assoc)
+              (:rewrite frame-addrs-root-of-frame->frame-of-collapse-this-lemma-1)
+              (:rewrite different-from-own-src-1)
+              (:rewrite abs-mkdir-correctness-lemma-192)
+              (:rewrite hifat-equiv-when-absfat-equiv-lemma-1))))))
 
     (defthm abs-mkdir-correctness-lemma-3
       (abs-fs-p
@@ -10462,28 +10494,6 @@
           (1st-complete-under-path (remove-assoc-equal name frame)
                                    path)))
   :hints (("goal" :in-theory (enable 1st-complete-under-path))))
-
-(defthm
-  1st-complete-under-path-when-path-clear-of-prefix
-  (implies (and (fat32-filename-list-p path2)
-                (path-clear path1 frame)
-                (prefixp (fat32-filename-list-fix path1)
-                         (fat32-filename-list-fix path2))
-                (not (fat32-filename-list-equiv path1 path2)))
-           (equal (1st-complete-under-path frame path2)
-                  0))
-  :hints
-  (("goal" :in-theory (e/d (frame-p path-clear
-                                    1st-complete-under-path names-at)
-                           (prefixp-when-equal-lengths len-when-prefixp)))
-   ("subgoal *1/2" :use ((:instance prefixp-when-equal-lengths (x path2)
-                                    (y (fat32-filename-list-fix path1)))
-                         (:instance len-when-prefixp
-                                    (x (fat32-filename-list-fix path1))
-                                    (y path2))
-                         (:instance len-when-prefixp
-                                    (y (fat32-filename-list-fix path1))
-                                    (x path2))))))
 
 ;; (thm
 ;;  (IMPLIES

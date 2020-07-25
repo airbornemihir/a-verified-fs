@@ -10507,6 +10507,7 @@
    ("subgoal *1/2"
     :expand ((intersection-equal seq (abs-addrs (frame->root frame)))))))
 
+;; Move later.
 (defthm
   frame-addrs-root-of-frame->frame-of-collapse-this-1
   (implies
