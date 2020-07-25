@@ -60,8 +60,6 @@
                          m1-file-alist-p-of-intersection-equal-2)
                         (:rewrite absfat-subsetp-transitivity-lemma-5)
                         (:rewrite
-                         no-duplicatesp-of-seq-this-lemma-1 . 3)
-                        (:rewrite
                          abs-separate-of-frame->frame-of-collapse-this-lemma-7)
                         (:linear 1st-complete-correctness-2)
                         different-from-own-src-1))))
@@ -5807,7 +5805,6 @@
           (:rewrite
            ctx-app-ok-when-absfat-equiv-lemma-4)
           (:rewrite abs-find-file-correctness-lemma-2)
-          (:linear len-of-seq-this-1)
           (:rewrite assoc-after-remove-assoc)
           (:rewrite abs-mkdir-correctness-lemma-14)
           (:definition acl2-number-listp)
