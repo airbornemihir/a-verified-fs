@@ -1043,7 +1043,7 @@
             (cdr frame))
      head-error-code)))
 
-(defund abs-disassoc (fs path new-index)
+(defund abs-alloc (fs path new-index)
   (declare (xargs :guard
                   (and (fat32-filename-list-p path)
                        (abs-fs-p fs)
@@ -1063,7 +1063,7 @@
                   (not (abs-directory-file-p (cdr alist-elem)))))
         (mv nil fs))
        ((mv x y)
-        (abs-disassoc
+        (abs-alloc
          (abs-file->contents (cdr alist-elem))
          (cdr path)
          new-index)))
@@ -1077,66 +1077,66 @@
          fs))))
 
 (defthm
-   abs-fs-p-of-abs-disassoc-1
-   (abs-fs-p (mv-nth 1 (abs-disassoc fs path new-index)))
-   :hints (("Goal" :in-theory (enable abs-disassoc abs-file-alist-p abs-no-dups-p abs-fs-p)
-            :induct (abs-disassoc fs path new-index))))
+   abs-fs-p-of-abs-alloc-1
+   (abs-fs-p (mv-nth 1 (abs-alloc fs path new-index)))
+   :hints (("Goal" :in-theory (enable abs-alloc abs-file-alist-p abs-no-dups-p abs-fs-p)
+            :induct (abs-alloc fs path new-index))))
 
-(defthm abs-fs-p-of-abs-disassoc-2
-  (abs-fs-p (mv-nth 0 (abs-disassoc fs path new-index)))
-  :hints (("goal" :in-theory (enable abs-disassoc)
-           :induct (abs-disassoc fs path new-index))))
+(defthm abs-fs-p-of-abs-alloc-2
+  (abs-fs-p (mv-nth 0 (abs-alloc fs path new-index)))
+  :hints (("goal" :in-theory (enable abs-alloc)
+           :induct (abs-alloc fs path new-index))))
 
-(verify-guards abs-disassoc)
+(verify-guards abs-alloc)
 
-(defthmd abs-disassoc-of-fat32-filename-list-fix
-  (equal (abs-disassoc fs (fat32-filename-list-fix path)
+(defthmd abs-alloc-of-fat32-filename-list-fix
+  (equal (abs-alloc fs (fat32-filename-list-fix path)
                        new-index)
-         (abs-disassoc fs path new-index))
-  :hints (("goal" :in-theory (enable abs-disassoc))))
+         (abs-alloc fs path new-index))
+  :hints (("goal" :in-theory (enable abs-alloc))))
 
-(defthm abs-disassoc-when-not-natp
+(defthm abs-alloc-when-not-natp
   (implies (not (natp new-index))
-           (equal (abs-disassoc fs path new-index)
-                  (abs-disassoc fs path 0)))
-  :hints (("Goal" :in-theory (enable abs-disassoc))))
+           (equal (abs-alloc fs path new-index)
+                  (abs-alloc fs path 0)))
+  :hints (("Goal" :in-theory (enable abs-alloc))))
 
 (defcong
   fat32-filename-list-equiv equal
-  (abs-disassoc fs path new-index)
+  (abs-alloc fs path new-index)
   2
   :hints
   (("goal"
-    :use (abs-disassoc-of-fat32-filename-list-fix
-          (:instance abs-disassoc-of-fat32-filename-list-fix
+    :use (abs-alloc-of-fat32-filename-list-fix
+          (:instance abs-alloc-of-fat32-filename-list-fix
                      (path path-equiv))))))
 
 (defcong nat-equiv equal
-  (abs-disassoc fs path new-index)
+  (abs-alloc fs path new-index)
   3
-  :hints (("goal" :in-theory (enable abs-disassoc))))
+  :hints (("goal" :in-theory (enable abs-alloc))))
 
-(defthm abs-disassoc-correctness-1
+(defthm abs-alloc-correctness-1
   (implies (and (not (member-equal (nfix new-index)
                                    (abs-addrs (abs-fs-fix fs))))
-                (equal (mv-nth 1 (abs-disassoc fs path new-index))
+                (equal (mv-nth 1 (abs-alloc fs path new-index))
                        (abs-fs-fix fs)))
-           (equal (mv-nth 0 (abs-disassoc fs path new-index))
+           (equal (mv-nth 0 (abs-alloc fs path new-index))
                   nil))
-  :hints (("goal" :in-theory (enable abs-disassoc))))
+  :hints (("goal" :in-theory (enable abs-alloc))))
 
-(defthm ctx-app-of-abs-disassoc
-  (equal (ctx-app (mv-nth 1 (abs-disassoc fs path new-index))
-                  (mv-nth 0 (abs-disassoc fs path new-index))
+(defthm ctx-app-of-abs-alloc
+  (equal (ctx-app (mv-nth 1 (abs-alloc fs path new-index))
+                  (mv-nth 0 (abs-alloc fs path new-index))
                   new-index path)
          (abs-fs-fix fs))
-  :hints (("goal" :in-theory (enable ctx-app abs-disassoc abs-fs-fix)
+  :hints (("goal" :in-theory (enable ctx-app abs-alloc abs-fs-fix)
            :expand (ctx-app fs nil new-index path))))
 
-(defthm abs-disassoc-of-abs-fs-fix
-  (equal (abs-disassoc (abs-fs-fix fs) path new-index)
-         (abs-disassoc fs path new-index))
-  :hints (("Goal" :in-theory (enable abs-disassoc))))
+(defthm abs-alloc-of-abs-fs-fix
+  (equal (abs-alloc (abs-fs-fix fs) path new-index)
+         (abs-alloc fs path new-index))
+  :hints (("Goal" :in-theory (enable abs-alloc))))
 
 (encapsulate
   ()
@@ -1147,11 +1147,11 @@
      (implies
       (and (abs-fs-p fs) (natp new-index))
       (equal
-       (names-at (mv-nth 1 (abs-disassoc fs path new-index))
+       (names-at (mv-nth 1 (abs-alloc fs path new-index))
                  relpath)
        (cond
         ((or
-          (equal (mv-nth 1 (abs-disassoc fs path new-index))
+          (equal (mv-nth 1 (abs-alloc fs path new-index))
                  fs)
           (not (fat32-filename-list-prefixp path relpath)))
          (names-at fs relpath))
@@ -1161,7 +1161,7 @@
        :in-theory
        (e/d
         (abs-top-addrs names-at
-                       abs-disassoc fat32-filename-list-fix
+                       abs-alloc fat32-filename-list-fix
                        abs-fs-p abs-file-alist-p abs-no-dups-p)
         ((:rewrite abs-fs-p-correctness-1)
          (:rewrite abs-no-dups-p-of-put-assoc-equal)
@@ -1187,13 +1187,13 @@
                    (names-at fs relpath))
        :expand
        ((:free (fs) (names-at fs relpath))
-        (abs-disassoc fs path new-index)
+        (abs-alloc fs path new-index)
         (:with
          abs-file-contents-fix-when-abs-file-contents-p
          (abs-file-contents-fix
           (mv-nth
            1
-           (abs-disassoc
+           (abs-alloc
             (abs-file->contents
              (cdr
               (assoc-equal (fat32-filename-fix (car path))
@@ -1202,12 +1202,12 @@
             new-index)))))))))
 
   (defthm
-    names-at-of-abs-disassoc-1
+    names-at-of-abs-alloc-1
     (equal
-     (names-at (mv-nth 1 (abs-disassoc fs path new-index))
+     (names-at (mv-nth 1 (abs-alloc fs path new-index))
                relpath)
      (if
-      (or (equal (mv-nth 1 (abs-disassoc fs path new-index))
+      (or (equal (mv-nth 1 (abs-alloc fs path new-index))
                  (abs-fs-fix fs))
           (not (fat32-filename-list-prefixp path relpath)))
       (names-at fs relpath)
@@ -1216,31 +1216,31 @@
     (("goal" :use (:instance lemma (fs (abs-fs-fix fs))
                              (new-index (nfix new-index)))))))
 
-(defthm dist-names-of-abs-disassoc-1
+(defthm dist-names-of-abs-alloc-1
   (implies (dist-names fs relpath frame)
-           (dist-names (mv-nth 1 (abs-disassoc fs path new-index))
+           (dist-names (mv-nth 1 (abs-alloc fs path new-index))
                        relpath frame))
   :hints (("goal" :in-theory (enable dist-names))))
 
 (defthm
-  subsetp-of-abs-addrs-of-abs-disassoc-1
+  subsetp-of-abs-addrs-of-abs-alloc-1
   (implies
    (and (member-equal (nfix new-index) y)
         (subsetp-equal (abs-addrs (abs-fs-fix fs))
                        y))
-   (subsetp-equal (abs-addrs (mv-nth 1 (abs-disassoc fs path new-index)))
+   (subsetp-equal (abs-addrs (mv-nth 1 (abs-alloc fs path new-index)))
                   y))
-  :hints (("goal" :in-theory (enable abs-disassoc)
+  :hints (("goal" :in-theory (enable abs-alloc)
            :expand (abs-addrs (list new-index)))))
 
 (defthm
-  names-at-of-abs-disassoc-lemma-1
+  names-at-of-abs-alloc-lemma-1
   (implies
    (not
     (equal
      (mv-nth
       1
-      (abs-disassoc (abs-file->contents
+      (abs-alloc (abs-file->contents
                      (cdr (assoc-equal (fat32-filename-fix (car path))
                                        fs)))
                     (cdr path)
@@ -1256,7 +1256,7 @@
         (cdr (assoc-equal (fat32-filename-fix (car path))
                           fs)))
        (mv-nth 1
-               (abs-disassoc
+               (abs-alloc
                 (abs-file->contents
                  (cdr (assoc-equal (fat32-filename-fix (car path))
                                    fs)))
@@ -1277,7 +1277,7 @@
         (cdr (assoc-equal (fat32-filename-fix (car path))
                           fs)))
        (mv-nth 1
-               (abs-disassoc
+               (abs-alloc
                 (abs-file->contents
                  (cdr (assoc-equal (fat32-filename-fix (car path))
                                    fs)))
@@ -1292,9 +1292,9 @@
    (defthmd
      lemma
      (implies (abs-fs-p fs)
-              (equal (names-at (mv-nth 0 (abs-disassoc fs path new-index))
+              (equal (names-at (mv-nth 0 (abs-alloc fs path new-index))
                                relpath)
-                     (if (equal (mv-nth 1 (abs-disassoc fs path new-index))
+                     (if (equal (mv-nth 1 (abs-alloc fs path new-index))
                                 (abs-fs-fix fs))
                          nil
                          (names-at fs (append path relpath)))))
@@ -1302,7 +1302,7 @@
      (("goal"
        :in-theory
        (e/d (abs-top-addrs names-at
-                           abs-disassoc fat32-filename-list-fix
+                           abs-alloc fat32-filename-list-fix
                            abs-fs-p abs-file-alist-p abs-no-dups-p)
             ((:rewrite abs-fs-p-correctness-1)
              (:rewrite abs-no-dups-p-of-put-assoc-equal)
@@ -1324,7 +1324,7 @@
              (:rewrite member-of-abs-fs-fix-when-natp)
              (:rewrite abs-file-contents-p-when-m1-file-contents-p)
              (:rewrite fat32-filename-fix-when-fat32-filename-p)))
-       :induct (abs-disassoc fs path new-index)
+       :induct (abs-alloc fs path new-index)
        :expand
        (:with
         (:rewrite put-assoc-equal-without-change . 1)
@@ -1337,7 +1337,7 @@
                               fs)))
            (mv-nth
             1
-            (abs-disassoc
+            (abs-alloc
              (abs-file->contents
               (cdr (assoc-equal (fat32-filename-fix (car path))
                                 fs)))
@@ -1347,9 +1347,9 @@
          fs))))))
 
   (defthm
-    names-at-of-abs-disassoc-2
-    (equal (names-at (mv-nth 0 (abs-disassoc fs path new-index)) relpath)
-           (if (equal (mv-nth 1 (abs-disassoc fs path new-index)) (abs-fs-fix fs))
+    names-at-of-abs-alloc-2
+    (equal (names-at (mv-nth 0 (abs-alloc fs path new-index)) relpath)
+           (if (equal (mv-nth 1 (abs-alloc fs path new-index)) (abs-fs-fix fs))
                nil
              (names-at fs (append path relpath))))
     :hints
@@ -1360,11 +1360,132 @@
        (fs (abs-fs-fix fs)))))))
 
 (defthm
-  no-duplicatesp-of-abs-addrs-of-abs-disassoc-1
+  no-duplicatesp-of-abs-addrs-of-abs-alloc-1
   (implies (no-duplicatesp-equal (abs-addrs (abs-fs-fix fs)))
            (no-duplicatesp-equal
-            (abs-addrs (mv-nth 0 (abs-disassoc fs path new-index)))))
-  :hints (("goal" :in-theory (enable abs-disassoc abs-fs-fix abs-addrs))))
+            (abs-addrs (mv-nth 0 (abs-alloc fs path new-index)))))
+  :hints (("goal" :in-theory (enable abs-alloc abs-fs-fix abs-addrs))))
+
+(defthm
+  addrs-at-of-abs-alloc-1
+  (equal (addrs-at (mv-nth 1 (abs-alloc fs path new-index))
+                   relpath)
+         (cond ((or (equal (mv-nth 1 (abs-alloc fs path new-index))
+                           (abs-fs-fix fs))
+                    (not (fat32-filename-list-prefixp path relpath)))
+                (addrs-at (abs-fs-fix fs) relpath))
+               ((fat32-filename-list-equiv relpath path)
+                (list (nfix new-index)))
+               (t nil)))
+  :hints
+  (("goal"
+    :in-theory (e/d (abs-top-addrs addrs-at abs-fs-fix
+                                   abs-alloc fat32-filename-list-fix
+                                   fat32-filename-list-equiv
+                                   fat32-filename-equiv
+                                   abs-fs-p abs-file-alist-p abs-no-dups-p)
+                    ((:rewrite abs-no-dups-p-of-put-assoc-equal)
+                     (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-1)
+                     (:rewrite abs-fs-p-when-hifat-no-dups-p)
+                     (:rewrite hifat-find-file-correctness-1-lemma-1)
+                     (:rewrite consp-of-assoc-of-abs-fs-fix)
+                     (:rewrite abs-file->contents-when-m1-file-p)
+                     (:rewrite subsetp-when-prefixp)
+                     (:rewrite
+                      m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+                     (:rewrite abs-file-alist-p-correctness-1)
+                     (:rewrite abs-no-dups-p-when-m1-file-alist-p)
+                     (:rewrite
+                      abs-file-alist-p-when-m1-file-alist-p)
+                     (:rewrite abs-alloc-correctness-1)
+                     (:rewrite
+                      abs-fs-fix-of-put-assoc-equal-lemma-3)
+                     (:rewrite abs-no-dups-p-of-cdr)
+                     (:rewrite abs-addrs-of-put-assoc-lemma-1)
+                     (:rewrite abs-addrs-when-m1-file-alist-p)
+                     (:rewrite
+                      abs-fs-fix-of-put-assoc-equal-lemma-2)
+                     (:rewrite abs-file-alist-p-of-cdr)))
+    :induct (mv (fat32-filename-list-prefixp path relpath)
+                (addrs-at fs relpath))
+    :expand ((:free (fs) (addrs-at fs relpath))
+             (abs-alloc fs path new-index)))))
+
+(defthm ctx-app-ok-of-abs-alloc-1
+  (implies
+   ;; This clause becomes a test for path's existence...
+   (not (equal (mv-nth 1 (abs-alloc fs path new-index))
+               (abs-fs-fix fs)))
+   (ctx-app-ok (mv-nth 1 (abs-alloc fs path new-index))
+               new-index path))
+  :hints (("goal" :in-theory (enable ctx-app-ok))))
+
+(defthm
+  no-duplicatesp-of-abs-addrs-of-abs-alloc-lemma-1
+  (implies
+   (not (intersectp-equal y (abs-addrs (abs-fs-fix fs))))
+   (not
+    (intersectp-equal
+     y
+     (abs-addrs (remove-assoc-equal (fat32-filename-fix (car path))
+                                    (abs-fs-fix fs)))))))
+
+(defthm
+  no-duplicatesp-of-abs-addrs-of-abs-alloc-lemma-2
+  (implies
+   (and (not (member-equal (nfix new-index) y))
+        (not (intersectp-equal y (abs-addrs (abs-fs-fix fs)))))
+   (not (intersectp-equal
+         y
+         (abs-addrs (mv-nth 1
+                            (abs-alloc fs path new-index))))))
+  :hints (("goal" :in-theory (enable abs-alloc abs-addrs)
+           :induct (abs-alloc fs path new-index))))
+
+(defthm
+  no-duplicatesp-of-abs-addrs-of-abs-alloc-lemma-3
+  (implies
+   (and (abs-directory-file-p (cdr (assoc-equal name fs)))
+        (no-duplicatesp-equal (abs-addrs fs)))
+   (not (intersectp-equal
+         (abs-addrs (remove-assoc-equal name fs))
+         (abs-addrs (abs-file->contents (cdr (assoc-equal name fs)))))))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm
+  no-duplicatesp-of-abs-addrs-of-abs-alloc-2
+  (implies (and (no-duplicatesp-equal (abs-addrs (abs-fs-fix fs)))
+                (not (member-equal (nfix new-index)
+                                   (abs-addrs (abs-fs-fix fs)))))
+           (no-duplicatesp-equal
+            (abs-addrs (mv-nth 1
+                               (abs-alloc fs path new-index)))))
+  :hints (("goal" :in-theory (e/d
+                              (abs-alloc abs-addrs)
+                              ((:REWRITE ABS-ADDRS-OF-REMOVE-ASSOC)
+                               (:REWRITE COMMUTATIVITY-OF-APPEND-UNDER-SET-EQUIV)
+                               (:REWRITE INTERSECT-EQUAL-OF-CONS-LEFT)
+                               (:REWRITE INTERSECT-WITH-SUBSET . 11)
+                               (:REWRITE INTERSECT-WITH-SUBSET . 12)
+                               (:REWRITE INTERSECTP-EQUAL-OF-ATOM-LEFT)
+                               (:REWRITE INTERSECTP-EQUAL-OF-ATOM-RIGHT)
+                               (:REWRITE INTERSECTP-IS-COMMUTATIVE)
+                               (:REWRITE LIST-EQUIV-WHEN-TRUE-LISTP)
+                               (:REWRITE MEMBER-OF-CONS)
+                               (:REWRITE MEMBER-WHEN-ATOM)
+                               (:REWRITE PREFIXP-WHEN-EQUAL-LENGTHS)
+                               (:REWRITE SET-DIFFERENCE$-WHEN-NOT-INTERSECTP)
+                               (:REWRITE SUBSETP-CAR-MEMBER)
+                               (:REWRITE SUBSETP-MEMBER . 3)
+                               (:REWRITE SUBSETP-OF-CDR)
+                               (:REWRITE SUBSETP-WHEN-PREFIXP)
+                               (:REWRITE TRUE-LIST-FIX-WHEN-TRUE-LISTP)
+                               (:TYPE-PRESCRIPTION ABS-ADDRS)
+                               (:TYPE-PRESCRIPTION ABS-ALLOC)
+                               (:TYPE-PRESCRIPTION ABS-FS-FIX)
+                               (:TYPE-PRESCRIPTION CTX-APP-LIST-WHEN-SET-EQUIV-LEMMA-4)
+                               (:TYPE-PRESCRIPTION SET-DIFFERENCE-EQUAL)))
+           :induct (abs-alloc fs path new-index))))
 
 (defthm abs-mkdir-guard-lemma-1
   (implies (consp (assoc-equal 0 frame))
@@ -1555,9 +1676,9 @@
        ;; It's not even a matter of removing that thing - we need to leave a
        ;; body address in its place...
        ((mv var new-src-dir)
-        (abs-disassoc (frame-val->dir (cdr (assoc-equal src frame)))
-                      (nthcdr (len (frame-val->path (cdr (assoc-equal src frame)))) dirname)
-                      new-index))
+        (abs-alloc (frame-val->dir (cdr (assoc-equal src frame)))
+                   (nthcdr (len (frame-val->path (cdr (assoc-equal src frame)))) dirname)
+                   new-index))
        ;; Check somewhere that (basename path) is not already present...
        ((unless (consp path)) (mv frame -1 *enoent*))
        ((when (consp (abs-assoc (basename path) var))) (mv frame -1 *eexist*))
@@ -1667,61 +1788,6 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable frame->root))))
 
-(defthm
-  addrs-at-of-abs-disassoc-1
-  (equal (addrs-at (mv-nth 1 (abs-disassoc fs path new-index))
-                   relpath)
-         (cond ((or (equal (mv-nth 1 (abs-disassoc fs path new-index))
-                           (abs-fs-fix fs))
-                    (not (fat32-filename-list-prefixp path relpath)))
-                (addrs-at (abs-fs-fix fs) relpath))
-               ((fat32-filename-list-equiv relpath path)
-                (list (nfix new-index)))
-               (t nil)))
-  :hints
-  (("goal"
-    :in-theory (e/d (abs-top-addrs addrs-at abs-fs-fix
-                                   abs-disassoc fat32-filename-list-fix
-                                   fat32-filename-list-equiv
-                                   fat32-filename-equiv
-                                   abs-fs-p abs-file-alist-p abs-no-dups-p)
-                    ((:rewrite abs-no-dups-p-of-put-assoc-equal)
-                     (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-1)
-                     (:rewrite abs-fs-p-when-hifat-no-dups-p)
-                     (:rewrite hifat-find-file-correctness-1-lemma-1)
-                     (:rewrite consp-of-assoc-of-abs-fs-fix)
-                     (:rewrite abs-file->contents-when-m1-file-p)
-                     (:rewrite subsetp-when-prefixp)
-                     (:rewrite
-                      m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-                     (:rewrite abs-file-alist-p-correctness-1)
-                     (:rewrite abs-no-dups-p-when-m1-file-alist-p)
-                     (:rewrite
-                      abs-file-alist-p-when-m1-file-alist-p)
-                     (:rewrite abs-disassoc-correctness-1)
-                     (:rewrite
-                      abs-fs-fix-of-put-assoc-equal-lemma-3)
-                     (:rewrite abs-no-dups-p-of-cdr)
-                     (:rewrite abs-addrs-of-put-assoc-lemma-1)
-                     (:rewrite abs-addrs-when-m1-file-alist-p)
-                     (:rewrite
-                      abs-fs-fix-of-put-assoc-equal-lemma-2)
-                     (:rewrite abs-file-alist-p-of-cdr)))
-    :induct (mv (fat32-filename-list-prefixp path relpath)
-                (addrs-at fs relpath))
-    :expand ((:free (fs) (addrs-at fs relpath))
-             (abs-disassoc fs path new-index)))))
-
-
-(defthm ctx-app-ok-of-abs-disassoc-1
-  (implies
-   ;; This clause becomes a test for path's existence...
-   (not (equal (mv-nth 1 (abs-disassoc fs path new-index))
-               (abs-fs-fix fs)))
-   (ctx-app-ok (mv-nth 1 (abs-disassoc fs path new-index))
-               new-index path))
-  :hints (("goal" :in-theory (enable ctx-app-ok))))
-
 (defthm abs-mkdir-correctness-lemma-12
   (equal (frame->frame (put-assoc-equal 0 val frame))
          (frame->frame frame))
@@ -1815,86 +1881,6 @@
 
 (defthm
   abs-mkdir-correctness-lemma-20
-  (implies
-   (not (intersectp-equal y (abs-addrs (abs-fs-fix fs))))
-   (not
-    (intersectp-equal
-     y
-     (abs-addrs (remove-assoc-equal (fat32-filename-fix (car path))
-                                    (abs-fs-fix fs)))))))
-
-(defthm
-  abs-mkdir-correctness-lemma-21
-  (implies
-   (and (not (member-equal (nfix new-index) y))
-        (not (intersectp-equal y (abs-addrs (abs-fs-fix fs)))))
-   (not (intersectp-equal
-         y
-         (abs-addrs (mv-nth 1
-                            (abs-disassoc fs path new-index))))))
-  :hints (("goal" :in-theory (enable abs-disassoc abs-addrs)
-           :induct (abs-disassoc fs path new-index))))
-
-(defthm
-  abs-mkdir-correctness-lemma-22
-  (implies
-   (and (abs-directory-file-p (cdr (assoc-equal name fs)))
-        (no-duplicatesp-equal (abs-addrs fs)))
-   (not (intersectp-equal
-         (abs-addrs (remove-assoc-equal name fs))
-         (abs-addrs (abs-file->contents (cdr (assoc-equal name fs)))))))
-  :hints (("goal" :in-theory (enable abs-addrs))))
-
-(defthm
-  abs-mkdir-correctness-lemma-23
-  (implies (and (no-duplicatesp-equal (abs-addrs (abs-fs-fix fs)))
-                (not (member-equal (nfix new-index)
-                                   (abs-addrs (abs-fs-fix fs)))))
-           (no-duplicatesp-equal
-            (abs-addrs (mv-nth 1
-                               (abs-disassoc fs path new-index)))))
-  :hints (("goal" :in-theory (e/d
-                              (abs-disassoc abs-addrs)
-                              ((:CONGRUENCE SET-EQUIV-IMPLIES-EQUAL-INTERSECTP-1)
-                               (:CONGRUENCE SET-EQUIV-IMPLIES-EQUAL-SET-DIFFERENCE-EQUAL-2)
-                               (:DEFINITION ENDP)
-                               (:DEFINITION TRUE-LISTP)
-                               (:ELIM CAR-CDR-ELIM)
-                               (:EXECUTABLE-COUNTERPART CONSP)
-                               (:EXECUTABLE-COUNTERPART LEN)
-                               (:EXECUTABLE-COUNTERPART NATP)
-                               (:EXECUTABLE-COUNTERPART UNARY--)
-                               (:INDUCTION ABS-ADDRS)
-                               (:INDUCTION MEMBER-EQUAL)
-                               (:INDUCTION NO-DUPLICATESP-EQUAL)
-                               (:INDUCTION TRUE-LISTP)
-                               (:REWRITE ABS-ADDRS-OF-REMOVE-ASSOC)
-                               (:REWRITE COMMUTATIVITY-OF-APPEND-UNDER-SET-EQUIV)
-                               (:REWRITE INTERSECT-EQUAL-OF-CONS-LEFT)
-                               (:REWRITE INTERSECT-WITH-SUBSET . 11)
-                               (:REWRITE INTERSECT-WITH-SUBSET . 12)
-                               (:REWRITE INTERSECTP-EQUAL-OF-ATOM-LEFT)
-                               (:REWRITE INTERSECTP-EQUAL-OF-ATOM-RIGHT)
-                               (:REWRITE INTERSECTP-IS-COMMUTATIVE)
-                               (:REWRITE LIST-EQUIV-WHEN-TRUE-LISTP)
-                               (:REWRITE MEMBER-OF-CONS)
-                               (:REWRITE MEMBER-WHEN-ATOM)
-                               (:REWRITE PREFIXP-WHEN-EQUAL-LENGTHS)
-                               (:REWRITE SET-DIFFERENCE$-WHEN-NOT-INTERSECTP)
-                               (:REWRITE SUBSETP-CAR-MEMBER)
-                               (:REWRITE SUBSETP-MEMBER . 3)
-                               (:REWRITE SUBSETP-OF-CDR)
-                               (:REWRITE SUBSETP-WHEN-PREFIXP)
-                               (:REWRITE TRUE-LIST-FIX-WHEN-TRUE-LISTP)
-                               (:TYPE-PRESCRIPTION ABS-ADDRS)
-                               (:TYPE-PRESCRIPTION ABS-DISASSOC)
-                               (:TYPE-PRESCRIPTION ABS-FS-FIX)
-                               (:TYPE-PRESCRIPTION CTX-APP-LIST-WHEN-SET-EQUIV-LEMMA-4)
-                               (:TYPE-PRESCRIPTION SET-DIFFERENCE-EQUAL)))
-           :induct (abs-disassoc fs path new-index))))
-
-(defthm
-  abs-mkdir-correctness-lemma-24
   (ctx-app-ok
    (list (find-new-index
           (strip-cars (partial-collapse frame (dirname path)))))
@@ -2261,7 +2247,7 @@
           frame)))
        (mv-nth
         1
-        (abs-disassoc
+        (abs-alloc
          (frame-val->dir
           (cdr
            (assoc-equal
@@ -2315,7 +2301,7 @@
              frame)))
           (mv-nth
            1
-           (abs-disassoc
+           (abs-alloc
             (frame-val->dir
              (cdr
               (assoc-equal
@@ -2433,12 +2419,12 @@
         (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs path)))
         (not (member-equal (nfix new-index)
                            (abs-addrs (abs-fs-fix fs)))))
-   (not (equal (mv-nth 1 (abs-disassoc fs path new-index))
+   (not (equal (mv-nth 1 (abs-alloc fs path new-index))
                (abs-fs-fix fs))))
   :hints
   (("goal"
     :in-theory
-    (e/d (abs-find-file-helper abs-disassoc fat32-filename-list-fix)
+    (e/d (abs-find-file-helper abs-alloc fat32-filename-list-fix)
          (ctx-app-ok-when-abs-complete-lemma-2 nfix))
     :expand
     ((:with
@@ -2450,7 +2436,7 @@
                   (list (nfix new-index)))
         fs)
        fs))
-     (abs-disassoc fs path new-index)
+     (abs-alloc fs path new-index)
      (abs-file-contents-fix (list (nfix new-index))))
     :induct (abs-find-file-helper fs path))
    ("subgoal *1/1"
@@ -2466,7 +2452,7 @@
           (not (member-equal (nfix new-index)
                              (abs-addrs (abs-fs-fix fs))))
           (abs-fs-p fs))
-     (not (equal (mv-nth 1 (abs-disassoc fs path new-index))
+     (not (equal (mv-nth 1 (abs-alloc fs path new-index))
                  fs))))))
 
 (defthm
@@ -2768,17 +2754,17 @@
   abs-mkdir-correctness-lemma-56
   (equal (consp (assoc-equal x
                              (mv-nth 0
-                                     (abs-disassoc fs path new-index))))
+                                     (abs-alloc fs path new-index))))
          (if (member-equal x (names-at fs path))
              t nil))
-  :hints (("goal" :in-theory (enable abs-disassoc names-at)
-           :induct (abs-disassoc fs path new-index)))
+  :hints (("goal" :in-theory (enable abs-alloc names-at)
+           :induct (abs-alloc fs path new-index)))
   :rule-classes
   ((:rewrite
     :corollary
     (iff (consp (assoc-equal x
                                (mv-nth 0
-                                       (abs-disassoc fs path new-index))))
+                                       (abs-alloc fs path new-index))))
          (member-equal x (names-at fs path))))))
 
 (defthm
@@ -3920,7 +3906,7 @@
                                       abs-find-file-after-abs-mkdir-lemma-1
                                       abs-find-file-after-abs-mkdir-lemma-4
                                       len-when-consp
-                                      fat32-filename-list-fix abs-disassoc)
+                                      fat32-filename-list-fix abs-alloc)
                            (abs-mkdir-correctness-lemma-50
                             (:definition nth)
                             (:definition true-listp)
@@ -4045,7 +4031,7 @@
                                abs-find-file-after-abs-mkdir-lemma-1
                                abs-find-file-after-abs-mkdir-lemma-4
                                len-when-consp fat32-filename-list-fix
-                               abs-disassoc abs-fs-fix)
+                               abs-alloc abs-fs-fix)
                     (abs-find-file-after-abs-mkdir-lemma-3
                      abs-find-file-src-correctness-2
                      (:definition nth)
@@ -4072,16 +4058,16 @@
   (implies
    (and (fat32-filename-list-prefixp x y)
         (not (fat32-filename-list-equiv x y))
-        (not (equal (mv-nth 1 (abs-disassoc fs x new-index))
+        (not (equal (mv-nth 1 (abs-alloc fs x new-index))
                     (abs-fs-fix fs))))
-   (equal (abs-find-file-helper (mv-nth 1 (abs-disassoc fs x new-index))
+   (equal (abs-find-file-helper (mv-nth 1 (abs-alloc fs x new-index))
                                 y)
           (mv (abs-file-fix nil) *enoent*)))
   :hints (("goal" :in-theory (enable abs-find-file-helper
-                                     abs-disassoc fat32-filename-list-fix
+                                     abs-alloc fat32-filename-list-fix
                                      fat32-filename-list-equiv
                                      fat32-filename-list-prefixp abs-fs-fix)
-           :induct (mv (abs-disassoc fs x new-index)
+           :induct (mv (abs-alloc fs x new-index)
                        (fat32-filename-list-prefixp x y)))))
 
 (defthm
@@ -4119,7 +4105,7 @@
     (equal
      (mv-nth
       1
-      (abs-disassoc
+      (abs-alloc
        (frame-val->dir
         (cdr (assoc-equal 0
                           (partial-collapse frame (dirname path)))))
@@ -4173,7 +4159,7 @@
     (abs-find-file-helper
      (mv-nth
       1
-      (abs-disassoc
+      (abs-alloc
        (frame-val->dir
         (cdr
          (assoc-equal 0
@@ -4205,7 +4191,7 @@
       (fs
        (mv-nth
         1
-        (abs-disassoc
+        (abs-alloc
          (frame-val->dir
           (cdr
            (assoc-equal
@@ -4324,7 +4310,7 @@
                                       abs-find-file-after-abs-mkdir-lemma-1
                                       abs-find-file-after-abs-mkdir-lemma-4
                                       len-when-consp fat32-filename-list-fix
-                                      abs-disassoc abs-fs-fix)
+                                      abs-alloc abs-fs-fix)
                            (abs-mkdir-correctness-lemma-50
                             (:definition nth)
                             (:definition true-listp)
@@ -4334,7 +4320,7 @@
                             (:rewrite abs-find-file-correctness-lemma-2)
                             (:rewrite
                              abs-find-file-helper-when-m1-file-alist-p)
-                            (:rewrite abs-disassoc-correctness-1)
+                            (:rewrite abs-alloc-correctness-1)
                             (:rewrite abs-fs-p-when-hifat-no-dups-p)
                             (:rewrite abs-file-alist-p-correctness-1)
                             (:rewrite consp-of-nthcdr)
@@ -4349,7 +4335,7 @@
   :otf-flg t)
 
 ;; Taking this together with abs-mkdir-correctness-lemma-47, it can be
-;; determined how the abs-disassoc is going to turn out...
+;; determined how the abs-alloc is going to turn out...
 (defthm
   abs-mkdir-correctness-lemma-73
   (implies
@@ -4360,12 +4346,12 @@
       (zp (mv-nth 1 (abs-find-file-helper fs path)))
       (abs-directory-file-p (mv-nth 0
                                     (abs-find-file-helper fs path))))))
-   (equal (mv-nth 1 (abs-disassoc fs path new-index))
+   (equal (mv-nth 1 (abs-alloc fs path new-index))
           (abs-fs-fix fs)))
   :hints
   (("goal"
     :in-theory
-    (e/d (abs-find-file-helper abs-disassoc fat32-filename-list-fix)
+    (e/d (abs-find-file-helper abs-alloc fat32-filename-list-fix)
          (ctx-app-ok-when-abs-complete-lemma-2 nfix))
     :expand
     ((:with
@@ -4377,7 +4363,7 @@
                   (list (nfix new-index)))
         fs)
        fs))
-     (abs-disassoc fs path new-index)
+     (abs-alloc fs path new-index)
      (abs-file-contents-fix (list (nfix new-index))))
     :induct (abs-find-file-helper fs path))))
 
@@ -4472,7 +4458,7 @@
     (equal
      (mv-nth
       1
-      (abs-disassoc
+      (abs-alloc
        (frame-val->dir
         (cdr
          (assoc-equal
@@ -4698,7 +4684,7 @@
      (equal
       (mv-nth
        1
-       (abs-disassoc
+       (abs-alloc
         (frame-val->dir
          (cdr
           (assoc-equal 0
@@ -5788,15 +5774,15 @@
   (implies
    (and (zp (mv-nth 1 (abs-find-file-helper fs path)))
         (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs path))))
-   (equal (mv-nth 0 (abs-disassoc fs path new-index))
+   (equal (mv-nth 0 (abs-alloc fs path new-index))
           (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path)))))
-  :hints (("goal" :in-theory (enable abs-disassoc abs-find-file-helper))))
+  :hints (("goal" :in-theory (enable abs-alloc abs-find-file-helper))))
 
 (defthm
   abs-mkdir-correctness-lemma-197
-  (subsetp-equal (abs-addrs (mv-nth 0 (abs-disassoc fs path new-index)))
+  (subsetp-equal (abs-addrs (mv-nth 0 (abs-alloc fs path new-index)))
                  (abs-addrs (abs-fs-fix fs)))
-  :hints (("goal" :in-theory (enable abs-disassoc abs-fs-fix abs-addrs))))
+  :hints (("goal" :in-theory (enable abs-alloc abs-fs-fix abs-addrs))))
 
 (encapsulate
   ()
@@ -5806,7 +5792,7 @@
     (e/d (collapse ctx-app 1st-complete
                    collapse-this hifat-place-file
                    hifat-find-file
-                   abs-disassoc
+                   abs-alloc
                    abs-mkdir-correctness-lemma-16
                    assoc-equal-of-frame-with-root
                    abs-separate dist-names abs-fs-fix
@@ -5993,7 +5979,7 @@
           fat32-filename-list-fix-when-zp-len
           (:rewrite m1-regular-file-p-correctness-1)
           abs-file-alist-p-when-m1-file-alist-p
-          abs-disassoc-when-not-natp
+          abs-alloc-when-not-natp
           (:rewrite prefixp-transitive . 1)
           abs-addrs-of-ctx-app-1-lemma-6
           absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2
@@ -6311,7 +6297,7 @@
       (basename path)
       (mv-nth
        0
-       (abs-disassoc
+       (abs-alloc
         (frame-val->dir$inline
          (cdr (assoc-equal 0
                            (partial-collapse frame (dirname path)))))
@@ -7776,7 +7762,7 @@
      (ctx-app-ok
       (mv-nth
        1
-       (abs-disassoc
+       (abs-alloc
         (frame-val->dir
          (cdr (assoc-equal
                (abs-find-file-src (partial-collapse frame (dirname path))
@@ -7869,7 +7855,7 @@
            (basename path)
            (mv-nth
             '0
-            (abs-disassoc
+            (abs-alloc
              (frame-val->dir$inline
               (cdr (assoc-equal '0
                                 (partial-collapse frame (dirname path)))))
@@ -7918,7 +7904,7 @@
            (basename path)
            (mv-nth
             '0
-            (abs-disassoc
+            (abs-alloc
              (frame-val->dir$inline
               (cdr (assoc-equal '0
                                 (partial-collapse frame (dirname path)))))
@@ -7987,7 +7973,7 @@
            (basename path)
            (mv-nth
             0
-            (abs-disassoc
+            (abs-alloc
              (frame-val->dir
               (cdr (assoc-equal
                     (abs-find-file-src (partial-collapse frame (dirname path))
@@ -8011,12 +7997,12 @@
                                 subsetp-equal)
                                ((:rewrite abs-mkdir-correctness-lemma-128)
                                 (:REWRITE ABS-ADDRS-OF-REMOVE-ASSOC)
-                                (:REWRITE ABS-FS-P-OF-ABS-DISASSOC-2)
+                                (:REWRITE ABS-FS-P-OF-ABS-ALLOC-2)
                                 (:REWRITE ABS-FS-P-OF-FRAME-VAL->DIR)
                                 (:REWRITE ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-4)
                                 (:REWRITE COLLAPSE-CONGRUENCE-LEMMA-4 . 2)
                                 (:REWRITE FAT32-FILENAME-P-OF-BASENAME)
-                                (:REWRITE NO-DUPLICATESP-OF-ABS-ADDRS-OF-ABS-DISASSOC-1)
+                                (:REWRITE NO-DUPLICATESP-OF-ABS-ADDRS-OF-ABS-ALLOC-1)
                                 (:REWRITE NOT-SUBSETP-WHEN-ATOM-SET-DIFFERENCE$)
                                 (:TYPE-PRESCRIPTION ABS-COMPLETE))))))
 
@@ -8108,7 +8094,7 @@
           (basename path)
           (mv-nth
            0
-           (abs-disassoc
+           (abs-alloc
             (frame-val->dir
              (cdr (assoc-equal
                    (abs-find-file-src (partial-collapse frame (dirname path))
@@ -8235,7 +8221,7 @@
        (ctx-app
         (mv-nth
          1
-         (abs-disassoc
+         (abs-alloc
           (frame-val->dir
            (cdr
             (assoc-equal (abs-find-file-src
@@ -8255,7 +8241,7 @@
            (strip-cars (partial-collapse frame (dirname path))))))
         (mv-nth
          0
-         (abs-disassoc
+         (abs-alloc
           (frame-val->dir
            (cdr
             (assoc-equal (abs-find-file-src
@@ -8304,7 +8290,7 @@
         (abs-place-file-helper
          (mv-nth
           0
-          (abs-disassoc
+          (abs-alloc
            (frame-val->dir
             (cdr
              (assoc-equal (abs-find-file-src
@@ -8448,7 +8434,7 @@
          (names-at
           (mv-nth
            1
-           (abs-disassoc
+           (abs-alloc
             (frame-val->dir
              (cdr
               (assoc-equal (abs-find-file-src
@@ -8539,7 +8525,7 @@
          (names-at
           (mv-nth
            1
-           (abs-disassoc
+           (abs-alloc
             (frame-val->dir
              (cdr (assoc-equal 0
                                (partial-collapse frame (dirname path)))))
@@ -8804,7 +8790,7 @@
          (equal
           (mv-nth
            1
-           (abs-disassoc
+           (abs-alloc
             (frame-val->dir
              (cdr (assoc-equal 0
                                (partial-collapse frame (dirname path)))))
@@ -8820,7 +8806,7 @@
          (names-at
           (mv-nth
            1
-           (abs-disassoc
+           (abs-alloc
             (frame-val->dir
              (cdr (assoc-equal 0
                                (partial-collapse frame (dirname path)))))
@@ -8878,7 +8864,7 @@
        (ctx-app-ok
         (mv-nth
          1
-         (abs-disassoc
+         (abs-alloc
           (frame-val->dir
            (cdr (assoc-equal
                  (abs-find-file-src (partial-collapse frame (dirname path))
@@ -9217,7 +9203,7 @@
        (ctx-app-ok
         (mv-nth
          1
-         (abs-disassoc
+         (abs-alloc
           (frame-val->dir
            (cdr (assoc-equal 0
                              (partial-collapse frame (dirname path)))))
@@ -9247,7 +9233,7 @@
          (ctx-app
           (mv-nth
            1
-           (abs-disassoc
+           (abs-alloc
             (frame-val->dir
              (cdr (assoc-equal 0
                                (partial-collapse frame (dirname path)))))
@@ -9260,7 +9246,7 @@
            (abs-place-file-helper
             (mv-nth
              0
-             (abs-disassoc
+             (abs-alloc
               (frame-val->dir
                (cdr (assoc-equal 0
                                  (partial-collapse frame (dirname path)))))
@@ -9281,7 +9267,7 @@
            (ctx-app
             (mv-nth
              1
-             (abs-disassoc
+             (abs-alloc
               (frame-val->dir
                (cdr (assoc-equal 0
                                  (partial-collapse frame (dirname path)))))
@@ -9291,7 +9277,7 @@
                (strip-cars (partial-collapse frame (dirname path))))))
             (mv-nth
              0
-             (abs-disassoc
+             (abs-alloc
               (frame-val->dir
                (cdr (assoc-equal 0
                                  (partial-collapse frame (dirname path)))))
@@ -9327,7 +9313,7 @@
             (basename path)
             (mv-nth
              0
-             (abs-disassoc
+             (abs-alloc
               (frame-val->dir
                (cdr (assoc-equal 0
                                  (partial-collapse frame (dirname path)))))
@@ -9380,7 +9366,7 @@
          (names-at
           (mv-nth
            1
-           (abs-disassoc
+           (abs-alloc
             (frame-val->dir
              (cdr (assoc-equal 0
                                (partial-collapse frame (dirname path)))))
@@ -9583,7 +9569,7 @@
          (ctx-app
           (mv-nth
            1
-           (abs-disassoc
+           (abs-alloc
             (frame-val->dir
              (cdr (assoc-equal
                    (abs-find-file-src (partial-collapse frame (dirname path))
@@ -9605,7 +9591,7 @@
            (abs-place-file-helper
             (mv-nth
              0
-             (abs-disassoc
+             (abs-alloc
               (frame-val->dir
                (cdr
                 (assoc-equal
@@ -9642,7 +9628,7 @@
            (ctx-app
             (mv-nth
              1
-             (abs-disassoc
+             (abs-alloc
               (frame-val->dir
                (cdr
                 (assoc-equal
@@ -9662,7 +9648,7 @@
                (strip-cars (partial-collapse frame (dirname path))))))
             (mv-nth
              0
-             (abs-disassoc
+             (abs-alloc
               (frame-val->dir
                (cdr
                 (assoc-equal
@@ -9718,7 +9704,7 @@
            (basename path)
            (mv-nth
             0
-            (abs-disassoc
+            (abs-alloc
              (frame-val->dir
               (cdr (assoc-equal
                     (abs-find-file-src (partial-collapse frame (dirname path))
@@ -9791,7 +9777,7 @@
        (ctx-app
         (mv-nth
          1
-         (abs-disassoc
+         (abs-alloc
           (frame-val->dir
            (cdr (assoc-equal 0
                              (partial-collapse frame (dirname path)))))
@@ -9801,7 +9787,7 @@
            (strip-cars (partial-collapse frame (dirname path))))))
         (mv-nth
          0
-         (abs-disassoc
+         (abs-alloc
           (frame-val->dir
            (cdr (assoc-equal 0
                              (partial-collapse frame (dirname path)))))
@@ -9820,7 +9806,7 @@
        (ctx-app-ok
         (mv-nth
          1
-         (abs-disassoc
+         (abs-alloc
           (frame-val->dir
            (cdr (assoc-equal 0
                              (partial-collapse frame (dirname path)))))
@@ -9924,7 +9910,7 @@
                :in-theory (enable frame-reps-fs abs-mkdir))))
 
     (defthm
-      abs-mkdir-correctness-lemma-201
+      abs-mkdir-correctness-lemma-21
       (implies
        (and
         (mv-nth 1 (collapse frame))
@@ -9956,7 +9942,7 @@
                         (abs-file-alist1 (mv-nth 0 (collapse frame)))))))
 
     (defthm
-      abs-mkdir-correctness-lemma-202
+      abs-mkdir-correctness-lemma-22
       (implies (and (absfat-equiv (mv-nth 0 (collapse frame))
                                   fs)
                     (abs-fs-p fs)
@@ -9970,7 +9956,7 @@
                               :s (:rewrite abs-fs-p-of-collapse)))
 
     (defthm
-      abs-mkdir-correctness-lemma-203
+      abs-mkdir-correctness-lemma-23
       (implies
        (and (fat32-filename-list-equiv (append (dirname path)
                                                (list (basename path)))
@@ -10093,7 +10079,7 @@
         (fs
          (mv-nth
           0
-          (abs-disassoc
+          (abs-alloc
            (frame-val->dir
             (cdr (assoc-equal
                   (abs-find-file-src (partial-collapse frame (dirname path))
@@ -10113,7 +10099,7 @@
         (abs-file-alist1
          (mv-nth
           1
-          (abs-disassoc
+          (abs-alloc
            (frame-val->dir
             (cdr (assoc-equal
                   (abs-find-file-src (partial-collapse frame (dirname path))
@@ -10293,8 +10279,8 @@
     (abs-find-file-helper
      (mv-nth
       1
-      (abs-disassoc (put-assoc-equal name file
-                                     (mv-nth 0 (abs-disassoc fs nil n1)))
+      (abs-alloc (put-assoc-equal name file
+                                     (mv-nth 0 (abs-alloc fs nil n1)))
                     (cons name nil)
                     n2))
      (cons name nil))
@@ -10304,7 +10290,7 @@
                     (list n2))
           0))))
   :hints (("goal" :in-theory (enable abs-mkdir partial-collapse
-                                     abs-disassoc abs-find-file-helper
+                                     abs-alloc abs-find-file-helper
                                      1st-complete-under-path
                                      abs-find-file abs-find-file-src
                                      assoc-equal-of-frame-with-root
@@ -10321,7 +10307,7 @@
         (fat32-filename-p name))
    (equal
     (abs-find-file-helper (mv-nth 1
-                                  (abs-disassoc (put-assoc-equal name file fs)
+                                  (abs-alloc (put-assoc-equal name file fs)
                                                 (cons name nil)
                                                 n))
                           (cons name nil))
@@ -10332,7 +10318,7 @@
             0))))
   :hints (("goal" :in-theory (enable abs-fs-fix
                                      abs-mkdir abs-file-contents-fix
-                                     abs-disassoc abs-find-file-helper
+                                     abs-alloc abs-find-file-helper
                                      assoc-equal-of-frame-with-root
                                      put-assoc-equal-of-frame-with-root)
            :do-not-induct t))
@@ -10524,7 +10510,7 @@
 ;;                  FRAME)))
 ;;         (MV-NTH
 ;;          1
-;;          (ABS-DISASSOC
+;;          (ABS-ALLOC
 ;;           (FRAME-VAL->DIR$INLINE
 ;;            (CDR
 ;;             (ASSOC-EQUAL
@@ -10557,7 +10543,7 @@
 ;;                 ABS-FIND-FILE ABS-FIND-FILE-SRC
 ;;                 ASSOC-EQUAL-OF-FRAME-WITH-ROOT
 ;;                 PUT-ASSOC-EQUAL-OF-FRAME-WITH-ROOT
-;;                 frame->frame-of-put-assoc abs-addrs abs-disassoc
+;;                 frame->frame-of-put-assoc abs-addrs abs-alloc
 ;;                 abs-fs-fix)
 ;;                ((:REWRITE FRAME-P-OF-CDR-WHEN-FRAME-P)
 ;;                 (:REWRITE COLLAPSE-HIFAT-PLACE-FILE-LEMMA-6)
@@ -10637,7 +10623,7 @@
                  FRAME)))
         (MV-NTH
          1
-         (ABS-DISASSOC
+         (ABS-ALLOC
           (FRAME-VAL->DIR$INLINE
            (CDR
             (ASSOC-EQUAL
@@ -10703,7 +10689,7 @@
             (LIST (FIND-NEW-INDEX
                    (STRIP-CARS (PARTIAL-COLLAPSE FRAME '("TMP        "))))))))
          ("Subgoal 2.1"
-          :in-theory (enable abs-find-file-helper abs-disassoc abs-file-alist-p)))
+          :in-theory (enable abs-find-file-helper abs-alloc abs-file-alist-p)))
  :otf-flg t)
 
 (defthm
@@ -10845,7 +10831,7 @@
                         (equal lstat-error-code 0)))))
   :hints
   (("goal"
-    :in-theory (enable abs-mkdir abs-lstat abs-disassoc abs-fs-fix
+    :in-theory (enable abs-mkdir abs-lstat abs-alloc abs-fs-fix
                        abs-find-file-helper abs-find-file)
     :do-not-induct t)))
 
@@ -10874,9 +10860,9 @@
        ;; It's not even a matter of removing that thing - we need to leave a
        ;; body address in its place...
        ((mv var new-src-dir)
-        (abs-disassoc (frame-val->dir (cdr (assoc-equal src frame)))
-                      (nthcdr (len (frame-val->path (cdr (assoc-equal src frame)))) dirname)
-                      new-index))
+        (abs-alloc (frame-val->dir (cdr (assoc-equal src frame)))
+                   (nthcdr (len (frame-val->path (cdr (assoc-equal src frame)))) dirname)
+                   new-index))
        ;; Check somewhere that (basename path) is not already present...
        ((unless (consp path)) (mv frame -1 *enoent*))
        ((when (consp (abs-assoc (basename path) var))) (mv frame -1 *eexist*))
