@@ -233,7 +233,7 @@
    (:dive 1 1 1 1)
    := :top (:dive 1)
    (:rewrite
-    chain-leading-to-complete-correctness-lemma-3
+    frame-val->src-of-cdr-of-assoc-when-member-of-frame-addrs-before
     ((x
       (car
        (chain-leading-to-complete
@@ -767,7 +767,7 @@
           (collapse-1st-index frame x)))
   :instructions (:promote (:dive 1 2 1 1 1)
                           := :top (:dive 1 2)
-                          (:rewrite chain-leading-to-complete-correctness-lemma-3
+                          (:rewrite frame-val->src-of-cdr-of-assoc-when-member-of-frame-addrs-before
                                     ((n (collapse-1st-index frame x))
                                      (x x)))
                           :top :bash))
@@ -862,9 +862,7 @@
           (:rewrite partial-collapse-correctness-lemma-2)
           (:rewrite integerp-of-car-when-integer-listp)
           (:definition integer-listp)
-          (:rewrite final-val-of-collapse-this-lemma-10)
-          (:definition nthcdr)
-          (:rewrite final-val-of-collapse-this-lemma-2)))
+          (:definition nthcdr)))
     :induct (frame-addrs-before frame x n)
     :expand (collapse-iter frame 1))))
 
@@ -939,23 +937,19 @@
            :use (:instance chain-ends-in-abs-complete (acc nil)))))
 
 (defthm
-  partial-collapse-correctness-lemma-21
+  consp-of-chain-leading-to-complete
   (implies (or (consp acc)
                (consp (assoc-equal (nfix x)
                                    (frame->frame frame))))
            (consp (chain-leading-to-complete frame x acc seq)))
   :rule-classes
-  (:rewrite
-   (:type-prescription
-    :corollary (implies (consp acc)
-                        (consp (chain-leading-to-complete frame x acc seq))))
-   (:type-prescription
+  ((:type-prescription
     :corollary (implies (and (natp x)
                              (consp (assoc-equal x (frame->frame frame))))
                         (consp (chain-leading-to-complete frame x acc seq))))))
 
 (defthm
-  partial-collapse-correctness-lemma-112
+  not-intersectp-of-chain-leading-to-complete-1
   (implies (and (not (intersectp-equal acc seq))
                 (not (member-equal x seq)))
            (not (intersectp-equal (chain-leading-to-complete frame x acc seq)

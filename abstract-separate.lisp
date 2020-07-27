@@ -6456,9 +6456,9 @@
         (len (frame->frame frame))))
     :trigger-terms ((collapse-1st-index frame x)))))
 
-;; Rename later.
+;; Move later.
 (defthm
-  valid-seqp-when-prefixp-lemma-1
+  len-of-frame->frame-of-collapse-this-1
   (implies
    (and (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
                0)
@@ -6470,7 +6470,7 @@
   :hints (("goal" :in-theory (enable collapse-this)
            :do-not-induct t)))
 (defthm
-  valid-seqp-when-prefixp-lemma-3
+  len-of-frame->frame-of-collapse-this-2
   (implies
    (and
     (natp x)
@@ -6495,7 +6495,7 @@
                                      collapse-iter collapse-1st-index))))
 
 (defthm
-  final-val-of-collapse-this-lemma-2
+  collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-1
   (implies (mv-nth 1 (collapse frame))
            (iff (consp (assoc-equal x
                                     (frame->frame (collapse-iter frame n))))
@@ -6509,8 +6509,9 @@
                      (:definition member-equal)
                      (:rewrite partial-collapse-correctness-lemma-2))))))
 
+;; Move later.
 (defthm
-  final-val-of-collapse-this-lemma-10
+  len-of-frame->frame-of-collapse-iter
   (implies (and (mv-nth 1 (collapse frame))
                 (no-duplicatesp-equal (strip-cars (frame->frame frame))))
            (equal (len (frame->frame (collapse-iter frame n)))
@@ -6518,13 +6519,13 @@
                            (nfix n)))))
   :hints (("goal" :in-theory (enable collapse collapse-iter))))
 
-(defthm final-val-of-collapse-this-lemma-3
+(defthm collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-2
   (implies (and (not (zp x))
                 (atom (assoc-equal x frame)))
            (not (equal x (1st-complete frame)))))
 
 (defthm
-  final-val-of-collapse-this-lemma-8
+  collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-3
   (implies (mv-nth 1 (collapse frame))
            (iff (equal (1st-complete (frame->frame frame))
                        (1st-complete (frame->frame (collapse-iter frame n))))
@@ -6533,7 +6534,7 @@
   :hints (("goal" :in-theory (enable collapse collapse-iter))))
 
 (defthmd
-  final-val-of-collapse-this-lemma-9
+  collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-4
   (implies
    (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
         (mv-nth 1 (collapse frame)))
@@ -6546,7 +6547,7 @@
                                      collapse-1st-index collapse))))
 
 (defthm
-  final-val-of-collapse-this-lemma-4
+  collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-5
   (implies
    (and
     (not (zp n))
@@ -6604,12 +6605,12 @@
                                       . 2)
                             (:definition len)
                             (:definition nthcdr)))
-    :use (:instance (:rewrite final-val-of-collapse-this-lemma-9)
+    :use (:instance (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-4)
                     (n (+ -1 n))
                     (frame (collapse-iter frame 1))))))
 
 (defthm
-  final-val-of-collapse-this-lemma-13
+  collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-6
   (implies
    (and
     (equal
@@ -6650,12 +6651,12 @@
                                       . 2)
                             (:definition len)
                             (:definition nthcdr)))
-    :use (:instance (:rewrite final-val-of-collapse-this-lemma-9)
+    :use (:instance (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-4)
                     (n (+ -1 n))
                     (frame (collapse-iter frame 1))))))
 
 (defthm
-  final-val-of-collapse-this-lemma-14
+  collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7
   (implies (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))
                 (mv-nth 1 (collapse frame))
                 (consp (assoc-equal x
@@ -6690,14 +6691,14 @@
     :induct (collapse-1st-index frame x)
     :expand (collapse-iter frame 1))))
 
-(defthm member-of-frame-addrs-before-seq-lemma-2
+(defthm collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-8
   (implies (and (consp (assoc-equal x (frame->frame frame)))
                 (frame-p (frame->frame frame)))
            (natp x))
   :rule-classes :forward-chaining)
 
 (defthm
-  chain-leading-to-complete-correctness-lemma-4
+  collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-9
   (implies
    (and (mv-nth 1 (collapse frame))
         (consp (assoc-equal x (frame->frame frame)))
@@ -6714,7 +6715,7 @@
                     (y (1st-complete (frame->frame frame)))))))
 
 (defthm
-  chain-leading-to-complete-correctness-lemma-5
+  collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-10
   (implies
    (not (equal (1st-complete (frame->frame frame))
                x))
@@ -6730,13 +6731,13 @@
   :hints
   (("goal"
     :in-theory (e/d (collapse-iter)
-                    ((:rewrite final-val-of-collapse-this-lemma-14)))
-    :use ((:instance (:rewrite final-val-of-collapse-this-lemma-14)
+                    ((:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7)))
+    :use ((:instance (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7)
                      (x x)
                      (n 1)
                      (frame frame))
           (:instance
-           (:rewrite final-val-of-collapse-this-lemma-14)
+           (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7)
            (x (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
            (n 1)
            (frame frame)))
@@ -6816,7 +6817,7 @@
 
 ;; Rename later.
 (defthm
-  chain-leading-to-complete-correctness-lemma-3
+  frame-val->src-of-cdr-of-assoc-when-member-of-frame-addrs-before
   (implies (member-equal y (frame-addrs-before frame x n))
            (equal (frame-val->src (cdr (assoc-equal y (frame->frame frame))))
                   x))

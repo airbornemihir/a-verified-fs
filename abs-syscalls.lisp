@@ -40,7 +40,7 @@
                         (:rewrite
                          partial-collapse-correctness-lemma-24)
                         (:rewrite abs-find-file-correctness-lemma-29)
-                        (:rewrite final-val-of-collapse-this-lemma-3)
+                        (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-2)
                         (:rewrite when-zp-src-of-1st-collapse-1)
                         (:rewrite ctx-app-ok-of-abs-fs-fix-1)
                         (:rewrite
@@ -5424,7 +5424,6 @@
            absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1)
           (:rewrite
            abs-fs-fix-of-put-assoc-equal-lemma-2)
-          (:rewrite final-val-of-collapse-this-lemma-3)
           (:rewrite abs-fs-p-of-ctx-app)
           (:type-prescription
            abs-fs-fix-of-put-assoc-equal-lemma-3)
@@ -5475,7 +5474,6 @@
           (:rewrite abs-fs-p-of-ctx-app)
           (:definition binary-append)
           (:rewrite absfat-subsetp-transitivity-lemma-7)
-          (:rewrite final-val-of-collapse-this-lemma-3)
           (:rewrite assoc-after-remove-assoc)
           (:rewrite abs-find-file-correctness-lemma-2)
           (:rewrite abs-mkdir-correctness-lemma-85)
