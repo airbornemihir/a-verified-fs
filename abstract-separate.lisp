@@ -593,12 +593,6 @@
                   (abs-top-addrs fs)))
   :hints (("goal" :in-theory (enable abs-top-addrs))))
 
-;; Rename later.
-(defthm collapse-hifat-place-file-lemma-3
-  (implies (m1-file-alist-p fs)
-           (equal (abs-top-addrs fs) nil))
-  :hints (("goal" :in-theory (enable abs-top-addrs m1-file-alist-p))))
-
 (defund
   abs-no-dups-p (fs)
   (declare
@@ -1559,12 +1553,12 @@
                            (x-equiv 0)))))
 
 ;; Rename later.
-(defthm ctx-app-ok-of-abs-place-file-helper-lemma-1
+(defthm null-addrs-at-when-stringp
   (implies (stringp x)
            (equal (addrs-at x relpath) nil))
   :hints (("goal" :in-theory (enable addrs-at abs-fs-fix)))
   :rule-classes (:type-prescription :rewrite))
-(defthm collapse-hifat-place-file-lemma-1
+(defthm not-ctx-app-ok-when-stringp
   (implies (stringp x)
            (not (ctx-app-ok x var relpath)))
   :hints (("goal" :in-theory (enable ctx-app-ok)))

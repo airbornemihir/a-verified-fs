@@ -5493,8 +5493,6 @@
           (:rewrite abs-addrs-of-ctx-app-1-lemma-2)
           (:rewrite member-of-abs-top-addrs)
           (:rewrite abs-find-file-correctness-lemma-12)
-          (:type-prescription
-           collapse-hifat-place-file-lemma-1)
           (:linear position-when-member)
           (:linear position-equal-ac-when-member)
           (:rewrite prefixp-one-way-or-another . 1)
@@ -5511,7 +5509,6 @@
           (:rewrite member-of-abs-fs-fix-when-natp)
           (:type-prescription
            abs-separate-of-frame->frame-of-collapse-this-lemma-7)
-          (:rewrite collapse-hifat-place-file-lemma-1)
           (:rewrite
            m1-file-alist-p-of-cdr-when-m1-file-alist-p)
           (:rewrite
