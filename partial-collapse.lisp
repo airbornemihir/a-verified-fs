@@ -3640,7 +3640,7 @@
   :rule-classes :forward-chaining)
 
 ;; Consider enabling.
-(defthmd
+(defthm
   chain-to-complete-correctness-lemma-3
   (implies (member-equal y (frame-addrs-before frame x n))
            (equal (frame-val->src (cdr (assoc-equal y (frame->frame frame))))
@@ -3721,7 +3721,7 @@
                (collapse-1st-index frame x)))
    :hints
    (("goal" :induct (chain-to-complete frame x acc seq)
-     :in-theory (e/d (chain-to-complete-correctness-lemma-3)
+     :in-theory (e/d ()
                      ((:linear chain-to-complete-correctness-lemma-6)
                       (:rewrite member-of-frame-addrs-before))))
     ("subgoal *1/3"
@@ -4631,7 +4631,7 @@
    (("goal"
      :in-theory
      (e/d
-      (chain-ends-in-abs-complete-lemma-9 chain-to-complete-correctness-lemma-3)
+      (chain-ends-in-abs-complete-lemma-9)
       ((:linear chain-to-complete-correctness-lemma-6)))
      :do-not-induct t
      :induct (chain-to-complete frame x acc seq))
@@ -6569,6 +6569,8 @@
     x))
   :hints
   (("goal"
+    :in-theory
+    (disable chain-to-complete-correctness-lemma-3)
     :use
     (:instance chain-to-complete-correctness-lemma-3
                (y (nth m (frame-addrs-before frame x n)))))))
@@ -9988,8 +9990,7 @@
   :hints
   (("goal"
     :in-theory (enable frame-addrs-before-seq
-                       (:rewrite chain-ends-in-abs-complete-lemma-9)
-                       chain-to-complete-correctness-lemma-3)
+                       (:rewrite chain-ends-in-abs-complete-lemma-9))
     :induct (frame-addrs-before-seq frame x seq)
     :expand
     ((:with
@@ -10500,11 +10501,10 @@
    (set-equiv (frame-addrs-before-seq frame 0 seq)
               (intersection-equal seq (abs-addrs (frame->root frame)))))
   :hints
-  (("goal" :in-theory (enable frame-addrs-before-seq
-                              (:rewrite chain-ends-in-abs-complete-lemma-9)
-                              chain-to-complete-correctness-lemma-3)
-    :induct (frame-addrs-before-seq frame 0 seq))
-   ("subgoal *1/2"
+  (("goal"
+    :in-theory (enable frame-addrs-before-seq
+                       (:rewrite chain-ends-in-abs-complete-lemma-9))
+    :induct (frame-addrs-before-seq frame 0 seq)
     :expand ((intersection-equal seq (abs-addrs (frame->root frame)))))))
 
 ;; Move later.
