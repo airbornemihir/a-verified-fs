@@ -2188,16 +2188,13 @@
 (defthm
   abs-place-file-helper-of-ctx-app-1
   (implies
-   (and (abs-fs-p (mv-nth 0
-                          (abs-place-file-helper fs path file)))
-        (ctx-app-ok abs-file-alist1 x x-path)
+   (and (ctx-app-ok abs-file-alist1 x x-path)
         (not (member-equal (fat32-filename-fix (car path))
                            (names-at abs-file-alist1 x-path)))
         (abs-fs-p (ctx-app abs-file-alist1 fs x x-path)))
    (equal
     (ctx-app abs-file-alist1
-             (mv-nth 0
-                     (abs-place-file-helper fs path file))
+             (mv-nth 0 (abs-place-file-helper fs path file))
              x x-path)
     (if (consp path)
         (mv-nth 0
@@ -10427,3 +10424,44 @@
                                (frame->frame frame)))))
     (mv frame (if (equal error-code 0) 0 -1)
         error-code)))
+
+(defthm
+  1st-complete-under-path-of-frame->frame-of-partial-collapse
+  (implies
+   (and (mv-nth 1 (collapse frame))
+        (abs-separate frame)
+        (frame-p frame)
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame))))
+   (equal
+    (1st-complete-under-path (frame->frame (partial-collapse frame path))
+                             path)
+    0))
+  :hints
+  (("goal"
+    :in-theory (enable partial-collapse
+                       1st-complete-under-path)
+    :induct (partial-collapse frame path)
+    :do-not-induct t
+    :expand
+    (:with
+     (:rewrite partial-collapse-correctness-lemma-122)
+     (mv-nth
+      1
+      (collapse (collapse-this frame
+                               (1st-complete-under-path (frame->frame frame)
+                                                        path))))))))
+
+(defthm
+  abs-mkdir-correctness-lemma-24
+  (implies (and (frame-p frame)
+                (atom (assoc-equal 0 frame))
+                (consp (assoc-equal y frame))
+                (abs-complete (frame-val->dir (cdr (assoc-equal y frame))))
+                (prefixp path
+                         (frame-val->path (cdr (assoc-equal y frame)))))
+           (< 0 (1st-complete-under-path frame path)))
+  :hints (("goal" :in-theory (enable 1st-complete-under-path)))
+  :rule-classes :linear)
