@@ -10465,3 +10465,36 @@
            (< 0 (1st-complete-under-path frame path)))
   :hints (("goal" :in-theory (enable 1st-complete-under-path)))
   :rule-classes :linear)
+
+(fty::defprod
+ dir-stream
+ ((pos natp)
+  (file-list fat32-filename-list-p)))
+
+(fty::defalist
+ dir-stream-table
+ :key-type nat
+ :val-type dir-stream
+ :true-listp t)
+
+(defthm fat32-filename-list-p-of-strip-cars-when-m1-file-alist-p
+  (implies (m1-file-alist-p fs)
+           (fat32-filename-list-p (strip-cars fs))))
+
+(defund hifat-opendir (fs path dir-stream-table)
+  (b*
+      ((path (mbe :exec path :logic (fat32-filename-list-fix path)))
+       ((mv file error-code)
+        (hifat-find-file fs path))
+       ((unless (equal error-code 0))
+        (mv 0 dir-stream-table *enoent*))
+       ((unless (m1-directory-file-p file))
+        (mv 0 dir-stream-table *enotdir*))
+       (dir-stream-table-index
+        (find-new-index (strip-cars dir-stream-table))))
+    (mv
+     dir-stream-table-index
+     (cons
+      (cons dir-stream-table-index (strip-cars (m1-file->contents file)))
+      dir-stream-table)
+     0)))
