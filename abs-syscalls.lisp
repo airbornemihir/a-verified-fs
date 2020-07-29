@@ -10498,3 +10498,51 @@
       (cons dir-stream-table-index (strip-cars (m1-file->contents file)))
       dir-stream-table)
      0)))
+
+(assert-event
+ (b*
+     (((mv dirp dir-stream-table errno)
+       (hifat-opendir
+        '(("INITRD  IMG" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+           (CONTENTS . ""))
+          ("RUN        "
+           (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+           (CONTENTS ("RSYSLOGDPID" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                      (CONTENTS . ""))))
+          ("USR        "
+           (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+           (CONTENTS
+            ("LOCAL      " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS))
+            ("LIB        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS))
+            ("SHARE      " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS))
+            ("BIN        "
+             (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS
+              ("CAT        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+               (CONTENTS . ""))
+              ("TAC        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+               (CONTENTS . ""))
+              ("COL        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+               (CONTENTS . "")))))))
+        (list "USR        ")
+        nil)))
+   (and
+    (equal dirp 0)
+    (equal dir-stream-table
+           '((0 "LOCAL      " "LIB        "
+                "SHARE      " "BIN        ")))
+    (equal errno 0))))
