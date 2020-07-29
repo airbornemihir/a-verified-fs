@@ -10546,3 +10546,31 @@
            '((0 "LOCAL      " "LIB        "
                 "SHARE      " "BIN        ")))
     (equal errno 0))))
+
+(defund hifat-readdir (dirp dir-stream-table)
+  (b*
+      ((alist-elem
+        (assoc-equal dirp dir-stream-table))
+       ((unless (consp alist-elem))
+        (mv (fat32-filename-fix nil) *ebadf* dir-stream-table))
+       ((unless (consp (cdr alist-elem)))
+        (mv (fat32-filename-fix nil) 0 dir-stream-table)))
+    (mv
+     (car (cdr alist-elem))
+     0
+     (put-assoc-equal
+      dirp
+      (cdr (cdr alist-elem))
+      dir-stream-table))))
+
+(defund hifat-closedir (dirp dir-stream-table)
+  (b*
+      ((alist-elem
+        (assoc-equal dirp dir-stream-table))
+       ((unless (consp alist-elem))
+        (mv *ebadf* dir-stream-table)))
+    (mv
+     0
+     (remove-assoc-equal
+      dirp
+      dir-stream-table))))
