@@ -7575,18 +7575,18 @@
       :hints (("goal" :do-not-induct t
                :in-theory (e/d (abs-mkdir-correctness-lemma-30
                                 frame-reps-fs abs-mkdir
-                                not-subsetp-when-atom-set-difference$
+                                consp-of-set-difference$
                                 subsetp-equal)
                                ((:rewrite abs-mkdir-correctness-lemma-128)
-                                (:REWRITE ABS-ADDRS-OF-REMOVE-ASSOC)
-                                (:REWRITE ABS-FS-P-OF-ABS-ALLOC-2)
-                                (:REWRITE ABS-FS-P-OF-FRAME-VAL->DIR)
-                                (:REWRITE ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-4)
-                                (:REWRITE COLLAPSE-CONGRUENCE-LEMMA-4 . 2)
-                                (:REWRITE FAT32-FILENAME-P-OF-BASENAME)
-                                (:REWRITE NO-DUPLICATESP-OF-ABS-ADDRS-OF-ABS-ALLOC-1)
-                                (:REWRITE NOT-SUBSETP-WHEN-ATOM-SET-DIFFERENCE$)
-                                (:TYPE-PRESCRIPTION ABS-COMPLETE))))))
+                                (:rewrite abs-addrs-of-remove-assoc)
+                                (:rewrite abs-fs-p-of-abs-alloc-2)
+                                (:rewrite abs-fs-p-of-frame-val->dir)
+                                (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-4)
+                                (:rewrite collapse-congruence-lemma-4 . 2)
+                                (:rewrite fat32-filename-p-of-basename)
+                                (:rewrite no-duplicatesp-of-abs-addrs-of-abs-alloc-1)
+                                (:rewrite consp-of-set-difference$)
+                                (:type-prescription abs-complete))))))
 
     (defthm
       abs-mkdir-correctness-lemma-80
