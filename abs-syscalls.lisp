@@ -628,16 +628,6 @@
   :hints (("goal" :in-theory (enable abs-top-addrs abs-place-file-helper))))
 
 (defthm
-  addrs-at-when-abs-complete
-  (implies (abs-complete (abs-fs-fix fs))
-           (equal (addrs-at fs relpath) nil))
-  :hints
-  (("goal" :in-theory (enable addrs-at)
-    :induct (addrs-at fs relpath))
-   ("subgoal *1/1''" :in-theory (disable ctx-app-ok-when-abs-complete-lemma-3)
-    :use ctx-app-ok-when-abs-complete-lemma-3)))
-
-(defthm
   addrs-at-of-abs-place-file-helper-lemma-1
   (implies (and (m1-file-p file)
                 (or (m1-regular-file-p file)
