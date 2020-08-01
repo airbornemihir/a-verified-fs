@@ -10264,21 +10264,39 @@
           :in-theory (enable abs-find-file-helper abs-alloc abs-file-alist-p)))
  :otf-flg t)
 
-(defthm abs-lstat-after-abs-mkdir-1
-  (implies (and (consp (assoc-equal 0 frame))
-                (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-                       0)
-                (frame-reps-fs frame (mv-nth 0 (collapse frame))))
+(defund good-frame-p (frame)
+  (b*
+      (((mv & result) (collapse frame)))
+    (and result
+         (equal (frame-val->path (cdr (assoc-equal 0 frame)))
+                nil)
+         (consp (assoc-equal 0 frame))
+         (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+                0)
+         (frame-p frame)
+         (no-duplicatesp-equal (strip-cars frame))
+         (abs-separate frame)
+         (subsetp-equal (abs-addrs (frame->root frame))
+                        (frame-addrs-root (frame->frame frame))))))
+
+(thm (implies (good-frame-p frame)
+              (frame-reps-fs frame (mv-nth 0 (collapse frame))))
+     :hints (("GOal" :do-not-induct t
+              :in-theory (enable good-frame-p frame-reps-fs))))
+
+(defthm
+  abs-lstat-after-abs-mkdir-1
+  (implies (good-frame-p frame)
            (b* (((mv frame & mkdir-error-code)
                  (abs-mkdir frame path)))
              (implies (equal mkdir-error-code 0)
                       (b* (((mv & lstat-error-code &)
                             (abs-lstat frame path)))
                         (equal lstat-error-code 0)))))
-  :hints (("goal" :in-theory (enable abs-mkdir abs-lstat abs-alloc
-                                     abs-fs-fix abs-find-file-helper
-                                     abs-find-file frame-reps-fs)
-           :do-not-induct t)))
+  :hints
+  (("goal"
+    :in-theory (enable abs-mkdir abs-lstat abs-alloc abs-fs-fix
+                       abs-find-file-helper abs-find-file good-frame-p))))
 
 (defund abs-mknod (frame path)
   (declare (xargs :guard (and (frame-p frame)
