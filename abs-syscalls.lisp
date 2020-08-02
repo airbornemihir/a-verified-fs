@@ -10298,6 +10298,19 @@
     :in-theory (enable abs-mkdir abs-lstat abs-alloc abs-fs-fix
                        abs-find-file-helper abs-find-file good-frame-p))))
 
+(defthm
+  abs-lstat-after-abs-mkdir-2
+  (implies (good-frame-p init-frame)
+           (b* (((mv final-frame & mkdir-error-code)
+                 (abs-mkdir init-frame path)))
+             (implies (not (equal mkdir-error-code 0))
+                      (collapse-equiv final-frame init-frame))))
+  :hints
+  (("goal"
+    :in-theory (enable collapse-equiv abs-mkdir abs-lstat abs-alloc abs-fs-fix
+                       abs-find-file-helper abs-find-file good-frame-p) :expand
+                       (:free (root) (collapse (frame-with-root root nil))))))
+
 (defund abs-mknod (frame path)
   (declare (xargs :guard (and (frame-p frame)
                               (consp (assoc-equal 0 frame))
