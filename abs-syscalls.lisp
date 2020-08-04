@@ -3218,7 +3218,7 @@
 ;; Here's the problem with this theorem: it doesn't work for the arbitrary
 ;; place-file because it can literally dump a number of names in different
 ;; directories while wiping out a bunch of others, making an utter mess of
-;; dist-names and therefor abs-separate. In actual system calls, we create one
+;; dist-names and therefore abs-separate. In actual system calls, we create one
 ;; new name at a time, which is what makes it possible to ensure that we can
 ;; use path-clear and basically account for everything. But... how do we
 ;; pass on that kind of stipulation here? It would be nice to hang on to a
@@ -10469,3 +10469,38 @@
            (< 0 (1st-complete-under-path frame path)))
   :hints (("goal" :in-theory (enable 1st-complete-under-path)))
   :rule-classes :linear)
+
+(encapsulate
+  ()
+
+  (local (include-book "tricks/chain-leading-to-complete"))
+
+  (thm
+   (implies
+    (and (frame-p frame)
+         (no-duplicatesp-equal (strip-cars frame))
+         (abs-separate frame)
+         (mv-nth 1 (collapse frame))
+         (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+         (subsetp-equal (abs-addrs (frame->root frame))
+                        (frame-addrs-root (frame->frame frame))))
+    (abs-complete
+     (abs-file->contents$inline
+      (mv-nth 0
+              (abs-find-file (partial-collapse frame path)
+                             path)))))
+   :hints (("goal" :do-not-induct t
+            :in-theory (e/d ()
+                            (abs-mkdir-correctness-lemma-158
+                             abs-find-file-src-correctness-2))
+            :use
+            ((:instance
+              abs-find-file-src-correctness-2
+              (frame (partial-collapse frame path)))))
+           ("subgoal 2"
+            :use
+            (:instance
+             (:rewrite
+              abs-find-file-of-put-assoc-lemma-4)
+             (path path)
+             (frame (partial-collapse frame path)))))))
