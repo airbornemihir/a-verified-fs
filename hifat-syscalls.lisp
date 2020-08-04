@@ -1130,6 +1130,21 @@
                            "SHARE      " "BIN        "))))
     (equal errno 0))))
 
+(defund string-list-min (str-list)
+  (b*
+      (((unless (consp str-list)) (str-fix nil))
+       (head (car str-list))
+       ((unless (consp (cdr str-list))) head)
+       (tail-val (string-list-min (cdr str-list)))
+       ((unless (string< tail-val head)) head))
+    tail-val))
+
+(defthm string-list-min-correctness-1
+  (implies (consp str-list)
+           (member-equal (string-list-min str-list)
+                         str-list))
+  :hints (("goal" :in-theory (enable string-list-min))))
+
 (defund hifat-readdir (dirp dir-stream-table)
   (declare (xargs :guard (and (dir-stream-table-p dir-stream-table)
                               (natp dirp))
