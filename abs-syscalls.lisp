@@ -3218,7 +3218,7 @@
 ;; Here's the problem with this theorem: it doesn't work for the arbitrary
 ;; place-file because it can literally dump a number of names in different
 ;; directories while wiping out a bunch of others, making an utter mess of
-;; dist-names and therefore abs-separate. In actual system calls, we create one
+;; dist-names and therefor abs-separate. In actual system calls, we create one
 ;; new name at a time, which is what makes it possible to ensure that we can
 ;; use path-clear and basically account for everything. But... how do we
 ;; pass on that kind of stipulation here? It would be nice to hang on to a
