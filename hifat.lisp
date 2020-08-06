@@ -1272,6 +1272,22 @@
      (dir-ent-directory-p dir-ent-set-first-cluster-file-size)
      (logbitp)))))
 
+(def-listp-rule list-equiv-refines-element-list-equiv
+  (implies (and (list-equiv x y)
+                (not (element-list-final-cdr-p t)))
+           (element-list-equiv x y))
+  :rule-classes nil
+  :hints (("Goal" :induct (fast-list-equiv x y)
+           :in-theory (enable fast-list-equiv)))
+  :name list-equiv-refines-element-list-equiv
+  :requirement (not element-list-final-cdr-p)
+  :body
+  (implies (list-equiv x y)
+           (element-list-equiv x y))
+  :inst-rule-classes :refinement)
+
+(table listfix-rules 'list-equiv-refines-element-list-equiv t)
+
 (fty::deflist fat32-filename-list
               :elt-type fat32-filename      ;; required, must have a known fixing function
               :true-listp t
