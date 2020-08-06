@@ -1272,6 +1272,12 @@
      (dir-ent-directory-p dir-ent-set-first-cluster-file-size)
      (logbitp)))))
 
+(def-listfix-rule nth-of-element-list-fix
+  (equal (nth n (element-list-fix x))
+         (if (< (nfix n) (len x))
+             (element-fix (nth n x))
+           nil)))
+
 (fty::deflist fat32-filename-list
               :elt-type fat32-filename      ;; required, must have a known fixing function
               :true-listp t
