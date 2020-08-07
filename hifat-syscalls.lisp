@@ -1130,6 +1130,11 @@
                            "SHARE      " "BIN        "))))
     (equal errno 0))))
 
+;; Here's an interesting example that gives the lie to the idea that set-equiv
+;; means much of anything when the sort is stable:
+;; (b* ((alist '((5 . 1) (6 . 1) (7 . 2))) (l1 (list 5 6)) (l2 (list 6 5)))
+;;   (and (set-equiv l1 l2) (not (equal (intval-alist-sort l1 alist)
+;;                                      (intval-alist-sort l2 alist)))))
 (encapsulate
   ()
 
@@ -1247,21 +1252,6 @@
   (defthm
     string2-sort-is-identity-under-set-equiv
     (set-equiv (string2-sort x) x)))
-
-(defund string-list-min (str-list)
-  (b*
-      (((unless (consp str-list)) (str-fix nil))
-       (head (car str-list))
-       ((unless (consp (cdr str-list))) head)
-       (tail-val (string-list-min (cdr str-list)))
-       ((unless (string< tail-val head)) head))
-    tail-val))
-
-(defthm string-list-min-correctness-1
-  (implies (consp str-list)
-           (member-equal (string-list-min str-list)
-                         str-list))
-  :hints (("goal" :in-theory (enable string-list-min))))
 
 (defund hifat-readdir (dirp dir-stream-table)
   (declare (xargs :guard (and (dir-stream-table-p dir-stream-table)
