@@ -1130,6 +1130,124 @@
                            "SHARE      " "BIN        "))))
     (equal errno 0))))
 
+(encapsulate
+  ()
+
+  (local (include-book "defsort/examples" :dir :system))
+
+  (defund string-less-p (x y)
+    (declare (xargs :guard (and (stringp x) (stringp y))))
+    (if (string< x y) t nil))
+
+  (defund string2-merge-tr (x y acc)
+    (declare (xargs :measure (+ (len x) (len y))
+                    :stobjs nil
+                    :guard (and t (string-listp x)
+                                (string-listp y))))
+    (cond ((atom x)
+           (revappend-without-guard acc y))
+          ((atom y)
+           (revappend-without-guard acc x))
+          ((string-less-p (car y) (car x))
+           (string2-merge-tr x (cdr y)
+                             (cons (car y) acc)))
+          (t (string2-merge-tr (cdr x)
+                               y (cons (car x) acc)))))
+
+  (defund
+    string2-mergesort-fixnum (x len)
+    (declare (xargs :measure (nfix len)
+                    :stobjs nil
+                    :guard (and t (string-listp x)
+                                (natp len)
+                                (<= len (len x)))
+                    :verify-guards nil)
+             (type (signed-byte 30) len))
+    (cond
+     ((mbe :logic (zp len)
+           :exec (eql (the (signed-byte 30) len) 0))
+      nil)
+     ((eql (the (signed-byte 30) len) 1)
+      (list (car x)))
+     (t (let* ((len1 (the (signed-byte 30)
+                          (ash (the (signed-byte 30) len) -1)))
+               (len2 (the (signed-byte 30)
+                          (- (the (signed-byte 30) len)
+                             (the (signed-byte 30) len1))))
+               (part1 (string2-mergesort-fixnum x len1))
+               (part2 (string2-mergesort-fixnum (rest-n len1 x)
+                                                len2)))
+              (string2-merge-tr part1 part2 nil)))))
+
+  (defund
+    string2-mergesort-integers (x len)
+    (declare (xargs :measure (nfix len)
+                    :stobjs nil
+                    :guard (and t (string-listp x)
+                                (natp len)
+                                (<= len (len x)))
+                    :verify-guards nil)
+             (type integer len))
+    (cond
+     ((mbe :logic (zp len)
+           :exec (eql (the integer len) 0))
+      nil)
+     ((eql (the integer len) 1)
+      (list (car x)))
+     (t
+      (let*
+       ((len1 (the integer (ash (the integer len) -1)))
+        (len2 (the integer
+                   (- (the integer len)
+                      (the integer len1))))
+        (part1 (if (< (the integer len1)
+                      (mergesort-fixnum-threshold))
+                   (string2-mergesort-fixnum x len1)
+                   (string2-mergesort-integers x len1)))
+        (part2 (if (< (the integer len2)
+                      (mergesort-fixnum-threshold))
+                   (string2-mergesort-fixnum (rest-n len1 x)
+                                             len2)
+                   (string2-mergesort-integers (rest-n len1 x)
+                                               len2))))
+       (string2-merge-tr part1 part2 nil)))))
+
+  (defun string2-merge (x y)
+    (declare (xargs :measure (+ (len x) (len y))
+                    :stobjs nil
+                    :guard (and t (string-listp x)
+                                (string-listp y))))
+    (cond ((atom x) y)
+          ((atom y) x)
+          ((string-less-p (car y) (car x))
+           (cons (car y)
+                 (string2-merge x (cdr y))))
+          (t (cons (car x)
+                   (string2-merge (cdr x) y)))))
+
+  (defund
+    string2-sort (x)
+    (declare (xargs :guard (and t (string-listp x))
+                    :measure (len x)
+                    :stobjs nil
+                    :verify-guards nil))
+    (mbe
+     :logic
+     (cond
+      ((atom x) nil)
+      ((atom (cdr x)) (list (car x)))
+      (t (let ((half (floor (len x) 2)))
+              (string2-merge (string2-sort (take half x))
+                             (string2-sort (nthcdr half x))))))
+     :exec (let ((len (len x)))
+                (if (< len (mergesort-fixnum-threshold))
+                    (string2-mergesort-fixnum x len)
+                    (string2-mergesort-integers x len)))))
+
+  (defthm
+    string2-sort-is-identity-under-set-equiv
+    (set-equiv (string2-sort x) x)))
+
 (defund string-list-min (str-list)
   (b*
       (((unless (consp str-list)) (str-fix nil))
