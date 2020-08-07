@@ -10690,3 +10690,76 @@
                      (fs2 (hifat-file-alist-fix fs1))
                      (fs1 (hifat-file-alist-fix fs2))))))
   :rule-classes :congruence)
+
+(encapsulate
+  ()
+
+  (local (include-book "defsort/generic" :dir :system))
+
+  (defthm
+    remove-equal-of-comparable-insert
+    (implies (and (comparable-orderedp l)
+                  (compare<-negation-transitive))
+             (equal (remove-equal x (comparable-insert elt l))
+                    (if (equal elt x)
+                        (remove-equal x l)
+                        (comparable-insert elt (remove-equal x l)))))
+    :hints (("goal" :in-theory (enable comparable-insert
+                                       comparable-orderedp true-list-fix))))
+
+  (defthm
+    comparable-insertsort-of-remove
+    (implies (compare<-negation-transitive)
+             (equal (comparable-insertsort (remove-equal x l))
+                    (remove-equal x (comparable-insertsort l))))
+    :hints (("goal" :in-theory (enable comparable-insertsort true-list-fix))))
+
+  (local
+   (defun
+       induction-scheme (l1 l2)
+     (cond
+      ((and (not (atom l1)))
+       (induction-scheme (cdr l1) (remove-equal (car l1) l2)))
+      (t (mv l1 l2)))))
+
+  (defthm comparable-insert-of-remove-self-lemma-1
+    (not (equal (comparable-insert x l) l))
+    :hints (("goal" :in-theory (enable comparable-insert))))
+
+  (thm (implies (and (compare<-negation-transitive)
+                     (not (equal (car l) x))
+                     (not (compare< (car l) x))
+                     (comparable-orderedp l))
+                (not (member-equal x l)))
+     :hints (("goal" :in-theory (enable member-equal comparable-orderedp))))
+
+  (thm (implies
+        (and (compare<-negation-transitive)
+             (comparable-orderedp l)
+             (no-duplicatesp-equal l)
+             (member-equal x l)
+             (true-listp l)
+             (compare<-strict))
+        (equal
+         (COMPARABLE-INSERT x
+                            (REMOVE-EQUAL x l))
+         l))
+       :hints
+       (("Goal" :in-theory (enable
+                            COMPARABLE-INSERT comparable-orderedp true-list-fix
+                            member-equal))))
+
+  (thm
+   (implies (and
+             (set-equiv x y)
+             (no-duplicatesp-equal x)
+             (no-duplicatesp-equal y)
+             (compare<-negation-transitive))
+            (equal (comparable-insertsort x)
+                   (comparable-insertsort y)))
+   :hints
+   (("Goal"
+     :in-theory
+     (enable comparable-insertsort)
+     :induct
+     (induction-scheme x y)))))
