@@ -1041,95 +1041,6 @@
   (implies (dir-stream-table-p dir-stream-table)
            (nat-listp (strip-cars dir-stream-table))))
 
-(defund hifat-opendir (fs path dir-stream-table)
-  (declare (xargs :guard (and (dir-stream-table-p dir-stream-table)
-                              (m1-file-alist-p fs)
-                              (hifat-no-dups-p fs)
-                              (fat32-filename-list-p path))
-                  :guard-debug t
-                  :guard-hints
-                  (("Goal"
-                    :in-theory
-                    (disable
-                     alistp-when-m1-file-alist-p)
-                    :use
-                    (:instance
-                     alistp-when-m1-file-alist-p
-                     (x (m1-file->contents (mv-nth 0 (hifat-find-file fs path)))))))))
-  (b*
-      ((dir-stream-table
-        (mbe :exec dir-stream-table :logic (dir-stream-table-fix dir-stream-table)))
-       ((mv file error-code)
-        (hifat-find-file fs path))
-       ((unless (equal error-code 0))
-        (mv 0 dir-stream-table *enoent*))
-       ((unless (m1-directory-file-p file))
-        (mv 0 dir-stream-table *enotdir*))
-       (dir-stream-table-index
-        (find-new-index (strip-cars dir-stream-table))))
-    (mv
-     dir-stream-table-index
-     (cons
-      (cons dir-stream-table-index
-            (make-dir-stream
-             :file-list
-             (strip-cars (m1-file->contents file))))
-      dir-stream-table)
-     0)))
-
-(defthm dir-stream-table-p-of-hifat-opendir
-  (dir-stream-table-p
-   (mv-nth 1 (hifat-opendir fs path dir-stream-table)))
-  :hints (("Goal" :in-theory (enable hifat-opendir))))
-
-(assert-event
- (b*
-     (((mv dirp dir-stream-table errno)
-       (hifat-opendir
-        '(("INITRD  IMG" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-           (CONTENTS . ""))
-          ("RUN        "
-           (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-           (CONTENTS ("RSYSLOGDPID" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                      (CONTENTS . ""))))
-          ("USR        "
-           (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-           (CONTENTS
-            ("LOCAL      " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-             (CONTENTS))
-            ("LIB        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-             (CONTENTS))
-            ("SHARE      " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-             (CONTENTS))
-            ("BIN        "
-             (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-             (CONTENTS
-              ("CAT        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-               (CONTENTS . ""))
-              ("TAC        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-               (CONTENTS . ""))
-              ("COL        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-               (CONTENTS . "")))))))
-        (list "USR        ")
-        nil)))
-   (and
-    (equal dirp 0)
-    (equal dir-stream-table
-           '((0 (FILE-LIST "LOCAL      " "LIB        "
-                           "SHARE      " "BIN        "))))
-    (equal errno 0))))
-
 ;; Here's an interesting example that gives the lie to the idea that set-equiv
 ;; means much of anything when the sort is stable:
 ;; (b* ((alist '((5 . 1) (6 . 1) (7 . 2))) (l1 (list 5 6)) (l2 (list 6 5)))
@@ -1184,6 +1095,9 @@
                                                 len2)))
               (string2-merge-tr part1 part2 nil)))))
 
+  (verify-guards
+    string2-mergesort-fixnum)
+
   (defund
     string2-mergesort-integers (x len)
     (declare (xargs :measure (nfix len)
@@ -1217,7 +1131,10 @@
                                                len2))))
        (string2-merge-tr part1 part2 nil)))))
 
-  (defun string2-merge (x y)
+  (verify-guards
+    string2-mergesort-integers)
+
+  (defund string2-merge (x y)
     (declare (xargs :measure (+ (len x) (len y))
                     :stobjs nil
                     :guard (and t (string-listp x)
@@ -1229,6 +1146,12 @@
                  (string2-merge x (cdr y))))
           (t (cons (car x)
                    (string2-merge (cdr x) y)))))
+
+  (defthm fat32-filename-list-p-of-string2-merge
+    (implies (and (fat32-filename-list-p x) (fat32-filename-list-p y))
+             (fat32-filename-list-p (string2-merge x y)))
+    :hints (("Goal" :in-theory (e/d (string2-merge)
+                                    (floor len)))))
 
   (defund
     string2-sort (x)
@@ -1249,9 +1172,116 @@
                     (string2-mergesort-fixnum x len)
                     (string2-mergesort-integers x len)))))
 
+  (verify-guards
+    string2-sort)
+
+  (local (include-book "ihs/ihs-lemmas" :dir :system))
+
+  (defthm fat32-filename-list-p-of-string2-sort-when-fat32-filename-list-p
+    (implies
+     (fat32-filename-list-p x)
+     (fat32-filename-list-p (string2-sort x)))
+    :hints (("Goal" :in-theory (e/d (string2-sort
+                                     floor-bounded-by-/)
+                                    (floor len)))))
+
   (defthm
     string2-sort-is-identity-under-set-equiv
     (set-equiv (string2-sort x) x)))
+
+(defthm string-listp-when-fat32-filename-listp
+  (implies (fat32-filename-list-p x)
+           (string-listp x)))
+
+(defund hifat-opendir (fs path dir-stream-table)
+  (declare (xargs :guard (and (dir-stream-table-p dir-stream-table)
+                              (m1-file-alist-p fs)
+                              (hifat-no-dups-p fs)
+                              (fat32-filename-list-p path))
+                  :guard-debug t
+                  :guard-hints
+                  (("Goal"
+                    :in-theory
+                    (disable
+                     alistp-when-m1-file-alist-p)
+                    :use
+                    (:instance
+                     alistp-when-m1-file-alist-p
+                     (x (m1-file->contents (mv-nth 0 (hifat-find-file fs path)))))))))
+  (b*
+      ((dir-stream-table
+        (mbe :exec dir-stream-table :logic (dir-stream-table-fix dir-stream-table)))
+       ((mv file error-code)
+        (hifat-find-file fs path))
+       ((unless (equal error-code 0))
+        (mv 0 dir-stream-table *enoent*))
+       ((unless (m1-directory-file-p file))
+        (mv 0 dir-stream-table *enotdir*))
+       (dir-stream-table-index
+        (find-new-index (strip-cars dir-stream-table))))
+    (mv
+     dir-stream-table-index
+     (cons
+      (cons dir-stream-table-index
+            (make-dir-stream
+             :file-list
+             (string2-sort
+              (strip-cars (m1-file->contents file)))))
+      dir-stream-table)
+     0)))
+
+(defthm dir-stream-table-p-of-hifat-opendir
+  (dir-stream-table-p
+   (mv-nth 1 (hifat-opendir fs path dir-stream-table)))
+  :hints (("Goal" :in-theory (enable hifat-opendir))))
+
+(assert-event
+ (b*
+     (((mv dirp dir-stream-table errno)
+       (hifat-opendir
+        '(("INITRD  IMG" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+           (CONTENTS . ""))
+          ("RUN        "
+           (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+           (CONTENTS ("RSYSLOGDPID" (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                             0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+                      (CONTENTS . ""))))
+          ("USR        "
+           (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+           (CONTENTS
+            ("LOCAL      " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS))
+            ("LIB        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS))
+            ("SHARE      " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS))
+            ("BIN        "
+             (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+             (CONTENTS
+              ("CAT        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+               (CONTENTS . ""))
+              ("TAC        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+               (CONTENTS . ""))
+              ("COL        " (DIR-ENT 0 0 0 0 0 0 0 0 0 0 0 0
+                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+               (CONTENTS . "")))))))
+        (list "USR        ")
+        nil)))
+   (and
+    (equal dirp 0)
+    (equal dir-stream-table
+           '((0 (FILE-LIST "BIN        " "LIB        "
+                           "LOCAL      " "SHARE      "))))
+    (equal errno 0))))
 
 (defund hifat-readdir (dirp dir-stream-table)
   (declare (xargs :guard (and (dir-stream-table-p dir-stream-table)
@@ -1283,15 +1313,15 @@
  (b*
      (((mv name errno dir-stream-table)
        (hifat-readdir 0
-                      '((0 (FILE-LIST "LOCAL      " "LIB        "
-                                      "SHARE      " "BIN        "))))))
+                      '((0 (FILE-LIST "BIN        " "LIB        "
+                                      "LOCAL      " "SHARE      "))))))
    (and
-    (equal name "LOCAL      ")
+    (equal name "BIN        ")
     (equal errno 0)
     (equal
      dir-stream-table
-     '((0 (FILE-LIST "LIB        "
-                     "SHARE      " "BIN        ")))))))
+     '((0  (FILE-LIST "LIB        "
+                      "LOCAL      " "SHARE      ")))))))
 
 (defthm dir-stream-table-p-of-hifat-readdir
   (dir-stream-table-p (mv-nth 2
