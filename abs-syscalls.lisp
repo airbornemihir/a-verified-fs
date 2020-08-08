@@ -10658,7 +10658,7 @@
                   (consp (assoc-equal x alist)))))))
 
 (defthm
-  strip-cars-of-hifat-file-alist
+  strip-cars-of-hifat-file-alist-fix
   (equal (strip-cars (hifat-file-alist-fix fs))
          (remove-duplicates-equal (fat32-filename-list-fix (strip-cars fs))))
   :hints (("goal" :in-theory (enable hifat-file-alist-fix))))
@@ -10690,3 +10690,44 @@
                      (fs2 (hifat-file-alist-fix fs1))
                      (fs1 (hifat-file-alist-fix fs2))))))
   :rule-classes :congruence)
+
+(defund abs-opendir (frame path dir-stream-table)
+  (declare
+   (xargs
+    :guard (and (fat32-filename-list-p path)
+                (frame-p frame)
+                (consp (assoc-equal 0 frame))
+                (dir-stream-table-p dir-stream-table))
+    :guard-debug t
+    :guard-hints
+    (("Goal"
+      :use
+      (:theorem
+       (implies
+        (m1-directory-file-p (mv-nth 0
+                                     (abs-find-file (partial-collapse frame path)
+                                                    path)))
+        (m1-file-alist-p
+         (m1-file->contents (mv-nth 0
+                                    (abs-find-file (partial-collapse frame path)
+                                                   path))))))))))
+  (b* ((frame (partial-collapse frame path))
+       ((mv file errno)
+        (abs-find-file frame path))
+       ((unless (equal errno 0))
+        (mv 0 dir-stream-table *enoent* frame))
+       ((unless (m1-directory-file-p file))
+        (mv 0 dir-stream-table *enotdir* frame))
+       (dir-stream-table-index
+        (find-new-index (strip-cars dir-stream-table))))
+    (mv
+     dir-stream-table-index
+     (cons
+      (cons dir-stream-table-index
+            (make-dir-stream
+             :file-list
+             (string2-sort
+              (strip-cars (m1-file->contents file)))))
+      dir-stream-table)
+     0
+     frame)))
