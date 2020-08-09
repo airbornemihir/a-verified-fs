@@ -1061,21 +1061,29 @@
     :comparable-listp string-listp
     :true-listp t)
 
-  (defthm fat32-filename-list-p-of-string2-merge
+  (defthm fat32-filename-list-p-of-<<-merge
     (implies (and (fat32-filename-list-p x) (fat32-filename-list-p y))
-             (fat32-filename-list-p (string2-merge x y)))
-    :hints (("Goal" :in-theory (e/d (string2-merge)
+             (fat32-filename-list-p (<<-merge x y)))
+    :hints (("Goal" :in-theory (e/d (<<-merge)
                                     (floor len)))))
 
   (local (include-book "ihs/ihs-lemmas" :dir :system))
 
-  (defthm fat32-filename-list-p-of-string2-sort-when-fat32-filename-list-p
+  (defthm fat32-filename-list-p-of-<<-sort-when-fat32-filename-list-p
     (implies
      (fat32-filename-list-p x)
-     (fat32-filename-list-p (string2-sort x)))
-    :hints (("Goal" :in-theory (e/d (string2-sort
+     (fat32-filename-list-p (<<-sort x)))
+    :hints (("Goal" :in-theory (e/d (<<-sort
                                      floor-bounded-by-/)
-                                    (floor len))))))
+                                    (floor len
+                                           <<-mergesort-equals-insertsort)))))
+
+  (defthm
+    common-<<-sort-for-perms
+    (implies (set-equiv x y)
+             (equal (<<-sort (remove-duplicates-equal x))
+                    (<<-sort (remove-duplicates-equal y))))
+    :rule-classes :congruence))
 
 (defthm string-listp-when-fat32-filename-list-p
   (implies (fat32-filename-list-p x)
@@ -1113,7 +1121,7 @@
       (cons dir-stream-table-index
             (make-dir-stream
              :file-list
-             (string2-sort
+             (<<-sort
               (strip-cars (m1-file->contents file)))))
       dir-stream-table)
      0)))

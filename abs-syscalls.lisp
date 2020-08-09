@@ -10728,7 +10728,7 @@
       (cons dir-stream-table-index
             (make-dir-stream
              :file-list
-             (string2-sort
+             (<<-sort
               (strip-cars (m1-file->contents file)))))
       dir-stream-table)
      0
@@ -10811,6 +10811,68 @@
       (m1-file->contents (mv-nth 0
                                  (hifat-find-file (mv-nth 0 (collapse frame))
                                                   path))))))))
+
+;; Move later.
+(defthm no-duplicatesp-of-strip-cars-when-hifat-no-dups-p
+  (implies (and (hifat-no-dups-p fs)
+                (m1-file-alist-p fs))
+           (no-duplicatesp-equal (strip-cars fs)))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
+
+;; Move later.
+(defthm remove-duplicates-when-no-duplicatesp
+  (implies (no-duplicatesp-equal x)
+           (equal (remove-duplicates-equal x)
+                  (true-list-fix x))))
+
+(defthm
+  abs-opendir-correctness-lemma-3
+  (implies
+   (and
+    (mv-nth 1 (collapse frame))
+    (not (frame-val->path (cdr (assoc-equal 0 frame))))
+    (frame-p frame)
+    (no-duplicatesp-equal (strip-cars frame))
+    (abs-separate frame)
+    (subsetp-equal (abs-addrs (frame->root frame))
+                   (frame-addrs-root (frame->frame frame)))
+    (m1-directory-file-p (mv-nth 0
+                                 (hifat-find-file (mv-nth 0 (collapse frame))
+                                                  path))))
+   (equal
+    (<<-sort
+     (strip-cars
+      (m1-file->contents
+       (mv-nth
+        0
+        (hifat-find-file (mv-nth 0
+                                 (collapse (partial-collapse frame path)))
+                         path)))))
+    (<<-sort
+     (strip-cars
+      (m1-file->contents (mv-nth 0
+                                 (hifat-find-file (mv-nth 0 (collapse frame))
+                                                  path)))))))
+  :hints
+  (("goal"
+    :in-theory (disable common-<<-sort-for-perms)
+    :do-not-induct t
+    :use
+    (:instance
+     common-<<-sort-for-perms
+     (x
+      (strip-cars
+       (m1-file->contents
+        (mv-nth
+         0
+         (hifat-find-file (mv-nth 0
+                                  (collapse (partial-collapse frame path)))
+                          path)))))
+     (y
+      (strip-cars
+       (m1-file->contents (mv-nth 0
+                                  (hifat-find-file (mv-nth 0 (collapse frame))
+                                                   path)))))))))
 
 (defthmd
   abs-opendir-correctness-2
