@@ -10890,3 +10890,9 @@
   :hints (("Goal"
            :do-not-induct t
            :in-theory (enable abs-opendir hifat-opendir good-frame-p))))
+
+(defund abs-readdir (dirp dir-stream-table)
+  (hifat-readdir dirp dir-stream-table))
+
+(defund abs-closedir (dirp dir-stream-table)
+  (hifat-closedir dirp dir-stream-table))
