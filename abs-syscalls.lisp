@@ -10744,6 +10744,74 @@
            :in-theory (enable good-frame-p
                               abs-opendir collapse-equiv))))
 
+(defthm
+  abs-opendir-correctness-lemma-1
+  (implies
+   (and
+    (mv-nth 1 (collapse frame))
+    (not (frame-val->path (cdr (assoc-equal 0 frame))))
+    (frame-p frame)
+    (no-duplicatesp-equal (strip-cars frame))
+    (abs-separate frame)
+    (subsetp-equal (abs-addrs (frame->root frame))
+                   (frame-addrs-root (frame->frame frame)))
+    (m1-directory-file-p (mv-nth 0
+                                 (hifat-find-file (mv-nth 0 (collapse frame))
+                                                  path))))
+   (m1-directory-file-p
+    (mv-nth '0
+            (hifat-find-file (mv-nth '0
+                                     (collapse (partial-collapse frame path)))
+                             path))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-opendir
+                              hifat-opendir good-frame-p))))
+
+(defthm
+  abs-opendir-correctness-lemma-2
+  (implies
+   (and
+    (mv-nth 1 (collapse frame))
+    (not (frame-val->path (cdr (assoc-equal 0 frame))))
+    (frame-p frame)
+    (no-duplicatesp-equal (strip-cars frame))
+    (abs-separate frame)
+    (subsetp-equal (abs-addrs (frame->root frame))
+                   (frame-addrs-root (frame->frame frame)))
+    (m1-directory-file-p (mv-nth 0
+                                 (hifat-find-file (mv-nth 0 (collapse frame))
+                                                  path))))
+   (set-equiv
+    (strip-cars
+     (m1-file->contents
+      (mv-nth
+       0
+       (hifat-find-file (mv-nth 0
+                                (collapse (partial-collapse frame path)))
+                        path))))
+    (strip-cars
+     (m1-file->contents (mv-nth 0
+                                (hifat-find-file (mv-nth 0 (collapse frame))
+                                                 path))))))
+  :hints
+  (("goal"
+    :in-theory (disable hifat-equiv-implies-set-equiv-strip-cars-1)
+    :do-not-induct t
+    :use
+    (:instance
+     hifat-equiv-implies-set-equiv-strip-cars-1
+     (fs1
+      (m1-file->contents
+       (mv-nth
+        0
+        (hifat-find-file (mv-nth 0
+                                 (collapse (partial-collapse frame path)))
+                         path))))
+     (fs2
+      (m1-file->contents (mv-nth 0
+                                 (hifat-find-file (mv-nth 0 (collapse frame))
+                                                  path))))))))
+
 (defthmd
   abs-opendir-correctness-2
   (implies
