@@ -10812,19 +10812,6 @@
                                  (hifat-find-file (mv-nth 0 (collapse frame))
                                                   path))))))))
 
-;; Move later.
-(defthm no-duplicatesp-of-strip-cars-when-hifat-no-dups-p
-  (implies (and (hifat-no-dups-p fs)
-                (m1-file-alist-p fs))
-           (no-duplicatesp-equal (strip-cars fs)))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p))))
-
-;; Move later.
-(defthm remove-duplicates-when-no-duplicatesp
-  (implies (no-duplicatesp-equal x)
-           (equal (remove-duplicates-equal x)
-                  (true-list-fix x))))
-
 (defthm
   abs-opendir-correctness-lemma-3
   (implies
