@@ -10996,7 +10996,8 @@
       (cdr
        (assoc-equal (nfix dirp)
                     (dir-stream-table-fix dir-stream-table)))))
-    :hints (("goal" :in-theory (enable hifat-readdir)))))
+    :hints (("goal" :in-theory (enable hifat-readdir)))
+    :guard (and (natp dirp) (dir-stream-table-p dir-stream-table))))
   (b*
       (((mv name errno dir-stream-table)
         (hifat-readdir dirp dir-stream-table))
@@ -11008,6 +11009,9 @@
     (mv (list* name tail) dir-stream-table)))
 
 (include-book "hifat-entry-count")
+
+(defthm character-listp-of-fat32-name-to-name
+  (character-listp (fat32-name-to-name character-list)))
 
 ;; Making a recursive function to do tar can get really annoying because in
 ;; theory we could hit directory cycles and just keep traversing deeper and
@@ -11031,32 +11035,47 @@
   (fs path name-list fd-table file-table dir-stream-table entry-count)
   (declare
    (xargs
-    :guard (and (stringp path))
-    :measure
-    (nfix entry-count)))
+    :guard (and
+            (m1-file-alist-p fs)
+            (hifat-no-dups-p fs)
+            (stringp path)
+            (natp entry-count)
+            (fat32-filename-list-p name-list)
+            (file-table-p file-table)
+            (fd-table-p fd-table))
+    :guard-debug t
+    :guard-hints (("GOal" :in-theory (e/d (string-listp)
+                                          (fat32-name-to-name hifat-lstat))))
+    :measure (nfix entry-count)))
   (b*
-      (((unless (consp name-list)) (mv "" fd-table file-table))
+      (((unless (and (consp name-list)
+                     (not (zp entry-count))))
+        (mv "" fd-table file-table))
        (head (car name-list))
        (head-path
         (concatenate
          'string path "/"
          (implode (fat32-name-to-name (explode head)))))
-       ((mv st & &) (hifat-lstat fs path))
+       ((mv st & &) (hifat-lstat fs
+                                 (path-to-fat32-path (coerce path 'list))))
        (len (struct-stat->st_size st))
        ((mv fd-table file-table fd &)
-        (hifat-open fat32-path fd-table file-table))
+        (hifat-open
+         (path-to-fat32-path (coerce head-path 'list))
+         fd-table file-table))
        ((unless (>= fd 0)) (mv "" fd-table file-table))
        ((mv & & pread-error-code)
         (hifat-pread
          fd len 0 fs fd-table file-table))
        ((mv fd-table file-table &) (hifat-close fd fd-table file-table))
+       (head-string (hifat-tar-reg-file-string fs head-path))
        ((when (zp pread-error-code))
         (b*
             (((mv & & &)
               (hifat-close fd fd-table file-table))
              ((mv tail-string fd-table file-table)
               (hifat-tar-name-list-string fs
-                                          path
+                                          head-path
                                           (cdr name-list)
                                           fd-table file-table
                                           dir-stream-table
@@ -11064,7 +11083,7 @@
           (mv
            (concatenate
             'string
-            (hifat-tar-reg-file-string fs head-path)
+            head-string
             tail-string)
            fd-table file-table)))
        ((mv dirp dir-stream-table &)

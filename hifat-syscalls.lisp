@@ -1225,6 +1225,7 @@
   :hints (("goal" :in-theory (enable hifat-readdir))))
 
 (defund hifat-closedir (dirp dir-stream-table)
+  (declare (xargs :guard (dir-stream-table-p dir-stream-table)))
   (b*
       ((alist-elem
         (assoc-equal dirp dir-stream-table))
