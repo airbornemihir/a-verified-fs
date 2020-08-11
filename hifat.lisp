@@ -2810,7 +2810,7 @@
 ;;                                                      CHARACTER-LIST))) ))
 
 (defun fat32-path-to-path (string-list)
-  ;; (declare (xargs :guard (string-listp string-list)))
+  (declare (xargs :guard (fat32-filename-list-p string-list)))
   (if (atom string-list)
       nil
     (append (fat32-name-to-name (coerce (car string-list) 'list))

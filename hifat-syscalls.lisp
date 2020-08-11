@@ -148,7 +148,7 @@
                                      fat32-filename-list-fix)
            :induct (basename-dirname-helper path))))
 
-(defun hifat-lstat (fs path)
+(defund hifat-lstat (fs path)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (hifat-no-dups-p fs)
                               (fat32-filename-list-p path))))
@@ -164,6 +164,10 @@
      (make-struct-stat
       :st_size st_size)
      0 0)))
+
+(defthm struct-stat-p-of-hifat-lstat
+  (struct-stat-p (mv-nth 0 (hifat-lstat fs path)))
+  :hints (("goal" :in-theory (enable hifat-lstat))))
 
 ;; By default, we aren't going to check whether the file exists.
 (defun hifat-open (path fd-table file-table)
@@ -525,16 +529,6 @@
      (remove-assoc fd fd-table)
      (remove-assoc (cdr fd-table-entry) file-table)
      0)))
-
-(defthm
-  fd-table-p-of-remove-assoc
-  (implies (fd-table-p fd-table)
-           (fd-table-p (remove-assoc-equal fd fd-table))))
-
-(defthm
-  file-table-p-of-remove-assoc
-  (implies (file-table-p file-table)
-           (file-table-p (remove-assoc-equal fd file-table))))
 
 (defthm hifat-close-correctness-1
   (b* (((mv fd-table file-table &)
@@ -1227,7 +1221,9 @@
 (defund hifat-closedir (dirp dir-stream-table)
   (declare (xargs :guard (dir-stream-table-p dir-stream-table)))
   (b*
-      ((alist-elem
+      ((dir-stream-table (mbe :exec dir-stream-table :logic
+                              (dir-stream-table-fix dir-stream-table)))
+       (alist-elem
         (assoc-equal dirp dir-stream-table))
        ((unless (consp alist-elem))
         (mv *ebadf* dir-stream-table)))
@@ -1236,6 +1232,10 @@
      (remove-assoc-equal
       dirp
       dir-stream-table))))
+
+(defthm dir-stream-table-p-of-hifat-closedir
+  (dir-stream-table-p (mv-nth 1 (hifat-closedir dirp dir-stream-table)))
+  :hints (("Goal" :in-theory (enable hifat-closedir))))
 
 (assert-event
  (b*
