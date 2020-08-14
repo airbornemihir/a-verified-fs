@@ -11021,17 +11021,6 @@
   :hints (("goal" :in-theory (enable hifat-get-names-from-dirp
                                      hifat-readdir))))
 
-(include-book "hifat-entry-count")
-
-;; Move later.
-(defthm character-listp-of-fat32-name-to-name
-  (character-listp (fat32-name-to-name character-list)))
-(defthm natp-of-hifat-opendir
-  (natp (mv-nth 0
-                (hifat-opendir fs path dir-stream-table)))
-  :hints (("goal" :in-theory (enable hifat-opendir)))
-  :rule-classes :type-prescription)
-
 ;; Making a recursive function to do tar can get really annoying because in
 ;; theory we could hit directory cycles and just keep traversing deeper and
 ;; deeper into the tree. It's important for proof purposes that we induct on
