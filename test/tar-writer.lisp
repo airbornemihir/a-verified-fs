@@ -2,44 +2,6 @@
 
 (local (in-theory (disable mod ceiling floor)))
 
-(encapsulate
-  ()
-
-  (local (include-book "arithmetic-3/top" :dir :system))
-
-  (defund
-    tar-len-encode-helper (len n)
-    (declare (xargs :guard (and (natp len) (natp n))))
-    (if
-     (zp n)
-     nil
-     (cons (code-char (+ (mod len 8) (char-code #\0)))
-           (tar-len-encode-helper (floor len 8) (- n 1))))))
-
-(defthm
-  len-of-tar-len-encode-helper
-  (equal (len (tar-len-encode-helper len n))
-         (nfix n))
-  :hints (("goal" :in-theory (enable tar-len-encode-helper))))
-
-(defthm
-  character-listp-of-tar-len-encode-helper
-  (character-listp (tar-len-encode-helper len n))
-  :hints (("goal" :in-theory (enable tar-len-encode-helper))))
-
-(defund tar-len-encode (len)
-  ;; It would be folly to stipulate that the length has to be less than 8^11,
-  ;; and then keep struggling with every new guard proof.
-  (declare (xargs :guard (natp len)
-                  :guard-hints (("Goal" :in-theory (enable
-                                                    tar-len-encode-helper)) )))
-  (coerce (revappend (tar-len-encode-helper len 11) (list (code-char 0)))
-          'string))
-
-(defthm length-of-tar-len-encode
-  (equal (len (explode (tar-len-encode len))) 12)
-  :hints (("Goal" :in-theory (enable tar-len-encode)) ))
-
 (defund
   tar-header-block (path len typeflag)
   (declare
