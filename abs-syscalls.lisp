@@ -7381,6 +7381,9 @@
 
   (local (deflabel abs-mkdir-correctness-label))
 
+  ;; Trying to enable additional executable-counterpart rules here just results
+  ;; in unnecessary trouble. It's like, all the proofs are there but one can't
+  ;; touch them at all...
   (local
    (in-theory
     (union-theories '(length hifat-mkdir fat32-filename-p-of-basename
@@ -10637,58 +10640,6 @@
 ;;       (frame (partial-collapse frame path))))
 ;;     ("Subgoal 1" :use
 ;;      collapse-seq-of-partial-seq-this-is-partial-collapse))))
-
-(defthm strip-cars-of-hifat-file-alist-fix-lemma-1
-  (implies (and (not (null x))
-                (set-equiv (strip-cars alist)
-                           (remove-duplicates-equal l)))
-           (iff (member-equal x l)
-                (consp (assoc-equal x alist))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable member-of-strip-cars)
-           :use member-of-strip-cars))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies (and (case-split (not (null x)))
-                  (equal (strip-cars alist)
-                         (remove-duplicates-equal l)))
-             (iff (member-equal x l)
-                  (consp (assoc-equal x alist)))))))
-
-(defthm
-  strip-cars-of-hifat-file-alist-fix
-  (equal (strip-cars (hifat-file-alist-fix fs))
-         (remove-duplicates-equal (fat32-filename-list-fix (strip-cars fs))))
-  :hints (("goal" :in-theory (enable hifat-file-alist-fix))))
-
-(defthm hifat-equiv-implies-set-equiv-strip-cars-1-lemma-1
-  (implies (and (member-equal a x) (null (car a)))
-           (member-equal nil (strip-cars x))))
-
-(defthm hifat-equiv-implies-set-equiv-strip-cars-1-lemma-2
-  (implies (hifat-subsetp fs1 fs2)
-           (subsetp-equal (strip-cars fs1)
-                          (strip-cars fs2)))
-  :hints (("goal" :in-theory (enable hifat-subsetp))))
-
-(defthm
-  hifat-equiv-implies-set-equiv-strip-cars-1
-  (implies (hifat-equiv fs1 fs2)
-           (set-equiv (fat32-filename-list-fix (strip-cars fs1))
-                      (fat32-filename-list-fix (strip-cars fs2))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory (e/d (hifat-equiv set-equiv)
-                    (hifat-equiv-implies-set-equiv-strip-cars-1-lemma-2))
-    :use ((:instance hifat-equiv-implies-set-equiv-strip-cars-1-lemma-2
-                     (fs1 (hifat-file-alist-fix fs1))
-                     (fs2 (hifat-file-alist-fix fs2)))
-          (:instance hifat-equiv-implies-set-equiv-strip-cars-1-lemma-2
-                     (fs2 (hifat-file-alist-fix fs1))
-                     (fs1 (hifat-file-alist-fix fs2))))))
-  :rule-classes :congruence)
 
 (defund abs-opendir (frame path dir-stream-table)
   (declare

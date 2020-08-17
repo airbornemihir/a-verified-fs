@@ -334,12 +334,43 @@
 ;; loop-stopper, we were going round and round in a big induction proof. By
 ;; explicitly stipulating equality as the equivalence relation, we get around
 ;; this.
+;;
+;; OK, another problem this rule had earlier - it was a rewrite rule instead of
+;; a congruence, and therefore supremely unwieldy!
 (defthm
   hifat-equiv-of-cons
   (implies (hifat-equiv tail1 tail2)
-           (equal (hifat-equiv (cons head tail1)
-                               (cons head tail2))
-                  t))
+           (hifat-equiv (cons head tail1)
+                        (cons head tail2)))
   :hints
   (("goal" :in-theory (e/d (hifat-equiv hifat-no-dups-p))
-    :expand (hifat-file-alist-fix (cons head tail1)))))
+    :expand (hifat-file-alist-fix (cons head tail1))))
+  :rule-classes :congruence)
+
+(defthm hifat-equiv-implies-set-equiv-strip-cars-1-lemma-1
+  (implies (and (member-equal a x) (null (car a)))
+           (member-equal nil (strip-cars x))))
+
+(defthm hifat-equiv-implies-set-equiv-strip-cars-1-lemma-2
+  (implies (hifat-subsetp fs1 fs2)
+           (subsetp-equal (strip-cars fs1)
+                          (strip-cars fs2)))
+  :hints (("goal" :in-theory (enable hifat-subsetp))))
+
+(defthm
+  hifat-equiv-implies-set-equiv-strip-cars-1
+  (implies (hifat-equiv fs1 fs2)
+           (set-equiv (fat32-filename-list-fix (strip-cars fs1))
+                      (fat32-filename-list-fix (strip-cars fs2))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (hifat-equiv set-equiv)
+                    (hifat-equiv-implies-set-equiv-strip-cars-1-lemma-2))
+    :use ((:instance hifat-equiv-implies-set-equiv-strip-cars-1-lemma-2
+                     (fs1 (hifat-file-alist-fix fs1))
+                     (fs2 (hifat-file-alist-fix fs2)))
+          (:instance hifat-equiv-implies-set-equiv-strip-cars-1-lemma-2
+                     (fs2 (hifat-file-alist-fix fs1))
+                     (fs1 (hifat-file-alist-fix fs2))))))
+  :rule-classes :congruence)

@@ -1848,6 +1848,24 @@
 
 (verify-guards hifat-file-alist-fix)
 
+(defthmd strip-cars-of-hifat-file-alist-fix-lemma-1
+  (implies (and (case-split (not (null x)))
+                (equal (strip-cars alist)
+                       (remove-duplicates-equal l)))
+           (iff (member-equal x l)
+                (consp (assoc-equal x alist))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (disable member-of-strip-cars)
+           :use member-of-strip-cars)))
+
+(defthm
+  strip-cars-of-hifat-file-alist-fix
+  (equal (strip-cars (hifat-file-alist-fix fs))
+         (remove-duplicates-equal (fat32-filename-list-fix (strip-cars fs))))
+  :hints
+  (("goal" :in-theory (enable hifat-file-alist-fix
+                              strip-cars-of-hifat-file-alist-fix-lemma-1))))
+
 ;; This function returns *ENOENT* when the root directory is asked for. There's
 ;; a simple reason: we want to return the whole file, including the directory
 ;; entry - and nowhere is there a directory entry for the root. Any
