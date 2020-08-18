@@ -10833,3 +10833,46 @@
 
 (defund abs-closedir (dirp dir-stream-table)
   (hifat-closedir dirp dir-stream-table))
+
+(defthm
+  hifat-place-file-of-append-2
+  (implies
+   (and (zp (mv-nth 1 (hifat-find-file fs x)))
+        (m1-regular-file-p (mv-nth 0 (hifat-find-file fs x))))
+   (equal (hifat-place-file fs (append x y) file)
+          (if (consp y)
+              (mv (hifat-file-alist-fix fs) *enotdir*)
+              (hifat-place-file fs x file))))
+  :hints
+  (("goal"
+    :in-theory (enable hifat-place-file hifat-find-file)
+    :induct
+    (mv
+     (mv-nth
+      0
+      (hifat-place-file
+       fs x
+       (m1-file
+        (m1-file->dir-ent (mv-nth 0 (hifat-find-file fs x)))
+        (mv-nth
+         0
+         (hifat-place-file
+          (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
+          y file)))))
+     (append x y)
+     (mv-nth 0 (hifat-find-file fs x))))))
+
+(defthm
+  abs-pwrite-correctness-2
+  (implies (and (zp (frame-val->src (cdr (assoc-equal 0 frame))))
+                (good-frame-p frame)
+                (consp (assoc-equal 0 frame)))
+           (frame-reps-fs (mv-nth 0 (abs-pwrite fd buf offset frame fd-table file-table))
+                          (mv-nth 0 (hifat-pwrite
+                                     fd buf offset
+                                     (mv-nth 0 (collapse frame))
+                                     fd-table file-table))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (frame-reps-fs good-frame-p abs-pwrite))))
+  :otf-flg t)
