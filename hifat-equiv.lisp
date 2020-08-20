@@ -252,7 +252,7 @@
                        (cdr fs))
                  fs)
     :in-theory (e/d (hifat-no-dups-p)
-                    (hifat-subsetp-reflexive-lemma-4))
+                    (hifat-subsetp-reflexive-lemma-4 m1-directory-file-p-of-m1-file))
     :use
     ((:instance hifat-subsetp-reflexive-lemma-4
                 (x (list (cons (car (car fs))

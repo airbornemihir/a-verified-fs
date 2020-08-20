@@ -10890,6 +10890,7 @@
                 (good-frame-p frame)
                 (consp (assoc-equal 0 frame))
                 (stringp buf)
+                (natp offset)
                 ;; silly, unnecessary hypothesis.
                 (not (member-equal
                       (find-new-index (strip-cars frame))
@@ -10903,7 +10904,8 @@
   (("goal" :do-not-induct t
     :in-theory (e/d (frame-reps-fs good-frame-p abs-pwrite
                                    collapse 1st-complete frame-addrs-root
-                                   dist-names abs-separate abs-fs-fix))
+                                   dist-names abs-separate abs-fs-fix
+                                   assoc-equal-of-frame-with-root))
     :expand
     ((:with
       abs-pwrite-correctness-lemma-1
@@ -10916,77 +10918,8 @@
                          file)))
      (:with
       no-duplicatesp-of-abs-addrs-of-put-assoc-2
-      (no-duplicatesp-equal
-       (abs-addrs
-        (put-assoc-equal
-         (basename (file-table-element->fid$inline
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table))))
-         (m1-file '(0 0 0 0 0 0 0 0 0 0 0 0
-                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                  (implode$inline (insert-text nil offset buf)))
-         (mv-nth
-          0
-          (abs-alloc
-           (frame-val->dir$inline
-            (cdr
-             (assoc-equal
-              (abs-find-file-src
-               (partial-collapse
-                frame
-                (dirname (file-table-element->fid$inline
-                          (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                            file-table)))))
-               (dirname (file-table-element->fid$inline
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-              (partial-collapse
-               frame
-               (dirname (file-table-element->fid$inline
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table))))))))
-           (nthcdr
-            (len
-             (frame-val->path$inline
-              (cdr
-               (assoc-equal
-                (abs-find-file-src
-                 (partial-collapse
-                  frame
-                  (dirname (file-table-element->fid$inline
-                            (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                              file-table)))))
-                 (dirname (file-table-element->fid$inline
-                           (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                             file-table)))))
-                frame))))
-            (dirname (file-table-element->fid$inline
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table)))))
-           (find-new-index
-            (strip-cars
-             (partial-collapse
-              frame
-              (dirname (file-table-element->fid$inline
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))))))))))
-     (:with
-      no-duplicatesp-of-abs-addrs-of-put-assoc-2
-      (no-duplicatesp-equal
-       (abs-addrs
-        (put-assoc-equal
-         (basename (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table))))
-         (m1-file '(0 0 0 0 0 0 0 0 0 0 0 0
-                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                  (implode (insert-text nil offset buf)))
-         (mv-nth
-          0
-          (abs-alloc
-           (frame-val->dir (cdr (assoc-equal 0 frame)))
-           (dirname (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table))))
-           (find-new-index (strip-cars frame)))))))))))
+      (:free
+       (name val abs-file-alist)
+       (no-duplicatesp-equal
+        (abs-addrs (put-assoc-equal name val abs-file-alist))))))))
   :otf-flg t)

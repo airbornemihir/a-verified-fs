@@ -1524,8 +1524,8 @@
 
 (defthm
   m1-directory-file-p-of-m1-file
-  (implies (m1-file-alist-p contents)
-           (m1-directory-file-p (m1-file dir-ent contents)))
+  (equal (m1-directory-file-p (m1-file dir-ent contents))
+         (m1-file-alist-p contents))
   :hints (("goal" :in-theory (enable m1-directory-file-p))))
 
 (defthm
