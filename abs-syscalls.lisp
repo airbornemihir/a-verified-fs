@@ -10353,83 +10353,56 @@
                                (frame->frame frame)))))
     (mv frame 0 0)))
 
-(defund
-  abs-pwrite
-  (fd buf offset frame fd-table file-table)
-  (declare
-   (xargs
-    :guard (and (natp fd)
-                (stringp buf)
-                (natp offset)
-                (fd-table-p fd-table)
-                (file-table-p file-table)
-                (frame-p frame)
-                (consp (assoc-equal 0 frame)))
-    :guard-debug t
-    :guard-hints
-    (("goal"
-      :do-not-induct t
-      :in-theory (e/d (len-of-insert-text abs-no-dups-file-p abs-no-dups-p)
-                      (unsigned-byte-p))
-      :expand
-      (:with m1-file-contents-fix-when-m1-file-contents-p
-             (:free (oldtext)
-                    (m1-file-contents-fix
-                     (implode (insert-text oldtext offset buf)))))))))
+(defund abs-pwrite (fd buf offset frame fd-table file-table)
+  (declare (xargs :guard (and (frame-p frame) (fd-table-p fd-table) (file-table-p file-table)
+                              (natp fd) (stringp buf) (natp offset) (consp (assoc-equal 0 frame)))
+                  :guard-hints
+                  (("goal"
+                    :do-not-induct t
+                    :in-theory (e/d (len-of-insert-text abs-no-dups-file-p abs-no-dups-p)
+                                    (unsigned-byte-p))
+                    :expand (:with m1-file-contents-fix-when-m1-file-contents-p
+                                   (:free (oldtext)
+                                          (m1-file-contents-fix
+                                           (implode (insert-text oldtext offset buf)))))))))
   (b*
       ((fd-table-entry (assoc-equal fd fd-table))
-       ((unless (consp fd-table-entry))
-        (mv frame -1 *ebadf*))
-       (file-table-entry (assoc-equal (cdr fd-table-entry)
-                                      file-table))
-       ((unless (consp file-table-entry))
-        (mv frame -1 *ebadf*))
+       ((unless (consp fd-table-entry)) (mv frame -1 *ebadf*))
+       (file-table-entry (assoc-equal (cdr fd-table-entry) file-table))
+       ((unless (consp file-table-entry)) (mv frame -1 *ebadf*))
        (path (file-table-element->fid (cdr file-table-entry)))
-       (dirname (dirname path)) (frame (partial-collapse frame dirname))
+       (dirname (dirname path))
+       (frame (partial-collapse frame dirname))
        ;; After partial-collapse, either the parent directory is there in one
        ;; variable, or it isn't there at all.
        ((mv parent-dir error-code) (abs-find-file frame dirname))
        ((unless (or (atom dirname) (and (zp error-code) (abs-directory-file-p parent-dir))))
         (mv frame -1 *enoent*))
        (src (abs-find-file-src frame dirname))
-       (new-index (find-new-index
-                   ;; Using this, not (strip-cars (frame->frame frame)), to make
-                   ;; sure we don't get a zero.
-                   (strip-cars frame)))
+       (new-index (find-new-index (strip-cars frame)))
        ((mv var new-src-dir)
         (abs-alloc (frame-val->dir (cdr (assoc-equal src frame)))
                    (nthcdr (len (frame-val->path (cdr (assoc-equal src frame)))) dirname)
                    new-index))
        ((when (consp (abs-assoc (basename path) var))) (mv frame -1 *eexist*))
-       ((mv file error-code)
-        (if (consp (abs-assoc (basename path) var))
-            (mv (cdr (abs-assoc (basename path) var)) 0)
-          (mv (make-abs-file) *enoent*)))
-       ((mv oldtext dir-ent)
-        (if (and (equal error-code 0)
-                 (m1-regular-file-p file))
-            (mv (coerce (m1-file->contents file) 'list)
-                (m1-file->dir-ent file))
-            (mv nil (dir-ent-fix nil))))
-       ((unless (unsigned-byte-p 32 (+ offset (length buf))))
-        (mv frame -1 *enospc*))
+       ((mv file error-code) (if (consp (abs-assoc (basename path) var))
+                                 (mv (cdr (abs-assoc (basename path) var)) 0)
+                               (mv (make-abs-file) *enoent*)))
+       ((mv oldtext dir-ent) (if (and (equal error-code 0) (m1-regular-file-p file))
+                                 (mv (coerce (m1-file->contents file) 'list)
+                                     (m1-file->dir-ent file))
+                               (mv nil (dir-ent-fix nil))))
+       ((unless (unsigned-byte-p 32 (+ offset (length buf)))) (mv frame -1 *enospc*))
        (frame (put-assoc-equal src (change-frame-val (cdr (assoc-equal src frame))
                                                      :dir new-src-dir)
                                frame))
        (file (make-m1-file :dir-ent dir-ent
-                           :contents (coerce (insert-text oldtext offset buf)
-                                             'string)))
-       (new-var (abs-put-assoc (basename path)
-                               file
-                               var))
-       (frame
-        (frame-with-root (frame->root frame)
-                         (cons (cons new-index
-                                     (frame-val dirname
-                                                new-var src))
-                               (frame->frame frame)))))
-    (mv frame (if (equal error-code 0) 0 -1)
-        error-code)))
+                           :contents (coerce (insert-text oldtext offset buf) 'string)))
+       (new-var (abs-put-assoc (basename path) file var))
+       (frame (frame-with-root (frame->root frame)
+                               (cons (cons new-index (frame-val dirname new-var src))
+                                     (frame->frame frame)))))
+    (mv frame (if (equal error-code 0) 0 -1) error-code)))
 
 (defthm
   1st-complete-under-path-of-frame->frame-of-partial-collapse
@@ -10834,8 +10807,48 @@
 (defund abs-closedir (dirp dir-stream-table)
   (hifat-closedir dirp dir-stream-table))
 
+(defthmd
+  abs-pwrite-correctness-lemma-1
+  (implies
+   (and (consp path)
+        (zp (mv-nth 1 (hifat-find-file fs (dirname path)))))
+   (equal
+    (hifat-place-file fs path file)
+    (cond
+     ((atom (list (basename path)))
+      (hifat-place-file fs (dirname path)
+                        file))
+     ((m1-directory-file-p (mv-nth 0 (hifat-find-file fs (dirname path))))
+      (list
+       (mv-nth
+        0
+        (hifat-place-file
+         fs (dirname path)
+         (m1-file
+          (m1-file->dir-ent (mv-nth 0 (hifat-find-file fs (dirname path))))
+          (mv-nth
+           0
+           (hifat-place-file
+            (m1-file->contents (mv-nth 0 (hifat-find-file fs (dirname path))))
+            (list (basename path))
+            file)))))
+       (mv-nth
+        1
+        (hifat-place-file
+         (m1-file->contents (mv-nth 0 (hifat-find-file fs (dirname path))))
+         (list (basename path))
+         file))))
+     (t (cons (hifat-file-alist-fix fs)
+              '(20))))))
+  :hints (("goal" :in-theory (disable (:rewrite hifat-place-file-of-append-1))
+           :use (:instance (:rewrite hifat-place-file-of-append-1)
+                           (file file)
+                           (y (list (basename path)))
+                           (x (dirname path))
+                           (fs fs)))))
+
 (defthm
-  abs-pwrite-correctness-2
+  abs-pwrite-correctness-1
   (implies (and (zp (frame-val->src (cdr (assoc-equal 0 frame))))
                 (good-frame-p frame)
                 (consp (assoc-equal 0 frame)))
@@ -10846,5 +10859,16 @@
                                      fd-table file-table))))
   :hints
   (("goal" :do-not-induct t
-    :in-theory (e/d (frame-reps-fs good-frame-p abs-pwrite))))
+    :in-theory (e/d (frame-reps-fs good-frame-p abs-pwrite
+                                   collapse 1st-complete))
+    :expand
+    (:with
+     abs-pwrite-correctness-lemma-1
+     (:free
+      (file)
+      (hifat-place-file (mv-nth 0 (collapse frame))
+                        (file-table-element->fid
+                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                           file-table)))
+                        file)))))
   :otf-flg t)

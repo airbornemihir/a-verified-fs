@@ -2109,35 +2109,35 @@
   :hints (("goal" :in-theory (enable hifat-place-file)))
   :rule-classes :type-prescription)
 
-;; This still isn't perfect, in that we should be able to remove the hypothesis
-;; about (mv-nth 1 (hifat-find-file fs x)). Oh well.
 (defthm
   hifat-place-file-of-append-1
-  (implies
-   (zp (mv-nth 1 (hifat-find-file fs x)))
-   (equal
-    (hifat-place-file fs (append x y) file)
-    (cond
-     ((atom y) (hifat-place-file fs x file))
-     ((m1-directory-file-p (mv-nth 0 (hifat-find-file fs x)))
-      (mv
-       (mv-nth
-        0
-        (hifat-place-file
-         fs x
-         (make-m1-file
-          :contents
-          (mv-nth 0
-                  (hifat-place-file
-                   (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
-                   y file))
-          :dir-ent (m1-file->dir-ent (mv-nth 0 (hifat-find-file fs x))))))
-       (mv-nth 1
-               (hifat-place-file
-                (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
-                y file))))
-     (t (mv (hifat-file-alist-fix fs)
-            *enotdir*)))))
+  (equal
+   (hifat-place-file fs (append x y) file)
+   (cond
+    ((atom y) (hifat-place-file fs x file))
+    ((and (zp (mv-nth 1 (hifat-find-file fs x)))
+          (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
+     (mv
+      (mv-nth
+       0
+       (hifat-place-file
+        fs x
+        (make-m1-file
+         :contents
+         (mv-nth 0
+                 (hifat-place-file
+                  (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
+                  y file))
+         :dir-ent (m1-file->dir-ent (mv-nth 0 (hifat-find-file fs x))))))
+      (mv-nth
+       1
+       (hifat-place-file (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
+                         y file))))
+    ((or (zp (mv-nth 1 (hifat-find-file fs x)))
+         (consp x))
+     (mv (hifat-file-alist-fix fs)
+         *enotdir*))
+    (t (hifat-place-file fs y file))))
   :hints
   (("goal"
     :in-theory (enable hifat-place-file hifat-find-file)
