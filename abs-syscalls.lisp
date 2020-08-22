@@ -5343,10 +5343,11 @@
 (defthmd
   abs-mkdir-correctness-lemma-30
   (implies
-   (and (zp (mv-nth 1 (abs-find-file-helper fs path)))
-        (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs path))))
+   (zp (mv-nth 1 (abs-find-file-helper fs path)))
    (equal (mv-nth 0 (abs-alloc fs path new-index))
-          (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path)))))
+          (if (abs-directory-file-p (mv-nth 0 (abs-find-file-helper fs path)))
+              (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path)))
+              nil)))
   :hints (("goal" :in-theory (enable abs-alloc abs-find-file-helper))))
 
 (defthm
