@@ -19102,6 +19102,49 @@
                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                        file-table))))))))))))))
 
+(defthm abs-pwrite-correctness-lemma-55
+  (implies (and (zp (mv-nth 1 (hifat-find-file fs y)))
+                (m1-directory-file-p (mv-nth 0 (hifat-find-file fs y)))
+                (fat32-filename-list-prefixp x y))
+           (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
+  :hints (("goal" :in-theory (enable fat32-filename-list-prefixp
+                                     hifat-find-file)
+           :induct (mv (fat32-filename-list-prefixp x y)
+                       (hifat-find-file fs x)))))
+
+(defthm
+  abs-pwrite-correctness-lemma-56
+  (implies (fat32-filename-list-prefixp x y)
+           (fat32-filename-list-equiv (append x (nthcdr (len x) y))
+                                      y))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory
+    (e/d (fat32-filename-list-prefixp-alt fat32-filename-list-equiv)
+         (append-when-prefixp))
+    :use (:instance append-when-prefixp
+                    (x (fat32-filename-list-fix x))
+                    (y (fat32-filename-list-fix y))))))
+
+(defthm
+  abs-pwrite-correctness-lemma-57
+  (implies
+   (and (zp (mv-nth 1 (hifat-find-file fs x)))
+        (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x)))
+        (fat32-filename-list-prefixp x y)
+        (consp (nthcdr (len x) y)))
+   (equal
+    (hifat-find-file (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
+                     (nthcdr (len x) y))
+    (hifat-find-file fs y)))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (disable hifat-find-file-of-append-1)
+    :use
+    ((:instance hifat-find-file-of-append-1
+                (y (nthcdr (len x) y)))))))
+
 ;; Subgoal
 (thm
  (implies
