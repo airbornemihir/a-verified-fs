@@ -19132,7 +19132,7 @@
    (and (zp (mv-nth 1 (hifat-find-file fs x)))
         (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x)))
         (fat32-filename-list-prefixp x y)
-        (consp (nthcdr (len x) y)))
+        (case-split (consp (nthcdr (len x) y))))
    (equal
     (hifat-find-file (m1-file->contents (mv-nth 0 (hifat-find-file fs x)))
                      (nthcdr (len x) y))
@@ -19144,6 +19144,63 @@
     :use
     ((:instance hifat-find-file-of-append-1
                 (y (nthcdr (len x) y)))))))
+
+;; Move later.
+(defthm
+  intersectp-of-set-difference$-when-subsetp-1
+  (implies (subsetp-equal z y)
+           (not (intersectp-equal z (set-difference-equal x y))))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary (implies (subsetp-equal z y)
+                        (not (intersectp-equal (set-difference-equal x y)
+                                               z))))))
+(defthm subsetp-of-set-difference$
+  (subsetp-equal (set-difference-equal x y)
+                 x))
+
+(defthm subsetp-of-abs-addrs-of-put-assoc
+  (implies (abs-complete (abs-file->contents file))
+           (subsetp-equal (abs-addrs (put-assoc-equal name file fs))
+                          (abs-addrs fs)))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm
+  subsetp-of-abs-addrs-of-abs-place-file-helper
+  (implies
+   (abs-complete (abs-file->contents (abs-no-dups-file-fix file)))
+   (subsetp-equal (abs-addrs (mv-nth 0 (abs-place-file-helper fs path file)))
+                  (abs-addrs (abs-fs-fix fs))))
+  :hints (("goal" :in-theory (enable abs-place-file-helper)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (implies
+     (and (abs-fs-p fs)
+          (abs-complete (abs-file->contents (abs-no-dups-file-fix file))))
+     (subsetp-equal
+      (abs-addrs (mv-nth 0 (abs-place-file-helper fs path file)))
+      (abs-addrs fs))))))
+
+(defthm
+  no-duplicatesp-of-abs-addrs-of-put-assoc
+  (implies (and (abs-complete (abs-file->contents file))
+                (no-duplicatesp-equal (abs-addrs fs)))
+           (no-duplicatesp-equal (abs-addrs (put-assoc-equal name file fs))))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm
+  no-duplicatesp-of-abs-addrs-of-abs-place-file-helper
+  (implies
+   (and
+    (no-duplicatesp-equal (abs-addrs (abs-fs-fix fs)))
+    (abs-complete (abs-file->contents$inline (abs-no-dups-file-fix file))))
+   (no-duplicatesp-equal
+    (abs-addrs (mv-nth 0
+                       (abs-place-file-helper fs path file)))))
+  :hints (("goal" :in-theory (enable abs-place-file-helper))))
 
 ;; Subgoal
 (thm
