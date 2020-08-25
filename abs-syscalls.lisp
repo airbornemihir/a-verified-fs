@@ -5475,7 +5475,6 @@
           abs-separate-of-frame->frame-of-collapse-this-lemma-13
           (:rewrite append-atom-under-list-equiv)
           (:rewrite abs-mkdir-correctness-lemma-99)
-          (:rewrite hifat-subsetp-preserves-assoc-equal)
           (:rewrite
            absfat-equiv-implies-set-equiv-names-at-1-lemma-1)
           (:linear abs-mkdir-correctness-lemma-74)
@@ -19034,21 +19033,6 @@
     ((:instance hifat-find-file-of-append-1
                 (y (nthcdr (len x) y)))))))
 
-;; Move later.
-(defthm
-  intersectp-of-set-difference$-when-subsetp-1
-  (implies (subsetp-equal z y)
-           (not (intersectp-equal z (set-difference-equal x y))))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary (implies (subsetp-equal z y)
-                        (not (intersectp-equal (set-difference-equal x y)
-                                               z))))))
-(defthm subsetp-of-set-difference$
-  (subsetp-equal (set-difference-equal x y)
-                 x))
-
 (defthm subsetp-of-abs-addrs-of-put-assoc
   (implies (abs-complete (abs-file->contents file))
            (subsetp-equal (abs-addrs (put-assoc-equal name file fs))
@@ -25539,7 +25523,6 @@
    :top (:dive 1 1)
    (:= 2)))
 
-
 (defthm
   abs-pwrite-correctness-lemma-80
   (implies
@@ -26046,41 +26029,7 @@
                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                    file-table))))))))))
 
-(encapsulate
-  ()
-
-  (thm (implies (and (member-equal x lst)
-                     (not (equal (car x) nil)))
-                (consp (assoc-equal (car x) lst))))
-
-  (thm
-   (implies
-    (and
-     (hifat-subsetp
-      m1-file-alist1 m1-file-alist2)
-     (consp (assoc-equal name m1-file-alist1)))
-    (consp (assoc-equal name m1-file-alist2)))
-   :hints (("goal" :in-theory (e/d (hifat-subsetp assoc-equal-when-member-equal)
-                                   (hifat-subsetp-preserves-assoc-equal))
-            :induct
-            (mv
-             (hifat-subsetp m1-file-alist1 m1-file-alist2)
-             (assoc-equal name m1-file-alist1))
-            :expand
-            (:with
-             assoc-equal-when-member-equal
-             (consp (assoc-equal (car (car m1-file-alist1))
-                                 m1-file-alist2)))))))
-
-(thm
- (implies
-  (and
-   (HIFAT-SUBSETP
-    M1-FILE-ALIST1 M1-FILE-ALIST2)
-   (fat32-filename-p name)
-   (consp (assoc-equal name m1-file-alist1)))
-  (consp (assoc-equal name m1-file-alist2)))
- :hints (("Goal" :in-theory (enable hifat-subsetp))))
+()
 
 (defthm
   abs-pwrite-correctness-1

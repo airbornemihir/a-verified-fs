@@ -54,7 +54,7 @@
    (hifat-no-dups-p (remove1-assoc-equal key m1-file-alist)))
   :hints (("Goal" :in-theory (enable hifat-no-dups-p))))
 
-(defthm hifat-subsetp-preserves-assoc-equal
+(defthm hifat-subsetp-preserves-assoc
   (implies (and (hifat-subsetp x y)
                 (stringp file)
                 (consp (assoc-equal file x)))
