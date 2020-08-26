@@ -9329,7 +9329,6 @@
                         abs-separate-of-frame->frame-of-collapse-this-lemma-10)
              ((:rewrite abs-mkdir-correctness-lemma-128)
               (:rewrite abs-mkdir-correctness-lemma-177)
-              (:rewrite abs-no-dups-p-of-remove1-assoc)
               (:rewrite frame-addrs-root-of-frame->frame-of-collapse-this-lemma-1)
               (:rewrite different-from-own-src-1)
               (:rewrite abs-mkdir-correctness-lemma-192)
@@ -16374,13 +16373,6 @@
     :restrict
     ((hifat-equiv-of-put-assoc-equal-3 ((file2 file2)))))))
 
-(defthm len-of-explode-when-m1-file-contents-p-1
-  (implies (m1-file-contents-p x)
-           (< (len (explode x)) (ash 1 32)))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable m1-file-contents-p)))
-  :rule-classes :linear)
-
 (defthm
   abs-pwrite-correctness-lemma-51
   (implies
@@ -21581,17 +21573,6 @@
    :top :bash))
 
 (defthm
-  len-of-explode-of-m1-file-contents-fix
-  (< (len (explode (m1-file-contents-fix x)))
-     (ash 1 32))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (disable len-of-explode-when-m1-file-contents-p-1)
-    :use (:instance len-of-explode-when-m1-file-contents-p-1
-                    (x (m1-file-contents-fix x)))))
-  :rule-classes :linear)
-
-(defthm
   abs-pwrite-correctness-lemma-72
   (hifat-equiv
    (put-assoc-equal
@@ -26208,14 +26189,6 @@
              (no-duplicatesp-equal
               (abs-addrs (put-assoc-equal name val abs-file-alist)))))))))
 
-;; Move later.
-(defthmd hifat-place-file-no-change-loser
-  (implies (not (zp (mv-nth 1 (hifat-place-file fs path file))))
-           (equal (hifat-place-file fs path file)
-                  (mv (hifat-file-alist-fix fs)
-                      (mv-nth 1 (hifat-place-file fs path file)))))
-  :hints (("goal" :in-theory (enable hifat-place-file))))
-
 (defthm
   abs-pwrite-correctness-lemma-95
   (implies
@@ -29120,12 +29093,6 @@
      (len (file-table-element->fid
            (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                              file-table))))))))
-
-(defthm
-  abs-no-dups-p-of-remove1-assoc-equal
-  (implies (abs-no-dups-p fs)
-           (abs-no-dups-p (remove1-assoc-equal name fs)))
-  :hints (("goal" :in-theory (enable abs-no-dups-p remove1-assoc-equal))))
 
 (defthm abs-pwrite-correctness-lemma-119
   (implies

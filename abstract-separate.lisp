@@ -645,7 +645,7 @@
   :hints (("goal" :in-theory (enable abs-no-dups-p))))
 
 (defthm
-  abs-no-dups-p-of-remove1-assoc
+  abs-no-dups-p-of-remove1-assoc-1
   (implies
    (or
     (atom (assoc-equal name fs))
@@ -701,6 +701,12 @@
   (implies (abs-no-dups-p fs)
            (abs-no-dups-p (remove-assoc-equal x fs)))
   :hints (("goal" :in-theory (enable abs-no-dups-p))))
+
+(defthm
+  abs-no-dups-p-of-remove1-assoc-2
+  (implies (abs-no-dups-p fs)
+           (abs-no-dups-p (remove1-assoc-equal name fs)))
+  :hints (("goal" :in-theory (enable abs-no-dups-p remove1-assoc-equal))))
 
 ;; Potentially overlapping with abs-no-dups-p-when-m1-file-alist-p, which is
 ;; actually more general.
