@@ -1519,6 +1519,16 @@
   :hints (("goal" :in-theory (enable m1-regular-file-p))))
 
 (defthm
+  m1-regular-file-p-correctness-2
+  (implies (m1-regular-file-p file)
+           (< (len (explode (m1-file->contents file)))
+              (ash 1 32)))
+  :hints (("goal" :in-theory (e/d (m1-regular-file-p m1-directory-file-p)
+                                  (m1-regular-file-p-correctness-1))
+           :use m1-regular-file-p-correctness-1))
+  :rule-classes :linear)
+
+(defthm
   m1-directory-file-p-correctness-1
   (implies (m1-directory-file-p file)
            (and (m1-file-p file)

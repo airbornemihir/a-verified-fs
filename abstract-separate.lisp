@@ -4404,7 +4404,6 @@
     :use (:instance (:rewrite absfat-equiv-implies-set-equiv-names-at-1-lemma-3)
                     (x (fat32-filename-fix (car x-path)))))))
 
-;; The second rewrite rule of this defthm is needed...
 (defthm
   absfat-equiv-implies-set-equiv-names-at-1-lemma-5
   (implies (and (absfat-subsetp abs-file-alist1 abs-file-alist2)
@@ -4469,6 +4468,20 @@
                                      (x (strip-cars (abs-fs-fix fs)))
                                      (b nil)
                                      (a (fat32-filename-fix (car y)))))))
+
+(defthmd
+  member-of-names-at
+  (iff
+   (member-equal x (names-at fs relpath))
+   (if
+    (consp relpath)
+    (consp
+     (assoc-equal
+      x
+      (abs-file->contents (mv-nth 0 (abs-find-file-helper fs relpath)))))
+    (consp (assoc-equal x (abs-fs-fix fs)))))
+  :hints (("goal" :in-theory (e/d (abs-find-file-helper names-at))
+           :induct (abs-find-file-helper fs relpath))))
 
 (defthmd absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1
   (implies (and (not (natp x))
