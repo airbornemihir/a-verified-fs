@@ -4469,20 +4469,6 @@
                                      (b nil)
                                      (a (fat32-filename-fix (car y)))))))
 
-(defthmd
-  member-of-names-at
-  (iff
-   (member-equal x (names-at fs relpath))
-   (if
-    (consp relpath)
-    (consp
-     (assoc-equal
-      x
-      (abs-file->contents (mv-nth 0 (abs-find-file-helper fs relpath)))))
-    (consp (assoc-equal x (abs-fs-fix fs)))))
-  :hints (("goal" :in-theory (e/d (abs-find-file-helper names-at))
-           :induct (abs-find-file-helper fs relpath))))
-
 (defthmd absfat-equiv-implies-set-equiv-addrs-at-1-lemma-1
   (implies (and (not (natp x))
                 (atom x)
