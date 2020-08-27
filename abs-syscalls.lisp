@@ -28755,5 +28755,16 @@
       no-duplicatesp-of-abs-addrs-of-put-assoc-2
       (:free (name val abs-file-alist)
              (no-duplicatesp-equal
-              (abs-addrs (put-assoc-equal name val abs-file-alist))))))))
-  :otf-flg t)
+              (abs-addrs (put-assoc-equal name val abs-file-alist)))))))))
+
+(thm
+ (implies (good-frame-p frame)
+          (frame-reps-fs (mv-nth 0 (abs-mkdir frame path))
+                         (mv-nth 0 (hifat-mkdir (mv-nth 0 (collapse frame)) path))))
+ :hints (("Goal" :in-theory (e/d (good-frame-p) (abs-mkdir-correctness-1))
+          :use
+          (:instance
+           abs-mkdir-correctness-1
+           (fs (mv-nth 0 (collapse frame))))
+          :expand
+          (frame-reps-fs frame (mv-nth 0 (collapse frame))))))

@@ -105,7 +105,7 @@
   :hints (("goal" :in-theory (enable abs-find-file-helper))))
 
 (defthm
-  abs-pwrite-correctness-lemma-40
+  member-of-names-at-lemma-1
   (implies (and (abs-file-alist-p fs)
                 (consp (assoc-equal name fs))
                 (not (abs-directory-file-p (cdr (assoc-equal name fs)))))
