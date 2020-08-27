@@ -238,6 +238,48 @@
              (not
               (consp (abs-addrs (mv-nth 0 (abs-place-file-helper fs path file)))))))))
 
+(defund good-frame-p (frame)
+  (b*
+      (((mv & result) (collapse frame)))
+    (and result
+         (equal (frame-val->path (cdr (assoc-equal 0 frame)))
+                nil)
+         (consp (assoc-equal 0 frame))
+         (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+                0)
+         (frame-p frame)
+         (no-duplicatesp-equal (strip-cars frame))
+         (abs-separate frame)
+         (subsetp-equal (abs-addrs (frame->root frame))
+                        (frame-addrs-root (frame->frame frame))))))
+
+;; I guess I should say that this function can only really do so much, and if
+;; we try to use this in our proofs we'll kinda be back to representing
+;; filesystem trees as... filesystem trees. When I say it can only do so much,
+;; I mean that it can only help us do some refinement proofs, which will tie
+;; lofat to hifat and hifat to absfat. Ultimately, I guess we'll want theorems
+;; that use the collapse-equiv relation defined previously...
+(defund frame-reps-fs
+    (frame fs)
+  (b*
+      (((mv fs-equiv result) (collapse frame)))
+    (and result
+         (absfat-equiv fs-equiv fs)
+         (frame-p frame)
+         (abs-separate frame)
+         (subsetp-equal
+          (abs-addrs (frame->root frame))
+          (frame-addrs-root (frame->frame frame)))
+         (no-duplicatesp-equal (strip-cars frame))
+         (atom (frame-val->path (cdr (assoc-equal 0 frame)))))))
+
+(defcong absfat-equiv equal (frame-reps-fs frame fs) 2
+  :hints (("Goal" :in-theory (enable frame-reps-fs))))
+
+(thm (implies (good-frame-p frame)
+              (frame-reps-fs frame (mv-nth 0 (collapse frame))))
+     :hints (("goal" :in-theory (enable good-frame-p frame-reps-fs))))
+
 (defund
   abs-place-file (frame path file)
   (declare
@@ -900,29 +942,6 @@
         file))
       (mv-nth 1
               (collapse (frame-with-root root frame))))))))
-
-;; I guess I should say that this function can only really do so much, and if
-;; we try to use this in our proofs we'll kinda be back to representing
-;; filesystem trees as... filesystem trees. When I say it can only do so much,
-;; I mean that it can only help us do some refinement proofs, which will tie
-;; lofat to hifat and hifat to absfat. Ultimately, I guess we'll want theorems
-;; that use the collapse-equiv relation defined previously...
-(defund frame-reps-fs
-    (frame fs)
-  (b*
-      (((mv fs-equiv result) (collapse frame)))
-    (and result
-         (absfat-equiv fs-equiv fs)
-         (frame-p frame)
-         (abs-separate frame)
-         (subsetp-equal
-          (abs-addrs (frame->root frame))
-          (frame-addrs-root (frame->frame frame)))
-         (no-duplicatesp-equal (strip-cars frame))
-         (atom (frame-val->path (cdr (assoc-equal 0 frame)))))))
-
-(defcong absfat-equiv equal (frame-reps-fs frame fs) 2
-  :hints (("Goal" :in-theory (enable frame-reps-fs))))
 
 (defund abs-lstat (frame path)
   (declare
@@ -10624,23 +10643,51 @@
                             path)
          (frame->frame (partial-collapse frame path))))))))))
 
+(defthm abs-mkdir-correctness-lemma-75
+  (implies (and (zp (mv-nth 1 (hifat-find-file fs y)))
+                (m1-directory-file-p (mv-nth 0 (hifat-find-file fs y)))
+                (fat32-filename-list-prefixp x y))
+           (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
+  :hints (("goal" :in-theory (enable fat32-filename-list-prefixp
+                                     hifat-find-file)
+           :induct (mv (fat32-filename-list-prefixp x y)
+                       (hifat-find-file fs x)))))
+
+(defthm
+  abs-mkdir-correctness-lemma-173
+  (implies
+   (and (frame-p frame)
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (abs-separate frame)
+        (mv-nth 1 (collapse frame))
+        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame)))
+        (prefixp (fat32-filename-list-fix path)
+                 (fat32-filename-list-fix y)))
+   (path-clear
+    y
+    (remove-assoc-equal (abs-find-file-src (partial-collapse frame path)
+                                           path)
+                        (frame->frame (partial-collapse frame path)))))
+  :hints (("goal" :in-theory (disable abs-mkdir-correctness-lemma-161)
+           :use abs-mkdir-correctness-lemma-161)))
+
 (defthm
   abs-mkdir-correctness-2
-  (implies (and (zp (frame-val->src (cdr (assoc-equal 0 frame))))
-                (frame-reps-fs frame fs)
-                (abs-fs-p fs)
-                (consp (assoc-equal 0 frame)))
-           (and (frame-reps-fs (mv-nth 0 (abs-mkdir frame path))
-                               (mv-nth 0 (hifat-mkdir fs path)))
-                (equal (mv-nth 2 (abs-mkdir frame path))
-                       (mv-nth 2 (hifat-mkdir fs path)))))
-  :hints
-  (("goal" :do-not-induct t
-    :in-theory (e/d (frame-reps-fs)
-                    (abs-mkdir-correctness-1
-                     (:rewrite
-                      abs-mkdir-correctness-lemma-60)))
-    :use (abs-mkdir-correctness-1 abs-mkdir-correctness-lemma-156))))
+  (implies (good-frame-p frame)
+           (and
+            (frame-reps-fs (mv-nth 0 (abs-mkdir frame path))
+                           (mv-nth 0 (hifat-mkdir (mv-nth 0 (collapse frame)) path)))
+            (equal (mv-nth 2 (abs-mkdir frame path))
+                   (mv-nth 2 (hifat-mkdir (mv-nth 0 (collapse frame)) path)))))
+  :hints (("Goal" :in-theory (e/d (good-frame-p) (abs-mkdir-correctness-1))
+           :use
+           (:instance
+            abs-mkdir-correctness-1
+            (fs (mv-nth 0 (collapse frame))))
+           :expand
+           (frame-reps-fs frame (mv-nth 0 (collapse frame))))))
 
 (defthm
   abs-find-file-after-abs-mkdir-lemma-15
@@ -11083,26 +11130,6 @@
           :in-theory (enable abs-find-file-helper abs-alloc abs-file-alist-p)))
  :otf-flg t)
 
-(defund good-frame-p (frame)
-  (b*
-      (((mv & result) (collapse frame)))
-    (and result
-         (equal (frame-val->path (cdr (assoc-equal 0 frame)))
-                nil)
-         (consp (assoc-equal 0 frame))
-         (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-                0)
-         (frame-p frame)
-         (no-duplicatesp-equal (strip-cars frame))
-         (abs-separate frame)
-         (subsetp-equal (abs-addrs (frame->root frame))
-                        (frame-addrs-root (frame->frame frame))))))
-
-(thm (implies (good-frame-p frame)
-              (frame-reps-fs frame (mv-nth 0 (collapse frame))))
-     :hints (("GOal" :do-not-induct t
-              :in-theory (enable good-frame-p frame-reps-fs))))
-
 (defthm
   abs-lstat-after-abs-mkdir-1
   (implies (good-frame-p frame)
@@ -11194,6 +11221,7 @@
        ((unless (consp fd-table-entry)) (mv frame -1 *ebadf*))
        (file-table-entry (assoc-equal (cdr fd-table-entry) file-table))
        ((unless (consp file-table-entry)) (mv frame -1 *ebadf*))
+       ((unless (unsigned-byte-p 32 (+ offset (length buf)))) (mv frame -1 *enospc*))
        (path (file-table-element->fid (cdr file-table-entry)))
        ((unless (consp path)) (mv frame -1 *enoent*))
        (dirname (dirname path))
@@ -11218,7 +11246,6 @@
                                (mv nil (dir-ent-fix nil))))
        ((when (and (consp (abs-assoc (basename path) var)) (m1-directory-file-p file)))
         (mv frame -1 *enoent*))
-       ((unless (unsigned-byte-p 32 (+ offset (length buf)))) (mv frame -1 *enospc*))
        (frame (put-assoc-equal src (change-frame-val (cdr (assoc-equal src frame))
                                                      :dir new-src-dir)
                                frame))
@@ -17401,18 +17428,8 @@
                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                        file-table))))))))))))))
 
-(defthm abs-pwrite-correctness-lemma-55
-  (implies (and (zp (mv-nth 1 (hifat-find-file fs y)))
-                (m1-directory-file-p (mv-nth 0 (hifat-find-file fs y)))
-                (fat32-filename-list-prefixp x y))
-           (m1-directory-file-p (mv-nth 0 (hifat-find-file fs x))))
-  :hints (("goal" :in-theory (enable fat32-filename-list-prefixp
-                                     hifat-find-file)
-           :induct (mv (fat32-filename-list-prefixp x y)
-                       (hifat-find-file fs x)))))
-
 (defthm
-  abs-pwrite-correctness-lemma-56
+  abs-pwrite-correctness-lemma-19
   (implies (fat32-filename-list-prefixp x y)
            (fat32-filename-list-equiv (append x (nthcdr (len x) y))
                                       y))
@@ -17469,27 +17486,7 @@
                                      m1-file-contents-fix))))
 
 (defthm
-  abs-pwrite-correctness-lemma-19
-  (implies
-   (and (frame-p frame)
-        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-        (abs-separate frame)
-        (mv-nth 1 (collapse frame))
-        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
-        (subsetp-equal (abs-addrs (frame->root frame))
-                       (frame-addrs-root (frame->frame frame)))
-        (prefixp (fat32-filename-list-fix path)
-                 (fat32-filename-list-fix y)))
-   (path-clear
-    y
-    (remove-assoc-equal (abs-find-file-src (partial-collapse frame path)
-                                           path)
-                        (frame->frame (partial-collapse frame path)))))
-  :hints (("goal" :in-theory (disable abs-mkdir-correctness-lemma-161)
-           :use abs-mkdir-correctness-lemma-161)))
-
-(defthm
-  abs-pwrite-correctness-lemma-62
+  abs-pwrite-correctness-lemma-33
   (implies
    (and (prefixp x y)
         (zp (mv-nth 1 (hifat-find-file fs x)))
@@ -28681,17 +28678,73 @@
                                        file-table)))))))))))))
           offset buf)))))))))
 
+;; Counterexample.
+(thm
+ (implies
+  (and (consp (assoc-equal fd fd-table))
+       (consp (assoc-equal (cdr (assoc-equal fd fd-table))
+                           file-table))
+       (not (consp (file-table-element->fid
+                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                      file-table)))))
+       (not (< (+ offset (len (explode buf)))
+               4294967296)))
+  (and (equal (mv-nth 2
+                      (abs-pwrite fd
+                                  buf offset frame fd-table file-table))
+              *enoent*)
+       (equal (mv-nth 2
+                      (hifat-pwrite fd
+                                    buf offset (mv-nth 0 (collapse frame))
+                                    fd-table file-table))
+              *enospc*)))
+ :hints
+ (("goal"
+   :do-not-induct t
+   :in-theory
+   (enable frame-reps-fs good-frame-p
+           abs-pwrite frame->frame-of-put-assoc
+           collapse collapse-this
+           1st-complete frame-addrs-root
+           dist-names abs-separate abs-fs-fix
+           assoc-equal-of-frame-with-root
+           hifat-no-dups-p
+           hifat-place-file hifat-find-file
+           abs-alloc ctx-app abs-fs-fix abs-addrs)
+   :expand
+   ((:with abs-pwrite-correctness-lemma-1
+           (:free (file)
+                  (hifat-place-file
+                   (mv-nth 0 (collapse frame))
+                   (file-table-element->fid
+                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                      file-table)))
+                   file)))
+    (:with
+     no-duplicatesp-of-abs-addrs-of-put-assoc-2
+     (:free (name val abs-file-alist)
+            (no-duplicatesp-equal
+             (abs-addrs (put-assoc-equal name val abs-file-alist)))))))))
+
 (defthm
   abs-pwrite-correctness-1
   (implies
    (good-frame-p frame)
-   (frame-reps-fs (mv-nth 0
-                          (abs-pwrite fd
-                                      buf offset frame fd-table file-table))
-                  (mv-nth 0
-                          (hifat-pwrite fd
-                                        buf offset (mv-nth 0 (collapse frame))
-                                        fd-table file-table))))
+   (and
+    (frame-reps-fs (mv-nth 0
+                           (abs-pwrite fd
+                                       buf offset frame fd-table file-table))
+                   (mv-nth 0
+                           (hifat-pwrite fd
+                                         buf offset (mv-nth 0 (collapse frame))
+                                         fd-table file-table)))
+    (equal (mv-nth 2
+                   (abs-pwrite fd
+                               buf offset frame fd-table file-table))
+           (mv-nth 2
+                   (hifat-pwrite fd
+                                 buf offset (mv-nth 0 (collapse frame))
+                                 fd-table file-table)))))
   :hints
   (("goal"
     :do-not-induct t
@@ -28756,15 +28809,3 @@
       (:free (name val abs-file-alist)
              (no-duplicatesp-equal
               (abs-addrs (put-assoc-equal name val abs-file-alist)))))))))
-
-(thm
- (implies (good-frame-p frame)
-          (frame-reps-fs (mv-nth 0 (abs-mkdir frame path))
-                         (mv-nth 0 (hifat-mkdir (mv-nth 0 (collapse frame)) path))))
- :hints (("Goal" :in-theory (e/d (good-frame-p) (abs-mkdir-correctness-1))
-          :use
-          (:instance
-           abs-mkdir-correctness-1
-           (fs (mv-nth 0 (collapse frame))))
-          :expand
-          (frame-reps-fs frame (mv-nth 0 (collapse frame))))))
