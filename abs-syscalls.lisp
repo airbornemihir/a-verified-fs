@@ -28678,53 +28678,13 @@
                                        file-table)))))))))))))
           offset buf)))))))))
 
-;; Counterexample.
-(thm
- (implies
-  (and (consp (assoc-equal fd fd-table))
-       (consp (assoc-equal (cdr (assoc-equal fd fd-table))
-                           file-table))
-       (not (consp (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-       (not (< (+ offset (len (explode buf)))
-               4294967296)))
-  (and (equal (mv-nth 2
-                      (abs-pwrite fd
-                                  buf offset frame fd-table file-table))
-              *enoent*)
-       (equal (mv-nth 2
-                      (hifat-pwrite fd
-                                    buf offset (mv-nth 0 (collapse frame))
-                                    fd-table file-table))
-              *enospc*)))
- :hints
- (("goal"
-   :do-not-induct t
-   :in-theory
-   (enable frame-reps-fs good-frame-p
-           abs-pwrite frame->frame-of-put-assoc
-           collapse collapse-this
-           1st-complete frame-addrs-root
-           dist-names abs-separate abs-fs-fix
-           assoc-equal-of-frame-with-root
-           hifat-no-dups-p
-           hifat-place-file hifat-find-file
-           abs-alloc ctx-app abs-fs-fix abs-addrs)
-   :expand
-   ((:with abs-pwrite-correctness-lemma-1
-           (:free (file)
-                  (hifat-place-file
-                   (mv-nth 0 (collapse frame))
-                   (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))
-                   file)))
-    (:with
-     no-duplicatesp-of-abs-addrs-of-put-assoc-2
-     (:free (name val abs-file-alist)
-            (no-duplicatesp-equal
-             (abs-addrs (put-assoc-equal name val abs-file-alist)))))))))
+(defthm
+  abs-pwrite-correctness-lemma-40
+  (implies (and (stringp (m1-file->contents file))
+                (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path))))
+           (equal (mv-nth 1 (hifat-place-file fs path file))
+                  0))
+  :hints (("goal" :in-theory (enable hifat-place-file hifat-find-file))))
 
 (defthm
   abs-pwrite-correctness-1
