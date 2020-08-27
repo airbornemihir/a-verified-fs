@@ -482,6 +482,10 @@
    (xargs :guard (abs-file-alist-p x)))
   (atom (abs-addrs x)))
 
+(defthm abs-complete-when-stringp
+  (implies (stringp x) (abs-complete x))
+  :hints (("goal" :in-theory (enable abs-complete abs-addrs))))
+
 (defthm abs-addrs-when-m1-file-contents-p
   (implies (m1-file-contents-p fs)
            (and
@@ -845,6 +849,7 @@
     (intersectp-equal (abs-addrs abs-file-alist2)
                       (abs-addrs (remove-assoc-equal name abs-file-alist1))))))
 
+;; This is used in multiple files.
 (defthm no-duplicatesp-of-abs-addrs-of-remove-assoc-lemma-3
   (implies (and (abs-directory-file-p (cdr (car y)))
                 (abs-no-dups-p y))
