@@ -486,13 +486,6 @@
   (implies (stringp x) (abs-complete x))
   :hints (("goal" :in-theory (enable abs-complete abs-addrs))))
 
-(defthm abs-addrs-when-m1-file-contents-p
-  (implies (m1-file-contents-p fs)
-           (and
-            (not (consp (abs-addrs fs)))
-            (abs-complete fs)))
-  :hints (("goal" :in-theory (enable abs-addrs m1-file-contents-p abs-complete))))
-
 (defthm
   abs-file-alist-p-correctness-1
   (implies (and (abs-file-alist-p x)
@@ -505,6 +498,33 @@
                                      abs-directory-file-p abs-file->contents)
            :induct (abs-addrs x)
            :expand (abs-file-alist-p x))))
+
+(defthm
+  subsetp-of-abs-addrs-of-put-assoc-lemma-1
+  (implies (abs-directory-file-p (abs-file-fix x))
+           (abs-file-alist-p (abs-file->contents$inline x)))
+  :hints (("goal" :in-theory (enable abs-file-alist-p abs-directory-file-p
+                                     abs-file->contents abs-file-fix))))
+
+(defthm subsetp-of-abs-addrs-of-put-assoc
+  (implies (abs-complete (abs-file->contents file))
+           (subsetp-equal (abs-addrs (put-assoc-equal name file fs))
+                          (abs-addrs fs)))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm
+  no-duplicatesp-of-abs-addrs-of-put-assoc
+  (implies (and (abs-complete (abs-file->contents file))
+                (no-duplicatesp-equal (abs-addrs fs)))
+           (no-duplicatesp-equal (abs-addrs (put-assoc-equal name file fs))))
+  :hints (("goal" :in-theory (enable abs-addrs))))
+
+(defthm abs-addrs-when-m1-file-contents-p
+  (implies (m1-file-contents-p fs)
+           (and
+            (not (consp (abs-addrs fs)))
+            (abs-complete fs)))
+  :hints (("goal" :in-theory (enable abs-addrs m1-file-contents-p abs-complete))))
 
 (defthm abs-file-alist-p-of-put-assoc-equal
   (implies (abs-file-alist-p alist)
@@ -930,12 +950,6 @@
            :in-theory (enable abs-fs-p))))
 
 ;; Rename later.
-(defthm
-  abs-fs-fix-of-put-assoc-equal-lemma-1
-  (implies (abs-directory-file-p (abs-file-fix x))
-           (abs-file-alist-p (abs-file->contents$inline x)))
-  :hints (("goal" :in-theory (enable abs-file-alist-p abs-directory-file-p
-                                     abs-file->contents abs-file-fix))))
 (defthm abs-fs-fix-of-put-assoc-equal-lemma-3
   (implies (and (consp (car x))
                 (abs-file-alist-p x))
@@ -2129,7 +2143,7 @@
   (("goal"
     :in-theory (e/d (abs-addrs)
                     ((:definition member-equal)
-                     (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-1)
+                     (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
                      (:rewrite abs-file-alist-p-when-m1-file-alist-p)
                      (:rewrite abs-addrs-when-m1-file-alist-p-lemma-2)
                      (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-2)
