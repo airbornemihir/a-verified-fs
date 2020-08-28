@@ -28674,10 +28674,11 @@
 
 (defthm abs-pread-refinement
   (implies (good-frame-p frame)
-           (equal
-            (abs-pread
-             fd count offset frame fd-table file-table)
-            (hifat-pread
-             fd count offset (mv-nth 0 (collapse frame)) fd-table file-table)))
-  :hints (("Goal" :do-not-induct t
-           :in-theory (e/d (abs-pread hifat-pread good-frame-p) ()))))
+           (equal (abs-pread fd
+                             count offset frame fd-table file-table)
+                  (hifat-pread fd
+                               count offset (mv-nth 0 (collapse frame))
+                               fd-table file-table)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (abs-pread hifat-pread good-frame-p)
+                           nil))))
