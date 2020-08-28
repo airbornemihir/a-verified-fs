@@ -28633,3 +28633,51 @@
       (:free (name val abs-file-alist)
              (no-duplicatesp-equal
               (abs-addrs (put-assoc-equal name val abs-file-alist)))))))))
+
+(defund abs-open (path fd-table file-table)
+  (declare (xargs :guard (and (fat32-filename-list-p path)
+                              (fd-table-p fd-table)
+                              (file-table-p file-table))))
+  (hifat-open path fd-table file-table))
+
+(defund
+  abs-pread
+  (fd count offset frame fd-table file-table)
+  (declare (xargs :guard (and (natp fd)
+                              (natp count)
+                              (natp offset)
+                              (fd-table-p fd-table)
+                              (file-table-p file-table)
+                              (frame-p frame)
+                              (consp (assoc-equal 0 frame)))))
+  (b*
+      ((fd-table-entry (assoc-equal fd fd-table))
+       ((unless (consp fd-table-entry))
+        (mv "" -1 *ebadf*))
+       (file-table-entry (assoc-equal (cdr fd-table-entry)
+                                      file-table))
+       ((unless (consp file-table-entry))
+        (mv "" -1 *ebadf*))
+       (path (file-table-element->fid (cdr file-table-entry)))
+       ((mv file error-code)
+        (abs-find-file frame path))
+       ((unless (and (equal error-code 0)
+                     (m1-regular-file-p file)))
+        (mv "" -1 error-code))
+       (new-offset (min (+ offset count)
+                        (length (m1-file->contents file))))
+       (buf (subseq (m1-file->contents file)
+                    (min offset
+                         (length (m1-file->contents file)))
+                    new-offset)))
+    (mv buf (length buf) 0)))
+
+(defthm abs-pread-refinement
+  (implies (good-frame-p frame)
+           (equal
+            (abs-pread
+             fd count offset frame fd-table file-table)
+            (hifat-pread
+             fd count offset (mv-nth 0 (collapse frame)) fd-table file-table)))
+  :hints (("Goal" :do-not-induct t
+           :in-theory (e/d (abs-pread hifat-pread good-frame-p) ()))))
