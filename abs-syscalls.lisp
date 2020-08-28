@@ -5307,7 +5307,7 @@
                  (abs-addrs (abs-fs-fix fs)))
   :hints (("goal" :in-theory (enable abs-alloc abs-fs-fix abs-addrs))))
 
-(defthm abs-pwrite-correctness-lemma-61
+(defthm abs-mkdir-correctness-lemma-179
   (implies (and (consp path)
                 (<= (nfix n) (len (dirname path))))
            (fat32-filename-list-equiv (append (nthcdr n (dirname path))
@@ -5320,7 +5320,7 @@
                            (n n)))))
 
 (defthm
-  abs-pwrite-correctness-lemma-88
+  abs-mkdir-correctness-lemma-189
   (implies
    (and (abs-file-alist-p fs)
         (not (consp (abs-addrs fs))))
@@ -5331,7 +5331,7 @@
            :induct (abs-file-alist-p fs))))
 
 (defthm
-  abs-pwrite-correctness-lemma-89
+  abs-mkdir-correctness-lemma-194
   (implies (not (consp (abs-addrs (abs-fs-fix fs))))
            (not (consp (abs-addrs (mv-nth 0 (abs-alloc fs path new-index))))))
   :hints (("goal" :in-theory (enable abs-alloc))))
@@ -5388,7 +5388,7 @@
            abs-fs-fix-of-put-assoc-equal-lemma-2)
           (:rewrite abs-fs-p-of-ctx-app)
           (:type-prescription
-           abs-fs-fix-of-put-assoc-equal-lemma-3)
+           abs-addrs-of-remove-assoc-lemma-1)
           (:definition binary-append)
           (:definition true-listp)
           (:rewrite
@@ -5471,7 +5471,7 @@
            fat32-filename-p-of-nth-when-fat32-filename-list-p)
           (:rewrite m1-file-alist-p-when-not-consp)
           (:rewrite
-           abs-fs-fix-of-put-assoc-equal-lemma-3)
+           abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite
            abs-no-dups-p-of-abs-file->contents-of-cdr-of-assoc)
           (:rewrite subsetp-member . 2)
@@ -7166,7 +7166,7 @@
             *eexist*))
     :hints (("goal" :in-theory (e/d (abs-mkdir frame-reps-fs)
                                     ((:rewrite abs-mkdir-correctness-lemma-128)
-                                     abs-pwrite-correctness-lemma-61))
+                                     abs-mkdir-correctness-lemma-179))
              :do-not-induct t)))
 
   (defthm
@@ -8571,7 +8571,7 @@
                                (collapse collapse-this
                                          (:rewrite
                                           abs-mkdir-correctness-lemma-128)
-                                         abs-pwrite-correctness-lemma-61)))))
+                                         abs-mkdir-correctness-lemma-179)))))
 
     (defthm
       abs-mkdir-correctness-lemma-125
@@ -8691,7 +8691,7 @@
       :hints (("goal" :do-not-induct t
                :in-theory (e/d (abs-mkdir frame-reps-fs)
                                ((:rewrite abs-mkdir-correctness-lemma-128)
-                                abs-pwrite-correctness-lemma-61)))))
+                                abs-mkdir-correctness-lemma-179)))))
 
     (defthm
       abs-mkdir-correctness-lemma-191
@@ -9320,7 +9320,7 @@
               (:rewrite different-from-own-src-1)
               (:rewrite abs-mkdir-correctness-lemma-192)
               (:rewrite hifat-equiv-when-absfat-equiv-lemma-1)
-              abs-pwrite-correctness-lemma-61 abs-pwrite-correctness-lemma-88)))))
+              abs-mkdir-correctness-lemma-179 abs-mkdir-correctness-lemma-189)))))
 
     (defthm abs-mkdir-correctness-lemma-3
       (abs-fs-p
@@ -9404,7 +9404,7 @@
                :in-theory (enable frame-reps-fs))))
 
     (defthm
-      abs-mkdir-correctness-lemma-195
+      abs-mkdir-correctness-lemma-200
       (implies
        (and
         (equal (frame-val->src (cdr (assoc-equal 0 frame)))
@@ -9542,7 +9542,7 @@
 
     ;; Move later.
     (defthm
-      abs-pwrite-correctness-lemma-82
+      abs-mkdir-correctness-lemma-195
       (implies (hifat-equiv x y)
                (equal (consp (assoc-equal (fat32-filename-fix name)
                                           (hifat-file-alist-fix x)))
@@ -9597,8 +9597,8 @@
                                                 path)))))))
       :hints
       (("goal"
-        :in-theory (e/d (HIFAT-FILE-ALIST-FIX-WHEN-HIFAT-NO-DUPS-P)
-                        (abs-pwrite-correctness-lemma-82))
+        :in-theory (e/d (hifat-file-alist-fix-when-hifat-no-dups-p)
+                        (abs-mkdir-correctness-lemma-195))
         :expand
         ((:with
           hifat-file-alist-fix-when-hifat-no-dups-p
@@ -9620,7 +9620,7 @@
                               path))))))
         :use
         ((:instance
-          abs-pwrite-correctness-lemma-82
+          abs-mkdir-correctness-lemma-195
           (x
            (m1-file->contents
             (mv-nth
@@ -9872,7 +9872,7 @@
        (:bash ("goal" :in-theory (enable frame->root)))
        (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-10)))
 
-    (defthm abs-pwrite-correctness-lemma-43
+    (defthm abs-mkdir-correctness-lemma-198
       (implies (and (consp x)
                     (equal (mv-nth 1 (hifat-find-file fs y))
                            0)
@@ -9891,7 +9891,7 @@
       :hints (("goal" :in-theory (enable hifat-place-file))))
 
     (defthm
-      abs-pwrite-correctness-lemma-74
+      abs-mkdir-correctness-lemma-199
       (implies
        (and (no-duplicatesp-equal (strip-cars frame))
             (atom (frame-val->path (cdr (assoc-equal 0 frame)))))
@@ -10097,7 +10097,7 @@
                                      (dirname path))
                   frame)))))
          (len (dirname path))))
-       (:rewrite abs-pwrite-correctness-lemma-61)
+       (:rewrite abs-mkdir-correctness-lemma-179)
        :top (:claim (m1-file-alist-p fs))
        (:claim (hifat-equiv (mv-nth 0 (collapse frame))
                             fs))
@@ -10133,7 +10133,7 @@
            (frame-val->path
             (cdr (assoc-equal 0
                               (partial-collapse frame (dirname path)))))))))
-       (:rewrite (:rewrite abs-pwrite-correctness-lemma-74 . 1))))
+       (:rewrite (:rewrite abs-mkdir-correctness-lemma-199 . 1))))
 
     (defthm
       abs-mkdir-correctness-lemma-164
@@ -10408,7 +10408,7 @@
      :hints
      (("goal" :do-not-induct t
        :in-theory
-       (e/d (frame-reps-fs abs-mkdir) (abs-pwrite-correctness-lemma-61))))))
+       (e/d (frame-reps-fs abs-mkdir) (abs-mkdir-correctness-lemma-179))))))
 
   ;; This has some unnecessary hypotheses which are awkward to remove.
   (defthm abs-mkdir-correctness-1
@@ -11240,7 +11240,7 @@
        ;; variable, or it isn't there at all.
        ((mv parent-dir error-code) (abs-find-file frame dirname))
        ((unless (or (atom dirname) (and (zp error-code) (abs-directory-file-p parent-dir))))
-        (mv frame -1 (if (zp error-code) *enotdir* *enotdir*)))
+        (mv frame -1 *enotdir*))
        (src (abs-find-file-src frame dirname))
        (new-index (find-new-index (strip-cars frame)))
        ((mv var new-src-dir)
@@ -14937,7 +14937,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -15510,7 +15510,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -15837,7 +15837,7 @@
            (:rewrite final-val-seq-of-collapse-this-lemma-2)
            (:rewrite ctx-app-when-not-ctx-app-ok)
            (:rewrite abs-mkdir-correctness-lemma-73)
-           (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+           (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
            (:rewrite assoc-after-remove-assoc)
            (:definition nth)
            (:definition put-assoc-equal)
@@ -21020,7 +21020,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -21784,334 +21784,7 @@
    (:= 2)))
 
 (defthm
-  abs-pwrite-correctness-lemma-80
-  (implies
-   (and
-    (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-           0)
-    (mv-nth 1 (collapse frame))
-    (not (frame-val->path (cdr (assoc-equal 0 frame))))
-    (frame-p frame)
-    (no-duplicatesp-equal (strip-cars frame))
-    (abs-separate frame)
-    (subsetp-equal (abs-addrs (frame->root frame))
-                   (frame-addrs-root (frame->frame frame)))
-    (consp (assoc-equal 0 frame))
-    (consp (dirname (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))
-    (m1-directory-file-p
-     (mv-nth
-      0
-      (hifat-find-file
-       (mv-nth 0 (collapse frame))
-       (dirname (file-table-element->fid
-                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                   file-table)))))))
-    (equal
-     (mv-nth
-      1
-      (hifat-find-file (mv-nth 0 (collapse frame))
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-     0)
-    (not
-     (equal
-      0
-      (abs-find-file-src
-       (partial-collapse
-        frame
-        (dirname (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table)))))
-       (dirname (file-table-element->fid
-                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                   file-table)))))))
-    (consp (file-table-element->fid
-            (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                              file-table))))
-    (consp
-     (assoc-equal
-      (basename (file-table-element->fid
-                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                   file-table))))
-      (m1-file->contents
-       (mv-nth
-        0
-        (hifat-find-file
-         (mv-nth 0 (collapse frame))
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table))))))))))
-   (member-equal
-    (basename (file-table-element->fid
-               (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                 file-table))))
-    (names-at
-     (frame-val->dir
-      (cdr
-       (assoc-equal
-        (abs-find-file-src
-         (partial-collapse
-          frame
-          (dirname (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-        (partial-collapse
-         frame
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table))))))))
-     (nthcdr
-      (len
-       (frame-val->path
-        (cdr
-         (assoc-equal
-          (abs-find-file-src
-           (partial-collapse
-            frame
-            (dirname (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table)))))
-           (dirname (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))
-          frame))))
-      (dirname (file-table-element->fid
-                (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                  file-table))))))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (e/d (frame-reps-fs good-frame-p
-                        abs-pwrite frame->frame-of-put-assoc
-                        1st-complete frame-addrs-root
-                        dist-names abs-separate abs-fs-fix
-                        assoc-equal-of-frame-with-root
-                        hifat-no-dups-p hifat-place-file
-                        assoc-equal-of-frame->frame
-                        member-of-names-at)
-         ((:rewrite collapse-hifat-place-file-lemma-6)
-          (:rewrite abs-mkdir-correctness-lemma-178)
-          (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
-                    . 2)
-          (:rewrite abs-find-file-after-abs-mkdir-lemma-22)
-          (:rewrite len-when-prefixp)
-          (:linear abs-mkdir-correctness-lemma-107)
-          (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
-                    . 3)
-          (:rewrite abs-lstat-refinement-lemma-1)
-          (:rewrite abs-fs-p-of-ctx-app)
-          (:rewrite abs-mkdir-correctness-lemma-50 . 3)
-          (:rewrite partial-collapse-correctness-lemma-2)
-          (:type-prescription assoc-when-zp-len)
-          (:rewrite abs-addrs-when-m1-file-contents-p)
-          (:rewrite final-val-seq-of-collapse-this-lemma-2)
-          (:rewrite ctx-app-when-not-ctx-app-ok)
-          (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
-          (:rewrite assoc-after-remove-assoc)
-          (:definition nth)
-          (:definition put-assoc-equal)
-          (:definition abs-fs-fix)
-          (:rewrite insert-text-correctness-4)
-          (:rewrite abs-mkdir-correctness-lemma-39)
-          collapse-hifat-place-file-2
-          (:rewrite abs-file-alist-p-correctness-1)
-          (:rewrite m1-directory-file-p-when-m1-file-p)))
-    :use
-    ((:instance
-      collapse-hifat-place-file-2
-      (root
-       (frame->root
-        (partial-collapse
-         frame
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))))
-      (frame
-       (frame->frame
-        (partial-collapse
-         frame
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))))
-      (x
-       (abs-find-file-src
-        (partial-collapse
-         frame
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-        (dirname (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table))))))
-      (path
-       (append
-        (nthcdr
-         (len
-          (frame-val->path
-           (cdr
-            (assoc-equal
-             (abs-find-file-src
-              (partial-collapse
-               frame
-               (dirname (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-              (dirname (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-             frame))))
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-        (list (basename (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))))
-      (file
-       (m1-file
-        (m1-file->dir-ent
-         (cdr
-          (assoc-equal
-           (basename (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table))))
-           (mv-nth
-            0
-            (abs-alloc
-             (frame-val->dir
-              (cdr
-               (assoc-equal
-                (abs-find-file-src
-                 (partial-collapse
-                  frame
-                  (dirname
-                   (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-                 (dirname
-                  (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-                (partial-collapse
-                 frame
-                 (dirname
-                  (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table))))))))
-             (nthcdr
-              (len
-               (frame-val->path
-                (cdr
-                 (assoc-equal
-                  (abs-find-file-src
-                   (partial-collapse
-                    frame
-                    (dirname
-                     (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table)))))
-                   (dirname
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))
-                  frame))))
-              (dirname (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-             (find-new-index
-              (strip-cars
-               (partial-collapse
-                frame
-                (dirname
-                 (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table))))))))))))
-        (implode
-         (insert-text
-          (explode
-           (m1-file->contents
-            (cdr
-             (assoc-equal
-              (basename (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table))))
-              (mv-nth
-               0
-               (abs-alloc
-                (frame-val->dir
-                 (cdr
-                  (assoc-equal
-                   (abs-find-file-src
-                    (partial-collapse
-                     frame
-                     (dirname
-                      (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table)))))
-                    (dirname
-                     (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table)))))
-                   (partial-collapse
-                    frame
-                    (dirname
-                     (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table))))))))
-                (nthcdr
-                 (len
-                  (frame-val->path
-                   (cdr
-                    (assoc-equal
-                     (abs-find-file-src
-                      (partial-collapse
-                       frame
-                       (dirname
-                        (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-                      (dirname
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-                     frame))))
-                 (dirname
-                  (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-                (find-new-index
-                 (strip-cars
-                  (partial-collapse
-                   frame
-                   (dirname
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))))))))))
-          offset buf))))))
-    :expand
-    ((:with abs-pwrite-correctness-lemma-1
-            (:free (file)
-                   (hifat-place-file
-                    (mv-nth 0 (collapse frame))
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))
-                    file)))
-     (:with
-      no-duplicatesp-of-abs-addrs-of-put-assoc-2
-      (:free (name val abs-file-alist)
-             (no-duplicatesp-equal
-              (abs-addrs (put-assoc-equal name val abs-file-alist)))))))))
-
-(defthm
-  abs-pwrite-correctness-lemma-84
+  abs-pwrite-correctness-lemma-21
   (implies
    (and
     (equal
@@ -22781,7 +22454,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -23073,7 +22746,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -23347,7 +23020,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -23431,7 +23104,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -23676,10 +23349,10 @@
                                 file-table))))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite abs-pwrite-correctness-lemma-74 . 1))
+    :in-theory (disable (:rewrite abs-mkdir-correctness-lemma-199 . 1))
     :use
     (:instance
-     (:rewrite abs-pwrite-correctness-lemma-74 . 1)
+     (:rewrite abs-mkdir-correctness-lemma-199 . 1)
      (path (dirname (file-table-element->fid
                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                        file-table)))))
@@ -23717,10 +23390,10 @@
                                 file-table))))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite abs-pwrite-correctness-lemma-74 . 1))
+    :in-theory (disable (:rewrite abs-mkdir-correctness-lemma-199 . 1))
     :use
     (:instance
-     (:rewrite abs-pwrite-correctness-lemma-74 . 1)
+     (:rewrite abs-mkdir-correctness-lemma-199 . 1)
      (path (dirname (file-table-element->fid
                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
                                        file-table)))))
@@ -24310,7 +23983,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -24389,7 +24062,7 @@
          (:rewrite final-val-seq-of-collapse-this-lemma-2)
          (:rewrite ctx-app-when-not-ctx-app-ok)
          (:rewrite abs-mkdir-correctness-lemma-73)
-         (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+         (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
          (:rewrite assoc-after-remove-assoc)
          (:definition nth)
          (:definition put-assoc-equal)
@@ -24543,7 +24216,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -24632,7 +24305,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -24733,7 +24406,7 @@
          (:rewrite final-val-seq-of-collapse-this-lemma-2)
          (:rewrite ctx-app-when-not-ctx-app-ok)
          (:rewrite abs-mkdir-correctness-lemma-73)
-         (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+         (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
          (:rewrite assoc-after-remove-assoc)
          (:definition nth)
          (:definition put-assoc-equal)
@@ -24812,7 +24485,7 @@
          (:rewrite final-val-seq-of-collapse-this-lemma-2)
          (:rewrite ctx-app-when-not-ctx-app-ok)
          (:rewrite abs-mkdir-correctness-lemma-73)
-         (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+         (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
          (:rewrite assoc-after-remove-assoc)
          (:definition nth)
          (:definition put-assoc-equal)
@@ -24906,7 +24579,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -25039,7 +24712,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -25124,7 +24797,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -25211,7 +24884,7 @@
          (:rewrite final-val-seq-of-collapse-this-lemma-2)
          (:rewrite ctx-app-when-not-ctx-app-ok)
          (:rewrite abs-mkdir-correctness-lemma-73)
-         (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+         (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
          (:rewrite assoc-after-remove-assoc)
          (:definition nth)
          (:definition put-assoc-equal)
@@ -25313,7 +24986,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -25417,7 +25090,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -25517,7 +25190,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -25617,7 +25290,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -25720,7 +25393,7 @@
          (:rewrite final-val-seq-of-collapse-this-lemma-2)
          (:rewrite ctx-app-when-not-ctx-app-ok)
          (:rewrite abs-mkdir-correctness-lemma-73)
-         (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+         (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
          (:rewrite assoc-after-remove-assoc)
          (:definition nth)
          (:definition put-assoc-equal)
@@ -25828,7 +25501,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -25927,7 +25600,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -26037,7 +25710,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -26141,7 +25814,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -26246,7 +25919,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -26740,7 +26413,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -26775,729 +26448,7 @@
               (abs-addrs (put-assoc-equal name val abs-file-alist)))))))))
 
 (defthm
-  abs-pwrite-correctness-lemma-122
-  (implies
-   (and
-    (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-           0)
-    (mv-nth 1 (collapse frame))
-    (not (frame-val->path (cdr (assoc-equal 0 frame))))
-    (frame-p frame)
-    (no-duplicatesp-equal (strip-cars frame))
-    (abs-separate frame)
-    (subsetp-equal (abs-addrs (frame->root frame))
-                   (frame-addrs-root (frame->frame frame)))
-    (consp (file-table-element->fid
-            (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                              file-table))))
-    (consp
-     (assoc-equal
-      (basename (file-table-element->fid
-                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                   file-table))))
-      (m1-file->contents
-       (mv-nth
-        0
-        (hifat-find-file
-         (mv-nth 0 (collapse frame))
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))))))
-    (not
-     (m1-regular-file-p
-      (cdr
-       (assoc-equal
-        (basename (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table))))
-        (m1-file->contents
-         (mv-nth
-          0
-          (hifat-find-file
-           (mv-nth 0 (collapse frame))
-           (dirname (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))))))))
-    (not
-     (equal
-      0
-      (abs-find-file-src
-       (partial-collapse
-        frame
-        (dirname (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table)))))
-       (dirname (file-table-element->fid
-                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                   file-table))))))))
-   (and
-    (mv-nth
-     1
-     (collapse
-      (frame-with-root
-       (frame->root
-        (partial-collapse
-         frame
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table))))))
-       (put-assoc-equal
-        (abs-find-file-src
-         (partial-collapse
-          frame
-          (dirname (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-        (frame-val
-         (frame-val->path
-          (cdr
-           (assoc-equal
-            (abs-find-file-src
-             (partial-collapse
-              frame
-              (dirname (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-             (dirname (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table)))))
-            frame)))
-         (mv-nth
-          0
-          (abs-place-file-helper
-           (frame-val->dir
-            (cdr
-             (assoc-equal
-              (abs-find-file-src
-               (partial-collapse
-                frame
-                (dirname
-                 (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table)))))
-               (dirname (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-              (partial-collapse
-               frame
-               (dirname (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table))))))))
-           (nthcdr
-            (len
-             (frame-val->path
-              (cdr
-               (assoc-equal
-                (abs-find-file-src
-                 (partial-collapse
-                  frame
-                  (dirname
-                   (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-                 (dirname
-                  (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-                frame))))
-            (file-table-element->fid
-             (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                               file-table))))
-           (m1-file
-            (m1-file->dir-ent
-             (cdr
-              (assoc-equal
-               (basename
-                (file-table-element->fid
-                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                   file-table))))
-               (mv-nth
-                0
-                (abs-alloc
-                 (frame-val->dir
-                  (cdr
-                   (assoc-equal
-                    (abs-find-file-src
-                     (partial-collapse
-                      frame
-                      (dirname
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-                     (dirname
-                      (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table)))))
-                    (partial-collapse
-                     frame
-                     (dirname
-                      (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table))))))))
-                 (nthcdr
-                  (len
-                   (frame-val->path
-                    (cdr
-                     (assoc-equal
-                      (abs-find-file-src
-                       (partial-collapse
-                        frame
-                        (dirname
-                         (file-table-element->fid
-                          (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                            file-table)))))
-                       (dirname
-                        (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-                      frame))))
-                  (dirname
-                   (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-                 (find-new-index
-                  (strip-cars
-                   (partial-collapse
-                    frame
-                    (dirname
-                     (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table))))))))))))
-            (implode
-             (insert-text
-              (explode
-               (m1-file->contents
-                (cdr
-                 (assoc-equal
-                  (basename
-                   (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table))))
-                  (mv-nth
-                   0
-                   (abs-alloc
-                    (frame-val->dir
-                     (cdr
-                      (assoc-equal
-                       (abs-find-file-src
-                        (partial-collapse
-                         frame
-                         (dirname
-                          (file-table-element->fid
-                           (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                             file-table)))))
-                        (dirname
-                         (file-table-element->fid
-                          (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                            file-table)))))
-                       (partial-collapse
-                        frame
-                        (dirname
-                         (file-table-element->fid
-                          (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                            file-table))))))))
-                    (nthcdr
-                     (len
-                      (frame-val->path
-                       (cdr
-                        (assoc-equal
-                         (abs-find-file-src
-                          (partial-collapse
-                           frame
-                           (dirname
-                            (file-table-element->fid
-                             (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                               file-table)))))
-                          (dirname
-                           (file-table-element->fid
-                            (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                              file-table)))))
-                         frame))))
-                     (dirname
-                      (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table)))))
-                    (find-new-index
-                     (strip-cars
-                      (partial-collapse
-                       frame
-                       (dirname
-                        (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))))))))))
-              offset buf)))))
-         (frame-val->src
-          (cdr
-           (assoc-equal
-            (abs-find-file-src
-             (partial-collapse
-              frame
-              (dirname (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-             (dirname (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table)))))
-            frame))))
-        (frame->frame
-         (partial-collapse
-          frame
-          (dirname (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table))))))))))
-    (absfat-equiv
-     (mv-nth
-      0
-      (collapse
-       (frame-with-root
-        (frame->root
-         (partial-collapse
-          frame
-          (dirname (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table))))))
-        (put-assoc-equal
-         (abs-find-file-src
-          (partial-collapse
-           frame
-           (dirname (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))
-          (dirname (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-         (frame-val
-          (frame-val->path
-           (cdr
-            (assoc-equal
-             (abs-find-file-src
-              (partial-collapse
-               frame
-               (dirname (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-              (dirname (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-             frame)))
-          (mv-nth
-           0
-           (abs-place-file-helper
-            (frame-val->dir
-             (cdr
-              (assoc-equal
-               (abs-find-file-src
-                (partial-collapse
-                 frame
-                 (dirname
-                  (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-                (dirname
-                 (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table)))))
-               (partial-collapse
-                frame
-                (dirname
-                 (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table))))))))
-            (nthcdr
-             (len
-              (frame-val->path
-               (cdr
-                (assoc-equal
-                 (abs-find-file-src
-                  (partial-collapse
-                   frame
-                   (dirname
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))
-                  (dirname
-                   (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-                 frame))))
-             (file-table-element->fid
-              (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                file-table))))
-            (m1-file
-             (m1-file->dir-ent
-              (cdr
-               (assoc-equal
-                (basename
-                 (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table))))
-                (mv-nth
-                 0
-                 (abs-alloc
-                  (frame-val->dir
-                   (cdr
-                    (assoc-equal
-                     (abs-find-file-src
-                      (partial-collapse
-                       frame
-                       (dirname
-                        (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-                      (dirname
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-                     (partial-collapse
-                      frame
-                      (dirname
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table))))))))
-                  (nthcdr
-                   (len
-                    (frame-val->path
-                     (cdr
-                      (assoc-equal
-                       (abs-find-file-src
-                        (partial-collapse
-                         frame
-                         (dirname
-                          (file-table-element->fid
-                           (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                             file-table)))))
-                        (dirname
-                         (file-table-element->fid
-                          (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                            file-table)))))
-                       frame))))
-                   (dirname
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))
-                  (find-new-index
-                   (strip-cars
-                    (partial-collapse
-                     frame
-                     (dirname
-                      (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table))))))))))))
-             (implode
-              (insert-text
-               (explode
-                (m1-file->contents
-                 (cdr
-                  (assoc-equal
-                   (basename
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table))))
-                   (mv-nth
-                    0
-                    (abs-alloc
-                     (frame-val->dir
-                      (cdr
-                       (assoc-equal
-                        (abs-find-file-src
-                         (partial-collapse
-                          frame
-                          (dirname
-                           (file-table-element->fid
-                            (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                              file-table)))))
-                         (dirname
-                          (file-table-element->fid
-                           (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                             file-table)))))
-                        (partial-collapse
-                         frame
-                         (dirname
-                          (file-table-element->fid
-                           (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                             file-table))))))))
-                     (nthcdr
-                      (len
-                       (frame-val->path
-                        (cdr
-                         (assoc-equal
-                          (abs-find-file-src
-                           (partial-collapse
-                            frame
-                            (dirname
-                             (file-table-element->fid
-                              (cdr
-                               (assoc-equal (cdr (assoc-equal fd fd-table))
-                                            file-table)))))
-                           (dirname
-                            (file-table-element->fid
-                             (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                               file-table)))))
-                          frame))))
-                      (dirname
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-                     (find-new-index
-                      (strip-cars
-                       (partial-collapse
-                        frame
-                        (dirname
-                         (file-table-element->fid
-                          (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                            file-table)))))))))))))
-               offset buf)))))
-          (frame-val->src
-           (cdr
-            (assoc-equal
-             (abs-find-file-src
-              (partial-collapse
-               frame
-               (dirname (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-              (dirname (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-             frame))))
-         (frame->frame
-          (partial-collapse
-           frame
-           (dirname (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table))))))))))
-     (mv-nth 0 (collapse frame)))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (e/d (frame-reps-fs good-frame-p
-                        abs-pwrite frame->frame-of-put-assoc
-                        collapse collapse-this
-                        1st-complete frame-addrs-root
-                        dist-names abs-separate abs-fs-fix
-                        assoc-equal-of-frame-with-root
-                        hifat-no-dups-p
-                        hifat-place-file hifat-find-file
-                        assoc-equal-of-frame->frame
-                        len-of-insert-text)
-         ((:rewrite collapse-hifat-place-file-lemma-6)
-          (:rewrite abs-mkdir-correctness-lemma-178)
-          (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
-                    . 2)
-          (:rewrite abs-find-file-after-abs-mkdir-lemma-22)
-          (:rewrite len-when-prefixp)
-          (:linear abs-mkdir-correctness-lemma-107)
-          (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
-                    . 3)
-          (:rewrite abs-lstat-refinement-lemma-1)
-          (:rewrite abs-fs-p-of-ctx-app)
-          (:rewrite abs-mkdir-correctness-lemma-50 . 3)
-          (:rewrite partial-collapse-correctness-lemma-2)
-          (:type-prescription assoc-when-zp-len)
-          (:rewrite abs-addrs-when-m1-file-contents-p)
-          (:rewrite final-val-seq-of-collapse-this-lemma-2)
-          (:rewrite ctx-app-when-not-ctx-app-ok)
-          (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
-          (:rewrite assoc-after-remove-assoc)
-          (:definition nth)
-          (:definition put-assoc-equal)
-          (:definition abs-fs-fix)
-          (:rewrite insert-text-correctness-4)
-          (:rewrite abs-mkdir-correctness-lemma-39)
-          collapse-hifat-place-file-2))
-    :expand
-    ((:with abs-pwrite-correctness-lemma-1
-            (:free (file)
-                   (hifat-place-file
-                    (mv-nth 0 (collapse frame))
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))
-                    file)))
-     (:with
-      no-duplicatesp-of-abs-addrs-of-put-assoc-2
-      (:free (name val abs-file-alist)
-             (no-duplicatesp-equal
-              (abs-addrs (put-assoc-equal name val abs-file-alist))))))
-    :use
-    ((:instance
-      collapse-hifat-place-file-2
-      (root
-       (frame->root
-        (partial-collapse
-         frame
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))))
-      (frame
-       (frame->frame
-        (partial-collapse
-         frame
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))))
-      (x
-       (abs-find-file-src
-        (partial-collapse
-         frame
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-        (dirname (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table))))))
-      (path
-       (append
-        (nthcdr
-         (len
-          (frame-val->path
-           (cdr
-            (assoc-equal
-             (abs-find-file-src
-              (partial-collapse
-               frame
-               (dirname (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-              (dirname (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-             frame))))
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-        (list (basename (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))))
-      (file
-       (m1-file
-        (m1-file->dir-ent
-         (cdr
-          (assoc-equal
-           (basename (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table))))
-           (mv-nth
-            0
-            (abs-alloc
-             (frame-val->dir
-              (cdr
-               (assoc-equal
-                (abs-find-file-src
-                 (partial-collapse
-                  frame
-                  (dirname
-                   (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-                 (dirname
-                  (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-                (partial-collapse
-                 frame
-                 (dirname
-                  (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table))))))))
-             (nthcdr
-              (len
-               (frame-val->path
-                (cdr
-                 (assoc-equal
-                  (abs-find-file-src
-                   (partial-collapse
-                    frame
-                    (dirname
-                     (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table)))))
-                   (dirname
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))
-                  frame))))
-              (dirname (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-             (find-new-index
-              (strip-cars
-               (partial-collapse
-                frame
-                (dirname
-                 (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table))))))))))))
-        (implode
-         (insert-text
-          (explode
-           (m1-file->contents
-            (cdr
-             (assoc-equal
-              (basename (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table))))
-              (mv-nth
-               0
-               (abs-alloc
-                (frame-val->dir
-                 (cdr
-                  (assoc-equal
-                   (abs-find-file-src
-                    (partial-collapse
-                     frame
-                     (dirname
-                      (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table)))))
-                    (dirname
-                     (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table)))))
-                   (partial-collapse
-                    frame
-                    (dirname
-                     (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table))))))))
-                (nthcdr
-                 (len
-                  (frame-val->path
-                   (cdr
-                    (assoc-equal
-                     (abs-find-file-src
-                      (partial-collapse
-                       frame
-                       (dirname
-                        (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))
-                      (dirname
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-                     frame))))
-                 (dirname
-                  (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-                (find-new-index
-                 (strip-cars
-                  (partial-collapse
-                   frame
-                   (dirname
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))))))))))
-          offset buf)))))))))
-
-(defthm
-  abs-pwrite-correctness-lemma-21
+  abs-pwrite-correctness-lemma-42
   (implies
    (and
     (equal
@@ -28470,7 +27421,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -28672,159 +27623,7 @@
                   0))
   :hints (("goal" :in-theory (enable hifat-place-file hifat-find-file))))
 
-(defthm
-  abs-pwrite-correctness-lemma-41
-  (implies
-   (and
-    (mv-nth 1 (collapse frame))
-    (not (frame-val->path (cdr (assoc-equal 0 frame))))
-    (consp (assoc-equal 0 frame))
-    (equal (frame-val->src (cdr (assoc-equal 0 frame)))
-           0)
-    (frame-p frame)
-    (no-duplicatesp-equal (strip-cars frame))
-    (abs-separate frame)
-    (subsetp-equal (abs-addrs (frame->root frame))
-                   (frame-addrs-root (frame->frame frame)))
-    (consp (file-table-element->fid
-            (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                              file-table))))
-    (consp (dirname (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))
-    (m1-directory-file-p
-     (mv-nth
-      0
-      (hifat-find-file
-       (mv-nth 0 (collapse frame))
-       (dirname (file-table-element->fid
-                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                   file-table)))))))
-    (equal
-     (mv-nth
-      1
-      (hifat-find-file (mv-nth 0 (collapse frame))
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-     0)
-    (m1-regular-file-p
-     (cdr
-      (assoc-equal
-       (basename (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table))))
-       (m1-file->contents
-        (mv-nth
-         0
-         (hifat-find-file
-          (mv-nth 0 (collapse frame))
-          (dirname (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))))))))
-   (member-equal
-    (basename (file-table-element->fid
-               (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                 file-table))))
-    (names-at
-     (frame-val->dir
-      (cdr
-       (assoc-equal
-        (abs-find-file-src
-         (partial-collapse
-          frame
-          (dirname (file-table-element->fid
-                    (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                      file-table)))))
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table)))))
-        (partial-collapse
-         frame
-         (dirname (file-table-element->fid
-                   (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                     file-table))))))))
-     (nthcdr
-      (len
-       (frame-val->path
-        (cdr
-         (assoc-equal
-          (abs-find-file-src
-           (partial-collapse
-            frame
-            (dirname (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table)))))
-           (dirname (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))))
-          frame))))
-      (dirname (file-table-element->fid
-                (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                  file-table))))))))
-  :instructions
-  ((:bash
-    ("goal"
-     :do-not-induct t
-     :in-theory (e/d (member-of-names-at)
-                     ((:rewrite abs-mkdir-correctness-lemma-86)))
-     :use
-     (:instance
-      (:rewrite abs-mkdir-correctness-lemma-86)
-      (x-path
-       (nthcdr
-        (len
-         (frame-val->path
-          (cdr
-           (assoc-equal
-            (abs-find-file-src
-             (partial-collapse
-              frame
-              (dirname (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
-             (dirname (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table)))))
-            frame))))
-        (dirname (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table))))))
-      (path (dirname (file-table-element->fid
-                      (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                        file-table)))))
-      (frame
-       (partial-collapse
-        frame
-        (dirname (file-table-element->fid
-                  (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                    file-table)))))))))
-   :demote
-   (:casesplit
-    (equal
-     (mv-nth
-      1
-      (hifat-find-file
-       (mv-nth 0 (collapse frame))
-       (dirname (file-table-element->fid
-                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                   file-table))))))
-     2))
-   :bash :contrapose (:dive 1 2 1)
-   (:=
-    (mv-nth '0 (collapse frame))
-    (mv-nth
-     0
-     (collapse
-      (partial-collapse
-       frame
-       (dirname (file-table-element->fid
-                 (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                   file-table)))))))
-    :equiv hifat-equiv)
-   :top :bash))
-
-(defthm abs-pwrite-correctness-lemma-42
+(defthm abs-pwrite-correctness-lemma-41
   (implies
    (and
     (equal
@@ -29061,7 +27860,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -29164,7 +27963,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -29268,7 +28067,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -29566,7 +28365,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)
@@ -29801,7 +28600,7 @@
           (:rewrite final-val-seq-of-collapse-this-lemma-2)
           (:rewrite ctx-app-when-not-ctx-app-ok)
           (:rewrite abs-mkdir-correctness-lemma-73)
-          (:type-prescription abs-fs-fix-of-put-assoc-equal-lemma-3)
+          (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite assoc-after-remove-assoc)
           (:definition nth)
           (:definition put-assoc-equal)

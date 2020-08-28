@@ -412,7 +412,7 @@
                       abs-file-alist-p-when-m1-file-alist-p)
                      (:rewrite abs-alloc-correctness-1)
                      (:rewrite
-                      abs-fs-fix-of-put-assoc-equal-lemma-3)
+                      abs-addrs-of-remove-assoc-lemma-1)
                      (:rewrite abs-no-dups-p-of-cdr)
                      (:rewrite abs-addrs-of-put-assoc-lemma-1)
                      (:rewrite abs-addrs-when-m1-file-alist-p)
