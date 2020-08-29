@@ -814,6 +814,20 @@
            (hifat-tar-name-list-string fs path name-list fd-table file-table
                                        dir-stream-table entry-count)))))
 
+(defthm
+  hifat-tar-name-list-string-reduction-correctness-lemma-4
+  (implies
+   (not (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path))))
+   (equal
+    (mv-nth 0
+            (hifat-tar-name-list-string fs path name-list fd-table file-table
+                                        dir-stream-table entry-count))
+    ""))
+  :hints
+  (("goal"
+    :in-theory (e/d (hifat-tar-name-list-string hifat-lstat hifat-find-file)
+                    (append append-of-cons)))))
+
 (defthmd
   hifat-tar-name-list-string-reduction-correctness-lemma-3
   (equal
@@ -826,8 +840,9 @@
   :hints
   (("goal"
     :in-theory
-    (e/d (hifat-tar-name-list-string hifat-open hifat-close hifat-pread
-                                     hifat-opendir hifat-closedir hifat-lstat)
+    (e/d (hifat-tar-name-list-string hifat-open hifat-close
+                                     hifat-pread hifat-opendir hifat-closedir
+                                     hifat-lstat get-names-from-dirp-alt)
          (append-of-cons binary-append (:rewrite nth-of-take)
                          (:rewrite nth-when->=-n-len-l)
                          (:rewrite prefixp-when-equal-lengths)
@@ -837,7 +852,47 @@
                          (:rewrite prefixp-of-cons-left)
                          (:rewrite take-of-too-many)
                          (:rewrite take-of-take-same)
-                         (:linear getopt::defoptions-lemma-8)))
+                         (:linear getopt::defoptions-lemma-8)
+                         (:definition strip-cars)
+                         (:linear position-equal-ac-when-member)
+                         (:rewrite nthcdr-when->=-n-len-l)
+                         (:rewrite m1-directory-file-p-when-m1-file-p)
+                         (:definition position-equal-ac)
+                         (:rewrite consp-of-nthcdr)
+                         (:rewrite hifat-find-file-correctness-3)
+                         (:rewrite get-names-from-dirp-alt-lemma-3)
+                         (:rewrite get-names-from-dirp-alt-lemma-1)
+                         (:rewrite
+                          dir-stream-table-p-of-cdr-when-dir-stream-table-p)
+                         (:rewrite
+                          dir-stream-table-p-when-subsetp-equal)
+                         (:rewrite consp-car-of-dir-stream-table-fix)
+                         (:type-prescription
+                          true-listp-nthcdr-type-prescription)
+                         (:rewrite take-fewer-of-take-more)
+                         (:rewrite dir-stream-table-p-when-not-consp)
+                         (:rewrite take-when-atom)
+                         (:linear
+                          len-of-explode-when-m1-file-contents-p-1)
+                         (:rewrite
+                          hifat-find-file-correctness-3-lemma-2)
+                         (:REWRITE DEFAULT-CAR)
+                         (:REWRITE
+                          M1-FILE->CONTENTS$INLINE-OF-M1-FILE-FIX-X-NORMALIZE-CONST)
+                         (:REWRITE
+                          CDR-OF-FAT32-FILENAME-LIST-FIX-X-NORMALIZE-CONST-UNDER-FAT32-FILENAME-LIST-EQUIV)
+                         (:REWRITE
+                          CONS-OF-FAT32-FILENAME-FIX-X-NORMALIZE-CONST-UNDER-FAT32-FILENAME-LIST-EQUIV)
+                         (:REWRITE
+                          CONS-OF-FAT32-FILENAME-LIST-FIX-Y-NORMALIZE-CONST-UNDER-FAT32-FILENAME-LIST-EQUIV)
+                         (:REWRITE
+                          CAR-OF-FAT32-FILENAME-LIST-FIX-X-NORMALIZE-CONST-UNDER-FAT32-FILENAME-EQUIV)
+                         (:REWRITE PUT-ASSOC-EQUAL-WITHOUT-CHANGE . 2)
+                         (:REWRITE
+                          DIR-STREAM-OF-FAT32-FILENAME-LIST-FIX-FILE-LIST-NORMALIZE-CONST)
+                         (:REWRITE
+                          CAR-OF-TRUE-LIST-LIST-FIX-X-NORMALIZE-CONST-UNDER-LIST-EQUIV)
+                         (:TYPE-PRESCRIPTION NATP-POSITION-AC)))
     :induct
     (hifat-tar-name-list-string fs path name-list fd-table
                                 file-table dir-stream-table entry-count)
@@ -846,6 +901,28 @@
                fd-table file-table dir-stream-table)
            (hifat-tar-name-list-string fs path name-list fd-table file-table
                                        dir-stream-table entry-count)))))
+
+(defund hifat-tar-name-list-string-reduction
+  (fs path name-list entry-count)
+  (b*
+      (((mv string & &)
+        (hifat-tar-name-list-string fs path name-list nil nil nil entry-count)))
+    string))
+
+(defthmd
+  hifat-tar-name-list-string-reduction-correctness-1
+  (equal
+   (mv-nth 0
+           (hifat-tar-name-list-string fs path name-list fd-table file-table
+                                       dir-stream-table entry-count))
+   (hifat-tar-name-list-string-reduction fs path name-list entry-count))
+  :instructions
+  ((:dive 2)
+   :x :top (:dive 1)
+   (:rewrite hifat-tar-name-list-string-reduction-correctness-lemma-1)
+   (:rewrite hifat-tar-name-list-string-reduction-correctness-lemma-2)
+   (:rewrite hifat-tar-name-list-string-reduction-correctness-lemma-3)
+   :top :s))
 
 (defund alist-shift (alist shift)
   (if (atom alist)
@@ -856,6 +933,7 @@
 (defund
   hifat-tar-name-list-alist
   (fs path name-list entry-count)
+  (declare (xargs :measure (nfix entry-count)))
   (b*
       (((unless (and (consp name-list)
                      (not (zp entry-count))))
@@ -865,11 +943,11 @@
        ((mv st & &) (hifat-lstat fs head-path))
        (len (struct-stat->st_size st))
        ((mv fd-table file-table fd &)
-        (hifat-open head-path fd-table file-table))
+        (hifat-open head-path nil nil))
        ((unless (>= fd 0)) nil)
        ((mv & & pread-error-code)
         (hifat-pread fd len 0 fs fd-table file-table))
-       ((mv fd-table file-table &)
+       ((mv & & &)
         (hifat-close fd fd-table file-table))
        ((unless (and (<= (len (fat32-path-to-path head-path)) 100))) nil)
        (head-string (hifat-tar-reg-file-string
@@ -882,31 +960,33 @@
           (cons (cons head-path 0)
                 (alist-shift tail-alist (len head-string)))))
        ((mv dirp dir-stream-table &)
-        (hifat-opendir fs head-path dir-stream-table))
+        (hifat-opendir fs head-path nil))
        ((mv names dir-stream-table)
         (get-names-from-dirp dirp dir-stream-table))
-       ((mv & dir-stream-table)
+       ((mv & &)
         (hifat-closedir dirp dir-stream-table))
        (head-alist
         (hifat-tar-name-list-alist fs (append path (list head)) names (- entry-count 1)))
        (tail-alist
-        (hifat-tar-name-list-alist fs path (cdr name-list)
-         fd-table file-table
-         dir-stream-table (- entry-count 1))))
+        (hifat-tar-name-list-alist fs path (cdr name-list) (- entry-count 1))))
     (append
      (alist-shift
       head-alist
-      (len
+      (length
        (tar-header-block (implode (fat32-path-to-path head-path))
                          0 *tar-dirtype*)))
      (alist-shift
       tail-alist
       (+
-       (len
+       (length
         (tar-header-block (implode (fat32-path-to-path head-path))
                           0 *tar-dirtype*))
-       (len)))
-     (concatenate
-      'string
-      head-string tail-string)
-     fd-table file-table)))
+       (len (hifat-tar-name-list-string-reduction
+             fs (append path (list head))
+             names (- entry-count 1))))))))
+
+(thm
+ (equal
+  (hifat-tar-name-list-alist
+   fs path name-list entry-count)
+  ))
