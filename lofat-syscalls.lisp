@@ -607,7 +607,9 @@
       (max-entry-count fat32-in-memory)))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite lofat-remove-file-correctness-1-lemma-1))
+    :do-not-induct t
+    :in-theory (e/d ()
+                    ((:rewrite lofat-remove-file-correctness-1-lemma-1)))
     :use
     (:instance
      (:rewrite lofat-remove-file-correctness-1-lemma-1)

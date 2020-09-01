@@ -12916,6 +12916,27 @@ Some (rather awful) testing forms are
     (and (equal error-code 0)
          (no-duplicatesp-equal clusterchain))))
 
+(defthm good-root-dir-ent-p-of-pseudo-root-dir-ent
+  (implies
+   (and
+    (lofat-fs-p fat32-in-memory)
+    (equal
+     (mv-nth
+      1
+      (dir-ent-clusterchain-contents fat32-in-memory
+                                     (pseudo-root-dir-ent fat32-in-memory)))
+     0)
+    (no-duplicatesp-equal
+     (mv-nth 0
+             (dir-ent-clusterchain fat32-in-memory
+                                   (pseudo-root-dir-ent fat32-in-memory)))))
+   (good-root-dir-ent-p (pseudo-root-dir-ent fat32-in-memory)
+                        fat32-in-memory))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (good-root-dir-ent-p)))))
+
 (defthm lofat-remove-file-correctness-lemma-18
  (implies
   (and
