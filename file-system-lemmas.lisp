@@ -1717,3 +1717,8 @@
 (defthm subsetp-of-set-difference$
   (subsetp-equal (set-difference-equal x y)
                  x))
+
+(defthm alistp-of-append
+  (equal (alistp (append x y))
+         (and (alistp (true-list-fix x))
+              (alistp y))))

@@ -1003,12 +1003,6 @@
   (alistp (alist-shift alist shift))
   :hints (("goal" :in-theory (enable alist-shift))))
 
-;; Move later.
-(defthm alistp-of-append
-  (equal (alistp (append x y))
-         (and (alistp (true-list-fix x))
-              (alistp y))))
-
 (defthm alistp-of-hifat-tar-name-list-alist
   (alistp (hifat-tar-name-list-alist fs path name-list entry-count))
   :hints (("goal" :in-theory (enable hifat-tar-name-list-alist))))
@@ -1063,21 +1057,6 @@
     0))
   :hints (("goal" :in-theory (enable hifat-open)))
   :rule-classes :linear)
-
-(thm (implies (and (integerp (+ end (- start)))
-                   (not (and (not (null end))
-                             (< (+ end (- start)) 0)))
-                   (not (and (<= (len x) (+ end (- start)))
-                             (integerp end)))
-                   end (<= (len x) (+ end (- start))))
-              (equal (subseq (implode (append x y))
-                             start end)
-                     (implode (append (make-character-list x)
-                                      (take (+ end (- start) (- (len x)))
-                                            (make-character-list y))))))
-     :hints (("goal" :in-theory (e/d (subseq subseq-list take)
-                                     ((:e force)))
-              :do-not-induct t)))
 
 (defthm
   subseq-of-implode-of-append-lemma-1
