@@ -1070,7 +1070,7 @@
 
   (local
    (defthmd
-     lemma
+     lemma-1
      (implies
       (or (natp start)
           (not (integerp (+ end (- start))))
@@ -1194,7 +1194,23 @@
     subseq-of-implode-of-append
     (equal (subseq (implode (append x y))
                    start end)
-           (cond ((and (stringp y) (not (consp x)))
+           (cond ((and (not (integerp (+ end (- start))))
+                       (not (consp x)))
+                  "")
+                 ((and (not (null end))
+                       (not (consp x))
+                       (not (integerp end)))
+                  (implode (take (+ end (- start))
+                                 (make-character-list y))))
+                 ((and (integerp (+ end (- start)))
+                       (<= (len x) (+ end (- start)))
+                       (< (len x) end)
+                       (consp x)
+                       (not (integerp end)))
+                  (implode (append (make-character-list x)
+                                   (take (+ end (- start) (- (len x)))
+                                         (make-character-list y)))))
+                 ((and (stringp y) (not (consp x)))
                   (implode (repeat (+ end (- start)) nil)))
                  ((and (stringp y)
                        (not (consp x))
@@ -1208,18 +1224,6 @@
                        (<= end (len x))
                        (not (integerp end)))
                   (implode (take (+ end (- start)) x)))
-                 ((and (not (null end))
-                       (<= (len x) (+ end (- start)))
-                       (not (natp start))
-                       (integerp (+ end (- start)))
-                       (not (and (not (consp x)) (stringp y)))
-                       (not (and (< start 0)
-                                 (< (+ end (- start)) (len x))))
-                       (not (and (<= (len x) (+ end (- start)))
-                                 (integerp end))))
-                  (implode (append (make-character-list x)
-                                   (take (+ end (- start) (- (len x)))
-                                         (make-character-list y)))))
                  ((and (integerp (+ end (- start)))
                        (< start 0)
                        (null end))
@@ -1275,7 +1279,7 @@
                  (t (implode (append (nthcdr start (make-character-list x))
                                      (take (- end (len x))
                                            (make-character-list y)))))))
-    :hints (("goal" :use lemma :do-not-induct t))))
+    :hints (("goal" :use lemma-1 :do-not-induct t))))
 
 (defthm hifat-tar-name-list-alist-correctness-lemma-4
   (implies (and (integerp start)
