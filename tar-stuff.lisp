@@ -1228,6 +1228,40 @@
     :in-theory (e/d (hifat-tar-name-list-string hifat-lstat hifat-find-file)
                     (append append-of-cons)))))
 
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-11
+  (and (< 0
+          (len (explode (tar-header-block path len typeflag))))
+       (not (equal (tar-header-block path len typeflag)
+                   "")))
+  :hints (("goal" :in-theory (enable tar-header-block)))
+  :rule-classes
+  ((:linear
+    :corollary (< 0
+                  (len (explode (tar-header-block path len typeflag)))))
+   (:rewrite :corollary (not (equal (tar-header-block path len typeflag)
+                                    "")))))
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-12
+  (implies (fat32-filename-list-p (path-to-fat32-path (explode path)))
+           (and (not (equal (hifat-tar-reg-file-string fs path)
+                            ""))
+                (< 0
+                   (len (explode (hifat-tar-reg-file-string fs path))))))
+  :hints (("goal" :in-theory (enable hifat-tar-reg-file-string hifat-open)))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies (fat32-filename-list-p (path-to-fat32-path (explode path)))
+             (not (equal (hifat-tar-reg-file-string fs path)
+                         ""))))
+   (:linear
+    :corollary
+    (implies (fat32-filename-list-p (path-to-fat32-path (explode path)))
+             (< 0
+                (len (explode (hifat-tar-reg-file-string fs path))))))))
+
 (encapsulate
   ()
 
@@ -1342,10 +1376,12 @@
         (cdr alist-elem)
         (+
          (cdr alist-elem)
-         (length (m1-file->contents
-                  (hifat-find-file fs path2)))))
-       (m1-file->contents
-        (hifat-find-file fs path2)))))
+         (length (hifat-tar-reg-file-string
+                     fs
+                     (implode (fat32-path-to-path path2))))))
+       (hifat-tar-reg-file-string
+        fs
+        (implode (fat32-path-to-path path2))))))
    :hints (("Goal"
             :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
                             (take-when-prefixp prefixp-of-cons-right
