@@ -940,7 +940,11 @@
         nil)
        (head (car name-list))
        (head-path (append path (list head)))
-       ((mv st & &) (hifat-lstat fs head-path))
+       ((mv st retval &) (hifat-lstat fs head-path))
+       (tail-alist
+        (hifat-tar-name-list-alist
+         fs head-path (cdr name-list) (- entry-count 1)))
+       ((unless (>= retval 0)) tail-alist)
        (len (struct-stat->st_size st))
        ((mv fd-table file-table fd &)
         (hifat-open head-path nil nil))
@@ -954,11 +958,8 @@
                      fs
                      (implode (fat32-path-to-path head-path))))
        ((when (zp pread-error-code))
-        (b* ((tail-alist
-              (hifat-tar-name-list-alist
-               fs head-path (cdr name-list) (- entry-count 1))))
-          (cons (cons head-path 0)
-                (alist-shift tail-alist (len head-string)))))
+        (cons (cons head-path 0)
+              (alist-shift tail-alist (len head-string))))
        ((mv dirp dir-stream-table &)
         (hifat-opendir fs head-path nil))
        ((mv names dir-stream-table)
@@ -1346,7 +1347,7 @@
        (m1-file->contents
         (hifat-find-file fs path2)))))
    :hints (("Goal"
-            :in-theory (e/d (hifat-pread hifat-lstat)
+            :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
                             (take-when-prefixp prefixp-of-cons-right
                                                take-of-cons
                                                fat32-name-to-name))
