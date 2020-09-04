@@ -2743,6 +2743,7 @@
    (fat32-name-to-name-helper
     character-list n)))
 
+;; We should consider disabling this...
 (defun fat32-name-to-name (character-list)
   (declare (xargs :guard (and (character-listp character-list)
                               (equal (len character-list) 11))))

@@ -985,14 +985,6 @@
              fs (append path (list head))
              names (- entry-count 1))))))))
 
-;; Move later.
-(defthm assoc-equal-of-append-2-rewrite
-  (implies (and (atom (assoc-equal nil x))
-                (atom (assoc-equal nil y)))
-           (not (consp (assoc-equal nil (append x y)))))
-  :hints (("goal" :in-theory (disable assoc-equal-of-append-2)
-           :use assoc-equal-of-append-2)))
-
 (defthm consp-of-assoc-of-alist-shift
   (implies (alistp alist)
            (equal (consp (assoc-equal x (alist-shift alist shift)))
@@ -1339,7 +1331,8 @@
       (and (consp alist-elem)
            (dir-stream-table-p dir-stream-table)
            (fd-table-p fd-table)
-           (file-table-p file-table))
+           (file-table-p file-table)
+           (fat32-filename-list-p name-list))
       (equal
        (subseq
         (mv-nth 0
@@ -1354,7 +1347,9 @@
         (hifat-find-file fs path2)))))
    :hints (("Goal"
             :in-theory (e/d (hifat-pread hifat-lstat)
-                            (take-when-prefixp prefixp-of-cons-right take-of-cons))
+                            (take-when-prefixp prefixp-of-cons-right
+                                               take-of-cons
+                                               fat32-name-to-name))
             :induct
             (hifat-tar-name-list-string
              fs path1 name-list fd-table file-table dir-stream-table
