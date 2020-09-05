@@ -763,14 +763,6 @@
              (hifat-find-file m1-file-alist2 path)))
     :in-theory (enable m1-file-alist-p hifat-find-file))))
 
-(defthm
-  hifat-find-file-correctness-4-lemma-1
-  (implies
-   (m1-file-alist-p fs)
-   (hifat-no-dups-p (m1-file->contents (mv-nth 0 (hifat-find-file fs path)))))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p
-                                     m1-file-alist-p hifat-find-file))))
-
 (defthm hifat-find-file-correctness-lemma-1
   (and (equal (hifat-equiv (hifat-file-alist-fix fs1)
                            fs2)

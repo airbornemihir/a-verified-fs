@@ -2055,6 +2055,12 @@
     (t (hifat-find-file fs x))))
   :hints (("goal" :in-theory (enable hifat-find-file))))
 
+(defthm
+  hifat-no-dups-p-of-m1-file->contents-of-hifat-find-file
+  (hifat-no-dups-p (m1-file->contents (mv-nth 0 (hifat-find-file fs path))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p
+                                     m1-file-alist-p hifat-find-file))))
+
 (defund
   hifat-place-file
   (fs path file)
