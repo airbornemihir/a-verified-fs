@@ -1,6 +1,8 @@
 (in-package "ACL2")
 
 (include-book "lofat-syscalls")
+
+;; This book disables subseq.
 (include-book "centaur/getopt/top" :dir :system)
 
 (defoptions mkdir-opts
