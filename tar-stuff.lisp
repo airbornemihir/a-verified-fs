@@ -1214,41 +1214,40 @@
              :in-theory (enable hifat-open hifat-find-file)))
     :rule-classes :type-prescription)
 
-  ;; (thm
-  ;;  (b*
-  ;;      ((alist
-  ;;        (hifat-tar-name-list-alist
-  ;;         fs path1 name-list entry-count))
-  ;;       (alist-elem (assoc-equal path2 alist)))
-  ;;    (implies
-  ;;     (and (consp alist-elem)
-  ;;          (dir-stream-table-p dir-stream-table)
-  ;;          (fd-table-p fd-table)
-  ;;          (file-table-p file-table)
-  ;;          (fat32-filename-list-p name-list))
-  ;;     (equal
-  ;;      (subseq
-  ;;       (mv-nth 0
-  ;;               (hifat-tar-name-list-string
-  ;;                fs path1 name-list fd-table file-table dir-stream-table entry-count))
-  ;;       (cdr alist-elem)
-  ;;       (+
-  ;;        (cdr alist-elem)
-  ;;        (length (hifat-tar-reg-file-string
-  ;;                    fs
-  ;;                    (implode (fat32-path-to-path path2))))))
-  ;;      (hifat-tar-reg-file-string
-  ;;       fs
-  ;;       (implode (fat32-path-to-path path2))))))
-  ;;  :hints (("Goal"
-  ;;           :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
-  ;;                           (take-when-prefixp prefixp-of-cons-right
-  ;;                                              take-of-cons
-  ;;                                              fat32-name-to-name))
-  ;;           :induct
-  ;;           (hifat-tar-name-list-string
-  ;;            fs path1 name-list fd-table file-table dir-stream-table
-  ;;            entry-count)
-  ;;           :expand
-  ;;           (HIFAT-TAR-NAME-LIST-ALIST FS PATH1 NAME-LIST ENTRY-COUNT))))
-  )
+  (thm
+   (b*
+       ((alist
+         (hifat-tar-name-list-alist
+          fs path1 name-list entry-count))
+        (alist-elem (assoc-equal path2 alist)))
+     (implies
+      (and (consp alist-elem)
+           (dir-stream-table-p dir-stream-table)
+           (fd-table-p fd-table)
+           (file-table-p file-table)
+           (fat32-filename-list-p name-list))
+      (equal
+       (subseq
+        (mv-nth 0
+                (hifat-tar-name-list-string
+                 fs path1 name-list fd-table file-table dir-stream-table entry-count))
+        (cdr alist-elem)
+        (+
+         (cdr alist-elem)
+         (length (hifat-tar-reg-file-string
+                     fs
+                     (implode (fat32-path-to-path path2))))))
+       (hifat-tar-reg-file-string
+        fs
+        (implode (fat32-path-to-path path2))))))
+   :hints (("Goal"
+            :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
+                            (take-when-prefixp prefixp-of-cons-right
+                                               take-of-cons
+                                               fat32-name-to-name))
+            :induct
+            (hifat-tar-name-list-string
+             fs path1 name-list fd-table file-table dir-stream-table
+             entry-count)
+            :expand
+            (HIFAT-TAR-NAME-LIST-ALIST FS PATH1 NAME-LIST ENTRY-COUNT)))))
