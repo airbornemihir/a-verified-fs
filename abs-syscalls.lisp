@@ -499,7 +499,8 @@
                        (mv-nth 1 (hifat-place-file x path file)))))
   :hints (("goal" :in-theory (enable hifat-place-file hifat-subsetp))))
 
-;; This isn't a congruence rule, so it may have to be left disabled...
+;; This is screwed up as a rewrite rule - it rewrites things in the opposite
+;; direction to how they should be rewritten.
 (defthm
   hifat-place-file-correctness-4
   (implies
@@ -8901,7 +8902,8 @@
                :in-theory (e/d (frame-reps-fs
                                 abs-mkdir abs-complete
                                 abs-separate-of-frame->frame-of-collapse-this-lemma-10)
-                               ((:rewrite abs-mkdir-correctness-lemma-128))))))
+                               ((:rewrite abs-mkdir-correctness-lemma-128)
+                                (:rewrite abs-mkdir-correctness-lemma-60))))))
 
     (defthm
       abs-mkdir-correctness-lemma-185
@@ -9317,7 +9319,8 @@
               (:rewrite different-from-own-src-1)
               (:rewrite abs-mkdir-correctness-lemma-192)
               (:rewrite hifat-equiv-when-absfat-equiv-lemma-1)
-              abs-mkdir-correctness-lemma-179 abs-mkdir-correctness-lemma-189)))))
+              abs-mkdir-correctness-lemma-179 abs-mkdir-correctness-lemma-189
+              (:rewrite abs-mkdir-correctness-lemma-60))))))
 
     (defthm abs-mkdir-correctness-lemma-3
       (abs-fs-p
