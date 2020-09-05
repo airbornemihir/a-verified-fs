@@ -2055,6 +2055,16 @@
     (t (hifat-find-file fs x))))
   :hints (("goal" :in-theory (enable hifat-find-file))))
 
+;; This can't be made local.
+(defthm
+  hifat-no-dups-p-of-m1-file->contents-of-hifat-find-file-lemma-1
+  (implies (and (m1-file-alist-p fs)
+                (hifat-no-dups-p fs))
+           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key fs)))))
+  :hints (("goal" :in-theory (enable hifat-no-dups-p m1-file->contents
+                                     m1-file-contents-fix m1-file-contents-p
+                                     m1-directory-file-p))))
+
 (defthm
   hifat-no-dups-p-of-m1-file->contents-of-hifat-find-file
   (hifat-no-dups-p (m1-file->contents (mv-nth 0 (hifat-find-file fs path))))
@@ -2152,16 +2162,6 @@
     :use (hifat-place-file-of-fat32-filename-list-fix
           (:instance hifat-place-file-of-fat32-filename-list-fix
                      (path path-equiv))))))
-
-;; This can't be made local.
-(defthm
-  hifat-place-file-correctness-lemma-2
-  (implies (and (m1-file-alist-p fs)
-                (hifat-no-dups-p fs))
-           (hifat-no-dups-p (m1-file->contents (cdr (assoc-equal key fs)))))
-  :hints (("goal" :in-theory (enable hifat-no-dups-p m1-file->contents
-                                     m1-file-contents-fix m1-file-contents-p
-                                     m1-directory-file-p))))
 
 (defthm
   hifat-place-file-correctness-3

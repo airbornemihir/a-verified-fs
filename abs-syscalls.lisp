@@ -5510,7 +5510,6 @@
            abs-separate-of-frame->frame-of-collapse-this-lemma-11)
           (:rewrite abs-find-file-correctness-lemma-14)
           (:rewrite subsetp-trans)
-          hifat-place-file-correctness-3
           prefixp-when-not-consp-right
           1st-complete-of-put-assoc-2
           cdr-of-append-when-consp
