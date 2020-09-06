@@ -499,8 +499,6 @@
                        (mv-nth 1 (hifat-place-file x path file)))))
   :hints (("goal" :in-theory (enable hifat-place-file hifat-subsetp))))
 
-;; This is screwed up as a rewrite rule - it rewrites things in the opposite
-;; direction to how they should be rewritten.
 (defthm
   hifat-place-file-correctness-4
   (implies
@@ -509,13 +507,13 @@
         (hifat-no-dups-p (m1-file->contents file)))
    (and
     (equal (mv-nth 1
-                   (hifat-place-file m1-file-alist2 path file))
+                   (hifat-place-file m1-file-alist1 path file))
            (mv-nth 1
-                   (hifat-place-file m1-file-alist1 path file)))
+                   (hifat-place-file m1-file-alist2 path file)))
     (hifat-equiv (mv-nth 0
-                         (hifat-place-file m1-file-alist2 path file))
+                         (hifat-place-file m1-file-alist1 path file))
                  (mv-nth 0
-                         (hifat-place-file m1-file-alist1 path file)))))
+                         (hifat-place-file m1-file-alist2 path file)))))
   :hints
   (("goal" :in-theory (enable hifat-place-file hifat-equiv)
     :use ((:instance (:rewrite hifat-place-file-correctness-lemma-1)
@@ -1023,90 +1021,6 @@
   (implies (m1-regular-file-p file)
            (abs-no-dups-file-p file))
   :hints (("goal" :in-theory (enable abs-no-dups-file-p))))
-
-;; I'm not even sure what the definition of abs-place-file above should be. But
-;; I'm pretty sure it should support a theorem like the following.
-;;
-;; In the hypotheses here, there has to be a stipulation that not only is dir
-;; complete, but also that it's the only one which has any names at that
-;; particular relpath, i.e. (butlast path 1). It's codified under
-;; path-clear.
-;;
-;; Also, the use hints in this theorem are awkward but necessary - restrict
-;; hints do not work because there's never a real chance for them to be
-;; applied, or so :brr tells us.
-;;
-;; OK, so how do we develop a specification for abs-mkdir which we can actually
-;; USE? Like, we would want to say that (abs-mkdir frame) is going to return a
-;; new frame and an error code, and that error code will tell us whether to
-;; expect an unchanged frame (modulo absfat-equiv) or a new frame with an
-;; element right at the front representing the parent directory of the new
-;; directory with the new directory inside it.
-(defthm
-  absfat-place-file-correctness-lemma-2
-  (implies
-   (and
-    (m1-file-alist-p fs)
-    (hifat-no-dups-p fs)
-    (fat32-filename-list-p path)
-    (m1-regular-file-p file)
-    (abs-fs-p dir)
-    (abs-complete dir)
-    (path-clear (butlast path 1) frame)
-    (atom (names-at root (butlast path 1)))
-    (frame-reps-fs
-     (frame-with-root root
-                      (cons (cons x (frame-val (butlast path 1) dir src))
-                            frame))
-     fs)
-    (not (member-equal (car (last path))
-                       (names-at dir nil)))
-    (consp path))
-   (b*
-       ((dir (put-assoc-equal (car (last path))
-                              file dir))
-        (frame
-         (frame-with-root root
-                          (cons (cons x (frame-val (butlast path 1) dir src))
-                                frame)))
-        ((mv fs &)
-         (hifat-place-file fs path file)))
-     (frame-reps-fs frame fs)))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (e/d (hifat-place-file dist-names abs-separate
-                           frame-addrs-root frame-reps-fs)
-         (collapse-hifat-place-file-2
-          (:rewrite m1-file-alist-p-when-subsetp-equal)
-          (:rewrite len-of-remove-assoc-when-no-duplicatesp-strip-cars)
-          (:linear len-of-remove-assoc-1)
-          (:definition remove-assoc-equal)
-          (:rewrite subsetp-trans)
-          (:rewrite abs-addrs-of-put-assoc-lemma-2)
-          member-of-abs-addrs-when-natp
-          (:linear position-equal-ac-when-member)
-          (:rewrite 1st-complete-of-put-assoc-lemma-1)
-          (:definition hifat-file-alist-fix)
-          (:rewrite hifat-find-file-correctness-1-lemma-1)
-          (:type-prescription ctx-app-list-when-set-equiv-lemma-4)
-          (:rewrite m1-directory-file-p-when-m1-file-p)
-          (:rewrite abs-no-dups-p-of-put-assoc-equal)
-          (:rewrite nthcdr-when->=-n-len-l)
-          (:rewrite ctx-app-ok-when-absfat-equiv-lemma-3)
-          (:type-prescription assoc-when-zp-len)
-          (:definition take)
-          (:rewrite take-of-len-free)
-          (:rewrite take-of-too-many)
-          (:definition true-listp)
-          (:rewrite true-listp-when-string-list)
-          (:definition string-listp)))
-    :use
-    ((:instance collapse-hifat-place-file-2
-                (frame (cons (cons x (frame-val (butlast path 1) dir src))
-                             frame))
-                (path (last path)))))))
 
 (defthm
   frame-p-of-abs-place-file
@@ -9540,30 +9454,6 @@
                 abs-fs-p-of-frame-val->dir abs-complete
                 abs-separate-of-frame->frame-of-collapse-this-lemma-10))))
 
-    ;; Move later.
-    (defthm
-      abs-mkdir-correctness-lemma-195
-      (implies (hifat-equiv x y)
-               (equal (consp (assoc-equal (fat32-filename-fix name)
-                                          (hifat-file-alist-fix x)))
-                      (consp (assoc-equal (fat32-filename-fix name)
-                                          (hifat-file-alist-fix y)))))
-      :hints (("goal" :do-not-induct t
-               :in-theory (e/d (hifat-equiv)
-                               (hifat-subsetp-preserves-assoc))
-               :use ((:instance hifat-subsetp-preserves-assoc
-                                (x (hifat-file-alist-fix x))
-                                (y (hifat-file-alist-fix y))
-                                (file (fat32-filename-p name)))
-                     (:instance hifat-subsetp-preserves-assoc
-                                (x (hifat-file-alist-fix y))
-                                (y (hifat-file-alist-fix x))
-                                (file (fat32-filename-p name))))
-               :cases ((consp (assoc-equal (fat32-filename-fix name)
-                                           (hifat-file-alist-fix x))))))
-      :rule-classes
-      :congruence)
-
     (defthm
       abs-mkdir-correctness-lemma-96
       (implies
@@ -9598,7 +9488,7 @@
       :hints
       (("goal"
         :in-theory (e/d (hifat-file-alist-fix-when-hifat-no-dups-p)
-                        (abs-mkdir-correctness-lemma-195))
+                        (consp-of-assoc-when-hifat-equiv))
         :expand
         ((:with
           hifat-file-alist-fix-when-hifat-no-dups-p
@@ -9620,7 +9510,7 @@
                               path))))))
         :use
         ((:instance
-          abs-mkdir-correctness-lemma-195
+          consp-of-assoc-when-hifat-equiv
           (x
            (m1-file->contents
             (mv-nth

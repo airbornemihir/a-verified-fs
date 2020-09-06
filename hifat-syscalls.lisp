@@ -976,13 +976,6 @@
   (("goal" :in-theory (enable hifat-find-file hifat-equiv)))
   :rule-classes :congruence)
 
-(defthm hifat-find-file-correctness-3-lemma-8
-  (implies (and (not (consp (assoc-equal name m1-file-alist2)))
-                (m1-file-alist-p m1-file-alist1)
-                (hifat-subsetp m1-file-alist1 m1-file-alist2))
-           (not (consp (assoc-equal name m1-file-alist1))))
-  :hints (("goal" :in-theory (enable hifat-subsetp m1-file-alist-p))))
-
 (defthm
   hifat-find-file-correctness-3
   (implies
