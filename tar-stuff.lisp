@@ -1120,6 +1120,41 @@
              (< 0
                 (len (explode (hifat-tar-reg-file-string fs path))))))))
 
+(defthm strip-cars-of-alist-shift
+  (equal (strip-cars (alist-shift alist shift))
+         (strip-cars alist))
+  :hints (("goal" :in-theory (enable alist-shift))))
+
+(defthm
+  no-duplicatesp-of-get-names-from-dirp
+  (implies
+   (no-duplicatesp-equal
+    (dir-stream->file-list
+     (cdr (assoc-equal (nfix dirp)
+                       (dir-stream-table-fix dir-stream-table)))))
+   (no-duplicatesp-equal
+    (mv-nth 0
+            (get-names-from-dirp dirp dir-stream-table))))
+  :hints (("goal" :in-theory (enable get-names-from-dirp-alt))))
+
+(defthm hifat-tar-name-list-alist-correctness-lemma-14
+  (iff (prefixp (append y x) y) (atom x))
+  :hints (("goal" :in-theory (enable prefixp))))
+
+(defthm hifat-tar-name-list-alist-correctness-lemma-15
+  (iff (equal x (append x y))
+       (equal y (if (consp x) (cdr (last x)) x))))
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-13
+  (implies
+   (or (not (prefixp path1 path2)) (equal path1 path2))
+   (not
+    (consp (assoc-equal
+            path2
+            (hifat-tar-name-list-alist fs path1 name-list entry-count)))))
+  :hints (("goal" :in-theory (enable hifat-tar-name-list-alist))))
+
 (encapsulate
   ()
 
@@ -1213,6 +1248,20 @@
     :hints (("goal" :do-not-induct t
              :in-theory (enable hifat-open hifat-find-file)))
     :rule-classes :type-prescription)
+
+  (thm
+   (implies
+    (and
+     (fat32-filename-list-p name-list)
+     (no-duplicatesp-equal name-list))
+    (no-duplicatesp-equal
+     (strip-cars
+      (hifat-tar-name-list-alist
+       fs path1 name-list entry-count))))
+   :hints (("Goal" :in-theory (e/d (hifat-opendir)
+                                   (take-when-prefixp prefixp-of-cons-right
+                                                      take-of-cons
+                                                      fat32-name-to-name)))))
 
   (thm
    (b*
