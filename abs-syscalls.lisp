@@ -5863,7 +5863,7 @@
                    (mv-nth 0 (collapse frame))))
      (:dive 1)
      (:rewrite hifat-place-file-correctness-4
-               ((m1-file-alist1 (mv-nth 0 (collapse frame)))))
+               ((m1-file-alist2 (mv-nth 0 (collapse frame)))))
      (:change-goal nil t)
      :bash :top (:dive 1)
      (:rewrite
@@ -10003,7 +10003,17 @@
            :equiv fat32-filename-list-equiv$inline)
        :top (:dive 1 2)
        (:rewrite hifat-place-file-of-append-1)
-       :top :bash (:dive 1)
+       :top :bash (:dive 2 2 2)
+       (:= path
+           (append (dirname path)
+                   (list (basename path)))
+           :equiv fat32-filename-list-equiv$inline)
+       :up
+       (:rewrite hifat-place-file-of-append-1)
+       :top :bash
+       (:rewrite (:rewrite prefixp-transitive . 2)
+                 ((y (fat32-filename-list-fix (dirname path)))))
+       :bash (:dive 1)
        (:=
         (frame-val->path
          (cdr
@@ -10011,9 +10021,6 @@
                                           (dirname path))
                        (partial-collapse frame (dirname path))))))
        :top
-       (:rewrite (:rewrite prefixp-transitive . 2)
-                 ((y (fat32-filename-list-fix (dirname path)))))
-       :bash
        (:claim
         (and
          (no-duplicatesp-equal
