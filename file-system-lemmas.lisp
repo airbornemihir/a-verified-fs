@@ -1722,3 +1722,13 @@
   (equal (alistp (append x y))
          (and (alistp (true-list-fix x))
               (alistp y))))
+
+(defthmd take-as-append-and-nth
+  (equal (take n l)
+         (if (zp n)
+             nil
+             (append (take (- n 1) l)
+                     (list (nth (- n 1) l))))))
+
+(theory-invariant (incompatible (:rewrite take-as-append-and-nth)
+                                (:rewrite append-of-take-and-cons)))

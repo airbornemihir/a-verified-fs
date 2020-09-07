@@ -1157,10 +1157,41 @@
   :hints
   (("goal" :in-theory (enable hifat-tar-name-list-alist))))
 
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-16
+  (not
+   (member-equal nil
+    (strip-cars
+                 (hifat-tar-name-list-alist fs path name-list entry-count))))
+  :hints (("goal" :in-theory (e/d (hifat-tar-name-list-alist)
+                                  (append append-of-cons))))
+  :rule-classes :type-prescription)
+
+(remove-hyps
+ (defthm
+   hifat-tar-name-list-alist-correctness-lemma-17
+   (implies
+    (and
+     t
+     (member-equal path2
+                   (strip-cars
+                    (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+     (not (member-equal name name-list)))
+    (not
+     (prefixp
+      (append path1 (list name))
+      path2)))
+   :hints (("goal" :in-theory (e/d (hifat-tar-name-list-alist hifat-pread
+                                                              hifat-open hifat-lstat)
+                                   (append append-of-cons))))
+   :rule-classes :type-prescription)
+ t)
+
 (encapsulate
   ()
 
   (local (include-book "std/basic/inductions" :dir :system))
+  (local (include-book "std/lists/intersectp" :dir :system))
 
   (thm
    (implies
@@ -1272,7 +1303,14 @@
                   (list (car name-list))))))))))))
         (+ -1 entry-count))))))
    :hints
-   (("goal" :induct (dec-induct n) :in-theory (enable take intersectp-equal)))))
+   (("goal" :induct (dec-induct n) :in-theory
+     (e/d ()
+          (append-of-take-and-cons))
+     :expand
+     (:with take-as-append-and-nth
+            (take n
+                  (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                                         (+ -1 entry-count)))))))))
 
 (encapsulate
   ()
