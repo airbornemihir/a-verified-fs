@@ -1167,25 +1167,77 @@
                                   (append append-of-cons))))
   :rule-classes :type-prescription)
 
-(remove-hyps
- (defthm
-   hifat-tar-name-list-alist-correctness-lemma-17
-   (implies
-    (and
-     t
-     (member-equal path2
-                   (strip-cars
-                    (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-     (not (member-equal name name-list)))
-    (not
-     (prefixp
-      (append path1 (list name))
-      path2)))
-   :hints (("goal" :in-theory (e/d (hifat-tar-name-list-alist hifat-pread
-                                                              hifat-open hifat-lstat)
-                                   (append append-of-cons))))
-   :rule-classes :type-prescription)
- t)
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-17
+  (implies (and (consp path)
+                (not (zp (mv-nth 1 (hifat-find-file fs path)))))
+           (equal (hifat-tar-name-list-alist fs path name-list entry-count)
+                  nil))
+  :hints (("goal" :in-theory (enable hifat-tar-name-list-alist alist-shift
+                                     hifat-pread hifat-lstat hifat-open))))
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-18
+  (not
+   (consp
+    (assoc-equal nil
+                 (hifat-tar-name-list-alist fs path name-list entry-count))))
+  :hints (("goal" :in-theory (enable hifat-tar-name-list-alist alist-shift)))
+  :rule-classes :type-prescription)
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-19
+  (implies
+   (consp
+    (assoc-equal path2
+                 (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+   (natp
+    (cdr (assoc-equal
+          path2
+          (hifat-tar-name-list-alist fs path1 name-list entry-count)))))
+  :hints (("goal" :in-theory (enable hifat-tar-name-list-alist alist-shift)))
+  :rule-classes :type-prescription)
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-20
+  (implies (and (consp name-list)
+                (prefixp (append path1 (list name))
+                         path2)
+                (not (member-equal name name-list)))
+           (not
+            (prefixp (append path1 (list (car name-list)))
+                     path2)))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (disable append-when-prefixp
+                        (:rewrite equal-when-append-same))
+    :use ((:instance append-when-prefixp
+                     (x (append path1 (list (car name-list))))
+                     (y path2))
+          (:instance append-when-prefixp
+                     (x (append path1 (list name)))
+                     (y path2))
+          (:instance (:rewrite equal-when-append-same)
+                     (y2 (cons name (cdr (nthcdr (len path1) path2))))
+                     (y1 (cons (car name-list)
+                               (cdr (nthcdr (len path1) path2))))
+                     (x path1))))))
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-21
+  (implies
+   (and
+    (member-equal
+     path2
+     (strip-cars (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+    (not (member-equal name name-list)))
+   (not (prefixp (append path1 (list name))
+                 path2)))
+  :hints
+  (("goal" :in-theory
+    (e/d (hifat-tar-name-list-alist hifat-pread hifat-open hifat-lstat)
+         (append append-of-cons))))
+  :rule-classes :type-prescription)
 
 (encapsulate
   ()
