@@ -1236,8 +1236,20 @@
   :hints
   (("goal" :in-theory
     (e/d (hifat-tar-name-list-alist hifat-pread hifat-open hifat-lstat)
-         (append append-of-cons))))
-  :rule-classes :type-prescription)
+         (append append-of-cons)))))
+
+(defthm consp-of-assoc-of-nth-of-strip-cars
+  (implies (not (null (nth n (strip-cars alist))))
+           (consp (assoc-equal (nth n (strip-cars alist))
+                               alist)))
+  :hints (("goal" :in-theory (disable (:rewrite member-equal-nth)
+                                      (:rewrite member-of-strip-cars))
+           :use ((:instance (:rewrite member-equal-nth)
+                            (l (strip-cars alist))
+                            (n n))
+                 (:instance (:rewrite member-of-strip-cars)
+                            (alist alist)
+                            (x (nth n (strip-cars alist))))))))
 
 (encapsulate
   ()
@@ -1245,124 +1257,115 @@
   (local (include-book "std/basic/inductions" :dir :system))
   (local (include-book "std/lists/intersectp" :dir :system))
 
-  (thm
-   (implies
-    (and
-     (equal (mv-nth 1 (hifat-find-file fs path1))
-            0)
-     (consp name-list)
-     (not (zp entry-count))
-     (<= 0
-         (mv-nth 1
-                 (hifat-lstat fs
-                              (append path1 (list (car name-list))))))
-     (<= 0
-         (mv-nth 2
-                 (hifat-open (append path1 (list (car name-list)))
-                             nil nil)))
-     (<= (len (fat32-path-to-path (append path1 (list (car name-list)))))
-         100)
-     (<
-      0
-      (mv-nth
-       2
-       (hifat-pread
-        (mv-nth 2
-                (hifat-open (append path1 (list (car name-list)))
-                            nil nil))
-        (struct-stat->st_size
-         (mv-nth 0
-                 (hifat-lstat fs
-                              (append path1 (list (car name-list))))))
-        0 fs
-        (mv-nth 0
-                (hifat-open (append path1 (list (car name-list)))
-                            nil nil))
-        (mv-nth 1
-                (hifat-open (append path1 (list (car name-list)))
-                            nil nil)))))
-     (no-duplicatesp-equal
-      (strip-cars
-       (hifat-tar-name-list-alist fs (append path1 (list (car name-list)))
-                                  (cdr name-list)
-                                  (+ -1 entry-count))))
-     (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path1)))
-     (no-duplicatesp-equal
-      (strip-cars
-       (hifat-tar-name-list-alist
-        fs (append path1 (list (car name-list)))
-        (mv-nth
-         0
-         (get-names-from-dirp
-          0
-          (list
-           (cons
+  (defthm
+    hifat-tar-name-list-alist-correctness-lemma-22
+    (implies
+     (and
+      (not (zp n))
+      (not (member-equal (car name-list)
+                         (cdr name-list))))
+     (not
+      (prefixp
+       (append path1 (list (car name-list)))
+       (nth (+ -1 n)
+            (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                                   (+ -1 entry-count)))))))
+    :hints
+    (("goal"
+      :in-theory
+      (disable (:rewrite hifat-tar-name-list-alist-correctness-lemma-21))
+      :use
+      (:instance
+       (:rewrite hifat-tar-name-list-alist-correctness-lemma-21)
+       (path2
+        (nth (+ -1 n)
+             (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                                    (+ -1 entry-count)))))
+       (name (car name-list))
+       (path1 path1)
+       (name-list (cdr name-list))
+       (fs fs)
+       (entry-count (- entry-count 1))))))
+
+  (local
+   (defthmd
+     lemma
+     (implies
+      (not (member-equal (car name-list)
+                         (cdr name-list)))
+      (not
+       (intersectp-equal
+        (take n
+              (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                                     (+ -1 entry-count))))
+        (strip-cars
+         (hifat-tar-name-list-alist
+          fs (append path1 (list (car name-list)))
+          (mv-nth
+           0
+           (get-names-from-dirp
             0
-            (dir-stream
-             (<<-sort
-              (strip-cars
-               (m1-file->contents
-                (mv-nth
-                 0
-                 (hifat-find-file
-                  (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
-                  (list (car name-list))))))))))))
-        (+ -1 entry-count))))
-     (no-duplicatesp-equal
-      (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
-                                             (+ -1 entry-count))))
-     (fat32-filename-list-p name-list)
+            (list
+             (cons
+              0
+              (dir-stream
+               (<<-sort
+                (strip-cars
+                 (m1-file->contents
+                  (mv-nth
+                   0
+                   (hifat-find-file
+                    (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
+                    (list (car name-list))))))))))))
+          (+ -1 entry-count))))))
+     :hints
+     (("goal"
+       :induct (dec-induct n)
+       :in-theory (e/d nil (append-of-take-and-cons))
+       :expand
+       (:with
+        take-as-append-and-nth
+        (take n
+              (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                                     (+ -1 entry-count)))))))))
+
+  (defthm
+    hifat-tar-name-list-alist-correctness-lemma-23
+    lemma
+    (implies
      (not (member-equal (car name-list)
                         (cdr name-list)))
-     (no-duplicatesp-equal (cdr name-list))
-     (equal
-      (mv-nth 1
-              (hifat-find-file
-               (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
-               (list (car name-list))))
-      0)
-     (m1-directory-file-p
-      (mv-nth 0
-              (hifat-find-file
-               (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
-               (list (car name-list)))))
-     (<= (nfix n) (len
-                   (hifat-tar-name-list-alist fs path1 (cdr name-list)
-                                              (+ -1 entry-count)))))
-    (not
-     (intersectp-equal
-      (take n
-            (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
-                                                   (+ -1 entry-count))))
-      (strip-cars
-       (hifat-tar-name-list-alist
-        fs (append path1 (list (car name-list)))
-        (mv-nth
-         0
-         (get-names-from-dirp
+     (not
+      (intersectp-equal
+       (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                              (+ -1 entry-count)))
+       (strip-cars
+        (hifat-tar-name-list-alist
+         fs (append path1 (list (car name-list)))
+         (mv-nth
           0
-          (list
-           (cons
-            0
-            (dir-stream
-             (<<-sort
-              (strip-cars
-               (m1-file->contents
-                (mv-nth
-                 0
-                 (hifat-find-file
-                  (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
-                  (list (car name-list))))))))))))
-        (+ -1 entry-count))))))
-   :hints
-   (("goal" :induct (dec-induct n) :in-theory
-     (e/d ()
-          (append-of-take-and-cons))
-     :expand
-     (:with take-as-append-and-nth
-            (take n
-                  (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
-                                                         (+ -1 entry-count)))))))))
+          (get-names-from-dirp
+           0
+           (list
+            (cons
+             0
+             (dir-stream
+              (<<-sort
+               (strip-cars
+                (m1-file->contents
+                 (mv-nth
+                  0
+                  (hifat-find-file
+                   (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
+                   (list (car name-list))))))))))))
+         (+ -1 entry-count))))))
+    :hints
+    (("goal" :do-not-induct t
+      :use (:instance lemma
+                      (n
+                       (len
+                        (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                                               (+ -1 entry-count))))))))))
 
 (encapsulate
   ()
@@ -1458,55 +1461,55 @@
              :in-theory (enable hifat-open hifat-find-file)))
     :rule-classes :type-prescription)
 
-  ;; (thm
-  ;;  (implies
-  ;;   (and
-  ;;    (fat32-filename-list-p name-list)
-  ;;    (no-duplicatesp-equal name-list))
-  ;;   (no-duplicatesp-equal
-  ;;    (strip-cars
-  ;;     (hifat-tar-name-list-alist
-  ;;      fs path1 name-list entry-count))))
-  ;;  :hints (("goal" :in-theory (e/d (hifat-opendir)
-  ;;                                  (take-when-prefixp prefixp-of-cons-right
-  ;;                                                     take-of-cons
-  ;;                                                     fat32-name-to-name)))))
+  (thm
+   (implies
+    (and
+     (fat32-filename-list-p name-list)
+     (no-duplicatesp-equal name-list))
+    (no-duplicatesp-equal
+     (strip-cars
+      (hifat-tar-name-list-alist
+       fs path1 name-list entry-count))))
+   :hints (("goal" :in-theory (e/d (hifat-opendir)
+                                   (take-when-prefixp prefixp-of-cons-right
+                                                      take-of-cons
+                                                      fat32-name-to-name)))))
 
-  ;; (thm
-  ;;  (b*
-  ;;      ((alist
-  ;;        (hifat-tar-name-list-alist
-  ;;         fs path1 name-list entry-count))
-  ;;       (alist-elem (assoc-equal path2 alist)))
-  ;;    (implies
-  ;;     (and (consp alist-elem)
-  ;;          (dir-stream-table-p dir-stream-table)
-  ;;          (fd-table-p fd-table)
-  ;;          (file-table-p file-table)
-  ;;          (fat32-filename-list-p name-list))
-  ;;     (equal
-  ;;      (subseq
-  ;;       (mv-nth 0
-  ;;               (hifat-tar-name-list-string
-  ;;                fs path1 name-list fd-table file-table dir-stream-table entry-count))
-  ;;       (cdr alist-elem)
-  ;;       (+
-  ;;        (cdr alist-elem)
-  ;;        (length (hifat-tar-reg-file-string
-  ;;                    fs
-  ;;                    (implode (fat32-path-to-path path2))))))
-  ;;      (hifat-tar-reg-file-string
-  ;;       fs
-  ;;       (implode (fat32-path-to-path path2))))))
-  ;;  :hints (("goal"
-  ;;           :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
-  ;;                           (take-when-prefixp prefixp-of-cons-right
-  ;;                                              take-of-cons
-  ;;                                              fat32-name-to-name))
-  ;;           :induct
-  ;;           (hifat-tar-name-list-string
-  ;;            fs path1 name-list fd-table file-table dir-stream-table
-  ;;            entry-count)
-  ;;           :expand
-  ;;           (hifat-tar-name-list-alist fs path1 name-list entry-count))))
+  (thm
+   (b*
+       ((alist
+         (hifat-tar-name-list-alist
+          fs path1 name-list entry-count))
+        (alist-elem (assoc-equal path2 alist)))
+     (implies
+      (and (consp alist-elem)
+           (dir-stream-table-p dir-stream-table)
+           (fd-table-p fd-table)
+           (file-table-p file-table)
+           (fat32-filename-list-p name-list))
+      (equal
+       (subseq
+        (mv-nth 0
+                (hifat-tar-name-list-string
+                 fs path1 name-list fd-table file-table dir-stream-table entry-count))
+        (cdr alist-elem)
+        (+
+         (cdr alist-elem)
+         (length (hifat-tar-reg-file-string
+                     fs
+                     (implode (fat32-path-to-path path2))))))
+       (hifat-tar-reg-file-string
+        fs
+        (implode (fat32-path-to-path path2))))))
+   :hints (("goal"
+            :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
+                            (take-when-prefixp prefixp-of-cons-right
+                                               take-of-cons
+                                               fat32-name-to-name))
+            :induct
+            (hifat-tar-name-list-string
+             fs path1 name-list fd-table file-table dir-stream-table
+             entry-count)
+            :expand
+            (hifat-tar-name-list-alist fs path1 name-list entry-count))))
   )
