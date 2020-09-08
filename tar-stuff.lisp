@@ -1060,8 +1060,9 @@
 
 (defthm hifat-tar-name-list-alist-correctness-lemma-7
   (equal (subseq "" start end)
-         (implode (repeat (+ end (- start)) nil)))
-  :hints (("goal" :in-theory (enable subseq subseq-list repeat))))
+         (implode (take (+ end (- start)) nil)))
+  :hints (("goal" :in-theory (e/d (subseq subseq-list repeat)
+                                  (take-of-too-many take-when-atom)))))
 
 (defthm
   stringp-of-hifat-tar-name-list-string-reduction
@@ -1551,6 +1552,203 @@
 (encapsulate
   ()
 
+  (local
+   (defthmd lemma-1 (iff (equal (len (explode str1)) 0)
+                         (equal (explode str1) nil))
+     :hints
+     (("goal" :expand (len (explode str1))))))
+
+  (local
+   (defthmd lemma-2
+     (implies (and (<= 0 (- start)) (<= 0 start))
+              (integerp (- start)))))
+
+  (defthm
+    subseq-of-string-append
+    (equal
+     (subseq (string-append str1 str2)
+             start end)
+     (cond ((and (not (stringp str2))
+                 (not (stringp str1)))
+            (subseq "" 0 (- end start)))
+           ((not (stringp str1))
+            (subseq str2 start end))
+           ((not (stringp str2))
+            (subseq str1 start end))
+           ((not (integerp (- end start))) "")
+           ((and (< end (+ start (len (explode str1))))
+                 (not (null end))
+                 (natp (- end start))
+                 (not (integerp start)))
+            (subseq str1 0 (- end start)))
+           ((and (>= end (+ start (len (explode str1))))
+                 (not (null end))
+                 (integerp (- end start))
+                 (not (integerp start)))
+            (string-append str1
+                           (subseq str2 0
+                                   (- end (+ start (len (explode str1)))))))
+           ((and (< start 0)
+                 (not (null end))
+                 (natp (- end start))
+                 (>= end (+ start (len (explode str1)))))
+            (string-append str1
+                           (subseq str2 0
+                                   (- end (+ start (len (explode str1)))))))
+           ((and (< start 0)
+                 (not (null end))
+                 (< end (+ start (len (explode str1))))
+                 (> end start))
+            (subseq str1 0 (- end start)))
+           ((not (integerp (- start))) "")
+           ((and (not (null end))
+                 (not (acl2-numberp end))
+                 (not (integerp start)))
+            "")
+           ((and (acl2-numberp end)
+                 (not (integerp end)))
+            "")
+           ((and (integerp start)
+                 (<= start (len (explode str1)))
+                 (<= 0 start)
+                 (null end))
+            (string-append (subseq str1 start nil)
+                           str2))
+           ((and (< (len (explode str1)) start)
+                 (null end)
+                 (natp (- (+ (len (explode str1))
+                             (len (explode str2)))
+                          start)))
+            (subseq str2 (- start (len (explode str1)))
+                    nil))
+           ((and (<= (+ start (len (explode str1))) end)
+                 (not (integerp start))
+                 (< (- start) (len (explode str1))))
+            (string-append str1
+                           (subseq str2 0
+                                   (+ (- end (+ start (len (explode str1))))))))
+           ((and (<= (+ start (len (explode str1))) end)
+                 (not (integerp start))
+                 (< (len (explode str1)) start)
+                 (<= start
+                     (+ (len (explode str1))
+                        (len (explode str2)))))
+            (string-append str1
+                           (subseq str2 0
+                                   (+ (- end (+ start (len (explode str1))))))))
+           ((and (<= (+ start (len (explode str1))) end)
+                 (< start 0)
+                 (not (null end)))
+            (string-append str1
+                           (subseq str2 0
+                                   (+ (- end (+ start (len (explode str1))))))))
+           ((and (not (integerp start))
+                 (< end (+ start (len (explode str1))))
+                 (< start end))
+            (subseq str1 0 (- end start)))
+           ((and (not (natp (- (+ (len (explode str1))
+                                  (len (explode str2)))
+                               start)))
+                 (null end))
+            "")
+           ((and (<= start 0)
+                 (equal (len (explode str1)) 0)
+                 (not (null end))
+                 (not (acl2-numberp end)))
+            (string-append str1 (subseq str2 0 (- start))))
+           ((and (not (integerp start))
+                 (equal (len (explode str1)) 0)
+                 (not (null end))
+                 (not (acl2-numberp end)))
+            str1)
+           ((and (< 0 start)
+                 (not (null end))
+                 (not (acl2-numberp end)))
+            "")
+           ((and (< (- start) (len (explode str1)))
+                 (not (null end))
+                 (not (acl2-numberp end)))
+            (subseq str1 0 (- start)))
+           ((and (< start 0)
+                 (not (null end))
+                 (<= (len (explode str1)) (- start))
+                 (not (acl2-numberp end)))
+            (string-append str1
+                           (subseq str2
+                                   0 (- (+ start (len (explode str1)))))))
+           ((and (< start 0)
+                 (<= (len (explode str1)) (- end start))
+                 (integerp end))
+            (string-append str1
+                           (subseq str2 0
+                                   (- end (+ start (len (explode str1)))))))
+           ((and (< (len (explode str1)) start)
+                 (<= start
+                     (+ (len (explode str1))
+                        (len (explode str2))))
+                 (null end))
+            (subseq str2 (- start (len (explode str1)))
+                    nil))
+           ((and (< (len (explode str1)) start)
+                 (<= start
+                     (+ (len (explode str1))
+                        (len (explode str2))))
+                 (integerp end))
+            (subseq str2 (- start (len (explode str1)))
+                    (- end (len (explode str1)))))
+           ((and (integerp start)
+                 (<= start (len (explode str1)))
+                 (<= 0 start)
+                 (< (len (explode str1)) end)
+                 (integerp end))
+            (string-append (subseq str1 start nil)
+                           (subseq str2 0 (- end (len (explode str1))))))
+           ((and (<= 0 start)
+                 (<= start end)
+                 (<= end (len (explode str1)))
+                 (integerp end))
+            (subseq str1 start end))
+           ((and (integerp start)
+                 (< start 0)
+                 (null end))
+            (string-append str1
+                           (subseq str2 0 (- (len (explode str2)) start))))
+           ((and (< start 0)
+                 (not (null end))
+                 (<= start end)
+                 (< end (+ start (len (explode str1)))))
+            (subseq str1 0 (- end start)))
+           ((and (< start 0)
+                 (not (null end))
+                 (<= start end)
+                 (< end (+ start (len (explode str1)))))
+            (subseq str1 start end))
+           ((and (integerp start)
+                 (< (+ (len (explode str1))
+                       (len (explode str2)))
+                    start))
+            (subseq "" start end))
+           ((and (acl2-numberp end)
+                 (not (integerp end)))
+            "")
+           ((and (not (null end)) (< end start))
+            "")
+           (t (implode (append (explode str1)
+                               (explode str2))))))
+    :hints (("goal" :in-theory (e/d (subseq subseq-list) ((:e force)))
+             :do-not-induct t
+             :use ((:theorem (equal (+ start (- start)
+                                       (- (len (explode str1))))
+                                    (- (len (explode str1)))))
+                   (:theorem (iff (integerp (+ (- start)
+                                               (len (explode str1))
+                                               (len (explode str2))))
+                                  (integerp (- start))))
+                   lemma-1 lemma-2)))))
+
+(encapsulate
+  ()
+
   (local (in-theory
           (e/d (hifat-tar-name-list-string
                 hifat-tar-name-list-alist)
@@ -1654,41 +1852,43 @@
                       (take-when-prefixp prefixp-of-cons-right
                                          take-of-cons fat32-name-to-name)))))
 
-  ;; (thm
-  ;;  (b*
-  ;;      ((alist
-  ;;        (hifat-tar-name-list-alist
-  ;;         fs path1 name-list entry-count))
-  ;;       (alist-elem (assoc-equal path2 alist)))
-  ;;    (implies
-  ;;     (and (consp alist-elem)
-  ;;          (dir-stream-table-p dir-stream-table)
-  ;;          (fd-table-p fd-table)
-  ;;          (file-table-p file-table)
-  ;;          (fat32-filename-list-p name-list)
-  ;;          (no-duplicatesp-equal name-list))
-  ;;     (equal
-  ;;      (subseq
-  ;;       (mv-nth 0
-  ;;               (hifat-tar-name-list-string
-  ;;                fs path1 name-list fd-table file-table dir-stream-table entry-count))
-  ;;       (cdr alist-elem)
-  ;;       (+
-  ;;        (cdr alist-elem)
-  ;;        (length (hifat-tar-reg-file-string
-  ;;                    fs
-  ;;                    (implode (fat32-path-to-path path2))))))
-  ;;      (hifat-tar-reg-file-string
-  ;;       fs
-  ;;       (implode (fat32-path-to-path path2))))))
-  ;;  :hints (("goal"
-  ;;           :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
-  ;;                           (take-when-prefixp prefixp-of-cons-right
-  ;;                                              take-of-cons))
-  ;;           :induct
-  ;;           (hifat-tar-name-list-string
-  ;;            fs path1 name-list fd-table file-table dir-stream-table
-  ;;            entry-count)
-  ;;           :expand
-  ;;           (hifat-tar-name-list-alist fs path1 name-list entry-count))))
+  (thm
+   (b*
+       ((alist
+         (hifat-tar-name-list-alist
+          fs path1 name-list entry-count))
+        (alist-elem (assoc-equal path2 alist)))
+     (implies
+      (and (consp alist-elem)
+           (dir-stream-table-p dir-stream-table)
+           (fd-table-p fd-table)
+           (file-table-p file-table)
+           (fat32-filename-list-p name-list)
+           (no-duplicatesp-equal name-list))
+      (equal
+       (subseq
+        (mv-nth 0
+                (hifat-tar-name-list-string
+                 fs path1 name-list fd-table file-table dir-stream-table entry-count))
+        (cdr alist-elem)
+        (+
+         (cdr alist-elem)
+         (length (hifat-tar-reg-file-string
+                     fs
+                     (implode (fat32-path-to-path path2))))))
+       (hifat-tar-reg-file-string
+        fs
+        (implode (fat32-path-to-path path2))))))
+   :hints (("goal"
+            :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
+                            (take-when-prefixp prefixp-of-cons-right
+                                               take-of-cons string-append))
+            :induct
+            (hifat-tar-name-list-string
+             fs path1 name-list fd-table file-table dir-stream-table
+             entry-count)
+            :expand
+            ((hifat-tar-name-list-alist fs path1 name-list entry-count)
+             (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                         dir-stream-table entry-count)))))
   )
