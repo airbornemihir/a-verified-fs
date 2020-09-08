@@ -1238,19 +1238,6 @@
     (e/d (hifat-tar-name-list-alist hifat-pread hifat-open hifat-lstat)
          (append append-of-cons)))))
 
-(defthm consp-of-assoc-of-nth-of-strip-cars
-  (implies (not (null (nth n (strip-cars alist))))
-           (consp (assoc-equal (nth n (strip-cars alist))
-                               alist)))
-  :hints (("goal" :in-theory (disable (:rewrite member-equal-nth)
-                                      (:rewrite member-of-strip-cars))
-           :use ((:instance (:rewrite member-equal-nth)
-                            (l (strip-cars alist))
-                            (n n))
-                 (:instance (:rewrite member-of-strip-cars)
-                            (alist alist)
-                            (x (nth n (strip-cars alist))))))))
-
 (encapsulate
   ()
 
@@ -1697,8 +1684,7 @@
   ;;  :hints (("goal"
   ;;           :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
   ;;                           (take-when-prefixp prefixp-of-cons-right
-  ;;                                              take-of-cons
-  ;;                                              fat32-name-to-name))
+  ;;                                              take-of-cons))
   ;;           :induct
   ;;           (hifat-tar-name-list-string
   ;;            fs path1 name-list fd-table file-table dir-stream-table
