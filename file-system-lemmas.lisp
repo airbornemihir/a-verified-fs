@@ -1723,6 +1723,7 @@
          (and (alistp (true-list-fix x))
               (alistp y))))
 
+;; Contributed to books/std/lists/take.lisp
 (defthmd take-as-append-and-nth
   (equal (take n l)
          (if (zp n)
@@ -1745,3 +1746,7 @@
                  (:instance (:rewrite member-of-strip-cars)
                             (alist alist)
                             (x (nth n (strip-cars alist))))))))
+
+(defthmd painful-debugging-lemma-21
+  (equal (+ x (- x) y) (fix y))
+  :hints (("goal" :in-theory (disable (:e force)))))

@@ -1737,9 +1737,9 @@
                                (explode str2))))))
     :hints (("goal" :in-theory (e/d (subseq subseq-list) ((:e force)))
              :do-not-induct t
-             :use ((:theorem (equal (+ start (- start)
-                                       (- (len (explode str1))))
-                                    (- (len (explode str1)))))
+             :use ((:instance painful-debugging-lemma-21
+                              (x start)
+                              (y (- (len (explode str1)))))
                    (:theorem (iff (integerp (+ (- start)
                                                (len (explode str1))
                                                (len (explode str2))))
@@ -1752,13 +1752,62 @@
      (equal (subseq seq 0 (len (explode seq))) seq))
     :hints (("Goal" :in-theory (enable subseq subseq-list lemma-1)))))
 
+;; Move later.
+(encapsulate () (local (in-theory (disable fix)))
+  (defthm fix-when-acl2-numberp
+    (implies (acl2-numberp x)
+             (equal (fix x) x))
+    :hints (("goal" :in-theory (enable fix)))))
+(encapsulate () (local (in-theory (disable length string-append)))
+  (defthm length-of-string-append
+    (equal (length (string-append str1 str2))
+           (+ (len (coerce str1 'list))
+              (len (coerce str2 'list))))
+    :hints (("goal" :in-theory (enable length string-append)))))
+(encapsulate () (local (in-theory (disable nfix)))
+  (defthm
+    hifat-tar-name-list-alist-correctness-lemma-29
+    (implies (<= 0 acc)
+             (<= (nfix (position-equal-ac item lst acc))
+                 (+ acc (len lst))))
+    :rule-classes :linear :hints (("Goal" :in-theory (enable nfix)))))
+(encapsulate () (local (in-theory (disable length)))
+  (defthm
+    length-when-stringp
+    (implies (stringp x)
+    (equal
+     (length x)
+     (len (coerce x 'list))))
+    :hints (("goal" :in-theory (enable length)))))
+
+(defthm subseq-of-length-1
+  (implies (and (stringp seq)
+                (equal start (length seq)))
+           (equal (subseq seq start end)
+                  (implode (take (+ end (- (len (explode seq))))
+                                 nil))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (e/d (subseq subseq-list)
+                           (take-of-too-many take-when-atom)))))
+
 (encapsulate
   ()
 
   (local (in-theory
           (e/d (hifat-tar-name-list-string
                 hifat-tar-name-list-alist)
-               (append-of-cons binary-append))))
+               (append-of-cons
+                binary-append
+                (:rewrite nthcdr-when->=-n-len-l)
+                (:rewrite take-of-len-free)
+                (:linear position-equal-ac-when-member)
+                (:definition position-equal-ac)
+                (:rewrite consp-of-nthcdr)
+                (:rewrite
+                 dir-stream-table-p-when-subsetp-equal)
+                (:rewrite hifat-to-lofat-inversion-lemma-2)
+                (:rewrite car-of-take)
+                (:rewrite <<-sort-consp)))))
 
   (defthm
     not-consp-assoc-nil-hifat-tar-name-list-alist
@@ -1856,96 +1905,10 @@
     (("goal"
       :in-theory (e/d (hifat-opendir)
                       (take-when-prefixp prefixp-of-cons-right
-                                         take-of-cons fat32-name-to-name)))))
+                                         take-of-cons)))))
 
-  ;; There is buggy behaviour on the part of hifat-tar-name-list-string. This
-  ;; theorem shows that we try to treat directories as regular files sometimes...
-  (thm
-   (implies
-    (and
-     (consp name-list)
-     (not (zp entry-count))
-     (not (consp path1))
-     (equal (mv-nth 1
-                    (hifat-find-file fs (list (car name-list))))
-            0)
-     (<= (len (fat32-name-to-name (explode (car name-list))))
-         100)
-     (not
-      (m1-regular-file-p (mv-nth 0
-                                 (hifat-find-file fs (list (car name-list))))))
-     (dir-stream-table-p dir-stream-table)
-     (fd-table-p fd-table)
-     (file-table-p file-table))
-    (equal
-     (length
-      (mv-nth
-       0
-       (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                   dir-stream-table entry-count)))
-     (+
-      (len
-       (explode
-        (hifat-tar-reg-file-string
-         fs
-         (implode (fat32-name-to-name (explode (car name-list)))))))
-      (len
-       (explode
-        (mv-nth
-         0
-         (hifat-tar-name-list-string fs path1 (cdr name-list)
-                                     fd-table file-table dir-stream-table
-                                     (+ -1 entry-count))))))))
-   :hints
-   (("goal" :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
-                            (take-when-prefixp prefixp-of-cons-right
-                                               take-of-cons string-append))
-     :expand
-     ((hifat-tar-name-list-alist fs path1 name-list entry-count)
-      (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                  dir-stream-table entry-count)))))
-
-  ;; This theorem, formulated with some help from the proof-builder, offers
-  ;; some more clues - basically hifat-pread will give you a zero return value
-  ;; every time.
-  (thm
-   (implies
-    (equal (mv-nth 1
-                   (hifat-find-file fs (list (car name-list))))
-           0)
-    (cond
-     ((< (mv-nth 1
-                 (hifat-lstat fs (list (car name-list))))
-         0)
-      nil)
-     ((<
-       0
-       (mv-nth
-        2
-        (hifat-pread (mv-nth 2
-                             (hifat-open (list (car name-list))
-                                         fd-table file-table))
-                     (struct-stat->st_size
-                      (mv-nth 0
-                              (hifat-lstat fs (list (car name-list)))))
-                     0 fs
-                     (mv-nth 0
-                             (hifat-open (list (car name-list))
-                                         fd-table file-table))
-                     (mv-nth 1
-                             (hifat-open (list (car name-list))
-                                         fd-table file-table)))))
-      nil)
-     (t t)))
-   :hints
-   (("goal" :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
-                            (take-when-prefixp prefixp-of-cons-right
-                                               take-of-cons string-append))
-     :expand
-     ((hifat-tar-name-list-alist fs path1 name-list entry-count)
-      (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                  dir-stream-table entry-count)))))
-
+  ;; This lemma is gathering too many case-splits. We'll have to disable some
+  ;; of the splitter lemmas.
   (thm
    (b*
        ((alist
@@ -1961,7 +1924,11 @@
            (no-duplicatesp-equal name-list))
       (and
        (<=
-        (cdr alist-elem)
+        (+
+         (cdr alist-elem)
+         (length (hifat-tar-reg-file-string
+                  fs
+                  (implode (fat32-path-to-path path2)))))
         (length
          (mv-nth 0
                  (hifat-tar-name-list-string
@@ -1981,9 +1948,17 @@
          fs
          (implode (fat32-path-to-path path2)))))))
    :hints (("goal"
-            :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
+            :in-theory (e/d (hifat-lstat hifat-open hifat-opendir
+                                         get-names-from-dirp-alt painful-debugging-lemma-21)
                             (take-when-prefixp prefixp-of-cons-right
-                                               take-of-cons string-append))
+                                               take-of-cons string-append
+                                               (:DEFINITION FIX)
+                                               (:DEFINITION HIFAT-TAR-NAME-LIST-ALIST)
+                                               (:DEFINITION LENGTH)
+                                               (:DEFINITION MIN)
+                                               (:DEFINITION NFIX)
+                                               (:DEFINITION NATP)
+                                               (:DEFINITION FAT32-PATH-TO-PATH)))
             :induct
             (hifat-tar-name-list-string
              fs path1 name-list fd-table file-table dir-stream-table
