@@ -1677,7 +1677,7 @@
                            (subseq str2
                                    0 (- (+ start (len (explode str1)))))))
            ((and (< start 0)
-                 (<= (len (explode str1)) (- end start))
+                 (<= (+ (len (explode str1)) start) end)
                  (integerp end))
             (string-append str1
                            (subseq str2 0
@@ -1744,7 +1744,13 @@
                                                (len (explode str1))
                                                (len (explode str2))))
                                   (integerp (- start))))
-                   lemma-1 lemma-2)))))
+                   lemma-1 lemma-2))))
+
+  (defthm hifat-tar-name-list-alist-correctness-lemma-28
+    (implies
+     (stringp seq)
+     (equal (subseq seq 0 (len (explode seq))) seq))
+    :hints (("Goal" :in-theory (enable subseq subseq-list lemma-1)))))
 
 (encapsulate
   ()
@@ -1852,6 +1858,94 @@
                       (take-when-prefixp prefixp-of-cons-right
                                          take-of-cons fat32-name-to-name)))))
 
+  ;; There is buggy behaviour on the part of hifat-tar-name-list-string. This
+  ;; theorem shows that we try to treat directories as regular files sometimes...
+  (thm
+   (implies
+    (and
+     (consp name-list)
+     (not (zp entry-count))
+     (not (consp path1))
+     (equal (mv-nth 1
+                    (hifat-find-file fs (list (car name-list))))
+            0)
+     (<= (len (fat32-name-to-name (explode (car name-list))))
+         100)
+     (not
+      (m1-regular-file-p (mv-nth 0
+                                 (hifat-find-file fs (list (car name-list))))))
+     (dir-stream-table-p dir-stream-table)
+     (fd-table-p fd-table)
+     (file-table-p file-table))
+    (equal
+     (length
+      (mv-nth
+       0
+       (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                   dir-stream-table entry-count)))
+     (+
+      (len
+       (explode
+        (hifat-tar-reg-file-string
+         fs
+         (implode (fat32-name-to-name (explode (car name-list)))))))
+      (len
+       (explode
+        (mv-nth
+         0
+         (hifat-tar-name-list-string fs path1 (cdr name-list)
+                                     fd-table file-table dir-stream-table
+                                     (+ -1 entry-count))))))))
+   :hints
+   (("goal" :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
+                            (take-when-prefixp prefixp-of-cons-right
+                                               take-of-cons string-append))
+     :expand
+     ((hifat-tar-name-list-alist fs path1 name-list entry-count)
+      (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                  dir-stream-table entry-count)))))
+
+  ;; This theorem, formulated with some help from the proof-builder, offers
+  ;; some more clues - basically hifat-pread will give you a zero return value
+  ;; every time.
+  (thm
+   (implies
+    (equal (mv-nth 1
+                   (hifat-find-file fs (list (car name-list))))
+           0)
+    (cond
+     ((< (mv-nth 1
+                 (hifat-lstat fs (list (car name-list))))
+         0)
+      nil)
+     ((<
+       0
+       (mv-nth
+        2
+        (hifat-pread (mv-nth 2
+                             (hifat-open (list (car name-list))
+                                         fd-table file-table))
+                     (struct-stat->st_size
+                      (mv-nth 0
+                              (hifat-lstat fs (list (car name-list)))))
+                     0 fs
+                     (mv-nth 0
+                             (hifat-open (list (car name-list))
+                                         fd-table file-table))
+                     (mv-nth 1
+                             (hifat-open (list (car name-list))
+                                         fd-table file-table)))))
+      nil)
+     (t t)))
+   :hints
+   (("goal" :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
+                            (take-when-prefixp prefixp-of-cons-right
+                                               take-of-cons string-append))
+     :expand
+     ((hifat-tar-name-list-alist fs path1 name-list entry-count)
+      (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                  dir-stream-table entry-count)))))
+
   (thm
    (b*
        ((alist
@@ -1865,20 +1959,27 @@
            (file-table-p file-table)
            (fat32-filename-list-p name-list)
            (no-duplicatesp-equal name-list))
-      (equal
-       (subseq
-        (mv-nth 0
-                (hifat-tar-name-list-string
-                 fs path1 name-list fd-table file-table dir-stream-table entry-count))
+      (and
+       (<=
         (cdr alist-elem)
-        (+
+        (length
+         (mv-nth 0
+                 (hifat-tar-name-list-string
+                  fs path1 name-list fd-table file-table dir-stream-table entry-count))))
+       (equal
+        (subseq
+         (mv-nth 0
+                 (hifat-tar-name-list-string
+                  fs path1 name-list fd-table file-table dir-stream-table entry-count))
          (cdr alist-elem)
-         (length (hifat-tar-reg-file-string
-                     fs
-                     (implode (fat32-path-to-path path2))))))
-       (hifat-tar-reg-file-string
-        fs
-        (implode (fat32-path-to-path path2))))))
+         (+
+          (cdr alist-elem)
+          (length (hifat-tar-reg-file-string
+                   fs
+                   (implode (fat32-path-to-path path2))))))
+        (hifat-tar-reg-file-string
+         fs
+         (implode (fat32-path-to-path path2)))))))
    :hints (("goal"
             :in-theory (e/d (hifat-pread hifat-lstat hifat-open)
                             (take-when-prefixp prefixp-of-cons-right
@@ -1890,5 +1991,4 @@
             :expand
             ((hifat-tar-name-list-alist fs path1 name-list entry-count)
              (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                         dir-stream-table entry-count)))))
-  )
+                                         dir-stream-table entry-count))))))
