@@ -1644,53 +1644,6 @@
     :hints (("Goal" :in-theory (enable subseq subseq-list)))))
 
 ;; Move later.
-(encapsulate () (local (in-theory (disable fix)))
-  (defthm fix-when-acl2-numberp
-    (implies (acl2-numberp x)
-             (equal (fix x) x))
-    :hints (("goal" :in-theory (enable fix)))))
-(encapsulate () (local (in-theory (disable length string-append)))
-  (defthm length-of-string-append
-    (equal (length (string-append str1 str2))
-           (+ (len (coerce str1 'list))
-              (len (coerce str2 'list))))
-    :hints (("goal" :in-theory (enable length string-append)))))
-(encapsulate () (local (in-theory (disable nfix)))
-  (defthm
-    hifat-tar-name-list-alist-correctness-lemma-29
-    (implies (<= 0 acc)
-             (<= (nfix (position-equal-ac item lst acc))
-                 (+ acc (len lst))))
-    :rule-classes :linear :hints (("Goal" :in-theory (enable nfix)))))
-(encapsulate () (local (in-theory (disable length)))
-  (defthm
-    length-when-stringp
-    (implies (stringp x)
-    (equal
-     (length x)
-     (len (coerce x 'list))))
-    :hints (("goal" :in-theory (enable length)))))
-
-(defthm subseq-of-length-1
-  (implies (and (stringp seq)
-                (equal start (length seq)))
-           (equal (subseq seq start end)
-                  (subseq "" 0 (- end (len (explode seq))))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (e/d (subseq subseq-list)
-                           (take-of-too-many take-when-atom)))))
-
-(encapsulate () (local (in-theory (disable string-append)))
-  (defthm string-append-of-empty-string-1
-    (equal (string-append "" str2)
-           (str-fix str2))
-    :hints (("goal" :in-theory (enable string-append)))))
-
-(encapsulate () (local (in-theory (disable nfix natp)))
-  (defthm nfix-when-natp
-    (implies (natp x) (equal (nfix x) x))
-    :hints (("goal" :do-not-induct t
-             :in-theory (enable nfix natp)))))
 
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-31
@@ -1826,7 +1779,6 @@
                 (:rewrite m1-regular-file-p-correctness-1)
                 (:definition nthcdr)
                 (:definition atom)
-                (:definition length)
                 (:definition min)
                 (:definition nfix)
                 (:definition natp)
