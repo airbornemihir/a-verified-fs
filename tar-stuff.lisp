@@ -1151,10 +1151,15 @@
   (implies
    (case-split (or (not (prefixp path1 path2))
                    (equal path1 path2)))
-   (not
-    (consp (assoc-equal path2
-                        (hifat-tar-name-list-alist
-                         fs path1 name-list entry-count)))))
+   (and
+    (not
+     (consp (assoc-equal path2
+                         (hifat-tar-name-list-alist
+                          fs path1 name-list entry-count))))
+    (atom
+     (assoc-equal path2
+                  (hifat-tar-name-list-alist
+                   fs path1 name-list entry-count)))))
   :hints
   (("goal" :in-theory (enable hifat-tar-name-list-alist))))
 
@@ -1224,20 +1229,49 @@
                                (cdr (nthcdr (len path1) path2))))
                      (x path1))))))
 
-(defthm
-  hifat-tar-name-list-alist-correctness-lemma-21
-  (implies
-   (and
-    (member-equal
-     path2
-     (strip-cars (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-    (not (member-equal name name-list)))
-   (not (prefixp (append path1 (list name))
-                 path2)))
-  :hints
-  (("goal" :in-theory
-    (e/d (hifat-tar-name-list-alist hifat-pread hifat-open hifat-lstat)
-         (append append-of-cons)))))
+(encapsulate
+  () (local (in-theory (disable atom)))
+
+  (defthm
+    hifat-tar-name-list-alist-correctness-lemma-21
+    (implies
+     (and (member-equal
+           path2
+           (strip-cars (hifat-tar-name-list-alist
+                        fs path1 name-list entry-count)))
+          (not (member-equal name name-list)))
+     (not (prefixp (append path1 (list name))
+                   path2)))
+    :hints
+    (("goal"
+      :in-theory (e/d (hifat-tar-name-list-alist
+                       hifat-pread hifat-open hifat-lstat)
+                      (append append-of-cons))))
+    :rule-classes
+    (:rewrite
+     (:rewrite
+      :corollary
+      (implies
+       (and (not (null path2))
+            (prefixp (append path1 (list name))
+                     path2)
+            (not (member-equal name name-list)))
+       (not
+        (consp
+         (assoc-equal path2
+                      (hifat-tar-name-list-alist
+                       fs path1 name-list entry-count))))))
+     (:rewrite
+      :corollary
+      (implies
+       (and (not (null path2))
+            (prefixp (append path1 (list name))
+                     path2)
+            (not (member-equal name name-list)))
+       (atom (assoc-equal path2
+                          (hifat-tar-name-list-alist
+                           fs path1 name-list entry-count))))
+      :hints (("goal" :in-theory (enable atom)))))))
 
 (encapsulate
   ()
@@ -1261,10 +1295,10 @@
     :hints
     (("goal"
       :in-theory
-      (disable (:rewrite hifat-tar-name-list-alist-correctness-lemma-21))
+      (disable hifat-tar-name-list-alist-correctness-lemma-21)
       :use
       (:instance
-       (:rewrite hifat-tar-name-list-alist-correctness-lemma-21)
+       hifat-tar-name-list-alist-correctness-lemma-21
        (path2
         (nth (+ -1 n)
              (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
@@ -1796,6 +1830,12 @@
            (str-fix str2))
     :hints (("goal" :in-theory (enable string-append)))))
 
+(encapsulate () (local (in-theory (disable nfix natp)))
+  (defthm nfix-when-natp
+    (implies (natp x) (equal (nfix x) x))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable nfix natp)))))
+
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-31
   (equal (mv-nth '0
@@ -1856,31 +1896,52 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable hifat-pread))))
 
-(defthm
-  hifat-tar-name-list-alist-correctness-lemma-34
-  (implies
-   (and
-    path2
-    (prefixp (append path1 (list (car name-list)))
-             path2)
-    (not (member-equal (car name-list)
-                       (cdr name-list))))
-   (not
-    (consp (assoc-equal path2
-                        (hifat-tar-name-list-alist fs path1 (cdr name-list)
-                                                   (+ -1 entry-count))))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (disable (:rewrite hifat-tar-name-list-alist-correctness-lemma-21))
-    :use (:instance (:rewrite hifat-tar-name-list-alist-correctness-lemma-21)
-                    (path2 path2)
-                    (name (car name-list))
-                    (path1 path1)
-                    (entry-count (+ -1 entry-count))
-                    (name-list (cdr name-list))
-                    (fs fs)))))
+(encapsulate
+  () (local (in-theory (disable atom)))
+
+  (defthm
+    hifat-tar-name-list-alist-correctness-lemma-34
+    (implies
+     (and path2
+          (prefixp (append path1 (list (car name-list)))
+                   path2)
+          (not (member-equal (car name-list)
+                             (cdr name-list))))
+     (not
+      (consp
+       (assoc-equal
+        path2
+        (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                   (+ -1 entry-count))))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (disable hifat-tar-name-list-alist-correctness-lemma-21)
+      :use
+      (:instance hifat-tar-name-list-alist-correctness-lemma-21
+                 (path2 path2)
+                 (name (car name-list))
+                 (path1 path1)
+                 (entry-count (+ -1 entry-count))
+                 (name-list (cdr name-list))
+                 (fs fs))))
+    :rule-classes
+    (:rewrite
+     (:rewrite
+      :corollary
+      (implies
+       (and path2
+            (prefixp (append path1 (list (car name-list)))
+                     path2)
+            (not (member-equal (car name-list)
+                               (cdr name-list))))
+       (atom
+        (assoc-equal
+         path2
+         (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                    (+ -1 entry-count)))))
+      :hints (("goal" :in-theory (disable atom)))))))
 
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-35
@@ -1987,12 +2048,22 @@
   ()
 
   (local (in-theory
-          (e/d (hifat-tar-name-list-string
+          (e/d (;; Enabling the definition lemma just leads to sadness with
+                ;; regards to hifat-tar-name-list-string-reduction. The small
+                ;; number of subgoals which need the definition should be
+                ;; handled with expand hints.
+                (:induction hifat-tar-name-list-string)
                 hifat-tar-name-list-alist
-                hifat-open
+                hifat-open hifat-pread hifat-lstat
+                ;; I don't know if I can justify enabling every system call,
+                ;; but this one has to be enabled on account of really stupid
+                ;; subgoals.
+                hifat-opendir
                 get-names-from-dirp-alt painful-debugging-lemma-21)
                (append-of-cons
                 binary-append
+                string-append
+                take-of-too-many
                 (:rewrite nthcdr-when->=-n-len-l)
                 (:rewrite take-of-len-free)
                 (:linear position-equal-ac-when-member)
@@ -2014,13 +2085,14 @@
                 (:linear
                  len-when-hifat-bounded-file-alist-p . 1)
                 (:rewrite m1-regular-file-p-correctness-1)
-                (:definition hifat-lstat)
-                (:definition hifat-opendir)
-                (:definition hifat-tar-name-list-string)
-                (:definition not)
                 (:definition nthcdr)
-                (:definition position-equal)
-                (:rewrite fat32-filename-list-p-of-take)))))
+                (:definition atom)
+                (:definition hifat-pread)
+                (:definition length)
+                (:definition min)
+                (:definition nfix)
+                (:definition natp)
+                (:definition fat32-path-to-path)))))
 
   (defthm
     not-consp-assoc-nil-hifat-tar-name-list-alist
