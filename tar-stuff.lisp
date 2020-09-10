@@ -2197,50 +2197,88 @@
   ;; The degree to which it's becoming difficult to prove this with lemmas
   ;; about hifat-pread, hifat-lstat and such illustrates that perhaps
   ;; separation logic would have been the right way to go here...
-  (thm
-   (b*
-       ((alist
-         (hifat-tar-name-list-alist
-          fs path1 name-list entry-count))
-        (alist-elem (assoc-equal path2 alist)))
-     (implies
-      (and (consp alist-elem)
-           (dir-stream-table-p dir-stream-table)
-           (fd-table-p fd-table)
-           (file-table-p file-table)
-           (fat32-filename-list-p name-list)
-           (no-duplicatesp-equal name-list))
-      (and
-       (<=
-        (+
-         (cdr alist-elem)
-         (length (hifat-tar-reg-file-string
-                  fs
-                  (implode (fat32-path-to-path path2)))))
+  (defthm
+    hifat-tar-name-list-alist-correctness-1
+    (implies
+     (consp
+      (assoc-equal path2
+                   (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+     (and
+      (subseq
+       (mv-nth
+        0
+        (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                    dir-stream-table entry-count))
+       (cdr (assoc-equal
+             path2
+             (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+       (+
+        (cdr (assoc-equal
+              path2
+              (hifat-tar-name-list-alist fs path1 name-list entry-count)))
         (length
-         (mv-nth 0
-                 (hifat-tar-name-list-string
-                  fs path1 name-list fd-table file-table dir-stream-table entry-count))))
-       (equal
-        (subseq
-         (mv-nth 0
-                 (hifat-tar-name-list-string
-                  fs path1 name-list fd-table file-table dir-stream-table entry-count))
-         (cdr alist-elem)
-         (+
-          (cdr alist-elem)
-          (length (hifat-tar-reg-file-string
-                   fs
-                   (implode (fat32-path-to-path path2))))))
-        (hifat-tar-reg-file-string
-         fs
-         (implode (fat32-path-to-path path2)))))))
-   :hints (("goal"
-            :induct
-            (hifat-tar-name-list-string
-             fs path1 name-list fd-table file-table dir-stream-table
-             entry-count)
-            :expand
-            ((hifat-tar-name-list-alist fs path1 name-list entry-count)
-             (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                         dir-stream-table entry-count))))))
+         (hifat-tar-reg-file-string fs
+                                    (implode (fat32-path-to-path path2))))))
+      (>=
+       (length
+        (mv-nth
+         0
+         (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                     dir-stream-table entry-count)))
+       (+
+        (cdr (assoc-equal
+              path2
+              (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+        (length
+         (hifat-tar-reg-file-string fs
+                                    (implode (fat32-path-to-path path2))))))))
+    :hints
+    (("goal"
+      :induct
+      (hifat-tar-name-list-string fs path1 name-list fd-table
+                                  file-table dir-stream-table entry-count)
+      :expand
+      ((hifat-tar-name-list-alist fs path1 name-list entry-count)
+       (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                   dir-stream-table entry-count))))
+    :rule-classes
+    ((:rewrite
+      :corollary
+      (implies
+       (consp
+        (assoc-equal path2
+                     (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+       (subseq
+        (mv-nth
+         0
+         (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                     dir-stream-table entry-count))
+        (cdr (assoc-equal
+              path2
+              (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+        (+
+         (cdr (assoc-equal
+               path2
+               (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+         (length
+          (hifat-tar-reg-file-string fs
+                                     (implode (fat32-path-to-path path2))))))))
+     (:linear
+      :corollary
+      (implies
+       (consp
+        (assoc-equal path2
+                     (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+       (>=
+        (length
+         (mv-nth
+          0
+          (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                      dir-stream-table entry-count)))
+        (+
+         (cdr (assoc-equal
+               path2
+               (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+         (length
+          (hifat-tar-reg-file-string fs
+                                     (implode (fat32-path-to-path path2)))))))))))
