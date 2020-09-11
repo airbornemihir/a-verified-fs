@@ -148,6 +148,72 @@
                                      fat32-filename-list-fix)
            :induct (basename-dirname-helper path))))
 
+(defthm append-nthcdr-dirname-basename-under-fat32-filename-list-equiv-lemma-1
+  (implies (consp path)
+           (fat32-filename-list-equiv
+            (append (dirname path)
+                    (list (basename path)))
+            path))
+  :hints (("goal" :in-theory (enable dirname basename
+                                     basename-dirname-helper
+                                     fat32-filename-list-fix
+                                     fat32-filename-list-equiv)))
+  :rule-classes
+  (:rewrite
+   (:rewrite
+    :corollary
+    (iff (fat32-filename-list-equiv (dirname path)
+                                    path)
+         (atom path))
+    :instructions
+    ((:bash ("goal" :in-theory (enable dirname basename
+                                       basename-dirname-helper
+                                       fat32-filename-list-fix
+                                       fat32-filename-list-equiv)))
+     (:claim
+      (equal
+       (len (append (fat32-filename-list-fix path)
+                    (list (mv-nth 0
+                                  (basename-dirname-helper path)))))
+       (len path))
+      :hints :none)
+     (:change-goal nil t)
+     (:dive 1 1)
+     := :up
+     (:rewrite len-of-fat32-filename-list-fix)
+     :top
+     :s :bash))
+   (:rewrite
+    :corollary
+    (implies (and (consp path) (nat-equiv n (len (dirname path))))
+             (fat32-filename-list-equiv
+              (nthcdr n path)
+              (list (basename path))))
+    :instructions (:split (:dive 1 2)
+                          (:= path
+                              (append (dirname path)
+                                      (list (basename path)))
+                              :equiv fat32-filename-list-equiv$inline)
+                          :top (:dive 1)
+                          (:= (append (nthcdr n (dirname path))
+                                      (list (basename path))))
+                          (:dive 1)
+                          (:= nil)
+                          :top :bash))))
+
+(defthm
+  append-nthcdr-dirname-basename-under-fat32-filename-list-equiv
+  (implies (and (consp path)
+                (<= (nfix n) (len (dirname path))))
+           (fat32-filename-list-equiv (append (nthcdr n (dirname path))
+                                              (list (basename path)))
+                                      (nthcdr n path)))
+  :hints (("goal" :in-theory (disable (:rewrite nthcdr-of-append))
+           :use (:instance (:rewrite nthcdr-of-append)
+                           (b (list (basename path)))
+                           (a (dirname path))
+                           (n n)))))
+
 (defund hifat-lstat (fs path)
   (declare (xargs :guard (and (m1-file-alist-p fs)
                               (hifat-no-dups-p fs)

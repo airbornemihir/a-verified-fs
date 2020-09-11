@@ -2170,6 +2170,12 @@
                   (hifat-file-alist-fix fs)))
   :hints (("goal" :in-theory (enable hifat-place-file))))
 
+(defthmd hifat-place-file-correctness-5
+  (equal (hifat-place-file fs path file)
+         (mv (mv-nth 0 (hifat-place-file fs path file))
+             (mv-nth 1 (hifat-place-file fs path file))))
+  :hints (("goal" :in-theory (enable hifat-place-file))))
+
 (defcong m1-file-equiv equal
   (hifat-place-file fs path file) 3
   :hints (("goal" :in-theory (enable hifat-place-file))))
