@@ -1440,133 +1440,14 @@
                                 (len (hifat-tar-name-list-alist fs path1 (cdr name-list)
                                                                 (+ -1 entry-count)))))))))
 
-(encapsulate
-  ()
-
-  (local
-   (defthmd lemma-1 (iff (equal (len (explode str1)) 0)
-                         (equal (explode str1) nil))
-     :hints
-     (("goal" :expand (len (explode str1))))))
-
-  (local
-   (defthmd lemma-2
-     (implies (and (<= 0 (- start)) (<= 0 start))
-              (integerp (- start)))))
-
-  (defthm
-    subseq-of-string-append
-    (equal (subseq (string-append str1 str2)
-                   start end)
-           (cond ((and (not (stringp str2))
-                       (not (stringp str1)))
-                  (subseq "" 0 (- end start)))
-                 ((not (stringp str1))
-                  (subseq str2 start end))
-                 ((not (stringp str2))
-                  (subseq str1 start end))
-                 ((and (< end (+ start (length str1)))
-                       (not (null end))
-                       (natp (- end start))
-                       (not (integerp start)))
-                  (subseq str1 0 (- end start)))
-                 ((and (>= end (+ start (length str1)))
-                       (not (null end))
-                       (integerp (- end start))
-                       (not (integerp start)))
-                  (string-append str1
-                                 (subseq str2
-                                         0 (- end (+ start (length str1))))))
-                 ((not (integerp (- start))) "")
-                 ((and (integerp start)
-                       (<= start (length str1))
-                       (<= 0 start)
-                       (null end))
-                  (string-append (subseq str1 start nil)
-                                 str2))
-                 ((and (<= start 0)
-                       (equal (length str1) 0)
-                       (not (null end))
-                       (not (acl2-numberp end)))
-                  (string-append str1 (subseq str2 0 (- start))))
-                 ((and (< (- start) (length str1))
-                       (not (null end))
-                       (not (acl2-numberp end)))
-                  (subseq str1 0 (- start)))
-                 ((and (< start 0)
-                       (not (null end))
-                       (<= (length str1) (- start))
-                       (not (acl2-numberp end)))
-                  (string-append str1
-                                 (subseq str2 0 (- (+ start (length str1))))))
-                 ((and (< start 0)
-                       (<= (+ (length str1) start) end)
-                       (integerp end))
-                  (string-append str1
-                                 (subseq str2
-                                         0 (- end (+ start (length str1))))))
-                 ((and (< (length str1) start)
-                       (<= start (+ (length str1) (length str2)))
-                       (null end))
-                  (subseq str2 (- start (length str1))
-                          nil))
-                 ((and (< (length str1) start)
-                       (<= start (+ (length str1) (length str2)))
-                       (integerp end))
-                  (subseq str2 (- start (length str1))
-                          (- end (length str1))))
-                 ((and (integerp start)
-                       (<= start (length str1))
-                       (<= 0 start)
-                       (< (length str1) end)
-                       (integerp end))
-                  (string-append (subseq str1 start nil)
-                                 (subseq str2 0 (- end (length str1)))))
-                 ((and (<= 0 start)
-                       (<= start end)
-                       (<= end (length str1))
-                       (integerp end))
-                  (subseq str1 start end))
-                 ((and (integerp start)
-                       (< start 0)
-                       (null end))
-                  (string-append str1
-                                 (subseq str2 0 (- (length str2) start))))
-                 ((and (< start 0)
-                       (not (null end))
-                       (<= start end)
-                       (< end (+ start (length str1))))
-                  (subseq str1 start end))
-                 ((and (integerp start)
-                       (< (+ (length str1) (length str2))
-                          start))
-                  (subseq "" start end))
-                 ((and (acl2-numberp end)
-                       (not (integerp end)))
-                  "")
-                 ((and (not (null end)) (< end start))
-                  "")
-                 (t (string-append str1 str2))))
-    :hints (("goal" :in-theory (e/d (subseq subseq-list) ((:e force)))
-             :do-not-induct t
-             :use ((:instance painful-debugging-lemma-21 (x start)
-                              (y (- (length str1))))
-                   (:theorem (iff (integerp (+ (- start)
-                                               (length str1)
-                                               (length str2)))
-                                  (integerp (- start))))
-                   lemma-1 lemma-2))))
-
-  (defthm hifat-tar-name-list-alist-correctness-lemma-28
-    (implies
-     (stringp seq)
-     (equal (subseq seq 0 (len (explode seq))) seq))
-    :hints (("Goal" :in-theory (enable subseq subseq-list)))))
-
-;; Move later.
+(defthm hifat-tar-name-list-alist-correctness-lemma-12
+  (implies
+   (stringp seq)
+   (equal (subseq seq 0 (len (explode seq))) seq))
+  :hints (("Goal" :in-theory (enable subseq subseq-list))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-31
+  hifat-tar-name-list-alist-correctness-lemma-21
   (equal (mv-nth '0
                  (hifat-tar-name-list-string fs (cons (car name-list1) 'nil)
                                              name-list2 fd-table file-table
