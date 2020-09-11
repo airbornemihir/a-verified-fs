@@ -1149,13 +1149,13 @@
     (implies
      (and
       (not (zp n))
-      (not (member-equal (car name-list)
-                         (cdr name-list))))
+      (not (member-equal name
+                         name-list1)))
      (not
       (prefixp
-       (append path1 (list (car name-list)))
+       (append path1 (list name))
        (nth (+ -1 n)
-            (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+            (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                    (+ -1 entry-count)))))))
     :hints
     (("goal"
@@ -1164,11 +1164,11 @@
        no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-6
        (path2
         (nth (+ -1 n)
-             (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+             (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                     (+ -1 entry-count)))))
-       (name (car name-list))
+       (name name)
        (path1 path1)
-       (name-list (cdr name-list))
+       (name-list name-list1)
        (fs fs)
        (entry-count (- entry-count 1))))))
 
@@ -1176,32 +1176,17 @@
    (defthmd
      lemma-1
      (implies
-      (not (member-equal (car name-list)
-                         (cdr name-list)))
+      (not (member-equal name
+                         name-list1))
       (not
        (intersectp-equal
         (take n
-              (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+              (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                      (+ -1 entry-count))))
         (strip-cars
          (hifat-tar-name-list-alist
-          fs (append path1 (list (car name-list)))
-          (mv-nth
-           0
-           (get-names-from-dirp
-            0
-            (list
-             (cons
-              0
-              (dir-stream
-               (<<-sort
-                (strip-cars
-                 (m1-file->contents
-                  (mv-nth
-                   0
-                   (hifat-find-file
-                    (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
-                    (list (car name-list))))))))))))
+          fs (append path1 (list name))
+          name-list2
           (+ -1 entry-count))))))
      :hints
      (("goal"
@@ -1211,44 +1196,29 @@
        (:with
         take-as-append-and-nth
         (take n
-              (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+              (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                      (+ -1 entry-count)))))))))
 
   (defthm
     no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-8
     (implies
-     (not (member-equal (car name-list)
-                        (cdr name-list)))
+     (not (member-equal name
+                        name-list1))
      (not
       (intersectp-equal
-       (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+       (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                               (+ -1 entry-count)))
        (strip-cars
         (hifat-tar-name-list-alist
-         fs (append path1 (list (car name-list)))
-         (mv-nth
-          0
-          (get-names-from-dirp
-           0
-           (list
-            (cons
-             0
-             (dir-stream
-              (<<-sort
-               (strip-cars
-                (m1-file->contents
-                 (mv-nth
-                  0
-                  (hifat-find-file
-                   (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
-                   (list (car name-list))))))))))))
+         fs (append path1 (list name))
+         name-list2
          (+ -1 entry-count))))))
     :hints
     (("goal" :do-not-induct t
       :use (:instance lemma-1
                       (n
                        (len
-                        (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                        (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                                (+ -1
                                                                   entry-count)))))))))
 
@@ -1257,17 +1227,17 @@
     (implies
      (and
       (not (consp path1))
-      (not (member-equal (car name-list)
-                         (cdr name-list)))
+      (not (member-equal name
+                         name-list1))
       (equal
-       (car name-list)
+       name
        (car (nth (+ -1 n)
-                 (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                 (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                         (+ -1 entry-count)))))))
      (not
       (consp
        (nth (+ -1 n)
-            (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+            (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                    (+ -1 entry-count)))))))
     :hints
     (("goal"
@@ -1276,40 +1246,28 @@
        no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-6
        (path2
         (nth (+ -1 n)
-             (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+             (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                     (+ -1 entry-count)))))
-       (name-list (cdr name-list))
+       (name-list name-list1)
        (entry-count (- entry-count 1))
-       (name (car name-list))))))
+       (name name)))))
 
   (local
    (defthmd
      lemma-2
      (implies
       (and (not (consp path1))
-           (not (member-equal (car name-list)
-                              (cdr name-list))))
+           (not (member-equal name
+                              name-list1)))
       (not
        (intersectp-equal
         (take n
-              (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+              (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                      (+ -1 entry-count))))
         (strip-cars
          (hifat-tar-name-list-alist
-          fs (list (car name-list))
-          (mv-nth
-           0
-           (get-names-from-dirp
-            0
-            (list
-             (cons
-              0
-              (dir-stream
-               (<<-sort
-                (strip-cars
-                 (m1-file->contents
-                  (mv-nth 0
-                          (hifat-find-file fs (list (car name-list))))))))))))
+          fs (list name)
+          name-list2
           (+ -1 entry-count))))))
      :hints
      (("goal"
@@ -1319,41 +1277,29 @@
        (:with
         take-as-append-and-nth
         (take n
-              (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+              (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                                      (+ -1 entry-count)))))))))
 
   (defthm
     no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-10
     (implies
      (and (not (consp path1))
-          (not (member-equal (car name-list)
-                             (cdr name-list))))
+          (not (member-equal name
+                             name-list1)))
      (not
       (intersectp-equal
-       (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
+       (strip-cars (hifat-tar-name-list-alist fs path1 name-list1
                                               (+ -1 entry-count)))
        (strip-cars
         (hifat-tar-name-list-alist
-         fs (list (car name-list))
-         (mv-nth
-          0
-          (get-names-from-dirp
-           0
-           (list
-            (cons
-             0
-             (dir-stream
-              (<<-sort
-               (strip-cars
-                (m1-file->contents
-                 (mv-nth 0
-                         (hifat-find-file fs (list (car name-list))))))))))))
+         fs (list name)
+         name-list2
          (+ -1 entry-count))))))
     :hints
     (("goal"
       :do-not-induct t
       :use (:instance lemma-2 (n
-                               (len (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                               (len (hifat-tar-name-list-alist fs path1 name-list1
                                                                (+ -1 entry-count)))))))))
 
 (defthm
@@ -1640,6 +1586,13 @@
 (encapsulate
   ()
 
+  ;; Quick note about enabling and disabling things: get-names-from-dirp-alt
+  ;; probably might not want to be enabled, because there are a couple of rules
+  ;; to be derived from
+  ;; no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-8 and
+  ;; no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-10 which
+  ;; will want get-names-from-dirp-to be there? Aaah, maybe not, because
+  ;; get-names-from-dirp-alt gets rid of the dir-stream table which is nice.
   (local (in-theory
           (e/d (;; Enabling the definition rules for these two, below, just
                 ;; leads to sadness with regards to
