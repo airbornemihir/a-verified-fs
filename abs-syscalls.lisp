@@ -27459,7 +27459,9 @@
                               (frame-p frame)
                               (consp (assoc-equal 0 frame)))))
   (b*
-      ((fd-table-entry (assoc-equal fd fd-table))
+      ((fd-table (mbe :logic (fd-table-fix fd-table) :exec fd-table))
+       (file-table (mbe :logic (file-table-fix file-table) :exec file-table))
+       (fd-table-entry (assoc-equal fd fd-table))
        ((unless (consp fd-table-entry))
         (mv "" -1 *ebadf*))
        (file-table-entry (assoc-equal (cdr fd-table-entry)

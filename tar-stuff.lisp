@@ -1926,13 +1926,17 @@
   ()
 
   (local (in-theory
-          (e/d (;; Enabling the definition lemma just leads to sadness with
-                ;; regards to hifat-tar-name-list-string-reduction. The small
-                ;; number of subgoals which need the definition should be
-                ;; handled with expand hints.
+          (e/d (;; Enabling the definition rules for these two, below, just
+                ;; leads to sadness with regards to
+                ;; hifat-tar-name-list-string-reduction. The small number of
+                ;; subgoals which need the definition should be handled with
+                ;; expand hints and specific rules.
                 (:induction hifat-tar-name-list-string)
                 (:induction hifat-tar-name-list-alist)
-                hifat-open
+                ;; There are too many lemmas which need these syscall
+                ;; definitions to be opened up.
+                hifat-open hifat-lstat hifat-opendir
+                get-names-from-dirp-alt
                 painful-debugging-lemma-21
                 length-of-empty-list)
                (append-of-cons
@@ -1961,6 +1965,8 @@
                  len-when-hifat-bounded-file-alist-p . 1)
                 (:rewrite m1-regular-file-p-correctness-1)
                 (:definition nthcdr)
+                ;; It's dubious how much labour is saved by disabling these,
+                ;; but it's worth a shot.
                 (:definition atom)
                 (:definition min)
                 (:definition nfix)
