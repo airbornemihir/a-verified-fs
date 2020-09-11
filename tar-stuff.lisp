@@ -1623,6 +1623,20 @@
   :rule-classes :type-prescription
   :hints (("Goal" :in-theory (enable hifat-tar-name-list-alist))))
 
+;; Move later.
+(defcong
+  fd-table-equiv equal (hifat-pread fd count offset fs fd-table file-table) 5
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-pread))))
+(defcong
+  file-table-equiv equal (hifat-pread fd count offset fs fd-table file-table) 6
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-pread))))
+(defcong
+  dir-stream-table-equiv equal (hifat-opendir fs path dir-stream-table) 3
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-opendir))))
+
 ;; Almost a direct subgoal, sigh.
 (defthm hifat-tar-name-list-alist-correctness-lemma-5
   (implies
