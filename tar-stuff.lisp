@@ -1310,8 +1310,8 @@
      0
      (hifat-find-file fs
                       (file-table-element->fid
-                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                         file-table))))))
+                       (cdr (assoc-equal (cdr (assoc-equal fd (fd-table-fix fd-table)))
+                                         (file-table-fix file-table)))))))
    (> (mv-nth 2
               (hifat-pread fd count offset fs fd-table file-table))
       0))
@@ -1323,24 +1323,26 @@
   no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-12
   (implies
    (and
-    (consp (assoc-equal fd fd-table))
-    (consp (assoc-equal (cdr (assoc-equal fd fd-table))
-                        file-table))
+    (consp (assoc-equal fd (fd-table-fix fd-table)))
+    (consp (assoc-equal (cdr (assoc-equal fd (fd-table-fix fd-table)))
+                        (file-table-fix file-table)))
     (not
      (m1-directory-file-p
       (mv-nth
        0
-       (hifat-find-file fs
-                        (file-table-element->fid
-                         (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                           file-table)))))))
+       (hifat-find-file
+        fs
+        (file-table-element->fid
+         (cdr (assoc-equal (cdr (assoc-equal fd (fd-table-fix fd-table)))
+                           (file-table-fix file-table))))))))
     (equal
      (mv-nth
       1
-      (hifat-find-file fs
-                       (file-table-element->fid
-                        (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                          file-table)))))
+      (hifat-find-file
+       fs
+       (file-table-element->fid
+        (cdr (assoc-equal (cdr (assoc-equal fd (fd-table-fix fd-table)))
+                          (file-table-fix file-table))))))
      0))
    (equal (mv-nth 2
                   (hifat-pread fd count offset fs fd-table file-table))
@@ -1582,6 +1584,41 @@
   dir-stream-table-equiv equal (hifat-opendir fs path dir-stream-table) 3
   :hints (("goal" :do-not-induct t
            :in-theory (enable hifat-opendir))))
+
+(defthm hifat-tar-name-list-alist-correctness-lemma-5
+  (equal (string-append str1 "")
+         (str-fix str1))
+  :hints (("goal" :do-not-induct t)))
+
+(defthm hifat-tar-name-list-alist-correctness-lemma-8
+  (implies (and (stringp seq)
+                (>= start (length seq)))
+           (equal (subseq seq start nil) ""))
+  :hints (("goal" :in-theory (enable subseq subseq-list))))
+
+(defthm hifat-tar-name-list-alist-correctness-lemma-10
+  (implies (stringp seq)
+           (equal (subseq seq 0 nil) seq))
+  :hints (("goal" :in-theory (enable subseq subseq-list))))
+
+;; This is a free variable version of something that can be done without free variables...
+(defthm hifat-tar-name-list-alist-correctness-lemma-11
+        (implies (and (<= end (len (explode seq)))
+                      (integerp end)
+                      (equal (subseq seq start end) str)
+                      (stringp str)
+                      (<= (len (explode seq)) end))
+                 (equal (subseq seq start nil) str))
+        :hints (("goal" :do-not-induct t
+                        :in-theory (enable subseq subseq-list))))
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-13
+  (implies (not (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path))))
+           (equal (hifat-tar-name-list-alist fs path name-list entry-count)
+                  nil))
+  :hints (("goal" :in-theory (enable hifat-tar-name-list-alist alist-shift
+                                     hifat-lstat hifat-find-file))))
 
 (encapsulate
   ()
