@@ -241,8 +241,8 @@
                               (fd-table-p fd-table)
                               (file-table-p file-table))))
   (b*
-      ((fd-table (fd-table-fix fd-table))
-       (file-table (file-table-fix file-table))
+      ((fd-table (mbe :logic (fd-table-fix fd-table) :exec fd-table))
+       (file-table (mbe :logic (file-table-fix file-table) :exec file-table))
        (file-table-index
         (find-new-index (strip-cars file-table)))
        (fd-table-index
@@ -309,7 +309,9 @@
                               (m1-file-alist-p fs)
                               (hifat-no-dups-p fs))))
   (b*
-      ((fd-table-entry (assoc-equal fd fd-table))
+      ((fd-table (mbe :logic (fd-table-fix fd-table) :exec fd-table))
+       (file-table (mbe :logic (file-table-fix file-table) :exec file-table))
+       (fd-table-entry (assoc-equal fd fd-table))
        ((unless (consp fd-table-entry))
         (mv "" -1 *ebadf*))
        (file-table-entry (assoc-equal (cdr fd-table-entry)
