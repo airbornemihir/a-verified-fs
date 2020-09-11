@@ -1781,8 +1781,7 @@
                 (:definition atom)
                 (:definition min)
                 (:definition nfix)
-                (:definition natp)
-                (:definition fat32-path-to-path)))))
+                (:definition natp)))))
 
   (defthm
     not-consp-assoc-nil-hifat-tar-name-list-alist

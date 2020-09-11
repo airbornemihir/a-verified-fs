@@ -2906,7 +2906,7 @@
 ;;            :expand (PATH-TO-FAT32-PATH (TAKE (+ -1 (LEN CHARACTER-LIST))
 ;;                                                      CHARACTER-LIST))) ))
 
-(defun fat32-path-to-path (string-list)
+(defund fat32-path-to-path (string-list)
   (declare (xargs :guard (fat32-filename-list-p string-list)))
   (if (atom string-list)
       nil
@@ -2929,4 +2929,4 @@
 
 (defthm character-listp-of-fat32-path-to-path
   (character-listp (fat32-path-to-path string-list))
-  :hints (("goal" :in-theory (enable fat32-name-to-name))))
+  :hints (("goal" :in-theory (enable fat32-name-to-name fat32-path-to-path))))
