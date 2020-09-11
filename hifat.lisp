@@ -456,6 +456,10 @@
                  (:theorem (equal (+ (len x) (- (len x)) (len y))
                                   (len y)))))))
 
+(defthm when-prefixp-append-same
+  (iff (prefixp (append y x) y) (atom x))
+  :hints (("goal" :in-theory (enable prefixp))))
+
 (defthmd
   painful-debugging-lemma-14
   (implies (not (zp cluster-size))

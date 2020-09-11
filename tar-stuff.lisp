@@ -1027,16 +1027,8 @@
   (alistp (hifat-tar-name-list-alist fs path name-list entry-count))
   :hints (("goal" :in-theory (enable hifat-tar-name-list-alist))))
 
-(defthm hifat-tar-name-list-alist-correctness-lemma-10
-  (iff (prefixp (append y x) y) (atom x))
-  :hints (("goal" :in-theory (enable prefixp))))
-
-(defthm hifat-tar-name-list-alist-correctness-lemma-15
-  (iff (equal x (append x y))
-       (equal y (if (consp x) (cdr (last x)) x))))
-
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-13
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-1
   (implies
    (case-split (or (not (prefixp path1 path2))
                    (equal path1 path2)))
@@ -1052,7 +1044,7 @@
   :hints
   (("goal" :in-theory (enable hifat-tar-name-list-alist))))
 
-(defthm hifat-tar-name-list-alist-correctness-lemma-4
+(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-2
   (implies (and (integerp start)
                 (equal start end)
                 (stringp seq))
@@ -1060,7 +1052,7 @@
   :hints (("goal" :in-theory (enable subseq subseq-list))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-16
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-3
   (not
    (member-equal nil
     (strip-cars
@@ -1070,7 +1062,7 @@
   :rule-classes :type-prescription)
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-17
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-4
   (implies (and (consp path)
                 (not (zp (mv-nth 1 (hifat-find-file fs path)))))
            (equal (hifat-tar-name-list-alist fs path name-list entry-count)
@@ -1079,7 +1071,7 @@
                                      hifat-pread hifat-lstat hifat-open))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-20
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-5
   (implies (and (consp name-list)
                 (prefixp (append path1 (list name))
                          path2)
@@ -1106,7 +1098,7 @@
 (encapsulate () (local (in-theory (disable atom)))
 
   (defthmd
-    hifat-tar-name-list-alist-correctness-lemma-11
+    no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-6
     (implies
      (and (member-equal
            path2
@@ -1153,7 +1145,7 @@
   (local (include-book "std/lists/intersectp" :dir :system))
 
   (defthm
-    hifat-tar-name-list-alist-correctness-lemma-22
+    no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-7
     (implies
      (and
       (not (zp n))
@@ -1169,7 +1161,7 @@
     (("goal"
       :use
       (:instance
-       hifat-tar-name-list-alist-correctness-lemma-11
+       no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-6
        (path2
         (nth (+ -1 n)
              (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
@@ -1223,7 +1215,7 @@
                                                      (+ -1 entry-count)))))))))
 
   (defthm
-    hifat-tar-name-list-alist-correctness-lemma-23
+    no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-8
     (implies
      (not (member-equal (car name-list)
                         (cdr name-list)))
@@ -1261,7 +1253,7 @@
                                                                   entry-count)))))))))
 
   (defthm
-    hifat-tar-name-list-alist-correctness-lemma-24
+    no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-9
     (implies
      (and
       (not (consp path1))
@@ -1281,7 +1273,7 @@
     (("goal"
       :use
       (:instance
-       hifat-tar-name-list-alist-correctness-lemma-11
+       no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-6
        (path2
         (nth (+ -1 n)
              (strip-cars (hifat-tar-name-list-alist fs path1 (cdr name-list)
@@ -1331,7 +1323,7 @@
                                                      (+ -1 entry-count)))))))))
 
   (defthm
-    hifat-tar-name-list-alist-correctness-lemma-25
+    no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-10
     (implies
      (and (not (consp path1))
           (not (member-equal (car name-list)
@@ -1365,7 +1357,7 @@
                                                                (+ -1 entry-count)))))))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-30
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-11
   (implies
    (m1-directory-file-p
     (mv-nth
@@ -1382,7 +1374,7 @@
   :rule-classes :linear)
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-32
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-12
   (implies
    (and
     (consp (assoc-equal fd fd-table))
@@ -1411,7 +1403,7 @@
            :in-theory (enable hifat-pread))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-5
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-13
   (implies (and (not (zp (mv-nth 1 (hifat-find-file fs path))))
                 (consp path))
            (equal (hifat-tar-name-list-alist fs path name-list entry-count)
@@ -1421,7 +1413,7 @@
                                   ()))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-26
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist
   (implies
    (no-duplicatesp-equal name-list)
    (no-duplicatesp-equal

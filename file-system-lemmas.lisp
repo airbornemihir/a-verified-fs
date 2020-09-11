@@ -1912,3 +1912,7 @@
               (:instance (:rewrite coerce-inverse-1)
                (x (make-character-list
                    (take (+ end (- (len (coerce str1 'list)))) (coerce str2 'list))))))))))
+
+(defthm when-append-same
+  (iff (equal x (append x y))
+       (equal y (if (consp x) (cdr (last x)) x))))
