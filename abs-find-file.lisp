@@ -355,25 +355,26 @@
                  abs-file-alist2 x x-path)))))
 
 (defthm
- abs-find-file-of-remove-assoc-1
- (implies
-  (and
-   (not (null x))
-   (no-duplicatesp-equal (strip-cars frame))
-   (or
-    (not (prefixp (frame-val->path (cdr (assoc-equal x frame)))
-                  (fat32-filename-list-fix path)))
-    (equal
-     (mv-nth 1
-             (abs-find-file-helper
-                  (frame-val->dir (cdr (assoc-equal x frame)))
-                  (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
-                          path)))
-     *enoent*)))
-  (equal (abs-find-file (remove-assoc-equal x frame)
-                        path)
-         (abs-find-file frame path)))
- :hints (("goal" :in-theory (enable abs-find-file))))
+  abs-find-file-of-remove-assoc-1
+  (implies
+   (and
+    (not (null x))
+    (no-duplicatesp-equal (strip-cars frame))
+    (case-split
+     (or
+      (not (prefixp (frame-val->path (cdr (assoc-equal x frame)))
+                    (fat32-filename-list-fix path)))
+      (equal
+       (mv-nth 1
+               (abs-find-file-helper
+                (frame-val->dir (cdr (assoc-equal x frame)))
+                (nthcdr (len (frame-val->path (cdr (assoc-equal x frame))))
+                        path)))
+       *enoent*))))
+   (equal (abs-find-file (remove-assoc-equal x frame)
+                         path)
+          (abs-find-file frame path)))
+  :hints (("goal" :in-theory (enable abs-find-file))))
 
 (defthm
   abs-find-file-of-remove-assoc-2
@@ -3777,6 +3778,10 @@
                      (x (1st-complete (frame->frame frame)))
                      (root (frame->root frame)))))))
 
+;; I think it's worth an attempt to get this through automatically without
+;; having to put in these expand hints. There are four lemmas with pretty much
+;; the same expand hints, and they're fragile against changes to the theory,
+;; which means every now and then I have to fix them up.
 (defthm
   abs-find-file-correctness-lemma-22
   (implies
@@ -3988,11 +3993,6 @@
                      (:rewrite nfix-when-natp)))
     :expand
     ((:with
-      abs-find-file-of-remove-assoc-1
-      (abs-find-file (remove-assoc-equal (1st-complete (frame->frame frame))
-                                         (frame->frame frame))
-                     path))
-     (:with
       abs-find-file-of-put-assoc
       (abs-find-file
        (put-assoc-equal
