@@ -352,6 +352,16 @@
   :hints (("goal" :in-theory (enable hifat-pread)))
   :rule-classes :type-prescription)
 
+(defcong
+  fd-table-equiv equal (hifat-pread fd count offset fs fd-table file-table) 5
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-pread))))
+
+(defcong
+  file-table-equiv equal (hifat-pread fd count offset fs fd-table file-table) 6
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-pread))))
+
 (defun
     hifat-pwrite
     (fd buf offset fs fd-table file-table)
@@ -1194,6 +1204,11 @@
                 (hifat-opendir fs path dir-stream-table)))
   :hints (("goal" :in-theory (enable hifat-opendir)))
   :rule-classes :type-prescription)
+
+(defcong
+  dir-stream-table-equiv equal (hifat-opendir fs path dir-stream-table) 3
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-opendir))))
 
 (assert-event
  (b*

@@ -1580,47 +1580,6 @@
   :rule-classes :type-prescription
   :hints (("Goal" :in-theory (enable hifat-tar-name-list-alist))))
 
-;; Move later.
-(defcong
-  fd-table-equiv equal (hifat-pread fd count offset fs fd-table file-table) 5
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable hifat-pread))))
-(defcong
-  file-table-equiv equal (hifat-pread fd count offset fs fd-table file-table) 6
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable hifat-pread))))
-(defcong
-  dir-stream-table-equiv equal (hifat-opendir fs path dir-stream-table) 3
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable hifat-opendir))))
-
-(defthm hifat-tar-name-list-alist-correctness-lemma-5
-  (equal (string-append str1 "")
-         (str-fix str1))
-  :hints (("goal" :do-not-induct t)))
-
-(defthm hifat-tar-name-list-alist-correctness-lemma-8
-  (implies (and (stringp seq)
-                (>= start (length seq)))
-           (equal (subseq seq start nil) ""))
-  :hints (("goal" :in-theory (enable subseq subseq-list))))
-
-(defthm hifat-tar-name-list-alist-correctness-lemma-10
-  (implies (stringp seq)
-           (equal (subseq seq 0 nil) seq))
-  :hints (("goal" :in-theory (enable subseq subseq-list))))
-
-;; This is a free variable version of something that can be done without free variables...
-(defthm hifat-tar-name-list-alist-correctness-lemma-11
-        (implies (and (<= end (len (explode seq)))
-                      (integerp end)
-                      (equal (subseq seq start end) str)
-                      (stringp str)
-                      (<= (len (explode seq)) end))
-                 (equal (subseq seq start nil) str))
-        :hints (("goal" :do-not-induct t
-                        :in-theory (enable subseq subseq-list))))
-
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-13
   (implies (not (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path))))

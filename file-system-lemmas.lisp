@@ -1785,6 +1785,10 @@
   (defthm string-append-of-empty-string-1
     (equal (string-append "" str2)
            (if (stringp str2) str2 ""))
+    :hints (("goal" :in-theory (enable string-append))))
+  (defthm string-append-of-empty-string-2
+    (equal (string-append str1 "")
+           (str-fix str1))
     :hints (("goal" :in-theory (enable string-append)))))
 
 (encapsulate () (local (in-theory (disable nfix natp)))
@@ -1912,7 +1916,23 @@
               (:instance (:rewrite coerce-inverse-2) (x str1))
               (:instance (:rewrite coerce-inverse-1)
                (x (make-character-list
-                   (take (+ end (- (len (coerce str1 'list)))) (coerce str2 'list))))))))))
+                   (take (+ end (- (len (coerce str1 'list)))) (coerce str2 'list)))))))))
+
+  (defthm then-subseq-empty-1
+    (implies (and (stringp seq)
+                  (>= start (length seq)))
+             (equal (subseq seq start nil) ""))
+    :hints (("goal" :in-theory (enable subseq subseq-list))))
+  (defthm then-subseq-same-1
+    (implies (stringp seq)
+             (equal (subseq seq 0 nil) seq))
+    :hints (("goal" :in-theory (enable subseq subseq-list))))
+  (defthm subseq-of-length-1
+    (implies (equal (length seq) end)
+             (equal (subseq seq start end)
+                    (subseq seq start nil)))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable subseq subseq-list)))))
 
 (defthm when-append-same
   (iff (equal x (append x y))
