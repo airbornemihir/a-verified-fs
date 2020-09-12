@@ -10,8 +10,6 @@
                      append-nthcdr-dirname-basename-under-fat32-filename-list-equiv-lemma-1
                      . 3)
                     (:linear listpos-upper-bound-strong-2)
-                    (:linear
-                     non-free-index-listp-correctness-6-lemma-3)
                     (:rewrite <<-sort-consp)
                     ;; Consider disabling everywhere.
                     (:definition hifat-file-alist-fix)
@@ -22,7 +20,8 @@
                      . 1)
                     (:linear
                      dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-10)
-                    (:rewrite no-duplicatesp-of-member)))))
+                    (:rewrite no-duplicatesp-of-member)
+                    (:linear getopt::defoptions-lemma-8)))))
 
 (defconst *tar-regtype* #\0)
 (defconst *tar-dirtype* #\5)
@@ -901,25 +900,27 @@
                           len-of-explode-when-m1-file-contents-p-1)
                          (:rewrite
                           hifat-find-file-correctness-3-lemma-2)
-                         (:REWRITE TAKE-OF-LEN-FREE)
-                         (:REWRITE STR::CONSP-OF-EXPLODE)
-                         (:LINEAR POSITION-WHEN-MEMBER)
-                         (:REWRITE DEFAULT-CAR)
-                         (:REWRITE APPEND-ATOM-UNDER-LIST-EQUIV)
-                         (:LINEAR LEN-WHEN-HIFAT-BOUNDED-FILE-ALIST-P
+                         (:rewrite take-of-len-free)
+                         (:rewrite str::consp-of-explode)
+                         (:linear position-when-member)
+                         (:rewrite default-car)
+                         (:rewrite append-atom-under-list-equiv)
+                         (:linear len-when-hifat-bounded-file-alist-p
                                   . 2)
-                         (:LINEAR LEN-WHEN-HIFAT-BOUNDED-FILE-ALIST-P
+                         (:linear len-when-hifat-bounded-file-alist-p
                                   . 1)
-                         (:REWRITE HIFAT-SUBSETP-PRESERVES-ASSOC)
-                         (:REWRITE CONSP-OF-ASSOC-WHEN-HIFAT-EQUIV-LEMMA-1)
-                         (:REWRITE MEMBER-WHEN-ATOM)
-                         (:REWRITE CONSP-OF-APPEND)
-                         (:LINEAR NON-FREE-INDEX-LISTP-CORRECTNESS-6-LEMMA-3)
-                         (:LINEAR LOWER-BOUND-OF-LEN-WHEN-SUBLISTP)
-                         (:LINEAR LEN-WHEN-PREFIXP)
-                         (:REWRITE SUBSETP-MEMBER . 3)
-                         (:REWRITE PUT-ASSOC-EQUAL-WITHOUT-CHANGE . 2)
-                         (:TYPE-PRESCRIPTION NATP-POSITION-AC)))
+                         (:rewrite hifat-subsetp-preserves-assoc)
+                         (:rewrite consp-of-assoc-when-hifat-equiv-lemma-1)
+                         (:rewrite member-when-atom)
+                         (:rewrite consp-of-append)
+                         (:linear lower-bound-of-len-when-sublistp)
+                         (:linear len-when-prefixp)
+                         (:rewrite subsetp-member . 3)
+                         (:rewrite put-assoc-equal-without-change . 2)
+                         (:type-prescription natp-position-ac)
+                         (:definition length)
+                         (:definition atom)
+                         (:definition min)))
     :induct
     (hifat-tar-name-list-string fs path name-list fd-table
                                 file-table dir-stream-table entry-count)

@@ -2,9 +2,7 @@
 
 (include-book "lofat-syscalls")
 
-;; This book brings in a really terrible lemma called defoptions-lemma-8.
 (include-book "centaur/getopt/top" :dir :system)
-(in-theory (disable (:linear getopt::defoptions-lemma-8)))
 
 (defoptions mkdir-opts
   :parents (demo2)

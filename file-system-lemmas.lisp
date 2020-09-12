@@ -1788,7 +1788,7 @@
     :hints (("goal" :in-theory (enable string-append))))
   (defthm string-append-of-empty-string-2
     (equal (string-append str1 "")
-           (str-fix str1))
+           (if (stringp str1) str1 ""))
     :hints (("goal" :in-theory (enable string-append)))))
 
 (encapsulate () (local (in-theory (disable nfix natp)))
