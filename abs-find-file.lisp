@@ -354,6 +354,13 @@
         (ctx-app abs-file-alist1
                  abs-file-alist2 x x-path)))))
 
+;; There doesn't seem to be an easy way of getting out of the expand hints that
+;; we need to use this theorem. I've tried surrounding the third hypothesis with a
+;; case-split, but that is ineffective because the real problem is the size of
+;; the terms in that hypothesis which causes brr to report the hypothesis as
+;; more complicated than its ancestors. It also doesn't help to split the
+;; theorem into two rewrite corollaries for the same reason - the term is too
+;; big! I'm not sure how this could be worked around.
 (defthm
  abs-find-file-of-remove-assoc-1
  (implies
