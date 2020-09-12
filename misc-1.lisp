@@ -1485,13 +1485,11 @@
     (abs-find-file frame path)))
   :hints
   (("goal"
-    :in-theory (disable
-                (:rewrite abs-find-file-of-remove-assoc-1))
-    :use (:instance
-          (:rewrite abs-find-file-of-remove-assoc-1)
-          (path path)
-          (frame (frame->frame frame))
-          (x (1st-complete (frame->frame frame)))))))
+    :in-theory (disable abs-find-file-of-remove-assoc-1)
+    :use (:instance abs-find-file-of-remove-assoc-1
+                    (path path)
+                    (frame (frame->frame frame))
+                    (x (1st-complete (frame->frame frame)))))))
 
 (encapsulate
   ()
