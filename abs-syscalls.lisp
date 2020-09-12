@@ -4545,39 +4545,6 @@
                            (x-path path)))))
 
 (defthm
-  hifat-equiv-of-put-assoc-equal-1
-  (implies (and (hifat-equiv (m1-file->contents file1)
-                             (m1-file->contents file2))
-                (syntaxp (not (term-order file1 file2)))
-                (m1-directory-file-p (m1-file-fix file1))
-                (m1-directory-file-p (m1-file-fix file2)))
-           (hifat-equiv (put-assoc-equal name file1 fs)
-                        (put-assoc-equal name file2 fs)))
-  :hints
-  (("goal"
-    :induct (mv (put-assoc-equal name file1 fs)
-                (put-assoc-equal name file2 fs))
-    :in-theory
-    (e/d (hifat-no-dups-p hifat-equiv)
-         (hifat-subsetp-reflexive-lemma-4
-          (:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)
-          (:rewrite abs-find-file-helper-when-m1-file-alist-p-lemma-1)
-          (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
-          (:rewrite abs-file-fix-when-abs-file-p)
-          (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-2)
-          (:rewrite collapse-hifat-place-file-lemma-10))))
-   ("subgoal *1/2"
-    :use
-    (:instance
-     hifat-subsetp-reflexive-lemma-4
-     (x
-      (list
-       (cons (fat32-filename-fix (car (car fs)))
-             (m1-file (m1-file->dir-ent file1)
-                      (hifat-file-alist-fix (m1-file->contents file1))))))
-     (y (hifat-file-alist-fix (cdr fs)))))))
-
-(defthm
   hifat-place-file-when-hifat-equiv-lemma-1
   (implies
    (and
@@ -4626,10 +4593,10 @@
      (hifat-file-alist-fix fs))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite hifat-equiv-of-put-assoc-equal-1))
+    :in-theory (disable (:rewrite put-assoc-under-hifat-equiv-1))
     :use
     (:instance
-     (:rewrite hifat-equiv-of-put-assoc-equal-1)
+     (:rewrite put-assoc-under-hifat-equiv-1)
      (fs (hifat-file-alist-fix fs))
      (file1
       (m1-file
@@ -4669,7 +4636,7 @@
                                          (m1-file-fix file2)
                                          (hifat-file-alist-fix fs))))
   :instructions (:promote (:dive 1)
-                          (:rewrite hifat-equiv-of-put-assoc-equal-1
+                          (:rewrite put-assoc-under-hifat-equiv-1
                                     ((file2 (m1-file-fix file2))))
                           :top
                           :bash :bash
@@ -4869,7 +4836,6 @@
           (:rewrite
            abs-file-alist-p-of-abs-file->contents)
           (:rewrite member-of-abs-addrs-when-natp . 2)
-          (:definition hifat-file-alist-fix)
           (:type-prescription assoc-when-zp-len)
           (:rewrite abs-addrs-of-ctx-app-2)
           (:definition put-assoc-equal)
@@ -14980,39 +14946,6 @@
                                    file-table))))))))))
 
 (defthm
-  hifat-equiv-of-put-assoc-equal-3
-  (implies (and (equal (m1-file->contents file1)
-                       (m1-file->contents file2))
-                (syntaxp (not (term-order file1 file2)))
-                (m1-regular-file-p (m1-file-fix file1))
-                (m1-regular-file-p (m1-file-fix file2)))
-           (hifat-equiv (put-assoc-equal name file1 fs)
-                        (put-assoc-equal name file2 fs)))
-  :hints
-  (("goal"
-    :induct (mv (put-assoc-equal name file1 fs)
-                (put-assoc-equal name file2 fs))
-    :in-theory
-    (e/d (hifat-no-dups-p hifat-equiv)
-         (hifat-subsetp-reflexive-lemma-4
-          (:rewrite hifat-file-alist-fix-when-hifat-no-dups-p)
-          (:rewrite abs-find-file-helper-when-m1-file-alist-p-lemma-1)
-          (:rewrite subsetp-of-abs-addrs-of-put-assoc-lemma-1)
-          (:rewrite abs-file-fix-when-abs-file-p)
-          (:rewrite abs-fs-fix-of-put-assoc-equal-lemma-2)
-          (:rewrite collapse-hifat-place-file-lemma-10))))
-   ("subgoal *1/2"
-    :use
-    (:instance
-     hifat-subsetp-reflexive-lemma-4
-     (x
-      (list
-       (cons (fat32-filename-fix (car (car fs)))
-             (m1-file (m1-file->dir-ent file1)
-                      (hifat-file-alist-fix (m1-file->contents file1))))))
-     (y (hifat-file-alist-fix (cdr fs)))))))
-
-(defthm
   hifat-place-file-when-hifat-equiv-3
   (implies
    (and (equal (m1-file->contents file1)
@@ -15026,10 +14959,10 @@
   (("goal"
     :in-theory (enable hifat-place-file)
     :restrict
-    ((hifat-equiv-of-put-assoc-equal-3 ((file2 file2)))))))
+    ((put-assoc-under-hifat-equiv-3 ((file2 file2)))))))
 
 (defthm
-  abs-pwrite-correctness-lemma-51
+  abs-pwrite-correctness-lemma-43
   (implies
    (and
     (mv-nth 1 (collapse frame))
@@ -15795,7 +15728,7 @@
   :hints
   (("goal"
     :in-theory
-    (disable (:rewrite hifat-equiv-of-put-assoc-equal-3))
+    (disable (:rewrite put-assoc-under-hifat-equiv-3))
     :use
     ((:instance
       (:linear len-of-explode-when-m1-file-contents-p-1)
@@ -15824,7 +15757,7 @@
                          file-table)))))))))))
           offset buf)))))
      (:instance
-      (:rewrite hifat-equiv-of-put-assoc-equal-3)
+      (:rewrite put-assoc-under-hifat-equiv-3)
       (fs
        (m1-file->contents
         (mv-nth
@@ -16932,10 +16865,10 @@
   (("goal"
     :in-theory
     (e/d (len-of-insert-text abs-mkdir-correctness-lemma-30)
-         (hifat-equiv-of-put-assoc-equal-3))
+         (put-assoc-under-hifat-equiv-3))
     :use
     (:instance
-     (:rewrite hifat-equiv-of-put-assoc-equal-3)
+     (:rewrite put-assoc-under-hifat-equiv-3)
      (file2
       (m1-file
        (m1-file->dir-ent
@@ -17991,7 +17924,7 @@
                                    file-table)))))))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite hifat-equiv-of-put-assoc-equal-3))
+    :in-theory (disable (:rewrite put-assoc-under-hifat-equiv-3))
     :use
     ((:instance
       (:linear len-of-explode-when-m1-file-contents-p-1)
@@ -18017,7 +17950,7 @@
                                      file-table)))))))))))
           offset buf)))))
      (:instance
-      (:rewrite hifat-equiv-of-put-assoc-equal-3)
+      (:rewrite put-assoc-under-hifat-equiv-3)
       (fs
        (m1-file->contents
         (mv-nth
@@ -18219,10 +18152,10 @@
                                    file-table)))))))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite hifat-equiv-of-put-assoc-equal-3))
+    :in-theory (disable (:rewrite put-assoc-under-hifat-equiv-3))
     :use
     (:instance
-     (:rewrite hifat-equiv-of-put-assoc-equal-3)
+     (:rewrite put-assoc-under-hifat-equiv-3)
      (fs
       (m1-file->contents
        (mv-nth

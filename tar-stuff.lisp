@@ -11,8 +11,6 @@
                      . 3)
                     (:linear listpos-upper-bound-strong-2)
                     (:rewrite <<-sort-consp)
-                    ;; Consider disabling everywhere.
-                    (:definition hifat-file-alist-fix)
                     (:rewrite
                      hifat-find-file-correctness-3-lemma-2)
                     (:linear

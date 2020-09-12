@@ -951,7 +951,7 @@
                        (fs m1-file-alist2)))
       :do-not-induct t
       :in-theory (e/d (m1-file-p m1-directory-file-p m1-file-contents-p
-                                 m1-file->contents hifat-equiv)
+                                 m1-file->contents hifat-equiv hifat-file-alist-fix)
                       ((:rewrite hifat-find-file-correctness-1)))))
     :rule-classes :congruence))
 
