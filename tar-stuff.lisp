@@ -2,6 +2,28 @@
 
 (include-book "test-stuff")
 
+(local (in-theory (e/d
+                   ()
+                   ((:definition str::strprefixp$inline)
+                    (:linear len-when-prefixp)
+                    (:rewrite
+                     append-nthcdr-dirname-basename-under-fat32-filename-list-equiv-lemma-1
+                     . 3)
+                    (:linear listpos-upper-bound-strong-2)
+                    (:linear
+                     non-free-index-listp-correctness-6-lemma-3)
+                    (:rewrite <<-sort-consp)
+                    ;; Consider disabling everywhere.
+                    (:definition hifat-file-alist-fix)
+                    (:rewrite
+                     hifat-find-file-correctness-3-lemma-2)
+                    (:linear
+                     dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-4
+                     . 1)
+                    (:linear
+                     dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-10)
+                    (:rewrite no-duplicatesp-of-member)))))
+
 (defconst *tar-regtype* #\0)
 (defconst *tar-dirtype* #\5)
 (defconst *tar-block-size* 512)
@@ -1414,19 +1436,6 @@
 
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-1
-  (consp
-   (assoc-equal
-    (cdr (assoc-equal (mv-nth 2 (hifat-open path fd-table file-table))
-                      (mv-nth 0
-                              (hifat-open path fd-table file-table))))
-    (mv-nth 1
-            (hifat-open path fd-table file-table))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable hifat-open)))
-  :rule-classes :type-prescription)
-
-(defthm
-  hifat-tar-name-list-alist-correctness-lemma-3
   (implies
    (not (equal (mv-nth 1 (hifat-find-file fs path))
                0))
