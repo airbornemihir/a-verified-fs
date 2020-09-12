@@ -1753,21 +1753,24 @@
        (consp
         (assoc-equal path2
                      (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-       (subseq
-        (mv-nth
-         0
-         (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                     dir-stream-table entry-count))
-        (cdr (assoc-equal
-              path2
-              (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-        (+
+       (equal
+        (subseq
+         (mv-nth
+          0
+          (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                      dir-stream-table entry-count))
          (cdr (assoc-equal
                path2
                (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-         (length
-          (hifat-tar-reg-file-string fs
-                                     (implode (fat32-path-to-path path2))))))))
+         (+
+          (cdr (assoc-equal
+                path2
+                (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+          (length
+           (hifat-tar-reg-file-string fs
+                                      (implode (fat32-path-to-path path2))))))
+        (hifat-tar-reg-file-string fs
+                                   (implode (fat32-path-to-path path2))))))
      (:linear
       :corollary
       (implies
