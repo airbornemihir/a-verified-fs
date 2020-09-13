@@ -1258,6 +1258,10 @@
                            "LOCAL      " "SHARE      "))))
     (equal errno 0))))
 
+;; This syscall needs to be adapted to return an extra value which will only be
+;; nil at the end of the directory. It is possible to just make the (mv-nth 0
+;; ...) of the return value nil, but there are certain advantages to
+;; maintaining that as a fat32-filename regardless of what the function returns.
 (defund hifat-readdir (dirp dir-stream-table)
   (declare (xargs :guard (and (dir-stream-table-p dir-stream-table)
                               (natp dirp))
