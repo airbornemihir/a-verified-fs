@@ -351,7 +351,7 @@
        ((mv name errno dir-stream-table)
         (hifat-readdir dirp dir-stream-table))
        ((when (or (equal errno *ebadf*)
-                  (equal name *empty-fat32-name*)))
+                  (equal name nil)))
         (mv nil dir-stream-table))
        ((mv tail dir-stream-table)
         (get-names-from-dirp dirp dir-stream-table)))
@@ -587,41 +587,22 @@
    :x
    :top :bash))
 
+(defthm
+  get-names-from-dirp-alt-lemma-2
+  (implies (consp (dir-stream->file-list x))
+           (car (dir-stream->file-list x)))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (fat32-filename-list-p)
+                    (fat32-filename-list-p-of-dir-stream->file-list))
+    :use fat32-filename-list-p-of-dir-stream->file-list))
+  :rule-classes :type-prescription)
+
 (defthmd
   get-names-from-dirp-alt
   (equal
    (get-names-from-dirp dirp dir-stream-table)
    (cond
-    ((member-equal
-      *empty-fat32-name*
-      (dir-stream->file-list
-       (cdr (assoc-equal (nfix dirp)
-                         (dir-stream-table-fix dir-stream-table)))))
-     (mv
-      (take
-       (position-equal
-        *empty-fat32-name*
-        (dir-stream->file-list
-         (cdr (assoc-equal (nfix dirp)
-                           (dir-stream-table-fix dir-stream-table)))))
-       (dir-stream->file-list
-        (cdr (assoc-equal (nfix dirp)
-                          (dir-stream-table-fix dir-stream-table)))))
-      (put-assoc-equal
-       (nfix dirp)
-       (dir-stream
-        (nthcdr
-         (+
-          1
-          (position-equal
-           *empty-fat32-name*
-           (dir-stream->file-list
-            (cdr (assoc-equal (nfix dirp)
-                              (dir-stream-table-fix dir-stream-table))))))
-         (dir-stream->file-list
-          (cdr (assoc-equal (nfix dirp)
-                            (dir-stream-table-fix dir-stream-table))))))
-       (dir-stream-table-fix dir-stream-table))))
     ((consp (assoc-equal (nfix dirp)
                          (dir-stream-table-fix dir-stream-table)))
      (mv (dir-stream->file-list

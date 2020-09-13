@@ -1258,10 +1258,9 @@
                            "LOCAL      " "SHARE      "))))
     (equal errno 0))))
 
-;; This syscall needs to be adapted to return an extra value which will only be
-;; nil at the end of the directory. It is possible to just make the (mv-nth 0
-;; ...) of the return value nil, but there are certain advantages to
-;; maintaining that as a fat32-filename regardless of what the function returns.
+;; This function is not going to return a pure filename as its (mv-nth 0
+;; ...). We'll let the chips fall where they may. But we really need to be able
+;; to return nil to signal clearly that we have reached the end of the stream.
 (defund hifat-readdir (dirp dir-stream-table)
   (declare (xargs :guard (and (dir-stream-table-p dir-stream-table)
                               (natp dirp))
@@ -1274,9 +1273,9 @@
        (alist-elem
         (assoc-equal dirp dir-stream-table))
        ((unless (consp alist-elem))
-        (mv *empty-fat32-name* *ebadf* dir-stream-table))
+        (mv nil *ebadf* dir-stream-table))
        ((unless (consp (dir-stream->file-list (cdr alist-elem))))
-        (mv *empty-fat32-name* 0 dir-stream-table)))
+        (mv nil 0 dir-stream-table)))
     (mv
      (car (dir-stream->file-list (cdr alist-elem)))
      0
