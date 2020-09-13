@@ -5646,38 +5646,6 @@
         path)))
      :do-not-induct t))))
 
-(defthm
-  abs-find-file-correctness-3
-  (implies (and (consp (assoc-equal 0 frame))
-                (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-                (mv-nth 1 (collapse frame))
-                (frame-p frame)
-                (no-duplicatesp-equal (strip-cars frame))
-                (subsetp-equal (abs-addrs (frame->root frame))
-                               (frame-addrs-root (frame->frame frame)))
-                (abs-separate frame))
-           (equal (mv-nth 1 (abs-find-file frame path))
-                  (mv-nth 1
-                          (hifat-find-file (mv-nth 0 (collapse frame))
-                                           path))))
-  :hints
-  (("goal"
-    :in-theory (e/d ((:definition abs-find-file)
-                     collapse (:definition collapse-this)
-                     abs-separate-of-frame->frame-of-collapse-this-lemma-10)
-                    ((:definition remove-equal)
-                     (:definition assoc-equal)
-                     (:definition member-equal)
-                     (:definition remove-assoc-equal)
-                     (:rewrite abs-file-alist-p-correctness-1)
-                     (:rewrite nthcdr-when->=-n-len-l)
-                     (:rewrite abs-find-file-of-put-assoc-lemma-6)
-                     (:rewrite subsetp-when-prefixp)
-                     (:definition strip-cars)
-                     abs-find-file-helper-of-collapse-3
-                     abs-find-file-correctness-1-lemma-3))
-    :induct (collapse frame))))
-
 (defthm abs-find-file-correctness-lemma-32
   (implies
    (and
@@ -6246,7 +6214,7 @@
       (m1-regular-file-p (mv-nth 0 (abs-find-file frame path))))))))
 
 (defthm
-  abs-find-file-correctness-4
+  abs-find-file-correctness-3
   (implies (and (consp (assoc-equal 0 frame))
                 (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
                 (mv-nth 1 (collapse frame))
@@ -6255,11 +6223,16 @@
                 (subsetp-equal (abs-addrs (frame->root frame))
                                (frame-addrs-root (frame->frame frame)))
                 (abs-separate frame))
-           (equal (m1-regular-file-p (mv-nth 0 (abs-find-file frame path)))
-                  (m1-regular-file-p
-                   (mv-nth 0
+           (and
+            (equal (mv-nth 1 (abs-find-file frame path))
+                   (mv-nth 1
                            (hifat-find-file (mv-nth 0 (collapse frame))
-                                            path)))))
+                                            path)))
+            (equal (m1-regular-file-p (mv-nth 0 (abs-find-file frame path)))
+                   (m1-regular-file-p
+                    (mv-nth 0
+                            (hifat-find-file (mv-nth 0 (collapse frame))
+                                             path))))))
   :hints
   (("goal"
     :in-theory (e/d ((:definition abs-find-file)
@@ -6275,6 +6248,5 @@
                      (:rewrite subsetp-when-prefixp)
                      (:definition strip-cars)
                      abs-find-file-helper-of-collapse-3
-                     abs-find-file-correctness-1-lemma-3
-                     abs-find-file-correctness-3))
+                     abs-find-file-correctness-1-lemma-3))
     :induct (collapse frame))))
