@@ -1153,23 +1153,27 @@
                      (:rewrite abs-file-alist-p-of-cdr)))))
   :rule-classes
   (:rewrite
-   (:rewrite :corollary
-             (implies
-              (abs-file-alist-p abs-file-alist)
-              (implies
-               (not (intersectp-equal x (abs-addrs abs-file-alist)))
-               (not (intersectp-equal
-                     x
-                     (abs-addrs (abs-fs-fix abs-file-alist)))))))
-   (:rewrite :corollary
-             (implies
-              (abs-file-alist-p abs-file-alist)
-              (implies
-               (not (intersectp-equal (abs-addrs abs-file-alist)
-                                      x))
-               (not
-                (intersectp-equal (abs-addrs (abs-fs-fix abs-file-alist))
-                                  x)))))))
+   (:rewrite
+    :corollary
+    (implies
+     (abs-file-alist-p abs-file-alist)
+     (implies
+      (not (intersectp-equal x (abs-addrs abs-file-alist)))
+      (not (intersectp-equal x
+                             (abs-addrs (abs-fs-fix abs-file-alist)))))))
+   (:rewrite
+    :corollary
+    (implies
+     (abs-file-alist-p abs-file-alist)
+     (implies (not (intersectp-equal (abs-addrs abs-file-alist)
+                                     x))
+              (not (intersectp-equal (abs-addrs (abs-fs-fix abs-file-alist))
+                                     x)))))
+   (:rewrite
+    :corollary (implies (and (abs-file-alist-p abs-file-alist)
+                             (equal (abs-addrs abs-file-alist) nil))
+                        (equal (abs-addrs (abs-fs-fix abs-file-alist))
+                               nil)))))
 
 ;; The abs-file-alist-p hypothesis is required because otherwise the fixing
 ;; could introduce a lot of (duplicate) zeros.
