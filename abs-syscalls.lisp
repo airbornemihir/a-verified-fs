@@ -1497,7 +1497,7 @@
                                                (abs-fs-fix fs)))))
      (relpath (cdr y))))))
 
-(defthmd
+(defthm
   abs-mkdir-correctness-lemma-26
   (implies
    (and (consp (assoc-equal 0 frame))
@@ -1509,88 +1509,28 @@
                        (frame-addrs-root (frame->frame frame)))
         (abs-separate frame))
    (equal
-    (m1-regular-file-p (mv-nth 0 (abs-find-file frame path)))
-    (m1-regular-file-p (mv-nth 0
-                               (hifat-find-file (mv-nth 0 (collapse frame))
-                                                path)))))
+    (abs-directory-file-p (mv-nth 0 (abs-find-file frame path)))
+    (m1-directory-file-p (mv-nth 0
+                                 (hifat-find-file (mv-nth 0 (collapse frame))
+                                                  path)))))
   :hints
   (("goal"
-    :in-theory (e/d ((:definition abs-find-file)
-                     collapse (:definition collapse-this)
-                     len-of-fat32-filename-list-fix
-                     abs-separate-of-frame->frame-of-collapse-this-lemma-10
-                     different-from-own-src-1)
-                    ((:rewrite partial-collapse-correctness-lemma-24)
-                     (:definition remove-equal)
-                     (:definition assoc-equal)
-                     (:definition remove-assoc-equal)
-                     (:rewrite abs-file-alist-p-correctness-1)
-                     (:rewrite nthcdr-when->=-n-len-l)
-                     (:rewrite abs-find-file-of-put-assoc-lemma-6)
-                     (:rewrite subsetp-when-prefixp)
-                     (:definition strip-cars)
-                     abs-find-file-helper-of-collapse-3
-                     abs-find-file-correctness-1-lemma-3
-                     (:rewrite consp-of-nthcdr)
-                     (:rewrite abs-find-file-helper-of-collapse-lemma-2)
-                     (:rewrite partial-collapse-correctness-lemma-2)
-                     (:rewrite put-assoc-equal-without-change . 2)
-                     (:rewrite abs-find-file-correctness-lemma-14)
-                     (:rewrite prefixp-when-equal-lengths)
-                     (:definition put-assoc-equal)
-                     (:rewrite abs-fs-p-when-hifat-no-dups-p)))
-    :induct (collapse frame)
-    :expand
-    ((:with abs-find-file-of-put-assoc
-            (:free (name val frame path)
-                   (abs-find-file (put-assoc-equal name val frame)
-                                  path)))
-     (:with
-      abs-find-file-of-remove-assoc-1
-      (abs-find-file (remove-assoc-equal (1st-complete (frame->frame frame))
-                                         (frame->frame frame))
-                     path))))
-   ("subgoal *1/6.4'" :expand ((:free (x) (hide x))))))
+    :do-not-induct t
+    :in-theory
+    (e/d
+     (abs-file-p-alt)
+     (abs-file-p-of-abs-find-file (:rewrite m1-regular-file-p-correctness-1)
+                                  m1-directory-file-p-when-m1-file-p
+                                  abs-find-file-correctness-2))
+    :use
+    (abs-file-p-of-abs-find-file abs-find-file-correctness-2
+     (:instance (:rewrite m1-regular-file-p-correctness-1)
+                (file (mv-nth 0
+                              (hifat-find-file (mv-nth 0 (collapse frame))
+                                               path))))))))
 
 (defthm
   abs-mkdir-correctness-lemma-27
- (implies
-  (and (consp (assoc-equal 0 frame))
-       (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
-       (mv-nth 1 (collapse frame))
-       (frame-p frame)
-       (no-duplicatesp-equal (strip-cars frame))
-       (subsetp-equal (abs-addrs (frame->root frame))
-                      (frame-addrs-root (frame->frame frame)))
-       (abs-separate frame))
-  (equal
-   (abs-directory-file-p (mv-nth 0 (abs-find-file frame path)))
-   (m1-directory-file-p (mv-nth 0
-                                (hifat-find-file (mv-nth 0 (collapse frame))
-                                                 path)))))
- :hints
- (("goal"
-   :do-not-induct t
-   :in-theory
-   (e/d
-    (abs-file-p-alt)
-    (abs-file-p-of-abs-find-file (:rewrite m1-regular-file-p-correctness-1)
-                                 m1-directory-file-p-when-m1-file-p))
-   :use
-   (abs-file-p-of-abs-find-file
-    abs-mkdir-correctness-lemma-26
-    (:instance (:rewrite m1-regular-file-p-correctness-1)
-               (file (mv-nth 0
-                             (hifat-find-file (mv-nth 0 (collapse frame))
-                                              path))))))
-  ("subgoal 1"
-   :expand
-   (m1-regular-file-p (mv-nth 0
-                              (hifat-find-file (mv-nth 0 (collapse frame))
-                                               path))))))
-
-(defthm
-  abs-mkdir-correctness-lemma-28
   (not
    (intersectp-equal
     (names-at

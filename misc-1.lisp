@@ -47,7 +47,40 @@
     :induct (collapse frame))))
 
 (defthm
-  abs-find-file-correctness-1-lemma-1
+  abs-find-file-correctness-lemma-10
+  (implies
+   (and
+    (equal
+     (frame-val->src (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                       (frame->frame frame1))))
+     0)
+    (equal (frame->frame frame1)
+           (frame->frame frame2))
+    (dist-names (frame->root frame2)
+                nil (frame->frame frame1))
+    (abs-separate (frame->frame frame1)))
+   (dist-names
+    (ctx-app
+     (frame->root frame2)
+     (frame-val->dir (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                       (frame->frame frame1))))
+     (1st-complete (frame->frame frame1))
+     (frame-val->path (cdr (assoc-equal (1st-complete (frame->frame frame1))
+                                        (frame->frame frame1)))))
+    nil
+    (frame->frame (collapse-this frame1
+                                 (1st-complete (frame->frame frame1))))))
+  :hints
+  (("goal" :in-theory
+    (e/d
+     ((:rewrite equal-of-frame->frame-of-collapse-this))
+     ((:rewrite abs-separate-correctness-1-lemma-37)))
+    :use (:instance (:rewrite abs-separate-correctness-1-lemma-37)
+                    (x (1st-complete (frame->frame frame2)))
+                    (frame frame2)))))
+
+(defthm
+  abs-find-file-correctness-lemma-43
   (implies
    (and (abs-complete (abs-fs-fix root))
         (m1-regular-file-p (mv-nth 0
@@ -748,20 +781,8 @@
            2)))
   :hints (("goal" :in-theory (enable collapse-this))))
 
-;; Maybe revisit this if a more explicit theorem turns out to be necessary.
 (defthm
-  abs-find-file-correctness-1-lemma-69
-  (implies
-   (not (equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               0))
-   (consp
-    (assoc-equal (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-                 (frame->frame (collapse-this frame x)))))
-  :hints (("goal" :in-theory (enable collapse-this)))
-  :rule-classes :type-prescription)
-
-(defthm
-  abs-find-file-correctness-1-lemma-53
+  abs-find-file-correctness-lemma-44
   (implies
    (equal
     (hifat-find-file
