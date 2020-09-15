@@ -4967,7 +4967,6 @@
       (no-duplicatesp-equal (strip-cars frame))
       (abs-separate frame))
      (equal
-      (mv-nth 1 (abs-find-file frame path))
       (mv-nth
        1
        (abs-find-file
@@ -5011,7 +5010,8 @@
                  (frame->frame frame)))))
          (remove-assoc-equal (1st-complete (frame->frame frame))
                              (frame->frame frame)))
-        path))))
+        path))
+      (mv-nth 1 (abs-find-file frame path))))
     :hints
     (("goal"
       :expand
