@@ -5813,7 +5813,8 @@
    (in-theory
     (e/d
      (abs-find-file collapse collapse-this
-                    abs-separate-of-frame->frame-of-collapse-this-lemma-10)
+                    abs-separate-of-frame->frame-of-collapse-this-lemma-10
+                    len-of-fat32-filename-list-fix)
      ((:definition remove-equal)
       (:definition assoc-equal)
       (:definition member-equal)
@@ -5826,7 +5827,6 @@
       abs-find-file-helper-of-collapse-3
       abs-find-file-correctness-1-lemma-3
       (:rewrite abs-find-file-of-put-assoc)
-      (:rewrite abs-find-file-of-put-assoc-lemma-7 . 1)
       (:rewrite consp-of-nthcdr)
       (:rewrite abs-find-file-helper-when-atom)
       (:rewrite prefixp-one-way-or-another . 1)
@@ -5839,7 +5839,6 @@
       (:rewrite
        collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-2)
       (:definition len)
-      (:linear len-when-prefixp)
       (:rewrite abs-no-dups-p-of-put-assoc-equal)
       (:definition put-assoc-equal)
       (:rewrite abs-no-dups-p-of-cdr)
