@@ -17,7 +17,9 @@
                      (:rewrite take-of-take-split)
                      (:rewrite take-more-of-take-fewer)
                      (:rewrite remove-assoc-of-put-assoc)
-                     (:linear position-when-member))))
+                     (:linear position-when-member)
+                     ;; Trying to see if something works...
+                     nfix)))
 
 (local
  (in-theory
