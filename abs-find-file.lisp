@@ -5373,6 +5373,12 @@
                                                path)))))
    :hints
    (("goal"
+     :in-theory (disable (:EXECUTABLE-COUNTERPART CONSP)
+                         (:REWRITE ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-9)
+                         (:REWRITE DIFFERENT-FROM-OWN-SRC-1)
+                         (:REWRITE FRAME-ADDRS-ROOT-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-1)
+                         (:TYPE-PRESCRIPTION ASSOC-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-1)
+                         (:TYPE-PRESCRIPTION FRAME->FRAME))
      :do-not-induct t
      :expand
      ((:with abs-find-file-of-remove-assoc-1
