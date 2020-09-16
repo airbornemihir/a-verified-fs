@@ -5600,8 +5600,10 @@
                        path)))
       (m1-regular-file-p (mv-nth 0 (abs-find-file frame path)))))
     :hints (("Goal" :do-not-induct t
-             :in-theory (enable
-                         (:rewrite abs-find-file-of-put-assoc-lemma-7 . 1)))))
+             :in-theory
+             (e/d
+              ((:rewrite abs-find-file-of-put-assoc-lemma-7 . 1))
+              (abs-find-file-correctness-lemma-26)))))
 
   (defthm abs-find-file-correctness-lemma-38
     (implies
