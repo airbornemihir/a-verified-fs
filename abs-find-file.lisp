@@ -5021,7 +5021,7 @@
     abs-find-file-correctness-lemma-10
     (implies
      (and
-      (atom (assoc-equal 0 frame))
+      (not (consp (assoc-equal 0 frame)))
       (< 0 (1st-complete frame))
       (< 0
          (frame-val->src (cdr (assoc-equal (1st-complete frame)
@@ -5073,10 +5073,10 @@
                           frame)))
            (ctx-app
             (frame-val->dir
-             (cdr (assoc-equal
-                   (frame-val->src (cdr (assoc-equal (1st-complete frame)
-                                                     frame)))
-                   frame)))
+             (cdr
+              (assoc-equal (frame-val->src (cdr (assoc-equal (1st-complete frame)
+                                                             frame)))
+                           frame)))
             (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                               frame)))
             (1st-complete frame)
@@ -5154,10 +5154,10 @@
                           frame)))
            (ctx-app
             (frame-val->dir
-             (cdr (assoc-equal
-                   (frame-val->src (cdr (assoc-equal (1st-complete frame)
-                                                     frame)))
-                   frame)))
+             (cdr
+              (assoc-equal (frame-val->src (cdr (assoc-equal (1st-complete frame)
+                                                             frame)))
+                           frame)))
             (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                               frame)))
             (1st-complete frame)
