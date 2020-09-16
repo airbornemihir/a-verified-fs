@@ -5375,12 +5375,7 @@
    (("goal"
      :in-theory
      (disable
-      (:executable-counterpart consp)
-      (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-9)
-      (:rewrite different-from-own-src-1)
-      (:rewrite frame-addrs-root-of-frame->frame-of-collapse-this-lemma-1)
-      (:type-prescription assoc-of-frame->frame-of-collapse-this-lemma-1)
-      (:type-prescription frame->frame))
+      (:rewrite frame-addrs-root-of-frame->frame-of-collapse-this-lemma-1))
      :do-not-induct t
      :expand
      ((:with abs-find-file-of-remove-assoc-1
