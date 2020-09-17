@@ -47,6 +47,16 @@
     :induct (collapse frame))))
 
 (defthm
+  abs-find-file-helper-of-collapse-lemma-1
+  (implies (m1-regular-file-p (mv-nth 0 (abs-find-file-helper root path)))
+           (not (equal (mv-nth 1 (abs-find-file-helper root path))
+                       2)))
+  :hints
+  (("goal"
+    :use (:instance (:rewrite abs-find-file-helper-of-ctx-app-lemma-4)
+                    (fs root)))))
+
+(defthm
   abs-find-file-correctness-lemma-34
   (implies
    (and
