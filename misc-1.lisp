@@ -57,7 +57,7 @@
                     (fs root)))))
 
 (defthmd
-  abs-find-file-correctness-1-lemma-3
+  abs-find-file-correctness-lemma-47
   (implies
    (and (frame-p frame)
         (no-duplicatesp-equal (strip-cars frame))
@@ -207,7 +207,8 @@
   (("goal"
     :do-not-induct t
     :in-theory (e/d (collapse-this abs-find-file-of-put-assoc-lemma-6
-                                   len-of-fat32-filename-list-fix abs-find-file-correctness-1-lemma-3)
+                                   len-of-fat32-filename-list-fix
+                                   abs-find-file-correctness-lemma-47)
                     (abs-find-file-of-put-assoc-lemma-7))
     :expand
     ((:with abs-find-file-of-remove-assoc-1
