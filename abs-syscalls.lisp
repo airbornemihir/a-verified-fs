@@ -37,7 +37,6 @@
                         (:rewrite natp-of-car-when-nat-listp)
                         (:rewrite
                          partial-collapse-correctness-lemma-24)
-                        (:rewrite abs-find-file-correctness-lemma-29)
                         (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-2)
                         (:rewrite when-zp-src-of-1st-collapse-1)
                         (:rewrite ctx-app-ok-of-abs-fs-fix-1)
