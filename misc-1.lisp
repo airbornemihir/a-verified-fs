@@ -929,7 +929,7 @@
                   (hifat-find-file (frame->root frame)
                                    path)))
   :instructions (:promote (:dive 2)
-                          (:rewrite abs-find-file-correctness-1-lemma-31)
+                          (:rewrite hifat-find-file-correctness-2)
                           :top :s))
 
 (defthm

@@ -4023,21 +4023,6 @@
                                                 frame)))
               frame)))))))
 
-(defthmd abs-find-file-correctness-1-lemma-31
-  (equal (hifat-find-file fs path)
-         (mv (mv-nth 0 (hifat-find-file fs path))
-             (mv-nth 1 (hifat-find-file fs path))))
-  :hints (("goal" :in-theory (enable hifat-find-file))))
-
-(defthmd
-  abs-find-file-correctness-1-lemma-74
-  (implies
-   (not (zp (mv-nth 1 (hifat-find-file fs path))))
-   (equal (hifat-find-file fs path)
-          (mv (make-m1-file)
-              (mv-nth 1 (hifat-find-file fs path)))))
-  :hints (("goal" :in-theory (enable hifat-find-file))))
-
 (local
  (defthm
    abs-find-file-correctness-lemma-18
@@ -4188,7 +4173,7 @@
     ((:instance (:rewrite abs-find-file-correctness-1-lemma-48)
                 (x (1st-complete frame)))
      (:instance
-      abs-find-file-correctness-1-lemma-74
+      hifat-find-file-correctness-5
       (fs (frame-val->dir (cdr (assoc-equal (1st-complete frame)
                                             frame))))
       (path
