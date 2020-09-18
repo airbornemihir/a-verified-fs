@@ -56,6 +56,34 @@
     :use (:instance (:rewrite abs-find-file-helper-of-ctx-app-lemma-4)
                     (fs root)))))
 
+(defthmd
+  abs-find-file-correctness-1-lemma-3
+  (implies
+   (and (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame))
+        (consp (assoc-equal (1st-complete frame)
+                            frame))
+        (equal (mv-nth 1
+                       (abs-find-file (remove-assoc-equal (1st-complete frame)
+                                                          frame)
+                                      path))
+               2))
+   (equal
+    (abs-find-file frame path)
+    (if
+     (prefixp (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                 frame)))
+              (fat32-filename-list-fix path))
+     (abs-find-file-helper
+      (frame-val->dir (cdr (assoc-equal (1st-complete frame)
+                                        frame)))
+      (nthcdr (len (frame-val->path (cdr (assoc-equal (1st-complete frame)
+                                                      frame))))
+              path))
+     (mv (abs-file-fix nil) *enoent*))))
+  :hints (("goal" :use (:instance abs-find-file-of-put-assoc-lemma-6
+                                  (x (1st-complete frame))))))
+
 (defthm
   abs-find-file-correctness-lemma-34
   (implies
@@ -178,7 +206,8 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (collapse-this abs-find-file-of-put-assoc-lemma-6 len-of-fat32-filename-list-fix)
+    :in-theory (e/d (collapse-this abs-find-file-of-put-assoc-lemma-6
+                                   len-of-fat32-filename-list-fix abs-find-file-correctness-1-lemma-3)
                     (abs-find-file-of-put-assoc-lemma-7))
     :expand
     ((:with abs-find-file-of-remove-assoc-1
@@ -1062,7 +1091,6 @@
                      (:rewrite
                       abs-find-file-helper-of-collapse-lemma-2)
                      (:definition remove-equal)
-                     abs-find-file-of-put-assoc-lemma-7
                      (:definition assoc-equal)
                      (:rewrite assoc-of-car-when-member)
                      (:rewrite subsetp-car-member)
