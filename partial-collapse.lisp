@@ -8770,6 +8770,19 @@
            (natp x))
   :rule-classes :forward-chaining)
 
+;; Rename later.
+(defthm
+  abs-mkdir-correctness-lemma-24
+  (implies (and (frame-p frame)
+                (atom (assoc-equal 0 frame))
+                (consp (assoc-equal y frame))
+                (abs-complete (frame-val->dir (cdr (assoc-equal y frame))))
+                (prefixp path
+                         (frame-val->path (cdr (assoc-equal y frame)))))
+           (< 0 (1st-complete-under-path frame path)))
+  :hints (("goal" :in-theory (enable 1st-complete-under-path)))
+  :rule-classes :linear)
+
 (encapsulate
   ()
 
@@ -8853,7 +8866,52 @@
                        (y (strip-cars (frame->frame frame)))
                        (a (car (chain-leading-to-complete frame x nil seq)))
                        (x (chain-leading-to-complete frame x nil seq))))))
-    :rule-classes :linear))
+    :rule-classes :linear)
+
+  (local
+   (defthm
+     partial-collapse-correctness-lemma-102
+     (implies
+      (and (mv-nth 1 (collapse frame))
+           (not (member-equal y acc))
+           (member-equal y
+                         (chain-leading-to-complete frame x acc seq)))
+      (prefixp (frame-val->path (cdr (assoc-equal x (frame->frame frame))))
+               (frame-val->path (cdr (assoc-equal y (frame->frame frame))))))
+     :hints (("goal" :induct (chain-leading-to-complete frame x acc seq)))))
+
+  (defthm
+    partial-collapse-correctness-lemma-92
+    (implies
+     (and (prefixp path
+                   (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+          (mv-nth 1 (collapse frame))
+          (valid-seqp frame seq)
+          (nat-listp seq)
+          (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+          (consp (assoc-equal x (frame->frame frame)))
+          (frame-p frame)
+          (abs-separate frame)
+          (not (consp (frame-val->path$inline (cdr (assoc-equal 0 frame)))))
+          (not (member-equal x seq)))
+     (< 0
+        (1st-complete-under-path (frame->frame (collapse-seq frame seq))
+                                 path)))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory
+      (e/d (abs-complete intersectp-equal)
+           (abs-mkdir-correctness-lemma-24 partial-collapse-correctness-lemma-61
+                                           (:rewrite subsetp-car-member)))
+      :use ((:instance abs-mkdir-correctness-lemma-24
+                       (frame (frame->frame (collapse-seq frame seq)))
+                       (y (car (chain-leading-to-complete frame x nil seq))))
+            (:instance (:rewrite subsetp-car-member)
+                       (y (strip-cars (frame->frame frame)))
+                       (x (chain-leading-to-complete frame x nil seq))))
+      :restrict
+      ((partial-collapse-correctness-lemma-102 ((acc nil) (seq seq))))))))
 
 (local
  (defthm
@@ -9554,7 +9612,8 @@
   collapse-seq-of-seq-this-under-path-is-partial-collapse
   (implies (no-duplicatesp-equal (strip-cars (frame->frame frame)))
            (equal (partial-collapse frame path)
-                  (collapse-seq frame (seq-this-under-path frame path))))
+                  (collapse-seq frame
+                                (seq-this-under-path frame path))))
   :hints
   (("goal" :in-theory (e/d (partial-collapse collapse-seq seq-this-under-path)
                            ((:definition assoc-equal)

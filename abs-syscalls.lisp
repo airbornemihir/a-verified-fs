@@ -10178,19 +10178,6 @@ Macroexpansion of instruction (ACL2-PC::SR) failed!
                                (1st-complete-under-path (frame->frame frame)
                                                         path))))))))
 
-;; Inductive, so probably not worth disabling.
-(defthm
-  abs-mkdir-correctness-lemma-24
-  (implies (and (frame-p frame)
-                (atom (assoc-equal 0 frame))
-                (consp (assoc-equal y frame))
-                (abs-complete (frame-val->dir (cdr (assoc-equal y frame))))
-                (prefixp path
-                         (frame-val->path (cdr (assoc-equal y frame)))))
-           (< 0 (1st-complete-under-path frame path)))
-  :hints (("goal" :in-theory (enable 1st-complete-under-path)))
-  :rule-classes :linear)
-
 (defthm
   collapse-hifat-place-file-lemma-2
   (implies
