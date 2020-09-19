@@ -9875,34 +9875,34 @@ print-gv, see :DOC trace, and see :DOC wet.
 Macroexpansion of instruction (ACL2-PC::SR) failed!
 ||#
 
-;; (thm
-;;  (implies
-;;   (and (mv-nth 1 (collapse frame)))
-;;   (equal
-;;    (1st-complete-under-path
-;;     (frame->frame (partial-collapse frame path))
-;;     path)
-;;    0))
-;;  :hints (("Goal" :in-theory (enable partial-collapse collapse
-;;                                     1st-complete-under-path)
-;;           :induct (partial-collapse frame path))))
+(defthm
+  abs-find-file-after-abs-mkdir-lemma-16
+  (implies
+   (and (mv-nth 1 (collapse frame))
+        (abs-separate frame)
+        (frame-p frame)
+        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame))))
+   (equal
+    (1st-complete-under-path (frame->frame (partial-collapse frame path))
+                             path)
+    0))
+  :hints (("goal" :in-theory (enable partial-collapse
+                                     collapse 1st-complete-under-path
+                                     partial-collapse-correctness-lemma-122)
+           :induct (partial-collapse frame path))))
 
-(skip-proofs
- (defthm abs-find-file-after-abs-mkdir-lemma-5
-   (implies
-    (and
-     (frame-p frame)
-     (abs-separate frame)
-     (subsetp-equal (abs-addrs (frame->root frame))
-                    (frame-addrs-root (frame->frame frame)))
-     (no-duplicatesp-equal (strip-cars frame))
-     (mv-nth 1 (collapse frame))
-     (fat32-filename-list-prefixp path1 path2))
-    (equal
-     (1st-complete-under-path
-      (frame->frame (partial-collapse frame path1))
-      path2)
-     0))))
+(defthm abs-find-file-after-abs-mkdir-lemma-5
+  (implies (and (frame-p frame)
+                (atom (assoc-equal 0 frame))
+                (equal (1st-complete-under-path frame path1)
+                       0)
+                (prefixp path1 path2))
+           (equal (1st-complete-under-path frame path2)
+                  0))
+  :hints (("goal" :in-theory (enable 1st-complete-under-path))))
 
 (defthm
   1st-complete-under-path-of-put-assoc-1
