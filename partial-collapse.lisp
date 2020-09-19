@@ -49,6 +49,22 @@
                   (1st-complete frame)))
   :hints (("goal" :in-theory (enable 1st-complete-under-path
                                      1st-complete prefixp))))
+(defthm
+  1st-complete-under-path-of-put-assoc-1
+  (implies
+   (and
+    (frame-p frame)
+    (no-duplicatesp-equal (strip-cars frame))
+    (not (and (equal (1st-complete-under-path (put-assoc-equal name val frame)
+                                              path)
+                     name)
+              (atom (abs-addrs (frame-val->dir val)))
+              (prefixp path (frame-val->path val)))))
+   (equal (1st-complete-under-path (put-assoc-equal name val frame)
+                                   path)
+          (1st-complete-under-path (remove-assoc-equal name frame)
+                                   path)))
+  :hints (("goal" :in-theory (enable 1st-complete-under-path))))
 
 (defund
   partial-collapse (frame pathname)

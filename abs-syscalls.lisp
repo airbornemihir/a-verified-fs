@@ -9875,25 +9875,6 @@ print-gv, see :DOC trace, and see :DOC wet.
 Macroexpansion of instruction (ACL2-PC::SR) failed!
 ||#
 
-(defthm
-  abs-find-file-after-abs-mkdir-lemma-16
-  (implies
-   (and (mv-nth 1 (collapse frame))
-        (abs-separate frame)
-        (frame-p frame)
-        (no-duplicatesp-equal (strip-cars (frame->frame frame)))
-        (atom (frame-val->path (cdr (assoc-equal 0 frame))))
-        (subsetp-equal (abs-addrs (frame->root frame))
-                       (frame-addrs-root (frame->frame frame))))
-   (equal
-    (1st-complete-under-path (frame->frame (partial-collapse frame path))
-                             path)
-    0))
-  :hints (("goal" :in-theory (enable partial-collapse
-                                     collapse 1st-complete-under-path
-                                     partial-collapse-correctness-lemma-122)
-           :induct (partial-collapse frame path))))
-
 (defthm abs-find-file-after-abs-mkdir-lemma-5
   (implies (and (frame-p frame)
                 (atom (assoc-equal 0 frame))
@@ -9904,97 +9885,6 @@ Macroexpansion of instruction (ACL2-PC::SR) failed!
                   0))
   :hints (("goal" :in-theory (enable 1st-complete-under-path))))
 
-(defthm
-  1st-complete-under-path-of-put-assoc-1
-  (implies
-   (and
-    (frame-p frame)
-    (no-duplicatesp-equal (strip-cars frame))
-    (not (and (equal (1st-complete-under-path (put-assoc-equal name val frame)
-                                              path)
-                     name)
-              (atom (abs-addrs (frame-val->dir val)))
-              (prefixp path (frame-val->path val)))))
-   (equal (1st-complete-under-path (put-assoc-equal name val frame)
-                                   path)
-          (1st-complete-under-path (remove-assoc-equal name frame)
-                                   path)))
-  :hints (("goal" :in-theory (enable 1st-complete-under-path))))
-
-;; (thm
-;;  (IMPLIES
-;;   (AND
-;;    (FRAME-P FRAME)
-;;    (NO-DUPLICATESP-EQUAL (STRIP-CARS FRAME))
-;;    (abs-separate frame)
-;;    (MV-NTH '1 (COLLAPSE FRAME))
-;;    (subsetp-equal (abs-addrs (frame->root frame))
-;;                   (frame-addrs-root (frame->frame frame)))
-;;    (CONSP (ASSOC-EQUAL 0 FRAME))
-;;    (EQUAL (FRAME-VAL->PATH$INLINE (CDR (ASSOC-EQUAL 0 FRAME)))
-;;           NIL)
-;;    (EQUAL (FRAME-VAL->SRC$INLINE (CDR (ASSOC-EQUAL 0 FRAME)))
-;;           0))
-;;    (EQUAL
-;;     (1ST-COMPLETE-UNDER-PATH
-;;      (FRAME->FRAME
-;;       (PUT-ASSOC-EQUAL
-;;        (ABS-FIND-FILE-SRC (PARTIAL-COLLAPSE FRAME '("TMP        "))
-;;                           '("TMP        "))
-;;        (FRAME-VAL
-;;         (FRAME-VAL->PATH$INLINE
-;;          (CDR
-;;             (ASSOC-EQUAL
-;;                  (ABS-FIND-FILE-SRC (PARTIAL-COLLAPSE FRAME '("TMP        "))
-;;                                     '("TMP        "))
-;;                  FRAME)))
-;;         (MV-NTH
-;;          1
-;;          (ABS-ALLOC
-;;           (FRAME-VAL->DIR$INLINE
-;;            (CDR
-;;             (ASSOC-EQUAL
-;;                  (ABS-FIND-FILE-SRC (PARTIAL-COLLAPSE FRAME '("TMP        "))
-;;                                     '("TMP        "))
-;;                  (PARTIAL-COLLAPSE FRAME '("TMP        ")))))
-;;           (NTHCDR
-;;            (LEN
-;;             (FRAME-VAL->PATH$INLINE
-;;              (CDR
-;;               (ASSOC-EQUAL
-;;                  (ABS-FIND-FILE-SRC (PARTIAL-COLLAPSE FRAME '("TMP        "))
-;;                                     '("TMP        "))
-;;                  FRAME))))
-;;            '("TMP        "))
-;;           (FIND-NEW-INDEX
-;;                (STRIP-CARS (PARTIAL-COLLAPSE FRAME '("TMP        "))))))
-;;         (FRAME-VAL->SRC$INLINE
-;;          (CDR
-;;             (ASSOC-EQUAL
-;;                  (ABS-FIND-FILE-SRC (PARTIAL-COLLAPSE FRAME '("TMP        "))
-;;                                     '("TMP        "))
-;;                  FRAME))))
-;;        (PARTIAL-COLLAPSE FRAME '("TMP        "))))
-;;      '("TMP        " "DOCS       "))
-;;     0))
-;;  :HINTS (("goal" :IN-THEORY
-;;           (e/d (ABS-MKDIR
-;;                 PARTIAL-COLLAPSE 1ST-COMPLETE-UNDER-PATH
-;;                 ABS-FIND-FILE ABS-FIND-FILE-SRC
-;;                 ASSOC-EQUAL-OF-FRAME-WITH-ROOT
-;;                 PUT-ASSOC-EQUAL-OF-FRAME-WITH-ROOT
-;;                 frame->frame-of-put-assoc abs-addrs abs-alloc
-;;                 abs-fs-fix)
-;;                ((:REWRITE FRAME-P-OF-CDR-WHEN-FRAME-P)
-;;                 (:REWRITE COLLAPSE-HIFAT-PLACE-FILE-LEMMA-6)
-;;                 (:DEFINITION FAT32-FILENAME-LIST-PREFIXP)
-;;                 (:REWRITE LEN-WHEN-PREFIXP)
-;;                 (:REWRITE CAR-OF-NTHCDR)
-;;                 ABS-SEPARATE-OF-FRAME->FRAME-OF-COLLAPSE-THIS-LEMMA-8))
-;;           :DO-NOT-INDUCT T
-;;           :restrict ((1ST-COMPLETE-UNDER-PATH-WHEN-PATH-CLEAR-OF-PREFIX
-;;                       ((PATH1 '("TMP        ")))))))
-;;  :otf-flg t)
 (defthm
   abs-find-file-after-abs-mkdir-lemma-6
   (implies (and (zp (abs-find-file-src frame (list basename)))
