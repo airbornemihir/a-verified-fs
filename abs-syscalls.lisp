@@ -9799,6 +9799,94 @@
            :in-theory (enable abs-find-file-helper)))
   :rule-classes :forward-chaining)
 
+#||
+A hard ACL2 error can be seen by executing the following commands at this
+point.
+
+(verify
+ (implies (and
+           (consp (frame->frame frame))
+           (< 0
+              (1st-complete-under-path (frame->frame frame)
+                                       path))
+           (<
+            0
+            (frame-val->src
+             (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                        path)
+                               (frame->frame frame)))))
+           (mv-nth 1 (collapse frame)))
+          (ctx-app-ok
+           (frame-val->dir
+            (cdr
+             (assoc-equal
+              (frame-val->src
+               (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                          path)
+                                 (frame->frame frame))))
+              (frame->frame frame))))
+           (1st-complete-under-path (frame->frame frame)
+                                    path)
+           (nthcdr
+            (len
+             (frame-val->path
+              (cdr
+               (assoc-equal
+                (frame-val->src
+                 (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                            path)
+                                   (frame->frame frame))))
+                (frame->frame frame)))))
+            (frame-val->path
+             (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                        path)
+                               (frame->frame frame))))))))
+
+promote
+
+sr
+
+At least for me, it reads:
+HARD ACL2 ERROR in FMT-VAR:  Illegal Fmt Syntax.  Unbound Fmt Variable.
+The tilde directive at location 494 in the fmt string below uses the
+variable #\8.  But this variable is not bound in the association list,
+((#\x "~ ~ Additional bindings: ~X0t"
+      (#\0 (X (FRAME->FRAME FRAME))))
+ (#\c . 0)
+ (#\3)
+ (#\s . 0)
+ (#\a (X (FRAME->FRAME FRAME))
+      (Y (NTHCDR (LEN #@5#)
+                 (FRAME-VAL->PATH #@6#)))
+      (VAR (1ST-COMPLETE-UNDER-PATH (FRAME->FRAME FRAME)
+                                    PATH))
+      (FS (FRAME-VAL->DIR (CDR #@7#))))
+ (#\b . 1)
+ (#\e . EQUAL)
+ . #@8#),
+supplied with the fmt string.
+
+
+
+ACL2 Error in PC-MACROEXPAND:  Evaluation aborted.  To debug see :DOC
+print-gv, see :DOC trace, and see :DOC wet.
+
+
+Macroexpansion of instruction (ACL2-PC::SR) failed!
+||#
+
+;; (thm
+;;  (implies
+;;   (and (mv-nth 1 (collapse frame)))
+;;   (equal
+;;    (1st-complete-under-path
+;;     (frame->frame (partial-collapse frame path))
+;;     path)
+;;    0))
+;;  :hints (("Goal" :in-theory (enable partial-collapse collapse
+;;                                     1st-complete-under-path)
+;;           :induct (partial-collapse frame path))))
+
 (skip-proofs
  (defthm abs-find-file-after-abs-mkdir-lemma-5
    (implies
