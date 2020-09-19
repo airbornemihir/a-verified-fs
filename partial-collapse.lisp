@@ -118,12 +118,10 @@
                     ((:definition no-duplicatesp-equal)
                      (:definition assoc-equal)
                      (:rewrite subsetp-when-prefixp)
-                     (:definition true-listp)
                      (:rewrite put-assoc-equal-without-change . 2)
                      abs-separate-of-frame->frame-of-collapse-this-lemma-8
                      (:rewrite true-list-fix-when-true-listp)
                      (:rewrite true-listp-when-string-list)
-                     (:definition string-listp)
                      (:definition put-assoc-equal)
                      (:rewrite remove-assoc-of-put-assoc)
                      (:definition remove-assoc-equal)
