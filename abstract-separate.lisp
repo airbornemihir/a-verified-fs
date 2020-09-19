@@ -6680,8 +6680,8 @@
     :expand (collapse-iter frame 1))))
 
 (defthm collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-8
-  (implies (and (consp (assoc-equal x (frame->frame frame)))
-                (frame-p (frame->frame frame)))
+  (implies (and (consp (assoc-equal x frame))
+                (frame-p frame))
            (natp x))
   :rule-classes :forward-chaining)
 
@@ -6690,17 +6690,20 @@
   (implies
    (and (mv-nth 1 (collapse frame))
         (consp (assoc-equal x (frame->frame frame)))
-        (frame-p (frame->frame frame))
         (no-duplicatesp-equal (strip-cars (frame->frame frame))))
    (not (equal (1st-complete (frame->frame frame))
                (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))))
   :hints
   (("goal"
-    :in-theory (disable (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8 . 2))
-    :use (:instance (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8 . 2)
-                    (frame frame)
-                    (x x)
-                    (y (1st-complete (frame->frame frame)))))))
+    :in-theory
+    (disable (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
+                       . 2))
+    :use
+    (:instance (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
+                         . 2)
+               (frame frame)
+               (x x)
+               (y (1st-complete (frame->frame frame)))))))
 
 (defthm
   collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-10
@@ -6718,17 +6721,24 @@
      (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))))
   :hints
   (("goal"
-    :in-theory (e/d (collapse-iter)
-                    ((:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7)))
-    :use ((:instance (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7)
-                     (x x)
-                     (n 1)
-                     (frame frame))
-          (:instance
-           (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7)
-           (x (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
-           (n 1)
-           (frame frame)))
+    :in-theory
+    (e/d
+     (collapse-iter)
+     ((:rewrite
+       collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7)))
+    :use
+    ((:instance
+      (:rewrite
+       collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7)
+      (x x)
+      (n 1)
+      (frame frame))
+     (:instance
+      (:rewrite
+       collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-7)
+      (x (frame-val->src (cdr (assoc-equal x (frame->frame frame)))))
+      (n 1)
+      (frame frame)))
     :expand (collapse-iter frame 1))))
 
 (defthm
@@ -6803,7 +6813,6 @@
   :hints (("goal" :in-theory (enable frame-addrs-before
                                      intersectp-equal collapse-1st-index))))
 
-;; Rename later.
 (defthm
   frame-val->src-of-cdr-of-assoc-when-member-of-frame-addrs-before
   (implies (member-equal y (frame-addrs-before frame x n))

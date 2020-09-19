@@ -66,6 +66,8 @@
                                    path)))
   :hints (("goal" :in-theory (enable 1st-complete-under-path))))
 
+;; Trying to refactor this around "path" instead of "pathname" messes things up
+;; because path and pathname are both variables.
 (defund
   partial-collapse (frame pathname)
   (declare (xargs :guard (and (frame-p frame)
@@ -9530,3 +9532,34 @@
              (collapse-equiv (partial-collapse frame path)
                              frame))
     :hints (("goal" :in-theory (enable collapse-equiv))))))
+
+(defund
+  seq-this-under-path
+  (frame path)
+  (declare
+   (xargs :measure (len (frame->frame frame))
+          :verify-guards nil))
+  (b*
+      (((when (atom (frame->frame frame))) nil)
+       (next-frame (collapse-seq frame (list
+                                        (1st-complete-under-path (frame->frame frame)
+                                                                 path))))
+       ((unless (< (len (frame->frame next-frame)) (len (frame->frame frame))))
+        nil))
+    (cons (1st-complete-under-path (frame->frame frame)
+                                   path)
+          (seq-this-under-path next-frame path))))
+
+(defthmd
+  collapse-seq-of-seq-this-under-path-is-partial-collapse
+  (implies (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+           (equal (partial-collapse frame path)
+                  (collapse-seq frame (seq-this-under-path frame path))))
+  :hints
+  (("goal" :in-theory (e/d (partial-collapse collapse-seq seq-this-under-path)
+                           ((:definition assoc-equal)
+                            (:rewrite nthcdr-when->=-n-len-l)
+                            (:definition remove-equal)
+                            (:rewrite remove-when-absent)))
+    :induct (seq-this-under-path frame path)
+    :expand (partial-collapse frame path))))
