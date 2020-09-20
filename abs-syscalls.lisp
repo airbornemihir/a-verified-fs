@@ -9799,82 +9799,6 @@
            :in-theory (enable abs-find-file-helper)))
   :rule-classes :forward-chaining)
 
-#||
-A hard ACL2 error can be seen by executing the following commands at this
-point.
-
-(verify
- (implies (and
-           (consp (frame->frame frame))
-           (< 0
-              (1st-complete-under-path (frame->frame frame)
-                                       path))
-           (<
-            0
-            (frame-val->src
-             (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                        path)
-                               (frame->frame frame)))))
-           (mv-nth 1 (collapse frame)))
-          (ctx-app-ok
-           (frame-val->dir
-            (cdr
-             (assoc-equal
-              (frame-val->src
-               (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                          path)
-                                 (frame->frame frame))))
-              (frame->frame frame))))
-           (1st-complete-under-path (frame->frame frame)
-                                    path)
-           (nthcdr
-            (len
-             (frame-val->path
-              (cdr
-               (assoc-equal
-                (frame-val->src
-                 (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                            path)
-                                   (frame->frame frame))))
-                (frame->frame frame)))))
-            (frame-val->path
-             (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
-                                                        path)
-                               (frame->frame frame))))))))
-
-promote
-
-sr
-
-At least for me, it reads:
-HARD ACL2 ERROR in FMT-VAR:  Illegal Fmt Syntax.  Unbound Fmt Variable.
-The tilde directive at location 494 in the fmt string below uses the
-variable #\8.  But this variable is not bound in the association list,
-((#\x "~ ~ Additional bindings: ~X0t"
-      (#\0 (X (FRAME->FRAME FRAME))))
- (#\c . 0)
- (#\3)
- (#\s . 0)
- (#\a (X (FRAME->FRAME FRAME))
-      (Y (NTHCDR (LEN #@5#)
-                 (FRAME-VAL->PATH #@6#)))
-      (VAR (1ST-COMPLETE-UNDER-PATH (FRAME->FRAME FRAME)
-                                    PATH))
-      (FS (FRAME-VAL->DIR (CDR #@7#))))
- (#\b . 1)
- (#\e . EQUAL)
- . #@8#),
-supplied with the fmt string.
-
-
-
-ACL2 Error in PC-MACROEXPAND:  Evaluation aborted.  To debug see :DOC
-print-gv, see :DOC trace, and see :DOC wet.
-
-
-Macroexpansion of instruction (ACL2-PC::SR) failed!
-||#
-
 (defthm abs-find-file-after-abs-mkdir-lemma-5
   (implies (and (frame-p frame)
                 (atom (assoc-equal 0 frame))
@@ -10177,6 +10101,81 @@ Macroexpansion of instruction (ACL2-PC::SR) failed!
       (collapse (collapse-this frame
                                (1st-complete-under-path (frame->frame frame)
                                                         path))))))))
+
+(defthm
+  valid-seqp-of-seq-this-under-path
+  (implies (and (frame-p frame)
+                (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+                (abs-separate frame)
+                (subsetp-equal (abs-addrs (frame->root frame))
+                               (frame-addrs-root (frame->frame frame)))
+                (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+           (valid-seqp frame (seq-this-under-path frame path)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (seq-this-under-path valid-seqp collapse-seq)
+         ((:rewrite collapse-hifat-place-file-lemma-6)
+          (:definition fat32-filename-list-prefixp)
+          (:rewrite assoc-of-frame->frame-of-collapse-this)
+          (:rewrite consp-of-nthcdr)
+          (:rewrite ctx-app-when-not-ctx-app-ok)
+          (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
+                    . 2)
+          (:rewrite nthcdr-when->=-n-len-l)
+          (:linear len-when-prefixp)
+          (:rewrite partial-collapse-correctness-lemma-2)))
+    :induct (seq-this-under-path frame path)
+    :expand
+    ((collapse-seq
+      frame
+      (cons
+       (1st-complete-under-path (frame->frame frame)
+                                path)
+       (seq-this-under-path
+        (collapse-seq frame
+                      (list (1st-complete-under-path (frame->frame frame)
+                                                     path)))
+        path)))
+     (:with
+      (:rewrite partial-collapse-correctness-lemma-122)
+      (mv-nth
+       1
+       (collapse (collapse-this frame
+                                (1st-complete-under-path (frame->frame frame)
+                                                         path)))))))
+   ("subgoal *1/2.6'"
+    :cases
+    ((zp (frame-val->src
+          (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                     path)
+                            (frame->frame frame)))))))))
+
+(thm
+ (implies
+  (and (prefixp path
+                (frame-val->path (cdr (assoc-equal x (frame->frame frame)))))
+       (mv-nth 1 (collapse frame))
+       (valid-seqp frame (seq-this-under-path frame path))
+       (nat-listp (seq-this-under-path frame path))
+       (no-duplicatesp-equal (strip-cars (frame->frame frame)))
+       (consp (assoc-equal x (frame->frame frame)))
+       (frame-p frame)
+       (abs-separate frame)
+       (not (consp (frame-val->path (cdr (assoc-equal 0 frame)))))
+       (subsetp-equal (abs-addrs (frame->root frame))
+                      (frame-addrs-root (frame->frame frame))))
+  (member-equal x (seq-this-under-path frame path)))
+ :hints
+ (("goal"
+   :do-not-induct t
+   :in-theory (disable
+               partial-collapse-correctness-lemma-92
+               1st-complete-under-path-of-frame->frame-of-partial-collapse)
+   :use ((:instance
+          partial-collapse-correctness-lemma-92 (seq (seq-this-under-path frame path)))
+         collapse-seq-of-seq-this-under-path-is-partial-collapse
+         1st-complete-under-path-of-frame->frame-of-partial-collapse))))
 
 (defthm
   collapse-hifat-place-file-lemma-2
