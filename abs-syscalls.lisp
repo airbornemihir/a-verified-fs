@@ -10223,29 +10223,12 @@
          path2))))))))
 
 (defthm
-  abs-mkdir-correctness-lemma-205
+  abs-mkdir-correctness-lemma-143
   (subsetp-equal
    (abs-addrs
     (abs-fs-fix
-     (abs-file->contents
-      (mv-nth
-       0
-       (abs-find-file-helper
-        (frame-val->dir
-         (cdr (assoc-equal
-               (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-               (frame->frame frame))))
-        path2)))))
-   (abs-addrs
-    (abs-file->contents
-     (mv-nth
-      0
-      (abs-find-file-helper
-       (frame-val->dir
-        (cdr (assoc-equal
-              (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-              (frame->frame frame))))
-       path2)))))
+     (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path)))))
+   (abs-addrs (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path)))))
   :hints
   (("goal"
     :in-theory
@@ -10254,35 +10237,16 @@
           (:rewrite no-duplicatesp-of-abs-addrs-of-abs-fs-fix-lemma-1
                     . 1)))
     :use
-    ((:instance
-      (:rewrite abs-file-contents-p-of-abs-file->contents)
-      (x
-       (mv-nth
-        0
-        (abs-find-file-helper
-         (frame-val->dir
-          (cdr
-           (assoc-equal
-            (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-            (frame->frame frame))))
-         path2))))
+    ((:instance (:rewrite abs-file-contents-p-of-abs-file->contents)
+                (x (mv-nth 0 (abs-find-file-helper fs path))))
      (:instance
       (:rewrite no-duplicatesp-of-abs-addrs-of-abs-fs-fix-lemma-1
                 . 1)
       (abs-file-alist
-       (abs-file->contents
-        (mv-nth
-         0
-         (abs-find-file-helper
-          (frame-val->dir
-           (cdr
-            (assoc-equal
-             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
-             (frame->frame frame))))
-          path2)))))))))
+       (abs-file->contents (mv-nth 0 (abs-find-file-helper fs path)))))))))
 
 (defthm
-  abs-mkdir-correctness-lemma-206
+  abs-mkdir-correctness-lemma-187
   (implies
    (and (abs-separate frame)
         (atom (frame-val->path (cdr (assoc-equal 0 frame))))
@@ -10401,10 +10365,10 @@
                                        path)
                     (frame->frame frame)))
    (:claim (and (no-duplicatesp-equal (strip-cars (frame->frame frame)))))
-   (:rewrite abs-mkdir-correctness-lemma-206)))
+   (:rewrite abs-mkdir-correctness-lemma-187)))
 
 (defthm
-  abs-mkdir-correctness-lemma-208
+  abs-mkdir-correctness-lemma-190
   (implies
    (and
     (abs-separate frame)
@@ -10830,40 +10794,7 @@
               (frame-val->path (cdr (assoc-equal y (frame->frame frame)))))))))
 
 (defthm
-  abs-mkdir-correctness-lemma-223
-  (subsetp-equal
-   (abs-addrs
-    (abs-fs-fix
-     (abs-file->contents (mv-nth 0
-                                 (abs-find-file-helper (frame->root frame)
-                                                       path2)))))
-   (abs-addrs
-    (abs-file->contents (mv-nth 0
-                                (abs-find-file-helper (frame->root frame)
-                                                      path2)))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
-    (e/d (abs-file-contents-p abs-fs-fix)
-         ((:rewrite abs-file-contents-p-of-abs-file->contents)
-          (:rewrite no-duplicatesp-of-abs-addrs-of-abs-fs-fix-lemma-1
-                    . 1)))
-    :use
-    ((:instance
-      (:rewrite no-duplicatesp-of-abs-addrs-of-abs-fs-fix-lemma-1
-                . 1)
-      (abs-file-alist
-       (abs-file->contents (mv-nth 0
-                                   (abs-find-file-helper (frame->root frame)
-                                                         path2)))))
-     (:instance (:rewrite abs-file-contents-p-of-abs-file->contents)
-                (x (mv-nth 0
-                           (abs-find-file-helper (frame->root frame)
-                                                 path2))))))))
-
-(defthm
-  abs-mkdir-correctness-lemma-224
+  abs-mkdir-correctness-lemma-194
   (implies
    (and (abs-separate frame)
         (atom (frame-val->path (cdr (assoc-equal 0 frame))))
