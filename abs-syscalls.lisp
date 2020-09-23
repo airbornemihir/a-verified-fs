@@ -4722,8 +4722,6 @@
           (:rewrite
            no-duplicatesp-of-abs-addrs-of-remove-assoc-lemma-3)
           (:rewrite
-           partial-collapse-correctness-lemma-1)
-          (:rewrite
            abs-separate-of-frame->frame-of-collapse-this-lemma-15)
           (:rewrite m1-file-alist-p-when-subsetp-equal)
           (:type-prescription

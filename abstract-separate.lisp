@@ -5637,7 +5637,7 @@
            :in-theory (enable collapse-this))))
 
 (defthm
-  partial-collapse-correctness-lemma-1
+  abs-separate-of-collapse-this-lemma-7
   (implies
    (and (abs-separate (frame->frame frame))
         (mv-nth 1 (collapse frame))
