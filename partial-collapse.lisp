@@ -6003,8 +6003,7 @@
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8 . 1)
           (:type-prescription abs-addrs-of-remove-assoc-lemma-1)
           (:rewrite 1st-complete-of-put-assoc-lemma-1)
-          (:definition len)
-          (:rewrite partial-collapse-correctness-lemma-1))))))
+          (:definition len))))))
 
 (encapsulate
   ()
@@ -6169,8 +6168,8 @@
                  (abs-addrs (frame->root frame))))
   :hints (("goal" :do-not-induct t
            :in-theory (e/d (ctx-app-ok)
-                           (partial-collapse-correctness-lemma-1))
-           :use (:instance partial-collapse-correctness-lemma-1
+                           (abs-separate-of-collapse-this-lemma-7))
+           :use (:instance abs-separate-of-collapse-this-lemma-7
                            (x (car seq))))))
 
 (defthmd
@@ -8370,7 +8369,6 @@
           (:definition remove-assoc-equal)
           (:definition no-duplicatesp-equal)
           (:rewrite subsetp-when-prefixp)
-          (:rewrite partial-collapse-correctness-lemma-1)
           (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-2)
           (:rewrite abs-file-alist-p-when-m1-file-alist-p)
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
@@ -9166,8 +9164,7 @@
           list-equiv-when-true-listp
           abs-separate-of-frame->frame-of-collapse-this-lemma-8
           (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-15)
-          (:rewrite different-from-own-src-1)
-          (:rewrite partial-collapse-correctness-lemma-1)))
+          (:rewrite different-from-own-src-1)))
     :do-not-induct t
     :induct (collapse-seq frame seq))))
 
