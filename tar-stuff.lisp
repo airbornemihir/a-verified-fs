@@ -1867,6 +1867,112 @@
                            (:definition nfix)
                            (:definition natp))))))
 
+;; Rename and move later.
+(defthm hifat-tar-name-list-alist-correctness-lemma-21
+  (implies (and (not (null x))
+                (member-equal x l)
+                (subsetp-equal l (strip-cars alist)))
+           (consp (assoc-equal x alist)))
+  :hints (("goal" :in-theory (disable member-of-strip-cars)
+           :use member-of-strip-cars)))
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-22
+  (implies (and (equal (nth 0 path2) (car name-list))
+                (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2))))
+           (equal (mv-nth 1
+                          (hifat-find-file fs (list (car name-list))))
+                  0))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable hifat-find-file nth))))
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-23
+  (implies
+   (and (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path1)))
+        (consp path1)
+        (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))
+        (fat32-filename-list-prefixp path1 path2))
+   (equal
+    (mv-nth 1
+            (hifat-find-file
+             (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
+             (list (nth (len path1) path2))))
+    0))
+  :hints (("goal" :in-theory (enable hifat-find-file nth)
+           :induct (mv (fat32-filename-list-prefixp path1 path2)
+                       (mv-nth 0 (hifat-find-file fs path1)))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path1)))
+          (consp path1)
+          (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))
+          (fat32-filename-list-prefixp path1 path2)
+          (fat32-filename-list-equiv path (list (nth (len path1) path2))))
+     (equal
+      (mv-nth 1
+              (hifat-find-file
+               (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
+               path))
+      0)))))
+
+;; This should have been proved a while ago...
+(defthm hifat-tar-name-list-alist-correctness-lemma-24
+  (implies (and (m1-file-alist-p alist)
+                (not (fat32-filename-p x)))
+           (not (consp (assoc-equal x alist))))
+  :hints (("goal" :in-theory (enable m1-file-alist-p))))
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-25
+  (implies (consp (assoc-equal name (m1-file->contents x)))
+           (and (m1-file-alist-p (m1-file->contents x))
+                (fat32-filename-p name)))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (m1-file-contents-p)
+                    ((:rewrite m1-file-contents-p-of-m1-file->contents)))
+    :use (:rewrite m1-file-contents-p-of-m1-file->contents)))
+  :rule-classes :forward-chaining)
+
+(thm
+ (implies
+  (and
+   (prefixp path1 path2)
+   (not (equal path1 path2))
+   (equal (mv-nth 1 (hifat-find-file fs path1))
+          0)
+   (consp name-list)
+   (not (zp entry-count))
+   (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path1)))
+   (consp (assoc-equal path2
+                       (hifat-tar-name-list-alist fs path1 (cdr name-list)
+                                                  (+ -1 entry-count))))
+   (m1-file-alist-p fs)
+   (hifat-no-dups-p fs)
+   (fat32-filename-list-p path2)
+   (true-listp name-list)
+   (consp path1)
+   (subsetp-equal
+    name-list
+    (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))))
+   (member-equal (nth (len path1) path2)
+                 (cdr name-list))
+   (<= (hifat-entry-count
+        (m1-file->contents (mv-nth 0 (hifat-find-file fs path1))))
+       entry-count)
+   (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))
+   (fat32-filename-list-prefixp path1 path2))
+  (equal
+   (mv-nth
+    1
+    (hifat-find-file (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
+                     (list (car name-list))))
+   0)) :hints (("goal" :in-theory (enable subsetp-equal hifat-find-file) :do-not-induct t)))
+
 (thm
  (b*
      ((contents1
