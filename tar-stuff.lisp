@@ -692,7 +692,8 @@
        ((mv fd-table file-table fd &) (hifat-open head-path fd-table file-table))
        ((mv & & pread-error-code) (hifat-pread fd len 0 fs fd-table file-table))
        ((mv fd-table file-table &) (hifat-close fd fd-table file-table))
-       ((unless (and (<= (len (fat32-path-to-path head-path)) 100))) (mv "" fd-table file-table)))
+       ((unless (and (<= (len (fat32-path-to-path head-path)) 100)))
+        (mv tail-string fd-table file-table)))
     (if (zp pread-error-code)
         ;; regular file.
         (b* ((head-string (hifat-tar-reg-file-string fs
@@ -981,8 +982,7 @@
        (head-path (append path (list head)))
        ((mv st retval &) (hifat-lstat fs head-path))
        (tail-alist
-        (hifat-tar-name-list-alist
-         fs head-path (cdr name-list) (- entry-count 1)))
+        (hifat-tar-name-list-alist fs path (cdr name-list) (- entry-count 1)))
        ((unless (>= retval 0)) tail-alist)
        (len (struct-stat->st_size st))
        ((mv fd-table file-table fd &)
@@ -1006,9 +1006,7 @@
        ((mv & &)
         (hifat-closedir dirp dir-stream-table))
        (head-alist
-        (hifat-tar-name-list-alist fs (append path (list head)) names (- entry-count 1)))
-       (tail-alist
-        (hifat-tar-name-list-alist fs path (cdr name-list) (- entry-count 1))))
+        (hifat-tar-name-list-alist fs (append path (list head)) names (- entry-count 1))))
     (append
      (alist-shift
       head-alist
@@ -1562,144 +1560,6 @@
   :hints (("goal" :in-theory (enable hifat-tar-name-list-alist alist-shift
                                      hifat-lstat hifat-find-file))))
 
-(defthm
-  hifat-tar-name-list-alist-correctness-1
-  (implies
-   (consp
-    (assoc-equal path2
-                 (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-   (and
-    (equal
-     (subseq
-      (mv-nth
-       0
-       (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                   dir-stream-table entry-count))
-      (cdr (assoc-equal
-            path2
-            (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-      (+
-       (cdr (assoc-equal
-             path2
-             (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-       (length
-        (hifat-tar-reg-file-string fs
-                                   (implode (fat32-path-to-path path2))))))
-     (hifat-tar-reg-file-string fs
-                                (implode (fat32-path-to-path path2))))
-    (>=
-     (length
-      (mv-nth
-       0
-       (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                   dir-stream-table entry-count)))
-     (+
-      (cdr (assoc-equal
-            path2
-            (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-      (length
-       (hifat-tar-reg-file-string fs
-                                  (implode (fat32-path-to-path path2))))))))
-  :hints
-  (("goal"
-    :induct
-    (hifat-tar-name-list-string fs path1 name-list fd-table
-                                file-table dir-stream-table entry-count)
-    :expand
-    ((hifat-tar-name-list-alist fs path1 name-list entry-count)
-     (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                 dir-stream-table entry-count))
-    :in-theory
-    (e/d (;; Enabling the definition rules for these two, below, just
-          ;; leads to sadness with regards to
-          ;; hifat-tar-name-list-string-reduction. The small number of
-          ;; subgoals which need the definition should be handled with
-          ;; expand hints and specific rules.
-          (:induction hifat-tar-name-list-string)
-          (:induction hifat-tar-name-list-alist)
-          ;; There are too many lemmas which need these syscall
-          ;; definitions to be opened up.
-          hifat-open hifat-lstat hifat-opendir
-          get-names-from-dirp-alt
-          painful-debugging-lemma-21
-          length-of-empty-list)
-         (append-of-cons
-          binary-append
-          string-append
-          take-of-too-many
-          (:rewrite nthcdr-when->=-n-len-l)
-          (:rewrite take-of-len-free)
-          (:linear position-equal-ac-when-member)
-          (:definition position-equal-ac)
-          (:rewrite consp-of-nthcdr)
-          (:rewrite
-           dir-stream-table-p-when-subsetp-equal)
-          (:rewrite hifat-to-lofat-inversion-lemma-2)
-          (:rewrite <<-sort-consp)
-          (:definition strip-cars)
-          (:rewrite m1-directory-file-p-when-m1-file-p)
-          (:rewrite true-listp-when-string-list)
-          (:rewrite hifat-find-file-correctness-3)
-          (:definition string-listp)
-          (:rewrite
-           string-listp-when-fat32-filename-list-p)
-          (:linear
-           len-when-hifat-bounded-file-alist-p . 2)
-          (:linear
-           len-when-hifat-bounded-file-alist-p . 1)
-          (:rewrite m1-regular-file-p-correctness-1)
-          (:definition nthcdr)
-          ;; It's dubious how much labour is saved by disabling these,
-          ;; but it's worth a shot.
-          (:definition atom)
-          (:definition min)
-          (:definition nfix)
-          (:definition natp)))))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (consp
-      (assoc-equal path2
-                   (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-     (equal
-      (subseq
-       (mv-nth
-        0
-        (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                    dir-stream-table entry-count))
-       (cdr (assoc-equal
-             path2
-             (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-       (+
-        (cdr (assoc-equal
-              path2
-              (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-        (length
-         (hifat-tar-reg-file-string fs
-                                    (implode (fat32-path-to-path path2))))))
-      (hifat-tar-reg-file-string fs
-                                 (implode (fat32-path-to-path path2))))))
-   (:linear
-    :corollary
-    (implies
-     (consp
-      (assoc-equal path2
-                   (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-     (>=
-      (length
-       (mv-nth
-        0
-        (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                    dir-stream-table entry-count)))
-      (+
-       (cdr (assoc-equal
-             path2
-             (hifat-tar-name-list-alist fs path1 name-list entry-count)))
-       (length
-        (hifat-tar-reg-file-string fs
-                                   (implode (fat32-path-to-path path2))))))))))
-
 (defthm nfix-when-zp
   (implies (zp x) (equal (nfix x) 0))
   :hints (("goal" :in-theory (enable nfix zp))))
@@ -2128,11 +1988,234 @@
   :rule-classes :linear)
 
 (defthm
+  hifat-tar-name-list-alist-correctness-lemma-41
+  (implies
+   (and (consp (assoc-equal path2
+                            (hifat-tar-name-list-alist fs nil (cdr name-list)
+                                                       (+ -1 entry-count))))
+        (fat32-filename-list-p path2)
+        (equal (nth 0 path2) (car name-list))
+        (<= (len (fat32-path-to-path path2))
+            100))
+   (<= (len (fat32-path-to-path (list (car name-list))))
+       100))
+  :rule-classes (:linear)
+  :instructions
+  (:promote (:dive 1 2)
+            (:apply-linear hifat-tar-name-list-alist-correctness-lemma-32
+                           ((y path2)))
+            :top
+            :bash (:bash ("goal" :in-theory (enable nth)))))
+
+;; Probably a stronger lemma can be proved...
+(defthm hifat-tar-name-list-alist-correctness-lemma-42
+  (and (>= (len (fat32-path-to-path (append x y)))
+           (len (fat32-path-to-path x)))
+       (>= (len (fat32-path-to-path (append x y)))
+           (len (fat32-path-to-path y))))
+  :hints (("goal" :in-theory (enable fat32-path-to-path)))
+  :rule-classes :linear)
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-43
+  (implies (and (fat32-filename-list-p name-list)
+                (< 100 (len (fat32-path-to-path path))))
+           (equal (hifat-tar-name-list-alist fs path name-list entry-count)
+                  nil))
+  :hints
+  (("goal"
+    :induct (hifat-tar-name-list-alist fs path name-list entry-count)
+    :expand
+    ((:free (path)
+            (hifat-tar-name-list-alist fs path name-list entry-count))
+     (:free (name-list)
+            (hifat-tar-name-list-alist fs path name-list entry-count)))
+    :in-theory
+    (e/d
+     ((:induction hifat-tar-name-list-string)
+      (:induction hifat-tar-name-list-alist)
+      hifat-open hifat-lstat
+      hifat-opendir get-names-from-dirp-alt
+      painful-debugging-lemma-21
+      length-of-empty-list hifat-entry-count
+      member-equal alist-shift)
+     (member-of-strip-cars append-of-cons binary-append
+                           string-append take-of-too-many
+                           (:rewrite nthcdr-when->=-n-len-l)
+                           (:rewrite take-of-len-free)
+                           (:linear position-equal-ac-when-member)
+                           (:definition position-equal-ac)
+                           (:rewrite consp-of-nthcdr)
+                           (:rewrite dir-stream-table-p-when-subsetp-equal)
+                           (:rewrite hifat-to-lofat-inversion-lemma-2)
+                           (:rewrite <<-sort-consp)
+                           (:definition strip-cars)
+                           (:rewrite m1-directory-file-p-when-m1-file-p)
+                           (:rewrite true-listp-when-string-list)
+                           (:rewrite hifat-find-file-correctness-3)
+                           (:definition string-listp)
+                           (:rewrite string-listp-when-fat32-filename-list-p)
+                           (:linear len-when-hifat-bounded-file-alist-p . 2)
+                           (:linear len-when-hifat-bounded-file-alist-p . 1)
+                           (:rewrite m1-regular-file-p-correctness-1)
+                           (:definition nthcdr)
+                           (:definition atom)
+                           (:definition min)
+                           (:definition nfix)
+                           (:definition natp))))))
+
+(defthm
+  hifat-tar-name-list-alist-correctness-1
+  (implies
+   (and
+    (fat32-filename-list-p name-list)
+    (consp
+     (assoc-equal path2
+                  (hifat-tar-name-list-alist fs path1 name-list entry-count))))
+   (and
+    (equal
+     (subseq
+      (mv-nth
+       0
+       (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                   dir-stream-table entry-count))
+      (cdr (assoc-equal
+            path2
+            (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+      (+
+       (cdr (assoc-equal
+             path2
+             (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+       (length
+        (hifat-tar-reg-file-string fs
+                                   (implode (fat32-path-to-path path2))))))
+     (hifat-tar-reg-file-string fs
+                                (implode (fat32-path-to-path path2))))
+    (>=
+     (length
+      (mv-nth
+       0
+       (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                   dir-stream-table entry-count)))
+     (+
+      (cdr (assoc-equal
+            path2
+            (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+      (length
+       (hifat-tar-reg-file-string fs
+                                  (implode (fat32-path-to-path path2))))))))
+  :hints
+  (("goal"
+    :induct
+    (hifat-tar-name-list-string fs path1 name-list fd-table
+                                file-table dir-stream-table entry-count)
+    :expand
+    ((hifat-tar-name-list-alist fs path1 name-list entry-count)
+     (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                 dir-stream-table entry-count))
+    :in-theory
+    (e/d (;; Enabling the definition rules for these two, below, just
+          ;; leads to sadness with regards to
+          ;; hifat-tar-name-list-string-reduction. The small number of
+          ;; subgoals which need the definition should be handled with
+          ;; expand hints and specific rules.
+          (:induction hifat-tar-name-list-string)
+          (:induction hifat-tar-name-list-alist)
+          ;; There are too many lemmas which need these syscall
+          ;; definitions to be opened up.
+          hifat-open hifat-lstat hifat-opendir
+          get-names-from-dirp-alt
+          painful-debugging-lemma-21
+          length-of-empty-list)
+         (append-of-cons
+          binary-append
+          string-append
+          take-of-too-many
+          (:rewrite nthcdr-when->=-n-len-l)
+          (:rewrite take-of-len-free)
+          (:linear position-equal-ac-when-member)
+          (:definition position-equal-ac)
+          (:rewrite consp-of-nthcdr)
+          (:rewrite
+           dir-stream-table-p-when-subsetp-equal)
+          (:rewrite hifat-to-lofat-inversion-lemma-2)
+          (:rewrite <<-sort-consp)
+          (:definition strip-cars)
+          (:rewrite m1-directory-file-p-when-m1-file-p)
+          (:rewrite true-listp-when-string-list)
+          (:rewrite hifat-find-file-correctness-3)
+          (:definition string-listp)
+          (:rewrite
+           string-listp-when-fat32-filename-list-p)
+          (:linear
+           len-when-hifat-bounded-file-alist-p . 2)
+          (:linear
+           len-when-hifat-bounded-file-alist-p . 1)
+          (:rewrite m1-regular-file-p-correctness-1)
+          (:definition nthcdr)
+          ;; It's dubious how much labour is saved by disabling these,
+          ;; but it's worth a shot.
+          (:definition atom)
+          (:definition min)
+          (:definition nfix)
+          (:definition natp)))))
+  :rule-classes
+  ((:rewrite
+    :corollary
+    (implies
+     (and
+      (fat32-filename-list-p name-list)
+      (consp
+       (assoc-equal path2
+                    (hifat-tar-name-list-alist fs path1 name-list entry-count))))
+     (equal
+      (subseq
+       (mv-nth
+        0
+        (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                    dir-stream-table entry-count))
+       (cdr (assoc-equal
+             path2
+             (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+       (+
+        (cdr (assoc-equal
+              path2
+              (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+        (length
+         (hifat-tar-reg-file-string fs
+                                    (implode (fat32-path-to-path path2))))))
+      (hifat-tar-reg-file-string fs
+                                 (implode (fat32-path-to-path path2))))))
+   (:linear
+    :corollary
+    (implies
+     (and
+      (fat32-filename-list-p name-list)
+      (consp
+       (assoc-equal path2
+                    (hifat-tar-name-list-alist fs path1 name-list entry-count))))
+     (>=
+      (length
+       (mv-nth
+        0
+        (hifat-tar-name-list-string fs path1 name-list fd-table file-table
+                                    dir-stream-table entry-count)))
+      (+
+       (cdr (assoc-equal
+             path2
+             (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+       (length
+        (hifat-tar-reg-file-string fs
+                                   (implode (fat32-path-to-path path2))))))))))
+
+(defthm
   hifat-tar-name-list-alist-correctness-lemma-40
   (implies
-   (consp
-    (assoc-equal path2
-                 (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+   (and
+    (fat32-filename-list-p name-list)
+    (consp
+     (assoc-equal path2
+                  (hifat-tar-name-list-alist fs path1 name-list entry-count))))
    (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2))))
   :hints
   (("goal"
@@ -2182,30 +2265,12 @@
    (:rewrite
     :corollary
     (implies
-     (consp (assoc-equal
-             path2
-             (hifat-tar-name-list-alist fs path1 name-list entry-count)))
+     (and
+      (fat32-filename-list-p name-list)
+      (consp
+       (assoc-equal path2
+                    (hifat-tar-name-list-alist fs path1 name-list entry-count))))
      (not (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path2))))))))
-
-(defthm
-  hifat-tar-name-list-alist-correctness-lemma-41
-  (implies
-   (and (consp (assoc-equal path2
-                            (hifat-tar-name-list-alist fs nil (cdr name-list)
-                                                       (+ -1 entry-count))))
-        (fat32-filename-list-p path2)
-        (equal (nth 0 path2) (car name-list))
-        (<= (len (fat32-path-to-path path2))
-            100))
-   (<= (len (fat32-path-to-path (list (car name-list))))
-       100))
-  :rule-classes (:linear)
-  :instructions
-  (:promote (:dive 1 2)
-            (:apply-linear hifat-tar-name-list-alist-correctness-lemma-32
-                           ((y path2)))
-            :top
-            :bash (:bash ("goal" :in-theory (enable nth)))))
 
 (thm
  (b*
