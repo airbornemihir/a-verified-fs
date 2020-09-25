@@ -1367,58 +1367,6 @@
                                   ()))))
 
 (defthm
-  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist
-  (implies
-   (no-duplicatesp-equal name-list)
-   (no-duplicatesp-equal
-    (strip-cars (hifat-tar-name-list-alist fs path1 name-list entry-count))))
-  :hints
-  (("goal"
-    :in-theory (e/d (;; Enabling the definition lemma just leads to sadness with
-                     ;; regards to hifat-tar-name-list-string-reduction. The small
-                     ;; number of subgoals which need the definition should be
-                     ;; handled with expand hints.
-                     (:induction hifat-tar-name-list-string)
-                     hifat-tar-name-list-alist
-                     hifat-open hifat-lstat
-                     ;; I don't know if I can justify enabling every system call,
-                     ;; but this one has to be enabled on account of really stupid
-                     ;; subgoals.
-                     hifat-opendir painful-debugging-lemma-21)
-                    (take-when-prefixp
-                     prefixp-of-cons-right
-                     take-of-cons
-                     append-of-cons
-                     binary-append
-                     string-append
-                     take-of-too-many
-                     (:rewrite nthcdr-when->=-n-len-l)
-                     (:rewrite take-of-len-free)
-                     (:linear position-equal-ac-when-member)
-                     (:definition position-equal-ac)
-                     (:rewrite consp-of-nthcdr)
-                     (:rewrite
-                      dir-stream-table-p-when-subsetp-equal)
-                     (:rewrite hifat-to-lofat-inversion-lemma-2)
-                     (:rewrite <<-sort-consp)
-                     (:rewrite m1-directory-file-p-when-m1-file-p)
-                     (:rewrite true-listp-when-string-list)
-                     (:rewrite hifat-find-file-correctness-3)
-                     (:definition string-listp)
-                     (:rewrite
-                      string-listp-when-fat32-filename-list-p)
-                     (:linear
-                      len-when-hifat-bounded-file-alist-p . 2)
-                     (:linear
-                      len-when-hifat-bounded-file-alist-p . 1)
-                     (:rewrite m1-regular-file-p-correctness-1)
-                     (:definition nthcdr)
-                     (:definition atom)
-                     (:definition min)
-                     (:definition nfix)
-                     (:definition natp))))))
-
-(defthm
   not-consp-assoc-nil-hifat-tar-name-list-alist
   (not
    (consp
@@ -1726,6 +1674,58 @@
                            (:definition min)
                            (:definition nfix)
                            (:definition natp))))))
+
+(defthm
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist
+  (implies
+   (no-duplicatesp-equal name-list)
+   (no-duplicatesp-equal
+    (strip-cars (hifat-tar-name-list-alist fs path1 name-list entry-count))))
+  :hints
+  (("goal"
+    :in-theory (e/d (;; Enabling the definition lemma just leads to sadness with
+                     ;; regards to hifat-tar-name-list-string-reduction. The small
+                     ;; number of subgoals which need the definition should be
+                     ;; handled with expand hints.
+                     (:induction hifat-tar-name-list-string)
+                     hifat-tar-name-list-alist
+                     hifat-open hifat-lstat
+                     ;; I don't know if I can justify enabling every system call,
+                     ;; but this one has to be enabled on account of really stupid
+                     ;; subgoals.
+                     hifat-opendir painful-debugging-lemma-21)
+                    (take-when-prefixp
+                     prefixp-of-cons-right
+                     take-of-cons
+                     append-of-cons
+                     binary-append
+                     string-append
+                     take-of-too-many
+                     (:rewrite nthcdr-when->=-n-len-l)
+                     (:rewrite take-of-len-free)
+                     (:linear position-equal-ac-when-member)
+                     (:definition position-equal-ac)
+                     (:rewrite consp-of-nthcdr)
+                     (:rewrite
+                      dir-stream-table-p-when-subsetp-equal)
+                     (:rewrite hifat-to-lofat-inversion-lemma-2)
+                     (:rewrite <<-sort-consp)
+                     (:rewrite m1-directory-file-p-when-m1-file-p)
+                     (:rewrite true-listp-when-string-list)
+                     (:rewrite hifat-find-file-correctness-3)
+                     (:definition string-listp)
+                     (:rewrite
+                      string-listp-when-fat32-filename-list-p)
+                     (:linear
+                      len-when-hifat-bounded-file-alist-p . 2)
+                     (:linear
+                      len-when-hifat-bounded-file-alist-p . 1)
+                     (:rewrite m1-regular-file-p-correctness-1)
+                     (:definition nthcdr)
+                     (:definition atom)
+                     (:definition min)
+                     (:definition nfix)
+                     (:definition natp))))))
 
 ;; Rename and move later.
 (defthm hifat-tar-name-list-alist-correctness-lemma-21
