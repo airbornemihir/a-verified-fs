@@ -2416,7 +2416,70 @@
             :bash :bash)
   :rule-classes :linear)
 
-;; This theorem has something wrong with it that's really hard to figure out.
+;; Move later.
+(defthm consp-of-remove-assocs-equal
+  (iff (consp (remove-assocs-equal keys alist))
+       (consp (set-difference-equal (strip-cars alist)
+                                    keys)))
+  :hints (("goal" :in-theory (enable remove-assocs-equal))))
+
+(defthm
+  set-difference$-becomes-intersection$
+  (equal (set-difference-equal l1 (set-difference-equal l1 l2))
+         (intersection-equal l1 l2))
+  :hints
+  (("goal"
+    :induct (intersection-equal l1 l2)
+    :in-theory (e/d nil nil)
+    :expand
+    (:with
+     set-difference$-redefinition
+     (set-difference-equal (cdr l1)
+                           (cons (car l1)
+                                 (set-difference-equal (cdr l1) l2)))))))
+
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/intersection" :dir :system))
+
+  (defthm
+    intersection$-when-subsetp
+    (implies (subsetp-equal x y)
+             (equal (intersection-equal x y)
+                    (true-list-fix x)))
+    :hints (("goal" :in-theory (enable subsetp-equal)))
+    :rule-classes
+    (:rewrite (:rewrite :corollary (implies (subsetp-equal x y)
+                                            (set-equiv (intersection-equal y x)
+                                                       x))))))
+
+(defthm m1-file-alist-p-of-remove-assocs-equal
+  (implies (m1-file-alist-p alist)
+           (m1-file-alist-p (remove-assocs-equal keys alist)))
+  :hints (("goal" :in-theory (enable remove-assocs-equal))))
+
+(defthm
+  hifat-no-dups-p-of-remove-assocs-equal-lemma-1
+  (implies (and (case-split (not (null x)))
+                (not (consp (assoc-equal x alist))))
+           (not (consp (assoc-equal x (remove-assocs-equal keys alist)))))
+  :hints (("goal" :in-theory (enable remove-assocs-equal))))
+
+(defthm
+  hifat-no-dups-p-of-remove-assocs-equal
+  (implies (and (hifat-no-dups-p alist)
+                (m1-file-alist-p alist))
+           (hifat-no-dups-p (remove-assocs-equal keys alist)))
+  :hints (("goal" :in-theory (enable remove-assocs-equal hifat-no-dups-p))))
+
+(thm
+ (implies (and (member-equal x keys) (consp (assoc-equal x alist))
+               (m1-file-alist-p alist) (hifat-no-dups-p alist))
+          (< (hifat-entry-count (remove-assocs-equal keys alist))
+             (hifat-entry-count (remove-assocs-equal (remove-equal x keys) alist))))
+ :hints (("goal" :in-theory (enable remove-assocs-equal hifat-entry-count))))
+
 (thm
  (b*
      ((contents1
@@ -2434,7 +2497,9 @@
      (subsetp-equal name-list (strip-cars contents1))
      (member-equal
       (nth (len path1) path2) name-list)
-     (<= (hifat-entry-count contents1) (nfix entry-count))
+     (<= (hifat-entry-count
+          (remove-assocs-equal (set-difference-equal (strip-cars contents1) name-list) contents1))
+         (nfix entry-count))
      (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))
      (prefixp path1 path2)
      (>= 100
@@ -2452,7 +2517,11 @@
      (path1)
      (hifat-tar-name-list-alist fs path1 name-list entry-count))
     (hifat-tar-name-list-string fs path1 name-list fd-table file-table
-                                dir-stream-table entry-count))
+                                dir-stream-table entry-count)
+    (:with
+     (:DEFINITION SET-DIFFERENCE$-REDEFINITION)
+     (:free (l1)
+            (SET-DIFFERENCE-EQUAL l1 NAME-LIST))))
    :in-theory
    (e/d (;; enabling the definition rules for these two, below, just
          ;; leads to sadness with regards to
@@ -2469,7 +2538,8 @@
          length-of-empty-list
          hifat-entry-count
          member-equal
-         subsetp-equal)
+         subsetp-equal
+         remove-assocs-equal)
         (append-of-cons
          binary-append
          string-append
@@ -2507,4 +2577,16 @@
          (:definition atom)
          (:definition min)
          (:definition nfix)
-         (:definition natp))))))
+         (:definition natp))))
+  ("subgoal *1/5"
+   :expand
+   ((hifat-entry-count
+     (remove-assocs-equal
+      (set-difference-equal
+       (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs path1))))
+       name-list)
+      (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))))
+    (hifat-entry-count
+     (remove-assocs-equal (set-difference-equal (strip-cars fs)
+                                                name-list)
+                          fs))))))
