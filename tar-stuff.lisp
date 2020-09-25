@@ -1376,7 +1376,7 @@
   :hints (("Goal" :in-theory (enable hifat-tar-name-list-alist))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-1
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-14
   (implies
    (not (equal (mv-nth 1 (hifat-find-file fs path))
                0))
@@ -1398,7 +1398,7 @@
   :rule-classes :linear)
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-2
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-15
   (and (< 0
           (len (explode (tar-header-block path len typeflag))))
        (not (equal (tar-header-block path len typeflag)
@@ -2368,6 +2368,32 @@
                     (hifat-tar-name-list-alist fs path1 name-list entry-count))))
      (not (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path2))))))))
 
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-1
+  (implies
+   (and
+    (consp name-list)
+    (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path1)))
+    (< 100
+       (len (fat32-path-to-path (append path1 (list (car name-list))))))
+    (subsetp-equal
+     name-list
+     (strip-cars (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))))
+    (equal (nth (len path1) path2)
+           (car name-list))
+    (prefixp path1 path2))
+   (< 100 (len (fat32-path-to-path path2))))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory
+    (disable (:linear hifat-tar-name-list-alist-correctness-lemma-32))
+    :use (:instance (:linear hifat-tar-name-list-alist-correctness-lemma-32)
+                    (y path2)
+                    (x (append path1 (list (car name-list)))))))
+  :rule-classes :linear)
+
+;; This theorem has something wrong with it that's really hard to figure out.
 (thm
  (b*
      ((contents1
@@ -2389,7 +2415,7 @@
      (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))
      (prefixp path1 path2)
      (>= 100
-         (LEN (FAT32-PATH-TO-PATH path2))))
+         (len (fat32-path-to-path path2))))
     (consp
      (assoc-equal path2
                   (hifat-tar-name-list-alist fs path1 name-list entry-count)))))
@@ -2419,9 +2445,9 @@
          painful-debugging-lemma-21
          length-of-empty-list
          hifat-entry-count
-         member-equal)
-        (member-of-strip-cars
-         append-of-cons
+         member-equal
+         subsetp-equal)
+        (append-of-cons
          binary-append
          string-append
          take-of-too-many
@@ -2429,7 +2455,6 @@
          (:rewrite take-of-len-free)
          (:linear position-equal-ac-when-member)
          (:definition position-equal-ac)
-         (:rewrite consp-of-nthcdr)
          (:rewrite
           dir-stream-table-p-when-subsetp-equal)
          (:rewrite hifat-to-lofat-inversion-lemma-2)
@@ -2447,13 +2472,16 @@
           len-when-hifat-bounded-file-alist-p . 1)
          (:rewrite m1-regular-file-p-correctness-1)
          (:definition nthcdr)
+         (:linear
+          hifat-tar-name-list-alist-correctness-lemma-1)
+         (:definition len)
+         (:linear
+          hifat-tar-name-list-alist-correctness-lemma-42)
+         (:linear hifat-entry-count-when-hifat-subsetp)
+         (:definition hifat-subsetp)
          ;; it's dubious how much labour is saved by disabling these,
          ;; but it's worth a shot.
          (:definition atom)
          (:definition min)
          (:definition nfix)
-         (:definition natp))))
-  ("subgoal *1/5''"
-   :expand
-   (hifat-entry-count
-    (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))))))
+         (:definition natp))))))
