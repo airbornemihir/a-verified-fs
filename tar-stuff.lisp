@@ -1,6 +1,7 @@
 (in-package "ACL2")
 
 (include-book "test-stuff")
+(local (include-book "std/alists/remove-assocs" :dir :system))
 
 (local (in-theory (e/d
                    ()
@@ -2391,6 +2392,28 @@
     :use (:instance (:linear hifat-tar-name-list-alist-correctness-lemma-32)
                     (y path2)
                     (x (append path1 (list (car name-list)))))))
+  :rule-classes :linear)
+
+(defthm
+  hifat-tar-name-list-alist-correctness-lemma-2
+  (implies
+   (and
+    (consp
+     (assoc-equal (car name-list)
+                  (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))))
+    (equal (nth (len path1) path2)
+           (car name-list))
+    (prefixp path1 path2)
+    (<= (len (fat32-path-to-path path2))
+        100))
+   (<= (len (fat32-path-to-path (append path1 (list (car name-list)))))
+       100))
+  :instructions
+  (:promote (:dive 1 2)
+            (:apply-linear hifat-tar-name-list-alist-correctness-lemma-32
+                           ((y path2)))
+            :top
+            :bash :bash)
   :rule-classes :linear)
 
 ;; This theorem has something wrong with it that's really hard to figure out.
