@@ -1413,7 +1413,7 @@
                                     "")))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-18
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-16
   (not
    (consp
     (assoc-equal nil
@@ -1422,7 +1422,7 @@
   :rule-classes :type-prescription)
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-7
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-17
   (equal (mv-nth '0
                  (hifat-tar-name-list-string fs (cons (car name-list1) 'nil)
                                              name-list2 fd-table file-table
@@ -1436,7 +1436,7 @@
     (enable (:rewrite hifat-tar-name-list-string-reduction-correctness-1)))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-14
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-18
   (equal (mv-nth '0
                  (hifat-tar-name-list-string
                   fs
@@ -1454,7 +1454,7 @@
     (enable (:rewrite hifat-tar-name-list-string-reduction-correctness-1)))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-36
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-19
   (implies
    (and
     (consp path)
@@ -1467,7 +1467,7 @@
            :in-theory (enable hifat-lstat))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-4
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-20
   (implies
    (equal (mv-nth 1 (hifat-find-file fs path))
           0)
@@ -1489,18 +1489,14 @@
            :in-theory (enable hifat-open))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-3
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-21
   (implies (not (m1-directory-file-p (mv-nth 0 (hifat-find-file fs path))))
            (equal (hifat-tar-name-list-alist fs path name-list entry-count)
                   nil))
   :hints (("goal" :in-theory (enable hifat-tar-name-list-alist alist-shift
                                      hifat-lstat hifat-find-file))))
 
-(defthm nfix-when-zp
-  (implies (zp x) (equal (nfix x) 0))
-  :hints (("goal" :in-theory (enable nfix zp))))
-
-(defthm hifat-tar-name-list-alist-correctness-lemma-10
+(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-22
  (implies
   (and
    (subsetp-equal
@@ -1511,7 +1507,7 @@
   (consp (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))))
  :hints (("goal" :in-theory (enable hifat-find-file))))
 
-(defthm hifat-tar-name-list-alist-correctness-lemma-11
+(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-23
   (implies (zp (hifat-entry-count fs))
            (not (consp (assoc-equal name (hifat-file-alist-fix fs)))))
   :hints (("goal" :in-theory (enable hifat-entry-count
@@ -1519,13 +1515,13 @@
   :rule-classes :type-prescription)
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-12
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-24
   (implies (equal (hifat-entry-count fs) 0)
            (iff (subsetp-equal x (strip-cars fs))
                 (not (consp x))))
   :hints (("goal" :in-theory (enable hifat-entry-count subsetp-equal))))
 
-(defthm hifat-tar-name-list-alist-correctness-lemma-13
+(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-25
   (implies (and (subsetp-equal x1 (strip-cars x2))
                 (not (null (car x1))))
            (consp (assoc-equal (car x1) x2)))
@@ -1535,7 +1531,7 @@
                            (alist x2)
                            (x (car x1))))))
 
-(defthm hifat-tar-name-list-alist-correctness-lemma-15
+(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-26
   (implies
    (and (not (equal (mv-nth 1
                             (hifat-find-file fs (list (car name-list))))
@@ -1561,14 +1557,14 @@
             0)))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-16
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-27
   (implies (and (not (atom path1))
                 (< 0 (mv-nth 1 (hifat-find-file fs path1)))
                 (fat32-filename-list-prefixp path1 path2))
            (not (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))))
   :hints (("goal" :in-theory (enable hifat-find-file))))
 
-(defthm hifat-tar-name-list-alist-correctness-lemma-17
+(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-28
   (implies
    (and
     (not
@@ -1603,7 +1599,7 @@
                         (list (car name-list))))
                0)))))
 
-(defthm hifat-tar-name-list-alist-correctness-lemma-19
+(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-29
   (implies (not (consp path1))
            (equal (hifat-find-file fs path1)
                   (mv (make-m1-file) *enoent*)))
@@ -1611,7 +1607,7 @@
            :in-theory (enable hifat-find-file))))
 
 (defthm
-  hifat-tar-name-list-alist-correctness-lemma-20
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-30
   (implies
    (not (member-equal (nth (len path1) path2)
                       name-list))
@@ -2459,11 +2455,10 @@
            (m1-file-alist-p (remove-assocs-equal keys alist)))
   :hints (("goal" :in-theory (enable remove-assocs-equal))))
 
-(defthm
-  hifat-no-dups-p-of-remove-assocs-equal-lemma-1
-  (implies (and (case-split (not (null x)))
-                (not (consp (assoc-equal x alist))))
-           (not (consp (assoc-equal x (remove-assocs-equal keys alist)))))
+(defthm consp-of-assoc-of-remove-assocs
+  (equal (consp (assoc-equal x (remove-assocs-equal keys alist)))
+         (and (consp (assoc-equal x alist))
+              (not (member-equal x keys))))
   :hints (("goal" :in-theory (enable remove-assocs-equal))))
 
 (defthm
@@ -2472,6 +2467,12 @@
                 (m1-file-alist-p alist))
            (hifat-no-dups-p (remove-assocs-equal keys alist)))
   :hints (("goal" :in-theory (enable remove-assocs-equal hifat-no-dups-p))))
+
+(thm
+ (implies (and (m1-file-alist-p alist) (hifat-no-dups-p alist))
+          (<= (hifat-entry-count (remove-assocs-equal keys alist))
+              (hifat-entry-count (remove-assocs-equal (remove-equal x keys) alist))))
+ :hints (("goal" :in-theory (enable remove-assocs-equal hifat-entry-count))))
 
 (thm
  (implies (and (member-equal x keys) (consp (assoc-equal x alist))

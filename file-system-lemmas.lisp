@@ -1795,7 +1795,11 @@
   (defthm nfix-when-natp
     (implies (natp x) (equal (nfix x) x))
     :hints (("goal" :do-not-induct t
-             :in-theory (enable nfix natp)))))
+             :in-theory (enable nfix natp))))
+
+  (defthm nfix-when-zp
+    (implies (zp x) (equal (nfix x) 0))
+    :hints (("goal" :in-theory (enable nfix natp)))))
 
 ;; The following are redundant with the eponymous theorems in
 ;; books/std/lists/take.lisp, from where they were taken with thanks.
