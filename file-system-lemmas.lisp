@@ -425,10 +425,6 @@
              (nthcdr n1 x)
            (update-nth (- (nfix n2) (nfix n1)) val (nthcdr n1 x)))))
 
-(defthmd car-of-assoc-equal
-  (let ((sd (assoc-equal x alist)))
-    (implies (consp sd) (equal (car sd) x))))
-
 (defthm update-nth-of-update-nth-1
   (implies (not (equal (nfix key1) (nfix key2)))
            (equal (update-nth key1 val1 (update-nth key2 val2 l))
@@ -541,7 +537,7 @@
   (("goal" :in-theory (disable revappend-of-binary-append-1))))
 
 (defthm
-  character-listp-of-member-equal
+  character-listp-of-member
   (implies (character-listp lst)
            (character-listp (member-equal x lst)))
   :rule-classes
@@ -552,7 +548,7 @@
                   (consp (member-equal x lst)))
              (character-listp (cdr (member-equal x lst)))))))
 
-(defthm true-listp-of-member-equal
+(defthm true-listp-of-member
   (implies (true-listp lst)
            (true-listp (member-equal x lst)))
   :rule-classes
@@ -563,12 +559,12 @@
                   (consp (member-equal x lst)))
              (true-listp (cdr (member-equal x lst)))))))
 
-(defthm len-of-member-equal
+(defthm len-of-member
   (<= (len (member-equal x lst))
       (len lst))
   :rule-classes :linear)
 
-(defthm len-of-remove1-assoc-equal
+(defthm len-of-remove1-assoc
   (implies (consp (assoc-equal key alist))
            (equal (len (remove1-assoc-equal key alist))
                   (- (len alist) 1))))
@@ -581,9 +577,9 @@
            (len l))))
 
 (defthm
-  assoc-equal-of-remove1-assoc-equal
+  assoc-of-remove1-assoc
   (implies
-   (and (not (equal key1 nil))
+   (and (not (null key1))
         (not (consp (assoc-equal key1 alist))))
    (not (consp (assoc-equal key1
                             (remove1-assoc-equal key2 alist))))))
@@ -758,7 +754,7 @@
          (nthcdr (+ (nfix a) (nfix b)) x))
   :hints(("goal" :induct (nthcdr b x))))
 
-(defthm acl2-count-of-member-equal
+(defthm acl2-count-of-member
   (<= (acl2-count (member-equal x lst))
       (acl2-count lst))
   :rule-classes :linear)
@@ -964,7 +960,7 @@
              (remove-assoc key alist)
            (put-assoc name val (remove-assoc key alist)))))
 
-(defthm last-of-member-equal
+(defthm last-of-member
   (equal (last (member-equal x lst))
          (if (member-equal x lst)
              (last lst)
