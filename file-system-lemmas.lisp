@@ -1916,7 +1916,7 @@
               (:instance (:rewrite coerce-inverse-2) (x str1))
               (:instance (:rewrite coerce-inverse-1)
                          (x (make-character-list
-                             (take (+ end (- (len (coerce str1 'list)))) (coerce str2 'list)))))))))
+                             (take (- end (len (coerce str1 'list))) (coerce str2 'list)))))))))
 
   (defthm then-subseq-empty-1
     (implies (and (stringp seq)
@@ -1950,3 +1950,34 @@
 (defthm when-append-same
   (iff (equal x (append x y))
        (equal y (if (consp x) (cdr (last x)) x))))
+
+(defthm
+  set-difference$-becomes-intersection$
+  (equal (set-difference-equal l1 (set-difference-equal l1 l2))
+         (intersection-equal l1 l2))
+  :hints
+  (("goal"
+    :induct (intersection-equal l1 l2)
+    :in-theory (e/d nil nil)
+    :expand
+    (:with
+     set-difference$-redefinition
+     (set-difference-equal (cdr l1)
+                           (cons (car l1)
+                                 (set-difference-equal (cdr l1) l2)))))))
+
+(defthm subsetp-of-set-difference$-2
+  (equal (subsetp-equal z (set-difference-equal x y))
+         (and (subsetp-equal z x)
+              (not (intersectp-equal z y))))
+  :hints (("goal" :in-theory (e/d () (intersectp-is-commutative))
+           :induct (mv (intersectp-equal z y) (subsetp-equal z x)))))
+
+(defthm intersectp-when-subsetp
+  (implies (subsetp-equal x y)
+           (equal (intersectp-equal x y)
+                  (consp x))))
+
+(defthm nth-under-iff-1
+  (implies (not (member-equal nil l))
+           (iff (nth n l) (< (nfix n) (len l)))))

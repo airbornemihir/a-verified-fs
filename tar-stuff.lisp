@@ -22,17 +22,17 @@
                     (:rewrite no-duplicatesp-of-member)
                     (:linear getopt::defoptions-lemma-8)
                     (:rewrite assoc-of-car-when-member)
-                    (:DEFINITION REMOVE-EQUAL)
-                    (:REWRITE SUBSETP-OF-REMOVE2)
-                    (:REWRITE PREFIXP-OF-APPEND-ARG2)
-                    (:REWRITE TRUE-LISTP-WHEN-STRING-LIST)
-                    (:REWRITE STRIP-CARS-OF-HIFAT-FILE-ALIST-FIX)
-                    (:REWRITE
-                     STRING-LISTP-WHEN-FAT32-FILENAME-LIST-P)
-                    (:REWRITE FAT32-FILENAME-LIST-P-OF-REMOVE)
-                    (:LINEAR LEN-OF-MEMBER)
-                    (:REWRITE
-                     REMOVE-DUPLICATES-WHEN-NO-DUPLICATESP)))))
+                    (:definition remove-equal)
+                    (:rewrite subsetp-of-remove2)
+                    (:rewrite prefixp-of-append-arg2)
+                    (:rewrite true-listp-when-string-list)
+                    (:rewrite strip-cars-of-hifat-file-alist-fix)
+                    (:rewrite
+                     string-listp-when-fat32-filename-list-p)
+                    (:rewrite fat32-filename-list-p-of-remove)
+                    (:linear len-of-member)
+                    (:rewrite
+                     remove-duplicates-when-no-duplicatesp)))))
 
 (defconst *tar-regtype* #\0)
 (defconst *tar-dirtype* #\5)
@@ -44,6 +44,28 @@
 
 (local
  (in-theory (disable nth update-nth ceiling floor mod true-listp take member-equal)))
+
+(defthm consp-of-remove-assocs-equal
+  (iff (consp (remove-assocs-equal keys alist))
+       (not (subsetp-equal (strip-cars alist) keys)))
+  :hints (("goal" :in-theory (enable remove-assocs-equal))))
+
+(defthm m1-file-alist-p-of-remove-assocs-equal
+  (implies (m1-file-alist-p alist)
+           (m1-file-alist-p (remove-assocs-equal keys alist)))
+  :hints (("goal" :in-theory (enable remove-assocs-equal))))
+
+(defthm assoc-of-remove-assocs
+  (equal (assoc-equal x (remove-assocs-equal keys alist))
+         (if (member-equal x keys)
+             nil (assoc-equal x alist)))
+  :hints (("goal" :in-theory (enable remove-assocs-equal))))
+
+(defthm remove-assocs-equal-when-atom
+  (implies (atom keys)
+           (equal (remove-assocs-equal keys alist)
+                  (true-list-fix alist)))
+  :hints (("goal" :in-theory (enable remove-assocs-equal))))
 
 (defund tar-len-decode-helper (rev-char-list)
   (declare (xargs :guard (character-listp rev-char-list)))
@@ -1163,7 +1185,9 @@
                                                    (+ -1 entry-count)))))))
     :hints
     (("goal"
-      :in-theory (disable (:rewrite prefixp-of-append-arg1))
+      :do-not-induct t
+      :in-theory (disable (:rewrite prefixp-of-append-arg1)
+                          (:rewrite nth-under-iff-1))
       :use
       (:instance
        no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-6
@@ -1507,7 +1531,7 @@
   :hints (("goal" :in-theory (enable hifat-tar-name-list-alist alist-shift
                                      hifat-lstat hifat-find-file))))
 
-(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-23
+(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-22
   (implies (zp (hifat-entry-count fs))
            (not (consp (assoc-equal name (hifat-file-alist-fix fs)))))
   :hints (("goal" :in-theory (enable hifat-entry-count
@@ -1522,14 +1546,14 @@
   :hints (("goal" :in-theory (enable hifat-entry-count subsetp-equal))))
 
 (defthm
-  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-27
+  no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-23
   (implies (and (not (atom path1))
                 (< 0 (mv-nth 1 (hifat-find-file fs path1)))
                 (fat32-filename-list-prefixp path1 path2))
            (not (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))))
   :hints (("goal" :in-theory (enable hifat-find-file))))
 
-(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-29
+(defthm no-duplicatesp-of-strip-cars-of-hifat-tar-name-list-alist-lemma-25
   (implies (not (consp path1))
            (equal (hifat-find-file fs path1)
                   (mv (make-m1-file) *enoent*)))
@@ -1641,15 +1665,6 @@
                      (:definition nfix)
                      (:definition natp))))))
 
-;; Rename and move later.
-(defthm hifat-tar-name-list-alist-correctness-lemma-21
-  (implies (and (not (null x))
-                (member-equal x l)
-                (subsetp-equal l (strip-cars alist)))
-           (consp (assoc-equal x alist)))
-  :hints (("goal" :in-theory (disable member-of-strip-cars)
-           :use member-of-strip-cars)))
-
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-22
   (implies (and (equal (nth 0 path2) (car name-list))
@@ -1661,7 +1676,7 @@
            :in-theory (enable hifat-find-file nth))))
 
 ;; This should have been proved a while ago...
-(defthm hifat-tar-name-list-alist-correctness-lemma-24
+(defthm hifat-tar-name-list-alist-correctness-lemma-23
   (implies (and (m1-file-alist-p alist)
                 (not (fat32-filename-p x)))
            (not (consp (assoc-equal x alist))))
@@ -1680,7 +1695,7 @@
     :use (:rewrite m1-file-contents-p-of-m1-file->contents)))
   :rule-classes :forward-chaining)
 
-(defthm hifat-tar-name-list-alist-correctness-lemma-28
+(defthm hifat-tar-name-list-alist-correctness-lemma-24
   (implies
    (and (not (equal (mv-nth 1
                             (hifat-find-file fs (list (car name-list))))
@@ -1728,7 +1743,7 @@
                     (hifat-find-file fs (list (car name-list))))
             0)))))
 
-(defthm hifat-tar-name-list-alist-correctness-lemma-32
+(defthm hifat-tar-name-list-alist-correctness-lemma-26
   (implies (prefixp x y)
            (<= (len (fat32-path-to-path x))
                (len (fat32-path-to-path y))))
@@ -1802,14 +1817,14 @@
                100))
   :instructions
   (:promote (:dive 1 2)
-            (:apply-linear hifat-tar-name-list-alist-correctness-lemma-32
+            (:apply-linear hifat-tar-name-list-alist-correctness-lemma-26
                            ((y path2)))
             :top
             :bash (:bash ("goal" :in-theory (enable nth))))
   :rule-classes :linear)
 
 ;; Probably a stronger lemma can be proved...
-(defthm hifat-tar-name-list-alist-correctness-lemma-42
+(defthm hifat-tar-name-list-alist-correctness-lemma-27
   (and (>= (len (fat32-path-to-path (append x y)))
            (len (fat32-path-to-path x)))
        (>= (len (fat32-path-to-path (append x y)))
@@ -2045,8 +2060,8 @@
   (("goal"
     :do-not-induct t
     :in-theory
-    (disable (:linear hifat-tar-name-list-alist-correctness-lemma-32))
-    :use (:instance (:linear hifat-tar-name-list-alist-correctness-lemma-32)
+    (disable (:linear hifat-tar-name-list-alist-correctness-lemma-26))
+    :use (:instance (:linear hifat-tar-name-list-alist-correctness-lemma-26)
                     (y path2)
                     (x (append path1 (list (car name-list)))))))
   :rule-classes :linear)
@@ -2067,67 +2082,11 @@
        100))
   :instructions
   (:promote (:dive 1 2)
-            (:apply-linear hifat-tar-name-list-alist-correctness-lemma-32
+            (:apply-linear hifat-tar-name-list-alist-correctness-lemma-26
                            ((y path2)))
             :top
             :bash :bash)
   :rule-classes :linear)
-
-;; Move later.
-(defthm consp-of-remove-assocs-equal
-  (iff (consp (remove-assocs-equal keys alist))
-       (not (subsetp-equal (strip-cars alist) keys)))
-  :hints (("goal" :in-theory (enable remove-assocs-equal))))
-
-(defthm
-  set-difference$-becomes-intersection$
-  (equal (set-difference-equal l1 (set-difference-equal l1 l2))
-         (intersection-equal l1 l2))
-  :hints
-  (("goal"
-    :induct (intersection-equal l1 l2)
-    :in-theory (e/d nil nil)
-    :expand
-    (:with
-     set-difference$-redefinition
-     (set-difference-equal (cdr l1)
-                           (cons (car l1)
-                                 (set-difference-equal (cdr l1) l2)))))))
-
-;; Move later.
-(defthm subsetp-of-set-difference$-2
-  (equal (subsetp-equal z (set-difference-equal x y))
-         (and (subsetp-equal z x)
-              (not (intersectp-equal z y))))
-  :hints (("goal" :in-theory (enable subsetp-equal intersectp-member)
-           :restrict ((intersectp-member ((a (car z))))))))
-
-(encapsulate
-  ()
-
-  (local (include-book "std/lists/intersection" :dir :system))
-
-  (defthm
-    intersection$-when-subsetp
-    (implies (subsetp-equal x y)
-             (equal (intersection-equal x y)
-                    (true-list-fix x)))
-    :hints (("goal" :in-theory (enable subsetp-equal)))
-    :rule-classes
-    (:rewrite (:rewrite :corollary (implies (subsetp-equal x y)
-                                            (set-equiv (intersection-equal y x)
-                                                       x))))))
-
-(defthm m1-file-alist-p-of-remove-assocs-equal
-  (implies (m1-file-alist-p alist)
-           (m1-file-alist-p (remove-assocs-equal keys alist)))
-  :hints (("goal" :in-theory (enable remove-assocs-equal))))
-
-(defthm assoc-of-remove-assocs
-  (equal (assoc-equal x (remove-assocs-equal keys alist))
-         (if (member-equal x keys)
-             nil (assoc-equal x alist)))
-  :hints (("goal" :in-theory (enable remove-assocs-equal))))
 
 (defthm
   hifat-no-dups-p-of-remove-assocs-equal
@@ -2156,13 +2115,6 @@
   :hints (("goal" :in-theory (enable remove-assocs-equal hifat-entry-count)))
   :rule-classes :linear)
 
-;; Move later.
-(defthm intersectp-when-subsetp
-  (implies (subsetp-equal x y)
-           (equal (intersectp-equal x y)
-                  (consp x)))
-  :hints (("goal" :in-theory (enable subsetp-equal intersectp-equal))))
-
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-5
   (implies
@@ -2181,13 +2133,6 @@
     :use (:instance hifat-tar-name-list-alist-correctness-lemma-4
                     (keys (set-difference-equal keys y)))))
   :rule-classes :linear)
-
-;; Move later.
-(defthm remove-assocs-equal-when-atom
-  (implies (atom keys)
-           (equal (remove-assocs-equal keys alist)
-                  (true-list-fix alist)))
-  :hints (("goal" :in-theory (enable remove-assocs-equal))))
 
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-6
@@ -2333,13 +2278,14 @@
                      (:rewrite m1-regular-file-p-correctness-1)
                      (:definition nthcdr)
                      (:linear hifat-tar-name-list-alist-correctness-lemma-1)
-                     (:linear hifat-tar-name-list-alist-correctness-lemma-42)
+                     (:linear hifat-tar-name-list-alist-correctness-lemma-27)
                      (:linear hifat-entry-count-when-hifat-subsetp)
                      (:definition hifat-subsetp)
                      (:definition atom)
                      (:definition min)
                      (:definition nfix)
-                     (:definition natp))))))
+                     (:definition natp)
+                     nth-under-iff-1)))))
 
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-12
@@ -2352,7 +2298,7 @@
   :rule-classes :linear
   :instructions
   (:promote (:dive 1 2)
-            (:apply-linear hifat-tar-name-list-alist-correctness-lemma-32
+            (:apply-linear hifat-tar-name-list-alist-correctness-lemma-26
                            ((y path2)))
             :top
             :bash :bash))
@@ -2503,12 +2449,6 @@
      (name (car name-list)))))
   :rule-classes :linear)
 
-;; Move later.
-(defthm nth-under-iff-1
-  (implies (not (member-equal nil l))
-           (iff (nth n l) (< (nfix n) (len l))))
-  :hints (("goal" :in-theory (enable nth))))
-
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-17
   (implies
@@ -2573,7 +2513,101 @@
   (:= (nthcdr 1 (nthcdr (+ -1 (len path1)) path2)))
   (:rewrite nthcdr-of-nthcdr)
   :top (:claim (>= (+ -1 (len path1)) 0))
-  :s))
+  :s)
+ :rule-classes
+ ((:rewrite
+   :corollary
+   (implies
+    (and
+     (equal (len path2) (+ 1 (len path1)))
+     (m1-directory-file-p
+      (mv-nth 0
+              (hifat-find-file
+               (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
+               (list (car name-list)))))
+     (<
+      0
+      (mv-nth
+       2
+       (hifat-pread
+        (find-new-index (strip-cars (fd-table-fix fd-table)))
+        2097152 0 fs
+        (cons (cons (find-new-index (strip-cars (fd-table-fix fd-table)))
+                    (find-new-index (strip-cars (file-table-fix file-table))))
+              fd-table)
+        (cons (cons (find-new-index (strip-cars (file-table-fix file-table)))
+                    (file-table-element 0
+                                        (append path1 (list (car name-list)))))
+              file-table))))
+     (fat32-filename-list-p path2)
+     (consp
+      (assoc-equal (car name-list)
+                   (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))))
+     (equal (nth (len path1) path2)
+            (car name-list))
+     (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))
+     (prefixp path1 path2))
+    (not
+     (atom
+      (assoc-equal
+       path2
+       (hifat-tar-name-list-alist
+        fs (append path1 (list (car name-list)))
+        (<<-sort
+         (strip-cars
+          (m1-file->contents
+           (mv-nth
+            0
+            (hifat-find-file
+             (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
+             (list (car name-list)))))))
+        (+ -1 entry-count)))))))
+  (:rewrite
+   :corollary
+   (implies
+    (and
+     (equal (len path2) (+ 1 (len path1)))
+     (m1-directory-file-p
+      (mv-nth 0
+              (hifat-find-file
+               (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
+               (list (car name-list)))))
+     (<
+      0
+      (mv-nth
+       2
+       (hifat-pread
+        (find-new-index (strip-cars (fd-table-fix fd-table)))
+        2097152 0 fs
+        (cons (cons (find-new-index (strip-cars (fd-table-fix fd-table)))
+                    (find-new-index (strip-cars (file-table-fix file-table))))
+              fd-table)
+        (cons (cons (find-new-index (strip-cars (file-table-fix file-table)))
+                    (file-table-element 0
+                                        (append path1 (list (car name-list)))))
+              file-table))))
+     (fat32-filename-list-p path2)
+     (consp
+      (assoc-equal (car name-list)
+                   (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))))
+     (equal (nth (len path1) path2)
+            (car name-list))
+     (m1-regular-file-p (mv-nth 0 (hifat-find-file fs path2)))
+     (prefixp path1 path2))
+    (consp
+     (assoc-equal
+      path2
+      (hifat-tar-name-list-alist
+       fs (append path1 (list (car name-list)))
+       (<<-sort
+        (strip-cars
+         (m1-file->contents
+          (mv-nth
+           0
+           (hifat-find-file
+            (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
+            (list (car name-list)))))))
+       (+ -1 entry-count))))))))
 
 (defthm
   hifat-tar-name-list-alist-correctness-lemma-18
@@ -2729,8 +2763,7 @@
                  (m1-file->contents (mv-nth 0 (hifat-find-file fs path1)))
                  (list (car name-list)))))))))))
 
-;; There's a good reason why nth is left disabled for this lemma - we want some
-;; terms resembling (nth 0 l) to benefit from general rules about nth.
+;; Hypotheses minimised.
 (defthm
   hifat-tar-name-list-alist-correctness-2
  (b*
@@ -2744,7 +2777,6 @@
      (m1-file-alist-p fs)
      (hifat-no-dups-p fs)
      (fat32-filename-list-p path2)
-     (fat32-filename-list-p path1)
      (fat32-filename-list-p name-list)
      (no-duplicatesp-equal name-list)
      (subsetp-equal name-list (strip-cars contents1))
@@ -2821,7 +2853,7 @@
          (:linear
           hifat-tar-name-list-alist-correctness-lemma-1)
          (:linear
-          hifat-tar-name-list-alist-correctness-lemma-42)
+          hifat-tar-name-list-alist-correctness-lemma-27)
          (:linear hifat-entry-count-when-hifat-subsetp)
          (:definition hifat-subsetp)
          ;; it's dubious how much labour is saved by disabling these,

@@ -450,6 +450,22 @@
                  (:theorem (equal (+ (len x) (- (len x)) (len y))
                                   (len y)))))))
 
+(encapsulate
+  ()
+
+  (local (include-book "std/lists/intersection" :dir :system))
+
+  (defthm
+    intersection$-when-subsetp
+    (implies (subsetp-equal x y)
+             (equal (intersection-equal x y)
+                    (true-list-fix x)))
+    :hints (("goal" :in-theory (enable subsetp-equal)))
+    :rule-classes
+    (:rewrite (:rewrite :corollary (implies (subsetp-equal x y)
+                                            (set-equiv (intersection-equal y x)
+                                                       x))))))
+
 (defthmd
   painful-debugging-lemma-14
   (implies (not (zp cluster-size))
