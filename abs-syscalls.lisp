@@ -40,8 +40,6 @@
                         (:rewrite collapse-1st-index-of-frame-val->src-of-cdr-of-assoc-linear-lemma-2)
                         (:rewrite when-zp-src-of-1st-collapse-1)
                         (:rewrite ctx-app-ok-of-abs-fs-fix-1)
-                        (:rewrite
-                         hifat-find-file-correctness-3-lemma-3)
                         (:rewrite abs-addrs-of-ctx-app-1-lemma-2)
                         (:rewrite
                          abs-fs-fix-of-put-assoc-equal-lemma-2)
@@ -15418,17 +15416,8 @@
    (:rewrite (:rewrite partial-collapse-correctness-1 . 2))
    :top :bash))
 
-(defthm
-  abs-pwrite-correctness-lemma-47
-  (implies
-   (and (hifat-subsetp m1-file-alist2 m1-file-alist1)
-        (m1-regular-file-p (cdr (assoc-equal name m1-file-alist2)))
-        (fat32-filename-p name))
-   (equal (m1-file->contents (cdr (assoc-equal name m1-file-alist1)))
-          (m1-file->contents (cdr (assoc-equal name m1-file-alist2))))))
-
 (defthmd
-  abs-pwrite-correctness-lemma-48
+  abs-pwrite-correctness-lemma-47
   (implies
    (and (hifat-equiv m1-file-alist1 m1-file-alist2)
         (syntaxp (not (term-order m1-file-alist1 m1-file-alist2)))
@@ -15612,7 +15601,7 @@
   (("goal"
     :use
     (:instance
-     (:rewrite abs-pwrite-correctness-lemma-48)
+     (:rewrite abs-pwrite-correctness-lemma-47)
      (m1-file-alist1
       (m1-file->contents
        (mv-nth
@@ -17088,7 +17077,7 @@
   (("goal"
     :use
     (:instance
-     (:rewrite abs-pwrite-correctness-lemma-48)
+     (:rewrite abs-pwrite-correctness-lemma-47)
      (m1-file-alist1
       (m1-file->contents
        (mv-nth
@@ -26890,3 +26879,31 @@
   :hints (("goal" :do-not-induct t
            :in-theory (e/d (abs-pread hifat-pread good-frame-p)
                            nil))))
+
+(defund
+  path-clear-alt (path frame indices)
+  (declare (xargs :guard (and (fat32-filename-list-p path)
+                              (frame-p frame))
+                  :guard-debug t))
+  (b*
+      (((when (atom indices)) t)
+       ((unless (path-clear-alt path frame (cdr indices)))
+        nil)
+       (path (mbe :exec path
+                  :logic (fat32-filename-list-fix path)))
+       (alist-elem (assoc-equal (car indices) frame)))
+    (or
+     (atom alist-elem)
+     (and
+      (or (not (prefixp path
+                        (frame-val->path (cdr alist-elem))))
+          (equal (frame-val->path (cdr alist-elem))
+                 path))
+      (or
+       (not (prefixp (frame-val->path (cdr alist-elem))
+                     path))
+       (atom
+        (names-at
+         (frame-val->dir (cdr alist-elem))
+         (nthcdr (len (frame-val->path (cdr alist-elem)))
+                 path))))))))

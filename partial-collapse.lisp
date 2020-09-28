@@ -23,7 +23,26 @@
                      position)))
 
 (local
- (in-theory (disable nat-listp-if-fat32-masked-entry-list-p)))
+ (in-theory
+  (disable
+   nat-listp-if-fat32-masked-entry-list-p
+   (:rewrite m1-directory-file-p-when-m1-file-p)
+   (:rewrite absfat-equiv-implies-set-equiv-addrs-at-1-lemma-2)
+   (:rewrite abs-file->contents-when-m1-file-p)
+   (:rewrite hifat-find-file-correctness-1-lemma-1)
+   (:rewrite abs-addrs-when-m1-file-contents-p)
+   (:rewrite
+    fat32-filename-list-p-of-cdr-when-fat32-filename-list-p)
+   (:rewrite abs-addrs-when-m1-file-alist-p-lemma-2)
+   (:rewrite assoc-of-car-when-member)
+   (:rewrite no-duplicatesp-of-strip-cars-when-hifat-no-dups-p)
+   (:rewrite m1-file-alist-p-when-subsetp-equal)
+   (:rewrite abs-no-dups-p-when-m1-file-alist-p)
+   (:rewrite m1-file-alist-p-when-not-consp)
+   (:rewrite m1-file-contents-p-correctness-1)
+   (:rewrite abs-directory-file-p-correctness-1)
+   (:rewrite m1-directory-file-p-correctness-1)
+   (:rewrite m1-directory-file-p-correctness-1))))
 
 (defund 1st-complete-under-path (frame path)
   (declare (xargs :guard (and (frame-p frame)
