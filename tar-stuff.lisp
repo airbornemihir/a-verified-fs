@@ -62,10 +62,12 @@
   :hints (("goal" :in-theory (enable remove-assocs-equal))))
 
 (defthm remove-assocs-equal-when-atom
-  (implies (atom keys)
+  (implies (not (intersectp-equal (strip-cars alist)
+                                  keys))
            (equal (remove-assocs-equal keys alist)
                   (true-list-fix alist)))
-  :hints (("goal" :in-theory (enable remove-assocs-equal))))
+  :hints (("goal" :in-theory (e/d (remove-assocs-equal)
+                                  (intersectp-is-commutative)))))
 
 (defund tar-len-decode-helper (rev-char-list)
   (declare (xargs :guard (character-listp rev-char-list)))
