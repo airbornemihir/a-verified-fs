@@ -26907,3 +26907,19 @@
          (frame-val->dir (cdr alist-elem))
          (nthcdr (len (frame-val->path (cdr alist-elem)))
                  path))))))))
+
+(defthm path-clear-alt-of-remove-of-strip-cars-lemma-1
+  (implies (and (subsetp-equal indices (strip-cars (cdr frame)))
+                (no-duplicatesp-equal (strip-cars frame)))
+           (equal (path-clear-alt path (cdr frame)
+                                  indices)
+                  (path-clear-alt path frame indices)))
+  :hints (("goal" :in-theory (enable path-clear-alt))))
+
+(defthmd path-clear-alt-of-remove-of-strip-cars
+  (implies (and (frame-p frame)
+                (no-duplicatesp-equal (strip-cars frame)))
+           (equal (path-clear-alt path frame
+                                  (remove-equal x (strip-cars frame)))
+                  (path-clear path (remove-assoc-equal x frame))))
+  :hints (("goal" :in-theory (enable path-clear path-clear-alt))))
