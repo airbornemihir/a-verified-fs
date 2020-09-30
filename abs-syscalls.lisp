@@ -4853,15 +4853,11 @@
           (:type-prescription
            1st-complete-correctness-1)
           (:rewrite
-           abs-find-file-helper-of-collapse-2 . 2)
-          (:rewrite
            names-at-of-abs-place-file-helper-1)
           (:rewrite abs-place-file-helper-correctness-2)
           (:rewrite
            hifat-file-alist-fix-when-hifat-no-dups-p)
           (:rewrite fat32-filename-list-p-of-append)
-          (:rewrite
-           abs-find-file-helper-of-collapse-3 . 2)
           (:rewrite
            absfat-place-file-correctness-lemma-6)
           (:rewrite 1st-complete-of-put-assoc-lemma-1)
