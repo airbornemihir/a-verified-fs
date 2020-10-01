@@ -169,7 +169,7 @@
                     (abs-find-file-of-put-assoc-lemma-7))
     :use
     (:instance
-     (:rewrite abs-find-file-of-put-assoc-lemma-4)
+     (:rewrite abs-find-file-of-remove-assoc-lemma-3)
      (path path)
      (frame (remove-assoc-equal
              (1st-complete frame)
@@ -336,7 +336,7 @@
      (:instance (:rewrite abs-find-file-correctness-1-lemma-48)
                 (x (1st-complete frame)))
      (:instance
-      (:rewrite abs-find-file-of-put-assoc-lemma-4)
+      (:rewrite abs-find-file-of-remove-assoc-lemma-3)
       (path path)
       (frame (remove-assoc-equal
               (frame-val->src (cdr (assoc-equal (1st-complete frame)
@@ -1037,7 +1037,7 @@
                           (nthcdr (len (frame-val->path (cdr (car frame))))
                                   path))))
   :instructions (:promote (:dive 2)
-                          (:rewrite abs-find-file-of-put-assoc-lemma-1)
+                          (:rewrite abs-find-file-of-remove-assoc-lemma-1)
                           :top (:dive 2 2 1)
                           :=
                           :top :s))
