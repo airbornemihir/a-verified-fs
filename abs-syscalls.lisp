@@ -418,50 +418,6 @@
                   frame))
   :hints (("Goal" :in-theory (enable partial-collapse))))
 
-(defthm
-  hifat-subsetp-of-put-assoc-1
-  (implies
-   (and (m1-file-alist-p x)
-        (hifat-no-dups-p x)
-        (stringp name))
-   (equal
-    (hifat-subsetp (put-assoc-equal name val x)
-                   y)
-    (and
-     (hifat-subsetp (remove-assoc-equal name x)
-                    y)
-     (consp (assoc-equal name y))
-     (or
-      (and (not (m1-directory-file-p (cdr (assoc-equal name y))))
-           (not (m1-directory-file-p val))
-           (equal (m1-file->contents val)
-                  (m1-file->contents (cdr (assoc-equal name y)))))
-      (and (m1-directory-file-p (cdr (assoc-equal name y)))
-           (m1-directory-file-p val)
-           (hifat-subsetp (m1-file->contents val)
-                          (m1-file->contents (cdr (assoc-equal name y)))))))))
-  :hints (("goal" :in-theory (enable hifat-subsetp)
-           :induct (mv (put-assoc-equal name val x)
-                       (remove-assoc-equal name x)))))
-
-;; Move later.
-(defthm hifat-subsetp-of-put-assoc-2
-  (implies (and (m1-file-alist-p x)
-                (hifat-subsetp x (remove-assoc-equal name y)))
-           (hifat-subsetp x (put-assoc-equal name val y)))
-  :hints (("goal" :in-theory (enable hifat-subsetp))))
-(defthm hifat-subsetp-of-remove-assoc-1
-  (implies (and (m1-file-alist-p x)
-                (atom (assoc-equal name x))
-                (hifat-subsetp x y))
-           (hifat-subsetp x (remove-assoc-equal name y)))
-  :hints (("goal" :in-theory (enable hifat-subsetp))))
-(defthm hifat-subsetp-of-remove-assoc-2
-  (implies (hifat-subsetp x y)
-           (hifat-subsetp (remove-assoc-equal name x)
-                          y))
-  :hints (("goal" :in-theory (enable hifat-subsetp))))
-
 (defthm hifat-place-file-correctness-lemma-3
   (implies (and (fat32-filename-p name)
                 (not (m1-regular-file-p (cdr (assoc-equal name x))))
