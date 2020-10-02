@@ -3021,7 +3021,8 @@
         x y))
       (t (mv frame x y)))))
 
-  ;; this is important, but the induction scheme and subgoals were a drag.
+  ;; The induction scheme and subgoals were a drag, but this is important
+  ;; because it helps reason about two different variables in a frame.
   (defthmd
     abs-find-file-correctness-1-lemma-75
     (implies
