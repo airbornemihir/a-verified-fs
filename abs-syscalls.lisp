@@ -6,7 +6,7 @@
 (in-package "ACL2")
 
 (include-book "partial-collapse")
-(include-book "abs-find-file")
+(include-book "abs-find-file-src")
 (include-book "abs-alloc")
 (include-book "hifat-syscalls")
 (local (include-book "std/lists/prefixp" :dir :system))
@@ -1083,140 +1083,6 @@
   (implies (consp (assoc-equal 0 frame))
            (consp (assoc-equal 0 (partial-collapse frame path))))
   :hints (("goal" :in-theory (enable partial-collapse))))
-
-;; This deliberately follows an almost-identical induction scheme to
-;; abs-find-file. It was going to be a part of that function, but that just led
-;; to too many failures.
-(defund
-  abs-find-file-src (frame path)
-  (declare
-   (xargs :guard (and (frame-p frame)
-                      (fat32-filename-list-p path))))
-  (b*
-      (((when (atom frame)) 0)
-       (path (mbe :exec path
-                      :logic (fat32-filename-list-fix path)))
-       ((unless (prefixp (frame-val->path (cdar frame))
-                         path))
-        (abs-find-file-src (cdr frame) path))
-       ((mv & error-code)
-        (abs-find-file-helper
-         (frame-val->dir (cdar frame))
-         (nthcdr (len (frame-val->path (cdar frame)))
-                 path)))
-       ((when (not (equal error-code *enoent*)))
-        (mbe :exec (caar frame) :logic (nfix (caar frame)))))
-    (abs-find-file-src (cdr frame) path)))
-
-(defthm
-  abs-find-file-src-correctness-2
-  (implies
-   (and (frame-p frame)
-        (no-duplicatesp-equal (strip-cars frame))
-        (not (equal (mv-nth 1 (abs-find-file frame path))
-                    *enoent*)))
-   (and
-    (consp (assoc-equal (abs-find-file-src frame path)
-                        frame))
-    (prefixp
-     (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
-                                        frame)))
-     (fat32-filename-list-fix path))
-    (equal
-     (abs-find-file-helper
-      (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame path)
-                                        frame)))
-      (nthcdr (len (frame-val->path
-                    (cdr (assoc-equal (abs-find-file-src frame path)
-                                      frame))))
-              path))
-     (abs-find-file frame path))))
-  :hints (("goal" :in-theory (enable abs-find-file abs-find-file-src)))
-  :rule-classes
-  ((:rewrite
-    :corollary
-    (implies
-     (and (frame-p frame)
-          (no-duplicatesp-equal (strip-cars frame))
-          (not (equal (mv-nth 1 (abs-find-file frame path))
-                      *enoent*)))
-     (and
-      (prefixp
-       (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
-                                          frame)))
-       (fat32-filename-list-fix path))
-      (equal
-       (abs-find-file-helper
-        (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame path)
-                                          frame)))
-        (nthcdr
-         (len (frame-val->path
-               (cdr (assoc-equal (abs-find-file-src frame path)
-                                 frame))))
-         path))
-       (abs-find-file frame path)))))))
-
-(encapsulate ()
-
-  (local
-   (defthm
-     lemma
-     (implies (not (zp (abs-find-file-src frame path)))
-              (consp (assoc-equal (abs-find-file-src frame path)
-                                  frame)))
-     :hints (("goal" :in-theory (enable abs-find-file abs-find-file-src)))))
-
-  (defthm
-    abs-find-file-src-correctness-1
-    (implies (consp (assoc-equal 0 frame))
-             (consp (assoc-equal (abs-find-file-src frame path)
-                                 frame)))
-    :hints (("goal" :in-theory (enable abs-find-file abs-find-file-src)))
-    :rule-classes
-    ((:rewrite
-      :corollary
-      (implies (or (not (zp (abs-find-file-src frame path)))
-                   (consp (assoc-equal 0 frame))
-                   (and (frame-p frame)
-                        (no-duplicatesp-equal (strip-cars frame))
-                        (not (equal (mv-nth 1 (abs-find-file frame path))
-                                    *enoent*))))
-               (consp (assoc-equal (abs-find-file-src frame path)
-                                   frame)))
-      :hints
-      (("goal" :in-theory (disable
-                           abs-find-file-src-correctness-2)
-        :use
-        abs-find-file-src-correctness-2))))))
-
-(defthmd
-  abs-find-file-src-of-fat32-filename-list-fix
-  (equal
-   (abs-find-file-src frame (fat32-filename-list-fix path))
-   (abs-find-file-src frame path))
-  :hints (("Goal" :in-theory (enable abs-find-file-src))))
-
-(defcong
-  fat32-filename-list-equiv
-  equal (abs-find-file-src frame path)
-  2
-  :hints
-  (("goal"
-    :use
-    ((:instance abs-find-file-src-of-fat32-filename-list-fix
-                (path path-equiv))
-     abs-find-file-src-of-fat32-filename-list-fix))))
-
-(defthm
-  abs-find-file-src-of-frame-with-root
-  (equal (abs-find-file-src (frame-with-root root frame)
-                            path)
-         (if (equal (mv-nth 1 (abs-find-file-helper root path))
-                    2)
-             (abs-find-file-src frame path)
-             0))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable abs-find-file-src frame-with-root))))
 
 (defthm abs-mkdir-guard-lemma-5
   (implies (abs-no-dups-p fs)
