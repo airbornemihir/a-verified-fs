@@ -326,23 +326,24 @@
           (abs-addrs (cdr abs-file-alist))))
         (t (abs-addrs (cdr abs-file-alist)))))
 
-(defthm
-  abs-addrs-when-m1-file-alist-p-lemma-2
-  (implies (and (or (and (consp (car x))
-                         (m1-file-alist-p (abs-file->contents (cdr (car x)))))
-                    (not
-                     (and (abs-file-alist-p (abs-file->contents (cdr (car x))))
-                          (or (abs-directory-file-p (cdr (car x)))
-                              (atom (abs-addrs (abs-file->contents (cdr (car x)))))))))
-                (abs-file-alist-p x))
-           (m1-file-p (cdr (car x))))
-  :hints
-  (("goal" :expand ((m1-file-p (cdr (car x)))
-                    (abs-file-alist-p x)
-                    (m1-file-alist-p (abs-file->contents (cdr (car x))))
-                    (abs-file->contents (cdr (car x)))
-                    (abs-directory-file-p (cdr (car x)))
-                    (abs-file-p (cdr (car x)))))))
+(local
+ (defthm
+   abs-addrs-when-m1-file-alist-p-lemma-2
+   (implies (and (or (and (consp (car x))
+                          (m1-file-alist-p (abs-file->contents (cdr (car x)))))
+                     (not
+                      (and (abs-file-alist-p (abs-file->contents (cdr (car x))))
+                           (or (abs-directory-file-p (cdr (car x)))
+                               (atom (abs-addrs (abs-file->contents (cdr (car x)))))))))
+                 (abs-file-alist-p x))
+            (m1-file-p (cdr (car x))))
+   :hints
+   (("goal" :expand ((m1-file-p (cdr (car x)))
+                     (abs-file-alist-p x)
+                     (m1-file-alist-p (abs-file->contents (cdr (car x))))
+                     (abs-file->contents (cdr (car x)))
+                     (abs-directory-file-p (cdr (car x)))
+                     (abs-file-p (cdr (car x))))))))
 
 (defthmd
   abs-addrs-when-m1-file-alist-p-lemma-1
@@ -4569,23 +4570,6 @@
                 abs-file-alist2)
       abs-file-alist1))
     :expand (abs-file-alist-p abs-file-alist1))))
-
-(defthm
-  abs-no-dups-p-of-ctx-app-lemma-3
-  (implies
-   (and (abs-directory-file-p (cdr (assoc-equal (car x-path)
-                                                abs-file-alist1)))
-        (abs-file-alist-p abs-file-alist2))
-   (equal
-    (abs-file-contents-fix
-     (ctx-app
-      (abs-file->contents$inline (cdr (assoc-equal (car x-path)
-                                                   abs-file-alist1)))
-      abs-file-alist2 x (cdr x-path)))
-    (ctx-app
-     (abs-file->contents$inline (cdr (assoc-equal (car x-path)
-                                                  abs-file-alist1)))
-     abs-file-alist2 x (cdr x-path)))))
 
 ;; This doesn't work all the time as a type prescription rule, because
 ;; rewriting is sometimes needed to establish the hypotheses.
