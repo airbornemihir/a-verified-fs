@@ -11428,6 +11428,46 @@
      abs-mkdir-correctness-lemma-216
      (indices (strip-cars (frame->frame (partial-collapse frame path))))))))
 
+(defthm
+  abs-mkdir-correctness-lemma-218
+  (implies (and (frame-p frame)
+                (no-duplicatesp-equal (strip-cars frame))
+                (abs-separate frame)
+                (mv-nth 1 (collapse frame))
+                (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+                (subsetp-equal (abs-addrs (frame->root frame))
+                               (frame-addrs-root (frame->frame frame)))
+                (not (equal (abs-find-file-src (partial-collapse frame path)
+                                               path)
+                            0)))
+           (equal (names-at (frame->root (partial-collapse frame path))
+                            path)
+                  nil))
+  :hints
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (assoc-of-frame->frame)
+                    ((:rewrite abs-mkdir-correctness-lemma-205)
+                     (:rewrite abs-find-file-src-correctness-1)
+                     (:rewrite abs-find-file-src-correctness-2)
+                     (:rewrite abs-mkdir-correctness-lemma-211)))
+    :use ((:instance (:rewrite abs-mkdir-correctness-lemma-205)
+                     (path path)
+                     (fs (frame->root (partial-collapse frame path))))
+          (:instance abs-find-file-correctness-1-lemma-36
+                     (x (abs-find-file-src (partial-collapse frame path)
+                                           path)))
+          (:instance (:rewrite abs-find-file-src-correctness-1)
+                     (path path)
+                     (frame (partial-collapse frame path)))
+          (:instance (:rewrite abs-mkdir-correctness-lemma-211)
+                     (path path)
+                     (frame frame)
+                     (x (abs-find-file-src (partial-collapse frame path)
+                                           path)))
+          (:instance (:rewrite abs-find-file-src-correctness-2)
+                     (frame (partial-collapse frame path)))))))
+
 (skip-proofs
  (defthm
    abs-mkdir-correctness-lemma-161
@@ -11443,16 +11483,12 @@
           (equal (abs-find-file-src (partial-collapse frame path)
                                     path)
                  0)))
-    (and
-     (not
-      (consp (names-at (frame->root (partial-collapse frame path))
-                       path)))
-     (path-clear
-      path
-      (remove-assoc-equal
-       (abs-find-file-src (partial-collapse frame path)
-                          path)
-       (frame->frame (partial-collapse frame path))))))))
+    (path-clear
+     path
+     (remove-assoc-equal
+      (abs-find-file-src (partial-collapse frame path)
+                         path)
+      (frame->frame (partial-collapse frame path)))))))
 
 (defthm
   abs-mkdir-correctness-lemma-173
