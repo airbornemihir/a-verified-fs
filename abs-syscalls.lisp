@@ -26165,6 +26165,37 @@
           (:instance abs-find-file-correctness-2
                      (frame (partial-collapse frame path)))))))
 
+(defthm abs-mkdir-correctness-lemma-233
+  (implies
+   (and (mv-nth 1 (collapse frame))
+        (not (frame-val->path (cdr (assoc-equal 0 frame))))
+        (consp (assoc-equal 0 frame))
+        (equal (frame-val->src (cdr (assoc-equal 0 frame)))
+               0)
+        (frame-p frame)
+        (no-duplicatesp-equal (strip-cars frame))
+        (abs-separate frame)
+        (subsetp-equal (abs-addrs (frame->root frame))
+                       (frame-addrs-root (frame->frame frame)))
+        (equal (mv-nth 1
+                       (hifat-find-file (mv-nth 0 (collapse frame))
+                                        path))
+               0))
+   (<
+    (len
+     (frame-val->path
+      (cdr (assoc-equal (abs-find-file-src (partial-collapse frame path)
+                                           path)
+                        frame))))
+    (len path)))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (disable (:linear abs-find-file-src-correctness-2))
+    :use (:instance (:linear abs-find-file-src-correctness-2)
+                    (path path)
+                    (frame (partial-collapse frame path)))))
+  :rule-classes :linear)
+
 (defthm
   abs-mkdir-correctness-2
   (implies (good-frame-p frame)
@@ -26195,7 +26226,33 @@
                                     fat32-filename-list-p-when-not-consp)
                                    (:rewrite
                                     abs-separate-of-frame->frame-of-collapse-this-lemma-8
-                                    . 3)))
+                                    . 3)
+                                   (:rewrite abs-fs-p-correctness-1)
+                                   (:rewrite abs-file-alist-p-correctness-1)
+                                   (:rewrite abs-addrs-of-remove-assoc-lemma-2)
+                                   (:rewrite abs-mkdir-guard-lemma-8)
+                                   (:definition assoc-equal)
+                                   (:type-prescription len-when-consp)
+                                   (:definition strip-cars)
+                                   (:type-prescription
+                                    fat32-filename-list-fix-when-zp-len)
+                                   (:rewrite nthcdr-when->=-n-len-l)
+                                   (:rewrite m1-regular-file-p-correctness-1)
+                                   (:rewrite
+                                    partial-collapse-when-path-clear-of-prefix)
+                                   (:rewrite
+                                    hifat-find-file-correctness-lemma-6)
+                                   (:rewrite abs-lstat-refinement-lemma-1)
+                                   (:definition remove-assoc-equal)
+                                   (:rewrite remove-assoc-when-absent-1)
+                                   (:rewrite valid-seqp-of-seq-this-under-path)
+                                   (:rewrite prefixp-when-not-consp-left)
+                                   (:rewrite
+                                    abs-separate-of-collapse-this-lemma-7)
+                                   (:type-prescription
+                                    abs-find-file-correctness-1-lemma-17)
+                                   (:rewrite
+                                    abs-find-file-correctness-1-lemma-40)))
            :do-not-induct t
            :expand
            ((:with abs-pwrite-correctness-lemma-1
@@ -26204,7 +26261,15 @@
                                             path
                                             '((dir-ent 0 0 0 0 0 0 0 0 0 0 0 16
                                                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                              (contents))))))))
+                                              (contents)))))
+            (:with
+             abs-mkdir-correctness-lemma-226
+             (consp
+              (assoc-equal
+               (basename path)
+               (m1-file->contents (mv-nth 0
+                                          (hifat-find-file (mv-nth 0 (collapse frame))
+                                                           (dirname path))))))))))
   :otf-flg t)
 
 (defund abs-open (path fd-table file-table)

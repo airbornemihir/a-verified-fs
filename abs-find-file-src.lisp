@@ -93,18 +93,17 @@
    (and
     (consp (assoc-equal (abs-find-file-src frame path)
                         frame))
-    (prefixp
-     (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
-                                        frame)))
-     (fat32-filename-list-fix path))
+    (prefixp (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                                frame)))
+             (fat32-filename-list-fix path))
     (equal
      (abs-find-file-helper
       (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame path)
                                         frame)))
-      (nthcdr (len (frame-val->path
-                    (cdr (assoc-equal (abs-find-file-src frame path)
-                                      frame))))
-              path))
+      (nthcdr
+       (len (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                               frame))))
+       path))
      (abs-find-file frame path))))
   :hints (("goal" :in-theory (enable abs-find-file abs-find-file-src)))
   :rule-classes
@@ -125,11 +124,23 @@
         (frame-val->dir (cdr (assoc-equal (abs-find-file-src frame path)
                                           frame)))
         (nthcdr
-         (len (frame-val->path
-               (cdr (assoc-equal (abs-find-file-src frame path)
-                                 frame))))
+         (len
+          (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                             frame))))
          path))
-       (abs-find-file frame path)))))))
+       (abs-find-file frame path)))))
+   (:linear
+    :corollary
+    (implies
+     (and (frame-p frame)
+          (no-duplicatesp-equal (strip-cars frame))
+          (not (equal (mv-nth 1 (abs-find-file frame path))
+                      *enoent*)))
+     (< (len (frame-val->path (cdr (assoc-equal (abs-find-file-src frame path)
+                                                frame))))
+        (len path)))
+    :hints (("goal" :in-theory (enable abs-find-file-helper)
+             :do-not-induct t)))))
 
 (encapsulate ()
 
