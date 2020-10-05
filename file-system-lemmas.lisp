@@ -579,7 +579,7 @@
 (defthm
   assoc-of-remove1-assoc
   (implies
-   (and (not (null key1))
+   (and (case-split (not (null key1)))
         (not (consp (assoc-equal key1 alist))))
    (not (consp (assoc-equal key1
                             (remove1-assoc-equal key2 alist))))))
