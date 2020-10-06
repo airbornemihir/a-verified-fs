@@ -9415,3 +9415,25 @@
 (defthm nat-listp-of-seq-this-under-path
   (nat-listp (seq-this-under-path frame path))
   :hints (("goal" :in-theory (enable seq-this-under-path))))
+
+(defthmd
+  seq-this-under-path-of-fat32-filename-list-fix
+  (equal (seq-this-under-path frame (fat32-filename-list-fix path))
+         (seq-this-under-path frame path))
+  :hints
+  (("goal"
+    :in-theory (enable seq-this-under-path)
+    :induct (seq-this-under-path frame path)
+    :expand (seq-this-under-path frame (fat32-filename-list-fix path)))))
+
+(defcong
+  fat32-filename-list-equiv
+  equal (seq-this-under-path frame path)
+  2
+  :hints
+  (("goal"
+    :in-theory (enable fat32-filename-list-equiv)
+    :use
+    ((:instance seq-this-under-path-of-fat32-filename-list-fix
+                (path path-equiv))
+     seq-this-under-path-of-fat32-filename-list-fix))))

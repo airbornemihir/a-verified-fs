@@ -51,6 +51,12 @@
          (nfix (- (len path) 1)))
   :hints (("goal" :in-theory (enable dirname))))
 
+(defthm consp-of-dirname
+  (equal (consp (dirname path))
+         (consp (cdr path)))
+  :hints (("goal" :in-theory (enable dirname)
+           :expand ((len (cdr path)) (len path)))))
+
 (defund basename (path)
   (declare (xargs :guard (fat32-filename-list-p path)
                   :guard-debug t))

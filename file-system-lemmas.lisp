@@ -1981,3 +1981,8 @@
 (defthm nth-under-iff-1
   (implies (not (member-equal nil l))
            (iff (nth n l) (< (nfix n) (len l)))))
+
+(defthm consp-when-member
+  (implies (member-equal x lst)
+           (consp lst))
+  :rule-classes :forward-chaining)

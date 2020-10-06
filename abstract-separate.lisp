@@ -488,6 +488,13 @@
   :hints (("goal" :in-theory (enable abs-complete abs-addrs))))
 
 (defthm
+  abs-complete-correctness-1
+  (implies (not (consp (abs-addrs x)))
+           (abs-complete x))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-complete))))
+
+(defthm
   abs-file-alist-p-correctness-1
   (implies (and (abs-file-alist-p x)
                 (abs-complete x))

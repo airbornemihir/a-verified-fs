@@ -9718,29 +9718,6 @@
                            (abs-find-file (partial-collapse frame path)
                                           path))))))))))
 
-;; Move later.
-(defthmd
-  seq-this-under-path-of-fat32-filename-list-fix
-  (equal (seq-this-under-path frame (fat32-filename-list-fix path))
-         (seq-this-under-path frame path))
-  :hints
-  (("goal"
-    :in-theory (enable seq-this-under-path)
-    :induct (seq-this-under-path frame path)
-    :expand (seq-this-under-path frame (fat32-filename-list-fix path)))))
-
-(defcong
-  fat32-filename-list-equiv
-  equal (seq-this-under-path frame path)
-  2
-  :hints
-  (("goal"
-    :in-theory (enable fat32-filename-list-equiv)
-    :use
-    ((:instance seq-this-under-path-of-fat32-filename-list-fix
-                (path path-equiv))
-     seq-this-under-path-of-fat32-filename-list-fix))))
-
 (defthm
   abs-mkdir-correctness-lemma-155
   (implies
@@ -23165,12 +23142,6 @@
                  abs-find-file-correctness-2)
            :do-not-induct t)))
 
-;; Move later.
-(defthm consp-when-member
-  (implies (member-equal x lst)
-           (consp lst))
-  :rule-classes :forward-chaining)
-
 (defthm
   abs-mkdir-correctness-lemma-232
   (implies
@@ -23778,13 +23749,6 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable abs-complete frame->root))))
 
-;; Move later.
-(defthm consp-of-dirname
-  (equal (consp (dirname path))
-         (consp (cdr path)))
-  :hints (("goal" :in-theory (enable dirname)
-           :expand ((len (cdr path)) (len path)))))
-
 (defthm fat32-filename-list-equiv-implies-equal-consp-cdr
   (implies (fat32-filename-list-equiv x y)
            (equal (consp (cdr x)) (consp (cdr y))))
@@ -24326,14 +24290,6 @@
                                 path))
               )))
     :otf-flg t))
-
-;; Move later.
-(defthm
-  abs-complete-correctness-1
-  (implies (not (consp (abs-addrs x)))
-           (abs-complete x))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable abs-complete))))
 
 (defthm
   abs-pwrite-correctness-lemma-89
