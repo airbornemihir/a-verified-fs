@@ -22705,6 +22705,61 @@
                     (frame (partial-collapse frame (dirname path)))
                     (path (dirname path))))))
 
+(defthm abs-mkdir-correctness-lemma-34
+  (implies (not (consp (cdr path)))
+           (equal (put-assoc-equal (basename path)
+                                   file fs)
+                  (put-assoc-equal (fat32-filename-fix (car path))
+                                   file fs)))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable basename))))
+
+(defthm
+  abs-mkdir-correctness-lemma-37
+  (implies (not (consp (abs-addrs (frame->root frame))))
+           (abs-complete (frame-val->dir$inline (cdr (assoc-equal 0 frame)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable abs-complete frame->root))))
+
+;; Move later.
+(defthm abs-file-alist-p-of-frame-val->dir
+  (abs-file-alist-p (frame-val->dir x))
+  :hints (("goal" :in-theory (e/d (frame-val->dir) nil))))
+(defthm abs-no-dups-p-of-frame-val->dir
+  (abs-no-dups-p (frame-val->dir x))
+  :hints (("goal" :in-theory (e/d (frame-val->dir) nil))))
+
+;; This lemma could come into conflict with the definition of frame->root as
+;; and when it is enabled...
+(defthm abs-mkdir-correctness-lemma-39
+  (equal (put-assoc-equal name file
+                          (frame-val->dir (cdr (assoc-equal 0 frame))))
+         (put-assoc-equal name file (frame->root frame)))
+  :hints (("goal" :in-theory (enable frame->root))))
+
+;; Move later.
+(defthm abs-file-alist-p-of-frame->root
+  (abs-file-alist-p (frame->root frame))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable frame->root))))
+(defthm abs-no-dups-p-of-frame->root
+  (abs-no-dups-p (frame->root frame))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable frame->root))))
+
+(defthm
+  abs-mkdir-correctness-lemma-52
+  (implies
+   (not (consp (cdr path)))
+   (and (implies (not (consp (assoc-equal (basename path) fs)))
+                 (not (consp (assoc-equal (fat32-filename-fix (car path))
+                                          fs))))
+        (implies (consp (assoc-equal (basename path) fs))
+                 (consp (assoc-equal (fat32-filename-fix (car path))
+                                     fs)))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable basename))))
+
 ;; This encapsulation is to ensure that any changes we make to a theory while
 ;; examining a subgoal actually have effect...
 (encapsulate
