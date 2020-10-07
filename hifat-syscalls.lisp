@@ -39,15 +39,6 @@
   (fat32-filename-list-p (dirname path))
   :hints (("goal" :in-theory (enable dirname))))
 
-;; Move later.
-(defcong
-  fat32-filename-list-equiv
-  fat32-filename-list-equiv (take n l)
-  2
-  :hints
-  (("goal" :in-theory (e/d (fat32-filename-list-equiv)
-                           (take-of-fat32-filename-list-fix)))))
-
 (defcong
   fat32-filename-list-equiv equal
   (dirname path)
@@ -71,30 +62,6 @@
 (defthm fat32-filename-p-of-basename
   (fat32-filename-p (basename path))
   :hints (("goal" :in-theory (enable basename))))
-
-(defthm car-of-last-of-fat32-filename-list-fix
-  (equal (car (last (fat32-filename-list-fix x)))
-         (if (consp x)
-             (fat32-filename-fix (car (last x)))
-             nil))
-  :hints (("goal" :in-theory (enable fat32-filename-list-fix))))
-
-(defthm
-  fat32-filename-list-equiv-implies-fat32-filename-equiv-car-last
-  (implies (fat32-filename-list-equiv l l-equiv)
-           (fat32-filename-equiv (car (last l))
-                                 (car (last l-equiv))))
-  :rule-classes :congruence
-  :hints
-  (("goal"
-    :in-theory
-    (e/d (fat32-filename-list-fix fat32-filename-list-equiv
-                                  fat32-filename-equiv)
-         (car-of-last-of-fat32-filename-list-fix))
-    :use ((:instance car-of-last-of-fat32-filename-list-fix
-                     (x l))
-          (:instance car-of-last-of-fat32-filename-list-fix
-                     (x l-equiv))))))
 
 (defcong
   fat32-filename-list-equiv equal
