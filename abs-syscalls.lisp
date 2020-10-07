@@ -23175,28 +23175,40 @@
      (root (frame->root (partial-collapse frame (dirname path))))))))
 
 (defthm
-  abs-pwrite-correctness-1
+  abs-pwrite-correctness-lemma-21
   (implies
-   (good-frame-p frame)
-   (and (frame-reps-fs
-         (mv-nth 0
-                 (abs-pwrite fd
-                             buf offset frame fd-table file-table))
-         (mv-nth 0
-                 (hifat-pwrite fd
-                               buf offset (mv-nth 0 (collapse frame))
-                               fd-table file-table)))
-        (equal (mv-nth 2
-                       (abs-pwrite fd
-                                   buf offset frame fd-table file-table))
-               (mv-nth 2
-                       (hifat-pwrite fd
-                                     buf offset (mv-nth 0 (collapse frame))
-                                     fd-table file-table)))))
-  :hints
-  (("goal"
-    :do-not-induct t
-    :in-theory
+   (and (fat32-filename-list-p path)
+        (not (consp (cdr path)))
+        (m1-directory-file-p (cdr (assoc-equal (basename path)
+                                               (mv-nth 0 (collapse frame))))))
+   (not (m1-regular-file-p (cdr (assoc-equal (car path)
+                                             (mv-nth 0 (collapse frame)))))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable basename))))
+
+(defthm
+  abs-pwrite-correctness-lemma-37
+  (implies (and (fat32-filename-list-p path)
+                (consp path)
+                (not (consp (cdr path))))
+           (equal (assoc-equal (car path) fs)
+                  (assoc-equal (basename path) fs)))
+  :hints (("goal" :in-theory (enable basename)
+           :do-not-induct t)))
+
+;; This lemma could come into conflict with the definition of frame->root as
+;; and when it is enabled...
+(defthm abs-pwrite-correctness-lemma-40
+  (equal (assoc-equal name
+                      (frame-val->dir (cdr (assoc-equal 0 frame))))
+         (assoc-equal name (frame->root frame)))
+  :hints (("goal" :in-theory (enable frame->root))))
+
+(encapsulate
+  ()
+
+  (local
+   (in-theory
     (e/d (frame-reps-fs good-frame-p
                         abs-pwrite frame->frame-of-put-assoc
                         collapse collapse-this
@@ -23237,23 +23249,46 @@
           (:linear len-when-hifat-bounded-file-alist-p . 2)
           (:rewrite abs-addrs-of-put-assoc-lemma-1)
           (:rewrite hifat-subsetp-reflexive-lemma-3)
-          (:REWRITE ABS-PWRITE-CORRECTNESS-LEMMA-97)
-          (:TYPE-PRESCRIPTION
-           ABS-MKDIR-CORRECTNESS-LEMMA-97)
-          (:REWRITE ABS-PWRITE-CORRECTNESS-LEMMA-20)
-          (:REWRITE ABS-PWRITE-CORRECTNESS-LEMMA-22)
-          (:REWRITE ABS-PWRITE-CORRECTNESS-LEMMA-47)
-          ABS-MKDIR-CORRECTNESS-LEMMA-211))
-    :expand
-    ((:with abs-pwrite-correctness-lemma-1
-            (:free (file)
-                   (hifat-place-file
-                    (mv-nth 0 (collapse frame))
-                    (file-table-element->fid
-                     (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
-                                       file-table)))
-                    file))))))
-  :otf-flg t)
+          (:rewrite abs-pwrite-correctness-lemma-97)
+          (:type-prescription
+           abs-mkdir-correctness-lemma-97)
+          (:rewrite abs-pwrite-correctness-lemma-20)
+          (:rewrite abs-pwrite-correctness-lemma-22)
+          (:rewrite abs-pwrite-correctness-lemma-47)
+          abs-mkdir-correctness-lemma-211))))
+
+  (defthm
+    abs-pwrite-correctness-1
+    (implies
+     (good-frame-p frame)
+     (and (frame-reps-fs
+           (mv-nth 0
+                   (abs-pwrite fd
+                               buf offset frame fd-table file-table))
+           (mv-nth 0
+                   (hifat-pwrite fd
+                                 buf offset (mv-nth 0 (collapse frame))
+                                 fd-table file-table)))
+          (equal (mv-nth 2
+                         (abs-pwrite fd
+                                     buf offset frame fd-table file-table))
+                 (mv-nth 2
+                         (hifat-pwrite fd
+                                       buf offset (mv-nth 0 (collapse frame))
+                                       fd-table file-table)))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :expand
+      ((:with abs-pwrite-correctness-lemma-1
+              (:free (file)
+                     (hifat-place-file
+                      (mv-nth 0 (collapse frame))
+                      (file-table-element->fid
+                       (cdr (assoc-equal (cdr (assoc-equal fd fd-table))
+                                         file-table)))
+                      file))))))
+    :otf-flg t))
 
 (defund abs-open (path fd-table file-table)
   (declare (xargs :guard (and (fat32-filename-list-p path)
