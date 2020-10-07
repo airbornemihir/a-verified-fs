@@ -3561,14 +3561,6 @@
            (not (consp (cdr path))))
   :hints (("goal" :in-theory (enable fat32-filename-list-fix basename))))
 
-;; Move later.
-(defcong
-  fat32-filename-list-equiv
-  equal (consp x)
-  1
-  :hints (("goal" :in-theory (enable fat32-filename-list-equiv
-                                     fat32-filename-list-fix))))
-
 (defthm
   abs-find-file-after-abs-mkdir-1
   (implies
