@@ -3556,14 +3556,6 @@
            (not (consp (cdr path))))
   :hints (("goal" :in-theory (enable fat32-filename-list-fix basename))))
 
-;; Move later.
-(defcong
-  fat32-filename-list-equiv
-  equal (consp x)
-  1
-  :hints (("goal" :in-theory (enable fat32-filename-list-equiv
-                                     fat32-filename-list-fix))))
-
 (defthm
   abs-find-file-after-abs-mkdir-1
   (implies
@@ -22721,14 +22713,6 @@
   :hints (("goal" :do-not-induct t
            :in-theory (enable abs-complete frame->root))))
 
-;; Move later.
-(defthm abs-file-alist-p-of-frame-val->dir
-  (abs-file-alist-p (frame-val->dir x))
-  :hints (("goal" :in-theory (e/d (frame-val->dir) nil))))
-(defthm abs-no-dups-p-of-frame-val->dir
-  (abs-no-dups-p (frame-val->dir x))
-  :hints (("goal" :in-theory (e/d (frame-val->dir) nil))))
-
 ;; This lemma could come into conflict with the definition of frame->root as
 ;; and when it is enabled...
 (defthm abs-mkdir-correctness-lemma-39
@@ -22736,16 +22720,6 @@
                           (frame-val->dir (cdr (assoc-equal 0 frame))))
          (put-assoc-equal name file (frame->root frame)))
   :hints (("goal" :in-theory (enable frame->root))))
-
-;; Move later.
-(defthm abs-file-alist-p-of-frame->root
-  (abs-file-alist-p (frame->root frame))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable frame->root))))
-(defthm abs-no-dups-p-of-frame->root
-  (abs-no-dups-p (frame->root frame))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable frame->root))))
 
 (defthm
   abs-mkdir-correctness-lemma-52

@@ -2366,6 +2366,14 @@
                (dir abs-fs-p)
                (src natp)))
 
+(defthm abs-file-alist-p-of-frame-val->dir
+  (abs-file-alist-p (frame-val->dir x))
+  :hints (("goal" :in-theory (e/d (frame-val->dir) nil))))
+
+(defthm abs-no-dups-p-of-frame-val->dir
+  (abs-no-dups-p (frame-val->dir x))
+  :hints (("goal" :in-theory (e/d (frame-val->dir) nil))))
+
 (fty::defalist frame
                :key-type nat
                :val-type frame-val
@@ -3225,6 +3233,16 @@
              (frame-val->dir val)
              (frame->root frame)))
   :hints (("goal" :in-theory (enable frame->root))))
+
+(defthm abs-file-alist-p-of-frame->root
+  (abs-file-alist-p (frame->root frame))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable frame->root))))
+
+(defthm abs-no-dups-p-of-frame->root
+  (abs-no-dups-p (frame->root frame))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable frame->root))))
 
 (defund
   collapse-this (frame x)
