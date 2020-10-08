@@ -1356,7 +1356,9 @@
             (lofat-to-hifat-helper fat32-in-memory
                                    dir-ent-list entry-limit1))))))
 
-(defthmd hifat-to-lofat-inversion-lemma-17
+;; This lemma needs to be enabled, because there are proofs that get stuck
+;; without it even when lofat-to-hifat-helper is enabled.
+(defthm hifat-to-lofat-inversion-lemma-17
   (implies
    (atom dir-ent-list)
    (equal
@@ -8125,7 +8127,6 @@
                        root-dir-ent-list
                        pseudo-root-dir-ent
                        not-intersectp-list
-                       hifat-to-lofat-inversion-lemma-17
                        hifat-to-lofat-inversion-lemma-20
                        painful-debugging-lemma-10
                        painful-debugging-lemma-11))))
@@ -9479,8 +9480,7 @@
     0))
   :hints
   (("goal"
-    :in-theory (e/d (lofat-to-hifat hifat-to-lofat
-                                    hifat-to-lofat-inversion-lemma-17)
+    :in-theory (e/d (lofat-to-hifat hifat-to-lofat)
                     (lofat-to-hifat-inversion-lemma-3 generate-index-list)))))
 
 (defthm
@@ -9691,7 +9691,6 @@
     :in-theory
     (e/d
      (lofat-to-hifat hifat-to-lofat
-                     hifat-to-lofat-inversion-lemma-17
                      lofat-to-hifat-inversion-lemma-4
                      lofat-to-hifat-helper-correctness-5-lemma-5
                      dir-ent-clusterchain pseudo-root-dir-ent)
