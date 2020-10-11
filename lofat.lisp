@@ -3593,11 +3593,15 @@ Some (rather awful) testing forms are
     (dir-ent-p root-dir-ent)
     (dir-ent-directory-p root-dir-ent)
     (<= 2 (dir-ent-first-cluster root-dir-ent))
-    (not (intersectp-equal
-          (mv-nth '0
-                  (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-          (mv-nth '0
-                  (dir-ent-clusterchain fat32-in-memory dir-ent))))
+    ;; Sometimes this hypothesis just goes unexpanded by the rewriter - we need
+    ;; to do something to force it to be examined, without actually forcing
+    ;; lol.
+    (case-split
+     (not (intersectp-equal
+           (mv-nth '0
+                   (dir-ent-clusterchain fat32-in-memory root-dir-ent))
+           (mv-nth '0
+                   (dir-ent-clusterchain fat32-in-memory dir-ent)))))
     (equal (mv-nth '1
                    (dir-ent-clusterchain-contents fat32-in-memory dir-ent))
            '0))
@@ -11147,6 +11151,17 @@ Some (rather awful) testing forms are
   :hints (("goal" :do-not-induct t
            :in-theory (enable good-root-dir-ent-p)))
   :rule-classes :forward-chaining)
+
+(defthm
+  lofat-place-file-correctness-lemma-5
+  (implies
+   (good-root-dir-ent-p root-dir-ent fat32-in-memory)
+   (equal
+    (mv-nth 1
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
+    0))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable good-root-dir-ent-p))))
 
 (defthm
   lofat-place-file-correctness-lemma-4
@@ -26174,7 +26189,8 @@ Some (rather awful) testing forms are
                                      1))
           0))
         entry-limit))
-      0))
+      0)
+     (useful-dir-ent-list-p dir-ent-list))
     (and
      (hifat-equiv
       (mv-nth
@@ -26326,7 +26342,6 @@ Some (rather awful) testing forms are
        (:rewrite lofat-place-file-correctness-1-lemma-14)
        (:linear nth-when-dir-ent-p)
        (:rewrite explode-of-dir-ent-filename)
-       (:rewrite take-of-len-free)
        (:rewrite lofat-place-file-correctness-1-lemma-17)
        (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
        (:rewrite lofat-place-file-correctness-1-lemma-15)
@@ -26776,24 +26791,6 @@ Some (rather awful) testing forms are
           (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
           (:rewrite lofat-fs-p-of-lofat-place-file-lemma-1)
           (:rewrite clear-clusterchain-reversibility-lemma-1))))))
-
-(defthm
-  lofat-place-file-correctness-lemma-5
-  (implies
-   (good-root-dir-ent-p root-dir-ent fat32-in-memory)
-   (equal
-    (mv-nth 1
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
-    0))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable good-root-dir-ent-p))))
-
-(defthm lofat-place-file-correctness-lemma-6
-  (implies (good-root-dir-ent-p root-dir-ent fat32-in-memory)
-           (dir-ent-directory-p root-dir-ent))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable good-root-dir-ent-p)))
-  :rule-classes :forward-chaining)
 
 ;; Rename and move later.
 (defthm lofat-place-file-correctness-lemma-10 (iff (< (min x y) y) (< x y)))
