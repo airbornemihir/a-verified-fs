@@ -15884,25 +15884,16 @@ Some (rather awful) testing forms are
        ((mv fat32-in-memory &)
         (if (or (< first-cluster 2) (<= (+ 2 (count-of-clusters fat32-in-memory)) first-cluster))
             (mv fat32-in-memory 0) (clear-clusterchain fat32-in-memory first-cluster length)))
-       (contents (if (lofat-regular-file-p file) (lofat-file->contents file)
-                   ;; What we're trying to do here is flatten the file
-                   ;; contents, then turn them to a string. We can only do half
-                   ;; the job right now, adding the dotdot entry.
-                   (nats=>string
-                    (append
-                     (dir-ent-set-first-cluster-file-size
-                      (dir-ent-set-filename (dir-ent-fix nil)
-                                            *parent-dir-fat32-name*)
-                      (dir-ent-first-cluster root-dir-ent)
-                      0)
-                     (flatten (lofat-file->contents file))))))
        ;; We're going to have to refer to two different values of file-length:
        ;; one which refers to how much space we need to allocate, which will be
        ;; non-zero for directories (remember, we're not adding any root
        ;; directories lol so we need to have dot and dotdot entries) and
        ;; another which refers to the filesize field in the directory entry,
        ;; which will be zero for directories.
-       (file-length (length contents))
+       (file-length (if (lofat-regular-file-p file)
+                        (length (lofat-file->contents file))
+                      ;; 32 bytes for dot, 32 bytes for dotdot.
+                      (+ *ms-dir-ent-length* *ms-dir-ent-length*)))
        ;; Note, this value of new-dir-contents only gets used when file-length
        ;; is zero - an empty regular file.
        (new-dir-contents
@@ -15921,8 +15912,10 @@ Some (rather awful) testing forms are
                                                     (fati first-cluster fat32-in-memory)
                                                     *ms-end-of-clusterchain*)
                                      fat32-in-memory))
-       (contents (if (lofat-regular-file-p file) contents
-                   ;; This is the other half of the job, adding the dot entry.
+       (contents (if (lofat-regular-file-p file) (lofat-file->contents file)
+                   ;; Our guard ensures that the contents of this directory
+                   ;; file are empty - so the only thing here is to add a dot
+                   ;; entry and a dotdot entry.
                    (nats=>string
                     (append
                      (dir-ent-set-first-cluster-file-size
@@ -15930,7 +15923,11 @@ Some (rather awful) testing forms are
                                             *current-dir-fat32-name*)
                       first-cluster
                       0)
-                     (string=>nats contents)))))
+                     (dir-ent-set-first-cluster-file-size
+                      (dir-ent-set-filename (dir-ent-fix nil)
+                                            *parent-dir-fat32-name*)
+                      (dir-ent-first-cluster root-dir-ent)
+                      0)))))
        ;; OK, we've been done with the previous value of file-length for a
        ;; while. Now, we need a value that's going in the directory entry.
        (file-length (if (lofat-regular-file-p file) (length contents) 0))
