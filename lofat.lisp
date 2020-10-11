@@ -26070,6 +26070,8 @@ Some (rather awful) testing forms are
                           0 0))
           entry-limit)))))))
 
+  ;; Hypotheses minimised. BTW, generalising this in terms of variables is just
+  ;; a lot of work, so later.
   (defthm
     lofat-place-file-correctness-lemma-6
     (implies
@@ -26092,7 +26094,7 @@ Some (rather awful) testing forms are
          (dir-ent-install-directory-bit
           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                (car path))
+                                name)
           t)
          (make-empty-subdir-contents
           (nth 0
@@ -26104,10 +26106,9 @@ Some (rather awful) testing forms are
               (find-n-free-clusters (effective-fat fat32-in-memory)
                                     1))))
        0)
-      (consp path)
       (good-root-dir-ent-p root-dir-ent fat32-in-memory)
       (non-free-index-listp x (effective-fat fat32-in-memory))
-      (fat32-filename-list-p path)
+      (fat32-filename-p name)
       (equal (mv-nth 3
                      (lofat-to-hifat-helper fat32-in-memory
                                             dir-ent-list entry-limit))
@@ -26126,7 +26127,7 @@ Some (rather awful) testing forms are
       (<= 1
           (count-free-clusters (effective-fat fat32-in-memory)))
       (not (equal (mv-nth 1
-                          (find-dir-ent dir-ent-list (car path)))
+                          (find-dir-ent dir-ent-list name))
                   0))
       (equal
        (mv-nth
@@ -26152,7 +26153,7 @@ Some (rather awful) testing forms are
              (dir-ent-install-directory-bit
               (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                    (car path))
+                                    name)
               t)
              (make-empty-subdir-contents
               (nth 0
@@ -26175,7 +26176,7 @@ Some (rather awful) testing forms are
                (dir-ent-set-filename
                 '(0 0 0 0 0 0 0 0 0 0 0 0
                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                (car path))
+                name)
                t)
               (nth 0
                    (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -26187,7 +26188,7 @@ Some (rather awful) testing forms are
            (dir-ent-install-directory-bit
             (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  (car path))
+                                  name)
             t)
            (nth 0
                 (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -26221,7 +26222,7 @@ Some (rather awful) testing forms are
              (dir-ent-install-directory-bit
               (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                    (car path))
+                                    name)
               t)
              (make-empty-subdir-contents
               (nth 0
@@ -26244,7 +26245,7 @@ Some (rather awful) testing forms are
                (dir-ent-set-filename
                 '(0 0 0 0 0 0 0 0 0 0 0 0
                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                (car path))
+                name)
                t)
               (nth 0
                    (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -26256,7 +26257,7 @@ Some (rather awful) testing forms are
            (dir-ent-install-directory-bit
             (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  (car path))
+                                  name)
             t)
            (nth 0
                 (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -26264,7 +26265,7 @@ Some (rather awful) testing forms are
            0))
          entry-limit))
        (put-assoc-equal
-        (car path)
+        name
         (m1-file dir-ent nil)
         (mv-nth 0
                 (lofat-to-hifat-helper fat32-in-memory
@@ -26294,7 +26295,7 @@ Some (rather awful) testing forms are
              (dir-ent-install-directory-bit
               (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                    (car path))
+                                    name)
               t)
              (make-empty-subdir-contents
               (nth 0
@@ -26317,7 +26318,7 @@ Some (rather awful) testing forms are
                (dir-ent-set-filename
                 '(0 0 0 0 0 0 0 0 0 0 0 0
                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                (car path))
+                name)
                t)
               (nth 0
                    (find-n-free-clusters (effective-fat fat32-in-memory)
@@ -26329,7 +26330,7 @@ Some (rather awful) testing forms are
            (dir-ent-install-directory-bit
             (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
                                       0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  (car path))
+                                  name)
             t)
            (nth 0
                 (find-n-free-clusters (effective-fat fat32-in-memory)
