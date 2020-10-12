@@ -26098,11 +26098,8 @@ Some (rather awful) testing forms are
                       (fat32-update-lower-28 (fati i fat32-in-memory)
                                              268435455)
                       fat32-in-memory)
-         (dir-ent-install-directory-bit
-          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                name)
-          t)
+         (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                        t)
          (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
          0 i))
        0)
@@ -26142,11 +26139,8 @@ Some (rather awful) testing forms are
                           (fat32-update-lower-28 (fati i fat32-in-memory)
                                                  268435455)
                           fat32-in-memory)
-             (dir-ent-install-directory-bit
-              (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                    name)
-              t)
+             (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                            t)
              (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
              0 i))
            (dir-ent-first-cluster root-dir-ent)
@@ -26157,21 +26151,14 @@ Some (rather awful) testing forms are
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
              (dir-ent-set-first-cluster-file-size
-              (dir-ent-install-directory-bit
-               (dir-ent-set-filename
-                '(0 0 0 0 0 0 0 0 0 0 0 0
-                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                name)
-               t)
+              (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                             t)
               i 0)))))
          (place-dir-ent
           dir-ent-list
           (dir-ent-set-first-cluster-file-size
-           (dir-ent-install-directory-bit
-            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  name)
-            t)
+           (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                          t)
            i 0))
          entry-limit))
        0)
@@ -26196,11 +26183,8 @@ Some (rather awful) testing forms are
                           (fat32-update-lower-28 (fati i fat32-in-memory)
                                                  268435455)
                           fat32-in-memory)
-             (dir-ent-install-directory-bit
-              (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                    name)
-              t)
+             (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                            t)
              (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
              0 i))
            (dir-ent-first-cluster root-dir-ent)
@@ -26211,21 +26195,14 @@ Some (rather awful) testing forms are
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
              (dir-ent-set-first-cluster-file-size
-              (dir-ent-install-directory-bit
-               (dir-ent-set-filename
-                '(0 0 0 0 0 0 0 0 0 0 0 0
-                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                name)
-               t)
+              (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                             t)
               i 0)))))
          (place-dir-ent
           dir-ent-list
           (dir-ent-set-first-cluster-file-size
-           (dir-ent-install-directory-bit
-            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  name)
-            t)
+           (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                          t)
            i 0))
          entry-limit))
        (put-assoc-equal
@@ -26248,11 +26225,8 @@ Some (rather awful) testing forms are
                           (fat32-update-lower-28 (fati i fat32-in-memory)
                                                  268435455)
                           fat32-in-memory)
-             (dir-ent-install-directory-bit
-              (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                        0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                    name)
-              t)
+             (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                            t)
              (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
              0 i))
            (dir-ent-first-cluster root-dir-ent)
@@ -26263,21 +26237,14 @@ Some (rather awful) testing forms are
                0
                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
              (dir-ent-set-first-cluster-file-size
-              (dir-ent-install-directory-bit
-               (dir-ent-set-filename
-                '(0 0 0 0 0 0 0 0 0 0 0 0
-                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                name)
-               t)
+              (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                             t)
               i 0)))))
          (place-dir-ent
           dir-ent-list
           (dir-ent-set-first-cluster-file-size
-           (dir-ent-install-directory-bit
-            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  name)
-            t)
+           (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                          t)
            i 0))
          entry-limit)))))
     :hints
@@ -26335,41 +26302,146 @@ Some (rather awful) testing forms are
                       (lofat-to-hifat-helper fat32-in-memory
                                              (cons dir-ent dir-ent-list)
                                              entry-limit))
-               (:free (x) (intersectp-equal nil x)))))))
+               (:free (x) (intersectp-equal nil x)))))
+    :rule-classes
+    ((:rewrite
+      :corollary
+      (implies
+       (and
+        (fat32-masked-entry-p i)
+        (equal
+         (mv-nth
+          2
+          (place-contents
+           (update-fati i
+                        (fat32-update-lower-28 (fati i fat32-in-memory)
+                                               268435455)
+                        fat32-in-memory)
+           (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                          t)
+           (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
+           0 i))
+         0)
+        (good-root-dir-ent-p root-dir-ent fat32-in-memory)
+        (non-free-index-listp x (effective-fat fat32-in-memory))
+        (fat32-filename-p name)
+        (equal (mv-nth 3
+                       (lofat-to-hifat-helper fat32-in-memory
+                                              dir-ent-list entry-limit))
+               0)
+        (not-intersectp-list
+         (mv-nth 0
+                 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
+         (mv-nth 2
+                 (lofat-to-hifat-helper fat32-in-memory
+                                        dir-ent-list entry-limit)))
+        (not-intersectp-list
+         x
+         (mv-nth 2
+                 (lofat-to-hifat-helper fat32-in-memory
+                                        dir-ent-list entry-limit)))
+        (<= 1
+            (count-free-clusters (effective-fat fat32-in-memory)))
+        (not (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
+                    0))
+        (equal
+         (mv-nth
+          3
+          (lofat-to-hifat-helper
+           (mv-nth
+            0
+            (update-dir-contents
+             (mv-nth
+              0
+              (place-contents
+               (update-fati i
+                            (fat32-update-lower-28 (fati i fat32-in-memory)
+                                                   268435455)
+                            fat32-in-memory)
+               (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                              t)
+               (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
+               0 i))
+             (dir-ent-first-cluster root-dir-ent)
+             (nats=>string
+              (insert-dir-ent
+               (string=>nats
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (dir-ent-set-first-cluster-file-size
+                (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                               t)
+                i 0)))))
+           (place-dir-ent
+            dir-ent-list
+            (dir-ent-set-first-cluster-file-size
+             (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                            t)
+             i 0))
+           entry-limit))
+         0)
+        (useful-dir-ent-list-p dir-ent-list)
+        (zp (fat32-entry-mask (nth i (effective-fat fat32-in-memory))))
+        (integerp i)
+        (<= 2 i)
+        (< i
+           (len (effective-fat fat32-in-memory))))
+       (not-intersectp-list
+        x
+        (mv-nth
+         2
+         (lofat-to-hifat-helper
+          (mv-nth
+           0
+           (update-dir-contents
+            (mv-nth
+             0
+             (place-contents
+              (update-fati i
+                           (fat32-update-lower-28 (fati i fat32-in-memory)
+                                                  268435455)
+                           fat32-in-memory)
+              (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                             t)
+              (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
+              0 i))
+            (dir-ent-first-cluster root-dir-ent)
+            (nats=>string
+             (insert-dir-ent
+              (string=>nats
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (dir-ent-set-first-cluster-file-size
+               (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                              t)
+               i 0)))))
+          (place-dir-ent
+           dir-ent-list
+           (dir-ent-set-first-cluster-file-size
+            (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                           t)
+            i 0))
+          entry-limit))))))))
 
 (defthm
   lofat-place-file-correctness-lemma-17
   (implies
    (and
+    (fat32-masked-entry-p i)
     (equal
      (mv-nth
       2
       (place-contents
-       (update-fati
-        (nth 0
-             (find-n-free-clusters (effective-fat fat32-in-memory)
-                                   1))
-        (fat32-update-lower-28
-         (fati (nth 0
-                    (find-n-free-clusters (effective-fat fat32-in-memory)
-                                          1))
-               fat32-in-memory)
-         268435455)
-        fat32-in-memory)
-       (dir-ent-install-directory-bit
-        (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                              name)
-        t)
-       (make-empty-subdir-contents
-        (nth 0
-             (find-n-free-clusters (effective-fat fat32-in-memory)
-                                   1))
-        (dir-ent-first-cluster root-dir-ent))
-       0
-       (nth 0
-            (find-n-free-clusters (effective-fat fat32-in-memory)
-                                  1))))
+       (update-fati i
+                    (fat32-update-lower-28 (fati i fat32-in-memory)
+                                           268435455)
+                    fat32-in-memory)
+       (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                      t)
+       (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
+       0 i))
      0)
     (good-root-dir-ent-p root-dir-ent fat32-in-memory)
     (fat32-filename-p name)
@@ -26397,31 +26469,14 @@ Some (rather awful) testing forms are
          (mv-nth
           0
           (place-contents
-           (update-fati
-            (nth 0
-                 (find-n-free-clusters (effective-fat fat32-in-memory)
-                                       1))
-            (fat32-update-lower-28
-             (fati (nth 0
-                        (find-n-free-clusters (effective-fat fat32-in-memory)
-                                              1))
-                   fat32-in-memory)
-             268435455)
-            fat32-in-memory)
-           (dir-ent-install-directory-bit
-            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  name)
-            t)
-           (make-empty-subdir-contents
-            (nth 0
-                 (find-n-free-clusters (effective-fat fat32-in-memory)
-                                       1))
-            (dir-ent-first-cluster root-dir-ent))
-           0
-           (nth 0
-                (find-n-free-clusters (effective-fat fat32-in-memory)
-                                      1))))
+           (update-fati i
+                        (fat32-update-lower-28 (fati i fat32-in-memory)
+                                               268435455)
+                        fat32-in-memory)
+           (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                          t)
+           (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
+           0 i))
          (dir-ent-first-cluster root-dir-ent)
          (nats=>string
           (insert-dir-ent
@@ -26430,31 +26485,22 @@ Some (rather awful) testing forms are
              0
              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
            (dir-ent-set-first-cluster-file-size
-            (dir-ent-install-directory-bit
-             (dir-ent-set-filename
-              '(0 0 0 0 0 0 0 0 0 0 0 0
-                  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-              name)
-             t)
-            (nth 0
-                 (find-n-free-clusters (effective-fat fat32-in-memory)
-                                       1))
-            0)))))
+            (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                           t)
+            i 0)))))
        (place-dir-ent
         dir-ent-list
         (dir-ent-set-first-cluster-file-size
-         (dir-ent-install-directory-bit
-          (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                    0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                name)
-          t)
-         (nth 0
-              (find-n-free-clusters (effective-fat fat32-in-memory)
-                                    1))
-         0))
+         (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                        t)
+         i 0))
        entry-limit))
      0)
-    (useful-dir-ent-list-p dir-ent-list))
+    (useful-dir-ent-list-p dir-ent-list)
+    (zp (fat32-entry-mask (nth i (effective-fat fat32-in-memory))))
+    (<= 2 i)
+    (< i
+       (len (effective-fat fat32-in-memory))))
    (hifat-equiv
     (mv-nth
      0
@@ -26465,31 +26511,14 @@ Some (rather awful) testing forms are
         (mv-nth
          0
          (place-contents
-          (update-fati
-           (nth 0
-                (find-n-free-clusters (effective-fat fat32-in-memory)
-                                      1))
-           (fat32-update-lower-28
-            (fati (nth 0
-                       (find-n-free-clusters (effective-fat fat32-in-memory)
-                                             1))
-                  fat32-in-memory)
-            268435455)
-           fat32-in-memory)
-          (dir-ent-install-directory-bit
-           (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                     0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                 name)
-           t)
-          (make-empty-subdir-contents
-           (nth 0
-                (find-n-free-clusters (effective-fat fat32-in-memory)
-                                      1))
-           (dir-ent-first-cluster root-dir-ent))
-          0
-          (nth 0
-               (find-n-free-clusters (effective-fat fat32-in-memory)
-                                     1))))
+          (update-fati i
+                       (fat32-update-lower-28 (fati i fat32-in-memory)
+                                              268435455)
+                       fat32-in-memory)
+          (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                         t)
+          (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
+          0 i))
         (dir-ent-first-cluster root-dir-ent)
         (nats=>string
          (insert-dir-ent
@@ -26498,35 +26527,23 @@ Some (rather awful) testing forms are
             0
             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
           (dir-ent-set-first-cluster-file-size
-           (dir-ent-install-directory-bit
-            (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                      0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                                  name)
-            t)
-           (nth 0
-                (find-n-free-clusters (effective-fat fat32-in-memory)
-                                      1))
-           0)))))
+           (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                          t)
+           i 0)))))
       (place-dir-ent
        dir-ent-list
        (dir-ent-set-first-cluster-file-size
-        (dir-ent-install-directory-bit
-         (dir-ent-set-filename '(0 0 0 0 0 0 0 0 0 0 0 0
-                                   0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-                               name)
-         t)
-        (nth 0
-             (find-n-free-clusters (effective-fat fat32-in-memory)
-                                   1))
-        0))
+        (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
+                                       t)
+        i 0))
       entry-limit))
     (put-assoc-equal
      name (m1-file (dir-ent-fix nil) nil)
      (mv-nth 0
              (lofat-to-hifat-helper fat32-in-memory
                                     dir-ent-list entry-limit)))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (disable lofat-place-file-correctness-lemma-6)
+  :hints (("goal" :in-theory (e/d (not-intersectp-list)
+                                  (lofat-place-file-correctness-lemma-6))
            :use (:instance lofat-place-file-correctness-lemma-6
                            (dir-ent (dir-ent-fix nil))
                            (x nil)))))
@@ -27120,17 +27137,14 @@ Some (rather awful) testing forms are
 (defthm
   lofat-place-file-correctness-lemma-14
   (implies
-   (and
-    (good-root-dir-ent-p root-dir-ent fat32-in-memory)
-    (lofat-file-p file)
-    (<= (len (make-clusters (lofat-file->contents file)
-                            (cluster-size fat32-in-memory)))
-        (count-free-clusters (effective-fat fat32-in-memory)))
-    (not (lofat-directory-file-p file))
-    (< 0
-       (len (explode (lofat-file->contents file))))
-    (<= 1
-        (count-free-clusters (effective-fat fat32-in-memory))))
+   (and (good-root-dir-ent-p root-dir-ent fat32-in-memory)
+        (lofat-file-p file)
+        (<= (len (make-clusters (lofat-file->contents file)
+                                (cluster-size fat32-in-memory)))
+            (count-free-clusters (effective-fat fat32-in-memory)))
+        (not (lofat-directory-file-p file))
+        (< 0
+           (len (explode (lofat-file->contents file)))))
    (equal
     (dir-ent-clusterchain-contents
      (mv-nth
@@ -27171,13 +27185,13 @@ Some (rather awful) testing forms are
      (implode
       (append
        (explode (lofat-file->contents file))
-       (make-list-ac
+       (make-list
         (+ (- (len (explode (lofat-file->contents file))))
            (min (len (explode (lofat-file->contents file)))
                 (* (cluster-size fat32-in-memory)
                    (len (make-clusters (lofat-file->contents file)
                                        (cluster-size fat32-in-memory))))))
-        #\  nil)))
+        :initial-element (code-char 0))))
      0)))
   :hints
   (("goal"
@@ -27221,8 +27235,7 @@ Some (rather awful) testing forms are
                                          1))
               fat32-in-memory)
         268435455)
-       fat32-in-memory))
-     (length (len (explode (lofat-file->contents file))))))))
+       fat32-in-memory))))))
 
 (defthm lofat-place-file-correctness-lemma-15
   (zp (+ (- x) (min x y)))
@@ -27238,6 +27251,20 @@ Some (rather awful) testing forms are
                   t))
   :hints (("goal" :in-theory (disable put-assoc-under-hifat-equiv-3)
            :use put-assoc-under-hifat-equiv-3)))
+
+(defthm lofat-place-file-correctness-lemma-19
+  (implies (fat32-filename-p name)
+           (not (useless-dir-ent-p (make-dir-ent-with-filename name))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable make-dir-ent-with-filename))))
+
+(defthm
+  lofat-place-file-correctness-lemma-20
+  (implies (fat32-filename-p filename)
+           (equal (dir-ent-filename (make-dir-ent-with-filename filename))
+                  filename))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable make-dir-ent-with-filename))))
 
 (encapsulate
   ()
