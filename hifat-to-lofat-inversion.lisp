@@ -4496,6 +4496,14 @@
   :hints (("goal" :in-theory (enable not-intersectp-list))))
 
 (defthm
+  non-free-index-list-listp-correctness-2
+  (implies (true-list-listp l)
+           (equal (non-free-index-listp (flatten l)
+                                        fa-table)
+                  (non-free-index-list-listp l fa-table)))
+  :hints (("goal" :in-theory (enable flatten))))
+
+(defthm
   not-intersectp-list-of-lofat-to-hifat-helper
   (b*
       (((mv & & clusterchain-list error-code)
@@ -4517,14 +4525,6 @@
                           (lofat-to-hifat-helper
                            fat32-in-memory
                            dir-ent-list entry-limit)))))))
-
-(defthm
-  non-free-index-list-listp-correctness-2
-  (implies (true-list-listp l)
-           (equal (non-free-index-listp (flatten l)
-                                        fa-table)
-                  (non-free-index-list-listp l fa-table)))
-  :hints (("goal" :in-theory (enable flatten))))
 
 (defun
     free-index-list-listp (l fa-table)
@@ -4603,6 +4603,17 @@
   (free-index-listp (find-n-free-clusters fa-table n)
                     fa-table)
   :hints (("goal" :in-theory (enable find-n-free-clusters))))
+
+(defthm
+  not-intersectp-list-of-find-n-free-clusters
+  (implies (non-free-index-list-listp l fa-table)
+           (not-intersectp-list (find-n-free-clusters fa-table n)
+                                l))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (disable non-free-index-list-listp-correctness-1)
+    :use (:instance non-free-index-list-listp-correctness-1
+                    (index-list (find-n-free-clusters fa-table n))))))
 
 (defthm
   lofat-to-hifat-helper-of-hifat-to-lofat-helper-disjoint-lemma-1
