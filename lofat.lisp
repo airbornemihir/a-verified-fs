@@ -26173,7 +26173,7 @@ Some (rather awful) testing forms are
         (place-contents
          (update-fati i
                       (fat32-update-lower-28 (fati i fat32-in-memory)
-                                             268435455)
+                                             *ms-end-of-clusterchain*)
                       fat32-in-memory)
          (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
                                         t)
@@ -26198,16 +26198,12 @@ Some (rather awful) testing forms are
        (mv-nth 2
                (lofat-to-hifat-helper fat32-in-memory
                                       dir-ent-list entry-limit)))
-      (<= 1
-          (count-free-clusters (effective-fat fat32-in-memory)))
       (not (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
                   0))
       (useful-dir-ent-list-p dir-ent-list)
       (zp (fat32-entry-mask (nth i (effective-fat fat32-in-memory))))
-      (integerp i)
       (<= 2 i)
-      (< i
-         (len (effective-fat fat32-in-memory)))
+      (< i (len (effective-fat fat32-in-memory)))
       (integerp entry-limit)
       (> entry-limit
          (hifat-entry-count
@@ -26227,7 +26223,7 @@ Some (rather awful) testing forms are
             (place-contents
              (update-fati i
                           (fat32-update-lower-28 (fati i fat32-in-memory)
-                                                 268435455)
+                                                 *ms-end-of-clusterchain*)
                           fat32-in-memory)
              (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
                                             t)
@@ -26264,7 +26260,7 @@ Some (rather awful) testing forms are
             (place-contents
              (update-fati i
                           (fat32-update-lower-28 (fati i fat32-in-memory)
-                                                 268435455)
+                                                 *ms-end-of-clusterchain*)
                           fat32-in-memory)
              (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
                                             t)
@@ -26306,7 +26302,7 @@ Some (rather awful) testing forms are
             (place-contents
              (update-fati i
                           (fat32-update-lower-28 (fati i fat32-in-memory)
-                                                 268435455)
+                                                 *ms-end-of-clusterchain*)
                           fat32-in-memory)
              (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
                                             t)
@@ -26334,8 +26330,8 @@ Some (rather awful) testing forms are
     (("goal"
       :in-theory
       (e/d
-       (lofat-to-hifat-helper not-intersectp-list intersectp-equal
-                              hifat-entry-count)
+       (lofat-to-hifat-helper not-intersectp-list
+                              intersectp-equal hifat-entry-count)
        ((:e dir-ent-fix)
         (:rewrite
          dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
@@ -26400,7 +26396,7 @@ Some (rather awful) testing forms are
           (place-contents
            (update-fati i
                         (fat32-update-lower-28 (fati i fat32-in-memory)
-                                               268435455)
+                                               *ms-end-of-clusterchain*)
                         fat32-in-memory)
            (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
                                           t)
@@ -26425,16 +26421,12 @@ Some (rather awful) testing forms are
          (mv-nth 2
                  (lofat-to-hifat-helper fat32-in-memory
                                         dir-ent-list entry-limit)))
-        (<= 1
-            (count-free-clusters (effective-fat fat32-in-memory)))
         (not (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
                     0))
         (useful-dir-ent-list-p dir-ent-list)
         (zp (fat32-entry-mask (nth i (effective-fat fat32-in-memory))))
-        (integerp i)
         (<= 2 i)
-        (< i
-           (len (effective-fat fat32-in-memory)))
+        (< i (len (effective-fat fat32-in-memory)))
         (integerp entry-limit)
         (> entry-limit
            (hifat-entry-count
@@ -26454,7 +26446,7 @@ Some (rather awful) testing forms are
              (place-contents
               (update-fati i
                            (fat32-update-lower-28 (fati i fat32-in-memory)
-                                                  268435455)
+                                                  *ms-end-of-clusterchain*)
                            fat32-in-memory)
               (dir-ent-install-directory-bit (make-dir-ent-with-filename name)
                                              t)
@@ -26511,8 +26503,6 @@ Some (rather awful) testing forms are
      (mv-nth 2
              (lofat-to-hifat-helper fat32-in-memory
                                     dir-ent-list entry-limit)))
-    (<= 1
-        (count-free-clusters (effective-fat fat32-in-memory)))
     (not (equal (mv-nth 1 (find-dir-ent dir-ent-list name))
                 0))
     (useful-dir-ent-list-p dir-ent-list)
