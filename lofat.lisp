@@ -26601,11 +26601,6 @@ Some (rather awful) testing forms are
        (mv-nth 2
                (lofat-to-hifat-helper fat32-in-memory
                                       dir-ent-list entry-limit)))
-      (<= 2
-          (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list name))))
-      (< (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list name)))
-         (+ 2 (count-of-clusters fat32-in-memory)))
-      (not (lofat-regular-file-p file))
       (not
        (member-equal
         i
@@ -26613,15 +26608,6 @@ Some (rather awful) testing forms are
          0
          (dir-ent-clusterchain fat32-in-memory
                                (mv-nth 0 (find-dir-ent dir-ent-list name))))))
-      (<= (+ 64 (* 32 (len dir-ent-list)))
-          2097152)
-      (integerp entry-limit)
-      (< (hifat-entry-count
-          (mv-nth 0
-                  (lofat-to-hifat-helper fat32-in-memory
-                                         dir-ent-list entry-limit)))
-         entry-limit)
-      (fat32-filename-p name)
       (fat32-masked-entry-p i)
       (<= 2 i)
       (< i
@@ -26874,12 +26860,12 @@ Some (rather awful) testing forms are
             i
             (fat32-update-lower-28 (fati i fat32-in-memory)
                                    268435455)
-            (mv-nth
-             0
-             (clear-clusterchain
-              fat32-in-memory
-              (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list name)))
-              2097152)))
+            (mv-nth 0
+                    (clear-clusterchain
+                     fat32-in-memory
+                     (dir-ent-first-cluster
+                      (mv-nth 0 (find-dir-ent dir-ent-list name)))
+                     2097152)))
            (mv-nth 0 (find-dir-ent dir-ent-list name))
            (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
            0 i))
@@ -26967,7 +26953,8 @@ Some (rather awful) testing forms are
                          (mv-nth 0 (find-dir-ent dir-ent-list name)))
                         2097152)))
               (mv-nth 0 (find-dir-ent dir-ent-list name))
-              (make-empty-subdir-contents i (dir-ent-first-cluster root-dir-ent))
+              (make-empty-subdir-contents
+               i (dir-ent-first-cluster root-dir-ent))
               0 i))
             (dir-ent-first-cluster root-dir-ent)
             (nats=>string
