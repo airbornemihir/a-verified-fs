@@ -23692,32 +23692,39 @@ Some (rather awful) testing forms are
      (root-dir-ent (mv-nth 0 (find-dir-ent dir-ent-list name)))
      (entry-limit entry-limit)))))
 
-;; This is vulnerable to infinite looping, so the inequality is intended as a
-;; loop-stopper.
-(defthmd
-  lofat-place-file-correctness-lemma-56
-  (implies
-   (and
-    (< (mv-nth 1
-               (lofat-to-hifat-helper fat32-in-memory
-                                      dir-ent-list entry-limit))
-       entry-limit)
-    (equal
-     (mv-nth 3
-             (lofat-to-hifat-helper fat32-in-memory
-                                    dir-ent-list entry-limit))
-     0))
-   (equal
-    (lofat-to-hifat-helper fat32-in-memory
-                           dir-ent-list entry-limit)
-    (lofat-to-hifat-helper
+(defund-nx
+  lofat-to-hifat-helper-normed
+  (fat32-in-memory dir-ent-list entry-limit)
+  (lofat-to-hifat-helper
      fat32-in-memory dir-ent-list
      (mv-nth
       1
       (lofat-to-hifat-helper fat32-in-memory
-                             dir-ent-list entry-limit)))))
+                             dir-ent-list entry-limit))))
+
+(defthmd
+  lofat-place-file-correctness-lemma-56
+  (implies
+   (and
+    (syntaxp (variablep entry-limit))
+    (equal
+     (mv-nth 3
+             (lofat-to-hifat-helper fat32-in-memory
+                                    dir-ent-list entry-limit))
+     0)
+    (case-split
+     (< (mv-nth 1
+                (lofat-to-hifat-helper fat32-in-memory
+                                       dir-ent-list entry-limit))
+        entry-limit)))
+   (equal
+    (lofat-to-hifat-helper fat32-in-memory
+                           dir-ent-list entry-limit)
+    (lofat-to-hifat-helper-normed
+     fat32-in-memory dir-ent-list entry-limit)))
   :hints
   (("goal"
+    :in-theory (enable lofat-to-hifat-helper-normed)
     :use
     (:instance
      lofat-to-hifat-helper-correctness-4
@@ -23726,9 +23733,7 @@ Some (rather awful) testing forms are
       (mv-nth
        1
        (lofat-to-hifat-helper fat32-in-memory
-                              dir-ent-list entry-limit))))))
-  :rule-classes
-  ((:rewrite :backchain-limit-lst 0)))
+                              dir-ent-list entry-limit)))))))
 
 (encapsulate
   ()
