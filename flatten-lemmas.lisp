@@ -38,7 +38,13 @@
   (implies (atom x) (not-intersectp-list x l))
   :hints (("Goal" :in-theory (enable not-intersectp-list))))
 
-(defthm not-intersectp-equal-if-subset
+(defthm not-intersectp-list-when-subsetp-1
+  (implies (and (not-intersectp-list y l)
+                (subsetp-equal x y))
+           (not-intersectp-list x l))
+  :hints (("Goal" :in-theory (enable not-intersectp-list))))
+
+(defthm not-intersectp-list-when-subsetp-2
   (implies (and (not-intersectp-list x l2)
                 (subsetp-equal l1 l2))
            (not-intersectp-list x l1))
