@@ -23692,48 +23692,37 @@ Some (rather awful) testing forms are
      (root-dir-ent (mv-nth 0 (find-dir-ent dir-ent-list name)))
      (entry-limit entry-limit)))))
 
-(defund-nx
-  lofat-to-hifat-helper-normed
-  (fat32-in-memory dir-ent-list entry-limit)
-  (lofat-to-hifat-helper
-     fat32-in-memory dir-ent-list
-     (mv-nth
-      1
-      (lofat-to-hifat-helper fat32-in-memory
-                             dir-ent-list entry-limit))))
-
-(defthmd
+(defthm
   lofat-place-file-correctness-lemma-56
   (implies
    (and
-    (syntaxp (variablep entry-limit))
     (equal
      (mv-nth 3
              (lofat-to-hifat-helper fat32-in-memory
-                                    dir-ent-list entry-limit))
+                                    dir-ent-list entry-limit1))
      0)
+    (not-intersectp-list
+     x
+     (mv-nth
+      2
+      (lofat-to-hifat-helper fat32-in-memory
+                             dir-ent-list entry-limit1)))
     (case-split
-     (< (mv-nth 1
-                (lofat-to-hifat-helper fat32-in-memory
-                                       dir-ent-list entry-limit))
-        entry-limit)))
-   (equal
-    (lofat-to-hifat-helper fat32-in-memory
-                           dir-ent-list entry-limit)
-    (lofat-to-hifat-helper-normed
-     fat32-in-memory dir-ent-list entry-limit)))
+     (>=
+      (nfix entry-limit2)
+      (mv-nth 1
+              (lofat-to-hifat-helper fat32-in-memory
+                                     dir-ent-list entry-limit1)))))
+   (not-intersectp-list
+    x
+    (mv-nth 2
+            (lofat-to-hifat-helper fat32-in-memory
+                                   dir-ent-list entry-limit2))))
   :hints
   (("goal"
-    :in-theory (enable lofat-to-hifat-helper-normed)
-    :use
-    (:instance
-     lofat-to-hifat-helper-correctness-4
-     (entry-limit1 entry-limit)
-     (entry-limit2
-      (mv-nth
-       1
-       (lofat-to-hifat-helper fat32-in-memory
-                              dir-ent-list entry-limit)))))))
+    :do-not-induct t
+    :in-theory (disable lofat-to-hifat-helper-correctness-4)
+    :use lofat-to-hifat-helper-correctness-4)))
 
 (encapsulate
   ()
@@ -25595,7 +25584,8 @@ Some (rather awful) testing forms are
      :in-theory
      (e/d
       (lofat-to-hifat-helper not-intersectp-list
-                             intersectp-equal hifat-entry-count)
+                             intersectp-equal hifat-entry-count
+                             lofat-place-file-correctness-lemma-56)
       ((:rewrite
         dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
         . 1)
@@ -25634,7 +25624,6 @@ Some (rather awful) testing forms are
         fat32-build-index-list-of-effective-fat-of-place-contents-disjoint)
        (:rewrite member-when-atom)
        (:rewrite place-contents-expansion-2)
-       (:definition hifat-entry-count)
        (:rewrite
         m1-file-alist-p-of-cdr-when-m1-file-alist-p)
        (:rewrite
