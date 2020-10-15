@@ -28123,6 +28123,61 @@ Some (rather awful) testing forms are
         268435455)
        fat32-in-memory))))))
 
+;; Move later.
+(defthm true-listp-when-non-free-index-listp
+  (implies (non-free-index-listp x fa-table)
+           (true-listp x))
+  :hints (("goal" :in-theory (enable true-listp non-free-index-listp)))
+  :rule-classes :forward-chaining)
+(defthm
+  true-list-listp-of-set-difference
+  (implies (true-list-listp l1)
+           (true-list-listp (set-difference-equal l1 l2)))
+  :hints (("goal" :in-theory (enable set-difference-equal true-list-listp))))
+(defthm non-free-index-list-listp-of-set-difference-1
+  (implies (non-free-index-list-listp l1 fa-table)
+           (non-free-index-list-listp (set-difference-equal l1 l2)
+                                      fa-table))
+  :hints (("goal" :in-theory (enable non-free-index-list-listp
+                                     set-difference-equal))))
+
+(defthm
+  lofat-place-file-correctness-lemma-58
+  (implies (and (no-duplicatesp-equal y)
+                (disjoint-list-listp x2)
+                (member-equal x1 y)
+                (subsetp-equal y x2))
+           (not-intersectp-list x1 (set-difference-equal x2 y)))
+  :hints
+  (("goal"
+    :in-theory (e/d (disjoint-list-listp subsetp-equal not-intersectp-list
+                                         set-difference-equal)
+                    (member-intersectp-is-commutative)))))
+
+(defthm
+  lofat-place-file-correctness-lemma-59
+  (implies (and (disjoint-list-listp x2)
+                (subsetp-equal x1 y)
+                (subsetp-equal y x2)
+                (no-duplicatesp-equal y))
+           (not (member-intersectp-equal x1 (set-difference-equal x2 y))))
+  :hints
+  (("goal"
+    :in-theory (e/d (disjoint-list-listp subsetp-equal member-intersectp-equal
+                                         set-difference-equal)
+                    (member-intersectp-is-commutative))
+    :expand
+    ((:with member-intersectp-is-commutative
+            (:free (x)
+                   (member-intersectp-equal x nil)))
+     (:with member-intersectp-is-commutative
+            (:free (x1 x2 y)
+                   (member-intersectp-equal x1 (cons x2 y))))
+     (:with member-intersectp-is-commutative
+            (:free (x y1 y2)
+                   (member-intersectp-equal (set-difference-equal x y1)
+                                            y2)))))))
+
 (encapsulate
   ()
 
@@ -28172,7 +28227,44 @@ Some (rather awful) testing forms are
                    (dir-ent-clusterchain-contents
                     fat32-in-memory root-dir-ent)))
           (car path)))
-        x))
+        (append
+         x
+         (flatten
+          (set-difference-equal
+           (mv-nth 2
+                   (lofat-to-hifat-helper
+                    fat32-in-memory
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    entry-limit))
+           (cons
+            (dir-ent-clusterchain
+             fat32-in-memory
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory root-dir-ent)))
+               (car path))))
+            (mv-nth 2
+                   (lofat-to-hifat-helper
+                    fat32-in-memory
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory (mv-nth
+                                               0
+                                               (find-dir-ent
+                                                (make-dir-ent-list
+                                                 (mv-nth 0
+                                                         (dir-ent-clusterchain-contents
+                                                          fat32-in-memory root-dir-ent)))
+                                                (car path))))))
+                    entry-limit))))))))
       (t (mv entry-limit fat32-in-memory
              file path root-dir-ent x)))))
 
