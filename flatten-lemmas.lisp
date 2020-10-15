@@ -202,3 +202,15 @@
 (defthm not-intersectp-list-of-flatten
   (equal (not-intersectp-list (flatten x) y)
          (not (member-intersectp-equal x y))))
+
+(defthm
+  not-intersectp-list-of-cons-1
+  (implies (case-split (consp y))
+           (equal (not-intersectp-list (cons x y) l)
+                  (and (not-intersectp-list (list x) l)
+                       (not-intersectp-list y l))))
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (disable not-intersectp-list-of-append-2)
+    :use (:instance not-intersectp-list-of-append-2
+                    (x (list x))))))
