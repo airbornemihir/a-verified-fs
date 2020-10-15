@@ -24016,6 +24016,102 @@ Some (rather awful) testing forms are
                     (val val)
                     (name name)))))
 
+(defthm
+  lofat-place-file-correctness-lemma-65
+  (implies
+   (and
+    (hifat-equiv
+     fs1
+     (put-assoc-equal
+      name
+      (m1-file
+       dir-ent
+       (mv-nth 0
+               (hifat-place-file
+                (mv-nth 0
+                        (lofat-to-hifat-helper fat32-in-memory
+                                               dir-ent-list entry-limit1))
+                path file)))
+      fs2))
+    (equal (mv-nth 3
+                   (lofat-to-hifat-helper fat32-in-memory
+                                          dir-ent-list entry-limit1))
+           0)
+    (>= (nfix entry-limit2)
+        (mv-nth 1
+                (lofat-to-hifat-helper fat32-in-memory
+                                       dir-ent-list entry-limit1))))
+   (hifat-equiv
+    (put-assoc-equal
+     name
+     (m1-file
+      dir-ent
+      (mv-nth 0
+              (hifat-place-file
+               (mv-nth 0
+                       (lofat-to-hifat-helper fat32-in-memory
+                                              dir-ent-list entry-limit2))
+               path file)))
+     fs2)
+    fs1))
+  :hints (("goal" :in-theory (disable lofat-to-hifat-helper-correctness-4)
+           :use lofat-to-hifat-helper-correctness-4)))
+
+(defthm
+  lofat-place-file-correctness-lemma-66
+  (implies (equal dir-ent (dir-ent-fix nil))
+           (not-intersectp-list
+            (mv-nth 0
+                    (dir-ent-clusterchain fat32-in-memory dir-ent))
+            (mv-nth 2
+                    (lofat-to-hifat-helper fat32-in-memory
+                                           dir-ent-list entry-limit))))
+  :hints (("goal" :do-not-induct t
+           :in-theory (enable dir-ent-clusterchain
+                              fat32-build-index-list))))
+
+(thm
+ (implies
+  (and (consp x)
+       (zp
+        (mv-nth
+         1 (find-dir-ent dir-ent-list name)))
+       (equal
+        x
+        (mv-nth
+         0
+         (dir-ent-clusterchain fat32-in-memory
+                               (mv-nth 0 (find-dir-ent dir-ent-list name)))))
+       (equal (mv-nth 3
+                      (lofat-to-hifat-helper fat32-in-memory
+                                             dir-ent-list entry-limit))
+              0)
+       (useful-dir-ent-list-p dir-ent-list))
+  (not (not-intersectp-list
+        x
+        (mv-nth 2
+                (lofat-to-hifat-helper fat32-in-memory
+                                       dir-ent-list entry-limit)))))
+ :hints (("goal" :in-theory
+          (e/d
+           (lofat-to-hifat-helper find-dir-ent not-intersectp-list)
+           ((:rewrite
+             lofat-place-file-correctness-1-lemma-14)
+            (:rewrite nth-of-effective-fat)
+            (:rewrite
+             dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+             . 1)
+            (:rewrite nth-of-nats=>chars)
+            (:linear nth-when-dir-ent-p)
+            (:rewrite
+             lofat-place-file-correctness-1-lemma-13)
+            (:rewrite explode-of-dir-ent-filename)
+            (:rewrite
+             hifat-entry-count-of-lofat-to-hifat-helper-of-delete-dir-ent-lemma-3)
+            (:rewrite
+             dir-ent-p-when-member-equal-of-dir-ent-list-p)
+            )))))
+
 (encapsulate
   ()
 
