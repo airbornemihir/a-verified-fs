@@ -6,8 +6,8 @@
 ; well as its inverse transformation lofat-to-hifat.
 
 (include-book "generate-index-list")
-(include-book "hifat-entry-count")
-(include-book "update-data-region")
+(include-book "hifat/hifat-entry-count")
+(include-book "lofat/update-data-region")
 
 ;; These are some rules from other books which are either interacting badly
 ;; with the theory I've built up so far, or else causing a lot of unnecessary
