@@ -24797,18 +24797,917 @@ Some (rather awful) testing forms are
                     (:rewrite m1-regular-file-p-of-m1-file)
                     (:rewrite m1-file-contents-p-when-stringp)))))
 
-  ;; This should be rewritten by FREE-INDEX-LISTP-CORRECTNESS-1, but...
-  (thm
-   (implies
-    (and
-     (not
-      (non-free-index-listp
+  (defthm
+    lofat-place-file-correctness-lemma-84
+    (implies
+     (and
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         fat32-in-memory
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list
+            (mv-nth
+             0
+             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path)))))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))
+       0)
+      (dir-ent-directory-p
+       (mv-nth
+        0
+        (find-dir-ent
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         (fat32-filename-fix (car path)))))
+      (not-intersectp-list
        x
-       (effective-fat
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))))
+     (not
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       x)))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory (disable (:rewrite intersectp-member . 3))
+      :use
+      (:instance
+       (:rewrite intersectp-member . 3)
+       (y x)
+       (a
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32-in-memory)
+           (mv-nth
+            0
+            (dir-ent-clusterchain
+             fat32-in-memory
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list (mv-nth 0
+                                            (dir-ent-clusterchain-contents
+                                             fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path)))))))
+            0 nil))
+          1)))
+       (x
         (mv-nth
          0
-         (place-contents
-          (update-fati
+         (dir-ent-clusterchain
+          fat32-in-memory
+          (mv-nth
+           0
+           (find-dir-ent
+            (make-dir-ent-list
+             (mv-nth
+              0
+              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+            (fat32-filename-fix (car path)))))))))))
+
+  (defthm
+    lofat-place-file-correctness-lemma-83
+    (implies
+     (and
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         fat32-in-memory
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list
+            (mv-nth
+             0
+             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path)))))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))
+       0)
+      (dir-ent-directory-p
+       (mv-nth
+        0
+        (find-dir-ent
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         (fat32-filename-fix (car path)))))
+      (not-intersectp-list
+       x
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))))
+     (not
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       x)))
+    :hints
+    (("goal"
+      :in-theory (disable nth-of-effective-fat
+                          (:rewrite nth-of-set-indices-in-fa-table-when-member))
+      :use
+      ((:instance
+        (:rewrite nth-of-set-indices-in-fa-table-when-member)
+        (val 0)
+        (index-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain
+           fat32-in-memory
+           (mv-nth
+            0
+            (find-dir-ent
+             (make-dir-ent-list
+              (mv-nth
+               0
+               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+             (fat32-filename-fix (car path)))))))
+        (fa-table (effective-fat fat32-in-memory))
+        (n
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent (make-dir-ent-list
+                                (mv-nth 0
+                                        (dir-ent-clusterchain-contents
+                                         fat32-in-memory root-dir-ent)))
+                               (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))))
+       (:instance
+        nth-of-effective-fat
+        (n
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent (make-dir-ent-list
+                                (mv-nth 0
+                                        (dir-ent-clusterchain-contents
+                                         fat32-in-memory root-dir-ent)))
+                               (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))))))))
+
+  ;; This should be rewritten by
+  ;; NON-FREE-INDEX-LISTP-CORRECTNESS-3, but...
+  (defthm
+    lofat-place-file-correctness-lemma-85
+    (implies
+     (and
+      (equal
+       (mv-nth
+        2
+        (place-contents
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32-in-memory)
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list (mv-nth 0
+                                            (dir-ent-clusterchain-contents
+                                             fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path))))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path)))))))
+              0 nil))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32-in-memory)
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path))))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))))
+                0 nil))
+              1))
+            fat32-in-memory)
+           268435455)
+          (mv-nth
+           0
+           (clear-clusterchain
+            fat32-in-memory
+            (dir-ent-first-cluster
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path)))))
+            2097152)))
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list
+            (mv-nth
+             0
+             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path))))
+         (make-empty-subdir-contents
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32-in-memory)
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list (mv-nth 0
+                                            (dir-ent-clusterchain-contents
+                                             fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path))))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path)))))))
+              0 nil))
+            1))
+          (dir-ent-first-cluster root-dir-ent))
+         0
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent (make-dir-ent-list
+                                (mv-nth 0
+                                        (dir-ent-clusterchain-contents
+                                         fat32-in-memory root-dir-ent)))
+                               (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))))
+       0)
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         fat32-in-memory
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list
+            (mv-nth
+             0
+             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path)))))))
+      (non-free-index-listp x (effective-fat fat32-in-memory))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))
+       0)
+      (lofat-fs-p fat32-in-memory)
+      (<
+       (dir-ent-first-cluster
+        (mv-nth
+         0
+         (find-dir-ent
+          (make-dir-ent-list
+           (mv-nth
+            0
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+          (fat32-filename-fix (car path)))))
+       (+ 2 (count-of-clusters fat32-in-memory)))
+      (dir-ent-directory-p
+       (mv-nth
+        0
+        (find-dir-ent
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         (fat32-filename-fix (car path)))))
+      (not-intersectp-list
+       x
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))))
+     (non-free-index-listp
+      x
+      (effective-fat
+       (mv-nth
+        0
+        (place-contents
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32-in-memory)
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list (mv-nth 0
+                                            (dir-ent-clusterchain-contents
+                                             fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path))))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path)))))))
+              0 nil))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32-in-memory)
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path))))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))))
+                0 nil))
+              1))
+            fat32-in-memory)
+           268435455)
+          (mv-nth
+           0
+           (clear-clusterchain
+            fat32-in-memory
+            (dir-ent-first-cluster
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path)))))
+            2097152)))
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list
+            (mv-nth
+             0
+             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path))))
+         (make-empty-subdir-contents
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32-in-memory)
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list (mv-nth 0
+                                            (dir-ent-clusterchain-contents
+                                             fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path))))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path)))))))
+              0 nil))
+            1))
+          (dir-ent-first-cluster root-dir-ent))
+         0
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent (make-dir-ent-list
+                                (mv-nth 0
+                                        (dir-ent-clusterchain-contents
+                                         fat32-in-memory root-dir-ent)))
+                               (fat32-filename-fix (car path)))))))
+             0 nil))
+           1)))))))
+    :hints
+    (("goal"
+      :do-not-induct t
+      :in-theory (disable (:rewrite non-free-index-listp-correctness-3))
+      :use
+      (:instance
+       (:rewrite non-free-index-listp-correctness-3)
+       (first-cluster
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32-in-memory)
+           (mv-nth
+            0
+            (dir-ent-clusterchain
+             fat32-in-memory
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list (mv-nth 0
+                                            (dir-ent-clusterchain-contents
+                                             fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path)))))))
+            0 nil))
+          1)))
+       (file-length 0)
+       (contents
+        (make-empty-subdir-contents
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent (make-dir-ent-list
+                                (mv-nth 0
+                                        (dir-ent-clusterchain-contents
+                                         fat32-in-memory root-dir-ent)))
+                               (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))
+         (dir-ent-first-cluster root-dir-ent)))
+       (dir-ent
+        (mv-nth
+         0
+         (find-dir-ent
+          (make-dir-ent-list
+           (mv-nth
+            0
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+          (fat32-filename-fix (car path)))))
+       (fat32-in-memory
+        (update-fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent (make-dir-ent-list
+                                (mv-nth 0
+                                        (dir-ent-clusterchain-contents
+                                         fat32-in-memory root-dir-ent)))
+                               (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))
+         (fat32-update-lower-28
+          (fati
            (nth
             0
             (find-n-free-clusters
@@ -24820,30 +25719,682 @@ Some (rather awful) testing forms are
                 fat32-in-memory
                 (mv-nth
                  0
-                 (find-dir-ent
-                  (make-dir-ent-list
-                   (mv-nth 0
-                           (dir-ent-clusterchain-contents
-                            fat32-in-memory root-dir-ent)))
-                  (fat32-filename-fix (car path))))))
+                 (find-dir-ent (make-dir-ent-list
+                                (mv-nth 0
+                                        (dir-ent-clusterchain-contents
+                                         fat32-in-memory root-dir-ent)))
+                               (fat32-filename-fix (car path))))))
               (make-list-ac
                (len
                 (mv-nth
                  0
                  (dir-ent-clusterchain
                   fat32-in-memory
-                  (mv-nth
-                   0
-                   (find-dir-ent
-                    (make-dir-ent-list
-                     (mv-nth 0
-                             (dir-ent-clusterchain-contents
-                              fat32-in-memory root-dir-ent)))
-                    (fat32-filename-fix (car path)))))))
+                  (mv-nth 0
+                          (find-dir-ent
+                           (make-dir-ent-list
+                            (mv-nth 0
+                                    (dir-ent-clusterchain-contents
+                                     fat32-in-memory root-dir-ent)))
+                           (fat32-filename-fix (car path)))))))
                0 nil))
              1))
-           (fat32-update-lower-28
-            (fati
+           fat32-in-memory)
+          268435455)
+         (mv-nth
+          0
+          (clear-clusterchain
+           fat32-in-memory
+           (dir-ent-first-cluster
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path)))))
+           2097152))))
+       (x x)))))
+
+  (defthm
+    lofat-place-file-correctness-lemma-86
+    (implies
+     (and
+      (equal
+       (mv-nth
+        2
+        (place-contents
+         (update-fati
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32-in-memory)
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list (mv-nth 0
+                                            (dir-ent-clusterchain-contents
+                                             fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path))))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path)))))))
+              0 nil))
+            1))
+          (fat32-update-lower-28
+           (fati
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32-in-memory)
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path))))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))))
+                0 nil))
+              1))
+            fat32-in-memory)
+           268435455)
+          (mv-nth
+           0
+           (clear-clusterchain
+            fat32-in-memory
+            (dir-ent-first-cluster
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path)))))
+            2097152)))
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list
+            (mv-nth
+             0
+             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path))))
+         (make-empty-subdir-contents
+          (nth
+           0
+           (find-n-free-clusters
+            (set-indices-in-fa-table
+             (effective-fat fat32-in-memory)
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list (mv-nth 0
+                                            (dir-ent-clusterchain-contents
+                                             fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path))))))
+             (make-list-ac
+              (len
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path)))))))
+              0 nil))
+            1))
+          (dir-ent-first-cluster root-dir-ent))
+         0
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent (make-dir-ent-list
+                                (mv-nth 0
+                                        (dir-ent-clusterchain-contents
+                                         fat32-in-memory root-dir-ent)))
+                               (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))))
+       0)
+      (dir-ent-directory-p root-dir-ent)
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         fat32-in-memory
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list
+            (mv-nth
+             0
+             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path)))))))
+      (equal
+       (mv-nth
+        1
+        (update-dir-contents
+         (mv-nth
+          0
+          (place-contents
+           (update-fati
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32-in-memory)
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path))))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))))
+                0 nil))
+              1))
+            (fat32-update-lower-28
+             (fati
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              fat32-in-memory)
+             268435455)
+            (mv-nth
+             0
+             (clear-clusterchain
+              fat32-in-memory
+              (dir-ent-first-cluster
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list (mv-nth 0
+                                            (dir-ent-clusterchain-contents
+                                             fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path)))))
+              2097152)))
+           (mv-nth
+            0
+            (find-dir-ent
+             (make-dir-ent-list
+              (mv-nth
+               0
+               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+             (fat32-filename-fix (car path))))
+           (make-empty-subdir-contents
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32-in-memory)
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path))))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))))
+                0 nil))
+              1))
+            (dir-ent-first-cluster root-dir-ent))
+           0
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32-in-memory)
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent (make-dir-ent-list
+                                (mv-nth 0
+                                        (dir-ent-clusterchain-contents
+                                         fat32-in-memory root-dir-ent)))
+                               (fat32-filename-fix (car path))))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth 0
+                          (find-dir-ent
+                           (make-dir-ent-list
+                            (mv-nth 0
+                                    (dir-ent-clusterchain-contents
+                                     fat32-in-memory root-dir-ent)))
+                           (fat32-filename-fix (car path)))))))
+               0 nil))
+             1))))
+         (dir-ent-first-cluster root-dir-ent)
+         (nats=>string
+          (insert-dir-ent
+           (string=>nats
+            (mv-nth
+             0
+             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+           (dir-ent-set-first-cluster-file-size
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path))))
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32-in-memory)
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path))))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))))
+                0 nil))
+              1))
+            0)))))
+       0)
+      (non-free-index-listp x (effective-fat fat32-in-memory))
+      (not (intersectp-equal
+            x
+            (mv-nth 0
+                    (dir-ent-clusterchain fat32-in-memory root-dir-ent))))
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))
+       0)
+      (lofat-fs-p fat32-in-memory)
+      (dir-ent-p root-dir-ent)
+      (not-intersectp-list
+       (mv-nth 0
+               (dir-ent-clusterchain fat32-in-memory root-dir-ent))
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit)))
+      (equal
+       (mv-nth 1
+               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
+       0)
+      (<
+       (dir-ent-first-cluster
+        (mv-nth
+         0
+         (find-dir-ent
+          (make-dir-ent-list
+           (mv-nth
+            0
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+          (fat32-filename-fix (car path)))))
+       (+ 2 (count-of-clusters fat32-in-memory)))
+      (dir-ent-directory-p
+       (mv-nth
+        0
+        (find-dir-ent
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         (fat32-filename-fix (car path)))))
+      (<=
+       (+
+        64
+        (*
+         32
+         (len
+          (make-dir-ent-list
+           (mv-nth
+            0
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))))))
+       2097152)
+      (not-intersectp-list
+       x
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         entry-limit))))
+     (not
+      (intersectp-equal
+       x
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         (mv-nth
+          0
+          (update-dir-contents
+           (mv-nth
+            0
+            (place-contents
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table
+                   (effective-fat fat32-in-memory)
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path))))))
+                   (make-list-ac
+                    (len
+                     (mv-nth
+                      0
+                      (dir-ent-clusterchain
+                       fat32-in-memory
+                       (mv-nth
+                        0
+                        (find-dir-ent
+                         (make-dir-ent-list
+                          (mv-nth 0
+                                  (dir-ent-clusterchain-contents
+                                   fat32-in-memory root-dir-ent)))
+                         (fat32-filename-fix (car path)))))))
+                    0 nil))
+                  1))
+                fat32-in-memory)
+               268435455)
+              (mv-nth
+               0
+               (clear-clusterchain
+                fat32-in-memory
+                (dir-ent-first-cluster
+                 (mv-nth 0
+                         (find-dir-ent
+                          (make-dir-ent-list
+                           (mv-nth 0
+                                   (dir-ent-clusterchain-contents
+                                    fat32-in-memory root-dir-ent)))
+                          (fat32-filename-fix (car path)))))
+                2097152)))
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))
+             (make-empty-subdir-contents
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (dir-ent-first-cluster root-dir-ent))
+             0
              (nth
               0
               (find-n-free-clusters
@@ -24853,14 +26404,13 @@ Some (rather awful) testing forms are
                  0
                  (dir-ent-clusterchain
                   fat32-in-memory
-                  (mv-nth
-                   0
-                   (find-dir-ent
-                    (make-dir-ent-list
-                     (mv-nth 0
-                             (dir-ent-clusterchain-contents
-                              fat32-in-memory root-dir-ent)))
-                    (fat32-filename-fix (car path))))))
+                  (mv-nth 0
+                          (find-dir-ent
+                           (make-dir-ent-list
+                            (mv-nth 0
+                                    (dir-ent-clusterchain-contents
+                                     fat32-in-memory root-dir-ent)))
+                           (fat32-filename-fix (car path))))))
                 (make-list-ac
                  (len
                   (mv-nth
@@ -24876,99 +26426,64 @@ Some (rather awful) testing forms are
                                 fat32-in-memory root-dir-ent)))
                       (fat32-filename-fix (car path)))))))
                  0 nil))
-               1))
-             fat32-in-memory)
-            268435455)
-           (mv-nth
-            0
-            (clear-clusterchain
-             fat32-in-memory
-             (dir-ent-first-cluster
+               1))))
+           (dir-ent-first-cluster root-dir-ent)
+           (nats=>string
+            (insert-dir-ent
+             (string=>nats
+              (mv-nth
+               0
+               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+             (dir-ent-set-first-cluster-file-size
               (mv-nth
                0
                (find-dir-ent
                 (make-dir-ent-list
-                 (mv-nth 0
-                         (dir-ent-clusterchain-contents
-                          fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path)))))
-             2097152)))
-          (mv-nth
-           0
-           (find-dir-ent (make-dir-ent-list
-                          (mv-nth 0
-                                  (dir-ent-clusterchain-contents
-                                   fat32-in-memory root-dir-ent)))
-                         (fat32-filename-fix (car path))))
-          (make-empty-subdir-contents
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent
-                  (make-dir-ent-list
-                   (mv-nth 0
-                           (dir-ent-clusterchain-contents
-                            fat32-in-memory root-dir-ent)))
-                  (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth
-                   0
-                   (find-dir-ent
-                    (make-dir-ent-list
-                     (mv-nth 0
-                             (dir-ent-clusterchain-contents
-                              fat32-in-memory root-dir-ent)))
-                    (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (dir-ent-first-cluster root-dir-ent))
-          0
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list
-                  (mv-nth 0
-                          (dir-ent-clusterchain-contents
-                           fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
                  (mv-nth
                   0
-                  (find-dir-ent
-                   (make-dir-ent-list
-                    (mv-nth 0
-                            (dir-ent-clusterchain-contents
-                             fat32-in-memory root-dir-ent)))
-                   (fat32-filename-fix (car path)))))))
-              0 nil))
-            1)))))))
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              0)))))
+         root-dir-ent)))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable update-dir-contents))))
+
+  (thm
+   (implies
+    (and
      (equal
       (mv-nth
        2
@@ -25141,29 +26656,148 @@ Some (rather awful) testing forms are
         (+ 2 (count-of-clusters fat32-in-memory)))
      (consp path)
      (not (lofat-regular-file-p file))
-     (member-equal
-      (nth
-       0
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32-in-memory)
+     (not
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth 0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth 0
+                         (dir-ent-clusterchain-contents
+                          fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         fat32-in-memory
          (mv-nth
           0
-          (dir-ent-clusterchain
-           fat32-in-memory
-           (mv-nth 0
-                   (find-dir-ent
-                    (make-dir-ent-list
-                     (mv-nth 0
-                             (dir-ent-clusterchain-contents
-                              fat32-in-memory root-dir-ent)))
-                    (fat32-filename-fix (car path))))))
-         (make-list-ac
-          (len
+          (find-dir-ent
+           (make-dir-ent-list (mv-nth 0
+                                      (dir-ent-clusterchain-contents
+                                       fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path))))))))
+     (equal
+      (mv-nth
+       2
+       (place-contents
+        (update-fati
+         (dir-ent-first-cluster root-dir-ent)
+         (fat32-update-lower-28
+          (fati
+           (dir-ent-first-cluster root-dir-ent)
            (mv-nth
             0
-            (dir-ent-clusterchain
-             fat32-in-memory
+            (place-contents
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table
+                   (effective-fat fat32-in-memory)
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path))))))
+                   (make-list-ac
+                    (len
+                     (mv-nth
+                      0
+                      (dir-ent-clusterchain
+                       fat32-in-memory
+                       (mv-nth
+                        0
+                        (find-dir-ent
+                         (make-dir-ent-list
+                          (mv-nth 0
+                                  (dir-ent-clusterchain-contents
+                                   fat32-in-memory root-dir-ent)))
+                         (fat32-filename-fix (car path)))))))
+                    0 nil))
+                  1))
+                fat32-in-memory)
+               268435455)
+              (mv-nth
+               0
+               (clear-clusterchain
+                fat32-in-memory
+                (dir-ent-first-cluster
+                 (mv-nth
+                  0
+                  (find-dir-ent
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory root-dir-ent)))
+                   (fat32-filename-fix (car path)))))
+                2097152)))
              (mv-nth
               0
               (find-dir-ent
@@ -25171,64 +26805,43 @@ Some (rather awful) testing forms are
                 (mv-nth 0
                         (dir-ent-clusterchain-contents
                          fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path)))))))
-          0 nil))
-        1))
-      (mv-nth
-       0
-       (dir-ent-clusterchain
-        fat32-in-memory
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path)))))))
-     (equal
-      (mv-nth
-       1
-       (update-dir-contents
-        (mv-nth
-         0
-         (place-contents
-          (update-fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
+               (fat32-filename-fix (car path))))
+             (make-empty-subdir-contents
+              (nth
                0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent
-                  (make-dir-ent-list
-                   (mv-nth 0
-                           (dir-ent-clusterchain-contents
-                            fat32-in-memory root-dir-ent)))
-                  (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth
-                   0
-                   (find-dir-ent
-                    (make-dir-ent-list
-                     (mv-nth 0
-                             (dir-ent-clusterchain-contents
-                              fat32-in-memory root-dir-ent)))
-                    (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (fat32-update-lower-28
-            (fati
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (dir-ent-first-cluster root-dir-ent))
+             0
              (nth
               0
               (find-n-free-clusters
@@ -25261,50 +26874,148 @@ Some (rather awful) testing forms are
                                 fat32-in-memory root-dir-ent)))
                       (fat32-filename-fix (car path)))))))
                  0 nil))
-               1))
-             fat32-in-memory)
-            268435455)
+               1)))))
+          268435455)
+         (mv-nth
+          0
+          (clear-clusterchain
            (mv-nth
             0
-            (clear-clusterchain
-             fat32-in-memory
-             (dir-ent-first-cluster
-              (mv-nth
+            (place-contents
+             (update-fati
+              (nth
                0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth 0
-                         (dir-ent-clusterchain-contents
-                          fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path)))))
-             2097152)))
-          (mv-nth
-           0
-           (find-dir-ent (make-dir-ent-list
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table
+                   (effective-fat fat32-in-memory)
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path))))))
+                   (make-list-ac
+                    (len
+                     (mv-nth
+                      0
+                      (dir-ent-clusterchain
+                       fat32-in-memory
+                       (mv-nth
+                        0
+                        (find-dir-ent
+                         (make-dir-ent-list
                           (mv-nth 0
                                   (dir-ent-clusterchain-contents
                                    fat32-in-memory root-dir-ent)))
-                         (fat32-filename-fix (car path))))
-          (make-empty-subdir-contents
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
+                         (fat32-filename-fix (car path)))))))
+                    0 nil))
+                  1))
+                fat32-in-memory)
+               268435455)
               (mv-nth
                0
-               (dir-ent-clusterchain
+               (clear-clusterchain
                 fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent
-                  (make-dir-ent-list
-                   (mv-nth 0
-                           (dir-ent-clusterchain-contents
-                            fat32-in-memory root-dir-ent)))
-                  (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
+                (dir-ent-first-cluster
+                 (mv-nth
+                  0
+                  (find-dir-ent
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory root-dir-ent)))
+                   (fat32-filename-fix (car path)))))
+                2097152)))
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))
+             (make-empty-subdir-contents
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (dir-ent-first-cluster root-dir-ent))
+             0
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
                 (mv-nth
                  0
                  (dir-ent-clusterchain
@@ -25316,45 +27027,27 @@ Some (rather awful) testing forms are
                      (mv-nth 0
                              (dir-ent-clusterchain-contents
                               fat32-in-memory root-dir-ent)))
-                    (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (dir-ent-first-cluster root-dir-ent))
-          0
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list
-                  (mv-nth 0
-                          (dir-ent-clusterchain-contents
-                           fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth
-                  0
-                  (find-dir-ent
-                   (make-dir-ent-list
-                    (mv-nth 0
-                            (dir-ent-clusterchain-contents
-                             fat32-in-memory root-dir-ent)))
-                   (fat32-filename-fix (car path)))))))
-              0 nil))
-            1))))
-        (dir-ent-first-cluster root-dir-ent)
+                    (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1))))
+           (dir-ent-first-cluster root-dir-ent)
+           2097152)))
+        '(0 0 0 0 0 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
         (nats=>string
          (insert-dir-ent
           (string=>nats
@@ -25402,7 +27095,8 @@ Some (rather awful) testing forms are
                     (fat32-filename-fix (car path)))))))
                0 nil))
              1))
-           0)))))
+           0)))
+        0 (dir-ent-first-cluster root-dir-ent)))
       0)
      (non-free-index-listp x (effective-fat fat32-in-memory))
      (not
@@ -25423,6 +27117,1599 @@ Some (rather awful) testing forms are
       0)
      (lofat-fs-p fat32-in-memory)
      (dir-ent-p root-dir-ent)
+     (not-intersectp-list
+      x
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+        entry-limit)))
+     (not-intersectp-list
+      (mv-nth 0
+              (dir-ent-clusterchain fat32-in-memory root-dir-ent))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+        entry-limit)))
+     (equal
+      (mv-nth
+       1
+       (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
+      0)
+     (not (consp (cdr path)))
+     (<=
+      2
+      (dir-ent-first-cluster
+       (mv-nth
+        0
+        (find-dir-ent
+         (make-dir-ent-list
+          (mv-nth
+           0
+           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         (fat32-filename-fix (car path))))))
+     (<
+      (dir-ent-first-cluster
+       (mv-nth
+        0
+        (find-dir-ent
+         (make-dir-ent-list
+          (mv-nth
+           0
+           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         (fat32-filename-fix (car path)))))
+      (+ 2 (count-of-clusters fat32-in-memory)))
+     (dir-ent-directory-p
+      (mv-nth
+       0
+       (find-dir-ent
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+        (fat32-filename-fix (car path)))))
+     (<= (+ 64
+            (* 32
+               (len (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent))))))
+         2097152))
+    (non-free-index-listp
+     x
+     (effective-fat
+      (mv-nth
+       0
+       (place-contents
+        (update-fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list (mv-nth 0
+                                             (dir-ent-clusterchain-contents
+                                              fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))
+         (fat32-update-lower-28
+          (fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32-in-memory)
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list (mv-nth 0
+                                             (dir-ent-clusterchain-contents
+                                              fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path))))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth 0
+                          (find-dir-ent
+                           (make-dir-ent-list
+                            (mv-nth 0
+                                    (dir-ent-clusterchain-contents
+                                     fat32-in-memory root-dir-ent)))
+                           (fat32-filename-fix (car path)))))))
+               0 nil))
+             1))
+           fat32-in-memory)
+          268435455)
+         (mv-nth
+          0
+          (clear-clusterchain
+           fat32-in-memory
+           (dir-ent-first-cluster
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path)))))
+           2097152)))
+        (mv-nth
+         0
+         (find-dir-ent
+          (make-dir-ent-list
+           (mv-nth 0
+                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+          (fat32-filename-fix (car path))))
+        (make-empty-subdir-contents
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list (mv-nth 0
+                                             (dir-ent-clusterchain-contents
+                                              fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))
+         (dir-ent-first-cluster root-dir-ent))
+        0
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32-in-memory)
+           (mv-nth
+            0
+            (dir-ent-clusterchain
+             fat32-in-memory
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path)))))))
+            0 nil))
+          1)))))))
+   :hints (("goal" :do-not-induct t)))
+
+  ;; This should be rewritten by
+  ;; (:REWRITE NON-FREE-INDEX-LISTP-OF-SET-INDICES-IN-FA-TABLE), but...
+  (thm
+   (implies
+    (and
+     (equal
+      (mv-nth
+       2
+       (place-contents
+        (update-fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth 0
+                         (dir-ent-clusterchain-contents
+                          fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))
+         (fat32-update-lower-28
+          (fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32-in-memory)
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path))))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path)))))))
+               0 nil))
+             1))
+           fat32-in-memory)
+          268435455)
+         (mv-nth
+          0
+          (clear-clusterchain
+           fat32-in-memory
+           (dir-ent-first-cluster
+            (mv-nth 0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))
+           2097152)))
+        (mv-nth
+         0
+         (find-dir-ent
+          (make-dir-ent-list
+           (mv-nth
+            0
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+          (fat32-filename-fix (car path))))
+        (make-empty-subdir-contents
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth 0
+                         (dir-ent-clusterchain-contents
+                          fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))
+         (dir-ent-first-cluster root-dir-ent))
+        0
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32-in-memory)
+           (mv-nth
+            0
+            (dir-ent-clusterchain
+             fat32-in-memory
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list
+                  (mv-nth 0
+                          (dir-ent-clusterchain-contents
+                           fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path)))))))
+            0 nil))
+          1))))
+      0)
+     (dir-ent-directory-p root-dir-ent)
+     (<= 2 (dir-ent-first-cluster root-dir-ent))
+     (< (dir-ent-first-cluster root-dir-ent)
+        (+ 2 (count-of-clusters fat32-in-memory)))
+     (consp path)
+     (not (lofat-regular-file-p file))
+     (not
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth 0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth 0
+                         (dir-ent-clusterchain-contents
+                          fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         fat32-in-memory
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list (mv-nth 0
+                                      (dir-ent-clusterchain-contents
+                                       fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path))))))))
+     (equal
+      (mv-nth
+       2
+       (place-contents
+        (update-fati
+         (dir-ent-first-cluster root-dir-ent)
+         (fat32-update-lower-28
+          (fati
+           (dir-ent-first-cluster root-dir-ent)
+           (mv-nth
+            0
+            (place-contents
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table
+                   (effective-fat fat32-in-memory)
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path))))))
+                   (make-list-ac
+                    (len
+                     (mv-nth
+                      0
+                      (dir-ent-clusterchain
+                       fat32-in-memory
+                       (mv-nth
+                        0
+                        (find-dir-ent
+                         (make-dir-ent-list
+                          (mv-nth 0
+                                  (dir-ent-clusterchain-contents
+                                   fat32-in-memory root-dir-ent)))
+                         (fat32-filename-fix (car path)))))))
+                    0 nil))
+                  1))
+                fat32-in-memory)
+               268435455)
+              (mv-nth
+               0
+               (clear-clusterchain
+                fat32-in-memory
+                (dir-ent-first-cluster
+                 (mv-nth
+                  0
+                  (find-dir-ent
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory root-dir-ent)))
+                   (fat32-filename-fix (car path)))))
+                2097152)))
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))
+             (make-empty-subdir-contents
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (dir-ent-first-cluster root-dir-ent))
+             0
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1)))))
+          268435455)
+         (mv-nth
+          0
+          (clear-clusterchain
+           (mv-nth
+            0
+            (place-contents
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table
+                   (effective-fat fat32-in-memory)
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path))))))
+                   (make-list-ac
+                    (len
+                     (mv-nth
+                      0
+                      (dir-ent-clusterchain
+                       fat32-in-memory
+                       (mv-nth
+                        0
+                        (find-dir-ent
+                         (make-dir-ent-list
+                          (mv-nth 0
+                                  (dir-ent-clusterchain-contents
+                                   fat32-in-memory root-dir-ent)))
+                         (fat32-filename-fix (car path)))))))
+                    0 nil))
+                  1))
+                fat32-in-memory)
+               268435455)
+              (mv-nth
+               0
+               (clear-clusterchain
+                fat32-in-memory
+                (dir-ent-first-cluster
+                 (mv-nth
+                  0
+                  (find-dir-ent
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory root-dir-ent)))
+                   (fat32-filename-fix (car path)))))
+                2097152)))
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))
+             (make-empty-subdir-contents
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (dir-ent-first-cluster root-dir-ent))
+             0
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1))))
+           (dir-ent-first-cluster root-dir-ent)
+           2097152)))
+        '(0 0 0 0 0 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+        (nats=>string
+         (insert-dir-ent
+          (string=>nats
+           (mv-nth
+            0
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+          (dir-ent-set-first-cluster-file-size
+           (mv-nth 0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path))))
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32-in-memory)
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path))))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path)))))))
+               0 nil))
+             1))
+           0)))
+        0 (dir-ent-first-cluster root-dir-ent)))
+      0)
+     (non-free-index-listp x (effective-fat fat32-in-memory))
+     (not
+      (intersectp-equal
+       x
+       (mv-nth 0
+               (dir-ent-clusterchain fat32-in-memory root-dir-ent))))
+     (equal
+      (mv-nth
+       3
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+        entry-limit))
+      0)
+     (lofat-fs-p fat32-in-memory)
+     (dir-ent-p root-dir-ent)
+     (not-intersectp-list
+      x
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+        entry-limit)))
+     (not-intersectp-list
+      (mv-nth 0
+              (dir-ent-clusterchain fat32-in-memory root-dir-ent))
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+        entry-limit)))
+     (equal
+      (mv-nth
+       1
+       (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
+      0)
+     (not (consp (cdr path)))
+     (<=
+      2
+      (dir-ent-first-cluster
+       (mv-nth
+        0
+        (find-dir-ent
+         (make-dir-ent-list
+          (mv-nth
+           0
+           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         (fat32-filename-fix (car path))))))
+     (<
+      (dir-ent-first-cluster
+       (mv-nth
+        0
+        (find-dir-ent
+         (make-dir-ent-list
+          (mv-nth
+           0
+           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+         (fat32-filename-fix (car path)))))
+      (+ 2 (count-of-clusters fat32-in-memory)))
+     (dir-ent-directory-p
+      (mv-nth
+       0
+       (find-dir-ent
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+        (fat32-filename-fix (car path)))))
+     (<= (+ 64
+            (* 32
+               (len (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent))))))
+         2097152))
+    (non-free-index-listp
+     x
+     (set-indices-in-fa-table (effective-fat #@21#)
+                              (mv-nth #@22# #@23#)
+                              (make-list-ac #@24# #@25# #@26#))))
+   :hints (("goal" :do-not-induct t)))
+
+  ;; This should be rewritten by
+  ;; LOFAT-TO-HIFAT-HELPER-OF-HIFAT-TO-LOFAT-HELPER-DISJOINT-LEMMA-1, but...
+  (thm
+   (implies
+    (and
+     (equal
+      (mv-nth
+       2
+       (place-contents
+        (update-fati
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth 0
+                         (dir-ent-clusterchain-contents
+                          fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))
+         (fat32-update-lower-28
+          (fati
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32-in-memory)
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path))))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path)))))))
+               0 nil))
+             1))
+           fat32-in-memory)
+          268435455)
+         (mv-nth
+          0
+          (clear-clusterchain
+           fat32-in-memory
+           (dir-ent-first-cluster
+            (mv-nth 0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))
+           2097152)))
+        (mv-nth
+         0
+         (find-dir-ent
+          (make-dir-ent-list
+           (mv-nth
+            0
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+          (fat32-filename-fix (car path))))
+        (make-empty-subdir-contents
+         (nth
+          0
+          (find-n-free-clusters
+           (set-indices-in-fa-table
+            (effective-fat fat32-in-memory)
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth 0
+                         (dir-ent-clusterchain-contents
+                          fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path))))))
+            (make-list-ac
+             (len
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path)))))))
+             0 nil))
+           1))
+         (dir-ent-first-cluster root-dir-ent))
+        0
+        (nth
+         0
+         (find-n-free-clusters
+          (set-indices-in-fa-table
+           (effective-fat fat32-in-memory)
+           (mv-nth
+            0
+            (dir-ent-clusterchain
+             fat32-in-memory
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))))
+           (make-list-ac
+            (len
+             (mv-nth
+              0
+              (dir-ent-clusterchain
+               fat32-in-memory
+               (mv-nth
+                0
+                (find-dir-ent
+                 (make-dir-ent-list
+                  (mv-nth 0
+                          (dir-ent-clusterchain-contents
+                           fat32-in-memory root-dir-ent)))
+                 (fat32-filename-fix (car path)))))))
+            0 nil))
+          1))))
+      0)
+     (dir-ent-directory-p root-dir-ent)
+     (<= 2 (dir-ent-first-cluster root-dir-ent))
+     (< (dir-ent-first-cluster root-dir-ent)
+        (+ 2 (count-of-clusters fat32-in-memory)))
+     (consp path)
+     (not (lofat-regular-file-p file))
+     (not
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth 0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
+              (mv-nth
+               0
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth 0
+                         (dir-ent-clusterchain-contents
+                          fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         fat32-in-memory
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list (mv-nth 0
+                                      (dir-ent-clusterchain-contents
+                                       fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path))))))))
+     (equal
+      (mv-nth
+       2
+       (place-contents
+        (update-fati
+         (dir-ent-first-cluster root-dir-ent)
+         (fat32-update-lower-28
+          (fati
+           (dir-ent-first-cluster root-dir-ent)
+           (mv-nth
+            0
+            (place-contents
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table
+                   (effective-fat fat32-in-memory)
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path))))))
+                   (make-list-ac
+                    (len
+                     (mv-nth
+                      0
+                      (dir-ent-clusterchain
+                       fat32-in-memory
+                       (mv-nth
+                        0
+                        (find-dir-ent
+                         (make-dir-ent-list
+                          (mv-nth 0
+                                  (dir-ent-clusterchain-contents
+                                   fat32-in-memory root-dir-ent)))
+                         (fat32-filename-fix (car path)))))))
+                    0 nil))
+                  1))
+                fat32-in-memory)
+               268435455)
+              (mv-nth
+               0
+               (clear-clusterchain
+                fat32-in-memory
+                (dir-ent-first-cluster
+                 (mv-nth
+                  0
+                  (find-dir-ent
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory root-dir-ent)))
+                   (fat32-filename-fix (car path)))))
+                2097152)))
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))
+             (make-empty-subdir-contents
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (dir-ent-first-cluster root-dir-ent))
+             0
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1)))))
+          268435455)
+         (mv-nth
+          0
+          (clear-clusterchain
+           (mv-nth
+            0
+            (place-contents
+             (update-fati
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (fat32-update-lower-28
+               (fati
+                (nth
+                 0
+                 (find-n-free-clusters
+                  (set-indices-in-fa-table
+                   (effective-fat fat32-in-memory)
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path))))))
+                   (make-list-ac
+                    (len
+                     (mv-nth
+                      0
+                      (dir-ent-clusterchain
+                       fat32-in-memory
+                       (mv-nth
+                        0
+                        (find-dir-ent
+                         (make-dir-ent-list
+                          (mv-nth 0
+                                  (dir-ent-clusterchain-contents
+                                   fat32-in-memory root-dir-ent)))
+                         (fat32-filename-fix (car path)))))))
+                    0 nil))
+                  1))
+                fat32-in-memory)
+               268435455)
+              (mv-nth
+               0
+               (clear-clusterchain
+                fat32-in-memory
+                (dir-ent-first-cluster
+                 (mv-nth
+                  0
+                  (find-dir-ent
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory root-dir-ent)))
+                   (fat32-filename-fix (car path)))))
+                2097152)))
+             (mv-nth
+              0
+              (find-dir-ent
+               (make-dir-ent-list
+                (mv-nth 0
+                        (dir-ent-clusterchain-contents
+                         fat32-in-memory root-dir-ent)))
+               (fat32-filename-fix (car path))))
+             (make-empty-subdir-contents
+              (nth
+               0
+               (find-n-free-clusters
+                (set-indices-in-fa-table
+                 (effective-fat fat32-in-memory)
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))))
+                 (make-list-ac
+                  (len
+                   (mv-nth
+                    0
+                    (dir-ent-clusterchain
+                     fat32-in-memory
+                     (mv-nth
+                      0
+                      (find-dir-ent
+                       (make-dir-ent-list
+                        (mv-nth 0
+                                (dir-ent-clusterchain-contents
+                                 fat32-in-memory root-dir-ent)))
+                       (fat32-filename-fix (car path)))))))
+                  0 nil))
+                1))
+              (dir-ent-first-cluster root-dir-ent))
+             0
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1))))
+           (dir-ent-first-cluster root-dir-ent)
+           2097152)))
+        '(0 0 0 0 0 0 0 0 0 0 0 0
+            0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+        (nats=>string
+         (insert-dir-ent
+          (string=>nats
+           (mv-nth
+            0
+            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+          (dir-ent-set-first-cluster-file-size
+           (mv-nth 0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path))))
+           (nth
+            0
+            (find-n-free-clusters
+             (set-indices-in-fa-table
+              (effective-fat fat32-in-memory)
+              (mv-nth
+               0
+               (dir-ent-clusterchain
+                fat32-in-memory
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path))))))
+              (make-list-ac
+               (len
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path)))))))
+               0 nil))
+             1))
+           0)))
+        0 (dir-ent-first-cluster root-dir-ent)))
+      0)
+     (non-free-index-listp x (effective-fat fat32-in-memory))
+     (not
+      (intersectp-equal
+       x
+       (mv-nth 0
+               (dir-ent-clusterchain fat32-in-memory root-dir-ent))))
+     (equal
+      (mv-nth
+       3
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+        entry-limit))
+      0)
+     (lofat-fs-p fat32-in-memory)
+     (dir-ent-p root-dir-ent)
+     (not-intersectp-list
+      x
+      (mv-nth
+       2
+       (lofat-to-hifat-helper
+        fat32-in-memory
+        (make-dir-ent-list
+         (mv-nth
+          0
+          (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+        entry-limit)))
      (not-intersectp-list
       (mv-nth 0
               (dir-ent-clusterchain fat32-in-memory root-dir-ent))
@@ -25480,29 +28767,362 @@ Some (rather awful) testing forms are
                               fat32-in-memory root-dir-ent))))))
          2097152))
     (not
-     (member-equal
-      (nth
-       0
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32-in-memory)
-         (mv-nth
-          0
-          (dir-ent-clusterchain
-           fat32-in-memory
-           (mv-nth 0
+     (intersectp-equal
+      x
+      (find-n-free-clusters
+       (update-nth
+        (dir-ent-first-cluster root-dir-ent)
+        (fat32-update-lower-28
+         (fati
+          (dir-ent-first-cluster root-dir-ent)
+          (mv-nth
+           0
+           (place-contents
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
                    (find-dir-ent
                     (make-dir-ent-list
                      (mv-nth 0
                              (dir-ent-clusterchain-contents
                               fat32-in-memory root-dir-ent)))
                     (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32-in-memory)
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path))))))
+                  (make-list-ac
+                   (len
+                    (mv-nth
+                     0
+                     (dir-ent-clusterchain
+                      fat32-in-memory
+                      (mv-nth
+                       0
+                       (find-dir-ent
+                        (make-dir-ent-list
+                         (mv-nth 0
+                                 (dir-ent-clusterchain-contents
+                                  fat32-in-memory root-dir-ent)))
+                        (fat32-filename-fix (car path)))))))
+                   0 nil))
+                 1))
+               fat32-in-memory)
+              268435455)
+             (mv-nth
+              0
+              (clear-clusterchain
+               fat32-in-memory
+               (dir-ent-first-cluster
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path)))))
+               2097152)))
+            (mv-nth 0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))
+            (make-empty-subdir-contents
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1))
+             (dir-ent-first-cluster root-dir-ent))
+            0
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32-in-memory)
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth
+                  0
+                  (find-dir-ent
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory root-dir-ent)))
+                   (fat32-filename-fix (car path))))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))))
+                0 nil))
+              1)))))
+         268435455)
+        (set-indices-in-fa-table
+         (effective-fat
+          (mv-nth
+           0
+           (place-contents
+            (update-fati
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1))
+             (fat32-update-lower-28
+              (fati
+               (nth
+                0
+                (find-n-free-clusters
+                 (set-indices-in-fa-table
+                  (effective-fat fat32-in-memory)
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path))))))
+                  (make-list-ac
+                   (len
+                    (mv-nth
+                     0
+                     (dir-ent-clusterchain
+                      fat32-in-memory
+                      (mv-nth
+                       0
+                       (find-dir-ent
+                        (make-dir-ent-list
+                         (mv-nth 0
+                                 (dir-ent-clusterchain-contents
+                                  fat32-in-memory root-dir-ent)))
+                        (fat32-filename-fix (car path)))))))
+                   0 nil))
+                 1))
+               fat32-in-memory)
+              268435455)
+             (mv-nth
+              0
+              (clear-clusterchain
+               fat32-in-memory
+               (dir-ent-first-cluster
+                (mv-nth
+                 0
+                 (find-dir-ent
+                  (make-dir-ent-list
+                   (mv-nth 0
+                           (dir-ent-clusterchain-contents
+                            fat32-in-memory root-dir-ent)))
+                  (fat32-filename-fix (car path)))))
+               2097152)))
+            (mv-nth 0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path))))
+            (make-empty-subdir-contents
+             (nth
+              0
+              (find-n-free-clusters
+               (set-indices-in-fa-table
+                (effective-fat fat32-in-memory)
+                (mv-nth
+                 0
+                 (dir-ent-clusterchain
+                  fat32-in-memory
+                  (mv-nth
+                   0
+                   (find-dir-ent
+                    (make-dir-ent-list
+                     (mv-nth 0
+                             (dir-ent-clusterchain-contents
+                              fat32-in-memory root-dir-ent)))
+                    (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1))
+             (dir-ent-first-cluster root-dir-ent))
+            0
+            (nth
+             0
+             (find-n-free-clusters
+              (set-indices-in-fa-table
+               (effective-fat fat32-in-memory)
+               (mv-nth
+                0
+                (dir-ent-clusterchain
+                 fat32-in-memory
+                 (mv-nth
+                  0
+                  (find-dir-ent
+                   (make-dir-ent-list
+                    (mv-nth 0
+                            (dir-ent-clusterchain-contents
+                             fat32-in-memory root-dir-ent)))
+                   (fat32-filename-fix (car path))))))
+               (make-list-ac
+                (len
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain
+                   fat32-in-memory
+                   (mv-nth
+                    0
+                    (find-dir-ent
+                     (make-dir-ent-list
+                      (mv-nth 0
+                              (dir-ent-clusterchain-contents
+                               fat32-in-memory root-dir-ent)))
+                     (fat32-filename-fix (car path)))))))
+                0 nil))
+              1)))))
+         (mv-nth 0
+                 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
          (make-list-ac
           (len
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
+           (mv-nth 0
+                   (dir-ent-clusterchain fat32-in-memory root-dir-ent)))
+          0 nil)))
+       (+
+        -1
+        (len
+         (make-clusters
+          (nats=>string
+           (insert-dir-ent
+            (string=>nats (mv-nth 0
+                                  (dir-ent-clusterchain-contents
+                                   fat32-in-memory root-dir-ent)))
+            (dir-ent-set-first-cluster-file-size
              (mv-nth
               0
               (find-dir-ent
@@ -25510,312 +29130,7 @@ Some (rather awful) testing forms are
                 (mv-nth 0
                         (dir-ent-clusterchain-contents
                          fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path)))))))
-          0 nil))
-        1))
-      x)))
-   :hints (("goal"
-            :do-not-induct t
-            :in-theory (disable
-                        (:REWRITE NON-FREE-INDEX-LISTP-CORRECTNESS-2 . 1))
-            :use
-            (:instance
-             (:rewrite non-free-index-listp-correctness-2 . 1)
-             (key
-              (nth
-               0
-               (find-n-free-clusters
-                (set-indices-in-fa-table
-                 (effective-fat fat32-in-memory)
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain
-                   fat32-in-memory
-                   (mv-nth
-                    0
-                    (find-dir-ent
-                     (make-dir-ent-list
-                      (mv-nth 0
-                              (dir-ent-clusterchain-contents
-                               fat32-in-memory root-dir-ent)))
-                     (fat32-filename-fix (car path))))))
-                 (make-list-ac
-                  (len
-                   (mv-nth
-                    0
-                    (dir-ent-clusterchain
-                     fat32-in-memory
-                     (mv-nth
-                      0
-                      (find-dir-ent
-                       (make-dir-ent-list
-                        (mv-nth 0
-                                (dir-ent-clusterchain-contents
-                                 fat32-in-memory root-dir-ent)))
-                       (fat32-filename-fix (car path)))))))
-                  0 nil))
-                1)))
-             (fa-table (effective-fat fat32-in-memory))))))
-
-  ;; This should be rewritten by NON-FREE-INDEX-LISTP-CORRECTNESS-3, but...
-  (thm
-   (implies
-    (and
-     (equal
-      (mv-nth
-       2
-       (place-contents
-        (update-fati
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (fat32-update-lower-28
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           fat32-in-memory)
-          268435455)
-         (mv-nth
-          0
-          (clear-clusterchain
-           fat32-in-memory
-           (dir-ent-first-cluster
-            (mv-nth
-             0
-             (find-dir-ent
-              (make-dir-ent-list
-               (mv-nth
-                0
-                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car path)))))
-           2097152)))
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path))))
-        (make-empty-subdir-contents
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (dir-ent-first-cluster root-dir-ent))
-        0
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path))))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path)))))))
-            0 nil))
-          1))))
-      0)
-     (dir-ent-directory-p root-dir-ent)
-     (<= 2 (dir-ent-first-cluster root-dir-ent))
-     (< (dir-ent-first-cluster root-dir-ent)
-        (+ 2 (count-of-clusters fat32-in-memory)))
-     (consp path)
-     (not (lofat-regular-file-p file))
-     (member-equal
-      (nth
-       0
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32-in-memory)
-         (mv-nth
-          0
-          (dir-ent-clusterchain
-           fat32-in-memory
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car path))))))
-         (make-list-ac
-          (len
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path)))))))
-          0 nil))
-        1))
-      (mv-nth
-       0
-       (dir-ent-clusterchain
-        fat32-in-memory
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path)))))))
-     (equal
-      (mv-nth
-       1
-       (update-dir-contents
-        (mv-nth
-         0
-         (place-contents
-          (update-fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (fat32-update-lower-28
-            (fati
+               (fat32-filename-fix (car path))))
              (nth
               0
               (find-n-free-clusters
@@ -25825,1403 +29140,6 @@ Some (rather awful) testing forms are
                  0
                  (dir-ent-clusterchain
                   fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path))))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain
-                    fat32-in-memory
-                    (mv-nth
-                     0
-                     (find-dir-ent
-                      (make-dir-ent-list
-                       (mv-nth 0
-                               (dir-ent-clusterchain-contents
-                                fat32-in-memory root-dir-ent)))
-                      (fat32-filename-fix (car path)))))))
-                 0 nil))
-               1))
-             fat32-in-memory)
-            268435455)
-           (mv-nth
-            0
-            (clear-clusterchain
-             fat32-in-memory
-             (dir-ent-first-cluster
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path)))))
-             2097152)))
-          (mv-nth
-           0
-           (find-dir-ent
-            (make-dir-ent-list
-             (mv-nth
-              0
-              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car path))))
-          (make-empty-subdir-contents
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (dir-ent-first-cluster root-dir-ent))
-          0
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth 0
-                         (find-dir-ent
-                          (make-dir-ent-list
-                           (mv-nth 0
-                                   (dir-ent-clusterchain-contents
-                                    fat32-in-memory root-dir-ent)))
-                          (fat32-filename-fix (car path)))))))
-              0 nil))
-            1))))
-        (dir-ent-first-cluster root-dir-ent)
-        (nats=>string
-         (insert-dir-ent
-          (string=>nats
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (dir-ent-set-first-cluster-file-size
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car path))))
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           0)))))
-      0)
-     (non-free-index-listp x (effective-fat fat32-in-memory))
-     (not (intersectp-equal
-           x
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory root-dir-ent))))
-     (equal
-      (mv-nth
-       3
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        entry-limit))
-      0)
-     (lofat-fs-p fat32-in-memory)
-     (dir-ent-p root-dir-ent)
-     (not-intersectp-list
-      (mv-nth 0
-              (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-      (mv-nth
-       2
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        entry-limit)))
-     (equal
-      (mv-nth 1
-              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
-      0)
-     (not (consp (cdr path)))
-     (<=
-      2
-      (dir-ent-first-cluster
-       (mv-nth
-        0
-        (find-dir-ent
-         (make-dir-ent-list
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (fat32-filename-fix (car path))))))
-     (<
-      (dir-ent-first-cluster
-       (mv-nth
-        0
-        (find-dir-ent
-         (make-dir-ent-list
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (fat32-filename-fix (car path)))))
-      (+ 2 (count-of-clusters fat32-in-memory)))
-     (dir-ent-directory-p
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (fat32-filename-fix (car path)))))
-     (<=
-      (+
-       64
-       (*
-        32
-        (len
-         (make-dir-ent-list
-          (mv-nth
-           0
-           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))))))
-      2097152))
-    (non-free-index-listp
-     x
-     (effective-fat
-      (mv-nth
-       0
-       (place-contents
-        (update-fati
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (fat32-update-lower-28
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           fat32-in-memory)
-          268435455)
-         (mv-nth
-          0
-          (clear-clusterchain
-           fat32-in-memory
-           (dir-ent-first-cluster
-            (mv-nth
-             0
-             (find-dir-ent
-              (make-dir-ent-list
-               (mv-nth
-                0
-                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car path)))))
-           2097152)))
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path))))
-        (make-empty-subdir-contents
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (dir-ent-first-cluster root-dir-ent))
-        0
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path))))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path)))))))
-            0 nil))
-          1)))))))
-   :hints (("goal"
-            :do-not-induct t
-            :in-theory (disable NON-FREE-INDEX-LISTP-CORRECTNESS-3)
-            :use (:instance non-free-index-listp-correctness-3
-                            (first-cluster
-                             (nth
-                              0
-                              (find-n-free-clusters
-                               (set-indices-in-fa-table
-                                (effective-fat fat32-in-memory)
-                                (mv-nth
-                                 0
-                                 (dir-ent-clusterchain
-                                  fat32-in-memory
-                                  (mv-nth
-                                   0
-                                   (find-dir-ent
-                                    (make-dir-ent-list
-                                     (mv-nth 0
-                                             (dir-ent-clusterchain-contents
-                                              fat32-in-memory root-dir-ent)))
-                                    (fat32-filename-fix (car path))))))
-                                (make-list-ac
-                                 (len
-                                  (mv-nth
-                                   0
-                                   (dir-ent-clusterchain
-                                    fat32-in-memory
-                                    (mv-nth
-                                     0
-                                     (find-dir-ent
-                                      (make-dir-ent-list
-                                       (mv-nth 0
-                                               (dir-ent-clusterchain-contents
-                                                fat32-in-memory root-dir-ent)))
-                                      (fat32-filename-fix (car path)))))))
-                                 0 nil))
-                               1)))
-                            (file-length 0)
-                            (contents
-                             (make-empty-subdir-contents
-                              (nth
-                               0
-                               (find-n-free-clusters
-                                (set-indices-in-fa-table
-                                 (effective-fat fat32-in-memory)
-                                 (mv-nth
-                                  0
-                                  (dir-ent-clusterchain
-                                   fat32-in-memory
-                                   (mv-nth
-                                    0
-                                    (find-dir-ent
-                                     (make-dir-ent-list
-                                      (mv-nth 0
-                                              (dir-ent-clusterchain-contents
-                                               fat32-in-memory root-dir-ent)))
-                                     (fat32-filename-fix (car path))))))
-                                 (make-list-ac
-                                  (len
-                                   (mv-nth
-                                    0
-                                    (dir-ent-clusterchain
-                                     fat32-in-memory
-                                     (mv-nth
-                                      0
-                                      (find-dir-ent
-                                       (make-dir-ent-list
-                                        (mv-nth 0
-                                                (dir-ent-clusterchain-contents
-                                                 fat32-in-memory root-dir-ent)))
-                                       (fat32-filename-fix (car path)))))))
-                                  0 nil))
-                                1))
-                              (dir-ent-first-cluster root-dir-ent)))
-                            (dir-ent
-                             (mv-nth
-                              0
-                              (find-dir-ent
-                               (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))
-                            (fat32-in-memory
-                             (update-fati
-                              (nth
-                               0
-                               (find-n-free-clusters
-                                (set-indices-in-fa-table
-                                 (effective-fat fat32-in-memory)
-                                 (mv-nth
-                                  0
-                                  (dir-ent-clusterchain
-                                   fat32-in-memory
-                                   (mv-nth
-                                    0
-                                    (find-dir-ent
-                                     (make-dir-ent-list
-                                      (mv-nth 0
-                                              (dir-ent-clusterchain-contents
-                                               fat32-in-memory root-dir-ent)))
-                                     (fat32-filename-fix (car path))))))
-                                 (make-list-ac
-                                  (len
-                                   (mv-nth
-                                    0
-                                    (dir-ent-clusterchain
-                                     fat32-in-memory
-                                     (mv-nth
-                                      0
-                                      (find-dir-ent
-                                       (make-dir-ent-list
-                                        (mv-nth 0
-                                                (dir-ent-clusterchain-contents
-                                                 fat32-in-memory root-dir-ent)))
-                                       (fat32-filename-fix (car path)))))))
-                                  0 nil))
-                                1))
-                              (fat32-update-lower-28
-                               (fati
-                                (nth
-                                 0
-                                 (find-n-free-clusters
-                                  (set-indices-in-fa-table
-                                   (effective-fat fat32-in-memory)
-                                   (mv-nth
-                                    0
-                                    (dir-ent-clusterchain
-                                     fat32-in-memory
-                                     (mv-nth
-                                      0
-                                      (find-dir-ent
-                                       (make-dir-ent-list
-                                        (mv-nth 0
-                                                (dir-ent-clusterchain-contents
-                                                 fat32-in-memory root-dir-ent)))
-                                       (fat32-filename-fix (car path))))))
-                                   (make-list-ac
-                                    (len
-                                     (mv-nth
-                                      0
-                                      (dir-ent-clusterchain
-                                       fat32-in-memory
-                                       (mv-nth
-                                        0
-                                        (find-dir-ent
-                                         (make-dir-ent-list
-                                          (mv-nth 0
-                                                  (dir-ent-clusterchain-contents
-                                                   fat32-in-memory root-dir-ent)))
-                                         (fat32-filename-fix (car path)))))))
-                                    0 nil))
-                                  1))
-                                fat32-in-memory)
-                               268435455)
-                              (mv-nth
-                               0
-                               (clear-clusterchain
-                                fat32-in-memory
-                                (dir-ent-first-cluster
-                                 (mv-nth
-                                  0
-                                  (find-dir-ent
-                                   (make-dir-ent-list
-                                    (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                                   (fat32-filename-fix (car path)))))
-                                2097152))))
-                            (x x)))))
-
-  ;; This should be rewritten by
-  ;; NON-FREE-INDEX-LISTP-CORRECTNESS-3, but...
-  (thm
-   (implies
-    (and
-     (equal
-      (mv-nth
-       2
-       (place-contents
-        (update-fati
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (fat32-update-lower-28
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           fat32-in-memory)
-          268435455)
-         (mv-nth
-          0
-          (clear-clusterchain
-           fat32-in-memory
-           (dir-ent-first-cluster
-            (mv-nth
-             0
-             (find-dir-ent
-              (make-dir-ent-list
-               (mv-nth
-                0
-                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car path)))))
-           2097152)))
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path))))
-        (make-empty-subdir-contents
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (dir-ent-first-cluster root-dir-ent))
-        0
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path))))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path)))))))
-            0 nil))
-          1))))
-      0)
-     (dir-ent-directory-p root-dir-ent)
-     (<= 2 (dir-ent-first-cluster root-dir-ent))
-     (< (dir-ent-first-cluster root-dir-ent)
-        (+ 2 (count-of-clusters fat32-in-memory)))
-     (consp path)
-     (not (lofat-regular-file-p file))
-     (member-equal
-      (nth
-       0
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32-in-memory)
-         (mv-nth
-          0
-          (dir-ent-clusterchain
-           fat32-in-memory
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car path))))))
-         (make-list-ac
-          (len
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path)))))))
-          0 nil))
-        1))
-      (mv-nth
-       0
-       (dir-ent-clusterchain
-        fat32-in-memory
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path)))))))
-     (equal
-      (mv-nth
-       1
-       (update-dir-contents
-        (mv-nth
-         0
-         (place-contents
-          (update-fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (fat32-update-lower-28
-            (fati
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32-in-memory)
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path))))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain
-                    fat32-in-memory
-                    (mv-nth
-                     0
-                     (find-dir-ent
-                      (make-dir-ent-list
-                       (mv-nth 0
-                               (dir-ent-clusterchain-contents
-                                fat32-in-memory root-dir-ent)))
-                      (fat32-filename-fix (car path)))))))
-                 0 nil))
-               1))
-             fat32-in-memory)
-            268435455)
-           (mv-nth
-            0
-            (clear-clusterchain
-             fat32-in-memory
-             (dir-ent-first-cluster
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path)))))
-             2097152)))
-          (mv-nth
-           0
-           (find-dir-ent
-            (make-dir-ent-list
-             (mv-nth
-              0
-              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car path))))
-          (make-empty-subdir-contents
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (dir-ent-first-cluster root-dir-ent))
-          0
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth 0
-                         (find-dir-ent
-                          (make-dir-ent-list
-                           (mv-nth 0
-                                   (dir-ent-clusterchain-contents
-                                    fat32-in-memory root-dir-ent)))
-                          (fat32-filename-fix (car path)))))))
-              0 nil))
-            1))))
-        (dir-ent-first-cluster root-dir-ent)
-        (nats=>string
-         (insert-dir-ent
-          (string=>nats
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (dir-ent-set-first-cluster-file-size
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car path))))
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           0)))))
-      0)
-     (non-free-index-listp x (effective-fat fat32-in-memory))
-     (not (intersectp-equal
-           x
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory root-dir-ent))))
-     (equal
-      (mv-nth
-       3
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        entry-limit))
-      0)
-     (lofat-fs-p fat32-in-memory)
-     (dir-ent-p root-dir-ent)
-     (not-intersectp-list
-      (mv-nth 0
-              (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-      (mv-nth
-       2
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        entry-limit)))
-     (equal
-      (mv-nth 1
-              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
-      0)
-     (not (consp (cdr path)))
-     (<=
-      2
-      (dir-ent-first-cluster
-       (mv-nth
-        0
-        (find-dir-ent
-         (make-dir-ent-list
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (fat32-filename-fix (car path))))))
-     (<
-      (dir-ent-first-cluster
-       (mv-nth
-        0
-        (find-dir-ent
-         (make-dir-ent-list
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (fat32-filename-fix (car path)))))
-      (+ 2 (count-of-clusters fat32-in-memory)))
-     (dir-ent-directory-p
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (fat32-filename-fix (car path)))))
-     (<=
-      (+
-       64
-       (*
-        32
-        (len
-         (make-dir-ent-list
-          (mv-nth
-           0
-           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))))))
-      2097152))
-    (non-free-index-listp
-     x
-     (effective-fat
-      (mv-nth
-       0
-       (place-contents
-        (update-fati
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent
-                  (make-dir-ent-list (mv-nth 0
-                                             (dir-ent-clusterchain-contents
-                                              fat32-in-memory root-dir-ent)))
-                  (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (fat32-update-lower-28
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent
-                  (make-dir-ent-list (mv-nth 0
-                                             (dir-ent-clusterchain-contents
-                                              fat32-in-memory root-dir-ent)))
-                  (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           fat32-in-memory)
-          268435455)
-         (mv-nth
-          0
-          (clear-clusterchain
-           fat32-in-memory
-           (dir-ent-first-cluster
-            (mv-nth
-             0
-             (find-dir-ent
-              (make-dir-ent-list
-               (mv-nth
-                0
-                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car path)))))
-           2097152)))
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth 0
-                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path))))
-        (make-empty-subdir-contents
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent
-                  (make-dir-ent-list (mv-nth 0
-                                             (dir-ent-clusterchain-contents
-                                              fat32-in-memory root-dir-ent)))
-                  (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (dir-ent-first-cluster root-dir-ent))
-        0
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path))))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path)))))))
-            0 nil))
-          1)))))))
-   :hints (("goal"
-            :do-not-induct t
-            :in-theory (disable
-                        (:rewrite non-free-index-listp-correctness-3))
-            :use
-            (:instance
-             (:rewrite non-free-index-listp-correctness-3)
-             (first-cluster
-              (nth
-               0
-               (find-n-free-clusters
-                (set-indices-in-fa-table
-                 (effective-fat fat32-in-memory)
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain
-                   fat32-in-memory
-                   (mv-nth
-                    0
-                    (find-dir-ent
-                     (make-dir-ent-list
-                      (mv-nth 0
-                              (dir-ent-clusterchain-contents
-                               fat32-in-memory root-dir-ent)))
-                     (fat32-filename-fix (car path))))))
-                 (make-list-ac
-                  (len
-                   (mv-nth
-                    0
-                    (dir-ent-clusterchain
-                     fat32-in-memory
-                     (mv-nth
-                      0
-                      (find-dir-ent
-                       (make-dir-ent-list
-                        (mv-nth 0
-                                (dir-ent-clusterchain-contents
-                                 fat32-in-memory root-dir-ent)))
-                       (fat32-filename-fix (car path)))))))
-                  0 nil))
-                1)))
-             (file-length 0)
-             (contents
-              (make-empty-subdir-contents
-               (nth
-                0
-                (find-n-free-clusters
-                 (set-indices-in-fa-table
-                  (effective-fat fat32-in-memory)
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain
-                    fat32-in-memory
-                    (mv-nth
-                     0
-                     (find-dir-ent
-                      (make-dir-ent-list
-                       (mv-nth 0
-                               (dir-ent-clusterchain-contents
-                                fat32-in-memory root-dir-ent)))
-                      (fat32-filename-fix (car path))))))
-                  (make-list-ac
-                   (len
-                    (mv-nth
-                     0
-                     (dir-ent-clusterchain
-                      fat32-in-memory
-                      (mv-nth
-                       0
-                       (find-dir-ent
-                        (make-dir-ent-list
-                         (mv-nth 0
-                                 (dir-ent-clusterchain-contents
-                                  fat32-in-memory root-dir-ent)))
-                        (fat32-filename-fix (car path)))))))
-                   0 nil))
-                 1))
-               (dir-ent-first-cluster root-dir-ent)))
-             (dir-ent
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth 0
-                         (dir-ent-clusterchain-contents
-                          fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path)))))
-             (fat32-in-memory
-              (update-fati
-               (nth
-                0
-                (find-n-free-clusters
-                 (set-indices-in-fa-table
-                  (effective-fat fat32-in-memory)
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain
-                    fat32-in-memory
-                    (mv-nth
-                     0
-                     (find-dir-ent
-                      (make-dir-ent-list
-                       (mv-nth 0
-                               (dir-ent-clusterchain-contents
-                                fat32-in-memory root-dir-ent)))
-                      (fat32-filename-fix (car path))))))
-                  (make-list-ac
-                   (len
-                    (mv-nth
-                     0
-                     (dir-ent-clusterchain
-                      fat32-in-memory
-                      (mv-nth
-                       0
-                       (find-dir-ent
-                        (make-dir-ent-list
-                         (mv-nth 0
-                                 (dir-ent-clusterchain-contents
-                                  fat32-in-memory root-dir-ent)))
-                        (fat32-filename-fix (car path)))))))
-                   0 nil))
-                 1))
-               (fat32-update-lower-28
-                (fati
-                 (nth
-                  0
-                  (find-n-free-clusters
-                   (set-indices-in-fa-table
-                    (effective-fat fat32-in-memory)
-                    (mv-nth
-                     0
-                     (dir-ent-clusterchain
-                      fat32-in-memory
-                      (mv-nth
-                       0
-                       (find-dir-ent
-                        (make-dir-ent-list
-                         (mv-nth 0
-                                 (dir-ent-clusterchain-contents
-                                  fat32-in-memory root-dir-ent)))
-                        (fat32-filename-fix (car path))))))
-                    (make-list-ac
-                     (len
-                      (mv-nth
-                       0
-                       (dir-ent-clusterchain
-                        fat32-in-memory
-                        (mv-nth
-                         0
-                         (find-dir-ent
-                          (make-dir-ent-list
-                           (mv-nth 0
-                                   (dir-ent-clusterchain-contents
-                                    fat32-in-memory root-dir-ent)))
-                          (fat32-filename-fix (car path)))))))
-                     0 nil))
-                   1))
-                 fat32-in-memory)
-                268435455)
-               (mv-nth
-                0
-                (clear-clusterchain
-                 fat32-in-memory
-                 (dir-ent-first-cluster
                   (mv-nth
                    0
                    (find-dir-ent
@@ -27229,12 +29147,27 @@ Some (rather awful) testing forms are
                      (mv-nth 0
                              (dir-ent-clusterchain-contents
                               fat32-in-memory root-dir-ent)))
-                    (fat32-filename-fix (car path)))))
-                 2097152))))
-             (x x)))))
+                    (fat32-filename-fix (car path))))))
+                (make-list-ac
+                 (len
+                  (mv-nth
+                   0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth
+                     0
+                     (find-dir-ent
+                      (make-dir-ent-list
+                       (mv-nth 0
+                               (dir-ent-clusterchain-contents
+                                fat32-in-memory root-dir-ent)))
+                      (fat32-filename-fix (car path)))))))
+                 0 nil))
+               1))
+             0)))
+          (cluster-size fat32-in-memory))))))))
+   :hints (("goal" :do-not-induct t)))
 
-  ;; This should be rewritten by
-  ;; NON-FREE-INDEX-LISTP-OF-SET-INDICES-IN-FA-TABLE but...
   (thm
    (implies
     (and
@@ -27406,52 +29339,53 @@ Some (rather awful) testing forms are
         (+ 2 (count-of-clusters fat32-in-memory)))
      (consp path)
      (not (lofat-regular-file-p file))
-     (member-equal
-      (nth
-       0
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32-in-memory)
-         (mv-nth
-          0
-          (dir-ent-clusterchain
-           fat32-in-memory
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
+     (not
+      (member-equal
+       (nth
+        0
+        (find-n-free-clusters
+         (set-indices-in-fa-table
+          (effective-fat fat32-in-memory)
+          (mv-nth
+           0
+           (dir-ent-clusterchain
+            fat32-in-memory
+            (mv-nth
+             0
+             (find-dir-ent
+              (make-dir-ent-list
+               (mv-nth
+                0
+                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+              (fat32-filename-fix (car path))))))
+          (make-list-ac
+           (len
+            (mv-nth
+             0
+             (dir-ent-clusterchain
+              fat32-in-memory
               (mv-nth
                0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car path))))))
-         (make-list-ac
-          (len
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path)))))))
-          0 nil))
-        1))
-      (mv-nth
-       0
-       (dir-ent-clusterchain
-        fat32-in-memory
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path)))))))
+               (find-dir-ent
+                (make-dir-ent-list
+                 (mv-nth
+                  0
+                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                (fat32-filename-fix (car path)))))))
+           0 nil))
+         1))
+       (mv-nth
+        0
+        (dir-ent-clusterchain
+         fat32-in-memory
+         (mv-nth
+          0
+          (find-dir-ent
+           (make-dir-ent-list
+            (mv-nth
+             0
+             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+           (fat32-filename-fix (car path))))))))
      (equal
       (mv-nth
        1
@@ -27681,8 +29615,7 @@ Some (rather awful) testing forms are
      (lofat-fs-p fat32-in-memory)
      (dir-ent-p root-dir-ent)
      (not-intersectp-list
-      (mv-nth 0
-              (dir-ent-clusterchain fat32-in-memory root-dir-ent))
+      x
       (mv-nth
        2
        (lofat-to-hifat-helper
@@ -27691,1347 +29624,6 @@ Some (rather awful) testing forms are
          (mv-nth 0
                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
         entry-limit)))
-     (equal
-      (mv-nth 1
-              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
-      0)
-     (not (consp (cdr path)))
-     (<=
-      2
-      (dir-ent-first-cluster
-       (mv-nth
-        0
-        (find-dir-ent
-         (make-dir-ent-list
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (fat32-filename-fix (car path))))))
-     (<
-      (dir-ent-first-cluster
-       (mv-nth
-        0
-        (find-dir-ent
-         (make-dir-ent-list
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (fat32-filename-fix (car path)))))
-      (+ 2 (count-of-clusters fat32-in-memory)))
-     (dir-ent-directory-p
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (fat32-filename-fix (car path)))))
-     (<=
-      (+
-       64
-       (*
-        32
-        (len
-         (make-dir-ent-list
-          (mv-nth
-           0
-           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))))))
-      2097152))
-    (non-free-index-listp
-     x
-     (set-indices-in-fa-table
-      (effective-fat
-       (mv-nth
-        0
-        (place-contents
-         (update-fati
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth
-                  0
-                  (find-dir-ent (make-dir-ent-list
-                                 (mv-nth 0
-                                         (dir-ent-clusterchain-contents
-                                          fat32-in-memory root-dir-ent)))
-                                (fat32-filename-fix (car path)))))))
-              0 nil))
-            1))
-          (fat32-update-lower-28
-           (fati
-            (nth
-             0
-             (find-n-free-clusters
-              (set-indices-in-fa-table
-               (effective-fat fat32-in-memory)
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth
-                  0
-                  (find-dir-ent (make-dir-ent-list
-                                 (mv-nth 0
-                                         (dir-ent-clusterchain-contents
-                                          fat32-in-memory root-dir-ent)))
-                                (fat32-filename-fix (car path))))))
-               (make-list-ac
-                (len
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain
-                   fat32-in-memory
-                   (mv-nth 0
-                           (find-dir-ent
-                            (make-dir-ent-list
-                             (mv-nth 0
-                                     (dir-ent-clusterchain-contents
-                                      fat32-in-memory root-dir-ent)))
-                            (fat32-filename-fix (car path)))))))
-                0 nil))
-              1))
-            fat32-in-memory)
-           268435455)
-          (mv-nth
-           0
-           (clear-clusterchain
-            fat32-in-memory
-            (dir-ent-first-cluster
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path)))))
-            2097152)))
-         (mv-nth
-          0
-          (find-dir-ent
-           (make-dir-ent-list
-            (mv-nth
-             0
-             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (fat32-filename-fix (car path))))
-         (make-empty-subdir-contents
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth
-                  0
-                  (find-dir-ent (make-dir-ent-list
-                                 (mv-nth 0
-                                         (dir-ent-clusterchain-contents
-                                          fat32-in-memory root-dir-ent)))
-                                (fat32-filename-fix (car path)))))))
-              0 nil))
-            1))
-          (dir-ent-first-cluster root-dir-ent))
-         0
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent
-                  (make-dir-ent-list (mv-nth 0
-                                             (dir-ent-clusterchain-contents
-                                              fat32-in-memory root-dir-ent)))
-                  (fat32-filename-fix (car path)))))))
-             0 nil))
-           1)))))
-      (mv-nth 0
-              (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-      (make-list-ac
-       (len (mv-nth 0
-                    (dir-ent-clusterchain fat32-in-memory root-dir-ent)))
-       0 nil))))
-   :hints (("goal"
-            :do-not-induct t
-            :in-theory (enable update-dir-contents))))
-
-  ;; This should be rewritten by
-  ;; LOFAT-TO-HIFAT-HELPER-OF-HIFAT-TO-LOFAT-HELPER-DISJOINT-LEMMA-1, but...
-  (thm
-   (implies
-    (and
-     (equal
-      (mv-nth
-       2
-       (place-contents
-        (update-fati
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (fat32-update-lower-28
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           fat32-in-memory)
-          268435455)
-         (mv-nth
-          0
-          (clear-clusterchain
-           fat32-in-memory
-           (dir-ent-first-cluster
-            (mv-nth
-             0
-             (find-dir-ent
-              (make-dir-ent-list
-               (mv-nth
-                0
-                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car path)))))
-           2097152)))
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path))))
-        (make-empty-subdir-contents
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (dir-ent-first-cluster root-dir-ent))
-        0
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path))))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path)))))))
-            0 nil))
-          1))))
-      0)
-     (dir-ent-directory-p root-dir-ent)
-     (<= 2 (dir-ent-first-cluster root-dir-ent))
-     (< (dir-ent-first-cluster root-dir-ent)
-        (+ 2 (count-of-clusters fat32-in-memory)))
-     (consp path)
-     (not (lofat-regular-file-p file))
-     (member-equal
-      (nth
-       0
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32-in-memory)
-         (mv-nth
-          0
-          (dir-ent-clusterchain
-           fat32-in-memory
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car path))))))
-         (make-list-ac
-          (len
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path)))))))
-          0 nil))
-        1))
-      (mv-nth
-       0
-       (dir-ent-clusterchain
-        fat32-in-memory
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path)))))))
-     (equal
-      (mv-nth
-       1
-       (update-dir-contents
-        (mv-nth
-         0
-         (place-contents
-          (update-fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (fat32-update-lower-28
-            (fati
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32-in-memory)
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path))))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain
-                    fat32-in-memory
-                    (mv-nth
-                     0
-                     (find-dir-ent
-                      (make-dir-ent-list
-                       (mv-nth 0
-                               (dir-ent-clusterchain-contents
-                                fat32-in-memory root-dir-ent)))
-                      (fat32-filename-fix (car path)))))))
-                 0 nil))
-               1))
-             fat32-in-memory)
-            268435455)
-           (mv-nth
-            0
-            (clear-clusterchain
-             fat32-in-memory
-             (dir-ent-first-cluster
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path)))))
-             2097152)))
-          (mv-nth
-           0
-           (find-dir-ent
-            (make-dir-ent-list
-             (mv-nth
-              0
-              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car path))))
-          (make-empty-subdir-contents
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (dir-ent-first-cluster root-dir-ent))
-          0
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth 0
-                         (find-dir-ent
-                          (make-dir-ent-list
-                           (mv-nth 0
-                                   (dir-ent-clusterchain-contents
-                                    fat32-in-memory root-dir-ent)))
-                          (fat32-filename-fix (car path)))))))
-              0 nil))
-            1))))
-        (dir-ent-first-cluster root-dir-ent)
-        (nats=>string
-         (insert-dir-ent
-          (string=>nats
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (dir-ent-set-first-cluster-file-size
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car path))))
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           0)))))
-      0)
-     (non-free-index-listp x (effective-fat fat32-in-memory))
-     (not (intersectp-equal
-           x
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory root-dir-ent))))
-     (equal
-      (mv-nth
-       3
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        entry-limit))
-      0)
-     (lofat-fs-p fat32-in-memory)
-     (dir-ent-p root-dir-ent)
-     (not-intersectp-list
-      (mv-nth 0
-              (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-      (mv-nth
-       2
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        entry-limit)))
-     (equal
-      (mv-nth 1
-              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))
-      0)
-     (not (consp (cdr path)))
-     (<=
-      2
-      (dir-ent-first-cluster
-       (mv-nth
-        0
-        (find-dir-ent
-         (make-dir-ent-list
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (fat32-filename-fix (car path))))))
-     (<
-      (dir-ent-first-cluster
-       (mv-nth
-        0
-        (find-dir-ent
-         (make-dir-ent-list
-          (mv-nth 0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-         (fat32-filename-fix (car path)))))
-      (+ 2 (count-of-clusters fat32-in-memory)))
-     (dir-ent-directory-p
-      (mv-nth
-       0
-       (find-dir-ent
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        (fat32-filename-fix (car path)))))
-     (<=
-      (+
-       64
-       (*
-        32
-        (len
-         (make-dir-ent-list
-          (mv-nth
-           0
-           (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent))))))
-      2097152))
-    (non-free-index-listp
-     x
-     (set-indices-in-fa-table
-      (effective-fat
-       (mv-nth
-        0
-        (place-contents
-         (update-fati
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth
-                  0
-                  (find-dir-ent (make-dir-ent-list
-                                 (mv-nth 0
-                                         (dir-ent-clusterchain-contents
-                                          fat32-in-memory root-dir-ent)))
-                                (fat32-filename-fix (car path)))))))
-              0 nil))
-            1))
-          (fat32-update-lower-28
-           (fati
-            (nth
-             0
-             (find-n-free-clusters
-              (set-indices-in-fa-table
-               (effective-fat fat32-in-memory)
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth
-                  0
-                  (find-dir-ent (make-dir-ent-list
-                                 (mv-nth 0
-                                         (dir-ent-clusterchain-contents
-                                          fat32-in-memory root-dir-ent)))
-                                (fat32-filename-fix (car path))))))
-               (make-list-ac
-                (len
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain
-                   fat32-in-memory
-                   (mv-nth 0
-                           (find-dir-ent
-                            (make-dir-ent-list
-                             (mv-nth 0
-                                     (dir-ent-clusterchain-contents
-                                      fat32-in-memory root-dir-ent)))
-                            (fat32-filename-fix (car path)))))))
-                0 nil))
-              1))
-            fat32-in-memory)
-           268435455)
-          (mv-nth
-           0
-           (clear-clusterchain
-            fat32-in-memory
-            (dir-ent-first-cluster
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path)))))
-            2097152)))
-         (mv-nth
-          0
-          (find-dir-ent
-           (make-dir-ent-list
-            (mv-nth
-             0
-             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (fat32-filename-fix (car path))))
-         (make-empty-subdir-contents
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth
-                  0
-                  (find-dir-ent (make-dir-ent-list
-                                 (mv-nth 0
-                                         (dir-ent-clusterchain-contents
-                                          fat32-in-memory root-dir-ent)))
-                                (fat32-filename-fix (car path)))))))
-              0 nil))
-            1))
-          (dir-ent-first-cluster root-dir-ent))
-         0
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent
-                  (make-dir-ent-list (mv-nth 0
-                                             (dir-ent-clusterchain-contents
-                                              fat32-in-memory root-dir-ent)))
-                  (fat32-filename-fix (car path)))))))
-             0 nil))
-           1)))))
-      (mv-nth 0
-              (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-      (make-list-ac
-       (len (mv-nth 0
-                    (dir-ent-clusterchain fat32-in-memory root-dir-ent)))
-       0 nil))))
-   :hints (("goal"
-            :do-not-induct t
-            :in-theory (enable update-dir-contents))))
-
-  ;; This should be rewritten by
-  ;; LOFAT-TO-HIFAT-HELPER-OF-HIFAT-TO-LOFAT-HELPER-DISJOINT-LEMMA-1, but...
-  (thm
-   (implies
-    (and
-     (equal
-      (mv-nth
-       2
-       (place-contents
-        (update-fati
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (fat32-update-lower-28
-          (fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           fat32-in-memory)
-          268435455)
-         (mv-nth
-          0
-          (clear-clusterchain
-           fat32-in-memory
-           (dir-ent-first-cluster
-            (mv-nth
-             0
-             (find-dir-ent
-              (make-dir-ent-list
-               (mv-nth
-                0
-                (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-              (fat32-filename-fix (car path)))))
-           2097152)))
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path))))
-        (make-empty-subdir-contents
-         (nth
-          0
-          (find-n-free-clusters
-           (set-indices-in-fa-table
-            (effective-fat fat32-in-memory)
-            (mv-nth
-             0
-             (dir-ent-clusterchain
-              fat32-in-memory
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path))))))
-            (make-list-ac
-             (len
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path)))))))
-             0 nil))
-           1))
-         (dir-ent-first-cluster root-dir-ent))
-        0
-        (nth
-         0
-         (find-n-free-clusters
-          (set-indices-in-fa-table
-           (effective-fat fat32-in-memory)
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path))))))
-           (make-list-ac
-            (len
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path)))))))
-            0 nil))
-          1))))
-      0)
-     (dir-ent-directory-p root-dir-ent)
-     (<= 2 (dir-ent-first-cluster root-dir-ent))
-     (< (dir-ent-first-cluster root-dir-ent)
-        (+ 2 (count-of-clusters fat32-in-memory)))
-     (consp path)
-     (not (lofat-regular-file-p file))
-     (member-equal
-      (nth
-       0
-       (find-n-free-clusters
-        (set-indices-in-fa-table
-         (effective-fat fat32-in-memory)
-         (mv-nth
-          0
-          (dir-ent-clusterchain
-           fat32-in-memory
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car path))))))
-         (make-list-ac
-          (len
-           (mv-nth
-            0
-            (dir-ent-clusterchain
-             fat32-in-memory
-             (mv-nth
-              0
-              (find-dir-ent
-               (make-dir-ent-list
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-               (fat32-filename-fix (car path)))))))
-          0 nil))
-        1))
-      (mv-nth
-       0
-       (dir-ent-clusterchain
-        fat32-in-memory
-        (mv-nth
-         0
-         (find-dir-ent
-          (make-dir-ent-list
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (fat32-filename-fix (car path)))))))
-     (equal
-      (mv-nth
-       1
-       (update-dir-contents
-        (mv-nth
-         0
-         (place-contents
-          (update-fati
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (fat32-update-lower-28
-            (fati
-             (nth
-              0
-              (find-n-free-clusters
-               (set-indices-in-fa-table
-                (effective-fat fat32-in-memory)
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path))))))
-                (make-list-ac
-                 (len
-                  (mv-nth
-                   0
-                   (dir-ent-clusterchain
-                    fat32-in-memory
-                    (mv-nth
-                     0
-                     (find-dir-ent
-                      (make-dir-ent-list
-                       (mv-nth 0
-                               (dir-ent-clusterchain-contents
-                                fat32-in-memory root-dir-ent)))
-                      (fat32-filename-fix (car path)))))))
-                 0 nil))
-               1))
-             fat32-in-memory)
-            268435455)
-           (mv-nth
-            0
-            (clear-clusterchain
-             fat32-in-memory
-             (dir-ent-first-cluster
-              (mv-nth
-               0
-               (find-dir-ent
-                (make-dir-ent-list
-                 (mv-nth
-                  0
-                  (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                (fat32-filename-fix (car path)))))
-             2097152)))
-          (mv-nth
-           0
-           (find-dir-ent
-            (make-dir-ent-list
-             (mv-nth
-              0
-              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-            (fat32-filename-fix (car path))))
-          (make-empty-subdir-contents
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           (dir-ent-first-cluster root-dir-ent))
-          0
-          (nth
-           0
-           (find-n-free-clusters
-            (set-indices-in-fa-table
-             (effective-fat fat32-in-memory)
-             (mv-nth
-              0
-              (dir-ent-clusterchain
-               fat32-in-memory
-               (mv-nth
-                0
-                (find-dir-ent
-                 (make-dir-ent-list (mv-nth 0
-                                            (dir-ent-clusterchain-contents
-                                             fat32-in-memory root-dir-ent)))
-                 (fat32-filename-fix (car path))))))
-             (make-list-ac
-              (len
-               (mv-nth
-                0
-                (dir-ent-clusterchain
-                 fat32-in-memory
-                 (mv-nth 0
-                         (find-dir-ent
-                          (make-dir-ent-list
-                           (mv-nth 0
-                                   (dir-ent-clusterchain-contents
-                                    fat32-in-memory root-dir-ent)))
-                          (fat32-filename-fix (car path)))))))
-              0 nil))
-            1))))
-        (dir-ent-first-cluster root-dir-ent)
-        (nats=>string
-         (insert-dir-ent
-          (string=>nats
-           (mv-nth
-            0
-            (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-          (dir-ent-set-first-cluster-file-size
-           (mv-nth
-            0
-            (find-dir-ent
-             (make-dir-ent-list
-              (mv-nth
-               0
-               (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-             (fat32-filename-fix (car path))))
-           (nth
-            0
-            (find-n-free-clusters
-             (set-indices-in-fa-table
-              (effective-fat fat32-in-memory)
-              (mv-nth
-               0
-               (dir-ent-clusterchain
-                fat32-in-memory
-                (mv-nth
-                 0
-                 (find-dir-ent (make-dir-ent-list
-                                (mv-nth 0
-                                        (dir-ent-clusterchain-contents
-                                         fat32-in-memory root-dir-ent)))
-                               (fat32-filename-fix (car path))))))
-              (make-list-ac
-               (len
-                (mv-nth
-                 0
-                 (dir-ent-clusterchain
-                  fat32-in-memory
-                  (mv-nth 0
-                          (find-dir-ent
-                           (make-dir-ent-list
-                            (mv-nth 0
-                                    (dir-ent-clusterchain-contents
-                                     fat32-in-memory root-dir-ent)))
-                           (fat32-filename-fix (car path)))))))
-               0 nil))
-             1))
-           0)))))
-      0)
-     (non-free-index-listp x (effective-fat fat32-in-memory))
-     (not (intersectp-equal
-           x
-           (mv-nth 0
-                   (dir-ent-clusterchain fat32-in-memory root-dir-ent))))
-     (equal
-      (mv-nth
-       3
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-        entry-limit))
-      0)
-     (lofat-fs-p fat32-in-memory)
-     (dir-ent-p root-dir-ent)
      (not-intersectp-list
       (mv-nth 0
               (dir-ent-clusterchain fat32-in-memory root-dir-ent))
@@ -29307,9 +29899,8 @@ Some (rather awful) testing forms are
                1))
              0)))))
         root-dir-ent)))))
-   :hints (("goal"
-            :do-not-induct t
-            :in-theory (enable update-dir-contents))))
+    :hints (("goal" :do-not-induct t
+             :in-theory (enable update-dir-contents))))
 
   (thm
    (implies
@@ -29344,6 +29935,16 @@ Some (rather awful) testing forms are
       0)
      (lofat-fs-p fat32-in-memory)
      (dir-ent-p root-dir-ent)
+     (not-intersectp-list x
+                          (mv-nth
+                           2
+                           (lofat-to-hifat-helper
+                            fat32-in-memory
+                            (make-dir-ent-list
+                             (mv-nth
+                              0
+                              (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+                            entry-limit)))
      (not-intersectp-list
       (mv-nth 0
               (dir-ent-clusterchain fat32-in-memory root-dir-ent))
