@@ -17303,13 +17303,6 @@ Some (rather awful) testing forms are
      path
      (m1-file dir-ent (lofat-file->contents file))))))
 
-;; Move later.
-(defthm member-of-nth
-  (implies (and (not (intersectp-equal l x))
-                (< (nfix n) (len l)))
-           (not (member-equal (nth n l) x)))
-  :hints (("goal" :do-not-induct t)))
-
 (defthm
   dir-ent-clusterchain-contents-of-lofat-place-file-disjoint-lemma-2
   (implies

@@ -4258,7 +4258,7 @@
   (implies
    (and
     (lofat-fs-p fat32-in-memory)
-    (non-free-index-listp x (effective-fat fat32-in-memory))
+    (case-split (non-free-index-listp x (effective-fat fat32-in-memory)))
     (not (member-equal first-cluster x))
     (integerp first-cluster)
     (<= *ms-first-data-cluster* first-cluster)
