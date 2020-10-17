@@ -8378,6 +8378,19 @@ Some (rather awful) testing forms are
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
+  (local
+   (defthm
+     lemma
+     (implies (and (dir-ent-p dir-ent)
+                   (< (nfix n) *ms-dir-ent-length*))
+              (rationalp (nth n dir-ent)))
+     :hints (("goal" :in-theory (enable dir-ent-p)))
+     :rule-classes
+     ((:rewrite
+       :corollary (implies (and (dir-ent-p dir-ent)
+                                (< (nfix n) *ms-dir-ent-length*))
+                           (acl2-numberp (nth n dir-ent)))))))
+
   (make-event
    `(defthm
       lofat-remove-file-correctness-1-lemma-34
@@ -11404,8 +11417,7 @@ Some (rather awful) testing forms are
      (:linear lofat-remove-file-correctness-1-lemma-27)
      (:definition alistp)
      (:rewrite m1-file-alist-p-of-remove-assoc-equal)
-     (:definition take)
-     (:rewrite m1-file-alist-p-of-lofat-to-hifat-helper-lemma-1)))
+     (:definition take)))
    :expand ((:free (fat32-in-memory entry-limit)
                    (lofat-to-hifat-helper fat32-in-memory
                                           dir-ent-list entry-limit))
@@ -11938,8 +11950,7 @@ Some (rather awful) testing forms are
         (:definition alistp)
         (:rewrite m1-file-alist-p-of-remove-assoc-equal)
         (:definition len)
-        (:definition take)
-        (:rewrite m1-file-alist-p-of-lofat-to-hifat-helper-lemma-1)))
+        (:definition take)))
       :expand ((:free (fat32-in-memory entry-limit)
                       (lofat-to-hifat-helper fat32-in-memory
                                              dir-ent-list entry-limit))
@@ -12279,8 +12290,7 @@ Some (rather awful) testing forms are
   ;;      (:linear lofat-remove-file-correctness-1-lemma-27)
   ;;      (:definition alistp)
   ;;      (:rewrite m1-file-alist-p-of-remove-assoc-equal)
-  ;;      (:definition take)
-  ;;      (:rewrite m1-file-alist-p-of-lofat-to-hifat-helper-lemma-1)))
+  ;;      (:definition take)))
   ;;    :expand ((:free (fat32-in-memory entry-limit)
   ;;                    (lofat-to-hifat-helper fat32-in-memory
   ;;                                           dir-ent-list entry-limit))
