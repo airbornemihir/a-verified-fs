@@ -8267,6 +8267,19 @@ Some (rather awful) testing forms are
 
   (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
+  (local
+   (defthm
+     lemma
+     (implies (and (dir-ent-p dir-ent)
+                   (< (nfix n) *ms-dir-ent-length*))
+              (rationalp (nth n dir-ent)))
+     :hints (("goal" :in-theory (enable dir-ent-p)))
+     :rule-classes
+     ((:rewrite
+       :corollary (implies (and (dir-ent-p dir-ent)
+                                (< (nfix n) *ms-dir-ent-length*))
+                           (acl2-numberp (nth n dir-ent)))))))
+
   (make-event
    `(defthm
       lofat-remove-file-correctness-1-lemma-34
@@ -11233,8 +11246,7 @@ Some (rather awful) testing forms are
      (:linear lofat-remove-file-correctness-1-lemma-27)
      (:definition alistp)
      (:rewrite m1-file-alist-p-of-remove-assoc-equal)
-     (:definition take)
-     (:rewrite m1-file-alist-p-of-lofat-to-hifat-helper-lemma-1)))
+     (:definition take)))
    :expand ((:free (fat32-in-memory entry-limit)
                    (lofat-to-hifat-helper fat32-in-memory
                                           dir-ent-list entry-limit))
@@ -11767,8 +11779,7 @@ Some (rather awful) testing forms are
         (:definition alistp)
         (:rewrite m1-file-alist-p-of-remove-assoc-equal)
         (:definition len)
-        (:definition take)
-        (:rewrite m1-file-alist-p-of-lofat-to-hifat-helper-lemma-1)))
+        (:definition take)))
       :expand ((:free (fat32-in-memory entry-limit)
                       (lofat-to-hifat-helper fat32-in-memory
                                              dir-ent-list entry-limit))
@@ -11911,107 +11922,7 @@ Some (rather awful) testing forms are
            (lofat-remove-file fat32-in-memory
                               (mv-nth 0 (find-dir-ent dir-ent-list filename))
                               path))
-          dir-ent-list entry-limit)))))))
-
-  ;; Yikes, another counterexample.
-  (thm
-   (implies
-    (and (dir-ent-directory-p (mv-nth 0 (find-dir-ent dir-ent-list name)))
-         (good-root-dir-ent-p root-dir-ent fat32-in-memory)
-         (equal (mv-nth 3
-                        (lofat-to-hifat-helper fat32-in-memory
-                                               dir-ent-list entry-limit))
-                0)
-         (not-intersectp-list
-          (mv-nth 0
-                  (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-          (mv-nth 2
-                  (lofat-to-hifat-helper fat32-in-memory
-                                         dir-ent-list entry-limit)))
-         (useful-dir-ent-list-p dir-ent-list))
-    (equal
-     (mv-nth
-      3
-      (lofat-to-hifat-helper
-       (mv-nth
-        0
-        (update-dir-contents
-         (mv-nth
-          0
-          (clear-clusterchain
-           fat32-in-memory
-           (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list name)))
-           2097152))
-         (dir-ent-first-cluster root-dir-ent)
-         (nats=>string
-          (insert-dir-ent
-           (string=>nats
-            (mv-nth
-             0
-             (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-           (dir-ent-set-first-cluster-file-size
-            (mv-nth 0 (find-dir-ent dir-ent-list name))
-            0 0)))))
-       (place-dir-ent dir-ent-list
-                      (dir-ent-set-first-cluster-file-size
-                       (mv-nth 0 (find-dir-ent dir-ent-list name))
-                       0 0))
-       entry-limit))
-     5))
-   :hints
-   (("goal"
-     :do-not-induct t
-     :induct (induction-scheme dir-ent-list
-                               entry-limit fat32-in-memory x)
-     :in-theory
-     (e/d
-      (lofat-to-hifat-helper lofat-to-hifat-helper-correctness-4
-                             lofat-remove-file-correctness-1-lemma-61
-                             lofat-remove-file-correctness-1-lemma-37
-                             lofat-remove-file-correctness-1-lemma-38
-                             place-dir-ent)
-      (nth-of-effective-fat
-       (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
-       (:definition no-duplicatesp-equal)
-       (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-2
-                 . 1)
-       (:rewrite assoc-of-car-when-member)
-       (:rewrite subsetp-car-member)
-       (:definition binary-append)
-       (:rewrite dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint)
-       (:rewrite dir-ent-clusterchain-of-lofat-remove-file-disjoint)
-       (:rewrite take-of-len-free)
-       (:rewrite
-        dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-2)
-       (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
-       (:rewrite lofat-to-hifat-helper-of-delete-dir-ent-2
-                 . 2)
-       (:rewrite lofat-to-hifat-helper-of-lofat-remove-file-disjoint-lemma-1
-                 . 1)
-       (:rewrite hifat-to-lofat-inversion-lemma-2)
-       (:definition assoc-equal)
-       (:rewrite not-intersectp-list-when-atom)
-       (:rewrite subdir-contents-p-when-zero-length)
-       (:rewrite hifat-no-dups-p-of-cdr)
-       (:rewrite free-index-list-listp-correctness-1)
-       (:rewrite m1-file-alist-p-when-subsetp-equal)
-       (:linear hifat-entry-count-when-hifat-subsetp)
-       (:rewrite lofat-remove-file-correctness-lemma-5)
-       (:definition remove-assoc-equal)
-       (:linear lofat-remove-file-correctness-1-lemma-27)
-       (:definition alistp)
-       (:rewrite m1-file-alist-p-of-remove-assoc-equal)
-       (:definition take)
-       (:rewrite m1-file-alist-p-of-lofat-to-hifat-helper-lemma-1)))
-     :expand ((:free (fat32-in-memory entry-limit)
-                     (lofat-to-hifat-helper fat32-in-memory
-                                            dir-ent-list entry-limit))
-              (:free (x1 x2 y)
-                     (not-intersectp-list x1 (cons x2 y)))
-              (intersectp-equal nil x)
-              (:free (fat32-in-memory dir-ent-list)
-                     (lofat-to-hifat-helper fat32-in-memory
-                                            dir-ent-list entry-limit)))))))
+          dir-ent-list entry-limit))))))))
 
 (defthm
   lofat-remove-file-correctness-1-lemma-4
