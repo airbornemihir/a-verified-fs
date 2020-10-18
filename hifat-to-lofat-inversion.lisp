@@ -4354,14 +4354,38 @@
            :expand ((intersectp-equal (list key) (car l))
                     (intersectp-equal nil (car l))))))
 
-(defthm
-  non-free-index-list-listp-of-set-indices-in-fa-table
-  (implies (and (non-free-index-list-listp l fa-table)
-                (not-intersectp-list index-list l))
-           (non-free-index-list-listp
-            l
-            (set-indices-in-fa-table fa-table index-list value-list)))
-  :hints (("goal" :in-theory (enable not-intersectp-list))))
+(encapsulate
+  ()
+
+  (local
+   (defthm
+     lemma-1
+     (implies (and (non-free-index-list-listp l fa-table)
+                   (not-intersectp-list index-list l))
+              (non-free-index-list-listp
+               l
+               (set-indices-in-fa-table fa-table index-list value-list)))
+     :hints (("goal" :in-theory (enable not-intersectp-list)))))
+
+  (local
+   (defthm
+     lemma-2
+     (implies (and (not (non-free-index-list-listp l fa-table))
+                   (not-intersectp-list index-list l))
+              (not
+               (non-free-index-list-listp
+                l
+                (set-indices-in-fa-table fa-table index-list value-list))))
+     :hints (("goal" :in-theory (enable not-intersectp-list)))))
+
+  (defthm
+    non-free-index-list-listp-of-set-indices-in-fa-table
+    (implies
+     (not-intersectp-list index-list l)
+     (iff (non-free-index-list-listp l
+                                     (set-indices-in-fa-table fa-table index-list value-list))
+          (non-free-index-list-listp l fa-table)))
+    :hints (("goal" :in-theory (enable not-intersectp-list)))))
 
 (defthm
   not-intersectp-list-of-lofat-to-hifat-helper
