@@ -10395,16 +10395,14 @@ Some (rather awful) testing forms are
       (:rewrite clear-clusterchain-reversibility-lemma-1)
       (:rewrite len-of-effective-fat)
       (:definition make-list-ac)
-      (:REWRITE SUBSETP-CAR-MEMBER)
-      (:REWRITE LOFAT-REMOVE-FILE-CORRECTNESS-1-LEMMA-16)
-      (:REWRITE SUBSETP-IMPLIES-SUBSETP-CDR)
-      (:REWRITE NOT-INTERSECTP-LIST-WHEN-ATOM)
-      (:REWRITE DIR-ENT-P-WHEN-MEMBER-EQUAL-OF-DIR-ENT-LIST-P)
-      (:REWRITE ANOTHER-LEMMA-ABOUT-MEMBER-INTERSECTP)
-      (:REWRITE LOFAT-REMOVE-FILE-CORRECTNESS-1-LEMMA-17)
-      (:REWRITE SUBSETP-TRANS2)
-      (:REWRITE SUBSETP-TRANS)
-      (:REWRITE LOFAT-REMOVE-FILE-CORRECTNESS-1-LEMMA-14)))
+      (:rewrite subsetp-car-member)
+      (:rewrite lofat-remove-file-correctness-1-lemma-16)
+      (:rewrite subsetp-implies-subsetp-cdr)
+      (:rewrite not-intersectp-list-when-atom)
+      (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
+      (:rewrite another-lemma-about-member-intersectp)
+      (:rewrite lofat-remove-file-correctness-1-lemma-17)
+      (:rewrite lofat-remove-file-correctness-1-lemma-14)))
     :induct (lofat-to-hifat-helper fat32-in-memory
                                    dir-ent-list entry-limit)
     :do-not-induct t
@@ -25049,13 +25047,36 @@ Some (rather awful) testing forms are
   :hints
   (("goal"
     :in-theory (enable member-equal not-intersectp-list))))
-
 (defthm
   lofat-place-file-correctness-lemma-103
   (implies (and (subsetp-equal l1 (cons nil l2))
                 (not-intersectp-list x l2))
            (not-intersectp-list x l1))
   :hints (("goal" :in-theory (enable subsetp-equal not-intersectp-list))))
+(defthm lofat-place-file-correctness-lemma-105
+  (implies (and (not (member-intersectp-equal x y1))
+                (subsetp-equal y2 (cons nil y1)))
+           (not (member-intersectp-equal x y2)))
+  :hints (("goal" :in-theory (enable member-intersectp-equal
+                                     subsetp-equal))))
+
+(defthm
+  lofat-place-file-correctness-lemma-104
+  (implies
+   (and (natp entry-limit)
+        (useful-dir-ent-list-p dir-ent-list))
+   (not
+    (< entry-limit
+       (hifat-entry-count
+        (mv-nth 0
+                (lofat-to-hifat-helper
+                 fat32-in-memory
+                 dir-ent-list (+ -1 entry-limit)))))))
+  :instructions
+  (:promote (:dv 1)
+            (:apply-linear lofat-to-hifat-helper-correctness-3)
+            :top :bash)
+  :rule-classes :linear)
 
 ;; These rewrite rules are going to be insufficiently general as is - will need
 ;; to be changed.
@@ -25077,7 +25098,11 @@ Some (rather awful) testing forms are
     (equal (mv-nth 3
                    (lofat-to-hifat-helper fat32-in-memory
                                           dir-ent-list entry-limit1))
-           0))
+           0)
+    (not
+     (dir-ent-directory-p
+      (mv-nth 0
+              (find-dir-ent dir-ent-list name)))))
    (and
     (equal
      (mv-nth
@@ -25112,7 +25137,8 @@ Some (rather awful) testing forms are
     :in-theory
     (e/d
      (lofat-to-hifat-helper find-dir-ent
-                            place-dir-ent not-intersectp-list hifat-entry-count)
+                            place-dir-ent hifat-entry-count
+                            lofat-to-hifat-helper-correctness-4)
      ((:rewrite lofat-place-file-correctness-1-lemma-14)
       (:rewrite nth-of-effective-fat)
       (:rewrite nth-of-nats=>chars)
@@ -25123,14 +25149,48 @@ Some (rather awful) testing forms are
       (:rewrite explode-of-dir-ent-filename)
       (:rewrite dir-ent-list-p-of-cdr-when-dir-ent-list-p)
       (:rewrite
-       dir-ent-p-when-member-equal-of-dir-ent-list-p)))
+       dir-ent-p-when-member-equal-of-dir-ent-list-p)
+      (:REWRITE
+       M1-FILE-ALIST-P-OF-CDR-WHEN-M1-FILE-ALIST-P)
+      (:REWRITE
+       LOFAT-PLACE-FILE-CORRECTNESS-LEMMA-68)
+      (:REWRITE INTERSECTP-WHEN-SUBSETP)
+      (:REWRITE NOT-INTERSECTP-LIST-WHEN-SUBSETP-2)
+      (:REWRITE NOT-INTERSECTP-LIST-WHEN-SUBSETP-1)
+      (:REWRITE SUBSETP-TRANS2)
+      (:REWRITE SUBSETP-WHEN-ATOM-LEFT)
+      (:REWRITE SUBSETP-WHEN-ATOM-RIGHT)
+      (:REWRITE
+       M1-FILE-P-OF-CDAR-WHEN-M1-FILE-ALIST-P)
+      (:REWRITE SUBSETP-CAR-MEMBER)
+      (:REWRITE
+       LOFAT-PLACE-FILE-CORRECTNESS-LEMMA-102)
+      (:DEFINITION BINARY-APPEND)
+      (:REWRITE M1-DIRECTORY-FILE-P-WHEN-M1-FILE-P)
+      (:REWRITE HIFAT-TO-LOFAT-INVERSION-LEMMA-2)
+      INTERSECT-WITH-SUBSET
+      (:DEFINITION ASSOC-EQUAL)
+      (:REWRITE
+       CONSP-OF-ASSOC-OF-HIFAT-FILE-ALIST-FIX)
+      (:REWRITE
+       FAT32-FILENAME-P-OF-CAAR-WHEN-M1-FILE-ALIST-P)
+      (:REWRITE SUBDIR-CONTENTS-P-WHEN-ZERO-LENGTH)
+      (:REWRITE M1-FILE-ALIST-P-WHEN-SUBSETP-EQUAL)
+      (:REWRITE FAT32-FILENAME-P-CORRECTNESS-1)
+      (:REWRITE M1-DIRECTORY-FILE-P-CORRECTNESS-1)
+      (:REWRITE M1-REGULAR-FILE-P-CORRECTNESS-1)
+      (:REWRITE HIFAT-NO-DUPS-P-OF-CDR)
+      (:REWRITE
+       DIR-ENT-CLUSTERCHAIN-CONTENTS-OF-LOFAT-PLACE-FILE-COINCIDENT-LEMMA-13
+       . 1)))
     :induct (lofat-to-hifat-helper fat32-in-memory
                                    dir-ent-list entry-limit1)
+    :do-not-induct t
     :expand
     (:free (dir-ent dir-ent-list)
            (lofat-to-hifat-helper fat32-in-memory
                                   (cons dir-ent dir-ent-list)
-                                  entry-limit2)))))
+                                  (+ 1 entry-limit1))))))
 
 (encapsulate
   ()
