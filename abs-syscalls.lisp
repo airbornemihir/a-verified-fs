@@ -7210,7 +7210,7 @@
     (strip-cars (frame->frame frame))))
   :hints
   (("goal"
-    :in-theory (e/d (collapse abs-addrs-of-ctx-app-1-lemma-7)
+    :in-theory (e/d (collapse abs-addrs-of-ctx-app-lemma-2)
                     ((:rewrite remove-assoc-of-put-assoc)
                      (:rewrite remove-assoc-of-remove-assoc)
                      (:rewrite abs-file-alist-p-when-m1-file-alist-p)))))

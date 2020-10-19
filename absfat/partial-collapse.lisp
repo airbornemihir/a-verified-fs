@@ -2953,7 +2953,7 @@
     :in-theory
     (e/d (ctx-app-list set-difference$-redefinition
                        subsetp-equal
-                       abs-addrs-of-ctx-app-1-lemma-7)
+                       abs-addrs-of-ctx-app-lemma-2)
          (set-difference-equal (:rewrite abs-addrs-of-ctx-app-list-lemma-1)
                                (:rewrite subsetp-car-member)
                                (:rewrite subsetp-trans)
@@ -3079,7 +3079,7 @@
     (subsetp-equal l (abs-addrs fs))))
   :hints
   (("goal" :in-theory (e/d (ctx-app-list-seq set-difference$-redefinition subsetp-equal
-                                             ABS-ADDRS-OF-CTX-APP-1-LEMMA-7)
+                                             ABS-ADDRS-OF-CTX-APP-LEMMA-2)
                            (set-difference-equal))
     :induct (ctx-app-list-seq fs relpath frame l seq))))
 
@@ -4805,7 +4805,7 @@
             (frame-val->src (cdr (assoc-equal x (frame->frame frame))))
             (frame->frame frame)))))))
   :hints
-  (("goal" :in-theory (e/d (collapse abs-addrs-of-ctx-app-1-lemma-7)
+  (("goal" :in-theory (e/d (collapse abs-addrs-of-ctx-app-lemma-2)
                            ((:rewrite remove-assoc-of-put-assoc)
                             (:rewrite remove-assoc-of-remove-assoc)
                             (:rewrite abs-file-alist-p-when-m1-file-alist-p)))
@@ -8182,7 +8182,7 @@
       (collapse-this (collapse-this frame
                                     (1st-complete (frame->frame frame)))
                      x)))))
-  :hints (("goal" :in-theory (enable collapse-this abs-addrs-of-ctx-app-1-lemma-7))))
+  :hints (("goal" :in-theory (enable collapse-this abs-addrs-of-ctx-app-lemma-2))))
 
 (defthm
   partial-collapse-correctness-lemma-23
@@ -8225,7 +8225,7 @@
       (collapse-this (collapse-this frame
                                     (1st-complete (frame->frame frame)))
                      x)))))
-  :hints (("goal" :in-theory (enable collapse-this abs-addrs-of-ctx-app-1-lemma-7))))
+  :hints (("goal" :in-theory (enable collapse-this abs-addrs-of-ctx-app-lemma-2))))
 
 (defthmd
   partial-collapse-correctness-lemma-24

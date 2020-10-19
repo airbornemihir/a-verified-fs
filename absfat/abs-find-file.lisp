@@ -1109,7 +1109,7 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (abs-find-file-helper abs-addrs-of-ctx-app-1-lemma-7
+    :in-theory (e/d (abs-find-file-helper abs-addrs-of-ctx-app-lemma-2
                                           len-of-fat32-filename-list-fix)
                     (abs-find-file-helper-of-collapse-lemma-2))
     :use
@@ -2196,7 +2196,7 @@
     :in-theory
     (e/d
      (take-of-nthcdr abs-find-file-helper
-                     abs-addrs-of-ctx-app-1-lemma-7)
+                     abs-addrs-of-ctx-app-lemma-2)
      (nthcdr-of-fat32-filename-list-fix
       abs-separate-of-frame->frame-of-collapse-this-lemma-3
       (:rewrite abs-find-file-correctness-1-lemma-6)
