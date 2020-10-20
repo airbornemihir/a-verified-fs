@@ -18758,7 +18758,7 @@ Some (rather awful) testing forms are
         (zp (mv-nth 3
                     (lofat-to-hifat-helper fat32-in-memory
                                            dir-ent-list entry-limit)))
-        (force
+        (case-split
          (> (nfix entry-limit)
             (hifat-entry-count
              (mv-nth 0
@@ -18999,7 +18999,7 @@ Some (rather awful) testing forms are
     (zp (mv-nth 3
                 (lofat-to-hifat-helper fat32-in-memory
                                        dir-ent-list entry-limit)))
-    (force
+    (case-split
      (> (nfix entry-limit)
         (hifat-entry-count
          (mv-nth 0
@@ -19065,7 +19065,7 @@ Some (rather awful) testing forms are
                                            entry-limit))
              (:free (x) (intersectp-equal nil x))))))
 
-;; Hypotheses are minimal.
+;; How did I ever think this kind of forcing would be a good idea?
 (defthm
   lofat-place-file-correctness-1-lemma-16
   (implies
@@ -19075,7 +19075,7 @@ Some (rather awful) testing forms are
     (zp (mv-nth 3
                 (lofat-to-hifat-helper fat32-in-memory
                                        dir-ent-list entry-limit)))
-    (force
+    (case-split
      (> (nfix entry-limit)
         (hifat-entry-count
          (mv-nth 0
@@ -19127,7 +19127,7 @@ Some (rather awful) testing forms are
     (zp (mv-nth 3
                 (lofat-to-hifat-helper fat32-in-memory
                                        dir-ent-list entry-limit)))
-    (force
+    (case-split
      (> (nfix entry-limit)
         (hifat-entry-count
          (mv-nth 0
