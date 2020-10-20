@@ -5,7 +5,7 @@
 ; This is a proof of the invertibility of the hifat-to-lofat transformation as
 ; well as its inverse transformation lofat-to-hifat.
 
-(include-book "generate-index-list")
+(include-book "utilities/generate-index-list")
 (include-book "hifat/hifat-entry-count")
 (include-book "lofat/stobj-find-n-free-clusters")
 

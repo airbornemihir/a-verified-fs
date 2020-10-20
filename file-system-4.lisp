@@ -11,8 +11,8 @@
 ; the comment is no longer pertinent.
 
 (include-book "file-system-3")
-(include-book "find-n-free-blocks")
-(include-book "set-indices")
+(include-book "utilities/find-n-free-blocks")
+(include-book "utilities/set-indices")
 
 (defthm mv-nth-replacement
   (equal (mv-nth n (cons a b))

@@ -6,7 +6,7 @@
 ; necessary basic definitions.
 
 (include-book "fat32-in-memory")
-(include-book "../cluster-listp")
+(include-book "../utilities/cluster-listp")
 (include-book "../flatten-lemmas")
 
 (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
