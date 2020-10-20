@@ -3919,7 +3919,36 @@ Some (rather awful) testing forms are
                     fat32-in-memory
                     (mv-nth '0
                             (find-dir-ent dir-ent-list filename))))
-           x))))))
+           x))))
+   (:rewrite
+    :corollary
+    (implies
+     (and
+      (member-equal a x)
+      (not-intersectp-list
+       x
+       (mv-nth 2
+               (lofat-to-hifat-helper fat32-in-memory
+                                      dir-ent-list entry-limit)))
+      (equal (mv-nth 3
+                     (lofat-to-hifat-helper fat32-in-memory
+                                            dir-ent-list entry-limit))
+             0)
+      (dir-ent-list-p dir-ent-list)
+      (<=
+       2
+       (dir-ent-first-cluster (mv-nth 0
+                                      (find-dir-ent dir-ent-list filename))))
+      (<
+       (dir-ent-first-cluster (mv-nth 0 (find-dir-ent dir-ent-list filename)))
+       (+ 2 (count-of-clusters fat32-in-memory))))
+     (not (member-equal
+           a
+           (mv-nth '0
+                   (dir-ent-clusterchain
+                    fat32-in-memory
+                    (mv-nth '0
+                            (find-dir-ent dir-ent-list filename))))))))))
 
 (defthm
   dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint
