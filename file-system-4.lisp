@@ -239,7 +239,7 @@
   (implies (l3-fs-p fs)
            (true-list-listp (l4-collect-all-index-lists fs))))
 
-(include-book "flatten-lemmas")
+(include-book "utilities/member-intersectp")
 
   ;; This theorem shows the equivalence between two ways of listing indices
 
