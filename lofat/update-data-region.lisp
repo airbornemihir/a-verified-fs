@@ -7,7 +7,7 @@
 
 (include-book "fat32-in-memory")
 (include-book "../utilities/cluster-listp")
-(include-book "../flatten-lemmas")
+(include-book "../utilities/member-intersectp")
 
 (local (include-book "rtl/rel9/arithmetic/top" :dir :system))
 
