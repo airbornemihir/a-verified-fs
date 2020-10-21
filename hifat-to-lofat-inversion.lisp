@@ -4122,28 +4122,20 @@
            (not (member-equal key x))))
 
 (defthm
-  non-free-index-listp-correctness-3
+  non-free-index-listp-of-effective-fat-of-place-contents
   (implies
-   (and
-    (lofat-fs-p fat32-in-memory)
-    (case-split (non-free-index-listp x (effective-fat fat32-in-memory)))
-    (not (member-equal first-cluster x))
-    (integerp first-cluster)
-    (<= *ms-first-data-cluster* first-cluster)
-    (stringp contents)
-    (equal
-     (mv-nth
-      2
-      (place-contents fat32-in-memory dir-ent
-                      contents file-length first-cluster))
-     0))
+   (and (lofat-fs-p fat32-in-memory)
+        (case-split (non-free-index-listp x (effective-fat fat32-in-memory)))
+        (not (member-equal first-cluster x))
+        (integerp first-cluster)
+        (<= *ms-first-data-cluster* first-cluster)
+        (stringp contents))
    (non-free-index-listp
     x
     (effective-fat
-     (mv-nth
-      0
-      (place-contents fat32-in-memory dir-ent
-                      contents file-length first-cluster))))))
+     (mv-nth 0
+             (place-contents fat32-in-memory dir-ent
+                             contents file-length first-cluster))))))
 
 (defthm
   non-free-index-listp-correctness-4-lemma-1
