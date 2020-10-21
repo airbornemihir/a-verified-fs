@@ -17364,7 +17364,7 @@ Some (rather awful) testing forms are
 ;; disables (:REWRITE
 ;; DIR-ENT-CLUSTERCHAIN-CONTENTS-OF-LOFAT-REMOVE-FILE-DISJOINT-LEMMA-7
 ;; . 5)
-.
+
 ;; (thm
 ;;  (implies
 ;;   (and
@@ -28015,7 +28015,11 @@ Some (rather awful) testing forms are
               0)))))
          root-dir-ent)))))
     :hints (("goal" :do-not-induct t
-             :in-theory (enable update-dir-contents))))
+             :in-theory (e/d
+                         (update-dir-contents)
+                         ((:rewrite
+                           dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+                           . 5))))))
 
   (defthm
     lofat-place-file-correctness-lemma-85
@@ -28078,7 +28082,12 @@ Some (rather awful) testing forms are
          root-dir-ent)))))
     :hints (("goal" :do-not-induct t
              :expand (lofat-place-file fat32-in-memory
-                                       root-dir-ent path file))))
+                                       root-dir-ent path file)
+             :in-theory
+             (e/d ()
+                  ((:rewrite
+                    dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+                    . 5))))))
 
   (defthm
     lofat-place-file-correctness-lemma-88
@@ -28122,7 +28131,12 @@ Some (rather awful) testing forms are
       0))
     :hints (("goal" :do-not-induct t
              :expand (lofat-place-file fat32-in-memory
-                                       root-dir-ent path file))))
+                                       root-dir-ent path file)
+             :in-theory
+             (e/d ()
+                  ((:rewrite
+                    dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+                    . 5))))))
 
   (defthm
     lofat-place-file-correctness-lemma-89
@@ -28171,7 +28185,12 @@ Some (rather awful) testing forms are
         root-dir-ent))))
     :hints (("goal" :do-not-induct t
              :expand (lofat-place-file fat32-in-memory
-                                       root-dir-ent path file)))))
+                                       root-dir-ent path file)
+             :in-theory
+             (e/d ()
+                  ((:rewrite
+                    dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+                    . 5)))))))
 
 ;; Move and rename later.
 (defthm
@@ -29806,7 +29825,104 @@ Some (rather awful) testing forms are
                       (lofat-to-hifat-helper fat32-in-memory
                                              (cons dir-ent dir-ent-list)
                                              entry-limit))
-               (:free (x) (intersectp-equal nil x)))))
+               (:free (x) (intersectp-equal nil x))))
+     ("Subgoal *1/1"
+      :in-theory
+      (e/d
+       (lofat-to-hifat-helper not-intersectp-list)
+       ((:rewrite nth-of-nats=>chars)
+        (:linear nth-when-dir-ent-p)
+        (:rewrite explode-of-dir-ent-filename)
+        (:rewrite lofat-to-hifat-helper-of-clear-clusterchain)
+        (:rewrite subdir-contents-p-when-zero-length)
+        (:rewrite natp-of-car-when-nat-listp)
+        (:rewrite count-free-clusters-of-set-indices-in-fa-table-lemma-1)
+        (:rewrite integerp-of-car-when-integer-listp)
+        (:rewrite make-dir-ent-list-of-clear-dir-ent-lemma-1)
+        (:rewrite subsetp-when-atom-right)
+        (:rewrite
+         dir-ent-clusterchain-contents-of-update-dir-contents-coincident)
+        (:definition char)
+        (:definition binary-append)
+        (:rewrite free-index-list-listp-of-update-nth-lemma-1)
+        (:rewrite dir-ent-p-when-member-equal-of-dir-ent-list-p)
+        (:rewrite len-of-nats=>chars)
+        (:rewrite len-of-insert-dir-ent)
+        (:rewrite subsetp-when-atom-left)
+        (:rewrite str::explode-when-not-stringp)
+        (:rewrite
+         fat32-build-index-list-of-effective-fat-of-place-contents-disjoint)
+        (:rewrite member-when-atom)
+        (:rewrite m1-file-alist-p-of-cdr-when-m1-file-alist-p)
+        (:rewrite dir-ent-clusterchain-contents-of-update-dir-contents-disjoint)
+        (:rewrite non-free-index-listp-of-update-nth)
+        (:rewrite nth-of-set-indices-in-fa-table-when-member)
+        (:rewrite lofat-place-file-correctness-1-lemma-16)
+        (:rewrite dir-ent-list-p-of-cdr-when-dir-ent-list-p)
+        (:rewrite lofat-place-file-correctness-1-lemma-11)
+        (:rewrite natp-of-car-when-nat-listp)
+        (:definition make-list-ac)
+        (:rewrite useful-dir-ent-list-p-of-place-dir-ent)
+        (:rewrite nth-of-set-indices-in-fa-table-when-member)
+        (:rewrite lofat-place-file-correctness-1-lemma-14)
+        (:rewrite lofat-place-file-correctness-1-lemma-13)
+        (:rewrite intersectp-when-subsetp)
+        (:rewrite subsetp-car-member)
+        (:rewrite hifat-to-lofat-inversion-lemma-2)
+        (:rewrite subsetp-implies-subsetp-cdr)
+        (:definition assoc-equal)
+        (:rewrite place-contents-expansion-2)
+        (:rewrite intersectp-equal-of-atom-left)
+        (:rewrite assoc-of-car-when-member)
+        (:rewrite flatten-subset-no-duplicatesp-lemma-2)
+        (:rewrite consp-of-assoc-of-hifat-file-alist-fix)
+        (:rewrite put-assoc-equal-without-change . 2)
+        (:rewrite fat32-filename-p-correctness-1)
+        (:rewrite free-index-listp-correctness-1)
+        (:rewrite stringp-when-nonempty-stringp)
+        (:rewrite m1-file-alist-p-when-subsetp-equal)
+        (:rewrite dir-ent-clusterchain-of-update-dir-contents)
+        (:rewrite dir-ent-clusterchain-of-clear-clusterchain)
+        (:rewrite dir-ent-clusterchain-contents-of-clear-clusterchain)
+        (:rewrite lofat-find-file-correctness-1-lemma-7)
+        (:rewrite lofat-to-hifat-helper-of-update-dir-contents)
+        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-1-lemma-3)
+        (:rewrite lofat-place-file-correctness-1-lemma-17)
+        (:rewrite lofat-place-file-correctness-1-lemma-15)
+        (:rewrite lofat-to-hifat-helper-after-delete-and-clear-2-lemma-3)
+        (:rewrite natp-of-caar-when-file-table-p)
+        (:rewrite natp-of-caar-when-fd-table-p)
+        (:rewrite
+         dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-9)
+        (:rewrite m1-regular-file-p-correctness-1)
+        (:rewrite member-intersectp-is-commutative-lemma-2)
+        (:rewrite fati-of-clear-clusterchain . 3)
+        (:rewrite hifat-no-dups-p-of-cdr)
+        (:rewrite file-table-p-when-subsetp-equal)
+        (:rewrite fd-table-p-when-subsetp-equal)
+        (:rewrite
+         dir-ent-clusterchain-contents-of-lofat-place-file-coincident-lemma-13
+         . 1)
+        (:rewrite effective-fat-of-clear-clusterchain . 3)
+        (:rewrite effective-fat-of-clear-clusterchain . 2)
+        (:rewrite file-table-p-when-not-consp)
+        (:rewrite
+         dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-4)
+        (:definition len)
+        (:rewrite
+         m1-file-p-of-cdar-when-m1-file-alist-p)
+        (:rewrite
+         m1-file-alist-p-of-lofat-to-hifat-helper)
+        (:rewrite not-intersectp-list-when-subsetp-1)
+        (:rewrite m1-directory-file-p-when-m1-file-p)
+        (:rewrite m1-file-fix-when-m1-file-p)
+        (:definition nfix)
+        (:rewrite
+         fat32-filename-fix-when-fat32-filename-p)
+        (:type-prescription assoc-when-zp-len)
+        (:rewrite
+         dir-ent-clusterchain-contents-of-lofat-remove-file-disjoint-lemma-7
+         . 5)))))
     :rule-classes
     ((:rewrite
       :corollary
