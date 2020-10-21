@@ -4522,55 +4522,36 @@
 
 (defthm
   lofat-to-hifat-helper-of-hifat-to-lofat-helper-disjoint-lemma-2
-  (implies (equal (mv-nth 3
-                          (lofat-to-hifat-helper fat32-in-memory
-                                                 dir-ent-list entry-limit))
-                  0)
-           (not-intersectp-list
-            (find-n-free-clusters (effective-fat fat32-in-memory)
-                                  n)
-            (mv-nth 2
-                    (lofat-to-hifat-helper fat32-in-memory
-                                           dir-ent-list entry-limit))))
+  (implies
+   (and (< (nfix m)
+           (len (find-n-free-clusters (effective-fat fat32-in-memory)
+                                      n)))
+        (equal (mv-nth 3
+                       (lofat-to-hifat-helper fat32-in-memory
+                                              dir-ent-list entry-limit))
+               0))
+   (not-intersectp-list
+    (cons (nth m
+               (find-n-free-clusters (effective-fat fat32-in-memory)
+                                     n))
+          nil)
+    (mv-nth 2
+            (lofat-to-hifat-helper fat32-in-memory
+                                   dir-ent-list entry-limit))))
   :hints
-  (("goal" :in-theory (enable intersectp-equal lofat-to-hifat-helper
-                              not-intersectp-list)
-    :induct (lofat-to-hifat-helper fat32-in-memory
-                                   dir-ent-list entry-limit)))
-  :rule-classes
-  (:rewrite
-   (:rewrite
-    :corollary
-    (implies
-     (and (lofat-fs-p fat32-in-memory)
-          (equal n 1)
-          (equal (len (find-n-free-clusters (effective-fat fat32-in-memory)
-                                            n))
-                 1)
-          (equal (mv-nth 3
-                         (lofat-to-hifat-helper fat32-in-memory
-                                                dir-ent-list entry-limit))
-                 0))
-     (not-intersectp-list
-      (cons (nth 0
-                 (find-n-free-clusters (effective-fat fat32-in-memory)
-                                       n))
-            nil)
-      (mv-nth 2
-              (lofat-to-hifat-helper fat32-in-memory
-                                     dir-ent-list entry-limit))))
-    :hints
-    (("goal"
-      :in-theory (disable len-of-find-n-free-clusters)
-      :expand ((len (find-n-free-clusters (effective-fat fat32-in-memory)
-                                          1))
-               (len (cdr (find-n-free-clusters (effective-fat fat32-in-memory)
-                                               1))))
-      :cases
-      ((equal (list (car (find-n-free-clusters (effective-fat fat32-in-memory)
-                                               1)))
-              (find-n-free-clusters (effective-fat fat32-in-memory)
-                                    1))))))))
+  (("goal"
+    :do-not-induct t
+    :in-theory (e/d (intersectp-equal lofat-to-hifat-helper
+                                      not-intersectp-list)
+                    (consp-of-find-n-free-clusters))
+    :restrict ((not-intersectp-list-when-subsetp-1
+                ((y (find-n-free-clusters (effective-fat fat32-in-memory)
+                                          n)))))
+    :cases ((< '0
+               (if (< (count-free-clusters (effective-fat fat32-in-memory))
+                      n)
+                   (count-free-clusters (effective-fat fat32-in-memory))
+                   n))))))
 
 (defthm
   lofat-to-hifat-helper-of-hifat-to-lofat-helper-disjoint
