@@ -38939,147 +38939,148 @@ Some (rather awful) testing forms are
 
   (local (include-book "std/lists/intersectp" :dir :system))
 
-  (defthm
-    lofat-place-file-correctness-1-lemma-1
-    (b*
-        (;; If we're going to use hifat-equiv, there's no need to get super
-         ;; specific about dir-ent in the expression below.
-         ((mv fs &)
-          (hifat-place-file
-           (mv-nth 0
-                   (lofat-to-hifat-helper
-                    fat32-in-memory
-                    (make-dir-ent-list
-                     (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                    entry-limit))
-           path
-           (m1-file dir-ent (lofat-file->contents file)))))
-      (implies
-       (and
-        (good-root-dir-ent-p root-dir-ent fat32-in-memory)
-        (non-free-index-listp x (effective-fat fat32-in-memory))
-        (fat32-filename-list-p path)
-        (equal (mv-nth 3
-                       (lofat-to-hifat-helper
-                        fat32-in-memory
-                        (make-dir-ent-list
-                         (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                        entry-limit))
-               0)
-        (not-intersectp-list
-         (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-         (mv-nth 2
-                 (lofat-to-hifat-helper
-                  fat32-in-memory
-                  (make-dir-ent-list
-                   (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                  entry-limit)))
-        (not-intersectp-list
-         x
-         (mv-nth 2
-                 (lofat-to-hifat-helper
-                  fat32-in-memory
-                  (make-dir-ent-list
-                   (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                  entry-limit)))
-        (lofat-file-p file)
-        ;; This is already horrible, but it is also imprecise... when we
-        ;; replace an existing file with another, we get some room from the
-        ;; removal of that file!
-        (or (and (lofat-regular-file-p file)
-                 (<= (len (make-clusters (lofat-file->contents file)
-                                         (cluster-size fat32-in-memory)))
-                     (count-free-clusters (effective-fat fat32-in-memory))))
-            (and (equal (lofat-file->contents file) nil)
-                 (<= 1 (count-free-clusters (effective-fat fat32-in-memory)))))
-        ;; This is necessary to get the ENOSPC cases out of the way.
-        (zp (mv-nth 1 (lofat-place-file fat32-in-memory root-dir-ent path
-                                        file)))
-        (integerp entry-limit)
-        (<= (+ 2
-               (hifat-entry-count
-                (mv-nth 0
-                        (lofat-to-hifat-helper
-                         fat32-in-memory
-                         (make-dir-ent-list
-                          (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
-                         entry-limit))))
-            entry-limit)
-        ;; Not sure why I'm having to stipulate this...
-        (or
-         (NOT
-          (DIR-ENT-DIRECTORY-P
-           (MV-NTH
-            0
-            (FIND-DIR-ENT
-             (MAKE-DIR-ENT-LIST
-              (MV-NTH 0
-                      (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY ROOT-DIR-ENT)))
-             (CAR PATH)))))
-         (NOT
-          (DIR-ENT-DIRECTORY-P
-           (MV-NTH
-            0
-            (FIND-DIR-ENT
-             (MAKE-DIR-ENT-LIST
-              (MV-NTH 0
-                      (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY ROOT-DIR-ENT)))
-             (CAR PATH)))))))
-       (and
-        (hifat-equiv
-         (mv-nth 0
-                 (lofat-to-hifat-helper
-                  (mv-nth
-                   0
-                   (lofat-place-file fat32-in-memory root-dir-ent path file))
-                  (make-dir-ent-list
-                   (mv-nth 0
-                           (dir-ent-clusterchain-contents
-                            (mv-nth
-                             0
-                             (lofat-place-file fat32-in-memory root-dir-ent path file))
-                            root-dir-ent)))
-                  entry-limit))
-         fs)
-        (not-intersectp-list
-         x
-         (mv-nth 2
-                 (lofat-to-hifat-helper
-                  (mv-nth
-                   0
-                   (lofat-place-file fat32-in-memory root-dir-ent path file))
-                  (make-dir-ent-list
-                   (mv-nth 0
-                           (dir-ent-clusterchain-contents
-                            (mv-nth
-                             0
-                             (lofat-place-file fat32-in-memory root-dir-ent path file))
-                            root-dir-ent)))
-                  entry-limit))))))
-    :hints
-    (("goal"
-      :induct
-      (induction-scheme
-       entry-limit fat32-in-memory file path root-dir-ent x)
-      :expand
-      (lofat-place-file fat32-in-memory root-dir-ent path file)
-      :in-theory
-      (e/d (hifat-place-file
-            (:rewrite lofat-to-hifat-inversion-lemma-4)
-            hifat-find-file)
-           ((:definition find-dir-ent)
-            (:definition place-dir-ent)
-            (:rewrite
-             dir-ent-p-when-member-equal-of-dir-ent-list-p)
-            (:rewrite
-             lofat-fs-p-of-lofat-place-file-lemma-1)
-            (:rewrite
-             clear-clusterchain-reversibility-lemma-1)))
-      ;; We can add more of these restrict bindings if needed... but right now
-      ;; we want to save space.
-      :restrict
-      ((put-assoc-under-hifat-equiv-3
-        ((file2
-          (m1-file dir-ent "")))
-        ((file2 (m1-file dir-ent
-                         (lofat-file->contents$inline file))))))))))
+  ;; (defthm
+  ;;   lofat-place-file-correctness-1-lemma-1
+  ;;   (b*
+  ;;       (;; If we're going to use hifat-equiv, there's no need to get super
+  ;;        ;; specific about dir-ent in the expression below.
+  ;;        ((mv fs &)
+  ;;         (hifat-place-file
+  ;;          (mv-nth 0
+  ;;                  (lofat-to-hifat-helper
+  ;;                   fat32-in-memory
+  ;;                   (make-dir-ent-list
+  ;;                    (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+  ;;                   entry-limit))
+  ;;          path
+  ;;          (m1-file dir-ent (lofat-file->contents file)))))
+  ;;     (implies
+  ;;      (and
+  ;;       (good-root-dir-ent-p root-dir-ent fat32-in-memory)
+  ;;       (non-free-index-listp x (effective-fat fat32-in-memory))
+  ;;       (fat32-filename-list-p path)
+  ;;       (equal (mv-nth 3
+  ;;                      (lofat-to-hifat-helper
+  ;;                       fat32-in-memory
+  ;;                       (make-dir-ent-list
+  ;;                        (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+  ;;                       entry-limit))
+  ;;              0)
+  ;;       (not-intersectp-list
+  ;;        (mv-nth 0 (dir-ent-clusterchain fat32-in-memory root-dir-ent))
+  ;;        (mv-nth 2
+  ;;                (lofat-to-hifat-helper
+  ;;                 fat32-in-memory
+  ;;                 (make-dir-ent-list
+  ;;                  (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+  ;;                 entry-limit)))
+  ;;       (not-intersectp-list
+  ;;        x
+  ;;        (mv-nth 2
+  ;;                (lofat-to-hifat-helper
+  ;;                 fat32-in-memory
+  ;;                 (make-dir-ent-list
+  ;;                  (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+  ;;                 entry-limit)))
+  ;;       (lofat-file-p file)
+  ;;       ;; This is already horrible, but it is also imprecise... when we
+  ;;       ;; replace an existing file with another, we get some room from the
+  ;;       ;; removal of that file!
+  ;;       (or (and (lofat-regular-file-p file)
+  ;;                (<= (len (make-clusters (lofat-file->contents file)
+  ;;                                        (cluster-size fat32-in-memory)))
+  ;;                    (count-free-clusters (effective-fat fat32-in-memory))))
+  ;;           (and (equal (lofat-file->contents file) nil)
+  ;;                (<= 1 (count-free-clusters (effective-fat fat32-in-memory)))))
+  ;;       ;; This is necessary to get the ENOSPC cases out of the way.
+  ;;       (zp (mv-nth 1 (lofat-place-file fat32-in-memory root-dir-ent path
+  ;;                                       file)))
+  ;;       (integerp entry-limit)
+  ;;       (<= (+ 2
+  ;;              (hifat-entry-count
+  ;;               (mv-nth 0
+  ;;                       (lofat-to-hifat-helper
+  ;;                        fat32-in-memory
+  ;;                        (make-dir-ent-list
+  ;;                         (mv-nth 0 (dir-ent-clusterchain-contents fat32-in-memory root-dir-ent)))
+  ;;                        entry-limit))))
+  ;;           entry-limit)
+  ;;       ;; Not sure why I'm having to stipulate this...
+  ;;       (or
+  ;;        (NOT
+  ;;         (DIR-ENT-DIRECTORY-P
+  ;;          (MV-NTH
+  ;;           0
+  ;;           (FIND-DIR-ENT
+  ;;            (MAKE-DIR-ENT-LIST
+  ;;             (MV-NTH 0
+  ;;                     (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY ROOT-DIR-ENT)))
+  ;;            (CAR PATH)))))
+  ;;        (NOT
+  ;;         (DIR-ENT-DIRECTORY-P
+  ;;          (MV-NTH
+  ;;           0
+  ;;           (FIND-DIR-ENT
+  ;;            (MAKE-DIR-ENT-LIST
+  ;;             (MV-NTH 0
+  ;;                     (DIR-ENT-CLUSTERCHAIN-CONTENTS FAT32-IN-MEMORY ROOT-DIR-ENT)))
+  ;;            (CAR PATH)))))))
+  ;;      (and
+  ;;       (hifat-equiv
+  ;;        (mv-nth 0
+  ;;                (lofat-to-hifat-helper
+  ;;                 (mv-nth
+  ;;                  0
+  ;;                  (lofat-place-file fat32-in-memory root-dir-ent path file))
+  ;;                 (make-dir-ent-list
+  ;;                  (mv-nth 0
+  ;;                          (dir-ent-clusterchain-contents
+  ;;                           (mv-nth
+  ;;                            0
+  ;;                            (lofat-place-file fat32-in-memory root-dir-ent path file))
+  ;;                           root-dir-ent)))
+  ;;                 entry-limit))
+  ;;        fs)
+  ;;       (not-intersectp-list
+  ;;        x
+  ;;        (mv-nth 2
+  ;;                (lofat-to-hifat-helper
+  ;;                 (mv-nth
+  ;;                  0
+  ;;                  (lofat-place-file fat32-in-memory root-dir-ent path file))
+  ;;                 (make-dir-ent-list
+  ;;                  (mv-nth 0
+  ;;                          (dir-ent-clusterchain-contents
+  ;;                           (mv-nth
+  ;;                            0
+  ;;                            (lofat-place-file fat32-in-memory root-dir-ent path file))
+  ;;                           root-dir-ent)))
+  ;;                 entry-limit))))))
+  ;;   :hints
+  ;;   (("goal"
+  ;;     :induct
+  ;;     (induction-scheme
+  ;;      entry-limit fat32-in-memory file path root-dir-ent x)
+  ;;     :expand
+  ;;     (lofat-place-file fat32-in-memory root-dir-ent path file)
+  ;;     :in-theory
+  ;;     (e/d (hifat-place-file
+  ;;           (:rewrite lofat-to-hifat-inversion-lemma-4)
+  ;;           hifat-find-file)
+  ;;          ((:definition find-dir-ent)
+  ;;           (:definition place-dir-ent)
+  ;;           (:rewrite
+  ;;            dir-ent-p-when-member-equal-of-dir-ent-list-p)
+  ;;           (:rewrite
+  ;;            lofat-fs-p-of-lofat-place-file-lemma-1)
+  ;;           (:rewrite
+  ;;            clear-clusterchain-reversibility-lemma-1)))
+  ;;     ;; We can add more of these restrict bindings if needed... but right now
+  ;;     ;; we want to save space.
+  ;;     :restrict
+  ;;     ((put-assoc-under-hifat-equiv-3
+  ;;       ((file2
+  ;;         (m1-file dir-ent "")))
+  ;;       ((file2 (m1-file dir-ent
+  ;;                        (lofat-file->contents$inline file)))))))))
+  )
