@@ -43,7 +43,26 @@
                   (:rewrite subseq-of-length-1)
                   (:rewrite assoc-of-car-when-member)
                   (:rewrite characterp-nth)
-                  (:rewrite hifat-file-alist-fix-guard-lemma-1)))))
+                  (:rewrite hifat-file-alist-fix-guard-lemma-1)
+                  (:REWRITE SUBSETP-MEMBER . 2)
+                  (:REWRITE
+                   DIR-ENT-LIST-P-OF-CDR-WHEN-DIR-ENT-LIST-P)
+                  (:REWRITE INTERSECT-WITH-SUBSET . 8)
+                  (:REWRITE INTERSECT-WITH-SUBSET . 1)
+                  (:REWRITE INTERSECT-WITH-SUBSET . 3)
+                  (:REWRITE INTERSECT-WITH-SUBSET . 4)
+                  (:REWRITE INTERSECT-WITH-SUBSET . 2)
+                  (:REWRITE INTERSECT-WITH-SUBSET . 7)
+                  (:REWRITE INTERSECT-WITH-SUBSET . 10)
+                  (:REWRITE SUBSETP-MEMBER . 4)
+                  (:REWRITE NATP-OF-CAAR-WHEN-FILE-TABLE-P)
+                  (:REWRITE NATP-OF-CAAR-WHEN-FD-TABLE-P)
+                  (:REWRITE
+                   FAT32-FILENAME-P-OF-CAR-WHEN-FAT32-FILENAME-LIST-P)
+                  (:REWRITE FREE-INDEX-LISTP-CORRECTNESS-1)
+                  (:REWRITE
+                   CONSP-OF-ASSOC-OF-HIFAT-FILE-ALIST-FIX)
+                  (:LINEAR HIFAT-ENTRY-COUNT-WHEN-HIFAT-SUBSETP)))))
 
 (defund-nx
   eqfat (str1 str2)
@@ -24688,7 +24707,7 @@ Some (rather awful) testing forms are
            :in-theory (enable dir-ent-clusterchain
                               fat32-build-index-list))))
 
-(defthm
+(defthmd
   lofat-place-file-correctness-lemma-67
   (implies
    (and
@@ -24760,7 +24779,7 @@ Some (rather awful) testing forms are
                (lofat-to-hifat-helper fat32-in-memory
                                       dir-ent-list entry-limit))))))))
 
-(defthm
+(defthmd
   lofat-place-file-correctness-lemma-68
   (implies
    (and
