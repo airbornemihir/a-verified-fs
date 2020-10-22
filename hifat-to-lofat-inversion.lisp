@@ -643,7 +643,8 @@
     0
     (dir-ent-clusterchain fat32-in-memory dir-ent)))
   :hints
-  (("goal" :in-theory (enable dir-ent-clusterchain))))
+  (("goal" :in-theory (enable dir-ent-clusterchain)))
+  :rule-classes (:rewrite :type-prescription))
 
 (defthm
   fat32-masked-entry-list-p-of-dir-ent-clusterchain
