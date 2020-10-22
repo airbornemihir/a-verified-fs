@@ -55,6 +55,28 @@
                         (bounded-nat-listp (generate-index-list start n)
                                            b)))))
 
+(defcong set-equiv equal (not-intersectp-list x l) 1
+  :hints (("Goal" :in-theory (e/d (not-intersectp-list)))))
+
+(defcong
+  set-equiv
+  equal (not-intersectp-list x l)
+  2
+  :hints
+  (("goal"
+    :in-theory
+    (e/d nil
+         ((:rewrite not-intersectp-list-when-subsetp-2)))
+    :use
+    ((:instance (:rewrite not-intersectp-list-when-subsetp-2)
+                (l1 l)
+                (x x)
+                (l2 l-equiv))
+     (:instance (:rewrite not-intersectp-list-when-subsetp-2)
+                (l2 l)
+                (x x)
+                (l1 l-equiv))))))
+
 (defund
   get-clusterchain
   (fat32-in-memory masked-current-cluster length)
