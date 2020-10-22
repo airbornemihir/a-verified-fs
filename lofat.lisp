@@ -38149,6 +38149,56 @@ Some (rather awful) testing forms are
       (l l-equiv))
      flatten-equiv-implies-equal-not-intersectp-list-2-lemma-1))))
 
+(defthmd
+  flatten-equiv-implies-equal-member-intersectp-equal-1-lemma-1
+  (equal (member-intersectp-equal (remove-equal nil (true-list-list-fix x))
+                                  y)
+         (member-intersectp-equal x y))
+  :hints (("goal" :in-theory (enable not-intersectp-list
+                                     true-list-list-fix intersectp-equal))))
+
+(defcong
+  set-equiv
+  equal (member-intersectp-equal x y)
+  1
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (set-equiv)
+                    (member-intersectp-with-subset))
+    :use ((:instance member-intersectp-with-subset (z y)
+                     (x x)
+                     (y x-equiv))
+          (:instance member-intersectp-with-subset (z y)
+                     (x x-equiv)
+                     (y x))))))
+
+(defcong
+  set-equiv
+  equal (member-intersectp-equal y x)
+  2
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (e/d (set-equiv)
+                    (member-intersectp-with-subset))
+    :use ((:instance member-intersectp-with-subset (z y)
+                     (x x)
+                     (y x-equiv))
+          (:instance member-intersectp-with-subset (z y)
+                     (x x-equiv)
+                     (y x))))))
+
+(defcong
+  flatten-equiv
+  equal (member-intersectp-equal x y)
+  1
+  :hints
+  (("goal" :do-not-induct t
+    :in-theory (enable member-intersectp-equal flatten-equiv)
+    :use ((:instance
+           flatten-equiv-implies-equal-member-intersectp-equal-1-lemma-1
+           (x x-equiv))
+          flatten-equiv-implies-equal-member-intersectp-equal-1-lemma-1))))
+
 (encapsulate
   ()
 
