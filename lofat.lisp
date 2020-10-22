@@ -38121,6 +38121,34 @@ Some (rather awful) testing forms are
           (cluster-size fat32-in-memory)))))
       nil)))))
 
+(defund flatten-equiv (x y)
+  (set-equiv (remove-equal nil (true-list-list-fix x))
+             (remove-equal nil (true-list-list-fix y))))
+
+(defequiv flatten-equiv
+  :hints (("goal" :in-theory (enable flatten-equiv))))
+
+(defthmd
+  flatten-equiv-implies-equal-not-intersectp-list-2-lemma-1
+  (equal (not-intersectp-list x
+                              (remove-equal nil (true-list-list-fix l)))
+         (not-intersectp-list x l))
+  :hints (("goal" :in-theory (enable not-intersectp-list
+                                     true-list-list-fix intersectp-equal))))
+
+(defcong
+  flatten-equiv
+  equal (not-intersectp-list x l)
+  2
+  :hints
+  (("goal"
+    :in-theory (enable flatten-equiv)
+    :use
+    ((:instance
+      flatten-equiv-implies-equal-not-intersectp-list-2-lemma-1
+      (l l-equiv))
+     flatten-equiv-implies-equal-not-intersectp-list-2-lemma-1))))
+
 (encapsulate
   ()
 
