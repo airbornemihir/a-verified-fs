@@ -9437,3 +9437,51 @@
     ((:instance seq-this-under-path-of-fat32-filename-list-fix
                 (path path-equiv))
      seq-this-under-path-of-fat32-filename-list-fix))))
+
+(defthm
+  valid-seqp-of-seq-this-under-path
+  (implies (and (frame-p frame)
+                (atom (frame-val->path (cdr (assoc-equal 0 frame))))
+                (abs-separate frame)
+                (subsetp-equal (abs-addrs (frame->root frame))
+                               (frame-addrs-root (frame->frame frame)))
+                (no-duplicatesp-equal (strip-cars (frame->frame frame))))
+           (valid-seqp frame (seq-this-under-path frame path)))
+  :hints
+  (("goal"
+    :in-theory
+    (e/d (seq-this-under-path valid-seqp collapse-seq)
+         ((:definition fat32-filename-list-prefixp)
+          (:rewrite assoc-of-frame->frame-of-collapse-this)
+          (:rewrite consp-of-nthcdr)
+          (:rewrite ctx-app-when-not-ctx-app-ok)
+          (:rewrite abs-separate-of-frame->frame-of-collapse-this-lemma-8
+                    . 2)
+          (:rewrite nthcdr-when->=-n-len-l)
+          (:linear len-when-prefixp)
+          (:rewrite partial-collapse-correctness-lemma-2)))
+    :induct (seq-this-under-path frame path)
+    :expand
+    ((collapse-seq
+      frame
+      (cons
+       (1st-complete-under-path (frame->frame frame)
+                                path)
+       (seq-this-under-path
+        (collapse-seq frame
+                      (list (1st-complete-under-path (frame->frame frame)
+                                                     path)))
+        path)))
+     (:with
+      (:rewrite 1st-complete-under-path-of-frame->frame-of-partial-collapse-lemma-69)
+      (mv-nth
+       1
+       (collapse (collapse-this frame
+                                (1st-complete-under-path (frame->frame frame)
+                                                         path)))))))
+   ("subgoal *1/2.6'"
+    :cases
+    ((zp (frame-val->src
+          (cdr (assoc-equal (1st-complete-under-path (frame->frame frame)
+                                                     path)
+                            (frame->frame frame)))))))))
