@@ -1997,3 +1997,7 @@
   (implies (and (not (intersectp-equal l x))
                 (< (nfix n) (len l)))
            (not (member-equal (nth n l) x))))
+
+(defthm true-list-listp-of-remove
+  (implies (true-list-listp l)
+           (true-list-listp (remove-equal x l))))
