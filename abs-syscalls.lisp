@@ -17884,16 +17884,17 @@
   :hints
   (("goal"
     :do-not-induct t
-    :in-theory (e/d (frame-reps-fs good-frame-p
-                                   abs-pwrite frame->frame-of-put-assoc
-                                   collapse collapse-this
-                                   1st-complete frame-addrs-root
-                                   dist-names abs-separate abs-fs-fix
-                                   assoc-equal-of-frame-with-root
-                                   hifat-no-dups-p hifat-place-file
-                                   hifat-find-file abs-alloc ctx-app
-                                   abs-fs-fix abs-addrs basename dirname)
-                    ())
+    :in-theory (enable
+                frame-reps-fs good-frame-p
+                abs-pwrite frame->frame-of-put-assoc
+                collapse collapse-this
+                1st-complete frame-addrs-root
+                dist-names abs-separate abs-fs-fix
+                assoc-equal-of-frame-with-root
+                hifat-no-dups-p hifat-place-file
+                hifat-find-file abs-alloc ctx-app
+                abs-fs-fix abs-addrs basename dirname
+                path-clear-partial-collapse-when-zp-src-lemma-34)
     :expand ((len path) (len (cdr path))))))
 
 (defthm

@@ -317,6 +317,7 @@
                  (:definition len)))
            :induct (partial-collapse frame path))))
 
+;; Used in other files.
 (defthm
   path-clear-partial-collapse-when-zp-src-lemma-9
   (implies
@@ -1088,7 +1089,7 @@
              ((y (strip-cars (frame->frame (partial-collapse frame path))))))
    :bash :bash))
 
-(defthm
+(defthmd
   path-clear-partial-collapse-when-zp-src-lemma-34
   (implies (m1-regular-file-p file)
            (abs-no-dups-p (abs-file->contents file)))
