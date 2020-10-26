@@ -50649,64 +50649,27 @@ Some (rather awful) testing forms are
 
   (defthm
     lofat-place-file-correctness-1-lemma-1
-   (implies
-    (and
-     (good-root-dir-ent-p root-dir-ent fat32-in-memory)
-     (non-free-index-listp x (effective-fat fat32-in-memory))
-     (fat32-filename-list-p path)
-     (equal
-      (mv-nth
-       3
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents
-                  fat32-in-memory root-dir-ent)))
-        entry-limit))
-      0)
-     (not-intersectp-list
-      (mv-nth 0
-              (dir-ent-clusterchain fat32-in-memory root-dir-ent))
-      (mv-nth
-       2
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents
-                  fat32-in-memory root-dir-ent)))
-        entry-limit)))
-     (not-intersectp-list
-      x
-      (mv-nth
-       2
-       (lofat-to-hifat-helper
-        fat32-in-memory
-        (make-dir-ent-list
-         (mv-nth 0
-                 (dir-ent-clusterchain-contents
-                  fat32-in-memory root-dir-ent)))
-        entry-limit)))
-     (lofat-file-p file)
-     (or
-      (and
-       (lofat-regular-file-p file)
-       (<= (len (make-clusters (lofat-file->contents file)
-                               (cluster-size fat32-in-memory)))
-           (count-free-clusters (effective-fat fat32-in-memory))))
-      (and
-       (equal (lofat-file->contents file) nil)
-       (<= 1
-           (count-free-clusters (effective-fat fat32-in-memory)))))
-     (zp (mv-nth 1
-                 (lofat-place-file fat32-in-memory
-                                   root-dir-ent path file)))
-     (integerp entry-limit)
-     (<
-      (hifat-entry-count
+    (implies
+     (and
+      (good-root-dir-ent-p root-dir-ent fat32-in-memory)
+      (non-free-index-listp x (effective-fat fat32-in-memory))
+      (fat32-filename-list-p path)
+      (equal
        (mv-nth
-        0
+        3
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents
+                   fat32-in-memory root-dir-ent)))
+         entry-limit))
+       0)
+      (not-intersectp-list
+       (mv-nth 0
+               (dir-ent-clusterchain fat32-in-memory root-dir-ent))
+       (mv-nth
+        2
         (lofat-to-hifat-helper
          fat32-in-memory
          (make-dir-ent-list
@@ -50714,62 +50677,34 @@ Some (rather awful) testing forms are
                   (dir-ent-clusterchain-contents
                    fat32-in-memory root-dir-ent)))
          entry-limit)))
-      entry-limit)
-     t)
-    (and
-     (equal
-      (mv-nth
-       3
-       (lofat-to-hifat-helper
-        (mv-nth
-         0
-         (lofat-place-file fat32-in-memory root-dir-ent path file))
-        (make-dir-ent-list
-         (mv-nth
-          0
-          (dir-ent-clusterchain-contents
-           (mv-nth 0
-                   (lofat-place-file
-                    fat32-in-memory root-dir-ent path file))
-           root-dir-ent)))
-        entry-limit))
-      0)
-     (not-intersectp-list
-      x
-      (mv-nth
-       2
-       (lofat-to-hifat-helper
-        (mv-nth
-         0
-         (lofat-place-file fat32-in-memory root-dir-ent path file))
-        (make-dir-ent-list
-         (mv-nth
-          0
-          (dir-ent-clusterchain-contents
-           (mv-nth 0
-                   (lofat-place-file
-                    fat32-in-memory root-dir-ent path file))
-           root-dir-ent)))
-        entry-limit)))
-     (hifat-equiv
-      (mv-nth
-       0
-       (lofat-to-hifat-helper
-        (mv-nth
-         0
-         (lofat-place-file fat32-in-memory root-dir-ent path file))
-        (make-dir-ent-list
-         (mv-nth
-          0
-          (dir-ent-clusterchain-contents
-           (mv-nth 0
-                   (lofat-place-file
-                    fat32-in-memory root-dir-ent path file))
-           root-dir-ent)))
-        entry-limit))
-      (mv-nth
-       0
-       (hifat-place-file
+      (not-intersectp-list
+       x
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         fat32-in-memory
+         (make-dir-ent-list
+          (mv-nth 0
+                  (dir-ent-clusterchain-contents
+                   fat32-in-memory root-dir-ent)))
+         entry-limit)))
+      (lofat-file-p file)
+      (or
+       (and
+        (lofat-regular-file-p file)
+        (<= (len (make-clusters (lofat-file->contents file)
+                                (cluster-size fat32-in-memory)))
+            (count-free-clusters (effective-fat fat32-in-memory))))
+       (and
+        (equal (lofat-file->contents file) nil)
+        (<= 1
+            (count-free-clusters (effective-fat fat32-in-memory)))))
+      (zp (mv-nth 1
+                  (lofat-place-file fat32-in-memory
+                                    root-dir-ent path file)))
+      (integerp entry-limit)
+      (<
+       (hifat-entry-count
         (mv-nth
          0
          (lofat-to-hifat-helper
@@ -50778,9 +50713,74 @@ Some (rather awful) testing forms are
            (mv-nth 0
                    (dir-ent-clusterchain-contents
                     fat32-in-memory root-dir-ent)))
-          entry-limit))
-        path
-        (m1-file dir-ent (lofat-file->contents file)))))))
+          entry-limit)))
+       entry-limit)
+      t)
+     (and
+      (equal
+       (mv-nth
+        3
+        (lofat-to-hifat-helper
+         (mv-nth
+          0
+          (lofat-place-file fat32-in-memory root-dir-ent path file))
+         (make-dir-ent-list
+          (mv-nth
+           0
+           (dir-ent-clusterchain-contents
+            (mv-nth 0
+                    (lofat-place-file
+                     fat32-in-memory root-dir-ent path file))
+            root-dir-ent)))
+         entry-limit))
+       0)
+      (not-intersectp-list
+       x
+       (mv-nth
+        2
+        (lofat-to-hifat-helper
+         (mv-nth
+          0
+          (lofat-place-file fat32-in-memory root-dir-ent path file))
+         (make-dir-ent-list
+          (mv-nth
+           0
+           (dir-ent-clusterchain-contents
+            (mv-nth 0
+                    (lofat-place-file
+                     fat32-in-memory root-dir-ent path file))
+            root-dir-ent)))
+         entry-limit)))
+      (hifat-equiv
+       (mv-nth
+        0
+        (lofat-to-hifat-helper
+         (mv-nth
+          0
+          (lofat-place-file fat32-in-memory root-dir-ent path file))
+         (make-dir-ent-list
+          (mv-nth
+           0
+           (dir-ent-clusterchain-contents
+            (mv-nth 0
+                    (lofat-place-file
+                     fat32-in-memory root-dir-ent path file))
+            root-dir-ent)))
+         entry-limit))
+       (mv-nth
+        0
+        (hifat-place-file
+         (mv-nth
+          0
+          (lofat-to-hifat-helper
+           fat32-in-memory
+           (make-dir-ent-list
+            (mv-nth 0
+                    (dir-ent-clusterchain-contents
+                     fat32-in-memory root-dir-ent)))
+           entry-limit))
+         path
+         (m1-file dir-ent (lofat-file->contents file)))))))
    :hints
    (("goal"
      :induct

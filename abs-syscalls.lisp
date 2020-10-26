@@ -118,7 +118,8 @@
     (:rewrite abs-addrs-of-ctx-app-1-lemma-4)
     (:rewrite hifat-find-file-correctness-lemma-6)
     abs-addrs-of-ctx-app-1-lemma-6
-    abs-addrs-of-ctx-app-lemma-4))))
+    abs-addrs-of-ctx-app-lemma-4
+    (:REWRITE ABS-ADDRS-OF-CTX-APP)))))
 
 (defund abs-no-dups-file-p (file)
   (declare (xargs :guard t))
@@ -5752,20 +5753,6 @@
                       (abs-file-alist1 (mv-nth 0 (collapse frame)))))))
 
   (defthm
-    abs-mkdir-correctness-lemma-22
-    (implies (and (absfat-equiv (mv-nth 0 (collapse frame))
-                                fs)
-                  (abs-fs-p fs)
-                  (not (consp (assoc-equal (basename path) fs))))
-             (not (consp (assoc-equal (basename path)
-                                      (mv-nth 0 (collapse frame))))))
-    :instructions (:promote (:dive 1)
-                            (:rewrite ctx-app-ok-when-absfat-equiv-lemma-1
-                                      ((abs-file-alist2 fs)))
-                            :top
-                            :s (:rewrite abs-fs-p-of-collapse)))
-
-  (defthm
     abs-mkdir-correctness-lemma-96
     (implies
      (and
@@ -7068,77 +7055,6 @@
               (find-new-index (strip-cars (partial-collapse frame path)))))
   :hints (("goal" :do-not-induct t))
   :rule-classes :type-prescription)
-
-(defthm
-  abs-pwrite-correctness-lemma-8
-  (implies
-   (and
-    (mv-nth 1 (collapse frame))
-    (not (frame-val->path (cdr (assoc-equal 0 frame))))
-    (frame-p frame)
-    (no-duplicatesp-equal (strip-cars frame))
-    (abs-separate frame)
-    (subsetp-equal (abs-addrs (frame->root frame))
-                   (frame-addrs-root (frame->frame frame)))
-    (consp (dirname path))
-    (m1-regular-file-p
-     (cdr
-      (assoc-equal
-       (basename path)
-       (mv-nth
-        0
-        (abs-alloc
-         (frame-val->dir
-          (cdr (assoc-equal 0
-                            (partial-collapse frame (dirname path)))))
-         (dirname path)
-         (find-new-index
-          (strip-cars (partial-collapse frame (dirname path)))))))))
-    (equal 0
-           (abs-find-file-src (partial-collapse frame (dirname path))
-                              (dirname path)))
-    (equal (frame-val->src$inline (cdr (assoc-equal 0 frame)))
-           0))
-   (abs-complete
-    (mv-nth
-     '0
-     (abs-alloc
-      (frame-val->dir$inline
-       (cdr (assoc-equal '0
-                         (partial-collapse frame (dirname path)))))
-      (dirname path)
-      (find-new-index
-       (strip-cars (partial-collapse frame (dirname path))))))))
-  :instructions
-  (:promote
-   (:dive 1)
-   (:claim
-    (and
-     (zp
-      (mv-nth
-       1
-       (abs-find-file-helper
-        (frame-val->dir
-         (cdr (assoc-equal 0
-                           (partial-collapse frame (dirname path)))))
-        (dirname path))))
-     (abs-directory-file-p
-      (mv-nth
-       0
-       (abs-find-file-helper
-        (frame-val->dir
-         (cdr (assoc-equal 0
-                           (partial-collapse frame (dirname path)))))
-        (dirname path))))))
-   (:rewrite abs-mkdir-correctness-lemma-30)
-   :top
-   (:bash
-    ("goal"
-     :in-theory (disable (:rewrite abs-mkdir-correctness-lemma-85))
-     :use (:instance (:rewrite abs-mkdir-correctness-lemma-85)
-                     (x-path (dirname path))
-                     (path (dirname path))
-                     (frame (partial-collapse frame (dirname path))))))))
 
 (defthm
   abs-pwrite-correctness-lemma-10
@@ -19897,13 +19813,6 @@
                                    file fs)))
   :hints (("goal" :do-not-induct t
            :in-theory (enable basename))))
-
-(defthm
-  abs-mkdir-correctness-lemma-37
-  (implies (not (consp (abs-addrs (frame->root frame))))
-           (abs-complete (frame-val->dir$inline (cdr (assoc-equal 0 frame)))))
-  :hints (("goal" :do-not-induct t
-           :in-theory (enable abs-complete frame->root))))
 
 ;; This lemma could come into conflict with the definition of frame->root as
 ;; and when it is enabled...
